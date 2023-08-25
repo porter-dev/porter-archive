@@ -49,7 +49,8 @@ import EventFocusView from "./activity-feed/events/focus-views/EventFocusView";
 import HelmValuesTab from "./HelmValuesTab";
 import SettingsTab from "./SettingsTab";
 import PorterAppRevisionSection from "./PorterAppRevisionSection";
-import { useQuery } from "@tanstack/react-query";
+import { useHasBuiltImage } from "lib/hooks/useHasBuiltImage";
+import { useGithubWorkflow } from "lib/hooks/useGithubWorkflow";
 
 type Props = RouteComponentProps & {};
 
@@ -91,12 +92,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [appData, setAppData] = useState(null);
-  const [workflowCheckPassed, setWorkflowCheckPassed] = useState<boolean>(
-    false
-  );
-  const [githubWorkflowFilename, setGithubWorkflowFilename] = useState<string>("");
-  const [hasBuiltImage, setHasBuiltImage] = useState<boolean>(false);
-
   const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
     false
   );
@@ -134,6 +129,10 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   }
   const eventId = queryParams.get('event_id');
   const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
+  const { appName } = props.match.params as any;
+  const hasBuiltImage = useHasBuiltImage(appName);
+  const { githubWorkflowFilename, isLoading: isLoadingWorkflowFile } = useGithubWorkflow(appData?.app);
+
   useEffect(() => {
     if (!_.isEqual(_.omitBy(porterApp, _.isEmpty), _.omitBy(tempPorterApp, _.isEmpty))) {
       setButtonStatus("");
@@ -144,159 +143,83 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   }, [tempPorterApp, porterApp]);
 
   useEffect(() => {
-    const { appName } = props.match.params as any;
     if (currentCluster && appName && currentProject) {
       getPorterApp({ revision: 0 });
     }
   }, [currentCluster]);
 
-  useEffect(() => {
-    const checkForWorkflow = async () => {
-      if (workflowCheckPassed) {
-        clearInterval(workflowInterval);
-        return;
-      }
-
-      const { appName } = props.match.params as any;
-
-      if (currentProject == null || currentCluster == null) {
-        return;
-      }
-
-      try {
-        const porterAppTableData = await api.getPorterApp(
-          "<token>",
-          {},
-          {
-            cluster_id: currentCluster.id,
-            project_id: currentProject.id,
-            name: appName,
-          }
-        );
-
-        try {
-          await api.getBranchContents(
-            "<token>",
-            {
-              dir: `./.github/workflows/porter_stack_${appName}.yml`,
-            },
-            {
-              project_id: currentProject.id,
-              git_repo_id: porterAppTableData.data.git_repo_id,
-              kind: "github",
-              owner: porterAppTableData.data.repo_name.split("/")[0],
-              name: porterAppTableData.data.repo_name.split("/")[1],
-              branch: porterAppTableData.data.git_branch,
-            }
-          );
-          setWorkflowCheckPassed(true);
-          setGithubWorkflowFilename(`porter_stack_${appName}.yml`);
-        } catch (parentErr) {
-          if (parentErr.response?.status === 404 && porterAppTableData?.data?.repo_name) {
-            try {
-              // Check for user-copied porter.yml as fallback
-              await api.getBranchContents(
-                "<token>",
-                { dir: `./.github/workflows/porter.yml` },
-                {
-                  project_id: currentProject.id,
-                  git_repo_id: porterAppTableData.data.git_repo_id,
-                  kind: "github",
-                  owner: porterAppTableData.data.repo_name.split("/")[0],
-                  name: porterAppTableData.data.repo_name.split("/")[1],
-                  branch: porterAppTableData.data.git_branch,
-                }
-              );
-              setWorkflowCheckPassed(true);
-              setGithubWorkflowFilename(`porter.yml`);
-            } catch (childErr) {
-              setWorkflowCheckPassed(false);
-            }
-          }
-        }
-
-      } catch (err) {
-        // Handle unmerged PR
-
-      }
-    }
-    const workflowInterval = setInterval(checkForWorkflow, 5000);
-    return () => clearInterval(workflowInterval);
-  }, []);
-
-  const { data: workflowCheckPassedQuery } = useQuery(
-    ["checkForWorkflow", currentProject?.id, currentCluster?.id],
-    async () => {
-      if (workflowCheckPassed) {
-        return true;
-      }
-
-      const { appName } = props.match.params as any;
-
-      if (currentProject == null || currentCluster == null) {
-        return;
-      }
+  // useEffect(() => {
+  //   const checkForWorkflow = async () => {
+  //     if (workflowCheckPassed) {
+  //       clearInterval(workflowInterval);
+  //       return;
+  //     }
 
 
+  //     if (currentProject == null || currentCluster == null) {
+  //       return;
+  //     }
 
-    },
-    {
-      enabled: !!currentProject && !!currentCluster && !workflowCheckPassed,
-      refetchInterval: 5000,
-      refetchOnWindowFocus: false,
-    }
-  );
-  useEffect(() => {
-    if (workflowCheckPassedQuery != null) {
-      setHasBuiltImage(hasBuiltImageQuery);
-    }
-  }, [workflowCheckPassedQuery]);
+  //     try {
+  //       const porterAppTableData = await api.getPorterApp(
+  //         "<token>",
+  //         {},
+  //         {
+  //           cluster_id: currentCluster.id,
+  //           project_id: currentProject.id,
+  //           name: appName,
+  //         }
+  //       );
 
-  const { data: hasBuiltImageQuery } = useQuery(
-    ["checkForBuiltImage", currentProject?.id, currentCluster?.id],
-    async () => {
-      console.log("checking for built image")
-      if (hasBuiltImage) {
-        return true;
-      }
+  //       try {
+  //         await api.getBranchContents(
+  //           "<token>",
+  //           {
+  //             dir: `./.github/workflows/porter_stack_${appName}.yml`,
+  //           },
+  //           {
+  //             project_id: currentProject.id,
+  //             git_repo_id: porterAppTableData.data.git_repo_id,
+  //             kind: "github",
+  //             owner: porterAppTableData.data.repo_name.split("/")[0],
+  //             name: porterAppTableData.data.repo_name.split("/")[1],
+  //             branch: porterAppTableData.data.git_branch,
+  //           }
+  //         );
+  //         setWorkflowCheckPassed(true);
+  //         setGithubWorkflowFilename(`porter_stack_${appName}.yml`);
+  //       } catch (parentErr) {
+  //         if (parentErr.response?.status === 404 && porterAppTableData?.data?.repo_name) {
+  //           try {
+  //             // Check for user-copied porter.yml as fallback
+  //             await api.getBranchContents(
+  //               "<token>",
+  //               { dir: `./.github/workflows/porter.yml` },
+  //               {
+  //                 project_id: currentProject.id,
+  //                 git_repo_id: porterAppTableData.data.git_repo_id,
+  //                 kind: "github",
+  //                 owner: porterAppTableData.data.repo_name.split("/")[0],
+  //                 name: porterAppTableData.data.repo_name.split("/")[1],
+  //                 branch: porterAppTableData.data.git_branch,
+  //               }
+  //             );
+  //             setWorkflowCheckPassed(true);
+  //             setGithubWorkflowFilename(`porter.yml`);
+  //           } catch (childErr) {
+  //             setWorkflowCheckPassed(false);
+  //           }
+  //         }
+  //       }
 
-      const { appName } = props.match.params as any;
+  //     } catch (err) {
+  //       // Handle unmerged PR
 
-      if (currentProject == null || currentCluster == null || appName == null) {
-        return false;
-      }
-
-      const resChartData = await api.getChart(
-        "<token>",
-        {},
-        {
-          id: currentProject.id,
-          namespace: `porter-stack-${appName}`,
-          cluster_id: currentCluster.id,
-          name: appName,
-          revision: 0,
-        }
-      );
-      const globalImage = resChartData.data.config?.global?.image
-      return globalImage != null &&
-        globalImage.repository != null &&
-        globalImage.tag != null &&
-        globalImage.repository !== ImageInfo.BASE_IMAGE.repository &&
-        globalImage.tag !== ImageInfo.BASE_IMAGE.tag
-
-    },
-    {
-      enabled: !!currentProject && !!currentCluster && !hasBuiltImage,
-      refetchOnWindowFocus: false,
-      refetchInterval: 5000,
-    }
-  );
-
-  useEffect(() => {
-    if (hasBuiltImageQuery != null) {
-      setHasBuiltImage(hasBuiltImageQuery);
-    }
-  }, [hasBuiltImageQuery]);
+  //     }
+  //   }
+  //   const workflowInterval = setInterval(checkForWorkflow, 5000);
+  //   return () => clearInterval(workflowInterval);
+  // }, []);
 
   // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
   const getPorterApp = async ({ revision }: { revision: number }) => {
@@ -925,8 +848,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Fieldset>
           ) : (
             <>
-              {!workflowCheckPassed ? (
-                isLoading ? (
+              {!githubWorkflowFilename ? (
+                isLoading || isLoadingWorkflowFile ? (
                   <Banner>
                     <Loading />
                   </Banner>

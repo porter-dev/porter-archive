@@ -59,7 +59,6 @@ func (c *ListAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	// get the app
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
 		err := telemetry.Error(ctx, span, nil, "error parsing porter app name")

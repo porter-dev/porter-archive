@@ -895,7 +895,18 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 			return nil, fmt.Errorf("invalid service key: %s. make sure that service key ends in either -web, -wkr, or -job", k)
 		}
 
+		config := convertMap(v).(map[string]interface{})
+		var runCommand string
+
+		if config["container"] != nil {
+			containerMap := config["container"].(map[string]interface{})
+			if containerMap["command"] != nil {
+				runCommand = containerMap["command"].(string)
+			}
+		}
+
 		services[serviceName] = &Service{
+			Run:    &runCommand,
 			Config: convertMap(v).(map[string]interface{}),
 			Type:   &serviceType,
 		}

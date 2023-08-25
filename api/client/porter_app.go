@@ -180,12 +180,14 @@ func (c *Client) ValidatePorterApp(
 	projectID, clusterID uint,
 	base64AppProto string,
 	deploymentTarget string,
+	commitSHA string,
 ) (*porter_app.ValidatePorterAppResponse, error) {
 	resp := &porter_app.ValidatePorterAppResponse{}
 
 	req := &porter_app.ValidatePorterAppRequest{
 		Base64AppProto:     base64AppProto,
 		DeploymentTargetId: deploymentTarget,
+		CommitSHA:          commitSHA,
 	}
 
 	err := c.postRequest(

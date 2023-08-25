@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/cli/cli/git"
+
 	"github.com/fatih/color"
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
@@ -47,7 +49,14 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		return errors.New("deployment target id is empty")
 	}
 
-	validateResp, err := client.ValidatePorterApp(ctx, cliConf.Project, cliConf.Cluster, parseResp.B64AppProto, targetResp.DeploymentTargetID)
+	var commitSHA string
+	if os.Getenv("PORTER_COMMIT_SHA") != "" {
+		commitSHA = os.Getenv("PORTER_COMMIT_SHA")
+	} else if commit, err := git.LastCommit(); err == nil && commit != nil {
+		commitSHA = commit.Sha
+	}
+
+	validateResp, err := client.ValidatePorterApp(ctx, cliConf.Project, cliConf.Cluster, parseResp.B64AppProto, targetResp.DeploymentTargetID, commitSHA)
 	if err != nil {
 		return fmt.Errorf("error calling validate endpoint: %w", err)
 	}
@@ -56,6 +65,11 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		return errors.New("validated b64 app proto is empty")
 	}
 	base64AppProto := validateResp.ValidatedBase64AppProto
+
+	err = errorIfMissingSHAForBuild(base64AppProto, commitSHA)
+	if err != nil {
+		return err
+	}
 
 	createPorterAppDBEntryInp, err := createPorterAppDbEntryInputFromProtoAndEnv(validateResp.ValidatedBase64AppProto)
 	if err != nil {
@@ -125,6 +139,29 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 	}
 
 	color.New(color.FgGreen).Printf("Successfully applied Porter YAML as revision %v, next action: %v\n", applyResp.AppRevisionId, applyResp.CLIAction) // nolint:errcheck,gosec
+	return nil
+}
+
+func errorIfMissingSHAForBuild(base64AppProto string, commitSHA string) error {
+	if commitSHA != "" {
+		return nil
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(base64AppProto)
+	if err != nil {
+		return fmt.Errorf("unable to decode base64 app for revision: %w", err)
+	}
+
+	app := &porterv1.PorterApp{}
+	err = helpers.UnmarshalContractObject(decoded, app)
+	if err != nil {
+		return fmt.Errorf("unable to unmarshal app for revision: %w", err)
+	}
+
+	if app.Build != nil {
+		return errors.New("Commit SHA is required for builds. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI.")
+	}
+
 	return nil
 }
 

@@ -39,7 +39,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var porterYAML string
+var (
+	porterYAML string
+	commitSHA  string
+)
 
 func registerCommand_Apply(cliConf config.CLIConfig) *cobra.Command {
 	applyCmd := &cobra.Command{

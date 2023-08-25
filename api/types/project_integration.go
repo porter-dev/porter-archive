@@ -86,10 +86,23 @@ type QuotaPreflightCheckRequest struct {
 
 type QuotaPreflightCheckResponse struct{}
 
+type Network struct {
+	CidrRange        string `json:"cidrRange"`
+	ControlPlaneCidr string `json:"controlPlaneCidr"`
+	PodCidr          string `json:"podCidr"`
+	ServiceCidr      string `json:"serviceCidr"`
+}
+
+type GCPValues struct {
+	Network Network `json:"network"`
+}
+
+func (g *GCPValues) isPreflightCheckRequest_PreflightValues() {}
+
 type PreflightCheckRequest struct {
-	ProjectID                  uint   `json:"project_id"`
-	CloudProvider              string `json:"cloud_provider"`
-	CloudProviderCredentialsID string `json:"cloud_provider_credentials_id"`
+	CloudProvider              string     `json:"cloudProvider"`
+	CloudProviderCredentialsID string     `json:"cloudProviderCredentialsID"`
+	CloudValues                *GCPValues `json:"cloudValues,omitempty"`
 }
 
 type PreflightCheckResponse struct{}

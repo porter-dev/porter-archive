@@ -79,6 +79,7 @@ const preflightCheck = baseApi<
   {
     cloud_provider_credentials_id: string;
     cloud_provider: string;
+    cloud_provider_values: JSON;
   },
   { id: number }
 >("POST", (pathParams) => {

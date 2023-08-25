@@ -1,6 +1,7 @@
 package project_integration
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -40,14 +41,31 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	request := &types.PreflightCheckRequest{}
-	if ok := p.DecodeAndValidate(w, r, request); !ok {
+	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	}
+	var cloudProvider porterv1.EnumCloudProvider
+	cloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP
+
+	if request.CloudProvider == "aws" {
+		cloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS
+	}
+	if request.CloudProvider == "gcp" {
+		cloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP
+	}
+	if request.CloudProvider == "azure" {
+		cloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AZURE
 	}
 
 	checkReq := porterv1.PreflightCheckRequest{
 		ProjectId:                  int64(project.ID),
-		CloudProvider:              porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP,
+		CloudProvider:              cloudProvider,
 		CloudProviderCredentialsId: request.CloudProviderCredentialsID,
+	}
+
+	if request.CloudValues != nil && request.CloudProvider == "gcp" {
+		checkReq.PreflightValues = request.CloudValues
 	}
 
 	checkResp, err := p.Config().ClusterControlPlaneClient.PreflightCheck(ctx, connect.NewRequest(&checkReq))

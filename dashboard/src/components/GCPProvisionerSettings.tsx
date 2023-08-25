@@ -321,6 +321,14 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       {
         cloud_provider_credentials_id: props.credentialId,
         cloud_provider: "gcp",
+        cloud_provider_values: {
+          network: new GKENetwork({
+            cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
+            controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
+            podCidr: defaultClusterNetworking.podCidr,
+            serviceCidr: defaultClusterNetworking.serviceCidr,
+          }),
+        },
       },
       {
         id: currentProject.id,

@@ -1,7 +1,6 @@
 package porter_app
 
 import (
-	"encoding/base64"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -81,7 +80,6 @@ func (c *ListAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// get the request object
 	request := &ListAppRevisionsRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding request")
@@ -89,16 +87,20 @@ func (c *ListAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// get the deployment target ID
 	deploymentTargetID, err := uuid.Parse(request.DeploymentTargetID)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "invalid deployment target ID")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+	if deploymentTargetID == uuid.Nil {
+		err = telemetry.Error(ctx, span, nil, "deployment target ID cannot be nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTargetID.String()})
 
-	// get the app revisions
 	revisions, err := c.Repo().AppRevision().AppRevisionsByAppAndDeploymentTarget(app.ID, deploymentTargetID)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error querying for app revisions")
@@ -106,17 +108,13 @@ func (c *ListAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// create the response object
 	res := &ListAppRevisionsResponse{
 		Revisions: make([]RevisionData, 0),
 	}
 
-	// iterate through the revisions and add them to the response
 	for _, revision := range revisions {
-		b64 := base64.StdEncoding.EncodeToString([]byte(revision.Base64App))
-
 		res.Revisions = append(res.Revisions, RevisionData{
-			B64AppProto:    b64,
+			B64AppProto:    revision.Base64App,
 			Status:         revision.Status,
 			RevisionNumber: revision.RevisionNumber,
 			UpdatedAt:      revision.UpdatedAt.UTC().String(),

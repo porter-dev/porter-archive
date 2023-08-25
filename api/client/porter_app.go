@@ -273,6 +273,7 @@ func (c *Client) CurrentAppRevision(
 	return resp, err
 }
 
+// CreatePorterAppDBEntryInput is the input struct to CreatePorterAppDBEntry
 type CreatePorterAppDBEntryInput struct {
 	AppName         string
 	GitRepoName     string

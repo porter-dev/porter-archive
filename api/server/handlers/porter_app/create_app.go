@@ -39,6 +39,8 @@ const (
 	SourceType_Github SourceType = "github"
 	// SourceType_DockerRegistry is the source kind for an app using an image from a docker registry
 	SourceType_DockerRegistry SourceType = "docker-registry"
+	// SourceType_Local is the source kind for an app being built locally
+	SourceType_Local SourceType = "other"
 )
 
 // Image is the image used by an app with a docker registry source
@@ -80,6 +82,14 @@ type CreateDockerRegistryAppInput struct {
 	PorterAppRepository repository.PorterAppRepository
 }
 
+// CreateLocalAppInput is the input for creating an app that is built locally via the cli
+type CreateLocalAppInput struct {
+	ProjectID           uint
+	ClusterID           uint
+	Name                string
+	PorterAppRepository repository.PorterAppRepository
+}
+
 func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-app")
 	defer span.End()
@@ -113,6 +123,24 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "source-type", Value: request.SourceType})
+
+	porterAppDBEntries, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(project.ID, request.Name)
+	if err != nil {
+		err := telemetry.Error(ctx, span, nil, "error reading porter apps by project id and name")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	if len(porterAppDBEntries) > 1 {
+		err := telemetry.Error(ctx, span, nil, "multiple apps with same name")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+	if len(porterAppDBEntries) == 1 {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "existing-app-id", Value: porterAppDBEntries[0].ID})
+		c.WriteResult(w, r, porterAppDBEntries[0].ToPorterAppType())
+		return
+	}
 
 	var porterApp *types.PorterApp
 	switch request.SourceType {
@@ -185,6 +213,21 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		porterApp = app.ToPorterAppType()
+	case SourceType_Local:
+		input := CreateLocalAppInput{
+			ProjectID:           project.ID,
+			ClusterID:           cluster.ID,
+			Name:                request.Name,
+			PorterAppRepository: c.Repo().PorterApp(),
+		}
+
+		app, err := createLocalApp(ctx, input)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error creating other app")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		porterApp = app.ToPorterAppType()
 	default:
 		err := telemetry.Error(ctx, span, nil, "source type not supported")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -227,6 +270,24 @@ func createDockerRegistryApp(ctx context.Context, input CreateDockerRegistryAppI
 		ProjectID:    input.ProjectID,
 		ClusterID:    input.ClusterID,
 		ImageRepoURI: fmt.Sprintf("%s:%s", input.Repository, input.Tag),
+	}
+
+	porterApp, err := input.PorterAppRepository.CreatePorterApp(porterApp)
+	if err != nil {
+		return porterApp, telemetry.Error(ctx, span, err, "error creating porter app")
+	}
+
+	return porterApp, nil
+}
+
+func createLocalApp(ctx context.Context, input CreateLocalAppInput) (*models.PorterApp, error) {
+	ctx, span := telemetry.NewSpan(ctx, "create-local-app")
+	defer span.End()
+
+	porterApp := &models.PorterApp{
+		Name:      input.Name,
+		ProjectID: input.ProjectID,
+		ClusterID: input.ClusterID,
 	}
 
 	porterApp, err := input.PorterAppRepository.CreatePorterApp(porterApp)

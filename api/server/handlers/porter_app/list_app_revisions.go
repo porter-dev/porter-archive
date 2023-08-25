@@ -3,7 +3,9 @@ package porter_app
 import (
 	"net/http"
 
+	"connectrpc.com/connect"
 	"github.com/google/uuid"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -11,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -36,21 +39,9 @@ type ListAppRevisionsRequest struct {
 	DeploymentTargetID string `schema:"deployment_target_id"`
 }
 
-// RevisionData represents the data for a single revision
-type RevisionData struct {
-	// B64AppProto is the base64 encoded app proto definition
-	B64AppProto string `json:"b64_app_proto"`
-	// Status is the status of the revision
-	Status string `json:"status"`
-	// RevisionNumber is the revision number with respect to the app and deployment target
-	RevisionNumber int `json:"revision_number"`
-	// UpdatedAt is the time the revision was updated
-	UpdatedAt string `json:"updated_at"`
-}
-
 // ListAppRevisionsResponse represents the response from the /apps/{porter_app_name}/revisions endpoint
 type ListAppRevisionsResponse struct {
-	Revisions []RevisionData `json:"revisions"`
+	AppRevisions []porter_app.Revision `json:"app_revisions"`
 }
 
 func (c *ListAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -58,6 +49,7 @@ func (c *ListAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	defer span.End()
 
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
@@ -97,27 +89,45 @@ func (c *ListAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTargetID.String()})
 
-	revisions, err := c.Repo().AppRevision().AppRevisionsByAppAndDeploymentTarget(app.ID, deploymentTargetID)
+	listAppRevisionsReq := connect.NewRequest(&porterv1.ListAppRevisionsRequest{
+		ProjectId:          int64(project.ID),
+		AppId:              int64(app.ID),
+		DeploymentTargetId: request.DeploymentTargetID,
+	})
+
+	listAppRevisionsResp, err := c.Config().ClusterControlPlaneClient.ListAppRevisions(r.Context(), listAppRevisionsReq)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error querying for app revisions")
+		err = telemetry.Error(ctx, span, err, "error listing app revisions")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	res := &ListAppRevisionsResponse{
-		Revisions: make([]RevisionData, 0),
+	if listAppRevisionsResp == nil || listAppRevisionsResp.Msg == nil {
+		err = telemetry.Error(ctx, span, nil, "list app revisions response is nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
 	}
 
-	for _, revision := range revisions {
-		res.Revisions = append(res.Revisions, RevisionData{
-			B64AppProto:    revision.Base64App,
-			Status:         revision.Status,
-			RevisionNumber: revision.RevisionNumber,
-			UpdatedAt:      revision.UpdatedAt.UTC().String(),
-		})
+	appRevisions := listAppRevisionsResp.Msg.AppRevisions
+	if appRevisions == nil {
+		appRevisions = []*porterv1.AppRevision{}
+	}
+
+	res := &ListAppRevisionsResponse{
+		AppRevisions: make([]porter_app.Revision, 0),
+	}
+
+	for _, revision := range appRevisions {
+		encodedRevision, err := porter_app.EncodedRevisionFromProto(ctx, revision)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting encoded revision from proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		res.AppRevisions = append(res.AppRevisions, encodedRevision)
 	}
 
 	c.WriteResult(w, r, res)

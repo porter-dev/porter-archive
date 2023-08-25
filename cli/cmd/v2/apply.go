@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/cli/cli/git"
+
 	"github.com/fatih/color"
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
@@ -47,7 +49,14 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		return errors.New("deployment target id is empty")
 	}
 
-	validateResp, err := client.ValidatePorterApp(ctx, cliConf.Project, cliConf.Cluster, parseResp.B64AppProto, targetResp.DeploymentTargetID)
+	var commitSHA string
+	if os.Getenv("PORTER_COMMIT_SHA") != "" {
+		commitSHA = os.Getenv("PORTER_COMMIT_SHA")
+	} else if commit, err := git.LastCommit(); err == nil && commit != nil {
+		commitSHA = commit.Sha
+	}
+
+	validateResp, err := client.ValidatePorterApp(ctx, cliConf.Project, cliConf.Cluster, parseResp.B64AppProto, targetResp.DeploymentTargetID, commitSHA)
 	if err != nil {
 		return fmt.Errorf("error calling validate endpoint: %w", err)
 	}
@@ -82,6 +91,10 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 	}
 
 	if applyResp.CLIAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_BUILD {
+		if commitSHA == "" {
+			return errors.New("Build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI.")
+		}
+
 		buildSettings, err := buildSettingsFromBase64AppProto(base64AppProto)
 		if err != nil {
 			return fmt.Errorf("error building settings from base64 app proto: %w", err)

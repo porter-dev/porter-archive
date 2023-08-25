@@ -38,7 +38,7 @@ import { EnvVariablesTab } from "./env-vars/EnvVariablesTab";
 import GHABanner from "./GHABanner";
 import LogSection from "./logs/LogSection";
 import ActivityFeed from "./activity-feed/ActivityFeed";
-import MetricsSection from "./MetricsSection";
+import MetricsSection from "./metrics/MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
 import _ from "lodash";
@@ -118,7 +118,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const [porterApp, setPorterApp] = useState<PorterApp>();
 
   // this is the version of the porterApp that is being edited. on save, we set the real porter app to be this version
-  const [tempPorterApp, setTempPorterApp] = useState<PorterApp>();
+  const [tempPorterApp, setTempPorterApp] = useState<PorterApp>(PorterApp.empty());
   const [buildView, setBuildView] = useState<BuildMethod>("docker");
 
   const history = useHistory();
@@ -722,6 +722,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               chart={appData.chart}
               addNewText={"Add a new service"}
               setExpandedJob={(x: string) => setExpandedJob(x)}
+              appName={appData.app.name}
             />
             <Spacer y={0.75} />
             <Button
@@ -741,7 +742,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             setTempPorterApp={(attrs: Partial<PorterApp>) => setTempPorterApp(PorterApp.setAttributes(tempPorterApp, attrs))}
             clearStatus={() => setButtonStatus("")}
             updatePorterApp={updatePorterApp}
-            setShowUnsavedChangesBanner={setShowUnsavedChangesBanner}
             buildView={buildView}
             setBuildView={setBuildView}
           />
@@ -755,12 +755,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       case "logs":
         return <LogSection
           currentChart={appData.chart}
-          services={services.filter(svc => Service.isNonRelease(svc) && !Service.isJob(svc))}
+          services={services.filter(svc => Service.isNonRelease(svc))}
           appName={appData.app.name}
           filterOpts={queryParamOpts}
         />;
       case "metrics":
-        return <MetricsSection currentChart={appData.chart} />;
+        return <MetricsSection currentChart={appData.chart} appName={appData.app.name} serviceName={queryParamOpts.service} services={services} />;
       case "debug":
         return <StatusSectionFC currentChart={appData.chart} />;
       case "environment":
@@ -771,6 +771,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               setEnvVars(envVars);
               //onAppUpdate(services, envVars.filter((e) => e.key !== "" || e.value !== ""));
             }}
+            setShowUnsavedChangesBanner={setShowUnsavedChangesBanner}
             syncedEnvGroups={syncedEnvGroups}
             status={buttonStatus}
             updatePorterApp={updatePorterApp}

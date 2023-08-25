@@ -107,14 +107,15 @@ const LogSection: React.FC<Props> = ({
     const patch = parseInt(versionParts[2]);
     if (major < 3) {
       return false;
+    } else if (major > 3) {
+      return true;
     }
     if (minor < 1) {
       return false;
+    } else if (minor > 1) {
+      return true;
     }
-    if (patch <= 3) {
-      return false;
-    }
-    return true;
+    return patch >= 4;
   }
 
   const [filters, setFilters] = useState<GenericLogFilter[]>(showFilter ? [
@@ -334,65 +335,43 @@ const LogSection: React.FC<Props> = ({
     return () => clearInterval(checkForAgentInterval);
   }, [isPorterAgentInstalling]);
 
-  const checkForAgent = () => {
+  const checkForAgent = async () => {
     const project_id = currentProject?.id;
     const cluster_id = currentCluster?.id;
 
-    api
-      .detectPorterAgent("<token>", {}, { project_id, cluster_id })
-      .then((res) => {
-        if (res.data?.version != "v3") {
-          setHasPorterAgent(false);
-        } else {
-          // next, check whether logs can be queried - if they can, we're good to go
-          const filters = {
-            revision: currentChart.version.toString(),
-            match_prefix: currentChart.name,
-          };
+    if (!project_id || !cluster_id) {
+      return;
+    }
 
-          api
-            .getLogPodValues("<TOKEN>", filters, {
-              project_id: currentProject.id,
-              cluster_id: currentCluster.id,
-            })
-            .then((res) => {
-              setHasPorterAgent(true);
-              setIsPorterAgentInstalling(false);
-              setIsLoading(false);
-            })
-            .catch((err) => {
-              // do nothing - this is expected while installing
-              setLogsError(err);
-              setIsLoading(false);
-            });
+    try {
+      const res = await api.detectPorterAgent("<token>", {}, { project_id, cluster_id });
 
-          const agentImage = res.data?.image;
-          if (!isAgentVersionUpdated(agentImage)) {
-            setFilters([
-              {
-                name: "pod_name",
-                displayName: "Service",
-                default: GenericLogFilter.getDefaultOption("pod_name"),
-                options: services?.map(s => {
-                  return GenericFilterOption.of(s.name, `${s.name}-${s.type == "worker" ? "wkr" : s.type}`)
-                }) ?? [],
-                setValue: (value: string) => {
-                  setSelectedFilterValues((s) => ({
-                    ...s,
-                    pod_name: value,
-                  }));
-                }
-              },
-            ])
-          }
-        }
-      })
-      .catch((err) => {
-        if (err.response?.status === 404) {
-          setHasPorterAgent(false);
-          setIsLoading(false);
-        }
-      });
+      setHasPorterAgent(true);
+
+      const agentImage = res.data?.image;
+      if (!isAgentVersionUpdated(agentImage)) {
+        setFilters([
+          {
+            name: "pod_name",
+            displayName: "Service",
+            default: GenericLogFilter.getDefaultOption("pod_name"),
+            options: services?.map(s => {
+              return GenericFilterOption.of(s.name, `${s.name}-${s.type == "worker" ? "wkr" : s.type}`)
+            }) ?? [],
+            setValue: (value: string) => {
+              setSelectedFilterValues((s) => ({
+                ...s,
+                pod_name: value,
+              }));
+            }
+          },
+        ])
+      }
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setHasPorterAgent(false);
+      }
+    }
   };
 
   const installAgent = async () => {

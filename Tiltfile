@@ -60,7 +60,6 @@ local_resource(
   deps=[
     "api",
     "build",
-    "cli",
     "ee",
     "internal",
     "pkg",

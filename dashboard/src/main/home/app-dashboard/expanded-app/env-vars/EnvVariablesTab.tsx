@@ -1,7 +1,7 @@
 import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import EnvGroupArrayStacks from "main/home/cluster-dashboard/env-groups/EnvGroupArrayStacks";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import Text from "components/porter/Text";
 import Error from "components/porter/Error";
@@ -24,12 +24,14 @@ interface EnvVariablesTabProps {
   clearStatus: () => void;
   appData: any;
   deletedEnvGroups: NewPopulatedEnvGroup[];
+  setShowUnsavedChangesBanner: (x: boolean) => void;
   setDeletedEnvGroups: (values: NewPopulatedEnvGroup[]) => void;
 }
 
 export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   envVars,
   setEnvVars,
+  setShowUnsavedChangesBanner,
   status,
   updatePorterApp,
   syncedEnvGroups,
@@ -46,8 +48,15 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   const { currentCluster, currentProject } = useContext(Context);
 
   const [values, setValues] = React.useState<string>(yaml.dump(appData.chart.config));
+  const initialMount = useRef(true);
+
   useEffect(() => {
-    setEnvVars(envVars);
+    if (initialMount.current) {
+      initialMount.current = false;
+    } else {
+      setShowUnsavedChangesBanner(true);
+      setEnvVars(envVars);
+    }
   }, [envVars]);
   useEffect(() => {
     updateEnvGroups();

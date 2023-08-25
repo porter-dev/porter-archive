@@ -68,6 +68,11 @@ type UpdatePorterAppRequest struct {
 	PullRequestURL string `json:"pull_request_url"`
 }
 
+// RunPorterAppCommandRequest represents a request to run a command on a pod of a porter app
+type RunPorterAppCommandRequest struct {
+	Command string `json:"command" form:"required"`
+}
+
 type RollbackPorterAppRequest struct {
 	Revision int `json:"revision" form:"required"`
 }
@@ -142,4 +147,23 @@ type ServiceDeploymentMetadata struct {
 	ExternalURI string `json:"external_uri"`
 	// Type is the type of the service - one of web, worker, or job
 	Type string `json:"type"`
+}
+type ListEnvironmentGroupsResponse struct {
+	// EnvironmentGroups is a list of environment groups
+	EnvironmentGroups []EnvironmentGroupListItem `json:"environment_groups,omitempty"`
+}
+
+type EnvironmentGroupListItem struct {
+	// Name is the name of the environment group
+	Name string `json:"name"`
+	// LatestVersion is the latest version of the environment group
+	LatestVersion int `json:"latest_version"`
+	// Variables is a map of variables for the environment group
+	Variables map[string]string `json:"variables"`
+	// SecretVariables is a map of secret variables for the environment group
+	SecretVariables map[string]string `json:"secret_variables"`
+	// CreatedAtUTC is the time the environment group was created
+	CreatedAtUTC time.Time `json:"created_at"`
+	// LinkedApplications is the list of applications this env group is linked to
+	LinkedApplications []string `json:"linked_applications,omitempty"`
 }

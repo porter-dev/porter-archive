@@ -33,6 +33,9 @@ type PorterTemplateSimple struct {
 
 	// The repo URL for the template
 	RepoURL string `json:"repo_url,omitempty"`
+
+	//
+	Tags []string `json:"tags,omitempty"`
 }
 
 // ListTemplatesResponse is how a chart gets displayed when listed

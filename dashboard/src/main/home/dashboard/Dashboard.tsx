@@ -35,7 +35,7 @@ const Dashboard: React.FC<Props> = ({
   const [pressingCtrl, setPressingCtrl] = useState(false);
   const [pressingK, setPressingK] = useState(false);
   const [showFormDebugger, setShowFormDebugger] = useState(false);
-  const [tabOptions, setTabOptions] = useState([{ 
+  const [tabOptions, setTabOptions] = useState([{
     label: "Connected clusters",
     value: "overview"
   }]);
@@ -91,7 +91,7 @@ const Dashboard: React.FC<Props> = ({
   const currentTab = () => new URLSearchParams(props.location.search).get("tab") || "overview";
 
   useEffect(() => {
-    if (usage && usage?.current?.clusters < usage?.limit?.clusters) {
+    if (user?.isPorterUser && usage && usage?.current?.clusters < usage?.limit?.clusters) {
       tabOptions.push({ label: "Create a cluster", value: "create-cluster" });
     }
 
@@ -153,15 +153,15 @@ const Dashboard: React.FC<Props> = ({
                 {currentProject?.roles?.filter((obj: any) => {
                   return obj.user_id === user.userId;
                 })[0].kind === "admin" || (
-                  <i
-                    className="material-icons"
-                    onClick={() => {
-                      pushFiltered(props, "/project-settings", ["project_id"]);
-                    }}
-                  >
-                    more_vert
-                  </i>
-                )}
+                    <i
+                      className="material-icons"
+                      onClick={() => {
+                        pushFiltered(props, "/project-settings", ["project_id"]);
+                      }}
+                    >
+                      more_vert
+                    </i>
+                  )}
               </TitleSection>
               <Spacer height="15px" />
               <InfoSection>

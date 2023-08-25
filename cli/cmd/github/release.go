@@ -44,8 +44,8 @@ type ZIPReleaseGetter struct {
 }
 
 // GetLatestRelease downloads the latest .zip release from a given Github repository
-func (z *ZIPReleaseGetter) GetLatestRelease() error {
-	releaseURL, err := z.getLatestReleaseDownloadURL()
+func (z *ZIPReleaseGetter) GetLatestRelease(ctx context.Context) error {
+	releaseURL, err := z.getLatestReleaseDownloadURL(ctx)
 	if err != nil {
 		return err
 	}
@@ -54,8 +54,8 @@ func (z *ZIPReleaseGetter) GetLatestRelease() error {
 }
 
 // GetRelease downloads a specific .zip release from a given Github repository
-func (z *ZIPReleaseGetter) GetRelease(releaseTag string) error {
-	releaseURL, err := z.getReleaseDownloadURL(releaseTag)
+func (z *ZIPReleaseGetter) GetRelease(ctx context.Context, releaseTag string) error {
+	releaseURL, err := z.getReleaseDownloadURL(ctx, releaseTag)
 
 	fmt.Printf("getting release %s\n", releaseURL)
 
@@ -85,10 +85,10 @@ func (z *ZIPReleaseGetter) getReleaseFromURL(releaseURL string) error {
 }
 
 // retrieves the download url for the latest release of an asset
-func (z *ZIPReleaseGetter) getLatestReleaseDownloadURL() (string, error) {
+func (z *ZIPReleaseGetter) getLatestReleaseDownloadURL(ctx context.Context) (string, error) {
 	client := github.NewClient(nil)
 
-	rel, _, err := client.Repositories.GetLatestRelease(context.Background(), z.EntityID, z.RepoName)
+	rel, _, err := client.Repositories.GetLatestRelease(ctx, z.EntityID, z.RepoName)
 	if err != nil {
 		return "", err
 	}
@@ -110,10 +110,10 @@ func (z *ZIPReleaseGetter) getLatestReleaseDownloadURL() (string, error) {
 	return releaseURL, nil
 }
 
-func (z *ZIPReleaseGetter) getReleaseDownloadURL(releaseTag string) (string, error) {
+func (z *ZIPReleaseGetter) getReleaseDownloadURL(ctx context.Context, releaseTag string) (string, error) {
 	client := github.NewClient(nil)
 
-	rel, _, err := client.Repositories.GetReleaseByTag(context.Background(), z.EntityID, z.RepoName, releaseTag)
+	rel, _, err := client.Repositories.GetReleaseByTag(ctx, z.EntityID, z.RepoName, releaseTag)
 	if err != nil {
 		return "", fmt.Errorf("release %s does not exist", releaseTag)
 	}

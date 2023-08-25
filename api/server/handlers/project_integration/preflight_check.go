@@ -1,9 +1,10 @@
 package project_integration
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/porter-dev/api-contracts/generated/go/helpers"
 
 	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
@@ -13,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type CreatePreflightCheckHandler struct {
@@ -30,45 +32,37 @@ func NewCreatePreflightCheckHandler(
 }
 
 func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(r.Context(), "preflight-checks")
+	defer span.End()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !p.Config().EnableCAPIProvisioner {
-		message := "Trying to run preflight checks but CAPI Provisioner is disabled. If you want to provision through CAPI, make sure that the environment variable ENABLE_CAPI_PROVISIONER is set to true"
-		e := fmt.Errorf(message)
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusServiceUnavailable, message))
-		return
+	
+	cloudValues := &porterv1.PreflightCheckRequest{}
+	err := helpers.UnmarshalContractObjectFromReader(r.Body, cloudValues)
+	if err != nil {
+		telemetry.Error(ctx, span, err, "error unmarshalling preflight check data")
 	}
 
-	request := &types.PreflightCheckRequest{}
-	if err := json.NewDecoder(r.Body).Decode(request); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	var cloudProvider porterv1.EnumCloudProvider
-	cloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP
+	// if err := json.NewDecoder(r.Body).Decode(request); err != nil {
+	// 	http.Error(w, err.Error(), http.StatusBadRequest)
+	// 	return
+	// }
+	// fmt.Println("HERE", request.CloudValues)
 
-	if request.CloudProvider == "aws" {
-		cloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS
-	}
-	if request.CloudProvider == "gcp" {
-		cloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP
-	}
-	if request.CloudProvider == "azure" {
-		cloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AZURE
-	}
-
-	checkReq := porterv1.PreflightCheckRequest{
+	input := porterv1.PreflightCheckRequest{
 		ProjectId:                  int64(project.ID),
-		CloudProvider:              cloudProvider,
-		CloudProviderCredentialsId: request.CloudProviderCredentialsID,
+		CloudProvider:              cloudValues.CloudProvider,
+		CloudProviderCredentialsId: cloudValues.CloudProviderCredentialsId,
 	}
 
-	if request.CloudValues != nil && request.CloudProvider == "gcp" {
-		checkReq.PreflightValues = request.CloudValues
+	if cloudValues.PreflightValues != nil {
+		if cloudValues.CloudProvider == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP {
+			input.PreflightValues =  cloudValues.PreflightValues
+		
+		}
 	}
 
-	checkResp, err := p.Config().ClusterControlPlaneClient.PreflightCheck(ctx, connect.NewRequest(&checkReq))
+	checkResp, err := p.Config().ClusterControlPlaneClient.PreflightCheck(ctx, connect.NewRequest(&input))
 	if err != nil {
 		e := fmt.Errorf("Pre-provision check failed: %w", err)
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusPreconditionFailed, err.Error()))

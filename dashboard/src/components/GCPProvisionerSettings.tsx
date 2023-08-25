@@ -19,7 +19,9 @@ import {
   GKE,
   GKENetwork,
   GKENodePool,
-  GKENodePoolType
+  GKENodePoolType,
+  GKEPreflightValues,
+  PreflightCheckRequest
 } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
@@ -316,20 +318,24 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     setIsLoading(true);
 
 
-    const preflightDataResp = await api.preflightCheck(
-      "<token>",
-      {
-        cloud_provider_credentials_id: props.credentialId,
-        cloud_provider: "gcp",
-        cloud_provider_values: {
+    var data = new PreflightCheckRequest({
+      projectId: BigInt(currentProject.id),
+      cloudProvider: EnumCloudProvider.GCP,
+      cloudProviderCredentialsId: props.credentialId,
+      preflightValues: {
+        case: "gkePreflightValues",
+        value: new GKEPreflightValues({
           network: new GKENetwork({
             cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
             controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
             podCidr: defaultClusterNetworking.podCidr,
             serviceCidr: defaultClusterNetworking.serviceCidr,
-          }),
-        },
-      },
+          })
+        })
+      }
+    });
+    const preflightDataResp = await api.preflightCheck(
+      "<token>", data,
       {
         id: currentProject.id,
       }

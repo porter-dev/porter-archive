@@ -13,6 +13,7 @@ import Button from "components/porter/Button";
 import Spacer from "./porter/Spacer";
 import Container from "./porter/Container";
 import PreflightChecks from "./PreflightChecks";
+import { EnumCloudProvider, GKENetwork, GKEPreflightValues, PreflightCheckRequest } from "@porter-dev/api-contracts";
 
 
 
@@ -86,13 +87,20 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
       if (gcpIntegrationResponse?.data?.cloud_provider_credentials_id) {
         console.log("Will Call Preflight Checks Here")
         setIsLoading(true);
+        var data = new PreflightCheckRequest({
+          projectId: BigInt(currentProject.id),
+          cloudProvider: EnumCloudProvider.GCP,
+          cloudProviderCredentialsId: gcpIntegrationResponse.data.cloud_provider_credentials_id
 
+        })
         const preflightDataResp = await api.preflightCheck(
-          "<token>",
-          {
-            cloud_provider_credentials_id: gcpIntegrationResponse.data.cloud_provider_credentials_id,
-            cloud_provider: "gcp",
-          },
+          "<token>", data,
+          // {
+          //   cloud_provider_credentials_id: gcpIntegrationResponse.data.cloud_provider_credentials_id,
+          //   cloud_provider: EnumCloudProvider.GCP,
+          //   cloud_values: null
+          // },
+
           {
             id: currentProject.id,
           }

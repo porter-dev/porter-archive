@@ -2,6 +2,8 @@ package types
 
 import (
 	"time"
+
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 )
 
 // The supported oauth mechanism clients
@@ -97,12 +99,12 @@ type GCPValues struct {
 	Network Network `json:"network"`
 }
 
-func (g *GCPValues) isPreflightCheckRequest_PreflightValues() {}
+// func (g *GCPValues) isPreflightCheckRequest_PreflightValues() {}
 
 type PreflightCheckRequest struct {
-	CloudProvider              string     `json:"cloudProvider"`
-	CloudProviderCredentialsID string     `json:"cloudProviderCredentialsID"`
-	CloudValues                *GCPValues `json:"cloudValues,omitempty"`
+	CloudProvider              porterv1.EnumCloudProvider   `json:"cloud_provider"`
+	CloudProviderCredentialsID string                       `json:"cloud_provider_credentials_id"`
+	CloudValues                *porterv1.GKEPreflightValues `json:"cloud_values,omitempty"`
 }
 
 type PreflightCheckResponse struct{}

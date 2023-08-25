@@ -13,6 +13,6 @@ export function valueExists<T>(value: T | null | undefined): value is T {
 
 
 export const PREFLIGHT_MESSAGE_CONST = {
-  "apiEnabled": "APIs enabled on Service Account",
-  "apiEnabledDup": "Duplicate"
+  "apiEnabled": "APIs enabled on service account",
+  "cidrAvailability": "Given CIDRs are available"
 }

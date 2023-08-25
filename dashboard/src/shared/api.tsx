@@ -11,7 +11,7 @@ import {
   CreateStackBody,
   SourceConfig,
 } from "main/home/cluster-dashboard/stacks/types";
-import { Contract } from "@porter-dev/api-contracts";
+import { Contract, EnumCloudProvider, GKEPreflightValues, PreflightCheckRequest } from "@porter-dev/api-contracts";
 
 /**
  * Generic api call format
@@ -75,12 +75,18 @@ const getGitlabIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/gitlab`
 );
 
-const preflightCheck = baseApi<
-  {
-    cloud_provider_credentials_id: string;
-    cloud_provider: string;
-    cloud_provider_values: JSON;
-  },
+// const preflightCheck = baseApi<
+//   {
+//     cloud_provider_credentials_id: string;
+//     cloud_provider: EnumCloudProvider;
+//     cloud_values: GKEPreflightValues | null; //ADD other PreflightValues here when they are created for other cloud providers 
+//   },
+//   { id: number }
+// >("POST", (pathParams) => {
+//   return `/api/projects/${pathParams.id}/integrations/preflightcheck`;
+// });
+
+const preflightCheck = baseApi<PreflightCheckRequest,
   { id: number }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/integrations/preflightcheck`;

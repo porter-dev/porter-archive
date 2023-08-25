@@ -74,19 +74,19 @@ func (c *CreateSubdomainHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName})
 
-	agent, err := c.GetAgent(r, cluster, "")
+	k8sAgent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
 		err := telemetry.Error(ctx, span, nil, "error getting agent")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-	if agent == nil {
+	if k8sAgent == nil {
 		err := telemetry.Error(ctx, span, nil, "agent is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	endpoint, found, err := domain.GetNGINXIngressServiceIP(agent.Clientset)
+	endpoint, found, err := domain.GetNGINXIngressServiceIP(k8sAgent.Clientset)
 	if err != nil {
 		err := telemetry.Error(ctx, span, nil, "error getting nginx ingress service ip")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

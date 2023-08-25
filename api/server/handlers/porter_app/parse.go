@@ -907,7 +907,7 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 
 		services[serviceName] = &Service{
 			Run:    &runCommand,
-			Config: convertMap(v).(map[string]interface{}),
+			Config: config,
 			Type:   &serviceType,
 		}
 	}

@@ -272,3 +272,61 @@ func (c *Client) CurrentAppRevision(
 
 	return resp, err
 }
+
+type CreatePorterAppDBEntryInput struct {
+	AppName         string
+	GitRepoName     string
+	GitRepoID       uint
+	GitBranch       string
+	ImageRepository string
+	PorterYamlPath  string
+	ImageTag        string
+	Local           bool
+}
+
+// CreatePorterAppDBEntry creates an entry in the porter app
+func (c *Client) CreatePorterAppDBEntry(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	inp CreatePorterAppDBEntryInput,
+) error {
+	var sourceType porter_app.SourceType
+	var image *porter_app.Image
+	if inp.Local {
+		sourceType = porter_app.SourceType_Local
+	}
+	if inp.GitRepoName != "" {
+		sourceType = porter_app.SourceType_Github
+	}
+	if inp.ImageRepository != "" {
+		sourceType = porter_app.SourceType_DockerRegistry
+		image = &porter_app.Image{
+			Repository: inp.ImageRepository,
+			Tag:        inp.ImageTag,
+		}
+	}
+	if sourceType == "" {
+		return fmt.Errorf("cannot determine source type")
+	}
+
+	req := &porter_app.CreateAppRequest{
+		Name:           inp.AppName,
+		SourceType:     sourceType,
+		GitBranch:      inp.GitBranch,
+		GitRepoName:    inp.GitRepoName,
+		GitRepoID:      inp.GitRepoID,
+		PorterYamlPath: inp.PorterYamlPath,
+		Image:          image,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/create",
+			projectID, clusterID,
+		),
+		req,
+		&types.PorterApp{},
+	)
+
+	return err
+}

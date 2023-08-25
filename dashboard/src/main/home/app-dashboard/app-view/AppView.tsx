@@ -21,6 +21,8 @@ import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Link from "components/porter/Link";
+import AppDataContainer from "./AppDataContainer";
+import { appRevisionValidator } from "lib/revisions/types";
 
 export const porterAppValidator = z.object({
   name: z.string(),
@@ -34,6 +36,7 @@ export const porterAppValidator = z.object({
   image_repo_uri: z.string().optional(),
   porter_yaml_path: z.string().optional(),
 });
+export type PorterAppRecord = z.infer<typeof porterAppValidator>;
 
 // Buildpack icons
 const icons = [
@@ -66,6 +69,7 @@ type Props = RouteComponentProps & {};
 
 const AppView: React.FC<Props> = ({ match }) => {
   const { currentCluster, currentProject } = useContext(Context);
+
   const deploymentTarget = useDefaultDeploymentTarget();
 
   const params = useMemo(() => {
@@ -113,11 +117,12 @@ const AppView: React.FC<Props> = ({ match }) => {
     },
     {
       enabled: appParamsExist,
+      refetchInterval: 5000,
     }
   );
 
   const { data: revision, status } = useQuery(
-    ["getAppRevision", params.appName, "latest"],
+    ["getLatestRevision", params.appName, "latest"],
     async () => {
       if (!appParamsExist) {
         return null;
@@ -135,17 +140,13 @@ const AppView: React.FC<Props> = ({ match }) => {
         }
       );
 
-      const rawAppData = await z
-        .object({
-          b64_app_proto: z.string(),
-        })
+      console.log("res.data", res.data);
+
+      const revision = await appRevisionValidator
+        .omit({ updated_at: true })
         .parseAsync(res.data);
 
-      const porterApp = PorterApp.fromJsonString(
-        atob(rawAppData.b64_app_proto)
-      );
-
-      return porterApp;
+      return revision;
     },
     {
       enabled: appParamsExist,
@@ -163,6 +164,14 @@ const AppView: React.FC<Props> = ({ match }) => {
       repo: appData.repo_name,
     };
   }, [appData]);
+
+  const appProto = useMemo(
+    () =>
+      revision?.b64_app_proto
+        ? PorterApp.fromJsonString(atob(revision?.b64_app_proto))
+        : null,
+    [revision]
+  );
 
   const getIconSvg = (build: PorterApp["build"]) => {
     if (!build) {
@@ -192,7 +201,7 @@ const AppView: React.FC<Props> = ({ match }) => {
     return <Loading />;
   }
 
-  if (status === "error" || porterAppStatus === "error" || !revision) {
+  if (status === "error" || porterAppStatus === "error" || !appData) {
     return (
       <Placeholder>
         <Container row>
@@ -211,9 +220,9 @@ const AppView: React.FC<Props> = ({ match }) => {
     <StyledExpandedApp>
       <Back to="/apps" />
       <Container row>
-        <Icon src={getIconSvg(revision.build)} height={"24px"} />
+        <Icon src={getIconSvg(appProto?.build)} height={"24px"} />
         <Spacer inline x={1} />
-        <Text size={21}>{revision.name}</Text>
+        <Text size={21}>{appProto?.name}</Text>
         {gitData && (
           <>
             <Spacer inline x={1} />
@@ -233,9 +242,25 @@ const AppView: React.FC<Props> = ({ match }) => {
             </TagWrapper>
           </>
         )}
+        {!gitData && appData?.image_repo_uri && (
+          <>
+            <Spacer inline x={1} />
+            <Container row>
+              <SmallIcon
+                height="19px"
+                src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
+              />
+              <Text size={13} color="helper">
+                {appData.image_repo_uri}
+              </Text>
+            </Container>
+          </>
+        )}
       </Container>
       <Spacer y={0.5} />
-      
+      {appData && revision && (
+        <AppDataContainer porterApp={appData} latestRevision={revision} />
+      )}
     </StyledExpandedApp>
   );
 };

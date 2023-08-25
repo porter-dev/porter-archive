@@ -14,23 +14,29 @@ import { PorterApp, Service } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 
 // buildValidator is used to validate inputs for build setting fields
-export const buildValidator = z.object({
-  context: z.string().default("./"),
-  method: z.enum(["pack", "docker", "registry"]),
-  buildpacks: z.array(buildpackSchema),
-  builder: z.string(),
-  dockerfile: z.string(),
-});
+export const buildValidator = z.discriminatedUnion("method", [
+  z.object({
+    method: z.literal("pack"),
+    context: z.string().default("./"),
+    buildpacks: z.array(buildpackSchema).default([]),
+    builder: z.string(),
+  }),
+  z.object({
+    method: z.literal("docker"),
+    context: z.string().default("./"),
+    dockerfile: z.string().default("./Dockerfile"),
+  }),
+]);
 export type BuildOptions = z.infer<typeof buildValidator>;
 
 // sourceValidator is used to validate inputs for source setting fields
 export const sourceValidator = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("github"),
-    git_repo_id: z.number(),
-    git_branch: z.string(),
-    git_repo_name: z.string(),
-    porter_yaml_path: z.string(),
+    git_repo_id: z.number().min(1),
+    git_branch: z.string().min(1),
+    git_repo_name: z.string().min(1),
+    porter_yaml_path: z.string().default("./porter.yaml"),
   }),
   z.object({
     type: z.literal("docker-registry"),
@@ -39,25 +45,25 @@ export const sourceValidator = z.discriminatedUnion("type", [
     git_branch: z.undefined(),
     git_repo_name: z.undefined(),
     image: z.object({
-      repository: z.string(),
+      repository: z.string().min(1),
       tag: z.string().default("latest"),
     }),
   }),
 ]);
 export type SourceOptions = z.infer<typeof sourceValidator>;
 
-// porterAppValidator is the representation of a Porter app on the client, and is used to validate inputs for app setting fields
-export const porterAppValidator = z.object({
-  name: z.string(),
+// clientAppValidator is the representation of a Porter app on the client, and is used to validate inputs for app setting fields
+export const clientAppValidator = z.object({
+  name: z.string().min(1),
   services: serviceValidator.array(),
-  env: z.record(z.string(), z.string()),
+  env: z.record(z.string(), z.string()).default({}),
   build: buildValidator,
 });
-export type ClientPorterApp = z.infer<typeof porterAppValidator>;
+export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 
 // porterAppFormValidator is used to validate inputs when creating + updating an app
 export const porterAppFormValidator = z.object({
-  app: porterAppValidator,
+  app: clientAppValidator,
   source: sourceValidator,
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
@@ -104,6 +110,24 @@ export function defaultServicesWithOverrides({
   };
 }
 
+const clientBuildToProto = (build: BuildOptions) => {
+  return match(build)
+    .with({ method: "pack" }, (b) =>
+      Object.freeze({
+        context: b.context,
+        buildpacks: b.buildpacks.map((b) => b.buildpack),
+        builder: b.builder,
+      })
+    )
+    .with({ method: "docker" }, (b) =>
+      Object.freeze({
+        context: b.context,
+        dockerfile: b.dockerfile,
+      })
+    )
+    .exhaustive();
+};
+
 export function clientAppToProto(data: PorterAppFormData): PorterApp {
   const { app, source } = data;
 
@@ -124,13 +148,7 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           name: app.name,
           services,
           env: app.env,
-          build: {
-            context: app.build.context,
-            method: app.build.method,
-            buildpacks: app.build.buildpacks.map((b) => b.buildpack),
-            builder: app.build.builder,
-            dockerfile: app.build.dockerfile,
-          },
+          build: clientBuildToProto(app.build),
           ...(predeploy && {
             predeploy: serviceProto(serializeService(predeploy)),
           }),

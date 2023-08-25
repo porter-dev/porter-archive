@@ -21,7 +21,8 @@ import (
 
 // ECR creates an ECR integration
 func ECR(
-	client *api.Client,
+	ctx context.Context,
+	client api.Client,
 	projectID uint,
 ) (uint, error) {
 	// if project ID is 0, ask the user to set the project ID or create a project
@@ -52,13 +53,13 @@ Would you like to proceed? %s `,
 		creds, err := agent.CreateIAMECRUser(region)
 		if err != nil {
 			color.New(color.FgRed).Fprintf(os.Stderr, "Automatic creation failed, manual input required. Error was: %v\n", err)
-			return ecrManual(client, projectID, region)
+			return ecrManual(ctx, client, projectID, region)
 		}
 
 		waitForAuthorizationToken(region, creds)
 
 		integration, err := client.CreateAWSIntegration(
-			context.Background(),
+			ctx,
 			projectID,
 			&types.CreateAWSRequest{
 				AWSAccessKeyID:     creds.AWSAccessKeyID,
@@ -72,14 +73,15 @@ Would you like to proceed? %s `,
 
 		color.New(color.FgGreen).Printf("created aws integration with id %d\n", integration.ID)
 
-		return linkRegistry(client, projectID, integration.ID)
+		return linkRegistry(ctx, client, projectID, integration.ID)
 	}
 
-	return ecrManual(client, projectID, region)
+	return ecrManual(ctx, client, projectID, region)
 }
 
 func ecrManual(
-	client *api.Client,
+	ctx context.Context,
+	client api.Client,
 	projectID uint,
 	region string,
 ) (uint, error) {
@@ -102,7 +104,7 @@ func ecrManual(
 
 	// create the aws integration
 	integration, err := client.CreateAWSIntegration(
-		context.Background(),
+		ctx,
 		projectID,
 		&types.CreateAWSRequest{
 			AWSAccessKeyID:     accessKeyID,
@@ -116,10 +118,10 @@ func ecrManual(
 
 	color.New(color.FgGreen).Printf("created aws integration with id %d\n", integration.ID)
 
-	return linkRegistry(client, projectID, integration.ID)
+	return linkRegistry(ctx, client, projectID, integration.ID)
 }
 
-func linkRegistry(client *api.Client, projectID uint, intID uint) (uint, error) {
+func linkRegistry(ctx context.Context, client api.Client, projectID uint, intID uint) (uint, error) {
 	// create the registry
 	// query for registry name
 	regName, err := utils.PromptPlaintext(fmt.Sprintf(`Give this registry a name: `))
@@ -128,7 +130,7 @@ func linkRegistry(client *api.Client, projectID uint, intID uint) (uint, error) 
 	}
 
 	reg, err := client.CreateRegistry(
-		context.Background(),
+		ctx,
 		projectID,
 		&types.CreateRegistryRequest{
 			Name:             regName,

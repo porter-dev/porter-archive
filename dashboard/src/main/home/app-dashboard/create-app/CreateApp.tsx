@@ -15,7 +15,11 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Link from "components/porter/Link";
 
 import { Context } from "shared/Context";
-import { PorterAppFormData, SourceOptions, porterAppFormValidator } from "lib/porter-apps";
+import {
+  PorterAppFormData,
+  SourceOptions,
+  porterAppFormValidator,
+} from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
 import Button from "components/porter/Button";
@@ -131,6 +135,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      setDeployError("");
       const validatedAppProto = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
 
@@ -334,7 +339,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       setError("app.name", {
         message: "An app with this name already exists",
       });
-      return
+      return;
     }
   }, [porterApps, name]);
 

@@ -219,10 +219,38 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
     .exhaustive();
 };
 
-export function clientAppFromProto(proto: PorterApp): ClientPorterApp {
+export function clientAppFromProto(
+  proto: PorterApp,
+  overrides: {
+    services: ClientService[];
+    predeploy?: ClientService;
+  } | null
+): ClientPorterApp {
   const services = Object.entries(proto.services)
     .map(([name, service]) => serializedServiceFromProto({ name, service }))
-    .map((svc) => deserializeService(svc));
+    .map((svc) => {
+      console.log("checking for override", svc.name, overrides?.services);
+      const override = overrides?.services.find(
+        (s) => s.name.value === svc.name
+      );
+      if (override) {
+        console.log(
+          "override found for service",
+          svc.name,
+          serializeService(override)
+        );
+        console.log(
+          "deserializeService(svc, serializeService(override))",
+          deserializeService(svc, serializeService(override))
+        );
+        return deserializeService(svc, serializeService(override));
+      }
+      return deserializeService(svc);
+    });
+
+  const predeployOverrides = overrides?.predeploy
+    ? serializeService(overrides.predeploy)
+    : undefined;
 
   const predeploy = proto.predeploy
     ? deserializeService(
@@ -230,7 +258,8 @@ export function clientAppFromProto(proto: PorterApp): ClientPorterApp {
           name: "pre-deploy",
           service: proto.predeploy,
           isPredeploy: true,
-        })
+        }),
+        predeployOverrides
       )
     : undefined;
 

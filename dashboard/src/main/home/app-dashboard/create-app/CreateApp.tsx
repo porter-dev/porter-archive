@@ -139,7 +139,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         return;
       }
 
-      await createAndApply({ app: validatedAppProto, source });
+      // await createAndApply({ app: validatedAppProto, source });
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
         setDeployError(err.response?.data?.error);

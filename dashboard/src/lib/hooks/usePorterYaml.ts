@@ -19,7 +19,7 @@ type DetectedServices = {
  * added to an app by default with read-only values.
  *
  */
-export const usePorterYaml = (source: SourceOptions) => {
+export const usePorterYaml = (source: SourceOptions | null) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [
     detectedServices,
@@ -30,11 +30,11 @@ export const usePorterYaml = (source: SourceOptions) => {
     [
       "getPorterYamlContents",
       currentProject?.id,
-      source.git_branch,
-      source.git_repo_name,
+      source?.git_branch,
+      source?.git_repo_name,
     ],
     async () => {
-      if (!currentProject) {
+      if (!currentProject || !source) {
         return;
       }
       if (source.type !== "github") {
@@ -59,9 +59,9 @@ export const usePorterYaml = (source: SourceOptions) => {
     },
     {
       enabled:
-        source.type === "github" &&
-        Boolean(source.git_repo_name) &&
-        Boolean(source.git_branch),
+        source?.type === "github" &&
+        Boolean(source?.git_repo_name) &&
+        Boolean(source?.git_branch),
     }
   );
 

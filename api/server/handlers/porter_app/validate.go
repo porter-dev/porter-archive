@@ -2,6 +2,7 @@ package porter_app
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -136,6 +137,8 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
+
+	fmt.Printf("predeploy: %v\n", ccpResp.Msg.App.Predeploy)
 
 	encoded, err := helpers.MarshalContractObject(ctx, ccpResp.Msg.App)
 	if err != nil {

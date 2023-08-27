@@ -25,6 +25,8 @@ import box from "assets/box.png";
 import github from "assets/github-white.png";
 import pr_icon from "assets/pull_request_icon.svg";
 import notFound from "assets/not-found.png";
+import { usePorterYaml } from "lib/hooks/usePorterYaml";
+import { SourceOptions } from "lib/porter-apps";
 
 export const porterAppValidator = z.object({
   name: z.string(),
@@ -48,24 +50,6 @@ const icons = [
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg",
   web,
 ];
-
-// commented out tabs are not yet implemented
-// will be included as support is available based on data from app revisions rather than helm releases
-const validTabs = [
-  // "activity",
-  // "events",
-  "overview",
-  // "logs",
-  // "metrics",
-  // "debug",
-  "environment",
-  "build-settings",
-  "settings",
-  // "helm-values",
-  // "job-history",
-] as const;
-const DEFAULT_TAB = "activity";
-type ValidTab = typeof validTabs[number];
 
 type Props = RouteComponentProps & {};
 
@@ -173,6 +157,30 @@ const AppView: React.FC<Props> = ({ match }) => {
         : null,
     [revision]
   );
+  const latestSource: SourceOptions | null = useMemo(() => {
+    if (!appData) {
+      return null;
+    }
+    if (appData.image_repo_uri) {
+      const [repository, tag] = appData.image_repo_uri.split(":");
+      return {
+        type: "docker-registry",
+        image: {
+          repository,
+          tag,
+        },
+      };
+    }
+
+    return {
+      type: "github",
+      git_repo_id: appData.git_repo_id ?? 0,
+      git_repo_name: appData.repo_name ?? "",
+      git_branch: appData.git_branch ?? "",
+      porter_yaml_path: appData.porter_yaml_path ?? "./porter.yaml",
+    };
+  }, [appData]);
+  const overrides = usePorterYaml(latestSource);
 
   const getIconSvg = (build: PorterApp["build"]) => {
     if (!build) {
@@ -264,8 +272,14 @@ const AppView: React.FC<Props> = ({ match }) => {
         )}
       </Container>
       <Spacer y={0.5} />
-      {appData && revision && (
-        <AppDataContainer porterApp={appData} latestRevision={revision} />
+      {appData && appProto && revision && latestSource && (
+        <AppDataContainer
+          porterApp={appData}
+          latestProto={appProto}
+          latestRevisionNumber={revision.revision_number}
+          overrides={overrides}
+          latestSource={latestSource}
+        />
       )}
     </StyledExpandedApp>
   );

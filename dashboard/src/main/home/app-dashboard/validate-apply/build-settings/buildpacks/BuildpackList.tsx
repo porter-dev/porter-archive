@@ -10,7 +10,9 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 import { BuildOptions, PorterAppFormData } from "lib/porter-apps";
 
 interface Props {
-  build: BuildOptions;
+  build: BuildOptions & {
+    method: "pack";
+  };
   availableBuildpacks: Buildpack[];
   setAvailableBuildpacks: (buildpacks: Buildpack[]) => void;
   showAvailableBuildpacks: boolean;

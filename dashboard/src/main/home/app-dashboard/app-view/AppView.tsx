@@ -1,26 +1,30 @@
-import React, { useContext } from "react";
-import { useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import Loading from "components/Loading";
-import api from "shared/api";
-import { Context } from "shared/Context";
-import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import { PorterApp } from "@porter-dev/api-contracts";
 import styled from "styled-components";
+
+import { Context } from "shared/Context";
+import api from "shared/api";
+import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
+import { appRevisionValidator } from "lib/revisions/types";
+
+import Loading from "components/Loading";
 import Back from "components/porter/Back";
 import Container from "components/porter/Container";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import Link from "components/porter/Link";
+import Icon from "components/porter/Icon";
+
+import AppDataContainer from "./AppDataContainer";
+
 import web from "assets/web.png";
 import box from "assets/box.png";
 import github from "assets/github-white.png";
 import pr_icon from "assets/pull_request_icon.svg";
 import notFound from "assets/not-found.png";
-
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import Link from "components/porter/Link";
 
 export const porterAppValidator = z.object({
   name: z.string(),
@@ -34,6 +38,7 @@ export const porterAppValidator = z.object({
   image_repo_uri: z.string().optional(),
   porter_yaml_path: z.string().optional(),
 });
+export type PorterAppRecord = z.infer<typeof porterAppValidator>;
 
 // Buildpack icons
 const icons = [
@@ -117,7 +122,7 @@ const AppView: React.FC<Props> = ({ match }) => {
   );
 
   const { data: revision, status } = useQuery(
-    ["getAppRevision", params.appName, "latest"],
+    ["getLatestRevision", params.appName, "latest"],
     async () => {
       if (!appParamsExist) {
         return null;
@@ -135,20 +140,17 @@ const AppView: React.FC<Props> = ({ match }) => {
         }
       );
 
-      const rawAppData = await z
+      const revisionData = await z
         .object({
-          b64_app_proto: z.string(),
+          app_revision: appRevisionValidator,
         })
         .parseAsync(res.data);
 
-      const porterApp = PorterApp.fromJsonString(
-        atob(rawAppData.b64_app_proto)
-      );
-
-      return porterApp;
+      return revisionData.app_revision;
     },
     {
       enabled: appParamsExist,
+      refetchInterval: 5000,
     }
   );
 
@@ -163,6 +165,14 @@ const AppView: React.FC<Props> = ({ match }) => {
       repo: appData.repo_name,
     };
   }, [appData]);
+
+  const appProto = useMemo(
+    () =>
+      revision?.b64_app_proto
+        ? PorterApp.fromJsonString(atob(revision?.b64_app_proto))
+        : null,
+    [revision]
+  );
 
   const getIconSvg = (build: PorterApp["build"]) => {
     if (!build) {
@@ -192,7 +202,12 @@ const AppView: React.FC<Props> = ({ match }) => {
     return <Loading />;
   }
 
-  if (status === "error" || porterAppStatus === "error" || !revision) {
+  if (
+    status === "error" ||
+    porterAppStatus === "error" ||
+    !revision ||
+    !appData
+  ) {
     return (
       <Placeholder>
         <Container row>
@@ -211,9 +226,9 @@ const AppView: React.FC<Props> = ({ match }) => {
     <StyledExpandedApp>
       <Back to="/apps" />
       <Container row>
-        <Icon src={getIconSvg(revision.build)} height={"24px"} />
+        <Icon src={getIconSvg(appProto?.build)} height={"24px"} />
         <Spacer inline x={1} />
-        <Text size={21}>{revision.name}</Text>
+        <Text size={21}>{appProto?.name}</Text>
         {gitData && (
           <>
             <Spacer inline x={1} />
@@ -233,9 +248,25 @@ const AppView: React.FC<Props> = ({ match }) => {
             </TagWrapper>
           </>
         )}
+        {!gitData && appData?.image_repo_uri && (
+          <>
+            <Spacer inline x={1} />
+            <Container row>
+              <SmallIcon
+                height="19px"
+                src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
+              />
+              <Text size={13} color="helper">
+                {appData.image_repo_uri}
+              </Text>
+            </Container>
+          </>
+        )}
       </Container>
       <Spacer y={0.5} />
-      
+      {appData && revision && (
+        <AppDataContainer porterApp={appData} latestRevision={revision} />
+      )}
     </StyledExpandedApp>
   );
 };

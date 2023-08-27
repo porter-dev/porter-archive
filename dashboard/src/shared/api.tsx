@@ -887,6 +887,19 @@ const getLatestRevision = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/latest`;
 });
 
+const listAppRevisions = baseApi<
+  {
+    deployment_target_id: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }
+>("GET", ({ project_id, cluster_id, porter_app_name }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/revisions`;
+});
+
 const getGitlabProcfileContents = baseApi<
   {
     path: string;
@@ -2960,6 +2973,7 @@ export default {
   createApp,
   applyApp,
   getLatestRevision,
+  listAppRevisions,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,

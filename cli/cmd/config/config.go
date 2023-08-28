@@ -17,9 +17,6 @@ import (
 
 var home = homedir.HomeDir()
 
-// config is a shared object used by all commands
-// var config = &CLIConfig{}
-
 // CLIConfig is the set of shared configuration options for the CLI commands.
 // This config is used by viper: calling Set() function for any parameter will
 // update the corresponding field in the viper config file.
@@ -98,12 +95,18 @@ func initAndLoadConfig() (CLIConfig, error) {
 		"token for Porter authentication",
 	)
 
+	err = viper.BindPFlags(utils.DefaultFlagSet)
+	if err != nil {
+		return config, err
+	}
+
 	utils.RegistryFlagSet.UintVar(
 		&config.Registry,
 		"registry",
 		0,
 		"registry ID of connected Porter registry",
 	)
+
 	err = viper.BindPFlags(utils.RegistryFlagSet)
 	if err != nil {
 		return config, err
@@ -116,10 +119,6 @@ func initAndLoadConfig() (CLIConfig, error) {
 		"helm repo ID of connected Porter Helm repository",
 	)
 	err = viper.BindPFlags(utils.HelmRepoFlagSet)
-	if err != nil {
-		return config, err
-	}
-	err = viper.BindPFlags(utils.DefaultFlagSet)
 	if err != nil {
 		return config, err
 	}

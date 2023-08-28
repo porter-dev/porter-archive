@@ -180,12 +180,14 @@ func (c *Client) ValidatePorterApp(
 	projectID, clusterID uint,
 	base64AppProto string,
 	deploymentTarget string,
+	commitSHA string,
 ) (*porter_app.ValidatePorterAppResponse, error) {
 	resp := &porter_app.ValidatePorterAppResponse{}
 
 	req := &porter_app.ValidatePorterAppRequest{
 		Base64AppProto:     base64AppProto,
 		DeploymentTargetId: deploymentTarget,
+		CommitSHA:          commitSHA,
 	}
 
 	err := c.postRequest(
@@ -264,6 +266,89 @@ func (c *Client) CurrentAppRevision(
 	err := c.getRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/%s/latest",
+			projectID, clusterID, appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// CreatePorterAppDBEntryInput is the input struct to CreatePorterAppDBEntry
+type CreatePorterAppDBEntryInput struct {
+	AppName         string
+	GitRepoName     string
+	GitRepoID       uint
+	GitBranch       string
+	ImageRepository string
+	PorterYamlPath  string
+	ImageTag        string
+	Local           bool
+}
+
+// CreatePorterAppDBEntry creates an entry in the porter app
+func (c *Client) CreatePorterAppDBEntry(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	inp CreatePorterAppDBEntryInput,
+) error {
+	var sourceType porter_app.SourceType
+	var image *porter_app.Image
+	if inp.Local {
+		sourceType = porter_app.SourceType_Local
+	}
+	if inp.GitRepoName != "" {
+		sourceType = porter_app.SourceType_Github
+	}
+	if inp.ImageRepository != "" {
+		sourceType = porter_app.SourceType_DockerRegistry
+		image = &porter_app.Image{
+			Repository: inp.ImageRepository,
+			Tag:        inp.ImageTag,
+		}
+	}
+	if sourceType == "" {
+		return fmt.Errorf("cannot determine source type")
+	}
+
+	req := &porter_app.CreateAppRequest{
+		Name:           inp.AppName,
+		SourceType:     sourceType,
+		GitBranch:      inp.GitBranch,
+		GitRepoName:    inp.GitRepoName,
+		GitRepoID:      inp.GitRepoID,
+		PorterYamlPath: inp.PorterYamlPath,
+		Image:          image,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/create",
+			projectID, clusterID,
+		),
+		req,
+		&types.PorterApp{},
+	)
+
+	return err
+}
+
+// CreateSubdomain returns a subdomain for a given service that point to the ingress-nginx service in the cluster
+func (c *Client) CreateSubdomain(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string, serviceName string,
+) (*porter_app.CreateSubdomainResponse, error) {
+	resp := &porter_app.CreateSubdomainResponse{}
+
+	req := &porter_app.CreateSubdomainRequest{
+		ServiceName: serviceName,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/subdomain",
 			projectID, clusterID, appName,
 		),
 		req,

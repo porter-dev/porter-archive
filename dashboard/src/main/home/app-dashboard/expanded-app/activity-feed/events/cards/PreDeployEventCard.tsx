@@ -11,7 +11,7 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Icon from "components/porter/Icon";
 
-import { getDuration, getStatusIcon, triggerWorkflow } from '../utils';
+import { getDuration, getStatusColor, getStatusIcon, triggerWorkflow } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import Link from "components/porter/Link";
 import document from "assets/document.svg";
@@ -26,11 +26,11 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appData }) => {
   const renderStatusText = (event: PorterAppEvent) => {
     switch (event.status) {
       case "SUCCESS":
-        return <Text color="#68BF8B">Pre-deploy succeeded</Text>;
+        return <Text color={getStatusColor(event.status)}>Pre-deploy succeeded</Text>;
       case "FAILED":
-        return <Text color="#FF6060">Pre-deploy failed</Text>;
+        return <Text color={getStatusColor(event.status)}>Pre-deploy failed</Text>;
       default:
-        return <Text color="helper">Pre-deploy in progress...</Text>;
+        return <Text color={getStatusColor(event.status)}>Pre-deploy in progress...</Text>;
     }
   };
 

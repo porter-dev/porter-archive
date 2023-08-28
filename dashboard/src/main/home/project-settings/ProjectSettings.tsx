@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
@@ -18,9 +18,17 @@ import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import ProjectDeleteConsent from "./ProjectDeleteConsent";
 import Metadata from "./Metadata";
+import Button from "components/porter/Button";
+import Input from "components/porter/Input";
+import { isAlphanumeric } from "shared/common";
+import api from "shared/api";
+import Error from "components/porter/Error";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
-
+type ValidationError = {
+  hasError: boolean;
+  description?: string;
+};
 type StateType = {
   projectName: string;
   currentTab: string;
@@ -28,62 +36,49 @@ type StateType = {
   showCostConfirmModal: boolean;
 };
 
-class ProjectSettings extends Component<PropsType, StateType> {
-  state = {
-    projectName: "",
-    currentTab: "manage-access",
-    tabOptions: [] as { value: string; label: string }[],
-    showCostConfirmModal: false,
-  };
+function ProjectSettings(props: any) {
+  const context = useContext(Context);
 
-  componentDidUpdate(prevProps: PropsType) {
+  const [projectName, setProjectName] = useState("");
+  const [currentTab, setCurrentTab] = useState("manage-access");
+  const [tabOptions, setTabOptions] = useState([]);
+  const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
+  const [name, setName] = useState(context?.currentProject?.name);
+  const [disabled, setDisabled] = useState<boolean>(false);
+  const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
+
+  useEffect(() => {
     const selectedTab =
-      getQueryParam(this.props, "selected_tab") || "manage-access";
+      getQueryParam(props, "selected_tab") || "manage-access";
 
-    if (
-      prevProps.location.search !== this.props.location.search &&
-      this.state.currentTab !== selectedTab
-    ) {
-      this.setState({ currentTab: selectedTab });
+    if (currentTab !== selectedTab) {
+      setCurrentTab(selectedTab);
+    }
+  }, [props.location.search]);
+  useEffect(() => {
+    const currentProject = context.currentProject;
+    if (projectName !== currentProject.name) {
+      setProjectName(currentProject.name);
     }
 
-    // if (
-    //   this.context?.hasBillingEnabled &&
-    //   !this.state.tabOptions.find((t) => t.value === "billing")
-    // ) {
-    //   const tabOptions = this.state.tabOptions;
-    //   tabOptions.splice(1, 0, { value: "billing", label: "Billing" });
-    //   this.setState({ tabOptions });
-    //   return;
-    // }
+  }, []);
 
-    // if (
-    //   !this.context?.hasBillingEnabled &&
-    //   this.state.tabOptions.find((t) => t.value === "billing")
-    // ) {
-    //   const tabOptions = this.state.tabOptions;
-    //   const billingIndex = this.state.tabOptions.findIndex(
-    //     (t) => t.value === "billing"
-    //   );
-    //   tabOptions.splice(billingIndex, 1);
-    // }
-  }
 
-  componentDidMount() {
-    let { currentProject } = this.context;
-
-    if (this.state.projectName !== currentProject.name) {
-      this.setState({ projectName: currentProject.name });
+  useEffect(() => {
+    let { currentProject } = context;
+    if (projectName !== currentProject.name) {
+      setProjectName(currentProject.name);
     }
-    const tabOptions = [];
-    tabOptions.push({ value: "manage-access", label: "Manage access" });
+
+    const tabOpts = [];
+    tabOpts.push({ value: "manage-access", label: "Manage access" });
     // ? Disabled for now https://discord.com/channels/542888846271184896/1059277393031856208/1059277395913351258
     // tabOptions.push({
     //   value: "billing",
     //   label: "Billing",
     // });
-    tabOptions.push({ value: "metadata", label: "Metadata" });
-    if (this.props.isAuthorized("settings", "", ["get", "delete"])) {
+    tabOpts.push({ value: "metadata", label: "Metadata" });
+    if (props.isAuthorized("settings", "", ["get", "delete"])) {
       // if (this.context?.hasBillingEnabled) {
       //   tabOptions.push({
       //     value: "billing",
@@ -92,54 +87,97 @@ class ProjectSettings extends Component<PropsType, StateType> {
       // }
 
       if (currentProject?.api_tokens_enabled) {
-        tabOptions.push({
+        tabOpts.push({
           value: "api-tokens",
           label: "API Tokens",
         });
       }
 
-      tabOptions.push({
+      tabOpts.push({
         value: "additional-settings",
         label: "Additional settings",
       });
     }
 
-    if (!_.isEqual(tabOptions, this.state.tabOptions)) {
-      this.setState({ tabOptions });
+
+    if (!_.isEqual(tabOpts, tabOptions)) {
+      setTabOptions(tabOpts);
     }
 
-    const selectedTab = getQueryParam(this.props, "selected_tab");
-    if (selectedTab && selectedTab !== this.state.currentTab) {
-      this.setState({ currentTab: selectedTab });
+    const selectedTab = getQueryParam(props, "selected_tab");
+    if (selectedTab && selectedTab !== currentTab) {
+      setCurrentTab(selectedTab);
+    }
+
+  }, [context, projectName, currentTab, props, tabOptions]);
+
+  const validateProjectName = (): ValidationError => {
+    if (name === "") {
+      return {
+        hasError: true,
+        description: "The name cannot be empty. Please fill the input.",
+      };
+    }
+    if (!isAlphanumeric(name)) {
+      return {
+        hasError: true,
+        description:
+          'Please be sure that the text is alphanumeric. (lowercase letters, numbers, and "-" only)',
+      };
+    }
+    if (name.length > 25) {
+      return {
+        hasError: true,
+        description:
+          "The length of the name cannot be more than 25 characters.",
+      };
+    }
+
+    return {
+      hasError: false,
+    };
+  };
+
+  const handleNameChange = async () => {
+    try {
+      setButtonStatus("loading");
+
+      await api.renameProject(
+        "<token>",
+        {
+          name: name,
+        },
+        {
+          project_id: context.currentProject.id,
+        })
+      setButtonStatus("success");
+      window.location.reload();
+
+    } catch (err) {
+      console.log(err)
+      setButtonStatus(<Error message="Unable to rename project" />);
     }
   }
 
-  renderTabContents = () => {
-    if (!this.props.isAuthorized("settings", "", ["get", "delete"])) {
+  const renderTabContents = () => {
+    if (!props.isAuthorized("settings", "", ["get", "delete"])) {
       return <InvitePage />;
     }
 
-    // if (
-    //   this.state.currentTab === "billing" &&
-    //   this.context?.hasBillingEnabled
-    // ) {
-    //   return <BillingPage />;
-    // }
-
-    if (this.state.currentTab === "manage-access") {
+    if (currentTab === "manage-access") {
       return <InvitePage />;
     }
-    else if (this.state.currentTab == "metadata") {
+    else if (currentTab == "metadata") {
       return <Metadata />
-    } else if (this.state.currentTab === "api-tokens") {
+    } else if (currentTab === "api-tokens") {
       return <APITokensSection />;
-    } else if (this.state.currentTab === "billing") {
+    } else if (currentTab === "billing") {
       return (
         <Placeholder>
           <Helper>
             Visit the{" "}
             <a
-              href={`/api/projects/${this.context.currentProject?.id}/billing/redirect`}
+              href={`/api/projects/${context.currentProject?.id}/billing/redirect`}
             >
               billing portal
             </a>{" "}
@@ -150,9 +188,29 @@ class ProjectSettings extends Component<PropsType, StateType> {
     } else {
       return (
         <>
+
+          <Heading isAtTop={true}>Rename Project</Heading>
+          <Spacer y={1} />
+          <Warning highlight={validateProjectName().hasError}>
+            (lowercase letters, numbers, and "-" only)
+          </Warning>
+          <Input placeholder={"ex: perspective-vortex"} value={name} setValue={setName} width={"500px"}>
+          </Input>
+          <Spacer y={1} />
+          <Button
+            onClick={() => {
+              handleNameChange()
+            }}
+            status={buttonStatus}
+            loadingText={"Updating..."}
+            disabled={validateProjectName().hasError}
+          >
+            Change name
+          </Button>
+
+          <Spacer y={1} />
           <Heading isAtTop={true}>Delete project</Heading>
-          <Helper>
-          </Helper>
+
           <Helper>
             Permanently delete this project. This will destroy all clusters tied
             to this project that have been provisioned by Porter. Note that this
@@ -162,40 +220,39 @@ class ProjectSettings extends Component<PropsType, StateType> {
 
           <DeleteButton
             onClick={() => {
-              this.setState({ showCostConfirmModal: true });
+              setShowCostConfirmModal(true);
             }}
           >
             Delete project
           </DeleteButton>
           <ProjectDeleteConsent
-            setShowCostConfirmModal={(show: boolean) => this.setState({ showCostConfirmModal: show })}
-            show={this.state.showCostConfirmModal}  // <-- Pass these props
+            setShowCostConfirmModal={setShowCostConfirmModal}
+            show={showCostConfirmModal}  // <-- Pass these props
           />
         </>
       );
     }
   };
 
-  render() {
-    return (
-      <StyledProjectSettings>
-        <DashboardHeader
-          image={settings}
-          title="Project settings"
-          description="Configure access permissions and additional project settings."
-          disableLineBreak
-        />
-        <TabRegion
-          currentTab={this.state.currentTab}
-          setCurrentTab={(x: string) => this.setState({ currentTab: x })}
-          options={this.state.tabOptions}
-        >
-          {this.renderTabContents()}
-        </TabRegion>
-      </StyledProjectSettings>
-    );
-  }
+  return (
+    <StyledProjectSettings>
+      <DashboardHeader
+        image={settings}
+        title="Project settings"
+        description="Configure access permissions and additional project settings."
+        disableLineBreak
+      />
+      <TabRegion
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+        options={tabOptions}
+      >
+        {renderTabContents()}
+      </TabRegion>
+    </StyledProjectSettings>
+  );
 }
+
 
 ProjectSettings.contextType = Context;
 

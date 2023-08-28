@@ -1395,10 +1395,37 @@ func getProjectRoutes(
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
-
 	routes = append(routes, &router.Route{
 		Endpoint: deleteAPIContractRevisionsEndpoint,
 		Handler:  deleteAPIContractRevisionHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/rename -> cluster.newRenamProject
+	renameProjectEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/rename",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	renameProjectHandler := project.NewRenameProjectHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: renameProjectEndpoint,
+		Handler:  renameProjectHandler,
 		Router:   r,
 	})
 

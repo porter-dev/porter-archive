@@ -71,17 +71,9 @@ type getReleaseInfo struct {
 	RevisionID   int       `json:"revision_id" yaml:"revision_id"`
 }
 
-func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
-	}
-	if project == nil {
-		return fmt.Errorf("project [%d] not found", cliConf.Project)
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.Get(ctx)
+func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.Get(ctx)
 		if err != nil {
 			return err
 		}
@@ -126,17 +118,9 @@ func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.
 	return nil
 }
 
-func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
-	}
-	if project == nil {
-		return fmt.Errorf("project [%d] not found", cliConf.Project)
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.GetValues(ctx)
+func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.GetValues(ctx)
 		if err != nil {
 			return err
 		}

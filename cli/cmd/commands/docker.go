@@ -31,6 +31,6 @@ func registerCommand_Docker(cliConf config.CLIConfig) *cobra.Command {
 	return dockerCmd
 }
 
-func dockerConfig(ctx context.Context, user *ptypes.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func dockerConfig(ctx context.Context, user *ptypes.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	return config.SetDockerConfig(ctx, client, cliConf.Project)
 }

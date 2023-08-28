@@ -278,7 +278,7 @@ func register(ctx context.Context, cliConf config.CLIConfig) error {
 	return nil
 }
 
-func logout(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func logout(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	err := client.Logout(ctx)
 	if err != nil {
 		return err

@@ -177,17 +177,9 @@ use the --namespace flag:
 	return jobCmd
 }
 
-func batchImageUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
-	}
-	if project == nil {
-		return fmt.Errorf("project [%d] not found", cliConf.Project)
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.BatchImageUpdate(ctx)
+func batchImageUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.BatchImageUpdate(ctx)
 		if err != nil {
 			return err
 		}
@@ -209,17 +201,9 @@ func batchImageUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 }
 
 // waits for a job with a given name/namespace
-func waitForJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
-	}
-	if project == nil {
-		return fmt.Errorf("project [%d] not found", cliConf.Project)
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.WaitForJob(ctx)
+func waitForJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.WaitForJob(ctx)
 		if err != nil {
 			return err
 		}
@@ -234,17 +218,9 @@ func waitForJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 	})
 }
 
-func runJob(ctx context.Context, authRes *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
-	}
-	if project == nil {
-		return fmt.Errorf("project [%d] not found", cliConf.Project)
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.RunJob(ctx)
+func runJob(ctx context.Context, authRes *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.RunJob(ctx)
 		if err != nil {
 			return err
 		}
@@ -267,7 +243,7 @@ func runJob(ctx context.Context, authRes *types.GetAuthenticatedUserResponse, cl
 		},
 	}
 
-	err = updateAgent.UpdateImageAndValues(
+	err := updateAgent.UpdateImageAndValues(
 		ctx,
 		map[string]interface{}{
 			"paused": false,
@@ -276,8 +252,7 @@ func runJob(ctx context.Context, authRes *types.GetAuthenticatedUserResponse, cl
 		return fmt.Errorf("error running job: %w", err)
 	}
 
-	err = waitForJob(ctx, authRes, client, cliConf, args)
-
+	err = waitForJob(ctx, authRes, client, cliConf, featureFlags, args)
 	if err != nil {
 		return fmt.Errorf("error waiting for job to complete: %w", err)
 	}

@@ -36,6 +36,12 @@ type CLIConfig struct {
 	Kubeconfig string `yaml:"kubeconfig"`
 }
 
+// FeatureFlags are any flags that are relevant to the feature set of the CLI. This should not include all feature flags, only those relevant to client-side CLI operations
+type FeatureFlags struct {
+	// ValidateApplyV2Enabled is a project-wide flag for checking if `porter apply` with porter.yaml is enabled
+	ValidateApplyV2Enabled bool
+}
+
 // InitAndLoadConfig populates the config object with the following precedence rules:
 // 1. flag
 // 2. env

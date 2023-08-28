@@ -152,7 +152,7 @@ func appRunFlags(appRunCmd *cobra.Command) {
 	)
 }
 
-func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, args []string) error {
 	execArgs := args[1:]
 
 	color.New(color.FgGreen).Println("Attempting to run", strings.Join(execArgs, " "), "for application", args[0])
@@ -267,7 +267,7 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 	return appExecuteRunEphemeral(ctx, config, appNamespace, selectedPod.Name, selectedContainerName, execArgs)
 }
 
-func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
+func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ []string) error {
 	config := &AppPorterRunSharedConfig{
 		Client:    client,
 		CLIConfig: cliConfig,
@@ -1044,7 +1044,7 @@ func appCreateEphemeralPodFromExisting(
 	)
 }
 
-func appUpdateTag(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+func appUpdateTag(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, args []string) error {
 	namespace := fmt.Sprintf("porter-stack-%s", args[0])
 	if appTag == "" {
 		appTag = "latest"

@@ -91,24 +91,16 @@ func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
 	return listCmd
 }
 
-func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
-	}
-	if project == nil {
-		return fmt.Errorf("project [%d] not found", cliConf.Project)
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.ListAll(ctx)
+func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.ListAll(ctx)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	err = writeReleases(ctx, client, cliConf, "all")
+	err := writeReleases(ctx, client, cliConf, "all")
 	if err != nil {
 		return err
 	}
@@ -116,24 +108,16 @@ func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client 
 	return nil
 }
 
-func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
-	}
-	if project == nil {
-		return fmt.Errorf("project [%d] not found", cliConf.Project)
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.ListApps(ctx)
+func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.ListApps(ctx)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	err = writeReleases(ctx, client, cliConf, "application")
+	err := writeReleases(ctx, client, cliConf, "application")
 	if err != nil {
 		return err
 	}
@@ -141,24 +125,16 @@ func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client
 	return nil
 }
 
-func listJobs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
-	}
-	if project == nil {
-		return fmt.Errorf("project [%d] not found", cliConf.Project)
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.ListJobs(ctx)
+func listJobs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.ListJobs(ctx)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	err = writeReleases(ctx, client, cliConf, "job")
+	err := writeReleases(ctx, client, cliConf, "job")
 	if err != nil {
 		return err
 	}
@@ -166,7 +142,7 @@ func listJobs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client
 	return nil
 }
 
-func listAddons(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func listAddons(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	err := writeReleases(ctx, client, cliConf, "addon")
 	if err != nil {
 		return err

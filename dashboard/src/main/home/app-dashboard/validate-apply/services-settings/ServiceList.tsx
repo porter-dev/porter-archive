@@ -41,7 +41,6 @@ type AddServiceFormValues = z.infer<typeof addServiceFormValidator>;
 
 type ServiceListProps = {
   addNewText: string;
-  defaultExpanded?: boolean;
   limitOne?: boolean;
   prePopulateService?: ClientService;
   isPredeploy?: boolean;
@@ -125,7 +124,9 @@ const ServiceList: React.FC<ServiceListProps> = ({
   };
 
   const onSubmit = handleSubmit(async (data) => {
-    append(deserializeService(defaultSerialized(data)));
+    append(
+      deserializeService({ service: defaultSerialized(data), expanded: true })
+    );
     reset();
     setShowAddServiceModal(false);
   });
@@ -241,7 +242,17 @@ const I = styled.i`
   justify-content: center;
 `;
 
-const ServicesContainer = styled.div``;
+const ServicesContainer = styled.div`
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
 
 const AddServiceButton = styled.div`
   color: #aaaabb;

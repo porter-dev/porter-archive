@@ -228,12 +228,17 @@ export function serializeService(service: ClientService): SerializedService {
 
 // deserializeService converts a SerializedService to a ClientService
 // A deserialized ClientService represents the state of a service in the UI and which fields are editable
-export function deserializeService(
-  service: SerializedService,
-  override?: SerializedService
-): ClientService {
+export function deserializeService({
+  service,
+  override,
+  expanded,
+}: {
+  service: SerializedService;
+  override?: SerializedService;
+  expanded?: boolean;
+}): ClientService {
   const baseService = {
-    expanded: true,
+    expanded,
     canDelete: !override,
     name: ServiceField.string(service.name, override?.name),
     run: ServiceField.string(service.run, override?.run),

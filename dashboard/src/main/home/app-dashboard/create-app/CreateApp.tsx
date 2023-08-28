@@ -126,7 +126,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const build = watch("app.build");
   const image = watch("source.image");
   const services = watch("app.services");
-  const servicesFromYaml = usePorterYaml(source);
+  const { detectedServices: servicesFromYaml } = usePorterYaml({ source });
   const deploymentTarget = useDefaultDeploymentTarget();
   const { updateAppStep } = useAppAnalytics(name);
   const { validateApp } = useAppValidation({
@@ -449,10 +449,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       )}
                     </Container>
                     <Spacer y={0.5} />
-                    <ServiceList
-                      defaultExpanded={true}
-                      addNewText={"Add a new service"}
-                    />
+                    <ServiceList addNewText={"Add a new service"} />
                   </>,
                   <>
                     <Text size={16}>Environment variables (optional)</Text>
@@ -475,12 +472,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       <ServiceList
                         limitOne={true}
                         addNewText={"Add a new pre-deploy job"}
-                        prePopulateService={deserializeService(
-                          defaultSerialized({
+                        prePopulateService={deserializeService({
+                          service: defaultSerialized({
                             name: "pre-deploy",
                             type: "predeploy",
-                          })
-                        )}
+                          }),
+                        })}
                         isPredeploy
                       />
                     </>

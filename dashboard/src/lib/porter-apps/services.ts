@@ -17,6 +17,10 @@ import {
 } from "./values";
 import { Service, ServiceType } from "@porter-dev/api-contracts";
 
+export type DetectedServices = {
+  services: ClientService[];
+  predeploy?: ClientService;
+};
 type ClientServiceType = "web" | "worker" | "job" | "predeploy";
 
 // serviceValidator is the validator for a ClientService

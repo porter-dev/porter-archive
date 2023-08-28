@@ -1,7 +1,7 @@
 import { buildpackSchema } from "main/home/app-dashboard/types/buildpack";
 import { z } from "zod";
 import {
-  ClientService,
+  DetectedServices,
   defaultSerialized,
   deserializeService,
   isPredeployService,
@@ -77,10 +77,7 @@ export function serviceOverrides({
 }: {
   overrides: PorterApp;
   useDefaults?: boolean;
-}): {
-  services: ClientService[];
-  predeploy?: ClientService;
-} {
+}): DetectedServices {
   const services = Object.entries(overrides.services)
     .map(([name, service]) => serializedServiceFromProto({ name, service }))
     .map((svc) => {
@@ -135,6 +132,7 @@ const clientBuildToProto = (build: BuildOptions) => {
   return match(build)
     .with({ method: "pack" }, (b) =>
       Object.freeze({
+        method: "pack",
         context: b.context,
         buildpacks: b.buildpacks.map((b) => b.buildpack),
         builder: b.builder,
@@ -142,6 +140,7 @@ const clientBuildToProto = (build: BuildOptions) => {
     )
     .with({ method: "docker" }, (b) =>
       Object.freeze({
+        method: "docker",
         context: b.context,
         dockerfile: b.dockerfile,
       })
@@ -241,10 +240,7 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
 
 export function clientAppFromProto(
   proto: PorterApp,
-  overrides: {
-    services: ClientService[];
-    predeploy?: ClientService;
-  } | null
+  overrides: DetectedServices | null
 ): ClientPorterApp {
   const services = Object.entries(proto.services)
     .map(([name, service]) => serializedServiceFromProto({ name, service }))

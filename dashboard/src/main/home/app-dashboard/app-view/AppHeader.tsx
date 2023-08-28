@@ -47,7 +47,7 @@ const AppHeader: React.FC = () => {
       return box;
     }
 
-    const bp = build.buildpacks[0].split("/")[1];
+    const bp = build.buildpacks[0]?.split("/")[1];
     switch (bp) {
       case "ruby":
         return icons[0];
@@ -104,7 +104,7 @@ const AppHeader: React.FC = () => {
   );
 };
 
-export default AppHeader
+export default AppHeader;
 
 const A = styled.a`
   display: flex;

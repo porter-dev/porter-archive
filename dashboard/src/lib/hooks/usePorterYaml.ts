@@ -1,16 +1,11 @@
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { SourceOptions, serviceOverrides } from "lib/porter-apps";
-import { ClientService } from "lib/porter-apps/services";
+import { ClientService, DetectedServices } from "lib/porter-apps/services";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { z } from "zod";
-
-type DetectedServices = {
-  services: ClientService[];
-  predeploy?: ClientService;
-};
 
 type PorterYamlStatus =
   | {

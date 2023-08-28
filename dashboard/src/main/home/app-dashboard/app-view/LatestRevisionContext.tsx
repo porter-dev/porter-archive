@@ -17,27 +17,21 @@ import notFound from "assets/not-found.png";
 import styled from "styled-components";
 import { SourceOptions } from "lib/porter-apps";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
-import { ClientService } from "lib/porter-apps/services";
+import { DetectedServices } from "lib/porter-apps/services";
 
-export const LatestRevisionContext = createContext<
-  | {
-      porterApp: PorterAppRecord;
-      latestRevision: AppRevision;
-      latestProto: PorterApp;
-      servicesFromYaml: {
-        services: ClientService[];
-        predeploy?: ClientService;
-      } | null;
-      clusterId: number;
-      projectId: number;
-      deploymentTargetId: string;
-    }
-  | undefined
->(undefined);
+export const LatestRevisionContext = createContext<{
+  porterApp: PorterAppRecord;
+  latestRevision: AppRevision;
+  latestProto: PorterApp;
+  servicesFromYaml: DetectedServices | null;
+  clusterId: number;
+  projectId: number;
+  deploymentTargetId: string;
+} | null>(null);
 
 export const useLatestRevision = () => {
   const context = useContext(LatestRevisionContext);
-  if (context === undefined) {
+  if (context === null) {
     throw new Error(
       "useLatestRevision must be used within a LatestRevisionContext"
     );
@@ -84,7 +78,13 @@ export const LatestRevisionProvider = ({
   );
 
   const { data: latestRevision, status } = useQuery(
-    ["appRevisions", currentProject?.id, currentCluster?.id],
+    [
+      "getLatestRevision",
+      currentProject?.id,
+      currentCluster?.id,
+      deploymentTarget?.deployment_target_id,
+      appName,
+    ],
     async () => {
       if (!appParamsExist) {
         return;
@@ -111,6 +111,7 @@ export const LatestRevisionProvider = ({
     },
     {
       enabled: appParamsExist,
+      refetchInterval: 5000,
     }
   );
 

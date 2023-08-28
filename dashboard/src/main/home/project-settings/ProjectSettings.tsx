@@ -190,10 +190,10 @@ function ProjectSettings(props: any) {
         <>
 
           <Heading isAtTop={true}>Rename Project</Heading>
-          <Spacer y={1} />
-          <Warning highlight={validateProjectName().hasError}>
+
+          <Helper color={validateProjectName().hasError ? "#f5cb42" : "#aaaabb"}>
             (lowercase letters, numbers, and "-" only)
-          </Warning>
+          </Helper>
           <Input placeholder={"ex: perspective-vortex"} value={name} setValue={setName} width={"500px"}>
           </Input>
           <Spacer y={1} />
@@ -274,7 +274,7 @@ const Placeholder = styled.div`
 const Warning = styled.div`
   font-size: 13px;
   color: ${(props: { highlight: boolean; makeFlush?: boolean }) =>
-    props.highlight ? "#f5cb42" : ""};
+    props.highlight ? "#f5cb42" : "#aaaabb"}
   margin-bottom: 20px;
 `;
 

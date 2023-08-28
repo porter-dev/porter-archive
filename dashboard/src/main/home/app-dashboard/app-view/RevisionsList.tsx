@@ -84,14 +84,22 @@ const RevisionsList: React.FC<Props> = ({
                 <Tr disableHover>
                   <Th>Revision no.</Th>
                   <Th>Timestamp</Th>
-                  <Th>Image Tag</Th>
+                  <Th>
+                    {revisionsWithProto[0]?.app_proto.build
+                      ? "Commit SHA"
+                      : "Image Tag"}
+                  </Th>
                   <Th>Rollback</Th>
                 </Tr>
                 {revisionsWithProto.map((revision) => (
                   <Tr key={revision.revision_number}>
                     <Td>{revision.revision_number}</Td>
                     <Td>{readableDate(revision.updated_at)}</Td>
-                    <Td>{revision.app_proto.image?.tag}</Td>
+                    <Td>
+                      {revision.app_proto.build
+                        ? revision.app_proto.build.commitSha.substring(0, 7)
+                        : revision.app_proto.image?.tag}
+                    </Td>
                     <Td>
                       <RollbackButton
                         disabled={

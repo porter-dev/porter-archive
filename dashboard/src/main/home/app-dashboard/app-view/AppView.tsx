@@ -1,30 +1,16 @@
-import React, { useContext, useMemo } from "react";
+import React, { useMemo } from "react";
 import { RouteComponentProps, withRouter } from "react-router";
-import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import { PorterApp } from "@porter-dev/api-contracts";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
-import api from "shared/api";
-import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
-import { appRevisionValidator } from "lib/revisions/types";
-
-import Loading from "components/Loading";
 import Back from "components/porter/Back";
-import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import Link from "components/porter/Link";
-import Icon from "components/porter/Icon";
 
 import AppDataContainer from "./AppDataContainer";
 
 import web from "assets/web.png";
-import box from "assets/box.png";
-import github from "assets/github-white.png";
-import pr_icon from "assets/pull_request_icon.svg";
-import notFound from "assets/not-found.png";
+import AppHeader from "./AppHeader";
+import { LatestRevisionProvider } from "./LatestRevisionContext";
 
 export const porterAppValidator = z.object({
   name: z.string(),
@@ -70,204 +56,34 @@ type ValidTab = typeof validTabs[number];
 type Props = RouteComponentProps & {};
 
 const AppView: React.FC<Props> = ({ match }) => {
-  const { currentCluster, currentProject } = useContext(Context);
-  const deploymentTarget = useDefaultDeploymentTarget();
-
   const params = useMemo(() => {
     const { params } = match;
     const validParams = z
       .object({
         appName: z.string(),
+        tab: z.string().optional(),
       })
       .safeParse(params);
 
     if (!validParams.success) {
       return {
-        appName: null,
+        appName: undefined,
+        tab: undefined,
       };
     }
 
     return validParams.data;
   }, [match]);
 
-  const appParamsExist =
-    !!params.appName &&
-    !!currentCluster &&
-    !!currentProject &&
-    !!deploymentTarget;
-
-  const { data: appData, status: porterAppStatus } = useQuery(
-    ["getPorterApp", currentCluster?.id, currentProject?.id, params.appName],
-    async () => {
-      if (!appParamsExist) {
-        return;
-      }
-
-      const res = await api.getPorterApp(
-        "<token>",
-        {},
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-          name: params.appName,
-        }
-      );
-
-      const porterApp = await porterAppValidator.parseAsync(res.data);
-      return porterApp;
-    },
-    {
-      enabled: appParamsExist,
-    }
-  );
-
-  const { data: revision, status } = useQuery(
-    ["getLatestRevision", params.appName, "latest"],
-    async () => {
-      if (!appParamsExist) {
-        return null;
-      }
-
-      const res = await api.getLatestRevision(
-        "<token>",
-        {
-          deployment_target_id: deploymentTarget.deployment_target_id,
-        },
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-          porter_app_name: params.appName,
-        }
-      );
-
-      const revisionData = await z
-        .object({
-          app_revision: appRevisionValidator,
-        })
-        .parseAsync(res.data);
-
-      return revisionData.app_revision;
-    },
-    {
-      enabled: appParamsExist,
-      refetchInterval: 5000,
-    }
-  );
-
-  const gitData = useMemo(() => {
-    if (!appData?.git_branch || !appData?.repo_name || !appData?.git_repo_id) {
-      return null;
-    }
-
-    return {
-      id: appData.git_repo_id,
-      branch: appData.git_branch,
-      repo: appData.repo_name,
-    };
-  }, [appData]);
-
-  const appProto = useMemo(
-    () =>
-      revision?.b64_app_proto
-        ? PorterApp.fromJsonString(atob(revision?.b64_app_proto))
-        : null,
-    [revision]
-  );
-
-  const getIconSvg = (build: PorterApp["build"]) => {
-    if (!build) {
-      return box;
-    }
-
-    const bp = build.buildpacks[0].split("/")[1];
-    switch (bp) {
-      case "ruby":
-        return icons[0];
-      case "nodejs":
-        return icons[1];
-      case "python":
-        return icons[2];
-      case "go":
-        return icons[3];
-      default:
-        return box;
-    }
-  };
-
-  if (
-    status === "loading" ||
-    porterAppStatus === "loading" ||
-    !appParamsExist
-  ) {
-    return <Loading />;
-  }
-
-  if (
-    status === "error" ||
-    porterAppStatus === "error" ||
-    !revision ||
-    !appData
-  ) {
-    return (
-      <Placeholder>
-        <Container row>
-          <PlaceholderIcon src={notFound} />
-          <Text color="helper">
-            No application matching "{params.appName}" was found.
-          </Text>
-        </Container>
-        <Spacer y={1} />
-        <Link to="/apps">Return to dashboard</Link>
-      </Placeholder>
-    );
-  }
-
   return (
-    <StyledExpandedApp>
-      <Back to="/apps" />
-      <Container row>
-        <Icon src={getIconSvg(appProto?.build)} height={"24px"} />
-        <Spacer inline x={1} />
-        <Text size={21}>{appProto?.name}</Text>
-        {gitData && (
-          <>
-            <Spacer inline x={1} />
-            <Container row>
-              <A target="_blank" href={`https://github.com/${gitData.repo}`}>
-                <SmallIcon src={github} />
-                <Text size={13}>{gitData.repo}</Text>
-              </A>
-            </Container>
-            <Spacer inline x={1} />
-            <TagWrapper>
-              Branch
-              <BranchTag>
-                <BranchIcon src={pr_icon} />
-                {gitData.branch}
-              </BranchTag>
-            </TagWrapper>
-          </>
-        )}
-        {!gitData && appData?.image_repo_uri && (
-          <>
-            <Spacer inline x={1} />
-            <Container row>
-              <SmallIcon
-                height="19px"
-                src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
-              />
-              <Text size={13} color="helper">
-                {appData.image_repo_uri}
-              </Text>
-            </Container>
-          </>
-        )}
-      </Container>
-      <Spacer y={0.5} />
-      {appData && revision && (
-        <AppDataContainer porterApp={appData} latestRevision={revision} />
-      )}
-    </StyledExpandedApp>
+    <LatestRevisionProvider appName={params.appName}>
+      <StyledExpandedApp>
+        <Back to="/apps" />
+        <AppHeader />
+        <Spacer y={0.5} />
+        <AppDataContainer tabParam={params.tab} />
+      </StyledExpandedApp>
+    </LatestRevisionProvider>
   );
 };
 
@@ -286,20 +102,6 @@ const StyledExpandedApp = styled.div`
       opacity: 1;
     }
   }
-`;
-const PlaceholderIcon = styled.img`
-  height: 13px;
-  margin-right: 12px;
-  opacity: 0.65;
-`;
-const Placeholder = styled.div`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  font-size: 13px;
 `;
 const A = styled.a`
   display: flex;

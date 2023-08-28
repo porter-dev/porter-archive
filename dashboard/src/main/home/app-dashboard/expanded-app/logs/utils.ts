@@ -7,6 +7,7 @@ import { Context } from "shared/Context";
 import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
 import { ChartType } from "shared/types";
 import { AgentLog, AgentLogSchema, Direction, PorterLog, PaginationInfo, GenericLogFilter, LogFilterName } from "./types";
+import { Service } from "../../new-app-flow/serviceTypes";
 
 const MAX_LOGS = 5000;
 const MAX_BUFFER_LOGS = 1000;
@@ -163,12 +164,14 @@ export const useLogs = (
 
     const websocketBaseURL = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki`;
 
-    const q = new URLSearchParams({
+    const searchParams = {
       pod_selector: currentPodSelector,
       namespace,
       search_param: searchParam,
       revision: currentChart.version.toString(),
-    }).toString();
+    }
+
+    const q = new URLSearchParams(searchParams).toString();
 
     const endpoint = `${websocketBaseURL}?${q}`;
 
@@ -511,28 +514,13 @@ export const getServiceNameFromPodNameAndAppName = (podName: string, porterAppNa
   return "";
 }
 
-export const getPodSelectorFromPodNameAndAppName = (podName: string, porterAppName: string) => {
-  const prefix: string = porterAppName + "-";
-  if (!podName.startsWith(prefix)) {
-    return "";
+export const getPodSelectorFromServiceName = (serviceName: string | null | undefined, services?: Service[]): string | undefined => {
+  if (serviceName == null) {
+    return undefined;
   }
-
-  podName = podName.replace(prefix, "");
-  const suffixes: string[] = ["-web", "-wkr", "-job"];
-  let index: number = -1;
-  let type = ""
-
-  for (const suffix of suffixes) {
-    const newIndex: number = podName.lastIndexOf(suffix);
-    if (newIndex > index) {
-      index = newIndex;
-      type = suffix;
-    }
+  const match = services?.find(s => s.name === serviceName);
+  if (match == null) {
+    return undefined;
   }
-
-  if (index !== -1) {
-    return podName.substring(0, index) + type;
-  }
-
-  return "";
+  return `${match.name}-${match.type == "worker" ? "wkr" : match.type}`;
 }

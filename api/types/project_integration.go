@@ -1,10 +1,6 @@
 package types
 
-import (
-	"time"
-
-	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
-)
+import "time"
 
 // The supported oauth mechanism clients
 const (
@@ -87,27 +83,6 @@ type QuotaPreflightCheckRequest struct {
 }
 
 type QuotaPreflightCheckResponse struct{}
-
-type Network struct {
-	CidrRange        string `json:"cidrRange"`
-	ControlPlaneCidr string `json:"controlPlaneCidr"`
-	PodCidr          string `json:"podCidr"`
-	ServiceCidr      string `json:"serviceCidr"`
-}
-
-type GCPValues struct {
-	Network Network `json:"network"`
-}
-
-// func (g *GCPValues) isPreflightCheckRequest_PreflightValues() {}
-
-type PreflightCheckRequest struct {
-	CloudProvider              porterv1.EnumCloudProvider   `json:"cloud_provider"`
-	CloudProviderCredentialsID string                       `json:"cloud_provider_credentials_id"`
-	CloudValues                *porterv1.GKEPreflightValues `json:"cloud_values,omitempty"`
-}
-
-type PreflightCheckResponse struct{}
 
 type CreateAWSRequest struct {
 	AWSRegion          string `json:"aws_region"`

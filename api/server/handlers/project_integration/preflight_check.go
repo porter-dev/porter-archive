@@ -39,7 +39,9 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	cloudValues := &porterv1.PreflightCheckRequest{}
 	err := helpers.UnmarshalContractObjectFromReader(r.Body, cloudValues)
 	if err != nil {
-		telemetry.Error(ctx, span, err, "error unmarshalling preflight check data")
+		e := telemetry.Error(ctx, span, err, "error unmarshalling preflight check data")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusPreconditionFailed, err.Error()))
+		return
 	}
 
 	input := porterv1.PreflightCheckRequest{

@@ -17,10 +17,12 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// CreatePreflightCheckHandler Create Preflight Checks
 type CreatePreflightCheckHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
+// NewCreatePreflightCheckHandler Create Preflight Checks
 func NewCreatePreflightCheckHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

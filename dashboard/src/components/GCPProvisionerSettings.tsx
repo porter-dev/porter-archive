@@ -84,6 +84,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [preflightData, setPreflightData] = useState({})
   const [preflightFailed, setPreflightFailed] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const markStepStarted = async (step: string) => {
     try {
@@ -141,6 +142,40 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
     return "";
   }
+  const renderAdvancedSettings = () => {
+    return (
+      <>
+        {
+          < Heading >
+            <ExpandHeader
+              onClick={() => setIsExpanded(!isExpanded)}
+              isExpanded={isExpanded}
+            >
+              <i className="material-icons">arrow_drop_down</i>
+              Advanced settings
+            </ExpandHeader>
+          </Heading >
+        }
+        {
+          isExpanded && (
+            <>
+              <InputRow
+                width="350px"
+                type="string"
+                disabled={isReadOnly}
+                value={clusterNetworking.cidrRange}
+                setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, cidrRange: x }))}
+                label="VPC CIDR range"
+                placeholder="ex: 10.78.0.0/16"
+              />
+              <Spacer y={0.25} />
+              <Text color="helper">The following ranges will be used: {clusterNetworking.cidrRange}, {clusterNetworking.controlPlaneCidr}, {clusterNetworking.serviceCidr}, {clusterNetworking.podCidr}</Text>
+            </>
+          )
+        }
+      </>
+    );
+  };
 
   const statusPreflight = (): string => {
 
@@ -367,17 +402,8 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
             setActiveValue={setRegion}
             label="📍 GCP location"
           />
-          <InputRow
-            width="350px"
-            type="string"
-            disabled={isReadOnly}
-            value={clusterNetworking.cidrRange}
-            setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, cidrRange: x }))}
-            label="VPC CIDR range"
-            placeholder="ex: 10.78.0.0/16"
-          />
-          <Spacer y={0.25} />
-          <Text color="helper">The following ranges will be used: {clusterNetworking.cidrRange}, {clusterNetworking.controlPlaneCidr}, {clusterNetworking.serviceCidr}, {clusterNetworking.podCidr}</Text>
+          {renderAdvancedSettings()}
+
         </>
       );
     }
@@ -511,4 +537,15 @@ const ExpandIcon = styled.i<{ isExpanded: boolean }>`
         cursor: pointer;
         border-radius: 20px;
         transform: ${props => props.isExpanded ? "" : "rotate(-90deg)"};
-        `;
+        `; const ExpandHeader = styled.div<{ isExpanded: boolean }>`
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        > i {
+          margin-right: 7px;
+          margin-left: -7px;
+          transform: ${(props) =>
+    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+          transition: transform 0.1s ease;
+        }
+      `;

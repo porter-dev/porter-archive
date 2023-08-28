@@ -75,16 +75,6 @@ const getGitlabIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/gitlab`
 );
 
-// const preflightCheck = baseApi<
-//   {
-//     cloud_provider_credentials_id: string;
-//     cloud_provider: EnumCloudProvider;
-//     cloud_values: GKEPreflightValues | null; //ADD other PreflightValues here when they are created for other cloud providers 
-//   },
-//   { id: number }
-// >("POST", (pathParams) => {
-//   return `/api/projects/${pathParams.id}/integrations/preflightcheck`;
-// });
 
 const preflightCheck = baseApi<PreflightCheckRequest,
   { id: number }

@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -37,57 +36,33 @@ func (c *DeletePorterAppByNameHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	ctx, span := telemetry.NewSpan(r.Context(), "server-delete-porter-app-by-name")
 	defer span.End()
 
-	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(reqErr, http.StatusBadRequest))
+		err := telemetry.Error(ctx, span, reqErr, "error parsing porter app name")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
-	porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
+	if appName == "" {
+		err := telemetry.Error(ctx, span, nil, "porter app name cannot be empty")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
+
+	deleteReq := connect.NewRequest[porterv1.DeletePorterAppRequest](&porterv1.DeletePorterAppRequest{
+		ProjectId: int64(project.ID),
+		AppName:   appName,
+	})
+	ccpResp, err := c.Config().ClusterControlPlaneClient.DeletePorterApp(r.Context(), deleteReq)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error reading porter app by name")
+		err := telemetry.Error(ctx, span, err, "error deleting porter app")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	delApp, err := c.Repo().PorterApp().DeletePorterApp(porterApp)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error deleting porter app")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	// this should be updated once multiple deployment targets are supported
-	if project.ValidateApplyV2 {
-		defaultDeploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(project.ID, cluster.ID, DeploymentTargetSelector_Default, DeploymentTargetSelectorType_Default)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error getting default deployment target from repo")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
-
-		if defaultDeploymentTarget.ID == uuid.Nil {
-			err := telemetry.Error(ctx, span, err, "default deployment target not found")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		deleteReq := connect.NewRequest(&porterv1.DeleteAppDeploymentRequest{
-			ProjectId:          int64(project.ID),
-			DeploymentTargetId: defaultDeploymentTarget.ID.String(),
-			AppName:            porterApp.Name,
-		})
-
-		_, err = c.Config().ClusterControlPlaneClient.DeleteAppDeployment(ctx, deleteReq)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error calling ccp delete app deployment")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-	}
-
-	c.WriteResult(w, r, delApp)
+	c.WriteResult(w, r, ccpResp)
 }

@@ -164,12 +164,14 @@ export const useLogs = (
 
     const websocketBaseURL = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki`;
 
-    const q = new URLSearchParams({
+    const searchParams = {
       pod_selector: currentPodSelector,
       namespace,
       search_param: searchParam,
       revision: currentChart.version.toString(),
-    }).toString();
+    }
+
+    const q = new URLSearchParams(searchParams).toString();
 
     const endpoint = `${websocketBaseURL}?${q}`;
 
@@ -512,13 +514,13 @@ export const getServiceNameFromPodNameAndAppName = (podName: string, porterAppNa
   return "";
 }
 
-export const getPodSelectorFromServiceName = (serviceName: string | null | undefined, services?: Service[]) => {
+export const getPodSelectorFromServiceName = (serviceName: string | null | undefined, services?: Service[]): string | undefined => {
   if (serviceName == null) {
-    return "";
+    return undefined;
   }
   const match = services?.find(s => s.name === serviceName);
   if (match == null) {
-    return "";
+    return undefined;
   }
   return `${match.name}-${match.type == "worker" ? "wkr" : match.type}`;
 }

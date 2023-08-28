@@ -49,7 +49,7 @@ const StyledLogs: React.FC<Props> = ({
                         <LogInnerPill
                             color={"white"}
                             key={index}
-                            onClick={() => filter.setValue(getPodSelectorFromServiceName(getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName), services))}
+                            onClick={() => filter.setValue(getPodSelectorFromServiceName(getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName), services) ?? GenericLogFilter.getDefaultOption("pod_name").value)}
                         >
                             {getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName)}
                         </LogInnerPill>

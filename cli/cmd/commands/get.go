@@ -74,7 +74,10 @@ type getReleaseInfo struct {
 func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
+	}
+	if project == nil {
+		return fmt.Errorf("project [%d] not found", cliConf.Project)
 	}
 
 	if project.ValidateApplyV2 {
@@ -126,7 +129,10 @@ func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.
 func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
+	}
+	if project == nil {
+		return fmt.Errorf("project [%d] not found", cliConf.Project)
 	}
 
 	if project.ValidateApplyV2 {

@@ -88,9 +88,8 @@ func login(ctx context.Context, cliConf config.CLIConfig) error {
 	user, err := client.AuthCheck(ctx)
 	if err != nil {
 		if !strings.Contains(err.Error(), "Forbidden") {
-			return fmt.Errorf("unexpected error performing authorization check")
+			return fmt.Errorf("unexpected error performing authorization check: %w", err)
 		}
-		fmt.Println(err)
 	}
 
 	if cliConf.Token == "" {

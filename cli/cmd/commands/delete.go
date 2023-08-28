@@ -116,7 +116,10 @@ deleting a configuration:
 func deleteDeployment(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
+	}
+	if project == nil {
+		return fmt.Errorf("project [%d] not found", cliConf.Project)
 	}
 
 	if project.ValidateApplyV2 {
@@ -160,7 +163,10 @@ func deleteDeployment(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 func deleteApp(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
+	}
+	if project == nil {
+		return fmt.Errorf("project [%d] not found", cliConf.Project)
 	}
 
 	if project.ValidateApplyV2 {
@@ -202,7 +208,10 @@ func deleteApp(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clien
 func deleteJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
+	}
+	if project == nil {
+		return fmt.Errorf("project [%d] not found", cliConf.Project)
 	}
 
 	if project.ValidateApplyV2 {

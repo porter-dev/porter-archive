@@ -94,7 +94,10 @@ func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
 func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
+	}
+	if project == nil {
+		return fmt.Errorf("project [%d] not found", cliConf.Project)
 	}
 
 	if project.ValidateApplyV2 {
@@ -116,7 +119,10 @@ func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client 
 func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
+	}
+	if project == nil {
+		return fmt.Errorf("project [%d] not found", cliConf.Project)
 	}
 
 	if project.ValidateApplyV2 {
@@ -138,7 +144,10 @@ func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client
 func listJobs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
+	}
+	if project == nil {
+		return fmt.Errorf("project [%d] not found", cliConf.Project)
 	}
 
 	if project.ValidateApplyV2 {

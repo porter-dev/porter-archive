@@ -61,9 +61,24 @@ export const useLogs = (
     nextCursor: null,
   });
 
+  /**
+ * Application pods are of the format <app-name>-<service-name>-<random-4-char-string>
+ * The max length of a pod name is 63 characters
+ * Therefore if the podSelector we try to use is longer than 58 characters, then it won't match any pods
+ * e.g. podSelector "postgres-snowflake-connector-postgres-snowflake-service-wkr-" won't work because the pod is actually named "postgres-snowflake-connector-postgres-snowflake-service-wkqcpz2" 
+ * so we trim the podSelector to "postgres-snowflake-connector-postgres-snowflake-service-wk" to ensure we match the pod
+ * This is only to fix current pods; new pods will be named correctly because we imposed service name limits in https://github.com/porter-dev/porter/pull/3439
+ * */
+  const trimPodSelector = (podSelector: string) => {
+    if (podSelector.length <= 58) {
+      return podSelector;
+    }
+    return podSelector.slice(0, 58);
+  }
+
   // if currentPodName is default value we are looking at all chart pod logs
   const currentPodSelector = selectedFilterValues.pod_name === GenericLogFilter.getDefaultOption("pod_name").value
-    ? `${currentChart?.name ?? ''}-.*` : `${currentChart?.name}-${selectedFilterValues.pod_name}-.*`;
+    ? `${currentChart?.name ?? ''}-.*` : `${trimPodSelector(`${currentChart?.name}-${selectedFilterValues.pod_name}-`)}.*`;
 
   // if we are live:
   // - start date is initially set to 2 weeks ago
@@ -498,6 +513,14 @@ export const getServiceNameFromPodNameAndAppName = (podName: string, porterAppNa
 
   if (index !== -1) {
     return podName.substring(0, index);
+  }
+
+  // if the suffix wasn't found, it's possible that the service name was too long to keep the entire suffix. example: postgres-snowflake-connector-postgres-snowflake-service-wk8gnst
+  // if this is the case, find the service name by removing everything after the last dash
+  // This is only to fix current pods; new pods will be named correctly because we imposed service name limits in https://github.com/porter-dev/porter/pull/3439
+  index = podName.lastIndexOf("-");
+  if (index !== -1) {
+    return podName.substring(0, index)
   }
 
   return "";

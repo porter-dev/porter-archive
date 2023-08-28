@@ -440,9 +440,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

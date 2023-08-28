@@ -49,6 +49,7 @@ import EventFocusView from "./activity-feed/events/focus-views/EventFocusView";
 import HelmValuesTab from "./HelmValuesTab";
 import SettingsTab from "./SettingsTab";
 import PorterAppRevisionSection from "./PorterAppRevisionSection";
+import NotificationFeed from "./notifications/NotificationFeed";
 
 type Props = RouteComponentProps & {};
 
@@ -72,6 +73,7 @@ const validTabs = [
   "settings",
   "helm-values",
   "job-history",
+  "notifications",
 ] as const;
 const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
@@ -726,6 +728,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           jobName={queryParamOpts.service}
           goBack={() => setExpandedJob(null)}
         />;
+      case "notifications":
+        return <NotificationFeed appName={appData.app.name} />;
       default:
         return <ActivityFeed
           chart={appData.chart}
@@ -922,6 +926,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <TabSelector
                 noBuffer
                 options={[
+                  { label: "Notifications", value: "notifications" },
                   { label: "Activity", value: "activity" },
                   { label: "Overview", value: "overview" },
                   hasBuiltImage && { label: "Logs", value: "logs" },

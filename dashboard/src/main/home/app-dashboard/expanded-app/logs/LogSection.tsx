@@ -276,6 +276,7 @@ const LogSection: React.FC<Props> = ({
                   logs={logs}
                   appName={appName}
                   filters={filters}
+                  services={services}
                 />
                 <LoadMoreButton
                   active={selectedDate && logs.length !== 0}

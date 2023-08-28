@@ -4,4 +4,8 @@
 
 ## What does this PR do?
 
-<!-- What are we reviewing? Add screenshots if possible! -->
+<!--
+What are we reviewing?
+Add screenshots if possible.
+Outline complex testing steps for posterity.
+-->

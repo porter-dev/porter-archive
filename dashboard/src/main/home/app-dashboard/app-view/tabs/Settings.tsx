@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from "react";
 import styled from "styled-components";
+import { useHistory } from "react-router";
 
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
@@ -11,6 +12,7 @@ import api from "shared/api";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 
 const Settings: React.FC = () => {
+  const history = useHistory();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { porterApp, clusterId, projectId } = useLatestRevision();
   const { updateAppStep } = useAppAnalytics(porterApp.name);
@@ -92,10 +94,12 @@ const Settings: React.FC = () => {
           }
 
           updateAppStep({ step: "stack-deletion", deleteWorkflow: true });
+          history.push("/apps");
           return;
         }
 
         updateAppStep({ step: "stack-deletion", deleteWorkflow: false });
+        history.push("/apps");
       } catch (err) {}
     },
     [githubWorkflowFilename, porterApp.name, clusterId, projectId]

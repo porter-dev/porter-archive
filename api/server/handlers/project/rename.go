@@ -12,11 +12,13 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
+// RenameProjectHandler Renames a project
 type RenameProjectHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
+// NewRenameProjectHandler renames the project with the given name
 func NewRenameProjectHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

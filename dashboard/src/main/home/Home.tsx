@@ -423,7 +423,11 @@ const Home: React.FC<Props> = (props) => {
               )}
             </Route>
             <Route path="/apps/:appName/:tab">
-              <ExpandedApp />
+              {currentProject?.validate_apply_v2 ? (
+                <AppView />
+              ) : (
+                <ExpandedApp />
+              )}
             </Route>
             <Route path="/apps/:appName">
               {currentProject?.validate_apply_v2 ? (

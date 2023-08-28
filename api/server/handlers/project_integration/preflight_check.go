@@ -36,18 +36,11 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	defer span.End()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	
 	cloudValues := &porterv1.PreflightCheckRequest{}
 	err := helpers.UnmarshalContractObjectFromReader(r.Body, cloudValues)
 	if err != nil {
 		telemetry.Error(ctx, span, err, "error unmarshalling preflight check data")
 	}
-
-	// if err := json.NewDecoder(r.Body).Decode(request); err != nil {
-	// 	http.Error(w, err.Error(), http.StatusBadRequest)
-	// 	return
-	// }
-	// fmt.Println("HERE", request.CloudValues)
 
 	input := porterv1.PreflightCheckRequest{
 		ProjectId:                  int64(project.ID),
@@ -57,8 +50,7 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	if cloudValues.PreflightValues != nil {
 		if cloudValues.CloudProvider == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP {
-			input.PreflightValues =  cloudValues.PreflightValues
-		
+			input.PreflightValues = cloudValues.PreflightValues
 		}
 	}
 

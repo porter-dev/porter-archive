@@ -31,7 +31,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
   const [gcpCloudProviderCredentialID, setGCPCloudProviderCredentialId] = useState<string>("")
-  const [preFlightData, setPreflightData] = useState({})
+  const [preFlightData, setPreflightData] = useState(null)
   const [preflightFailed, setPreflightFailed] = useState<boolean>(false)
 
   useEffect(() => {
@@ -95,12 +95,6 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
         })
         const preflightDataResp = await api.preflightCheck(
           "<token>", data,
-          // {
-          //   cloud_provider_credentials_id: gcpIntegrationResponse.data.cloud_provider_credentials_id,
-          //   cloud_provider: EnumCloudProvider.GCP,
-          //   cloud_values: null
-          // },
-
           {
             id: currentProject.id,
           }

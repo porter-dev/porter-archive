@@ -308,7 +308,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   }, [props.selectedClusterVersion]);
 
   useEffect(() => {
-    if (statusPreflight() == "") {
+    if (statusPreflight() == "" && !props.clusterId) {
       preflightChecks()
     }
 
@@ -414,7 +414,14 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
             <Spacer y={1} />
           </>
           :
-          <PreflightChecks preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
+          <>
+            {(!props.clusterId) &&
+              <>
+                <PreflightChecks preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
+                <Spacer y={1} />
+              </>
+            }
+          </>
         }
 
       </>
@@ -435,14 +442,14 @@ export default withRouter(GCPProvisionerSettings);
 
 
 const StyledForm = styled.div`
-  position: relative;
-  padding: 30px 30px 25px;
-  border-radius: 5px;
-  background: ${({ theme }) => theme.fg};
-  border: 1px solid #494b4f;
-  font-size: 13px;
-  margin-bottom: 30px;
-`;
+      position: relative;
+      padding: 30px 30px 25px;
+      border-radius: 5px;
+      background: ${({ theme }) => theme.fg};
+      border: 1px solid #494b4f;
+      font-size: 13px;
+      margin-bottom: 30px;
+      `;
 
 const DEFAULT_ERROR_MESSAGE =
   "An error occurred while provisioning your infrastructure. Please try again.";
@@ -455,53 +462,53 @@ const errorMessageToModal = (errorMessage: string) => {
 };
 
 const AppearingDiv = styled.div<{ color?: string }>`
-  animation: floatIn 0.5s;
-  animation-fill-mode: forwards;
-  display: flex;
-  flex-direction: column; 
-  color: ${(props) => props.color || "#ffffff44"};
-  margin-left: 10px;
-  @keyframes floatIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
+        animation: floatIn 0.5s;
+        animation-fill-mode: forwards;
+        display: flex;
+        flex-direction: column;
+        color: ${(props) => props.color || "#ffffff44"};
+        margin-left: 10px;
+        @keyframes floatIn {
+          from {
+          opacity: 0;
+        transform: translateY(20px);
     }
-    to {
-      opacity: 1;
-      transform: translateY(0px);
+        to {
+          opacity: 1;
+        transform: translateY(0px);
     }
   }
-`;
+        `;
 const StatusIcon = styled.img`
-height: 14px;
-`;
+        height: 14px;
+        `;
 
 const CheckItemContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  border: 1px solid ${props => props.theme.border};
-  border-radius: 5px;
-  font-size: 13px;
-  width: 100%;
-  margin-bottom: 10px;
-  padding-left: 10px;
-  cursor: ${props => (props.hasMessage ? 'pointer' : 'default')};
-  background: ${props => props.theme.clickable.bg};
+        display: flex;
+        flex-direction: column;
+        border: 1px solid ${props => props.theme.border};
+        border-radius: 5px;
+        font-size: 13px;
+        width: 100%;
+        margin-bottom: 10px;
+        padding-left: 10px;
+        cursor: ${props => (props.hasMessage ? 'pointer' : 'default')};
+        background: ${props => props.theme.clickable.bg};
 
-`;
+        `;
 
 const CheckItemTop = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  background: ${props => props.theme.clickable.bg};
-`;
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        background: ${props => props.theme.clickable.bg};
+        `;
 
 const ExpandIcon = styled.i<{ isExpanded: boolean }>`
-  margin-left: 8px;
-  color: #ffffff66;
-  font-size: 20px;
-  cursor: pointer;
-  border-radius: 20px;
-  transform: ${props => props.isExpanded ? "" : "rotate(-90deg)"};
-`;
+        margin-left: 8px;
+        color: #ffffff66;
+        font-size: 20px;
+        cursor: pointer;
+        border-radius: 20px;
+        transform: ${props => props.isExpanded ? "" : "rotate(-90deg)"};
+        `;

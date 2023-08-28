@@ -52,26 +52,9 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
           this.props.setRefreshClusters(true);
           this.setState({ status: "successful", showDeleteOverlay: false });
           this.context.setCurrentModal(null, null);
-
-
-          if (currentProject?.simplified_view_enabled) {
-            api.saveOnboardingState("<token>",
-              {
-                "current_step": "connect_source"
-              },
-              {
-                project_id: currentProject.id
-              }
-            ).then(() =>
-              pushFiltered(this.props, "/onboarding", ["project_id"], {})
-            )
-
-          } else {
-
-            pushFiltered(this.props, "/dashboard", ["project_id"], {
-              tab: "overview",
-            });
-          }
+          pushFiltered(this.props, "/dashboard", ["project_id"], {
+            tab: "overview",
+          });
           return;
         }
 

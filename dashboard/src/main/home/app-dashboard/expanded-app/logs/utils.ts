@@ -500,6 +500,14 @@ export const getServiceNameFromPodNameAndAppName = (podName: string, porterAppNa
     return podName.substring(0, index);
   }
 
+  // if the suffix wasn't found, it's possible that the service name was too long to keep the entire suffix. example: postgres-snowflake-connector-postgres-snowflake-service-wk8gnst
+  // if this is the case, find the service name by removing everything after the last dash
+  // This is only to fix current pods; new pods will be named correctly because we imposed service name limits in https://github.com/porter-dev/porter/pull/3439
+  index = podName.lastIndexOf("-");
+  if (index !== -1) {
+    return podName.substring(0, index)
+  }
+
   return "";
 }
 

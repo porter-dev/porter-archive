@@ -15,7 +15,6 @@ import {
   PorterAppFormData,
   SourceOptions,
 } from "lib/porter-apps";
-import { BuildMethod } from "../types/porterApp";
 import RepositorySelector from "../build-settings/RepositorySelector";
 import BranchSelector from "../build-settings/BranchSelector";
 import BuildpackSettings from "../validate-apply/build-settings/buildpacks/BuildpackSettings";
@@ -34,6 +33,7 @@ const branchContentsSchema = z
   .array();
 
 type BranchContents = z.infer<typeof branchContentsSchema>;
+type BuildView = "docker" | "pack";
 
 const RepoSettings: React.FC<Props> = ({ projectId, source, build }) => {
   const {
@@ -42,8 +42,8 @@ const RepoSettings: React.FC<Props> = ({ projectId, source, build }) => {
     register,
     setValue,
   } = useFormContext<PorterAppFormData>();
-  const [buildView, setBuildView] = useState<BuildMethod>("buildpacks");
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const method = watch("app.build.method");
 
   const repoIsSet = useMemo(() => source.git_repo_name !== "", [
     source.git_repo_name,
@@ -83,7 +83,7 @@ const RepoSettings: React.FC<Props> = ({ projectId, source, build }) => {
     const hasDockerfile = branchContents.some((item) =>
       item.path.includes("Dockerfile")
     );
-    setBuildView(hasDockerfile ? "docker" : "buildpacks");
+    setValue("app.build.method", hasDockerfile ? "docker" : "pack");
   }, [branchContents]);
 
   return (
@@ -208,7 +208,7 @@ const RepoSettings: React.FC<Props> = ({ projectId, source, build }) => {
                   setShowSettings(!showSettings);
                 }}
               >
-                {buildView == "docker" ? (
+                {method == "docker" ? (
                   <AdvancedBuildTitle>
                     <i className="material-icons dropdown">arrow_drop_down</i>
                     Configure Dockerfile settings
@@ -224,18 +224,18 @@ const RepoSettings: React.FC<Props> = ({ projectId, source, build }) => {
               <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
                 <StyledSourceBox>
                   <Select
-                    value={buildView}
+                    value={method}
                     width="300px"
                     options={[
                       { value: "docker", label: "Docker" },
-                      { value: "buildpacks", label: "Buildpacks" },
+                      { value: "pack", label: "Buildpacks" },
                     ]}
                     setValue={(option: string) =>
-                      setBuildView(option as BuildMethod)
+                      setValue("app.build.method", option as BuildView)
                     }
                     label="Build method"
                   />
-                  {buildView === "docker" ? (
+                  {method === "docker" ? (
                     <>
                       <Spacer y={0.5} />
                       <Text color="helper">

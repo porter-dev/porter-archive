@@ -16,6 +16,7 @@ import { Service, ServiceType } from "./serviceTypes";
 
 interface ServicesProps {
   services: Service[];
+  appName: string;
   setServices: (services: Service[]) => void;
   addNewText: string;
   defaultExpanded?: boolean;
@@ -26,6 +27,7 @@ interface ServicesProps {
 }
 
 const Services: React.FC<ServicesProps> = ({
+  appName,
   services,
   setServices,
   addNewText,
@@ -48,6 +50,11 @@ const Services: React.FC<ServicesProps> = ({
     const serviceNames = services.map((service) => service.name);
     return serviceNames.includes(name);
   };
+  const isServiceNameTooLong = (name: string) => {
+    // k8s pod name limit is 63 characters: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
+    // the pod name is the appName-serviceName-web/wkr/job-random_4_char_string, so the max limit is 53
+    return name.length + appName.length > 53;
+  };
 
   const maybeGetError = (): string | undefined => {
     if (serviceName.length > 30) {
@@ -55,7 +62,9 @@ const Services: React.FC<ServicesProps> = ({
     } else if (serviceName != "" && !isServiceNameValid(serviceName)) {
       return "Lowercase letters, numbers, and '-' only.";
     } else if (isServiceNameDuplicate(serviceName)) {
-      return "Service name is duplicate";
+      return "Service name is duplicate!";
+    } else if (isServiceNameTooLong(serviceName)) {
+      return "Service name is too long!";
     } else {
       return undefined;
     }

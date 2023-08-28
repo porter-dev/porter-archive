@@ -41,18 +41,18 @@ func isPorterAgentUpdated(agent *kubernetes.Agent, major, minor, patch int) bool
 	parsedPatch, _ := strconv.Atoi(parsedTag[2])
 	if parsedMajor < major {
 		return false
+	} else if parsedMajor > major {
+		return true
 	}
 	if parsedMinor < minor {
 		return false
+	} else if parsedMinor > minor {
+		return true
 	}
-	if parsedPatch < patch {
-		return false
-	}
-	return true
+	return parsedPatch >= patch
 }
 
 // Only create the PROGRESSING event if the cluster's agent is updated, because only the updated agent can update the status
-// TODO: remove dependence on porter email once we are ready to release this feature
-func AreAgentDeployEventsEnabled(email string, agent *kubernetes.Agent) bool {
-	return isPorterAgentUpdated(agent, 3, 1, 6) && strings.HasSuffix(email, "porter.run")
+func AreAgentDeployEventsEnabled(agent *kubernetes.Agent) bool {
+	return isPorterAgentUpdated(agent, 3, 1, 6)
 }

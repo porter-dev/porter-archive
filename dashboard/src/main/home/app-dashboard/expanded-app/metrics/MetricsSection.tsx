@@ -4,6 +4,7 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { ChartType } from "shared/types";
+import { Service } from "../../new-app-flow/serviceTypes";
 
 import TabSelector from "components/TabSelector";
 import SelectRow from "components/form-components/SelectRow";
@@ -20,12 +21,14 @@ type PropsType = {
   currentChart: ChartType;
   appName: string;
   serviceName?: string;
+  services: Service[];
 };
 
 const MetricsSection: React.FunctionComponent<PropsType> = ({
   currentChart,
   appName,
   serviceName,
+  services,
 }) => {
   const [selectedController, setSelectedController] = useState<any>(null);
   const [selectedRange, setSelectedRange] = useState("1H");
@@ -65,6 +68,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       });
 
       return controllerOptions;
+    },
+    {
+      refetchOnWindowFocus: false,
     }
   );
 
@@ -81,10 +87,15 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         return;
       }
       const metrics: Metric[] = [];
-      const metricTypes: MetricType[] = ["cpu", "memory", "network"];
+      const metricTypes: MetricType[] = ["cpu", "memory"];
 
       const serviceName: string = selectedController?.metadata.labels["app.kubernetes.io/name"]
       const isHpaEnabled: boolean = currentChart?.config?.[serviceName]?.autoscaling?.enabled
+
+      const shortServiceName: string = getServiceNameFromControllerName(selectedController?.metadata?.name, appName)
+      if (services.some(svc => svc.name === shortServiceName && svc.type === "web")) {
+         metricTypes.push("network");
+      }
 
       if (isHpaEnabled) {
         metricTypes.push("hpa_replicas");
@@ -149,7 +160,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               "<token>",
               {
                 metric: hpaMetricType,
-                shouldsum: true,
+                shouldsum: false,
                 kind: kind,
                 name: selectedController?.metadata.name,
                 namespace: currentChart.namespace,
@@ -212,6 +223,8 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     },
     {
       enabled: selectedController != null,
+      refetchOnWindowFocus: false,
+      refetchInterval: 10000, // refresh metrics every 10 seconds
     }
   );
 

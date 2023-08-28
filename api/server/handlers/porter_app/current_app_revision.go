@@ -1,18 +1,17 @@
 package porter_app
 
 import (
-	"encoding/base64"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 
 	"connectrpc.com/connect"
 
-	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 
 	"github.com/google/uuid"
 
+	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -46,7 +45,8 @@ type LatestAppRevisionRequest struct {
 
 // LatestAppRevisionResponse is the response object for the /apps/{porter_app_name}/latest endpoint
 type LatestAppRevisionResponse struct {
-	B64AppProto string `json:"b64_app_proto"`
+	// AppRevision is the latest revision for the app
+	AppRevision porter_app.Revision `json:"app_revision"`
 }
 
 // ServeHTTP translates the request into a CurrentAppRevision grpc request, forwards to the cluster control plane, and returns the response.
@@ -129,23 +129,16 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if currentAppRevisionResp.Msg.App == nil {
-		err := telemetry.Error(ctx, span, err, "current app revision definition is nil")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	encoded, err := helpers.MarshalContractObject(ctx, currentAppRevisionResp.Msg.App)
+	appRevision := currentAppRevisionResp.Msg.AppRevision
+	encodedRevision, err := porter_app.EncodedRevisionFromProto(ctx, appRevision)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error marshalling app proto back to json")
+		err := telemetry.Error(ctx, span, err, "error encoding revision from proto")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	b64 := base64.StdEncoding.EncodeToString(encoded)
-
-	response := &LatestAppRevisionResponse{
-		B64AppProto: b64,
+	response := LatestAppRevisionResponse{
+		AppRevision: encodedRevision,
 	}
 
 	c.WriteResult(w, r, response)

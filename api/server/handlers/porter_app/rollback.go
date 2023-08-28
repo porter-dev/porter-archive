@@ -39,7 +39,6 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-rollback-porter-app")
 	defer span.End()
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-	user, _ := ctx.Value(types.UserScope).(*models.User)
 
 	request := &types.RollbackPorterAppRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -154,7 +153,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if features.AreAgentDeployEventsEnabled(user.Email, k8sAgent) {
+	if features.AreAgentDeployEventsEnabled(k8sAgent) {
 		serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, types.PorterAppEventStatus_Progressing)
 		_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, types.PorterAppEventStatus_Progressing, porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 	} else {

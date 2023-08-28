@@ -29,9 +29,6 @@ type Client struct {
 
 	// cfToken is a cloudflare token for accessing the API
 	cfToken string
-
-	// // Config contains all config read from flags, environment variables, or porter.yaml config. This is used to automatically pull hosts, projectIDs, clusterIDs etc. in API calls
-	// Config config.CLIConfig
 }
 
 // NewClientInput contains all information required to create a new API Client
@@ -79,8 +76,11 @@ func NewClientWithConfig(ctx context.Context, input NewClientInput) (Client, err
 		}
 		return client, nil
 	}
-	return client, errors.New("unable to create an API session with cookie nor token")
+	return client, ErrNoAuthCredential
 }
+
+// ErrNoAuthCredential returns an error when no auth credentials have been provided such as cookies or tokens
+var ErrNoAuthCredential = errors.New("unable to create an API session with cookie nor token")
 
 // NewClient constructs a new client based on a set of options
 func NewClient(baseURL string, cookieFileName string) *Client {

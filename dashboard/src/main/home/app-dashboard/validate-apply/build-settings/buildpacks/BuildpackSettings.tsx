@@ -26,7 +26,9 @@ import {
 
 type Props = {
   projectId: number;
-  build: BuildOptions;
+  build: BuildOptions & {
+    method: "pack";
+  };
   source: SourceOptions & { type: "github" };
   autoDetectionDisabled?: boolean;
 };

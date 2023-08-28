@@ -5,7 +5,10 @@
 ## What does this PR do?
 
 <!--
-What are we reviewing?
-Add screenshots if possible.
-Outline complex testing steps for posterity.
+This is where you should write the PR description. What are we reviewing?
+Be concise, summarize with bullet points if possible.
+
+- Add screenshots for frontend changes.
+- Outline complex testing steps for posterity.
+- Note if this PR depends on other PRs or specific actions.
 -->

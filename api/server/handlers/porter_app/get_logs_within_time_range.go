@@ -166,9 +166,9 @@ func trimPodSelector(podSelector string) string {
 	if !strings.HasSuffix(podSelector, ".*") {
 		return podSelector
 	}
-	podSelector = strings.TrimSuffix(podSelector, ".*")
-	if len(podSelector) <= 58 {
+	podSelectorWithoutWildcard := strings.TrimSuffix(podSelector, ".*")
+	if len(podSelectorWithoutWildcard) <= 58 {
 		return podSelector
 	}
-	return fmt.Sprintf("%s.*", podSelector[:58])
+	return fmt.Sprintf("%s.*", podSelectorWithoutWildcard[:58])
 }

@@ -166,7 +166,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     }) => {
       setIsDeploying(true);
       // log analytics event that we started form submission
-      updateAppStep("stack-launch-complete");
+      updateAppStep({ step: "stack-launch-complete" });
 
       try {
         if (!currentProject?.id || !currentCluster?.id) {
@@ -202,7 +202,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         );
 
         // log analytics event that we successfully deployed
-        updateAppStep("stack-launch-success");
+        updateAppStep({ step: "stack-launch-success" });
 
         if (source.type === "docker-registry") {
           history.push(`/apps/${app.name}`);
@@ -211,14 +211,17 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         return true;
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.data?.error) {
-          updateAppStep("stack-launch-failure", err.response?.data?.error);
+          updateAppStep({
+            step: "stack-launch-failure",
+            errorMessage: err.response?.data?.error,
+          });
           setDeployError(err.response?.data?.error);
           return false;
         }
 
         const msg =
           "An error occurred while deploying your application. Please try again.";
-        updateAppStep("stack-launch-failure", msg);
+        updateAppStep({ step: "stack-launch-failure", errorMessage: msg });
         setDeployError(msg);
         return false;
       } finally {

@@ -7,6 +7,7 @@ import { Context } from "shared/Context";
 import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
 import { ChartType } from "shared/types";
 import { AgentLog, AgentLogSchema, Direction, PorterLog, PaginationInfo, GenericLogFilter, LogFilterName } from "./types";
+import { Service } from "../../new-app-flow/serviceTypes";
 
 const MAX_LOGS = 5000;
 const MAX_BUFFER_LOGS = 1000;
@@ -511,28 +512,13 @@ export const getServiceNameFromPodNameAndAppName = (podName: string, porterAppNa
   return "";
 }
 
-export const getPodSelectorFromPodNameAndAppName = (podName: string, porterAppName: string) => {
-  const prefix: string = porterAppName + "-";
-  if (!podName.startsWith(prefix)) {
+export const getPodSelectorFromServiceName = (serviceName: string | null | undefined, services?: Service[]) => {
+  if (serviceName == null) {
     return "";
   }
-
-  podName = podName.replace(prefix, "");
-  const suffixes: string[] = ["-web", "-wkr", "-job"];
-  let index: number = -1;
-  let type = ""
-
-  for (const suffix of suffixes) {
-    const newIndex: number = podName.lastIndexOf(suffix);
-    if (newIndex > index) {
-      index = newIndex;
-      type = suffix;
-    }
+  const match = services?.find(s => s.name == serviceName);
+  if (match == null) {
+    return "";
   }
-
-  if (index !== -1) {
-    return podName.substring(0, index) + type;
-  }
-
-  return "";
+  return `${match.name}-${match.type == "worker" ? "wkr" : match.type}`;
 }

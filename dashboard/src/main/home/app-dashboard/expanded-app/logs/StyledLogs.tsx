@@ -3,19 +3,22 @@ import { GenericLogFilter, PorterLog } from "./types";
 import styled from "styled-components";
 import Anser from "anser";
 import dayjs from "dayjs";
-import { getPodSelectorFromPodNameAndAppName, getServiceNameFromPodNameAndAppName, getVersionTagColor } from "./utils";
+import { getPodSelectorFromServiceName, getServiceNameFromPodNameAndAppName, getVersionTagColor } from "./utils";
+import { Service } from "../../new-app-flow/serviceTypes";
 
 
 type Props = {
     logs: PorterLog[];
     appName: string;
     filters: GenericLogFilter[];
+    services?: Service[];
 };
 
 const StyledLogs: React.FC<Props> = ({
     logs,
     appName,
     filters,
+    services,
 }) => {
     const renderFilterTagForLog = (filter: GenericLogFilter, log: PorterLog, index: number) => {
         if (log.metadata == null) {
@@ -46,7 +49,7 @@ const StyledLogs: React.FC<Props> = ({
                         <LogInnerPill
                             color={"white"}
                             key={index}
-                            onClick={() => filter.setValue(getPodSelectorFromPodNameAndAppName(log.metadata.pod_name, appName))}
+                            onClick={() => filter.setValue(getPodSelectorFromServiceName(getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName), services))}
                         >
                             {getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName)}
                         </LogInnerPill>
@@ -95,7 +98,6 @@ const StyledLogs: React.FC<Props> = ({
                     )
                 })}
             </StyledLogsTableBody>
-
         </StyledLogsTable>
     );
 };

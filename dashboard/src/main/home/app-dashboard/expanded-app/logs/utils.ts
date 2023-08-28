@@ -516,7 +516,7 @@ export const getPodSelectorFromServiceName = (serviceName: string | null | undef
   if (serviceName == null) {
     return "";
   }
-  const match = services?.find(s => s.name == serviceName);
+  const match = services?.find(s => s.name === serviceName);
   if (match == null) {
     return "";
   }

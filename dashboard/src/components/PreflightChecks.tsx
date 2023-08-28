@@ -42,8 +42,13 @@ const PreflightChecks: React.FC<Props> = (props) => {
           <div>
             <ErrorMessageLabel>Error Message:</ErrorMessageLabel>
             <ErrorMessageContent>{check.value.message}</ErrorMessageContent>
-            <ErrorMessageLabel>Enable:</ErrorMessageLabel>
-            <ErrorMessageContent>{check.value.metadata ? check.value.metadata.Enable : "Please Contact Porter Support at support@porter.run"}</ErrorMessageContent>
+            {check.value.metadata &&
+              Object.entries(check.value.metadata).map(([key, value]) => (
+                <div key={key}>
+                  <ErrorMessageLabel>{key}:</ErrorMessageLabel>
+                  <ErrorMessageContent>{value}</ErrorMessageContent>
+                </div>
+              ))}
           </div>
         )}
       </CheckItemContainer>

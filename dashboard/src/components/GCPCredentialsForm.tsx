@@ -32,7 +32,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
   const [gcpCloudProviderCredentialID, setGCPCloudProviderCredentialId] = useState<string>("")
   const [preFlightData, setPreflightData] = useState(null)
-  const [preflightFailed, setPreflightFailed] = useState<boolean>(false)
+  const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
 
   useEffect(() => {
     setDetected(undefined);
@@ -85,7 +85,6 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
       setIsLoading(false)
 
       if (gcpIntegrationResponse?.data?.cloud_provider_credentials_id) {
-        console.log("Will Call Preflight Checks Here")
         setIsLoading(true);
         var data = new PreflightCheckRequest({
           projectId: BigInt(currentProject.id),
@@ -196,7 +195,11 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
 
             </>
             :
-            <PreflightChecks preflightData={preFlightData} setPreflightFailed={setPreflightFailed} />
+
+            preFlightData ?
+              (<PreflightChecks preflightData={preFlightData} setPreflightFailed={setPreflightFailed} />)
+              : (<Text>  Error could not perfrom preflight checks on your account please check your credentails or contact Porter Support at support@porter.run</Text>)
+
           }
         </>
       </>

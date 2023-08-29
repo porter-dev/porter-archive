@@ -36,16 +36,19 @@ type CLIConfig struct {
 	Kubeconfig string `yaml:"kubeconfig"`
 }
 
+// FeatureFlags are any flags that are relevant to the feature set of the CLI. This should not include all feature flags, only those relevant to client-side CLI operations
+type FeatureFlags struct {
+	// ValidateApplyV2Enabled is a project-wide flag for checking if `porter apply` with porter.yaml is enabled
+	ValidateApplyV2Enabled bool
+}
+
 // InitAndLoadConfig populates the config object with the following precedence rules:
 // 1. flag
 // 2. env
 // 3. config
 // 4. default
+// Make sure to call overrideConfigWithFlags during runtime, to ensure that the flag values are considered
 func InitAndLoadConfig() (CLIConfig, error) {
-	return initAndLoadConfig()
-}
-
-func initAndLoadConfig() (CLIConfig, error) {
 	var config CLIConfig
 
 	porterDir, err := getOrCreatePorterDirectoryAndConfig()
@@ -55,6 +58,11 @@ func initAndLoadConfig() (CLIConfig, error) {
 	viper.SetConfigName("porter")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(porterDir)
+
+	err = createAndLoadPorterYaml(porterDir)
+	if err != nil {
+		return config, fmt.Errorf("unable to load porter config: %w", err)
+	}
 
 	utils.DriverFlagSet.StringVar(
 		&config.Driver,
@@ -141,11 +149,6 @@ func initAndLoadConfig() (CLIConfig, error) {
 		return config, err
 	}
 
-	err = createAndLoadPorterYaml(porterDir)
-	if err != nil {
-		return config, fmt.Errorf("unable to load porter config: %w", err)
-	}
-
 	err = viper.Unmarshal(&config)
 	if err != nil {
 		return config, fmt.Errorf("unable to unmarshal porter config: %w", err)
@@ -187,28 +190,6 @@ func createAndLoadPorterYaml(porterDir string) error {
 	}
 	return nil
 }
-
-// func GetCLIConfig() *CLIConfig {
-// 	if config == nil {
-// 		panic("GetCLIConfig() called before initialisation")
-// 	}
-
-// 	return config
-// }
-
-// func GetAPIClient() api.Client {
-// 	ctx := ctx
-
-// 	config := GetCLIConfig()
-
-// 	client := api.NewClientWithConfig(ctx, api.NewClientInput{
-// 		BaseURL:        fmt.Sprintf("%s/api", config.Host),
-// 		BearerToken:    config.Token,
-// 		CookieFileName: "cookie.json",
-// 	})
-
-// 	return client
-// }
 
 func (c *CLIConfig) SetDriver(driver string) error {
 	viper.Set("driver", driver)

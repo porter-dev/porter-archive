@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import {
   PorterAppFormData,
@@ -18,6 +18,8 @@ import { useAppValidation } from "lib/hooks/useAppValidation";
 import api from "shared/api";
 import { useQueryClient } from "@tanstack/react-query";
 import Settings from "./tabs/Settings";
+import BuildSettings from "./tabs/BuildSettings";
+import Environment from "./tabs/Environment";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -44,6 +46,8 @@ type AppDataContainerProps = {
 const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const history = useHistory();
   const queryClient = useQueryClient();
+  const [redeployOnSave, setRedeployOnSave] = useState(false);
+
   const {
     porterApp,
     latestProto,
@@ -94,7 +98,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       source: latestSource,
     },
   });
-  const { reset, handleSubmit } = porterAppFormMethods;
+  const {
+    reset,
+    handleSubmit,
+    formState: { dirtyFields },
+  } = porterAppFormMethods;
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -110,6 +118,28 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           cluster_id: clusterId,
         }
       );
+
+      if (
+        redeployOnSave &&
+        latestSource.type === "github" &&
+        dirtyFields.app?.build
+      ) {
+        await api.reRunGHWorkflow(
+          "<token>",
+          {},
+          {
+            project_id: projectId,
+            cluster_id: clusterId,
+            git_installation_id: latestSource.git_repo_id,
+            owner: latestSource.git_repo_name.split("/")[0],
+            name: latestSource.git_repo_name.split("/")[1],
+            branch: porterApp.git_branch,
+            filename: "porter_stack_" + porterApp.name + ".yml",
+          }
+        );
+
+        setRedeployOnSave(false);
+      }
 
       await queryClient.invalidateQueries([
         "getLatestRevision",
@@ -146,6 +176,15 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           noBuffer
           options={[
             { label: "Overview", value: "overview" },
+            { label: "Environment", value: "environment" },
+            ...(latestProto.build
+              ? [
+                  {
+                    label: "Build Settings",
+                    value: "build-settings",
+                  },
+                ]
+              : []),
             { label: "Settings", value: "settings" },
           ]}
           currentTab={currentTab}
@@ -156,6 +195,13 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         <Spacer y={1} />
         {match(currentTab)
           .with("overview", () => <Overview />)
+          .with("build-settings", () => (
+            <BuildSettings
+              redeployOnSave={redeployOnSave}
+              setRedeployOnSave={setRedeployOnSave}
+            />
+          ))
+          .with("environment", () => <Environment />)
           .with("settings", () => <Settings />)
           .otherwise(() => null)}
         <Spacer y={2} />

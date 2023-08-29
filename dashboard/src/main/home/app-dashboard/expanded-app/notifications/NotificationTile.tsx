@@ -4,6 +4,7 @@ import { PorterAppEvent } from "../activity-feed/events/types";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { getServiceNameFromPodNameAndAppName } from "../logs/utils";
+import { feedDate } from "shared/string_utils";
 
 type Props = {
   event: PorterAppEvent;
@@ -21,7 +22,9 @@ const NotificationTile: React.FC<Props> = ({
   return (
     <StyledNotificationTile onClick={onClick} selected={selected}>
       <NotificationContent>
-        <NotificationSummary>{event.metadata.summary}</NotificationSummary>
+        <Text color="helper">{feedDate(event.created_at)}</Text>
+        <Spacer y={0.5} />
+        <NotificationSummary>{event.metadata.short_summary}</NotificationSummary>
         <Spacer y={0.5} />
         <Text color="helper">Service: <ServiceName>{getServiceNameFromPodNameAndAppName(event.metadata.pod_name, appName)}</ServiceName></Text>
       </NotificationContent>

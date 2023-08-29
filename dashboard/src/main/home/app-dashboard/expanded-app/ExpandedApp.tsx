@@ -926,7 +926,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               <TabSelector
                 noBuffer
                 options={[
-                  { label: "Notifications", value: "notifications" },
+                  { label: "Notifications (8)", value: "notifications" },
                   { label: "Activity", value: "activity" },
                   { label: "Overview", value: "overview" },
                   hasBuiltImage && { label: "Logs", value: "logs" },

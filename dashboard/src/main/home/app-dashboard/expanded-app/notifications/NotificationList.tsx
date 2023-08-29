@@ -4,22 +4,22 @@ import { PorterAppEvent } from "../activity-feed/events/types";
 import NotificationTile from "./NotificationTile";
 
 type Props = {
-    onTileClick: (tileId: string) => void;
+    onTileClick: (event: PorterAppEvent) => void;
     events: PorterAppEvent[];
-    selectedEventId: string;
+    selectedEvent: PorterAppEvent;
     appName: string;
 };
 
 const NotificationList: React.FC<Props> = ({
     onTileClick,
     events,
-    selectedEventId,
+    selectedEvent,
     appName,
 }) => {
     return (
         <StyledNotificationList>
             {events.map((evt) => (
-                <NotificationTile key={evt.id} event={evt} selected={evt.id === selectedEventId} onClick={() => onTileClick(evt.id)} appName={appName} />
+                <NotificationTile key={evt.id} event={evt} selected={evt.id === selectedEvent.id} onClick={() => onTileClick(evt)} appName={appName} />
             ))}
         </StyledNotificationList>
     );
@@ -33,6 +33,7 @@ const StyledNotificationList = styled.div`
     flex-direction: column;
     height: 600px;
     overflow: auto;
+    border-bottom: 1px solid #494b4f;
 
     ::-webkit-scrollbar {
         width: 3px;

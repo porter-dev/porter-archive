@@ -15,11 +15,11 @@ type Props = {
 const NotificationFeed: React.FC<Props> = ({
     appName,
 }) => {
-    const [selectedEventId, setSelectedEventId] = useState<string>("");
+    const [selectedEvent, setSelectedEvent] = useState<PorterAppEvent | null>(null);
     const { currentCluster, currentProject } = useContext(Context);
 
-    const handleTileClick = (tileId: string) => {
-        setSelectedEventId(tileId);
+    const handleTileClick = (event: PorterAppEvent) => {
+        setSelectedEvent(event);
     };
 
     const { data: events = [], isLoading } = useQuery<PorterAppEvent[]>(
@@ -53,7 +53,7 @@ const NotificationFeed: React.FC<Props> = ({
 
     useEffect(() => {
         if (events.length > 0) {
-            setSelectedEventId(events[0].id);
+            setSelectedEvent(events[0]);
         }
     }, [events])
 
@@ -63,8 +63,8 @@ const NotificationFeed: React.FC<Props> = ({
 
     return (
         <StyledNotificationFeed>
-            <NotificationList onTileClick={handleTileClick} events={events} selectedEventId={selectedEventId} appName={appName} />
-            {selectedEventId !== "" && <NotificationExpandedView eventId={selectedEventId} />}
+            {selectedEvent && <NotificationList onTileClick={handleTileClick} events={events} selectedEvent={selectedEvent} appName={appName} />}
+            {selectedEvent && <NotificationExpandedView event={selectedEvent} />}
         </StyledNotificationFeed>
     );
 };

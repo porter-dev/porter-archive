@@ -46,7 +46,7 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 			}
 
 			if len(args) == 0 {
-				err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listAndSetProject)
+				err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAndSetProject)
 				if err != nil {
 					os.Exit(1)
 				}
@@ -72,7 +72,7 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 		Short: "Saves the cluster id in the default configuration",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
-				err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listAndSetCluster)
+				err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAndSetCluster)
 				if err != nil {
 					os.Exit(1)
 				}
@@ -99,7 +99,7 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 		Short: "Saves the registry id in the default configuration",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
-				err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listAndSetRegistry)
+				err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAndSetRegistry)
 				if err != nil {
 					os.Exit(1)
 				}
@@ -186,7 +186,7 @@ func printConfig() error {
 	return nil
 }
 
-func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	_ = s.Color("cyan")
 	s.Suffix = " Loading list of projects"
@@ -230,7 +230,7 @@ func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 	return nil
 }
 
-func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	_ = s.Color("cyan")
 	s.Suffix = " Loading list of clusters"
@@ -273,7 +273,7 @@ func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 	return nil
 }
 
-func listAndSetRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func listAndSetRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	_ = s.Color("cyan")
 	s.Suffix = " Loading list of registries"

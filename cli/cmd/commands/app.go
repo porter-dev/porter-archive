@@ -55,7 +55,7 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.MinimumNArgs(2),
 		Short: "Runs a command inside a connected cluster container.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, appRun)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, appRun)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -70,7 +70,7 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.NoArgs,
 		Short: "Delete any lingering ephemeral pods that were created with \"porter app run\".",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, appCleanup)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, appCleanup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -84,7 +84,7 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Short: "Updates the image tag for an application.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, appUpdateTag)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, appUpdateTag)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -152,7 +152,7 @@ func appRunFlags(appRunCmd *cobra.Command) {
 	)
 }
 
-func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, args []string) error {
 	execArgs := args[1:]
 
 	color.New(color.FgGreen).Println("Attempting to run", strings.Join(execArgs, " "), "for application", args[0])
@@ -267,7 +267,7 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 	return appExecuteRunEphemeral(ctx, config, appNamespace, selectedPod.Name, selectedContainerName, execArgs)
 }
 
-func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
+func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ []string) error {
 	config := &AppPorterRunSharedConfig{
 		Client:    client,
 		CLIConfig: cliConfig,
@@ -1044,7 +1044,7 @@ func appCreateEphemeralPodFromExisting(
 	)
 }
 
-func appUpdateTag(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, args []string) error {
+func appUpdateTag(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, args []string) error {
 	namespace := fmt.Sprintf("porter-stack-%s", args[0])
 	if appTag == "" {
 		appTag = "latest"

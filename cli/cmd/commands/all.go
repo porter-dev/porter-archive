@@ -52,7 +52,7 @@ func RegisterCommands() (*cobra.Command, error) {
 }
 
 // overrideConfigWithFlags grabs the runtime value of registered flags, and overrides the values in CLIConfig.
-// It was done this was to reduce the size of a refactor, as the codebase conflates initialisation of the commands, with the runtime values.
+// It was done this way to reduce the size of a refactor, as the codebase conflates initialisation of the commands, with the runtime values.
 func overrideConfigWithFlags(cmd *cobra.Command, config config.CLIConfig) config.CLIConfig {
 	type flag struct {
 		// stringName is the name of the flag which is a string

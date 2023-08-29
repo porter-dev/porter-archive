@@ -28,7 +28,7 @@ func registerCommand_Project(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Creates a project with the authorized user as admin",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, createProject)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, createProject)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -41,7 +41,7 @@ func registerCommand_Project(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Deletes the project with the given id",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteProject)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteProject)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -53,7 +53,7 @@ func registerCommand_Project(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "list",
 		Short: "Lists the projects for the logged in user",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listProjects)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listProjects)
 			if err != nil {
 				os.Exit(1)
 			}

@@ -78,7 +78,7 @@ To deploy an application from a Docker registry, use "--source registry" and pas
 			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source registry --image gcr.io/snowflake-12345/example-app:latest"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, createFull)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, createFull)
 			if err != nil {
 				os.Exit(1)
 			}

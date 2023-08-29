@@ -37,7 +37,7 @@ func registerCommand_Stack(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Add an env group to a stack",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, stackAddEnvGroup)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, stackAddEnvGroup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -49,7 +49,7 @@ func registerCommand_Stack(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Remove an existing env group from a stack",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, stackRemoveEnvGroup)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, stackRemoveEnvGroup)
 			if err != nil {
 				os.Exit(1)
 			}

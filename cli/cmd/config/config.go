@@ -47,11 +47,8 @@ type FeatureFlags struct {
 // 2. env
 // 3. config
 // 4. default
+// Make sure to call overrideConfigWithFlags during runtime, to ensure that the flag values are considered
 func InitAndLoadConfig() (CLIConfig, error) {
-	return initAndLoadConfig()
-}
-
-func initAndLoadConfig() (CLIConfig, error) {
 	var config CLIConfig
 
 	porterDir, err := getOrCreatePorterDirectoryAndConfig()

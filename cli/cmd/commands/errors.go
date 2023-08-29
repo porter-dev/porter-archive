@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	cliErrors "github.com/porter-dev/porter/cli/cmd/errors"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -21,7 +22,10 @@ var (
 
 type authenticatedRunnerFunc func(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error
 
-func checkLoginAndRunWithConfig(ctx context.Context, cliConf config.CLIConfig, args []string, runner authenticatedRunnerFunc) error {
+func checkLoginAndRunWithConfig(cmd *cobra.Command, cliConf config.CLIConfig, args []string, runner authenticatedRunnerFunc) error {
+	ctx := cmd.Context()
+	cliConf = overrideConfigWithFlags(cmd, cliConf)
+
 	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
 		BaseURL:        fmt.Sprintf("%s/api", cliConf.Host),
 		BearerToken:    cliConf.Token,

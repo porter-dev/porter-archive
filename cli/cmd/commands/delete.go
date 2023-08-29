@@ -35,7 +35,7 @@ deleting a configuration:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter delete"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteDeployment)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteDeployment)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -49,7 +49,7 @@ deleting a configuration:
 		Short:   "Deletes an existing app",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteApp)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteApp)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -63,7 +63,7 @@ deleting a configuration:
 		Short:   "Deletes an existing job",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteJob)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteJob)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -77,7 +77,7 @@ deleting a configuration:
 		Short:   "Deletes an existing addon",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteAddon)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteAddon)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -91,7 +91,7 @@ deleting a configuration:
 		Short:   "Deletes an existing helm repo",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteHelm)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteHelm)
 			if err != nil {
 				os.Exit(1)
 			}

@@ -20,7 +20,7 @@ func registerCommand_Docker(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "configure",
 		Short: "Configures the host's Docker instance",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, dockerConfig)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, dockerConfig)
 			if err != nil {
 				os.Exit(1)
 			}

@@ -73,7 +73,7 @@ applying a configuration:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter apply -f porter.yaml"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, apply)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, apply)
 			if err != nil {
 				if strings.Contains(err.Error(), "Forbidden") {
 					_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "You may have to update your GitHub secret token")

@@ -28,7 +28,7 @@ func registerCommand_Deploy(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "blue-green-switch",
 		Short: "Automatically switches the traffic of a blue-green deployment once the new application is ready.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, bluegreenSwitch)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, bluegreenSwitch)
 			if err != nil {
 				os.Exit(1)
 			}

@@ -24,7 +24,7 @@ func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
 		Short: "List applications, addons or jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 || (args[0] == "all") {
-				err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listAll)
+				err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAll)
 				if err != nil {
 					os.Exit(1)
 				}
@@ -39,7 +39,7 @@ func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
 		Aliases: []string{"applications", "app", "application"},
 		Short:   "Lists applications in a specific namespace, or across all namespaces",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listApps)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listApps)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -51,7 +51,7 @@ func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
 		Aliases: []string{"job"},
 		Short:   "Lists jobs in a specific namespace, or across all namespaces",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listJobs)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listJobs)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -63,7 +63,7 @@ func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
 		Aliases: []string{"addon"},
 		Short:   "Lists addons in a specific namespace, or across all namespaces",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listAddons)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAddons)
 			if err != nil {
 				os.Exit(1)
 			}

@@ -27,7 +27,7 @@ func registerCommand_Registry(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "list",
 		Short: "Lists the registries linked to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listRegistries)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listRegistries)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -39,7 +39,7 @@ func registerCommand_Registry(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Deletes the registry with the given id",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteRegistry)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteRegistry)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -56,7 +56,7 @@ func registerCommand_Registry(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "list",
 		Short: "Lists the repositories in an image registry",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listRepos)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listRepos)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -74,7 +74,7 @@ func registerCommand_Registry(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Lists the images the specified image repository",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listImages)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listImages)
 			if err != nil {
 				os.Exit(1)
 			}

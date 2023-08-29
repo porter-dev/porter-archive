@@ -24,7 +24,7 @@ func registerCommand_Get(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Fetches a release.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, get)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, get)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -37,7 +37,7 @@ func registerCommand_Get(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Fetches the Helm values for a release.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, getValues)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, getValues)
 			if err != nil {
 				os.Exit(1)
 			}

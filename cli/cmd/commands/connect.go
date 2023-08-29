@@ -27,7 +27,7 @@ func registerCommand_Connect(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "kubeconfig",
 		Short: "Uses the local kubeconfig to add a cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectKubeconfig)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runConnectKubeconfig)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -38,7 +38,7 @@ func registerCommand_Connect(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "ecr",
 		Short: "Adds an ECR instance to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectECR)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runConnectECR)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -49,7 +49,7 @@ func registerCommand_Connect(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "dockerhub",
 		Short: "Adds a Docker Hub registry integration to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectDockerhub)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runConnectDockerhub)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -60,7 +60,7 @@ func registerCommand_Connect(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "registry",
 		Short: "Adds a custom image registry to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectRegistry)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runConnectRegistry)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -71,7 +71,7 @@ func registerCommand_Connect(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "helm",
 		Short: "Adds a custom Helm registry to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectHelmRepo)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runConnectHelmRepo)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -82,7 +82,7 @@ func registerCommand_Connect(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "gcr",
 		Short: "Adds a GCR instance to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectGCR)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runConnectGCR)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -93,7 +93,7 @@ func registerCommand_Connect(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "gar",
 		Short: "Adds a GAR instance to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectGAR)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runConnectGAR)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -105,7 +105,7 @@ func registerCommand_Connect(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "docr",
 		Short: "Adds a DOCR instance to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runConnectDOCR)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runConnectDOCR)
 			if err != nil {
 				os.Exit(1)
 			}

@@ -29,6 +29,8 @@ func registerCommand_Auth(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "login",
 		Short: "Authorizes a user for a given Porter server",
 		Run: func(cmd *cobra.Command, args []string) {
+			cliConf = overrideConfigWithFlags(cmd, cliConf)
+
 			err := login(cmd.Context(), cliConf)
 			if err != nil {
 				color.Red("Error logging in: %s\n", err.Error())
@@ -41,6 +43,8 @@ func registerCommand_Auth(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "register",
 		Short: "Creates a user for a given Porter server",
 		Run: func(cmd *cobra.Command, args []string) {
+			cliConf = overrideConfigWithFlags(cmd, cliConf)
+
 			err := register(cmd.Context(), cliConf)
 			if err != nil {
 				color.Red("Error registering: %s\n", err.Error())
@@ -53,7 +57,7 @@ func registerCommand_Auth(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "logout",
 		Short: "Logs a user out of a given Porter server",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, logout)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, logout)
 			if err != nil {
 				os.Exit(1)
 			}

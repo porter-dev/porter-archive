@@ -17,7 +17,7 @@ func registerCommand_Kubectl(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "kubectl",
 		Short: "Use kubectl to interact with a Porter cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runKubectl)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runKubectl)
 			if err != nil {
 				os.Exit(1)
 			}

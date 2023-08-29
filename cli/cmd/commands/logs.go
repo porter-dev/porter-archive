@@ -20,7 +20,7 @@ func registerCommand_Logs(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Logs the output from a given application.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, logs)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, logs)
 			if err != nil {
 				os.Exit(1)
 			}

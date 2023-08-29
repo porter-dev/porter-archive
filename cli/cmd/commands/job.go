@@ -47,7 +47,7 @@ use the --namespace flag:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter job update-images --namespace custom-namespace --image-repo-uri my-image.registry.io --tag newtag"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, batchImageUpdate)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, batchImageUpdate)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -77,7 +77,7 @@ use the --namespace flag:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter job wait --name job-example --namespace custom-namespace"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, waitForJob)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, waitForJob)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -107,7 +107,7 @@ use the --namespace flag:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter job run --name job-example --namespace custom-namespace"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runJob)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runJob)
 			if err != nil {
 				os.Exit(1)
 			}

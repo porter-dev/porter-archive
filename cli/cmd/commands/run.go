@@ -48,7 +48,7 @@ func registerCommand_Run(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.MinimumNArgs(2),
 		Short: "Runs a command inside a connected cluster container.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, run)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, run)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -61,7 +61,7 @@ func registerCommand_Run(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.NoArgs,
 		Short: "Delete any lingering ephemeral pods that were created with \"porter run\".",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, cleanup)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, cleanup)
 			if err != nil {
 				os.Exit(1)
 			}

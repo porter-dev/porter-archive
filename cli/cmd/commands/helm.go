@@ -17,7 +17,7 @@ func registerCommand_Helm(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "helm",
 		Short: "Use helm to interact with a Porter cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, runHelm)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runHelm)
 			if err != nil {
 				os.Exit(1)
 			}

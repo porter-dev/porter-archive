@@ -113,7 +113,6 @@ func overrideConfigWithFlags(cmd *cobra.Command, config config.CLIConfig) config
 				*fl.uintConfigTarget = ui
 			}
 		}
-
 	}
 	return config
 }

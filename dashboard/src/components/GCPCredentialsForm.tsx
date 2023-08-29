@@ -198,7 +198,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
 
             preFlightData ?
               (<PreflightChecks preflightData={preFlightData} setPreflightFailed={setPreflightFailed} />)
-              : (<Text>  Error could not perfrom preflight checks on your account please check your credentails or contact Porter Support at support@porter.run</Text>)
+              : (<Text>  Could not perform preflight checks on your account. Please verify your credentials are correct or contact Porter Support at support@porter.run</Text>)
 
           }
         </>

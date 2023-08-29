@@ -209,6 +209,7 @@ function ProjectSettings(props: any) {
           </Button>
 
           <Spacer y={1} />
+          <Spacer y={1} />
           <Heading isAtTop={true}>Delete project</Heading>
 
           <Helper>

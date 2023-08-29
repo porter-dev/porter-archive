@@ -139,6 +139,13 @@ export const usePorterYaml = ({
     }
   }, [data]);
 
+  if (source?.type !== "github") {
+    return {
+      loading: false,
+      detectedServices: null,
+    };
+  }
+
   if (status === "loading") {
     return {
       loading: true,

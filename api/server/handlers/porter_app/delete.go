@@ -64,5 +64,16 @@ func (c *DeletePorterAppByNameHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	c.WriteResult(w, r, ccpResp)
+	if ccpResp == nil {
+		err := telemetry.Error(ctx, span, err, "ccp resp is nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+	if ccpResp.Msg == nil {
+		err := telemetry.Error(ctx, span, err, "ccp resp msg is nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	c.WriteResult(w, r, ccpResp.Msg)
 }

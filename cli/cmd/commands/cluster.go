@@ -27,7 +27,7 @@ func registerCommand_Cluster(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "list",
 		Short: "Lists the linked clusters in the current project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listClusters)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listClusters)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -40,7 +40,7 @@ func registerCommand_Cluster(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Deletes the cluster with the given id",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, deleteCluster)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteCluster)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -59,7 +59,7 @@ func registerCommand_Cluster(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "list",
 		Short: "Lists the namespaces in a cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listNamespaces)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listNamespaces)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -70,7 +70,7 @@ func registerCommand_Cluster(cliConf config.CLIConfig) *cobra.Command {
 	return clusterCmd
 }
 
-func listClusters(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func listClusters(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	resp, err := client.ListProjectClusters(ctx, cliConf.Project)
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func listClusters(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 	return nil
 }
 
-func deleteCluster(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func deleteCluster(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Are you sure you'd like to delete the cluster with id %s? %s `,
@@ -128,7 +128,7 @@ func deleteCluster(ctx context.Context, user *types.GetAuthenticatedUserResponse
 	return nil
 }
 
-func listNamespaces(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func listNamespaces(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	pID := cliConf.Project
 
 	// get the service account based on the cluster id

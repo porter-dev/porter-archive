@@ -10,13 +10,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/gorilla/schema"
 	"github.com/porter-dev/porter/api/types"
-	"k8s.io/client-go/util/homedir"
 )
 
 // Client represents the client for the Porter API
@@ -81,33 +79,6 @@ func NewClientWithConfig(ctx context.Context, input NewClientInput) (Client, err
 
 // ErrNoAuthCredential returns an error when no auth credentials have been provided such as cookies or tokens
 var ErrNoAuthCredential = errors.New("unable to create an API session with cookie nor token")
-
-// NewClient constructs a new client based on a set of options
-func NewClient(baseURL string, cookieFileName string) *Client {
-	home := homedir.HomeDir()
-	cookieFilePath := filepath.Join(home, ".porter", cookieFileName)
-
-	client := &Client{
-		BaseURL:        baseURL,
-		CookieFilePath: cookieFilePath,
-		HTTPClient: &http.Client{
-			Timeout: time.Minute,
-		},
-	}
-
-	cookie, _ := client.getCookie()
-
-	if cookie != nil {
-		client.Cookie = cookie
-	}
-
-	// look for a cloudflare access token specifically for Porter
-	if cfToken := os.Getenv("PORTER_CF_ACCESS_TOKEN"); cfToken != "" {
-		client.cfToken = cfToken
-	}
-
-	return client
-}
 
 func (c *Client) getRequest(relPath string, data interface{}, response interface{}) error {
 	vals := make(map[string][]string)

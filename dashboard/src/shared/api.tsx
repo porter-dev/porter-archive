@@ -11,7 +11,7 @@ import {
   CreateStackBody,
   SourceConfig,
 } from "main/home/cluster-dashboard/stacks/types";
-import { Contract } from "@porter-dev/api-contracts";
+import { Contract, EnumCloudProvider, GKEPreflightValues, PreflightCheckRequest } from "@porter-dev/api-contracts";
 
 /**
  * Generic api call format
@@ -74,6 +74,13 @@ const getGitlabIntegration = baseApi<{}, { project_id: number }>(
   "GET",
   ({ project_id }) => `/api/projects/${project_id}/integrations/gitlab`
 );
+
+
+const preflightCheck = baseApi<PreflightCheckRequest,
+  { id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/integrations/preflightcheck`;
+});
 
 const preflightCheckAWSUsage = baseApi<
   {
@@ -3044,6 +3051,7 @@ export default {
   addApplicationToEnvGroup,
   removeApplicationFromEnvGroup,
   provisionDatabase,
+  preflightCheck,
   preflightCheckAWSUsage,
   getDatabases,
   getPreviousLogsForContainer,

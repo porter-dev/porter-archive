@@ -152,8 +152,8 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 
 		now := time.Now().UTC()
 		for {
-			if time.Since(now) > 60*time.Minute {
-				break
+			if time.Since(now) > checkPredeployTimeout {
+				return errors.New("timed out waiting for predeploy to complete")
 			}
 
 			predeployStatusResp, err := client.PredeployStatus(ctx, cliConf.Project, cliConf.Cluster, appName, applyResp.AppRevisionId)
@@ -165,7 +165,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 				break
 			}
 
-			time.Sleep(10 * time.Second)
+			time.Sleep(checkPredeployFrequency)
 		}
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId)
@@ -181,6 +181,12 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 	color.New(color.FgGreen).Printf("Successfully applied new revision %s for app %s\n", applyResp.AppRevisionId, appName) // nolint:errcheck,gosec
 	return nil
 }
+
+// checkPredeployTimeout is the maximum amount of time the CLI will wait for a predeploy to complete before calling apply again
+const checkPredeployTimeout = 60 * time.Minute
+
+// checkPredeployFrequency is the frequency at which the CLI will check the status of a predeploy
+const checkPredeployFrequency = 10 * time.Second
 
 func appNameFromB64AppProto(base64AppProto string) (string, error) {
 	decoded, err := base64.StdEncoding.DecodeString(base64AppProto)

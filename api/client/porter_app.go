@@ -357,3 +357,27 @@ func (c *Client) CreateSubdomain(
 
 	return resp, err
 }
+
+// PredeployStatus checks the current status of a predeploy job for an app revision
+func (c *Client) PredeployStatus(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string, appRevisionId string,
+) (*porter_app.PredeployStatusResponse, error) {
+	resp := &porter_app.PredeployStatusResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/%s/predeploy-status",
+			projectID, clusterID, appName, appRevisionId,
+		),
+		nil,
+		resp,
+	)
+
+	if resp.Status == "" {
+		return nil, fmt.Errorf("no predeploy status found")
+	}
+
+	return resp, err
+}

@@ -15,7 +15,11 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Link from "components/porter/Link";
 
 import { Context } from "shared/Context";
-import { PorterAppFormData, SourceOptions, porterAppFormValidator } from "lib/porter-apps";
+import {
+  PorterAppFormData,
+  SourceOptions,
+  porterAppFormValidator,
+} from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
 import Button from "components/porter/Button";
@@ -122,7 +126,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const build = watch("app.build");
   const image = watch("source.image");
   const services = watch("app.services");
-  const servicesFromYaml = usePorterYaml(source);
+  const { detectedServices: servicesFromYaml } = usePorterYaml({ source });
   const deploymentTarget = useDefaultDeploymentTarget();
   const { updateAppStep } = useAppAnalytics(name);
   const { validateApp } = useAppValidation({
@@ -131,6 +135,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      setDeployError("");
       const validatedAppProto = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
 
@@ -334,7 +339,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       setError("app.name", {
         message: "An app with this name already exists",
       });
-      return
+      return;
     }
   }, [porterApps, name]);
 
@@ -444,10 +449,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       )}
                     </Container>
                     <Spacer y={0.5} />
-                    <ServiceList
-                      defaultExpanded={true}
-                      addNewText={"Add a new service"}
-                    />
+                    <ServiceList addNewText={"Add a new service"} />
                   </>,
                   <>
                     <Text size={16}>Environment variables (optional)</Text>
@@ -470,12 +472,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       <ServiceList
                         limitOne={true}
                         addNewText={"Add a new pre-deploy job"}
-                        prePopulateService={deserializeService(
-                          defaultSerialized({
+                        prePopulateService={deserializeService({
+                          service: defaultSerialized({
                             name: "pre-deploy",
                             type: "predeploy",
-                          })
-                        )}
+                          }),
+                        })}
                         isPredeploy
                       />
                     </>

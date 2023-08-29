@@ -14,7 +14,9 @@ import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { BuildOptions, PorterAppFormData } from "lib/porter-apps";
 
 type Props = {
-  build: BuildOptions;
+  build: BuildOptions & {
+    method: "pack";
+  };
   closeModal: () => void;
   sortedStackOptions: { value: string; label: string }[];
   availableBuildpacks: Buildpack[];

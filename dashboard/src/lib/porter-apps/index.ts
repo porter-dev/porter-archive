@@ -1,7 +1,7 @@
 import { buildpackSchema } from "main/home/app-dashboard/types/buildpack";
 import { z } from "zod";
 import {
-  ClientService,
+  DetectedServices,
   defaultSerialized,
   deserializeService,
   isPredeployService,
@@ -10,8 +10,9 @@ import {
   serviceProto,
   serviceValidator,
 } from "./services";
-import { PorterApp, Service } from "@porter-dev/api-contracts";
+import { Build, PorterApp, Service } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
+import { valueExists } from "shared/util";
 
 // buildValidator is used to validate inputs for build setting fields
 export const buildValidator = z.discriminatedUnion("method", [
@@ -68,45 +69,62 @@ export const porterAppFormValidator = z.object({
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
-// defaultServicesWithOverrides is used to generate the default services for an app from porter.yaml
+// serviceOverrides is used to generate the services overrides for an app from porter.yaml
 // this method is only called when a porter.yaml is present and has services defined
-export function defaultServicesWithOverrides({
+export function serviceOverrides({
   overrides,
+  useDefaults = true,
 }: {
   overrides: PorterApp;
-}): {
-  services: ClientService[];
-  predeploy?: ClientService;
-} {
+  useDefaults?: boolean;
+}): DetectedServices {
   const services = Object.entries(overrides.services)
     .map(([name, service]) => serializedServiceFromProto({ name, service }))
-    .map((svc) =>
-      deserializeService(
-        defaultSerialized({
-          name: svc.name,
-          type: svc.config.type,
-        }),
-        svc
-      )
-    );
+    .map((svc) => {
+      if (useDefaults) {
+        return deserializeService({
+          service: defaultSerialized({ name: svc.name, type: svc.config.type }),
+          override: svc,
+          expanded: true,
+        });
+      }
 
-  const predeploy = overrides.predeploy
-    ? deserializeService(
-        defaultSerialized({
+      return deserializeService({ service: svc });
+    });
+
+  if (!overrides.predeploy) {
+    return {
+      services,
+    };
+  }
+
+  if (useDefaults) {
+    return {
+      services,
+      predeploy: deserializeService({
+        service: defaultSerialized({
           name: "pre-deploy",
           type: "predeploy",
         }),
-        serializedServiceFromProto({
+        override: serializedServiceFromProto({
           name: "pre-deploy",
           service: overrides.predeploy,
           isPredeploy: true,
-        })
-      )
-    : undefined;
+        }),
+        expanded: true,
+      }),
+    };
+  }
 
   return {
     services,
-    predeploy,
+    predeploy: deserializeService({
+      service: serializedServiceFromProto({
+        name: "pre-deploy",
+        service: overrides.predeploy,
+        isPredeploy: true,
+      }),
+    }),
   };
 }
 
@@ -114,6 +132,7 @@ const clientBuildToProto = (build: BuildOptions) => {
   return match(build)
     .with({ method: "pack" }, (b) =>
       Object.freeze({
+        method: "pack",
         context: b.context,
         buildpacks: b.buildpacks.map((b) => b.buildpack),
         builder: b.builder,
@@ -121,6 +140,7 @@ const clientBuildToProto = (build: BuildOptions) => {
     )
     .with({ method: "docker" }, (b) =>
       Object.freeze({
+        method: "docker",
         context: b.context,
         dockerfile: b.dockerfile,
       })
@@ -170,4 +190,109 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
     .exhaustive();
 
   return proto;
+}
+
+const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
+  if (!proto) {
+    return;
+  }
+
+  const buildValidation = z
+    .discriminatedUnion("method", [
+      z.object({
+        method: z.literal("pack"),
+        context: z.string(),
+        buildpacks: z.array(z.string()).default([]),
+        builder: z.string(),
+      }),
+      z.object({
+        method: z.literal("docker"),
+        context: z.string(),
+        dockerfile: z.string(),
+      }),
+    ])
+    .safeParse(proto);
+
+  if (!buildValidation.success) {
+    return;
+  }
+
+  const build = buildValidation.data;
+
+  return match(build)
+    .with({ method: "pack" }, (b) =>
+      Object.freeze({
+        method: b.method,
+        context: b.context,
+        buildpacks: b.buildpacks.map((b) => ({ name: b, buildpack: b })),
+        builder: b.builder,
+      })
+    )
+    .with({ method: "docker" }, (b) =>
+      Object.freeze({
+        method: b.method,
+        context: b.context,
+        dockerfile: b.dockerfile,
+      })
+    )
+    .exhaustive();
+};
+
+export function clientAppFromProto(
+  proto: PorterApp,
+  overrides: DetectedServices | null
+): ClientPorterApp {
+  const services = Object.entries(proto.services)
+    .map(([name, service]) => serializedServiceFromProto({ name, service }))
+    .map((svc) => {
+      const override = overrides?.services.find(
+        (s) => s.name.value === svc.name
+      );
+
+      if (override) {
+        return deserializeService({
+          service: svc,
+          override: serializeService(override),
+        });
+      }
+      return deserializeService({ service: svc });
+    });
+
+  if (!overrides?.predeploy) {
+    return {
+      name: proto.name,
+      services,
+      env: proto.env,
+      build: clientBuildFromProto(proto.build) ?? {
+        method: "pack",
+        context: "./",
+        buildpacks: [],
+        builder: "",
+      },
+    };
+  }
+
+  const predeployOverrides = serializeService(overrides.predeploy);
+  const predeploy = proto.predeploy
+    ? deserializeService({
+        service: serializedServiceFromProto({
+          name: "pre-deploy",
+          service: proto.predeploy,
+          isPredeploy: true,
+        }),
+        override: predeployOverrides,
+      })
+    : undefined;
+
+  return {
+    name: proto.name,
+    services: [...services, predeploy].filter(valueExists),
+    env: proto.env,
+    build: clientBuildFromProto(proto.build) ?? {
+      method: "pack",
+      context: "./",
+      buildpacks: [],
+      builder: "",
+    },
+  };
 }

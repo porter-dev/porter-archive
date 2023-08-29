@@ -103,7 +103,7 @@ func (c *PredeployStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	var status PredeployStatus
 	switch ccpResp.Msg.PredeployStatus {
-	case porterv1.EnumPredeployStatus_ENUM_PREDEPLOY_STATUS_RUNNING:
+	case porterv1.EnumPredeployStatus_ENUM_PREDEPLOY_STATUS_IN_PROGRESS:
 		status = PredeployStatus_InProgress
 	case porterv1.EnumPredeployStatus_ENUM_PREDEPLOY_STATUS_FAILED:
 		status = PredeployStatus_Failed

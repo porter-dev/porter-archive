@@ -135,7 +135,16 @@ const updateCluster = baseApi<
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
-
+const renameProject = baseApi<
+  {
+    name: string | undefined;
+  },
+  {
+    project_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/rename`;
+});
 const renameCluster = baseApi<
   {
     name: string;
@@ -812,11 +821,9 @@ const getBranchHead = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${
-    pathParams.git_repo_id
-  }/repos/${pathParams.kind}/${pathParams.owner}/${
-    pathParams.name
-  }/${encodeURIComponent(pathParams.branch)}/head`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/head`;
 });
 
 const validatePorterApp = baseApi<
@@ -2856,6 +2863,7 @@ export default {
   overwriteAWSIntegration,
   updateCluster,
   renameCluster,
+  renameProject,
   createAzureIntegration,
   createGitlabIntegration,
   createEmailVerification,

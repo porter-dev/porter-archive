@@ -24,7 +24,7 @@ export type Collaborator = {
   kind: string;
 };
 
-const InvitePage: React.FunctionComponent<Props> = ({}) => {
+const InvitePage: React.FunctionComponent<Props> = ({ }) => {
   const {
     currentProject,
     setCurrentModal,
@@ -185,8 +185,11 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   };
 
   const validateEmail = () => {
+    const trimmedEmail = email.trim();
+    setEmail(trimmedEmail);
+
     const regex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    if (!regex.test(email.toLowerCase())) {
+    if (!regex.test(trimmedEmail.toLowerCase())) {
       setIsInvalidEmail(true);
       return;
     }
@@ -335,9 +338,8 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
     inviteList.sort((a: any, b: any) => (a.email > b.email ? 1 : -1));
     inviteList.sort((a: any, b: any) => (a.accepted > b.accepted ? 1 : -1));
     const buildInviteLink = (token: string) => `
-      ${isHTTPS ? "https://" : ""}${window.location.host}/api/projects/${
-      currentProject.id
-    }/invites/${token}
+      ${isHTTPS ? "https://" : ""}${window.location.host}/api/projects/${currentProject.id
+      }/invites/${token}
     `;
 
     if (!user) {

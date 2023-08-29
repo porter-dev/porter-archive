@@ -11,9 +11,11 @@ import {
 } from "lib/porter-apps/services";
 import Error from "components/porter/Error";
 import Button from "components/porter/Button";
+import { useLatestRevision } from "../LatestRevisionContext";
 
 const Overview: React.FC = () => {
   const { formState } = useFormContext<PorterAppFormData>();
+  const { porterApp } = useLatestRevision();
 
   const buttonStatus = useMemo(() => {
     if (formState.isSubmitting) {
@@ -29,20 +31,24 @@ const Overview: React.FC = () => {
 
   return (
     <>
-      <Text size={16}>Pre-deploy job</Text>
-      <Spacer y={0.5} />
-      <ServiceList
-        limitOne={true}
-        addNewText={"Add a new pre-deploy job"}
-        prePopulateService={deserializeService({
-          service: defaultSerialized({
-            name: "pre-deploy",
-            type: "predeploy",
-          }),
-        })}
-        isPredeploy
-      />
-      <Spacer y={0.5} />
+      {porterApp.git_repo_id && (
+        <>
+          <Text size={16}>Pre-deploy job</Text>
+          <Spacer y={0.5} />
+          <ServiceList
+            limitOne={true}
+            addNewText={"Add a new pre-deploy job"}
+            prePopulateService={deserializeService({
+              service: defaultSerialized({
+                name: "pre-deploy",
+                type: "predeploy",
+              }),
+            })}
+            isPredeploy
+          />
+          <Spacer y={0.5} />
+        </>
+      )}
       <Text size={16}>Application services</Text>
       <Spacer y={0.5} />
       <ServiceList addNewText={"Add a new service"} />

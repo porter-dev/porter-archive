@@ -35,7 +35,7 @@ func registerCommand_Auth(cliConf config.CLIConfig) *cobra.Command {
 			if err != nil {
 				color.Red("Error logging in: %s\n", err.Error())
 				if strings.Contains(err.Error(), "Forbidden") {
-					cliConf.SetToken("")
+					_ = cliConf.SetToken("")
 				}
 				os.Exit(1)
 			}
@@ -62,7 +62,7 @@ func registerCommand_Auth(cliConf config.CLIConfig) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			err := checkLoginAndRunWithConfig(cmd, cliConf, args, logout)
 			if err != nil {
-				cliConf.SetToken("")
+				_ = cliConf.SetToken("")
 				os.Exit(1)
 			}
 		},

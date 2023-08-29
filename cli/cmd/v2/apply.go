@@ -8,6 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
+
+	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 
 	"github.com/cli/cli/git"
 
@@ -39,6 +42,13 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 	if parseResp.B64AppProto == "" {
 		return errors.New("b64 app proto is empty")
 	}
+
+	appName, err := appNameFromB64AppProto(parseResp.B64AppProto)
+	if err != nil {
+		return fmt.Errorf("error getting app name from b64 app proto: %w", err)
+	}
+
+	color.New(color.FgGreen).Printf("Successfully parsed Porter YAML: applying app \"%s\"\n", appName) // nolint:errcheck,gosec
 
 	targetResp, err := client.DefaultDeploymentTarget(ctx, cliConf.Project, cliConf.Cluster)
 	if err != nil {
@@ -91,6 +101,8 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 	}
 
 	if applyResp.CLIAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_BUILD {
+		color.New(color.FgGreen).Printf("Building new image...\n") // nolint:errcheck,gosec
+
 		if commitSHA == "" {
 			return errors.New("Build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI.")
 		}
@@ -100,7 +112,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 			return fmt.Errorf("error building settings from base64 app proto: %w", err)
 		}
 
-		currentAppRevisionResp, err := client.CurrentAppRevision(ctx, cliConf.Project, cliConf.Cluster, buildSettings.AppName, targetResp.DeploymentTargetID)
+		currentAppRevisionResp, err := client.CurrentAppRevision(ctx, cliConf.Project, cliConf.Cluster, appName, targetResp.DeploymentTargetID)
 		if err != nil {
 			return fmt.Errorf("error getting current app revision: %w", err)
 		}
@@ -127,9 +139,38 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 			return fmt.Errorf("error building app: %w", err)
 		}
 
+		color.New(color.FgGreen).Printf("Successfully built image (tag: %s)\n", buildSettings.ImageTag) // nolint:errcheck,gosec
+
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId)
 		if err != nil {
-			return fmt.Errorf("error calling apply endpoint after build: %w", err)
+			return fmt.Errorf("apply error post-build: %w", err)
+		}
+	}
+
+	if applyResp.CLIAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_TRACK_PREDEPLOY {
+		color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec
+
+		now := time.Now().UTC()
+		for {
+			if time.Since(now) > 60*time.Minute {
+				break
+			}
+
+			predeployStatusResp, err := client.PredeployStatus(ctx, cliConf.Project, cliConf.Cluster, appName, applyResp.AppRevisionId)
+			if err != nil {
+				return fmt.Errorf("error calling predeploy status endpoint: %w", err)
+			}
+
+			if predeployStatusResp.Status == porter_app.PredeployStatus_Failed || predeployStatusResp.Status == porter_app.PredeployStatus_Successful {
+				break
+			}
+
+			time.Sleep(10 * time.Second)
+		}
+
+		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId)
+		if err != nil {
+			return fmt.Errorf("apply error post-predeploy: %w", err)
 		}
 	}
 
@@ -137,8 +178,26 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		return fmt.Errorf("unexpected CLI action: %s", applyResp.CLIAction)
 	}
 
-	color.New(color.FgGreen).Printf("Successfully applied Porter YAML as revision %v, next action: %v\n", applyResp.AppRevisionId, applyResp.CLIAction) // nolint:errcheck,gosec
+	color.New(color.FgGreen).Printf("Successfully applied new revision %s for app %s\n", applyResp.AppRevisionId, appName) // nolint:errcheck,gosec
 	return nil
+}
+
+func appNameFromB64AppProto(base64AppProto string) (string, error) {
+	decoded, err := base64.StdEncoding.DecodeString(base64AppProto)
+	if err != nil {
+		return "", fmt.Errorf("unable to decode base64 app for revision: %w", err)
+	}
+
+	app := &porterv1.PorterApp{}
+	err = helpers.UnmarshalContractObject(decoded, app)
+	if err != nil {
+		return "", fmt.Errorf("unable to unmarshal app for revision: %w", err)
+	}
+
+	if app.Name == "" {
+		return "", fmt.Errorf("app does not contain name")
+	}
+	return app.Name, nil
 }
 
 func createPorterAppDbEntryInputFromProtoAndEnv(base64AppProto string) (api.CreatePorterAppDBEntryInput, error) {

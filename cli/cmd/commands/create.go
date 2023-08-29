@@ -78,7 +78,7 @@ To deploy an application from a Docker registry, use "--source registry" and pas
 			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source registry --image gcr.io/snowflake-12345/example-app:latest"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, createFull)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, createFull)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -180,14 +180,9 @@ To deploy an application from a Docker registry, use "--source registry" and pas
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
 
-func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.CreateFull(ctx)
+func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.CreateFull(ctx)
 		if err != nil {
 			return err
 		}
@@ -279,7 +274,7 @@ func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 				return err
 			}
 
-			err = config.SetDockerConfig(ctx, createAgent.Client, project.ID)
+			err = config.SetDockerConfig(ctx, createAgent.Client, cliConf.Project)
 
 			if err != nil {
 				return err

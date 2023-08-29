@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	cliErrors "github.com/porter-dev/porter/cli/cmd/errors"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -19,7 +20,12 @@ var (
 	ErrCannotConnect error = errors.New("Unable to connect to the Porter server.")
 )
 
-func checkLoginAndRunWithConfig(ctx context.Context, cliConf config.CLIConfig, args []string, runner func(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error) error {
+type authenticatedRunnerFunc func(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error
+
+func checkLoginAndRunWithConfig(cmd *cobra.Command, cliConf config.CLIConfig, args []string, runner authenticatedRunnerFunc) error {
+	ctx := cmd.Context()
+	cliConf = overrideConfigWithFlags(cmd, cliConf)
+
 	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
 		BaseURL:        fmt.Sprintf("%s/api", cliConf.Host),
 		BearerToken:    cliConf.Token,
@@ -47,8 +53,19 @@ func checkLoginAndRunWithConfig(ctx context.Context, cliConf config.CLIConfig, a
 		return err
 	}
 
-	err = runner(ctx, user, client, cliConf, args)
+	project, err := client.GetProject(ctx, cliConf.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run: %w", err)
+	}
+	if project == nil {
+		return fmt.Errorf("project [%d] not found", cliConf.Project)
+	}
 
+	flags := config.FeatureFlags{
+		ValidateApplyV2Enabled: project.ValidateApplyV2,
+	}
+
+	err = runner(ctx, user, client, cliConf, flags, args)
 	if err != nil {
 		red := color.New(color.FgRed)
 

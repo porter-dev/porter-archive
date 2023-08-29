@@ -20,7 +20,7 @@ func registerCommand_Docker(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "configure",
 		Short: "Configures the host's Docker instance",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, dockerConfig)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, dockerConfig)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -31,6 +31,6 @@ func registerCommand_Docker(cliConf config.CLIConfig) *cobra.Command {
 	return dockerCmd
 }
 
-func dockerConfig(ctx context.Context, user *ptypes.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func dockerConfig(ctx context.Context, user *ptypes.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	return config.SetDockerConfig(ctx, client, cliConf.Project)
 }

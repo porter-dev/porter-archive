@@ -37,7 +37,7 @@ func registerCommand_Stack(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Add an env group to a stack",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, stackAddEnvGroup)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, stackAddEnvGroup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -49,7 +49,7 @@ func registerCommand_Stack(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Remove an existing env group from a stack",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, stackRemoveEnvGroup)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, stackRemoveEnvGroup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -101,14 +101,9 @@ func registerCommand_Stack(cliConf config.CLIConfig) *cobra.Command {
 	return stackCmd
 }
 
-func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.StackAddEnvGroup(ctx)
+func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.StackAddEnvGroup(ctx)
 		if err != nil {
 			return err
 		}
@@ -184,14 +179,9 @@ func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	return nil
 }
 
-func stackRemoveEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.StackRemoveEnvGroup(ctx)
+func stackRemoveEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.StackRemoveEnvGroup(ctx)
 		if err != nil {
 			return err
 		}

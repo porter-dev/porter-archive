@@ -48,7 +48,7 @@ func registerCommand_Run(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.MinimumNArgs(2),
 		Short: "Runs a command inside a connected cluster container.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, run)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, run)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -61,7 +61,7 @@ func registerCommand_Run(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.NoArgs,
 		Short: "Delete any lingering ephemeral pods that were created with \"porter run\".",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, cleanup)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, cleanup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -126,7 +126,7 @@ func registerCommand_Run(cliConf config.CLIConfig) *cobra.Command {
 	return runCmd
 }
 
-func run(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func run(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	execArgs := args[1:]
 
 	color.New(color.FgGreen).Println("Running", strings.Join(execArgs, " "), "for release", args[0])
@@ -242,7 +242,7 @@ func run(ctx context.Context, user *types.GetAuthenticatedUserResponse, client a
 	return executeRunEphemeral(ctx, config, namespace, selectedPod.Name, selectedContainerName, execArgs)
 }
 
-func cleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) error {
+func cleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ []string) error {
 	config := &PorterRunSharedConfig{
 		Client:    client,
 		CLIConfig: cliConfig,

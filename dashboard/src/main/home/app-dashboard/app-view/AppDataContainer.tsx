@@ -184,6 +184,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         deploymentTargetId,
         porterApp.name,
       ]);
+
+      reset({
+        app: clientAppFromProto(latestProto, servicesFromYaml),
+        source: latestSource,
+      });
     } catch (err) {}
   });
 

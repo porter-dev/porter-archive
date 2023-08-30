@@ -1,33 +1,12 @@
-## Pull request type
+## POR-
+<!-- Enter your issue ID in the title above or type "N/A" if there isn't one -->
+## What does this PR do?
 
-<!-- Please try to limit your pull request to one type, submit multiple pull requests if needed. -->
+<!--
+This is where you should write the PR description. What are we reviewing?
+Be concise, summarize with bullet points if possible.
 
-Please check the type of change your PR introduces:
-
-- [ ] Bugfix
-- [ ] Feature
-- [ ] Other (please describe):
-
-## Pull request checklist
-
-Please check if your PR fulfills the following requirements:
-
-- [ ] If it's a backend change, tests for the changes have been added and `go test ./...` runs successfully from the root folder.
-- [ ] If it's a frontend change, Prettier has been run
-- [ ] Docs have been reviewed and added / updated if needed
-
-## What is the current behavior?
-
-<!-- Please describe the current behavior that you are modifying, or link to a relevant issue.
-
-Issue Number: N/A
-
+- Add screenshots for frontend changes.
+- Outline complex testing steps for posterity.
+- Note if this PR depends on other PRs or specific actions.
 -->
-
-## What is the new behavior?
-
-<!-- Please describe the behavior or changes that are being added by this PR. -->
-
-<!-- Any other information that is important to this PR such as screenshots of how the component looks before and after the change. -->
-
-## Technical Spec/Implementation Notes

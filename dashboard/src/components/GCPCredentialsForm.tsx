@@ -12,6 +12,9 @@ import Text from "components/porter/Text";
 import Button from "components/porter/Button";
 import Spacer from "./porter/Spacer";
 import Container from "./porter/Container";
+import PreflightChecks from "./PreflightChecks";
+import { EnumCloudProvider, GKENetwork, GKEPreflightValues, PreflightCheckRequest } from "@porter-dev/api-contracts";
+
 
 
 type Props = {
@@ -27,11 +30,19 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
+  const [gcpCloudProviderCredentialID, setGCPCloudProviderCredentialId] = useState<string>("")
+  const [preFlightData, setPreflightData] = useState(null)
+  const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
 
   useEffect(() => {
     setDetected(undefined);
   }, []);
 
+  useEffect(() => {
+
+    gcpIntegration()
+
+  }, [detected])
   interface FailureState {
     condition: boolean;
     errorMessage: string;
@@ -48,7 +59,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
     message: string;
   };
 
-  const saveCredentials = async () => {
+  const gcpIntegration = async () => {
     failureStates.forEach((failureState) => {
       if (failureState.condition) {
         setErrorMessage(failureState.errorMessage);
@@ -70,16 +81,47 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
         setErrorMessage("Unable to store cluster credentials. Please try again later. If the problem persists, contact support@porter.run")
         return;
       }
-      const gcpCloudProviderCredentialID = gcpIntegrationResponse.data.cloud_provider_credentials_id;
-      proceed(gcpCloudProviderCredentialID)
+      setGCPCloudProviderCredentialId(gcpIntegrationResponse.data.cloud_provider_credentials_id)
+      setIsLoading(false)
 
-    } catch (err) {
+      if (gcpIntegrationResponse?.data?.cloud_provider_credentials_id) {
+        setIsLoading(true);
+        var data = new PreflightCheckRequest({
+          projectId: BigInt(currentProject.id),
+          cloudProvider: EnumCloudProvider.GCP,
+          cloudProviderCredentialsId: gcpIntegrationResponse.data.cloud_provider_credentials_id
+
+        })
+        const preflightDataResp = await api.preflightCheck(
+          "<token>", data,
+          {
+            id: currentProject.id,
+          }
+        )
+        setPreflightData(preflightDataResp?.data?.Msg);
+        setIsLoading(false)
+
+      }
+    }
+    catch (err) {
+      setIsLoading(false)
+
       if (err.response?.data?.error) {
         setErrorMessage(err.response?.data?.error.replace("unknown: ", ""));
       } else {
         setErrorMessage("Something went wrong, please try again later.");
       }
-    };
+    }
+
+  }
+
+
+  const saveCredentials = async () => {
+
+    if (gcpCloudProviderCredentialID) {
+      proceed(gcpCloudProviderCredentialID)
+    }
+
   }
 
   const handleLoadJSON = (serviceAccountJSONFile: string) => {
@@ -104,13 +146,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
     setIsContinueEnabled(true);
   }
 
-  if (isLoading) {
-    return (
-      <Placeholder>
-        <Loading />
-      </Placeholder>
-    );
-  }
+
 
   return (
     <>
@@ -133,23 +169,45 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
         isRequired={true}
       />
 
-      {detected && serviceAccountKey && (
-        <AppearingDiv color={projectId ? "#8590ff" : "#fcba03"}>
-          {detected.detected ? (
-            <I className="material-icons">check</I>
-          ) : (
-            <I className="material-icons">error</I>
-          )}
-          <Text color={detected.detected ? "#8590ff" : "#fcba03"}>
-            {detected.message}
-          </Text>
-        </AppearingDiv>
+      {detected && serviceAccountKey && (<>
+
+
+        <>
+          <AppearingDiv color={projectId ? "#8590ff" : "#fcba03"}>
+            {detected.detected ? (
+              <>
+                <I className="material-icons">check</I>
+              </>
+            ) : (
+              <I className="material-icons">error</I>
+            )}
+
+            <Text color={detected.detected ? "#8590ff" : "#fcba03"}>
+              {detected.message}
+            </Text>
+          </AppearingDiv>
+          <Spacer y={1} />
+          {isLoading ?
+            <>
+              <Placeholder>
+                <Loading />
+              </Placeholder>
+
+            </>
+            :
+
+            preFlightData ?
+              (<PreflightChecks preflightData={preFlightData} setPreflightFailed={setPreflightFailed} />)
+              : (<Text>  Could not perform preflight checks on your account. Please verify your credentials are correct or contact Porter Support at support@porter.run</Text>)
+
+          }
+        </>
+      </>
       )}
 
       <Spacer y={0.5} />
-
       <Button
-        disabled={!isContinueEnabled}
+        disabled={!isContinueEnabled || preflightFailed || isLoading}
         onClick={saveCredentials}
       >Continue</Button>
 
@@ -161,72 +219,78 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
 export default GCPCredentialsForm;
 
 const BackButton = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  font-size: 13px;
-  height: 35px;
-  padding: 5px 13px;
-  padding-right: 15px;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  width: ${(props: { width: string }) => props.width};
-  color: white;
-  background: #ffffff11;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-size: 13px;
+      height: 35px;
+      padding: 5px 13px;
+      padding-right: 15px;
+      border: 1px solid #ffffff55;
+      border-radius: 100px;
+      width: ${(props: { width: string }) => props.width};
+      color: white;
+      background: #ffffff11;
 
-  :hover {
-    background: #ffffff22;
+      :hover {
+        background: #ffffff22;
   }
 
   > i {
-    color: white;
-    font-size: 16px;
-    margin-right: 6px;
-    margin-left: -2px;
+        color: white;
+      font-size: 16px;
+      margin-right: 6px;
+      margin-left: -2px;
   }
-`;
+      `;
 
 const HelperButton = styled.div`
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  margin-left: 10px;
-  justify-content: center;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      margin-left: 10px;
+      justify-content: center;
   > i {
-    color: #aaaabb;
-    width: 24px;
-    height: 24px;
-    font-size: 20px;
-    border-radius: 20px;
+        color: #aaaabb;
+      width: 24px;
+      height: 24px;
+      font-size: 20px;
+      border-radius: 20px;
   }
-`;
+      `;
 
 const Img = styled.img`
-  height: 18px;
-  margin-right: 15px;
-`;
+      height: 18px;
+      margin-right: 15px;
+      `;
 
 const AppearingDiv = styled.div<{ color?: string }>`
-  animation: floatIn 0.5s;
-  animation-fill-mode: forwards;
-  display: flex;
-  align-items: center;
-  color: ${(props) => props.color || "#ffffff44"};
-  margin-left: 10px;
-  @keyframes floatIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
+        animation: floatIn 0.5s;
+        animation-fill-mode: forwards;
+        display: flex;
+        align-items: center;
+        color: ${(props) => props.color || "#ffffff44"};
+        margin-left: 10px;
+        @keyframes floatIn {
+          from {
+          opacity: 0;
+        transform: translateY(20px);
     }
-    to {
-      opacity: 1;
-      transform: translateY(0px);
+        to {
+          opacity: 1;
+        transform: translateY(0px);
     }
   }
-`;
+        `;
 
 const I = styled.i`
-  font-size: 18px;
-  margin-right: 5px;
-`;
+        font-size: 18px;
+        margin-right: 5px;
+        `;
+
+const StatusIcon = styled.img`
+        top: 20px;
+        right: 20px;
+        height: 18px;
+        `;

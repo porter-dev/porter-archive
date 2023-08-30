@@ -80,7 +80,7 @@ func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	var podSelector string
 	if request.ChartName == "" {
-		podSelector = request.PodSelector
+		podSelector = trimPodSelector(request.PodSelector)
 	} else {
 		// get the pod values which will be used to get the correct pod selector
 		podVals, err := porter_agent.GetPodValues(agent.Clientset, agentSvc, podValuesRequest)
@@ -152,4 +152,23 @@ func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http
 	}
 
 	c.WriteResult(w, r, logs)
+}
+
+/**
+ * Application pods are of the format <app-name>-<service-name>-<random-4-char-string>
+ * The max length of a pod name is 63 characters
+ * Therefore if the podSelector we try to use is longer than 58 characters (63 characters minus 4 characters for the random string minus 1 character for the last hyphen), then it won't match any pods
+ * e.g. podSelector "postgres-snowflake-connector-postgres-snowflake-service-wkr-" (60 chars) won't work because the pod is actually named "postgres-snowflake-connector-postgres-snowflake-service-wkqcpz2"
+ * so we trim the podSelector to "postgres-snowflake-connector-postgres-snowflake-service-wk" (58 characters) to ensure we match the pod
+ * This is only to fix current pods; new pods will be named correctly because we imposed service name limits in https://github.com/porter-dev/porter/pull/3439
+ * */
+func trimPodSelector(podSelector string) string {
+	if !strings.HasSuffix(podSelector, ".*") {
+		return podSelector
+	}
+	podSelectorWithoutWildcard := strings.TrimSuffix(podSelector, ".*")
+	if len(podSelectorWithoutWildcard) <= 58 {
+		return podSelector
+	}
+	return fmt.Sprintf("%s.*", podSelectorWithoutWildcard[:58])
 }

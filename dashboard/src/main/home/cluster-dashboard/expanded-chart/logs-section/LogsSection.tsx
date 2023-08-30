@@ -34,7 +34,7 @@ type Props = {
   setIsFullscreen: (x: boolean) => void;
   initData?: InitLogData;
   setInitData?: (initData: InitLogData) => void;
-  overridingPodName?: string;
+  overridingPodSelector?: string;
 };
 
 const escapeRegExp = (str: string) => {
@@ -103,7 +103,7 @@ const LogsSection: React.FC<Props> = ({
   setIsFullscreen,
   initData = {},
   setInitData,
-  overridingPodName,
+  overridingPodSelector,
 }) => {
   const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
   const { currentProject, currentCluster } = useContext(Context);
@@ -125,7 +125,7 @@ const LogsSection: React.FC<Props> = ({
   };
 
   const { logs, refresh, moveCursor, paginationInfo } = useLogs(
-    "",
+    overridingPodSelector ?? "",
     "",
     enteredSearchText,
     notify,

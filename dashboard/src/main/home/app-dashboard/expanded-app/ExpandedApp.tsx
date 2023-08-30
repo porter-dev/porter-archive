@@ -38,7 +38,7 @@ import { EnvVariablesTab } from "./env-vars/EnvVariablesTab";
 import GHABanner from "./GHABanner";
 import LogSection from "./logs/LogSection";
 import ActivityFeed from "./activity-feed/ActivityFeed";
-import MetricsSection from "./MetricsSection";
+import MetricsSection from "./metrics/MetricsSection";
 import StatusSectionFC from "./status/StatusSection";
 import ExpandedJob from "./expanded-job/ExpandedJob";
 import _ from "lodash";
@@ -443,6 +443,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       } else {
         setButtonStatus(<Error message="Unable to update app" />);
       }
+      // redirect to the default tab
+      history.push(`/apps/${appData.app.name}/${DEFAULT_TAB}`);
     } catch (err) {
       // TODO: better error handling
       const errMessage =
@@ -451,9 +453,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         "An error occurred while deploying your app. Please try again.";
       setButtonStatus(<Error message={errMessage} />);
     }
-
-    // redirect to the default tab
-    history.push(`/apps/${appData.app.name}/${DEFAULT_TAB}`);
   };
 
   const fetchPorterYamlContent = async (
@@ -655,6 +654,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
               chart={appData.chart}
               addNewText={"Add a new service"}
               setExpandedJob={(x: string) => setExpandedJob(x)}
+              appName={appData.app.name}
             />
             <Spacer y={0.75} />
             <Button
@@ -692,7 +692,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           filterOpts={queryParamOpts}
         />;
       case "metrics":
-        return <MetricsSection currentChart={appData.chart} />;
+        return <MetricsSection currentChart={appData.chart} appName={appData.app.name} serviceName={queryParamOpts.service} services={services} />;
       case "debug":
         return <StatusSectionFC currentChart={appData.chart} />;
       case "environment":

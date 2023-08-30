@@ -97,22 +97,21 @@ type Build struct {
 	Builder    string   `yaml:"builder" validate:"required_if=Method pack"`
 	Buildpacks []string `yaml:"buildpacks"`
 	Dockerfile string   `yaml:"dockerfile" validate:"required_if=Method docker"`
-	Image      string   `yaml:"image" validate:"required_if=Method registry"`
 }
 
 // Service represents a single service in a porter app
 type Service struct {
-	Run             string      `yaml:"run"`
-	Type            string      `yaml:"type" validate:"required, oneof=web worker job"`
-	Instances       int         `yaml:"instances"`
-	CpuCores        float32     `yaml:"cpuCores"`
-	RamMegabytes    int         `yaml:"ramMegabytes"`
-	Port            int         `yaml:"port"`
-	Autoscaling     AutoScaling `yaml:"autoscaling" validate:"excluded_if=Type job"`
-	Domains         []Domains   `yaml:"domains" validate:"excluded_unless=Type web"`
-	HealthCheck     HealthCheck `yaml:"healthCheck" validate:"excluded_unless=Type web"`
-	AllowConcurrent bool        `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
-	Cron            string      `yaml:"cron" validate:"excluded_unless=Type job"`
+	Run             string       `yaml:"run"`
+	Type            string       `yaml:"type" validate:"required, oneof=web worker job"`
+	Instances       int          `yaml:"instances"`
+	CpuCores        float32      `yaml:"cpuCores"`
+	RamMegabytes    int          `yaml:"ramMegabytes"`
+	Port            int          `yaml:"port"`
+	Autoscaling     *AutoScaling `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
+	Domains         []Domains    `yaml:"domains" validate:"excluded_unless=Type web"`
+	HealthCheck     *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
+	AllowConcurrent bool         `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
+	Cron            string       `yaml:"cron" validate:"excluded_unless=Type job"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -189,22 +188,28 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	case porterv1.ServiceType_SERVICE_TYPE_UNSPECIFIED:
 		return nil, errors.New("Service type unspecified")
 	case porterv1.ServiceType_SERVICE_TYPE_WEB:
-		webConfig := &porterv1.WebServiceConfig{
-			HealthCheck: &porterv1.HealthCheck{
+		webConfig := &porterv1.WebServiceConfig{}
+
+		var autoscaling *porterv1.Autoscaling
+		if service.Autoscaling != nil {
+			autoscaling = &porterv1.Autoscaling{
+				Enabled:                service.Autoscaling.Enabled,
+				MinInstances:           int32(service.Autoscaling.MinInstances),
+				MaxInstances:           int32(service.Autoscaling.MaxInstances),
+				CpuThresholdPercent:    int32(service.Autoscaling.CpuThresholdPercent),
+				MemoryThresholdPercent: int32(service.Autoscaling.MemoryThresholdPercent),
+			}
+		}
+		webConfig.Autoscaling = autoscaling
+
+		var healthCheck *porterv1.HealthCheck
+		if service.HealthCheck != nil {
+			healthCheck = &porterv1.HealthCheck{
 				Enabled:  service.HealthCheck.Enabled,
 				HttpPath: service.HealthCheck.HttpPath,
-			},
+			}
 		}
-
-		autoscaling := &porterv1.Autoscaling{
-			Enabled:                service.Autoscaling.Enabled,
-			MinInstances:           int32(service.Autoscaling.MinInstances),
-			MaxInstances:           int32(service.Autoscaling.MaxInstances),
-			CpuThresholdPercent:    int32(service.Autoscaling.CpuThresholdPercent),
-			MemoryThresholdPercent: int32(service.Autoscaling.MemoryThresholdPercent),
-		}
-
-		webConfig.Autoscaling = autoscaling
+		webConfig.HealthCheck = healthCheck
 
 		domains := make([]*porterv1.Domain, 0)
 		for _, domain := range service.Domains {
@@ -219,12 +224,16 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		}
 	case porterv1.ServiceType_SERVICE_TYPE_WORKER:
 		workerConfig := &porterv1.WorkerServiceConfig{}
-		autoscaling := &porterv1.Autoscaling{
-			Enabled:                service.Autoscaling.Enabled,
-			MinInstances:           int32(service.Autoscaling.MinInstances),
-			MaxInstances:           int32(service.Autoscaling.MaxInstances),
-			CpuThresholdPercent:    int32(service.Autoscaling.CpuThresholdPercent),
-			MemoryThresholdPercent: int32(service.Autoscaling.MemoryThresholdPercent),
+
+		var autoscaling *porterv1.Autoscaling
+		if service.Autoscaling != nil {
+			autoscaling = &porterv1.Autoscaling{
+				Enabled:                service.Autoscaling.Enabled,
+				MinInstances:           int32(service.Autoscaling.MinInstances),
+				MaxInstances:           int32(service.Autoscaling.MaxInstances),
+				CpuThresholdPercent:    int32(service.Autoscaling.CpuThresholdPercent),
+				MemoryThresholdPercent: int32(service.Autoscaling.MemoryThresholdPercent),
+			}
 		}
 		workerConfig.Autoscaling = autoscaling
 

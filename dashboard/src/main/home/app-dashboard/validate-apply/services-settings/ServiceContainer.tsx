@@ -39,7 +39,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   update,
   remove,
 }) => {
-  const [height, setHeight] = useState<Height>("auto");
+  const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
 
   const UPPER_BOUND = 0.75;
 
@@ -160,12 +160,15 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         />
       ))
       .with({ config: { type: "job" } }, (svc) => (
+        <JobTabs index={index} service={svc} maxCPU={maxCPU} maxRAM={maxRAM} />
+      ))
+      .with({ config: { type: "predeploy" } }, (svc) => (
         <JobTabs
           index={index}
           service={svc}
           maxCPU={maxCPU}
           maxRAM={maxRAM}
-          isPredeploy={isPredeploy}
+          isPredeploy
         />
       ))
       .exhaustive();
@@ -178,6 +181,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       case "worker":
         return <Icon src={worker} />;
       case "job":
+        return <Icon src={job} />;
+      case "predeploy":
         return <Icon src={job} />;
     }
   };
@@ -228,13 +233,15 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         contentClassName="auto-content"
         duration={300}
       >
-        <StyledSourceBox
-          showExpanded={service.expanded}
-          chart={chart}
-          hasFooter={chart && service && getHasBuiltImage()}
-        >
-          {renderTabs(service)}
-        </StyledSourceBox>
+        {height !== 0 && (
+          <StyledSourceBox
+            showExpanded={service.expanded}
+            chart={chart}
+            hasFooter={chart && service && getHasBuiltImage()}
+          >
+            {renderTabs(service)}
+          </StyledSourceBox>
+        )}
       </AnimateHeight>
       {chart &&
         service &&
@@ -328,29 +335,9 @@ const ServiceHeader = styled.div<{
     transform: ${(props: { showExpanded?: boolean; chart: any }) =>
       props.showExpanded ? "" : "rotate(-90deg)"};
   }
-
-  animation: fadeIn 0.3s 0s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
 `;
 
 const Icon = styled.img`
   height: 18px;
   margin-right: 15px;
-
-  animation: fadeIn 0.3s 0s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
 `;

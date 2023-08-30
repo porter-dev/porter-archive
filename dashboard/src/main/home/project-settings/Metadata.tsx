@@ -36,7 +36,7 @@ const Metadata: React.FC<Props> = ({
                 <Icon src={icon} height={"14px"} />
                 <IconWithName>{name}</IconWithName>
                 <CopyContainer>
-                    <IdText>Id: {id}</IdText>
+                    <IdText>ID: {id}</IdText>
                     <CopyToClipboard text={id.toString()}>
                         <CopyIcon src={copy} alt="copy" />
                     </CopyToClipboard>

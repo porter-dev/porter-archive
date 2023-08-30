@@ -18,16 +18,23 @@ import (
 )
 
 type StackConf struct {
-	apiClient            *api.Client
+	apiClient            api.Client
 	parsed               *Application
 	stackName, namespace string
 	projectID, clusterID uint
 }
 
-func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worker, app *Application, applicationName string, cliConf *config.CLIConfig) ([]*switchboardTypes.Resource, error) {
+// CreateApplicationDeploy creates everything needed to deploy a porter app
+func CreateApplicationDeploy(ctx context.Context, client api.Client, worker *switchboardWorker.Worker, app *Application, applicationName string, cliConf config.CLIConfig) ([]*switchboardTypes.Resource, error) {
+	err := cliConf.ValidateCLIEnvironment()
+	if err != nil {
+		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
+		return nil, fmt.Errorf("%s: %w", errMsg, err)
+	}
+
 	// we need to know the builder so that we can inject launcher to the start command later if heroku builder is used
 	var builder string
-	resources, builder, err := createV1BuildResources(client, app, applicationName, cliConf.Project, cliConf.Cluster)
+	resources, builder, err := createV1BuildResources(ctx, client, app, applicationName, cliConf.Project, cliConf.Cluster)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 	}
@@ -39,6 +46,7 @@ func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worke
 
 	deployAppHook := &DeployAppHook{
 		Client:               client,
+		CLIConfig:            cliConf,
 		ApplicationName:      applicationName,
 		ProjectID:            cliConf.Project,
 		ClusterID:            cliConf.Cluster,
@@ -52,7 +60,7 @@ func CreateApplicationDeploy(client *api.Client, worker *switchboardWorker.Worke
 }
 
 // Create app event to signfy start of build
-func createAppEvent(client *api.Client, applicationName string, projectId, clusterId uint) (string, error) {
+func createAppEvent(ctx context.Context, client api.Client, applicationName string, projectId, clusterId uint) (string, error) {
 	var req *types.CreateOrUpdatePorterAppEventRequest
 	if os.Getenv("GITHUB_RUN_ID") != "" {
 		req = &types.CreateOrUpdatePorterAppEventRequest{
@@ -97,7 +105,6 @@ func createAppEvent(client *api.Client, applicationName string, projectId, clust
 		}
 	}
 
-	ctx := context.Background()
 	event, err := client.CreateOrUpdatePorterAppEvent(ctx, projectId, clusterId, applicationName, req)
 	if err != nil {
 		return "", fmt.Errorf("unable to create porter app build event: %w", err)
@@ -106,11 +113,11 @@ func createAppEvent(client *api.Client, applicationName string, projectId, clust
 	return event.ID, nil
 }
 
-func createV1BuildResources(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) ([]*switchboardTypes.Resource, string, error) {
+func createV1BuildResources(ctx context.Context, client api.Client, app *Application, stackName string, projectID uint, clusterID uint) ([]*switchboardTypes.Resource, string, error) {
 	var builder string
 	resources := make([]*switchboardTypes.Resource, 0)
 
-	stackConf, err := createStackConf(client, app, stackName, projectID, clusterID)
+	stackConf, err := createStackConf(ctx, client, app, stackName, projectID, clusterID)
 	if err != nil {
 		return nil, "", err
 	}
@@ -121,7 +128,7 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 	if stackConf.parsed.Build == nil {
 		color.New(color.FgYellow).Printf("No build values specified in porter.yaml, attempting to load stack build settings instead \n")
 
-		res, err := client.GetPorterApp(context.Background(), stackConf.projectID, stackConf.clusterID, stackConf.stackName)
+		res, err := client.GetPorterApp(ctx, stackConf.projectID, stackConf.clusterID, stackConf.stackName)
 		if err != nil {
 			return nil, "", fmt.Errorf("unable to read build info from DB: %w", err)
 		}
@@ -141,7 +148,9 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 		resources = append(resources, bi, pi)
 
 		// also excluding use of pre-deploy with pre-built imges
-		preDeploy, cmd, err := createPreDeployResource(client,
+		preDeploy, cmd, err := createPreDeployResource(
+			ctx,
+			client,
 			stackConf.parsed.Release,
 			stackConf.stackName,
 			bi.Name,
@@ -165,15 +174,10 @@ func createV1BuildResources(client *api.Client, app *Application, stackName stri
 	return resources, builder, nil
 }
 
-func createStackConf(client *api.Client, app *Application, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
-	err := config.ValidateCLIEnvironment()
-	if err != nil {
-		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
-		return nil, fmt.Errorf("%s: %w", errMsg, err)
-	}
-
-	releaseEnvVars := getEnvFromRelease(client, stackName, projectID, clusterID)
-	releaseEnvGroupVars := getEnvGroupFromRelease(client, stackName, projectID, clusterID)
+//nolint:unparam
+func createStackConf(ctx context.Context, client api.Client, app *Application, stackName string, projectID uint, clusterID uint) (*StackConf, error) {
+	releaseEnvVars := getEnvFromRelease(ctx, client, stackName, projectID, clusterID)
+	releaseEnvGroupVars := getEnvGroupFromRelease(ctx, client, stackName, projectID, clusterID)
 	// releaseEnvVars will override releaseEnvGroupVars
 	totalEnv := mergeStringMaps(releaseEnvGroupVars, releaseEnvVars)
 
@@ -260,11 +264,11 @@ func convertToBuild(porterApp *types.PorterApp) Build {
 	}
 }
 
-func getEnvGroupFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) map[string]string {
+func getEnvGroupFromRelease(ctx context.Context, client api.Client, stackName string, projectID uint, clusterID uint) map[string]string {
 	var envGroups []string
 	envVarsGroupStringMap := make(map[string]string)
 
-	ctx, span := telemetry.NewSpan(context.Background(), "get-env-from-release")
+	ctx, span := telemetry.NewSpan(ctx, "get-env-from-release")
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "project-id", Value: projectID},
 		telemetry.AttributeKV{Key: "stack-name", Value: stackName},
@@ -326,11 +330,11 @@ func getEnvGroupFromRelease(client *api.Client, stackName string, projectID uint
 	return envVarsGroupStringMap
 }
 
-func getEnvFromRelease(client *api.Client, stackName string, projectID uint, clusterID uint) map[string]string {
+func getEnvFromRelease(ctx context.Context, client api.Client, stackName string, projectID uint, clusterID uint) map[string]string {
 	var envVarsStringMap map[string]string
 	namespace := fmt.Sprintf("porter-stack-%s", stackName)
 	release, err := client.GetRelease(
-		context.Background(),
+		ctx,
 		projectID,
 		clusterID,
 		namespace,

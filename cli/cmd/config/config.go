@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,9 +16,6 @@ import (
 )
 
 var home = homedir.HomeDir()
-
-// config is a shared object used by all commands
-var config = &CLIConfig{}
 
 // CLIConfig is the set of shared configuration options for the CLI commands.
 // This config is used by viper: calling Set() function for any parameter will
@@ -40,83 +36,44 @@ type CLIConfig struct {
 	Kubeconfig string `yaml:"kubeconfig"`
 }
 
+// FeatureFlags are any flags that are relevant to the feature set of the CLI. This should not include all feature flags, only those relevant to client-side CLI operations
+type FeatureFlags struct {
+	// ValidateApplyV2Enabled is a project-wide flag for checking if `porter apply` with porter.yaml is enabled
+	ValidateApplyV2Enabled bool
+}
+
 // InitAndLoadConfig populates the config object with the following precedence rules:
 // 1. flag
 // 2. env
 // 3. config
 // 4. default
-//
-// It populates the shared config object above
-func InitAndLoadConfig() {
-	initAndLoadConfig(config)
-}
+// Make sure to call overrideConfigWithFlags during runtime, to ensure that the flag values are considered
+func InitAndLoadConfig() (CLIConfig, error) {
+	var config CLIConfig
 
-func InitAndLoadNewConfig() *CLIConfig {
-	newConfig := &CLIConfig{}
-
-	initAndLoadConfig(newConfig)
-
-	return newConfig
-}
-
-func initAndLoadConfig(_config *CLIConfig) {
-	initFlagSet()
-
-	// check that the .porter folder exists; create if not
-	porterDir := filepath.Join(home, ".porter")
-
-	if _, err := os.Stat(porterDir); os.IsNotExist(err) {
-		os.Mkdir(porterDir, 0o700)
-	} else if err != nil {
-		color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+	porterDir, err := getOrCreatePorterDirectoryAndConfig()
+	if err != nil {
+		return config, fmt.Errorf("unable to get or create porter directory: %w", err)
 	}
-
 	viper.SetConfigName("porter")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(porterDir)
 
-	// Bind the flagset initialized above
-	viper.BindPFlags(utils.DriverFlagSet)
-	viper.BindPFlags(utils.DefaultFlagSet)
-	viper.BindPFlags(utils.RegistryFlagSet)
-	viper.BindPFlags(utils.HelmRepoFlagSet)
-
-	// Bind the environment variables with prefix "PORTER_"
-	viper.SetEnvPrefix("PORTER")
-	viper.BindEnv("host")
-	viper.BindEnv("project")
-	viper.BindEnv("cluster")
-	viper.BindEnv("token")
-
-	err := viper.ReadInConfig()
+	err = createAndLoadPorterYaml(porterDir)
 	if err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// create blank config file
-			err := ioutil.WriteFile(filepath.Join(home, ".porter", "porter.yaml"), []byte{}, 0o644)
-			if err != nil {
-				color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err)
-				os.Exit(1)
-			}
-		} else {
-			// Config file was found but another error was produced
-			color.New(color.FgRed).Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(1)
-		}
+		return config, fmt.Errorf("unable to load porter config: %w", err)
 	}
 
-	// unmarshal the config into the shared config struct
-	viper.Unmarshal(_config)
-}
-
-// initFlagSet initializes the shared flags used by multiple commands
-func initFlagSet() {
 	utils.DriverFlagSet.StringVar(
 		&config.Driver,
 		"driver",
 		"local",
 		"driver to use (local or docker)",
 	)
+	err = viper.BindPFlags(utils.DriverFlagSet)
+	if err != nil {
+		return config, err
+	}
 
 	utils.DefaultFlagSet.StringVar(
 		&config.Host,
@@ -146,6 +103,11 @@ func initFlagSet() {
 		"token for Porter authentication",
 	)
 
+	err = viper.BindPFlags(utils.DefaultFlagSet)
+	if err != nil {
+		return config, err
+	}
+
 	utils.RegistryFlagSet.UintVar(
 		&config.Registry,
 		"registry",
@@ -153,30 +115,80 @@ func initFlagSet() {
 		"registry ID of connected Porter registry",
 	)
 
+	err = viper.BindPFlags(utils.RegistryFlagSet)
+	if err != nil {
+		return config, err
+	}
+
 	utils.HelmRepoFlagSet.UintVar(
 		&config.HelmRepo,
 		"helmrepo",
 		0,
 		"helm repo ID of connected Porter Helm repository",
 	)
-}
-
-func GetCLIConfig() *CLIConfig {
-	if config == nil {
-		panic("GetCLIConfig() called before initialisation")
+	err = viper.BindPFlags(utils.HelmRepoFlagSet)
+	if err != nil {
+		return config, err
 	}
 
-	return config
-}
-
-func GetAPIClient() *api.Client {
-	config := GetCLIConfig()
-
-	if token := config.Token; token != "" {
-		return api.NewClientWithToken(config.Host+"/api", token)
+	viper.SetEnvPrefix("PORTER")
+	err = viper.BindEnv("host")
+	if err != nil {
+		return config, err
+	}
+	err = viper.BindEnv("project")
+	if err != nil {
+		return config, err
+	}
+	err = viper.BindEnv("cluster")
+	if err != nil {
+		return config, err
+	}
+	err = viper.BindEnv("token")
+	if err != nil {
+		return config, err
 	}
 
-	return api.NewClient(config.Host+"/api", "cookie.json")
+	err = viper.Unmarshal(&config)
+	if err != nil {
+		return config, fmt.Errorf("unable to unmarshal porter config: %w", err)
+	}
+
+	return config, nil
+}
+
+// getOrCreatePorterDirectoryAndConfig checks that the .porter folder exists; create if not
+func getOrCreatePorterDirectoryAndConfig() (string, error) {
+	porterDir := filepath.Join(home, ".porter")
+
+	_, err := os.Stat(porterDir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return "", fmt.Errorf("error reading porter directory: %w", err)
+		}
+		err = os.Mkdir(porterDir, 0o700)
+		if err != nil {
+			return "", fmt.Errorf("error creating porter directory: %w", err)
+		}
+	}
+	return porterDir, nil
+}
+
+// createAndLoadPorterYaml loads a porter.yaml config into Viper if it exists, or creates the file if it does not
+func createAndLoadPorterYaml(porterDir string) error {
+	err := viper.ReadInConfig()
+	if err != nil {
+		_, ok := err.(viper.ConfigFileNotFoundError)
+		if !ok {
+			return fmt.Errorf("unknown error reading ~/.porter/porter.yaml config: %w", err)
+		}
+
+		err := os.WriteFile(filepath.Join(porterDir, "porter.yaml"), []byte{}, 0o644) //nolint:gosec // do not want to change program logic. Should be addressed later
+		if err != nil {
+			return fmt.Errorf("unable to create ~/.porter/porter.yaml config: %w", err)
+		}
+	}
+	return nil
 }
 
 func (c *CLIConfig) SetDriver(driver string) error {
@@ -187,7 +199,7 @@ func (c *CLIConfig) SetDriver(driver string) error {
 		return err
 	}
 
-	config.Driver = driver
+	c.Driver = driver
 
 	return nil
 }
@@ -210,20 +222,21 @@ func (c *CLIConfig) SetHost(host string) error {
 
 	color.New(color.FgGreen).Printf("Set the current host as %s\n", host)
 
-	config.Host = host
-	config.Project = 0
-	config.Cluster = 0
-	config.Token = ""
+	c.Host = host
+	c.Project = 0
+	c.Cluster = 0
+	c.Token = ""
 
 	return nil
 }
 
-func (c *CLIConfig) SetProject(projectID uint) error {
+// SetProject sets a project for all API commands
+func (c *CLIConfig) SetProject(ctx context.Context, apiClient api.Client, projectID uint) error {
 	viper.Set("project", projectID)
 
 	color.New(color.FgGreen).Printf("Set the current project as %d\n", projectID)
 
-	if config.Kubeconfig != "" || viper.IsSet("kubeconfig") {
+	if c.Kubeconfig != "" || viper.IsSet("kubeconfig") {
 		color.New(color.FgYellow).Println("Please change local kubeconfig if needed")
 	}
 
@@ -232,16 +245,13 @@ func (c *CLIConfig) SetProject(projectID uint) error {
 		return err
 	}
 
-	config.Project = projectID
+	c.Project = projectID
 
-	client := GetAPIClient()
-	if client != nil {
-		resp, err := client.ListProjectClusters(context.Background(), projectID)
-		if err == nil {
-			clusters := *resp
-			if len(clusters) == 1 {
-				c.SetCluster(clusters[0].ID)
-			}
+	resp, err := apiClient.ListProjectClusters(ctx, projectID)
+	if err == nil {
+		clusters := *resp
+		if len(clusters) == 1 {
+			_ = c.SetCluster(clusters[0].ID)
 		}
 	}
 
@@ -253,7 +263,7 @@ func (c *CLIConfig) SetCluster(clusterID uint) error {
 
 	color.New(color.FgGreen).Printf("Set the current cluster as %d\n", clusterID)
 
-	if config.Kubeconfig != "" || viper.IsSet("kubeconfig") {
+	if c.Kubeconfig != "" || viper.IsSet("kubeconfig") {
 		color.New(color.FgYellow).Println("Please change local kubeconfig if needed")
 	}
 
@@ -262,7 +272,7 @@ func (c *CLIConfig) SetCluster(clusterID uint) error {
 		return err
 	}
 
-	config.Cluster = clusterID
+	c.Cluster = clusterID
 
 	return nil
 }
@@ -274,7 +284,7 @@ func (c *CLIConfig) SetToken(token string) error {
 		return err
 	}
 
-	config.Token = token
+	c.Token = token
 
 	return nil
 }
@@ -287,7 +297,7 @@ func (c *CLIConfig) SetRegistry(registryID uint) error {
 		return err
 	}
 
-	config.Registry = registryID
+	c.Registry = registryID
 
 	return nil
 }
@@ -300,7 +310,7 @@ func (c *CLIConfig) SetHelmRepo(helmRepoID uint) error {
 		return err
 	}
 
-	config.HelmRepo = helmRepoID
+	c.HelmRepo = helmRepoID
 
 	return nil
 }
@@ -323,21 +333,22 @@ func (c *CLIConfig) SetKubeconfig(kubeconfig string) error {
 		return err
 	}
 
-	config.Kubeconfig = kubeconfig
+	c.Kubeconfig = kubeconfig
 
 	return nil
 }
 
-func ValidateCLIEnvironment() error {
-	if GetCLIConfig().Token == "" {
+// ValidateCLIEnvironment checks that all required variables are present for running the CLI
+func (c *CLIConfig) ValidateCLIEnvironment() error {
+	if c.Token == "" {
 		return fmt.Errorf("no auth token present, please run 'porter auth login' to authenticate")
 	}
 
-	if GetCLIConfig().Project == 0 {
+	if c.Project == 0 {
 		return fmt.Errorf("no project selected, please run 'porter config set-project' to select a project")
 	}
 
-	if GetCLIConfig().Cluster == 0 {
+	if c.Cluster == 0 {
 		return fmt.Errorf("no cluster selected, please run 'porter config set-cluster' to select a cluster")
 	}
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import ServiceContainer from "./ServiceContainer";
 import styled from "styled-components";
 import Spacer from "components/porter/Spacer";
@@ -12,8 +12,13 @@ import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
 import { z } from "zod";
-import { ClientPorterApp, PorterAppFormData } from "lib/porter-apps";
-import { ClientService } from "lib/porter-apps/services";
+import { PorterAppFormData } from "lib/porter-apps";
+import {
+  ClientService,
+  defaultSerialized,
+  deserializeService,
+  isPredeployService,
+} from "lib/porter-apps/services";
 import {
   Controller,
   useFieldArray,
@@ -21,7 +26,6 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { ControlledInput } from "components/porter/ControlledInput";
-import { match } from "ts-pattern";
 
 const addServiceFormValidator = z.object({
   name: z
@@ -37,15 +41,16 @@ type AddServiceFormValues = z.infer<typeof addServiceFormValidator>;
 
 type ServiceListProps = {
   addNewText: string;
-  defaultExpanded?: boolean;
   limitOne?: boolean;
   prePopulateService?: ClientService;
+  isPredeploy?: boolean;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
   addNewText,
   limitOne = false,
   prePopulateService,
+  isPredeploy = false,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
@@ -65,7 +70,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
       type: "web",
     },
   });
-  const { append, remove, update, fields: services } = useFieldArray({
+  const { append, remove, update, fields } = useFieldArray({
     control: appControl,
     name: "app.services",
   });
@@ -77,8 +82,21 @@ const ServiceList: React.FC<ServiceListProps> = ({
     false
   );
 
+  const services = useMemo(() => {
+    // if predeploy, only show predeploy services
+    // if not predeploy, only show non-predeploy services
+    return fields.map((svc, idx) => {
+      const predeploy = isPredeployService(svc);
+      return {
+        svc,
+        idx,
+        included: isPredeploy ? predeploy : !predeploy,
+      };
+    });
+  }, [fields]);
+
   const isServiceNameDuplicate = (name: string) => {
-    return services.some((s) => s.name.value === name);
+    return services.some(({ svc: s }) => s.name.value === name);
   };
 
   const maybeRenderAddServicesButton = () => {
@@ -106,75 +124,9 @@ const ServiceList: React.FC<ServiceListProps> = ({
   };
 
   const onSubmit = handleSubmit(async (data) => {
-    const config: ClientService["config"] = match(data.type)
-      .with("web", () => ({
-        type: "web" as const,
-        domains: [],
-        autoscaling: {
-          enabled: {
-            readOnly: false,
-            value: false,
-          },
-        },
-        healthCheck: {
-          enabled: {
-            readOnly: false,
-            value: false,
-          },
-        },
-      }))
-      .with("worker", () => ({
-        type: "worker" as const,
-        autoscaling: {
-          enabled: {
-            readOnly: false,
-            value: false,
-          },
-        },
-      }))
-      .with("job", () => ({
-        type: "job" as const,
-        allowConcurrent: {
-          readOnly: false,
-          value: true,
-        },
-        cron: {
-          readOnly: false,
-          value: "",
-        },
-      }))
-      .exhaustive();
-
-    append({
-      expanded: true,
-      canDelete: true,
-      name: {
-        readOnly: false,
-        value: data.name,
-      },
-      run: {
-        readOnly: false,
-        value: "",
-      },
-      instances: {
-        readOnly: false,
-        value: 1,
-      },
-      cpuCores: {
-        readOnly: false,
-        value: 0.1,
-      },
-      ramMegabytes: {
-        readOnly: false,
-        value: 256,
-      },
-      port: {
-        readOnly: false,
-        value: 3000,
-      },
-      config,
-    });
-
+    append(
+      deserializeService({ service: defaultSerialized(data), expanded: true })
+    );
     reset();
     setShowAddServiceModal(false);
   });
@@ -183,70 +135,69 @@ const ServiceList: React.FC<ServiceListProps> = ({
     <>
       {services.length > 0 && (
         <ServicesContainer>
-          {services.map((service, idx) => {
-            return (
+          {services.map(({ svc, idx, included }) => {
+            return included ? (
               <ServiceContainer
                 index={idx}
-                key={service.id}
-                service={service}
+                key={svc.id}
+                service={svc}
                 update={update}
                 remove={remove}
               />
-            );
+            ) : null;
           })}
         </ServicesContainer>
       )}
       {maybeRenderAddServicesButton()}
       {showAddServiceModal && (
         <Modal closeModal={() => setShowAddServiceModal(false)} width="500px">
-          <form onSubmit={onSubmit}>
-            <Text size={16}>{addNewText}</Text>
-            <Spacer y={1} />
-            <Text color="helper">Select a service type:</Text>
-            <Spacer y={0.5} />
-            <Container row>
-              <ServiceIcon>
-                {serviceType === "web" && <img src={web} />}
-                {serviceType === "worker" && <img src={worker} />}
-                {serviceType === "job" && <img src={job} />}
-              </ServiceIcon>
-              <Controller
-                name="type"
-                control={control}
-                render={({ field: { onChange } }) => (
-                  <Select
-                    value={serviceType}
-                    width="100%"
-                    setValue={(value: string) => onChange(value)}
-                    options={[
-                      { label: "Web", value: "web" },
-                      { label: "Worker", value: "worker" },
-                      { label: "Cron Job", value: "job" },
-                    ]}
-                  />
-                )}
-              />
-            </Container>
-            <Spacer y={1} />
-            <Text color="helper">Name this service:</Text>
-            <Spacer y={0.5} />
-            <ControlledInput
-              type="text"
-              placeholder="ex: my-service"
-              width="100%"
-              error={errors.name?.message}
-              {...register("name")}
+          <Text size={16}>{addNewText}</Text>
+          <Spacer y={1} />
+          <Text color="helper">Select a service type:</Text>
+          <Spacer y={0.5} />
+          <Container row>
+            <ServiceIcon>
+              {serviceType === "web" && <img src={web} />}
+              {serviceType === "worker" && <img src={worker} />}
+              {serviceType === "job" && <img src={job} />}
+            </ServiceIcon>
+            <Controller
+              name="type"
+              control={control}
+              render={({ field: { onChange } }) => (
+                <Select
+                  value={serviceType}
+                  width="100%"
+                  setValue={(value: string) => onChange(value)}
+                  options={[
+                    { label: "Web", value: "web" },
+                    { label: "Worker", value: "worker" },
+                    { label: "Cron Job", value: "job" },
+                  ]}
+                />
+              )}
             />
-            <Spacer y={1} />
-            <Button
-              type="submit"
-              disabled={
-                isServiceNameDuplicate(serviceName) || serviceName?.length > 61
-              }
-            >
-              <I className="material-icons">add</I> Add service
-            </Button>
-          </form>
+          </Container>
+          <Spacer y={1} />
+          <Text color="helper">Name this service:</Text>
+          <Spacer y={0.5} />
+          <ControlledInput
+            type="text"
+            placeholder="ex: my-service"
+            width="100%"
+            error={errors.name?.message}
+            {...register("name")}
+          />
+          <Spacer y={1} />
+          <Button
+            type="button"
+            onClick={onSubmit}
+            disabled={
+              isServiceNameDuplicate(serviceName) || serviceName?.length > 61
+            }
+          >
+            <I className="material-icons">add</I> Add service
+          </Button>
         </Modal>
       )}
     </>
@@ -291,7 +242,17 @@ const I = styled.i`
   justify-content: center;
 `;
 
-const ServicesContainer = styled.div``;
+const ServicesContainer = styled.div`
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
 
 const AddServiceButton = styled.div`
   color: #aaaabb;

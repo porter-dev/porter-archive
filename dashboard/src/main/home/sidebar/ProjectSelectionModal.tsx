@@ -105,10 +105,10 @@ const ProjectSelectionModal: React.FC<Props> = ({
             if (clusters_list?.length > 0) {
               setCurrentCluster(clusters_list[0]);
               if (project.simplified_view_enabled) {
-                pushFiltered(props, "/apps", ["project_id"], {});
+                pushFiltered(props, "/onboarding/source", ["project_id"], {});
               }
               else {
-                pushFiltered(props, "/applications", ["project_id"], {})
+                pushFiltered(props, "/applications", ["project_id"], {});
               }
             } else {
               pushFiltered(props, "/onboarding", ["project_id"], {});
@@ -121,7 +121,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
 
 
           <BlockDescription>
-            Project Id: {project.id}
+            Project ID: {project.id}
           </BlockDescription>
         </IdContainer>
       );

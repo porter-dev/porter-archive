@@ -248,6 +248,34 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/integrations/preflightcheck -> project_integration.NewCreatePreflightCheckHandler
+	preflightCheckEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/preflightcheck",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	preflightCheckHandler := project_integration.NewCreatePreflightCheckHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: preflightCheckEndpoint,
+		Handler:  preflightCheckHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/integrations/azure -> project_integration.NewListAzureHandler
 	listAzureEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -2,12 +2,16 @@ import { PolicyDocType } from "./auth/types";
 import { PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
 import { baseApi } from "./baseApi";
 
-import { BuildConfig, FullActionConfigType, CreateUpdatePorterAppOptions } from "./types";
+import {
+  BuildConfig,
+  FullActionConfigType,
+  CreateUpdatePorterAppOptions,
+} from "./types";
 import {
   CreateStackBody,
   SourceConfig,
 } from "main/home/cluster-dashboard/stacks/types";
-import { Contract } from "@porter-dev/api-contracts";
+import { Contract, EnumCloudProvider, GKEPreflightValues, PreflightCheckRequest } from "@porter-dev/api-contracts";
 
 /**
  * Generic api call format
@@ -71,6 +75,13 @@ const getGitlabIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/gitlab`
 );
 
+
+const preflightCheck = baseApi<PreflightCheckRequest,
+  { id: number }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/integrations/preflightcheck`;
+});
+
 const preflightCheckAWSUsage = baseApi<
   {
     target_arn: string;
@@ -124,7 +135,16 @@ const updateCluster = baseApi<
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
-
+const renameProject = baseApi<
+  {
+    name: string | undefined;
+  },
+  {
+    project_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/rename`;
+});
 const renameCluster = baseApi<
   {
     name: string;
@@ -268,7 +288,8 @@ const getFeedEvents = baseApi<
   }
 >("GET", (pathParams) => {
   let { project_id, cluster_id, stack_name, page } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/events?page=${page || 1}`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/events?page=${page || 1
+    }`;
 });
 
 const createEnvironment = baseApi<
@@ -765,6 +786,123 @@ const getPorterYamlContents = baseApi<
   return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
     }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
     }/${encodeURIComponent(pathParams.branch)}/porteryaml`;
+});
+
+const parsePorterYaml = baseApi<
+  {
+    b64_yaml: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/parse`;
+});
+
+const getDefaultDeploymentTarget = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/default-deployment-target`;
+});
+
+const getBranchHead = baseApi<
+  {},
+  {
+    project_id: number;
+    git_repo_id: number;
+    kind: string;
+    owner: string;
+    name: string;
+    branch: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/head`;
+});
+
+const validatePorterApp = baseApi<
+  {
+    b64_app_proto: string;
+    deployment_target_id: string;
+    commit_sha: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/validate`;
+});
+
+const createApp = baseApi<
+  | {
+    name: string;
+    type: "github";
+    git_repo_id: number;
+    git_branch: string;
+    git_repo_name: string;
+    porter_yaml_path: string;
+  }
+  | {
+    name: string;
+    type: "docker-registry";
+    image: {
+      repository: string;
+      tag: string;
+    };
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/create`;
+});
+
+const applyApp = baseApi<
+  {
+    deployment_target_id: string;
+    b64_app_proto?: string;
+    app_revision_id?: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/apply`;
+});
+
+const getLatestRevision = baseApi<
+  {
+    deployment_target_id: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }
+>("GET", ({ project_id, cluster_id, porter_app_name }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/latest`;
+});
+
+const listAppRevisions = baseApi<
+  {
+    deployment_target_id: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }
+>("GET", ({ project_id, cluster_id, porter_app_name }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/revisions`;
 });
 
 const getGitlabProcfileContents = baseApi<
@@ -1797,7 +1935,6 @@ const deleteNewEnvGroup = baseApi<
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
 });
 
-
 const deleteConfigMap = baseApi<
   {
     name: string;
@@ -2726,6 +2863,7 @@ export default {
   overwriteAWSIntegration,
   updateCluster,
   renameCluster,
+  renameProject,
   createAzureIntegration,
   createGitlabIntegration,
   createEmailVerification,
@@ -2832,6 +2970,14 @@ export default {
   getPodEvents,
   getProcfileContents,
   getPorterYamlContents,
+  parsePorterYaml,
+  getDefaultDeploymentTarget,
+  getBranchHead,
+  validatePorterApp,
+  createApp,
+  applyApp,
+  getLatestRevision,
+  listAppRevisions,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,
@@ -2905,6 +3051,7 @@ export default {
   addApplicationToEnvGroup,
   removeApplicationFromEnvGroup,
   provisionDatabase,
+  preflightCheck,
   preflightCheckAWSUsage,
   getDatabases,
   getPreviousLogsForContainer,

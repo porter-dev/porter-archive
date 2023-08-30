@@ -4,17 +4,19 @@
 package main
 
 import (
+	"context"
 	"os"
 	"time"
 
 	"github.com/fatih/color"
 	"github.com/getsentry/sentry-go"
-	"github.com/porter-dev/porter/cli/cmd"
+	"github.com/porter-dev/porter/cli/cmd/commands"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/errors"
 )
 
 func main() {
+	ctx := context.Background()
 	if errors.SentryDSN != "" {
 		err := sentry.Init(sentry.ClientOptions{
 			Dsn:         errors.SentryDSN,
@@ -33,5 +35,9 @@ func main() {
 		defer sentry.Flush(2 * time.Second)
 	}
 
-	cmd.Execute()
+	err := commands.Execute(ctx)
+	if err != nil {
+		color.New(color.FgRed).Fprintf(os.Stderr, "error executing command: %s\n", err)
+		os.Exit(1)
+	}
 }

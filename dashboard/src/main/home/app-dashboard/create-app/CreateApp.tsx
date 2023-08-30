@@ -473,7 +473,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       </Text>
                       <Spacer y={0.5} />
                       <ServiceList
-                        limitOne={true}
                         addNewText={"Add a new pre-deploy job"}
                         prePopulateService={deserializeService({
                           service: defaultSerialized({

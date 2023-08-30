@@ -1,13 +1,8 @@
 import { PorterApp } from "@porter-dev/api-contracts";
-import {
-  PorterAppFormData,
-  SourceOptions,
-  clientAppToProto,
-} from "lib/porter-apps";
+import { PorterAppFormData, clientAppToProto } from "lib/porter-apps";
 import { useCallback, useContext } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { match } from "ts-pattern";
 import { z } from "zod";
 
 export const useAppValidation = ({
@@ -16,41 +11,6 @@ export const useAppValidation = ({
   deploymentTargetID?: string;
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
-
-  const getBranchHead = async ({
-    projectID,
-    source,
-  }: {
-    projectID: number;
-    source: SourceOptions & {
-      type: "github";
-    };
-  }) => {
-    const [owner, repo_name] = await z
-      .tuple([z.string(), z.string()])
-      .parseAsync(source.git_repo_name?.split("/"));
-
-    const res = await api.getBranchHead(
-      "<token>",
-      {},
-      {
-        ...source,
-        project_id: projectID,
-        kind: "github",
-        owner,
-        name: repo_name,
-        branch: source.git_branch,
-      }
-    );
-
-    const commitData = await z
-      .object({
-        commit_sha: z.string(),
-      })
-      .parseAsync(res.data);
-
-    return commitData;
-  };
 
   const validateApp = useCallback(
     async (data: PorterAppFormData) => {
@@ -63,18 +23,6 @@ export const useAppValidation = ({
       }
 
       const proto = clientAppToProto(data);
-      const commit_sha = await match(data.source)
-        .with({ type: "github" }, async (src) => {
-          const { commit_sha } = await getBranchHead({
-            projectID: currentProject.id,
-            source: src,
-          });
-          return commit_sha;
-        })
-        .with({ type: "docker-registry" }, () => {
-          return "";
-        })
-        .exhaustive();
 
       const res = await api.validatePorterApp(
         "<token>",
@@ -85,7 +33,7 @@ export const useAppValidation = ({
             })
           ),
           deployment_target_id: deploymentTargetID,
-          commit_sha,
+          commit_sha: "", // not sending a commit sha since the CLI will handle this
         },
         {
           project_id: currentProject.id,

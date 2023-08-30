@@ -184,11 +184,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         deploymentTargetId,
         porterApp.name,
       ]);
-
-      reset({
-        app: clientAppFromProto(latestProto, servicesFromYaml),
-        source: latestSource,
-      });
     } catch (err) {}
   });
 
@@ -199,7 +194,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         source: latestSource,
       });
     }
-  }, [servicesFromYaml, currentTab]);
+  }, [servicesFromYaml, currentTab, latestProto]);
 
   return (
     <FormProvider {...porterAppFormMethods}>
@@ -210,7 +205,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           projectId={projectId}
           clusterId={clusterId}
           appName={porterApp.name}
-          sourceType={latestSource.type}
+          latestSource={latestSource}
         />
         <Spacer y={1} />
         <AnimateHeight height={isDirty && !onlyExpandedChanged ? "auto" : 0}>

@@ -99,6 +99,13 @@ export function isPredeployService(service: SerializedService | ClientService) {
   return service.config.type == "predeploy";
 }
 
+export function prefixSubdomain(subdomain: string) {
+  if (subdomain.startsWith("https://") || subdomain.startsWith("http://")) {
+    return subdomain;
+  }
+  return "https://" + subdomain;
+}
+
 export function defaultSerialized({
   name,
   type,

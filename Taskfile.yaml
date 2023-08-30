@@ -44,6 +44,3 @@ tasks:
     cmd: golangci-lint run -c .github/golangci-lint.yaml
     env:
       GOWORK: off
-    
-
-

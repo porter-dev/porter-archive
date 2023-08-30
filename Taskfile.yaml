@@ -33,6 +33,7 @@ tasks:
     - cmd: git push origin {{.CLI_ARGS}}
       silent: true
       ignore_error: false
+    - cmd: echo "View your pre-release at https://github.com/porter-dev/porter/releases/tag{{ .CLI_ARGS }}"
 
   semantic-check:
     preconditions:

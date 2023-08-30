@@ -49,18 +49,21 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			CompanyName:            user.CompanyName,
 		}))
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error tracking project delete")
+			_ = telemetry.Error(ctx, span, err, "error tracking project delete")
 		}
 	}
 
 	if request.Step == "cluster-delete" {
-		v.Config().AnalyticsClient.Track(analytics.ClusterDeleteTrack(&analytics.ClusterDeleteTrackOpts{
+		err := v.Config().AnalyticsClient.Track(analytics.ClusterDeleteTrack(&analytics.ClusterDeleteTrackOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			Email:                  user.Email,
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
 		}))
+		if err != nil {
+			_ = telemetry.Error(ctx, span, err, "error tracking cluster delete")
+		}
 	}
 
 	if request.Step == "cost-consent-opened" {
@@ -73,7 +76,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			CompanyName:         user.CompanyName,
 		}))
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error tracking cost consent opened")
+			_ = telemetry.Error(ctx, span, err, "error tracking cost consent opened")
 		}
 	}
 
@@ -87,7 +90,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			CompanyName:         user.CompanyName,
 		}))
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error tracking cost consent completed")
+			_ = telemetry.Error(ctx, span, err, "error tracking cost consent completed")
 		}
 	}
 
@@ -101,7 +104,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			AccountId:              request.AccountId,
 		}))
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error tracking aws input")
+			_ = telemetry.Error(ctx, span, err, "error tracking aws input")
 		}
 	}
 
@@ -116,7 +119,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			LoginURL:               request.LoginURL,
 		}))
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error tracking aws login redirect")
+			_ = telemetry.Error(ctx, span, err, "error tracking aws login redirect")
 		}
 	}
 
@@ -132,7 +135,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			ExternalId:             request.ExternalId,
 		}))
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error tracking aws cloudformation redirect")
+			_ = telemetry.Error(ctx, span, err, "error tracking aws cloudformation redirect")
 		}
 	}
 
@@ -146,7 +149,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			AccountId:              request.AccountId,
 		}))
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error tracking aws create integration")
+			_ = telemetry.Error(ctx, span, err, "error tracking aws create integration")
 		}
 	}
 
@@ -162,7 +165,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			ExternalId:             request.ExternalId,
 		}))
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error tracking aws create integration failure")
+			_ = telemetry.Error(ctx, span, err, "error tracking aws create integration failure")
 		}
 	}
 
@@ -171,7 +174,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),
 		}))
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error tracking credential step complete")
+			_ = telemetry.Error(ctx, span, err, "error tracking credential step complete")
 		}
 	}
 
@@ -184,7 +187,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			CompanyName:            user.CompanyName,
 		}))
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error tracking pre-provisioning check started")
+			_ = telemetry.Error(ctx, span, err, "error tracking pre-provisioning check started")
 		}
 	}
 
@@ -198,7 +201,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			Region:                 request.Region,
 		}))
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error tracking provisioning started")
+			_ = telemetry.Error(ctx, span, err, "error tracking provisioning started")
 		}
 	}
 
@@ -213,7 +216,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			Region:                 request.Region,
 		}))
 		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error tracking provisioning failure")
+			_ = telemetry.Error(ctx, span, err, "error tracking provisioning failure")
 		}
 	}
 

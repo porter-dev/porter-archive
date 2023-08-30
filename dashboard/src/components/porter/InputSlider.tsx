@@ -49,8 +49,23 @@ const InputSlider: React.FC<InputSliderProps> = ({
   width,
 
 }) => {
-  const marks: Mark[] = [
+  const quarter = min + (max - min) * 0.25;
+  const threeQuarter = min + (max - min) * 0.75;
 
+  const mid = min + (max - min) * 0.5;
+  const marks: Mark[] = [
+    // {
+    //   value: quarter,
+    //   label: `25%`,
+    // },
+    {
+      value: mid,
+      label: `${mid}`,
+    },
+    {
+      value: threeQuarter,
+      label: `Recommended`,
+    },
     {
       value: max,
       label: max.toString(),
@@ -64,8 +79,10 @@ const InputSlider: React.FC<InputSliderProps> = ({
         <Value>{`${value} ${unit}`}</Value>
       </LabelContainer>
       <DisabledTooltip title={disabled ? disabledTooltip || '' : ''} arrow>
-
         <div style={{ position: 'relative' }}>
+          {/* <div style={{ position: 'absolute', bottom: '100%', left: `calc(${((threeQuarter - min) / (max - min)) * 100}% - 50px)` }}>
+            Recommended
+          </div> */}
           <StyledSlider
             ValueLabelComponent={ValueLabelComponent}
             aria-label="input slider"
@@ -106,7 +123,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
 export default InputSlider;
 
 const SliderContainer = styled.div<{ width?: string }>`
-  width: ${({ width }) => width || '300px'};
+  width: ${({ width }) => width || '800px'};
   margin: 1px 0;
 `;
 
@@ -164,7 +181,10 @@ const StyledSlider = withStyles({
     color: '#6e717d',
     fontSize: '12px',
     marginRight: 5,
-
+    '&[data-mark-value="Recommended"]': { // targeting the Recommended label
+      transform: 'translateY(-100%)', // move it upwards
+      marginBottom: '15px', // adjust the margin to position it
+    },
   },
   markLabelActive: {
     color: '#6e717d',

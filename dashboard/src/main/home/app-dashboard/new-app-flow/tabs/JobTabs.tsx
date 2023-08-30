@@ -92,7 +92,7 @@ const JobTabs: React.FC<Props> = ({
           setValue={(e) => {
             editService({ ...service, cpu: { readOnly: false, value: e * MILI_TO_CORE } });
           }}
-          step={0.01}
+          step={0.1}
           disabled={service.cpu.readOnly}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
@@ -108,7 +108,7 @@ const JobTabs: React.FC<Props> = ({
             editService({ ...service, ram: { readOnly: false, value: e * MIB_TO_GIB } });
           }}
           disabled={service.ram.readOnly}
-          step={0.01}
+          step={0.1}
           disabledTooltip={"You may only edit this field in your porter.yaml."}
         />
       </>

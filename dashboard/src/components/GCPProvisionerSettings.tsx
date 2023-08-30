@@ -454,7 +454,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       )}
 
       <Button
-        disabled={isDisabled() || isLoading || preflightFailed}
+        disabled={isDisabled() || isLoading || preflightFailed || statusPreflight() != ""}
         onClick={createCluster}
         status={getStatus()}
       >

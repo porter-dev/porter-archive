@@ -98,10 +98,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       app: {
         name: "",
         build: {
+          method: "pack",
           context: "./",
           builder: "",
           buildpacks: [],
-          dockerfile: "",
         },
       },
       source: {

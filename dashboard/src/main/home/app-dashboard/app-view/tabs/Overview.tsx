@@ -36,7 +36,6 @@ const Overview: React.FC = () => {
           <Text size={16}>Pre-deploy job</Text>
           <Spacer y={0.5} />
           <ServiceList
-            limitOne={true}
             addNewText={"Add a new pre-deploy job"}
             prePopulateService={deserializeService({
               service: defaultSerialized({

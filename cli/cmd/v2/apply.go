@@ -62,6 +62,8 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 	var commitSHA string
 	if os.Getenv("PORTER_COMMIT_SHA") != "" {
 		commitSHA = os.Getenv("PORTER_COMMIT_SHA")
+	} else if os.Getenv("GITHUB_SHA") != "" {
+		commitSHA = os.Getenv("GITHUB_SHA")
 	} else if commit, err := git.LastCommit(); err == nil && commit != nil {
 		commitSHA = commit.Sha
 	}

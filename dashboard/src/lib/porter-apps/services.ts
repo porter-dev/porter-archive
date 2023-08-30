@@ -38,9 +38,12 @@ export const serviceValidator = z.object({
     z.object({
       type: z.literal("web"),
       autoscaling: autoscalingValidator.optional(),
-      ingressEnabled: z.boolean().default(false).optional(),
       domains: domainsValidator,
       healthCheck: healthcheckValidator.optional(),
+      private: serviceBooleanValidator.default({
+        value: false,
+        readOnly: false,
+      }),
     }),
     z.object({
       type: z.literal("worker"),
@@ -76,6 +79,7 @@ export type SerializedService = {
         }[];
         autoscaling?: SerializedAutoscaling;
         healthCheck?: SerializedHealthcheck;
+        private: boolean;
       }
     | {
         type: "worker";
@@ -132,6 +136,7 @@ export function defaultSerialized({
         autoscaling: defaultAutoscaling,
         healthCheck: defaultHealthCheck,
         domains: [],
+        private: false,
       },
     }))
     .with("worker", () => ({
@@ -180,6 +185,7 @@ export function serializeService(service: ClientService): SerializedService {
           domains: config.domains.map((domain) => ({
             name: domain.name.value,
           })),
+          private: config.private.value,
         },
       })
     )
@@ -280,6 +286,10 @@ export function deserializeService({
               )?.name
             ),
           })),
+          private: ServiceField.boolean(
+            config.private,
+            overrideWebConfig?.private
+          ),
         },
       };
     })

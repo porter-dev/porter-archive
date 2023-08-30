@@ -44,6 +44,16 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		}))
 	}
 
+	if request.Step == "cluster-delete" {
+		v.Config().AnalyticsClient.Track(analytics.ClusterDeleteTrack(&analytics.ClusterDeleteTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+		}))
+	}
+
 	if request.Step == "cost-consent-opened" {
 		v.Config().AnalyticsClient.Track(analytics.CostConsentOpenedTrack(&analytics.CostConsentOpenedTrackOpts{
 			UserScopedTrackOpts: analytics.GetUserScopedTrackOpts(user.ID),

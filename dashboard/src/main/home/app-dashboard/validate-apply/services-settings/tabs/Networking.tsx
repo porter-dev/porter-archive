@@ -28,7 +28,7 @@ const prefixSubdomain = (subdomain: string) => {
 const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
   const { register, control, watch } = useFormContext<PorterAppFormData>();
 
-  const ingressEnabled = watch(`app.services.${index}.config.ingressEnabled`);
+  const privateService = watch(`app.services.${index}.config.private.value`);
 
   const getApplicationURLText = () => {
     if (service.config.domains.length !== 0) {
@@ -69,12 +69,12 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
       />
       <Spacer y={1} />
       <Controller
-        name={`app.services.${index}.config.ingressEnabled`}
+        name={`app.services.${index}.config.private.value`}
         control={control}
         render={({ field: { value, onChange } }) => (
           <Checkbox
-            checked={Boolean(value)}
-            disabled={service.config.domains.some((d) => d.name.readOnly)}
+            checked={value}
+            disabled={service.config.private.readOnly}
             toggleChecked={() => {
               onChange(!value);
             }}
@@ -82,11 +82,11 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
               "You may only edit this field in your porter.yaml."
             }
           >
-            <Text color="helper">Expose to external traffic</Text>
+            <Text color="helper">Private Service</Text>
           </Checkbox>
         )}
       />
-      {ingressEnabled && (
+      {!privateService && (
         <>
           <Spacer y={0.5} />
           {getApplicationURLText()}

@@ -583,6 +583,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   limitOne={true}
                   addNewText={"Add a new pre-deploy job"}
                   prePopulateService={Service.default("pre-deploy", "release", porterJsonWithPath?.porterJson)}
+                  appName={porterApp.name}
                 />
               </>,
               <Button

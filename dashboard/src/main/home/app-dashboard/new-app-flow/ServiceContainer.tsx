@@ -23,7 +23,7 @@ interface ServiceProps {
   chart?: any;
   editService: (service: Service) => void;
   deleteService: () => void;
-  setExpandedJob: (x: string) => void;
+  setExpandedJob?: (x: string) => void;
 }
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -80,7 +80,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
               RAM: 4,
             };
 
-            data.forEach(node => {
+            // TODO: type this response
+            data.forEach((node: any) => {
               if (node.labels['porter.run/workload-kind'] == "application") {
                 var instanceType: string = node.labels['beta.kubernetes.io/instance-type'];
                 const [instanceClass, instanceSize] = instanceType.split('.');

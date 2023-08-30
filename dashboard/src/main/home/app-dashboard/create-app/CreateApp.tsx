@@ -131,6 +131,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const { updateAppStep } = useAppAnalytics(name);
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget?.deployment_target_id,
+    creating: true,
   });
 
   const onSubmit = handleSubmit(async (data) => {

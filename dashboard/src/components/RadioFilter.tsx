@@ -178,6 +178,32 @@ const Placeholder = styled.div`
 const ScrollableWrapper = styled.div`
   overflow-y: auto;
   max-height: 350px;
+
+  ::-webkit-scrollbar {
+    width: 5px;
+    :horizontal {
+      height: 8px;
+    }
+  }
+
+  ::-webkit-scrollbar-corner {
+    width: 10px;
+    background: #ffffff11;
+    color: white;
+  }
+
+  ::-webkit-scrollbar-track {
+    width: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: darkgrey;
+    outline: 1px solid slategrey;
+    border-radius: 5px;
+  }
 `;
 
 const Relative = styled.div`

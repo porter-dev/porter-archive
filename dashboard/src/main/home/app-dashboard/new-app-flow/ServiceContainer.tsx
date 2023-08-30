@@ -23,7 +23,7 @@ interface ServiceProps {
   chart?: any;
   editService: (service: Service) => void;
   deleteService: () => void;
-  setExpandedJob: (x: string) => void;
+  setExpandedJob?: (x: string) => void;
 }
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -35,7 +35,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
 }) => {
   const [height, setHeight] = React.useState<Height>("auto");
 
-  const UPPER_BOUND = .75;
+  const UPPER_BOUND = .5;
 
   const [maxCPU, setMaxCPU] = useState(2 * UPPER_BOUND); //default is set to a t3 medium 
   const [maxRAM, setMaxRAM] = useState(4 * UPPER_BOUND); //default is set to a t3 medium
@@ -80,7 +80,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
               RAM: 4,
             };
 
-            data.forEach(node => {
+            // TODO: type this response
+            data.forEach((node: any) => {
               if (node.labels['porter.run/workload-kind'] == "application") {
                 var instanceType: string = node.labels['beta.kubernetes.io/instance-type'];
                 const [instanceClass, instanceSize] = instanceType.split('.');

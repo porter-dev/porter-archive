@@ -24,7 +24,7 @@ func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
 		Short: "List applications, addons or jobs.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 || (args[0] == "all") {
-				err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listAll)
+				err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAll)
 				if err != nil {
 					os.Exit(1)
 				}
@@ -39,7 +39,7 @@ func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
 		Aliases: []string{"applications", "app", "application"},
 		Short:   "Lists applications in a specific namespace, or across all namespaces",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listApps)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listApps)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -51,7 +51,7 @@ func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
 		Aliases: []string{"job"},
 		Short:   "Lists jobs in a specific namespace, or across all namespaces",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listJobs)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listJobs)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -63,7 +63,7 @@ func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
 		Aliases: []string{"addon"},
 		Short:   "Lists addons in a specific namespace, or across all namespaces",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, listAddons)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAddons)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -91,21 +91,16 @@ func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
 	return listCmd
 }
 
-func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.ListAll(ctx)
+func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.ListAll(ctx)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	err = writeReleases(ctx, client, cliConf, "all")
+	err := writeReleases(ctx, client, cliConf, "all")
 	if err != nil {
 		return err
 	}
@@ -113,21 +108,16 @@ func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client 
 	return nil
 }
 
-func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.ListApps(ctx)
+func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.ListApps(ctx)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	err = writeReleases(ctx, client, cliConf, "application")
+	err := writeReleases(ctx, client, cliConf, "application")
 	if err != nil {
 		return err
 	}
@@ -135,21 +125,16 @@ func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client
 	return nil
 }
 
-func listJobs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
-	project, err := client.GetProject(ctx, cliConf.Project)
-	if err != nil {
-		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
-	}
-
-	if project.ValidateApplyV2 {
-		err = v2.ListJobs(ctx)
+func listJobs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+	if featureFlags.ValidateApplyV2Enabled {
+		err := v2.ListJobs(ctx)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	err = writeReleases(ctx, client, cliConf, "job")
+	err := writeReleases(ctx, client, cliConf, "job")
 	if err != nil {
 		return err
 	}
@@ -157,7 +142,7 @@ func listJobs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client
 	return nil
 }
 
-func listAddons(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func listAddons(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	err := writeReleases(ctx, client, cliConf, "addon")
 	if err != nil {
 		return err

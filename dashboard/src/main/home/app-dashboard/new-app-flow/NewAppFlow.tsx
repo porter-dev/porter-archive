@@ -570,9 +570,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                 <Text size={16}>Pre-deploy job (optional)</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
-                  You may add a pre-deploy job to
-                  perform an operation before your application services
-                  deploy each time, like a database migration.
+                  After your application is built each time, your pre-deploy command will run before your services
+                  are deployed. Use this for operations like a database migration.
                 </Text>
                 <Spacer y={0.5} />
                 <Services
@@ -584,6 +583,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   limitOne={true}
                   addNewText={"Add a new pre-deploy job"}
                   prePopulateService={Service.default("pre-deploy", "release", porterJsonWithPath?.porterJson)}
+                  appName={porterApp.name}
                 />
               </>,
               <Button

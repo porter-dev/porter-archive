@@ -73,6 +73,7 @@ export const usePorterYaml = ({
         source?.type === "github" &&
         Boolean(source.git_repo_name) &&
         Boolean(source.git_branch),
+      retry: false,
     }
   );
 
@@ -138,6 +139,13 @@ export const usePorterYaml = ({
       setDetectedServices(null);
     }
   }, [data]);
+
+  if (source?.type !== "github") {
+    return {
+      loading: false,
+      detectedServices: null,
+    };
+  }
 
   if (status === "loading") {
     return {

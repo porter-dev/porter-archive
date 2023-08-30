@@ -133,7 +133,6 @@ func login(ctx context.Context, cliConf config.CLIConfig) error {
 		}
 
 		_, _ = color.New(color.FgGreen).Println("Successfully logged in!")
-
 		return setProjectForUser(ctx, client, cliConf, user.ID)
 
 	}
@@ -189,7 +188,6 @@ func setProjectForUser(ctx context.Context, client api.Client, config config.CLI
 		config.SetProject(ctx, client, projects[0].ID) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
 		err = setProjectCluster(ctx, client, config, projects[0].ID)
-
 		if err != nil {
 			return err
 		}
@@ -199,6 +197,7 @@ func setProjectForUser(ctx context.Context, client api.Client, config config.CLI
 }
 
 func loginManual(ctx context.Context, cliConf config.CLIConfig, client api.Client) error {
+	client.CookieFilePath = "cookie.json" // required as this uses cookies for auth instead of a token
 	var username, pw string
 
 	fmt.Println("Please log in with an email and password:")
@@ -209,16 +208,13 @@ func loginManual(ctx context.Context, cliConf config.CLIConfig, client api.Clien
 	}
 
 	pw, err = utils.PromptPassword("Password: ")
-
 	if err != nil {
 		return err
 	}
-
 	_, err = client.Login(ctx, &types.LoginUserRequest{
 		Email:    username,
 		Password: pw,
 	})
-
 	if err != nil {
 		return err
 	}

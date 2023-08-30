@@ -464,7 +464,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   );
 };
 
-export default withRouter(GCPProvisionerSettings);s
+export default withRouter(GCPProvisionerSettings);
 
 
 const StyledForm = styled.div`

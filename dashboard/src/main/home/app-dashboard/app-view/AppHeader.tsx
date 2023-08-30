@@ -9,10 +9,12 @@ import github from "assets/github-white.png";
 import pr_icon from "assets/pull_request_icon.svg";
 
 import { PorterApp } from "@porter-dev/api-contracts";
-import { useLatestRevision } from "./LatestRevisionContext";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import styled from "styled-components";
+import { useLatestRevision } from "./LatestRevisionContext";
+import { prefixSubdomain } from "lib/porter-apps/services";
+import { readableDate } from "shared/string_utils";
 
 // Buildpack icons
 const icons = [
@@ -24,7 +26,7 @@ const icons = [
 ];
 
 const AppHeader: React.FC = () => {
-  const { latestProto, porterApp } = useLatestRevision();
+  const { latestProto, porterApp, latestRevision } = useLatestRevision();
 
   const gitData = useMemo(() => {
     if (
@@ -62,45 +64,79 @@ const AppHeader: React.FC = () => {
     }
   };
 
+  const displayDomain = useMemo(() => {
+    const domains = Object.values(latestProto.services).reduce(
+      (acc: string[], s) => {
+        if (s.config.case === "webConfig") {
+          const names = s.config.value.domains.map((d) => d.name);
+          return [...acc, ...names];
+        }
+
+        return acc;
+      },
+      []
+    );
+
+    return domains.length === 1 ? prefixSubdomain(domains[0]) : "";
+  }, [latestProto]);
+
   return (
-    <Container row>
-      <Icon src={getIconSvg(latestProto.build)} height={"24px"} />
-      <Spacer inline x={1} />
-      <Text size={21}>{latestProto.name}</Text>
-      {gitData && (
+    <>
+      <Container row>
+        <Icon src={getIconSvg(latestProto.build)} height={"24px"} />
+        <Spacer inline x={1} />
+        <Text size={21}>{latestProto.name}</Text>
+        {gitData && (
+          <>
+            <Spacer inline x={1} />
+            <Container row>
+              <A target="_blank" href={`https://github.com/${gitData.repo}`}>
+                <SmallIcon src={github} />
+                <Text size={13}>{gitData.repo}</Text>
+              </A>
+            </Container>
+            <Spacer inline x={1} />
+            <TagWrapper>
+              Branch
+              <BranchTag>
+                <BranchIcon src={pr_icon} />
+                {gitData.branch}
+              </BranchTag>
+            </TagWrapper>
+          </>
+        )}
+        {!gitData && porterApp.image_repo_uri && (
+          <>
+            <Spacer inline x={1} />
+            <Container row>
+              <SmallIcon
+                height="19px"
+                src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
+              />
+              <Text size={13} color="helper">
+                {porterApp.image_repo_uri}
+              </Text>
+            </Container>
+          </>
+        )}
+      </Container>
+      <Spacer y={0.5} />
+      {displayDomain && (
         <>
-          <Spacer inline x={1} />
-          <Container row>
-            <A target="_blank" href={`https://github.com/${gitData.repo}`}>
-              <SmallIcon src={github} />
-              <Text size={13}>{gitData.repo}</Text>
-            </A>
-          </Container>
-          <Spacer inline x={1} />
-          <TagWrapper>
-            Branch
-            <BranchTag>
-              <BranchIcon src={pr_icon} />
-              {gitData.branch}
-            </BranchTag>
-          </TagWrapper>
-        </>
-      )}
-      {!gitData && porterApp.image_repo_uri && (
-        <>
-          <Spacer inline x={1} />
-          <Container row>
-            <SmallIcon
-              height="19px"
-              src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
-            />
-            <Text size={13} color="helper">
-              {porterApp.image_repo_uri}
+          <Container>
+            <Text>
+              <a href={displayDomain} target="_blank">
+                {displayDomain}
+              </a>
             </Text>
           </Container>
+          <Spacer y={0.5} />
         </>
       )}
-    </Container>
+      <Text color="#aaaabb66">
+        Last deployed {readableDate(latestRevision.created_at)}
+      </Text>
+    </>
   );
 };
 

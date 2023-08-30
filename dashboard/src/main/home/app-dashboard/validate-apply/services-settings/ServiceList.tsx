@@ -41,14 +41,12 @@ type AddServiceFormValues = z.infer<typeof addServiceFormValidator>;
 
 type ServiceListProps = {
   addNewText: string;
-  limitOne?: boolean;
   prePopulateService?: ClientService;
   isPredeploy?: boolean;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
   addNewText,
-  limitOne = false,
   prePopulateService,
   isPredeploy = false,
 }) => {
@@ -100,7 +98,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   };
 
   const maybeRenderAddServicesButton = () => {
-    if (limitOne && services.length > 0) {
+    if (isPredeploy && services.find((s) => isPredeployService(s.svc))) {
       return null;
     }
     return (

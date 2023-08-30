@@ -1,7 +1,7 @@
 import React from "react";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Spacer from "components/porter/Spacer";
-import { ClientService } from "lib/porter-apps/services";
+import { ClientService, prefixSubdomain } from "lib/porter-apps/services";
 import { Controller, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import Checkbox from "components/porter/Checkbox";
@@ -16,13 +16,6 @@ type NetworkingProps = {
       type: "web";
     };
   };
-};
-
-const prefixSubdomain = (subdomain: string) => {
-  if (subdomain.startsWith("https://") || subdomain.startsWith("http://")) {
-    return subdomain;
-  }
-  return "https://" + subdomain;
 };
 
 const Networking: React.FC<NetworkingProps> = ({ index, service }) => {

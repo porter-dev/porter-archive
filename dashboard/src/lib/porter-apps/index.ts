@@ -1,4 +1,7 @@
-import { buildpackSchema } from "main/home/app-dashboard/types/buildpack";
+import {
+  BUILDPACK_TO_NAME,
+  buildpackSchema,
+} from "main/home/app-dashboard/types/buildpack";
 import { z } from "zod";
 import {
   DetectedServices,
@@ -224,7 +227,10 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
       Object.freeze({
         method: b.method,
         context: b.context,
-        buildpacks: b.buildpacks.map((b) => ({ name: b, buildpack: b })),
+        buildpacks: b.buildpacks.map((b) => ({
+          name: BUILDPACK_TO_NAME[b],
+          buildpack: b,
+        })),
         builder: b.builder,
       })
     )

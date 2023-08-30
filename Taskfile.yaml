@@ -16,9 +16,34 @@ tasks:
     - cmd: git push origin production
       ignore_error: false
       silent: true
+
+  cli-prerelease:
+    desc: Create prerelease of CLI at the provided semantic version. Call `task cli-prerelease -- v1.2.3` where v1.2.3 is the desired tag for releasing
+    cmds:
+    - task: semantic-check
+    - cmd: git fetch origin --tags 
+      silent: true
+    - cmd: git checkout master
+      silent: true
+    - cmd: git pull origin master
+      silent: true
+    - cmd: git tag {{.CLI_ARGS}}
+      silent: true
+      ignore_error: false
+    - cmd: git push origin {{.CLI_ARGS}}
+      silent: true
+      ignore_error: false
+
+  semantic-check:
+    preconditions:
+    - sh: version={{ .CLI_ARGS }}; semantic_version_regex='^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'; if [[ $version =~  $semantic_version_regex ]]; then; else exit 1; fi
+      msg: must use a semantic version such as v0.1.2
  
   lint:
     desc: Run all available linters. This mimics any checks performed in Pull Request pre-merge checks
     cmd: golangci-lint run -c .github/golangci-lint.yaml
     env:
       GOWORK: off
+    
+
+

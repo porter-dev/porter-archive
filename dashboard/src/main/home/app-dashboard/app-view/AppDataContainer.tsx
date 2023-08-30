@@ -20,6 +20,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import Settings from "./tabs/Settings";
 import BuildSettings from "./tabs/BuildSettings";
 import Environment from "./tabs/Environment";
+import AnimateHeight from "react-animate-height";
+import Banner from "components/porter/Banner";
+import Button from "components/porter/Button";
+import Icon from "components/porter/Icon";
+import save from "assets/save-01.svg";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -101,8 +106,34 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const {
     reset,
     handleSubmit,
-    formState: { dirtyFields },
+    formState: { isDirty, dirtyFields },
   } = porterAppFormMethods;
+
+  const getAllDirtyFields = (dirtyFields: object) => {
+    const dirty: string[] = [];
+
+    Object.entries(dirtyFields).forEach(([key, value]) => {
+      if (value) {
+        if (typeof value === "boolean" && value === true) {
+          dirty.push(key);
+        }
+
+        if (typeof value === "object") {
+          dirty.push(...getAllDirtyFields(value));
+        }
+      }
+    });
+
+    return dirty;
+  };
+
+  const onlyExpandedChanged = useMemo(() => {
+    if (!isDirty) return false;
+
+    // get all entries in entire dirtyFields object that are true
+    const dirty = getAllDirtyFields(dirtyFields);
+    return dirty.every((f) => f === "expanded" || f === "id");
+  }, [isDirty, dirtyFields]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -172,6 +203,27 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           sourceType={latestSource.type}
         />
         <Spacer y={1} />
+        <AnimateHeight height={isDirty && !onlyExpandedChanged ? 67 : 0}>
+          <Banner
+            type="warning"
+            suffix={
+              <>
+                <Button
+                  type="submit"
+                  loadingText={"Updating..."}
+                  height={"10px"}
+                >
+                  <Icon src={save} height={"13px"} />
+                  <Spacer inline x={0.5} />
+                  Save as latest version
+                </Button>
+              </>
+            }
+          >
+            Changes you are currently previewing have not been saved.
+            <Spacer inline width="5px" />
+          </Banner>
+        </AnimateHeight>
         <TabSelector
           noBuffer
           options={[

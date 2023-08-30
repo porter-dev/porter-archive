@@ -266,12 +266,6 @@ export function deserializeService({
       const overrideWebConfig =
         override?.config.type == "web" ? override.config : undefined;
 
-      console.log("overrideWebConfig?.private", overrideWebConfig?.private);
-      console.log("config.private", config.private);
-      console.log(
-        ServiceField.boolean(config.private, overrideWebConfig?.private)
-      );
-
       return {
         ...baseService,
         config: {
@@ -425,8 +419,6 @@ export function serializedServiceFromProto({
   if (!config.case) {
     throw new Error("No case found on service config");
   }
-
-  console.log("config", config);
 
   return match(config)
     .with({ case: "webConfig" }, ({ value }) => ({

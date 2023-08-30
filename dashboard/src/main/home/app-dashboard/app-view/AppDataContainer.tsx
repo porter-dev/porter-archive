@@ -106,9 +106,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const {
     reset,
     handleSubmit,
-    formState: { isDirty, dirtyFields },
+    formState: { isDirty, dirtyFields, isSubmitting },
   } = porterAppFormMethods;
 
+  // getAllDirtyFields recursively gets all dirty fields from the dirtyFields object
+  // all fields in the form are set to a boolean indicating if the current value is different from the default value
   const getAllDirtyFields = (dirtyFields: object) => {
     const dirty: string[] = [];
 
@@ -127,13 +129,16 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     return dirty;
   };
 
+  // onlyExpandedChanged is true if the only dirty fields are expanded and id
+  // expanded is a ui only value used to determine if a service is expanded or not
+  // id is set by useFieldArray and is also not relevant to the app proto
   const onlyExpandedChanged = useMemo(() => {
     if (!isDirty) return false;
 
     // get all entries in entire dirtyFields object that are true
     const dirty = getAllDirtyFields(dirtyFields);
     return dirty.every((f) => f === "expanded" || f === "id");
-  }, [isDirty, dirtyFields]);
+  }, [isDirty, JSON.stringify(dirtyFields)]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -203,7 +208,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           sourceType={latestSource.type}
         />
         <Spacer y={1} />
-        <AnimateHeight height={isDirty && !onlyExpandedChanged ? 67 : 0}>
+        <AnimateHeight height={isDirty && !onlyExpandedChanged ? "auto" : 0}>
           <Banner
             type="warning"
             suffix={
@@ -212,6 +217,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                   type="submit"
                   loadingText={"Updating..."}
                   height={"10px"}
+                  status={isSubmitting ? "loading" : ""}
+                  disabled={isSubmitting}
                 >
                   <Icon src={save} height={"13px"} />
                   <Spacer inline x={0.5} />
@@ -223,6 +230,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             Changes you are currently previewing have not been saved.
             <Spacer inline width="5px" />
           </Banner>
+          <Spacer y={1} />
         </AnimateHeight>
         <TabSelector
           noBuffer

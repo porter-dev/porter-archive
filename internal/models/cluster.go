@@ -102,7 +102,7 @@ type Cluster struct {
 	MonitorHelmReleases bool
 }
 
-// ToProjectType generates an external types.Project to be shared over REST
+// ToClusterType generates an external types.Cluster to be shared over REST
 func (c *Cluster) ToClusterType() *types.Cluster {
 	serv := types.Kube
 

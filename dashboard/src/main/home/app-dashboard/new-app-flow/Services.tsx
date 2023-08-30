@@ -124,7 +124,14 @@ const Services: React.FC<ServicesProps> = ({
       )}
       {maybeRenderAddServicesButton()}
       {showAddServiceModal && (
-        <Modal closeModal={() => setShowAddServiceModal(false)} width="500px">
+        <Modal
+          closeModal={() => {
+            setShowAddServiceModal(false)
+            setServiceName("")
+            setServiceType("web")
+          }}
+          width="500px"
+        >
           <Text size={16}>{addNewText}</Text>
           <Spacer y={1} />
           <Text color="helper">Select a service type:</Text>
@@ -168,11 +175,7 @@ const Services: React.FC<ServicesProps> = ({
               setServiceName("");
               setServiceType("web");
             }}
-            disabled={
-              !isServiceNameValid(serviceName) ||
-              isServiceNameDuplicate(serviceName) ||
-              serviceName?.length > 61
-            }
+            disabled={maybeGetError() != null}
           >
             <I className="material-icons">add</I> Add service
           </Button>

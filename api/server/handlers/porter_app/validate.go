@@ -36,6 +36,7 @@ func NewValidatePorterAppHandler(
 	}
 }
 
+// Deletions are the names of services and env variables to delete
 type Deletions struct {
 	ServiceNames     []string `json:"service_names"`
 	EnvVariableNames []string `json:"env_variable_names"`

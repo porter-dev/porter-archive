@@ -13,8 +13,7 @@ import AppHeader from "./AppHeader";
 import { LatestRevisionProvider } from "./LatestRevisionContext";
 
 export const porterAppValidator = z.object({
-  name: z.string(),
-  git_branch: z.string().optional(),
+  name: z.string(),git_branch: z.string().optional(),
   git_repo_id: z.number().optional(),
   repo_name: z.string().optional(),
   build_context: z.string().optional(),

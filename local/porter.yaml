@@ -1,0 +1,9 @@
+version: v2
+name: app
+services:
+  nginxa:
+    type: web
+
+image:
+  repository: nginx
+  tag: latest

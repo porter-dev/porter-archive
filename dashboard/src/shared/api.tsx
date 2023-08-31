@@ -282,7 +282,7 @@ const appLogs = baseApi<
     {
         app_name: string;
         service_name: string;
-        deployment_target: string;
+        deployment_target_id: string;
         limit: number;
         start_range: string;
         end_range: string;

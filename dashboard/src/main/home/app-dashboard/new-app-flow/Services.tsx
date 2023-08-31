@@ -175,7 +175,7 @@ const Services: React.FC<ServicesProps> = ({
               setServiceName("");
               setServiceType("web");
             }}
-            disabled={maybeGetError() != null}
+            disabled={maybeGetError() != null || serviceName == ""}
           >
             <I className="material-icons">add</I> Add service
           </Button>

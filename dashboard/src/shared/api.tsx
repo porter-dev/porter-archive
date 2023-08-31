@@ -1476,6 +1476,27 @@ const getMetrics = baseApi<
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/metrics`;
 });
 
+const appMetrics = baseApi<
+    {
+        metric: string;
+        shouldsum: boolean;
+        pods?: string[];
+        kind?: string; // the controller kind
+        name?: string;
+        percentile?: number;
+        deployment_target_id: string;
+        startrange: number;
+        endrange: number;
+        resolution: string;
+    },
+    {
+        id: number;
+        cluster_id: number;
+    }
+>("GET", (pathParams) => {
+    return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/apps/metrics`;
+});
+
 const getNamespaces = baseApi<
   {},
   {
@@ -3003,6 +3024,7 @@ export default {
   getAllReleasePods,
   getClusterState,
   getMetrics,
+  appMetrics,
   getNamespaces,
   getNGINXIngresses,
   getOAuthIds,

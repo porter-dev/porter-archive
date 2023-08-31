@@ -119,6 +119,9 @@ export class MetricNormalizer {
     kind: AvailableMetrics;
 
     constructor(data: GenericMetricResponse[], kind: AvailableMetrics) {
+        console.log("data", data)
+        console.log(Array.isArray(data))
+        console.log(data[0]?.results)
         if (!Array.isArray(data) || !data[0]?.results) {
             throw new Error("Failed parsing response" + JSON.stringify(data));
         }

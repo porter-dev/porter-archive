@@ -25,6 +25,7 @@ import Banner from "components/porter/Banner";
 import Button from "components/porter/Button";
 import Icon from "components/porter/Icon";
 import save from "assets/save-01.svg";
+import LogsTab from "./tabs/LogsTab";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -32,7 +33,7 @@ const validTabs = [
   // "activity",
   // "events",
   "overview",
-  // "logs",
+  "logs",
   // "metrics",
   // "debug",
   "environment",
@@ -245,6 +246,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           noBuffer
           options={[
             { label: "Overview", value: "overview" },
+            { label: "Logs", value: "logs" },
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
@@ -272,6 +274,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           ))
           .with("environment", () => <Environment />)
           .with("settings", () => <Settings />)
+          .with("logs", () => <LogsTab />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>

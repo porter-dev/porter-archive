@@ -1,12 +1,10 @@
 import dayjs, { Dayjs } from "dayjs";
 import _ from "lodash";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import Anser from "anser";
-import { Context } from "shared/Context";
 import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
-import { ChartType } from "shared/types";
-import { AgentLog, agentLogValidator, Direction, PorterLog, PaginationInfo, GenericLogFilter, LogFilterName } from "./types";
+import { AgentLog, agentLogValidator, Direction, PorterLog, PaginationInfo, LogFilterName } from "../../expanded-app/logs/types";
 import { Service } from "../../new-app-flow/serviceTypes";
 
 const MAX_LOGS = 5000;
@@ -17,7 +15,6 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
   return logs.map((log: any, idx) => {
     try {
       const parsed: AgentLog = agentLogValidator.parse(log);
-
       // TODO Move log parsing to the render method
       const ansiLog = Anser.ansiToJson(parsed.line);
       return {
@@ -27,6 +24,7 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
         metadata: parsed.metadata,
       };
     } catch (err) {
+      console.log(err)
       return {
         line: Anser.ansiToJson(log.toString()),
         lineNumber: idx + 1,
@@ -37,12 +35,14 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
 };
 
 export const useLogs = (
+    projectID: number,
+    clusterID: number,
   selectedFilterValues: Record<LogFilterName, string>,
   appName: string,
-  namespace: string,
+  serviceName: string,
+  deploymentTargetId: string,
   searchParam: string,
   notify: (message: string) => void,
-  currentChart: ChartType | undefined,
   setLoading: (isLoading: boolean) => void,
   // if setDate is set, results are not live
   setDate?: Date,
@@ -53,18 +53,11 @@ export const useLogs = (
 ) => {
   const isLive = !setDate;
   const logsBufferRef = useRef<PorterLog[]>([]);
-  const { currentCluster, currentProject } = useContext(
-    Context
-  );
   const [logs, setLogs] = useState<PorterLog[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
     previousCursor: null,
     nextCursor: null,
   });
-
-  // if currentPodName is default value we are looking at all chart pod logs
-  const currentPodSelector = selectedFilterValues.pod_name === GenericLogFilter.getDefaultOption("pod_name").value
-    ? `${currentChart?.name ?? ''}-.*` : `${currentChart?.name}-${selectedFilterValues.pod_name}-.*`;
 
   // if we are live:
   // - start date is initially set to 2 weeks ago
@@ -132,7 +125,7 @@ export const useLogs = (
         }
       }
 
-      return filterLogs(updatedLogs);
+      return updatedLogs;
     });
   };
 
@@ -158,17 +151,13 @@ export const useLogs = (
   };
 
   const setupWebsocket = (websocketKey: string) => {
-    if (namespace == "" || currentCluster == null || currentProject == null || currentChart == null) {
-      return;
-    }
-
-    const websocketBaseURL = `/api/projects/${currentProject.id}/clusters/${currentCluster.id}/namespaces/${namespace}/logs/loki`;
+    const websocketBaseURL = `/api/projects/${projectID}/clusters/${clusterID}/apps/logs/loki`;
 
     const searchParams = {
-      pod_selector: currentPodSelector,
-      namespace,
+      app_name: appName,
+      service_name: serviceName,
+      deployment_target_id: deploymentTargetId,
       search_param: searchParam,
-      revision: currentChart.version.toString(),
     }
 
     const q = new URLSearchParams(searchParams).toString();
@@ -196,8 +185,7 @@ export const useLogs = (
           }
         });
         const newLogsParsed = parseLogs(newLogs);
-        const newLogsFiltered = filterLogs(newLogsParsed);
-        pushLogs(newLogsFiltered);
+        pushLogs(newLogsParsed);
       },
       onclose: () => {
         console.log("Closed websocket:", websocketKey);
@@ -206,31 +194,6 @@ export const useLogs = (
 
     newWebsocket(websocketKey, endpoint, config);
     openWebsocket(websocketKey);
-  };
-
-  const filterLogs = (logs: PorterLog[]) => {
-    return logs.filter(log => {
-      if (log.metadata == null) {
-        return true;
-      }
-
-      // TODO: refactor this extremely hacky way to filter out pre-deploy logs
-      if (!currentChart?.name.endsWith("-r") && log.metadata.pod_name.startsWith(`${appName}-r`)) {
-        return false;
-      }
-
-      if (selectedFilterValues.output_stream !== GenericLogFilter.getDefaultOption("output_stream").value &&
-        log.metadata.output_stream !== selectedFilterValues.output_stream) {
-        return false;
-      }
-
-      if (selectedFilterValues.revision !== GenericLogFilter.getDefaultOption("revision").value &&
-        log.metadata.revision !== selectedFilterValues.revision) {
-        return false;
-      }
-
-      return true;
-    });
   };
 
   const queryLogs = async (
@@ -243,47 +206,25 @@ export const useLogs = (
     previousCursor: string | null;
     nextCursor: string | null;
   }> => {
-    if (currentCluster == null || currentProject == null) {
-      return {
-        logs: [],
-        previousCursor: null,
-        nextCursor: null,
-      };
-    }
-
-    const getLogsReq = {
-      namespace,
-      search_param: searchParam,
-      start_range: startDate,
-      end_range: endDate,
-      limit,
-      chart_name: "",
-      pod_selector: currentPodSelector,
-      direction,
-    };
-
-    if (currentChart == null) {
-      return {
-        logs: [],
-        previousCursor: null,
-        nextCursor: null,
-      };
-    }
-
-    // special casing for pre-deploy logs - see get_logs_within_time_range.go
-    if (currentChart.name.endsWith("-r")) {
-      getLogsReq.chart_name = currentChart.name;
-      getLogsReq.pod_selector = "";
-    }
-
     try {
-      const logsResp = await api.getLogsWithinTimeRange(
-        "<token>",
-        getLogsReq,
-        {
-          cluster_id: currentCluster.id,
-          project_id: currentProject.id,
-        }
+      const getLogsReq = {
+        app_name: appName,
+        service_name: serviceName,
+        deployment_target_id: deploymentTargetId,
+        search_param: searchParam,
+        start_range: startDate,
+        end_range: endDate,
+        limit,
+        direction,
+      };
+
+      const logsResp = await api.appLogs(
+          "<token>",
+          getLogsReq,
+          {
+            cluster_id: clusterID,
+            project_id: projectID,
+          }
       )
 
       if (logsResp.data == null) {
@@ -317,10 +258,6 @@ export const useLogs = (
   };
 
   const refresh = async () => {
-    if (!currentPodSelector) {
-      return;
-    }
-
     setLoading(true);
     setLogs([]);
     flushLogsBuffer(true);
@@ -348,12 +285,13 @@ export const useLogs = (
 
     closeAllWebsockets();
     const suffix = Math.random().toString(36).substring(2, 15);
-    const websocketKey = `${currentPodSelector}-${namespace}-websocket-${suffix}`;
+    const websocketKey = `${appName}-${serviceName}-websocket-${suffix}`;
 
     setLoading(false);
 
     if (isLive) {
       setupWebsocket(websocketKey);
+
     }
   };
 
@@ -445,7 +383,7 @@ export const useLogs = (
 
   useEffect(() => {
     refresh();
-  }, [currentPodSelector, namespace, searchParam, setDate, selectedFilterValues]);
+  }, [appName, serviceName, deploymentTargetId, searchParam, setDate, selectedFilterValues]);
 
   useEffect(() => {
     // if the streaming is no longer live, close all websockets
@@ -467,60 +405,3 @@ export const useLogs = (
     paginationInfo,
   };
 };
-
-export const getVersionTagColor = (version: string) => {
-  const colors = [
-    "#7B61FF",
-    "#FF7B61",
-    "#61FF7B",
-  ];
-
-  const versionInt = parseInt(version);
-  if (isNaN(versionInt)) {
-    return colors[0];
-  }
-  return colors[versionInt % colors.length];
-};
-
-export const getServiceNameFromPodNameAndAppName = (podName: string, porterAppName: string) => {
-  const prefix: string = porterAppName + "-";
-  if (!podName.startsWith(prefix)) {
-    return "";
-  }
-
-  podName = podName.replace(prefix, "");
-  const suffixes: string[] = ["-web", "-wkr", "-job"];
-  let index: number = -1;
-
-  for (const suffix of suffixes) {
-    const newIndex: number = podName.lastIndexOf(suffix);
-    if (newIndex > index) {
-      index = newIndex;
-    }
-  }
-
-  if (index !== -1) {
-    return podName.substring(0, index);
-  }
-
-  // if the suffix wasn't found, it's possible that the service name was too long to keep the entire suffix. example: postgres-snowflake-connector-postgres-snowflake-service-wk8gnst
-  // if this is the case, find the service name by removing everything after the last dash
-  // This is only to fix current pods; new pods will be named correctly because we imposed service name limits in https://github.com/porter-dev/porter/pull/3439
-  index = podName.lastIndexOf("-");
-  if (index !== -1) {
-    return podName.substring(0, index)
-  }
-
-  return "";
-}
-
-export const getPodSelectorFromServiceName = (serviceName: string | null | undefined, services?: Service[]): string | undefined => {
-  if (serviceName == null) {
-    return undefined;
-  }
-  const match = services?.find(s => s.name === serviceName);
-  if (match == null) {
-    return undefined;
-  }
-  return `${match.name}-${match.type == "worker" ? "wkr" : match.type}`;
-}

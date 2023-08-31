@@ -55,6 +55,21 @@ const StyledLogs: React.FC<Props> = ({
                         </LogInnerPill>
                     </StyledLogsTableData>
                 )
+            case "service_name":
+                if (log.metadata?.raw_labels?.porter_run_service_name == null || log.metadata?.raw_labels?.porter_run_service_name === "") {
+                    return null;
+                }
+                return (
+                    <StyledLogsTableData width={"100px"}>
+                        <LogInnerPill
+                            color={"white"}
+                            key={index}
+                            onClick={() => filter.setValue(log.metadata?.raw_labels?.porter_run_service_name ?? GenericLogFilter.getDefaultOption("service_name").value)}
+                        >
+                            {log.metadata.raw_labels?.porter_run_service_name}
+                        </LogInnerPill>
+                    </StyledLogsTableData>
+                )
             default:
                 return null;
         }

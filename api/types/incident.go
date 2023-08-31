@@ -112,6 +112,16 @@ type GetLogRequest struct {
 	Direction   string     `schema:"direction"`
 }
 
+// LogRequest is a request for logs from the porter agent. It generalizes pod selectors and namespace to just MatchLabels.
+type LogRequest struct {
+	Limit       uint              `schema:"limit"`
+	StartRange  *time.Time        `schema:"start_range"`
+	EndRange    *time.Time        `schema:"end_range"`
+	SearchParam string            `schema:"search_param"`
+	MatchLabels map[string]string `schema:"match_labels"`
+	Direction   string            `schema:"direction"`
+}
+
 // You may either provide the pod selector directly, or the chart name,
 // in which case we will attempt to find the correct pod within the timeframe.
 type GetChartLogsWithinTimeRangeRequest struct {
@@ -146,11 +156,12 @@ type LogLine struct {
 }
 
 type LogMetadata struct {
-	PodName      string `json:"pod_name"`
-	PodNamespace string `json:"pod_namespace"`
-	Revision     string `json:"revision"`
-	OutputStream string `json:"output_stream"`
-	AppName      string `json:"app_name"`
+	PodName      string            `json:"pod_name"`
+	PodNamespace string            `json:"pod_namespace"`
+	Revision     string            `json:"revision"`
+	OutputStream string            `json:"output_stream"`
+	AppName      string            `json:"app_name"`
+	RawLabels    map[string]string `json:"raw_labels"`
 }
 
 type GetLogResponse struct {

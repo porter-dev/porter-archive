@@ -381,7 +381,13 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       >
         Provision
       </Button>
-
+      {
+        (!currentProject?.enable_reprovision && currentCluster) &&
+        <>
+          <Spacer y={1} />
+          <Text>Updates to the cluster are disabled on this project. Enable re-provisioning by contacting <a href="mailto:support@porter.run">Porter Support</a>.</Text>
+        </>
+      }
       {user.isPorterUser &&
         <>
 

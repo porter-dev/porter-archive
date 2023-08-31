@@ -1,12 +1,10 @@
 import dayjs, { Dayjs } from "dayjs";
 import _ from "lodash";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import Anser from "anser";
-import { Context } from "shared/Context";
 import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
-import { ChartType } from "shared/types";
-import { AgentLog, AgentLogSchema, Direction, PorterLog, PaginationInfo, GenericLogFilter, LogFilterName } from "./types";
+import { AgentLog, agentLogValidator, Direction, PorterLog, PaginationInfo, LogFilterName } from "../../expanded-app/logs/types";
 import { Service } from "../../new-app-flow/serviceTypes";
 
 const MAX_LOGS = 5000;
@@ -16,7 +14,7 @@ const QUERY_LIMIT = 1000;
 export const parseLogs = (logs: any[] = []): PorterLog[] => {
   return logs.map((log: any, idx) => {
     try {
-      const parsed: AgentLog = AgentLogSchema.parse(log);
+      const parsed: AgentLog = agentLogValidator.parse(log);
       // TODO Move log parsing to the render method
       const ansiLog = Anser.ansiToJson(parsed.line);
       return {
@@ -127,7 +125,7 @@ export const useLogs = (
         }
       }
 
-      return filterLogs(updatedLogs);
+      return updatedLogs;
     });
   };
 
@@ -187,8 +185,7 @@ export const useLogs = (
           }
         });
         const newLogsParsed = parseLogs(newLogs);
-        const newLogsFiltered = filterLogs(newLogsParsed);
-        pushLogs(newLogsFiltered);
+        pushLogs(newLogsParsed);
       },
       onclose: () => {
         console.log("Closed websocket:", websocketKey);
@@ -197,16 +194,6 @@ export const useLogs = (
 
     newWebsocket(websocketKey, endpoint, config);
     openWebsocket(websocketKey);
-  };
-
-  const filterLogs = (logs: PorterLog[]) => {
-    return logs.filter(log => {
-      if (log.metadata == null) {
-        return true;
-      }
-
-      return true;
-    });
   };
 
   const queryLogs = async (
@@ -418,60 +405,3 @@ export const useLogs = (
     paginationInfo,
   };
 };
-
-export const getVersionTagColor = (version: string) => {
-  const colors = [
-    "#7B61FF",
-    "#FF7B61",
-    "#61FF7B",
-  ];
-
-  const versionInt = parseInt(version);
-  if (isNaN(versionInt)) {
-    return colors[0];
-  }
-  return colors[versionInt % colors.length];
-};
-
-export const getServiceNameFromPodNameAndAppName = (podName: string, porterAppName: string) => {
-  const prefix: string = porterAppName + "-";
-  if (!podName.startsWith(prefix)) {
-    return "";
-  }
-
-  podName = podName.replace(prefix, "");
-  const suffixes: string[] = ["-web", "-wkr", "-job"];
-  let index: number = -1;
-
-  for (const suffix of suffixes) {
-    const newIndex: number = podName.lastIndexOf(suffix);
-    if (newIndex > index) {
-      index = newIndex;
-    }
-  }
-
-  if (index !== -1) {
-    return podName.substring(0, index);
-  }
-
-  // if the suffix wasn't found, it's possible that the service name was too long to keep the entire suffix. example: postgres-snowflake-connector-postgres-snowflake-service-wk8gnst
-  // if this is the case, find the service name by removing everything after the last dash
-  // This is only to fix current pods; new pods will be named correctly because we imposed service name limits in https://github.com/porter-dev/porter/pull/3439
-  index = podName.lastIndexOf("-");
-  if (index !== -1) {
-    return podName.substring(0, index)
-  }
-
-  return "";
-}
-
-export const getPodSelectorFromServiceName = (serviceName: string | null | undefined, services?: Service[]): string | undefined => {
-  if (serviceName == null) {
-    return undefined;
-  }
-  const match = services?.find(s => s.name === serviceName);
-  if (match == null) {
-    return undefined;
-  }
-  return `${match.name}-${match.type == "worker" ? "wkr" : match.type}`;
-}

@@ -9,14 +9,12 @@ import React, {
 import styled from "styled-components";
 
 import spinner from "assets/loading.gif";
-import { Context } from "shared/Context";
 import api from "shared/api";
-import { getPodSelectorFromServiceName, useLogs } from "./utils";
-import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName, LogFilterQueryParamOpts } from "./types";
+import { useLogs } from "./utils";
+import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName, LogFilterQueryParamOpts } from "../../expanded-app/logs/types";
 import dayjs, { Dayjs } from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
-import { ChartType } from "shared/types";
 import Banner from "components/porter/Banner";
 import LogSearchBar from "components/LogSearchBar";
 import LogQueryModeSelectionToggle from "components/LogQueryModeSelectionToggle";
@@ -26,8 +24,8 @@ import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 import { Service } from "../../new-app-flow/serviceTypes";
-import LogFilterContainer from "./LogFilterContainer";
-import StyledLogs from "./StyledLogs";
+import LogFilterContainer from "../../expanded-app/logs/LogFilterContainer";
+import StyledLogs from "../../expanded-app/logs/StyledLogs";
 
 type Props = {
     projectId: number;
@@ -58,6 +56,9 @@ const Logs: React.FC<Props> = ({
 
     const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
         service_name:  GenericLogFilter.getDefaultOption("service_name").value,
+        pod_name: "", // not supported yet
+        revision: "", // not supported yet
+        output_stream: GenericLogFilter.getDefaultOption("output_stream").value,
     });
 
     const isAgentVersionUpdated = (agentImage: string | undefined) => {
@@ -89,7 +90,7 @@ const Logs: React.FC<Props> = ({
         } else if (minor > 1) {
             return true;
         }
-        return patch >= 4;
+        return patch >= 7;
     }
 
     const [filters, setFilters] = useState<GenericLogFilter[]>([
@@ -104,6 +105,20 @@ const Logs: React.FC<Props> = ({
                 setSelectedFilterValues((s) => ({
                     ...s,
                     service_name: value,
+                }));
+            }
+        },
+        {
+            name: "output_stream",
+            displayName: "Output Stream",
+            default: GenericLogFilter.getDefaultOption("output_stream"),
+            options: serviceNames.map(s => {
+                return GenericFilterOption.of(s, s)
+            }) ?? [],
+            setValue: (value: string) => {
+                setSelectedFilterValues((s) => ({
+                    ...s,
+                    output_stream: value,
                 }));
             }
         },
@@ -143,6 +158,9 @@ const Logs: React.FC<Props> = ({
 
     const resetFilters = () => {
         setSelectedFilterValues({
+            output_stream: GenericLogFilter.getDefaultOption("output_stream").value,
+            revision: "", // not supported yet
+            pod_name: "", // not supported yet
             service_name: GenericLogFilter.getDefaultOption("service_name").value,
         });
     };
@@ -227,9 +245,7 @@ const Logs: React.FC<Props> = ({
                                 </LoadMoreButton>
                                 <StyledLogs
                                     logs={logs}
-                                    appName={appName}
                                     filters={filters}
-                                    serviceNames={serviceNames}
                                 />
                                 <LoadMoreButton
                                     active={selectedDate && logs.length !== 0}
@@ -291,7 +307,7 @@ const Logs: React.FC<Props> = ({
 
             const agentImage = res.data?.image;
             if (!isAgentVersionUpdated(agentImage)) {
-                throw new Error("Agent version is not updated");
+                notify("Porter agent is outdated. Please upgrade to see logs.");
             }
         } catch (err) {
             if (err.response?.status === 404) {

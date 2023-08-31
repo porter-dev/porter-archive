@@ -3,6 +3,7 @@ package porter_app
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"connectrpc.com/connect"
@@ -108,15 +109,18 @@ func (c *StreamLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	startTime, err := request.StartRange.MarshalText()
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err := telemetry.Error(ctx, span, err, "error marshaling start time")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "start-time", Value: string(startTime)})
 
 	safeRW := r.Context().Value(types.RequestCtxWebsocketKey).(*websocket.WebsocketSafeReadWriter)
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err := telemetry.Error(ctx, span, err, "error getting agent")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -129,10 +133,12 @@ func (c *StreamLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		labels = append(labels, fmt.Sprintf("%s=%s", lokiLabel_PorterServiceName, request.ServiceName))
 	}
 
-	err = agent.StreamPorterAgentLokiLog(labels, string(startTime), request.SearchParam, 0, safeRW)
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "labels", Value: strings.Join(labels, ",")})
 
+	err = agent.StreamPorterAgentLokiLog(labels, string(startTime), request.SearchParam, 0, safeRW)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err := telemetry.Error(ctx, span, err, "error streaming logs")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 }

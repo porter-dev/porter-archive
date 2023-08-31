@@ -147,4 +147,7 @@ local_resource(
     resource_deps=["postgresql"],
     labels=["porter"]
 )
-local_resource('public-url', serve_cmd='ngrok http 8081 --log=stdout --domain=%s' % ngrok_url, resource_deps=["porter-dashboard"], labels=["porter"])
+local_resource('public-url', 
+serve_cmd='''
+echo " \n\n****** NGROK URL ****** \n\n" && echo https://%s && echo "\n\n********\n\n" && ngrok http 8081 --log=stdout --domain=%s''' 
+% (ngrok_url, ngrok_url), resource_deps=["porter-dashboard"], labels=["porter"])

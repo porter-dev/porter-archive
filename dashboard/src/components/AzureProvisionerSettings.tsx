@@ -71,9 +71,9 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
 
-  const markStepStarted = async (step: string) => {
+  const markStepStarted = async (step: string, region: string) => {
     try {
-      await api.updateOnboardingStep("<token>", { step }, {
+      await api.updateOnboardingStep("<token>", { step, region, provider: "azure" }, {
         project_id: currentProject.id,
       });
     } catch (err) {
@@ -193,7 +193,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       setErrorDetails("")
 
       if (!props.clusterId) {
-        markStepStarted("provisioning-started");
+        markStepStarted("provisioning-started", azureLocation);
       }
 
       const res = await api.createContract("<token>", data, {

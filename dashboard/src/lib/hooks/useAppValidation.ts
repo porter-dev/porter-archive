@@ -23,15 +23,7 @@ export const useAppValidation = ({
     current: Record<string, string>,
     previous: Record<string, string>
   ) => {
-    const removed: string[] = [];
-
-    Object.entries(previous).forEach(([key, _]) => {
-      if (!current[key]) {
-        removed.push(key);
-      }
-    });
-
-    return removed;
+    return Object.keys(previous).filter((key) => !current[key]);
   };
 
   const getBranchHead = async ({

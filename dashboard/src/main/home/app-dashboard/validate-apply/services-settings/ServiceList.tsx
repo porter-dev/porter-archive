@@ -130,12 +130,16 @@ const ServiceList: React.FC<ServiceListProps> = ({
   };
 
   const onSubmit = handleSubmit(async (data) => {
+    // if service was previously deleted, remove from deletions
+    // handle case such as pre-deploy (which always has the same name)
+    // being deleted and then re-added
     const previouslyDeleted = deletedServices.findIndex(
       (s) => s.name === data.name
     );
     if (previouslyDeleted !== -1) {
       removeDeletion(previouslyDeleted);
     }
+
     append(
       deserializeService({ service: defaultSerialized(data), expanded: true })
     );

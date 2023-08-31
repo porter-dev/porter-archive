@@ -122,15 +122,12 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
   const isDisabled = () => {
     return (
-
       (!clusterName && true)
       || (isReadOnly && props.provisionerError === "")
       || currentCluster?.status === "UPDATING"
       || isClicked
       || (!currentProject?.enable_reprovision && props.clusterId)
-
     )
-
   };
 
   const validateInputs = (): string => {

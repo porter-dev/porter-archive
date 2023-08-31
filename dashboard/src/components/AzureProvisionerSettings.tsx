@@ -37,7 +37,7 @@ const machineTypeOptions = [
   { value: "Standard_A4_v2", label: "Standard_A4_v2" },
 ];
 
-const clusterVersionOptions = [{ value: "v1.26.6", label: "v1.26.6" },{ value: "v1.24.9", label: "v1.24.9" }];
+const clusterVersionOptions = [{ value: "v1.26.6", label: "v1.26.6" }, { value: "v1.24.9", label: "v1.24.9" }];
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
@@ -102,14 +102,14 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
 
   const isDisabled = () => {
     return (
-      !user.email.endsWith("porter.run") &&
-      ((!clusterName && true) ||
-        (isReadOnly && props.provisionerError === "") ||
-        props.provisionerError === "" ||
-        currentCluster?.status === "UPDATING" ||
-        isClicked)
-    );
+      (!clusterName && true)
+      || (isReadOnly && props.provisionerError === "")
+      || currentCluster?.status === "UPDATING"
+      || isClicked
+      || (!currentProject?.enable_reprovision && props.clusterId)
+    )
   };
+
 
   const validateInputs = (): string => {
     if (!clusterName) {
@@ -128,7 +128,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       return "VPC CIDR range must be in the format of [0-255].[0-255].0.0/16";
     }
     if (clusterVersion == "v1.24.9") {
-        return "Cluster version v1.24.9 is no longer supported";
+      return "Cluster version v1.24.9 is no longer supported";
     }
 
     return "";
@@ -381,6 +381,21 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       >
         Provision
       </Button>
+
+      {user.isPorterUser &&
+        <>
+
+          <Spacer y={1} />
+          <Text color="yellow">Visible to Admin Only</Text>
+          <Button
+            color="red"
+            onClick={createCluster}
+            status={getStatus()}
+          >
+            Override Provision
+          </Button>
+        </>
+      }
     </>
   );
 };

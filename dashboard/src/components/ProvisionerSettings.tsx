@@ -141,6 +141,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           step,
           error_message: errMessage,
           region: awsRegion,
+          provider: "aws",
         },
         {
           project_id: currentProject.id,

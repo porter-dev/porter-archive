@@ -100,3 +100,10 @@ func (p *Project) ToProjectType() *types.Project {
 		FullAddOns:             p.FullAddOns,
 	}
 }
+
+func (p *Project) ToProjectListType() *types.Project {
+	return &types.ProjectList{
+		ID:   p.ID,
+		Name: p.Name,
+	}
+}

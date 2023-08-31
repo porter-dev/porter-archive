@@ -1,5 +1,11 @@
 package types
 
+// Project type that extends gorm.Model
+type ProjectList struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
 type Project struct {
 	ID                     uint    `json:"id"`
 	Name                   string  `json:"name"`

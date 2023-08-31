@@ -135,24 +135,17 @@ const Home: React.FC<Props> = (props) => {
 
             let foundProject = null;
             if (id) {
-              res.data.forEach((project: ProjectType, i: number) => {
-                if (project.id === id) {
-                  foundProject = project;
-                }
-              });
-              setCurrentProject(foundProject || res.data[0]);
+              foundProject = (res.data as ProjectType[]).find(
+                (item: ProjectType) => item.id == id
+              );
             }
+
             if (!foundProject) {
-              res.data.forEach((project: ProjectType, i: number) => {
-                if (
-                  project.id.toString() ===
-                  localStorage.getItem("currentProject")
-                ) {
-                  foundProject = project;
-                }
-              });
-              setCurrentProject(foundProject || res.data[0]);
+              foundProject = (res.data as ProjectType[]).find(
+                (item: ProjectType) => item.toString() == localStorage.getItem("currentProject")
+              );
             }
+            setCurrentProject(foundProject || res.data[0]);
           }
         }
       })

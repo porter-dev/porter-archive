@@ -34,7 +34,7 @@ const agentLogMetadataValidator = z.object({
     revision: z.string(),
     output_stream: z.string(),
     app_name: z.string(),
-    raw_labels: rawLabelsValidator.optional(),
+    // raw_labels: rawLabelsValidator.optional(),
 });
 
 export const agentLogValidator = z.object({

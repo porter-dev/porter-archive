@@ -66,6 +66,7 @@ const LogSection: React.FC<Props> = ({
     revision: filterOpts?.revision ?? GenericLogFilter.getDefaultOption("revision").value,
     output_stream: filterOpts?.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
     pod_name: getPodSelectorFromServiceName(filterOpts?.service, services) ?? GenericLogFilter.getDefaultOption("pod_name").value,
+    service_name: filterOpts?.service ?? GenericLogFilter.getDefaultOption("service_name").value,
   });
 
   const createVersionOptions = (number: number) => {
@@ -189,6 +190,7 @@ const LogSection: React.FC<Props> = ({
       revision: filterOpts?.revision ?? GenericLogFilter.getDefaultOption("revision").value,
       output_stream: filterOpts?.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
       pod_name: getPodSelectorFromServiceName(filterOpts?.service, services) ?? GenericLogFilter.getDefaultOption("pod_name").value,
+      service_name: filterOpts?.service ?? GenericLogFilter.getDefaultOption("service_name").value,
     });
   };
 

@@ -16,12 +16,9 @@ const QUERY_LIMIT = 1000;
 export const parseLogs = (logs: any[] = []): PorterLog[] => {
   return logs.map((log: any, idx) => {
     try {
-      console.log("log", log)
       const parsed: AgentLog = AgentLogSchema.parse(log);
-      console.log("parsed", parsed)
       // TODO Move log parsing to the render method
       const ansiLog = Anser.ansiToJson(parsed.line);
-      console.log("ansiLog", ansiLog)
       return {
         line: ansiLog,
         lineNumber: idx + 1,
@@ -306,12 +303,7 @@ export const useLogs = (
     setLoading(false);
 
     if (isLive) {
-      try {
-        setupWebsocket(websocketKey);
-      } catch (err) {
-        console.log(err)
-        notify("Error connecting to websocket")
-      }
+      setupWebsocket(websocketKey);
 
     }
   };

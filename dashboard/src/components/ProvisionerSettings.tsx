@@ -39,6 +39,7 @@ import Tooltip from "./porter/Tooltip";
 import Icon from "./porter/Icon";
 import { set } from "traverse";
 import { load } from "js-yaml";
+import Loading from "./Loading";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -130,6 +131,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const markStepStarted = async (step: string, errMessage?: string) => {
     try {
       await api.updateOnboardingStep(
@@ -149,6 +152,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   };
 
   const getStatus = () => {
+    if (isLoading) {
+      return <Loading />
+    }
     if (isReadOnly && props.provisionerError == "") {
       return "Provisioning is still in progress...";
     } else if (errorMessage) {
@@ -218,9 +224,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   const isDisabled = () => {
     return (
-      !user?.isPorterUser &&
-      (clusterNameDoesNotExist() || userProvisioning() || isClicked)
-    );
+      (clusterNameDoesNotExist() || userProvisioning() || isClicked || (currentCluster && !currentProject?.enable_reprovision)
+      ))
   };
   function convertStringToTags(tagString) {
     if (typeof tagString !== "string" || tagString.trim() === "") {
@@ -239,6 +244,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return tags;
   }
   const createCluster = async () => {
+    setIsLoading(true);
     setIsClicked(true);
 
     let loadBalancerObj = new LoadBalancer({});
@@ -371,6 +377,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       const errMessage = err.response.data?.error.replace("unknown: ", "");
       // hacky, need to standardize error contract with backend
       setIsClicked(false);
+      setIsLoading(false)
       if (errMessage.includes("elastic IP")) {
         setErrorMessage(AWS_EIP_QUOTA_ERROR_MESSAGE);
       } else if (errMessage.includes("VPC")) {
@@ -387,6 +394,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       markStepStarted("provisioning-failed", errMessage);
     } finally {
       setIsReadOnly(false);
+      setIsLoading(false);
+
       setIsClicked(false);
     }
   };
@@ -963,18 +972,27 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       <Button
         // disabled={isDisabled()}
         disabled={
-          user?.email === "admin@porter.run" ||
-            currentProject?.enable_reprovision
-            ? false
-            : currentCluster
-              ? true
-              : isDisabled()
+          isDisabled()
         }
         onClick={createCluster}
         status={getStatus()}
       >
         Provision
       </Button>
+      {user.isPorterUser &&
+        <>
+
+          <Spacer y={1} />
+          <Text color="yellow">Visible to Admin Only</Text>
+          <Button
+            color="red"
+            onClick={createCluster}
+            status={getStatus()}
+          >
+            Override Provision
+          </Button>
+        </>
+      }
     </>
   );
 };

@@ -30,7 +30,6 @@ export const NewProjectFC = () => {
     setCurrentProject,
     canCreateProject,
     projects,
-    capabilities,
   } = useContext(Context);
   const { pushFiltered } = useRouting();
   const [buttonStatus, setButtonStatus] = useState("");

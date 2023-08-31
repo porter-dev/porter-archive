@@ -195,12 +195,14 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   }
 
   const createCluster = async () => {
+
     const err = validateInputs();
     if (err !== "") {
       setErrorMessage(err)
       setErrorDetails("")
       return;
     }
+    setIsLoading(true);
 
     setIsClicked(true);
     var data = new Contract({
@@ -293,15 +295,21 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       } catch (err) {
         const errMessage = err.response.data.error.replace("unknown: ", "");
         setIsClicked(false);
+        setIsLoading(true);
+
         // TODO: handle different error conditions here from preflights
         setErrorMessage(DEFAULT_ERROR_MESSAGE);
         setErrorDetails(errMessage)
       } finally {
         setIsReadOnly(false);
         setIsClicked(false);
+        setIsLoading(true);
+
       }
     } else {
       setIsClicked(false);
+      setIsLoading(true);
+
       // TODO: handle different error conditions here from preflights
       setErrorMessage(DEFAULT_ERROR_MESSAGE);
       setErrorDetails("Could not perform Preflight Checks ")
@@ -469,7 +477,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         (!currentProject?.enable_reprovision && props.clusterId) &&
         <>
           <Spacer y={1} />
-          <Text>Updates to this cluster are disabled on this project. Enable re-provisioning by contacting <a href="mailto:support@porter.run">Porter Support</a>.</Text>
+          <Text>Updates to the cluster are disabled on this project. Enable re-provisioning by contacting <a href="mailto:support@porter.run">Porter Support</a>.</Text>
         </>
       }
 

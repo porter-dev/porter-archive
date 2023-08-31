@@ -278,6 +278,27 @@ const getLogsWithinTimeRange = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/applications/logs`
 );
 
+const appLogs = baseApi<
+    {
+        app_name: string;
+        service_name: string;
+        deployment_target: string;
+        limit: number;
+        start_range: string;
+        end_range: string;
+        search_param?: string;
+        direction?: string;
+    },
+    {
+        project_id: number;
+        cluster_id: number;
+    }
+>(
+    "GET",
+    ({ project_id, cluster_id }) =>
+        `/api/projects/${project_id}/clusters/${cluster_id}/apps/logs`
+);
+
 const getFeedEvents = baseApi<
   {},
   {
@@ -2893,6 +2914,7 @@ export default {
   rollbackPorterApp,
   createSecretAndOpenGitHubPullRequest,
   getLogsWithinTimeRange,
+  appLogs,
   getFeedEvents,
   updateStackStep,
   // -----------------------------------

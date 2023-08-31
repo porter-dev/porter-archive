@@ -36,11 +36,18 @@ func NewValidatePorterAppHandler(
 	}
 }
 
+// Deletions are the names of services and env variables to delete
+type Deletions struct {
+	ServiceNames     []string `json:"service_names"`
+	EnvVariableNames []string `json:"env_variable_names"`
+}
+
 // ValidatePorterAppRequest is the request object for the /apps/validate endpoint
 type ValidatePorterAppRequest struct {
-	Base64AppProto     string `json:"b64_app_proto"`
-	DeploymentTargetId string `json:"deployment_target_id"`
-	CommitSHA          string `json:"commit_sha"`
+	Base64AppProto     string    `json:"b64_app_proto"`
+	DeploymentTargetId string    `json:"deployment_target_id"`
+	CommitSHA          string    `json:"commit_sha"`
+	Deletions          Deletions `json:"deletions"`
 }
 
 // ValidatePorterAppResponse is the response object for the /apps/validate endpoint
@@ -112,6 +119,10 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		DeploymentTargetId: request.DeploymentTargetId,
 		CommitSha:          request.CommitSHA,
 		App:                appProto,
+		Deletions: &porterv1.Deletions{
+			ServiceNames:     request.Deletions.ServiceNames,
+			EnvVariableNames: request.Deletions.EnvVariableNames,
+		},
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.ValidatePorterApp(ctx, validateReq)
 	if err != nil {

@@ -72,6 +72,14 @@ const ServiceList: React.FC<ServiceListProps> = ({
     control: appControl,
     name: "app.services",
   });
+  const {
+    append: appendDeletion,
+    remove: removeDeletion,
+    fields: deletedServices,
+  } = useFieldArray({
+    control: appControl,
+    name: "deletions.serviceNames",
+  });
 
   const serviceType = watch("type");
   const serviceName = watch("name");
@@ -122,12 +130,28 @@ const ServiceList: React.FC<ServiceListProps> = ({
   };
 
   const onSubmit = handleSubmit(async (data) => {
+    // if service was previously deleted, remove from deletions
+    // handle case such as pre-deploy (which always has the same name)
+    // being deleted and then re-added
+    const previouslyDeleted = deletedServices.findIndex(
+      (s) => s.name === data.name
+    );
+    if (previouslyDeleted !== -1) {
+      removeDeletion(previouslyDeleted);
+    }
+
     append(
       deserializeService({ service: defaultSerialized(data), expanded: true })
     );
     reset();
     setShowAddServiceModal(false);
   });
+
+  const onRemove = (index: number) => {
+    const name = services[index].svc.name.value;
+    remove(index);
+    appendDeletion({ name });
+  };
 
   return (
     <>
@@ -140,7 +164,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 key={svc.id}
                 service={svc}
                 update={update}
-                remove={remove}
+                remove={onRemove}
               />
             ) : null;
           })}

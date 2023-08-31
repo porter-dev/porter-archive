@@ -332,8 +332,8 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
-      if (contract.cluster.gkeKind.nodePools) {
-        contract.cluster.gkeKind.nodePools.map((nodePool: any) => {
+      if (contract.cluster?.gkeKind?.nodePools) {
+        contract.cluster?.gkeKind?.nodePools.map((nodePool: any) => {
           if (nodePool.nodePoolType === "NODE_POOL_TYPE_APPLICATION") {
             setMinInstances(nodePool.minInstances);
             setMaxInstances(nodePool.maxInstances);
@@ -341,11 +341,11 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         });
       }
       setCreateStatus("");
-      setClusterName(contract.cluster.gkeKind.clusterName);
-      setRegion(contract.cluster.gkeKind.region);
-      setClusterVersion(contract.cluster.gkeKind.clusterVersion);
+      setClusterName(contract.cluster.gkeKind?.clusterName);
+      setRegion(contract.cluster.gkeKind?.region);
+      setClusterVersion(contract.cluster.gkeKind?.clusterVersion);
       let cn = new GKENetwork({
-        cidrRange: contract.cluster.gkeKind.clusterNetworking?.cidrRange || defaultClusterNetworking.cidrRange,
+        cidrRange: contract.cluster.gkeKind?.clusterNetworking?.cidrRange || defaultClusterNetworking.cidrRange,
         controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
         podCidr: defaultClusterNetworking.podCidr,
         serviceCidr: defaultClusterNetworking.serviceCidr,

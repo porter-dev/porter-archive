@@ -17,7 +17,7 @@ import { AWS_INSTANCE_LIMITS } from "./tabs/utils";
 import api from "shared/api";
 import StatusFooter from "../../expanded-app/StatusFooter";
 import { ClientService } from "lib/porter-apps/services";
-import { UseFieldArrayRemove, UseFieldArrayUpdate } from "react-hook-form";
+import { UseFieldArrayUpdate } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import { match } from "ts-pattern";
 import useResizeObserver from "lib/hooks/useResizeObserver";
@@ -26,16 +26,14 @@ interface ServiceProps {
   index: number;
   service: ClientService;
   chart?: any;
-  isPredeploy?: boolean;
   update: UseFieldArrayUpdate<PorterAppFormData, "app.services">;
-  remove: UseFieldArrayRemove;
+  remove: (index: number) => void;
 }
 
 const ServiceContainer: React.FC<ServiceProps> = ({
   index,
   service,
   chart,
-  isPredeploy,
   update,
   remove,
 }) => {

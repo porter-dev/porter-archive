@@ -82,15 +82,14 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
-  const [detected, setDetected] = useState<Detected | undefined>(undefined);
   const [preflightData, setPreflightData] = useState({})
   const [preflightFailed, setPreflightFailed] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const markStepStarted = async (step: string) => {
+  const markStepStarted = async (step: string, region?: string) => {
     try {
-      await api.updateOnboardingStep("<token>", { step }, {
+      await api.updateOnboardingStep("<token>", { step, provider: "gcp", region }, {
         project_id: currentProject.id,
       });
     } catch (err) {
@@ -261,7 +260,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         setErrorDetails("")
 
         if (!props.clusterId) {
-          markStepStarted("provisioning-started");
+          markStepStarted("provisioning-started", region);
         }
 
         const res = await api.createContract("<token>", data, {

@@ -62,6 +62,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     clusterId,
     deploymentTargetId,
     servicesFromYaml,
+    setPreviewRevision,
   } = useLatestRevision();
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTargetId,
@@ -102,6 +103,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     defaultValues: {
       app: clientAppFromProto(latestProto, servicesFromYaml),
       source: latestSource,
+      deletions: {
+        serviceNames: [],
+      },
     },
   });
   const {
@@ -143,7 +147,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const validatedAppProto = await validateApp(data);
+      const validatedAppProto = await validateApp(data, latestProto);
       await api.applyApp(
         "<token>",
         {
@@ -185,11 +189,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         deploymentTargetId,
         porterApp.name,
       ]);
-
-      reset({
-        app: clientAppFromProto(latestProto, servicesFromYaml),
-        source: latestSource,
-      });
+      setPreviewRevision(null);
     } catch (err) {}
   });
 
@@ -198,9 +198,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       reset({
         app: clientAppFromProto(latestProto, servicesFromYaml),
         source: latestSource,
+        deletions: {
+          serviceNames: [],
+        },
       });
     }
-  }, [servicesFromYaml, currentTab]);
+  }, [servicesFromYaml, currentTab, latestProto]);
 
   return (
     <FormProvider {...porterAppFormMethods}>
@@ -211,7 +214,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           projectId={projectId}
           clusterId={clusterId}
           appName={porterApp.name}
-          sourceType={latestSource.type}
+          latestSource={latestSource}
+          onSubmit={onSubmit}
         />
         <Spacer y={1} />
         <AnimateHeight height={isDirty && !onlyExpandedChanged ? "auto" : 0}>

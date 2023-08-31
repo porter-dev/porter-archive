@@ -15,7 +15,8 @@ type MainTabProps = {
 };
 
 const MainTab: React.FC<MainTabProps> = ({ index, service }) => {
-  const { register } = useFormContext<PorterAppFormData>();
+  const { register, watch } = useFormContext<PorterAppFormData>();
+  const cron = watch(`app.services.${index}.config.cron.value`);
 
   const getScheduleDescription = useCallback((cron: string) => {
     try {
@@ -61,7 +62,7 @@ const MainTab: React.FC<MainTabProps> = ({ index, service }) => {
             {...register(`app.services.${index}.config.cron.value`)}
           />
           <Spacer y={0.5} />
-          {getScheduleDescription(service.config.cron.value)}
+          {getScheduleDescription(cron)}
         </>
       )}
     </>

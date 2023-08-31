@@ -33,9 +33,15 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
     console.log(err);
   };
 
-  handleDelete = () => {
+  handleDelete = async () => {
     let { currentProject, currentCluster } = this.context;
     this.setState({ status: "loading" });
+
+    await api.updateOnboardingStep(
+      "<token>",
+      { step: "cluster-delete" },
+      { project_id: currentProject.id }
+    );
 
     api
       .deleteCluster(

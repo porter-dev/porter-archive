@@ -22,7 +22,7 @@ const ProjectButton: React.FC<PropsType> = (props) => {
   const context = useContext(Context);
   const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
 
-  const { setCurrentProject, setCurrentCluster, user } = context;
+  const { user } = context;
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);

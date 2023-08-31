@@ -546,6 +546,14 @@ func buildUmbrellaChart(application *Application, config *config.Config, project
 			// have to repair the dependency name because of https://github.com/helm/helm/issues/9214
 			if strings.HasSuffix(dep.Name, "-web") || strings.HasSuffix(dep.Name, "-wkr") || strings.HasSuffix(dep.Name, "-job") {
 				dep.Name = getChartTypeFromHelmName(dep.Name)
+				if dep.Name == "" {
+					return nil, fmt.Errorf("unable to determine type of existing dependency")
+				}
+				version, err := getLatestTemplateVersion(dep.Name, config, projectID)
+				if err != nil {
+					return nil, err
+				}
+				dep.Version = version
 			}
 			deps = append(deps, dep)
 		}

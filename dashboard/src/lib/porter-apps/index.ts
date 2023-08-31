@@ -1,4 +1,7 @@
-import { buildpackSchema } from "main/home/app-dashboard/types/buildpack";
+import {
+  BUILDPACK_TO_NAME,
+  buildpackSchema,
+} from "main/home/app-dashboard/types/buildpack";
 import { z } from "zod";
 import {
   DetectedServices,
@@ -53,6 +56,14 @@ export const sourceValidator = z.discriminatedUnion("type", [
 ]);
 export type SourceOptions = z.infer<typeof sourceValidator>;
 
+export const deletionValidator = z.object({
+  serviceNames: z
+    .object({
+      name: z.string(),
+    })
+    .array(),
+});
+
 // clientAppValidator is the representation of a Porter app on the client, and is used to validate inputs for app setting fields
 export const clientAppValidator = z.object({
   name: z.string().min(1),
@@ -66,6 +77,7 @@ export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 export const porterAppFormValidator = z.object({
   app: clientAppValidator,
   source: sourceValidator,
+  deletions: deletionValidator,
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
@@ -224,7 +236,10 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
       Object.freeze({
         method: b.method,
         context: b.context,
-        buildpacks: b.buildpacks.map((b) => ({ name: b, buildpack: b })),
+        buildpacks: b.buildpacks.map((b) => ({
+          name: BUILDPACK_TO_NAME[b],
+          buildpack: b,
+        })),
         builder: b.builder,
       })
     )

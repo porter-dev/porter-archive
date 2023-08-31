@@ -109,6 +109,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         git_branch: "",
         porter_yaml_path: "./porter.yaml",
       },
+      deletions: {
+        serviceNames: [],
+      }
     },
   });
   const {
@@ -131,6 +134,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const { updateAppStep } = useAppAnalytics(name);
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget?.deployment_target_id,
+    creating: true,
   });
 
   const onSubmit = handleSubmit(async (data) => {
@@ -473,7 +477,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       </Text>
                       <Spacer y={0.5} />
                       <ServiceList
-                        limitOne={true}
                         addNewText={"Add a new pre-deploy job"}
                         prePopulateService={deserializeService({
                           service: defaultSerialized({

@@ -8,7 +8,7 @@ import midnight from "shared/themes/midnight";
 import standard from "shared/themes/standard";
 import { Context } from "shared/Context";
 import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
-import { ClusterType, ProjectType } from "shared/types";
+import { ClusterType, ProjectType, ProjectListType } from "shared/types";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
@@ -133,19 +133,26 @@ const Home: React.FC<Props> = (props) => {
           } else if (res.data.length > 0 && !currentProject) {
             setProjects(res.data);
 
-            let foundProject = null;
+            let foundProjectListEntry: ProjectListType | undefined;
+
             if (id) {
-              foundProject = (res.data as ProjectType[]).find(
-                (item: ProjectType) => item.id == id
+              foundProjectListEntry = (res.data as ProjectListType[]).find(
+                (item: ProjectListType) => item.id == id
               );
             }
 
-            if (!foundProject) {
-              foundProject = (res.data as ProjectType[]).find(
-                (item: ProjectType) => item.toString() == localStorage.getItem("currentProject")
+            if (!foundProjectListEntry) {
+              const localStorageId = localStorage.getItem("currentProject");
+              foundProjectListEntry = (res.data as ProjectListType[]).find(
+                (item: ProjectListType) => item.id.toString() == localStorageId
               );
             }
-            setCurrentProject(foundProject || res.data[0]);
+
+            const project = await api
+              .getProject("<token>", {}, { id: foundProjectListEntry?.id || res.data[0].id })
+              .then((res) => res.data)
+              .catch(console.log);
+            setCurrentProject(project);
           }
         }
       })
@@ -313,7 +320,11 @@ const Home: React.FC<Props> = (props) => {
       if (!res.data.length) {
         setCurrentProject(null, () => redirectToNewProject());
       } else {
-        setCurrentProject(res.data[0]);
+        const project = await api
+          .getProject("<token>", {}, { id: res.data[0].id })
+          .then((res) => res.data);
+
+        setCurrentProject(project);
       }
       setCurrentModal(null, null);
     } catch (error) {

@@ -259,6 +259,10 @@ export interface FileType {
   path: string;
   type: string;
 }
+export interface ProjectListType {
+  id: number;
+  name: string;
+}
 
 export interface ProjectType {
   id: number;

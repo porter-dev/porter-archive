@@ -88,12 +88,15 @@ const ProjectSelectionModal: React.FC<Props> = ({
     }
   };
   const renderBlockList = () => {
-    return filteredProjects.map((project: ProjectType, i: number) => {
+    return filteredProjects.map((projectListEntry: ProjectListType, i: number) => {
       return (
         <IdContainer
           key={i}
-          selected={project.id === currentProject.id}
+          selected={projectListEntry.id === currentProject.id}
           onClick={async () => {
+            const project = await api
+              .getProject("<token>", {}, { id: currentProject.id })
+              .then((res) => res.data);
 
             setCurrentProject(project);
 
@@ -113,11 +116,11 @@ const ProjectSelectionModal: React.FC<Props> = ({
           }}
         >
           {/* <BlockIcon src={gradient} /> */}
-          <BlockTitle>{project.name}</BlockTitle>
+          <BlockTitle>{projectListEntry.name}</BlockTitle>
 
 
           <BlockDescription>
-            Project ID: {project.id}
+            Project ID: {projectListEntry.id}
           </BlockDescription>
         </IdContainer>
       );

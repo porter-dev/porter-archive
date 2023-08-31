@@ -115,7 +115,7 @@ const Home: React.FC<Props> = (props) => {
       });
   };
 
-  const getProjects = (id?: number) => {
+  const getProjects = async (id?: number) => {
     let { currentProject } = props;
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
@@ -124,40 +124,38 @@ const Home: React.FC<Props> = (props) => {
       pushQueryParams(props, { project_id: currentProject.id.toString() });
     }
 
-    api
-      .getProjects("<token>", {}, { id: user.userId })
-      .then((res) => {
-        if (res.data) {
-          if (res.data.length === 0) {
-            redirectToNewProject();
-          } else if (res.data.length > 0 && !currentProject) {
-            setProjects(res.data);
+    try {
+      const res = await api.getProjects("<token>", {}, { id: user.userId });
+      if (res.data.length === 0) {
+        redirectToNewProject();
+      } else if (res.data.length > 0 && !currentProject) {
+        setProjects(res.data);
 
-            let foundProjectListEntry: ProjectListType | undefined;
+        let foundProjectListEntry: ProjectListType | undefined;
 
-            if (id) {
-              foundProjectListEntry = (res.data as ProjectListType[]).find(
-                (item: ProjectListType) => item.id == id
-              );
-            }
-
-            if (!foundProjectListEntry) {
-              const localStorageId = localStorage.getItem("currentProject");
-              foundProjectListEntry = (res.data as ProjectListType[]).find(
-                (item: ProjectListType) => item.id.toString() == localStorageId
-              );
-            }
-
-            const project = await api
-              .getProject("<token>", {}, { id: foundProjectListEntry?.id || res.data[0].id })
-              .then((res) => res.data)
-              .catch(console.log);
-            setCurrentProject(project);
-          }
+        if (id) {
+          foundProjectListEntry = (res.data as ProjectListType[]).find(
+            (item: ProjectListType) => item.id == id
+          );
         }
-      })
-      .catch(console.log);
-  };
+
+        if (!foundProjectListEntry) {
+          const localStorageId = localStorage.getItem("currentProject");
+          foundProjectListEntry = (res.data as ProjectListType[]).find(
+            (item: ProjectListType) => item.id.toString() == localStorageId
+          );
+        }
+
+        const project = await api
+          .getProject("<token>", {}, { id: foundProjectListEntry?.id || res.data[0].id })
+          .then((res) => res.data)
+          .catch(console.log);
+        setCurrentProject(project);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    };
 
   const checkIfCanCreateProject = () => {
     api

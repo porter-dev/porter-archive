@@ -4,8 +4,6 @@ tasks:
   move-to-production:
     desc: Move the current branch to production
     cmds:
-    - cmd: git fetch origin --tags 
-      silent: true
     - cmd: git checkout master
       silent: true
     - cmd: git pull origin master

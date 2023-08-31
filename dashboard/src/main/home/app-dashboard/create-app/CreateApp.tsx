@@ -109,6 +109,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         git_branch: "",
         porter_yaml_path: "./porter.yaml",
       },
+      deletions: {
+        serviceNames: [],
+      }
     },
   });
   const {

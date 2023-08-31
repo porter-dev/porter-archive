@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { AppRevision, appRevisionValidator } from "lib/revisions/types";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import { match } from "ts-pattern";
@@ -16,6 +16,7 @@ import { readableDate } from "shared/string_utils";
 import Text from "components/porter/Text";
 import { useLatestRevision } from "./LatestRevisionContext";
 import { useFormContext } from "react-hook-form";
+import ConfirmOverlay from "components/porter/ConfirmOverlay";
 
 type Props = {
   deploymentTargetId: string;
@@ -24,6 +25,7 @@ type Props = {
   appName: string;
   latestSource: SourceOptions;
   latestRevisionNumber: number;
+  onSubmit: () => Promise<void>;
 };
 
 const RED = "#ff0000";
@@ -36,14 +38,19 @@ const RevisionsList: React.FC<Props> = ({
   clusterId,
   appName,
   latestSource,
+  onSubmit,
 }) => {
   const {
     previewRevision,
     setPreviewRevision,
     servicesFromYaml,
   } = useLatestRevision();
-  const { reset } = useFormContext<PorterAppFormData>();
+  const { reset, setValue } = useFormContext<PorterAppFormData>();
   const [expandRevisions, setExpandRevisions] = useState(false);
+  const [revertData, setRevertData] = useState<{
+    app: PorterApp;
+    revision: number;
+  } | null>(null);
 
   const res = useQuery(
     ["listAppRevisions", projectId, clusterId, latestRevisionNumber, appName],
@@ -121,6 +128,17 @@ const RevisionsList: React.FC<Props> = ({
 
     return numDeployed + 1;
   };
+
+  const onRevert = useCallback(async () => {
+    if (!revertData) {
+      return;
+    }
+
+    setValue("app", clientAppFromProto(revertData.app, servicesFromYaml));
+    setRevertData(null);
+
+    void onSubmit();
+  }, [onSubmit, setValue, revertData]);
 
   const renderContents = (revisions: AppRevision[]) => {
     const revisionsWithProto = revisions.map((revision) => {
@@ -245,7 +263,16 @@ const RevisionsList: React.FC<Props> = ({
                       <Td>
                         <RollbackButton
                           disabled={isLatestDeployedRevision}
-                          onClick={() => {}}
+                          onClick={() => {
+                            if (isLatestDeployedRevision) {
+                              return;
+                            }
+
+                            setRevertData({
+                              app: revision.app_proto,
+                              revision: revision.revision_number,
+                            });
+                          }}
                         >
                           {isLatestDeployedRevision ? "Current" : "Revert"}
                         </RollbackButton>
@@ -275,6 +302,15 @@ const RevisionsList: React.FC<Props> = ({
           renderContents(data.app_revisions)
         )
         .otherwise(() => null)}
+      {revertData ? (
+        <ConfirmOverlay
+          message={`Are you sure you want to revert to revision ${revertData?.revision}?`}
+          onYes={onRevert}
+          onNo={() => {
+            setRevertData(null);
+          }}
+        />
+      ) : null}
     </StyledRevisionSection>
   );
 };

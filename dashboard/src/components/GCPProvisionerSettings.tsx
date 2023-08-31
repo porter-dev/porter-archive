@@ -38,6 +38,7 @@ import Fieldset from "./porter/Fieldset";
 import ExpandableSection from "./porter/ExpandableSection";
 import PreflightChecks from "./PreflightChecks";
 
+
 const locationOptions = [
   { value: "us-east1", label: "us-east1" },
 ];
@@ -98,6 +99,9 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   };
 
   const getStatus = () => {
+    if (isLoading) {
+      return <Loading />
+    }
     if (isReadOnly && props.provisionerError == "") {
       return "Provisioning is still in progress...";
     } else if (errorMessage !== "") {
@@ -118,13 +122,15 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
   const isDisabled = () => {
     return (
-      !user.email.endsWith("porter.run") &&
-      ((!clusterName && true) ||
-        (isReadOnly && props.provisionerError === "") ||
-        props.provisionerError === "" ||
-        currentCluster?.status === "UPDATING" ||
-        isClicked)
-    );
+
+      (!clusterName && true)
+      || (isReadOnly && props.provisionerError === "")
+      || currentCluster?.status === "UPDATING"
+      || isClicked
+      || (!currentProject?.enable_reprovision && props.clusterId)
+
+    )
+
   };
 
   const validateInputs = (): string => {
@@ -461,6 +467,30 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       >
         Provision
       </Button>
+
+      {
+        (!currentProject?.enable_reprovision && props.clusterId) &&
+        <>
+          <Spacer y={1} />
+          <Text>Updates to this cluster are disabled on this project. Enable re-provisioning by contacting <a href="mailto:support@porter.run">Porter Support</a>.</Text>
+        </>
+      }
+
+      {user.isPorterUser &&
+        <>
+
+          <Spacer y={1} />
+          <Text color="yellow">Visible to Admin Only</Text>
+          <Button
+            color="red"
+            onClick={createCluster}
+            status={getStatus()}
+          >
+            Override Provision
+          </Button>
+        </>
+      }
+
     </>
   );
 };
@@ -488,65 +518,15 @@ const errorMessageToModal = (errorMessage: string) => {
   }
 };
 
-const AppearingDiv = styled.div<{ color?: string }>`
-        animation: floatIn 0.5s;
-        animation-fill-mode: forwards;
-        display: flex;
-        flex-direction: column;
-        color: ${(props) => props.color || "#ffffff44"};
-        margin-left: 10px;
-        @keyframes floatIn {
-          from {
-          opacity: 0;
-        transform: translateY(20px);
-    }
-        to {
-          opacity: 1;
-        transform: translateY(0px);
-    }
-  }
-        `;
-const StatusIcon = styled.img`
-        height: 14px;
-        `;
-
-const CheckItemContainer = styled.div`
-        display: flex;
-        flex-direction: column;
-        border: 1px solid ${props => props.theme.border};
-        border-radius: 5px;
-        font-size: 13px;
-        width: 100%;
-        margin-bottom: 10px;
-        padding-left: 10px;
-        cursor: ${props => (props.hasMessage ? 'pointer' : 'default')};
-        background: ${props => props.theme.clickable.bg};
-
-        `;
-
-const CheckItemTop = styled.div`
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        background: ${props => props.theme.clickable.bg};
-        `;
-
-const ExpandIcon = styled.i<{ isExpanded: boolean }>`
-        margin-left: 8px;
-        color: #ffffff66;
-        font-size: 20px;
-        cursor: pointer;
-        border-radius: 20px;
-        transform: ${props => props.isExpanded ? "" : "rotate(-90deg)"};
-        `; const ExpandHeader = styled.div<{ isExpanded: boolean }>`
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        > i {
-          margin-right: 7px;
-          margin-left: -7px;
-          transform: ${(props) =>
+const ExpandHeader = styled.div<{ isExpanded: boolean }>`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  > i {
+    margin-right: 7px;
+    margin-left: -7px;
+    transform: ${(props) =>
     props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
-          transition: transform 0.1s ease;
-        }
-      `;
+    transition: transform 0.1s ease;
+  }
+`;

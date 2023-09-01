@@ -61,7 +61,6 @@ const CloudFormationForm: React.FC<Props> = ({
   proceed,
   switchToCredentialFlow
 }) => {
-  const [hasSentAWSNotif, setHasSentAWSNotif] = useState(false);
   const [AWSAccountID, setAWSAccountID] = useState("");
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [hasClickedCloudformationButton, setHasClickedCloudformationButton] = useState(false);
@@ -152,10 +151,7 @@ const CloudFormationForm: React.FC<Props> = ({
 
   const handleContinueWithAWSAccountId = () => {
     setCurrentStep(2);
-    if (!hasSentAWSNotif) {
-      setHasSentAWSNotif(true);
-      markStepStarted({ step: "aws-account-id-complete", account_id: AWSAccountID });
-    }
+    markStepStarted({ step: "aws-account-id-complete", account_id: AWSAccountID });
   }
 
   const handleProceedToProvisionStep = () => {

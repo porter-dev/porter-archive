@@ -40,7 +40,9 @@ import PreflightChecks from "./PreflightChecks";
 
 
 const locationOptions = [
-  { value: "us-east1", label: "us-east1" },
+  { value: "us-east1", label: "us-east1 (South Carolina, USA)" },
+  { value: "us-east4", label: "us-east4 (Virginia, USA)" },
+  { value: "asia-south1", label: "asia-south1 (Mumbia, India)" },
 ];
 
 const defaultClusterNetworking = new GKENetwork({
@@ -50,8 +52,7 @@ const defaultClusterNetworking = new GKENetwork({
   serviceCidr: "10.75.0.0/16",
 });
 
-const defaultClusterVersion = "1.25";
-
+const clusterVersionOptions = [{ value: "1.25", label: "v1.25" }, { value: "1.26", label: "v1.26" }, { value: "1.27", label: "v1.27" }];
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
@@ -77,7 +78,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
   const [clusterNetworking, setClusterNetworking] = useState(defaultClusterNetworking);
-  const [clusterVersion, setClusterVersion] = useState(defaultClusterVersion);
+  const [clusterVersion, setClusterVersion] = useState(clusterVersionOptions[0].value);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
@@ -162,6 +163,16 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         {
           isExpanded && (
             <>
+              <SelectRow
+                options={clusterVersionOptions}
+                width="350px"
+                disabled={isReadOnly}
+                value={clusterVersion}
+                scrollBuffer={true}
+                dropdownMaxHeight="240px"
+                setActiveValue={setClusterVersion}
+                label="Cluster version"
+              />
               <InputRow
                 width="350px"
                 type="string"
@@ -214,7 +225,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           case: "gkeKind",
           value: new GKE({
             clusterName: clusterName,
-            clusterVersion: clusterVersion || defaultClusterVersion,
+            clusterVersion: clusterVersion || clusterVersionOptions[0].value,
             region: region,
             network: new GKENetwork({
               cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
@@ -358,7 +369,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       preflightChecks()
     }
 
-  }, [props.selectedClusterVersion, clusterNetworking]);
+  }, [props.selectedClusterVersion, clusterNetworking, region]);
 
   const preflightChecks = async () => {
     setIsLoading(true);
@@ -432,6 +443,16 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           dropdownMaxHeight="240px"
           setActiveValue={setRegion}
           label="📍 Google Cloud Region"
+        />
+        <SelectRow
+          options={clusterVersionOptions}
+          width="350px"
+          disabled={isReadOnly}
+          value={clusterVersion}
+          scrollBuffer={true}
+          dropdownMaxHeight="240px"
+          setActiveValue={setClusterVersion}
+          label="Cluster version"
         />
       </>
     );

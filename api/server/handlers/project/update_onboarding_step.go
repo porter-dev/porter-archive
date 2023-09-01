@@ -199,6 +199,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
 			Region:                 request.Region,
+			Provider:               request.Provider,
 		}))
 		if err != nil {
 			_ = telemetry.Error(ctx, span, err, "error tracking provisioning started")

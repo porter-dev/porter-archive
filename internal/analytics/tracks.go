@@ -386,6 +386,7 @@ type ProvisioningAttemptTrackOpts struct {
 	CompanyName  string
 	ErrorMessage string
 	Region       string
+	Provider     string
 }
 
 // ProvisioningAttemptTrack returns a track for when a user attempts provisioning
@@ -395,6 +396,7 @@ func ProvisioningAttemptTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["region"] = opts.Region
+	additionalProps["provider"] = opts.Provider
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,

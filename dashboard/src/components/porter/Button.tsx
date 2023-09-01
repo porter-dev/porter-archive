@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 
 import loading from "assets/loading.gif";
+import Tooltip from "./Tooltip";
 
 type Props = {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ type Props = {
   rounded?: boolean;
   alt?: boolean;
   type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
+  disabledTooltipMessage?: string;
 };
 
 const Button: React.FC<Props> = ({
@@ -37,6 +39,7 @@ const Button: React.FC<Props> = ({
   rounded,
   alt,
   type,
+  disabledTooltipMessage,
 }) => {
   const renderStatus = () => {
     switch (status) {
@@ -65,7 +68,30 @@ const Button: React.FC<Props> = ({
     }
   };
 
-  return (
+  return disabled && disabledTooltipMessage ? (
+    <Tooltip content={disabledTooltipMessage} position="right">
+      <Wrapper>
+        <StyledButton
+          disabled={disabled}
+          onClick={() => {
+            if (!disabled && onClick) {
+              onClick();
+            }
+          }}
+          width={width}
+          height={height}
+          color={color}
+          withBorder={withBorder || alt}
+          rounded={rounded || alt}
+          alt={alt}
+          type={type}
+        >
+          <Text>{children}</Text>
+        </StyledButton>
+        {(helperText || status) && renderStatus()}
+      </Wrapper>
+    </Tooltip>
+  ) : (
     <Wrapper>
       <StyledButton
         disabled={disabled}

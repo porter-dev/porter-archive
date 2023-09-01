@@ -156,12 +156,12 @@ type LogLine struct {
 }
 
 type LogMetadata struct {
-	PodName      string            `json:"pod_name"`
-	PodNamespace string            `json:"pod_namespace"`
-	Revision     string            `json:"revision"`
-	OutputStream string            `json:"output_stream"`
-	AppName      string            `json:"app_name"`
-	RawLabels    map[string]string `json:"raw_labels"`
+	PodName      string `json:"pod_name"`
+	PodNamespace string `json:"pod_namespace"`
+	Revision     string `json:"revision"`
+	OutputStream string `json:"output_stream"`
+	AppName      string `json:"app_name"`
+	// RawLabels    map[string]string `json:"raw_labels"`
 }
 
 type GetLogResponse struct {

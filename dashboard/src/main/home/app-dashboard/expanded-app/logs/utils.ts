@@ -27,6 +27,7 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
         metadata: parsed.metadata,
       };
     } catch (err) {
+      console.log(err)
       return {
         line: Anser.ansiToJson(log.toString()),
         lineNumber: idx + 1,

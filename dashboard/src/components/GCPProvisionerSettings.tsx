@@ -369,7 +369,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       preflightChecks()
     }
 
-  }, [props.selectedClusterVersion, clusterNetworking]);
+  }, [props.selectedClusterVersion, clusterNetworking, region]);
 
   const preflightChecks = async () => {
     setIsLoading(true);

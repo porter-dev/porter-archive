@@ -117,8 +117,18 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
 
 
   const saveCredentials = async () => {
-
     if (gcpCloudProviderCredentialID) {
+      try {
+        if (currentProject?.id != null) {
+          api.inviteAdmin(
+            "<token>",
+            {},
+            { project_id: currentProject?.id }
+          );
+        }
+      } catch (err) {
+        console.log(err);
+      }
       proceed(gcpCloudProviderCredentialID)
     }
 

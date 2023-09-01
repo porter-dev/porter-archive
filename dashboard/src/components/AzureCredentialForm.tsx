@@ -60,6 +60,17 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
             id: currentProject.id,
           });
         const azureIntegrationId = azureIntegrationResponse.data.cloud_provider_credentials_id;
+        try {
+          if (currentProject?.id != null) {
+            api.inviteAdmin(
+              "<token>",
+              {},
+              { project_id: currentProject?.id }
+            );
+          }
+        } catch (err) {
+          console.log(err);
+        }
         proceed(azureIntegrationId)
       } catch (err) {
         if (err.response?.data?.error) {

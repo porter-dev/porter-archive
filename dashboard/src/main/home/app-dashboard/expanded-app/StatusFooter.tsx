@@ -300,7 +300,7 @@ const StatusFooter: React.FC<Props> = ({
         replicaSetArray.map((replicaSet, i) => {
           return (
             <StatusFooterContainer key={i}>
-              <StyledStatusFooterTop key={i} expanded={expanded}>
+              <StyledStatusFooterTop expanded={expanded}>
                 <StyledContainer row spaced>
                   {replicaSet.some((r) => r.crashLoopReason != "") || replicaSet.some((r) => r.failing) ? (
                     <>

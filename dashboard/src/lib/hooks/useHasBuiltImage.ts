@@ -9,9 +9,8 @@ export const useHasBuiltImage = (appName: string | undefined) => {
     const [hasBuiltImage, setHasBuiltImage] = useState<boolean>(false);
 
     const { data } = useQuery(
-        ["checkForBuiltImage", currentProject?.id, currentCluster?.id],
+        ["checkForBuiltImage", currentProject?.id, currentCluster?.id, hasBuiltImage],
         async () => {
-            console.log("checking for built image")
             if (hasBuiltImage) {
                 return true;
             }

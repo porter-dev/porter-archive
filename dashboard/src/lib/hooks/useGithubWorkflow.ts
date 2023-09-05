@@ -12,8 +12,6 @@ export const useGithubWorkflow = (appData: any, hasBuiltImage: boolean) => {
         return useQuery(
             [`checkForApplicationWorkflow_${fileName}`, currentProject?.id, currentCluster?.id, githubWorkflowFilename, appData, hasBuiltImage],
             async () => {
-                console.log("checking for workflow file", fileName)
-                console.log("here is the github workflow name", githubWorkflowFilename)
                 if (githubWorkflowFilename !== "") {
                     return githubWorkflowFilename;
                 }

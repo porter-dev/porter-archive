@@ -1,6 +1,6 @@
 package types
 
-// Project type that extends gorm.Model
+// ProjectList type for entries in the api response on GET /projects
 type ProjectList struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name"`

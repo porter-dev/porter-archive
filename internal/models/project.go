@@ -101,6 +101,8 @@ func (p *Project) ToProjectType() *types.Project {
 	}
 }
 
+// ToProjectListType returns a "minified" version of a Project
+// suitable for api responses to GET /projects
 func (p *Project) ToProjectListType() *types.ProjectList {
 	return &types.ProjectList{
 		ID:   p.ID,

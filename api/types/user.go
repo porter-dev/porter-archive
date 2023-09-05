@@ -66,6 +66,7 @@ type FinalizeResetUserPasswordRequest struct {
 	NewPassword string `json:"new_password" form:"required,max=255"`
 }
 
+// ListUserProjectsResponse type for api responses to GET /projects
 type ListUserProjectsResponse []*ProjectList
 
 type WelcomeWebhookRequest struct {

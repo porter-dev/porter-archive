@@ -42,6 +42,7 @@ import PreflightChecks from "./PreflightChecks";
 const locationOptions = [
   { value: "us-east1", label: "us-east1 (South Carolina, USA)" },
   { value: "us-east4", label: "us-east4 (Virginia, USA)" },
+  { value: "us-central1", label: "us-central1 (Iowa, USA)" },
   { value: "asia-south1", label: "asia-south1 (Mumbia, India)" },
 ];
 

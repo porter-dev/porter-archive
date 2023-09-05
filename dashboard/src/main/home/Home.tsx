@@ -125,32 +125,32 @@ const Home: React.FC<Props> = (props) => {
     }
 
     try {
-      const projects = await api
+      const projectList = await api
         .getProjects("<token>", {}, { id: user.userId })
         .then((res) => res.data as ProjectListType[]);
 
-      if (projects.length === 0) {
+      if (projectList.length === 0) {
         redirectToNewProject();
-      } else if (projects.length > 0 && !currentProject) {
-        setProjects(projects);
+      } else if (projectList.length > 0 && !currentProject) {
+        setProjects(projectList);
 
         let foundProjectListEntry: ProjectListType | undefined;
 
         if (id) {
-          foundProjectListEntry = (projects).find(
+          foundProjectListEntry = (projectList).find(
             (item: ProjectListType) => item.id == id
           );
         }
 
         if (!foundProjectListEntry) {
           const localStorageId = localStorage.getItem("currentProject");
-          foundProjectListEntry = (projects).find(
+          foundProjectListEntry = (projectList).find(
             (item: ProjectListType) => item.id.toString() == localStorageId
           );
         }
 
         const project = await api
-          .getProject("<token>", {}, { id: foundProjectListEntry?.id || projects[0].id })
+          .getProject("<token>", {}, { id: foundProjectListEntry?.id || projectList[0].id })
           .then((res) => res.data as ProjectType);
         setCurrentProject(project);
       }
@@ -310,21 +310,21 @@ const Home: React.FC<Props> = (props) => {
 
   const projectOverlayCall = async () => {
     try {
-      const projects = await api
+      const projectList = await api
         .getProjects("<token>", {}, { id: user.userId })
         .then((res) => res.data as ProjectListType[]);
 
-      if (!projects) {
+      if (!projectList) {
         setCurrentModal(null, null);
         return;
       }
 
-      setProjects(projects);
-      if (!projects.length) {
+      setProjects(projectList);
+      if (!projectList.length) {
         setCurrentProject(null, () => redirectToNewProject());
       } else {
         const project = await api
-          .getProject("<token>", {}, { id: projects[0].id })
+          .getProject("<token>", {}, { id: projectList[0].id })
           .then((res) => res.data as ProjectType);
 
         setCurrentProject(project);

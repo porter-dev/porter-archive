@@ -131,7 +131,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
   const { appName } = props.match.params as any;
   const hasBuiltImage = useHasBuiltImage(appName);
-  const { githubWorkflowFilename, isLoading: isLoadingWorkflowFile } = useGithubWorkflow(appData?.app);
+  const { githubWorkflowFilename, isLoading: isLoadingWorkflowFile } = useGithubWorkflow(appData?.app, hasBuiltImage);
 
   useEffect(() => {
     if (!_.isEqual(_.omitBy(porterApp, _.isEmpty), _.omitBy(tempPorterApp, _.isEmpty))) {
@@ -479,6 +479,9 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     appData: any
   ): Promise<PorterJson | undefined> => {
     try {
+      if (appData?.app?.git_repo_id == null || appData?.app?.repo_name == null) {
+        return undefined;
+      }
       const res = await api.getPorterYamlContents(
         "<token>",
         {
@@ -487,8 +490,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         {
           project_id: appData.app.project_id,
           git_repo_id: appData.app.git_repo_id,
-          owner: appData.app.repo_name?.split("/")[0],
-          name: appData.app.repo_name?.split("/")[1],
+          owner: appData.app.repo_name.split("/")[0],
+          name: appData.app.repo_name.split("/")[1],
           kind: "github",
           branch: appData.app.git_branch,
         }
@@ -869,21 +872,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     appName={appData.app.name}
                   />
                   <DarkMatter antiHeight="-18px" />
-                </>)
+                </>
+              )
                 :
                 githubWorkflowFilename ? (
-                  <Banner
-                    suffix={
-                      <>
-                        <RefreshButton
-                          onClick={() => window.location.reload()}
-                        >
-                          <img src={refresh} />
-                          Refresh
-                        </RefreshButton>
-                      </>
-                    }
-                  >
+                  <Banner>
                     Your GitHub repo has not been built yet.
                     <Spacer inline width="5px" />
                     <Link

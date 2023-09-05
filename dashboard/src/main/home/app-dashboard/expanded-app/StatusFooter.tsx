@@ -299,7 +299,7 @@ const StatusFooter: React.FC<Props> = ({
         replicaSetArray.length > 0 &&
         replicaSetArray.map((replicaSet, i) => {
           return (
-            <>
+            <StatusFooterContainer key={i}>
               <StyledStatusFooterTop key={i} expanded={expanded}>
                 <StyledContainer row spaced>
                   {replicaSet.some((r) => r.crashLoopReason != "") || replicaSet.some((r) => r.failing) ? (
@@ -374,7 +374,7 @@ const StatusFooter: React.FC<Props> = ({
                   </StyledStatusFooter>
                 </AnimateHeight>
               )}
-            </>
+            </StatusFooterContainer>
           );
         })}
     </>
@@ -382,6 +382,9 @@ const StatusFooter: React.FC<Props> = ({
 };
 
 export default withRouter(StatusFooter);
+
+const StatusFooterContainer = styled.div`
+`;
 
 const StatusDot = styled.div<{ color?: string }>`
   min-width: 7px;

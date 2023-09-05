@@ -18,7 +18,7 @@ export const useGithubWorkflow = (appData: any, hasBuiltImage: boolean) => {
                     return githubWorkflowFilename;
                 }
 
-                if (currentProject == null || currentCluster == null || appData == null) {
+                if (currentProject == null || currentCluster == null) {
                     return "";
                 }
 

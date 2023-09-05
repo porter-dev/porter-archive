@@ -38,11 +38,6 @@ const GHABanner: React.FC<Props> = ({
           {pullRequestUrl ? (
             <Banner
               type="warning"
-              suffix={
-                <RefreshButton onClick={() => window.location.reload()}>
-                  <img src={refresh} /> Refresh
-                </RefreshButton>
-              }
             >
               Your application will not be available until you merge the Porter PR.
               <Spacer inline width="5px" />
@@ -57,11 +52,6 @@ const GHABanner: React.FC<Props> = ({
           ) : (
             <Banner
               type="warning"
-              suffix={
-                <RefreshButton onClick={() => window.location.reload()}>
-                  <img src={refresh} /> Refresh
-                </RefreshButton>
-              }
             >
               Your application will not be available until you add the Porter workflow to your branch.
               <Spacer inline width="5px" />

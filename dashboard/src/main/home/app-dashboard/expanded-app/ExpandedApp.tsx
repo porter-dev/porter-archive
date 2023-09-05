@@ -847,8 +847,65 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Fieldset>
           ) : (
             <>
-              {!githubWorkflowFilename ? (
-                isLoading || isLoadingWorkflowFile ? (
+              {hasBuiltImage ? (
+                <>
+                  <DarkMatter />
+                  <PorterAppRevisionSection
+                    showRevisions={showRevisions}
+                    toggleShowRevisions={() => {
+                      setShowRevisions(!showRevisions);
+                    }}
+                    chart={appData.chart}
+                    setRevision={setRevision}
+                    forceRefreshRevisions={forceRefreshRevisions}
+                    refreshRevisionsOff={() => setForceRefreshRevisions(false)}
+                    shouldUpdate={
+                      appData.chart.latest_version &&
+                      appData.chart.latest_version !==
+                      appData.chart.chart.metadata.version
+                    }
+                    updatePorterApp={updatePorterApp}
+                    latestVersion={appData.chart.latest_version}
+                    appName={appData.app.name}
+                  />
+                  <DarkMatter antiHeight="-18px" />
+                </>)
+                :
+                githubWorkflowFilename ? (
+                  <Banner
+                    suffix={
+                      <>
+                        <RefreshButton
+                          onClick={() => window.location.reload()}
+                        >
+                          <img src={refresh} />
+                          Refresh
+                        </RefreshButton>
+                      </>
+                    }
+                  >
+                    Your GitHub repo has not been built yet.
+                    <Spacer inline width="5px" />
+                    <Link
+                      hasunderline
+                      target="_blank"
+                      to={`https://github.com/${appData.app.repo_name}/actions`}
+                    >
+                      Check status
+                    </Link>
+                  </Banner>
+                ) : (
+                  <GHABanner
+                    repoName={appData.app.repo_name}
+                    branchName={appData.app.git_branch}
+                    pullRequestUrl={appData.app.pull_request_url}
+                    stackName={appData.app.name}
+                    gitRepoId={appData.app.git_repo_id}
+                    porterYamlPath={appData.app.porter_yaml_path}
+                  />
+                )}
+              {/* {!githubWorkflowFilename ? (
+                isLoading ? (
                   <Banner>
                     <Loading />
                   </Banner>
@@ -914,7 +971,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   />
                   <DarkMatter antiHeight="-18px" />
                 </>
-              )}
+              )} */}
               <Spacer y={1} />
               <AnimateHeight height={showUnsavedChangesBanner ? 67 : 0}>
                 <Banner

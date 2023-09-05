@@ -4,13 +4,13 @@ import { useContext, useEffect, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
 
-export const useGithubWorkflow = (appData: any) => {
+export const useGithubWorkflow = (appData: any, hasBuiltImage: boolean) => {
     const { currentProject, currentCluster } = useContext(Context);
     const [githubWorkflowFilename, setGithubWorkflowName] = useState<string>("");
 
-    const createUseQuery = (fileName: string) => {
+    const createUseQuery = (fileName: string, hasBuiltImage: boolean) => {
         return useQuery(
-            [`checkForApplicationWorkflow_${fileName}`, currentProject?.id, currentCluster?.id],
+            [`checkForApplicationWorkflow_${fileName}`, currentProject?.id, currentCluster?.id, githubWorkflowFilename, appData, hasBuiltImage],
             async () => {
                 console.log("checking for workflow file", fileName)
                 console.log("here is the github workflow name", githubWorkflowFilename)
@@ -42,16 +42,16 @@ export const useGithubWorkflow = (appData: any) => {
                 }
             },
             {
-                enabled: !!currentProject && !!currentCluster && !!appData && githubWorkflowFilename === "",
+                enabled: !hasBuiltImage && !!currentProject && !!currentCluster && !!appData && githubWorkflowFilename === "",
                 refetchInterval: 5000,
                 refetchOnWindowFocus: false,
             }
         );
     }
 
-    const { data: applicationWorkflowCheck, isLoading: isLoadingApplicationWorkflow } = createUseQuery(`porter_stack_${appData?.name}.yml`);
+    const { data: applicationWorkflowCheck, isLoading: isLoadingApplicationWorkflow } = createUseQuery(`porter_stack_${appData?.name}.yml`, hasBuiltImage);
 
-    const { data: defaultWorkflowCheck, isLoading: isLoadingDefaultWorkflow } = createUseQuery(`porter.yml`);
+    const { data: defaultWorkflowCheck, isLoading: isLoadingDefaultWorkflow } = createUseQuery(`porter.yml`, hasBuiltImage);
 
     useEffect(() => {
         if (!!applicationWorkflowCheck) {

@@ -82,7 +82,6 @@ const machineTypeOptions = [
 
 const clusterVersionOptions = [
   { value: "v1.24.0", label: "1.24.0" },
-  { value: "v1.25.0", label: "1.25.0" },
 ];
 
 type Props = RouteComponentProps & {

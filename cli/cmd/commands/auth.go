@@ -29,9 +29,14 @@ func registerCommand_Auth(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "login",
 		Short: "Authorizes a user for a given Porter server",
 		Run: func(cmd *cobra.Command, args []string) {
+			cliConf = overrideConfigWithFlags(cmd, cliConf)
+
 			err := login(cmd.Context(), cliConf)
 			if err != nil {
 				color.Red("Error logging in: %s\n", err.Error())
+				if strings.Contains(err.Error(), "Forbidden") {
+					_ = cliConf.SetToken("")
+				}
 				os.Exit(1)
 			}
 		},
@@ -41,6 +46,8 @@ func registerCommand_Auth(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "register",
 		Short: "Creates a user for a given Porter server",
 		Run: func(cmd *cobra.Command, args []string) {
+			cliConf = overrideConfigWithFlags(cmd, cliConf)
+
 			err := register(cmd.Context(), cliConf)
 			if err != nil {
 				color.Red("Error registering: %s\n", err.Error())
@@ -53,8 +60,9 @@ func registerCommand_Auth(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "logout",
 		Short: "Logs a user out of a given Porter server",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, logout)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, logout)
 			if err != nil {
+				_ = cliConf.SetToken("")
 				os.Exit(1)
 			}
 		},
@@ -88,9 +96,8 @@ func login(ctx context.Context, cliConf config.CLIConfig) error {
 	user, err := client.AuthCheck(ctx)
 	if err != nil {
 		if !strings.Contains(err.Error(), "Forbidden") {
-			return fmt.Errorf("unexpected error performing authorization check")
+			return fmt.Errorf("unexpected error performing authorization check: %w", err)
 		}
-		fmt.Println(err)
 	}
 
 	if cliConf.Token == "" {
@@ -107,7 +114,6 @@ func login(ctx context.Context, cliConf config.CLIConfig) error {
 
 		// set the token in config
 		err = cliConf.SetToken(token)
-
 		if err != nil {
 			return err
 		}
@@ -121,14 +127,12 @@ func login(ctx context.Context, cliConf config.CLIConfig) error {
 		}
 
 		user, err = client.AuthCheck(ctx)
-
 		if err != nil {
 			color.Red("Invalid token.")
 			return err
 		}
 
 		_, _ = color.New(color.FgGreen).Println("Successfully logged in!")
-
 		return setProjectForUser(ctx, client, cliConf, user.ID)
 
 	}
@@ -137,7 +141,6 @@ func login(ctx context.Context, cliConf config.CLIConfig) error {
 	if err != nil {
 		return err
 	}
-	_, _ = color.New(color.FgGreen).Println("Successfully logged in!")
 
 	projID, exists, err := api.GetProjectIDFromToken(cliConf.Token)
 	if err != nil {
@@ -167,6 +170,8 @@ func login(ctx context.Context, cliConf config.CLIConfig) error {
 			return err
 		}
 	}
+	_, _ = color.New(color.FgGreen).Println("Successfully logged in!")
+
 	return nil
 }
 
@@ -183,7 +188,6 @@ func setProjectForUser(ctx context.Context, client api.Client, config config.CLI
 		config.SetProject(ctx, client, projects[0].ID) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
 		err = setProjectCluster(ctx, client, config, projects[0].ID)
-
 		if err != nil {
 			return err
 		}
@@ -193,6 +197,7 @@ func setProjectForUser(ctx context.Context, client api.Client, config config.CLI
 }
 
 func loginManual(ctx context.Context, cliConf config.CLIConfig, client api.Client) error {
+	client.CookieFilePath = "cookie.json" // required as this uses cookies for auth instead of a token
 	var username, pw string
 
 	fmt.Println("Please log in with an email and password:")
@@ -203,16 +208,13 @@ func loginManual(ctx context.Context, cliConf config.CLIConfig, client api.Clien
 	}
 
 	pw, err = utils.PromptPassword("Password: ")
-
 	if err != nil {
 		return err
 	}
-
 	_, err = client.Login(ctx, &types.LoginUserRequest{
 		Email:    username,
 		Password: pw,
 	})
-
 	if err != nil {
 		return err
 	}
@@ -279,10 +281,12 @@ func register(ctx context.Context, cliConf config.CLIConfig) error {
 	return nil
 }
 
-func logout(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, args []string) error {
+func logout(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	err := client.Logout(ctx)
 	if err != nil {
-		return err
+		if !strings.Contains(err.Error(), "You are not logged in.") {
+			return err
+		}
 	}
 
 	cliConf.SetToken("")

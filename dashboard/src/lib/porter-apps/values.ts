@@ -10,7 +10,7 @@ export type ServiceString = z.infer<typeof serviceStringValidator>;
 // ServiceNumber is a number value in a service that can be read-only or editable
 export const serviceNumberValidator = z.object({
   readOnly: z.boolean(),
-  value: z.number(),
+  value: z.coerce.number(),
 });
 export type ServiceNumber = z.infer<typeof serviceNumberValidator>;
 

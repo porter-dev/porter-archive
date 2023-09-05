@@ -51,5 +51,6 @@ const StyledText = styled.div<{
   font-size: ${props => props.size || 13}px;
   display: inline;
   align-items: center;
+  user-select: text;
   ${props => props.additionalStyles ? props.additionalStyles : ""}
 `;

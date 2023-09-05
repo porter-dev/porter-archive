@@ -73,7 +73,7 @@ applying a configuration:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter apply -f porter.yaml"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd.Context(), cliConf, args, apply)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, args, apply)
 			if err != nil {
 				if strings.Contains(err.Error(), "Forbidden") {
 					_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "You may have to update your GitHub secret token")
@@ -108,7 +108,7 @@ applying a configuration:
 	return applyCmd
 }
 
-func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ []string) (err error) {
+func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ []string) (err error) {
 	project, err := client.GetProject(ctx, cliConfig.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -232,6 +232,8 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 
 			resGroup.Resources = append(resGroup.Resources, resources...)
 		}
+	} else if previewVersion.Version == "v2" {
+		return errors.New("porter.yaml v2 is not enabled for this project")
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
 	}

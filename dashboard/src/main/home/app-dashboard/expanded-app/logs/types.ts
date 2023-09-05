@@ -10,7 +10,7 @@ export interface PorterLog {
     line: AnserJsonEntry[];
     lineNumber: number;
     timestamp?: string;
-    metadata?: z.infer<typeof AgentLogMetadataSchema>;
+    metadata?: z.infer<typeof agentLogMetadataValidator>;
 }
 
 export interface PaginationInfo {
@@ -18,20 +18,31 @@ export interface PaginationInfo {
     nextCursor: string | null;
 }
 
-const AgentLogMetadataSchema = z.object({
+const rawLabelsValidator = z.object({
+    porter_run_absolute_name: z.string().optional(),
+    porter_run_app_id: z.string().optional(),
+    porter_run_app_name: z.string().optional(),
+    porter_run_app_revision_id: z.string().optional(),
+    porter_run_service_name: z.string().optional(),
+    porter_run_service_type: z.string().optional(),
+});
+export type RawLabels = z.infer<typeof rawLabelsValidator>;
+
+const agentLogMetadataValidator = z.object({
     pod_name: z.string(),
     pod_namespace: z.string(),
     revision: z.string(),
     output_stream: z.string(),
     app_name: z.string(),
+    // raw_labels: rawLabelsValidator.optional(),
 });
 
-export const AgentLogSchema = z.object({
+export const agentLogValidator = z.object({
     line: z.string(),
     timestamp: z.string(),
-    metadata: AgentLogMetadataSchema.optional(),
+    metadata: agentLogMetadataValidator.optional(),
 });
-export type AgentLog = z.infer<typeof AgentLogSchema>;
+export type AgentLog = z.infer<typeof agentLogValidator>;
 
 export interface GenericFilterOption {
     label: string;
@@ -42,7 +53,7 @@ export const GenericFilterOption = {
         return { label, value };
     }
 }
-export type LogFilterName = 'revision' | 'output_stream' | 'pod_name';
+export type LogFilterName = 'revision' | 'output_stream' | 'pod_name' | 'service_name';
 export interface GenericLogFilter {
     name: LogFilterName;
     displayName: string;
@@ -57,6 +68,8 @@ export const GenericLogFilter = {
 
     getDefaultOption: (filterName: LogFilterName) => {
         switch (filterName) {
+            case 'service_name':
+                return GenericFilterOption.of('All', 'all');
             case 'revision':
                 return GenericFilterOption.of('All', 'all');
             case 'output_stream':

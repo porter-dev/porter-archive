@@ -11,7 +11,7 @@ import {
   CreateStackBody,
   SourceConfig,
 } from "main/home/cluster-dashboard/stacks/types";
-import { Contract } from "@porter-dev/api-contracts";
+import { Contract, PreflightCheckRequest } from "@porter-dev/api-contracts";
 
 /**
  * Generic api call format
@@ -75,6 +75,13 @@ const getGitlabIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/gitlab`
 );
 
+const preflightCheck = baseApi<PreflightCheckRequest, { id: number }>(
+  "POST",
+  (pathParams) => {
+    return `/api/projects/${pathParams.id}/integrations/preflightcheck`;
+  }
+);
+
 const preflightCheckAWSUsage = baseApi<
   {
     target_arn: string;
@@ -128,7 +135,16 @@ const updateCluster = baseApi<
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}`;
 });
-
+const renameProject = baseApi<
+  {
+    name: string | undefined;
+  },
+  {
+    project_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/rename`;
+});
 const renameCluster = baseApi<
   {
     name: string;
@@ -260,6 +276,27 @@ const getLogsWithinTimeRange = baseApi<
   "GET",
   ({ project_id, cluster_id }) =>
     `/api/projects/${project_id}/clusters/${cluster_id}/applications/logs`
+);
+
+const appLogs = baseApi<
+    {
+        app_name: string;
+        service_name: string;
+        deployment_target_id: string;
+        limit: number;
+        start_range: string;
+        end_range: string;
+        search_param?: string;
+        direction?: string;
+    },
+    {
+        project_id: number;
+        cluster_id: number;
+    }
+>(
+    "GET",
+    ({ project_id, cluster_id }) =>
+        `/api/projects/${project_id}/clusters/${cluster_id}/apps/logs`
 );
 
 const getFeedEvents = baseApi<
@@ -803,11 +840,33 @@ const getDefaultDeploymentTarget = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/default-deployment-target`;
 });
 
+const getBranchHead = baseApi<
+  {},
+  {
+    project_id: number;
+    git_repo_id: number;
+    kind: string;
+    owner: string;
+    name: string;
+    branch: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/head`;
+});
+
 const validatePorterApp = baseApi<
   {
     b64_app_proto: string;
     deployment_target_id: string;
     commit_sha: string;
+    deletions: {
+      service_names: string[];
+      env_variable_names: string[];
+    };
   },
   {
     project_id: number;
@@ -867,6 +926,19 @@ const getLatestRevision = baseApi<
   }
 >("GET", ({ project_id, cluster_id, porter_app_name }) => {
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/latest`;
+});
+
+const listAppRevisions = baseApi<
+  {
+    deployment_target_id: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }
+>("GET", ({ project_id, cluster_id, porter_app_name }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/revisions`;
 });
 
 const getGitlabProcfileContents = baseApi<
@@ -2829,6 +2901,7 @@ export default {
   overwriteAWSIntegration,
   updateCluster,
   renameCluster,
+  renameProject,
   createAzureIntegration,
   createGitlabIntegration,
   createEmailVerification,
@@ -2858,6 +2931,7 @@ export default {
   rollbackPorterApp,
   createSecretAndOpenGitHubPullRequest,
   getLogsWithinTimeRange,
+  appLogs,
   getFeedEvents,
   updateStackStep,
   // -----------------------------------
@@ -2937,10 +3011,12 @@ export default {
   getPorterYamlContents,
   parsePorterYaml,
   getDefaultDeploymentTarget,
+  getBranchHead,
   validatePorterApp,
   createApp,
   applyApp,
   getLatestRevision,
+  listAppRevisions,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,
@@ -3014,6 +3090,7 @@ export default {
   addApplicationToEnvGroup,
   removeApplicationFromEnvGroup,
   provisionDatabase,
+  preflightCheck,
   preflightCheckAWSUsage,
   getDatabases,
   getPreviousLogsForContainer,

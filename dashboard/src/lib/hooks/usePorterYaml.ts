@@ -1,16 +1,21 @@
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
-import { SourceOptions, defaultServicesWithOverrides } from "lib/porter-apps";
-import { ClientService } from "lib/porter-apps/services";
+import { SourceOptions, serviceOverrides } from "lib/porter-apps";
+import { ClientService, DetectedServices } from "lib/porter-apps/services";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { z } from "zod";
 
-type DetectedServices = {
-  services: ClientService[];
-  predeploy?: ClientService;
-};
+type PorterYamlStatus =
+  | {
+      loading: true;
+      detectedServices: null;
+    }
+  | {
+      detectedServices: DetectedServices | null;
+      loading: false;
+    };
 
 /*
  *
@@ -19,25 +24,31 @@ type DetectedServices = {
  * added to an app by default with read-only values.
  *
  */
-export const usePorterYaml = (source: SourceOptions) => {
+export const usePorterYaml = ({
+  source,
+  useDefaults = true,
+}: {
+  source: SourceOptions | null;
+  useDefaults?: boolean;
+}): PorterYamlStatus => {
   const { currentProject, currentCluster } = useContext(Context);
   const [
     detectedServices,
     setDetectedServices,
   ] = useState<DetectedServices | null>(null);
 
-  const { data } = useQuery(
+  const { data, status } = useQuery(
     [
       "getPorterYamlContents",
       currentProject?.id,
-      source.git_branch,
-      source.git_repo_name,
+      source?.git_branch,
+      source?.git_repo_name,
     ],
     async () => {
       if (!currentProject) {
         return;
       }
-      if (source.type !== "github") {
+      if (source?.type !== "github") {
         return;
       }
       const res = await api.getPorterYamlContents(
@@ -59,9 +70,10 @@ export const usePorterYaml = (source: SourceOptions) => {
     },
     {
       enabled:
-        source.type === "github" &&
+        source?.type === "github" &&
         Boolean(source.git_repo_name) &&
         Boolean(source.git_branch),
+      retry: false,
     }
   );
 
@@ -92,8 +104,9 @@ export const usePorterYaml = (source: SourceOptions) => {
           .parseAsync(res.data);
         const proto = PorterApp.fromJsonString(atob(data.b64_app_proto));
 
-        const { services, predeploy } = defaultServicesWithOverrides({
+        const { services, predeploy } = serviceOverrides({
           overrides: proto,
+          useDefaults,
         });
 
         if (services.length || predeploy) {
@@ -127,5 +140,22 @@ export const usePorterYaml = (source: SourceOptions) => {
     }
   }, [data]);
 
-  return detectedServices;
+  if (source?.type !== "github") {
+    return {
+      loading: false,
+      detectedServices: null,
+    };
+  }
+
+  if (status === "loading") {
+    return {
+      loading: true,
+      detectedServices: null,
+    };
+  }
+
+  return {
+    detectedServices,
+    loading: false,
+  };
 };

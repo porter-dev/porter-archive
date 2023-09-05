@@ -19,7 +19,9 @@ import {
   GKE,
   GKENetwork,
   GKENodePool,
-  GKENodePoolType
+  GKENodePoolType,
+  GKEPreflightValues,
+  PreflightCheckRequest
 } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
@@ -28,9 +30,19 @@ import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
 import Link from "./porter/Link";
 import Text from "./porter/Text";
+import healthy from "assets/status-healthy.png";
+import failure from "assets/failure.svg";
+import Loading from "components/Loading";
+import Placeholder from "./Placeholder";
+import Fieldset from "./porter/Fieldset";
+import ExpandableSection from "./porter/ExpandableSection";
+import PreflightChecks from "./PreflightChecks";
+
 
 const locationOptions = [
-  { value: "us-east1", label: "us-east1" },
+  { value: "us-east1", label: "us-east1 (South Carolina, USA)" },
+  { value: "us-east4", label: "us-east4 (Virginia, USA)" },
+  { value: "asia-south1", label: "asia-south1 (Mumbia, India)" },
 ];
 
 const defaultClusterNetworking = new GKENetwork({
@@ -40,8 +52,7 @@ const defaultClusterNetworking = new GKENetwork({
   serviceCidr: "10.75.0.0/16",
 });
 
-const defaultClusterVersion = "1.25";
-
+const clusterVersionOptions = [{ value: "1.25", label: "v1.25" }, { value: "1.26", label: "v1.26" }, { value: "1.27", label: "v1.27" }];
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
@@ -50,7 +61,8 @@ type Props = RouteComponentProps & {
   clusterId?: number;
 };
 
-const VALID_CIDR_RANGE_PATTERN = /^(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.0\.0\/16$/;
+const VALID_CIDR_RANGE_PATTERN = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(8|9|1\d|2[0-8])$/;
+
 
 const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const {
@@ -66,15 +78,19 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
   const [clusterNetworking, setClusterNetworking] = useState(defaultClusterNetworking);
-  const [clusterVersion, setClusterVersion] = useState(defaultClusterVersion);
+  const [clusterVersion, setClusterVersion] = useState(clusterVersionOptions[0].value);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
+  const [preflightData, setPreflightData] = useState({})
+  const [preflightFailed, setPreflightFailed] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const markStepStarted = async (step: string) => {
+  const markStepStarted = async (step: string, region?: string) => {
     try {
-      await api.updateOnboardingStep("<token>", { step }, {
+      await api.updateOnboardingStep("<token>", { step, provider: "gcp", region }, {
         project_id: currentProject.id,
       });
     } catch (err) {
@@ -83,6 +99,9 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   };
 
   const getStatus = () => {
+    if (isLoading) {
+      return <Loading />
+    }
     if (isReadOnly && props.provisionerError == "") {
       return "Provisioning is still in progress...";
     } else if (errorMessage !== "") {
@@ -103,13 +122,12 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
   const isDisabled = () => {
     return (
-      !user.email.endsWith("porter.run") &&
-      ((!clusterName && true) ||
-        (isReadOnly && props.provisionerError === "") ||
-        props.provisionerError === "" ||
-        currentCluster?.status === "UPDATING" ||
-        isClicked)
-    );
+      (!clusterName && true)
+      || (isReadOnly && props.provisionerError === "")
+      || currentCluster?.status === "UPDATING"
+      || isClicked
+      || (!currentProject?.enable_reprovision && props.clusterId)
+    )
   };
 
   const validateInputs = (): string => {
@@ -128,13 +146,73 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
     return "";
   }
+  const renderAdvancedSettings = () => {
+    return (
+      <>
+        {
+          < Heading >
+            <ExpandHeader
+              onClick={() => setIsExpanded(!isExpanded)}
+              isExpanded={isExpanded}
+            >
+              <i className="material-icons">arrow_drop_down</i>
+              Advanced settings
+            </ExpandHeader>
+          </Heading >
+        }
+        {
+          isExpanded && (
+            <>
+              <SelectRow
+                options={clusterVersionOptions}
+                width="350px"
+                disabled={isReadOnly}
+                value={clusterVersion}
+                scrollBuffer={true}
+                dropdownMaxHeight="240px"
+                setActiveValue={setClusterVersion}
+                label="Cluster version"
+              />
+              <InputRow
+                width="350px"
+                type="string"
+                disabled={isReadOnly}
+                value={clusterNetworking.cidrRange}
+                setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, cidrRange: x }))}
+                label="VPC CIDR range"
+                placeholder="ex: 10.78.0.0/16"
+              />
+              <Spacer y={0.25} />
+              <Text color="helper">The following ranges will be used: {clusterNetworking.cidrRange}, {clusterNetworking.controlPlaneCidr}, {clusterNetworking.serviceCidr}, {clusterNetworking.podCidr}</Text>
+            </>
+          )
+        }
+      </>
+    );
+  };
+
+  const statusPreflight = (): string => {
+
+
+    if (!clusterNetworking.cidrRange) {
+      return "VPC CIDR range is required";
+    }
+    if (!VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.cidrRange)) {
+      return "VPC CIDR range must be in the format of [0-255].[0-255].0.0/16";
+    }
+
+    return "";
+  }
+
   const createCluster = async () => {
+
     const err = validateInputs();
     if (err !== "") {
       setErrorMessage(err)
       setErrorDetails("")
       return;
     }
+    setIsLoading(true);
 
     setIsClicked(true);
     var data = new Contract({
@@ -147,7 +225,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           case: "gkeKind",
           value: new GKE({
             clusterName: clusterName,
-            clusterVersion: clusterVersion || defaultClusterVersion,
+            clusterVersion: clusterVersion || clusterVersionOptions[0].value,
             region: region,
             network: new GKENetwork({
               cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
@@ -182,56 +260,69 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       }),
     });
 
-    if (props.clusterId) {
-      data["cluster"]["clusterId"] = props.clusterId;
-    }
-
-    try {
-      setIsReadOnly(true);
-      setErrorMessage("");
-      setErrorDetails("")
-
-      if (!props.clusterId) {
-        markStepStarted("provisioning-started");
+    if (preflightData) {
+      if (props.clusterId) {
+        data["cluster"]["clusterId"] = props.clusterId;
       }
 
-      const res = await api.createContract("<token>", data, {
-        project_id: currentProject.id,
-      });
+      try {
+        setIsReadOnly(true);
+        setErrorMessage("");
+        setErrorDetails("")
 
-      setErrorMessage("");
-      setErrorDetails("");
+        if (!props.clusterId) {
+          markStepStarted("provisioning-started", region);
+        }
 
-      // Only refresh and set clusters on initial create
-      setShouldRefreshClusters(true);
-      api
-        .getClusters("<token>", {}, { id: currentProject.id })
-        .then(({ data }) => {
-          data.forEach((cluster: ClusterType) => {
-            if (cluster.id === res.data.contract_revision?.cluster_id) {
-              // setHasFinishedOnboarding(true);
-              setCurrentCluster(cluster);
-              OFState.actions.goTo("clean_up");
-              pushFiltered(props, "/cluster-dashboard", ["project_id"], {
-                cluster: cluster.name,
-              });
-            }
-          });
-        })
-        .catch((err) => {
-          setErrorMessage("Error fetching clusters");
-          setErrorDetails(err)
+        const res = await api.createContract("<token>", data, {
+          project_id: currentProject.id,
         });
 
-    } catch (err) {
-      const errMessage = err.response.data.error.replace("unknown: ", "");
+        setErrorMessage("");
+        setErrorDetails("");
+
+        // Only refresh and set clusters on initial create
+        setShouldRefreshClusters(true);
+        api
+          .getClusters("<token>", {}, { id: currentProject.id })
+          .then(({ data }) => {
+            data.forEach((cluster: ClusterType) => {
+              if (cluster.id === res.data.contract_revision?.cluster_id) {
+                // setHasFinishedOnboarding(true);
+                setCurrentCluster(cluster);
+                OFState.actions.goTo("clean_up");
+                pushFiltered(props, "/cluster-dashboard", ["project_id"], {
+                  cluster: cluster.name,
+                });
+              }
+            });
+          })
+          .catch((err) => {
+            setErrorMessage("Error fetching clusters");
+            setErrorDetails(err)
+          });
+
+      } catch (err) {
+        const errMessage = err.response.data.error.replace("unknown: ", "");
+        setIsClicked(false);
+        setIsLoading(true);
+
+        // TODO: handle different error conditions here from preflights
+        setErrorMessage(DEFAULT_ERROR_MESSAGE);
+        setErrorDetails(errMessage)
+      } finally {
+        setIsReadOnly(false);
+        setIsClicked(false);
+        setIsLoading(true);
+
+      }
+    } else {
       setIsClicked(false);
+      setIsLoading(true);
+
       // TODO: handle different error conditions here from preflights
       setErrorMessage(DEFAULT_ERROR_MESSAGE);
-      setErrorDetails(errMessage)
-    } finally {
-      setIsReadOnly(false);
-      setIsClicked(false);
+      setErrorDetails("Could not perform Preflight Checks ")
     }
   };
 
@@ -251,8 +342,8 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
-      if (contract.cluster.gkeKind.nodePools) {
-        contract.cluster.gkeKind.nodePools.map((nodePool: any) => {
+      if (contract.cluster?.gkeKind?.nodePools) {
+        contract.cluster?.gkeKind?.nodePools.map((nodePool: any) => {
           if (nodePool.nodePoolType === "NODE_POOL_TYPE_APPLICATION") {
             setMinInstances(nodePool.minInstances);
             setMaxInstances(nodePool.maxInstances);
@@ -260,11 +351,11 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         });
       }
       setCreateStatus("");
-      setClusterName(contract.cluster.gkeKind.clusterName);
-      setRegion(contract.cluster.gkeKind.region);
-      setClusterVersion(contract.cluster.gkeKind.clusterVersion);
+      setClusterName(contract.cluster.gkeKind?.clusterName);
+      setRegion(contract.cluster.gkeKind?.region);
+      setClusterVersion(contract.cluster.gkeKind?.clusterVersion);
       let cn = new GKENetwork({
-        cidrRange: contract.cluster.gkeKind.clusterNetworking?.cidrRange || defaultClusterNetworking.cidrRange,
+        cidrRange: contract.cluster.gkeKind?.clusterNetworking?.cidrRange || defaultClusterNetworking.cidrRange,
         controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
         podCidr: defaultClusterNetworking.podCidr,
         serviceCidr: defaultClusterNetworking.serviceCidr,
@@ -272,6 +363,44 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       setClusterNetworking(cn);
     }
   }, [props.selectedClusterVersion]);
+
+  useEffect(() => {
+    if (statusPreflight() == "" && !props.clusterId) {
+      preflightChecks()
+    }
+
+  }, [props.selectedClusterVersion, clusterNetworking, region]);
+
+  const preflightChecks = async () => {
+    setIsLoading(true);
+
+
+    var data = new PreflightCheckRequest({
+      projectId: BigInt(currentProject.id),
+      cloudProvider: EnumCloudProvider.GCP,
+      cloudProviderCredentialsId: props.credentialId,
+      preflightValues: {
+        case: "gkePreflightValues",
+        value: new GKEPreflightValues({
+          network: new GKENetwork({
+            cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
+            controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
+            podCidr: defaultClusterNetworking.podCidr,
+            serviceCidr: defaultClusterNetworking.serviceCidr,
+          })
+        })
+      }
+    });
+    const preflightDataResp = await api.preflightCheck(
+      "<token>", data,
+      {
+        id: currentProject.id,
+      }
+    )
+    setPreflightData(preflightDataResp?.data?.Msg);
+    setIsLoading(false)
+
+  }
 
   const renderForm = () => {
     // Render simplified form if initial create
@@ -295,17 +424,8 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
             setActiveValue={setRegion}
             label="📍 GCP location"
           />
-          <InputRow
-            width="350px"
-            type="string"
-            disabled={isReadOnly}
-            value={clusterNetworking.cidrRange}
-            setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, cidrRange: x }))}
-            label="VPC CIDR range"
-            placeholder="ex: 10.78.0.0/16"
-          />
-          <Spacer y={0.25} />
-          <Text color="helper">The following ranges will be used: {clusterNetworking.cidrRange}, {clusterNetworking.controlPlaneCidr}, {clusterNetworking.serviceCidr}, {clusterNetworking.podCidr}</Text>
+          {renderAdvancedSettings()}
+
         </>
       );
     }
@@ -324,6 +444,16 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           setActiveValue={setRegion}
           label="📍 Google Cloud Region"
         />
+        <SelectRow
+          options={clusterVersionOptions}
+          width="350px"
+          disabled={isReadOnly}
+          value={clusterVersion}
+          scrollBuffer={true}
+          dropdownMaxHeight="240px"
+          setActiveValue={setClusterVersion}
+          label="Cluster version"
+        />
       </>
     );
   };
@@ -331,13 +461,61 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   return (
     <>
       <StyledForm>{renderForm()}</StyledForm>
+
+      {props.credentialId && (<>
+
+        {isLoading ?
+          <>
+            <Placeholder>
+              <Loading />
+            </Placeholder>
+            <Spacer y={1} />
+          </>
+          :
+          <>
+            {(!props.clusterId) &&
+              <>
+                <PreflightChecks preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
+                <Spacer y={1} />
+              </>
+            }
+          </>
+        }
+
+      </>
+      )}
+
       <Button
-        disabled={isDisabled()}
+        disabled={isDisabled() || isLoading || preflightFailed || statusPreflight() != ""}
         onClick={createCluster}
         status={getStatus()}
       >
         Provision
       </Button>
+
+      {
+        (!currentProject?.enable_reprovision && props.clusterId) &&
+        <>
+          <Spacer y={1} />
+          <Text>Updates to the cluster are disabled on this project. Enable re-provisioning by contacting <a href="mailto:support@porter.run">Porter Support</a>.</Text>
+        </>
+      }
+
+      {user.isPorterUser &&
+        <>
+
+          <Spacer y={1} />
+          <Text color="yellow">Visible to Admin Only</Text>
+          <Button
+            color="red"
+            onClick={createCluster}
+            status={getStatus()}
+          >
+            Override Provision
+          </Button>
+        </>
+      }
+
     </>
   );
 };
@@ -346,14 +524,14 @@ export default withRouter(GCPProvisionerSettings);
 
 
 const StyledForm = styled.div`
-  position: relative;
-  padding: 30px 30px 25px;
-  border-radius: 5px;
-  background: ${({ theme }) => theme.fg};
-  border: 1px solid #494b4f;
-  font-size: 13px;
-  margin-bottom: 30px;
-`;
+      position: relative;
+      padding: 30px 30px 25px;
+      border-radius: 5px;
+      background: ${({ theme }) => theme.fg};
+      border: 1px solid #494b4f;
+      font-size: 13px;
+      margin-bottom: 30px;
+      `;
 
 const DEFAULT_ERROR_MESSAGE =
   "An error occurred while provisioning your infrastructure. Please try again.";
@@ -364,3 +542,16 @@ const errorMessageToModal = (errorMessage: string) => {
       return null;
   }
 };
+
+const ExpandHeader = styled.div<{ isExpanded: boolean }>`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  > i {
+    margin-right: 7px;
+    margin-left: -7px;
+    transform: ${(props) =>
+    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+    transition: transform 0.1s ease;
+  }
+`;

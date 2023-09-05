@@ -17,7 +17,7 @@ import { AWS_INSTANCE_LIMITS } from "./tabs/utils";
 import api from "shared/api";
 import StatusFooter from "../../expanded-app/StatusFooter";
 import { ClientService } from "lib/porter-apps/services";
-import { UseFieldArrayRemove, UseFieldArrayUpdate } from "react-hook-form";
+import { UseFieldArrayUpdate } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import { match } from "ts-pattern";
 import useResizeObserver from "lib/hooks/useResizeObserver";
@@ -26,20 +26,18 @@ interface ServiceProps {
   index: number;
   service: ClientService;
   chart?: any;
-  isPredeploy?: boolean;
   update: UseFieldArrayUpdate<PorterAppFormData, "app.services">;
-  remove: UseFieldArrayRemove;
+  remove: (index: number) => void;
 }
 
 const ServiceContainer: React.FC<ServiceProps> = ({
   index,
   service,
   chart,
-  isPredeploy,
   update,
   remove,
 }) => {
-  const [height, setHeight] = useState<Height>("auto");
+  const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
 
   const UPPER_BOUND = 0.75;
 
@@ -233,13 +231,15 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         contentClassName="auto-content"
         duration={300}
       >
-        <StyledSourceBox
-          showExpanded={service.expanded}
-          chart={chart}
-          hasFooter={chart && service && getHasBuiltImage()}
-        >
-          {renderTabs(service)}
-        </StyledSourceBox>
+        {height !== 0 && (
+          <StyledSourceBox
+            showExpanded={service.expanded}
+            chart={chart}
+            hasFooter={chart && service && getHasBuiltImage()}
+          >
+            {renderTabs(service)}
+          </StyledSourceBox>
+        )}
       </AnimateHeight>
       {chart &&
         service &&
@@ -333,29 +333,9 @@ const ServiceHeader = styled.div<{
     transform: ${(props: { showExpanded?: boolean; chart: any }) =>
       props.showExpanded ? "" : "rotate(-90deg)"};
   }
-
-  animation: fadeIn 0.3s 0s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
 `;
 
 const Icon = styled.img`
   height: 18px;
   margin-right: 15px;
-
-  animation: fadeIn 0.3s 0s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
 `;

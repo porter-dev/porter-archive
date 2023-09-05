@@ -17,6 +17,10 @@ import {
 } from "./values";
 import { Service, ServiceType } from "@porter-dev/api-contracts";
 
+export type DetectedServices = {
+  services: ClientService[];
+  predeploy?: ClientService;
+};
 type ClientServiceType = "web" | "worker" | "job" | "predeploy";
 
 // serviceValidator is the validator for a ClientService
@@ -34,9 +38,12 @@ export const serviceValidator = z.object({
     z.object({
       type: z.literal("web"),
       autoscaling: autoscalingValidator.optional(),
-      ingressEnabled: z.boolean().default(false).optional(),
       domains: domainsValidator,
       healthCheck: healthcheckValidator.optional(),
+      private: serviceBooleanValidator.default({
+        value: false,
+        readOnly: false,
+      }),
     }),
     z.object({
       type: z.literal("worker"),
@@ -72,6 +79,7 @@ export type SerializedService = {
         }[];
         autoscaling?: SerializedAutoscaling;
         healthCheck?: SerializedHealthcheck;
+        private: boolean;
       }
     | {
         type: "worker";
@@ -89,6 +97,13 @@ export type SerializedService = {
 
 export function isPredeployService(service: SerializedService | ClientService) {
   return service.config.type == "predeploy";
+}
+
+export function prefixSubdomain(subdomain: string) {
+  if (subdomain.startsWith("https://") || subdomain.startsWith("http://")) {
+    return subdomain;
+  }
+  return "https://" + subdomain;
 }
 
 export function defaultSerialized({
@@ -128,6 +143,7 @@ export function defaultSerialized({
         autoscaling: defaultAutoscaling,
         healthCheck: defaultHealthCheck,
         domains: [],
+        private: false,
       },
     }))
     .with("worker", () => ({
@@ -176,6 +192,7 @@ export function serializeService(service: ClientService): SerializedService {
           domains: config.domains.map((domain) => ({
             name: domain.name.value,
           })),
+          private: config.private.value,
         },
       })
     )
@@ -228,12 +245,17 @@ export function serializeService(service: ClientService): SerializedService {
 
 // deserializeService converts a SerializedService to a ClientService
 // A deserialized ClientService represents the state of a service in the UI and which fields are editable
-export function deserializeService(
-  service: SerializedService,
-  override?: SerializedService
-): ClientService {
+export function deserializeService({
+  service,
+  override,
+  expanded,
+}: {
+  service: SerializedService;
+  override?: SerializedService;
+  expanded?: boolean;
+}): ClientService {
   const baseService = {
-    expanded: true,
+    expanded,
     canDelete: !override,
     name: ServiceField.string(service.name, override?.name),
     run: ServiceField.string(service.run, override?.run),
@@ -271,6 +293,10 @@ export function deserializeService(
               )?.name
             ),
           })),
+          private: ServiceField.boolean(
+            config.private,
+            overrideWebConfig?.private
+          ),
         },
       };
     })

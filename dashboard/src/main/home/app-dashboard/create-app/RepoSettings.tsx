@@ -18,11 +18,13 @@ import {
 import RepositorySelector from "../build-settings/RepositorySelector";
 import BranchSelector from "../build-settings/BranchSelector";
 import BuildpackSettings from "../validate-apply/build-settings/buildpacks/BuildpackSettings";
+import { match } from "ts-pattern";
 
 type Props = {
   projectId: number;
   source: SourceOptions & { type: "github" };
   build: BuildOptions;
+  appExists?: boolean;
 };
 
 const branchContentsSchema = z
@@ -35,15 +37,14 @@ const branchContentsSchema = z
 type BranchContents = z.infer<typeof branchContentsSchema>;
 type BuildView = "docker" | "pack";
 
-const RepoSettings: React.FC<Props> = ({ projectId, source, build }) => {
-  const {
-    watch,
-    control,
-    register,
-    setValue,
-  } = useFormContext<PorterAppFormData>();
+const RepoSettings: React.FC<Props> = ({
+  projectId,
+  source,
+  build,
+  appExists,
+}) => {
+  const { control, register, setValue } = useFormContext<PorterAppFormData>();
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const method = watch("app.build.method");
 
   const repoIsSet = useMemo(() => source.git_repo_name !== "", [
     source.git_repo_name,
@@ -129,23 +130,25 @@ const RepoSettings: React.FC<Props> = ({ projectId, source, build }) => {
             setValue={() => {}}
             placeholder=""
           />
-          <BackButton
-            width="135px"
-            onClick={() => {
-              setValue("source", {
-                type: "github",
-                git_repo_name: "",
-                git_branch: "",
-                git_repo_id: 0,
-                porter_yaml_path: "./porter.yaml",
-              });
+          {!appExists && (
+            <BackButton
+              width="135px"
+              onClick={() => {
+                setValue("source", {
+                  type: "github",
+                  git_repo_name: "",
+                  git_branch: "",
+                  git_repo_id: 0,
+                  porter_yaml_path: "./porter.yaml",
+                });
 
-              setValue("app.build.context", "./");
-            }}
-          >
-            <i className="material-icons">keyboard_backspace</i>
-            Select repo
-          </BackButton>
+                setValue("app.build.context", "./");
+              }}
+            >
+              <i className="material-icons">keyboard_backspace</i>
+              Select repo
+            </BackButton>
+          )}
           <Spacer y={0.5} />
           <Spacer y={0.5} />
           <Text color="helper">Specify your GitHub branch.</Text>
@@ -208,7 +211,7 @@ const RepoSettings: React.FC<Props> = ({ projectId, source, build }) => {
                   setShowSettings(!showSettings);
                 }}
               >
-                {method == "docker" ? (
+                {build.method == "docker" ? (
                   <AdvancedBuildTitle>
                     <i className="material-icons dropdown">arrow_drop_down</i>
                     Configure Dockerfile settings
@@ -224,7 +227,7 @@ const RepoSettings: React.FC<Props> = ({ projectId, source, build }) => {
               <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
                 <StyledSourceBox>
                   <Select
-                    value={method}
+                    value={build.method}
                     width="300px"
                     options={[
                       { value: "docker", label: "Docker" },
@@ -235,28 +238,31 @@ const RepoSettings: React.FC<Props> = ({ projectId, source, build }) => {
                     }
                     label="Build method"
                   />
-                  {method === "docker" ? (
-                    <>
-                      <Spacer y={0.5} />
-                      <Text color="helper">
-                        Dockerfile path (absolute path)
-                      </Text>
-                      <Spacer y={0.5} />
-                      <ControlledInput
-                        width="300px"
-                        placeholder="ex: ./Dockerfile"
-                        type="text"
-                        {...register("app.build.dockerfile")}
+                  {match(build)
+                    .with({ method: "docker" }, () => (
+                      <>
+                        <Spacer y={0.5} />
+                        <Text color="helper">
+                          Dockerfile path (absolute path)
+                        </Text>
+                        <Spacer y={0.5} />
+                        <ControlledInput
+                          width="300px"
+                          placeholder="ex: ./Dockerfile"
+                          type="text"
+                          {...register("app.build.dockerfile")}
+                        />
+                        <Spacer y={0.5} />
+                      </>
+                    ))
+                    .with({ method: "pack" }, (b) => (
+                      <BuildpackSettings
+                        projectId={projectId}
+                        build={b}
+                        source={source}
                       />
-                      <Spacer y={0.5} />
-                    </>
-                  ) : (
-                    <BuildpackSettings
-                      projectId={projectId}
-                      build={build}
-                      source={source}
-                    />
-                  )}
+                    ))
+                    .exhaustive()}
                 </StyledSourceBox>
               </AnimateHeight>
             </>

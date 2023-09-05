@@ -144,3 +144,8 @@ type UpdateOnboardingStepRequest struct {
 	// ExternalId used as a 'password' for the aws assume role chain to porter-manager role
 	ExternalId string `json:"external_id"`
 }
+
+// UpdateProjectNameRequest takes in a name to rename projects
+type UpdateProjectNameRequest struct {
+	Name string `json:"name" form:"required"`
+}

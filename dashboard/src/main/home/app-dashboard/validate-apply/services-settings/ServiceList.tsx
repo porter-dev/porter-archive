@@ -41,15 +41,12 @@ type AddServiceFormValues = z.infer<typeof addServiceFormValidator>;
 
 type ServiceListProps = {
   addNewText: string;
-  defaultExpanded?: boolean;
-  limitOne?: boolean;
   prePopulateService?: ClientService;
   isPredeploy?: boolean;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
   addNewText,
-  limitOne = false,
   prePopulateService,
   isPredeploy = false,
 }) => {
@@ -74,6 +71,14 @@ const ServiceList: React.FC<ServiceListProps> = ({
   const { append, remove, update, fields } = useFieldArray({
     control: appControl,
     name: "app.services",
+  });
+  const {
+    append: appendDeletion,
+    remove: removeDeletion,
+    fields: deletedServices,
+  } = useFieldArray({
+    control: appControl,
+    name: "deletions.serviceNames",
   });
 
   const serviceType = watch("type");
@@ -101,7 +106,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   };
 
   const maybeRenderAddServicesButton = () => {
-    if (limitOne && services.length > 0) {
+    if (isPredeploy && services.find((s) => isPredeployService(s.svc))) {
       return null;
     }
     return (
@@ -125,10 +130,28 @@ const ServiceList: React.FC<ServiceListProps> = ({
   };
 
   const onSubmit = handleSubmit(async (data) => {
-    append(deserializeService(defaultSerialized(data)));
+    // if service was previously deleted, remove from deletions
+    // handle case such as pre-deploy (which always has the same name)
+    // being deleted and then re-added
+    const previouslyDeleted = deletedServices.findIndex(
+      (s) => s.name === data.name
+    );
+    if (previouslyDeleted !== -1) {
+      removeDeletion(previouslyDeleted);
+    }
+
+    append(
+      deserializeService({ service: defaultSerialized(data), expanded: true })
+    );
     reset();
     setShowAddServiceModal(false);
   });
+
+  const onRemove = (index: number) => {
+    const name = services[index].svc.name.value;
+    remove(index);
+    appendDeletion({ name });
+  };
 
   return (
     <>
@@ -141,7 +164,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 key={svc.id}
                 service={svc}
                 update={update}
-                remove={remove}
+                remove={onRemove}
               />
             ) : null;
           })}
@@ -241,7 +264,17 @@ const I = styled.i`
   justify-content: center;
 `;
 
-const ServicesContainer = styled.div``;
+const ServicesContainer = styled.div`
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
 
 const AddServiceButton = styled.div`
   color: #aaaabb;

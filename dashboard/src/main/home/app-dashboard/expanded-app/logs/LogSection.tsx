@@ -11,7 +11,7 @@ import styled from "styled-components";
 import spinner from "assets/loading.gif";
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { useLogs } from "./utils";
+import { getPodSelectorFromServiceName, useLogs } from "./utils";
 import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName, LogFilterQueryParamOpts } from "./types";
 import dayjs, { Dayjs } from "dayjs";
 import Loading from "components/Loading";
@@ -61,20 +61,12 @@ const LogSection: React.FC<Props> = ({
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [logsError, setLogsError] = useState<string | undefined>(undefined);
-  const getSelectorFromServiceQueryParam = (serviceName: string | null | undefined) => {
-    if (serviceName == null) {
-      return undefined;
-    }
-    const match = services?.find(s => s.name == serviceName);
-    if (match == null) {
-      return undefined;
-    }
-    return `${match.name}-${match.type == "worker" ? "wkr" : match.type}`;
-  }
+
   const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
     revision: filterOpts?.revision ?? GenericLogFilter.getDefaultOption("revision").value,
     output_stream: filterOpts?.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
-    pod_name: getSelectorFromServiceQueryParam(filterOpts?.service) ?? GenericLogFilter.getDefaultOption("pod_name").value,
+    pod_name: getPodSelectorFromServiceName(filterOpts?.service, services) ?? GenericLogFilter.getDefaultOption("pod_name").value,
+    service_name: filterOpts?.service ?? GenericLogFilter.getDefaultOption("service_name").value,
   });
 
   const createVersionOptions = (number: number) => {
@@ -197,7 +189,8 @@ const LogSection: React.FC<Props> = ({
     setSelectedFilterValues({
       revision: filterOpts?.revision ?? GenericLogFilter.getDefaultOption("revision").value,
       output_stream: filterOpts?.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
-      pod_name: getSelectorFromServiceQueryParam(filterOpts?.service) ?? GenericLogFilter.getDefaultOption("pod_name").value,
+      pod_name: getPodSelectorFromServiceName(filterOpts?.service, services) ?? GenericLogFilter.getDefaultOption("pod_name").value,
+      service_name: filterOpts?.service ?? GenericLogFilter.getDefaultOption("service_name").value,
     });
   };
 
@@ -285,6 +278,7 @@ const LogSection: React.FC<Props> = ({
                   logs={logs}
                   appName={appName}
                   filters={filters}
+                  services={services}
                 />
                 <LoadMoreButton
                   active={selectedDate && logs.length !== 0}

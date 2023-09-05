@@ -18,7 +18,6 @@ import { Context } from "shared/Context";
 import {
   PorterAppFormData,
   SourceOptions,
-  clientAppToProto,
   porterAppFormValidator,
 } from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
@@ -36,13 +35,14 @@ import EnvVariables from "../validate-apply/app-settings/EnvVariables";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import { valueExists } from "shared/util";
 import api from "shared/api";
-import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import Error from "components/porter/Error";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { useAppValidation } from "lib/hooks/useAppValidation";
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -98,10 +98,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       app: {
         name: "",
         build: {
+          method: "pack",
           context: "./",
           builder: "",
           buildpacks: [],
-          dockerfile: "",
         },
       },
       source: {
@@ -109,6 +109,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         git_branch: "",
         porter_yaml_path: "./porter.yaml",
       },
+      deletions: {
+        serviceNames: [],
+      }
     },
   });
   const {
@@ -126,45 +129,20 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const build = watch("app.build");
   const image = watch("source.image");
   const services = watch("app.services");
-  const servicesFromYaml = usePorterYaml(source);
+  const { detectedServices: servicesFromYaml } = usePorterYaml({ source });
   const deploymentTarget = useDefaultDeploymentTarget();
   const { updateAppStep } = useAppAnalytics(name);
+  const { validateApp } = useAppValidation({
+    deploymentTargetID: deploymentTarget?.deployment_target_id,
+    creating: true,
+  });
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      if (!currentProject || !currentCluster) {
-        return;
-      }
-
-      if (!deploymentTarget) {
-        return;
-      }
-
-      const proto = clientAppToProto(data);
-      const res = await api.validatePorterApp(
-        "<token>",
-        {
-          b64_app_proto: btoa(proto.toJsonString()),
-          deployment_target_id: deploymentTarget.deployment_target_id,
-          commit_sha: "",
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
-
-      const validAppData = await z
-        .object({
-          validate_b64_app_proto: z.string(),
-        })
-        .parseAsync(res.data);
-
-      const validatedAppProto = PorterApp.fromJsonString(
-        atob(validAppData.validate_b64_app_proto)
-      );
-
+      setDeployError("");
+      const validatedAppProto = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
+
       if (source?.type === "github") {
         setShowGHAModal(true);
         return;
@@ -192,7 +170,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     }) => {
       setIsDeploying(true);
       // log analytics event that we started form submission
-      updateAppStep("stack-launch-complete");
+      updateAppStep({ step: "stack-launch-complete" });
 
       try {
         if (!currentProject?.id || !currentCluster?.id) {
@@ -228,7 +206,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         );
 
         // log analytics event that we successfully deployed
-        updateAppStep("stack-launch-success");
+        updateAppStep({ step: "stack-launch-success" });
 
         if (source.type === "docker-registry") {
           history.push(`/apps/${app.name}`);
@@ -237,14 +215,17 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         return true;
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.data?.error) {
-          updateAppStep("stack-launch-failure", err.response?.data?.error);
+          updateAppStep({
+            step: "stack-launch-failure",
+            errorMessage: err.response?.data?.error,
+          });
           setDeployError(err.response?.data?.error);
           return false;
         }
 
         const msg =
           "An error occurred while deploying your application. Please try again.";
-        updateAppStep("stack-launch-failure", msg);
+        updateAppStep({ step: "stack-launch-failure", errorMessage: msg });
         setDeployError(msg);
         return false;
       } finally {
@@ -365,8 +346,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       setError("app.name", {
         message: "An app with this name already exists",
       });
+      return;
     }
-  }, [porterApps]);
+  }, [porterApps, name]);
 
   if (!currentProject || !currentCluster) {
     return null;
@@ -474,10 +456,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       )}
                     </Container>
                     <Spacer y={0.5} />
-                    <ServiceList
-                      defaultExpanded={true}
-                      addNewText={"Add a new service"}
-                    />
+                    <ServiceList addNewText={"Add a new service"} />
                   </>,
                   <>
                     <Text size={16}>Environment variables (optional)</Text>
@@ -498,14 +477,13 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       </Text>
                       <Spacer y={0.5} />
                       <ServiceList
-                        limitOne={true}
                         addNewText={"Add a new pre-deploy job"}
-                        prePopulateService={deserializeService(
-                          defaultSerialized({
+                        prePopulateService={deserializeService({
+                          service: defaultSerialized({
                             name: "pre-deploy",
                             type: "predeploy",
-                          })
-                        )}
+                          }),
+                        })}
                         isPredeploy
                       />
                     </>

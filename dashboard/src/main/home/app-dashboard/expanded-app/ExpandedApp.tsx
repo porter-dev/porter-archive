@@ -148,79 +148,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   }, [currentCluster]);
 
-  // useEffect(() => {
-  //   const checkForWorkflow = async () => {
-  //     if (workflowCheckPassed) {
-  //       clearInterval(workflowInterval);
-  //       return;
-  //     }
-
-
-  //     if (currentProject == null || currentCluster == null) {
-  //       return;
-  //     }
-
-  //     try {
-  //       const porterAppTableData = await api.getPorterApp(
-  //         "<token>",
-  //         {},
-  //         {
-  //           cluster_id: currentCluster.id,
-  //           project_id: currentProject.id,
-  //           name: appName,
-  //         }
-  //       );
-
-  //       try {
-  //         await api.getBranchContents(
-  //           "<token>",
-  //           {
-  //             dir: `./.github/workflows/porter_stack_${appName}.yml`,
-  //           },
-  //           {
-  //             project_id: currentProject.id,
-  //             git_repo_id: porterAppTableData.data.git_repo_id,
-  //             kind: "github",
-  //             owner: porterAppTableData.data.repo_name.split("/")[0],
-  //             name: porterAppTableData.data.repo_name.split("/")[1],
-  //             branch: porterAppTableData.data.git_branch,
-  //           }
-  //         );
-  //         setWorkflowCheckPassed(true);
-  //         setGithubWorkflowFilename(`porter_stack_${appName}.yml`);
-  //       } catch (parentErr) {
-  //         if (parentErr.response?.status === 404 && porterAppTableData?.data?.repo_name) {
-  //           try {
-  //             // Check for user-copied porter.yml as fallback
-  //             await api.getBranchContents(
-  //               "<token>",
-  //               { dir: `./.github/workflows/porter.yml` },
-  //               {
-  //                 project_id: currentProject.id,
-  //                 git_repo_id: porterAppTableData.data.git_repo_id,
-  //                 kind: "github",
-  //                 owner: porterAppTableData.data.repo_name.split("/")[0],
-  //                 name: porterAppTableData.data.repo_name.split("/")[1],
-  //                 branch: porterAppTableData.data.git_branch,
-  //               }
-  //             );
-  //             setWorkflowCheckPassed(true);
-  //             setGithubWorkflowFilename(`porter.yml`);
-  //           } catch (childErr) {
-  //             setWorkflowCheckPassed(false);
-  //           }
-  //         }
-  //       }
-
-  //     } catch (err) {
-  //       // Handle unmerged PR
-
-  //     }
-  //   }
-  //   const workflowInterval = setInterval(checkForWorkflow, 5000);
-  //   return () => clearInterval(workflowInterval);
-  // }, []);
-
   // this method fetches and reconstructs the porter yaml as well as the DB info (stored in PorterApp)
   const getPorterApp = async ({ revision }: { revision: number }) => {
     const { appName } = props.match.params as any;
@@ -897,74 +824,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     porterYamlPath={appData.app.porter_yaml_path}
                   />
                 )}
-              {/* {!githubWorkflowFilename ? (
-                isLoading ? (
-                  <Banner>
-                    <Loading />
-                  </Banner>
-                ) : (
-                  <GHABanner
-                    repoName={appData.app.repo_name}
-                    branchName={appData.app.git_branch}
-                    pullRequestUrl={appData.app.pull_request_url}
-                    stackName={appData.app.name}
-                    gitRepoId={appData.app.git_repo_id}
-                    porterYamlPath={appData.app.porter_yaml_path}
-                  />
-                )
-              ) : !hasBuiltImage ? (
-                isLoading ? (
-                  <Banner>
-                    <Loading />
-                  </Banner>
-                ) : (
-                  <Banner
-                    suffix={
-                      <>
-                        <RefreshButton
-                          onClick={() => window.location.reload()}
-                        >
-                          <img src={refresh} />
-                          Refresh
-                        </RefreshButton>
-                      </>
-                    }
-                  >
-                    Your GitHub repo has not been built yet.
-                    <Spacer inline width="5px" />
-                    <Link
-                      hasunderline
-                      target="_blank"
-                      to={`https://github.com/${appData.app.repo_name}/actions`}
-                    >
-                      Check status
-                    </Link>
-                  </Banner>
-                )
-              ) : (
-                <>
-                  <DarkMatter />
-                  <PorterAppRevisionSection
-                    showRevisions={showRevisions}
-                    toggleShowRevisions={() => {
-                      setShowRevisions(!showRevisions);
-                    }}
-                    chart={appData.chart}
-                    setRevision={setRevision}
-                    forceRefreshRevisions={forceRefreshRevisions}
-                    refreshRevisionsOff={() => setForceRefreshRevisions(false)}
-                    shouldUpdate={
-                      appData.chart.latest_version &&
-                      appData.chart.latest_version !==
-                      appData.chart.chart.metadata.version
-                    }
-                    updatePorterApp={updatePorterApp}
-                    latestVersion={appData.chart.latest_version}
-                    appName={appData.app.name}
-                  />
-                  <DarkMatter antiHeight="-18px" />
-                </>
-              )} */}
               <Spacer y={1} />
               <AnimateHeight height={showUnsavedChangesBanner ? 67 : 0}>
                 <Banner
@@ -1031,27 +890,6 @@ export default withRouter(ExpandedApp);
 const A = styled.a`
   display: flex;
   align-items: center;
-`;
-
-const RefreshButton = styled.div`
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  :hover {
-    color: #ffffff;
-    > img {
-      opacity: 1;
-    }
-  }
-
-  > img {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 11px;
-    margin-right: 10px;
-  }
 `;
 
 const Spinner = styled.img`

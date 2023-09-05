@@ -40,10 +40,10 @@ func TestListProjectsSuccessful(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	expProjects := make([]*types.Project, 0)
+	expProjects := make([]*types.ProjectList, 0)
 
-	expProjects = append(expProjects, proj1.ToProjectType())
-	expProjects = append(expProjects, proj2.ToProjectType())
+	expProjects = append(expProjects, proj1.ToProjectListType())
+	expProjects = append(expProjects, proj2.ToProjectListType())
 	gotProjects := []*types.Project{}
 
 	apitest.AssertResponseExpected(t, rr, &expProjects, &gotProjects)

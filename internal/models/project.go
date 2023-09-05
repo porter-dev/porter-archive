@@ -103,9 +103,33 @@ func (p *Project) ToProjectType() *types.Project {
 
 // ToProjectListType returns a "minified" version of a Project
 // suitable for api responses to GET /projects
+// TODO: update this in the future to use default values for all
+// the feature flags instead of trying to retrieve them from the database
 func (p *Project) ToProjectListType() *types.ProjectList {
+	roles := make([]*types.Role, 0)
+	for _, role := range p.Roles {
+		roles = append(roles, role.ToRoleType())
+	}
+
 	return &types.ProjectList{
 		ID:   p.ID,
 		Name: p.Name,
+
+		// note: all of these fields should be considered deprecated
+		// in an api response
+		Roles:                  roles,
+		PreviewEnvsEnabled:     p.PreviewEnvsEnabled,
+		RDSDatabasesEnabled:    p.RDSDatabasesEnabled,
+		ManagedInfraEnabled:    p.ManagedInfraEnabled,
+		StacksEnabled:          p.StacksEnabled,
+		APITokensEnabled:       p.APITokensEnabled,
+		CapiProvisionerEnabled: p.CapiProvisionerEnabled,
+		SimplifiedViewEnabled:  p.SimplifiedViewEnabled,
+		AzureEnabled:           p.AzureEnabled,
+		HelmValuesEnabled:      p.HelmValuesEnabled,
+		MultiCluster:           p.MultiCluster,
+		EnableReprovision:      p.EnableReprovision,
+		ValidateApplyV2:        p.ValidateApplyV2,
+		FullAddOns:             p.FullAddOns,
 	}
 }

@@ -35,7 +35,7 @@ func (p *ProjectListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := make([]*types.Project, len(projects))
+	res := make([]*types.ProjectList, len(projects))
 
 	for i, proj := range projects {
 		res[i] = proj.ToProjectListType()

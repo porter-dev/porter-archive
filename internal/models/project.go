@@ -101,7 +101,7 @@ func (p *Project) ToProjectType() *types.Project {
 	}
 }
 
-func (p *Project) ToProjectListType() *types.Project {
+func (p *Project) ToProjectListType() *types.ProjectList {
 	return &types.ProjectList{
 		ID:   p.ID,
 		Name: p.Name,

@@ -44,7 +44,7 @@ func TestListProjectsSuccessful(t *testing.T) {
 
 	expProjects = append(expProjects, proj1.ToProjectListType())
 	expProjects = append(expProjects, proj2.ToProjectListType())
-	gotProjects := []*types.Project{}
+	gotProjects := []*types.ProjectList{}
 
 	apitest.AssertResponseExpected(t, rr, &expProjects, &gotProjects)
 }

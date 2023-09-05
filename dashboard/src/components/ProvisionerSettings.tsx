@@ -10,8 +10,6 @@ import info from "assets/info-outlined.svg";
 
 import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import InputRow from "./form-components/InputRow";
 import {
   Contract,
   EnumKubernetesKind,
@@ -34,11 +32,8 @@ import Text from "./porter/Text";
 import Select from "./porter/Select";
 import Input from "./porter/Input";
 import Checkbox from "./porter/Checkbox";
-import { Certificate } from "crypto";
 import Tooltip from "./porter/Tooltip";
 import Icon from "./porter/Icon";
-import { set } from "traverse";
-import { load } from "js-yaml";
 import Loading from "./Loading";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -98,9 +93,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     currentCluster,
     setCurrentCluster,
     setShouldRefreshClusters,
-    setHasFinishedOnboarding,
   } = useContext(Context);
-  const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
   const [machineType, setMachineType] = useState("t3.medium");
@@ -435,7 +428,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           setAdditionalNodePolicies(nodeGroup.additionalPolicies);
         }
       });
-      setCreateStatus("");
       setClusterName(eksValues.clusterName);
       setAwsRegion(eksValues.region);
       setClusterVersion(eksValues.clusterVersion);

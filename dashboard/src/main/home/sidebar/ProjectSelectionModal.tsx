@@ -96,7 +96,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
           onClick={async () => {
             const project = await api
               .getProject("<token>", {}, { id: projectListEntry.id })
-              .then((res) => res.data);
+              .then((res) => res.data as ProjectType);
 
             setCurrentProject(project);
 

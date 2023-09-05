@@ -60,7 +60,7 @@ class ProjectSection extends Component<PropsType, StateType> {
 
             const project = await api
               .getProject("<token>", {}, { id: projectListEntry.id })
-              .then((res) => res.data);
+              .then((res) => res.data as ProjectType);
 
             setCurrentProject(project, () => {
               pushFiltered(this.props, "/dashboard", ["project_id"]);

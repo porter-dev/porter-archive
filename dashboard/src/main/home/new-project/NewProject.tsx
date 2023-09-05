@@ -17,6 +17,7 @@ import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
 import WelcomeForm from "./WelcomeForm";
 import { trackCreateNewProject } from "shared/anayltics";
+import { ProjectListType } from "shared/types";
 
 type ValidationError = {
   hasError: boolean;
@@ -95,7 +96,7 @@ export const NewProjectFC = () => {
             id: user.userId,
           }
         )
-        .then((res) => res.data);
+        .then((res) => res.data as ProjectListType[]);
       setProjects(projectList);
       setCurrentProject(project);
       setButtonStatus("successful");

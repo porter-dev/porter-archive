@@ -35,6 +35,7 @@ type Props = {
     appName: string;
     serviceNames: string[];
     deploymentTargetId: string;
+    latestRevisionNumber: number;
 };
 
 const Logs: React.FC<Props> = ({
@@ -43,6 +44,7 @@ const Logs: React.FC<Props> = ({
     appName,
     serviceNames,
     deploymentTargetId,
+    latestRevisionNumber,
 }) => {
     const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
     const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
@@ -50,7 +52,6 @@ const Logs: React.FC<Props> = ({
     const [searchText, setSearchText] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [notification, setNotification] = useState<string>();
-    const [latestRevisionNumber, setLatestRevisionNumber] = useState<number>(0);
     const [revisionMap, setRevisionMap] = useState<Map<string, number>>(new Map());
 
     const [hasPorterAgent, setHasPorterAgent] = useState(true);
@@ -98,7 +99,6 @@ const Logs: React.FC<Props> = ({
     }
 
     const createVersionOptions = (number: number) => {
-        console.log("createVersionOptions", number)
         console.log(Array.from({ length: number }, (_, index) => {
             const version = index + 1;
             const label = version === number ? `Version ${version} (latest)` : `Version ${version}`;
@@ -132,7 +132,7 @@ const Logs: React.FC<Props> = ({
             name: "revision",
             displayName: "Version",
             default: GenericLogFilter.getDefaultOption("revision"),
-            options: createVersionOptions(0),
+            options: createVersionOptions(latestRevisionNumber),
             setValue: (value: string) => {
                 setSelectedFilterValues((s) => ({
                     ...s,
@@ -190,10 +190,9 @@ const Logs: React.FC<Props> = ({
     useEffect(() => {
         getRevisions().then((revisions) => {
             setRevisionMap(new Map(revisions.app_revisions.map((revision) => [revision.revision_id, revision.revision_number])))
-            setLatestRevisionNumber(Math.max(...revisions.app_revisions.map((revision) => revision.revision_number != null ? revision.revision_number : 0)))
         }).catch((err) => console.log(err));
 
-    }, [projectId, clusterId, appName, deploymentTargetId]);
+    }, [projectId, clusterId, appName, deploymentTargetId, latestRevisionNumber]);
 
 
     const { logs, refresh, moveCursor, paginationInfo } = useLogs(

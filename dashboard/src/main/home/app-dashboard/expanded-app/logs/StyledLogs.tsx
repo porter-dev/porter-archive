@@ -30,7 +30,7 @@ const StyledLogs: React.FC<Props> = ({
                     return null;
                 }
                 return (
-                    <StyledLogsTableData width={"100px"}>
+                    <StyledLogsTableData width={"100px"} key={index}>
                         <LogInnerPill
                             color={getVersionTagColor(log.metadata.revision)}
                             key={index}
@@ -45,7 +45,7 @@ const StyledLogs: React.FC<Props> = ({
                     return null;
                 }
                 return (
-                    <StyledLogsTableData width={"100px"}>
+                    <StyledLogsTableData width={"100px"} key={index}>
                         <LogInnerPill
                             color={"white"}
                             key={index}
@@ -60,7 +60,7 @@ const StyledLogs: React.FC<Props> = ({
                     return null;
                 }
                 return (
-                    <StyledLogsTableData width={"100px"}>
+                    <StyledLogsTableData width={"100px"} key={index}>
                         <LogInnerPill
                             color={"white"}
                             key={index}

@@ -27,7 +27,7 @@ const LogsTab: React.FC = () => {
                 appName={appName}
                 serviceNames={serviceNames}
                 deploymentTargetId={deploymentTargetId}
-                latestRevisionNumber={latestRevision.revision_number}
+                latestRevision={latestRevision}
             />
         </>
     );

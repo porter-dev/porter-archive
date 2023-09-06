@@ -270,10 +270,9 @@ export const useLogs = (
       }
 
       newLogs.filter((log) => {
-        return log.metadata != null
-            && log.metadata.raw_labels != null
-            && log.metadata.raw_labels.porter_run_app_revision_id != null
+        return log.metadata?.raw_labels?.porter_run_app_revision_id != null
             && revisionMap.has(log.metadata.raw_labels.porter_run_app_revision_id)
+            && revisionMap.get(log.metadata.raw_labels.porter_run_app_revision_id) != 0
       }).forEach((log) => {
         if (log.metadata?.raw_labels?.porter_run_app_revision_id != null) {
             const revisionNumber = revisionMap.get(log.metadata.raw_labels.porter_run_app_revision_id);

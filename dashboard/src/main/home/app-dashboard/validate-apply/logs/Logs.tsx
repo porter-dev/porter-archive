@@ -27,7 +27,7 @@ import { Service } from "../../new-app-flow/serviceTypes";
 import LogFilterContainer from "../../expanded-app/logs/LogFilterContainer";
 import StyledLogs from "../../expanded-app/logs/StyledLogs";
 import {z} from "zod";
-import {appRevisionValidator} from "../../../../../lib/revisions/types";
+import {AppRevision, appRevisionValidator} from "../../../../../lib/revisions/types";
 
 type Props = {
     projectId: number;
@@ -35,7 +35,7 @@ type Props = {
     appName: string;
     serviceNames: string[];
     deploymentTargetId: string;
-    latestRevisionNumber: number;
+    latestRevision: AppRevision;
 };
 
 const Logs: React.FC<Props> = ({
@@ -44,7 +44,7 @@ const Logs: React.FC<Props> = ({
     appName,
     serviceNames,
     deploymentTargetId,
-    latestRevisionNumber,
+    latestRevision,
 }) => {
     const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
     const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
@@ -53,6 +53,7 @@ const Logs: React.FC<Props> = ({
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [notification, setNotification] = useState<string>();
     const [revisionMap, setRevisionMap] = useState<Map<string, number>>(new Map());
+    const [latestRevisionNumber, setLatestRevisionNumber] = useState<number>(0);
 
     const [hasPorterAgent, setHasPorterAgent] = useState(true);
     const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
@@ -189,10 +190,11 @@ const Logs: React.FC<Props> = ({
 
     useEffect(() => {
         getRevisions().then((revisions) => {
-            setRevisionMap(new Map(revisions.app_revisions.map((revision) => [revision.revision_id, revision.revision_number])))
+            setRevisionMap(new Map(revisions.app_revisions.map((revision) => [revision.id, revision.revision_number])))
+            setLatestRevisionNumber(revisions.app_revisions.map((revision) => revision.revision_number).reduce((a, b) => Math.max(a, b), 0))
         }).catch((err) => console.log(err));
 
-    }, [projectId, clusterId, appName, deploymentTargetId, latestRevisionNumber]);
+    }, [projectId, clusterId, appName, deploymentTargetId, latestRevision]);
 
 
     const { logs, refresh, moveCursor, paginationInfo } = useLogs(

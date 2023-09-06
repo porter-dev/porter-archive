@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -51,15 +52,16 @@ func (t *TestConfigLoader) LoadConfig() (*config.Config, error) {
 	notifier := NewFakeUserNotifier()
 
 	return &config.Config{
-		Logger:          l,
-		Repo:            repo,
-		Store:           store,
-		ServerConf:      envConf.ServerConf,
-		TokenConf:       tokenConf,
-		UserNotifier:    notifier,
-		AnalyticsClient: analytics.InitializeAnalyticsSegmentClient("", l),
-		BillingManager:  &billing.NoopBillingManager{},
-		TelemetryConfig: telemetry.TracerConfig{ServiceName: "fake", CollectorURL: "fake"},
+		Logger:             l,
+		Repo:               repo,
+		Store:              store,
+		ServerConf:         envConf.ServerConf,
+		TokenConf:          tokenConf,
+		UserNotifier:       notifier,
+		LaunchDarklyClient: features.NewClient(nil),
+		AnalyticsClient:    analytics.InitializeAnalyticsSegmentClient("", l),
+		BillingManager:     &billing.NoopBillingManager{},
+		TelemetryConfig:    telemetry.TracerConfig{ServiceName: "fake", CollectorURL: "fake"},
 	}, nil
 }
 

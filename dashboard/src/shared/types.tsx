@@ -259,6 +259,10 @@ export interface FileType {
   path: string;
   type: string;
 }
+export interface ProjectListType {
+  id: number;
+  name: string;
+}
 
 export interface ProjectType {
   id: number;
@@ -369,8 +373,8 @@ export interface ContextProps {
   setCurrentCluster: (currentCluster: ClusterType, callback?: any) => void;
   currentProject?: ProjectType;
   setCurrentProject: (currentProject: ProjectType, callback?: any) => void;
-  projects: ProjectType[];
-  setProjects: (projects: ProjectType[]) => void;
+  projects: ProjectListType[];
+  setProjects: (projects: ProjectListType[]) => void;
   user: any;
   setUser: (userId: number, email: string) => void;
   devOpsMode: boolean;

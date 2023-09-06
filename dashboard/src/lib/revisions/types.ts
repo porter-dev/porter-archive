@@ -13,6 +13,7 @@ export const appRevisionValidator = z.object({
   ]),
   b64_app_proto: z.string(),
   revision_number: z.number(),
+  revision_id: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
 });

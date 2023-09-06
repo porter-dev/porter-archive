@@ -4,8 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import Anser from "anser";
 import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
-import { AgentLog, agentLogValidator, Direction, PorterLog, PaginationInfo, LogFilterName } from "../../expanded-app/logs/types";
-import { Service } from "../../new-app-flow/serviceTypes";
+import {
+  AgentLog,
+  agentLogValidator,
+  Direction,
+  PorterLog,
+  PaginationInfo,
+  LogFilterName,
+  GenericLogFilter
+} from "../../expanded-app/logs/types";
 
 const MAX_LOGS = 5000;
 const MAX_BUFFER_LOGS = 1000;
@@ -44,7 +51,8 @@ export const useLogs = (
   searchParam: string,
   notify: (message: string) => void,
   setLoading: (isLoading: boolean) => void,
-  // if setDate is set, results are not live
+  revisionMap: Map<string, number>,
+    // if setDate is set, results are not live
   setDate?: Date,
   timeRange?: {
     startTime?: Dayjs,
@@ -125,7 +133,7 @@ export const useLogs = (
         }
       }
 
-      return updatedLogs;
+      return filterLogs(updatedLogs);
     });
   };
 
@@ -185,7 +193,8 @@ export const useLogs = (
           }
         });
         const newLogsParsed = parseLogs(newLogs);
-        pushLogs(newLogsParsed);
+        const newLogsFiltered = filterLogs(newLogsParsed);
+        pushLogs(newLogsFiltered);
       },
       onclose: () => {
         console.log("Closed websocket:", websocketKey);
@@ -194,6 +203,26 @@ export const useLogs = (
 
     newWebsocket(websocketKey, endpoint, config);
     openWebsocket(websocketKey);
+  };
+
+  const filterLogs = (logs: PorterLog[]) => {
+    return logs.filter(log => {
+      if (log.metadata == null) {
+        return true;
+      }
+
+      if (selectedFilterValues.output_stream !== GenericLogFilter.getDefaultOption("output_stream").value &&
+          log.metadata.output_stream !== selectedFilterValues.output_stream) {
+        return false;
+      }
+
+      if (selectedFilterValues.revision !== GenericLogFilter.getDefaultOption("revision").value &&
+          log.metadata.revision !== selectedFilterValues.revision) {
+        return false;
+      }
+
+      return true;
+    });
   };
 
   const queryLogs = async (
@@ -239,6 +268,20 @@ export const useLogs = (
       if (direction === Direction.backward) {
         newLogs.reverse();
       }
+
+      newLogs.filter((log) => {
+        return log.metadata != null
+            && log.metadata.raw_labels != null
+            && log.metadata.raw_labels.porter_run_app_revision_id != null
+            && revisionMap.has(log.metadata.raw_labels.porter_run_app_revision_id)
+      }).forEach((log) => {
+        if (log.metadata?.raw_labels?.porter_run_app_revision_id != null) {
+            const revisionNumber = revisionMap.get(log.metadata.raw_labels.porter_run_app_revision_id);
+            if (revisionNumber != null && revisionNumber != 0) {
+              log.metadata.revision = revisionNumber.toString();
+            }
+      }})
+
       return {
         logs: newLogs,
         previousCursor:

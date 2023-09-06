@@ -26,6 +26,8 @@ import Button from "components/porter/Button";
 import { Service } from "../../new-app-flow/serviceTypes";
 import LogFilterContainer from "../../expanded-app/logs/LogFilterContainer";
 import StyledLogs from "../../expanded-app/logs/StyledLogs";
+import {z} from "zod";
+import {appRevisionValidator} from "../../../../../lib/revisions/types";
 
 type Props = {
     projectId: number;
@@ -48,6 +50,8 @@ const Logs: React.FC<Props> = ({
     const [searchText, setSearchText] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [notification, setNotification] = useState<string>();
+    const [latestRevisionNumber, setLatestRevisionNumber] = useState<number>(0);
+    const [revisionMap, setRevisionMap] = useState<Map<string, number>>(new Map());
 
     const [hasPorterAgent, setHasPorterAgent] = useState(true);
     const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
@@ -56,8 +60,8 @@ const Logs: React.FC<Props> = ({
 
     const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
         service_name:  GenericLogFilter.getDefaultOption("service_name").value,
-        pod_name: "", // not supported yet
-        revision: "", // not supported yet
+        pod_name: "", // not supported
+        revision: GenericLogFilter.getDefaultOption("revision").value,
         output_stream: GenericLogFilter.getDefaultOption("output_stream").value,
     });
 
@@ -93,6 +97,22 @@ const Logs: React.FC<Props> = ({
         return patch >= 7;
     }
 
+    const createVersionOptions = (number: number) => {
+        console.log("createVersionOptions", number)
+        console.log(Array.from({ length: number }, (_, index) => {
+            const version = index + 1;
+            const label = version === number ? `Version ${version} (latest)` : `Version ${version}`;
+            const value = version.toString();
+            return GenericFilterOption.of(label, value);
+        }).reverse().slice(0, 3))
+        return Array.from({ length: number }, (_, index) => {
+            const version = index + 1;
+            const label = version === number ? `Version ${version} (latest)` : `Version ${version}`;
+            const value = version.toString();
+            return GenericFilterOption.of(label, value);
+        }).reverse().slice(0, 3);
+    }
+
     const [filters, setFilters] = useState<GenericLogFilter[]>([
         {
             name: "service_name",
@@ -109,12 +129,25 @@ const Logs: React.FC<Props> = ({
             }
         },
         {
+            name: "revision",
+            displayName: "Version",
+            default: GenericLogFilter.getDefaultOption("revision"),
+            options: createVersionOptions(0),
+            setValue: (value: string) => {
+                setSelectedFilterValues((s) => ({
+                    ...s,
+                    revision: value,
+                }));
+            }
+        },
+        {
             name: "output_stream",
             displayName: "Output Stream",
             default: GenericLogFilter.getDefaultOption("output_stream"),
-            options: serviceNames.map(s => {
-                return GenericFilterOption.of(s, s)
-            }) ?? [],
+            options: [
+                GenericFilterOption.of('stdout', 'stdout'),
+                GenericFilterOption.of("stderr", "stderr"),
+            ],
             setValue: (value: string) => {
                 setSelectedFilterValues((s) => ({
                     ...s,
@@ -132,6 +165,37 @@ const Logs: React.FC<Props> = ({
         }, 5000);
     };
 
+    const getRevisions = async () => {
+        const revisionResp = await api.listAppRevisions(
+            "<token>",
+            {
+                deployment_target_id: deploymentTargetId,
+            },
+            {
+                project_id: projectId,
+                cluster_id: clusterId,
+                porter_app_name: appName,
+            }
+        );
+
+        const revisions = await z
+            .object({
+                app_revisions: z.array(appRevisionValidator),
+            })
+            .parseAsync(revisionResp.data);
+
+        return revisions;
+    };
+
+    useEffect(() => {
+        getRevisions().then((revisions) => {
+            setRevisionMap(new Map(revisions.app_revisions.map((revision) => [revision.revision_id, revision.revision_number])))
+            setLatestRevisionNumber(Math.max(...revisions.app_revisions.map((revision) => revision.revision_number != null ? revision.revision_number : 0)))
+        }).catch((err) => console.log(err));
+
+    }, [projectId, clusterId, appName, deploymentTargetId]);
+
+
     const { logs, refresh, moveCursor, paginationInfo } = useLogs(
         projectId,
         clusterId,
@@ -142,8 +206,55 @@ const Logs: React.FC<Props> = ({
         enteredSearchText,
         notify,
         setIsLoading,
+        revisionMap,
         selectedDate,
     );
+
+    useEffect(() => {
+        setFilters([
+            {
+                name: "service_name",
+                displayName: "Service",
+                default: GenericLogFilter.getDefaultOption("service_name"),
+                options: serviceNames.map(s => {
+                    return GenericFilterOption.of(s, s)
+                }) ?? [],
+                setValue: (value: string) => {
+                    setSelectedFilterValues((s) => ({
+                        ...s,
+                        service_name: value,
+                    }));
+                }
+            },
+            {
+                name: "revision",
+                displayName: "Version",
+                default: GenericLogFilter.getDefaultOption("revision"),
+                options: createVersionOptions(latestRevisionNumber),
+                setValue: (value: string) => {
+                    setSelectedFilterValues((s) => ({
+                        ...s,
+                        revision: value,
+                    }));
+                }
+            },
+            {
+                name: "output_stream",
+                displayName: "Output Stream",
+                default: GenericLogFilter.getDefaultOption("output_stream"),
+                options: [
+                    GenericFilterOption.of('stdout', 'stdout'),
+                    GenericFilterOption.of("stderr", "stderr"),
+                ],
+                setValue: (value: string) => {
+                    setSelectedFilterValues((s) => ({
+                        ...s,
+                        output_stream: value,
+                    }));
+                }
+            },
+        ])
+    }, [latestRevisionNumber]);
 
     useEffect(() => {
         if (!isLoading && scrollToBottomRef.current && scrollToBottomEnabled) {
@@ -159,8 +270,8 @@ const Logs: React.FC<Props> = ({
     const resetFilters = () => {
         setSelectedFilterValues({
             output_stream: GenericLogFilter.getDefaultOption("output_stream").value,
-            revision: "", // not supported yet
-            pod_name: "", // not supported yet
+            pod_name: "", // not supported
+            revision: GenericLogFilter.getDefaultOption("revision").value,
             service_name: GenericLogFilter.getDefaultOption("service_name").value,
         });
     };

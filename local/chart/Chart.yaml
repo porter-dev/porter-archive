@@ -1,0 +1,17 @@
+name: umbrella
+type: application
+version: 0.97.0
+apiVersion: v2
+description: Porter app composed of web, worker and job charts
+home: https://getporter.dev/
+icon: https://user-images.githubusercontent.com/65516095/111255214-07d3da80-85ed-11eb-99e2-fddcbdb99bdb.png
+keywords:
+  - porter
+  - application
+  - service
+  - web
+dependencies:
+- name: web
+  version: "0.136.0"
+  repository: "https://charts.getporter.dev"
+  alias: "myname"

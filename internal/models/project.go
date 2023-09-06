@@ -106,7 +106,7 @@ func (p *Project) ToProjectType() *types.Project {
 // TODO: update this in the future to use default values for all
 // the feature flags instead of trying to retrieve them from the database
 func (p *Project) ToProjectListType() *types.ProjectList {
-	roles := make([]types.Role, len(p.Roles))
+	var roles []types.Role
 	for _, role := range p.Roles {
 		roles = append(roles, *role.ToRoleType())
 	}

@@ -100,12 +100,9 @@ const ProjectSelectionModal: React.FC<Props> = ({
             setCurrentProject(project);
 
             const clusters_list = await updateClusterList(project.id);
-            console.log(clusters_list);
-
             if (clusters_list?.length > 0) {
               setCurrentCluster(clusters_list[0]);
               if (project.simplified_view_enabled) {
-                console.log("HERE BITCH")
                 pushFiltered(props, "/apps", ["project_id"], {});
               }
               else {

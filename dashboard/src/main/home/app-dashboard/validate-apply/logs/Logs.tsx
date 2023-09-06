@@ -100,12 +100,6 @@ const Logs: React.FC<Props> = ({
     }
 
     const createVersionOptions = (number: number) => {
-        console.log(Array.from({ length: number }, (_, index) => {
-            const version = index + 1;
-            const label = version === number ? `Version ${version} (latest)` : `Version ${version}`;
-            const value = version.toString();
-            return GenericFilterOption.of(label, value);
-        }).reverse().slice(0, 3))
         return Array.from({ length: number }, (_, index) => {
             const version = index + 1;
             const label = version === number ? `Version ${version} (latest)` : `Version ${version}`;

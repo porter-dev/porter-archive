@@ -1522,6 +1522,10 @@ const getProjectRepos = baseApi<{}, { id: number }>("GET", (pathParams) => {
 
 const getProjects = baseApi("GET", "/api/projects");
 
+const getProject = baseApi<{}, { id: number }>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}`;
+});
+
 const getPrometheusIsInstalled = baseApi<
   {},
   {
@@ -3022,6 +3026,7 @@ export default {
   getProjectRegistries,
   getProjectRepos,
   getProjects,
+  getProject,
   getPrometheusIsInstalled,
   getRegistryIntegrations,
   getReleaseToken,

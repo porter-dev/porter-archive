@@ -75,6 +75,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         clusterId,
         selectedService?.name,
         selectedRange,
+        deploymentTargetId,
     ],
     async () => {
       if (selectedService?.name == null) {

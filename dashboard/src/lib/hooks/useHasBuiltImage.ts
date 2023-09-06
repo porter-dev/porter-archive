@@ -11,10 +11,6 @@ export const useHasBuiltImage = (appName: string | undefined) => {
     const { data } = useQuery(
         ["checkForBuiltImage", currentProject?.id, currentCluster?.id, hasBuiltImage],
         async () => {
-            if (hasBuiltImage) {
-                return true;
-            }
-
             if (currentProject == null || currentCluster == null || appName == null) {
                 return false;
             }
@@ -34,8 +30,8 @@ export const useHasBuiltImage = (appName: string | undefined) => {
             return globalImage != null &&
                 globalImage.repository != null &&
                 globalImage.tag != null &&
-                globalImage.repository !== ImageInfo.BASE_IMAGE.repository &&
-                globalImage.tag !== ImageInfo.BASE_IMAGE.tag
+                !(globalImage.repository === ImageInfo.BASE_IMAGE.repository &&
+                    globalImage.tag === ImageInfo.BASE_IMAGE.tag)
         },
         {
             enabled: !!currentProject && !!currentCluster && !hasBuiltImage,

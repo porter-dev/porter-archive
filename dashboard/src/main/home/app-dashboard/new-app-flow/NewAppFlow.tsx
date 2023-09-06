@@ -33,6 +33,7 @@ import { NewPopulatedEnvGroup, PartialEnvGroup, PopulatedEnvGroup } from "compon
 import EnvGroupArrayStacks from "main/home/cluster-dashboard/env-groups/EnvGroupArrayStacks";
 import EnvGroupModal from "../expanded-app/env-vars/EnvGroupModal";
 import ExpandableEnvGroup from "../expanded-app/env-vars/ExpandableEnvGroup";
+import { useQueryClient } from "@tanstack/react-query";
 
 type Props = RouteComponentProps & {};
 
@@ -109,6 +110,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [syncedEnvGroups, setSyncedEnvGroups] = useState<NewPopulatedEnvGroup[]>([]);
   const [showEnvModal, setShowEnvModal] = useState(false);
   const [deletedEnvGroups, setDeleteEnvGroups] = useState<NewPopulatedEnvGroup[]>([])
+
+  const queryClient = useQueryClient();
 
   // this advances the step in the case that a user chooses a repo that doesn't have a porter.yaml
   useEffect(() => {
@@ -365,6 +368,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
           stack_name: porterApp.name,
         }
       );
+
+      await queryClient.invalidateQueries();
 
       if (porterAppRequest.repo_name === "") {
         props.history.push(`/apps/${porterApp.name}`);

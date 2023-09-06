@@ -24,8 +24,6 @@ type PropsType = WithAuthProps & {
     shouldUpdate: boolean;
     upgradeVersion: (version: string, cb: () => void) => void;
     latestVersion: string;
-    showRevisions?: boolean;
-    toggleShowRevisions?: () => void;
     updatePorterApp: (options: Partial<CreateUpdatePorterAppOptions>) => Promise<void>;
     appName: string;
 };
@@ -37,6 +35,7 @@ type StateType = {
     loading: boolean;
     maxVersion: number;
     expandRevisions: boolean;
+    showRevisions: boolean;
 };
 
 // TODO: refactor this component it's so gross
@@ -48,6 +47,7 @@ class PorterAppRevisionSection extends Component<PropsType, StateType> {
         loading: false,
         maxVersion: 0, // Track most recent version even when previewing old revisions
         expandRevisions: false,
+        showRevisions: false,
     };
 
     ws: WebSocket | null = null;
@@ -109,7 +109,7 @@ class PorterAppRevisionSection extends Component<PropsType, StateType> {
 
             if (event.event_type == "UPDATE" || event.event_type == "ADD") {
                 let object = event.Object;
-
+                let revisionIndex = -1
                 this.setState(
                     (prevState) => {
                         const { revisions: oldRevisions } = prevState;
@@ -117,7 +117,7 @@ class PorterAppRevisionSection extends Component<PropsType, StateType> {
                         const prevRevisions = [...oldRevisions];
 
                         // Check if it's an update of a revision or if it's a new one
-                        const revisionIndex = prevRevisions.findIndex((rev) => {
+                        revisionIndex = prevRevisions.findIndex((rev) => {
                             if (rev.version === object.version) {
                                 return true;
                             }
@@ -133,7 +133,10 @@ class PorterAppRevisionSection extends Component<PropsType, StateType> {
                         return { ...prevState, revisions: prevRevisions, maxVersion: Math.max(...prevRevisions.map(rev => rev.version)) };
                     },
                     () => {
-                        this.props.setRevision(this.state.revisions[0], true);
+                        // only update the dashboard if the revision is new or the latest one
+                        if (revisionIndex === -1 || revisionIndex === this.state.revisions.length - 1) {
+                            this.props.setRevision(this.state.revisions[0], true);
+                        }
                     }
                 );
             }
@@ -321,15 +324,13 @@ class PorterAppRevisionSection extends Component<PropsType, StateType> {
                     </Modal>
                 )}
                 <RevisionHeader
-                    showRevisions={this.props.showRevisions}
+                    showRevisions={this.state.showRevisions}
                     isCurrent={isCurrent}
                     onClick={() => {
-                        if (typeof this.props.toggleShowRevisions === "function") {
-                            this.props.toggleShowRevisions();
-                        }
                         this.setState((prev) => ({
                             ...prev,
                             expandRevisions: !prev.expandRevisions,
+                            showRevisions: !prev.showRevisions,
                         }));
                     }}
                 >

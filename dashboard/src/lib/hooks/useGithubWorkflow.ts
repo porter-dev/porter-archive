@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { ImageInfo } from "main/home/app-dashboard/new-app-flow/serviceTypes";
 import { useContext, useEffect, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -7,8 +6,9 @@ import api from "shared/api";
 export const useGithubWorkflow = (appData: any, hasBuiltImage: boolean) => {
     const { currentProject, currentCluster } = useContext(Context);
     const [githubWorkflowFilename, setGithubWorkflowName] = useState<string>("");
+    const [userHasGithubAccess, setUserHasGithubAccess] = useState<boolean>(true);
 
-    const createUseQuery = (fileName: string, hasBuiltImage: boolean) => {
+    const createUseQuery = (fileName: string) => {
         return useQuery(
             [`checkForApplicationWorkflow_${fileName}`, currentProject?.id, currentCluster?.id, githubWorkflowFilename, appData, hasBuiltImage],
             async () => {
@@ -41,15 +41,21 @@ export const useGithubWorkflow = (appData: any, hasBuiltImage: boolean) => {
             },
             {
                 enabled: !hasBuiltImage && !!currentProject && !!currentCluster && !!appData && githubWorkflowFilename === "",
-                refetchInterval: 5000,
+                retryDelay: 5000,
+                retry: (_failureCount, error) => {
+                    if (error.response?.status === 403) {
+                        setUserHasGithubAccess(false);
+                    }
+                    return true;
+                },
                 refetchOnWindowFocus: false,
             }
         );
     }
 
-    const { data: applicationWorkflowCheck, isLoading: isLoadingApplicationWorkflow } = createUseQuery(`porter_stack_${appData?.name}.yml`, hasBuiltImage);
+    const { data: applicationWorkflowCheck, isLoading: isLoadingApplicationWorkflow } = createUseQuery(`porter_stack_${appData?.name}.yml`);
 
-    const { data: defaultWorkflowCheck, isLoading: isLoadingDefaultWorkflow } = createUseQuery(`porter.yml`, hasBuiltImage);
+    const { data: defaultWorkflowCheck, isLoading: isLoadingDefaultWorkflow } = createUseQuery(`porter.yml`);
 
     useEffect(() => {
         if (!!applicationWorkflowCheck) {
@@ -59,5 +65,5 @@ export const useGithubWorkflow = (appData: any, hasBuiltImage: boolean) => {
         }
     }, [applicationWorkflowCheck, defaultWorkflowCheck]);
 
-    return { githubWorkflowFilename, isLoading: isLoadingApplicationWorkflow || isLoadingDefaultWorkflow };
+    return { githubWorkflowFilename, isLoading: isLoadingApplicationWorkflow || isLoadingDefaultWorkflow, userHasGithubAccess };
 } 

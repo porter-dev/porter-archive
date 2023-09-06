@@ -9,7 +9,6 @@ import box from "assets/box.png";
 import github from "assets/github-white.png";
 import pr_icon from "assets/pull_request_icon.svg";
 import loadingImg from "assets/loading.gif";
-import refresh from "assets/refresh.png";
 import save from "assets/save-01.svg";
 
 import api from "shared/api";
@@ -29,13 +28,12 @@ import { ChartType, CreateUpdatePorterAppOptions } from "shared/types";
 import BuildSettingsTab from "../build-settings/BuildSettingsTab";
 import Button from "components/porter/Button";
 import Services from "../new-app-flow/Services";
-import { ImageInfo, Service } from "../new-app-flow/serviceTypes";
+import { Service } from "../new-app-flow/serviceTypes";
 import Fieldset from "components/porter/Fieldset";
 import { PorterJson, createFinalPorterYaml } from "../new-app-flow/schema";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { PorterYamlSchema } from "../new-app-flow/schema";
 import { EnvVariablesTab } from "./env-vars/EnvVariablesTab";
-import GHABanner from "./GHABanner";
 import LogSection from "./logs/LogSection";
 import ActivityFeed from "./activity-feed/ActivityFeed";
 import MetricsSection from "./metrics/MetricsSection";
@@ -48,9 +46,9 @@ import { BuildMethod, PorterApp } from "../types/porterApp";
 import EventFocusView from "./activity-feed/events/focus-views/EventFocusView";
 import HelmValuesTab from "./HelmValuesTab";
 import SettingsTab from "./SettingsTab";
-import PorterAppRevisionSection from "./PorterAppRevisionSection";
 import { useHasBuiltImage } from "lib/hooks/useHasBuiltImage";
 import { useGithubWorkflow } from "lib/hooks/useGithubWorkflow";
+import ExpandedAppBanner from "./ExpandedAppBanner";
 
 type Props = RouteComponentProps & {};
 
@@ -86,18 +84,11 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const {
     currentCluster,
     currentProject,
-    setCurrentError,
     user,
   } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [appData, setAppData] = useState(null);
-  const [forceRefreshRevisions, setForceRefreshRevisions] = useState<boolean>(
-    false
-  );
-
-  const [showRevisions, setShowRevisions] = useState<boolean>(false);
-
   // this is what we read from their porter.yaml in github
   const [porterJson, setPorterJson] = useState<PorterJson | undefined>(undefined);
   // this is what we use to update the release. the above is a subset of this
@@ -131,7 +122,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
   const selectedTab: ValidTab = tab != null && validTabs.includes(tab) ? tab : DEFAULT_TAB;
   const { appName } = props.match.params as any;
   const hasBuiltImage = useHasBuiltImage(appName);
-  const { githubWorkflowFilename, isLoading: isLoadingWorkflowFile } = useGithubWorkflow(appData?.app, hasBuiltImage);
+  const { githubWorkflowFilename, userHasGithubAccess } = useGithubWorkflow(appData?.app, hasBuiltImage);
 
   useEffect(() => {
     if (!_.isEqual(_.omitBy(porterApp, _.isEmpty), _.omitBy(tempPorterApp, _.isEmpty))) {
@@ -777,7 +768,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             </Fieldset>
           ) : (
             <>
-              {hasBuiltImage ? (
+              {/* {hasBuiltImage ? (
                 <>
                   <DarkMatter />
                   <PorterAppRevisionSection
@@ -823,7 +814,15 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                     gitRepoId={appData.app.git_repo_id}
                     porterYamlPath={appData.app.porter_yaml_path}
                   />
-                )}
+                )} */}
+              <ExpandedAppBanner
+                appData={appData}
+                hasBuiltImage={hasBuiltImage}
+                githubWorkflowFilename={githubWorkflowFilename}
+                setRevision={setRevision}
+                updatePorterApp={updatePorterApp}
+                userHasGithubAccess={userHasGithubAccess}
+              />
               <Spacer y={1} />
               <AnimateHeight height={showUnsavedChangesBanner ? 67 : 0}>
                 <Banner

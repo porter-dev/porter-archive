@@ -12,7 +12,7 @@ interface Props {
   suffix?: React.ReactNode;
 }
 
-const Banner: React.FC<Props> = ({ 
+const Banner: React.FC<Props> = ({
   type,
   icon,
   children,
@@ -32,12 +32,12 @@ const Banner: React.FC<Props> = ({
 
   return (
     <StyledBanner
-      color={type === "error" ? "#ff385d" : type === "warning" && "#f5cb42"}
+      color={type === "error" ? "#ff385d" : type === "warning" ? "#f5cb42" : ""}
       noMargin={noMargin}
     >
       <>
-      {renderIcon()}
-      <span>{children}</span>
+        {renderIcon()}
+        <span>{children}</span>
       </>
       {suffix && (
         <Suffix>{suffix}</Suffix>

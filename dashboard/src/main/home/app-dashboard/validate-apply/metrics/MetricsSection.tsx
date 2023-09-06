@@ -68,10 +68,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         }
     }, []);
 
-  const setSelectedServiceOption = (option: ServiceOption) => {
-      setSelectedService(option.value);
-  }
-
   const { data: metricsData, isLoading: isMetricsDataLoading, refetch } = useQuery(
     [
         "getMetrics",
@@ -276,7 +272,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
             displayFlex={true}
             label="Service"
             value={selectedService}
-            setActiveValue={(x: any) => setSelectedServiceOption(x)}
+            setActiveValue={(x: any) => setSelectedService(x)}
             options={serviceOptions}
             width="200px"
           />

@@ -19,7 +19,8 @@ export function useDefaultDeploymentTarget() {
   const { data } = useQuery(
     ["getDefaultDeploymentTarget", currentProject?.id, currentCluster?.id],
     async () => {
-      if (!currentProject?.id || !currentCluster?.id) {
+      // see Context.tsx L98 for why the last check is necessary
+      if (!currentProject?.id || !currentCluster?.id || currentCluster.id === -1) {
         return;
       }
       const res = await api.getDefaultDeploymentTarget(

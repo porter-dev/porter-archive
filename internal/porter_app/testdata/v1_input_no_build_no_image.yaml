@@ -65,9 +65,8 @@ apps:
           - test2.example.com
         porter_hosts: []
         annotations:
-          kubernetes.io/test: nginx
       service:
-        port: '3000'
+        port: '8080'
       health:
         startupProbe:
           enabled: false
@@ -82,7 +81,7 @@ apps:
         livenessProbe:
           enabled: true
           failureThreshold: '3'
-          path: /livez
+          path: /healthz
           periodSeconds: '5'
       cloudsql:
         enabled: false

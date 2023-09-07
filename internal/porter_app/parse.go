@@ -23,7 +23,7 @@ const (
 )
 
 // ParseYAML converts a Porter YAML file into a PorterApp proto object
-func ParseYAML(ctx context.Context, porterYaml []byte) (*porterv1.PorterApp, error) {
+func ParseYAML(ctx context.Context, porterYaml []byte, appName string) (*porterv1.PorterApp, error) {
 	ctx, span := telemetry.NewSpan(ctx, "porter-app-parse-yaml")
 	defer span.End()
 
@@ -49,7 +49,10 @@ func ParseYAML(ctx context.Context, porterYaml []byte) (*porterv1.PorterApp, err
 	// track this span in telemetry and reach out to customers who are still using old porter.yaml if they exist.
 	// once no one is converting from old porter.yaml, we can remove this code
 	case PorterYamlVersion_V1, "":
-		appProto, err = v1.AppProtoFromYaml(ctx, porterYaml)
+		if appName == "" {
+			return nil, telemetry.Error(ctx, span, nil, "v1 porter yaml requires externally-provided app name")
+		}
+		appProto, err = v1.AppProtoFromYaml(ctx, porterYaml, appName)
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "error converting v1 yaml to proto")
 		}

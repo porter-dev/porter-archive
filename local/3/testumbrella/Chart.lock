@@ -1,0 +1,9 @@
+dependencies:
+- name: testchart
+  repository: file://../depchart
+  version: 0.1.0
+- name: testchart
+  repository: file://../depchart
+  version: 0.1.0
+digest: sha256:5778b10b5e5eeecd1e7d6c4d9848d7c888a13abb104d954868d0b41b2cbf611f
+generated: "2023-09-06T18:48:32.799658-04:00"

@@ -1,0 +1,8 @@
+
+web:
+  ingress:
+    annotations: {}
+    custom_domain: false
+    enabled: false
+    hosts: []
+    porter_hosts: []

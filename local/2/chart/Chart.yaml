@@ -10,8 +10,8 @@ keywords:
   - application
   - service
   - web
-dependencies:
+dependencies: 
 - name: web
   version: "0.136.0"
   repository: "https://charts.getporter.dev"
-  alias: "myname"
+  alias: "web"

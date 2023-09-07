@@ -1,0 +1,39 @@
+porter-web:
+  auto_deploy: true
+  autoscaling:
+    enabled: false
+  clusterId: 1
+  container:
+    env:
+      normal: null
+    lifecycle: {}
+    port: 80
+  currentCluster:
+    service:
+      is_aws: false
+      is_do: false
+      is_gcp: false
+  health:
+    livenessProbe:
+      enabled: false
+    readinessProbe:
+      enabled: false
+    startupProbe:
+      enabled: false
+  image:
+    repository: nginx
+    tag: latest
+  ingress:
+    annotations: {}
+    custom_domain: false
+    enabled: false
+    hosts: []
+    porter_hosts: []
+  namespace: default
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  showStartCommand: true
+  terminationGracePeriodSeconds: 30

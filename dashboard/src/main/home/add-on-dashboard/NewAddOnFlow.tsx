@@ -192,11 +192,12 @@ const NewAddOnFlow: React.FC<Props> = ({
                           <div>
                             <Text color="helper">For developer productivity.</Text>
                           </div>
+                          <TemplateList
+                            templates={appTemplates} // This is where you provide only APP templates
+                            setCurrentTemplate={(x) => setCurrentTemplate(x)}
+                          />
                         </>}
-                      <TemplateList
-                        templates={appTemplates} // This is where you provide only APP templates
-                        setCurrentTemplate={(x) => setCurrentTemplate(x)}
-                      />
+
                       {dataStoreTemplates?.length > 0 &&
                         <>
                           <div>
@@ -205,11 +206,12 @@ const NewAddOnFlow: React.FC<Props> = ({
                           <div>
                             <Text color="helper">Pre-production datastores are not highly available and use ephemeral storage.</Text>
                           </div>
+                          <TemplateList
+                            templates={dataStoreTemplates} // This is where you provide only DATA_STORE templates
+                            setCurrentTemplate={(x) => setCurrentTemplate(x)}
+                          />
                         </>}
-                      <TemplateList
-                        templates={dataStoreTemplates} // This is where you provide only DATA_STORE templates
-                        setCurrentTemplate={(x) => setCurrentTemplate(x)}
-                      />
+
 
                       {filteredTemplates?.length > 0 && (currentProject?.full_add_ons || user.isPorterUser) &&
                         <>

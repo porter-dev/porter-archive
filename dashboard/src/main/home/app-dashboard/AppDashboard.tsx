@@ -215,7 +215,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
       {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (
-        filteredApps.length === 0 ? (
+        apps.length === 0 ? (
           isLoading ?
             (<Loading offset="-150px" />) : (
               <Fieldset>
@@ -283,7 +283,14 @@ const AppDashboard: React.FC<Props> = ({ }) => {
             </Container>
             <Spacer y={1} />
 
-            {isLoading ? (
+            {filteredApps.length === 0 ? (
+              <Fieldset>
+                <Container row>
+                  <PlaceholderIcon src={notFound} />
+                  <Text color="helper">No matching apps were found.</Text>
+                </Container>
+              </Fieldset>
+            ) : (isLoading ? (
               <Loading offset="-150px" />
             ) : view === "grid" ? (
               <GridList>
@@ -342,7 +349,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                   }
                 })}
               </List>
-            )}
+            ))}
           </>
         )
       )

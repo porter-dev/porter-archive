@@ -493,16 +493,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       preflightValues: {
         case: "eksPreflightValues",
         value: new EKSPreflightValues({
-          eks: new EKS({
-            clusterName,
-            clusterVersion: clusterVersion || "v1.24.0",
-            cidrRange: cidrRange || "10.78.0.0/16",
-            region: awsRegion,
-            logging: controlPlaneLogs,
-            enableGuardDuty: guardDutyEnabled,
-            targetArn: props.credentialId,
-            externalId: user?.external_id,
-          })
+          region: awsRegion,
         })
       }
     });

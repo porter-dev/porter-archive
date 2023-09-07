@@ -57,9 +57,9 @@ type MetricsRequest struct {
 	Percentile float64 `schema:"percentile"`
 }
 
-// ServeHTTP streams live logs for a given app, service, and deployment target
+// ServeHTTP returns metrics for a given app in the provided deployment target
 func (c *AppMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-stream-app-logs")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-app-metrics")
 	defer span.End()
 	r = r.Clone(ctx)
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)

@@ -26,6 +26,7 @@ import Button from "components/porter/Button";
 import Icon from "components/porter/Icon";
 import save from "assets/save-01.svg";
 import LogsTab from "./tabs/LogsTab";
+import _ from "lodash";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -190,7 +191,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         porterApp.name,
       ]);
       setPreviewRevision(null);
-    } catch (err) {}
+    } catch (err) { }
   });
 
   useEffect(() => {
@@ -217,7 +218,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           latestSource={latestSource}
           onSubmit={onSubmit}
         />
-        <Spacer y={1} />
         <AnimateHeight height={isDirty && !onlyExpandedChanged ? "auto" : 0}>
           <Banner
             type="warning"
@@ -250,11 +250,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
+                {
+                  label: "Build Settings",
+                  value: "build-settings",
+                },
+              ]
               : []),
             { label: "Settings", value: "settings" },
           ]}

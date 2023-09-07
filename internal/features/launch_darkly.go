@@ -21,11 +21,13 @@ type Client struct {
 // has no off variation.
 //
 // For more information, see the Reference Guide: https://docs.launchdarkly.com/sdk/features/evaluating#go
-func (c *Client) BoolVariation(field string, context ldcontext.Context, defaultValue bool) (bool, error) {
+func (c Client) BoolVariation(field string, context ldcontext.Context, defaultValue bool) (bool, error) {
 	if c.client == nil {
+		println("client missing")
 		return defaultValue, errors.New("failed to participate in launchdarkly test: no client available")
 	}
-	return c.client.BoolVariation(field, context, defaultValue)
+	val, err := c.client.BoolVariation(field, context, defaultValue)
+	return val, err
 }
 
 // NewClient returns a Client wrapping a launchdarkly client instance

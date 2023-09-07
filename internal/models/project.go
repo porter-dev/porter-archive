@@ -75,7 +75,7 @@ type Project struct {
 }
 
 // ToProjectType generates an external types.Project to be shared over REST
-func (p *Project) ToProjectType(launchDarklyClient *features.Client) *types.Project {
+func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Project {
 	roles := make([]*types.Role, 0)
 
 	for _, role := range p.Roles {
@@ -86,7 +86,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) *types.Proj
 	projectName := p.Name
 	ldContext := getProjectContext(projectID, projectName)
 
-	project := &types.Project{
+	return types.Project{
 		ID:    projectID,
 		Name:  projectName,
 		Roles: roles,
@@ -105,8 +105,6 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) *types.Proj
 		ValidateApplyV2:        getValidateApplyV2(ldContext, launchDarklyClient),
 		FullAddOns:             getFullAddOns(ldContext, launchDarklyClient),
 	}
-
-	return project
 }
 
 // ToProjectListType returns a "minified" version of a Project

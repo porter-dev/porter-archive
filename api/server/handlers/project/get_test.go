@@ -35,7 +35,9 @@ func TestGetProjectSuccessful(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	expProject := proj.ToProjectType(features.NewClient(nil))
-	gotProject := &types.Project{}
+	gotProject := types.Project{}
 
-	apitest.AssertResponseExpected(t, rr, expProject, gotProject)
+	// note: these need to be passed as pointer values
+	// due to how testify/assert handles serialization
+	apitest.AssertResponseExpected(t, rr, &expProject, &gotProject)
 }

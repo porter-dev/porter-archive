@@ -70,7 +70,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   });
   const { append, remove, update, fields } = useFieldArray({
     control: appControl,
-    name: "app.services",
+    name: isPredeploy ? "app.predeploy" : "app.services",
   });
   const {
     append: appendDeletion,

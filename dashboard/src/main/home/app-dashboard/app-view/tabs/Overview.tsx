@@ -15,7 +15,7 @@ import { useLatestRevision } from "../LatestRevisionContext";
 
 const Overview: React.FC = () => {
   const { formState } = useFormContext<PorterAppFormData>();
-  const { porterApp } = useLatestRevision();
+  const { porterApp, latestProto } = useLatestRevision();
 
   const buttonStatus = useMemo(() => {
     if (formState.isSubmitting) {
@@ -43,6 +43,7 @@ const Overview: React.FC = () => {
                 type: "predeploy",
               }),
             })}
+            existingServiceNames={Object.keys(latestProto.services)}
             isPredeploy
           />
           <Spacer y={0.5} />

@@ -65,11 +65,6 @@ func (c *AppMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
-		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
-	)
-
 	request := &MetricsRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {

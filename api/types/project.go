@@ -1,5 +1,28 @@
 package types
 
+// ProjectList type for entries in the api response on GET /projects
+type ProjectList struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+
+	// note: all of these fields should be considered deprecated
+	// in an api response
+	Roles                  []Role `json:"roles"`
+	PreviewEnvsEnabled     bool   `json:"preview_envs_enabled"`
+	RDSDatabasesEnabled    bool   `json:"enable_rds_databases"`
+	ManagedInfraEnabled    bool   `json:"managed_infra_enabled"`
+	APITokensEnabled       bool   `json:"api_tokens_enabled"`
+	StacksEnabled          bool   `json:"stacks_enabled"`
+	CapiProvisionerEnabled bool   `json:"capi_provisioner_enabled"`
+	SimplifiedViewEnabled  bool   `json:"simplified_view_enabled"`
+	AzureEnabled           bool   `json:"azure_enabled"`
+	HelmValuesEnabled      bool   `json:"helm_values_enabled"`
+	MultiCluster           bool   `json:"multi_cluster"`
+	FullAddOns             bool   `json:"full_add_ons"`
+	EnableReprovision      bool   `json:"enable_reprovision"`
+	ValidateApplyV2        bool   `json:"validate_apply_v2"`
+}
+
 type Project struct {
 	ID                     uint    `json:"id"`
 	Name                   string  `json:"name"`

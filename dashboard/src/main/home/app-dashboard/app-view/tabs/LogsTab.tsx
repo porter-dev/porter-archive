@@ -14,7 +14,7 @@ import Button from "components/porter/Button";
 import { useLatestRevision } from "../LatestRevisionContext";
 
 const LogsTab: React.FC = () => {
-    const { projectId, clusterId, latestProto , deploymentTargetId} = useLatestRevision();
+    const { projectId, clusterId, latestProto , deploymentTargetId, latestRevision} = useLatestRevision();
 
     const appName = latestProto.name
     const serviceNames = Object.keys(latestProto.services)
@@ -27,6 +27,7 @@ const LogsTab: React.FC = () => {
                 appName={appName}
                 serviceNames={serviceNames}
                 deploymentTargetId={deploymentTargetId}
+                latestRevision={latestRevision}
             />
         </>
     );

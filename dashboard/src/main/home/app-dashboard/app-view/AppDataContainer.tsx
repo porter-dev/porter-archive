@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import _ from "lodash";
 import { FormProvider, useForm } from "react-hook-form";
 import {
   PorterAppFormData,
@@ -26,7 +27,7 @@ import Button from "components/porter/Button";
 import Icon from "components/porter/Icon";
 import save from "assets/save-01.svg";
 import LogsTab from "./tabs/LogsTab";
-import _ from "lodash";
+import MetricsTab from "./tabs/MetricsTab";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -35,7 +36,7 @@ const validTabs = [
   // "events",
   "overview",
   "logs",
-  // "metrics",
+  "metrics",
   // "debug",
   "environment",
   "build-settings",
@@ -247,6 +248,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           options={[
             { label: "Overview", value: "overview" },
             { label: "Logs", value: "logs" },
+            { label: "Metrics", value: "metrics" },
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
@@ -275,6 +277,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("environment", () => <Environment />)
           .with("settings", () => <Settings />)
           .with("logs", () => <LogsTab />)
+          .with("metrics", () => <MetricsTab />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>

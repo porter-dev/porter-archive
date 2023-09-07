@@ -55,7 +55,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     }, []);
 
     const [serviceName, serviceKind, metricTypes, isHpaEnabled] = useMemo(() => {
-        if (selectedServiceName == "") {
+        if (selectedServiceName === "") {
             return ["", "", [], false]
         }
 

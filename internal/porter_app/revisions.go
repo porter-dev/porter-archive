@@ -12,6 +12,8 @@ import (
 
 // Revision represents the data for a single revision
 type Revision struct {
+	// ID is the revision id
+	ID string `json:"id"`
 	// B64AppProto is the base64 encoded app proto definition
 	B64AppProto string `json:"b64_app_proto"`
 	// Status is the status of the revision
@@ -50,6 +52,7 @@ func EncodedRevisionFromProto(ctx context.Context, appRevision *porterv1.AppRevi
 	revision = Revision{
 		B64AppProto:    b64,
 		Status:         appRevision.Status,
+		ID:             appRevision.Id,
 		RevisionNumber: appRevision.RevisionNumber,
 		CreatedAt:      appRevision.CreatedAt.AsTime(),
 		UpdatedAt:      appRevision.UpdatedAt.AsTime(),

@@ -6,7 +6,6 @@ import { Controller, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
-import AnimateHeight from "react-animate-height";
 import CustomDomains from "./CustomDomains";
 
 type NetworkingProps = {
@@ -66,7 +65,7 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
         control={control}
         render={({ field: { value, onChange } }) => (
           <Checkbox
-            checked={value}
+            checked={!value}
             disabled={service.config.private.readOnly}
             toggleChecked={() => {
               onChange(!value);
@@ -75,7 +74,7 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
               "You may only edit this field in your porter.yaml."
             }
           >
-            <Text color="helper">Private Service</Text>
+            <Text color="helper">Expose to external traffic</Text>
           </Checkbox>
         )}
       />
@@ -94,7 +93,7 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
             </a>
           </Text>
           <Spacer y={0.5} />
-          <CustomDomains index={index} customDomains={service.config.domains} />
+          <CustomDomains index={index} />
           <Spacer y={0.5} />
         </>
       )}

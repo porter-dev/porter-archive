@@ -18,6 +18,7 @@ export interface PaginationInfo {
     nextCursor: string | null;
 }
 
+
 const rawLabelsValidator = z.object({
     porter_run_absolute_name: z.string().optional(),
     porter_run_app_id: z.string().optional(),
@@ -34,7 +35,7 @@ const agentLogMetadataValidator = z.object({
     revision: z.string(),
     output_stream: z.string(),
     app_name: z.string(),
-    // raw_labels: rawLabelsValidator.optional(),
+    raw_labels: rawLabelsValidator.nullish(),
 });
 
 export const agentLogValidator = z.object({

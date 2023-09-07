@@ -17,6 +17,11 @@ import {
 } from "./values";
 import { Service, ServiceType } from "@porter-dev/api-contracts";
 
+export type ServiceWithName = {
+    name: string;
+    service: Service;
+}
+
 export type DetectedServices = {
   services: ClientService[];
   predeploy?: ClientService;

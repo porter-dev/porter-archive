@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, {useContext, useEffect, useMemo, useState} from "react";
 import styled from "styled-components";
 
 import api from "shared/api";
@@ -15,33 +15,20 @@ import MetricsChart from "../../expanded-app/metrics/MetricsChart";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "components/Loading";
 import CheckboxRow from "components/CheckboxRow";
+import {ServiceWithName} from "lib/porter-apps/services";
+import {Service} from "@porter-dev/api-contracts";
 
 type PropsType = {
     projectId: number;
     clusterId: number;
     appName: string;
-    services: Service[];
+    services: ServiceWithName[];
     deploymentTargetId: string;
 };
 
-export type Autoscaling = {
-    minReplicas: number;
-    maxReplicas: number;
-    targetCPUUtilizationPercentage: number;
-    targetMemoryUtilizationPercentage: number;
-}
-
-export interface Service {
-    name: string;
-    kind: string;
-    ingress_enabled: boolean;
-    absolute_name?: string;
-    autoscaling?: Autoscaling;
-}
-
 type ServiceOption = {
     label: string;
-    value: Service;
+    value: ServiceWithName;
 }
 
 const MetricsSection: React.FunctionComponent<PropsType> = ({
@@ -51,14 +38,14 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     services,
     deploymentTargetId,
 }) => {
-  const [selectedService, setSelectedService] = useState<Service>();
+  const [selectedService, setSelectedService] = useState<ServiceWithName>();
   const [selectedRange, setSelectedRange] = useState("1H");
   const [showAutoscalingThresholds, setShowAutoscalingThresholds] = useState(false);
 
-  const serviceOptions: ServiceOption[] = services.map((service) => {
+  const serviceOptions: ServiceOption[] = services.map(s => {
     return {
-      label: service.name,
-      value: service,
+      label: s.name,
+      value: s,
     };
   });
 
@@ -68,36 +55,61 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         }
     }, []);
 
+    const [serviceName, serviceKind, metricTypes, isHpaEnabled] = useMemo(() => {
+        if (selectedService == null || selectedService.service == null) {
+            return ["", "", [], false]
+        }
+
+        const serviceName = selectedService.service.absoluteName === "" ? (appName + "-" + selectedService.name) : selectedService.service.absoluteName
+
+        let serviceKind = ""
+        const metricTypes: MetricType[] = ["cpu", "memory"];
+        let isHpaEnabled = false
+
+        if (selectedService.service.config.case === "webConfig") {
+            serviceKind = "web"
+            metricTypes.push("network");
+            if (selectedService.service.config.value.autoscaling != null && selectedService.service.config.value.autoscaling.enabled) {
+                isHpaEnabled = true
+            }
+            if (!selectedService.service.config.value.private) {
+                metricTypes.push("nginx:status")
+            }
+        }
+
+        if (selectedService.service.config.case === "workerConfig") {
+            serviceKind = "worker"
+            if (selectedService.service.config.value.autoscaling != null && selectedService.service.config.value.autoscaling.enabled) {
+                isHpaEnabled = true
+            }
+        }
+
+
+
+        if (isHpaEnabled) {
+            metricTypes.push("hpa_replicas");
+        }
+
+        return [serviceName, serviceKind, metricTypes, isHpaEnabled]
+    }, [selectedService])
+
+
   const { data: metricsData, isLoading: isMetricsDataLoading, refetch } = useQuery(
     [
         "getMetrics",
         projectId,
         clusterId,
-        selectedService?.name,
+        serviceName,
         selectedRange,
         deploymentTargetId,
     ],
     async () => {
-      if (selectedService?.name == null) {
+
+      if (serviceName === "" || serviceKind === "" || metricTypes.length === 0) {
         return;
       }
+
       const metrics: Metric[] = [];
-      const metricTypes: MetricType[] = ["cpu", "memory"];
-
-      const serviceName: string = selectedService.name
-      const isHpaEnabled: boolean = selectedService.autoscaling != null;
-
-      if (selectedService.kind === "web") {
-         metricTypes.push("network");
-      }
-
-      if (isHpaEnabled) {
-        metricTypes.push("hpa_replicas");
-      }
-
-      if (selectedService.ingress_enabled) {
-        metricTypes.push("nginx:status")
-      }
 
       const d = new Date();
       const end = Math.round(d.getTime() / 1000);
@@ -105,16 +117,16 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
       for (const metricType of metricTypes) {
           var kind = "";
-        if (selectedService.kind === "web") {
-            kind = "deployment";
-        } else if (selectedService.kind === "worker") {
-            kind = "deployment";
-        } else if (selectedService.kind === "job") {
-            kind = "job";
-        }
-        if (metricType === "nginx:status") {
-            kind = "Ingress"
-        }
+          if (serviceKind === "web") {
+              kind = "deployment";
+          } else if (serviceKind === "worker") {
+              kind = "deployment";
+          } else if (serviceKind === "job") {
+              kind = "job";
+          }
+          if (metricType === "nginx:status") {
+              kind = "Ingress"
+          }
 
         const aggregatedMetricsResponse = await api.appMetrics(
           "<token>",
@@ -122,7 +134,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
             metric: metricType,
             shouldsum: false,
             kind: kind,
-            name: selectedService.absolute_name == null ? appName + "-" + selectedService.name : selectedService.absolute_name,
+            name: serviceName,
             deployment_target_id: deploymentTargetId,
             startrange: start,
             endrange: end,
@@ -162,7 +174,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
                 metric: hpaMetricType,
                 shouldsum: false,
                 kind: kind,
-                name: selectedService.absolute_name == null ? appName + "-" + selectedService.name : selectedService.absolute_name,
+                name: serviceName,
                 deployment_target_id: deploymentTargetId,
                 startrange: start,
                 endrange: end,
@@ -245,13 +257,10 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     })
   }
 
-  const renderShowAutoscalingThresholdsCheckbox = () => {
-  if (selectedService == null) {
+  const renderShowAutoscalingThresholdsCheckbox = (serviceName: string, isHpaEnabled: boolean) => {
+  if (serviceName == null) {
     return null;
   }
-
-    const serviceName: string = selectedService.name
-    const isHpaEnabled: boolean = selectedService.autoscaling != null
 
     if (!isHpaEnabled) {
       return null;
@@ -280,7 +289,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           <Highlight color={"#7d7d81"} onClick={() => refetch()}>
             <i className="material-icons">autorenew</i>
           </Highlight>
-          {renderShowAutoscalingThresholdsCheckbox()}
+          {renderShowAutoscalingThresholdsCheckbox(serviceName, isHpaEnabled)}
         </Flex>
         <RangeWrapper>
           <Relative>

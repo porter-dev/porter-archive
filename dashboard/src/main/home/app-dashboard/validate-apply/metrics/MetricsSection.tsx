@@ -1,13 +1,11 @@
-import React, {useContext, useEffect, useMemo, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import styled from "styled-components";
 
 import api from "shared/api";
-import { Context } from "shared/Context";
-import { ChartType } from "shared/types";
 
 import TabSelector from "components/TabSelector";
 import SelectRow from "components/form-components/SelectRow";
-import { getServiceNameFromControllerName, MetricNormalizer, resolutions, secondsBeforeNow } from "../../expanded-app/metrics/utils";
+import { MetricNormalizer, resolutions, secondsBeforeNow } from "../../expanded-app/metrics/utils";
 import { Metric, MetricType, NginxStatusMetric } from "../../expanded-app/metrics/types";
 import { match } from "ts-pattern";
 import { AvailableMetrics, NormalizedMetricsData } from "main/home/cluster-dashboard/expanded-chart/metrics/types";

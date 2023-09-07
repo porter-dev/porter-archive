@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { useLatestRevision } from "../LatestRevisionContext";
 import MetricsSection from "../../validate-apply/metrics/MetricsSection";
 

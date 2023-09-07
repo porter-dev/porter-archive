@@ -23,11 +23,9 @@ type Client struct {
 // For more information, see the Reference Guide: https://docs.launchdarkly.com/sdk/features/evaluating#go
 func (c Client) BoolVariation(field string, context ldcontext.Context, defaultValue bool) (bool, error) {
 	if c.client == nil {
-		println("client missing")
 		return defaultValue, errors.New("failed to participate in launchdarkly test: no client available")
 	}
-	val, err := c.client.BoolVariation(field, context, defaultValue)
-	return val, err
+	return c.client.BoolVariation(field, context, defaultValue)
 }
 
 // NewClient returns a Client wrapping a launchdarkly client instance

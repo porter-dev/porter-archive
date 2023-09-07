@@ -153,12 +153,9 @@ const ServiceList: React.FC<ServiceListProps> = ({
     const name = services[index].svc.name.value;
     remove(index);
 
-    // if (existingServiceNames.includes(name)) {
-    //   appendDeletion({ name });
-    // }
-
-    appendDeletion({ name });
-
+    if (existingServiceNames.includes(name)) {
+      appendDeletion({ name });
+    }
   };
 
   return (

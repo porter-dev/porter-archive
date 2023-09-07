@@ -18,6 +18,7 @@ type PorterYamlVersion string
 const (
 	// PorterYamlVersion_V2 is the v2 version of the porter yaml
 	PorterYamlVersion_V2 PorterYamlVersion = "v2"
+	// PorterYamlVersion_V1 is the v1, legacy version of the porter yaml
 	PorterYamlVersion_V1 PorterYamlVersion = "v1stack"
 )
 

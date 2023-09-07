@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -143,6 +144,9 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 
 	// if the revision number cannot be converted, it will default to 0
 	replicaCount, _ := strconv.Atoi(service.Config.ReplicaCount)
+	if replicaCount < math.MinInt32 || replicaCount > math.MaxInt32 {
+		return nil, fmt.Errorf("replica count is out of range")
+	}
 	serviceProto.Instances = int32(replicaCount)
 
 	if service.Config.Resources.Requests.Cpu != "" {
@@ -178,6 +182,9 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 		if err != nil {
 			return nil, fmt.Errorf("invalid port '%s'", service.Config.Container.Port)
 		}
+		if port < math.MinInt32 || port > math.MaxInt32 {
+			return nil, fmt.Errorf("port is out of range")
+		}
 		serviceProto.Port = int32(port)
 	}
 
@@ -195,12 +202,24 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 				Enabled: service.Config.Autoscaling.Enabled,
 			}
 			minReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MinReplicas)
+			if minReplicas < math.MinInt32 || minReplicas > math.MaxInt32 {
+				return nil, fmt.Errorf("minReplicas is out of range")
+			}
 			autoscaling.MinInstances = int32(minReplicas)
 			maxReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MaxReplicas)
+			if maxReplicas < math.MinInt32 || maxReplicas > math.MaxInt32 {
+				return nil, fmt.Errorf("maxReplicas is out of range")
+			}
 			autoscaling.MaxInstances = int32(maxReplicas)
 			cpuThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetCPUUtilizationPercentage)
+			if cpuThresholdPercent < math.MinInt32 || cpuThresholdPercent > math.MaxInt32 {
+				return nil, fmt.Errorf("cpuThresholdPercent is out of range")
+			}
 			autoscaling.CpuThresholdPercent = int32(cpuThresholdPercent)
 			memoryThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetMemoryUtilizationPercentage)
+			if memoryThresholdPercent < math.MinInt32 || memoryThresholdPercent > math.MaxInt32 {
+				return nil, fmt.Errorf("memoryThresholdPercent is out of range")
+			}
 			autoscaling.MemoryThresholdPercent = int32(memoryThresholdPercent)
 		}
 		webConfig.Autoscaling = autoscaling

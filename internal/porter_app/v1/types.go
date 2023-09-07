@@ -124,25 +124,16 @@ type Service struct {
 }
 
 type v1_PorterYAML struct {
-	Applications map[string]*Application `yaml:"applications" validate:"required_without=Services Apps"`
-	Version      *string                 `yaml:"version"`
-	Build        *Build                  `yaml:"build"`
-	Env          map[string]string       `yaml:"env"`
-	SyncedEnv    []*SyncedEnvSection     `yaml:"synced_env"`
-	Apps         map[string]v1_Service   `yaml:"apps" validate:"required_without=Applications Services"`
-	Services     map[string]v1_Service   `yaml:"services" validate:"required_without=Applications Apps"`
-
-	Release *v1_Service `yaml:"release"`
-}
-
-type Application struct {
-	Services map[string]v1_Service `yaml:"services" validate:"required"`
+	Version  *string               `yaml:"version"`
 	Build    *Build                `yaml:"build"`
 	Env      map[string]string     `yaml:"env"`
+	Apps     map[string]v1_Service `yaml:"apps" validate:"required_without=Applications Services"`
+	Services map[string]v1_Service `yaml:"services" validate:"required_without=Applications Apps"`
 
 	Release *v1_Service `yaml:"release"`
 }
 
+// Build represents the build settings for a Porter app
 type Build struct {
 	Context    string   `yaml:"context" validate:"dir"`
 	Method     string   `yaml:"method" validate:"required,oneof=pack docker registry"`
@@ -156,15 +147,4 @@ type v1_Service struct {
 	Run    string           `yaml:"run"`
 	Config v1_ServiceConfig `yaml:"config"`
 	Type   string           `yaml:"type" validate:"required, oneof=web worker job"`
-}
-
-type SyncedEnvSection struct {
-	Name    string                `json:"name" yaml:"name"`
-	Version uint                  `json:"version" yaml:"version"`
-	Keys    []SyncedEnvSectionKey `json:"keys" yaml:"keys"`
-}
-
-type SyncedEnvSectionKey struct {
-	Name   string `json:"name" yaml:"name"`
-	Secret bool   `json:"secret" yaml:"secret"`
 }

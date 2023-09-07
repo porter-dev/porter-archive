@@ -7,10 +7,8 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import { Context } from "shared/Context";
 import { DetailedClusterType, ProjectType } from "shared/types";
-import gradient from "assets/gradient.png";
 import { pushFiltered } from "shared/routing";
 import SearchBar from "components/porter/SearchBar";
-import { search } from "shared/search";
 import _ from 'lodash';
 import { useMemo } from 'react';
 import api from "shared/api";
@@ -90,12 +88,15 @@ const ProjectSelectionModal: React.FC<Props> = ({
     }
   };
   const renderBlockList = () => {
-    return filteredProjects.map((project: ProjectType, i: number) => {
+    return filteredProjects.map((projectListEntry: ProjectListType, i: number) => {
       return (
         <IdContainer
           key={i}
-          selected={project.id === currentProject.id}
+          selected={projectListEntry.id === currentProject.id}
           onClick={async () => {
+            const project = await api
+              .getProject("<token>", {}, { id: projectListEntry.id })
+              .then((res) => res.data as ProjectType);
 
             setCurrentProject(project);
 
@@ -115,11 +116,11 @@ const ProjectSelectionModal: React.FC<Props> = ({
           }}
         >
           {/* <BlockIcon src={gradient} /> */}
-          <BlockTitle>{project.name}</BlockTitle>
+          <BlockTitle>{projectListEntry.name}</BlockTitle>
 
 
           <BlockDescription>
-            Project ID: {project.id}
+            Project ID: {projectListEntry.id}
           </BlockDescription>
         </IdContainer>
       );

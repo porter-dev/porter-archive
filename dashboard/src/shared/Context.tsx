@@ -4,6 +4,7 @@ import {
   CapabilityType,
   ClusterType,
   ContextProps,
+  ProjectListType,
   ProjectType,
   UsageData,
 } from "shared/types";
@@ -42,8 +43,8 @@ export interface GlobalContextType {
     currentProject: ProjectType,
     callback?: () => void
   ) => void;
-  projects: ProjectType[];
-  setProjects: (projects: ProjectType[]) => void;
+  projects: ProjectListType[];
+  setProjects: (projects: ProjectListType[]) => void;
   user: any;
   setUser: (userId: number, email: string) => void;
   devOpsMode: boolean;
@@ -127,7 +128,7 @@ class ContextProvider extends Component<PropsType, StateType> {
       });
     },
     projects: [],
-    setProjects: (projects: ProjectType[]) => {
+    setProjects: (projects: ProjectListType[]) => {
       projects.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
       this.setState({ projects });
     },

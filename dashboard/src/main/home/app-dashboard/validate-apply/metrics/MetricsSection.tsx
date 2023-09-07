@@ -37,14 +37,17 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 }) => {
   const [selectedServiceName, setSelectedServiceName] = useState<string>("");
   const [selectedRange, setSelectedRange] = useState("1H");
-  const [showAutoscalingThresholds, setShowAutoscalingThresholds] = useState(false);
+  const [showAutoscalingThresholds, setShowAutoscalingThresholds] = useState(true);
 
-  const serviceOptions: ServiceOption[] = Object.keys(services).map((name) => {
-    return {
-      label: name,
-      value: name,
-    };
-  });
+
+  const serviceOptions: ServiceOption[] = useMemo(() => {
+      return Object.keys(services).map((name) => {
+          return {
+              label: name,
+              value: name,
+          };
+      });
+  }, [services]);
 
     useEffect(() => {
         if (serviceOptions.length > 0) {
@@ -233,7 +236,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       return metrics;
     },
     {
-      enabled: selectedServiceName != null,
+      enabled: selectedServiceName !== "",
       refetchOnWindowFocus: false,
       refetchInterval: 10000, // refresh metrics every 10 seconds
     }
@@ -257,7 +260,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   }
 
   const renderShowAutoscalingThresholdsCheckbox = (serviceName: string, isHpaEnabled: boolean) => {
-  if (serviceName == null) {
+  if (serviceName === "") {
     return null;
   }
 

@@ -257,6 +257,7 @@ export function clientAppFromProto(
   proto: PorterApp,
   overrides: DetectedServices | null
 ): ClientPorterApp {
+  console.log("services", proto.services)
   const services = Object.entries(proto.services)
     .map(([name, service]) => serializedServiceFromProto({ name, service }))
     .map((svc) => {
@@ -273,10 +274,21 @@ export function clientAppFromProto(
       return deserializeService({ service: svc });
     });
 
+  const predeployList = [];
+  if (proto.predeploy) {
+    predeployList.push(deserializeService({
+      service: serializedServiceFromProto({
+        name: "pre-deploy",
+        service: proto.predeploy,
+        isPredeploy: true,
+      })
+    }))
+  }
   if (!overrides?.predeploy) {
     return {
       name: proto.name,
       services,
+      predeploy: predeployList,
       env: proto.env,
       build: clientBuildFromProto(proto.build) ?? {
         method: "pack",
@@ -298,6 +310,8 @@ export function clientAppFromProto(
       override: predeployOverrides,
     })]
     : undefined;
+
+  console.log(predeploy)
 
   return {
     name: proto.name,

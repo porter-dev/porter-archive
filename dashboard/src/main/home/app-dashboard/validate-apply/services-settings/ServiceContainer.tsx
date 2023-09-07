@@ -197,16 +197,10 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       <ServiceHeader
         showExpanded={service.expanded}
         onClick={() => {
-          try {
-            console.log(index);
-            update(index, {
-              ...service,
-              expanded: !service.expanded,
-            });
-          } catch (err) {
-            console.log(err);
-          }
-
+          update(index, {
+            ...service,
+            expanded: !service.expanded,
+          });
         }}
         chart={chart}
         bordersRounded={!getHasBuiltImage() && !service.expanded}

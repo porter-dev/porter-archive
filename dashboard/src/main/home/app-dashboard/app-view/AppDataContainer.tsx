@@ -109,6 +109,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       },
     },
   });
+  console.log("values", porterAppFormMethods.getValues())
+  console.log("client app from proto", clientAppFromProto(latestProto, servicesFromYaml))
   const {
     reset,
     handleSubmit,

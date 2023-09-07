@@ -68,16 +68,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Get Go Binaries
-        uses: actions/download-artifact@v3
-        with:
-          name: go-binaries
-          path: bin/
-      - name: Get NPM static files
-        uses: actions/download-artifact@v3
-        with:
-          name: npm-static-files
-          path: build/
+      # - name: Get Go Binaries
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: go-binaries
+      #     path: bin/
+      # - name: Get NPM static files
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: npm-static-files
+      #     path: build/
       - name: Set Github tag
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT

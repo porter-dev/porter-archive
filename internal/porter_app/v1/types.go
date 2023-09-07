@@ -88,6 +88,7 @@ type KubernetesService struct {
 	Port string `yaml:"port"`
 }
 
+// PorterYAML represents the accepted top-level fields in a porter.yaml
 type PorterYAML struct {
 	Version  *string            `yaml:"version"`
 	Build    *Build             `yaml:"build"`
@@ -108,6 +109,7 @@ type Build struct {
 	Image      string   `yaml:"image" validate:"required_if=Method registry"`
 }
 
+// Service represents a service in a Porter app
 type Service struct {
 	Run    string        `yaml:"run"`
 	Config ServiceConfig `yaml:"config"`

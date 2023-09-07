@@ -182,6 +182,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		if err != nil {
 			return nil, fmt.Errorf("memory is not a float")
 		}
+		// nolint:gosec
 		serviceProto.RamMegabytes = int32(memoryFloat64)
 	}
 
@@ -196,6 +197,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		if port < math.MinInt32 || port > math.MaxInt32 {
 			return nil, fmt.Errorf("port is out of range of int32")
 		}
+		// nolint:gosec
 		serviceProto.Port = int32(port)
 	}
 	if service.Config.Service.Port != "" {
@@ -206,6 +208,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		if port < math.MinInt32 || port > math.MaxInt32 {
 			return nil, fmt.Errorf("port is out of range of int32")
 		}
+		// nolint:gosec
 		serviceProto.Port = int32(port)
 	}
 
@@ -215,118 +218,19 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	case porterv1.ServiceType_SERVICE_TYPE_UNSPECIFIED:
 		return nil, errors.New("KubernetesService type unspecified")
 	case porterv1.ServiceType_SERVICE_TYPE_WEB:
-		webConfig := &porterv1.WebServiceConfig{}
-
-		var autoscaling *porterv1.Autoscaling
-		if service.Config.Autoscaling != nil && service.Config.Autoscaling.Enabled {
-			autoscaling = &porterv1.Autoscaling{
-				Enabled: service.Config.Autoscaling.Enabled,
-			}
-			minReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MinReplicas)
-			if minReplicas < math.MinInt32 || minReplicas > math.MaxInt32 {
-				return nil, errors.New("minReplicas is out of range of int32")
-			}
-			// nolint:gosec
-			autoscaling.MinInstances = int32(minReplicas)
-			maxReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MaxReplicas)
-			if maxReplicas < math.MinInt32 || maxReplicas > math.MaxInt32 {
-				return nil, errors.New("maxReplicas is out of range of int32")
-			}
-			// nolint:gosec
-			autoscaling.MaxInstances = int32(maxReplicas)
-			cpuThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetCPUUtilizationPercentage)
-			if cpuThresholdPercent < math.MinInt32 || cpuThresholdPercent > math.MaxInt32 {
-				return nil, fmt.Errorf("cpuThresholdPercent is out of range of int32")
-			}
-			// nolint:gosec
-			autoscaling.CpuThresholdPercent = int32(cpuThresholdPercent)
-			memoryThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetMemoryUtilizationPercentage)
-			if memoryThresholdPercent < math.MinInt32 || memoryThresholdPercent > math.MaxInt32 {
-				return nil, fmt.Errorf("memoryThresholdPercent is out of range of int32")
-			}
-			// nolint:gosec
-			autoscaling.MemoryThresholdPercent = int32(memoryThresholdPercent)
+		webConfig, err := webConfigProtoFromConfig(service)
+		if err != nil {
+			return nil, fmt.Errorf("error converting web config: %w", err)
 		}
-		webConfig.Autoscaling = autoscaling
-
-		var healthCheck *porterv1.HealthCheck
-		// note that we are only reading from the readiness probe config, since readiness and liveness share the same config now
-		if service.Config.Health != nil {
-			health := service.Config.Health
-			if health.ReadinessProbe.Enabled && health.LivenessProbe.Enabled && health.ReadinessProbe.Path != health.LivenessProbe.Path {
-				return nil, errors.New("liveness and readiness probes must have the same path")
-			}
-			if health.ReadinessProbe.Enabled {
-				healthCheck = &porterv1.HealthCheck{
-					Enabled:  service.Config.Health.ReadinessProbe.Enabled,
-					HttpPath: service.Config.Health.ReadinessProbe.Path,
-				}
-			} else if health.LivenessProbe.Enabled {
-				healthCheck = &porterv1.HealthCheck{
-					Enabled:  service.Config.Health.LivenessProbe.Enabled,
-					HttpPath: service.Config.Health.LivenessProbe.Path,
-				}
-			}
-		}
-
-		webConfig.HealthCheck = healthCheck
-
-		domains := make([]*porterv1.Domain, 0)
-		for _, domain := range service.Config.Ingress.Hosts {
-			hostName := domain
-			domains = append(domains, &porterv1.Domain{
-				Name: hostName,
-			})
-		}
-		for _, domain := range service.Config.Ingress.PorterHosts {
-			hostName := domain
-			domains = append(domains, &porterv1.Domain{
-				Name: hostName,
-			})
-		}
-		if service.Config.Ingress.Annotations != nil && len(service.Config.Ingress.Annotations) > 0 {
-			return nil, errors.New("annotations are not supported")
-		}
-		webConfig.Domains = domains
-		webConfig.Private = !service.Config.Ingress.Enabled
 
 		serviceProto.Config = &porterv1.Service_WebConfig{
 			WebConfig: webConfig,
 		}
 	case porterv1.ServiceType_SERVICE_TYPE_WORKER:
-		workerConfig := &porterv1.WorkerServiceConfig{}
-
-		var autoscaling *porterv1.Autoscaling
-		if service.Config.Autoscaling != nil && service.Config.Autoscaling.Enabled {
-			autoscaling = &porterv1.Autoscaling{
-				Enabled: service.Config.Autoscaling.Enabled,
-			}
-			minReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MinReplicas)
-			if minReplicas < math.MinInt32 || minReplicas > math.MaxInt32 {
-				return nil, fmt.Errorf("minReplicas is out of range of int32")
-			}
-			// nolint:gosec
-			autoscaling.MinInstances = int32(minReplicas)
-			maxReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MaxReplicas)
-			if maxReplicas < math.MinInt32 || maxReplicas > math.MaxInt32 {
-				return nil, fmt.Errorf("maxReplicas is out of range of int32")
-			}
-			// nolint:gosec
-			autoscaling.MaxInstances = int32(maxReplicas)
-			cpuThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetCPUUtilizationPercentage)
-			if cpuThresholdPercent < math.MinInt32 || cpuThresholdPercent > math.MaxInt32 {
-				return nil, fmt.Errorf("cpuThresholdPercent is out of range of int32")
-			}
-			// nolint:gosec
-			autoscaling.CpuThresholdPercent = int32(cpuThresholdPercent)
-			memoryThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetMemoryUtilizationPercentage)
-			if memoryThresholdPercent < math.MinInt32 || memoryThresholdPercent > math.MaxInt32 {
-				return nil, fmt.Errorf("memoryThresholdPercent is out of range of int32")
-			}
-			// nolint:gosec
-			autoscaling.MemoryThresholdPercent = int32(memoryThresholdPercent)
+		workerConfig, err := workerConfigProtoFromConfig(service)
+		if err != nil {
+			return nil, fmt.Errorf("error converting worker config: %w", err)
 		}
-		workerConfig.Autoscaling = autoscaling
 
 		serviceProto.Config = &porterv1.Service_WorkerConfig{
 			WorkerConfig: workerConfig,
@@ -343,4 +247,121 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	}
 
 	return serviceProto, nil
+}
+
+func workerConfigProtoFromConfig(service Service) (*porterv1.WorkerServiceConfig, error) {
+	workerConfig := &porterv1.WorkerServiceConfig{}
+
+	var autoscaling *porterv1.Autoscaling
+	if service.Config.Autoscaling != nil && service.Config.Autoscaling.Enabled {
+		autoscaling = &porterv1.Autoscaling{
+			Enabled: service.Config.Autoscaling.Enabled,
+		}
+		minReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MinReplicas)
+		if minReplicas < math.MinInt32 || minReplicas > math.MaxInt32 {
+			return nil, fmt.Errorf("minReplicas is out of range of int32")
+		}
+		// nolint:gosec
+		autoscaling.MinInstances = int32(minReplicas)
+		maxReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MaxReplicas)
+		if maxReplicas < math.MinInt32 || maxReplicas > math.MaxInt32 {
+			return nil, fmt.Errorf("maxReplicas is out of range of int32")
+		}
+		// nolint:gosec
+		autoscaling.MaxInstances = int32(maxReplicas)
+		cpuThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetCPUUtilizationPercentage)
+		if cpuThresholdPercent < math.MinInt32 || cpuThresholdPercent > math.MaxInt32 {
+			return nil, fmt.Errorf("cpuThresholdPercent is out of range of int32")
+		}
+		// nolint:gosec
+		autoscaling.CpuThresholdPercent = int32(cpuThresholdPercent)
+		memoryThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetMemoryUtilizationPercentage)
+		if memoryThresholdPercent < math.MinInt32 || memoryThresholdPercent > math.MaxInt32 {
+			return nil, fmt.Errorf("memoryThresholdPercent is out of range of int32")
+		}
+		// nolint:gosec
+		autoscaling.MemoryThresholdPercent = int32(memoryThresholdPercent)
+	}
+	workerConfig.Autoscaling = autoscaling
+
+	return workerConfig, nil
+}
+
+func webConfigProtoFromConfig(service Service) (*porterv1.WebServiceConfig, error) {
+	webConfig := &porterv1.WebServiceConfig{}
+
+	var autoscaling *porterv1.Autoscaling
+	if service.Config.Autoscaling != nil && service.Config.Autoscaling.Enabled {
+		autoscaling = &porterv1.Autoscaling{
+			Enabled: service.Config.Autoscaling.Enabled,
+		}
+		minReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MinReplicas)
+		if minReplicas < math.MinInt32 || minReplicas > math.MaxInt32 {
+			return nil, errors.New("minReplicas is out of range of int32")
+		}
+		// nolint:gosec
+		autoscaling.MinInstances = int32(minReplicas)
+		maxReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MaxReplicas)
+		if maxReplicas < math.MinInt32 || maxReplicas > math.MaxInt32 {
+			return nil, errors.New("maxReplicas is out of range of int32")
+		}
+		// nolint:gosec
+		autoscaling.MaxInstances = int32(maxReplicas)
+		cpuThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetCPUUtilizationPercentage)
+		if cpuThresholdPercent < math.MinInt32 || cpuThresholdPercent > math.MaxInt32 {
+			return nil, fmt.Errorf("cpuThresholdPercent is out of range of int32")
+		}
+		// nolint:gosec
+		autoscaling.CpuThresholdPercent = int32(cpuThresholdPercent)
+		memoryThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetMemoryUtilizationPercentage)
+		if memoryThresholdPercent < math.MinInt32 || memoryThresholdPercent > math.MaxInt32 {
+			return nil, fmt.Errorf("memoryThresholdPercent is out of range of int32")
+		}
+		// nolint:gosec
+		autoscaling.MemoryThresholdPercent = int32(memoryThresholdPercent)
+	}
+	webConfig.Autoscaling = autoscaling
+
+	var healthCheck *porterv1.HealthCheck
+	// note that we are only reading from the readiness probe config, since readiness and liveness share the same config now
+	if service.Config.Health != nil {
+		health := service.Config.Health
+		if health.ReadinessProbe.Enabled && health.LivenessProbe.Enabled && health.ReadinessProbe.Path != health.LivenessProbe.Path {
+			return nil, errors.New("liveness and readiness probes must have the same path")
+		}
+		if health.ReadinessProbe.Enabled {
+			healthCheck = &porterv1.HealthCheck{
+				Enabled:  service.Config.Health.ReadinessProbe.Enabled,
+				HttpPath: service.Config.Health.ReadinessProbe.Path,
+			}
+		} else if health.LivenessProbe.Enabled {
+			healthCheck = &porterv1.HealthCheck{
+				Enabled:  service.Config.Health.LivenessProbe.Enabled,
+				HttpPath: service.Config.Health.LivenessProbe.Path,
+			}
+		}
+	}
+
+	webConfig.HealthCheck = healthCheck
+
+	domains := make([]*porterv1.Domain, 0)
+	for _, domain := range service.Config.Ingress.Hosts {
+		hostName := domain
+		domains = append(domains, &porterv1.Domain{
+			Name: hostName,
+		})
+	}
+	for _, domain := range service.Config.Ingress.PorterHosts {
+		hostName := domain
+		domains = append(domains, &porterv1.Domain{
+			Name: hostName,
+		})
+	}
+	if service.Config.Ingress.Annotations != nil && len(service.Config.Ingress.Annotations) > 0 {
+		return nil, errors.New("annotations are not supported")
+	}
+	webConfig.Domains = domains
+	webConfig.Private = !service.Config.Ingress.Enabled
+
+	return webConfig, nil
 }

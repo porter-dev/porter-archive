@@ -257,7 +257,6 @@ export function clientAppFromProto(
   proto: PorterApp,
   overrides: DetectedServices | null
 ): ClientPorterApp {
-  console.log("services", proto.services)
   const services = Object.entries(proto.services)
     .map(([name, service]) => serializedServiceFromProto({ name, service }))
     .map((svc) => {
@@ -310,8 +309,6 @@ export function clientAppFromProto(
       override: predeployOverrides,
     })]
     : undefined;
-
-  console.log(predeploy)
 
   return {
     name: proto.name,

@@ -162,33 +162,6 @@ const Logs: React.FC<Props> = ({
         }, 5000);
     };
 
-    const getRevisions = async () => {
-        const revisionResp = await api.listAppRevisions(
-            "<token>",
-            {
-                deployment_target_id: deploymentTargetId,
-            },
-            {
-                project_id: projectId,
-                cluster_id: clusterId,
-                porter_app_name: appName,
-            }
-        );
-
-        const revisions = await z
-            .object({
-                app_revisions: z.array(appRevisionValidator),
-            })
-            .parseAsync(revisionResp.data);
-
-        return revisions;
-    };
-
-    useEffect(() => {
-
-    }, [projectId, clusterId, appName, deploymentTargetId, latestRevision]);
-
-
     const { logs, refresh, moveCursor, paginationInfo } = useLogs(
         projectId,
         clusterId,

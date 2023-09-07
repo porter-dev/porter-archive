@@ -15,20 +15,19 @@ import MetricsChart from "../../expanded-app/metrics/MetricsChart";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "components/Loading";
 import CheckboxRow from "components/CheckboxRow";
-import {ServiceWithName} from "lib/porter-apps/services";
-import {Service} from "@porter-dev/api-contracts";
+import {PorterApp} from "@porter-dev/api-contracts";
 
 type PropsType = {
     projectId: number;
     clusterId: number;
     appName: string;
-    services: ServiceWithName[];
+    services: PorterApp["services"];
     deploymentTargetId: string;
 };
 
 type ServiceOption = {
     label: string;
-    value: ServiceWithName;
+    value: string;
 }
 
 const MetricsSection: React.FunctionComponent<PropsType> = ({
@@ -38,48 +37,50 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     services,
     deploymentTargetId,
 }) => {
-  const [selectedService, setSelectedService] = useState<ServiceWithName>();
+  const [selectedServiceName, setSelectedServiceName] = useState<string>("");
   const [selectedRange, setSelectedRange] = useState("1H");
   const [showAutoscalingThresholds, setShowAutoscalingThresholds] = useState(false);
 
-  const serviceOptions: ServiceOption[] = services.map(s => {
+  const serviceOptions: ServiceOption[] = Object.keys(services).map((name) => {
     return {
-      label: s.name,
-      value: s,
+      label: name,
+      value: name,
     };
   });
 
     useEffect(() => {
-        if (services.length > 0) {
-            setSelectedService(services[0])
+        if (serviceOptions.length > 0) {
+            setSelectedServiceName(serviceOptions[0].value)
         }
     }, []);
 
     const [serviceName, serviceKind, metricTypes, isHpaEnabled] = useMemo(() => {
-        if (selectedService == null || selectedService.service == null) {
+        if (selectedServiceName == "") {
             return ["", "", [], false]
         }
 
-        const serviceName = selectedService.service.absoluteName === "" ? (appName + "-" + selectedService.name) : selectedService.service.absoluteName
+        const service = services[selectedServiceName]
+
+        const serviceName = service.absoluteName === "" ? (appName + "-" + selectedServiceName) : service.absoluteName
 
         let serviceKind = ""
         const metricTypes: MetricType[] = ["cpu", "memory"];
         let isHpaEnabled = false
 
-        if (selectedService.service.config.case === "webConfig") {
+        if (service.config.case === "webConfig") {
             serviceKind = "web"
             metricTypes.push("network");
-            if (selectedService.service.config.value.autoscaling != null && selectedService.service.config.value.autoscaling.enabled) {
+            if (service.config.value.autoscaling != null && service.config.value.autoscaling.enabled) {
                 isHpaEnabled = true
             }
-            if (!selectedService.service.config.value.private) {
+            if (!service.config.value.private) {
                 metricTypes.push("nginx:status")
             }
         }
 
-        if (selectedService.service.config.case === "workerConfig") {
+        if (service.config.case === "workerConfig") {
             serviceKind = "worker"
-            if (selectedService.service.config.value.autoscaling != null && selectedService.service.config.value.autoscaling.enabled) {
+            if (service.config.value.autoscaling != null && service.config.value.autoscaling.enabled) {
                 isHpaEnabled = true
             }
         }
@@ -91,7 +92,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         }
 
         return [serviceName, serviceKind, metricTypes, isHpaEnabled]
-    }, [selectedService])
+    }, [selectedServiceName])
 
 
   const { data: metricsData, isLoading: isMetricsDataLoading, refetch } = useQuery(
@@ -234,7 +235,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       return metrics;
     },
     {
-      enabled: selectedService != null,
+      enabled: selectedServiceName != null,
       refetchOnWindowFocus: false,
       refetchInterval: 10000, // refresh metrics every 10 seconds
     }
@@ -281,8 +282,8 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           <SelectRow
             displayFlex={true}
             label="Service"
-            value={selectedService}
-            setActiveValue={(x: any) => setSelectedService(x)}
+            value={selectedServiceName}
+            setActiveValue={(x: any) => setSelectedServiceName(x)}
             options={serviceOptions}
             width="200px"
           />

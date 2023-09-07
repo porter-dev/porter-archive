@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import _ from "lodash";
 import { FormProvider, useForm } from "react-hook-form";
 import {
   PorterAppFormData,

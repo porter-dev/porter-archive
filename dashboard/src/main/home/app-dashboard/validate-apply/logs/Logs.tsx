@@ -27,7 +27,7 @@ import { Service } from "../../new-app-flow/serviceTypes";
 import LogFilterContainer from "../../expanded-app/logs/LogFilterContainer";
 import StyledLogs from "../../expanded-app/logs/StyledLogs";
 import {z} from "zod";
-import {AppRevision, appRevisionValidator} from "../../../../../lib/revisions/types";
+import {AppRevision, appRevisionValidator} from "lib/revisions/types";
 
 type Props = {
     projectId: number;

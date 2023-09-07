@@ -22,9 +22,9 @@ const VerticalSteps: React.FC<Props> = ({
                 <Line isActive={i + 1 <= currentStep} />
               )
             }
-            <Dot
-              isActive={i <= currentStep}
-            />
+            <Dot isActive={i <= currentStep}>
+              <Number>{i+1}</Number>
+            </Dot>
             <OpacityWrapper isActive={i <= currentStep}>
               {step}
               {
@@ -42,6 +42,11 @@ const VerticalSteps: React.FC<Props> = ({
 
 export default VerticalSteps;
 
+const Number = styled.div`
+  font-size: 12px;
+  color: #fff;
+`;
+
 const ReadOnlyOverlay = styled.div`
   position: absolute;
   width: 100%;
@@ -56,7 +61,7 @@ const Line = styled.div<{
 }>`
   width: 1px;
   height: calc(100% + 35px);
-  background: ${props => props.isActive ? "#fff" : "#414141"};
+  background: #414141;
   position: absolute;
   left: 4px;
   top: 8px;
@@ -66,14 +71,18 @@ const Line = styled.div<{
 const Dot = styled.div<{
   isActive: boolean;
 }>`
-  width: 9px;
-  height: 9px;
-  background: ${props => props.isActive ? "#fff" : "#414141"};
+  width: 31px;
+  height: 31px;
+  background: ${props => props.isActive ? "#3D48C3" : "#121212"};
   border-radius: 50%;
   position: absolute;
-  left: 0;
-  top: 7px;
+  left: -11px;
+  top: -3px;
   opacity: 1;
+  border: 6px solid #121212;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const OpacityWrapper = styled.div<{

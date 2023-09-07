@@ -400,7 +400,7 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster(ctx context.Context) 
 
 func (conf *OutOfClusterConfig) CreateRawConfigFromCluster(ctx context.Context) (*api.Config, error) {
 	ctx, span := telemetry.NewSpan(ctx, "ooc-create-raw-config-from-cluster")
-	defer span.End()
+	// defer span.End() // This span is one of most frequent spans. We need to sample this. For now, this span will not send
 
 	cluster := conf.Cluster
 

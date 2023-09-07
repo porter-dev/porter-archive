@@ -15,23 +15,27 @@ import (
 )
 
 // AppProtoFromYaml converts an old version Porter YAML file into a PorterApp proto object
-func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.PorterApp, error) {
+func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName string) (*porterv1.PorterApp, error) {
 	ctx, span := telemetry.NewSpan(ctx, "v1-app-proto-from-yaml")
 	defer span.End()
+
+	if appName == "" {
+		return nil, telemetry.Error(ctx, span, nil, "app name is empty")
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
 
 	if porterYamlBytes == nil {
 		return nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
 	}
 
-	porterYaml := &v1_PorterYAML{}
+	porterYaml := &PorterYAML{}
 	err := yaml.Unmarshal(porterYamlBytes, porterYaml)
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
 	}
 
 	appProto := &porterv1.PorterApp{
-		// TODO: figure out what to do about no name spec in v1
-		Name: "",
+		Name: appName,
 		Env:  porterYaml.Env,
 	}
 
@@ -53,6 +57,7 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 				Tag:        imageSpl[1],
 			}
 		} else {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "image", Value: porterYaml.Build.Image})
 			return nil, telemetry.Error(ctx, span, err, "error parsing image")
 		}
 	}
@@ -60,7 +65,7 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 	if porterYaml.Apps != nil && porterYaml.Services != nil {
 		return nil, telemetry.Error(ctx, span, nil, "'apps' and 'services' are synonymous but both were defined")
 	}
-	var services map[string]v1_Service
+	var services map[string]Service
 	if porterYaml.Apps != nil {
 		services = porterYaml.Apps
 	}
@@ -77,11 +82,13 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 	for name, service := range services {
 		serviceType, err := protoEnumFromType(name, service)
 		if err != nil {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "failing-service-name", Value: name})
 			return nil, telemetry.Error(ctx, span, err, "error getting service type")
 		}
 
 		serviceProto, err := serviceProtoFromConfig(service, serviceType)
 		if err != nil {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "failing-service-name", Value: name})
 			return nil, telemetry.Error(ctx, span, err, "error casting service config")
 		}
 
@@ -100,7 +107,7 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 	return appProto, nil
 }
 
-func protoEnumFromType(name string, service v1_Service) (porterv1.ServiceType, error) {
+func protoEnumFromType(name string, service Service) (porterv1.ServiceType, error) {
 	var serviceType porterv1.ServiceType
 
 	if service.Type != "" {
@@ -136,7 +143,7 @@ func protoEnumFromType(name string, service v1_Service) (porterv1.ServiceType, e
 	return serviceType, errors.New("no type provided and could not parse service type from name")
 }
 
-func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {
+func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {
 	serviceProto := &porterv1.Service{
 		Run:  service.Run,
 		Type: serviceType,
@@ -145,7 +152,7 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 	// if the revision number cannot be converted, it will default to 0
 	replicaCount, _ := strconv.Atoi(service.Config.ReplicaCount)
 	if replicaCount < math.MinInt32 || replicaCount > math.MaxInt32 {
-		return nil, fmt.Errorf("replica count is out of range")
+		return nil, fmt.Errorf("replica count is out of range of int32")
 	}
 	// nolint:gosec
 	serviceProto.Instances = int32(replicaCount)
@@ -178,13 +185,26 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 		serviceProto.RamMegabytes = int32(memoryFloat64)
 	}
 
+	if service.Config.Container.Port != "" && service.Config.Service.Port != "" && service.Config.Container.Port != service.Config.Service.Port {
+		return nil, errors.New("container port and service port do not match")
+	}
 	if service.Config.Container.Port != "" {
 		port, err := strconv.Atoi(service.Config.Container.Port)
 		if err != nil {
-			return nil, fmt.Errorf("invalid port '%s'", service.Config.Container.Port)
+			return nil, fmt.Errorf("container port cannot be converted to int: %w", err)
 		}
 		if port < math.MinInt32 || port > math.MaxInt32 {
-			return nil, fmt.Errorf("port is out of range")
+			return nil, fmt.Errorf("port is out of range of int32")
+		}
+		serviceProto.Port = int32(port)
+	}
+	if service.Config.Service.Port != "" {
+		port, err := strconv.Atoi(service.Config.Service.Port)
+		if err != nil {
+			return nil, fmt.Errorf("service port cannot be converted to int: %w", err)
+		}
+		if port < math.MinInt32 || port > math.MaxInt32 {
+			return nil, fmt.Errorf("port is out of range of int32")
 		}
 		serviceProto.Port = int32(port)
 	}
@@ -193,7 +213,7 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 	default:
 		return nil, fmt.Errorf("invalid service type '%s'", serviceType)
 	case porterv1.ServiceType_SERVICE_TYPE_UNSPECIFIED:
-		return nil, errors.New("Service type unspecified")
+		return nil, errors.New("KubernetesService type unspecified")
 	case porterv1.ServiceType_SERVICE_TYPE_WEB:
 		webConfig := &porterv1.WebServiceConfig{}
 
@@ -204,25 +224,25 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 			}
 			minReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MinReplicas)
 			if minReplicas < math.MinInt32 || minReplicas > math.MaxInt32 {
-				return nil, fmt.Errorf("minReplicas is out of range")
+				return nil, errors.New("minReplicas is out of range of int32")
 			}
 			// nolint:gosec
 			autoscaling.MinInstances = int32(minReplicas)
 			maxReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MaxReplicas)
 			if maxReplicas < math.MinInt32 || maxReplicas > math.MaxInt32 {
-				return nil, fmt.Errorf("maxReplicas is out of range")
+				return nil, errors.New("maxReplicas is out of range of int32")
 			}
 			// nolint:gosec
 			autoscaling.MaxInstances = int32(maxReplicas)
 			cpuThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetCPUUtilizationPercentage)
 			if cpuThresholdPercent < math.MinInt32 || cpuThresholdPercent > math.MaxInt32 {
-				return nil, fmt.Errorf("cpuThresholdPercent is out of range")
+				return nil, fmt.Errorf("cpuThresholdPercent is out of range of int32")
 			}
 			// nolint:gosec
 			autoscaling.CpuThresholdPercent = int32(cpuThresholdPercent)
 			memoryThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetMemoryUtilizationPercentage)
 			if memoryThresholdPercent < math.MinInt32 || memoryThresholdPercent > math.MaxInt32 {
-				return nil, fmt.Errorf("memoryThresholdPercent is out of range")
+				return nil, fmt.Errorf("memoryThresholdPercent is out of range of int32")
 			}
 			// nolint:gosec
 			autoscaling.MemoryThresholdPercent = int32(memoryThresholdPercent)
@@ -232,11 +252,23 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 		var healthCheck *porterv1.HealthCheck
 		// note that we are only reading from the readiness probe config, since readiness and liveness share the same config now
 		if service.Config.Health != nil {
-			healthCheck = &porterv1.HealthCheck{
-				Enabled:  service.Config.Health.ReadinessProbe.Enabled,
-				HttpPath: service.Config.Health.ReadinessProbe.Path,
+			health := service.Config.Health
+			if health.ReadinessProbe.Enabled && health.LivenessProbe.Enabled && health.ReadinessProbe.Path != health.LivenessProbe.Path {
+				return nil, errors.New("liveness and readiness probes must have the same path")
+			}
+			if health.ReadinessProbe.Enabled {
+				healthCheck = &porterv1.HealthCheck{
+					Enabled:  service.Config.Health.ReadinessProbe.Enabled,
+					HttpPath: service.Config.Health.ReadinessProbe.Path,
+				}
+			} else if health.LivenessProbe.Enabled {
+				healthCheck = &porterv1.HealthCheck{
+					Enabled:  service.Config.Health.LivenessProbe.Enabled,
+					HttpPath: service.Config.Health.LivenessProbe.Path,
+				}
 			}
 		}
+
 		webConfig.HealthCheck = healthCheck
 
 		domains := make([]*porterv1.Domain, 0)
@@ -245,6 +277,15 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 			domains = append(domains, &porterv1.Domain{
 				Name: hostName,
 			})
+		}
+		for _, domain := range service.Config.Ingress.PorterHosts {
+			hostName := domain
+			domains = append(domains, &porterv1.Domain{
+				Name: hostName,
+			})
+		}
+		if service.Config.Ingress.Annotations != nil && len(service.Config.Ingress.Annotations) > 0 {
+			return nil, errors.New("annotations are not supported")
 		}
 		webConfig.Domains = domains
 		webConfig.Private = !service.Config.Ingress.Enabled
@@ -262,25 +303,25 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 			}
 			minReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MinReplicas)
 			if minReplicas < math.MinInt32 || minReplicas > math.MaxInt32 {
-				return nil, fmt.Errorf("minReplicas is out of range")
+				return nil, fmt.Errorf("minReplicas is out of range of int32")
 			}
 			// nolint:gosec
 			autoscaling.MinInstances = int32(minReplicas)
 			maxReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MaxReplicas)
 			if maxReplicas < math.MinInt32 || maxReplicas > math.MaxInt32 {
-				return nil, fmt.Errorf("maxReplicas is out of range")
+				return nil, fmt.Errorf("maxReplicas is out of range of int32")
 			}
 			// nolint:gosec
 			autoscaling.MaxInstances = int32(maxReplicas)
 			cpuThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetCPUUtilizationPercentage)
 			if cpuThresholdPercent < math.MinInt32 || cpuThresholdPercent > math.MaxInt32 {
-				return nil, fmt.Errorf("cpuThresholdPercent is out of range")
+				return nil, fmt.Errorf("cpuThresholdPercent is out of range of int32")
 			}
 			// nolint:gosec
 			autoscaling.CpuThresholdPercent = int32(cpuThresholdPercent)
 			memoryThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetMemoryUtilizationPercentage)
 			if memoryThresholdPercent < math.MinInt32 || memoryThresholdPercent > math.MaxInt32 {
-				return nil, fmt.Errorf("memoryThresholdPercent is out of range")
+				return nil, fmt.Errorf("memoryThresholdPercent is out of range of int32")
 			}
 			// nolint:gosec
 			autoscaling.MemoryThresholdPercent = int32(memoryThresholdPercent)

@@ -30,7 +30,7 @@ func TestParseYAML(t *testing.T) {
 			want, err := os.ReadFile(fmt.Sprintf("testdata/%s.yaml", tt.porterYamlFileName))
 			is.NoErr(err) // no error expected reading test file
 
-			got, err := ParseYAML(context.Background(), want)
+			got, err := ParseYAML(context.Background(), want, "test-app")
 			is.NoErr(err) // umbrella chart values should convert to map[string]any without issues
 
 			diffProtoWithFailTest(t, is, tt.want, got)
@@ -118,7 +118,7 @@ var result_nobuild = &porterv1.PorterApp{
 }
 
 var v1_result_nobuild_no_image = &porterv1.PorterApp{
-	Name: "",
+	Name: "test-app",
 	Services: map[string]*porterv1.Service{
 		"example-job": {
 			Run:          "echo 'hello world'",

@@ -147,6 +147,7 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 	if replicaCount < math.MinInt32 || replicaCount > math.MaxInt32 {
 		return nil, fmt.Errorf("replica count is out of range")
 	}
+	// nolint:gosec
 	serviceProto.Instances = int32(replicaCount)
 
 	if service.Config.Resources.Requests.Cpu != "" {
@@ -205,21 +206,25 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 			if minReplicas < math.MinInt32 || minReplicas > math.MaxInt32 {
 				return nil, fmt.Errorf("minReplicas is out of range")
 			}
+			// nolint:gosec
 			autoscaling.MinInstances = int32(minReplicas)
 			maxReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MaxReplicas)
 			if maxReplicas < math.MinInt32 || maxReplicas > math.MaxInt32 {
 				return nil, fmt.Errorf("maxReplicas is out of range")
 			}
+			// nolint:gosec
 			autoscaling.MaxInstances = int32(maxReplicas)
 			cpuThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetCPUUtilizationPercentage)
 			if cpuThresholdPercent < math.MinInt32 || cpuThresholdPercent > math.MaxInt32 {
 				return nil, fmt.Errorf("cpuThresholdPercent is out of range")
 			}
+			// nolint:gosec
 			autoscaling.CpuThresholdPercent = int32(cpuThresholdPercent)
 			memoryThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetMemoryUtilizationPercentage)
 			if memoryThresholdPercent < math.MinInt32 || memoryThresholdPercent > math.MaxInt32 {
 				return nil, fmt.Errorf("memoryThresholdPercent is out of range")
 			}
+			// nolint:gosec
 			autoscaling.MemoryThresholdPercent = int32(memoryThresholdPercent)
 		}
 		webConfig.Autoscaling = autoscaling
@@ -256,12 +261,28 @@ func serviceProtoFromConfig(service v1_Service, serviceType porterv1.ServiceType
 				Enabled: service.Config.Autoscaling.Enabled,
 			}
 			minReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MinReplicas)
+			if minReplicas < math.MinInt32 || minReplicas > math.MaxInt32 {
+				return nil, fmt.Errorf("minReplicas is out of range")
+			}
+			// nolint:gosec
 			autoscaling.MinInstances = int32(minReplicas)
 			maxReplicas, _ := strconv.Atoi(service.Config.Autoscaling.MaxReplicas)
+			if maxReplicas < math.MinInt32 || maxReplicas > math.MaxInt32 {
+				return nil, fmt.Errorf("maxReplicas is out of range")
+			}
+			// nolint:gosec
 			autoscaling.MaxInstances = int32(maxReplicas)
 			cpuThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetCPUUtilizationPercentage)
+			if cpuThresholdPercent < math.MinInt32 || cpuThresholdPercent > math.MaxInt32 {
+				return nil, fmt.Errorf("cpuThresholdPercent is out of range")
+			}
+			// nolint:gosec
 			autoscaling.CpuThresholdPercent = int32(cpuThresholdPercent)
 			memoryThresholdPercent, _ := strconv.Atoi(service.Config.Autoscaling.TargetMemoryUtilizationPercentage)
+			if memoryThresholdPercent < math.MinInt32 || memoryThresholdPercent > math.MaxInt32 {
+				return nil, fmt.Errorf("memoryThresholdPercent is out of range")
+			}
+			// nolint:gosec
 			autoscaling.MemoryThresholdPercent = int32(memoryThresholdPercent)
 		}
 		workerConfig.Autoscaling = autoscaling

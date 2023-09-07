@@ -34,7 +34,7 @@ func TestGetProjectSuccessful(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	expProject := proj.ToProjectType(features.NewClient(nil))
+	expProject := proj.ToProjectType(&features.Client{})
 	gotProject := types.Project{}
 
 	apitest.AssertResponseExpected(t, rr, &expProject, &gotProject)

@@ -28,13 +28,6 @@ func (c Client) BoolVariation(field string, context ldcontext.Context, defaultVa
 	return c.client.BoolVariation(field, context, defaultValue)
 }
 
-// NewClient returns a Client wrapping a launchdarkly client instance
-func NewClient(client *ld.LDClient) *Client {
-	return &Client{
-		client: client,
-	}
-}
-
 // GetClient retrieves a Client for interacting with LaunchDarkly
 func GetClient(envConf *envloader.EnvConf) (*Client, error) {
 	ldClient, err := ld.MakeClient(envConf.ServerConf.LaunchDarklySDKKey, 5*time.Second)
@@ -50,5 +43,5 @@ func GetClient(envConf *envloader.EnvConf) (*Client, error) {
 		return &Client{}, errors.New("failed to create new launchdarkly client: sdk failed to initialize")
 	}
 
-	return NewClient(ldClient), nil
+	return &Client{ldClient}, nil
 }

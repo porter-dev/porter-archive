@@ -53,7 +53,7 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	if !project.ValidateApplyV2 {
 		err := telemetry.Error(ctx, span, nil, "project does not have apply v2 enabled")
-		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 		return
 	}
 

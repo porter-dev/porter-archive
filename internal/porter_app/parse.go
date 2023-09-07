@@ -3,6 +3,7 @@ package porter_app
 import (
 	"context"
 
+	v1 "github.com/porter-dev/porter/internal/porter_app/v1"
 	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 
 	"sigs.k8s.io/yaml"
@@ -17,6 +18,7 @@ type PorterYamlVersion string
 const (
 	// PorterYamlVersion_V2 is the v2 version of the porter yaml
 	PorterYamlVersion_V2 PorterYamlVersion = "v2"
+	PorterYamlVersion_V1 PorterYamlVersion = "v1stack"
 )
 
 // ParseYAML converts a Porter YAML file into a PorterApp proto object
@@ -25,7 +27,7 @@ func ParseYAML(ctx context.Context, porterYaml []byte) (*porterv1.PorterApp, err
 	defer span.End()
 
 	if porterYaml == nil {
-		return nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
+		return nil, telemetry.Error(ctx, span, nil, "porter yaml input is nil")
 	}
 
 	version := &yamlVersion{}
@@ -35,18 +37,27 @@ func ParseYAML(ctx context.Context, porterYaml []byte) (*porterv1.PorterApp, err
 	}
 
 	var appProto *porterv1.PorterApp
+
 	switch version.Version {
 	case PorterYamlVersion_V2:
 		appProto, err = v2.AppProtoFromYaml(ctx, porterYaml)
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "error converting v2 yaml to proto")
 		}
+	// backwards compatibility for old porter.yaml files
+	// track this span in telemetry and reach out to customers who are still using old porter.yaml if they exist.
+	// once no one is converting from old porter.yaml, we can remove this code
+	case PorterYamlVersion_V1, "":
+		appProto, err = v1.AppProtoFromYaml(ctx, porterYaml)
+		if err != nil {
+			return nil, telemetry.Error(ctx, span, err, "error converting v1 yaml to proto")
+		}
 	default:
 		return nil, telemetry.Error(ctx, span, nil, "porter yaml version not supported")
 	}
 
 	if appProto == nil {
-		return nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
+		return nil, telemetry.Error(ctx, span, nil, "porter yaml output is nil")
 	}
 
 	return appProto, nil

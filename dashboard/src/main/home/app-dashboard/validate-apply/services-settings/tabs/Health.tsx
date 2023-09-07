@@ -56,7 +56,7 @@ const Health: React.FC<HealthProps> = ({ index, service }) => {
               "You may only edit this field in your porter.yaml."
             }
           >
-            <Text color="helper">Enable Liveness Probe</Text>
+            <Text color="helper">Enable health checks</Text>
           </Checkbox>
         )}
       />

@@ -248,7 +248,7 @@ class SettingsPage extends Component<PropsType, StateType> {
         <StyledSettingsPage>
           {this.renderHeaderSection()}
           {this.props.isCloning && this.getNameInput()}
-          {!currentProject?.capi_provisioner_enabled && (
+          {!currentProject?.simplified_view_enabled && (
             <>
               <Heading>Destination</Heading>
               <Helper>

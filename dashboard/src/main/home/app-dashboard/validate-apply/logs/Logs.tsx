@@ -28,6 +28,7 @@ import LogFilterContainer from "../../expanded-app/logs/LogFilterContainer";
 import StyledLogs from "../../expanded-app/logs/StyledLogs";
 import {z} from "zod";
 import {AppRevision, appRevisionValidator} from "lib/revisions/types";
+import {useLatestRevisionNumber, useRevisionIdToNumber} from "lib/hooks/useRevisionList";
 
 type Props = {
     projectId: number;
@@ -52,8 +53,6 @@ const Logs: React.FC<Props> = ({
     const [searchText, setSearchText] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
     const [notification, setNotification] = useState<string>();
-    const [revisionMap, setRevisionMap] = useState<Map<string, number>>(new Map());
-    const [latestRevisionNumber, setLatestRevisionNumber] = useState<number>(0);
 
     const [hasPorterAgent, setHasPorterAgent] = useState(true);
     const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
@@ -66,6 +65,9 @@ const Logs: React.FC<Props> = ({
         revision: GenericLogFilter.getDefaultOption("revision").value,
         output_stream: GenericLogFilter.getDefaultOption("output_stream").value,
     });
+
+    const revisionIdToNumber = useRevisionIdToNumber(appName, deploymentTargetId)
+    const latestRevisionNumber = useLatestRevisionNumber(appName, deploymentTargetId)
 
     const isAgentVersionUpdated = (agentImage: string | undefined) => {
         if (agentImage == null) {
@@ -183,10 +185,6 @@ const Logs: React.FC<Props> = ({
     };
 
     useEffect(() => {
-        getRevisions().then((revisions) => {
-            setRevisionMap(new Map(revisions.app_revisions.map((revision) => [revision.id, revision.revision_number])))
-            setLatestRevisionNumber(revisions.app_revisions.map((revision) => revision.revision_number).reduce((a, b) => Math.max(a, b), 0))
-        }).catch((err) => console.log(err));
 
     }, [projectId, clusterId, appName, deploymentTargetId, latestRevision]);
 
@@ -201,7 +199,7 @@ const Logs: React.FC<Props> = ({
         enteredSearchText,
         notify,
         setIsLoading,
-        revisionMap,
+        revisionIdToNumber,
         selectedDate,
     );
 
@@ -352,6 +350,7 @@ const Logs: React.FC<Props> = ({
                                 <StyledLogs
                                     logs={logs}
                                     filters={filters}
+                                    appName={appName}
                                 />
                                 <LoadMoreButton
                                     active={selectedDate && logs.length !== 0}

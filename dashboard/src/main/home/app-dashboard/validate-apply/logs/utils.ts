@@ -51,7 +51,7 @@ export const useLogs = (
   searchParam: string,
   notify: (message: string) => void,
   setLoading: (isLoading: boolean) => void,
-  revisionMap: Map<string, number>,
+  revisionIdToNumber: Record<string, number>,
     // if setDate is set, results are not live
   setDate?: Date,
   timeRange?: {
@@ -271,11 +271,11 @@ export const useLogs = (
 
       newLogs.filter((log) => {
         return log.metadata?.raw_labels?.porter_run_app_revision_id != null
-            && revisionMap.has(log.metadata.raw_labels.porter_run_app_revision_id)
-            && revisionMap.get(log.metadata.raw_labels.porter_run_app_revision_id) != 0
+            && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != null
+            && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != 0
       }).forEach((log) => {
         if (log.metadata?.raw_labels?.porter_run_app_revision_id != null) {
-            const revisionNumber = revisionMap.get(log.metadata.raw_labels.porter_run_app_revision_id);
+            const revisionNumber = revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id];
             if (revisionNumber != null && revisionNumber != 0) {
               log.metadata.revision = revisionNumber.toString();
             }

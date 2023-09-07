@@ -191,7 +191,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         porterApp.name,
       ]);
       setPreviewRevision(null);
-    } catch (err) {}
+    } catch (err) { }
   });
 
   useEffect(() => {
@@ -218,7 +218,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           latestSource={latestSource}
           onSubmit={onSubmit}
         />
-        <Spacer y={1} />
         <AnimateHeight height={isDirty && !onlyExpandedChanged ? "auto" : 0}>
           <Banner
             type="warning"
@@ -252,11 +251,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
+                {
+                  label: "Build Settings",
+                  value: "build-settings",
+                },
+              ]
               : []),
             { label: "Settings", value: "settings" },
           ]}

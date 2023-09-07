@@ -21,6 +21,9 @@ import {
   LoadBalancer,
   LoadBalancerType,
   EKSLogging,
+  EKSPreflightValues,
+  PreflightCheckRequest,
+  GKE
 } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
@@ -35,6 +38,8 @@ import Checkbox from "./porter/Checkbox";
 import Tooltip from "./porter/Tooltip";
 import Icon from "./porter/Icon";
 import Loading from "./Loading";
+import PreflightChecks from "./PreflightChecks";
+import Placeholder from "./Placeholder";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -124,6 +129,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [preflightData, setPreflightData] = useState({})
+  const [preflightFailed, setPreflightFailed] = useState<boolean>(false)
 
   const markStepStarted = async (step: string, errMessage?: string) => {
     try {
@@ -468,7 +475,47 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
   }, [isExpanded, props.selectedClusterVersion]);
 
+  useEffect(() => {
+    if (!props.clusterId) {
+      preflightChecks()
+    }
 
+  }, [props.selectedClusterVersion, awsRegion]);
+
+  const preflightChecks = async () => {
+    setIsLoading(true);
+
+
+    var data = new PreflightCheckRequest({
+      projectId: BigInt(currentProject.id),
+      cloudProvider: EnumCloudProvider.AWS,
+      cloudProviderCredentialsId: props.credentialId,
+      preflightValues: {
+        case: "eksPreflightValues",
+        value: new EKSPreflightValues({
+          eks: new EKS({
+            clusterName,
+            clusterVersion: clusterVersion || "v1.24.0",
+            cidrRange: cidrRange || "10.78.0.0/16",
+            region: awsRegion,
+            logging: controlPlaneLogs,
+            enableGuardDuty: guardDutyEnabled,
+            targetArn: props.credentialId,
+            externalId: user?.external_id,
+          })
+        })
+      }
+    });
+    const preflightDataResp = await api.preflightCheck(
+      "<token>", data,
+      {
+        id: currentProject.id,
+      }
+    )
+    setPreflightData(preflightDataResp?.data?.Msg);
+    setIsLoading(false)
+
+  }
   const renderAdvancedSettings = () => {
     return (
       <>
@@ -961,6 +1008,30 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   return (
     <>
       <StyledForm>{renderForm()}</StyledForm>
+
+
+      {props.credentialId && (<>
+
+        {isLoading ?
+          <>
+            <Placeholder>
+              <Loading />
+            </Placeholder>
+            <Spacer y={1} />
+          </>
+          :
+          <>
+            {(!props.clusterId) &&
+              <>
+                <PreflightChecks preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
+                <Spacer y={1} />
+              </>
+            }
+          </>
+        }
+
+      </>
+      )}
       <Button
         // disabled={isDisabled()}
         disabled={

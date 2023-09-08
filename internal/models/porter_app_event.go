@@ -27,6 +27,8 @@ type PorterAppEvent struct {
 	// PorterAppID is the ID that the given event relates to
 	PorterAppID uint  `json:"porter_app_id"`
 	Metadata    JSONB `json:"metadata" sql:"type:jsonb" gorm:"type:jsonb"`
+
+	DeploymentTargetID uuid.UUID `json:"deployment_target_id" gorm:"type:uuid;default:00000000-0000-0000-0000-000000000000"`
 }
 
 // TableName overrides the table name

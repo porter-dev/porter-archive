@@ -95,9 +95,6 @@ const ServiceList: React.FC<ServiceListProps> = ({
   const services = useMemo(() => {
     // if predeploy, only show predeploy services
     // if not predeploy, only show non-predeploy services
-    if (isPredeploy) {
-      console.log("fields", fields)
-    }
     return fields.map((svc, idx) => {
       const predeploy = isPredeployService(svc);
       return {

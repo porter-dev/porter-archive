@@ -1,0 +1,207 @@
+legacy-web:
+  fullnameOverride: legacy-web
+  albIngress:
+    annotations: null
+    certificate_arn: null
+    custom_paths: []
+    enabled: false
+    external_dns: false
+    group_name: null
+    group_order: null
+    healthcheck_healthy_threshold_count: null
+    healthcheck_interval_seconds: null
+    healthcheck_path: null
+    healthcheck_port: null
+    healthcheck_protocol: null
+    healthcheck_success_codes: null
+    healthcheck_timeout_seconds: null
+    healthcheck_unhealthy_threshold_count: null
+    hosts: []
+    scheme: internet-facing
+    security_groups: null
+    target_node_labels: null
+    target_type: ip
+    wafv2_acl_arn: null
+  auto_deploy: true
+  autoscaling:
+    enabled: false
+    maxReplicas: 10
+    minReplicas: 1
+    targetCPUUtilizationPercentage: 50
+    targetMemoryUtilizationPercentage: 50
+  bluegreen:
+    disablePrimaryDeployment: false
+    enabled: false
+    imageTags: []
+  cloudsql:
+    additionalConnection:
+      connectionName: ""
+      dbPort: 5432
+      enabled: false
+    connectionName: ""
+    dbPort: 5432
+    enabled: false
+    serviceAccountJSON: ""
+  clusterId: 2
+  container:
+    args: null
+    command: null
+    env: {}
+    lifecycle:
+      postStart: null
+      preStop: null
+    port: 80
+  currentCluster:
+    service:
+      is_aws: false
+      is_do: false
+      is_gcp: false
+  customNodePort:
+    enabled: false
+    port: 30000
+  datadog:
+    enabled: false
+  emptyDir:
+    enabled: false
+    mountPath: /mypath
+  health:
+    livenessCommand:
+      command: ls -l
+      enabled: false
+      failureThreshold: 3
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      successThreshold: 1
+      timeoutSeconds: 1
+    livenessProbe:
+      auth:
+        enabled: false
+        password: ""
+        username: ""
+      enabled: false
+      failureThreshold: 3
+      httpHeaders: []
+      initialDelaySeconds: 0
+      path: /livez
+      periodSeconds: 5
+      scheme: HTTP
+      successThreshold: 1
+      timeoutSeconds: 1
+    readinessProbe:
+      auth:
+        enabled: false
+        password: ""
+        username: ""
+      enabled: false
+      failureThreshold: 3
+      httpHeaders: []
+      initialDelaySeconds: 0
+      path: /readyz
+      periodSeconds: 5
+      scheme: HTTP
+      successThreshold: 1
+      timeoutSeconds: 1
+    startupProbe:
+      auth:
+        enabled: false
+        password: ""
+        username: ""
+      enabled: false
+      failureThreshold: 3
+      httpHeaders: []
+      path: /startupz
+      periodSeconds: 5
+      scheme: HTTP
+      timeoutSeconds: 1
+  hostAliases: []
+  image:
+    pullPolicy: Always
+    repository: nginx
+    tag: latest
+  ingress:
+    annotations: {}
+    custom_domain: false
+    custom_paths: []
+    customTls:
+      customTlsSecret: null
+      enabled: false
+    enabled: false
+    hosts: []
+    porter_hosts: []
+    provider: ""
+    rewriteCustomPathsEnabled: true
+    tls: true
+    useDefaultIngressTLSSecret: false
+    wildcard: false
+  keda:
+    cooldownPeriod: 300
+    enabled: false
+    fallback:
+      failureReplicas: 6
+      failureThreshold: 3
+    hpa:
+      scaleDown:
+        policy:
+          periodSeconds: 300
+          type: Percent
+          value: 10
+        stabilizationWindowSeconds: 300
+      scaleUp:
+        policy:
+          periodSeconds: 300
+          type: Percent
+          value: 10
+        stabilizationWindowSeconds: 300
+    maxReplicaCount: 10
+    minReplicaCount: 1
+    pollingInterval: 30
+    trigger:
+      metricName: ""
+      metricQuery: ""
+      metricThreshold: ""
+      metricType: AverageValue
+    triggers: []
+  namespace: default
+  nodeSelector: {}
+  podLabels: {}
+  privateIngress:
+    annotations: {}
+    clusterIssuer: letsencrypt-prod-private
+    custom_paths: []
+    enabled: false
+    hosts: []
+    privateIngressClass: null
+    tls: false
+  pvc:
+    enabled: false
+    existingVolume: ""
+    mountPath: /mypath
+    storage: 20Gi
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  service:
+    port: 80
+  serviceAccount:
+    annotations: {}
+    create: true
+    name: ""
+  showStartCommand: true
+  stack:
+    enabled: false
+    name: ""
+    revision: 0
+  statefulset:
+    enabled: false
+  terminationGracePeriodSeconds: 30
+  tolerations: []
+  topology:
+    enabled: false
+    labelSelector:
+      enabled: false
+      matchLabels: {}
+    maxSkew: null
+    topologyKey: null
+    whenUnsatisfiable: null

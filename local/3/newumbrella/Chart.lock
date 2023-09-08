@@ -1,0 +1,6 @@
+dependencies:
+- name: web
+  repository: https://charts.getporter.dev
+  version: 0.136.0
+digest: sha256:e2669625ae4afd9c65c245b04678fc93dc8d362aee9d963dcfeb086a551b1505
+generated: "2023-09-08T16:00:39.899337-04:00"

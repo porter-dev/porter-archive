@@ -13,7 +13,7 @@ type PorterAppEvent struct {
 	gorm.Model
 
 	// ID is a unique identifier for a given event
-	ID uuid.UUID `gorm:"type:uuid;primaryKey;index:idx_app_instance" json:"id"`
+	ID uuid.UUID `gorm:"type:uuid;primaryKey;index:idx_app_deployment_target" json:"id"`
 	// Status contains the accepted status' of a given event such as SUCCESS, FAILED, PROGRESSING, etc.
 	Status string `json:"status"`
 	// Type represents a supported Porter Stack Event
@@ -27,7 +27,7 @@ type PorterAppEvent struct {
 	// PorterAppID is the ID that the given event relates to
 	PorterAppID uint `json:"porter_app_id"`
 	// DeploymentTargetID is the ID of the deployment target that the event relates to
-	DeploymentTargetID uuid.UUID `json:"deployment_target_id" gorm:"type:uuid;index:idx_app_instance;default:00000000-0000-0000-0000-000000000000"`
+	DeploymentTargetID uuid.UUID `json:"deployment_target_id" gorm:"type:uuid;index:idx_app_deployment_target;default:00000000-0000-0000-0000-000000000000"`
 	Metadata           JSONB     `json:"metadata" sql:"type:jsonb" gorm:"type:jsonb"`
 }
 

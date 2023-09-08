@@ -67,6 +67,7 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// switch back to calling ListEventsByPorterAppID and remove ListEventsByPorterAppIDExcludingAppEvents when https://linear.app/porter/issue/POR-1670/fix-porter-app-app-events is resolved
 	porterAppEvents, paginatedResult, err := p.Repo().PorterAppEvent().ListEventsByPorterAppIDExcludingAppEvents(ctx, app.ID, helpers.WithPageSize(20), helpers.WithPage(int(pr.Page)))
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {

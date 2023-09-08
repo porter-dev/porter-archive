@@ -26,7 +26,7 @@ interface ServiceProps {
   index: number;
   service: ClientService;
   chart?: any;
-  update: UseFieldArrayUpdate<PorterAppFormData, "app.services">;
+  update: UseFieldArrayUpdate<PorterAppFormData, "app.services" | "app.predeploy">;
   remove: (index: number) => void;
 }
 
@@ -47,7 +47,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   const [maxRAM, setMaxRAM] = useState(
     Math.round(
       convert(AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"], "GiB").to("MB") *
-        UPPER_BOUND
+      UPPER_BOUND
     )
   ); //default is set to a t3 medium
   const context = useContext(Context);
@@ -140,7 +140,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             );
           }
         })
-        .catch((error) => {});
+        .catch((error) => { });
     }
   }, []);
 
@@ -246,7 +246,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         // Check if has built image
         getHasBuiltImage() && (
           <StatusFooter
-            setExpandedJob={() => {}}
+            setExpandedJob={() => { }}
             chart={chart}
             service={service}
           />
@@ -331,7 +331,7 @@ const ServiceHeader = styled.div<{
     border-radius: 20px;
     margin-left: -10px;
     transform: ${(props: { showExpanded?: boolean; chart: any }) =>
-      props.showExpanded ? "" : "rotate(-90deg)"};
+    props.showExpanded ? "" : "rotate(-90deg)"};
   }
 `;
 

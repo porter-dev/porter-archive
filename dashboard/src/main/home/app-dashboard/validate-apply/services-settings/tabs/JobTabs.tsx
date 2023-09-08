@@ -39,14 +39,14 @@ const JobTabs: React.FC<Props> = ({
 
   const tabs = isPredeploy
     ? [
-        { label: "Main", value: "main" as const },
-        { label: "Resources", value: "resources" as const },
-      ]
+      { label: "Main", value: "main" as const },
+      { label: "Resources", value: "resources" as const },
+    ]
     : [
-        { label: "Main", value: "main" as const },
-        { label: "Resources", value: "resources" as const },
-        { label: "Advanced", value: "advanced" as const },
-      ];
+      { label: "Main", value: "main" as const },
+      { label: "Resources", value: "resources" as const },
+      { label: "Advanced", value: "advanced" as const },
+    ];
 
   return (
     <>
@@ -56,13 +56,14 @@ const JobTabs: React.FC<Props> = ({
         setCurrentTab={setCurrentTab}
       />
       {match(currentTab)
-        .with("main", () => <MainTab index={index} service={service} />)
+        .with("main", () => <MainTab index={index} service={service} isPredeploy={isPredeploy} />)
         .with("resources", () => (
           <Resources
             index={index}
             maxCPU={maxCPU}
             maxRAM={maxRAM}
             service={service}
+            isPredeploy={isPredeploy}
           />
         ))
         .with("advanced", () => (

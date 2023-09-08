@@ -154,11 +154,13 @@ func (c *Client) ParseYAML(
 	ctx context.Context,
 	projectID, clusterID uint,
 	b64Yaml string,
+	appName string,
 ) (*porter_app.ParsePorterYAMLToProtoResponse, error) {
 	resp := &porter_app.ParsePorterYAMLToProtoResponse{}
 
 	req := &porter_app.ParsePorterYAMLToProtoRequest{
 		B64Yaml: b64Yaml,
+		AppName: appName,
 	}
 
 	err := c.postRequest(

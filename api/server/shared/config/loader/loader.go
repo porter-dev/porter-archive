@@ -23,6 +23,7 @@ import (
 	"github.com/porter-dev/porter/internal/auth/sessionstore"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/billing"
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/notifier"
@@ -241,6 +242,12 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 
 		sc.GithubAppSecret = append(sc.GithubAppSecret, secret...)
 	}
+
+	launchDarklyClient, err := features.GetClient(envConf)
+	if err != nil {
+		return nil, fmt.Errorf("could not create launch darkly client: %s", err)
+	}
+	res.LaunchDarklyClient = launchDarklyClient
 
 	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {
 		res.Logger.Info().Msg("Creating Slack client")

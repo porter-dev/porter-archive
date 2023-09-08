@@ -1,0 +1,89 @@
+
+# Source: testchart/charts/legacy-web/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy2-web
+  labels:
+    helm.sh/chart: legacy-web-0.136.0
+    app.kubernetes.io/name: legacy-web
+    app.kubernetes.io/instance: umbrella-chart
+    app.kubernetes.io/version: "1.25.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  
+  
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: legacy-web
+      app.kubernetes.io/instance: umbrella-chart
+  template:
+    metadata:
+      annotations:
+        helm.sh/revision: "1"
+      labels:
+        app.kubernetes.io/name: legacy-web
+        app.kubernetes.io/instance: umbrella-chart
+        porter.run/application-name: "umbrella-chart"
+    spec:
+      serviceAccountName: legacy-web
+      terminationGracePeriodSeconds: 30
+      hostAliases:
+        []
+      securityContext:
+        null
+      containers:
+        - name: legacy-web
+          securityContext:
+            null
+          image: "nginx:latest"
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          
+          
+          
+          
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 256Mi
+          
+          
+          env:
+            # Porter default environment variables
+            - name: PORTER_RESOURCES_RAM
+              value: "256Mi"
+            - name: PORTER_RESOURCES_CPU
+              value: "100m"
+            - name: PORTER_RESOURCES_REPLICAS
+              value: "1"
+            - name: PORTER_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: PORTER_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: PORTER_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: PORTER_POD_IMAGE_TAG
+              value: "latest"
+            - name: PORTER_POD_REVISION
+              value: "1"
+            
+          
+          
+      tolerations:
+        - key: "removable"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"

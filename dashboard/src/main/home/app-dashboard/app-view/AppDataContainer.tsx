@@ -165,10 +165,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       if (
         redeployOnSave &&
-        latestSource.type === "github" &&
-        dirtyFields.app?.build
+        latestSource.type === "github"
       ) {
-        await api.reRunGHWorkflow(
+        const res = await api.reRunGHWorkflow(
           "<token>",
           {},
           {
@@ -182,6 +181,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           }
         );
 
+        if (res.data != null) {
+          window.open(res.data, "_blank", "noreferrer");
+        }
+
         setRedeployOnSave(false);
       }
 
@@ -193,6 +196,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         porterApp.name,
       ]);
       setPreviewRevision(null);
+      history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
     } catch (err) { }
   });
 

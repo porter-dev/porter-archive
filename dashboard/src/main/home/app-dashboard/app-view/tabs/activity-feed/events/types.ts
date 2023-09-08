@@ -27,12 +27,14 @@ const porterAppDeployEventMetadataValidator = z.object({
     })),
 });
 const porterAppBuildEventMetadataValidator = z.object({
-    org: z.string(),
     repo: z.string(),
-    branch: z.string(),
-    action_run_id: z.string(),
-    github_account_id: z.string(),
+    action_run_id: z.number(),
+    github_account_id: z.number(),
 })
+const porterAppPreDeployEventMetadataValidator = z.object({
+    start_time: z.string(),
+    end_time: z.string().optional(),
+});
 export const porterAppEventValidator = z.object({
     id: z.string(),
     created_at: z.string(),
@@ -45,6 +47,7 @@ export const porterAppEventValidator = z.object({
         porterAppAppEventMetadataValidator,
         porterAppDeployEventMetadataValidator,
         porterAppBuildEventMetadataValidator,
+        porterAppPreDeployEventMetadataValidator,
     ]).optional(),
 }).refine((data) => {
     if (data.type === PorterAppEventType.APP_EVENT) {
@@ -55,6 +58,9 @@ export const porterAppEventValidator = z.object({
     }
     if (data.type === PorterAppEventType.BUILD) {
         return porterAppBuildEventMetadataValidator.safeParse(data.metadata).success;
+    }
+    if (data.type === PorterAppEventType.PRE_DEPLOY) {
+        return porterAppPreDeployEventMetadataValidator.safeParse(data.metadata).success;
     }
     return true;
 });

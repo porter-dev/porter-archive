@@ -8,8 +8,8 @@ import { SourceOptions } from "lib/porter-apps";
 import { PorterAppRecord } from "../../../AppView";
 
 export const getDuration = (event: PorterAppEvent): string => {
-    const startTimeStamp = new Date(event.metadata.start_time ?? event.created_at).getTime();
-    const endTimeStamp = new Date(event.metadata.end_time ?? event.updated_at).getTime();
+    const startTimeStamp = new Date(event.metadata?.start_time ?? event.created_at).getTime();
+    const endTimeStamp = new Date(event.metadata?.end_time ?? event.updated_at).getTime();
 
     const timeDifferenceMilliseconds = endTimeStamp - startTimeStamp;
 

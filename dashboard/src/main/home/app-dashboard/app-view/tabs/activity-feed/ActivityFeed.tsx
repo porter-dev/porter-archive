@@ -52,9 +52,11 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
             );
 
             setNumPages(res.data.num_pages);
+
             const events = z.array(porterAppEventValidator).optional().default([]).parse(res.data.events);
             setEvents(events);
         } catch (err) {
+            console.log(err);
             setError(err);
         } finally {
             setLoading(false);

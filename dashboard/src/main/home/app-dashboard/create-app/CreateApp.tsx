@@ -140,6 +140,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      console.log("submitting!")
       setDeployError("");
       const validatedAppProto = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
@@ -326,7 +327,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   useEffect(() => {
     if (servicesFromYaml && !detectedServices.detected) {
-      console.log(servicesFromYaml);
       const { services, predeploy } = servicesFromYaml;
       setValue("app.services", services);
       setValue("app.predeploy", [predeploy].filter(valueExists));

@@ -22,8 +22,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
     - name: Get Go Binaries
       uses: actions/download-artifact@v3
       with:

@@ -5,8 +5,6 @@ description: builds the static dashboard files for the app
 runs:
   using: "composite"
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
     - name: Setup Node
       uses: actions/setup-node@v3
       with:

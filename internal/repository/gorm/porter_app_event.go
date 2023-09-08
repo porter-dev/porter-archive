@@ -47,6 +47,28 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppID(ctx context.Contex
 	return apps, paginatedResult, nil
 }
 
+func (repo *PorterAppEventRepository) ListEventsByPorterAppIDExcludingAppEvents(ctx context.Context, porterAppID uint, opts ...helpers.QueryOption) ([]*models.PorterAppEvent, helpers.PaginatedResult, error) {
+	apps := []*models.PorterAppEvent{}
+	paginatedResult := helpers.PaginatedResult{}
+
+	id := strconv.Itoa(int(porterAppID))
+	if id == "" {
+		return nil, paginatedResult, errors.New("invalid porter app id supplied")
+	}
+
+	db := repo.db.Model(&models.PorterAppEvent{})
+	resultDB := db.Where("porter_app_id = ? and type != APP_EVENT", id).Order("created_at DESC")
+	resultDB = resultDB.Scopes(helpers.Paginate(db, &paginatedResult, opts...))
+
+	if err := resultDB.Find(&apps).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, paginatedResult, err
+		}
+	}
+
+	return apps, paginatedResult, nil
+}
+
 func (repo *PorterAppEventRepository) CreateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error {
 	if appEvent.ID == uuid.Nil {
 		appEvent.ID = uuid.New()

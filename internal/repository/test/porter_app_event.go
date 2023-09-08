@@ -22,6 +22,10 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppID(ctx context.Contex
 	return nil, helpers.PaginatedResult{}, errors.New("cannot write database")
 }
 
+func (repo *PorterAppEventRepository) ListEventsByPorterAppIDExcludingAppEvents(ctx context.Context, porterAppID uint, opts ...helpers.QueryOption) ([]*models.PorterAppEvent, helpers.PaginatedResult, error) {
+	return nil, helpers.PaginatedResult{}, errors.New("cannot write database")
+}
+
 func (repo *PorterAppEventRepository) CreateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error {
 	return errors.New("cannot write database")
 }

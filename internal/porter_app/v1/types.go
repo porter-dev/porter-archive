@@ -5,7 +5,7 @@ type ServiceConfig struct {
 	Autoscaling      *Autoscaling      `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
 	Container        Container         `yaml:"container"`
 	Health           *Health           `yaml:"health,omitempty" validate:"excluded_unless=Type web"`
-	Ingress          Ingress           `yaml:"ingress"`
+	Ingress          *Ingress          `yaml:"ingress"`
 	ReplicaCount     string            `yaml:"replicaCount"`
 	Resources        Resources         `yaml:"resources"`
 	Service          KubernetesService `yaml:"service"`

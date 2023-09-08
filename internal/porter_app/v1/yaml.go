@@ -344,24 +344,26 @@ func webConfigProtoFromConfig(service Service) (*porterv1.WebServiceConfig, erro
 
 	webConfig.HealthCheck = healthCheck
 
-	domains := make([]*porterv1.Domain, 0)
-	for _, domain := range service.Config.Ingress.Hosts {
-		hostName := domain
-		domains = append(domains, &porterv1.Domain{
-			Name: hostName,
-		})
+	if service.Config.Ingress != nil {
+		domains := make([]*porterv1.Domain, 0)
+		for _, domain := range service.Config.Ingress.Hosts {
+			hostName := domain
+			domains = append(domains, &porterv1.Domain{
+				Name: hostName,
+			})
+		}
+		for _, domain := range service.Config.Ingress.PorterHosts {
+			hostName := domain
+			domains = append(domains, &porterv1.Domain{
+				Name: hostName,
+			})
+		}
+		if service.Config.Ingress.Annotations != nil && len(service.Config.Ingress.Annotations) > 0 {
+			return nil, errors.New("annotations are not supported")
+		}
+		webConfig.Domains = domains
+		webConfig.Private = !service.Config.Ingress.Enabled
 	}
-	for _, domain := range service.Config.Ingress.PorterHosts {
-		hostName := domain
-		domains = append(domains, &porterv1.Domain{
-			Name: hostName,
-		})
-	}
-	if service.Config.Ingress.Annotations != nil && len(service.Config.Ingress.Annotations) > 0 {
-		return nil, errors.New("annotations are not supported")
-	}
-	webConfig.Domains = domains
-	webConfig.Private = !service.Config.Ingress.Enabled
 
 	return webConfig, nil
 }

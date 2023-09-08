@@ -121,6 +121,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     setValue,
     handleSubmit,
     setError,
+    clearErrors,
     formState: { isSubmitting: isValidating, errors },
   } = porterAppFormMethods;
 
@@ -302,6 +303,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   // reset services when source changes
   useEffect(() => {
     setValue("app.services", []);
+    setValue("app.predeploy", []);
     setDetectedServices({
       detected: false,
       count: 0,
@@ -325,7 +327,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   useEffect(() => {
     if (servicesFromYaml && !detectedServices.detected) {
       const { services, predeploy } = servicesFromYaml;
-      setValue("app.services", [...services, predeploy].filter(valueExists));
+      setValue("app.services", services);
+      setValue("app.predeploy", [predeploy].filter(valueExists));
       setDetectedServices({
         detected: true,
         count: services.length,
@@ -334,6 +337,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
     if (!servicesFromYaml && detectedServices.detected) {
       setValue("app.services", []);
+      setValue("app.predeploy", []);
       setDetectedServices({
         detected: false,
         count: 0,
@@ -346,7 +350,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       setError("app.name", {
         message: "An app with this name already exists",
       });
-      return;
+    } else {
+      clearErrors("app.name");
     }
   }, [porterApps, name]);
 
@@ -455,7 +460,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       )}
                     </Container>
                     <Spacer y={0.5} />
-                    <ServiceList addNewText={"Add a new service"} />
+                    <ServiceList addNewText={"Add a new service"} fieldArrayName={"app.services"} />
                   </>,
                   <>
                     <Text size={16}>Environment variables (optional)</Text>
@@ -482,8 +487,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             name: "pre-deploy",
                             type: "predeploy",
                           }),
+                          expanded: true,
                         })}
                         isPredeploy
+                        fieldArrayName={"app.predeploy"}
                       />
                     </>
                   ),

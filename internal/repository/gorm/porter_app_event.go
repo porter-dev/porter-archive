@@ -57,7 +57,7 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppIDExcludingAppEvents(
 	}
 
 	db := repo.db.Model(&models.PorterAppEvent{})
-	resultDB := db.Where("porter_app_id = ? and type != APP_EVENT", id).Order("created_at DESC")
+	resultDB := db.Where("porter_app_id = ? and type != 'APP_EVENT'", id).Order("created_at DESC")
 	resultDB = resultDB.Scopes(helpers.Paginate(db, &paginatedResult, opts...))
 
 	if err := resultDB.Find(&apps).Error; err != nil {

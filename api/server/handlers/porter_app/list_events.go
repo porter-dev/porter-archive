@@ -71,7 +71,7 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	porterAppEvents, paginatedResult, err := p.Repo().PorterAppEvent().ListEventsByPorterAppIDExcludingAppEvents(ctx, app.ID, helpers.WithPageSize(20), helpers.WithPage(int(pr.Page)))
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			e := telemetry.Error(ctx, span, nil, "error listing porter app events by porter app id")
+			e := telemetry.Error(ctx, span, err, "error listing porter app events by porter app id")
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 			return
 		}
@@ -81,7 +81,7 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		if appEvent.Status == string(types.PorterAppEventStatus_Progressing) {
 			pae, err := p.updateExistingAppEvent(ctx, *cluster, appName, *appEvent, user, project)
 			if err != nil {
-				telemetry.Error(ctx, span, nil, "unable to update existing porter app event")
+				_ = telemetry.Error(ctx, span, err, "unable to update existing porter app event")
 			}
 			porterAppEvents[idx] = &pae
 		}

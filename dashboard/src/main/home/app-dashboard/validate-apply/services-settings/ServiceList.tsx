@@ -44,6 +44,7 @@ type ServiceListProps = {
   prePopulateService?: ClientService;
   isPredeploy?: boolean;
   existingServiceNames?: string[];
+  fieldArrayName: "app.services" | "app.predeploy";
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
@@ -51,6 +52,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   prePopulateService,
   isPredeploy = false,
   existingServiceNames = [],
+  fieldArrayName,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
@@ -72,7 +74,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   });
   const { append, remove, update, fields } = useFieldArray({
     control: appControl,
-    name: "app.services",
+    name: fieldArrayName,
   });
   const {
     append: appendDeletion,

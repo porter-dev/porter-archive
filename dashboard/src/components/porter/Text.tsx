@@ -7,6 +7,7 @@ type Props = {
   weight?: number;
   children: any;
   additionalStyles?: string;
+  truncate?: boolean;
 };
 
 const Text: React.FC<Props> = ({
@@ -14,7 +15,8 @@ const Text: React.FC<Props> = ({
   weight,
   color,
   children,
-  additionalStyles
+  additionalStyles,
+  truncate // added this
 }) => {
   const getColor = () => {
     switch (color) {
@@ -31,6 +33,7 @@ const Text: React.FC<Props> = ({
       color={getColor()}
       weight={weight}
       additionalStyles={additionalStyles}
+      truncate={truncate}
     >
       {children}
     </StyledText>
@@ -44,6 +47,7 @@ const StyledText = styled.div<{
   color?: string;
   weight?: number;
   additionalStyles?: string;
+  truncate?: boolean;
 }>`
   line-height: 1.5;
   font-weight: ${props => props.weight || 400};
@@ -53,4 +57,14 @@ const StyledText = styled.div<{
   align-items: center;
   user-select: text;
   ${props => props.additionalStyles ? props.additionalStyles : ""}
+
+  ${props =>
+    props.truncate
+      ? `
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 90%; 
+      `
+      : ""}
 `;

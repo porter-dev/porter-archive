@@ -208,7 +208,6 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 		event.Metadata[k] = v
 	}
 
-	fmt.Printf("creating porter app event from create and update event: %+v\n", event)
 	err = p.Repo().PorterAppEvent().CreateEvent(ctx, &event)
 	if err != nil {
 		return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error creating porter app event")

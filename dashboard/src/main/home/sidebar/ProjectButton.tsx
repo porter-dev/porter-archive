@@ -3,7 +3,7 @@ import styled from "styled-components";
 import gradient from "assets/gradient.png";
 
 import { Context } from "shared/Context";
-import { ProjectType } from "shared/types";
+import { ProjectListType, ProjectType } from "shared/types";
 import { pushFiltered } from "shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
 import Icon from "components/porter/Icon";
@@ -13,14 +13,14 @@ import ProjectSelectionModal from "./ProjectSelectionModal";
 
 type PropsType = RouteComponentProps & {
   currentProject: ProjectType;
-  projects: ProjectType[];
+  projects: ProjectListType[];
 };
 
 const ProjectButton: React.FC<PropsType> = (props) => {
   const [expanded, setExpanded] = useState(false);
   const wrapperRef = useRef<any>(null);
   const context = useContext(Context);
-  const [showGHAModal, setShowGHAModal] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
 
   const { user } = context;
 
@@ -51,17 +51,17 @@ const ProjectButton: React.FC<PropsType> = (props) => {
   if (currentProject) {
     return (
       <StyledProjectSection ref={wrapperRef}>
-        {showGHAModal && currentProject != null && (
+        {showModal && currentProject != null && (
           <ProjectSelectionModal
             currentProject={props.currentProject}
             projects={props.projects}
-            closeModal={() => setShowGHAModal(false)}
+            closeModal={() => setShowModal(false)}
           />
         )}
         <MainSelector
           projectsLength={props.projects.length}
           isPorterUser={user.isPorterUser}
-          onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowGHAModal(true)} >
+          onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowModal(true)} >
           <ProjectIcon>
             <ProjectImage src={gradient} />
             <Letter>{currentProject.name[0].toUpperCase()}</Letter>

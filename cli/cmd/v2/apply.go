@@ -35,7 +35,8 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 
 	b64YAML := base64.StdEncoding.EncodeToString(porterYaml)
 
-	parseResp, err := client.ParseYAML(ctx, cliConf.Project, cliConf.Cluster, b64YAML)
+	// last argument is passed to accommodate users with v1 porter yamls
+	parseResp, err := client.ParseYAML(ctx, cliConf.Project, cliConf.Cluster, b64YAML, os.Getenv("PORTER_STACK_NAME"))
 	if err != nil {
 		return fmt.Errorf("error calling parse yaml endpoint: %w", err)
 	}

@@ -12,13 +12,11 @@ import { PREFLIGHT_MESSAGE_CONST, PREFLIGHT_MESSAGE_CONST_AWS, PREFLIGHT_MESSAGE
 import Loading from "./Loading";
 type Props = RouteComponentProps & {
   preflightData: any
-  setPreflightFailed: (x: boolean) => void;
   provider: 'AWS' | 'GCP' | 'DEFAULT';
 
 };
 
 const PreflightChecks: React.FC<Props> = (props) => {
-  const [trackFailures, setFailures] = useState<boolean>(false);
   const getMessageConstByProvider = (provider: 'AWS' | 'GCP' | 'DEFAULT') => {
     switch (provider) {
       case 'AWS':
@@ -38,19 +36,13 @@ const PreflightChecks: React.FC<Props> = (props) => {
 
     const [isExpanded, setIsExpanded] = useState(false);
 
-    useEffect(() => {
-      if (hasMessage) {
-        setFailures(true);
-      }
-    }, [hasMessage]);
-
     const handleToggle = () => {
       if (hasMessage) {
         setIsExpanded(!isExpanded);
       }
     };
 
-    props.setPreflightFailed(trackFailures);
+
 
     return (
       <CheckItemContainer hasMessage={hasMessage}>
@@ -99,7 +91,7 @@ const PreflightChecks: React.FC<Props> = (props) => {
   };
   return (
     <AppearingDiv>
-      <Text> Preflight Checks </Text>
+      <Text size={16}>Cluster Provision Check</Text>
       <Spacer y={.5} />
       {Object.keys(currentMessageConst).map((checkKey) => (
         <PreflightCheckItem key={checkKey} checkKey={checkKey} />

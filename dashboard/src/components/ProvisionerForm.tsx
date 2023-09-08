@@ -39,10 +39,11 @@ const ProvisionerForm: React.FC<Props> = ({
             <Text size={16}>Configure settings</Text>
           </Container>
           <Spacer y={1} />
+          {/* <Spacer y={1} />
           <Text color="helper">
             Configure settings for your AWS environment.
           </Text>
-          <Spacer y={1} />
+          <Spacer y={1} /> */}
           <ProvisionerSettings credentialId={credentialId} />
         </>
       )}

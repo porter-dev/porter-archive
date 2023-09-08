@@ -479,14 +479,15 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     if (!props.clusterId) {
+      setStep(1)
+      setPreflightData(null)
       preflightChecks()
     }
-
   }, [props.selectedClusterVersion, awsRegion]);
+
 
   const preflightChecks = async () => {
     setIsLoading(true);
-
 
     var data = new PreflightCheckRequest({
       projectId: BigInt(currentProject.id),
@@ -505,6 +506,19 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         id: currentProject.id,
       }
     )
+    // Check if any of the preflight checks has a message
+    let hasMessage = false;
+    for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
+      if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
+        hasMessage = true;
+        break;
+      }
+    }
+    // If none of the checks have a message, set setPreflightFailed to false
+    if (!hasMessage) {
+      setPreflightFailed(false);
+      setStep(2);
+    }
     setPreflightData(preflightDataResp?.data?.Msg);
     setIsLoading(false)
 
@@ -971,37 +985,31 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 dropdownMaxHeight="240px"
                 setActiveValue={setAwsRegion}
                 label="📍 AWS region" />
+              <>
+                {
+                  user?.isPorterUser && renderAdvancedSettings()
+                }
+              </>
             </>,
             <>
-              <PreflightChecks provider='AWS' preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
+              <PreflightChecks provider='AWS' preflightData={preflightData} />
+
+            </>,
+            <>
+              <Text size={16}>Provision your cluster</Text>
               <Spacer y={1} />
-            </>
-
-
-
+              <Button
+                // disabled={isDisabled()}
+                disabled={isDisabled() || preflightFailed || isLoading}
+                onClick={createCluster}
+                status={getStatus()}
+              >
+                Provision
+              </Button>
+              <Spacer y={1} /></>
           ].filter((x) => x)}
         />
-        // <>
-        //   <Text size={16}>Select an AWS region</Text>
-        //   <Spacer y={1} />
-        //   <Text color="helper">
-        //     Porter will automatically provision your infrastructure in the
-        //     specified region.
-        //   </Text>
-        //   <Spacer height="10px" />
-        //   <SelectRow
-        //     options={regionOptions}
-        //     width="350px"
-        //     disabled={isReadOnly}
-        //     value={awsRegion}
-        //     scrollBuffer={true}
-        //     dropdownMaxHeight="240px"
-        //     setActiveValue={setAwsRegion}
-        //     label="📍 AWS region"
-        //   />
-        //   {(user?.isPorterUser || !currentProject?.simplified_view_enabled) &&
-        //     renderAdvancedSettings()}
-        // </>
+
 
       );
     }
@@ -1021,33 +1029,22 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           label="📍 AWS region"
         />
         {renderAdvancedSettings()}
+
+        <Button
+          // disabled={isDisabled()}
+          disabled={isDisabled() || preflightFailed || isLoading}
+          onClick={createCluster}
+          status={getStatus()}
+        >
+          Provision
+        </Button>
       </>
     );
   };
 
   return (
     <>
-      <StyledForm>{renderForm()}</StyledForm>
-
-
-
-      {!props.clusterId &&
-        <>
-          <PreflightChecks provider='AWS' preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
-          <Spacer y={1} />
-        </>}
-
-
-      <Button
-        // disabled={isDisabled()}
-        disabled={
-          isDisabled() || preflightFailed || isLoading
-        }
-        onClick={createCluster}
-        status={getStatus()}
-      >
-        Provision
-      </Button>
+      {renderForm()}
       {
         user.isPorterUser &&
         <>

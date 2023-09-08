@@ -1,0 +1,29 @@
+---
+name: 'build-npm'
+description: builds the static dashboard files for the app
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Setup Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - name: Install NPM Dependencies
+      shell: bash
+      run: |
+        cd dashboard
+        npm i --legacy-peer-deps
+    - name: Run NPM Build
+      shell: bash
+      run: |
+        cd dashboard
+        npm run build
+    - name: Store NPM Static Files
+      uses: actions/upload-artifact@v3
+      with:
+        name: npm-static-files
+        path: dashboard/build/
+        retention-days: 1

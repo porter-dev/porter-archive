@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/auth/token"
 	"github.com/porter-dev/porter/internal/billing"
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/nats"
@@ -68,6 +69,9 @@ type Config struct {
 
 	// GoogleConf is the configuration for a Google OAuth client
 	GoogleConf *oauth2.Config
+
+	// LaunchDarklyClient is the client for the LaunchDarkly feature flag service
+	LaunchDarklyClient *features.Client
 
 	// SlackConf is the configuration for a Slack OAuth client
 	SlackConf *oauth2.Config

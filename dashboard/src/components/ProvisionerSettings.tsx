@@ -40,6 +40,7 @@ import Icon from "./porter/Icon";
 import Loading from "./Loading";
 import PreflightChecks from "./PreflightChecks";
 import Placeholder from "./Placeholder";
+import VerticalSteps from "./porter/VerticalSteps";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -106,6 +107,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [kmsEncryptionEnabled, setKmsEncryptionEnabled] = useState<boolean>(
     false
   );
+  const [step, setStep] = useState(0);
   const [loadBalancerType, setLoadBalancerType] = useState(false);
   const [wildCardDomain, setWildCardDomain] = useState("");
   const [IPAllowList, setIPAllowList] = useState<string>("");
@@ -953,6 +955,32 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     // Render simplified form if initial create
     if (!props.clusterId) {
       return (
+        <VerticalSteps
+          currentStep={step}
+          steps={[
+            <>
+              <Text size={16}>Select an AWS region</Text><Spacer y={1} /><Text color="helper">
+                Porter will automatically provision your infrastructure in the
+                specified region.
+              </Text><Spacer height="10px" /><SelectRow
+                options={regionOptions}
+                width="350px"
+                disabled={isReadOnly}
+                value={awsRegion}
+                scrollBuffer={true}
+                dropdownMaxHeight="240px"
+                setActiveValue={setAwsRegion}
+                label="📍 AWS region" />
+            </>,
+            <>
+              <PreflightChecks provider='AWS' preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
+              <Spacer y={1} />
+            </>
+
+
+
+          ].filter((x) => x)}
+        />
         // <>
         //   <Text size={16}>Select an AWS region</Text>
         //   <Spacer y={1} />
@@ -974,7 +1002,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         //   {(user?.isPorterUser || !currentProject?.simplified_view_enabled) &&
         //     renderAdvancedSettings()}
         // </>
-        <Text size={16}>Select an AWS region</Text>
 
       );
     }

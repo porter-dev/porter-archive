@@ -20,6 +20,7 @@ func TestParseYAML(t *testing.T) {
 		want               *porterv1.PorterApp
 	}{
 		{"v2_input_nobuild", result_nobuild},
+		{"v1_input_no_build_no_image", v1_result_nobuild_no_image},
 	}
 
 	for _, tt := range tests {
@@ -29,7 +30,7 @@ func TestParseYAML(t *testing.T) {
 			want, err := os.ReadFile(fmt.Sprintf("testdata/%s.yaml", tt.porterYamlFileName))
 			is.NoErr(err) // no error expected reading test file
 
-			got, err := ParseYAML(context.Background(), want)
+			got, err := ParseYAML(context.Background(), want, "test-app")
 			is.NoErr(err) // umbrella chart values should convert to map[string]any without issues
 
 			diffProtoWithFailTest(t, is, tt.want, got)
@@ -113,6 +114,81 @@ var result_nobuild = &porterv1.PorterApp{
 	Image: &porterv1.AppImage{
 		Repository: "nginx",
 		Tag:        "latest",
+	},
+}
+
+var v1_result_nobuild_no_image = &porterv1.PorterApp{
+	Name: "test-app",
+	Services: map[string]*porterv1.Service{
+		"example-job": {
+			Run:          "echo 'hello world'",
+			CpuCores:     0.1,
+			RamMegabytes: 256,
+			Config: &porterv1.Service_JobConfig{
+				JobConfig: &porterv1.JobServiceConfig{
+					AllowConcurrent: true,
+					Cron:            "*/10 * * * *",
+				},
+			},
+			Type: 3,
+		},
+		"example-wkr": {
+			Run:          "echo 'work'",
+			Instances:    1,
+			Port:         80,
+			CpuCores:     0.1,
+			RamMegabytes: 256,
+			Config: &porterv1.Service_WorkerConfig{
+				WorkerConfig: &porterv1.WorkerServiceConfig{
+					Autoscaling: nil,
+				},
+			},
+			Type: 2,
+		},
+		"example-web": {
+			Run:          "node index.js",
+			Instances:    0,
+			Port:         8080,
+			CpuCores:     0.1,
+			RamMegabytes: 256,
+			Config: &porterv1.Service_WebConfig{
+				WebConfig: &porterv1.WebServiceConfig{
+					Autoscaling: &porterv1.Autoscaling{
+						Enabled:                true,
+						MinInstances:           1,
+						MaxInstances:           3,
+						CpuThresholdPercent:    60,
+						MemoryThresholdPercent: 60,
+					},
+					Domains: []*porterv1.Domain{
+						{
+							Name: "test1.example.com",
+						},
+						{
+							Name: "test2.example.com",
+						},
+					},
+					HealthCheck: &porterv1.HealthCheck{
+						Enabled:  true,
+						HttpPath: "/healthz",
+					},
+				},
+			},
+			Type: 1,
+		},
+	},
+	Env: map[string]string{
+		"PORT":     "8080",
+		"NODE_ENV": "production",
+	},
+	Predeploy: &porterv1.Service{
+		Run:          "ls",
+		Instances:    0,
+		Port:         0,
+		CpuCores:     0,
+		RamMegabytes: 0,
+		Config:       &porterv1.Service_JobConfig{},
+		Type:         3,
 	},
 }
 

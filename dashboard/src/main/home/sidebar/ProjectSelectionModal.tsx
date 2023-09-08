@@ -17,7 +17,7 @@ import Container from "components/porter/Container";
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
-  projects: ProjectType[];
+  projects: ProjectListType[];
   currentProject: ProjectType;
 }
 
@@ -103,9 +103,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
             const clusters_list = await updateClusterList(project.id);
             if (clusters_list?.length > 0) {
               setCurrentCluster(clusters_list[0]);
-              setCurrentProject(project, () => {
-                pushFiltered(props, "/dashboard", ["project_id"]);
-              });
+              pushFiltered(props, "/dashboard", ["project_id"]);
             } else {
               setCurrentProject(project, () => {
                 pushFiltered(props, "/dashboard", ["project_id"]);

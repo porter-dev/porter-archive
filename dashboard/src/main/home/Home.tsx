@@ -134,15 +134,35 @@ const Home: React.FC<Props> = (props) => {
       } else if (projectList.length > 0 && !currentProject) {
         setProjects(projectList);
 
-        id = id ?? Number(localStorage.getItem("currentProject"));
-        const foundProjectListEntry = projectList.find(
-          (item: ProjectListType) => item.id === id
-        );
+        let foundProject = null;
+        if (id) {
+          projectList.forEach((project: ProjectListType, i: number) => {
+            if (project.id === id) {
+              foundProject = project;
+            }
+          });
 
-        const project = await api
-          .getProject("<token>", {}, { id: foundProjectListEntry?.id || projectList[0].id })
-          .then((res) => res.data as ProjectType);
-        setCurrentProject(project);
+          const project = await api
+            .getProject("<token>", {}, { id: projectList[0].id })
+            .then((res) => res.data as ProjectType);
+
+          setCurrentProject(foundProject || project);
+        }
+        if (!foundProject) {
+          projectList.forEach((project: ProjectListType, i: number) => {
+            if (
+              project.id.toString() ===
+              localStorage.getItem("currentProject")
+            ) {
+              foundProject = project;
+            }
+          });
+          const project = await api
+            .getProject("<token>", {}, { id: projectList[0].id })
+            .then((res) => res.data as ProjectType);
+
+          setCurrentProject(foundProject || project);
+        }
       }
     } catch (error) {
       console.log(error);
@@ -183,7 +203,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -457,17 +477,17 @@ const Home: React.FC<Props> = (props) => {
               overrideInfraTabEnabled({
                 projectID: currentProject?.id,
               })) && (
-              <Route
-                path="/infrastructure"
-                render={() => {
-                  return (
-                    <DashboardWrapper>
-                      <InfrastructureRouter />
-                    </DashboardWrapper>
-                  );
-                }}
-              />
-            )}
+                <Route
+                  path="/infrastructure"
+                  render={() => {
+                    return (
+                      <DashboardWrapper>
+                        <InfrastructureRouter />
+                      </DashboardWrapper>
+                    );
+                  }}
+                />
+              )}
             <Route
               path="/dashboard"
               render={() => {

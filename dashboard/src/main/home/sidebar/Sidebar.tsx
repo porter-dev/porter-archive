@@ -23,8 +23,6 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import SidebarLink from "./SidebarLink";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
 import ClusterListContainer from "./ClusterListContainer";
-import ProjectButtonContainer from "./ProjectButtonContainer";
-import ProjectButtonContianer from "./ProjectButtonContainer";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {

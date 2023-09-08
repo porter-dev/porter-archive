@@ -16,6 +16,7 @@ import MetricsChart from "./MetricsChart";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "components/Loading";
 import CheckboxRow from "components/CheckboxRow";
+import Spacer from "components/porter/Spacer";
 
 type PropsType = {
   currentChart: ChartType;
@@ -267,11 +268,14 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       return null;
     }
     return (
-      <CheckboxRow
-        toggle={() => setShowAutoscalingThresholds(!showAutoscalingThresholds)}
-        checked={showAutoscalingThresholds}
-        label="Show Autoscaling Thresholds"
-      />
+      <>
+        <Spacer inline x={1} />
+        <CheckboxRow
+          toggle={() => setShowAutoscalingThresholds(!showAutoscalingThresholds)}
+          checked={showAutoscalingThresholds}
+          label="Show autoscaling thresholds"
+        />
+      </>
     )
   }
 

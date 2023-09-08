@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { Context } from "shared/Context";
 
 import userIcon from "assets/user-icon.png"
+import settings from "assets/settings-bold.png";
 
 import Feedback from "./Feedback";
 import Help from "./Help";
@@ -42,7 +43,7 @@ class Navbar extends Component<PropsType, StateType> {
               }
             >
               <SettingsIcon>
-                <i className="material-icons">settings</i>
+                <Icon src={settings} />
               </SettingsIcon>
               Account settings
             </UserDropdownButton>
@@ -81,6 +82,13 @@ class Navbar extends Component<PropsType, StateType> {
 Navbar.contextType = Context;
 
 export default withAuth(Navbar);
+
+const Icon = styled.img`
+  height: 15px;
+  margin-right: 10px;
+  opacity: 0.6;
+  margin-bottom: -3px;
+`;
 
 const VersionTag = styled.div`
   position: absolute;
@@ -152,8 +160,8 @@ const UserDropdownButton = styled.button`
       border: 1px solid #fff;
     }
     > div {
-      > i {
-        color: #fff;
+      > img {
+        opacity: 100%;
       }
     }
   }

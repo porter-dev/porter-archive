@@ -7,11 +7,15 @@ jobs:
   build-go:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
       - name: build-go
         uses: ./.github/actions/build-go
   build-npm:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
       - name: build-npm
         uses: ./.github/actions/build-npm
   porter-deploy:

@@ -87,7 +87,7 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	p.WriteResult(w, r, deletedProject.ToProjectType())
+	p.WriteResult(w, r, deletedProject.ToProjectType(p.Config().LaunchDarklyClient))
 
 	// delete the billing team
 	if err := p.Config().BillingManager.DeleteTeam(user, proj); err != nil {

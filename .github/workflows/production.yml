@@ -21,7 +21,6 @@ jobs:
         uses: actions/setup-go@v4
         with:
           cache: false
-          go-version: '1.20.5'
           go-version-file: go.mod
       - name: Download Go Modules
         run: go mod download
@@ -96,6 +95,27 @@ jobs:
         uses: porter-dev/porter-update-config-action@v0.1.0
         with:
           app: porter-auth
+          cluster: "9"
+          host: https://dashboard.internal-tools.porter.run
+          namespace: default
+          project: "5"
+          tag: ${{ steps.vars.outputs.sha_short }}
+          token: ${{ secrets.PORTER_TOKEN_5 }}
+
+  deploy-worker-pool:
+    runs-on: ubuntu-latest
+    needs: [build-go, build-npm] # don't run this step unless these finish successfully
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set Github tag
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Update Worker Pool (revision cull job)
+        timeout-minutes: 20
+        uses: porter-dev/porter-update-action@v0.1.0
+        with:
+          app: cull-helm-revisions
           cluster: "9"
           host: https://dashboard.internal-tools.porter.run
           namespace: default

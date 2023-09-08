@@ -55,6 +55,8 @@ type ServerConf struct {
 	GoogleClientSecret     string `env:"GOOGLE_CLIENT_SECRET"`
 	GoogleRestrictedDomain string `env:"GOOGLE_RESTRICTED_DOMAIN"`
 
+	LaunchDarklySDKKey string `env:"LAUNCHDARKLY_SDK_KEY"`
+
 	SendgridAPIKey                     string `env:"SENDGRID_API_KEY"`
 	SendgridPWResetTemplateID          string `env:"SENDGRID_PW_RESET_TEMPLATE_ID"`
 	SendgridPWGHTemplateID             string `env:"SENDGRID_PW_GH_TEMPLATE_ID"`

@@ -37,6 +37,7 @@ func NewParsePorterYAMLToProtoHandler(
 // ParsePorterYAMLToProtoRequest is the request object for the /apps/parse endpoint
 type ParsePorterYAMLToProtoRequest struct {
 	B64Yaml string `json:"b64_yaml"`
+	AppName string `json:"app_name"`
 }
 
 // ParsePorterYAMLToProtoResponse is the response object for the /apps/parse endpoint
@@ -53,7 +54,7 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	if !project.ValidateApplyV2 {
 		err := telemetry.Error(ctx, span, nil, "project does not have apply v2 enabled")
-		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 		return
 	}
 
@@ -82,7 +83,7 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	appProto, err := porter_app.ParseYAML(ctx, yaml)
+	appProto, err := porter_app.ParseYAML(ctx, yaml, request.AppName)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error parsing yaml")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))

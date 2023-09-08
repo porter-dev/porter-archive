@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
 
+import userIcon from "assets/user-icon.png"
+
 import Feedback from "./Feedback";
 import Help from "./Help";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -62,14 +64,13 @@ class Navbar extends Component<PropsType, StateType> {
     return (
       <StyledNavbar>
         <Help />
-        {this.renderFeedbackButton()}
         <NavButton
           selected={this.state.showDropdown}
           onClick={() =>
             this.setState({ showDropdown: !this.state.showDropdown })
           }
         >
-          <I className="material-icons">account_circle</I>
+          <Img src={userIcon} selected={this.state.showDropdown} />
           {this.renderSettingsDropdown()}
         </NavButton>
       </StyledNavbar>
@@ -108,6 +109,16 @@ const I = styled.i`
   margin-right: 7px;
 `;
 
+const Img = styled.img<{ selected: boolean }>`
+  height: 16px;
+  opacity: ${props => props.selected ? "1" : "0.6"};
+  margin-right: 10px; 
+  border-radius: 5px;
+  :hover {
+    opacity: 1;
+  }
+`;
+
 const CloseOverlay = styled.div`
   position: fixed;
   width: 100vw;
@@ -124,7 +135,7 @@ const UserDropdownButton = styled.button`
   height: 40px;
   font-size: 13px;
   font-family: "Work Sans", sans-serif;
-  color: white;
+  color: #ffffff88;
   width: 100%;
   border: 0;
   text-align: left;
@@ -135,7 +146,16 @@ const UserDropdownButton = styled.button`
     outline: 0;
   }
   :hover {
-    background: #ffffff11;
+    color: #fff;
+    > i {
+      color: #fff;
+      border: 1px solid #fff;
+    }
+    > div {
+      > i {
+        color: #fff;
+      }
+    }
   }
   display: flex;
   align-items: center;
@@ -168,8 +188,8 @@ const DropdownLabel = styled.div`
 const Dropdown = styled.div`
   position: absolute;
   right: 0;
-  top: calc(100% + 5px);
-  background: #26282f;
+  top: calc(100% + 15px);
+  background: #121212;
   width: ${(props: {
     dropdownWidth: string;
     dropdownMaxHeight: string;
@@ -180,11 +200,11 @@ const Dropdown = styled.div`
     dropdownMaxHeight: string;
     feedbackSent?: boolean;
   }) => (props.dropdownMaxHeight ? props.dropdownMaxHeight : "300px")};
-  border-radius: 3px;
+  border-radius: 5px;
   z-index: 999;
+  border: 1px solid #494B4F;
   overflow-y: auto;
   margin-bottom: 20px;
-  box-shadow: 0 8px 20px 0px #00000088;
   animation: ${(props: {
     dropdownWidth: string;
     dropdownMaxHeight: string;

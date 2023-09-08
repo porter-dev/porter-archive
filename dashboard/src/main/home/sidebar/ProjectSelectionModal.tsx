@@ -6,7 +6,7 @@ import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import { Context } from "shared/Context";
-import { DetailedClusterType, ProjectType } from "shared/types";
+import { DetailedClusterType, ProjectListType, ProjectType } from "shared/types";
 import { pushFiltered } from "shared/routing";
 import SearchBar from "components/porter/SearchBar";
 import _ from 'lodash';
@@ -103,19 +103,17 @@ const ProjectSelectionModal: React.FC<Props> = ({
             const clusters_list = await updateClusterList(project.id);
             if (clusters_list?.length > 0) {
               setCurrentCluster(clusters_list[0]);
-              if (project.simplified_view_enabled) {
-                pushFiltered(props, "/apps", ["project_id"], {});
-              }
-              else {
-                pushFiltered(props, "/applications", ["project_id"], {});
-              }
+              setCurrentProject(project, () => {
+                pushFiltered(props, "/dashboard", ["project_id"]);
+              });
             } else {
-              pushFiltered(props, "/apps", ["project_id"], {});
+              setCurrentProject(project, () => {
+                pushFiltered(props, "/dashboard", ["project_id"]);
+              });
             }
             closeModal();
           }}
         >
-          {/* <BlockIcon src={gradient} /> */}
           <BlockTitle>{projectListEntry.name}</BlockTitle>
 
 

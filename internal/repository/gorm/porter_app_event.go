@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -47,6 +48,32 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppID(ctx context.Contex
 	return apps, paginatedResult, nil
 }
 
+func (repo *PorterAppEventRepository) ListEventsByPorterAppIDAndDeploymentTargetID(ctx context.Context, porterAppID uint, deploymentTargetID uuid.UUID, opts ...helpers.QueryOption) ([]*models.PorterAppEvent, helpers.PaginatedResult, error) {
+	apps := []*models.PorterAppEvent{}
+	paginatedResult := helpers.PaginatedResult{}
+
+	id := strconv.Itoa(int(porterAppID))
+	if id == "" {
+		return nil, paginatedResult, errors.New("invalid porter app id supplied")
+	}
+
+	if deploymentTargetID == uuid.Nil {
+		return nil, paginatedResult, errors.New("invalid deployment target id supplied")
+	}
+
+	db := repo.db.Model(&models.PorterAppEvent{})
+	resultDB := db.Where("porter_app_id = ? AND deployment_target_id = ?", id, deploymentTargetID).Order("created_at DESC")
+	resultDB = resultDB.Scopes(helpers.Paginate(db, &paginatedResult, opts...))
+
+	if err := resultDB.Find(&apps).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, paginatedResult, err
+		}
+	}
+
+	return apps, paginatedResult, nil
+}
+
 func (repo *PorterAppEventRepository) CreateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error {
 	if appEvent.ID == uuid.Nil {
 		appEvent.ID = uuid.New()
@@ -69,6 +96,7 @@ func (repo *PorterAppEventRepository) CreateEvent(ctx context.Context, appEvent 
 
 // UpdateEvent will set all values in the database to the values of the passed in appEvent
 func (repo *PorterAppEventRepository) UpdateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error {
+	fmt.Printf("updating appEvent: %+v\n", appEvent)
 	if appEvent.PorterAppID == 0 {
 		return errors.New("invalid porter app id supplied to update event")
 	}
@@ -121,6 +149,27 @@ func (repo *PorterAppEventRepository) ReadDeployEventByRevision(ctx context.Cont
 	strRevision := string(revJSON)
 
 	if err := repo.db.Where("porter_app_id = ? AND type = 'DEPLOY' AND metadata->>'revision' = ?", strAppID, strRevision).First(&appEvent).Error; err != nil {
+		return appEvent, err
+	}
+
+	return appEvent, nil
+}
+
+func (repo *PorterAppEventRepository) ReadDeployEventByAppRevisionID(ctx context.Context, porterAppID uint, appRevisionID string) (models.PorterAppEvent, error) {
+	appEvent := models.PorterAppEvent{}
+
+	if porterAppID == 0 {
+		return appEvent, errors.New("invalid porter app ID supplied")
+	}
+
+	if appRevisionID == "" {
+		return appEvent, errors.New("no app revision ID supplied")
+	}
+
+	// Convert porterAppID to string
+	strAppID := strconv.Itoa(int(porterAppID))
+
+	if err := repo.db.Where("porter_app_id = ? AND type = 'DEPLOY' AND metadata->>'app_revision_id' = ?", strAppID, appRevisionID).First(&appEvent).Error; err != nil {
 		return appEvent, err
 	}
 

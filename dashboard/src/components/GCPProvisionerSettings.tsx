@@ -84,7 +84,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
-  const [preflightData, setPreflightData] = useState({})
+  const [preflightData, setPreflightData] = useState(null)
   const [preflightFailed, setPreflightFailed] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -463,28 +463,12 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     <>
       <StyledForm>{renderForm()}</StyledForm>
 
-      {props.credentialId && (<>
-
-        {isLoading ?
-          <>
-            <Placeholder>
-              <Loading />
-            </Placeholder>
-            <Spacer y={1} />
-          </>
-          :
-          <>
-            {(!props.clusterId) &&
-              <>
-                <PreflightChecks preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
-                <Spacer y={1} />
-              </>
-            }
-          </>
-        }
-
-      </>
-      )}
+      {(!props.clusterId) &&
+        <>
+          <PreflightChecks provider="GCP" preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
+          <Spacer y={1} />
+        </>
+      }
 
       <Button
         disabled={isDisabled() || isLoading || preflightFailed || statusPreflight() != ""}

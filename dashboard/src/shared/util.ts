@@ -20,3 +20,15 @@ export const PREFLIGHT_MESSAGE_CONST = {
   "vpc": "VPC availability",
   "vcpus": "VCPUs availability",
 }
+
+export const PREFLIGHT_MESSAGE_CONST_AWS = {
+  "eip": "Elastic IP availability",
+  "natGateway": "NAT Gateway availability",
+  "vpc": "VPC availability",
+  "vcpus": "VCPUs availability",
+}
+
+export const PREFLIGHT_MESSAGE_CONST_GCP = {
+  "apiEnabled": "APIs enabled on service account",
+  "cidrAvailability": "CIDR availability",
+}

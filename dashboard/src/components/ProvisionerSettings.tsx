@@ -129,8 +129,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [preflightData, setPreflightData] = useState({})
-  const [preflightFailed, setPreflightFailed] = useState<boolean>(false)
+  const [preflightData, setPreflightData] = useState(null)
+  const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
 
   const markStepStarted = async (step: string, errMessage?: string) => {
     try {
@@ -953,27 +953,29 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     // Render simplified form if initial create
     if (!props.clusterId) {
       return (
-        <>
-          <Text size={16}>Select an AWS region</Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            Porter will automatically provision your infrastructure in the
-            specified region.
-          </Text>
-          <Spacer height="10px" />
-          <SelectRow
-            options={regionOptions}
-            width="350px"
-            disabled={isReadOnly}
-            value={awsRegion}
-            scrollBuffer={true}
-            dropdownMaxHeight="240px"
-            setActiveValue={setAwsRegion}
-            label="📍 AWS region"
-          />
-          {(user?.isPorterUser || !currentProject?.simplified_view_enabled) &&
-            renderAdvancedSettings()}
-        </>
+        // <>
+        //   <Text size={16}>Select an AWS region</Text>
+        //   <Spacer y={1} />
+        //   <Text color="helper">
+        //     Porter will automatically provision your infrastructure in the
+        //     specified region.
+        //   </Text>
+        //   <Spacer height="10px" />
+        //   <SelectRow
+        //     options={regionOptions}
+        //     width="350px"
+        //     disabled={isReadOnly}
+        //     value={awsRegion}
+        //     scrollBuffer={true}
+        //     dropdownMaxHeight="240px"
+        //     setActiveValue={setAwsRegion}
+        //     label="📍 AWS region"
+        //   />
+        //   {(user?.isPorterUser || !currentProject?.simplified_view_enabled) &&
+        //     renderAdvancedSettings()}
+        // </>
+        <Text size={16}>Select an AWS region</Text>
+
       );
     }
 
@@ -1001,39 +1003,26 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       <StyledForm>{renderForm()}</StyledForm>
 
 
-      {props.credentialId && (<>
 
-        {isLoading ?
-          <>
-            <Placeholder>
-              <Loading />
-            </Placeholder>
-            <Spacer y={1} />
-          </>
-          :
-          <>
-            {(!props.clusterId) &&
-              <>
-                <PreflightChecks preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
-                <Spacer y={1} />
-              </>
-            }
-          </>
-        }
+      {!props.clusterId &&
+        <>
+          <PreflightChecks provider='AWS' preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
+          <Spacer y={1} />
+        </>}
 
-      </>
-      )}
+
       <Button
         // disabled={isDisabled()}
         disabled={
-          isDisabled()
+          isDisabled() || preflightFailed || isLoading
         }
         onClick={createCluster}
         status={getStatus()}
       >
         Provision
       </Button>
-      {user.isPorterUser &&
+      {
+        user.isPorterUser &&
         <>
 
           <Spacer y={1} />

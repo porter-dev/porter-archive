@@ -48,6 +48,7 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppID(ctx context.Contex
 	return apps, paginatedResult, nil
 }
 
+// ListEventsByPorterAppIDAndDeploymentTargetID returns a list of events for a given porter app id and deployment target id
 func (repo *PorterAppEventRepository) ListEventsByPorterAppIDAndDeploymentTargetID(ctx context.Context, porterAppID uint, deploymentTargetID uuid.UUID, opts ...helpers.QueryOption) ([]*models.PorterAppEvent, helpers.PaginatedResult, error) {
 	apps := []*models.PorterAppEvent{}
 	paginatedResult := helpers.PaginatedResult{}
@@ -155,6 +156,7 @@ func (repo *PorterAppEventRepository) ReadDeployEventByRevision(ctx context.Cont
 	return appEvent, nil
 }
 
+// ReadDeployEventByAppRevisionID returns a deploy event for a given porter app id and app revision ID
 func (repo *PorterAppEventRepository) ReadDeployEventByAppRevisionID(ctx context.Context, porterAppID uint, appRevisionID string) (models.PorterAppEvent, error) {
 	appEvent := models.PorterAppEvent{}
 

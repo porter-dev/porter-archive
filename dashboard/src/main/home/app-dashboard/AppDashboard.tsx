@@ -420,7 +420,7 @@ const Block = styled.div`
   :hover {
     border: 1px solid #7a7b80;
   }
-
+  overflow: auto;
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {
     from {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -97,7 +96,6 @@ func (repo *PorterAppEventRepository) CreateEvent(ctx context.Context, appEvent 
 
 // UpdateEvent will set all values in the database to the values of the passed in appEvent
 func (repo *PorterAppEventRepository) UpdateEvent(ctx context.Context, appEvent *models.PorterAppEvent) error {
-	fmt.Printf("updating appEvent: %+v\n", appEvent)
 	if appEvent.PorterAppID == 0 {
 		return errors.New("invalid porter app id supplied to update event")
 	}

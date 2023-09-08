@@ -14,6 +14,7 @@ type ResourcesProps = {
   maxCPU: number;
   maxRAM: number;
   service: ClientService;
+  isPredeploy?: boolean;
 };
 
 const Resources: React.FC<ResourcesProps> = ({
@@ -21,6 +22,7 @@ const Resources: React.FC<ResourcesProps> = ({
   maxCPU,
   maxRAM,
   service,
+  isPredeploy = false,
 }) => {
   const { control, register, watch } = useFormContext<PorterAppFormData>();
 
@@ -32,7 +34,7 @@ const Resources: React.FC<ResourcesProps> = ({
     <>
       <Spacer y={1} />
       <Controller
-        name={`app.services.${index}.cpuCores`}
+        name={isPredeploy ? `app.predeploy.${index}.cpuCores` : `app.services.${index}.cpuCores`}
         control={control}
         render={({ field: { value, onChange } }) => (
           <InputSlider
@@ -58,7 +60,7 @@ const Resources: React.FC<ResourcesProps> = ({
       />
       <Spacer y={1} />
       <Controller
-        name={`app.services.${index}.ramMegabytes`}
+        name={isPredeploy ? `app.predeploy.${index}.ramMegabytes` : `app.services.${index}.ramMegabytes`}
         control={control}
         render={({ field: { value, onChange } }) => (
           <InputSlider

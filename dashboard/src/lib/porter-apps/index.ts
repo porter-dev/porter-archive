@@ -68,6 +68,7 @@ export const deletionValidator = z.object({
 export const clientAppValidator = z.object({
   name: z.string().min(1),
   services: serviceValidator.array(),
+  predeploy: serviceValidator.array().optional(),
   env: z.record(z.string(), z.string()).default({}),
   build: buildValidator,
 });
@@ -164,13 +165,12 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
   const { app, source } = data;
 
   const services = app.services
-    .filter((s) => !isPredeployService(s))
     .reduce((acc: Record<string, Service>, svc) => {
       acc[svc.name.value] = serviceProto(serializeService(svc));
       return acc;
     }, {});
 
-  const predeploy = app.services.find((s) => isPredeployService(s));
+  const predeploy = app.predeploy?.[0]
 
   const proto = match(source)
     .with(
@@ -273,10 +273,21 @@ export function clientAppFromProto(
       return deserializeService({ service: svc });
     });
 
+  const predeployList = [];
+  if (proto.predeploy) {
+    predeployList.push(deserializeService({
+      service: serializedServiceFromProto({
+        name: "pre-deploy",
+        service: proto.predeploy,
+        isPredeploy: true,
+      })
+    }))
+  }
   if (!overrides?.predeploy) {
     return {
       name: proto.name,
       services,
+      predeploy: predeployList,
       env: proto.env,
       build: clientBuildFromProto(proto.build) ?? {
         method: "pack",
@@ -289,19 +300,20 @@ export function clientAppFromProto(
 
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
-    ? deserializeService({
-        service: serializedServiceFromProto({
-          name: "pre-deploy",
-          service: proto.predeploy,
-          isPredeploy: true,
-        }),
-        override: predeployOverrides,
-      })
+    ? [deserializeService({
+      service: serializedServiceFromProto({
+        name: "pre-deploy",
+        service: proto.predeploy,
+        isPredeploy: true,
+      }),
+      override: predeployOverrides,
+    })]
     : undefined;
 
   return {
     name: proto.name,
-    services: [...services, predeploy].filter(valueExists),
+    services,
+    predeploy,
     env: proto.env,
     build: clientBuildFromProto(proto.build) ?? {
       method: "pack",

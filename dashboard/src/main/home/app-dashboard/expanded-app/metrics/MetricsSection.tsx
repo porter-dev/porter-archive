@@ -16,6 +16,7 @@ import MetricsChart from "./MetricsChart";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "components/Loading";
 import CheckboxRow from "components/CheckboxRow";
+import Spacer from "components/porter/Spacer";
 
 type PropsType = {
   currentChart: ChartType;
@@ -267,11 +268,14 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       return null;
     }
     return (
-      <CheckboxRow
-        toggle={() => setShowAutoscalingThresholds(!showAutoscalingThresholds)}
-        checked={showAutoscalingThresholds}
-        label="Show Autoscaling Thresholds"
-      />
+      <>
+        <Spacer inline x={1} />
+        <CheckboxRow
+          toggle={() => setShowAutoscalingThresholds(!showAutoscalingThresholds)}
+          checked={showAutoscalingThresholds}
+          label="Show autoscaling thresholds"
+        />
+      </>
     )
   }
 
@@ -329,6 +333,7 @@ const MetricsHeader = styled.div`
   width: 100%;
   display: flex;
   align-items: center;
+  margin-bottom: 10px;
   overflow: visible;
   justify-content: space-between;
 `;
@@ -343,6 +348,7 @@ const RangeWrapper = styled.div`
 const StyledMetricsSection = styled.div`
   width: 100%;
   display: flex;
+  margin-top: -20px;
   flex-direction: column;
   position: relative;
 `;
@@ -351,9 +357,9 @@ const Highlight = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 20px;
   margin-left: 8px;
   margin-bottom: 15px;
-  margin-top: 20px;
   color: ${(props: { color: string }) => props.color};
   cursor: pointer;
 

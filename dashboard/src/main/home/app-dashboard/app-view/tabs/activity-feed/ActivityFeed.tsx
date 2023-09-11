@@ -14,7 +14,7 @@ import { feedDate } from "shared/string_utils";
 import Pagination from "components/porter/Pagination";
 import _ from "lodash";
 import Button from "components/porter/Button";
-import { PorterAppEvent, PorterAppEventType, porterAppEventValidator } from "./events/types";
+import { PorterAppEvent, porterAppEventValidator } from "./events/types";
 import { z } from "zod";
 
 type Props = {
@@ -64,7 +64,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
     };
 
     const getLatestDeployEventIndex = () => {
-        const deployEvents = events.filter((event) => event.type === PorterAppEventType.DEPLOY);
+        const deployEvents = events.filter((event) => event.type === 'DEPLOY');
         if (deployEvents.length === 0) {
             return -1;
         }

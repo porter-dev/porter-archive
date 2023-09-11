@@ -1,11 +1,7 @@
 import { z } from "zod";
 
-export enum PorterAppEventType {
-    BUILD = "BUILD",
-    DEPLOY = "DEPLOY",
-    APP_EVENT = "APP_EVENT",
-    PRE_DEPLOY = "PRE_DEPLOY",
-}
+export type PorterAppEventType = 'BUILD' | 'DEPLOY' | 'APP_EVENT' | 'PRE_DEPLOY';
+
 const porterAppAppEventMetadataValidator = z.object({
     namespace: z.string(),
     summary: z.string(),
@@ -35,61 +31,53 @@ const porterAppPreDeployEventMetadataValidator = z.object({
     start_time: z.string(),
     end_time: z.string().optional(),
 });
-export const porterAppEventValidator = z.object({
-    id: z.string(),
-    created_at: z.string(),
-    updated_at: z.string(),
-    status: z.string().optional().default(""),
-    type: z.nativeEnum(PorterAppEventType),
-    type_external_source: z.string().optional().default(""),
-    porter_app_id: z.number(),
-    metadata: z.union([
-        porterAppAppEventMetadataValidator,
-        porterAppDeployEventMetadataValidator,
-        porterAppBuildEventMetadataValidator,
-        porterAppPreDeployEventMetadataValidator,
-    ]).optional(),
-}).refine((data) => {
-    if (data.type === PorterAppEventType.APP_EVENT) {
-        return porterAppAppEventMetadataValidator.safeParse(data.metadata).success;
-    }
-    if (data.type === PorterAppEventType.DEPLOY) {
-        return porterAppDeployEventMetadataValidator.safeParse(data.metadata).success;
-    }
-    if (data.type === PorterAppEventType.BUILD) {
-        return porterAppBuildEventMetadataValidator.safeParse(data.metadata).success;
-    }
-    if (data.type === PorterAppEventType.PRE_DEPLOY) {
-        return porterAppPreDeployEventMetadataValidator.safeParse(data.metadata).success;
-    }
-    return true;
-});
+export const porterAppEventValidator = z.discriminatedUnion("type", [
+    z.object({
+        id: z.string(),
+        created_at: z.string(),
+        updated_at: z.string(),
+        status: z.string().optional().default(""),
+        type: z.literal("BUILD"),
+        type_external_source: z.string().optional().default(""),
+        porter_app_id: z.number(),
+        metadata: porterAppBuildEventMetadataValidator
+    }),
+    z.object({
+        id: z.string(),
+        created_at: z.string(),
+        updated_at: z.string(),
+        status: z.string().optional().default(""),
+        type: z.literal("DEPLOY"),
+        type_external_source: z.string().optional().default(""),
+        porter_app_id: z.number(),
+        metadata: porterAppDeployEventMetadataValidator
+    }),
+    z.object({
+        id: z.string(),
+        created_at: z.string(),
+        updated_at: z.string(),
+        status: z.string().optional().default(""),
+        type: z.literal("PRE_DEPLOY"),
+        type_external_source: z.string().optional().default(""),
+        porter_app_id: z.number(),
+        metadata: porterAppPreDeployEventMetadataValidator
+    }),
+    z.object({
+        id: z.string(),
+        created_at: z.string(),
+        updated_at: z.string(),
+        status: z.string().optional().default(""),
+        type: z.literal("APP_EVENT"),
+        type_external_source: z.string().optional().default(""),
+        porter_app_id: z.number(),
+        metadata: porterAppAppEventMetadataValidator
+    }),
+]);
 
 export const getPorterAppEventsValidator = z.array(porterAppEventValidator).optional().default([]);
 
 export type PorterAppEvent = z.infer<typeof porterAppEventValidator>;
-// TODO: figure out how to type this easier
-export type PorterAppAppEvent = Omit<PorterAppEvent, 'metadata'> & { type: PorterAppEventType.APP_EVENT, metadata: z.infer<typeof porterAppAppEventMetadataValidator> };
-export type PorterAppDeployEvent = Omit<PorterAppEvent, 'metadata'> & { type: PorterAppEventType.DEPLOY, metadata: z.infer<typeof porterAppDeployEventMetadataValidator> };
-export type PorterAppBuildEvent = Omit<PorterAppEvent, 'metadata'> & { type: PorterAppEventType.BUILD, metadata: z.infer<typeof porterAppBuildEventMetadataValidator> };
-// interface PorterAppServiceDeploymentMetadata {
-//     status: string;
-//     external_uri: string;
-//     type: string;
-// }
-// export interface PorterAppDeployEvent extends PorterAppEvent {
-//     type: PorterAppEventType.DEPLOY;
-//     metadata: {
-//         image_tag: string;
-//         revision: number;
-//         service_deployment_metadata: Record<string, PorterAppServiceDeploymentMetadata>;
-//     };
-// }
-// export interface PorterAppAppEvent extends PorterAppEvent {
-//     type: PorterAppEventType.APP_EVENT;
-//     metadata: {
-//         image_tag: string;
-//         revision: number;
-//         service_deployment_metadata: Record<string, PorterAppServiceDeploymentMetadata>;
-//     };
-// }
+export type PorterAppBuildEvent = PorterAppEvent & { type: 'BUILD' };
+export type PorterAppDeployEvent = PorterAppEvent & { type: 'DEPLOY' };
+export type PorterAppPreDeployEvent = PorterAppEvent & { type: 'PRE_DEPLOY' };
+export type PorterAppAppEvent = PorterAppEvent & { type: 'APP_EVENT' };

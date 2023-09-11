@@ -15,11 +15,11 @@ import { getDuration, getStatusColor, getStatusIcon, triggerWorkflow } from '../
 import { StyledEventCard } from "./EventCard";
 import Link from "components/porter/Link";
 import document from "assets/document.svg";
-import { PorterAppEvent } from "../types";
+import { PorterAppPreDeployEvent } from "../types";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 
 type Props = {
-  event: PorterAppEvent;
+  event: PorterAppPreDeployEvent;
   appName: string;
   projectId: number;
   clusterId: number;
@@ -28,7 +28,7 @@ type Props = {
 const PreDeployEventCard: React.FC<Props> = ({ event, appName, projectId, clusterId }) => {
   const { porterApp } = useLatestRevision();
 
-  const renderStatusText = (event: PorterAppEvent) => {
+  const renderStatusText = (event: PorterAppPreDeployEvent) => {
     switch (event.status) {
       case "SUCCESS":
         return <Text color={getStatusColor(event.status)}>Pre-deploy succeeded</Text>;

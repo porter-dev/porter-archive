@@ -14,7 +14,7 @@ import Icon from "components/porter/Icon";
 import { getDuration, getStatusColor, getStatusIcon, triggerWorkflow } from '../utils';
 import { StyledEventCard } from "./EventCard";
 import document from "assets/document.svg";
-import { PorterAppBuildEvent, PorterAppEvent } from "../types";
+import { PorterAppBuildEvent } from "../types";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 
 type Props = {
@@ -26,7 +26,7 @@ type Props = {
 
 const BuildEventCard: React.FC<Props> = ({ event, appName, projectId, clusterId }) => {
   const { porterApp } = useLatestRevision();
-  const renderStatusText = (event: PorterAppEvent) => {
+  const renderStatusText = (event: PorterAppBuildEvent) => {
     switch (event.status) {
       case "SUCCESS":
         return <Text color={getStatusColor(event.status)}>Build succeeded</Text>;

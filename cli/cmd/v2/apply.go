@@ -107,7 +107,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 	if applyResp.CLIAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_BUILD {
 		color.New(color.FgGreen).Printf("Building new image...\n") // nolint:errcheck,gosec
 
-		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster)
+		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID)
 
 		if commitSHA == "" {
 			return errors.New("Build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI.")
@@ -142,13 +142,13 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 
 		err = build(ctx, client, buildSettings)
 		if err != nil {
-			_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, eventID, types.PorterAppEventStatus_Failed, nil)
+			_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, eventID, types.PorterAppEventStatus_Failed, nil)
 			return fmt.Errorf("error building app: %w", err)
 		}
 
 		color.New(color.FgGreen).Printf("Successfully built image (tag: %s)\n", buildSettings.ImageTag) // nolint:errcheck,gosec
 
-		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, eventID, types.PorterAppEventStatus_Success, nil)
+		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, eventID, types.PorterAppEventStatus_Success, nil)
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId)
 		if err != nil {
@@ -160,7 +160,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec
 
 		now := time.Now().UTC()
-		eventID, _ := createPredeployEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, now)
+		eventID, _ := createPredeployEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, now)
 
 		eventStatus := types.PorterAppEventStatus_Success
 		for {
@@ -186,7 +186,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 
 		metadata := make(map[string]interface{})
 		metadata["end_time"] = time.Now().UTC()
-		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, eventID, eventStatus, metadata)
+		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, eventID, eventStatus, metadata)
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId)
 		if err != nil {

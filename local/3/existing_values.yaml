@@ -106,7 +106,7 @@ ingress:
   custom_paths: []
   customTls:
     enabled: false
-  enabled: false
+  enabled: true
   hosts: []
   porter_hosts:
   - legacy-17e207c81b4cbb84.onporter.run

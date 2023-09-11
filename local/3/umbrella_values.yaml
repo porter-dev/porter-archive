@@ -1,4 +1,5 @@
 legacy-web:
+  fullnameOverride: legacy-web
   albIngress:
     custom_paths: []
     enabled: false
@@ -31,7 +32,7 @@ legacy-web:
     env:
       normal: {}
     lifecycle: {}
-    port: 8080
+    port: 80
   currentCluster:
     service:
       is_aws: false
@@ -106,7 +107,7 @@ legacy-web:
     custom_paths: []
     customTls:
       enabled: false
-    enabled: false
+    enabled: true
     hosts: []
     porter_hosts:
     - legacy-17e207c81b4cbb84.onporter.run

@@ -1,13 +1,13 @@
 
-# Source: testchart/charts/legacy-web/templates/deployment.yaml
+# Source: newumbrella/charts/legacy-web/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: legacy2-web
+  name: legacy-web2
   labels:
     helm.sh/chart: legacy-web-0.136.0
     app.kubernetes.io/name: legacy-web
-    app.kubernetes.io/instance: umbrella-chart
+    app.kubernetes.io/instance: release-name
     app.kubernetes.io/version: "1.25.0"
     app.kubernetes.io/managed-by: Helm
 spec:
@@ -17,15 +17,15 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: legacy-web
-      app.kubernetes.io/instance: umbrella-chart
+      app.kubernetes.io/instance: release-name
   template:
     metadata:
       annotations:
         helm.sh/revision: "1"
       labels:
         app.kubernetes.io/name: legacy-web
-        app.kubernetes.io/instance: umbrella-chart
-        porter.run/application-name: "umbrella-chart"
+        app.kubernetes.io/instance: release-name
+        porter.run/application-name: "release-name"
     spec:
       serviceAccountName: legacy-web
       terminationGracePeriodSeconds: 30

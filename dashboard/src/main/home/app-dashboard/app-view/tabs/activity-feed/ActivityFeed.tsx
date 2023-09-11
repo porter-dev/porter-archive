@@ -57,6 +57,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
             setHasError(false)
         } catch (err) {
             setHasError(true);
+            console.log(err);
         } finally {
             setLoading(false);
             setShouldAnimate(false);

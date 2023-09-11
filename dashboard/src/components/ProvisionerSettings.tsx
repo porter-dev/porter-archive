@@ -488,7 +488,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   const preflightChecks = async () => {
     setIsLoading(true);
-    setPreflightData(null)
+    setPreflightData(null);
 
     var data = new PreflightCheckRequest({
       projectId: BigInt(currentProject.id),
@@ -512,7 +512,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
       if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
         hasMessage = true;
-        markStepStarted("provisioning-failed", "Preflight Checks failed");
+        markStepStarted("provisioning-failed", "Preflight Checks failed for AWS");
         break;
       }
     }

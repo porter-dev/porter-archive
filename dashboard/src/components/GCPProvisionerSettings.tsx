@@ -87,7 +87,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
   const [preflightData, setPreflightData] = useState(null)
-  const [preflightFailed, setPreflightFailed] = useState<boolean>(false)
+  const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -378,8 +378,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
   const preflightChecks = async () => {
     setIsLoading(true);
-
-
+    setPreflightData(null);
     var data = new PreflightCheckRequest({
       projectId: BigInt(currentProject.id),
       cloudProvider: EnumCloudProvider.GCP,
@@ -407,6 +406,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
       if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
         hasMessage = true;
+        markStepStarted("provisioning-failed", "Preflight Checks failed for GCP");
         break;
       }
     }
@@ -449,6 +449,21 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
             </>,
             <>
               <PreflightChecks provider="GCP" preflightData={preflightData} />
+              <Spacer y={.5} />
+              {(preflightFailed && preflightData) &&
+                <>
+                  <Text color="helper">
+                    Preflight checks for the account didn't pass. Please fix the issues and retry.
+                  </Text>
+                  < Button
+                    // disabled={isDisabled()}
+                    disabled={isLoading}
+                    onClick={preflightChecks}
+                  >
+                    Retry Checks
+                  </Button>
+                </>
+              }
             </>,
             <>
               <Text size={16}>Provision your cluster</Text>
@@ -468,27 +483,30 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     // If settings, update full form
     return (
       <>
-        <Heading isAtTop>GCP configuration</Heading>
-        <SelectRow
-          options={locationOptions}
-          width="350px"
-          disabled={isReadOnly || true}
-          value={region}
-          scrollBuffer={true}
-          dropdownMaxHeight="240px"
-          setActiveValue={setRegion}
-          label="📍 Google Cloud Region"
-        />
-        <SelectRow
-          options={clusterVersionOptions}
-          width="350px"
-          disabled={isReadOnly}
-          value={clusterVersion}
-          scrollBuffer={true}
-          dropdownMaxHeight="240px"
-          setActiveValue={setClusterVersion}
-          label="Cluster version"
-        />
+        <StyledForm>
+          <Heading isAtTop>GCP configuration</Heading>
+          <SelectRow
+            options={locationOptions}
+            width="350px"
+            disabled={isReadOnly || true}
+            value={region}
+            scrollBuffer={true}
+            dropdownMaxHeight="240px"
+            setActiveValue={setRegion}
+            label="📍 Google Cloud Region"
+          />
+          <SelectRow
+            options={clusterVersionOptions}
+            width="350px"
+            disabled={isReadOnly}
+            value={clusterVersion}
+            scrollBuffer={true}
+            dropdownMaxHeight="240px"
+            setActiveValue={setClusterVersion}
+            label="Cluster version"
+          />
+        </StyledForm>
+
         <Button
           disabled={isDisabled() || isLoading || preflightFailed || statusPreflight() != ""}
           onClick={createCluster}
@@ -536,14 +554,14 @@ export default withRouter(GCPProvisionerSettings);
 
 
 const StyledForm = styled.div`
-      position: relative;
-      padding: 30px 30px 25px;
-      border-radius: 5px;
-      background: ${({ theme }) => theme.fg};
-      border: 1px solid #494b4f;
-      font-size: 13px;
-      margin-bottom: 30px;
-      `;
+              position: relative;
+              padding: 30px 30px 25px;
+              border-radius: 5px;
+              background: ${({ theme }) => theme.fg};
+              border: 1px solid #494b4f;
+              font-size: 13px;
+              margin-bottom: 30px;
+              `;
 
 const DEFAULT_ERROR_MESSAGE =
   "An error occurred while provisioning your infrastructure. Please try again.";
@@ -556,14 +574,14 @@ const errorMessageToModal = (errorMessage: string) => {
 };
 
 const ExpandHeader = styled.div<{ isExpanded: boolean }>`
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+              display: flex;
+              align-items: center;
+              cursor: pointer;
   > i {
-    margin-right: 7px;
-    margin-left: -7px;
-    transform: ${(props) =>
+                margin - right: 7px;
+              margin-left: -7px;
+              transform: ${(props) =>
     props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
-    transition: transform 0.1s ease;
+              transition: transform 0.1s ease;
   }
-`;
+              `;

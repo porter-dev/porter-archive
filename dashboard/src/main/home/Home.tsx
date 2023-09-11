@@ -134,35 +134,15 @@ const Home: React.FC<Props> = (props) => {
       } else if (projectList.length > 0 && !currentProject) {
         setProjects(projectList);
 
-        let foundProject = null;
-        if (id) {
-          projectList.forEach((project: ProjectListType, i: number) => {
-            if (project.id === id) {
-              foundProject = project;
-            }
-          });
-
-          const project = await api
-            .getProject("<token>", {}, { id: projectList[0].id })
-            .then((res) => res.data as ProjectType);
-
-          setCurrentProject(foundProject || project);
+        if (!id) {
+          id = Number(localStorage.getItem("currentProject")) || projectList[0].id
         }
-        if (!foundProject) {
-          projectList.forEach((project: ProjectListType, i: number) => {
-            if (
-              project.id.toString() ===
-              localStorage.getItem("currentProject")
-            ) {
-              foundProject = project;
-            }
-          });
-          const project = await api
-            .getProject("<token>", {}, { id: projectList[0].id })
-            .then((res) => res.data as ProjectType);
 
-          setCurrentProject(foundProject || project);
-        }
+        const project = await api
+          .getProject("<token>", {}, { id: id })
+          .then((res) => res.data as ProjectType);
+
+        setCurrentProject(project);
       }
     } catch (error) {
       console.log(error);

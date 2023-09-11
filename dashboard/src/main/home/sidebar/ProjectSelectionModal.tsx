@@ -6,11 +6,9 @@ import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import { Context } from "shared/Context";
-import { DetailedClusterType, ProjectType } from "shared/types";
-import gradient from "assets/gradient.png";
+import { DetailedClusterType, ProjectListType, ProjectType } from "shared/types";
 import { pushFiltered } from "shared/routing";
 import SearchBar from "components/porter/SearchBar";
-import { search } from "shared/search";
 import _ from 'lodash';
 import { useMemo } from 'react';
 import api from "shared/api";
@@ -19,7 +17,7 @@ import Container from "components/porter/Container";
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
-  projects: ProjectType[];
+  projects: ProjectListType[];
   currentProject: ProjectType;
 }
 
@@ -90,38 +88,35 @@ const ProjectSelectionModal: React.FC<Props> = ({
     }
   };
   const renderBlockList = () => {
-    return filteredProjects.map((project: ProjectType, i: number) => {
+    return filteredProjects.map((projectListEntry: ProjectListType, i: number) => {
       return (
         <IdContainer
           key={i}
-          selected={project.id === currentProject.id}
+          selected={projectListEntry.id === currentProject.id}
           onClick={async () => {
+            const project = await api
+              .getProject("<token>", {}, { id: projectListEntry.id })
+              .then((res) => res.data as ProjectType);
 
             setCurrentProject(project);
 
             const clusters_list = await updateClusterList(project.id);
-            console.log(clusters_list);
-
             if (clusters_list?.length > 0) {
               setCurrentCluster(clusters_list[0]);
-              if (project.simplified_view_enabled) {
-                pushFiltered(props, "/onboarding/source", ["project_id"], {});
-              }
-              else {
-                pushFiltered(props, "/applications", ["project_id"], {});
-              }
+              pushFiltered(props, "/dashboard", ["project_id"]);
             } else {
-              pushFiltered(props, "/onboarding", ["project_id"], {});
+              setCurrentProject(project, () => {
+                pushFiltered(props, "/dashboard", ["project_id"]);
+              });
             }
             closeModal();
           }}
         >
-          {/* <BlockIcon src={gradient} /> */}
-          <BlockTitle>{project.name}</BlockTitle>
+          <BlockTitle>{projectListEntry.name}</BlockTitle>
 
 
           <BlockDescription>
-            Project ID: {project.id}
+            Project ID: {projectListEntry.id}
           </BlockDescription>
         </IdContainer>
       );

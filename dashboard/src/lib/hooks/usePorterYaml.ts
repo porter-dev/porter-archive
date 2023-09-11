@@ -73,6 +73,7 @@ export const usePorterYaml = ({
         source?.type === "github" &&
         Boolean(source.git_repo_name) &&
         Boolean(source.git_branch),
+      retry: false,
     }
   );
 

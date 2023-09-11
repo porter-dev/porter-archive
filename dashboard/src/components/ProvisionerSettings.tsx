@@ -10,8 +10,6 @@ import info from "assets/info-outlined.svg";
 
 import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import InputRow from "./form-components/InputRow";
 import {
   Contract,
   EnumKubernetesKind,
@@ -23,6 +21,9 @@ import {
   LoadBalancer,
   LoadBalancerType,
   EKSLogging,
+  EKSPreflightValues,
+  PreflightCheckRequest,
+  GKE
 } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
@@ -34,11 +35,12 @@ import Text from "./porter/Text";
 import Select from "./porter/Select";
 import Input from "./porter/Input";
 import Checkbox from "./porter/Checkbox";
-import { Certificate } from "crypto";
 import Tooltip from "./porter/Tooltip";
 import Icon from "./porter/Icon";
-import { set } from "traverse";
-import { load } from "js-yaml";
+import Loading from "./Loading";
+import PreflightChecks from "./PreflightChecks";
+import Placeholder from "./Placeholder";
+import VerticalSteps from "./porter/VerticalSteps";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -81,7 +83,6 @@ const machineTypeOptions = [
 
 const clusterVersionOptions = [
   { value: "v1.24.0", label: "1.24.0" },
-  { value: "v1.25.0", label: "1.25.0" },
 ];
 
 type Props = RouteComponentProps & {
@@ -98,9 +99,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     currentCluster,
     setCurrentCluster,
     setShouldRefreshClusters,
-    setHasFinishedOnboarding,
   } = useContext(Context);
-  const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
   const [machineType, setMachineType] = useState("t3.medium");
@@ -108,6 +107,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [kmsEncryptionEnabled, setKmsEncryptionEnabled] = useState<boolean>(
     false
   );
+  const [step, setStep] = useState(0);
   const [loadBalancerType, setLoadBalancerType] = useState(false);
   const [wildCardDomain, setWildCardDomain] = useState("");
   const [IPAllowList, setIPAllowList] = useState<string>("");
@@ -130,6 +130,10 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [preflightData, setPreflightData] = useState(null)
+  const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
+
   const markStepStarted = async (step: string, errMessage?: string) => {
     try {
       await api.updateOnboardingStep(
@@ -138,6 +142,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           step,
           error_message: errMessage,
           region: awsRegion,
+          provider: "aws",
         },
         {
           project_id: currentProject.id,
@@ -149,6 +154,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   };
 
   const getStatus = () => {
+    if (isLoading) {
+      return <Loading />
+    }
     if (isReadOnly && props.provisionerError == "") {
       return "Provisioning is still in progress...";
     } else if (errorMessage) {
@@ -218,9 +226,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   const isDisabled = () => {
     return (
-      !user?.isPorterUser &&
-      (clusterNameDoesNotExist() || userProvisioning() || isClicked)
-    );
+      (clusterNameDoesNotExist() || userProvisioning() || isClicked || (currentCluster && !currentProject?.enable_reprovision)
+      ))
   };
   function convertStringToTags(tagString) {
     if (typeof tagString !== "string" || tagString.trim() === "") {
@@ -239,6 +246,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return tags;
   }
   const createCluster = async () => {
+    setIsLoading(true);
     setIsClicked(true);
 
     let loadBalancerObj = new LoadBalancer({});
@@ -371,6 +379,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       const errMessage = err.response.data?.error.replace("unknown: ", "");
       // hacky, need to standardize error contract with backend
       setIsClicked(false);
+      setIsLoading(false)
       if (errMessage.includes("elastic IP")) {
         setErrorMessage(AWS_EIP_QUOTA_ERROR_MESSAGE);
       } else if (errMessage.includes("VPC")) {
@@ -387,6 +396,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       markStepStarted("provisioning-failed", errMessage);
     } finally {
       setIsReadOnly(false);
+      setIsLoading(false);
+
       setIsClicked(false);
     }
   };
@@ -426,7 +437,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           setAdditionalNodePolicies(nodeGroup.additionalPolicies);
         }
       });
-      setCreateStatus("");
       setClusterName(eksValues.clusterName);
       setAwsRegion(eksValues.region);
       setClusterVersion(eksValues.clusterVersion);
@@ -467,7 +477,57 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
   }, [isExpanded, props.selectedClusterVersion]);
 
+  useEffect(() => {
+    if (!props.clusterId) {
+      setStep(1)
+      setPreflightData(null)
+      preflightChecks()
+    }
+  }, [props.selectedClusterVersion, awsRegion]);
 
+
+  const preflightChecks = async () => {
+    setIsLoading(true);
+    setPreflightData(null);
+
+    var data = new PreflightCheckRequest({
+      projectId: BigInt(currentProject.id),
+      cloudProvider: EnumCloudProvider.AWS,
+      cloudProviderCredentialsId: props.credentialId,
+      preflightValues: {
+        case: "eksPreflightValues",
+        value: new EKSPreflightValues({
+          region: awsRegion,
+        })
+      }
+    });
+    const preflightDataResp = await api.preflightCheck(
+      "<token>", data,
+      {
+        id: currentProject.id,
+      }
+    )
+    // Check if any of the preflight checks has a message
+    let hasMessage = false;
+    let errors = "Preflight Checks Failed : ";
+    for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
+      if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
+        hasMessage = true;
+        errors = errors + check + ", "
+      }
+    }
+    // If none of the checks have a message, set setPreflightFailed to false
+    if (hasMessage) {
+      markStepStarted("provisioning-failed", errors);
+    }
+    if (!hasMessage) {
+      setPreflightFailed(false);
+      setStep(2);
+    }
+    setPreflightData(preflightDataResp?.data?.Msg);
+    setIsLoading(false)
+
+  }
   const renderAdvancedSettings = () => {
     return (
       <>
@@ -914,33 +974,66 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     // Render simplified form if initial create
     if (!props.clusterId) {
       return (
-        <>
-          <Text size={16}>Select an AWS region</Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            Porter will automatically provision your infrastructure in the
-            specified region.
-          </Text>
-          <Spacer height="10px" />
-          <SelectRow
-            options={regionOptions}
-            width="350px"
-            disabled={isReadOnly}
-            value={awsRegion}
-            scrollBuffer={true}
-            dropdownMaxHeight="240px"
-            setActiveValue={setAwsRegion}
-            label="📍 AWS region"
-          />
-          {(user?.isPorterUser || !currentProject?.simplified_view_enabled) &&
-            renderAdvancedSettings()}
-        </>
+        <VerticalSteps
+          currentStep={step}
+          steps={[
+            <>
+              <Text size={16}>Select an AWS region</Text><Spacer y={.5} /><Text color="helper">
+                Porter will automatically provision your infrastructure in the
+                specified region.
+              </Text><Spacer height="10px" /><SelectRow
+                options={regionOptions}
+                width="350px"
+                disabled={isReadOnly}
+                value={awsRegion}
+                scrollBuffer={true}
+                dropdownMaxHeight="240px"
+                setActiveValue={setAwsRegion}
+                label="📍 AWS region" />
+              <>
+                {
+                  user?.isPorterUser && renderAdvancedSettings()
+                }
+              </>
+            </>,
+            <>
+              <PreflightChecks provider='AWS' preflightData={preflightData} />
+              <Spacer y={.5} />
+              {(preflightFailed && preflightData) &&
+                <>
+                  <Text color="helper">
+                    Preflight checks for the account didn't pass. Please fix the issues and retry.
+                  </Text>
+                  < Button
+                    // disabled={isDisabled()}
+                    disabled={isLoading}
+                    onClick={preflightChecks}
+                  >
+                    Retry Checks
+                  </Button>
+                </>
+              }
+            </>,
+            <>
+              <Text size={16}>Provision your cluster</Text>
+              <Spacer y={1} />
+              <Button
+                // disabled={isDisabled()}
+                disabled={isDisabled() || preflightFailed || isLoading}
+                onClick={createCluster}
+                status={getStatus()}
+              >
+                Provision
+              </Button>
+              <Spacer y={1} /></>
+          ].filter((x) => x)}
+        />
       );
     }
 
     // If settings, update full form
     return (
-      <>
+      <><StyledForm>
         <Heading isAtTop>EKS configuration</Heading>
         <SelectRow
           options={regionOptions}
@@ -950,31 +1043,38 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           scrollBuffer={true}
           dropdownMaxHeight="240px"
           setActiveValue={setAwsRegion}
-          label="📍 AWS region"
-        />
+          label="📍 AWS region" />
         {renderAdvancedSettings()}
-      </>
+      </StyledForm>
+        <Button
+          // disabled={isDisabled()}
+          disabled={isDisabled() || preflightFailed || isLoading}
+          onClick={createCluster}
+          status={getStatus()}
+        >
+          Provision
+        </Button></>
     );
   };
 
   return (
     <>
-      <StyledForm>{renderForm()}</StyledForm>
-      <Button
-        // disabled={isDisabled()}
-        disabled={
-          user?.email === "admin@porter.run" ||
-            currentProject?.enable_reprovision
-            ? false
-            : currentCluster
-              ? true
-              : isDisabled()
-        }
-        onClick={createCluster}
-        status={getStatus()}
-      >
-        Provision
-      </Button>
+      {renderForm()}
+      {
+        user.isPorterUser &&
+        <>
+
+          <Spacer y={1} />
+          <Text color="yellow">Visible to Admin Only</Text>
+          <Button
+            color="red"
+            onClick={createCluster}
+            status={getStatus()}
+          >
+            Override Provision
+          </Button>
+        </>
+      }
     </>
   );
 };

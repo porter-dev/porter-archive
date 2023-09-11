@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
+	"github.com/porter-dev/porter/api/types"
 
 	"github.com/cli/cli/git"
 
@@ -34,7 +35,8 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 
 	b64YAML := base64.StdEncoding.EncodeToString(porterYaml)
 
-	parseResp, err := client.ParseYAML(ctx, cliConf.Project, cliConf.Cluster, b64YAML)
+	// last argument is passed to accommodate users with v1 porter yamls
+	parseResp, err := client.ParseYAML(ctx, cliConf.Project, cliConf.Cluster, b64YAML, os.Getenv("PORTER_STACK_NAME"))
 	if err != nil {
 		return fmt.Errorf("error calling parse yaml endpoint: %w", err)
 	}
@@ -62,6 +64,8 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 	var commitSHA string
 	if os.Getenv("PORTER_COMMIT_SHA") != "" {
 		commitSHA = os.Getenv("PORTER_COMMIT_SHA")
+	} else if os.Getenv("GITHUB_SHA") != "" {
+		commitSHA = os.Getenv("GITHUB_SHA")
 	} else if commit, err := git.LastCommit(); err == nil && commit != nil {
 		commitSHA = commit.Sha
 	}
@@ -103,6 +107,8 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 	if applyResp.CLIAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_BUILD {
 		color.New(color.FgGreen).Printf("Building new image...\n") // nolint:errcheck,gosec
 
+		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster)
+
 		if commitSHA == "" {
 			return errors.New("Build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI.")
 		}
@@ -136,10 +142,13 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 
 		err = build(ctx, client, buildSettings)
 		if err != nil {
+			_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, eventID, types.PorterAppEventStatus_Failed, nil)
 			return fmt.Errorf("error building app: %w", err)
 		}
 
 		color.New(color.FgGreen).Printf("Successfully built image (tag: %s)\n", buildSettings.ImageTag) // nolint:errcheck,gosec
+
+		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, eventID, types.PorterAppEventStatus_Success, nil)
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId)
 		if err != nil {
@@ -151,6 +160,9 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec
 
 		now := time.Now().UTC()
+		eventID, _ := createPredeployEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, now)
+
+		eventStatus := types.PorterAppEventStatus_Success
 		for {
 			if time.Since(now) > checkPredeployTimeout {
 				return errors.New("timed out waiting for predeploy to complete")
@@ -161,12 +173,20 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 				return fmt.Errorf("error calling predeploy status endpoint: %w", err)
 			}
 
-			if predeployStatusResp.Status == porter_app.PredeployStatus_Failed || predeployStatusResp.Status == porter_app.PredeployStatus_Successful {
+			if predeployStatusResp.Status == porter_app.PredeployStatus_Failed {
+				eventStatus = types.PorterAppEventStatus_Failed
+				break
+			}
+			if predeployStatusResp.Status == porter_app.PredeployStatus_Successful {
 				break
 			}
 
 			time.Sleep(checkPredeployFrequency)
 		}
+
+		metadata := make(map[string]interface{})
+		metadata["end_time"] = time.Now().UTC()
+		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, eventID, eventStatus, metadata)
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId)
 		if err != nil {

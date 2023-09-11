@@ -12,9 +12,6 @@ import Text from "components/porter/Text";
 import Button from "components/porter/Button";
 import Spacer from "./porter/Spacer";
 import Container from "./porter/Container";
-import PreflightChecks from "./PreflightChecks";
-import { EnumCloudProvider, GKENetwork, GKEPreflightValues, PreflightCheckRequest } from "@porter-dev/api-contracts";
-
 
 
 type Props = {
@@ -31,8 +28,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
   const [gcpCloudProviderCredentialID, setGCPCloudProviderCredentialId] = useState<string>("")
-  const [preFlightData, setPreflightData] = useState(null)
-  const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
+
 
   useEffect(() => {
     setDetected(undefined);
@@ -83,25 +79,6 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
       }
       setGCPCloudProviderCredentialId(gcpIntegrationResponse.data.cloud_provider_credentials_id)
       setIsLoading(false)
-
-      if (gcpIntegrationResponse?.data?.cloud_provider_credentials_id) {
-        setIsLoading(true);
-        var data = new PreflightCheckRequest({
-          projectId: BigInt(currentProject.id),
-          cloudProvider: EnumCloudProvider.GCP,
-          cloudProviderCredentialsId: gcpIntegrationResponse.data.cloud_provider_credentials_id
-
-        })
-        const preflightDataResp = await api.preflightCheck(
-          "<token>", data,
-          {
-            id: currentProject.id,
-          }
-        )
-        setPreflightData(preflightDataResp?.data?.Msg);
-        setIsLoading(false)
-
-      }
     }
     catch (err) {
       setIsLoading(false)
@@ -117,8 +94,18 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
 
 
   const saveCredentials = async () => {
-
     if (gcpCloudProviderCredentialID) {
+      try {
+        if (currentProject?.id != null) {
+          api.inviteAdmin(
+            "<token>",
+            {},
+            { project_id: currentProject?.id }
+          );
+        }
+      } catch (err) {
+        console.log(err);
+      }
       proceed(gcpCloudProviderCredentialID)
     }
 
@@ -187,27 +174,13 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
             </Text>
           </AppearingDiv>
           <Spacer y={1} />
-          {isLoading ?
-            <>
-              <Placeholder>
-                <Loading />
-              </Placeholder>
-
-            </>
-            :
-
-            preFlightData ?
-              (<PreflightChecks preflightData={preFlightData} setPreflightFailed={setPreflightFailed} />)
-              : (<Text>  Could not perform preflight checks on your account. Please verify your credentials are correct or contact Porter Support at support@porter.run</Text>)
-
-          }
         </>
       </>
       )}
 
       <Spacer y={0.5} />
       <Button
-        disabled={!isContinueEnabled || preflightFailed || isLoading}
+        disabled={!isContinueEnabled || isLoading}
         onClick={saveCredentials}
       >Continue</Button>
 

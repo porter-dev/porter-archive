@@ -1,12 +1,11 @@
 import React from "react";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Spacer from "components/porter/Spacer";
-import { ClientService } from "lib/porter-apps/services";
+import { ClientService, prefixSubdomain } from "lib/porter-apps/services";
 import { Controller, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
-import AnimateHeight from "react-animate-height";
 import CustomDomains from "./CustomDomains";
 
 type NetworkingProps = {
@@ -18,17 +17,10 @@ type NetworkingProps = {
   };
 };
 
-const prefixSubdomain = (subdomain: string) => {
-  if (subdomain.startsWith("https://") || subdomain.startsWith("http://")) {
-    return subdomain;
-  }
-  return "https://" + subdomain;
-};
-
 const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
   const { register, control, watch } = useFormContext<PorterAppFormData>();
 
-  const ingressEnabled = watch(`app.services.${index}.config.ingressEnabled`);
+  const privateService = watch(`app.services.${index}.config.private.value`);
 
   const getApplicationURLText = () => {
     if (service.config.domains.length !== 0) {
@@ -69,12 +61,12 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
       />
       <Spacer y={1} />
       <Controller
-        name={`app.services.${index}.config.ingressEnabled`}
+        name={`app.services.${index}.config.private.value`}
         control={control}
         render={({ field: { value, onChange } }) => (
           <Checkbox
-            checked={Boolean(value)}
-            disabled={service.config.domains.some((d) => d.name.readOnly)}
+            checked={!value}
+            disabled={service.config.private.readOnly}
             toggleChecked={() => {
               onChange(!value);
             }}
@@ -86,7 +78,7 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
           </Checkbox>
         )}
       />
-      {ingressEnabled && (
+      {!privateService && (
         <>
           <Spacer y={0.5} />
           {getApplicationURLText()}
@@ -101,7 +93,7 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
             </a>
           </Text>
           <Spacer y={0.5} />
-          <CustomDomains index={index} customDomains={service.config.domains} />
+          <CustomDomains index={index} />
           <Spacer y={0.5} />
         </>
       )}

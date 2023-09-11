@@ -41,16 +41,18 @@ type AddServiceFormValues = z.infer<typeof addServiceFormValidator>;
 
 type ServiceListProps = {
   addNewText: string;
-  limitOne?: boolean;
   prePopulateService?: ClientService;
   isPredeploy?: boolean;
+  existingServiceNames?: string[];
+  fieldArrayName: "app.services" | "app.predeploy";
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
   addNewText,
-  limitOne = false,
   prePopulateService,
   isPredeploy = false,
+  existingServiceNames = [],
+  fieldArrayName,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
@@ -72,7 +74,15 @@ const ServiceList: React.FC<ServiceListProps> = ({
   });
   const { append, remove, update, fields } = useFieldArray({
     control: appControl,
-    name: "app.services",
+    name: fieldArrayName,
+  });
+  const {
+    append: appendDeletion,
+    remove: removeDeletion,
+    fields: deletedServices,
+  } = useFieldArray({
+    control: appControl,
+    name: "deletions.serviceNames",
   });
 
   const serviceType = watch("type");
@@ -100,7 +110,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   };
 
   const maybeRenderAddServicesButton = () => {
-    if (limitOne && services.length > 0) {
+    if (isPredeploy && services.find((s) => isPredeployService(s.svc))) {
       return null;
     }
     return (
@@ -124,12 +134,31 @@ const ServiceList: React.FC<ServiceListProps> = ({
   };
 
   const onSubmit = handleSubmit(async (data) => {
+    // if service was previously deleted, remove from deletions
+    // handle case such as pre-deploy (which always has the same name)
+    // being deleted and then re-added
+    const previouslyDeleted = deletedServices.findIndex(
+      (s) => s.name === data.name
+    );
+    if (previouslyDeleted !== -1) {
+      removeDeletion(previouslyDeleted);
+    }
+
     append(
       deserializeService({ service: defaultSerialized(data), expanded: true })
     );
     reset();
     setShowAddServiceModal(false);
   });
+
+  const onRemove = (index: number) => {
+    const name = services[index].svc.name.value;
+    remove(index);
+
+    if (existingServiceNames.includes(name)) {
+      appendDeletion({ name });
+    }
+  };
 
   return (
     <>
@@ -142,7 +171,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 key={svc.id}
                 service={svc}
                 update={update}
-                remove={remove}
+                remove={onRemove}
               />
             ) : null;
           })}

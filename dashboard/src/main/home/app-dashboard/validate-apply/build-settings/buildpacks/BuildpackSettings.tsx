@@ -104,8 +104,8 @@ const BuildpackSettings: React.FC<Props> = ({
       }
       if (build.buildpacks.length) {
         const bps = build.buildpacks.map((bp) => ({
-          ...bp,
-          name: BUILDPACK_TO_NAME[bp.buildpack] ?? bp,
+          name: BUILDPACK_TO_NAME[bp.buildpack] ?? bp.buildpack,
+          buildpack: bp.buildpack,
         }));
         replace(bps);
       }
@@ -159,7 +159,12 @@ const BuildpackSettings: React.FC<Props> = ({
 
       if (!autoDetectionDisabled) {
         setValue("app.build.builder", detectedBuilder);
-        replace(defaultBuilder.detected);
+        replace(
+          defaultBuilder.detected.map((bp) => ({
+            name: bp.name,
+            buildpack: bp.buildpack,
+          }))
+        );
         setAvailableBuildpacks(defaultBuilder.others);
       } else {
         setValue("app.build.builder", detectedBuilder);

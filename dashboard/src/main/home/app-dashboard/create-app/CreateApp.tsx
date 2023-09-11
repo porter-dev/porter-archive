@@ -98,10 +98,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       app: {
         name: "",
         build: {
+          method: "pack",
           context: "./",
           builder: "",
           buildpacks: [],
-          dockerfile: "",
         },
       },
       source: {
@@ -109,6 +109,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         git_branch: "",
         porter_yaml_path: "./porter.yaml",
       },
+      deletions: {
+        serviceNames: [],
+      }
     },
   });
   const {
@@ -118,6 +121,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     setValue,
     handleSubmit,
     setError,
+    clearErrors,
     formState: { isSubmitting: isValidating, errors },
   } = porterAppFormMethods;
 
@@ -131,15 +135,17 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const { updateAppStep } = useAppAnalytics(name);
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget?.deployment_target_id,
+    creating: true,
   });
 
   const onSubmit = handleSubmit(async (data) => {
     try {
+      console.log("submitting!")
       setDeployError("");
       const validatedAppProto = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
 
-      if (source?.type === "github") {
+      if (source.type === "github") {
         setShowGHAModal(true);
         return;
       }
@@ -298,6 +304,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   // reset services when source changes
   useEffect(() => {
     setValue("app.services", []);
+    setValue("app.predeploy", []);
     setDetectedServices({
       detected: false,
       count: 0,
@@ -321,7 +328,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   useEffect(() => {
     if (servicesFromYaml && !detectedServices.detected) {
       const { services, predeploy } = servicesFromYaml;
-      setValue("app.services", [...services, predeploy].filter(valueExists));
+      setValue("app.services", services);
+      setValue("app.predeploy", [predeploy].filter(valueExists));
       setDetectedServices({
         detected: true,
         count: services.length,
@@ -330,6 +338,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
     if (!servicesFromYaml && detectedServices.detected) {
       setValue("app.services", []);
+      setValue("app.predeploy", []);
       setDetectedServices({
         detected: false,
         count: 0,
@@ -342,7 +351,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       setError("app.name", {
         message: "An app with this name already exists",
       });
-      return;
+    } else {
+      clearErrors("app.name");
     }
   }, [porterApps, name]);
 
@@ -443,16 +453,15 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>
                       )}
                     </Container>
                     <Spacer y={0.5} />
-                    <ServiceList addNewText={"Add a new service"} />
+                    <ServiceList addNewText={"Add a new service"} fieldArrayName={"app.services"} />
                   </>,
                   <>
                     <Text size={16}>Environment variables (optional)</Text>
@@ -473,15 +482,16 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       </Text>
                       <Spacer y={0.5} />
                       <ServiceList
-                        limitOne={true}
                         addNewText={"Add a new pre-deploy job"}
                         prePopulateService={deserializeService({
                           service: defaultSerialized({
                             name: "pre-deploy",
                             type: "predeploy",
                           }),
+                          expanded: true,
                         })}
                         isPredeploy
+                        fieldArrayName={"app.predeploy"}
                       />
                     </>
                   ),

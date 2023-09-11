@@ -8,7 +8,7 @@ import midnight from "shared/themes/midnight";
 import standard from "shared/themes/standard";
 import { Context } from "shared/Context";
 import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
-import { ClusterType, ProjectType } from "shared/types";
+import { ClusterType, ProjectType, ProjectListType } from "shared/types";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
@@ -39,7 +39,6 @@ import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
 import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
 import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
-import ExpandedJob from "./app-dashboard/expanded-app/expanded-job/ExpandedJob";
 import CreateApp from "./app-dashboard/create-app/CreateApp";
 import AppView from "./app-dashboard/app-view/AppView";
 
@@ -116,7 +115,7 @@ const Home: React.FC<Props> = (props) => {
       });
   };
 
-  const getProjects = (id?: number) => {
+  const getProjects = async (id?: number) => {
     let { currentProject } = props;
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
@@ -125,39 +124,49 @@ const Home: React.FC<Props> = (props) => {
       pushQueryParams(props, { project_id: currentProject.id.toString() });
     }
 
-    api
-      .getProjects("<token>", {}, { id: user.userId })
-      .then((res) => {
-        if (res.data) {
-          if (res.data.length === 0) {
-            redirectToNewProject();
-          } else if (res.data.length > 0 && !currentProject) {
-            setProjects(res.data);
+    try {
+      const projectList = await api
+        .getProjects("<token>", {}, { id: user.userId })
+        .then((res) => res.data as ProjectListType[]);
 
-            let foundProject = null;
-            if (id) {
-              res.data.forEach((project: ProjectType, i: number) => {
-                if (project.id === id) {
-                  foundProject = project;
-                }
-              });
-              setCurrentProject(foundProject || res.data[0]);
+      if (projectList.length === 0) {
+        redirectToNewProject();
+      } else if (projectList.length > 0 && !currentProject) {
+        setProjects(projectList);
+
+        let foundProject = null;
+        if (id) {
+          projectList.forEach((project: ProjectListType, i: number) => {
+            if (project.id === id) {
+              foundProject = project;
             }
-            if (!foundProject) {
-              res.data.forEach((project: ProjectType, i: number) => {
-                if (
-                  project.id.toString() ===
-                  localStorage.getItem("currentProject")
-                ) {
-                  foundProject = project;
-                }
-              });
-              setCurrentProject(foundProject || res.data[0]);
-            }
-          }
+          });
+
+          const project = await api
+            .getProject("<token>", {}, { id: projectList[0].id })
+            .then((res) => res.data as ProjectType);
+
+          setCurrentProject(foundProject || project);
         }
-      })
-      .catch(console.log);
+        if (!foundProject) {
+          projectList.forEach((project: ProjectListType, i: number) => {
+            if (
+              project.id.toString() ===
+              localStorage.getItem("currentProject")
+            ) {
+              foundProject = project;
+            }
+          });
+          const project = await api
+            .getProject("<token>", {}, { id: projectList[0].id })
+            .then((res) => res.data as ProjectType);
+
+          setCurrentProject(foundProject || project);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const checkIfCanCreateProject = () => {
@@ -194,7 +203,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -311,17 +320,24 @@ const Home: React.FC<Props> = (props) => {
 
   const projectOverlayCall = async () => {
     try {
-      const res = await api.getProjects("<token>", {}, { id: user.userId });
-      if (!res.data) {
+      const projectList = await api
+        .getProjects("<token>", {}, { id: user.userId })
+        .then((res) => res.data as ProjectListType[]);
+
+      if (!projectList) {
         setCurrentModal(null, null);
         return;
       }
 
-      setProjects(res.data);
-      if (!res.data.length) {
+      setProjects(projectList);
+      if (!projectList.length) {
         setCurrentProject(null, () => redirectToNewProject());
       } else {
-        setCurrentProject(res.data[0]);
+        const project = await api
+          .getProject("<token>", {}, { id: projectList[0].id })
+          .then((res) => res.data as ProjectType);
+
+        setCurrentProject(project);
       }
       setCurrentModal(null, null);
     } catch (error) {
@@ -461,17 +477,17 @@ const Home: React.FC<Props> = (props) => {
               overrideInfraTabEnabled({
                 projectID: currentProject?.id,
               })) && (
-              <Route
-                path="/infrastructure"
-                render={() => {
-                  return (
-                    <DashboardWrapper>
-                      <InfrastructureRouter />
-                    </DashboardWrapper>
-                  );
-                }}
-              />
-            )}
+                <Route
+                  path="/infrastructure"
+                  render={() => {
+                    return (
+                      <DashboardWrapper>
+                        <InfrastructureRouter />
+                      </DashboardWrapper>
+                    );
+                  }}
+                />
+              )}
             <Route
               path="/dashboard"
               render={() => {

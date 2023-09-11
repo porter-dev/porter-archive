@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apitest"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -33,8 +34,8 @@ func TestGetProjectSuccessful(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	expProject := proj.ToProjectType()
-	gotProject := &types.Project{}
+	expProject := proj.ToProjectType(&features.Client{})
+	gotProject := types.Project{}
 
-	apitest.AssertResponseExpected(t, rr, expProject, gotProject)
+	apitest.AssertResponseExpected(t, rr, &expProject, &gotProject)
 }

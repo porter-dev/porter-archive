@@ -12,10 +12,19 @@ import { z } from "zod";
 
 export const useAppValidation = ({
   deploymentTargetID,
+  creating = false,
 }: {
   deploymentTargetID?: string;
+  creating?: boolean;
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
+
+  const removedEnvKeys = (
+    current: Record<string, string>,
+    previous: Record<string, string>
+  ) => {
+    return Object.keys(previous).filter((key) => !current[key]);
+  };
 
   const getBranchHead = async ({
     projectID,
@@ -53,7 +62,7 @@ export const useAppValidation = ({
   };
 
   const validateApp = useCallback(
-    async (data: PorterAppFormData) => {
+    async (data: PorterAppFormData, prevRevision?: PorterApp) => {
       if (!currentProject || !currentCluster) {
         throw new Error("No project or cluster selected");
       }
@@ -62,9 +71,18 @@ export const useAppValidation = ({
         throw new Error("No deployment target selected");
       }
 
+      const envVariableDeletions = removedEnvKeys(
+        data.app.env,
+        prevRevision?.env || {}
+      );
+
       const proto = clientAppToProto(data);
       const commit_sha = await match(data.source)
         .with({ type: "github" }, async (src) => {
+          if (!creating) {
+            return "";
+          }
+
           const { commit_sha } = await getBranchHead({
             projectID: currentProject.id,
             source: src,
@@ -86,6 +104,10 @@ export const useAppValidation = ({
           ),
           deployment_target_id: deploymentTargetID,
           commit_sha,
+          deletions: {
+            service_names: data.deletions.serviceNames.map((s) => s.name),
+            env_variable_names: envVariableDeletions,
+          },
         },
         {
           project_id: currentProject.id,

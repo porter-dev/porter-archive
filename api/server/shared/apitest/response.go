@@ -10,6 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// AssertResponseExpected asserts that the expected http response matches the actual response
+//
+// Note that arguments need to be passed as pointer values due to how testify/assert handles serialization
 func AssertResponseExpected(t *testing.T, rr *httptest.ResponseRecorder, expResponse interface{}, gotTarget interface{}) {
 	err := json.NewDecoder(rr.Body).Decode(gotTarget)
 	if err != nil {

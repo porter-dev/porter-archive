@@ -31,6 +31,11 @@ GITHUB_APP_ID=<github_app_id>
 
 GITHUB_APP_SECRET_PATH=<path_to_secret>
 
+# LAUNCHDARKLY_SDK_KEY is used to interact with the launchdarkly api
+# Retrieve your SDK key from https://app.launchdarkly.com/settings/projects/dev/environments
+
+LAUNCHDARKLY_SDK_KEY=<launchdarkly_sdk_key>
+
 # Optional parameters
 
 # HELM_APP_REPO_URL=http://chartmuseum:8080 can be used to test charts using porter-charts with Tilt

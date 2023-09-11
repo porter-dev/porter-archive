@@ -1,19 +1,16 @@
 import React from "react";
 import Button from "components/porter/Button";
 import styled from "styled-components";
-import Input from "components/porter/Input";
 import Spacer from "components/porter/Spacer";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
-import { ClientDomains } from "lib/porter-apps/values";
 import { ControlledInput } from "components/porter/ControlledInput";
 
 interface Props {
   index: number;
-  customDomains: ClientDomains;
 }
 
-const CustomDomains: React.FC<Props> = ({ index, customDomains }) => {
+const CustomDomains: React.FC<Props> = ({ index }) => {
   const { control, register } = useFormContext<PorterAppFormData>();
   const { remove, append, fields } = useFieldArray({
     control,
@@ -25,7 +22,7 @@ const CustomDomains: React.FC<Props> = ({ index, customDomains }) => {
       {fields.length !== 0 && (
         <>
           {fields.map((customDomain, i) => {
-            return (
+            return !customDomain.name.value.includes("onporter.run") ? (
               <div key={customDomain.id}>
                 <AnnotationContainer>
                   <ControlledInput
@@ -51,12 +48,13 @@ const CustomDomains: React.FC<Props> = ({ index, customDomains }) => {
                 </AnnotationContainer>
                 <Spacer y={0.25} />
               </div>
-            );
+            ) : null;
           })}
           <Spacer y={0.5} />
         </>
       )}
       <Button
+        type="button" // this is required so that CreateApp.tsx doesn't try to submit the form onClick lol
         onClick={() => {
           append({
             name: {

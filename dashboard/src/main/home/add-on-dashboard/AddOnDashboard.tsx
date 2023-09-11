@@ -155,8 +155,7 @@ const AddOnDashboard: React.FC<Props> = ({
         <ClusterProvisioningPlaceholder />
       ) : (
 
-
-        (filteredAddOns.length === 0) ? (
+        (addOns.length === 0) ? (
 
           isLoading ?
             (<Loading offset="-150px" />) : (
@@ -209,7 +208,14 @@ const AddOnDashboard: React.FC<Props> = ({
             </Container>
             <Spacer y={1} />
 
-            {isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
+            {filteredAddOns.length === 0 ? (
+              <Fieldset>
+                <Container row>
+                  <PlaceholderIcon src={notFound} />
+                  <Text color="helper">No matching add-ons were found.</Text>
+                </Container>
+              </Fieldset>
+            ) : (isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
               <GridList>
                 {(filteredAddOns ?? []).map((app: any, i: number) => {
                   return (
@@ -222,6 +228,7 @@ const AddOnDashboard: React.FC<Props> = ({
                           }
                         />
                         <Text size={14}>{app.name}</Text>
+                        <Spacer inline x={2} />
                       </Container>
                       <StatusIcon src={healthy} />
                       <Container row>
@@ -261,6 +268,7 @@ const AddOnDashboard: React.FC<Props> = ({
                   );
                 })}
               </List>
+            )
             )}
           </>
         ))}

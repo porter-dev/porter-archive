@@ -232,6 +232,8 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 
 			resGroup.Resources = append(resGroup.Resources, resources...)
 		}
+	} else if previewVersion.Version == "v2" {
+		return errors.New("porter.yaml v2 is not enabled for this project")
 	} else {
 		return fmt.Errorf("unknown porter.yaml version: %s", previewVersion.Version)
 	}

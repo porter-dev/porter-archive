@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/features"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
@@ -18,7 +19,7 @@ const (
 
 // Project type that extends gorm.Model
 type Project struct {
-	gorm.Model
+	gorm.Model `gorm:"embedded"`
 
 	Name  string `json:"name"`
 	Roles []Role `json:"roles"`
@@ -74,16 +75,54 @@ type Project struct {
 }
 
 // ToProjectType generates an external types.Project to be shared over REST
-func (p *Project) ToProjectType() *types.Project {
+func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Project {
 	roles := make([]*types.Role, 0)
 
 	for _, role := range p.Roles {
 		roles = append(roles, role.ToRoleType())
 	}
 
-	return &types.Project{
-		ID:                     p.ID,
-		Name:                   p.Name,
+	projectID := p.ID
+	projectName := p.Name
+	ldContext := getProjectContext(projectID, projectName)
+
+	return types.Project{
+		ID:    projectID,
+		Name:  projectName,
+		Roles: roles,
+
+		PreviewEnvsEnabled:     getPreviewEnvsEnabled(ldContext, launchDarklyClient),
+		RDSDatabasesEnabled:    getRdsDatabasesEnabled(ldContext, launchDarklyClient),
+		ManagedInfraEnabled:    getManagedInfraEnabled(ldContext, launchDarklyClient),
+		StacksEnabled:          getStacksEnabled(ldContext, launchDarklyClient),
+		APITokensEnabled:       getAPITokensEnabled(ldContext, launchDarklyClient),
+		CapiProvisionerEnabled: getCapiProvisionerEnabled(ldContext, launchDarklyClient),
+		SimplifiedViewEnabled:  getSimplifiedViewEnabled(ldContext, launchDarklyClient),
+		AzureEnabled:           getAzureEnabled(ldContext, launchDarklyClient),
+		HelmValuesEnabled:      getHelmValuesEnabled(ldContext, launchDarklyClient),
+		MultiCluster:           getMultiCluster(ldContext, launchDarklyClient),
+		EnableReprovision:      getEnableReprovision(ldContext, launchDarklyClient),
+		ValidateApplyV2:        getValidateApplyV2(ldContext, launchDarklyClient),
+		FullAddOns:             getFullAddOns(ldContext, launchDarklyClient),
+	}
+}
+
+// ToProjectListType returns a "minified" version of a Project
+// suitable for api responses to GET /projects
+// TODO: update this in the future to use default values for all
+// the feature flags instead of trying to retrieve them from the database
+func (p *Project) ToProjectListType() *types.ProjectList {
+	var roles []types.Role
+	for _, role := range p.Roles {
+		roles = append(roles, *role.ToRoleType())
+	}
+
+	return &types.ProjectList{
+		ID:   p.ID,
+		Name: p.Name,
+
+		// note: all of these fields should be considered deprecated
+		// in an api response
 		Roles:                  roles,
 		PreviewEnvsEnabled:     p.PreviewEnvsEnabled,
 		RDSDatabasesEnabled:    p.RDSDatabasesEnabled,

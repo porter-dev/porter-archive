@@ -15,7 +15,7 @@ import { useLatestRevision } from "../LatestRevisionContext";
 
 const Overview: React.FC = () => {
   const { formState } = useFormContext<PorterAppFormData>();
-  const { porterApp } = useLatestRevision();
+  const { porterApp, latestProto } = useLatestRevision();
 
   const buttonStatus = useMemo(() => {
     if (formState.isSubmitting) {
@@ -36,7 +36,6 @@ const Overview: React.FC = () => {
           <Text size={16}>Pre-deploy job</Text>
           <Spacer y={0.5} />
           <ServiceList
-            limitOne={true}
             addNewText={"Add a new pre-deploy job"}
             prePopulateService={deserializeService({
               service: defaultSerialized({
@@ -44,14 +43,16 @@ const Overview: React.FC = () => {
                 type: "predeploy",
               }),
             })}
+            existingServiceNames={Object.keys(latestProto.services)}
             isPredeploy
+            fieldArrayName={"app.predeploy"}
           />
           <Spacer y={0.5} />
         </>
       )}
       <Text size={16}>Application services</Text>
       <Spacer y={0.5} />
-      <ServiceList addNewText={"Add a new service"} />
+      <ServiceList addNewText={"Add a new service"} fieldArrayName={"app.services"} existingServiceNames={Object.keys(latestProto.services)} />
       <Spacer y={0.75} />
       <Button
         type="submit"

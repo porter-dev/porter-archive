@@ -235,7 +235,12 @@ const LogSection: React.FC<Props> = ({
             />
           </Flex>
           <Flex>
-            <Filter filters={filters} />
+            {showFilter && (
+              <Filter 
+                filters={filters}
+                selectedFilterValues={selectedFilterValues}
+              />
+            )}
             <Spacer inline width="10px" />
             <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
               <Checkbox checked={scrollToBottomEnabled}>

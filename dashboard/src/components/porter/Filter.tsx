@@ -5,10 +5,12 @@ import Spacer from "./Spacer";
 
 type Props = {
   filters: any;
+  selectedFilterValues: Record<any, string>;
 };
 
 const Filter: React.FC<Props> = ({
   filters,
+  selectedFilterValues,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -21,26 +23,39 @@ const Filter: React.FC<Props> = ({
         Filter
       </StyledFilter>
       {isExpanded && (
-        <Dropdown>
-          {filters.map((filter: any, i: number) => {
-            return (
-              <>
-                <FilterLabel>{filter.displayName}</FilterLabel>
-                <Spacer height="10px" />
-                <Select
-                  options={filter.options}
-                />
-                {i < filter.length && <Spacer height="15px" />}
-              </>
-            );
-          })}
-        </Dropdown>
+        <>
+          <CloseOverlay onClick={() => setIsExpanded(false)} />
+          <Dropdown>
+            {filters.map((filter: any, i: number) => {
+              return (
+                <React.Fragment key={i}>
+                  <FilterLabel>{filter.displayName}</FilterLabel>
+                  <Spacer height="10px" />
+                  <Select
+                    options={[filter.default, ...filter.options]}
+                    setValue={filter.setValue}
+                  />
+                  {i < filter.length && <Spacer height="15px" />}
+                </React.Fragment>
+              );
+            })}
+          </Dropdown>
+        </>
       )}
     </Relative>
   );
 };
 
 export default Filter;
+
+const CloseOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 998;
+  width: 100vw;
+  height: 100vh;
+`;
 
 const FilterLabel = styled.div`
 `;

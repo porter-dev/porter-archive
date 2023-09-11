@@ -28,6 +28,7 @@ import Button from "components/porter/Button";
 import { Service } from "../../new-app-flow/serviceTypes";
 import LogFilterContainer from "./LogFilterContainer";
 import StyledLogs from "./StyledLogs";
+import Filter from "components/porter/Filter";
 
 type Props = {
   appName: string;
@@ -226,6 +227,7 @@ const LogSection: React.FC<Props> = ({
               setEnteredSearchText={setEnteredSearchText}
               setSelectedDate={setSelectedDateIfUndefined}
             />
+            <Spacer inline width="10px" />
             <LogQueryModeSelectionToggle
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
@@ -233,6 +235,8 @@ const LogSection: React.FC<Props> = ({
             />
           </Flex>
           <Flex>
+            <Filter filters={filters} />
+            <Spacer inline width="10px" />
             <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
               <Checkbox checked={scrollToBottomEnabled}>
                 <i className="material-icons">done</i>
@@ -251,7 +255,7 @@ const LogSection: React.FC<Props> = ({
           </Flex>
         </FlexRow>
         <Spacer y={0.5} />
-        {showFilter &&
+        {showFilter && false &&
           <>
             <LogFilterContainer
               filters={filters}
@@ -464,7 +468,7 @@ const Checkbox = styled.div<{ checked: boolean }>`
 `;
 
 const ScrollButton = styled.div`
-  background: #26292e;
+  background: #181B20;
   border-radius: 5px;
   height: 30px;
   font-size: 13px;
@@ -586,4 +590,5 @@ const NotificationWrapper = styled.div<{ active?: boolean }>`
 
 const LogsSectionWrapper = styled.div`
   position: relative;
+  margin-top: 10px;
 `;

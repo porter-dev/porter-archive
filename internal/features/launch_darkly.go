@@ -7,7 +7,6 @@ import (
 
 	"github.com/launchdarkly/go-sdk-common/v3/ldcontext"
 	ld "github.com/launchdarkly/go-server-sdk/v6"
-	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 )
 
 // Client is a struct wrapper around the launchdarkly client
@@ -29,8 +28,8 @@ func (c Client) BoolVariation(field string, context ldcontext.Context, defaultVa
 }
 
 // GetClient retrieves a Client for interacting with LaunchDarkly
-func GetClient(envConf *envloader.EnvConf) (*Client, error) {
-	ldClient, err := ld.MakeClient(envConf.ServerConf.LaunchDarklySDKKey, 5*time.Second)
+func GetClient(launchDarklySDKKey string) (*Client, error) {
+	ldClient, err := ld.MakeClient(launchDarklySDKKey, 5*time.Second)
 	if err != nil {
 		return &Client{}, fmt.Errorf("failed to create new launchdarkly client: %w", err)
 	}

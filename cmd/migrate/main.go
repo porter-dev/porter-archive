@@ -30,7 +30,7 @@ func main() {
 		return
 	}
 
-	launchDarklyClient, err := features.GetClient(envConf)
+	launchDarklyClient, err := features.GetClient(envConf.ServerConf.LaunchDarklySDKKey)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("could not load launch darkly client")
 		return

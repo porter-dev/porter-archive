@@ -228,6 +228,7 @@ const AddOnDashboard: React.FC<Props> = ({
                           }
                         />
                         <Text size={14}>{app.name}</Text>
+                        <Spacer inline x={2} />
                       </Container>
                       <StatusIcon src={healthy} />
                       <Container row>

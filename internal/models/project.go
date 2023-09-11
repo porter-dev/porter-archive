@@ -1,12 +1,32 @@
 package models
 
 import (
+	"fmt"
+
 	"gorm.io/gorm"
 
+	"github.com/launchdarkly/go-sdk-common/v3/ldcontext"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/features"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
+
+// ProjectFeatureFlags keeps track of all project-related feature flags
+var ProjectFeatureFlags = map[string]bool{
+	"api_tokens_enabled":       false,
+	"azure_enabled":            false,
+	"capi_provisioner_enabled": true,
+	"enable_reprovision":       false,
+	"full_add_ons":             false,
+	"helm_values_enabled":      false,
+	"managed_infra_enabled":    false,
+	"multi_cluster":            false,
+	"preview_envs_enabled":     false,
+	"rds_databases_enabled":    false,
+	"simplified_view_enabled":  true,
+	"stacks_enabled":           false,
+	"validate_apply_v2":        false,
+}
 
 type ProjectPlan string
 
@@ -74,6 +94,18 @@ type Project struct {
 	EnableReprovision      bool `gorm:"default:false"`
 }
 
+// GetFeatureFlag calls launchdarkly for the specified flag
+// and returns the configured value
+func (p *Project) GetFeatureFlag(flagName string, launchDarklyClient *features.Client) bool {
+	projectID := p.ID
+	projectName := p.Name
+	ldContext := getProjectContext(projectID, projectName)
+
+	defaultValue := ProjectFeatureFlags[flagName]
+	value, _ := launchDarklyClient.BoolVariation(flagName, ldContext, defaultValue)
+	return value
+}
+
 // ToProjectType generates an external types.Project to be shared over REST
 func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Project {
 	roles := make([]*types.Role, 0)
@@ -84,26 +116,25 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 
 	projectID := p.ID
 	projectName := p.Name
-	ldContext := getProjectContext(projectID, projectName)
 
 	return types.Project{
 		ID:    projectID,
 		Name:  projectName,
 		Roles: roles,
 
-		PreviewEnvsEnabled:     getPreviewEnvsEnabled(ldContext, launchDarklyClient),
-		RDSDatabasesEnabled:    getRdsDatabasesEnabled(ldContext, launchDarklyClient),
-		ManagedInfraEnabled:    getManagedInfraEnabled(ldContext, launchDarklyClient),
-		StacksEnabled:          getStacksEnabled(ldContext, launchDarklyClient),
-		APITokensEnabled:       getAPITokensEnabled(ldContext, launchDarklyClient),
-		CapiProvisionerEnabled: getCapiProvisionerEnabled(ldContext, launchDarklyClient),
-		SimplifiedViewEnabled:  getSimplifiedViewEnabled(ldContext, launchDarklyClient),
-		AzureEnabled:           getAzureEnabled(ldContext, launchDarklyClient),
-		HelmValuesEnabled:      getHelmValuesEnabled(ldContext, launchDarklyClient),
-		MultiCluster:           getMultiCluster(ldContext, launchDarklyClient),
-		EnableReprovision:      getEnableReprovision(ldContext, launchDarklyClient),
-		ValidateApplyV2:        getValidateApplyV2(ldContext, launchDarklyClient),
-		FullAddOns:             getFullAddOns(ldContext, launchDarklyClient),
+		PreviewEnvsEnabled:     p.GetFeatureFlag("preview_envs_enabled", launchDarklyClient),
+		RDSDatabasesEnabled:    p.GetFeatureFlag("rds_databases_enabled", launchDarklyClient),
+		ManagedInfraEnabled:    p.GetFeatureFlag("managed_infra_enabled", launchDarklyClient),
+		StacksEnabled:          p.GetFeatureFlag("stacks_enabled", launchDarklyClient),
+		APITokensEnabled:       p.GetFeatureFlag("api_tokens_enabled", launchDarklyClient),
+		CapiProvisionerEnabled: p.GetFeatureFlag("capi_provisioner_enabled", launchDarklyClient),
+		SimplifiedViewEnabled:  p.GetFeatureFlag("simplified_view_enabled", launchDarklyClient),
+		AzureEnabled:           p.GetFeatureFlag("azure_enabled", launchDarklyClient),
+		HelmValuesEnabled:      p.GetFeatureFlag("helm_values_enabled", launchDarklyClient),
+		MultiCluster:           p.GetFeatureFlag("multi_cluster", launchDarklyClient),
+		EnableReprovision:      p.GetFeatureFlag("enable_reprovision", launchDarklyClient),
+		ValidateApplyV2:        p.GetFeatureFlag("validate_apply_v2", launchDarklyClient),
+		FullAddOns:             p.GetFeatureFlag("full_add_ons", launchDarklyClient),
 	}
 }
 
@@ -138,4 +169,14 @@ func (p *Project) ToProjectListType() *types.ProjectList {
 		ValidateApplyV2:        p.ValidateApplyV2,
 		FullAddOns:             p.FullAddOns,
 	}
+}
+
+func getProjectContext(projectID uint, projectName string) ldcontext.Context {
+	projectIdentifier := fmt.Sprintf("project-%d", projectID)
+	launchDarklyName := fmt.Sprintf("%s: %s", projectIdentifier, projectName)
+	return ldcontext.NewBuilder(projectIdentifier).
+		Kind("project").
+		Name(launchDarklyName).
+		SetInt("project_id", int(projectID)).
+		Build()
 }

@@ -30,7 +30,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
 
     const [events, setEvents] = useState<PorterAppEvent[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<any>(null);
+    const [hasError, setHasError] = useState<boolean>(false);
     const [page, setPage] = useState<number>(1);
     const [numPages, setNumPages] = useState<number>(0);
     const [hasPorterAgent, setHasPorterAgent] = useState(false);
@@ -54,8 +54,9 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
             setNumPages(res.data.num_pages);
             const events = z.array(porterAppEventValidator).optional().default([]).parse(res.data.events);
             setEvents(events);
+            setHasError(false)
         } catch (err) {
-            setError(err);
+            setHasError(true);
         } finally {
             setLoading(false);
             setShouldAnimate(false);
@@ -82,12 +83,12 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
                     page,
                 }
             );
-            setError(undefined)
+            setHasError(false)
             setNumPages(res.data.num_pages);
             const events = z.array(porterAppEventValidator).optional().default([]).parse(res.data.events);
             setEvents(events);
         } catch (err) {
-            setError(err);
+            setHasError(true);
         }
     }
 
@@ -142,7 +143,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
         );
     }
 
-    if (error) {
+    if (hasError) {
         return (
             <Fieldset>
                 <Text size={16}>Error retrieving events</Text>

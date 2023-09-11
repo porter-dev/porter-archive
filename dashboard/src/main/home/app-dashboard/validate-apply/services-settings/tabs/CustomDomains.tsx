@@ -54,6 +54,7 @@ const CustomDomains: React.FC<Props> = ({ index }) => {
         </>
       )}
       <Button
+        type="button" // this is required so that CreateApp.tsx doesn't try to submit the form onClick
         onClick={() => {
           append({
             name: {

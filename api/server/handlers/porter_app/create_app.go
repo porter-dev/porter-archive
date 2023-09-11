@@ -97,7 +97,7 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
-	if !project.ValidateApplyV2 {
+	if !project.GetFeatureFlag("validate_apply_v2", c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return

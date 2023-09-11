@@ -154,7 +154,7 @@ func (r *Registry) ListRepositories(
 		return nil, telemetry.Error(ctx, span, err, "error getting project for repository")
 	}
 
-	if project.CapiProvisionerEnabled {
+	if project.GetFeatureFlag("capi_provisioner_enabled", conf.LaunchDarklyClient) {
 		// TODO: Remove this conditional when AWS list repos is supported in CCP
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "registry-uri", Value: r.URL})
 
@@ -899,7 +899,7 @@ func (r *Registry) CreateRepository(
 		return telemetry.Error(ctx, span, err, "error getting project for repository")
 	}
 
-	if project.CapiProvisionerEnabled {
+	if project.GetFeatureFlag("capi_provisioner_enabled", conf.LaunchDarklyClient) {
 		// no need to create repository if pushing to ACR or GAR
 		if strings.Contains(r.URL, ".azurecr.") || strings.Contains(r.URL, "-docker.pkg.dev") {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "skipping-create-repo", Value: true})
@@ -1063,7 +1063,7 @@ func (r *Registry) ListImages(
 		return nil, fmt.Errorf("error getting project for repository: %w", err)
 	}
 
-	if project.CapiProvisionerEnabled {
+	if project.GetFeatureFlag("capi_provisioner_enabled", conf.LaunchDarklyClient) {
 		uri := strings.TrimPrefix(r.URL, "https://")
 		splits := strings.Split(uri, ".")
 		accountID := splits[0]

@@ -33,7 +33,7 @@ func NewAPITokenGetHandler(
 func (p *APITokenGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	if !proj.APITokensEnabled {
+	if !proj.GetFeatureFlag("api_tokens_enabled", p.Config().LaunchDarklyClient) {
 		p.HandleAPIError(w, r, apierrors.NewErrForbidden(fmt.Errorf("api token endpoints are not enabled for this project")))
 		return
 	}

@@ -1,0 +1,39 @@
+---
+name: 'build-go'
+description: builds the go binaries for the app
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Go Cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: porter-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: porter-go-`
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        cache: false
+        go-version-file: go.mod
+    - name: Download Go Modules
+      shell: bash
+      run: go mod download
+    - name: Build Server Binary
+      shell: bash
+      run: go build -ldflags="-w -s -X 'main.Version=production'" -tags ee -o ./bin/app ./cmd/app
+    - name: Build Migration Binary
+      shell: bash
+      run: go build -ldflags '-w -s' -tags ee -o ./bin/migrate ./cmd/migrate
+    - name: Compress binaries
+      shell: bash
+      run: |
+        upx bin/* --best --lzma
+    - name: Store Binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: go-binaries
+        path: bin/
+        retention-days: 1

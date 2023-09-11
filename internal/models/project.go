@@ -11,18 +11,43 @@ import (
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
+// APITokensEnabled allows users to create Bearer tokens for use with the Porter API
 const APITokensEnabled = "api_tokens_enabled"
+
+// AzureEnabled enables Azure Provisioning
 const AzureEnabled = "azure_enabled"
+
+// CapiProvisionerEnabled enables the CAPI Provisioning flow
 const CapiProvisionerEnabled = "capi_provisioner_enabled"
+
+// EnableReprovision enables the provisioning button after initial creation of the cluster
 const EnableReprovision = "enable_reprovision"
+
+// FullAddOns shows all addons, not just curated
 const FullAddOns = "full_add_ons"
+
+// HelmValuesEnabled shows the helm values tab for porter apps (when simplified_view_enabled=true)
 const HelmValuesEnabled = "helm_values_enabled"
+
+// ManagedInfraEnabled uses terraform provisioning instead of capi
 const ManagedInfraEnabled = "managed_infra_enabled"
+
+// MultiCluster allows multiple clusters in simplified view (simplified_view_enabled=true)
 const MultiCluster = "multi_cluster"
+
+// PreviewEnvsEnabled allows legacy user the ability to see preview environments in sidebar (simplified_view_enabled=false)
 const PreviewEnvsEnabled = "preview_envs_enabled"
+
+// RDSDatabasesEnabled allows for users to provision RDS instances within their cluster vpc
 const RDSDatabasesEnabled = "rds_databases_enabled"
+
+// SimplifiedViewEnabled shows the new UI dashboard or not
 const SimplifiedViewEnabled = "simplified_view_enabled"
+
+// StacksEnabled uses stack view for legacy (simplified_view_enabled=false)
 const StacksEnabled = "stacks_enabled"
+
+// ValidateApplyV2 controls whether apps deploys use a porter app revision contract vs helm
 const ValidateApplyV2 = "validate_apply_v2"
 
 // ProjectFeatureFlags keeps track of all project-related feature flags

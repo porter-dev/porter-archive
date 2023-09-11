@@ -512,6 +512,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
       if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
         hasMessage = true;
+        markStepStarted("provisioning-failed", "Preflight Checks failed");
         break;
       }
     }

@@ -27,11 +27,12 @@ import Icon from "components/porter/Icon";
 import save from "assets/save-01.svg";
 import LogsTab from "./tabs/LogsTab";
 import MetricsTab from "./tabs/MetricsTab";
+import Activity from "./tabs/Activity";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
 const validTabs = [
-  // "activity",
+  "activity",
   // "events",
   "overview",
   "logs",
@@ -43,7 +44,7 @@ const validTabs = [
   // "helm-values",
   // "job-history",
 ] as const;
-const DEFAULT_TAB = "overview";
+const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
 
 type AppDataContainerProps = {
@@ -246,6 +247,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         <TabSelector
           noBuffer
           options={[
+            { label: "Activity", value: "activity" },
             { label: "Overview", value: "overview" },
             { label: "Logs", value: "logs" },
             { label: "Metrics", value: "metrics" },
@@ -267,6 +269,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         />
         <Spacer y={1} />
         {match(currentTab)
+          .with("activity", () => <Activity />)
           .with("overview", () => <Overview />)
           .with("build-settings", () => (
             <BuildSettings

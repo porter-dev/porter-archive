@@ -35,7 +35,6 @@ export default class Help extends Component<PropsType, StateType> {
               <i className="material-icons-outlined">book</i>
               Documentation
             </Option>
-            <Line />
             <Option
               onClick={() => {
                 window.open("https://discord.gg/Vbse9vJtPU", "_blank").focus();
@@ -102,14 +101,6 @@ const Option = styled.div`
   }
 `;
 
-const Line = styled.div`
-  height: 1px;
-  z-index: 0;
-  left: 0;
-  background: #aaaabb55;
-  width: 100%;
-`;
-
 const CloseOverlay = styled.div`
   position: fixed;
   width: 100vw;
@@ -129,8 +120,8 @@ const Flex = styled.div`
 const Dropdown = styled.div`
   position: absolute;
   right: 0;
-  top: calc(100% + 5px);
-  background: #26282f;
+  top: calc(100% + 15px);
+  background: #121212;
   width: ${(props: {
     dropdownWidth: string;
     dropdownMaxHeight: string;
@@ -141,11 +132,11 @@ const Dropdown = styled.div`
     dropdownMaxHeight: string;
     feedbackSent?: boolean;
   }) => (props.dropdownMaxHeight ? props.dropdownMaxHeight : "300px")};
-  border-radius: 10px;
+  border-radius: 5px;
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
-  box-shadow: 0 8px 20px 0px #00000088;
+  border: 1px solid #494B4F;
   animation: ${(props: {
     dropdownWidth: string;
     dropdownMaxHeight: string;

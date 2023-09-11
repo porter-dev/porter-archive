@@ -13,7 +13,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-func createBuildEvent(ctx context.Context, client api.Client, applicationName string, projectId, clusterId uint) (string, error) {
+func createBuildEvent(ctx context.Context, client api.Client, applicationName string, projectId uint, clusterId uint, deploymentTargetID string) (string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-build-event")
 	defer span.End()
 
@@ -22,6 +22,7 @@ func createBuildEvent(ctx context.Context, client api.Client, applicationName st
 		Type:               types.PorterAppEventType_Build,
 		TypeExternalSource: "GITHUB",
 		Metadata:           make(map[string]interface{}),
+		DeploymentTargetID: deploymentTargetID,
 	}
 
 	actionRunID := os.Getenv("GITHUB_RUN_ID")
@@ -61,14 +62,15 @@ func createBuildEvent(ctx context.Context, client api.Client, applicationName st
 	return event.ID, nil
 }
 
-func createPredeployEvent(ctx context.Context, client api.Client, applicationName string, projectId, clusterId uint, createdAt time.Time) (string, error) {
+func createPredeployEvent(ctx context.Context, client api.Client, applicationName string, projectId, clusterId uint, deploymentTargetID string, createdAt time.Time) (string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-predeploy-event")
 	defer span.End()
 
 	req := &types.CreateOrUpdatePorterAppEventRequest{
-		Status:   types.PorterAppEventStatus_Progressing,
-		Type:     types.PorterAppEventType_PreDeploy,
-		Metadata: make(map[string]interface{}),
+		Status:             types.PorterAppEventStatus_Progressing,
+		Type:               types.PorterAppEventType_PreDeploy,
+		Metadata:           make(map[string]interface{}),
+		DeploymentTargetID: deploymentTargetID,
 	}
 	req.Metadata["start_time"] = createdAt
 
@@ -80,14 +82,15 @@ func createPredeployEvent(ctx context.Context, client api.Client, applicationNam
 	return event.ID, nil
 }
 
-func updateExistingEvent(ctx context.Context, client api.Client, applicationName string, projectId, clusterId uint, eventID string, status types.PorterAppEventStatus, metadata map[string]interface{}) error {
+func updateExistingEvent(ctx context.Context, client api.Client, applicationName string, projectId, clusterId uint, deploymentTargetID string, eventID string, status types.PorterAppEventStatus, metadata map[string]interface{}) error {
 	ctx, span := telemetry.NewSpan(ctx, "update-existing-event")
 	defer span.End()
 
 	req := &types.CreateOrUpdatePorterAppEventRequest{
-		ID:       eventID,
-		Status:   status,
-		Metadata: metadata,
+		ID:                 eventID,
+		Status:             status,
+		Metadata:           metadata,
+		DeploymentTargetID: deploymentTargetID,
 	}
 
 	_, err := client.CreateOrUpdatePorterAppEvent(ctx, projectId, clusterId, applicationName, req)

@@ -11,21 +11,35 @@ import (
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
+const APITokensEnabled = "api_tokens_enabled"
+const AzureEnabled = "azure_enabled"
+const CapiProvisionerEnabled = "capi_provisioner_enabled"
+const EnableReprovision = "enable_reprovision"
+const FullAddOns = "full_add_ons"
+const HelmValuesEnabled = "helm_values_enabled"
+const ManagedInfraEnabled = "managed_infra_enabled"
+const MultiCluster = "multi_cluster"
+const PreviewEnvsEnabled = "preview_envs_enabled"
+const RDSDatabasesEnabled = "rds_databases_enabled"
+const SimplifiedViewEnabled = "simplified_view_enabled"
+const StacksEnabled = "stacks_enabled"
+const ValidateApplyV2 = "validate_apply_v2"
+
 // ProjectFeatureFlags keeps track of all project-related feature flags
 var ProjectFeatureFlags = map[string]bool{
-	"api_tokens_enabled":       false,
-	"azure_enabled":            false,
-	"capi_provisioner_enabled": true,
-	"enable_reprovision":       false,
-	"full_add_ons":             false,
-	"helm_values_enabled":      false,
-	"managed_infra_enabled":    false,
-	"multi_cluster":            false,
-	"preview_envs_enabled":     false,
-	"rds_databases_enabled":    false,
-	"simplified_view_enabled":  true,
-	"stacks_enabled":           false,
-	"validate_apply_v2":        false,
+	APITokensEnabled:       false,
+	AzureEnabled:           false,
+	CapiProvisionerEnabled: true,
+	EnableReprovision:      false,
+	FullAddOns:             false,
+	HelmValuesEnabled:      false,
+	ManagedInfraEnabled:    false,
+	MultiCluster:           false,
+	PreviewEnvsEnabled:     false,
+	RDSDatabasesEnabled:    false,
+	SimplifiedViewEnabled:  true,
+	StacksEnabled:          false,
+	ValidateApplyV2:        false,
 }
 
 type ProjectPlan string
@@ -122,19 +136,19 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		Name:  projectName,
 		Roles: roles,
 
-		PreviewEnvsEnabled:     p.GetFeatureFlag("preview_envs_enabled", launchDarklyClient),
-		RDSDatabasesEnabled:    p.GetFeatureFlag("rds_databases_enabled", launchDarklyClient),
-		ManagedInfraEnabled:    p.GetFeatureFlag("managed_infra_enabled", launchDarklyClient),
-		StacksEnabled:          p.GetFeatureFlag("stacks_enabled", launchDarklyClient),
-		APITokensEnabled:       p.GetFeatureFlag("api_tokens_enabled", launchDarklyClient),
-		CapiProvisionerEnabled: p.GetFeatureFlag("capi_provisioner_enabled", launchDarklyClient),
-		SimplifiedViewEnabled:  p.GetFeatureFlag("simplified_view_enabled", launchDarklyClient),
-		AzureEnabled:           p.GetFeatureFlag("azure_enabled", launchDarklyClient),
-		HelmValuesEnabled:      p.GetFeatureFlag("helm_values_enabled", launchDarklyClient),
-		MultiCluster:           p.GetFeatureFlag("multi_cluster", launchDarklyClient),
-		EnableReprovision:      p.GetFeatureFlag("enable_reprovision", launchDarklyClient),
-		ValidateApplyV2:        p.GetFeatureFlag("validate_apply_v2", launchDarklyClient),
-		FullAddOns:             p.GetFeatureFlag("full_add_ons", launchDarklyClient),
+		PreviewEnvsEnabled:     p.GetFeatureFlag(PreviewEnvsEnabled, launchDarklyClient),
+		RDSDatabasesEnabled:    p.GetFeatureFlag(RDSDatabasesEnabled, launchDarklyClient),
+		ManagedInfraEnabled:    p.GetFeatureFlag(ManagedInfraEnabled, launchDarklyClient),
+		StacksEnabled:          p.GetFeatureFlag(StacksEnabled, launchDarklyClient),
+		APITokensEnabled:       p.GetFeatureFlag(APITokensEnabled, launchDarklyClient),
+		CapiProvisionerEnabled: p.GetFeatureFlag(CapiProvisionerEnabled, launchDarklyClient),
+		SimplifiedViewEnabled:  p.GetFeatureFlag(SimplifiedViewEnabled, launchDarklyClient),
+		AzureEnabled:           p.GetFeatureFlag(AzureEnabled, launchDarklyClient),
+		HelmValuesEnabled:      p.GetFeatureFlag(HelmValuesEnabled, launchDarklyClient),
+		MultiCluster:           p.GetFeatureFlag(MultiCluster, launchDarklyClient),
+		EnableReprovision:      p.GetFeatureFlag(EnableReprovision, launchDarklyClient),
+		ValidateApplyV2:        p.GetFeatureFlag(ValidateApplyV2, launchDarklyClient),
+		FullAddOns:             p.GetFeatureFlag(FullAddOns, launchDarklyClient),
 	}
 }
 

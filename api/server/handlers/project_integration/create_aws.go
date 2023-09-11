@@ -56,7 +56,7 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AWSIntegration: aws.ToAWSIntegrationType(),
 	}
 
-	if project.GetFeatureFlag("capi_provisioner_enabled", p.Config().LaunchDarklyClient) && p.Config().EnableCAPIProvisioner {
+	if project.GetFeatureFlag(models.CapiProvisionerEnabled, p.Config().LaunchDarklyClient) && p.Config().EnableCAPIProvisioner {
 		credReq := porterv1.CreateAssumeRoleChainRequest{
 			ProjectId:       int64(project.ID),
 			SourceArn:       "arn:aws:iam::108458755588:role/CAPIManagement", // hard coded as this is the final hop for a CAPI cluster

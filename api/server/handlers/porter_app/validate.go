@@ -68,7 +68,7 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
 	)
 
-	if !project.GetFeatureFlag("validate_apply_v2", c.Config().LaunchDarklyClient) {
+	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return

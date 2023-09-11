@@ -43,7 +43,7 @@ func (p *CreateGCPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if project.GetFeatureFlag("capi_provisioner_enabled", p.Config().LaunchDarklyClient) {
+	if project.GetFeatureFlag(models.CapiProvisionerEnabled, p.Config().LaunchDarklyClient) {
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "capi-provisioner-enabled", Value: true})
 
 		b64Key := base64.StdEncoding.EncodeToString([]byte(request.GCPKeyData))

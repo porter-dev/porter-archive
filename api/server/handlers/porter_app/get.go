@@ -60,7 +60,7 @@ func (c *GetPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	// this is a temporary fix until we figure out how to reconcile the new revisions table
 	// with dependencies on helm releases throuhg the api
-	if project.GetFeatureFlag("validate_apply_v2", c.Config().LaunchDarklyClient) {
+	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		c.WriteResult(w, r, app.ToPorterAppType())
 		return
 	}

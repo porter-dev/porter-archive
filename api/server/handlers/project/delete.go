@@ -33,7 +33,7 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	user, _ := ctx.Value(types.UserScope).(*models.User)
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if proj.GetFeatureFlag("capi_provisioner_enabled", p.Config().LaunchDarklyClient) {
+	if proj.GetFeatureFlag(models.CapiProvisionerEnabled, p.Config().LaunchDarklyClient) {
 		clusters, err := p.Config().Repo.Cluster().ListClustersByProjectID(proj.ID)
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error finding clusters for project: %w", err)))

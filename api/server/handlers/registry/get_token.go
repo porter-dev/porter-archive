@@ -47,7 +47,7 @@ func (c *RegistryGetECRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if proj.GetFeatureFlag("capi_provisioner_enabled", c.Config().LaunchDarklyClient) {
+	if proj.GetFeatureFlag(models.CapiProvisionerEnabled, c.Config().LaunchDarklyClient) {
 		ecrRequest := porterv1.ECRTokenForRegistryRequest{
 			ProjectId:    int64(proj.ID),
 			Region:       request.Region,
@@ -247,7 +247,7 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if proj.GetFeatureFlag("capi_provisioner_enabled", c.Config().LaunchDarklyClient) {
+	if proj.GetFeatureFlag(models.CapiProvisionerEnabled, c.Config().LaunchDarklyClient) {
 		regInput := connect.NewRequest(&porterv1.TokenForRegistryRequest{
 			ProjectId:   int64(proj.ID),
 			RegistryUri: regs[0].URL,
@@ -493,7 +493,7 @@ func (c *RegistryGetACRTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "registry-name", Value: matchingReg.Name})
 
-	if proj.GetFeatureFlag("capi_provisioner_enabled", c.Config().LaunchDarklyClient) {
+	if proj.GetFeatureFlag(models.CapiProvisionerEnabled, c.Config().LaunchDarklyClient) {
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "capi-provisioned", Value: true})
 
 		if c.Config().ClusterControlPlaneClient == nil {

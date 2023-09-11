@@ -1,7 +1,7 @@
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { SourceOptions, serviceOverrides } from "lib/porter-apps";
-import { ClientService, DetectedServices } from "lib/porter-apps/services";
+import { DetectedServices } from "lib/porter-apps/services";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -10,10 +10,12 @@ import { z } from "zod";
 type PorterYamlStatus =
   | {
       loading: true;
+      detectedName: null;
       detectedServices: null;
     }
   | {
       detectedServices: DetectedServices | null;
+      detectedName: string | null;
       loading: false;
     };
 
@@ -36,6 +38,7 @@ export const usePorterYaml = ({
     detectedServices,
     setDetectedServices,
   ] = useState<DetectedServices | null>(null);
+  const [detectedName, setDetectedName] = useState<string | null>(null);
 
   const { data, status } = useQuery(
     [
@@ -115,6 +118,10 @@ export const usePorterYaml = ({
             predeploy,
           });
         }
+
+        if (proto.name) {
+          setDetectedName(proto.name);
+        }
       } catch (err) {
         // silent failure for now
       }
@@ -143,6 +150,7 @@ export const usePorterYaml = ({
   if (source?.type !== "github") {
     return {
       loading: false,
+      detectedName: null,
       detectedServices: null,
     };
   }
@@ -150,12 +158,14 @@ export const usePorterYaml = ({
   if (status === "loading") {
     return {
       loading: true,
+      detectedName: null,
       detectedServices: null,
     };
   }
 
   return {
     detectedServices,
+    detectedName,
     loading: false,
   };
 };

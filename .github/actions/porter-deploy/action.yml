@@ -1,0 +1,49 @@
+---
+name: 'porter-deploy'
+description: deploys porter
+
+inputs:
+  app:
+    description: 'app to deploy'
+    required: true
+  cluster:
+    description: 'cluster to deploy to'
+    required: true
+  host:
+    description: 'project to deploy to'
+    required: true
+  project:
+    description: 'project to deploy to'
+    required: true
+  token:
+    description: 'porter deploy api token'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get Go Binaries
+      uses: actions/download-artifact@v3
+      with:
+        name: go-binaries
+        path: bin/
+    - name: Get NPM static files
+      uses: actions/download-artifact@v3
+      with:
+        name: npm-static-files
+        path: build/
+    - name: Set Github tag
+      shell: bash
+      id: vars
+      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    - name: Deploy stack
+      uses: porter-dev/porter-cli-action@v0.1.0
+      with:
+        command: apply
+      env:
+        PORTER_CLUSTER: "${{ inputs.cluster }}"
+        PORTER_HOST: "${{ inputs.host }}"
+        PORTER_PROJECT: "${{ inputs.project }}"
+        PORTER_STACK_NAME: "${{ inputs.app }}"
+        PORTER_TAG: ${{ steps.vars.outputs.sha_short }}
+        PORTER_TOKEN: "${{ inputs.token }}"

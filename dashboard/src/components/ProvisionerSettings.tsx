@@ -509,14 +509,17 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     )
     // Check if any of the preflight checks has a message
     let hasMessage = false;
+    let errors = "Preflight Checks Failed : ";
     for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
       if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
         hasMessage = true;
-        markStepStarted("provisioning-failed", "Preflight Checks failed for AWS");
-        break;
+        errors = errors + check + ", "
       }
     }
     // If none of the checks have a message, set setPreflightFailed to false
+    if (hasMessage) {
+      markStepStarted("provisioning-failed", errors);
+    }
     if (!hasMessage) {
       setPreflightFailed(false);
       setStep(2);

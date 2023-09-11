@@ -1,0 +1,185 @@
+legacy-web:
+  albIngress:
+    custom_paths: []
+    enabled: false
+    external_dns: false
+    hosts: []
+    scheme: internet-facing
+    target_type: ip
+  auto_deploy: false
+  autoscaling:
+    enabled: false
+    maxReplicas: 10
+    minReplicas: 1
+    targetCPUUtilizationPercentage: 50
+    targetMemoryUtilizationPercentage: 50
+  bluegreen:
+    disablePrimaryDeployment: false
+    enabled: false
+    imageTags: []
+  cloudsql:
+    additionalConnection:
+      connectionName: ""
+      dbPort: 5432
+      enabled: false
+    connectionName: ""
+    dbPort: 5432
+    enabled: false
+    serviceAccountJSON: ""
+  clusterId: 32
+  container:
+    env:
+      normal: {}
+    lifecycle: {}
+    port: 8080
+  currentCluster:
+    service:
+      is_aws: false
+      is_do: false
+      is_gcp: false
+  customNodePort:
+    enabled: false
+    port: 30000
+  datadog:
+    enabled: false
+  emptyDir:
+    enabled: false
+    mountPath: /mypath
+  enableEDNS0: false
+  health:
+    livenessCommand:
+      command: ls -l
+      enabled: false
+      failureThreshold: 3
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      successThreshold: 1
+      timeoutSeconds: 1
+    livenessProbe:
+      auth:
+        enabled: false
+        password: ""
+        username: ""
+      enabled: false
+      failureThreshold: 3
+      httpHeaders: []
+      initialDelaySeconds: 0
+      path: /livez
+      periodSeconds: 5
+      scheme: HTTP
+      successThreshold: 1
+      timeoutSeconds: 1
+    readinessProbe:
+      auth:
+        enabled: false
+        password: ""
+        username: ""
+      enabled: false
+      failureThreshold: 3
+      httpHeaders: []
+      initialDelaySeconds: 0
+      path: /readyz
+      periodSeconds: 5
+      scheme: HTTP
+      successThreshold: 1
+      timeoutSeconds: 1
+    startupProbe:
+      auth:
+        enabled: false
+        password: ""
+        username: ""
+      enabled: false
+      failureThreshold: 3
+      httpHeaders: []
+      path: /startupz
+      periodSeconds: 5
+      scheme: HTTP
+      timeoutSeconds: 1
+  hostAliases: []
+  image:
+    pullPolicy: Always
+    repository: nginx
+    tag: latest
+  ingress:
+    annotations: {}
+    custom_domain: false
+    custom_paths: []
+    customTls:
+      enabled: false
+    enabled: false
+    hosts: []
+    porter_hosts:
+    - legacy-17e207c81b4cbb84.onporter.run
+    provider: eks
+    rewriteCustomPathsEnabled: true
+    tls: true
+    useDefaultIngressTLSSecret: false
+    wildcard: false
+  keda:
+    cooldownPeriod: 300
+    enabled: false
+    fallback:
+      failureReplicas: 6
+      failureThreshold: 3
+    hpa:
+      scaleDown:
+        policy:
+          periodSeconds: 300
+          type: Percent
+          value: 10
+        stabilizationWindowSeconds: 300
+      scaleUp:
+        policy:
+          periodSeconds: 300
+          type: Percent
+          value: 10
+        stabilizationWindowSeconds: 300
+    maxReplicaCount: 10
+    minReplicaCount: 1
+    pollingInterval: 30
+    trigger:
+      metricName: ""
+      metricQuery: ""
+      metricThreshold: ""
+      metricType: AverageValue
+    triggers: []
+  namespace: default
+  nodeSelector: {}
+  podLabels: {}
+  privateIngress:
+    annotations: {}
+    clusterIssuer: letsencrypt-prod-private
+    custom_paths: []
+    enabled: false
+    hosts: []
+    tls: false
+  pvc:
+    enabled: false
+    existingVolume: ""
+    mountPath: /mypath
+    storage: 20Gi
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  service:
+    port: 80
+  serviceAccount:
+    annotations: {}
+    create: true
+    name: ""
+  showStartCommand: true
+  stack:
+    enabled: false
+    name: ""
+    revision: 0
+  statefulset:
+    enabled: false
+  terminationGracePeriodSeconds: 30
+  tolerations: []
+  topology:
+    enabled: false
+    labelSelector:
+      enabled: false
+      matchLabels: {}

@@ -188,48 +188,69 @@ helm upgrade foo testumbrella --set bar.MyName=bar --reuse-values
 ```
 
 Custom script with web charts - change this
+``
 
 ```bash
-helm dependency build newumbrella
+# start with helm install of old version (or porter UI on legacy view)
+# newumbrella is a locally cloned umbrella helm chart
 
-KIND=deployment
+
+CHART_REPO=localngrok/newumbrella
+NAMESPACE=default
 EXISTING_RELEASE_NAME=legacy
 RELEASE_TYPE=web
 NAME=$EXISTING_RELEASE_NAME-$RELEASE_TYPE
 TARGET_RELEASE_NAME=umbrella-chart
-NAMESPACE=default
+
+# CHART_REPO=newumbrella
+# there should be no deps in Chart.yaml
+# helm dependency build $CHART_REPO
+
+helm cm-push newumbrella localngrok
 
 # create umbrella chart which has hello-porter
-helm install $TARGET_RELEASE_NAME newumbrella
+porter helm -- install $TARGET_RELEASE_NAME $CHART_REPO
 
 # add exising chart as dep on Chart.yaml, with alias set as the old release name
-helm dependency update newumbrella
+# helm dependency update $CHART_REPO
+helm cm-push newumbrella localngrok
+helm repo update localngrok
 
 # get existing values and indent the values to have the existing release name as a key which matches Chart.yaml
-helm get values $EXISTING_RELEASE_NAME > existing_values.yaml
+porter helm -- get values $EXISTING_RELEASE_NAME > existing_values.yaml
+
+# from existing_values.yaml, create a new values.yaml for the umbrella chart with the correct nesting for helm deps (umbrella_values.yaml)
+
+# deployment selectors cant be changed. We need to create a new deployment which goes into the existing service, then delete the existing deployment, then run an update on helm, then delete the manually created deployment
+helm template $TARGET_RELEASE_NAME -f umbrella_values.yaml > template.yaml
+
+# edit template.yaml to only have deployment (or any other issues)
 
 
 ##### OTHER KINDS
-# KIND=deployment
-# kubectl annotate $KIND $NAME meta.helm.sh/release-name=$TARGET_RELEASE_NAME -n $NAMESPACE --overwrite
-# kubectl annotate $KIND $NAME meta.helm.sh/release-namespace=$NAMESPACE -n $NAMESPACE --overwrite
-# kubectl label $KIND $NAME app.kubernetes.io/managed-by=Helm -n $NAMESPACE
-
-#### deployment selectors cant be changed. We need to create a new deployment which goes into the existing service, then delete the existing deployment, then run an update on helm, then delete the manually created deployment
+KIND=deployment
+porter kubectl -- annotate $KIND $NAME meta.helm.sh/release-name=$TARGET_RELEASE_NAME -n $NAMESPACE --overwrite
+porter kubectl --  annotate $KIND $NAME meta.helm.sh/release-namespace=$NAMESPACE -n $NAMESPACE --overwrite
+porter kubectl --  label $KIND $NAME app.kubernetes.io/managed-by=Helm -n $NAMESPACE
 
 KIND=svc
-kubectl annotate $KIND $NAME meta.helm.sh/release-name=$TARGET_RELEASE_NAME -n $NAMESPACE --overwrite
-kubectl annotate $KIND $NAME meta.helm.sh/release-namespace=$NAMESPACE -n $NAMESPACE --overwrite
-kubectl label $KIND $NAME app.kubernetes.io/managed-by=Helm -n $NAMESPACE
+porter kubectl --  annotate $KIND $NAME meta.helm.sh/release-name=$TARGET_RELEASE_NAME -n $NAMESPACE --overwrite
+porter kubectl --  annotate $KIND $NAME meta.helm.sh/release-namespace=$NAMESPACE -n $NAMESPACE --overwrite
+porter kubectl --  label $KIND $NAME app.kubernetes.io/managed-by=Helm -n $NAMESPACE
 
 KIND=sa
-kubectl annotate $KIND $NAME meta.helm.sh/release-name=$TARGET_RELEASE_NAME -n $NAMESPACE --overwrite
-kubectl annotate $KIND $NAME meta.helm.sh/release-namespace=$NAMESPACE -n $NAMESPACE --overwrite
-kubectl label $KIND $NAME app.kubernetes.io/managed-by=Helm -n $NAMESPACE
+porter kubectl --  annotate $KIND $NAME meta.helm.sh/release-name=$TARGET_RELEASE_NAME -n $NAMESPACE --overwrite
+porter kubectl --  annotate $KIND $NAME meta.helm.sh/release-namespace=$NAMESPACE -n $NAMESPACE --overwrite
+porter kubectl --  label $KIND $NAME app.kubernetes.io/managed-by=Helm -n $NAMESPACE
+
+KIND=ingress
+porter kubectl --  annotate $KIND $NAME meta.helm.sh/release-name=$TARGET_RELEASE_NAME -n $NAMESPACE --overwrite
+porter kubectl --  annotate $KIND $NAME meta.helm.sh/release-namespace=$NAMESPACE -n $NAMESPACE --overwrite
+porter kubectl --  label $KIND $NAME app.kubernetes.io/managed-by=Helm -n $NAMESPACE
 ##### OTHER KINDS END
 
 # must delete deployments to scale up new ones as selectors are immutable
 
-helm upgrade $TARGET_RELEASE_NAME newumbrella -f existing_values.yaml
+porter helm -- upgrade $TARGET_RELEASE_NAME $CHART_REPO -f umbrella_values.yaml
 
 ```

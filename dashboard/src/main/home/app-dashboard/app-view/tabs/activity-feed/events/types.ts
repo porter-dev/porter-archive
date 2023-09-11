@@ -11,11 +11,10 @@ const porterAppAppEventMetadataValidator = z.object({
     app_revision_id: z.string(),
     app_name: z.string(),
     app_id: z.string(),
-    agent_event_id: z.string(),
+    agent_event_id: z.number(),
 });
 const porterAppDeployEventMetadataValidator = z.object({
     image_tag: z.string(),
-    revision: z.number(),
     app_revision_id: z.string(),
     service_deployment_metadata: z.record(z.object({
         status: z.string(),

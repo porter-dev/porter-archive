@@ -549,16 +549,6 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         </>
       }
 
-<<<<<<< HEAD
-      <Button
-        disabled={isDisabled() || isLoading || preflightFailed || statusPreflight() != ""}
-        onClick={createCluster}
-        status={getStatus()}
-      >
-        Provision
-      </Button>
-=======
->>>>>>> master
     </>
   );
 };

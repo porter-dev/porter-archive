@@ -3,6 +3,7 @@ package enable_cluster_preview_envs
 import (
 	"testing"
 
+	"github.com/porter-dev/porter/internal/features"
 	lr "github.com/porter-dev/porter/pkg/logger"
 )
 
@@ -20,7 +21,7 @@ func TestEnableForProjectEnabled(t *testing.T) {
 	initProjectPreviewEnabled(tester, t)
 	initCluster(tester, t)
 
-	err := EnableClusterPreviewEnvs(tester.DB, logger)
+	err := EnableClusterPreviewEnvs(tester.DB, &features.Client{}, logger)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 		return

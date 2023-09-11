@@ -38,7 +38,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   const UPPER_BOUND = .5;
 
   const [maxCPU, setMaxCPU] = useState(2 * UPPER_BOUND); //default is set to a t3 medium 
-  const [maxRAM, setMaxRAM] = useState(4 * UPPER_BOUND); //default is set to a t3 medium
+  const [maxRAM, setMaxRAM] = useState(4 * .75); //default is set to a t3 medium
   const context = useContext(Context);
 
   useEffect(() => {

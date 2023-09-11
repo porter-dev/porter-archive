@@ -168,7 +168,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         latestSource.type === "github" &&
         dirtyFields.app?.build
       ) {
-        await api.reRunGHWorkflow(
+        const res = await api.reRunGHWorkflow(
           "<token>",
           {},
           {
@@ -181,6 +181,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             filename: "porter_stack_" + porterApp.name + ".yml",
           }
         );
+
+        if (res.data != null) {
+          window.open(res.data, "_blank", "noreferrer");
+        }
 
         setRedeployOnSave(false);
       }

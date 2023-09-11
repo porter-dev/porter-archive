@@ -140,7 +140,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      console.log("submitting!")
       setDeployError("");
       const validatedAppProto = await validateApp(data);
       setValidatedAppProto(validatedAppProto);

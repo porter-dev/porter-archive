@@ -5,7 +5,7 @@ import BuildEventCard from "./BuildEventCard";
 import PreDeployEventCard from "./PreDeployEventCard";
 import AppEventCard from "./AppEventCard";
 import DeployEventCard from "./DeployEventCard";
-import { PorterAppAppEvent, PorterAppBuildEvent, PorterAppDeployEvent, PorterAppEvent, PorterAppEventType, } from "../types";
+import { PorterAppEvent } from "../types";
 import { match } from "ts-pattern";
 
 type Props = {
@@ -18,11 +18,11 @@ type Props = {
 };
 
 const EventCard: React.FC<Props> = ({ event, deploymentTargetId, isLatestDeployEvent, projectId, clusterId, appName }) => {
-  return match(event.type)
-    .with(PorterAppEventType.APP_EVENT, () => <AppEventCard event={event as PorterAppAppEvent} deploymentTargetId={deploymentTargetId} projectId={projectId} clusterId={clusterId} appName={appName} />)
-    .with(PorterAppEventType.BUILD, () => <BuildEventCard event={event as PorterAppBuildEvent} projectId={projectId} clusterId={clusterId} appName={appName} />)
-    .with(PorterAppEventType.DEPLOY, () => <DeployEventCard event={event as PorterAppDeployEvent} appName={appName} showServiceStatusDetail={isLatestDeployEvent} />)
-    .with(PorterAppEventType.PRE_DEPLOY, () => <PreDeployEventCard event={event} appName={appName} projectId={projectId} clusterId={clusterId} />)
+  return match(event)
+    .with({ type: "APP_EVENT" }, (ev) => <AppEventCard event={ev} deploymentTargetId={deploymentTargetId} projectId={projectId} clusterId={clusterId} appName={appName} />)
+    .with({ type: "BUILD" }, (ev) => <BuildEventCard event={ev} projectId={projectId} clusterId={clusterId} appName={appName} />)
+    .with({ type: "DEPLOY" }, (ev) => <DeployEventCard event={ev} appName={appName} showServiceStatusDetail={isLatestDeployEvent} />)
+    .with({ type: "PRE_DEPLOY" }, (ev) => <PreDeployEventCard event={ev} appName={appName} projectId={projectId} clusterId={clusterId} />)
     .exhaustive();
 };
 

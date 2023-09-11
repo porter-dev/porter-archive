@@ -93,6 +93,10 @@ const PreflightChecks: React.FC<Props> = (props) => {
     <AppearingDiv>
       <Text size={16}>Cluster Provision Check</Text>
       <Spacer y={.5} />
+      <Text color="helper">
+        Porter checks that the account has the right permissions and resources to provsion a cluster.
+      </Text>
+      <Spacer y={1} />
       {Object.keys(currentMessageConst).map((checkKey) => (
         <PreflightCheckItem key={checkKey} checkKey={checkKey} />
       ))}

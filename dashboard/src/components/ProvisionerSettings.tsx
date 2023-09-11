@@ -488,6 +488,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   const preflightChecks = async () => {
     setIsLoading(true);
+    setPreflightData(null)
 
     var data = new PreflightCheckRequest({
       projectId: BigInt(currentProject.id),
@@ -973,7 +974,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           currentStep={step}
           steps={[
             <>
-              <Text size={16}>Select an AWS region</Text><Spacer y={1} /><Text color="helper">
+              <Text size={16}>Select an AWS region</Text><Spacer y={.5} /><Text color="helper">
                 Porter will automatically provision your infrastructure in the
                 specified region.
               </Text><Spacer height="10px" /><SelectRow
@@ -993,7 +994,21 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             </>,
             <>
               <PreflightChecks provider='AWS' preflightData={preflightData} />
-
+              <Spacer y={.5} />
+              {(preflightFailed && preflightData) &&
+                <>
+                  <Text color="helper">
+                    Preflight checks for the account didn't pass. Please fix the issues and retry.
+                  </Text>
+                  < Button
+                    // disabled={isDisabled()}
+                    disabled={isLoading}
+                    onClick={preflightChecks}
+                  >
+                    Retry Checks
+                  </Button>
+                </>
+              }
             </>,
             <>
               <Text size={16}>Provision your cluster</Text>
@@ -1009,14 +1024,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Spacer y={1} /></>
           ].filter((x) => x)}
         />
-
-
       );
     }
 
     // If settings, update full form
     return (
-      <>
+      <><StyledForm>
         <Heading isAtTop>EKS configuration</Heading>
         <SelectRow
           options={regionOptions}
@@ -1026,10 +1039,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           scrollBuffer={true}
           dropdownMaxHeight="240px"
           setActiveValue={setAwsRegion}
-          label="📍 AWS region"
-        />
+          label="📍 AWS region" />
         {renderAdvancedSettings()}
-
+      </StyledForm>
         <Button
           // disabled={isDisabled()}
           disabled={isDisabled() || preflightFailed || isLoading}
@@ -1037,8 +1049,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           status={getStatus()}
         >
           Provision
-        </Button>
-      </>
+        </Button></>
     );
   };
 

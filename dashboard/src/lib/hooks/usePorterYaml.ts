@@ -1,7 +1,7 @@
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { SourceOptions, serviceOverrides } from "lib/porter-apps";
-import { ClientService, DetectedServices } from "lib/porter-apps/services";
+import { DetectedServices } from "lib/porter-apps/services";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -9,15 +9,17 @@ import { z } from "zod";
 
 type PorterYamlStatus =
   | {
-    loading: true;
-    detectedServices: null;
-    porterYamlFound: boolean;
-  }
+      loading: true;
+      detectedName: null;
+      detectedServices: null;
+      porterYamlFound: boolean;
+    }
   | {
-    detectedServices: DetectedServices | null;
-    loading: false;
-    porterYamlFound: boolean;
-  };
+      detectedServices: DetectedServices | null;
+      detectedName: string | null;
+      loading: false;
+      porterYamlFound: boolean;
+    };
 
 /*
  *
@@ -30,7 +32,7 @@ export const usePorterYaml = ({
   source,
   useDefaults = true,
 }: {
-  source: SourceOptions & { type: "github" } | null;
+  source: (SourceOptions & { type: "github" }) | null;
   useDefaults?: boolean;
 }): PorterYamlStatus => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -38,6 +40,7 @@ export const usePorterYaml = ({
     detectedServices,
     setDetectedServices,
   ] = useState<DetectedServices | null>(null);
+  const [detectedName, setDetectedName] = useState<string | null>(null);
   const [porterYamlFound, setPorterYamlFound] = useState(false);
 
   const { data, status } = useQuery(
@@ -54,7 +57,6 @@ export const usePorterYaml = ({
       if (!currentProject || !source) {
         return;
       }
-
 
       const res = await api.getPorterYamlContents(
         "<token>",
@@ -128,6 +130,10 @@ export const usePorterYaml = ({
             predeploy,
           });
         }
+
+        if (proto.name) {
+          setDetectedName(proto.name);
+        }
       } catch (err) {
         // silent failure for now
       }
@@ -156,6 +162,7 @@ export const usePorterYaml = ({
   if (source?.type !== "github") {
     return {
       loading: false,
+      detectedName: null,
       detectedServices: null,
       porterYamlFound: false,
     };
@@ -164,6 +171,7 @@ export const usePorterYaml = ({
   if (status === "loading") {
     return {
       loading: true,
+      detectedName: null,
       detectedServices: null,
       porterYamlFound: true,
     };
@@ -171,6 +179,7 @@ export const usePorterYaml = ({
 
   return {
     detectedServices,
+    detectedName,
     loading: false,
     porterYamlFound,
   };

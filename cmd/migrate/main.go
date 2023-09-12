@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/cmd/migrate/startup_migrations"
 
 	adapter "github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository/gorm"
 	lr "github.com/porter-dev/porter/pkg/logger"
@@ -26,6 +27,12 @@ func main() {
 	envConf, err := envloader.FromEnv()
 	if err != nil {
 		logger.Fatal().Err(err).Msg("could not load env conf")
+		return
+	}
+
+	launchDarklyClient, err := features.GetClient(envConf.ServerConf.LaunchDarklySDKKey)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("could not load launch darkly client")
 		return
 	}
 
@@ -103,7 +110,7 @@ func main() {
 	if dbMigration.Version < latestMigrationVersion {
 		for ver, fn := range startup_migrations.StartupMigrations {
 			if ver > dbMigration.Version {
-				err := fn(tx, logger)
+				err := fn(tx, launchDarklyClient, logger)
 				if err != nil {
 					tx.Rollback()
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-test/deep"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/models"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 	orm "gorm.io/gorm"
@@ -228,7 +229,7 @@ func TestCreateCluster(t *testing.T) {
 
 	expCluster := *cluster
 
-	cluster, err := tester.repo.Cluster().CreateCluster(cluster)
+	cluster, err := tester.repo.Cluster().CreateCluster(cluster, &features.Client{})
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}
@@ -315,6 +316,7 @@ func TestUpdateCluster(t *testing.T) {
 
 	cluster, err := tester.repo.Cluster().UpdateCluster(
 		cluster,
+		&features.Client{},
 	)
 	if err != nil {
 		t.Fatalf("%v\n", err)
@@ -369,7 +371,7 @@ func TestUpdateClusterToken(t *testing.T) {
 		},
 	}
 
-	cluster, err := tester.repo.Cluster().CreateCluster(cluster)
+	cluster, err := tester.repo.Cluster().CreateCluster(cluster, &features.Client{})
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

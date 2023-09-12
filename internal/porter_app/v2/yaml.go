@@ -12,7 +12,7 @@ import (
 )
 
 // AppProtoFromYaml converts a Porter YAML file into a PorterApp proto object
-func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.PorterApp, error) {
+func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName string) (*porterv1.PorterApp, error) {
 	ctx, span := telemetry.NewSpan(ctx, "v2-app-proto-from-yaml")
 	defer span.End()
 
@@ -24,6 +24,11 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 	err := yaml.Unmarshal(porterYamlBytes, porterYaml)
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
+	}
+
+	// if the porter yaml is missing a name field, use the app name that is provided in the request
+	if porterYaml.Name == "" {
+		porterYaml.Name = appName
 	}
 
 	appProto := &porterv1.PorterApp{

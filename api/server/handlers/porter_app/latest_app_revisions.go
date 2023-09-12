@@ -32,8 +32,7 @@ func NewLatestAppRevisionsHandler(
 }
 
 // LatestAppRevisionsRequest represents the response from the /apps/{porter_app_name}/revisions endpoint
-type LatestAppRevisionsRequest struct {
-}
+type LatestAppRevisionsRequest struct{}
 
 // LatestRevisionWithSource is an app revision and its source porter app
 type LatestRevisionWithSource struct {

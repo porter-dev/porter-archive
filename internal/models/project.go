@@ -11,47 +11,51 @@ import (
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
-// APITokensEnabled allows users to create Bearer tokens for use with the Porter API
-const APITokensEnabled = "api_tokens_enabled"
+type FeatureFlagLabel string
 
-// AzureEnabled enables Azure Provisioning
-const AzureEnabled = "azure_enabled"
+const (
+	// APITokensEnabled allows users to create Bearer tokens for use with the Porter API
+	APITokensEnabled FeatureFlagLabel = "api_tokens_enabled"
 
-// CapiProvisionerEnabled enables the CAPI Provisioning flow
-const CapiProvisionerEnabled = "capi_provisioner_enabled"
+	// AzureEnabled enables Azure Provisioning
+	AzureEnabled FeatureFlagLabel = "azure_enabled"
 
-// EnableReprovision enables the provisioning button after initial creation of the cluster
-const EnableReprovision = "enable_reprovision"
+	// CapiProvisionerEnabled enables the CAPI Provisioning flow
+	CapiProvisionerEnabled FeatureFlagLabel = "capi_provisioner_enabled"
 
-// FullAddOns shows all addons, not just curated
-const FullAddOns = "full_add_ons"
+	// EnableReprovision enables the provisioning button after initial creation of the cluster
+	EnableReprovision FeatureFlagLabel = "enable_reprovision"
 
-// HelmValuesEnabled shows the helm values tab for porter apps (when simplified_view_enabled=true)
-const HelmValuesEnabled = "helm_values_enabled"
+	// FullAddOns shows all addons, not just curated
+	FullAddOns FeatureFlagLabel = "full_add_ons"
 
-// ManagedInfraEnabled uses terraform provisioning instead of capi
-const ManagedInfraEnabled = "managed_infra_enabled"
+	// HelmValuesEnabled shows the helm values tab for porter apps (when simplified_view_enabled=true)
+	HelmValuesEnabled FeatureFlagLabel = "helm_values_enabled"
 
-// MultiCluster allows multiple clusters in simplified view (simplified_view_enabled=true)
-const MultiCluster = "multi_cluster"
+	// ManagedInfraEnabled uses terraform provisioning instead of capi
+	ManagedInfraEnabled FeatureFlagLabel = "managed_infra_enabled"
 
-// PreviewEnvsEnabled allows legacy user the ability to see preview environments in sidebar (simplified_view_enabled=false)
-const PreviewEnvsEnabled = "preview_envs_enabled"
+	// MultiCluster allows multiple clusters in simplified view (simplified_view_enabled=true)
+	MultiCluster FeatureFlagLabel = "multi_cluster"
 
-// RDSDatabasesEnabled allows for users to provision RDS instances within their cluster vpc
-const RDSDatabasesEnabled = "rds_databases_enabled"
+	// PreviewEnvsEnabled allows legacy user the ability to see preview environments in sidebar (simplified_view_enabled=false)
+	PreviewEnvsEnabled FeatureFlagLabel = "preview_envs_enabled"
 
-// SimplifiedViewEnabled shows the new UI dashboard or not
-const SimplifiedViewEnabled = "simplified_view_enabled"
+	// RDSDatabasesEnabled allows for users to provision RDS instances within their cluster vpc
+	RDSDatabasesEnabled FeatureFlagLabel = "rds_databases_enabled"
 
-// StacksEnabled uses stack view for legacy (simplified_view_enabled=false)
-const StacksEnabled = "stacks_enabled"
+	// SimplifiedViewEnabled shows the new UI dashboard or not
+	SimplifiedViewEnabled FeatureFlagLabel = "simplified_view_enabled"
 
-// ValidateApplyV2 controls whether apps deploys use a porter app revision contract vs helm
-const ValidateApplyV2 = "validate_apply_v2"
+	// StacksEnabled uses stack view for legacy (simplified_view_enabled=false)
+	StacksEnabled FeatureFlagLabel = "stacks_enabled"
+
+	// ValidateApplyV2 controls whether apps deploys use a porter app revision contract vs helm
+	ValidateApplyV2 FeatureFlagLabel = "validate_apply_v2"
+)
 
 // ProjectFeatureFlags keeps track of all project-related feature flags
-var ProjectFeatureFlags = map[string]bool{
+var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	APITokensEnabled:       false,
 	AzureEnabled:           false,
 	CapiProvisionerEnabled: true,
@@ -135,13 +139,13 @@ type Project struct {
 
 // GetFeatureFlag calls launchdarkly for the specified flag
 // and returns the configured value
-func (p *Project) GetFeatureFlag(flagName string, launchDarklyClient *features.Client) bool {
+func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *features.Client) bool {
 	projectID := p.ID
 	projectName := p.Name
 	ldContext := getProjectContext(projectID, projectName)
 
 	defaultValue := ProjectFeatureFlags[flagName]
-	value, _ := launchDarklyClient.BoolVariation(flagName, ldContext, defaultValue)
+	value, _ := launchDarklyClient.BoolVariation(string(flagName), ldContext, defaultValue)
 	return value
 }
 

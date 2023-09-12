@@ -38,7 +38,7 @@ const Button: React.FC<Props> = ({
   withBorder,
   rounded,
   alt,
-  type,
+  type = "button",
   disabledTooltipMessage,
 }) => {
   const renderStatus = () => {
@@ -194,7 +194,7 @@ const StyledButton = styled.button<{
       : props.color || props.theme.button;
   }};
   display: flex;
-  ailgn-items: center;
+  align-items: center;
   justify-content: center;
   border-radius: ${(props) => (props.rounded ? "50px" : "5px")};
   border: ${(props) => (props.withBorder ? "1px solid #494b4f" : "none")};

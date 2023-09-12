@@ -3,13 +3,17 @@ import failure from "assets/failure.svg";
 import loading from "assets/loading.gif";
 import canceled from "assets/canceled.svg"
 import api from "shared/api";
-import { PorterAppEvent } from "./types";
-import { SourceOptions } from "lib/porter-apps";
+import { PorterAppBuildEvent, PorterAppEvent, PorterAppPreDeployEvent } from "./types";
 import { PorterAppRecord } from "../../../AppView";
+import { match } from "ts-pattern";
 
-export const getDuration = (event: PorterAppEvent): string => {
-    const startTimeStamp = new Date(event.metadata.start_time ?? event.created_at).getTime();
-    const endTimeStamp = new Date(event.metadata.end_time ?? event.updated_at).getTime();
+export const getDuration = (event: PorterAppPreDeployEvent | PorterAppBuildEvent): string => {
+    const startTimeStamp = match(event)
+        .with({ type: "BUILD" }, (ev) => new Date(ev.created_at).getTime())
+        .with({ type: "PRE_DEPLOY" }, (ev) => new Date(ev.metadata.start_time).getTime())
+        .exhaustive();
+
+    const endTimeStamp = event.metadata.end_time ? new Date(event.metadata.end_time).getTime() : Date.now()
 
     const timeDifferenceMilliseconds = endTimeStamp - startTimeStamp;
 

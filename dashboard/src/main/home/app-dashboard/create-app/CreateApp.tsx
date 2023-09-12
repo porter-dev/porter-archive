@@ -397,6 +397,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       type="text"
                       error={errors.app?.name?.message}
                       disabled={name.readOnly}
+                      disabledTooltip={
+                        "You may only edit this field in your porter.yaml."
+                      }
                       {...register("app.name.value")}
                     />
                   </>,

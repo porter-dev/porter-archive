@@ -1,7 +1,7 @@
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { SourceOptions, serviceOverrides } from "lib/porter-apps";
-import { ClientService, DetectedServices } from "lib/porter-apps/services";
+import { DetectedServices } from "lib/porter-apps/services";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -10,11 +10,15 @@ import { z } from "zod";
 type PorterYamlStatus =
   | {
       loading: true;
+      detectedName: null;
       detectedServices: null;
+      porterYamlFound: boolean;
     }
   | {
       detectedServices: DetectedServices | null;
+      detectedName: string | null;
       loading: false;
+      porterYamlFound: boolean;
     };
 
 /*
@@ -28,7 +32,7 @@ export const usePorterYaml = ({
   source,
   useDefaults = true,
 }: {
-  source: SourceOptions | null;
+  source: (SourceOptions & { type: "github" }) | null;
   useDefaults?: boolean;
 }): PorterYamlStatus => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -36,6 +40,8 @@ export const usePorterYaml = ({
     detectedServices,
     setDetectedServices,
   ] = useState<DetectedServices | null>(null);
+  const [detectedName, setDetectedName] = useState<string | null>(null);
+  const [porterYamlFound, setPorterYamlFound] = useState(false);
 
   const { data, status } = useQuery(
     [
@@ -43,14 +49,15 @@ export const usePorterYaml = ({
       currentProject?.id,
       source?.git_branch,
       source?.git_repo_name,
+      source?.porter_yaml_path,
     ],
     async () => {
-      if (!currentProject) {
+      setPorterYamlFound(false);
+
+      if (!currentProject || !source) {
         return;
       }
-      if (source?.type !== "github") {
-        return;
-      }
+
       const res = await api.getPorterYamlContents(
         "<token>",
         {
@@ -66,6 +73,7 @@ export const usePorterYaml = ({
         }
       );
 
+      setPorterYamlFound(true);
       return z.string().parseAsync(res.data);
     },
     {
@@ -73,7 +81,14 @@ export const usePorterYaml = ({
         source?.type === "github" &&
         Boolean(source.git_repo_name) &&
         Boolean(source.git_branch),
-      retry: false,
+      retry: (_failureCount, error) => {
+        if (error.response.data?.error?.includes("404")) {
+          setPorterYamlFound(false);
+          return false;
+        }
+        return true;
+      },
+      refetchOnWindowFocus: false,
     }
   );
 
@@ -115,6 +130,10 @@ export const usePorterYaml = ({
             predeploy,
           });
         }
+
+        if (proto.name) {
+          setDetectedName(proto.name);
+        }
       } catch (err) {
         // silent failure for now
       }
@@ -143,19 +162,25 @@ export const usePorterYaml = ({
   if (source?.type !== "github") {
     return {
       loading: false,
+      detectedName: null,
       detectedServices: null,
+      porterYamlFound: false,
     };
   }
 
   if (status === "loading") {
     return {
       loading: true,
+      detectedName: null,
       detectedServices: null,
+      porterYamlFound: true,
     };
   }
 
   return {
     detectedServices,
+    detectedName,
     loading: false,
+    porterYamlFound,
   };
 };

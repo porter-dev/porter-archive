@@ -22,7 +22,7 @@ const BuildSettings: React.FC<Props> = ({
     watch,
     formState: { isSubmitting, errors },
   } = useFormContext<PorterAppFormData>();
-  const { projectId } = useLatestRevision();
+  const { projectId, latestRevision } = useLatestRevision();
 
   const build = watch("app.build");
   const source = watch("source");
@@ -59,7 +59,15 @@ const BuildSettings: React.FC<Props> = ({
         <Text>Re-run build and deploy on save</Text>
       </Checkbox>
       <Spacer y={1} />
-      <Button type="submit" status={buttonStatus}>
+      <Button
+        type="submit"
+        status={buttonStatus}
+        disabled={
+          isSubmitting ||
+          latestRevision.status === "CREATED" ||
+          latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+        }
+      >
         Save build settings
       </Button>
     </>

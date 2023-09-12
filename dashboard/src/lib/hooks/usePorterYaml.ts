@@ -9,17 +9,17 @@ import { z } from "zod";
 
 type PorterYamlStatus =
   | {
-      loading: true;
-      detectedName: null;
-      detectedServices: null;
-      porterYamlFound: boolean;
-    }
+    loading: true;
+    detectedName: null;
+    detectedServices: null;
+    porterYamlFound: false;
+  }
   | {
-      detectedServices: DetectedServices | null;
-      detectedName: string | null;
-      loading: false;
-      porterYamlFound: boolean;
-    };
+    detectedServices: DetectedServices | null;
+    detectedName: string | null;
+    loading: false;
+    porterYamlFound: boolean;
+  };
 
 /*
  *
@@ -52,8 +52,6 @@ export const usePorterYaml = ({
       source?.porter_yaml_path,
     ],
     async () => {
-      setPorterYamlFound(false);
-
       if (!currentProject || !source) {
         return;
       }
@@ -173,7 +171,7 @@ export const usePorterYaml = ({
       loading: true,
       detectedName: null,
       detectedServices: null,
-      porterYamlFound: true,
+      porterYamlFound: false,
     };
   }
 

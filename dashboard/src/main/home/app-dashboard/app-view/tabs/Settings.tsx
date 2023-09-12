@@ -10,8 +10,10 @@ import DeleteApplicationModal from "../../expanded-app/DeleteApplicationModal";
 import { useLatestRevision } from "../LatestRevisionContext";
 import api from "shared/api";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Settings: React.FC = () => {
+  const queryClient = useQueryClient();
   const history = useHistory();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { porterApp, clusterId, projectId } = useLatestRevision();
@@ -62,6 +64,7 @@ const Settings: React.FC = () => {
             name: porterApp.name,
           }
         );
+        void queryClient.invalidateQueries();
 
         if (!deleteWorkflow) {
           return;

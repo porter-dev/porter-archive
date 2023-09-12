@@ -16,6 +16,7 @@ type FeatureFlagLabel string
 
 const (
 	// APITokensEnabled allows users to create Bearer tokens for use with the Porter API
+	// #nosec G101 - Not actually an api token
 	APITokensEnabled FeatureFlagLabel = "api_tokens_enabled"
 
 	// AzureEnabled enables Azure Provisioning

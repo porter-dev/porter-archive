@@ -34,3 +34,13 @@ func (repo *DeploymentTargetRepository) DeploymentTargetBySelectorAndSelectorTyp
 
 	return deploymentTarget, nil
 }
+
+func (repo *DeploymentTargetRepository) List(projectID uint) ([]*models.DeploymentTarget, error) {
+	deploymentTargets := []*models.DeploymentTarget{}
+
+	if err := repo.db.Where("project_id = ?", projectID).Find(&deploymentTargets).Error; err != nil {
+		return nil, err
+	}
+
+	return deploymentTargets, nil
+}

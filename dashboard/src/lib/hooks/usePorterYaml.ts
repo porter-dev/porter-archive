@@ -9,13 +9,15 @@ import { z } from "zod";
 
 type PorterYamlStatus =
   | {
-      loading: true;
-      detectedServices: null;
-    }
+    loading: true;
+    detectedServices: null;
+    porterYamlFound: boolean;
+  }
   | {
-      detectedServices: DetectedServices | null;
-      loading: false;
-    };
+    detectedServices: DetectedServices | null;
+    loading: false;
+    porterYamlFound: boolean;
+  };
 
 /*
  *
@@ -28,7 +30,7 @@ export const usePorterYaml = ({
   source,
   useDefaults = true,
 }: {
-  source: SourceOptions | null;
+  source: SourceOptions & { type: "github" } | null;
   useDefaults?: boolean;
 }): PorterYamlStatus => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -36,6 +38,7 @@ export const usePorterYaml = ({
     detectedServices,
     setDetectedServices,
   ] = useState<DetectedServices | null>(null);
+  const [porterYamlFound, setPorterYamlFound] = useState(false);
 
   const { data, status } = useQuery(
     [
@@ -43,14 +46,16 @@ export const usePorterYaml = ({
       currentProject?.id,
       source?.git_branch,
       source?.git_repo_name,
+      source?.porter_yaml_path,
     ],
     async () => {
-      if (!currentProject) {
+      setPorterYamlFound(false);
+
+      if (!currentProject || !source) {
         return;
       }
-      if (source?.type !== "github") {
-        return;
-      }
+
+
       const res = await api.getPorterYamlContents(
         "<token>",
         {
@@ -66,6 +71,7 @@ export const usePorterYaml = ({
         }
       );
 
+      setPorterYamlFound(true);
       return z.string().parseAsync(res.data);
     },
     {
@@ -73,7 +79,14 @@ export const usePorterYaml = ({
         source?.type === "github" &&
         Boolean(source.git_repo_name) &&
         Boolean(source.git_branch),
-      retry: false,
+      retry: (_failureCount, error) => {
+        if (error.response.data?.error?.includes("404")) {
+          setPorterYamlFound(false);
+          return false;
+        }
+        return true;
+      },
+      refetchOnWindowFocus: false,
     }
   );
 
@@ -144,6 +157,7 @@ export const usePorterYaml = ({
     return {
       loading: false,
       detectedServices: null,
+      porterYamlFound: false,
     };
   }
 
@@ -151,11 +165,13 @@ export const usePorterYaml = ({
     return {
       loading: true,
       detectedServices: null,
+      porterYamlFound: true,
     };
   }
 
   return {
     detectedServices,
     loading: false,
+    porterYamlFound,
   };
 };

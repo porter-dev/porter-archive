@@ -6,8 +6,10 @@ import Button from "components/porter/Button";
 import Error from "components/porter/Error";
 import { useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
+import { useLatestRevision } from "../LatestRevisionContext";
 
 const Environment: React.FC = () => {
+  const { latestRevision } = useLatestRevision();
   const {
     formState: { isSubmitting, errors },
   } = useFormContext<PorterAppFormData>();
@@ -31,7 +33,16 @@ const Environment: React.FC = () => {
       <Text color="helper">Shared among all services.</Text>
       <EnvVariables />
       <Spacer y={0.5} />
-      <Button type="submit" status={buttonStatus} loadingText={"Updating..."}>
+      <Button
+        type="submit"
+        status={buttonStatus}
+        loadingText={"Updating..."}
+        disabled={
+          isSubmitting ||
+          latestRevision.status === "CREATED" ||
+          latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+        }
+      >
         Update app
       </Button>
     </>

@@ -1,12 +1,14 @@
 package enable_cluster_preview_envs
 
 import (
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/models"
 	lr "github.com/porter-dev/porter/pkg/logger"
 	_gorm "gorm.io/gorm"
 )
 
-func EnableClusterPreviewEnvs(db *_gorm.DB, logger *lr.Logger) error {
+// EnableClusterPreviewEnvs enables preview environments for clusters where it is enabled for the project
+func EnableClusterPreviewEnvs(db *_gorm.DB, client *features.Client, logger *lr.Logger) error {
 	logger.Info().Msg("starting to enable preview envs for existing clusters whose parent projects have preview envs enabled")
 
 	var clusters []*models.Cluster
@@ -24,7 +26,7 @@ func EnableClusterPreviewEnvs(db *_gorm.DB, logger *lr.Logger) error {
 			continue
 		}
 
-		if project.PreviewEnvsEnabled {
+		if project.GetFeatureFlag(models.PreviewEnvsEnabled, client) {
 			c.PreviewEnvsEnabled = true
 
 			if err := db.Save(c).Error; err != nil {

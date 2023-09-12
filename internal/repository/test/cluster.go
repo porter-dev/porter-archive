@@ -3,6 +3,7 @@ package test
 import (
 	"errors"
 
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -93,6 +94,7 @@ func (repo *ClusterRepository) UpdateClusterCandidateCreatedClusterID(
 // CreateCluster creates a new servicea account
 func (repo *ClusterRepository) CreateCluster(
 	cluster *models.Cluster,
+	launchDarklyClient *features.Client,
 ) (*models.Cluster, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot write database")
@@ -153,6 +155,7 @@ func (repo *ClusterRepository) ListClustersByProjectID(
 // UpdateCluster modifies an existing Cluster in the database
 func (repo *ClusterRepository) UpdateCluster(
 	cluster *models.Cluster,
+	launchDarklyClient *features.Client,
 ) (*models.Cluster, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot write database")

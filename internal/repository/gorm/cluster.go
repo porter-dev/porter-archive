@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/porter-dev/porter/internal/encryption"
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -118,6 +119,7 @@ func (repo *ClusterRepository) UpdateClusterCandidateCreatedClusterID(
 // CreateCluster creates a new cluster
 func (repo *ClusterRepository) CreateCluster(
 	cluster *models.Cluster,
+	launchDarkluClient *features.Client,
 ) (*models.Cluster, error) {
 	err := repo.EncryptClusterData(cluster, repo.key)
 	if err != nil {
@@ -130,7 +132,7 @@ func (repo *ClusterRepository) CreateCluster(
 		return nil, err
 	}
 
-	if cluster.PreviewEnvsEnabled && !project.PreviewEnvsEnabled {
+	if cluster.PreviewEnvsEnabled && !project.GetFeatureFlag(models.PreviewEnvsEnabled, launchDarkluClient) {
 		// this should only work if the corresponding project has preview environments enabled
 		cluster.PreviewEnvsEnabled = false
 	}
@@ -246,6 +248,7 @@ func (repo *ClusterRepository) ListClustersByProjectID(
 // UpdateCluster modifies an existing Cluster in the database
 func (repo *ClusterRepository) UpdateCluster(
 	cluster *models.Cluster,
+	launchDarklyClient *features.Client,
 ) (*models.Cluster, error) {
 	err := repo.EncryptClusterData(cluster, repo.key)
 	if err != nil {
@@ -260,7 +263,7 @@ func (repo *ClusterRepository) UpdateCluster(
 			return nil, fmt.Errorf("error fetching details about cluster's project: %w", err)
 		}
 
-		if !project.PreviewEnvsEnabled {
+		if !project.GetFeatureFlag(models.PreviewEnvsEnabled, launchDarklyClient) {
 			cluster.PreviewEnvsEnabled = false
 		}
 	}

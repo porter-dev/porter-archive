@@ -43,6 +43,7 @@ import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
+import PorterYamlModal from "./PorterYamlModal";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -54,6 +55,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     count: number;
   }>({ detected: false, count: 0 });
   const [showGHAModal, setShowGHAModal] = React.useState(false);
+  const [userHasSeenNoPorterYamlFoundModal, setUserHasSeenNoPorterYamlFoundModal] = React.useState(false);
 
   const [
     validatedAppProto,
@@ -133,9 +135,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const build = watch("app.build");
   const image = watch("source.image");
   const services = watch("app.services");
-  const { detectedServices: servicesFromYaml, detectedName } = usePorterYaml({
-    source,
-  });
+  const { detectedServices: servicesFromYaml, porterYamlFound, detectedName } = usePorterYaml({ source: source?.type === "github" ? source : null });
   const deploymentTarget = useDefaultDeploymentTarget();
   const { updateAppStep } = useAppAnalytics(name.value);
   const { validateApp } = useAppValidation({
@@ -434,11 +434,28 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       <Spacer y={1} />
                       {source?.type ? (
                         source.type === "github" ? (
-                          <RepoSettings
-                            build={build}
-                            source={source}
-                            projectId={currentProject.id}
-                          />
+                          <>
+                            <RepoSettings
+                              build={build}
+                              source={source}
+                              projectId={currentProject.id}
+                            />
+                            {!userHasSeenNoPorterYamlFoundModal && !porterYamlFound &&
+                              <Controller
+                                name="source.porter_yaml_path"
+                                control={control}
+                                render={({ field: { onChange, value } }) => (
+                                  <PorterYamlModal
+                                    close={() => setUserHasSeenNoPorterYamlFoundModal(true)}
+                                    setPorterYamlPath={(porterYamlPath) => {
+                                      onChange(porterYamlPath);
+                                    }}
+                                    porterYamlPath={value}
+                                  />
+                                )}
+                              />
+                            }
+                          </>
                         ) : (
                           <ImageSettings />
                         )

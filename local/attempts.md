@@ -187,13 +187,14 @@ kubectl label $KIND $NAME app.kubernetes.io/managed-by=Helm -n $NAMESPACE
 helm upgrade foo testumbrella --set bar.MyName=bar --reuse-values
 ```
 
-Custom script with web charts - change this
-``
+# Attempt 3 - using a remote repo with porter CLI
 
 ```bash
 # start with helm install of old version (or porter UI on legacy view)
 # newumbrella is a locally cloned umbrella helm chart
 
+helm cm-push newumbrella localngrok
+helm repo update localngrok
 
 CHART_REPO=localngrok/newumbrella
 NAMESPACE=default
@@ -206,32 +207,39 @@ TARGET_RELEASE_NAME=umbrella-chart
 # there should be no deps in Chart.yaml
 # helm dependency build $CHART_REPO
 
-helm cm-push newumbrella localngrok
-
-# create umbrella chart which has hello-porter
-porter helm -- install $TARGET_RELEASE_NAME $CHART_REPO
-
 # add exising chart as dep on Chart.yaml, with alias set as the old release name
 # helm dependency update $CHART_REPO
 helm cm-push newumbrella localngrok
 helm repo update localngrok
 
+# create umbrella chart which has hello-porter
+porter helm -- install $TARGET_RELEASE_NAME $CHART_REPO
+
 # get existing values and indent the values to have the existing release name as a key which matches Chart.yaml
 porter helm -- get values $EXISTING_RELEASE_NAME > existing_values.yaml
 
 # from existing_values.yaml, create a new values.yaml for the umbrella chart with the correct nesting for helm deps (umbrella_values.yaml)
-
-# deployment selectors cant be changed. We need to create a new deployment which goes into the existing service, then delete the existing deployment, then run an update on helm, then delete the manually created deployment
-helm template $TARGET_RELEASE_NAME -f umbrella_values.yaml > template.yaml
-
-# edit template.yaml to only have deployment (or any other issues)
+# you must also set fullnameOverride on each deps values, to match what the dep name should be
 
 
-##### OTHER KINDS
-KIND=deployment
-porter kubectl -- annotate $KIND $NAME meta.helm.sh/release-name=$TARGET_RELEASE_NAME -n $NAMESPACE --overwrite
-porter kubectl --  annotate $KIND $NAME meta.helm.sh/release-namespace=$NAMESPACE -n $NAMESPACE --overwrite
-porter kubectl --  label $KIND $NAME app.kubernetes.io/managed-by=Helm -n $NAMESPACE
+
+##### START
+# IF THERE ARE CONFLICTING RESOURCES SUCH AS DEPLOYMENTS, which would cause downtime, do not label them below. Instead do the following:
+helm template $CHART_REPO -f umbrella_values.yaml > template.yaml
+
+# - edit template.yaml to only have deployment (or any other conflicting resource)
+# - change the name of the these resources (add a letter or something to the name) lets call it legacy-web2 for now
+
+# apply the new template
+porter kubectl -- apply -f template.yaml
+
+# when the new deployments etc come up, delete the previous deployment (call it legacy-web)
+porter kubectl -- delete deploy/legacy-web
+
+# Continue with labelling
+##### END
+
+## Labelling - do not label any parts which would cause conflict .i.e deployments
 
 KIND=svc
 porter kubectl --  annotate $KIND $NAME meta.helm.sh/release-name=$TARGET_RELEASE_NAME -n $NAMESPACE --overwrite
@@ -247,10 +255,15 @@ KIND=ingress
 porter kubectl --  annotate $KIND $NAME meta.helm.sh/release-name=$TARGET_RELEASE_NAME -n $NAMESPACE --overwrite
 porter kubectl --  annotate $KIND $NAME meta.helm.sh/release-namespace=$NAMESPACE -n $NAMESPACE --overwrite
 porter kubectl --  label $KIND $NAME app.kubernetes.io/managed-by=Helm -n $NAMESPACE
-##### OTHER KINDS END
-
-# must delete deployments to scale up new ones as selectors are immutable
 
 porter helm -- upgrade $TARGET_RELEASE_NAME $CHART_REPO -f umbrella_values.yaml
+
+### START
+# Delete any conflicting resources that were created in the helm template
+porter kubectl -- delete deploy/legacy-web2
+### END
+
+# convenience for restarting
+porter helm -- uninstall $TARGET_RELEASE_NAME
 
 ```

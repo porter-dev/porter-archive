@@ -68,6 +68,12 @@ func (c *LatestAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	if len(deploymentTargets) > 1 {
+		err = telemetry.Error(ctx, span, err, "more than one deployment target found")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	// todo(ianedwards): once we have a way to select a deployment target, we can add it to the request
 	deploymentTarget := deploymentTargets[0]
 

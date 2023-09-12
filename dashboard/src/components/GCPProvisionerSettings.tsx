@@ -336,7 +336,8 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         currentCluster?.status === "UPDATING_UNAVAILABLE")
     );
     setClusterName(
-      `${currentProject.name}-cluster-${Math.random()
+      //5 characters from the project name + "-cluster-"(9 characters) +random 6 characters = 20 characters 
+      `${currentProject.name.substring(0, 5)}-cluster-${Math.random()
         .toString(36)
         .substring(2, 8)}`
     );

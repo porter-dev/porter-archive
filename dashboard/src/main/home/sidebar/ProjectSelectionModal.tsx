@@ -103,10 +103,12 @@ const ProjectSelectionModal: React.FC<Props> = ({
             const clusters_list = await updateClusterList(project.id);
             if (clusters_list?.length > 0) {
               setCurrentCluster(clusters_list[0]);
-              pushFiltered(props, "/dashboard", ["project_id"]);
+              setCurrentProject(project, () => {
+                pushFiltered(props, "/dashboard", [], { project_id: project.id });
+              });
             } else {
               setCurrentProject(project, () => {
-                pushFiltered(props, "/dashboard", ["project_id"]);
+                pushFiltered(props, "/dashboard", [], { project_id: project.id });
               });
             }
             closeModal();

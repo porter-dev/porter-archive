@@ -35,6 +35,7 @@ func (repo *DeploymentTargetRepository) DeploymentTargetBySelectorAndSelectorTyp
 	return deploymentTarget, nil
 }
 
+// List finds all deployment targets for a given project
 func (repo *DeploymentTargetRepository) List(projectID uint) ([]*models.DeploymentTarget, error) {
 	deploymentTargets := []*models.DeploymentTarget{}
 

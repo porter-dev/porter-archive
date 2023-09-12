@@ -35,6 +35,7 @@ func NewLatestAppRevisionsHandler(
 type LatestAppRevisionsRequest struct {
 }
 
+// LatestRevisionWithSource is an app revision and its source porter app
 type LatestRevisionWithSource struct {
 	AppRevision porter_app.Revision `json:"app_revision"`
 	Source      types.PorterApp     `json:"source"`

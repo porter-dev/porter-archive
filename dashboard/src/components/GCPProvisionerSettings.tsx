@@ -337,9 +337,9 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     );
     setClusterName(
       //14 characters from the project name + 1 "-" +random 6 characters = 20 characters 
-      `${currentProject.name.substring(0, 13)}-${Math.random()
+      `${currentProject.name.substring(0, 10)}-${Math.random()
         .toString(36)
-        .substring(2, 8)}`
+        .substring(2, 6)}`
     );
   }, []);
 

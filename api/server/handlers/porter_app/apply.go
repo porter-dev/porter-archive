@@ -194,6 +194,7 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	c.WriteResult(w, r, response)
 }
 
+// addPorterSubdomainsIfNecessary adds porter subdomains to the app proto if a web service is changed to private and has no domains
 func addPorterSubdomainsIfNecessary(ctx context.Context, app *porterv1.PorterApp, createSubdomainInput porter_app.CreatePorterSubdomainInput) (*porterv1.PorterApp, error) {
 	for serviceName, service := range app.Services {
 		if service.Type == porterv1.ServiceType_SERVICE_TYPE_WEB {

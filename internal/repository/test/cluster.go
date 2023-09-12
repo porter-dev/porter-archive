@@ -155,6 +155,7 @@ func (repo *ClusterRepository) ListClustersByProjectID(
 // UpdateCluster modifies an existing Cluster in the database
 func (repo *ClusterRepository) UpdateCluster(
 	cluster *models.Cluster,
+	launchDarklyClient *features.Client,
 ) (*models.Cluster, error) {
 	if !repo.canQuery {
 		return nil, errors.New("Cannot write database")

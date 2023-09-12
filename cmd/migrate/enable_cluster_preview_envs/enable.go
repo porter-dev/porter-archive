@@ -7,6 +7,7 @@ import (
 	_gorm "gorm.io/gorm"
 )
 
+// EnableClusterPreviewEnvs enables preview environments for clusters where it is enabled for the project
 func EnableClusterPreviewEnvs(db *_gorm.DB, client *features.Client, logger *lr.Logger) error {
 	logger.Info().Msg("starting to enable preview envs for existing clusters whose parent projects have preview envs enabled")
 

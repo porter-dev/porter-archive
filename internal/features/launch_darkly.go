@@ -11,10 +11,12 @@ import (
 
 // Client is a struct wrapper around the launchdarkly client
 type Client struct {
-	Client LDClientInterface
+	Client LDClient
 }
 
-type LDClientInterface interface {
+// LDClient is an interface that allows us to mock
+// the LaunchDarkly client in tests
+type LDClient interface {
 	BoolVariation(key string, context ldcontext.Context, defaultVal bool) (bool, error)
 }
 

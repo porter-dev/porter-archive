@@ -11,6 +11,7 @@ import (
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 )
 
+// FeatureFlagLabel strongly types project feature flags
 type FeatureFlagLabel string
 
 const (

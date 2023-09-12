@@ -201,16 +201,19 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   });
 
   useEffect(() => {
-    if (servicesFromYaml) {
-      reset({
-        app: clientAppFromProto(latestProto, servicesFromYaml),
-        source: latestSource,
-        deletions: {
-          serviceNames: [],
-        },
-      });
-    }
-  }, [servicesFromYaml, currentTab, latestProto]);
+    reset({
+      app: clientAppFromProto(latestProto, servicesFromYaml),
+      source: latestSource,
+      deletions: {
+        serviceNames: [],
+      },
+    });
+  }, [
+    servicesFromYaml,
+    currentTab,
+    latestProto,
+    latestRevision.revision_number,
+  ]);
 
   return (
     <FormProvider {...porterAppFormMethods}>

@@ -80,7 +80,7 @@ func (c *CreateResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	switch req.Kind {
 	case string(types.InfraEKS), string(types.InfraDOKS), string(types.InfraGKE), string(types.InfraAKS):
 		var cluster *models.Cluster
-		cluster, err = createCluster(c.Config, infra, operation, c.Config.LaunchDarklyClient, req.Output)
+		cluster, err = createCluster(c.Config, infra, c.Config.LaunchDarklyClient, req.Output)
 		if cluster != nil {
 			c.Config.AnalyticsClient.Track(analytics.ClusterProvisioningSuccessTrack(
 				&analytics.ClusterProvisioningSuccessTrackOpts{
@@ -198,7 +198,7 @@ func createS3Bucket(ctx context.Context, config *config.Config, infra *models.In
 	return createS3EnvGroup(ctx, config, infra, lastApplied, output)
 }
 
-func createCluster(config *config.Config, infra *models.Infra, operation *models.Operation, launchDarklyClient *features.Client, output map[string]interface{}) (*models.Cluster, error) {
+func createCluster(config *config.Config, infra *models.Infra, launchDarklyClient *features.Client, output map[string]interface{}) (*models.Cluster, error) {
 	// check for infra id being 0 as a safeguard so that all non-provisioned
 	// clusters are not matched by read
 	if infra.ID == 0 {

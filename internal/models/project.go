@@ -123,19 +123,45 @@ type Project struct {
 	AzureIntegrations  []ints.AzureIntegration  `json:"azure_integrations"`
 	GitlabIntegrations []ints.GitlabIntegration `json:"gitlab_integrations"`
 
-	PreviewEnvsEnabled     bool
-	RDSDatabasesEnabled    bool
-	ManagedInfraEnabled    bool
-	StacksEnabled          bool
-	APITokensEnabled       bool
+	// Deprecated: use p.GetFeatureFlag(PreviewEnvsEnabled, *features.Client) instead
+	PreviewEnvsEnabled bool
+
+	// Deprecated: use p.GetFeatureFlag(RDSDatabasesEnabled, *features.Client) instead
+
+	RDSDatabasesEnabled bool
+	// Deprecated: use p.GetFeatureFlag(ManagedInfraEnabled, *features.Client) instead
+
+	ManagedInfraEnabled bool
+	// Deprecated: use p.GetFeatureFlag(StacksEnabled, *features.Client) instead
+
+	StacksEnabled bool
+	// Deprecated: use p.GetFeatureFlag(APITokensEnabled, *features.Client) instead
+
+	APITokensEnabled bool
+	// Deprecated: use p.GetFeatureFlag(CapiProvisionerEnabled, *features.Client) instead
+
 	CapiProvisionerEnabled bool
-	SimplifiedViewEnabled  bool
-	AzureEnabled           bool
-	HelmValuesEnabled      bool
-	MultiCluster           bool `gorm:"default:false"`
-	FullAddOns             bool `gorm:"default:false"`
-	ValidateApplyV2        bool `gorm:"default:false"`
-	EnableReprovision      bool `gorm:"default:false"`
+	// Deprecated: use p.GetFeatureFlag(SimplifiedViewEnabled, *features.Client) instead
+
+	SimplifiedViewEnabled bool
+	// Deprecated: use p.GetFeatureFlag(AzureEnabled, *features.Client) instead
+
+	AzureEnabled bool
+	// Deprecated: use p.GetFeatureFlag(HelmValuesEnabled, *features.Client) instead
+
+	HelmValuesEnabled bool
+	// Deprecated: use p.GetFeatureFlag(MultiCluster, *features.Client) instead
+
+	MultiCluster bool `gorm:"default:false"`
+	// Deprecated: use p.GetFeatureFlag(FullAddOns, *features.Client) instead
+
+	FullAddOns bool `gorm:"default:false"`
+	// Deprecated: use p.GetFeatureFlag(ValidateApplyV2, *features.Client) instead
+
+	ValidateApplyV2 bool `gorm:"default:false"`
+	// Deprecated: use p.GetFeatureFlag(EnableReprovision, *features.Client) instead
+
+	EnableReprovision bool `gorm:"default:false"`
 }
 
 // GetFeatureFlag calls launchdarkly for the specified flag

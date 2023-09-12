@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/porter-dev/porter/internal/encryption"
-	"github.com/porter-dev/porter/internal/integrations/powerdns"
+	"github.com/porter-dev/porter/internal/integrations/dns"
 	"github.com/porter-dev/porter/internal/models"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -99,13 +99,13 @@ func (c *CreateDNSRecordConfig) NewDNSRecordForEndpoint() *models.DNSRecord {
 }
 
 // CreateDomain creates a new record for the vanity domain
-func (e *DNSRecord) CreateDomain(powerDNSClient *powerdns.Client) error {
+func (e *DNSRecord) CreateDomain(dnsClient *dns.Client) error {
 	isIPv4 := net.ParseIP(e.Endpoint) != nil
 	domain := fmt.Sprintf("%s.%s", e.SubdomainPrefix, e.RootDomain)
 
 	if isIPv4 {
-		return powerDNSClient.CreateARecord(e.Endpoint, domain)
+		return dnsClient.CreateARecord(e.Endpoint, domain)
 	}
 
-	return powerDNSClient.CreateCNAMERecord(e.Endpoint, domain)
+	return dnsClient.CreateCNAMERecord(e.Endpoint, domain)
 }

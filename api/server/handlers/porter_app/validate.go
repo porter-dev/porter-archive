@@ -44,6 +44,7 @@ type Deletions struct {
 
 // ValidatePorterAppRequest is the request object for the /apps/validate endpoint
 type ValidatePorterAppRequest struct {
+	AppName            string    `json:"app_name"`
 	Base64AppProto     string    `json:"b64_app_proto"`
 	DeploymentTargetId string    `json:"deployment_target_id"`
 	CommitSHA          string    `json:"commit_sha"`
@@ -81,29 +82,34 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if request.Base64AppProto == "" {
-		err := telemetry.Error(ctx, span, nil, "b64 yaml is empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error decoding base  yaml")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
 	appProto := &porterv1.PorterApp{}
-	err = helpers.UnmarshalContractObject(decoded, appProto)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error unmarshalling app proto")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
+
+	if request.Base64AppProto == "" {
+		if request.AppName == "" {
+			err := telemetry.Error(ctx, span, nil, "app name is empty and no base64 proto provided")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		appProto.Name = request.AppName
+	} else {
+		decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error decoding base  yaml")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		err = helpers.UnmarshalContractObject(decoded, appProto)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error unmarshalling app proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
 	}
 
 	if appProto.Name == "" {
-		err := telemetry.Error(ctx, span, err, "app proto name is empty")
+		err := telemetry.Error(ctx, span, nil, "app proto name is empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}

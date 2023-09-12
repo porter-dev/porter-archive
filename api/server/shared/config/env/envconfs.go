@@ -89,6 +89,9 @@ type ServerConf struct {
 
 	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`
 
+	// Cloudflare API Key
+	CloudflareAPIToken string `env:"CLOUDFLARE_API_TOKEN"`
+
 	// PowerDNS client API key and the host of the PowerDNS API server
 	PowerDNSAPIServerURL string `env:"POWER_DNS_API_SERVER_URL"`
 	PowerDNSAPIKey       string `env:"POWER_DNS_API_KEY"`

@@ -1,17 +1,17 @@
-package powerdns
+package dns
 
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 )
 
-// Client contains an API client for a PowerDNS server
-type Client struct {
+// PowerDNSClient contains an API client for a PowerDNS server
+type PowerDNSClient struct {
 	apiKey    string
 	serverURL string
 	runDomain string
@@ -19,30 +19,30 @@ type Client struct {
 	httpClient *http.Client
 }
 
-// NewClient creates a new bind API client
-func NewClient(serverURL, apiKey, runDomain string) *Client {
+// NewPowerDNSClient creates a new bind API client
+func NewPowerDNSClient(serverURL, apiKey, runDomain string) *PowerDNSClient {
 	httpClient := &http.Client{
 		Timeout: time.Minute,
 	}
 
-	return &Client{apiKey, serverURL, runDomain, httpClient}
+	return &PowerDNSClient{apiKey, serverURL, runDomain, httpClient}
 }
 
-// RecordData represents the data required to create or delete an A/CNAME record
+// PowerDNSRecordData represents the data required to create or delete an A/CNAME record
 // for the nameserver
-type RecordData struct {
-	RRSets []RR `json:"rrsets"`
+type PowerDNSRecordData struct {
+	RRSets []PowerDNSRR `json:"rrsets"`
 }
 
-type RR struct {
-	Name       string   `json:"name"`
-	Type       string   `json:"type"`
-	ChangeType string   `json:"changetype"`
-	TTL        uint     `json:"ttl"`
-	Records    []Record `json:"records"`
+type PowerDNSRR struct {
+	Name       string           `json:"name"`
+	Type       string           `json:"type"`
+	ChangeType string           `json:"changetype"`
+	TTL        uint             `json:"ttl"`
+	Records    []PowerDNSRecord `json:"records"`
 }
 
-type Record struct {
+type PowerDNSRecord struct {
 	Content  string `json:"content"`
 	Disabled bool   `json:"disabled"`
 	Name     string `json:"name"`
@@ -51,17 +51,17 @@ type Record struct {
 }
 
 // CreateCNAMERecord creates a new CNAME record for the nameserver
-func (c *Client) CreateCNAMERecord(value, hostname string) error {
-	valueC := canonicalize(value)
-	hostnameC := canonicalize(hostname)
+func (c *PowerDNSClient) CreateCNAMERecord(record Record) error {
+	valueC := canonicalize(record.Value)
+	hostnameC := canonicalize(fmt.Sprintf("%s.%s", record.Name, record.RootDomain))
 
-	return c.sendRequest("PATCH", &RecordData{
-		RRSets: []RR{{
+	return c.sendRequest("PATCH", &PowerDNSRecordData{
+		RRSets: []PowerDNSRR{{
 			Name:       hostnameC,
 			Type:       "CNAME",
 			ChangeType: "REPLACE",
 			TTL:        300,
-			Records: []Record{{
+			Records: []PowerDNSRecord{{
 				Content:  valueC,
 				Disabled: false,
 				Name:     hostnameC,
@@ -73,17 +73,17 @@ func (c *Client) CreateCNAMERecord(value, hostname string) error {
 }
 
 // CreateARecord creates a new A record for the nameserver
-func (c *Client) CreateARecord(value, hostname string) error {
-	hostnameC := canonicalize(hostname)
+func (c *PowerDNSClient) CreateARecord(record Record) error {
+	hostnameC := canonicalize(fmt.Sprintf("%s.%s", record.Name, record.RootDomain))
 
-	return c.sendRequest("PATCH", &RecordData{
-		RRSets: []RR{{
+	return c.sendRequest("PATCH", &PowerDNSRecordData{
+		RRSets: []PowerDNSRR{{
 			Name:       hostnameC,
 			Type:       "A",
 			ChangeType: "REPLACE",
 			TTL:        300,
-			Records: []Record{{
-				Content:  value,
+			Records: []PowerDNSRecord{{
+				Content:  record.Value,
 				Disabled: false,
 				Name:     hostnameC,
 				Type:     "A",
@@ -102,7 +102,7 @@ func canonicalize(value string) string {
 	return fmt.Sprintf("%s.", value)
 }
 
-func (c *Client) sendRequest(method string, data *RecordData) error {
+func (c *PowerDNSClient) sendRequest(method string, data *PowerDNSRecordData) error {
 	reqURL, err := url.Parse(c.serverURL)
 	if err != nil {
 		return nil
@@ -136,7 +136,7 @@ func (c *Client) sendRequest(method string, data *RecordData) error {
 	defer res.Body.Close()
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
-		resBytes, err := ioutil.ReadAll(res.Body)
+		resBytes, err := io.ReadAll(res.Body)
 		if err != nil {
 			return fmt.Errorf("request failed with status code %d, but could not read body (%s)\n", res.StatusCode, err.Error())
 		}

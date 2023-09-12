@@ -23,17 +23,9 @@ export const porterAppValidator = z.object({
   dockerfile: z.string().optional(),
   image_repo_uri: z.string().optional(),
   porter_yaml_path: z.string().optional(),
+  pull_request_url: z.string().optional(),
 });
 export type PorterAppRecord = z.infer<typeof porterAppValidator>;
-
-// Buildpack icons
-const icons = [
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-plain.svg",
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg",
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-plain.svg",
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg",
-  web,
-];
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -102,47 +94,4 @@ const StyledExpandedApp = styled.div`
       opacity: 1;
     }
   }
-`;
-const A = styled.a`
-  display: flex;
-  align-items: center;
-`;
-const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
-  height: ${(props) => props.height || "15px"};
-  opacity: ${(props) => props.opacity || 1};
-  margin-right: 10px;
-`;
-const BranchIcon = styled.img`
-  height: 14px;
-  opacity: 0.65;
-  margin-right: 5px;
-`;
-const TagWrapper = styled.div`
-  height: 20px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff44;
-  border: 1px solid #ffffff44;
-  border-radius: 3px;
-  padding-left: 6px;
-`;
-const BranchTag = styled.div`
-  height: 20px;
-  margin-left: 6px;
-  color: #aaaabb;
-  background: #ffffff22;
-  border-radius: 3px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0px 6px;
-  padding-left: 7px;
-  border-top-left-radius: 0px;
-  border-bottom-left-radius: 0px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 `;

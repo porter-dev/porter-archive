@@ -102,7 +102,7 @@ func (c *GithubGetPorterYamlHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if project.ValidateApplyV2 {
+	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		if parsed.Version != nil && *parsed.Version != "v2" {
 			err = telemetry.Error(ctx, span, nil, "porter YAML version is not supported")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -111,7 +111,7 @@ func (c *GithubGetPorterYamlHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	// backwards compatibility so that old porter yamls are no longer valid
-	if !project.ValidateApplyV2 && parsed.Version != nil {
+	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) && parsed.Version != nil {
 		version := *parsed.Version
 		if version != "v1stack" {
 			err = telemetry.Error(ctx, span, nil, "porter YAML version is not supported")

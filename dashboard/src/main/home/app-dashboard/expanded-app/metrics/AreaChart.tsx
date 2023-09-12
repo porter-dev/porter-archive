@@ -331,6 +331,7 @@ const AreaChart: React.FunctionComponent<AreaProps> = ({
                     left={10}
                     scale={valueScale}
                     hideAxisLine={true}
+                    numTicks={6}
                     hideTicks={true}
                     tickLabelProps={() => ({
                         fill: "white",

@@ -90,12 +90,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		return fmt.Errorf("error creating porter app db entry: %w", err)
 	}
 
-	base64AppProtoWithSubdomains, err := addPorterSubdomainsIfNecessary(ctx, client, cliConf.Project, cliConf.Cluster, base64AppProto)
-	if err != nil {
-		return fmt.Errorf("error creating subdomains: %w", err)
-	}
-
-	applyResp, err := client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, base64AppProtoWithSubdomains, targetResp.DeploymentTargetID, "")
+	applyResp, err := client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, base64AppProto, targetResp.DeploymentTargetID, "")
 	if err != nil {
 		return fmt.Errorf("error calling apply endpoint: %w", err)
 	}
@@ -107,7 +102,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 	if applyResp.CLIAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_BUILD {
 		color.New(color.FgGreen).Printf("Building new image...\n") // nolint:errcheck,gosec
 
-		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster)
+		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID)
 
 		if commitSHA == "" {
 			return errors.New("Build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI.")
@@ -141,14 +136,17 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		buildSettings.ProjectID = cliConf.Project
 
 		err = build(ctx, client, buildSettings)
+		buildMetadata := make(map[string]interface{})
+		buildMetadata["end_time"] = time.Now().UTC()
+
 		if err != nil {
-			_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, eventID, types.PorterAppEventStatus_Failed, nil)
+			_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, eventID, types.PorterAppEventStatus_Failed, buildMetadata)
 			return fmt.Errorf("error building app: %w", err)
 		}
 
 		color.New(color.FgGreen).Printf("Successfully built image (tag: %s)\n", buildSettings.ImageTag) // nolint:errcheck,gosec
 
-		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, eventID, types.PorterAppEventStatus_Success, nil)
+		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, eventID, types.PorterAppEventStatus_Success, buildMetadata)
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId)
 		if err != nil {
@@ -160,7 +158,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec
 
 		now := time.Now().UTC()
-		eventID, _ := createPredeployEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, now)
+		eventID, _ := createPredeployEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, now, applyResp.AppRevisionId)
 
 		eventStatus := types.PorterAppEventStatus_Success
 		for {
@@ -186,7 +184,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 
 		metadata := make(map[string]interface{})
 		metadata["end_time"] = time.Now().UTC()
-		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, eventID, eventStatus, metadata)
+		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, eventID, eventStatus, metadata)
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId)
 		if err != nil {
@@ -268,58 +266,6 @@ func createPorterAppDbEntryInputFromProtoAndEnv(base64AppProto string) (api.Crea
 	}
 
 	return input, fmt.Errorf("app does not contain build or image settings")
-}
-
-func addPorterSubdomainsIfNecessary(ctx context.Context, client api.Client, project uint, cluster uint, base64AppProto string) (string, error) {
-	var editedB64AppProto string
-
-	decoded, err := base64.StdEncoding.DecodeString(base64AppProto)
-	if err != nil {
-		return editedB64AppProto, fmt.Errorf("unable to decode base64 app for revision: %w", err)
-	}
-
-	app := &porterv1.PorterApp{}
-	err = helpers.UnmarshalContractObject(decoded, app)
-	if err != nil {
-		return editedB64AppProto, fmt.Errorf("unable to unmarshal app for revision: %w", err)
-	}
-
-	for serviceName, service := range app.Services {
-		if service.Type == porterv1.ServiceType_SERVICE_TYPE_WEB {
-			if service.GetWebConfig() == nil {
-				return editedB64AppProto, fmt.Errorf("web service %s does not contain web config", serviceName)
-			}
-
-			webConfig := service.GetWebConfig()
-
-			if !webConfig.Private && len(webConfig.Domains) == 0 {
-				color.New(color.FgYellow).Printf("Service %s is public but does not contain any domains, creating Porter domain\n", serviceName) // nolint:errcheck,gosec
-				domain, err := client.CreateSubdomain(ctx, project, cluster, app.Name, serviceName)
-				if err != nil {
-					return editedB64AppProto, fmt.Errorf("error creating subdomain: %w", err)
-				}
-
-				if domain.Subdomain == "" {
-					return editedB64AppProto, errors.New("response subdomain is empty")
-				}
-
-				webConfig.Domains = []*porterv1.Domain{
-					{Name: domain.Subdomain},
-				}
-
-				service.Config = &porterv1.Service_WebConfig{WebConfig: webConfig}
-			}
-		}
-	}
-
-	marshalled, err := helpers.MarshalContractObject(ctx, app)
-	if err != nil {
-		return editedB64AppProto, fmt.Errorf("unable to marshal app back to json: %w", err)
-	}
-
-	editedB64AppProto = base64.StdEncoding.EncodeToString(marshalled)
-
-	return editedB64AppProto, nil
 }
 
 func buildSettingsFromBase64AppProto(base64AppProto string) (buildInput, error) {

@@ -7,7 +7,6 @@ import {
   porterAppFormValidator,
 } from "lib/porter-apps";
 import { zodResolver } from "@hookform/resolvers/zod";
-import RevisionsList from "./RevisionsList";
 import { useLatestRevision } from "./LatestRevisionContext";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
@@ -27,11 +26,13 @@ import Icon from "components/porter/Icon";
 import save from "assets/save-01.svg";
 import LogsTab from "./tabs/LogsTab";
 import MetricsTab from "./tabs/MetricsTab";
+import RevisionsList from "../validate-apply/revisions-list/RevisionsList";
+import Activity from "./tabs/Activity";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
 const validTabs = [
-  // "activity",
+  "activity",
   // "events",
   "overview",
   "logs",
@@ -43,7 +44,7 @@ const validTabs = [
   // "helm-values",
   // "job-history",
 ] as const;
-const DEFAULT_TAB = "overview";
+const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
 
 type AppDataContainerProps = {
@@ -167,7 +168,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         latestSource.type === "github" &&
         dirtyFields.app?.build
       ) {
-        await api.reRunGHWorkflow(
+        const res = await api.reRunGHWorkflow(
           "<token>",
           {},
           {
@@ -181,6 +182,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           }
         );
 
+        if (res.data != null) {
+          window.open(res.data, "_blank", "noreferrer");
+        }
+
         setRedeployOnSave(false);
       }
 
@@ -192,20 +197,23 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         porterApp.name,
       ]);
       setPreviewRevision(null);
-    } catch (err) { }
+    } catch (err) {}
   });
 
   useEffect(() => {
-    if (servicesFromYaml) {
-      reset({
-        app: clientAppFromProto(latestProto, servicesFromYaml),
-        source: latestSource,
-        deletions: {
-          serviceNames: [],
-        },
-      });
-    }
-  }, [servicesFromYaml, currentTab, latestProto]);
+    reset({
+      app: clientAppFromProto(latestProto, servicesFromYaml),
+      source: latestSource,
+      deletions: {
+        serviceNames: [],
+      },
+    });
+  }, [
+    servicesFromYaml,
+    currentTab,
+    latestProto,
+    latestRevision.revision_number,
+  ]);
 
   return (
     <FormProvider {...porterAppFormMethods}>
@@ -246,17 +254,18 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         <TabSelector
           noBuffer
           options={[
+            { label: "Activity", value: "activity" },
             { label: "Overview", value: "overview" },
             { label: "Logs", value: "logs" },
             { label: "Metrics", value: "metrics" },
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                {
-                  label: "Build Settings",
-                  value: "build-settings",
-                },
-              ]
+                  {
+                    label: "Build Settings",
+                    value: "build-settings",
+                  },
+                ]
               : []),
             { label: "Settings", value: "settings" },
           ]}
@@ -267,6 +276,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         />
         <Spacer y={1} />
         {match(currentTab)
+          .with("activity", () => <Activity />)
           .with("overview", () => <Overview />)
           .with("build-settings", () => (
             <BuildSettings

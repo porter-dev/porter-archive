@@ -240,7 +240,7 @@ const CloudFormationForm: React.FC<Props> = ({
                       <i
                         className="material-icons"
                         onClick={() => {
-                          window.open("https://docs.aws.amazon.com/IAM/latest/UserGuide/FindingYourAWSId.html", "_blank")
+                          window.open("https://us-east-1.console.aws.amazon.com/billing/home?region=us-east-1#/account", "_blank")
                         }}
                       >
                         help_outline

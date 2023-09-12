@@ -37,6 +37,7 @@ import Placeholder from "./Placeholder";
 import Fieldset from "./porter/Fieldset";
 import ExpandableSection from "./porter/ExpandableSection";
 import PreflightChecks from "./PreflightChecks";
+import VerticalSteps from "./porter/VerticalSteps";
 
 
 const locationOptions = [
@@ -73,6 +74,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     setCurrentCluster,
     setShouldRefreshClusters,
   } = useContext(Context);
+  const [step, setStep] = useState(0);
   const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [region, setRegion] = useState(locationOptions[0].value);
@@ -84,8 +86,8 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
-  const [preflightData, setPreflightData] = useState({})
-  const [preflightFailed, setPreflightFailed] = useState<boolean>(false)
+  const [preflightData, setPreflightData] = useState(null)
+  const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -334,9 +336,9 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         currentCluster?.status === "UPDATING_UNAVAILABLE")
     );
     setClusterName(
-      `${currentProject.name}-cluster-${Math.random()
+      `${currentProject.name.substring(0, 10)}-${Math.random()
         .toString(36)
-        .substring(2, 8)}`
+        .substring(2, 6)}`
     );
   }, []);
 
@@ -367,6 +369,8 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     if (statusPreflight() == "" && !props.clusterId) {
+      setStep(1)
+      setPreflightData(null)
       preflightChecks()
     }
 
@@ -374,8 +378,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
   const preflightChecks = async () => {
     setIsLoading(true);
-
-
+    setPreflightData(null);
     var data = new PreflightCheckRequest({
       projectId: BigInt(currentProject.id),
       cloudProvider: EnumCloudProvider.GCP,
@@ -398,6 +401,23 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         id: currentProject.id,
       }
     )
+    // Check if any of the preflight checks has a message
+    let hasMessage = false;
+    let errors = "Preflight Checks Failed : ";
+    for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
+      if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
+        hasMessage = true;
+        errors = errors + check + ", "
+      }
+    }
+    // If none of the checks have a message, set setPreflightFailed to false
+    if (hasMessage) {
+      markStepStarted("provisioning-failed", errors);
+    }
+    if (!hasMessage) {
+      setPreflightFailed(false);
+      setStep(2);
+    }
     setPreflightData(preflightDataResp?.data?.Msg);
     setIsLoading(false)
 
@@ -407,100 +427,112 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     // Render simplified form if initial create
     if (!props.clusterId) {
       return (
-        <>
-          <Text size={16}>Select a Google Cloud Region for your cluster</Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            Porter will provision your infrastructure in the
-            specified location.
-          </Text>
-          <Spacer height="10px" />
-          <SelectRow
-            options={locationOptions}
-            width="350px"
-            disabled={isReadOnly}
-            value={region}
-            scrollBuffer={true}
-            dropdownMaxHeight="240px"
-            setActiveValue={setRegion}
-            label="📍 GCP location"
-          />
-          {renderAdvancedSettings()}
+        <VerticalSteps
+          currentStep={step}
+          steps={[
+            <>
+              <Text size={16}>Select a Google Cloud Region for your cluster</Text>
+              <Spacer y={1} />
+              <Text color="helper">
+                Porter will provision your infrastructure in the
+                specified location.
+              </Text>
+              <Spacer height="10px" />
+              <SelectRow
+                options={locationOptions}
+                width="350px"
+                disabled={isReadOnly}
+                value={region}
+                scrollBuffer={true}
+                dropdownMaxHeight="240px"
+                setActiveValue={setRegion}
+                label="📍 GCP location" />
+              {renderAdvancedSettings()}
 
-        </>
+            </>,
+            <>
+              <PreflightChecks provider="GCP" preflightData={preflightData} />
+              <Spacer y={.5} />
+              {(preflightFailed && preflightData) &&
+                <>
+                  <Text color="helper">
+                    Preflight checks for the account didn't pass. Please fix the issues and retry.
+                  </Text>
+                  < Button
+                    // disabled={isDisabled()}
+                    disabled={isLoading}
+                    onClick={preflightChecks}
+                  >
+                    Retry Checks
+                  </Button>
+                </>
+              }
+            </>,
+            <>
+              <Text size={16}>Provision your cluster</Text>
+              <Spacer y={1} />
+              <Button
+                disabled={isDisabled() || isLoading || preflightFailed || statusPreflight() != ""}
+                onClick={createCluster}
+                status={getStatus()}
+              >
+                Provision
+              </Button><Spacer y={1} /></>
+          ].filter((x) => x)}
+        />
       );
     }
 
     // If settings, update full form
     return (
       <>
-        <Heading isAtTop>GCP configuration</Heading>
-        <SelectRow
-          options={locationOptions}
-          width="350px"
-          disabled={isReadOnly || true}
-          value={region}
-          scrollBuffer={true}
-          dropdownMaxHeight="240px"
-          setActiveValue={setRegion}
-          label="📍 Google Cloud Region"
-        />
-        <SelectRow
-          options={clusterVersionOptions}
-          width="350px"
-          disabled={isReadOnly}
-          value={clusterVersion}
-          scrollBuffer={true}
-          dropdownMaxHeight="240px"
-          setActiveValue={setClusterVersion}
-          label="Cluster version"
-        />
+        <StyledForm>
+          <Heading isAtTop>GCP configuration</Heading>
+          <SelectRow
+            options={locationOptions}
+            width="350px"
+            disabled={isReadOnly || true}
+            value={region}
+            scrollBuffer={true}
+            dropdownMaxHeight="240px"
+            setActiveValue={setRegion}
+            label="📍 Google Cloud Region"
+          />
+          <SelectRow
+            options={clusterVersionOptions}
+            width="350px"
+            disabled={isReadOnly}
+            value={clusterVersion}
+            scrollBuffer={true}
+            dropdownMaxHeight="240px"
+            setActiveValue={setClusterVersion}
+            label="Cluster version"
+          />
+        </StyledForm>
+
+        <Button
+          disabled={isDisabled() || isLoading || preflightFailed || statusPreflight() != ""}
+          onClick={createCluster}
+          status={getStatus()}
+        >
+          Provision
+        </Button>
+
+        {
+          (!currentProject?.enable_reprovision && props.clusterId) &&
+          <>
+            <Spacer y={1} />
+            <Text>Updates to the cluster are disabled on this project. Enable re-provisioning by contacting <a href="mailto:support@porter.run">Porter Support</a>.</Text>
+          </>
+        }
       </>
     );
   };
 
   return (
     <>
-      <StyledForm>{renderForm()}</StyledForm>
+      {renderForm()}
 
-      {props.credentialId && (<>
-
-        {isLoading ?
-          <>
-            <Placeholder>
-              <Loading />
-            </Placeholder>
-            <Spacer y={1} />
-          </>
-          :
-          <>
-            {(!props.clusterId) &&
-              <>
-                <PreflightChecks preflightData={preflightData} setPreflightFailed={setPreflightFailed} />
-                <Spacer y={1} />
-              </>
-            }
-          </>
-        }
-
-      </>
-      )}
-
-      <Button
-        disabled={isDisabled() || isLoading || preflightFailed || statusPreflight() != ""}
-        onClick={createCluster}
-        status={getStatus()}
-      >
-        Provision
-      </Button>
-
-      {
-        (!currentProject?.enable_reprovision && props.clusterId) &&
-        <>
-          <Spacer y={1} />
-          <Text>Updates to the cluster are disabled on this project. Enable re-provisioning by contacting <a href="mailto:support@porter.run">Porter Support</a>.</Text>
-        </>
-      }
 
       {user.isPorterUser &&
         <>
@@ -525,14 +557,14 @@ export default withRouter(GCPProvisionerSettings);
 
 
 const StyledForm = styled.div`
-      position: relative;
-      padding: 30px 30px 25px;
-      border-radius: 5px;
-      background: ${({ theme }) => theme.fg};
-      border: 1px solid #494b4f;
-      font-size: 13px;
-      margin-bottom: 30px;
-      `;
+              position: relative;
+              padding: 30px 30px 25px;
+              border-radius: 5px;
+              background: ${({ theme }) => theme.fg};
+              border: 1px solid #494b4f;
+              font-size: 13px;
+              margin-bottom: 30px;
+              `;
 
 const DEFAULT_ERROR_MESSAGE =
   "An error occurred while provisioning your infrastructure. Please try again.";
@@ -545,14 +577,14 @@ const errorMessageToModal = (errorMessage: string) => {
 };
 
 const ExpandHeader = styled.div<{ isExpanded: boolean }>`
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+              display: flex;
+              align-items: center;
+              cursor: pointer;
   > i {
-    margin-right: 7px;
-    margin-left: -7px;
-    transform: ${(props) =>
+                margin - right: 7px;
+              margin-left: -7px;
+              transform: ${(props) =>
     props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
-    transition: transform 0.1s ease;
+              transition: transform 0.1s ease;
   }
-`;
+              `;

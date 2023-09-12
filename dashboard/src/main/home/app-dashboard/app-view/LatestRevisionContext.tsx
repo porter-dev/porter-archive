@@ -144,7 +144,7 @@ export const LatestRevisionProvider = ({
   }, [porterApp]);
 
   const { loading: porterYamlLoading, detectedServices } = usePorterYaml({
-    source: latestSource,
+    source: latestSource?.type === "github" ? latestSource : null,
     useDefaults: false,
   });
 

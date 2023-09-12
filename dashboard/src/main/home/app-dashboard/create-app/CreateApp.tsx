@@ -43,6 +43,7 @@ import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
+import PorterYamlModal from "./PorterYamlModal";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -54,6 +55,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     count: number;
   }>({ detected: false, count: 0 });
   const [showGHAModal, setShowGHAModal] = React.useState(false);
+  const [userHasSeenNoPorterYamlFoundModal, setUserHasSeenNoPorterYamlFoundModal] = React.useState(false);
 
   const [
     validatedAppProto,
@@ -96,7 +98,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     reValidateMode: "onSubmit",
     defaultValues: {
       app: {
-        name: "",
+        name: {
+          value: "",
+          readOnly: false,
+        },
         build: {
           method: "pack",
           context: "./",
@@ -111,7 +116,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       },
       deletions: {
         serviceNames: [],
-      }
+      },
     },
   });
   const {
@@ -130,9 +135,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const build = watch("app.build");
   const image = watch("source.image");
   const services = watch("app.services");
-  const { detectedServices: servicesFromYaml } = usePorterYaml({ source });
+  const { detectedServices: servicesFromYaml, porterYamlFound, detectedName, loading: isLoadingPorterYaml } = usePorterYaml({ source: source?.type === "github" ? source : null });
   const deploymentTarget = useDefaultDeploymentTarget();
-  const { updateAppStep } = useAppAnalytics(name);
+  const { updateAppStep } = useAppAnalytics(name.value);
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget?.deployment_target_id,
     creating: true,
@@ -297,7 +302,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   }, [isValidating, isDeploying, deployError, errors]);
 
   const submitDisabled = useMemo(() => {
-    return !name || !source || services.length === 0;
+    return !name || !source || services?.length === 0;
   }, [name, source, services?.length]);
 
   // reset services when source changes
@@ -343,17 +348,21 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         count: 0,
       });
     }
-  }, [servicesFromYaml, detectedServices.detected]);
+
+    if (detectedName) {
+      setValue("app.name", { value: detectedName, readOnly: true });
+    }
+  }, [servicesFromYaml, detectedName, detectedServices.detected]);
 
   useEffect(() => {
-    if (porterApps.includes(name)) {
-      setError("app.name", {
+    if (porterApps.includes(name.value)) {
+      setError("app.name.value", {
         message: "An app with this name already exists",
       });
     } else {
-      clearErrors("app.name");
+      clearErrors("app.name.value");
     }
-  }, [porterApps, name]);
+  }, [porterApps, name.value]);
 
   if (!currentProject || !currentCluster) {
     return null;
@@ -387,7 +396,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       placeholder="ex: academic-sophon"
                       type="text"
                       error={errors.app?.name?.message}
-                      {...register("app.name")}
+                      disabled={name.readOnly}
+                      disabledTooltip={
+                        "You may only edit this field in your porter.yaml."
+                      }
+                      {...register("app.name.value")}
                     />
                   </>,
                   <>
@@ -421,11 +434,28 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       <Spacer y={1} />
                       {source?.type ? (
                         source.type === "github" ? (
-                          <RepoSettings
-                            build={build}
-                            source={source}
-                            projectId={currentProject.id}
-                          />
+                          <>
+                            <RepoSettings
+                              build={build}
+                              source={source}
+                              projectId={currentProject.id}
+                            />
+                            {!userHasSeenNoPorterYamlFoundModal && !porterYamlFound && !isLoadingPorterYaml &&
+                              <Controller
+                                name="source.porter_yaml_path"
+                                control={control}
+                                render={({ field: { onChange, value } }) => (
+                                  <PorterYamlModal
+                                    close={() => setUserHasSeenNoPorterYamlFoundModal(true)}
+                                    setPorterYamlPath={(porterYamlPath) => {
+                                      onChange(porterYamlPath);
+                                    }}
+                                    porterYamlPath={value}
+                                  />
+                                )}
+                              />
+                            }
+                          </>
                         ) : (
                           <ImageSettings />
                         )
@@ -460,7 +490,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       )}
                     </Container>
                     <Spacer y={0.5} />
-                    <ServiceList addNewText={"Add a new service"} fieldArrayName={"app.services"} />
+                    <ServiceList
+                      addNewText={"Add a new service"}
+                      fieldArrayName={"app.services"}
+                    />
                   </>,
                   <>
                     <Text size={16}>Environment variables (optional)</Text>
@@ -517,7 +550,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           githubRepoOwner={source.git_repo_name.split("/")[0]}
           githubRepoName={source.git_repo_name.split("/")[1]}
           branch={source.git_branch}
-          stackName={name}
+          stackName={name.value}
           projectId={currentProject.id}
           clusterId={currentCluster.id}
           deployPorterApp={() =>

@@ -10,14 +10,16 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// CreatePorterSubdomainInput is the input to the CreatePorterSubdomain function
 type CreatePorterSubdomainInput struct {
-	AppName    string
-	RootDomain string
-	KubernetesAgent            *kubernetes.Agent
+	AppName             string
+	RootDomain          string
+	KubernetesAgent     *kubernetes.Agent
 	PowerDNSClient      *powerdns.Client
 	DNSRecordRepository repository.DNSRecordRepository
 }
 
+// CreatePorterSubdomain creates a subdomain for the porter app
 func CreatePorterSubdomain(ctx context.Context, input CreatePorterSubdomainInput) (string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-porter-subdomain")
 	defer span.End()

@@ -37,9 +37,9 @@ const ServiceContainer: React.FC<ServiceProps> = ({
 
   const UPPER_BOUND_RAM = .75;
   const UPPER_BOUND_CPU = .5;
-
-  const [maxCPU, setMaxCPU] = useState(2 * UPPER_BOUND_CPU); //default is set to a t3 medium 
-  const [maxRAM, setMaxRAM] = useState(4 * UPPER_BOUND_RAM); //default is set to a t3 medium
+  const ration = .5;
+  const [maxCPU, setMaxCPU] = useState(2); //default is set to a t3 medium 
+  const [maxRAM, setMaxRAM] = useState(4); //default is set to a t3 medium
   const context = useContext(Context);
 
   useEffect(() => {
@@ -58,8 +58,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         instanceType = chart?.config?.[`${serviceName}-${service.type}`]?.nodeSelector?.["beta.kubernetes.io/instance-type"]
         const [instanceClass, instanceSize] = instanceType.split('.');
         const currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
-        setMaxCPU(currentInstance.vCPU * UPPER_BOUND_CPU);
-        setMaxRAM(currentInstance.RAM * UPPER_BOUND_RAM);
+        setMaxCPU(currentInstance.vCPU);
+        setMaxRAM(currentInstance.RAM);
       }
     }
     //Query the given nodes if no instance type is specified
@@ -97,8 +97,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
               }
             });
 
-            setMaxCPU(largestInstanceType.vCPUs * UPPER_BOUND_CPU);
-            setMaxRAM(largestInstanceType.RAM * UPPER_BOUND_RAM);
+            setMaxCPU(largestInstanceType.vCPUs);
+            setMaxRAM(largestInstanceType.RAM);
           }
         }).catch((error) => {
 

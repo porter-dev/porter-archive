@@ -82,3 +82,7 @@ export const AWS_INSTANCE_LIMITS: InstanceTypes = {
         "xlarge": { "vCPU": 4, "RAM": 64 },
     }
 }
+
+
+export const UPPER_BOUND_SMART = .5
+export const RESOURCE_ALLOCATION_RAM = 1

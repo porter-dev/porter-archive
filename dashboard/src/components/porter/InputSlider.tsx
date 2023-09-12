@@ -4,8 +4,8 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import styled from 'styled-components';
 import { withStyles } from '@material-ui/core/styles';
-import Container from './Container';
-
+import Text from './Text';
+import Spacer from './Spacer';
 
 type InputSliderProps = {
   label?: string;
@@ -19,6 +19,8 @@ type InputSliderProps = {
   color?: string;
   width?: string;
   step?: number;
+  smartLimit?: number;
+  override?: boolean;
 };
 
 const ValueLabelComponent: React.FC<any> = (props) => {
@@ -47,10 +49,12 @@ const InputSlider: React.FC<InputSliderProps> = ({
   color,
   step,
   width,
-
+  smartLimit,
+  override
 }) => {
   const quarter = min + (max - min) * 0.25;
   const threeQuarter = min + (max - min) * 0.75;
+  const actualMax = smartLimit && smartLimit < max ? smartLimit : max;
 
   const mid = min + (max - min) * 0.5;
   const marks: Mark[] = [
@@ -62,43 +66,74 @@ const InputSlider: React.FC<InputSliderProps> = ({
       value: mid,
       label: `${mid}`,
     },
-    {
-      value: threeQuarter,
-      label: `Recommended`,
-    },
+    // {
+    //   value: threeQuarter,
+    //   label: `Recommended`,
+    // },
     {
       value: max,
       label: max.toString(),
     },
   ];
 
+  if (smartLimit) {
+    marks.push({
+      value: smartLimit,
+      label: smartLimit.toString(),
+    });
+  }
+
+  const isExceedingLimit = Number(value) > smartLimit;
+
+
   return (
     <SliderContainer width={width}>
       <LabelContainer>
-        {label && <Label>{label}</Label>}
-        <Value>{`${value} ${unit}`}</Value>
+        <>
+          {label && <Label>{label}</Label>}
+          <Value>{`${value} ${unit}`}</Value>
+          {isExceedingLimit &&
+            <><Spacer inline x={1} /><Label color="#FFBF00"> Value is not optimal for cost</Label></>}
+        </>
       </LabelContainer>
+
       <DisabledTooltip title={disabled ? disabledTooltip || '' : ''} arrow>
         <div style={{ position: 'relative' }}>
           {/* <div style={{ position: 'absolute', bottom: '100%', left: `calc(${((threeQuarter - min) / (max - min)) * 100}% - 50px)` }}>
             Recommended
           </div> */}
-          <StyledSlider
-            ValueLabelComponent={ValueLabelComponent}
-            aria-label="input slider"
-            min={min}
-            max={max}
-            value={Number(value)}
-            onChange={(event, newValue) => {
-              setValue(newValue as number);
-            }}
-            disabled={disabled}
-            marks={marks}
-            step={step ? step : 1}
-            style={{
-              color: disabled ? "gray" : color,
-            }}
-          />
+          <MaxedOutToolTip title={smartLimit?.toString() == value && !override ? "To increase value toggle off Smart Optimization" || '' : ''} arrow>
+            <div style={{ position: 'relative' }}>
+
+              <StyledSlider
+                ValueLabelComponent={ValueLabelComponent}
+                aria-label="input slider"
+                isExceedingLimit={isExceedingLimit}
+                min={min}
+                max={max} // keep this as max to show the full range
+                value={(!override && isExceedingLimit) ? smartLimit : Number(value)}
+                onChange={(event, newValue) => {
+                  // If not in override mode and newValue is greater than smartLimit, set to smartLimit
+                  if (!override && smartLimit && newValue > smartLimit) {
+                    setValue(smartLimit);
+                  } else {
+                    setValue(newValue as number);
+                  }
+                }}
+                classes={{
+                  track: isExceedingLimit ? 'exceeds-limit' : '',
+                  rail: isExceedingLimit ? 'exceeds-limit' : ''
+                }}
+                valueLabelDisplay={smartLimit && Number(value) > smartLimit ? "off" : "auto"}
+                disabled={disabled}
+                marks={marks}
+                step={step ? step : 1}
+                style={{
+                  color: disabled ? "gray" : color,
+                }}
+              />
+            </div>
+          </MaxedOutToolTip>
           {disabled && (
             <div
               style={{
@@ -131,7 +166,7 @@ const Label = styled.div<{ color?: string }>`
   font-size: 13px;
   margin-right: 5px;
   margin-bottom: 10px;
-  color: #aaaabb;
+  color: ${props => props.color ? props.color : '#aaaabb'};
 `;
 
 const Value = styled.div<{ color?: string }>`
@@ -158,6 +193,24 @@ const DisabledTooltip = withStyles(theme => ({
   },
   arrow: {
     color: '#333',
+  },
+}))(Tooltip);
+
+const MaxedOutToolTip = withStyles(theme => ({
+  tooltip: {
+    backgroundColor: '#333',
+    color: '#fff',
+    padding: '8px',
+    borderRadius: '4px',
+    fontSize: '14px',
+    textAlign: 'center',
+    whiteSpace: 'pre-wrap',
+    wordWrap: 'break-word',
+    maxWidth: '200px',
+    width: '200px',
+    [theme.breakpoints.up('sm')]: {
+      margin: '0 14px',
+    },
   },
 }))(Tooltip);
 
@@ -203,21 +256,24 @@ const StyledSlider = withStyles({
       width: 16,
     },
   },
-  track: {
-    height: 8, // Same as root height for consistency
+  track: (props) => ({
+    height: 8,
     borderRadius: 4,
-  },
-  rail: {
-    height: 8, // Same as root height for consistency
+    backgroundColor: props.isExceedingLimit ? '#FFBF00' : '',  // setting color conditionally
+  }),
+  rail: (props) => ({
+    height: 8,
     borderRadius: 4,
-  },
+    backgroundColor: props.isExceedingLimit ? '#FFBF00' : '',  // setting color conditionally
+  }),
   valueLabel: {
     top: -22,
     '& *': {
       background: 'transparent',
       border: 'none', // remove the default border
     },
-  },
+  }
+  ,
   disabled: {},
 })(Slider);
 

@@ -7,12 +7,20 @@ import Checkbox from "components/porter/Checkbox";
 import { Service, WebService } from "../serviceTypes";
 import AnimateHeight, { Height } from "react-animate-height";
 import { Context } from "shared/Context";
-import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, RESOURCE_HEIGHT_WITHOUT_AUTOSCALING, RESOURCE_HEIGHT_WITH_AUTOSCALING, AWS_INSTANCE_LIMITS, MILI_TO_CORE, MIB_TO_GIB } from "./utils";
+import { DATABASE_HEIGHT_DISABLED, DATABASE_HEIGHT_ENABLED, RESOURCE_HEIGHT_WITHOUT_AUTOSCALING, RESOURCE_HEIGHT_WITH_AUTOSCALING, AWS_INSTANCE_LIMITS, MILI_TO_CORE, MIB_TO_GIB, UPPER_BOUND_SMART, UPPER_BOUND_REG, RESOURCE_ALLOCATION, RESOURCE_ALLOCATION_CPU, RESOURCE_ALLOCATION_RAM } from "./utils";
 import IngressCustomAnnotations from "./IngressCustomAnnotations";
 import CustomDomains from "./CustomDomains";
 import InputSlider from "components/porter/InputSlider";
 import api from "shared/api";
-
+import Toggle from "components/porter/Toggle";
+import Container from "components/porter/Container";
+import { FormControlLabel, Switch } from "@material-ui/core";
+import DialToggle from "components/porter/DialToggle";
+import { max } from "lodash";
+import styled from "styled-components";
+import Step from "components/porter/Step";
+import Link from "components/porter/Link";
+import Modal from "components/porter/Modal";
 interface Props {
   service: WebService;
   editService: (service: WebService) => void;
@@ -37,7 +45,12 @@ const WebTabs: React.FC<Props> = ({
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>("main");
   const { currentCluster } = useContext(Context);
+  const [checked, setChecked] = React.useState(true);
+  const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
 
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setChecked(event.target.checked);
+  };
   const renderMain = () => {
     setHeight(159);
     return (
@@ -249,43 +262,92 @@ const WebTabs: React.FC<Props> = ({
     return (
       <>
         <Spacer y={1} />
-        <InputSlider
-          label="CPUs: "
-          unit="Cores"
-          min={0}
-          max={maxCPU}
-          color={"#3a48ca"}
-          value={(service.cpu.value / MILI_TO_CORE).toString()}
-          setValue={(e) => {
-            editService({ ...service, cpu: { readOnly: false, value: e * MILI_TO_CORE } });
-          }}
-          step={0.01}
-          disabled={service.cpu.readOnly}
-          disabledTooltip={"You may only edit this field in your porter.yaml."}
-        />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+          <StyledIcon
+            className="material-icons"
+            onClick={() => {
+              setShowNeedHelpModal(true)
+            }}
+          >
+            help_outline
+          </StyledIcon>
+          <Text style={{ marginRight: '10px' }}>Smart Optimization</Text>
+          <Switch
+            color="primary"
+            checked={checked}
+            onChange={handleChange}
+            inputProps={{ 'aria-label': 'controlled' }}
+          />
+        </div>
+        {showNeedHelpModal &&
+          <><Modal closeModal={() => setShowNeedHelpModal(false)} width={"800px"}>
+            <Text size={16}>Resource Optimization on Porter</Text>
+            <Spacer y={1} />
+            <Text color="helper">
+              Smart Optimization ensures that your app runs smoothly while minimizing costs. Smart Optimization performs the following:
+            </Text>
+            <Spacer y={1} />
+            <Step number={1}>
+              Maintains a consistant ratio between RAM and CPU based on the instance type.
+            </Step>
+            <Spacer y={1} />
+            <Step number={2}>
+              Enforces limits so that your app does not consume resources beyond the instance type's limits.
+            </Step>
+            <Spacer y={1} />
+            <Step number={3}> Determines an optimal resource threshold to save cost.</Step>
+            <Spacer y={1} />
+
+            <Text color="helper">
+              Turning off Smart Optimization will allow you to specify your own resource values. This is not recommended unless you are familiar with Kubernetes resource management.
+            </Text>
+
+          </Modal></>}
+        <>
+          <InputSlider
+            label="CPUs: "
+            unit="Cores"
+            override={!checked}
+            min={0}
+            max={maxCPU - (RESOURCE_ALLOCATION_RAM * maxCPU / maxRAM)}
+            color={"#3a48ca"}
+            smartLimit={(maxCPU * UPPER_BOUND_SMART)}
+            value={(service.cpu.value / MILI_TO_CORE).toString()}
+            setValue={(e) => {
+              checked ? editService({ ...service, cpu: { readOnly: false, value: e * MILI_TO_CORE }, ram: { readOnly: false, value: e * maxRAM / maxCPU * MIB_TO_GIB } }) :
+                editService({ ...service, cpu: { readOnly: false, value: e * MILI_TO_CORE } });
+            }}
+            step={0.01}
+            disabled={false}
+            disabledTooltip={"You may only edit this field in your porter.yaml."} />
+
+          <Spacer y={1} />
+
+          <InputSlider
+            label="RAM: "
+            unit="GiB"
+            min={0}
+            override={!checked}
+            smartLimit={(maxRAM * UPPER_BOUND_SMART)}
+            max={(maxRAM - RESOURCE_ALLOCATION_RAM)}
+            color={"#3a48ca"}
+            value={(service.ram.value / MIB_TO_GIB).toString()}
+            setValue={(e) => {
+              checked ? editService({ ...service, ram: { readOnly: false, value: e * MIB_TO_GIB }, cpu: { readOnly: false, value: e * maxCPU / maxRAM * MILI_TO_CORE } }) :
+                editService({ ...service, ram: { readOnly: false, value: e * MIB_TO_GIB } });
+            }}
+
+            disabled={service.ram.readOnly}
+            step={0.1}
+            disabledTooltip={"You may only edit this field in your porter.yaml."} />
+        </>
         <Spacer y={1} />
-        <InputSlider
-          label="RAM: "
-          unit="GiB"
-          min={0}
-          max={maxRAM}
-          color={"#3a48ca"}
-          value={(service.ram.value / MIB_TO_GIB).toString()}
-          setValue={(e) => {
-            editService({ ...service, ram: { readOnly: false, value: e * MIB_TO_GIB } });
-          }}
-          disabled={service.ram.readOnly}
-          step={0.1}
-          disabledTooltip={"You may only edit this field in your porter.yaml."}
-        />
-        <Spacer y={1} />
+
         <Input
           label="Replicas"
           placeholder="ex: 1"
           value={service.replicas.value}
-          disabled={
-            service.replicas.readOnly || service.autoscaling.enabled.value
-          }
+          disabled={service.replicas.readOnly || service.autoscaling.enabled.value}
           width="300px"
           setValue={(e) => {
             editService({
@@ -293,43 +355,35 @@ const WebTabs: React.FC<Props> = ({
               replicas: { readOnly: false, value: e },
             });
           }}
-          disabledTooltip={
-            service.replicas.readOnly
-              ? "You may only edit this field in your porter.yaml."
-              : "Disable autoscaling to specify replicas."
-          }
-        />
-        <Spacer y={1} />
-        <Checkbox
-          checked={service.autoscaling.enabled.value}
-          toggleChecked={() => {
-            editService({
-              ...service,
-              autoscaling: {
-                ...service.autoscaling,
-                enabled: {
-                  readOnly: false,
-                  value: !service.autoscaling.enabled.value,
-                },
-              },
-            });
-            setHeight(service.autoscaling.enabled.value ? RESOURCE_HEIGHT_WITHOUT_AUTOSCALING : RESOURCE_HEIGHT_WITH_AUTOSCALING);
-          }}
-          disabled={service.autoscaling.enabled.readOnly}
-          disabledTooltip={"You may only edit this field in your porter.yaml."}
-        >
+          disabledTooltip={service.replicas.readOnly
+            ? "You may only edit this field in your porter.yaml."
+            : "Disable autoscaling to specify replicas."} /><Spacer y={1} /><Checkbox
+              checked={service.autoscaling.enabled.value}
+              toggleChecked={() => {
+                editService({
+                  ...service,
+                  autoscaling: {
+                    ...service.autoscaling,
+                    enabled: {
+                      readOnly: false,
+                      value: !service.autoscaling.enabled.value,
+                    },
+                  },
+                });
+                setHeight(service.autoscaling.enabled.value ? RESOURCE_HEIGHT_WITHOUT_AUTOSCALING : RESOURCE_HEIGHT_WITH_AUTOSCALING);
+              }}
+              disabled={service.autoscaling.enabled.readOnly}
+              disabledTooltip={"You may only edit this field in your porter.yaml."}
+            >
           <Text color="helper">Enable autoscaling (overrides replicas)</Text>
-        </Checkbox>
-        <AnimateHeight height={service.autoscaling.enabled.value ? 'auto' : 0}>
+        </Checkbox><AnimateHeight height={service.autoscaling.enabled.value ? 'auto' : 0}>
           <Spacer y={1} />
           <Input
             label="Min replicas"
             placeholder="ex: 1"
             value={service.autoscaling.minReplicas.value}
-            disabled={
-              service.autoscaling.minReplicas.readOnly ||
-              !service.autoscaling.enabled.value
-            }
+            disabled={service.autoscaling.minReplicas.readOnly ||
+              !service.autoscaling.enabled.value}
             width="300px"
             setValue={(e) => {
               editService({
@@ -340,21 +394,16 @@ const WebTabs: React.FC<Props> = ({
                 },
               });
             }}
-            disabledTooltip={
-              service.autoscaling.minReplicas.readOnly
-                ? "You may only edit this field in your porter.yaml."
-                : "Enable autoscaling to specify min replicas."
-            }
-          />
+            disabledTooltip={service.autoscaling.minReplicas.readOnly
+              ? "You may only edit this field in your porter.yaml."
+              : "Enable autoscaling to specify min replicas."} />
           <Spacer y={1} />
           <Input
             label="Max replicas"
             placeholder="ex: 10"
             value={service.autoscaling.maxReplicas.value}
-            disabled={
-              service.autoscaling.maxReplicas.readOnly ||
-              !service.autoscaling.enabled.value
-            }
+            disabled={service.autoscaling.maxReplicas.readOnly ||
+              !service.autoscaling.enabled.value}
             width="300px"
             setValue={(e) => {
               editService({
@@ -365,12 +414,9 @@ const WebTabs: React.FC<Props> = ({
                 },
               });
             }}
-            disabledTooltip={
-              service.autoscaling.maxReplicas.readOnly
-                ? "You may only edit this field in your porter.yaml."
-                : "Enable autoscaling to specify max replicas."
-            }
-          />
+            disabledTooltip={service.autoscaling.maxReplicas.readOnly
+              ? "You may only edit this field in your porter.yaml."
+              : "Enable autoscaling to specify max replicas."} />
           <Spacer y={1} />
           <InputSlider
             label="Target CPU utilization: "
@@ -378,10 +424,8 @@ const WebTabs: React.FC<Props> = ({
             min={0}
             max={100}
             value={service.autoscaling.targetCPUUtilizationPercentage.value}
-            disabled={
-              service.autoscaling.targetCPUUtilizationPercentage.readOnly ||
-              !service.autoscaling.enabled.value
-            }
+            disabled={service.autoscaling.targetCPUUtilizationPercentage.readOnly ||
+              !service.autoscaling.enabled.value}
             width="300px"
             setValue={(e) => {
               editService({
@@ -392,12 +436,9 @@ const WebTabs: React.FC<Props> = ({
                 },
               });
             }}
-            disabledTooltip={
-              service.autoscaling.targetCPUUtilizationPercentage.readOnly
-                ? "You may only edit this field in your porter.yaml."
-                : "Enable autoscaling to specify target CPU utilization."
-            }
-          />
+            disabledTooltip={service.autoscaling.targetCPUUtilizationPercentage.readOnly
+              ? "You may only edit this field in your porter.yaml."
+              : "Enable autoscaling to specify target CPU utilization."} />
           <Spacer y={1} />
           <InputSlider
             label="Target RAM utilization: "
@@ -405,10 +446,8 @@ const WebTabs: React.FC<Props> = ({
             min={0}
             max={100}
             value={service.autoscaling.targetMemoryUtilizationPercentage.value}
-            disabled={
-              service.autoscaling.targetMemoryUtilizationPercentage.readOnly ||
-              !service.autoscaling.enabled.value
-            }
+            disabled={service.autoscaling.targetMemoryUtilizationPercentage.readOnly ||
+              !service.autoscaling.enabled.value}
             width="300px"
             setValue={(e) => {
               editService({
@@ -422,14 +461,10 @@ const WebTabs: React.FC<Props> = ({
                 },
               });
             }}
-            disabledTooltip={
-              service.autoscaling.targetMemoryUtilizationPercentage.readOnly
-                ? "You may only edit this field in your porter.yaml."
-                : "Enable autoscaling to specify target RAM utilization."
-            }
-          />
-        </AnimateHeight>
-      </>
+            disabledTooltip={service.autoscaling.targetMemoryUtilizationPercentage.readOnly
+              ? "You may only edit this field in your porter.yaml."
+              : "Enable autoscaling to specify target RAM utilization."} />
+        </AnimateHeight></>
     );
   };
 
@@ -860,3 +895,12 @@ const WebTabs: React.FC<Props> = ({
 };
 
 export default WebTabs;
+
+const StyledIcon = styled.i`
+  cursor: pointer;
+  font-size: 16px; 
+  margin-right : 5px;
+  &:hover {
+    color: #666;  
+  }
+`;

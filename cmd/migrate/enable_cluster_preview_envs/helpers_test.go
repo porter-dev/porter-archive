@@ -7,6 +7,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/internal/adapter"
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/models"
 	ints "github.com/porter-dev/porter/internal/models/integrations"
 	"github.com/porter-dev/porter/internal/repository"
@@ -109,7 +110,7 @@ func initCluster(tester *tester, t *testing.T) {
 		},
 	}
 
-	cluster, err := tester.repo.Cluster().CreateCluster(cluster)
+	cluster, err := tester.repo.Cluster().CreateCluster(cluster, &features.Client{})
 	if err != nil {
 		t.Fatalf("%v\n", err)
 	}

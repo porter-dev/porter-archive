@@ -38,7 +38,7 @@ func (p *PreviewEnvironmentScopedMiddleware) ServeHTTP(w http.ResponseWriter, r 
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	if !project.PreviewEnvsEnabled {
+	if !project.GetFeatureFlag(models.PreviewEnvsEnabled, p.config.LaunchDarklyClient) {
 		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r,
 			apierrors.NewErrForbidden(errPreviewProjectDisabled), true)
 		return

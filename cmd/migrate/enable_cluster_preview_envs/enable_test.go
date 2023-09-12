@@ -61,7 +61,7 @@ func TestEnableForProjectDisabled(t *testing.T) {
 	initProjectPreviewDisabled(tester, t)
 	initCluster(tester, t)
 
-	err := EnableClusterPreviewEnvs(tester.DB, &features.Client{Client: FeaturesTestClient{true}}, logger)
+	err := EnableClusterPreviewEnvs(tester.DB, &features.Client{Client: FeaturesTestClient{false}}, logger)
 	if err != nil {
 		t.Fatalf("%v\n", err)
 		return

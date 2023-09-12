@@ -27,15 +27,6 @@ export const porterAppValidator = z.object({
 });
 export type PorterAppRecord = z.infer<typeof porterAppValidator>;
 
-// Buildpack icons
-const icons = [
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-plain.svg",
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg",
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-plain.svg",
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg",
-  web,
-];
-
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
 const validTabs = [

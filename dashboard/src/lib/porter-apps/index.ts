@@ -308,15 +308,15 @@ export function clientAppFromProto(
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-        deserializeService({
-          service: serializedServiceFromProto({
-            name: "pre-deploy",
-            service: proto.predeploy,
-            isPredeploy: true,
-          }),
-          override: predeployOverrides,
+      deserializeService({
+        service: serializedServiceFromProto({
+          name: "pre-deploy",
+          service: proto.predeploy,
+          isPredeploy: true,
         }),
-      ]
+        override: predeployOverrides,
+      }),
+    ]
     : undefined;
 
   return {

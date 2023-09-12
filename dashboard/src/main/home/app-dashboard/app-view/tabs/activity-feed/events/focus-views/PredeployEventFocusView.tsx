@@ -4,22 +4,26 @@ import dayjs from "dayjs";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
 import { getDuration } from "../utils";
-import LogSection from "../../../logs/LogSection";
 import { AppearingView } from "./EventFocusView";
 import Icon from "components/porter/Icon";
 import loading from "assets/loading.gif";
 import Container from "components/porter/Container";
-import { PorterAppEvent } from "../types";
+import { PorterAppPreDeployEvent } from "../types";
+import Logs from "main/home/app-dashboard/validate-apply/logs/Logs";
+import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 
 type Props = {
-  event: PorterAppEvent;
-  appData: any;
+  event: PorterAppPreDeployEvent;
 };
 
 const PreDeployEventFocusView: React.FC<Props> = ({
   event,
-  appData,
 }) => {
+  const { projectId, clusterId, latestProto, deploymentTargetId, latestRevision } = useLatestRevision();
+
+  const appName = latestProto.name
+  const serviceNames = [`${latestProto.name}-predeploy`]
+
   const renderHeaderText = () => {
     switch (event.status) {
       case "SUCCESS":
@@ -54,14 +58,13 @@ const PreDeployEventFocusView: React.FC<Props> = ({
       <Spacer y={0.5} />
       {renderDurationText()}
       <Spacer y={0.5} />
-      <LogSection
-        currentChart={appData.releaseChart}
-        timeRange={{
-          startTime: event.metadata.end_time != null ? dayjs(event.metadata.start_time).subtract(1, 'minute') : undefined,
-          endTime: event.metadata.end_time != null ? dayjs(event.metadata.end_time).add(1, 'minute') : undefined,
-        }}
-        showFilter={false}
-        appName={appData.app.name}
+      <Logs
+        projectId={projectId}
+        clusterId={clusterId}
+        appName={appName}
+        serviceNames={serviceNames}
+        deploymentTargetId={deploymentTargetId}
+        latestRevision={latestRevision}
       />
     </>
   );

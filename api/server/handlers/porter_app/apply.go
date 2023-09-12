@@ -133,7 +133,7 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		subdomainCreateInput := porter_app.CreatePorterSubdomainInput{
 			AppName:             appProto.Name,
 			RootDomain:          c.Config().ServerConf.AppRootDomain,
-			PowerDNSClient:      c.Config().PowerDNSClient,
+			DNSClient:           c.Config().DNSClient,
 			DNSRecordRepository: c.Repo().DNSRecord(),
 			KubernetesAgent:     agent,
 		}

@@ -3,7 +3,7 @@ package porter_app
 import (
 	"context"
 
-	"github.com/porter-dev/porter/internal/integrations/powerdns"
+	"github.com/porter-dev/porter/internal/integrations/dns"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/domain"
 	"github.com/porter-dev/porter/internal/repository"
@@ -15,7 +15,7 @@ type CreatePorterSubdomainInput struct {
 	AppName             string
 	RootDomain          string
 	KubernetesAgent     *kubernetes.Agent
-	PowerDNSClient      *powerdns.Client
+	DNSClient           *dns.Client
 	DNSRecordRepository repository.DNSRecordRepository
 }
 
@@ -29,7 +29,7 @@ func CreatePorterSubdomain(ctx context.Context, input CreatePorterSubdomainInput
 	if input.KubernetesAgent == nil {
 		return "", telemetry.Error(ctx, span, nil, "k8s agent is nil")
 	}
-	if input.PowerDNSClient == nil {
+	if input.DNSClient == nil {
 		return "", telemetry.Error(ctx, span, nil, "powerdns client is nil")
 	}
 	if input.AppName == "" {
@@ -66,7 +66,7 @@ func CreatePorterSubdomain(ctx context.Context, input CreatePorterSubdomainInput
 
 	_record := domain.DNSRecord(*record)
 
-	err = _record.CreateDomain(input.PowerDNSClient)
+	err = _record.CreateDomain(input.DNSClient)
 	if err != nil {
 		return createdDomain, telemetry.Error(ctx, span, err, "error creating domain")
 	}

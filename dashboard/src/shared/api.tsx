@@ -931,6 +931,14 @@ const listAppRevisions = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/revisions`;
 });
 
+const getLatestAppRevisions = baseApi<
+{},{
+    project_id: number;
+    cluster_id: number;
+}>("GET", ({ project_id, cluster_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/revisions`;
+})
+
 const getGitlabProcfileContents = baseApi<
   {
     path: string;
@@ -3031,6 +3039,7 @@ export default {
   applyApp,
   getLatestRevision,
   listAppRevisions,
+  getLatestAppRevisions,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,

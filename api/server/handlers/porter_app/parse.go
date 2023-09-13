@@ -10,7 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	porterAppUtils "github.com/porter-dev/porter/api/utils/porter_app"
 	"github.com/porter-dev/porter/internal/helm/loader"
-	"github.com/porter-dev/porter/internal/integrations/powerdns"
+	"github.com/porter-dev/porter/internal/integrations/dns"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/domain"
 	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
@@ -70,11 +70,11 @@ type SyncedEnvSectionKey struct {
 }
 
 type SubdomainCreateOpts struct {
-	k8sAgent       *kubernetes.Agent
-	dnsRepo        repository.DNSRecordRepository
-	powerDnsClient *powerdns.Client
-	appRootDomain  string
-	stackName      string
+	k8sAgent      *kubernetes.Agent
+	dnsRepo       repository.DNSRecordRepository
+	dnsClient     *dns.Client
+	appRootDomain string
+	stackName     string
 }
 
 type ParseConf struct {
@@ -721,8 +721,8 @@ func createSubdomainIfRequired(
 }
 
 func createDNSRecord(opts SubdomainCreateOpts) (*types.DNSRecord, error) {
-	if opts.powerDnsClient == nil {
-		return nil, fmt.Errorf("cannot create subdomain because powerdns client is nil")
+	if opts.dnsClient == nil {
+		return nil, fmt.Errorf("cannot create subdomain because dns client is nil")
 	}
 
 	endpoint, found, err := domain.GetNGINXIngressServiceIP(opts.k8sAgent.Clientset)
@@ -749,7 +749,7 @@ func createDNSRecord(opts SubdomainCreateOpts) (*types.DNSRecord, error) {
 
 	_record := domain.DNSRecord(*record)
 
-	err = _record.CreateDomain(opts.powerDnsClient)
+	err = _record.CreateDomain(opts.dnsClient)
 
 	if err != nil {
 		return nil, err

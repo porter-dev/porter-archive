@@ -168,6 +168,12 @@ const CloudFormationForm: React.FC<Props> = ({
     }
     markStepStarted({ step: "aws-create-integration-success", account_id: AWSAccountID })
     proceed(`arn:aws:iam::${AWSAccountID}:role/porter-manager`);
+    window.dataLayer.push({
+      event: 'provision-attempt',
+      data: {
+        email: user.email
+      }
+    });
   }
 
   const reportFailedCreateAWSIntegration = () => {

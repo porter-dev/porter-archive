@@ -80,23 +80,29 @@ func NewClientWithConfig(ctx context.Context, input NewClientInput) (Client, err
 // ErrNoAuthCredential returns an error when no auth credentials have been provided such as cookies or tokens
 var ErrNoAuthCredential = errors.New("unable to create an API session with cookie nor token")
 
-type getRequestOpts struct {
+type getRequestConfig struct {
 	retryCount uint
 }
 
-func (c *Client) getRequest(relPath string, data interface{}, response interface{}, opts ...getRequestOpts) error {
-	var retryCount uint = 1
+func withRetryCount(retryCount uint) func(getRequestConfig) {
+	return func(o getRequestConfig) {
+		o.retryCount = retryCount
+	}
+}
 
-	if len(opts) > 0 {
-		for _, opt := range opts {
-			retryCount = opt.retryCount
-		}
+func (c *Client) getRequest(relPath string, data interface{}, response interface{}, opts ...func(getRequestConfig)) error {
+	config := getRequestConfig{
+		retryCount: 1,
+	}
+
+	for _, opt := range opts {
+		opt(config)
 	}
 
 	var httpErr *types.ExternalError
 	var err error
 
-	for i := 0; i < int(retryCount); i++ {
+	for i := 0; i < int(config.retryCount); i++ {
 		vals := make(map[string][]string)
 		err = schema.NewEncoder().Encode(data, vals)
 		if err != nil {
@@ -131,7 +137,7 @@ func (c *Client) getRequest(relPath string, data interface{}, response interface
 			return nil
 		}
 
-		if i != int(retryCount)-1 {
+		if i != int(config.retryCount)-1 {
 			if httpErr != nil {
 				fmt.Fprintf(os.Stderr, "Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
 			} else {

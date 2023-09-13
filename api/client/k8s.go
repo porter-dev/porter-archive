@@ -182,9 +182,7 @@ func (c *Client) GetRelease(
 		),
 		nil,
 		resp,
-		getRequestOpts{
-			retryCount: 3,
-		},
+		withRetryCount(3),
 	)
 
 	return resp, err

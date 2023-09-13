@@ -28,6 +28,7 @@ import StyledLogs from "../../expanded-app/logs/StyledLogs";
 import { AppRevision } from "lib/revisions/types";
 import { useLatestRevisionNumber, useRevisionIdToNumber } from "lib/hooks/useRevisionList";
 import { useLocation } from "react-router";
+import { valueExists } from "shared/util";
 
 type Props = {
     projectId: number;
@@ -35,8 +36,8 @@ type Props = {
     appName: string;
     serviceNames: string[];
     deploymentTargetId: string;
-    latestRevision: AppRevision;
     appRevisionId?: string;
+    logFilterNames?: LogFilterName[];
 };
 
 const Logs: React.FC<Props> = ({
@@ -45,8 +46,8 @@ const Logs: React.FC<Props> = ({
     appName,
     serviceNames,
     deploymentTargetId,
-    latestRevision,
     appRevisionId,
+    logFilterNames = ["service_name", "revision", "output_stream"],
 }) => {
     const { search } = useLocation();
     const queryParams = new URLSearchParams(search);
@@ -133,7 +134,7 @@ const Logs: React.FC<Props> = ({
                     service_name: value,
                 }));
             }
-        },
+        } as GenericLogFilter,
         {
             name: "revision",
             displayName: "Version",
@@ -145,7 +146,7 @@ const Logs: React.FC<Props> = ({
                     revision: value,
                 }));
             }
-        },
+        } as GenericLogFilter,
         {
             name: "output_stream",
             displayName: "Output Stream",
@@ -160,8 +161,9 @@ const Logs: React.FC<Props> = ({
                     output_stream: value,
                 }));
             }
-        },
-    ]);
+        } as GenericLogFilter,
+    ].filter((f: GenericLogFilter) => logFilterNames.includes(f.name)));
+
 
     const notify = (message: string) => {
         setNotification(message);
@@ -201,7 +203,7 @@ const Logs: React.FC<Props> = ({
                         service_name: value,
                     }));
                 }
-            },
+            } as GenericLogFilter,
             {
                 name: "revision",
                 displayName: "Version",
@@ -213,7 +215,7 @@ const Logs: React.FC<Props> = ({
                         revision: value,
                     }));
                 }
-            },
+            } as GenericLogFilter,
             {
                 name: "output_stream",
                 displayName: "Output Stream",
@@ -228,8 +230,8 @@ const Logs: React.FC<Props> = ({
                         output_stream: value,
                     }));
                 }
-            },
-        ])
+            } as GenericLogFilter,
+        ].filter((f: GenericLogFilter) => logFilterNames.includes(f.name)))
     }, [latestRevisionNumber]);
 
     useEffect(() => {

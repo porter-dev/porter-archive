@@ -3,7 +3,7 @@ import React from "react";
 import dayjs from "dayjs";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
-import { getDuration } from "../utils";
+import { getDuration, getStatusColor } from "../utils";
 import { AppearingView } from "./EventFocusView";
 import Icon from "components/porter/Icon";
 import loading from "assets/loading.gif";
@@ -27,15 +27,15 @@ const PreDeployEventFocusView: React.FC<Props> = ({
   const renderHeaderText = () => {
     switch (event.status) {
       case "SUCCESS":
-        return <Text color="#68BF8B" size={16}>Pre-deploy succeeded</Text>;
+        return <Text color={getStatusColor(event.status)} size={16}>Pre-deploy succeeded</Text>;
       case "FAILED":
-        return <Text color="#FF6060" size={16}>Pre-deploy failed</Text>;
+        return <Text color={getStatusColor(event.status)} size={16}>Pre-deploy failed</Text>;
       default:
         return (
           <Container row>
             <Icon height="16px" src={loading} />
             <Spacer inline width="10px" />
-            <Text size={16}>Pre-deploy in progress...</Text>
+            <Text size={16} color={getStatusColor(event.status)}>Pre-deploy in progress...</Text>
           </Container>
         );
     }
@@ -64,8 +64,8 @@ const PreDeployEventFocusView: React.FC<Props> = ({
         appName={appName}
         serviceNames={serviceNames}
         deploymentTargetId={deploymentTargetId}
-        latestRevision={latestRevision}
         appRevisionId={event.metadata.app_revision_id}
+        logFilterNames={["service_name"]}
       />
     </>
   );

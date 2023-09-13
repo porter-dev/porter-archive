@@ -218,6 +218,15 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     setIsLoading(true);
 
     setIsClicked(true);
+    
+    window.dataLayer.push({
+      event: 'provision-attempt',
+      data: {
+        cloud: 'gcp',
+        email: user.email
+      }
+    });
+    
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,

@@ -21,6 +21,7 @@ import styled from "styled-components";
 import Step from "components/porter/Step";
 import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
+import SmartOptModal from "./SmartOptModal";
 interface Props {
   service: WebService;
   editService: (service: WebService) => void;
@@ -28,6 +29,7 @@ interface Props {
   chart?: any;
   maxRAM: number;
   maxCPU: number;
+  nodeCount: number;
 }
 
 const NETWORKING_HEIGHT_WITHOUT_INGRESS = 204;
@@ -42,14 +44,37 @@ const WebTabs: React.FC<Props> = ({
   setHeight,
   maxRAM,
   maxCPU,
+  nodeCount,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>("main");
   const { currentCluster } = useContext(Context);
-  const [checked, setChecked] = React.useState(true);
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
+  const smartLimitRAM = (maxRAM - RESOURCE_ALLOCATION_RAM) * UPPER_BOUND_SMART
+  const smartLimitCPU = (maxCPU - (RESOURCE_ALLOCATION_RAM * maxCPU / maxRAM)) * UPPER_BOUND_SMART
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setChecked(event.target.checked);
+  const handleSwitch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if ((service.cpu.value / MILI_TO_CORE) > (smartLimitCPU) || (service.ram.value / MILI_TO_CORE) > (smartLimitRAM)) {
+
+      editService({
+        ...service,
+        cpu: {
+          readOnly: false,
+          value: (smartLimitCPU * MILI_TO_CORE).toString()
+        },
+        ram: {
+          readOnly: false,
+          value: (smartLimitRAM * MIB_TO_GIB).toString()
+        },
+        smartOptimization: !service.smartOptimization
+      })
+    }
+    else {
+      editService({
+        ...service,
+        smartOptimization: !service.smartOptimization
+      })
+    }
+
   };
   const renderMain = () => {
     setHeight(159);
@@ -273,51 +298,33 @@ const WebTabs: React.FC<Props> = ({
           </StyledIcon>
           <Text style={{ marginRight: '10px' }}>Smart Optimization</Text>
           <Switch
+            size="small"
             color="primary"
-            checked={checked}
-            onChange={handleChange}
+            checked={service.smartOptimization}
+            onChange={handleSwitch}
             inputProps={{ 'aria-label': 'controlled' }}
           />
         </div>
         {showNeedHelpModal &&
-          <><Modal closeModal={() => setShowNeedHelpModal(false)} width={"800px"}>
-            <Text size={16}>Resource Optimization on Porter</Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              Smart Optimization ensures that your app runs smoothly while minimizing costs. Smart Optimization performs the following:
-            </Text>
-            <Spacer y={1} />
-            <Step number={1}>
-              Maintains a consistant ratio between RAM and CPU based on the instance type.
-            </Step>
-            <Spacer y={1} />
-            <Step number={2}>
-              Enforces limits so that your app does not consume resources beyond the instance type's limits.
-            </Step>
-            <Spacer y={1} />
-            <Step number={3}> Determines an optimal resource threshold to save cost.</Step>
-            <Spacer y={1} />
-
-            <Text color="helper">
-              Turning off Smart Optimization will allow you to specify your own resource values. This is not recommended unless you are familiar with Kubernetes resource management.
-            </Text>
-
-          </Modal></>}
+          <SmartOptModal
+            setModalVisible={setShowNeedHelpModal}
+          />}
         <>
           <InputSlider
             label="CPUs: "
             unit="Cores"
-            override={!checked}
+            override={!service.smartOptimization}
             min={0}
-            max={maxCPU - (RESOURCE_ALLOCATION_RAM * maxCPU / maxRAM)}
-            color={"#3a48ca"}
-            smartLimit={(maxCPU * UPPER_BOUND_SMART)}
+            max={Math.floor((maxCPU - (RESOURCE_ALLOCATION_RAM * maxCPU / maxRAM)) * 10) / 10}
+            nodeCount={nodeCount}
+            color={"#3f51b5"}
+            smartLimit={smartLimitCPU}
             value={(service.cpu.value / MILI_TO_CORE).toString()}
             setValue={(e) => {
-              checked ? editService({ ...service, cpu: { readOnly: false, value: e * MILI_TO_CORE }, ram: { readOnly: false, value: e * maxRAM / maxCPU * MIB_TO_GIB } }) :
+              service.smartOptimization ? editService({ ...service, cpu: { readOnly: false, value: Math.round(e * MILI_TO_CORE * 10) / 10 }, ram: { readOnly: false, value: Math.round((e * maxRAM / maxCPU * MIB_TO_GIB) * 10) / 10 } }) :
                 editService({ ...service, cpu: { readOnly: false, value: e * MILI_TO_CORE } });
             }}
-            step={0.01}
+            step={0.1}
             disabled={false}
             disabledTooltip={"You may only edit this field in your porter.yaml."} />
 
@@ -327,13 +334,14 @@ const WebTabs: React.FC<Props> = ({
             label="RAM: "
             unit="GiB"
             min={0}
-            override={!checked}
-            smartLimit={(maxRAM * UPPER_BOUND_SMART)}
-            max={(maxRAM - RESOURCE_ALLOCATION_RAM)}
-            color={"#3a48ca"}
+            override={!service.smartOptimization}
+            nodeCount={nodeCount}
+            smartLimit={smartLimitRAM}
+            max={Math.floor((maxRAM - RESOURCE_ALLOCATION_RAM) * 10) / 10}
+            color={"#3f51b5"}
             value={(service.ram.value / MIB_TO_GIB).toString()}
             setValue={(e) => {
-              checked ? editService({ ...service, ram: { readOnly: false, value: e * MIB_TO_GIB }, cpu: { readOnly: false, value: e * maxCPU / maxRAM * MILI_TO_CORE } }) :
+              service.smartOptimization ? editService({ ...service, ram: { readOnly: false, value: Math.round(e * MIB_TO_GIB * 10) / 10 }, cpu: { readOnly: false, value: Math.round((e * (maxCPU / maxRAM) * MILI_TO_CORE) * 10) / 10 } }) :
                 editService({ ...service, ram: { readOnly: false, value: e * MIB_TO_GIB } });
             }}
 

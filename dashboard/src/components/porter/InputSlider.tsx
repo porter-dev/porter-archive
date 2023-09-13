@@ -21,6 +21,7 @@ type InputSliderProps = {
   step?: number;
   smartLimit?: number;
   override?: boolean;
+  nodeCount?: number;
 };
 
 const ValueLabelComponent: React.FC<any> = (props) => {
@@ -50,40 +51,46 @@ const InputSlider: React.FC<InputSliderProps> = ({
   step,
   width,
   smartLimit,
-  override
+  override,
+  nodeCount
 }) => {
-  const quarter = min + (max - min) * 0.25;
-  const threeQuarter = min + (max - min) * 0.75;
-  const actualMax = smartLimit && smartLimit < max ? smartLimit : max;
+
+  const optimal = nodeCount ? Math.round((max / nodeCount) * 10) / 10 : 0;
 
   const mid = min + (max - min) * 0.5;
   const marks: Mark[] = [
-    // {
-    //   value: quarter,
-    //   label: `25%`,
-    // },
-    {
-      value: mid,
-      label: `${mid}`,
-    },
-    // {
-    //   value: threeQuarter,
-    //   label: `Recommended`,
-    // },
     {
       value: max,
       label: max.toString(),
     },
   ];
+  var isExceedingLimit = false;
+
+  //Optimal Marks only give useful information to user if they are using more than 2 nodes
+  if (optimal != 0 && nodeCount && nodeCount > 2) {
+    marks.push({
+      value: optimal,
+      label: `Optimal for ${nodeCount} app nodes`,
+    });
+  }
 
   if (smartLimit) {
     marks.push({
       value: smartLimit,
       label: smartLimit.toString(),
     });
-  }
 
-  const isExceedingLimit = Number(value) > smartLimit;
+    isExceedingLimit = Number(value) > smartLimit;
+  }
+  const isCloseToMark = (value, marks, threshold = 0.1) => {
+    return marks.some(mark => Math.abs(mark.value - value) < threshold);
+  };
+
+  const getClosestMark = (value, marks) => {
+    return marks.reduce((prev, curr) => (
+      Math.abs(curr.value - value) < Math.abs(prev.value - value) ? curr : prev
+    )).value;
+  };
 
 
   return (
@@ -91,7 +98,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
       <LabelContainer>
         <>
           {label && <Label>{label}</Label>}
-          <Value>{`${value} ${unit}`}</Value>
+          <Value>{`${Math.floor(value * 100) / 100} ${unit}`}</Value>
           {isExceedingLimit &&
             <><Spacer inline x={1} /><Label color="#FFBF00"> Value is not optimal for cost</Label></>}
         </>
@@ -110,16 +117,23 @@ const InputSlider: React.FC<InputSliderProps> = ({
                 aria-label="input slider"
                 isExceedingLimit={isExceedingLimit}
                 min={min}
-                max={max} // keep this as max to show the full range
+                max={max}
                 value={(!override && isExceedingLimit) ? smartLimit : Number(value)}
                 onChange={(event, newValue) => {
-                  // If not in override mode and newValue is greater than smartLimit, set to smartLimit
                   if (!override && smartLimit && newValue > smartLimit) {
                     setValue(smartLimit);
                   } else {
-                    setValue(newValue as number);
+                    if (isCloseToMark(newValue, marks)) {
+                      const closestMarkValue = getClosestMark(newValue, marks);
+                      setValue(closestMarkValue);
+                    }
+                    else {
+                      setValue(newValue as number);
+                    }
                   }
-                }}
+                }
+
+                }
                 classes={{
                   track: isExceedingLimit ? 'exceeds-limit' : '',
                   rail: isExceedingLimit ? 'exceeds-limit' : ''

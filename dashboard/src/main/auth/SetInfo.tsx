@@ -73,6 +73,13 @@ const SetInfo: React.FC<Props> = ({
       )
         .then((res: any) => {
           authenticate();
+          window.dataLayer.push({
+            event: 'sign-up',
+            data: {
+              method: 'github'
+              email: user.email
+            }
+          });
         })
         .catch((err) => setCurrentError(err));
     }

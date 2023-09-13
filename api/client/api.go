@@ -80,6 +80,7 @@ func NewClientWithConfig(ctx context.Context, input NewClientInput) (Client, err
 // ErrNoAuthCredential returns an error when no auth credentials have been provided such as cookies or tokens
 var ErrNoAuthCredential = errors.New("unable to create an API session with cookie nor token")
 
+// getRequestConfig defines configuration for a GET request
 type getRequestConfig struct {
 	retryCount uint
 }

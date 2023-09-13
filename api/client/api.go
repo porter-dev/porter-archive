@@ -84,14 +84,14 @@ type getRequestConfig struct {
 	retryCount uint
 }
 
-func withRetryCount(retryCount uint) func(getRequestConfig) {
-	return func(o getRequestConfig) {
+func withRetryCount(retryCount uint) func(*getRequestConfig) {
+	return func(o *getRequestConfig) {
 		o.retryCount = retryCount
 	}
 }
 
-func (c *Client) getRequest(relPath string, data interface{}, response interface{}, opts ...func(getRequestConfig)) error {
-	config := getRequestConfig{
+func (c *Client) getRequest(relPath string, data interface{}, response interface{}, opts ...func(*getRequestConfig)) error {
+	config := &getRequestConfig{
 		retryCount: 1,
 	}
 

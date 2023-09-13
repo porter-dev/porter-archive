@@ -37,7 +37,6 @@ const icons = [
 ];
 
 const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
-  console.log("apps", apps);
   const appsWithProto = useMemo(() => {
     return apps.map((app) => {
       return {
@@ -49,7 +48,6 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
       };
     });
   }, [apps]);
-  console.log("appsWithProto", appsWithProto);
 
   const filteredApps = useMemo(() => {
     const filteredBySearch = search(appsWithProto ?? [], searchValue, {

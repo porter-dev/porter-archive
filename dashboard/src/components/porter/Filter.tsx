@@ -14,6 +14,23 @@ const Filter: React.FC<Props> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const generateFilterString = () => {
+    console.log(selectedFilterValues);
+    let filterString = "";
+    if (selectedFilterValues["service_name"] !== "all") {
+      filterString += selectedFilterValues["service_name"];
+    } else if (selectedFilterValues["pod_name"] !== "all") {
+      filterString += selectedFilterValues["pod_name"].replace(/-[^-]*$/, '');
+    }
+    if (selectedFilterValues["revision"] !== "all") {
+      if (filterString !== "") {
+        filterString += " ";
+      }
+      filterString += selectedFilterValues["revision"];
+    }
+    return filterString;
+  };
+
   return (
     <Relative>
       <StyledFilter onClick={() => setIsExpanded(!isExpanded)}>
@@ -21,46 +38,57 @@ const Filter: React.FC<Props> = ({
           <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="m2.133 2.6 5.856 6.9L8 14l4 3 .011-7.5 5.856-6.9a1 1 0 0 0-.804-1.6H2.937a1 1 0 0 0-.804 1.6Z"/>
         </svg>
         Filter
+        {generateFilterString() !== "" && (
+          <>
+            <Bar />
+            <Spacer width="10px" />
+            {generateFilterString()}
+          </>
+        )}
       </StyledFilter>
-      {isExpanded && (
-        <>
-          <CloseOverlay onClick={() => setIsExpanded(false)} />
-          <Dropdown>
-            {filters.map((filter: any, i: number) => {
-              return (
-                <React.Fragment key={i}>
-                  <FilterLabel>{filter.displayName}</FilterLabel>
-                  <Spacer height="10px" />
-                  <Select
-                    options={[filter.default, ...filter.options]}
-                    setValue={filter.setValue}
-                  />
-                  {i < filter.length && <Spacer height="15px" />}
-                </React.Fragment>
-              );
-            })}
-          </Dropdown>
-        </>
-      )}
+      <CloseOverlay onClick={() => setIsExpanded(false)} isExpanded={isExpanded} />
+      <Dropdown isExpanded={isExpanded}>
+        {filters.map((filter: any, i: number) => {
+          return (
+            <React.Fragment key={i}>
+              <FilterLabel>{filter.displayName}</FilterLabel>
+              <Spacer height="10px" />
+              <Select
+                options={[filter.default, ...filter.options]}
+                setValue={filter.setValue}
+              />
+              {i < filter.length && <Spacer height="15px" />}
+            </React.Fragment>
+          );
+        })}
+      </Dropdown>
     </Relative>
   );
 };
 
 export default Filter;
 
-const CloseOverlay = styled.div`
+const Bar = styled.div`
+  width: 1px;
+  height: calc(100%);
+  background: #494b4f;
+  margin: 0 10px;
+`;
+
+const CloseOverlay = styled.div<{ isExpanded: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
   z-index: 998;
   width: 100vw;
   height: 100vh;
+  display: ${props => props.isExpanded ? "block" : "none"};
 `;
 
 const FilterLabel = styled.div`
 `;
 
-const Dropdown = styled.div`
+const Dropdown = styled.div<{ isExpanded: boolean }>`
   position: absolute;
   top: 40px;
   left: 0;
@@ -71,6 +99,7 @@ const Dropdown = styled.div`
   padding: 10px;
   padding-bottom: 15px;
   z-index: 999;
+  display: ${props => props.isExpanded ? "block" : "none"};
 `;
 
 const Relative = styled.div`
@@ -86,7 +115,7 @@ const StyledFilter = styled.div<{
   height: 30px;
   border-radius: 5px;
   background: ${props => props.theme.fg};
-  padding: 5px 10px;
+  padding: 0px 10px;
   cursor: pointer;
 
   border: 1px solid #494b4f;

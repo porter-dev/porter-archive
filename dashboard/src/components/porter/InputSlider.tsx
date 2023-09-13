@@ -117,7 +117,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
               help_outline
             </StyledIcon></>}
           {showNeedHelpModal &&
-            <SmartOptModal
+            <NodeInfoModal
               setModalVisible={setShowNeedHelpModal}
             />}
           {isExceedingLimit &&

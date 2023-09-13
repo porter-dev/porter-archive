@@ -219,13 +219,18 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
     setIsClicked(true);
     
-    window.dataLayer.push({
-      event: 'provision-attempt',
-      data: {
-        cloud: 'gcp',
-        email: user.email
-      }
-    });
+
+    try {
+      window.dataLayer?.push({
+        event: 'provision-attempt',
+        data: {
+          cloud: 'gcp',
+          email: user?.email
+        }
+      });
+    } catch (err) {
+      console.log(err);
+    }
     
     var data = new Contract({
       cluster: new Cluster({

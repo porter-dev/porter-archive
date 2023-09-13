@@ -117,13 +117,18 @@ const Register: React.FC<Props> = ({
           } else {
             setUser(res?.data?.id, res?.data?.email);
             authenticate();
-            window.dataLayer.push({
-              event: 'sign-up',
-              data: {
-                method: 'email'
-                email: res?.data?.email
-              }
-            });
+            
+            try {
+              window.dataLayer?.push({
+                event: 'sign-up',
+                data: {
+                  method: 'email',
+                  email: res?.data?.email
+                }
+              });
+            } catch (err) {
+              console.log(err);
+            }
           }
 
           // Temp

@@ -3,12 +3,13 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 
 type AppStep =
+  | "stack-launch-start"
   | "stack-launch-complete"
   | "stack-launch-success"
   | "stack-launch-failure"
   | "stack-deletion";
 
-export const useAppAnalytics = (appName: string) => {
+export const useAppAnalytics = (appName?: string) => {
   const { currentCluster, currentProject } = useContext(Context);
 
   const updateAppStep = async ({

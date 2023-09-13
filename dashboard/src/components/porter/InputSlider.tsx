@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Slider, { Mark } from '@material-ui/core/Slider';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { withStyles } from '@material-ui/core/styles';
 import Text from './Text';
 import Spacer from './Spacer';
+import SmartOptModal from 'main/home/app-dashboard/new-app-flow/tabs/SmartOptModal';
 
 type InputSliderProps = {
   label?: string;
@@ -54,6 +55,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
   override,
   nodeCount
 }) => {
+  const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
 
   const optimal = nodeCount ? Math.round((max / nodeCount) * 10) / 10 : 0;
 
@@ -65,18 +67,19 @@ const InputSlider: React.FC<InputSliderProps> = ({
     },
   ];
   var isExceedingLimit = false;
-
+  var displayOptimalText = false;
   //Optimal Marks only give useful information to user if they are using more than 2 nodes
   if (optimal != 0 && nodeCount && nodeCount > 2) {
     marks.push({
       value: optimal,
       label: (
         <Text color="helper" size={10}>
-          Optimal based on available compute
+          Recommended
         </Text>
 
       )
     });
+    displayOptimalText = Number(value) == optimal;
   }
 
   if (smartLimit) {
@@ -104,6 +107,19 @@ const InputSlider: React.FC<InputSliderProps> = ({
         <>
           {label && <Label>{label}</Label>}
           <Value>{`${Math.floor(value * 100) / 100} ${unit}`}</Value>
+          {displayOptimalText &&
+            <><Spacer inline x={1} /><Label>Recommended based on the available compute ({nodeCount} application nodes)  </Label>  <StyledIcon
+              className="material-icons"
+              onClick={() => {
+                setShowNeedHelpModal(true)
+              }}
+            >
+              help_outline
+            </StyledIcon></>}
+          {showNeedHelpModal &&
+            <SmartOptModal
+              setModalVisible={setShowNeedHelpModal}
+            />}
           {isExceedingLimit &&
             <><Spacer inline x={1} /><Label color="#FFBF00"> Value is not optimal for cost</Label></>}
         </>
@@ -310,3 +326,11 @@ const LabelContainer = styled.div`
   align-items: center;
 `;
 
+const StyledIcon = styled.i`
+  cursor: pointer;
+  font-size: 16px; 
+  margin-bottom : 10px;
+  &:hover {
+    color: #666;  
+  }
+`;

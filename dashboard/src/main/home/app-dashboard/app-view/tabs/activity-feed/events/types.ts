@@ -11,11 +11,10 @@ const porterAppAppEventMetadataValidator = z.object({
     app_revision_id: z.string(),
     app_name: z.string(),
     app_id: z.string(),
-    agent_event_id: z.string(),
+    agent_event_id: z.number(),
 });
 const porterAppDeployEventMetadataValidator = z.object({
     image_tag: z.string(),
-    revision: z.number(),
     app_revision_id: z.string(),
     service_deployment_metadata: z.record(z.object({
         status: z.string(),
@@ -26,10 +25,12 @@ const porterAppBuildEventMetadataValidator = z.object({
     repo: z.string(),
     action_run_id: z.number(),
     github_account_id: z.number(),
+    end_time: z.string().optional(),
 })
 const porterAppPreDeployEventMetadataValidator = z.object({
     start_time: z.string(),
     end_time: z.string().optional(),
+    app_revision_id: z.string(),
 });
 export const porterAppEventValidator = z.discriminatedUnion("type", [
     z.object({

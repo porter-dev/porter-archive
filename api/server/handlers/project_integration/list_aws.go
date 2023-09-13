@@ -40,7 +40,7 @@ func (p *ListAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if project.CapiProvisionerEnabled {
+	if project.GetFeatureFlag(models.CapiProvisionerEnabled, p.Config().LaunchDarklyClient) {
 		dblinks, err := p.Repo().AWSAssumeRoleChainer().List(ctx, project.ID)
 		if err != nil {
 			e := fmt.Errorf("unable to find assume role chain links: %w", err)

@@ -72,27 +72,27 @@ export type SerializedService = {
   cpuCores: number;
   ramMegabytes: number;
   config:
-    | {
-        type: "web";
-        domains: {
-          name: string;
-        }[];
-        autoscaling?: SerializedAutoscaling;
-        healthCheck?: SerializedHealthcheck;
-        private: boolean;
-      }
-    | {
-        type: "worker";
-        autoscaling?: SerializedAutoscaling;
-      }
-    | {
-        type: "job";
-        allowConcurrent: boolean;
-        cron: string;
-      }
-    | {
-        type: "predeploy";
-      };
+  | {
+    type: "web";
+    domains: {
+      name: string;
+    }[];
+    autoscaling?: SerializedAutoscaling;
+    healthCheck?: SerializedHealthcheck;
+    private: boolean;
+  }
+  | {
+    type: "worker";
+    autoscaling?: SerializedAutoscaling;
+  }
+  | {
+    type: "job";
+    allowConcurrent: boolean;
+    cron: string;
+  }
+  | {
+    type: "predeploy";
+  };
 };
 
 export function isPredeployService(service: SerializedService | ClientService) {
@@ -285,7 +285,8 @@ export function deserializeService({
             health: config.healthCheck,
             override: overrideWebConfig?.healthCheck,
           }),
-          domains: config.domains.map((domain) => ({
+
+          domains: Array.from(new Set([...config.domains, ...(overrideWebConfig?.domains ?? [])])).map((domain) => ({
             name: ServiceField.string(
               domain.name,
               overrideWebConfig?.domains.find(

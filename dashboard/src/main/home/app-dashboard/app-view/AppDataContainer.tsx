@@ -7,7 +7,6 @@ import {
   porterAppFormValidator,
 } from "lib/porter-apps";
 import { zodResolver } from "@hookform/resolvers/zod";
-import RevisionsList from "./RevisionsList";
 import { useLatestRevision } from "./LatestRevisionContext";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
@@ -27,13 +26,15 @@ import Icon from "components/porter/Icon";
 import save from "assets/save-01.svg";
 import LogsTab from "./tabs/LogsTab";
 import MetricsTab from "./tabs/MetricsTab";
+import RevisionsList from "../validate-apply/revisions-list/RevisionsList";
 import Activity from "./tabs/Activity";
+import EventFocusView from "./tabs/activity-feed/events/focus-views/EventFocusView";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
 const validTabs = [
   "activity",
-  // "events",
+  "events",
   "overview",
   "logs",
   "metrics",
@@ -197,20 +198,26 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         porterApp.name,
       ]);
       setPreviewRevision(null);
+
+      // redirect to the default tab after save
+      history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
     } catch (err) { }
   });
 
   useEffect(() => {
-    if (servicesFromYaml) {
-      reset({
-        app: clientAppFromProto(latestProto, servicesFromYaml),
-        source: latestSource,
-        deletions: {
-          serviceNames: [],
-        },
-      });
-    }
-  }, [servicesFromYaml, currentTab, latestProto]);
+    reset({
+      app: clientAppFromProto(latestProto, servicesFromYaml),
+      source: latestSource,
+      deletions: {
+        serviceNames: [],
+      },
+    });
+  }, [
+    servicesFromYaml,
+    currentTab,
+    latestProto,
+    latestRevision.revision_number,
+  ]);
 
   return (
     <FormProvider {...porterAppFormMethods}>
@@ -285,6 +292,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("settings", () => <Settings />)
           .with("logs", () => <LogsTab />)
           .with("metrics", () => <MetricsTab />)
+          .with("events", () => <EventFocusView />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>

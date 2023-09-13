@@ -3,35 +3,39 @@ import React from "react";
 import dayjs from "dayjs";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
-import { getDuration } from "../utils";
-import LogSection from "../../../logs/LogSection";
+import { getDuration, getStatusColor } from "../utils";
 import { AppearingView } from "./EventFocusView";
 import Icon from "components/porter/Icon";
 import loading from "assets/loading.gif";
 import Container from "components/porter/Container";
-import { PorterAppEvent } from "../types";
+import { PorterAppPreDeployEvent } from "../types";
+import Logs from "main/home/app-dashboard/validate-apply/logs/Logs";
+import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 
 type Props = {
-  event: PorterAppEvent;
-  appData: any;
+  event: PorterAppPreDeployEvent;
 };
 
 const PreDeployEventFocusView: React.FC<Props> = ({
   event,
-  appData,
 }) => {
+  const { projectId, clusterId, latestProto, deploymentTargetId, latestRevision } = useLatestRevision();
+
+  const appName = latestProto.name
+  const serviceNames = [`${latestProto.name}-predeploy`]
+
   const renderHeaderText = () => {
     switch (event.status) {
       case "SUCCESS":
-        return <Text color="#68BF8B" size={16}>Pre-deploy succeeded</Text>;
+        return <Text color={getStatusColor(event.status)} size={16}>Pre-deploy succeeded</Text>;
       case "FAILED":
-        return <Text color="#FF6060" size={16}>Pre-deploy failed</Text>;
+        return <Text color={getStatusColor(event.status)} size={16}>Pre-deploy failed</Text>;
       default:
         return (
           <Container row>
             <Icon height="16px" src={loading} />
             <Spacer inline width="10px" />
-            <Text size={16}>Pre-deploy in progress...</Text>
+            <Text size={16} color={getStatusColor(event.status)}>Pre-deploy in progress...</Text>
           </Container>
         );
     }
@@ -54,14 +58,14 @@ const PreDeployEventFocusView: React.FC<Props> = ({
       <Spacer y={0.5} />
       {renderDurationText()}
       <Spacer y={0.5} />
-      <LogSection
-        currentChart={appData.releaseChart}
-        timeRange={{
-          startTime: event.metadata.end_time != null ? dayjs(event.metadata.start_time).subtract(1, 'minute') : undefined,
-          endTime: event.metadata.end_time != null ? dayjs(event.metadata.end_time).add(1, 'minute') : undefined,
-        }}
-        showFilter={false}
-        appName={appData.app.name}
+      <Logs
+        projectId={projectId}
+        clusterId={clusterId}
+        appName={appName}
+        serviceNames={serviceNames}
+        deploymentTargetId={deploymentTargetId}
+        appRevisionId={event.metadata.app_revision_id}
+        logFilterNames={["service_name"]}
       />
     </>
   );

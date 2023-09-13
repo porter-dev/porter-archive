@@ -42,8 +42,8 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
 };
 
 export const useLogs = (
-    projectID: number,
-    clusterID: number,
+  projectID: number,
+  clusterID: number,
   selectedFilterValues: Record<LogFilterName, string>,
   appName: string,
   serviceName: string,
@@ -52,8 +52,9 @@ export const useLogs = (
   notify: (message: string) => void,
   setLoading: (isLoading: boolean) => void,
   revisionIdToNumber: Record<string, number>,
-    // if setDate is set, results are not live
+  // if setDate is set, results are not live
   setDate?: Date,
+  appRevisionId: string = "",
   timeRange?: {
     startTime?: Dayjs,
     endTime?: Dayjs,
@@ -166,6 +167,7 @@ export const useLogs = (
       service_name: serviceName,
       deployment_target_id: deploymentTargetId,
       search_param: searchParam,
+      app_revision_id: appRevisionId,
     }
 
     const q = new URLSearchParams(searchParams).toString();
@@ -212,12 +214,12 @@ export const useLogs = (
       }
 
       if (selectedFilterValues.output_stream !== GenericLogFilter.getDefaultOption("output_stream").value &&
-          log.metadata.output_stream !== selectedFilterValues.output_stream) {
+        log.metadata.output_stream !== selectedFilterValues.output_stream) {
         return false;
       }
 
       if (selectedFilterValues.revision !== GenericLogFilter.getDefaultOption("revision").value &&
-          log.metadata.revision !== selectedFilterValues.revision) {
+        log.metadata.revision !== selectedFilterValues.revision) {
         return false;
       }
 
@@ -245,15 +247,16 @@ export const useLogs = (
         end_range: endDate,
         limit,
         direction,
+        app_revision_id: appRevisionId,
       };
 
       const logsResp = await api.appLogs(
-          "<token>",
-          getLogsReq,
-          {
-            cluster_id: clusterID,
-            project_id: projectID,
-          }
+        "<token>",
+        getLogsReq,
+        {
+          cluster_id: clusterID,
+          project_id: projectID,
+        }
       )
 
       if (logsResp.data == null) {
@@ -271,15 +274,16 @@ export const useLogs = (
 
       newLogs.filter((log) => {
         return log.metadata?.raw_labels?.porter_run_app_revision_id != null
-            && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != null
-            && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != 0
+          && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != null
+          && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != 0
       }).forEach((log) => {
         if (log.metadata?.raw_labels?.porter_run_app_revision_id != null) {
-            const revisionNumber = revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id];
-            if (revisionNumber != null && revisionNumber != 0) {
-              log.metadata.revision = revisionNumber.toString();
-            }
-      }})
+          const revisionNumber = revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id];
+          if (revisionNumber != null && revisionNumber != 0) {
+            log.metadata.revision = revisionNumber.toString();
+          }
+        }
+      })
 
       return {
         logs: newLogs,

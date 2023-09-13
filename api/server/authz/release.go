@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/stefanmcshane/helm/pkg/release"
 )
 
@@ -35,22 +36,25 @@ type ReleaseScopedMiddleware struct {
 }
 
 func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
+	ctx, span := telemetry.NewSpan(r.Context(), "middleware-release-scope")
+	defer span.End()
 
-	helmAgent, err := p.agentGetter.GetHelmAgent(r.Context(), r, cluster, "")
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+
+	helmAgent, err := p.agentGetter.GetHelmAgent(ctx, r, cluster, "")
 	if err != nil {
 		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
 		return
 	}
 
 	// get the name of the application
-	reqScopes, _ := r.Context().Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
+	reqScopes, _ := ctx.Value(types.RequestScopeCtxKey).(map[types.PermissionScope]*types.RequestAction)
 	name := reqScopes[types.ReleaseScope].Resource.Name
 
 	// get the version for the application
 	version, _ := requestutils.GetURLParamUint(r, types.URLParamReleaseVersion)
 
-	release, err := helmAgent.GetRelease(context.Background(), name, int(version), false)
+	release, err := helmAgent.GetRelease(ctx, name, int(version), false)
 	if err != nil {
 		// ugly casing since at the time of this commit Helm doesn't have an errors package.
 		// so we rely on the Helm error containing "not found"
@@ -66,7 +70,7 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	ctx := NewReleaseContext(r.Context(), release)
+	ctx = NewReleaseContext(ctx, release)
 	r = r.Clone(ctx)
 	p.next.ServeHTTP(w, r)
 }

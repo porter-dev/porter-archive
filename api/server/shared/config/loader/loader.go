@@ -25,6 +25,7 @@ import (
 	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
+	"github.com/porter-dev/porter/internal/integrations/dns"
 	"github.com/porter-dev/porter/internal/integrations/powerdns"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/notifier/sendgrid"
@@ -304,7 +305,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	res.Logger.Info().Msg("Created analytics client")
 
 	if sc.PowerDNSAPIKey != "" && sc.PowerDNSAPIServerURL != "" {
-		res.PowerDNSClient = powerdns.NewClient(sc.PowerDNSAPIServerURL, sc.PowerDNSAPIKey, sc.AppRootDomain)
+		res.DNSClient = &dns.Client{Client: powerdns.NewClient(sc.PowerDNSAPIServerURL, sc.PowerDNSAPIKey, sc.AppRootDomain)}
 	}
 
 	res.EnableCAPIProvisioner = sc.EnableCAPIProvisioner

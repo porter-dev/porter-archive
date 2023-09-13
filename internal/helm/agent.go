@@ -111,7 +111,7 @@ func (a *Agent) GetRelease(
 	getDeps bool,
 ) (*release.Release, error) {
 	ctx, span := telemetry.NewSpan(ctx, "helm-get-release")
-	defer span.End() // This span is one of most frequent spans. We need to sample this. For now, this span will not send
+	defer span.End() // This span is one of most frequent spans. We need to sample this.
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "name", Value: name},

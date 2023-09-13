@@ -18,6 +18,7 @@ const Settings: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { porterApp, clusterId, projectId } = useLatestRevision();
   const { updateAppStep } = useAppAnalytics(porterApp.name);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const githubWorkflowFilename = `porter_stack_${porterApp.name}.yml`;
 
@@ -55,6 +56,7 @@ const Settings: React.FC = () => {
   const onDelete = useCallback(
     async (deleteWorkflow?: boolean) => {
       try {
+        setIsDeleting(true);
         await api.deletePorterApp(
           "<token>",
           {},
@@ -103,7 +105,10 @@ const Settings: React.FC = () => {
 
         updateAppStep({ step: "stack-deletion", deleteWorkflow: false });
         history.push("/apps");
-      } catch (err) {}
+      } catch (err) {
+      } finally {
+        setIsDeleting(false);
+      }
     },
     [githubWorkflowFilename, porterApp.name, clusterId, projectId]
   );
@@ -130,6 +135,7 @@ const Settings: React.FC = () => {
           closeModal={() => setIsDeleteModalOpen(false)}
           githubWorkflowFilename={githubWorkflowFilename}
           deleteApplication={onDelete}
+          loading={isDeleting}
         />
       )}
     </StyledSettingsTab>

@@ -142,6 +142,15 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
     }
 
     setIsClicked(true);
+    
+    window.dataLayer.push({
+      event: 'provision-attempt',
+      data: {
+        cloud: 'azure',
+        email: user.email
+      }
+    });
+    
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,

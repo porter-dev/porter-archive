@@ -65,6 +65,7 @@ const PreDeployEventFocusView: React.FC<Props> = ({
         serviceNames={serviceNames}
         deploymentTargetId={deploymentTargetId}
         latestRevision={latestRevision}
+        appRevisionId={event.metadata.app_revision_id}
       />
     </>
   );

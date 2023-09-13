@@ -30,6 +30,7 @@ const porterAppBuildEventMetadataValidator = z.object({
 const porterAppPreDeployEventMetadataValidator = z.object({
     start_time: z.string(),
     end_time: z.string().optional(),
+    app_revision_id: z.string(),
 });
 export const porterAppEventValidator = z.discriminatedUnion("type", [
     z.object({

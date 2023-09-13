@@ -36,6 +36,7 @@ type Props = {
     serviceNames: string[];
     deploymentTargetId: string;
     latestRevision: AppRevision;
+    appRevisionId?: string;
 };
 
 const Logs: React.FC<Props> = ({
@@ -45,6 +46,7 @@ const Logs: React.FC<Props> = ({
     serviceNames,
     deploymentTargetId,
     latestRevision,
+    appRevisionId,
 }) => {
     const { search } = useLocation();
     const queryParams = new URLSearchParams(search);
@@ -181,6 +183,7 @@ const Logs: React.FC<Props> = ({
         setIsLoading,
         revisionIdToNumber,
         selectedDate,
+        appRevisionId,
     );
 
     useEffect(() => {

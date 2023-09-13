@@ -43,7 +43,7 @@ func (p *ReleaseScopedMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	helmAgent, err := p.agentGetter.GetHelmAgent(ctx, r, cluster, "")
 	if err != nil {
-		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrInternal(err), true)
+		apierrors.HandleAPIError(p.config.Logger, p.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError), true)
 		return
 	}
 

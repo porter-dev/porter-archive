@@ -80,41 +80,71 @@ func NewClientWithConfig(ctx context.Context, input NewClientInput) (Client, err
 // ErrNoAuthCredential returns an error when no auth credentials have been provided such as cookies or tokens
 var ErrNoAuthCredential = errors.New("unable to create an API session with cookie nor token")
 
-func (c *Client) getRequest(relPath string, data interface{}, response interface{}) error {
-	vals := make(map[string][]string)
-	err := schema.NewEncoder().Encode(data, vals)
+type getRequestOpts struct {
+	retryCount uint
+}
 
-	urlVals := url.Values(vals)
-	encodedURLVals := urlVals.Encode()
-	var req *http.Request
+func (c *Client) getRequest(relPath string, data interface{}, response interface{}, opts ...getRequestOpts) error {
+	var retryCount uint = 1
 
-	if encodedURLVals != "" {
-		req, err = http.NewRequest(
-			"GET",
-			fmt.Sprintf("%s%s?%s", c.BaseURL, relPath, encodedURLVals),
-			nil,
-		)
-	} else {
-		req, err = http.NewRequest(
-			"GET",
-			fmt.Sprintf("%s%s", c.BaseURL, relPath),
-			nil,
-		)
+	if len(opts) > 0 {
+		for _, opt := range opts {
+			retryCount = opt.retryCount
+		}
 	}
 
-	if err != nil {
-		return err
-	}
+	var httpErr *types.ExternalError
+	var err error
 
-	if httpErr, err := c.sendRequest(req, response, true); httpErr != nil || err != nil {
-		if httpErr != nil {
-			return fmt.Errorf("%v", httpErr.Error)
+	for i := 0; i < int(retryCount); i++ {
+		vals := make(map[string][]string)
+		err = schema.NewEncoder().Encode(data, vals)
+		if err != nil {
+			return err
 		}
 
-		return err
+		urlVals := url.Values(vals)
+		encodedURLVals := urlVals.Encode()
+		var req *http.Request
+
+		if encodedURLVals != "" {
+			req, err = http.NewRequest(
+				"GET",
+				fmt.Sprintf("%s%s?%s", c.BaseURL, relPath, encodedURLVals),
+				nil,
+			)
+		} else {
+			req, err = http.NewRequest(
+				"GET",
+				fmt.Sprintf("%s%s", c.BaseURL, relPath),
+				nil,
+			)
+		}
+
+		if err != nil {
+			return err
+		}
+
+		httpErr, err = c.sendRequest(req, response, true)
+
+		if httpErr == nil && err == nil {
+			return nil
+		}
+
+		if i != int(retryCount)-1 {
+			if httpErr != nil {
+				fmt.Fprintf(os.Stderr, "Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
+			} else {
+				fmt.Fprintf(os.Stderr, "Error: %v, retrying request...\n", err)
+			}
+		}
 	}
 
-	return nil
+	if httpErr != nil {
+		return fmt.Errorf("%v", httpErr.Error)
+	}
+
+	return err
 }
 
 type postRequestOpts struct {

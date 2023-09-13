@@ -102,35 +102,35 @@ func (c *Client) getRequest(relPath string, data interface{}, response interface
 	var httpErr *types.ExternalError
 	var err error
 
+	vals := make(map[string][]string)
+	err = schema.NewEncoder().Encode(data, vals)
+	if err != nil {
+		return err
+	}
+
+	urlVals := url.Values(vals)
+	encodedURLVals := urlVals.Encode()
+	var req *http.Request
+
+	if encodedURLVals != "" {
+		req, err = http.NewRequest(
+			"GET",
+			fmt.Sprintf("%s%s?%s", c.BaseURL, relPath, encodedURLVals),
+			nil,
+		)
+	} else {
+		req, err = http.NewRequest(
+			"GET",
+			fmt.Sprintf("%s%s", c.BaseURL, relPath),
+			nil,
+		)
+	}
+
+	if err != nil {
+		return err
+	}
+
 	for i := 0; i < int(config.retryCount); i++ {
-		vals := make(map[string][]string)
-		err = schema.NewEncoder().Encode(data, vals)
-		if err != nil {
-			return err
-		}
-
-		urlVals := url.Values(vals)
-		encodedURLVals := urlVals.Encode()
-		var req *http.Request
-
-		if encodedURLVals != "" {
-			req, err = http.NewRequest(
-				"GET",
-				fmt.Sprintf("%s%s?%s", c.BaseURL, relPath, encodedURLVals),
-				nil,
-			)
-		} else {
-			req, err = http.NewRequest(
-				"GET",
-				fmt.Sprintf("%s%s", c.BaseURL, relPath),
-				nil,
-			)
-		}
-
-		if err != nil {
-			return err
-		}
-
 		httpErr, err = c.sendRequest(req, response, true)
 
 		if httpErr == nil && err == nil {

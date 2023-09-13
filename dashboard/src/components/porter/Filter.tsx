@@ -6,30 +6,15 @@ import Spacer from "./Spacer";
 type Props = {
   filters: any;
   selectedFilterValues: Record<any, string>;
+  generateFilterString: (selectedFilterValues: any) => string;
 };
 
 const Filter: React.FC<Props> = ({
   filters,
   selectedFilterValues,
+  generateFilterString,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-
-  const generateFilterString = () => {
-    console.log(selectedFilterValues);
-    let filterString = "";
-    if (selectedFilterValues["service_name"] !== "all") {
-      filterString += selectedFilterValues["service_name"];
-    } else if (selectedFilterValues["pod_name"] !== "all") {
-      filterString += selectedFilterValues["pod_name"].replace(/-[^-]*$/, '');
-    }
-    if (selectedFilterValues["revision"] !== "all") {
-      if (filterString !== "") {
-        filterString += " ";
-      }
-      filterString += selectedFilterValues["revision"];
-    }
-    return filterString;
-  };
 
   return (
     <Relative>
@@ -38,11 +23,11 @@ const Filter: React.FC<Props> = ({
           <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="m2.133 2.6 5.856 6.9L8 14l4 3 .011-7.5 5.856-6.9a1 1 0 0 0-.804-1.6H2.937a1 1 0 0 0-.804 1.6Z"/>
         </svg>
         Filter
-        {generateFilterString() !== "" && (
+        {generateFilterString(selectedFilterValues) !== "" && (
           <>
             <Bar />
             <Spacer width="10px" />
-            {generateFilterString()}
+            {generateFilterString(selectedFilterValues)}
           </>
         )}
       </StyledFilter>

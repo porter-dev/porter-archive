@@ -239,6 +239,21 @@ const LogSection: React.FC<Props> = ({
               <Filter 
                 filters={filters}
                 selectedFilterValues={selectedFilterValues}
+                generateFilterString={(selectedFilterValues: any) => {
+                  let filterString = "";
+                  if (selectedFilterValues["service_name"] !== "all") {
+                    filterString += selectedFilterValues["service_name"];
+                  } else if (selectedFilterValues["pod_name"] !== "all") {
+                    filterString += selectedFilterValues["pod_name"].replace(/-[^-]*$/, '');
+                  }
+                  if (selectedFilterValues["revision"] !== "all") {
+                    if (filterString !== "") {
+                      filterString += " ";
+                    }
+                    filterString += selectedFilterValues["revision"];
+                  }
+                  return filterString;
+                }}
               />
             )}
             <Spacer inline width="10px" />

@@ -92,24 +92,11 @@ func withRetryCount(retryCount uint) func(*getRequestConfig) {
 	}
 }
 
-// getRequest is responsible for making a GET request to the API
+// getRequest makes a GET request to the API
 func (c *Client) getRequest(relPath string, data interface{}, response interface{}, opts ...func(*getRequestConfig)) error {
-	config := &getRequestConfig{
-		retryCount: 1,
-	}
-
-	for _, opt := range opts {
-		opt(config)
-	}
-
-	var httpErr *types.ExternalError
-	var err error
-
 	vals := make(map[string][]string)
-	err = schema.NewEncoder().Encode(data, vals)
-	if err != nil {
-		return err
-	}
+	_ = schema.NewEncoder().Encode(data, vals)
+	var err error
 
 	urlVals := url.Values(vals)
 	encodedURLVals := urlVals.Encode()
@@ -133,6 +120,15 @@ func (c *Client) getRequest(relPath string, data interface{}, response interface
 		return err
 	}
 
+	config := &getRequestConfig{
+		retryCount: 1,
+	}
+
+	for _, opt := range opts {
+		opt(config)
+	}
+
+	var httpErr *types.ExternalError
 	for i := 0; i < int(config.retryCount); i++ {
 		httpErr, err = c.sendRequest(req, response, true)
 

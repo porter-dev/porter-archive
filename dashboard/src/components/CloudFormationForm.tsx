@@ -171,6 +171,7 @@ const CloudFormationForm: React.FC<Props> = ({
     window.dataLayer.push({
       event: 'provision-attempt',
       data: {
+        cloud: 'aws',
         email: user.email
       }
     });

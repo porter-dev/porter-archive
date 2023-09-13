@@ -84,12 +84,14 @@ type getRequestConfig struct {
 	retryCount uint
 }
 
+// withRetryCount is a convenience function for setting the retry count
 func withRetryCount(retryCount uint) func(*getRequestConfig) {
 	return func(o *getRequestConfig) {
 		o.retryCount = retryCount
 	}
 }
 
+// getRequest is responsible for making a GET request to the API
 func (c *Client) getRequest(relPath string, data interface{}, response interface{}, opts ...func(*getRequestConfig)) error {
 	config := &getRequestConfig{
 		retryCount: 1,

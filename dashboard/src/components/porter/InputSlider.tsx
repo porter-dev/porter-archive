@@ -70,7 +70,12 @@ const InputSlider: React.FC<InputSliderProps> = ({
   if (optimal != 0 && nodeCount && nodeCount > 2) {
     marks.push({
       value: optimal,
-      label: `Optimal for ${nodeCount} app nodes`,
+      label: (
+        <Text color="helper" size={10}>
+          Optimal based on available compute
+        </Text>
+
+      )
     });
   }
 
@@ -304,3 +309,4 @@ const LabelContainer = styled.div`
   display: flex;
   align-items: center;
 `;
+

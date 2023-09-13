@@ -41,6 +41,7 @@ import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
 import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
 import CreateApp from "./app-dashboard/create-app/CreateApp";
 import AppView from "./app-dashboard/app-view/AppView";
+import Apps from "./app-dashboard/apps/Apps";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -135,7 +136,8 @@ const Home: React.FC<Props> = (props) => {
         setProjects(projectList);
 
         if (!id) {
-          id = Number(localStorage.getItem("currentProject")) || projectList[0].id
+          id =
+            Number(localStorage.getItem("currentProject")) || projectList[0].id;
         }
 
         const project = await api
@@ -183,7 +185,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -433,7 +435,7 @@ const Home: React.FC<Props> = (props) => {
               )}
             </Route>
             <Route path="/apps">
-              <AppDashboard />
+              {currentProject?.validate_apply_v2 ? <Apps /> : <AppDashboard />}
             </Route>
             <Route path="/addons/new">
               <NewAddOnFlow />
@@ -457,17 +459,17 @@ const Home: React.FC<Props> = (props) => {
               overrideInfraTabEnabled({
                 projectID: currentProject?.id,
               })) && (
-                <Route
-                  path="/infrastructure"
-                  render={() => {
-                    return (
-                      <DashboardWrapper>
-                        <InfrastructureRouter />
-                      </DashboardWrapper>
-                    );
-                  }}
-                />
-              )}
+              <Route
+                path="/infrastructure"
+                render={() => {
+                  return (
+                    <DashboardWrapper>
+                      <InfrastructureRouter />
+                    </DashboardWrapper>
+                  );
+                }}
+              />
+            )}
             <Route
               path="/dashboard"
               render={() => {

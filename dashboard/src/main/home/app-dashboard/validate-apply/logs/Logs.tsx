@@ -23,12 +23,12 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
-import { Service } from "../../new-app-flow/serviceTypes";
 import LogFilterContainer from "../../expanded-app/logs/LogFilterContainer";
 import StyledLogs from "../../expanded-app/logs/StyledLogs";
-import {z} from "zod";
-import {AppRevision, appRevisionValidator} from "lib/revisions/types";
-import {useLatestRevisionNumber, useRevisionIdToNumber} from "lib/hooks/useRevisionList";
+import { AppRevision } from "lib/revisions/types";
+import { useLatestRevisionNumber, useRevisionIdToNumber } from "lib/hooks/useRevisionList";
+import { useLocation } from "react-router";
+import { valueExists } from "shared/util";
 
 type Props = {
     projectId: number;
@@ -36,7 +36,8 @@ type Props = {
     appName: string;
     serviceNames: string[];
     deploymentTargetId: string;
-    latestRevision: AppRevision;
+    appRevisionId?: string;
+    logFilterNames?: LogFilterName[];
 };
 
 const Logs: React.FC<Props> = ({
@@ -45,8 +46,17 @@ const Logs: React.FC<Props> = ({
     appName,
     serviceNames,
     deploymentTargetId,
-    latestRevision,
+    appRevisionId,
+    logFilterNames = ["service_name", "revision", "output_stream"],
 }) => {
+    const { search } = useLocation();
+    const queryParams = new URLSearchParams(search);
+    const logQueryParamOpts = {
+        revision: queryParams.get('version'),
+        output_stream: queryParams.get('output_stream'),
+        service: queryParams.get('service'),
+    }
+
     const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
     const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
     const [enteredSearchText, setEnteredSearchText] = useState("");
@@ -60,10 +70,10 @@ const Logs: React.FC<Props> = ({
     const [logsError, setLogsError] = useState<string | undefined>(undefined);
 
     const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
-        service_name:  GenericLogFilter.getDefaultOption("service_name").value,
+        service_name: logQueryParamOpts?.service ?? GenericLogFilter.getDefaultOption("service_name").value,
         pod_name: "", // not supported
-        revision: GenericLogFilter.getDefaultOption("revision").value,
-        output_stream: GenericLogFilter.getDefaultOption("output_stream").value,
+        revision: logQueryParamOpts.revision ?? GenericLogFilter.getDefaultOption("revision").value,
+        output_stream: logQueryParamOpts.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
     });
 
     const revisionIdToNumber = useRevisionIdToNumber(appName, deploymentTargetId)
@@ -124,7 +134,7 @@ const Logs: React.FC<Props> = ({
                     service_name: value,
                 }));
             }
-        },
+        } as GenericLogFilter,
         {
             name: "revision",
             displayName: "Version",
@@ -136,7 +146,7 @@ const Logs: React.FC<Props> = ({
                     revision: value,
                 }));
             }
-        },
+        } as GenericLogFilter,
         {
             name: "output_stream",
             displayName: "Output Stream",
@@ -151,8 +161,9 @@ const Logs: React.FC<Props> = ({
                     output_stream: value,
                 }));
             }
-        },
-    ]);
+        } as GenericLogFilter,
+    ].filter((f: GenericLogFilter) => logFilterNames.includes(f.name)));
+
 
     const notify = (message: string) => {
         setNotification(message);
@@ -174,6 +185,7 @@ const Logs: React.FC<Props> = ({
         setIsLoading,
         revisionIdToNumber,
         selectedDate,
+        appRevisionId,
     );
 
     useEffect(() => {
@@ -191,7 +203,7 @@ const Logs: React.FC<Props> = ({
                         service_name: value,
                     }));
                 }
-            },
+            } as GenericLogFilter,
             {
                 name: "revision",
                 displayName: "Version",
@@ -203,7 +215,7 @@ const Logs: React.FC<Props> = ({
                         revision: value,
                     }));
                 }
-            },
+            } as GenericLogFilter,
             {
                 name: "output_stream",
                 displayName: "Output Stream",
@@ -218,8 +230,8 @@ const Logs: React.FC<Props> = ({
                         output_stream: value,
                     }));
                 }
-            },
-        ])
+            } as GenericLogFilter,
+        ].filter((f: GenericLogFilter) => logFilterNames.includes(f.name)))
     }, [latestRevisionNumber]);
 
     useEffect(() => {
@@ -235,10 +247,10 @@ const Logs: React.FC<Props> = ({
 
     const resetFilters = () => {
         setSelectedFilterValues({
-            output_stream: GenericLogFilter.getDefaultOption("output_stream").value,
+            service_name: logQueryParamOpts?.service ?? GenericLogFilter.getDefaultOption("service_name").value,
             pod_name: "", // not supported
-            revision: GenericLogFilter.getDefaultOption("revision").value,
-            service_name: GenericLogFilter.getDefaultOption("service_name").value,
+            revision: logQueryParamOpts.revision ?? GenericLogFilter.getDefaultOption("revision").value,
+            output_stream: logQueryParamOpts.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
         });
     };
 

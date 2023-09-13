@@ -2,6 +2,7 @@ package startup_migrations
 
 import (
 	"github.com/porter-dev/porter/cmd/migrate/enable_cluster_preview_envs"
+	"github.com/porter-dev/porter/internal/features"
 	lr "github.com/porter-dev/porter/pkg/logger"
 	"gorm.io/gorm"
 )
@@ -9,7 +10,7 @@ import (
 // this should be incremented with every new startup migration script
 const LatestMigrationVersion uint = 1
 
-type migrationFunc func(db *gorm.DB, logger *lr.Logger) error
+type migrationFunc func(db *gorm.DB, config *features.Client, logger *lr.Logger) error
 
 var StartupMigrations = make(map[uint]migrationFunc)
 

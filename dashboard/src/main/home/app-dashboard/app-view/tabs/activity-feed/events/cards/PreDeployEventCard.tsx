@@ -63,7 +63,7 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appName, projectId, cluste
             <>
               <Spacer inline x={1} />
               <Wrapper>
-                <Link to={`/apps/${appName}/events?event_id=${event.id}`} hasunderline>
+                <Link to={`/apps/${appName}/events?event_id=${event.id}&service=${appName}-predeploy`} hasunderline>
                   <Container row>
                     <Icon src={document} height="10px" />
                     <Spacer inline width="5px" />

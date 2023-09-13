@@ -7,12 +7,17 @@ import (
 
 	"github.com/launchdarkly/go-sdk-common/v3/ldcontext"
 	ld "github.com/launchdarkly/go-server-sdk/v6"
-	"github.com/porter-dev/porter/api/server/shared/config/envloader"
 )
 
 // Client is a struct wrapper around the launchdarkly client
 type Client struct {
-	client *ld.LDClient
+	Client LDClient
+}
+
+// LDClient is an interface that allows us to mock
+// the LaunchDarkly client in tests
+type LDClient interface {
+	BoolVariation(key string, context ldcontext.Context, defaultVal bool) (bool, error)
 }
 
 // BoolVariation returns the value of a boolean feature flag for a given evaluation context.
@@ -22,15 +27,15 @@ type Client struct {
 //
 // For more information, see the Reference Guide: https://docs.launchdarkly.com/sdk/features/evaluating#go
 func (c Client) BoolVariation(field string, context ldcontext.Context, defaultValue bool) (bool, error) {
-	if c.client == nil {
+	if c.Client == nil {
 		return defaultValue, errors.New("failed to participate in launchdarkly test: no client available")
 	}
-	return c.client.BoolVariation(field, context, defaultValue)
+	return c.Client.BoolVariation(field, context, defaultValue)
 }
 
 // GetClient retrieves a Client for interacting with LaunchDarkly
-func GetClient(envConf *envloader.EnvConf) (*Client, error) {
-	ldClient, err := ld.MakeClient(envConf.ServerConf.LaunchDarklySDKKey, 5*time.Second)
+func GetClient(launchDarklySDKKey string) (*Client, error) {
+	ldClient, err := ld.MakeClient(launchDarklySDKKey, 5*time.Second)
 	if err != nil {
 		return &Client{}, fmt.Errorf("failed to create new launchdarkly client: %w", err)
 	}

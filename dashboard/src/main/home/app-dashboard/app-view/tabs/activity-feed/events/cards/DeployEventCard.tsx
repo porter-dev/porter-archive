@@ -12,18 +12,22 @@ import { PorterAppDeployEvent } from "../types";
 import AnimateHeight from "react-animate-height";
 import ServiceStatusDetail from "./ServiceStatusDetail";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import { useRevisionIdToNumber } from "lib/hooks/useRevisionList";
 
 type Props = {
   event: PorterAppDeployEvent;
   appName: string;
   showServiceStatusDetail?: boolean;
+  deploymentTargetId: string;
 };
 
-const DeployEventCard: React.FC<Props> = ({ event, appName, showServiceStatusDetail = false }) => {
+const DeployEventCard: React.FC<Props> = ({ event, appName, deploymentTargetId, showServiceStatusDetail = false }) => {
   const { latestRevision } = useLatestRevision();
   const [diffModalVisible, setDiffModalVisible] = useState(false);
   const [revertModalVisible, setRevertModalVisible] = useState(false);
   const [serviceStatusVisible, setServiceStatusVisible] = useState(showServiceStatusDetail);
+
+  const revisionIdToNumber = useRevisionIdToNumber(appName, deploymentTargetId);
 
   const renderStatusText = () => {
     switch (event.status) {
@@ -131,7 +135,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appName, showServiceStatusDet
         <Container row>
           <Icon height="16px" src={deploy} />
           <Spacer inline width="10px" />
-          <Text>Application version no. {event.metadata?.revision}</Text>
+          <Text>Application version no. {revisionIdToNumber[event.metadata.app_revision_id]}</Text>
         </Container>
       </Container>
       <Spacer y={0.5} />
@@ -140,12 +144,12 @@ const DeployEventCard: React.FC<Props> = ({ event, appName, showServiceStatusDet
           <Icon height="12px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText()}
-          {latestRevision.id !== event.metadata.app_revision_id && (
+          {revisionIdToNumber[event.metadata.app_revision_id] != null && latestRevision.revision_number !== revisionIdToNumber[event.metadata.app_revision_id] && (
             <>
               <Spacer inline x={1} />
               <TempWrapper>
                 <Link hasunderline onClick={() => setRevertModalVisible(true)}>
-                  Revert to version {event.metadata.revision}
+                  Revert to version {revisionIdToNumber[event.metadata.app_revision_id]}
                 </Link>
 
               </TempWrapper>
@@ -184,7 +188,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appName, showServiceStatusDet
           <ServiceStatusDetail
             serviceDeploymentMetadata={event.metadata.service_deployment_metadata}
             appName={appName}
-            revision={event.metadata.revision}
+            revision={revisionIdToNumber[event.metadata.app_revision_id]}
           />
         </AnimateHeight>
       }

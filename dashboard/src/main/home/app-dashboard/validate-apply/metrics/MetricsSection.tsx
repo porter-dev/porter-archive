@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
 import api from "shared/api";
@@ -13,97 +13,101 @@ import MetricsChart from "../../expanded-app/metrics/MetricsChart";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "components/Loading";
 import CheckboxRow from "components/CheckboxRow";
-import {PorterApp} from "@porter-dev/api-contracts";
+import { PorterApp } from "@porter-dev/api-contracts";
+import { useLocation } from "react-router";
 
 type PropsType = {
-    projectId: number;
-    clusterId: number;
-    appName: string;
-    services: PorterApp["services"];
-    deploymentTargetId: string;
+  projectId: number;
+  clusterId: number;
+  appName: string;
+  services: PorterApp["services"];
+  deploymentTargetId: string;
 };
 
 type ServiceOption = {
-    label: string;
-    value: string;
+  label: string;
+  value: string;
 }
 
 const MetricsSection: React.FunctionComponent<PropsType> = ({
-    projectId,
-    clusterId,
-    appName,
-    services,
-    deploymentTargetId,
+  projectId,
+  clusterId,
+  appName,
+  services,
+  deploymentTargetId,
 }) => {
-  const [selectedServiceName, setSelectedServiceName] = useState<string>("");
+  const { search } = useLocation();
+  const queryParams = new URLSearchParams(search);
+  const serviceFromQueryParams = queryParams.get("service");
+
+  const [selectedServiceName, setSelectedServiceName] = useState<string>(serviceFromQueryParams ?? "");
   const [selectedRange, setSelectedRange] = useState("1H");
   const [showAutoscalingThresholds, setShowAutoscalingThresholds] = useState(true);
 
-
   const serviceOptions: ServiceOption[] = useMemo(() => {
-      return Object.keys(services).map((name) => {
-          return {
-              label: name,
-              value: name,
-          };
-      });
+    return Object.keys(services).map((name) => {
+      return {
+        label: name,
+        value: name,
+      };
+    });
   }, [services]);
 
-    useEffect(() => {
-        if (serviceOptions.length > 0) {
-            setSelectedServiceName(serviceOptions[0].value)
-        }
-    }, []);
+  useEffect(() => {
+    if (serviceOptions.length > 0 && selectedServiceName === "") {
+      setSelectedServiceName(serviceOptions[0].value)
+    }
+  }, []);
 
-    const [serviceName, serviceKind, metricTypes, isHpaEnabled] = useMemo(() => {
-        if (selectedServiceName === "") {
-            return ["", "", [], false]
-        }
+  const [serviceName, serviceKind, metricTypes, isHpaEnabled] = useMemo(() => {
+    if (selectedServiceName === "") {
+      return ["", "", [], false]
+    }
 
-        const service = services[selectedServiceName]
+    const service = services[selectedServiceName]
 
-        const serviceName = service.absoluteName === "" ? (appName + "-" + selectedServiceName) : service.absoluteName
+    const serviceName = service.absoluteName === "" ? (appName + "-" + selectedServiceName) : service.absoluteName
 
-        let serviceKind = ""
-        const metricTypes: MetricType[] = ["cpu", "memory"];
-        let isHpaEnabled = false
+    let serviceKind = ""
+    const metricTypes: MetricType[] = ["cpu", "memory"];
+    let isHpaEnabled = false
 
-        if (service.config.case === "webConfig") {
-            serviceKind = "web"
-            metricTypes.push("network");
-            if (service.config.value.autoscaling != null && service.config.value.autoscaling.enabled) {
-                isHpaEnabled = true
-            }
-            if (!service.config.value.private) {
-                metricTypes.push("nginx:status")
-            }
-        }
+    if (service.config.case === "webConfig") {
+      serviceKind = "web"
+      metricTypes.push("network");
+      if (service.config.value.autoscaling != null && service.config.value.autoscaling.enabled) {
+        isHpaEnabled = true
+      }
+      if (!service.config.value.private) {
+        metricTypes.push("nginx:status")
+      }
+    }
 
-        if (service.config.case === "workerConfig") {
-            serviceKind = "worker"
-            if (service.config.value.autoscaling != null && service.config.value.autoscaling.enabled) {
-                isHpaEnabled = true
-            }
-        }
+    if (service.config.case === "workerConfig") {
+      serviceKind = "worker"
+      if (service.config.value.autoscaling != null && service.config.value.autoscaling.enabled) {
+        isHpaEnabled = true
+      }
+    }
 
 
 
-        if (isHpaEnabled) {
-            metricTypes.push("hpa_replicas");
-        }
+    if (isHpaEnabled) {
+      metricTypes.push("hpa_replicas");
+    }
 
-        return [serviceName, serviceKind, metricTypes, isHpaEnabled]
-    }, [selectedServiceName])
+    return [serviceName, serviceKind, metricTypes, isHpaEnabled]
+  }, [selectedServiceName])
 
 
   const { data: metricsData, isLoading: isMetricsDataLoading, refetch } = useQuery(
     [
-        "getMetrics",
-        projectId,
-        clusterId,
-        serviceName,
-        selectedRange,
-        deploymentTargetId,
+      "getMetrics",
+      projectId,
+      clusterId,
+      serviceName,
+      selectedRange,
+      deploymentTargetId,
     ],
     async () => {
 
@@ -118,17 +122,17 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       const start = end - secondsBeforeNow[selectedRange];
 
       for (const metricType of metricTypes) {
-          var kind = "";
-          if (serviceKind === "web") {
-              kind = "deployment";
-          } else if (serviceKind === "worker") {
-              kind = "deployment";
-          } else if (serviceKind === "job") {
-              kind = "job";
-          }
-          if (metricType === "nginx:status") {
-              kind = "Ingress"
-          }
+        var kind = "";
+        if (serviceKind === "web") {
+          kind = "deployment";
+        } else if (serviceKind === "worker") {
+          kind = "deployment";
+        } else if (serviceKind === "job") {
+          kind = "job";
+        }
+        if (metricType === "nginx:status") {
+          kind = "Ingress"
+        }
 
         const aggregatedMetricsResponse = await api.appMetrics(
           "<token>",
@@ -260,9 +264,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   }
 
   const renderShowAutoscalingThresholdsCheckbox = (serviceName: string, isHpaEnabled: boolean) => {
-  if (serviceName === "") {
-    return null;
-  }
+    if (serviceName === "") {
+      return null;
+    }
 
     if (!isHpaEnabled) {
       return null;

@@ -133,6 +133,10 @@ func (c *StreamLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		labels = append(labels, fmt.Sprintf("%s=%s", lokiLabel_PorterServiceName, request.ServiceName))
 	}
 
+	if request.AppRevisionID != "" {
+		labels = append(labels, fmt.Sprintf("%s=%s", lokiLabel_PorterAppRevisionID, request.AppRevisionID))
+	}
+
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "labels", Value: strings.Join(labels, ",")})
 
 	err = agent.StreamPorterAgentLokiLog(labels, string(startTime), request.SearchParam, 0, safeRW)

@@ -41,7 +41,7 @@ func ParseYAML(ctx context.Context, porterYaml []byte, appName string) (*porterv
 
 	switch version.Version {
 	case PorterYamlVersion_V2:
-		appProto, err = v2.AppProtoFromYaml(ctx, porterYaml)
+		appProto, err = v2.AppProtoFromYaml(ctx, porterYaml, appName)
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "error converting v2 yaml to proto")
 		}

@@ -1,14 +1,29 @@
-import { PorterApp } from "@porter-dev/api-contracts";
+import { Build, PorterApp } from "@porter-dev/api-contracts";
 import {
   PorterAppFormData,
   SourceOptions,
   clientAppToProto,
+  clientBuildToProto,
 } from "lib/porter-apps";
 import { useCallback, useContext } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { match } from "ts-pattern";
 import { z } from "zod";
+
+const didBuildChange = (
+  current: PorterAppFormData["app"]["build"],
+  previous?: PorterApp["build"]
+) => {
+  if (!previous) {
+    return true;
+  }
+
+  const currentAsProto = clientBuildToProto(current);
+  currentAsProto.commitSha = previous.commitSha;
+
+  return !Build.equals(currentAsProto, previous);
+};
 
 export const useAppValidation = ({
   deploymentTargetID,
@@ -76,7 +91,17 @@ export const useAppValidation = ({
         prevRevision?.env || {}
       );
 
-      const proto = clientAppToProto(data);
+      const buildChanged = didBuildChange(data.app.build, prevRevision?.build);
+      const initialProto = clientAppToProto(data);
+
+      const proto = buildChanged
+        ? initialProto
+        : new PorterApp({
+            ...initialProto,
+            build: undefined,
+            image: undefined,
+          });
+
       const commit_sha = await match(data.source)
         .with({ type: "github" }, async (src) => {
           if (!creating) {

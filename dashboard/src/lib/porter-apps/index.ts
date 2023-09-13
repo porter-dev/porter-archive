@@ -144,22 +144,26 @@ export function serviceOverrides({
   };
 }
 
-const clientBuildToProto = (build: BuildOptions) => {
+export const clientBuildToProto = (build: BuildOptions) => {
   return match(build)
-    .with({ method: "pack" }, (b) =>
-      Object.freeze({
-        method: "pack",
-        context: b.context,
-        buildpacks: b.buildpacks.map((b) => b.buildpack),
-        builder: b.builder,
-      })
+    .with(
+      { method: "pack" },
+      (b) =>
+        new Build({
+          method: "pack",
+          context: b.context,
+          buildpacks: b.buildpacks.map((b) => b.buildpack),
+          builder: b.builder,
+        })
     )
-    .with({ method: "docker" }, (b) =>
-      Object.freeze({
-        method: "docker",
-        context: b.context,
-        dockerfile: b.dockerfile,
-      })
+    .with(
+      { method: "docker" },
+      (b) =>
+        new Build({
+          method: "docker",
+          context: b.context,
+          dockerfile: b.dockerfile,
+        })
     )
     .exhaustive();
 };
@@ -308,15 +312,15 @@ export function clientAppFromProto(
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-      deserializeService({
-        service: serializedServiceFromProto({
-          name: "pre-deploy",
-          service: proto.predeploy,
-          isPredeploy: true,
+        deserializeService({
+          service: serializedServiceFromProto({
+            name: "pre-deploy",
+            service: proto.predeploy,
+            isPredeploy: true,
+          }),
+          override: predeployOverrides,
         }),
-        override: predeployOverrides,
-      }),
-    ]
+      ]
     : undefined;
 
   return {

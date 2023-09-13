@@ -23,14 +23,7 @@ import (
 )
 
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
-func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, porterYamlPath string) error {
-	var appName string
-	if os.Getenv("PORTER_APP_NAME") != "" {
-		appName = os.Getenv("PORTER_APP_NAME")
-	} else if os.Getenv("PORTER_STACK_NAME") != "" {
-		appName = os.Getenv("PORTER_STACK_NAME")
-	}
-
+func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, porterYamlPath string, appName string) error {
 	var yamlB64 string
 	if len(porterYamlPath) != 0 {
 		porterYaml, err := os.ReadFile(filepath.Clean(porterYamlPath))
@@ -41,7 +34,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		b64YAML := base64.StdEncoding.EncodeToString(porterYaml)
 
 		// last argument is passed to accommodate users with v1 porter yamls
-		parseResp, err := client.ParseYAML(ctx, cliConf.Project, cliConf.Cluster, b64YAML, os.Getenv("PORTER_STACK_NAME"))
+		parseResp, err := client.ParseYAML(ctx, cliConf.Project, cliConf.Cluster, b64YAML, appName)
 		if err != nil {
 			return fmt.Errorf("error calling parse yaml endpoint: %w", err)
 		}
@@ -162,7 +155,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		}
 	}
 
-	color.New(color.FgGreen).Printf("Image tag exists in repository") // nolint:errcheck,gosec
+	color.New(color.FgGreen).Printf("Image tag exists in repository\n") // nolint:errcheck,gosec
 
 	if applyResp.CLIAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_TRACK_PREDEPLOY {
 		color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec

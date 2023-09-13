@@ -285,7 +285,8 @@ export function deserializeService({
             health: config.healthCheck,
             override: overrideWebConfig?.healthCheck,
           }),
-          domains: [...config.domains, ...(overrideWebConfig?.domains ?? [])].map((domain) => ({
+
+          domains: Array.from(new Set([...config.domains, ...(overrideWebConfig?.domains ?? [])])).map((domain) => ({
             name: ServiceField.string(
               domain.name,
               overrideWebConfig?.domains.find(

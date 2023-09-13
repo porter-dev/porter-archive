@@ -21,3 +21,8 @@ func NewDeploymentTargetRepository() repository.DeploymentTargetRepository {
 func (repo *DeploymentTargetRepository) DeploymentTargetBySelectorAndSelectorType(projectID uint, clusterID uint, selector, selectorType string) (*models.DeploymentTarget, error) {
 	return nil, errors.New("cannot read database")
 }
+
+// List returns all deployment targets for a project
+func (repo *DeploymentTargetRepository) List(projectID uint) ([]*models.DeploymentTarget, error) {
+	return nil, errors.New("cannot read database")
+}

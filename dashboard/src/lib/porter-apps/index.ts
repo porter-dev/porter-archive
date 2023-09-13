@@ -66,7 +66,10 @@ export const deletionValidator = z.object({
 
 // clientAppValidator is the representation of a Porter app on the client, and is used to validate inputs for app setting fields
 export const clientAppValidator = z.object({
-  name: z.string().min(1),
+  name: z.object({
+    readOnly: z.boolean(),
+    value: z.string(),
+  }),
   services: serviceValidator.array(),
   predeploy: serviceValidator.array().optional(),
   env: z.record(z.string(), z.string()).default({}),
@@ -164,20 +167,19 @@ const clientBuildToProto = (build: BuildOptions) => {
 export function clientAppToProto(data: PorterAppFormData): PorterApp {
   const { app, source } = data;
 
-  const services = app.services
-    .reduce((acc: Record<string, Service>, svc) => {
-      acc[svc.name.value] = serviceProto(serializeService(svc));
-      return acc;
-    }, {});
+  const services = app.services.reduce((acc: Record<string, Service>, svc) => {
+    acc[svc.name.value] = serviceProto(serializeService(svc));
+    return acc;
+  }, {});
 
-  const predeploy = app.predeploy?.[0]
+  const predeploy = app.predeploy?.[0];
 
   const proto = match(source)
     .with(
       { type: "github" },
       () =>
         new PorterApp({
-          name: app.name,
+          name: app.name.value,
           services,
           env: app.env,
           build: clientBuildToProto(app.build),
@@ -190,7 +192,7 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
       { type: "docker-registry" },
       (src) =>
         new PorterApp({
-          name: app.name,
+          name: app.name.value,
           services,
           env: app.env,
           image: {
@@ -275,17 +277,22 @@ export function clientAppFromProto(
 
   const predeployList = [];
   if (proto.predeploy) {
-    predeployList.push(deserializeService({
-      service: serializedServiceFromProto({
-        name: "pre-deploy",
-        service: proto.predeploy,
-        isPredeploy: true,
+    predeployList.push(
+      deserializeService({
+        service: serializedServiceFromProto({
+          name: "pre-deploy",
+          service: proto.predeploy,
+          isPredeploy: true,
+        }),
       })
-    }))
+    );
   }
   if (!overrides?.predeploy) {
     return {
-      name: proto.name,
+      name: {
+        readOnly: true,
+        value: proto.name,
+      },
       services,
       predeploy: predeployList,
       env: proto.env,
@@ -300,18 +307,23 @@ export function clientAppFromProto(
 
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
-    ? [deserializeService({
-      service: serializedServiceFromProto({
-        name: "pre-deploy",
-        service: proto.predeploy,
-        isPredeploy: true,
+    ? [
+      deserializeService({
+        service: serializedServiceFromProto({
+          name: "pre-deploy",
+          service: proto.predeploy,
+          isPredeploy: true,
+        }),
+        override: predeployOverrides,
       }),
-      override: predeployOverrides,
-    })]
+    ]
     : undefined;
 
   return {
-    name: proto.name,
+    name: {
+      readOnly: true,
+      value: proto.name,
+    },
     services,
     predeploy,
     env: proto.env,

@@ -180,6 +180,7 @@ func (c *Client) ParseYAML(
 func (c *Client) ValidatePorterApp(
 	ctx context.Context,
 	projectID, clusterID uint,
+	appName string,
 	base64AppProto string,
 	deploymentTarget string,
 	commitSHA string,
@@ -187,6 +188,7 @@ func (c *Client) ValidatePorterApp(
 	resp := &porter_app.ValidatePorterAppResponse{}
 
 	req := &porter_app.ValidatePorterAppRequest{
+		AppName:            appName,
 		Base64AppProto:     base64AppProto,
 		DeploymentTargetId: deploymentTarget,
 		CommitSHA:          commitSHA,

@@ -67,7 +67,7 @@ func (c *CreateClusterCandidateHandler) ServeHTTP(w http.ResponseWriter, r *http
 		// automatically
 		if len(cc.Resolvers) == 0 {
 			var cluster *models.Cluster
-			cluster, cc, err = createClusterFromCandidate(c.Repo(), proj, user, cc, &types.ClusterResolverAll{})
+			cluster, cc, err = createClusterFromCandidate(c.Repo(), proj, user, cc, &types.ClusterResolverAll{}, c.Config().LaunchDarklyClient)
 
 			if err != nil {
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

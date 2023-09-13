@@ -11,7 +11,7 @@ import (
 	"github.com/porter-dev/porter/internal/billing"
 	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/helm/urlcache"
-	"github.com/porter-dev/porter/internal/integrations/powerdns"
+	"github.com/porter-dev/porter/internal/integrations/dns"
 	"github.com/porter-dev/porter/internal/nats"
 	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -97,8 +97,8 @@ type Config struct {
 	// WhitelistedUsers do not count toward usage limits
 	WhitelistedUsers map[uint]uint
 
-	// PowerDNSClient is a client for PowerDNS, if the Porter instance supports vanity URLs
-	PowerDNSClient *powerdns.Client
+	// DNSClient is a client for DNS, if the Porter instance supports vanity URLs
+	DNSClient *dns.Client
 
 	// ClusterControlPlaneClient is a client for ClusterControlPlane
 	ClusterControlPlaneClient porterv1connect.ClusterControlPlaneServiceClient

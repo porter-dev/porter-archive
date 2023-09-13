@@ -48,12 +48,14 @@ type AppLogsRequest struct {
 	EndRange           time.Time `schema:"end_range,omitempty"`
 	SearchParam        string    `schema:"search_param"`
 	Direction          string    `schema:"direction"`
+	AppRevisionID      string    `schema:"app_revision_id"`
 }
 
 const (
-	lokiLabel_PorterAppName     = "porter_run_app_name"
-	lokiLabel_PorterServiceName = "porter_run_service_name"
-	lokiLabel_Namespace         = "namespace"
+	lokiLabel_PorterAppName       = "porter_run_app_name"
+	lokiLabel_PorterServiceName   = "porter_run_service_name"
+	lokiLabel_PorterAppRevisionID = "porter_run_app_revision_id"
+	lokiLabel_Namespace           = "namespace"
 )
 
 // ServeHTTP gets logs for a given app, service, and deployment target
@@ -150,6 +152,10 @@ func (c *AppLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if request.ServiceName != "all" {
 		matchLabels[lokiLabel_PorterServiceName] = request.ServiceName
+	}
+
+	if request.AppRevisionID != "" {
+		matchLabels[lokiLabel_PorterAppRevisionID] = request.AppRevisionID
 	}
 
 	logRequest := &types.LogRequest{

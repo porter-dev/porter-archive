@@ -6,14 +6,12 @@ import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import styled from "styled-components";
 import { readableDate } from "shared/string_utils";
 import Text from "components/porter/Text";
-import { useGithubWorkflow } from "lib/hooks/useGithubWorkflow";
 import { useFormContext } from "react-hook-form";
 import {
   PorterAppFormData,
   SourceOptions,
   clientAppFromProto,
 } from "lib/porter-apps";
-import GHStatusBanner from "./GHStatusBanner";
 
 type RevisionTableContentsProps = {
   latestRevisionNumber: number;
@@ -191,6 +189,9 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                           servicesFromYaml
                         ),
                         source: latestSource,
+                        deletions: {
+                          serviceNames: [],
+                        },
                       });
                       setPreviewRevision(
                         isLatestDeployedRevision

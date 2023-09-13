@@ -28,12 +28,13 @@ import LogsTab from "./tabs/LogsTab";
 import MetricsTab from "./tabs/MetricsTab";
 import RevisionsList from "../validate-apply/revisions-list/RevisionsList";
 import Activity from "./tabs/Activity";
+import EventFocusView from "./tabs/activity-feed/events/focus-views/EventFocusView";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
 const validTabs = [
   "activity",
-  // "events",
+  "events",
   "overview",
   "logs",
   "metrics",
@@ -197,20 +198,26 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         porterApp.name,
       ]);
       setPreviewRevision(null);
-    } catch (err) {}
+
+      // redirect to the default tab after save
+      history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
+    } catch (err) { }
   });
 
   useEffect(() => {
-    if (servicesFromYaml) {
-      reset({
-        app: clientAppFromProto(latestProto, servicesFromYaml),
-        source: latestSource,
-        deletions: {
-          serviceNames: [],
-        },
-      });
-    }
-  }, [servicesFromYaml, currentTab, latestProto]);
+    reset({
+      app: clientAppFromProto(latestProto, servicesFromYaml),
+      source: latestSource,
+      deletions: {
+        serviceNames: [],
+      },
+    });
+  }, [
+    servicesFromYaml,
+    currentTab,
+    latestProto,
+    latestRevision.revision_number,
+  ]);
 
   return (
     <FormProvider {...porterAppFormMethods}>
@@ -258,11 +265,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
+                {
+                  label: "Build Settings",
+                  value: "build-settings",
+                },
+              ]
               : []),
             { label: "Settings", value: "settings" },
           ]}
@@ -285,6 +292,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("settings", () => <Settings />)
           .with("logs", () => <LogsTab />)
           .with("metrics", () => <MetricsTab />)
+          .with("events", () => <EventFocusView />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>

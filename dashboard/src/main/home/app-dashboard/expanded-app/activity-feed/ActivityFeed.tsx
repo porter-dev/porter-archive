@@ -38,8 +38,8 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const [shouldAnimate, setShouldAnimate] = useState(true);
 
   // remove this filter when https://linear.app/porter/issue/POR-1676/disable-porter-agent-code-for-cpu-alerts is resolved
-  const isFilteredAppEvent = (event: PorterAppEvent) => {
-    return event.type === PorterAppEventType.APP_EVENT && (event.metadata?.short_summary?.includes("requesting more memory than is available") || event.metadata?.short_summary?.includes("requesting more CPU than is available"));
+  const isNotFilteredAppEvent = (event: PorterAppEvent) => {
+    return !(event.type === PorterAppEventType.APP_EVENT && (event.metadata?.short_summary?.includes("requesting more memory than is available") || event.metadata?.short_summary?.includes("requesting more CPU than is available")));
   }
 
   const getEvents = async () => {
@@ -62,7 +62,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
       );
 
       setNumPages(res.data.num_pages);
-      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)).filter(!isFilteredAppEvent) ?? []);
+      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)).filter(isNotFilteredAppEvent) ?? []);
     } catch (err) {
       setError(err);
     } finally {
@@ -96,7 +96,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
       );
       setError(undefined)
       setNumPages(res.data.num_pages);
-      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)).filter(!isFilteredAppEvent) ?? []);
+      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)).filter(isNotFilteredAppEvent) ?? []);
     } catch (err) {
       setError(err);
     }

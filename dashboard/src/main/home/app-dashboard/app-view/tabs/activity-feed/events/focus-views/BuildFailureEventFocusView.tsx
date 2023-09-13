@@ -10,18 +10,19 @@ import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
 import { getDuration } from "../utils";
 import Link from "components/porter/Link";
-import { PorterLog } from "../../../logs/types";
-import { PorterAppEvent } from "../types";
+import { PorterAppBuildEvent } from "../types";
+import { PorterLog } from "main/home/app-dashboard/expanded-app/logs/types";
+import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 
 type Props = {
-    event: PorterAppEvent;
-    appData: any;
+    event: PorterAppBuildEvent;
 };
 
 const BuildFailureEventFocusView: React.FC<Props> = ({
     event,
-    appData,
 }) => {
+    const { porterApp, projectId, clusterId } = useLatestRevision();
+
     const [logs, setLogs] = useState<PorterLog[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const scrollToBottomRef = useRef<HTMLDivElement>(null);
@@ -36,7 +37,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
     }, [isLoading, logs, scrollToBottomRef]);
 
     const getBuildLogs = async () => {
-        if (event == null) {
+        if (event == null || porterApp.git_repo_id == null || porterApp.repo_name == null) {
             return;
         }
         try {
@@ -46,13 +47,13 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
                 "",
                 {},
                 {
-                    project_id: appData.app.project_id,
-                    cluster_id: appData.app.cluster_id,
-                    git_installation_id: appData.app.git_repo_id,
-                    owner: appData.app.repo_name?.split("/")[0],
-                    name: appData.app.repo_name?.split("/")[1],
-                    filename: "porter_stack_" + appData.chart.name + ".yml",
-                    run_id: event.metadata.action_run_id,
+                    project_id: projectId,
+                    cluster_id: clusterId,
+                    git_installation_id: porterApp.git_repo_id,
+                    owner: porterApp.repo_name.split("/")[0],
+                    name: porterApp.repo_name.split("/")[1],
+                    filename: "porter_stack_" + porterApp.name + ".yml",
+                    run_id: event.metadata.action_run_id.toString(),
                 }
             );
             let logs: PorterLog[] = [];
@@ -175,8 +176,8 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
                 target="_blank"
                 to={
                     event.metadata.action_run_id
-                        ? `https://github.com/${appData.app.repo_name}/actions/runs/${event.metadata.action_run_id}`
-                        : `https://github.com/${appData.app.repo_name}/actions`
+                        ? `https://github.com/${porterApp.repo_name}/actions/runs/${event.metadata.action_run_id}`
+                        : `https://github.com/${porterApp.repo_name}/actions`
                 }
             >
                 View full build logs

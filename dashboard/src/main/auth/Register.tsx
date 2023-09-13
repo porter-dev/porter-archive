@@ -121,7 +121,7 @@ const Register: React.FC<Props> = ({
               event: 'sign-up',
               data: {
                 method: 'email'
-                email: user.email
+                email: res?.data?.email
               }
             });
           }

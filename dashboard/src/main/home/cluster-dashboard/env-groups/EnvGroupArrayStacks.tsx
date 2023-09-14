@@ -44,9 +44,9 @@ const EnvGroupArray = ({
     }
   }, [values]);
   const isKeyOverriding = (key: string) => {
-    if (!syncedEnvGroups || !values) return false;
-    return syncedEnvGroups?.some(envGroup =>
-      (envGroup?.variables) && key in envGroup?.variables || key in envGroup?.secret_variables
+    if (!syncedEnvGroups) return false;
+    return syncedEnvGroups.some(envGroup =>
+      key in envGroup.variables || key in envGroup?.secret_variables
     );
   };
 

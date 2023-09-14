@@ -34,6 +34,7 @@ type PowerDNSRecordData struct {
 	RRSets []PowerDNSRR `json:"rrsets"`
 }
 
+// PowerDNSRR represents a dns resource record collection for PowerDNS
 type PowerDNSRR struct {
 	Name       string           `json:"name"`
 	Type       string           `json:"type"`
@@ -42,6 +43,8 @@ type PowerDNSRR struct {
 	Records    []PowerDNSRecord `json:"records"`
 }
 
+// PowerDNSRecord represents an individual record for a given
+// PowerDNS resource record
 type PowerDNSRecord struct {
 	Content  string `json:"content"`
 	Disabled bool   `json:"disabled"`

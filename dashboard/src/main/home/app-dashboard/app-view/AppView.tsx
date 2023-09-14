@@ -8,7 +8,6 @@ import Spacer from "components/porter/Spacer";
 
 import AppDataContainer from "./AppDataContainer";
 
-import web from "assets/web.png";
 import AppHeader from "./AppHeader";
 import { LatestRevisionProvider } from "./LatestRevisionContext";
 
@@ -19,7 +18,10 @@ export const porterAppValidator = z.object({
   repo_name: z.string().optional(),
   build_context: z.string().optional(),
   builder: z.string().optional(),
-  buildpacks: z.array(z.string()).optional(),
+  buildpacks: z
+    .string()
+    .transform((s) => s.split(","))
+    .optional(),
   dockerfile: z.string().optional(),
   image_repo_uri: z.string().optional(),
   porter_yaml_path: z.string().optional(),

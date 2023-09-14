@@ -168,6 +168,38 @@ type Project struct {
 // GetFeatureFlag calls launchdarkly for the specified flag
 // and returns the configured value
 func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *features.Client) bool {
+	if launchDarklyClient.UseDatabase() {
+		// case switch things
+		switch flagName {
+		case "api_tokens_enabled":
+			return p.APITokensEnabled
+		case "azure_enabled":
+			return p.AzureEnabled
+		case "capi_provisioner_enabled":
+			return p.CapiProvisionerEnabled
+		case "enable_reprovision":
+			return p.EnableReprovision
+		case "full_add_ons":
+			return p.FullAddOns
+		case "helm_values_enabled":
+			return p.HelmValuesEnabled
+		case "managed_infra_enabled":
+			return p.ManagedInfraEnabled
+		case "multi_cluster":
+			return p.MultiCluster
+		case "preview_envs_enabled":
+			return p.PreviewEnvsEnabled
+		case "rds_databases_enabled":
+			return p.RDSDatabasesEnabled
+		case "simplified_view_enabled":
+			return p.SimplifiedViewEnabled
+		case "stacks_enabled":
+			return p.StacksEnabled
+		case "validate_apply_v2":
+			return p.ValidateApplyV2
+		}
+	}
+
 	projectID := p.ID
 	projectName := p.Name
 	ldContext := getProjectContext(projectID, projectName)

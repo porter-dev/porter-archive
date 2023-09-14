@@ -48,6 +48,7 @@ type ApplyPorterAppRequest struct {
 	Base64AppProto     string `json:"b64_app_proto"`
 	DeploymentTargetId string `json:"deployment_target_id"`
 	AppRevisionID      string `json:"app_revision_id"`
+	ForceBuild         bool   `json:"force_build"`
 }
 
 // ApplyPorterAppResponse is the response object for the /apps/apply endpoint
@@ -151,6 +152,7 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		DeploymentTargetId:  deploymentTargetID,
 		App:                 appProto,
 		PorterAppRevisionId: appRevisionID,
+		ForceBuild:          request.ForceBuild,
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.ApplyPorterApp(ctx, applyReq)
 	if err != nil {

@@ -216,6 +216,22 @@ const LogSection: React.FC<Props> = ({
     }
   };
 
+  const generateFilterString = () => {
+    let filterString = "";
+    if (selectedFilterValues["service_name"] !== "all") {
+      filterString += selectedFilterValues["service_name"];
+    } else if (selectedFilterValues["pod_name"] !== "all") {
+      filterString += selectedFilterValues["pod_name"].replace(/-[^-]*$/, '');
+    }
+    if (selectedFilterValues["revision"] !== "all") {
+      if (filterString !== "") {
+        filterString += " ";
+      }
+      filterString += "v" + selectedFilterValues["revision"];
+    }
+    return filterString;
+  };
+
   const renderContents = () => {
     return (
       <>
@@ -239,21 +255,7 @@ const LogSection: React.FC<Props> = ({
               <Filter 
                 filters={filters}
                 selectedFilterValues={selectedFilterValues}
-                generateFilterString={(selectedFilterValues: any) => {
-                  let filterString = "";
-                  if (selectedFilterValues["service_name"] !== "all") {
-                    filterString += selectedFilterValues["service_name"];
-                  } else if (selectedFilterValues["pod_name"] !== "all") {
-                    filterString += selectedFilterValues["pod_name"].replace(/-[^-]*$/, '');
-                  }
-                  if (selectedFilterValues["revision"] !== "all") {
-                    if (filterString !== "") {
-                      filterString += " ";
-                    }
-                    filterString += selectedFilterValues["revision"];
-                  }
-                  return filterString;
-                }}
+                filterString={generateFilterString()}
               />
             )}
             <Spacer inline width="10px" />
@@ -275,15 +277,6 @@ const LogSection: React.FC<Props> = ({
           </Flex>
         </FlexRow>
         <Spacer y={0.5} />
-        {showFilter && false &&
-          <>
-            <LogFilterContainer
-              filters={filters}
-              selectedFilterValues={selectedFilterValues}
-            />
-            <Spacer y={0.5} />
-          </>
-        }
         <LogsSectionWrapper>
           <StyledLogsSection>
             {isLoading && <Loading message="Waiting for logs..." />}

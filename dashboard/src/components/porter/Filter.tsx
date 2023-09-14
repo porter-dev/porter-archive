@@ -3,31 +3,31 @@ import styled from "styled-components";
 import Select from "./Select";
 import Spacer from "./Spacer";
 
+import filter from "assets/filter.svg";
+
 type Props = {
   filters: any;
   selectedFilterValues: Record<any, string>;
-  generateFilterString: (selectedFilterValues: any) => string;
+  filterString: string;
 };
 
 const Filter: React.FC<Props> = ({
   filters,
   selectedFilterValues,
-  generateFilterString,
+  filterString,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <Relative>
       <StyledFilter onClick={() => setIsExpanded(!isExpanded)}>
-        <svg className="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 18">
-          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="m2.133 2.6 5.856 6.9L8 14l4 3 .011-7.5 5.856-6.9a1 1 0 0 0-.804-1.6H2.937a1 1 0 0 0-.804 1.6Z"/>
-        </svg>
+        <img src={filter} />
         Filter
-        {generateFilterString(selectedFilterValues) !== "" && (
+        {filterString !== "" && (
           <>
             <Bar />
             <Spacer width="10px" />
-            {generateFilterString(selectedFilterValues)}
+            {filterString}
           </>
         )}
       </StyledFilter>
@@ -108,10 +108,9 @@ const StyledFilter = styled.div<{
     border: 1px solid #7a7b80;
   }
 
-  > svg {
+  > img {
     height: 13px;
     width: 13px;
-    color: #fff;
     margin-right: 8px;
   }
 `;

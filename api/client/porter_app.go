@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
+	"github.com/porter-dev/porter/internal/models"
 
 	"github.com/porter-dev/porter/api/types"
 )
@@ -384,6 +385,31 @@ func (c *Client) PredeployStatus(
 	if resp.Status == "" {
 		return nil, fmt.Errorf("no predeploy status found")
 	}
+
+	return resp, err
+}
+
+// UpdateRevisionStatus updates the status of an app revision
+func (c *Client) UpdateRevisionStatus(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string, appRevisionId string,
+	status models.AppRevisionStatus,
+) (*porter_app.UpdateAppRevisionStatusResponse, error) {
+	resp := &porter_app.UpdateAppRevisionStatusResponse{}
+
+	req := &porter_app.UpdateAppRevisionStatusRequest{
+		Status: status,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/revisions/%s",
+			projectID, clusterID, appName, appRevisionId,
+		),
+		req,
+		resp,
+	)
 
 	return resp, err
 }

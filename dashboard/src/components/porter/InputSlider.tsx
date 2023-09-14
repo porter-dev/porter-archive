@@ -7,6 +7,7 @@ import { withStyles } from '@material-ui/core/styles';
 import Text from './Text';
 import Spacer from './Spacer';
 import SmartOptModal from 'main/home/app-dashboard/new-app-flow/tabs/SmartOptModal';
+import NodeInfoModal from 'main/home/app-dashboard/new-app-flow/tabs/NodeInfoModal';
 
 type InputSliderProps = {
   label?: string;

@@ -47,7 +47,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if reqErr != nil {
 		err := telemetry.Error(ctx, span, reqErr, "unable to get request action for endpoint")
-		apierrors.HandleAPIError(h.config.Logger, h.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError), true)
+		apierrors.HandleAPIError(h.config.Logger, h.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest), true)
 		return
 	}
 

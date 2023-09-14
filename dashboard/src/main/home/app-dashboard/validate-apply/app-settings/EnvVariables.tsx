@@ -9,12 +9,14 @@ const EnvVariables: React.FC = () => {
   const { control } = useFormContext<PorterAppFormData>();
 
   const recordToKVType = useCallback((env?: Record<string, string>) => {
+    console.log("recordToKVType", env)
     return Object.entries(env ?? []).map(([key, value]) => {
-      return { key, value, hidden: false, locked: false, deleted: false };
+      return { key, value, hidden: false, locked: value?.includes("PORTERLOCKED"), deleted: false };
     });
   }, []);
 
   const kvTypeToRecord = useCallback((env: KeyValueType[]) => {
+    console.log("kvTypeToRecord", env)
     return env.reduce((acc, { key, value }) => {
       acc[key] = value;
       return acc;

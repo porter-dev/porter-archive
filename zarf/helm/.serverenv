@@ -34,6 +34,7 @@ GITHUB_APP_SECRET_PATH=<path_to_secret>
 # LAUNCHDARKLY_SDK_KEY is used to interact with the launchdarkly api
 # Retrieve your SDK key from https://app.launchdarkly.com/settings/projects/dev/environments
 
+FEATURE_FLAG_CLIENT=launch_darkly
 LAUNCHDARKLY_SDK_KEY=<launchdarkly_sdk_key>
 
 # Optional parameters

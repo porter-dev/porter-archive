@@ -11,7 +11,8 @@ import (
 
 // Client is a struct wrapper around the launchdarkly client
 type Client struct {
-	Client LDClient
+	Client      LDClient
+	useDatabase bool
 }
 
 // LDClient is an interface that allows us to mock
@@ -33,20 +34,55 @@ func (c Client) BoolVariation(field string, context ldcontext.Context, defaultVa
 	return c.Client.BoolVariation(field, context, defaultValue)
 }
 
+// UseDatabase returns whether we should force using the database for feature flags
+//
+// The initial implementation of feature flags stored flags in
+// table-specific columns, making it so we need to use a nasty hack to
+// fetch the correct value for on-prem deployments. A proper refactor would
+// be to introduce a migration that moved these flags to a feature flags
+// table that we could implement a proper WrappedClient for, but a shortcut
+// is taken here in order to fix this sooner and give us time for a proper
+// refactor.
+func (c Client) UseDatabase() bool {
+	return c.useDatabase
+}
+
 // GetClient retrieves a Client for interacting with LaunchDarkly
-func GetClient(launchDarklySDKKey string) (*Client, error) {
+func GetClient(featureFlagClient string, launchDarklySDKKey string) (*Client, error) {
+	validClients := map[string]bool{
+		"database":      true,
+		"launch_darkly": true,
+	}
+
+	if !validClients[featureFlagClient] {
+		return &Client{}, fmt.Errorf("failed to create new feature flag client: invalid feature flag client specified")
+	}
+
+	if featureFlagClient == "database" {
+		return &Client{
+			useDatabase: true,
+		}, nil
+	}
+
+	if launchDarklySDKKey == "" {
+		return &Client{}, fmt.Errorf("failed to create new feature flag client: missing launch_darkly sdk key")
+	}
+
 	ldClient, err := ld.MakeClient(launchDarklySDKKey, 5*time.Second)
 	if err != nil {
-		return &Client{}, fmt.Errorf("failed to create new launchdarkly client: %w", err)
+		return &Client{}, fmt.Errorf("failed to create new feature flag client: %w", err)
 	}
 
 	if ldClient == nil {
-		return &Client{}, errors.New("failed to create new launchdarkly client: invalid config")
+		return &Client{}, errors.New("failed to create new feature flag client: invalid config")
 	}
 
 	if !ldClient.Initialized() {
-		return &Client{}, errors.New("failed to create new launchdarkly client: sdk failed to initialize")
+		return &Client{}, errors.New("failed to create new feature flag client: sdk failed to initialize")
 	}
 
-	return &Client{ldClient}, nil
+	return &Client{
+		Client:      ldClient,
+		useDatabase: false,
+	}, nil
 }

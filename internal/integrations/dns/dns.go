@@ -11,9 +11,9 @@ const (
 	CNAME
 )
 
-// DNSClient is an interface describing a wrapper
+// WrappedClient is an interface describing a wrapper
 // around a particular dns implementation
-type DNSClient interface {
+type WrappedClient interface {
 	CreateARecord(record Record) error
 	CreateCNAMERecord(record Record) error
 }
@@ -21,7 +21,7 @@ type DNSClient interface {
 // Client wraps the underlying powerdns client
 // providing a stable api around interacting with DNS
 type Client struct {
-	Client DNSClient
+	Client WrappedClient
 }
 
 // Record describes a specific DNS record to create

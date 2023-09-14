@@ -42,6 +42,7 @@ type UpdateAppRevisionStatusRequest struct {
 // UpdateAppRevisionStatusResponse is the response object for the /apps/{porter_app_name}/revisions/{app_revision_id} endpoint
 type UpdateAppRevisionStatusResponse struct{}
 
+// UpdateAppRevisionStatus updates the status of an app revision
 func (c *UpdateAppRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-update-app-revision-status")
 	defer span.End()

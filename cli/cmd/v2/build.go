@@ -37,6 +37,8 @@ type buildInput struct {
 	// CurrentImageTag is used in docker build to cache from
 	CurrentImageTag string
 	RepositoryURL   string
+
+	Env map[string]string
 }
 
 // build will create an image repository if it does not exist, and then build and push the image

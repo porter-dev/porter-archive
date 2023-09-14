@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import AnimateHeight, { Height } from "react-animate-height";
 import styled from "styled-components";
 import _ from "lodash";
@@ -185,12 +185,12 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     }
   };
 
-  const getHasBuiltImage = () => {
+  const hasBuiltImage = useMemo(() => {
     if (!chart?.chart?.values) {
       return false;
     }
     return !_.isEmpty((Object.values(chart.chart.values)[0] as any)?.global);
-  };
+  }, [chart]);
 
   return (
     <>
@@ -203,7 +203,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           });
         }}
         chart={chart}
-        bordersRounded={!getHasBuiltImage() && !service.expanded}
+        bordersRounded={!hasBuiltImage && !service.expanded}
       >
         <ServiceTitle>
           <ActionButton>
@@ -235,7 +235,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           <StyledSourceBox
             showExpanded={service.expanded}
             chart={chart}
-            hasFooter={chart && service && getHasBuiltImage()}
+            hasFooter={chart && service && hasBuiltImage}
           >
             {renderTabs(service)}
           </StyledSourceBox>
@@ -244,7 +244,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       {chart &&
         service &&
         // Check if has built image
-        getHasBuiltImage() && (
+        hasBuiltImage && (
           <StatusFooter
             setExpandedJob={() => { }}
             chart={chart}

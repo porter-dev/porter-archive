@@ -26,6 +26,8 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { ControlledInput } from "components/porter/ControlledInput";
+import { useLatestRevision } from "../../app-view/LatestRevisionContext";
+import { useAppStatus } from "lib/hooks/useAppStatus";
 
 const addServiceFormValidator = z.object({
   name: z
@@ -56,6 +58,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
+
+  const { projectId, clusterId, latestProto, deploymentTargetId } = useLatestRevision();
 
   // add service modal form
   const {
@@ -159,6 +163,13 @@ const ServiceList: React.FC<ServiceListProps> = ({
       appendDeletion({ name });
     }
   };
+
+  const replicaSetArray = useAppStatus({
+    projectId,
+    clusterId,
+    serviceNames: Object.keys(latestProto.services),
+    deploymentTargetId,
+  })
 
   return (
     <>

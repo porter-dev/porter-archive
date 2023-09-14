@@ -1,15 +1,15 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
 import { PorterAppFormData } from "lib/porter-apps";
-import EnvGroupArrayV2 from "main/home/cluster-dashboard/env-groups/EnvGroupArrayV2";
-import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArrayV2";
+import EnvGroupArrayStacks, {
+  KeyValueType,
+} from "main/home/cluster-dashboard/env-groups/EnvGroupArrayStacks";
 
 const EnvVariables: React.FC = () => {
   const { control } = useFormContext<PorterAppFormData>();
 
   const recordToKVType = useCallback((env?: Record<string, string>) => {
-    console.log("env", env)
     return Object.entries(env ?? []).map(([key, value]) => {
       return { key, value, hidden: false, locked: false, deleted: false };
     });
@@ -27,7 +27,7 @@ const EnvVariables: React.FC = () => {
       name={`app.env`}
       control={control}
       render={({ field: { value, onChange } }) => (
-        <EnvGroupArrayV2
+        <EnvGroupArrayStacks
           values={recordToKVType(value)}
           setValues={(x: KeyValueType[]) => {
             onChange(kvTypeToRecord(x));

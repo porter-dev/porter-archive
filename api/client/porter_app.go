@@ -213,6 +213,7 @@ func (c *Client) ApplyPorterApp(
 	base64AppProto string,
 	deploymentTarget string,
 	appRevisionID string,
+	fromCLI bool,
 ) (*porter_app.ApplyPorterAppResponse, error) {
 	resp := &porter_app.ApplyPorterAppResponse{}
 
@@ -220,6 +221,7 @@ func (c *Client) ApplyPorterApp(
 		Base64AppProto:     base64AppProto,
 		DeploymentTargetId: deploymentTarget,
 		AppRevisionID:      appRevisionID,
+		FromCLI:            fromCLI,
 	}
 
 	err := c.postRequest(

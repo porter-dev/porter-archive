@@ -24,7 +24,9 @@ import (
 
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
 func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, porterYamlPath string, appName string) error {
+	const fromCLI = true
 	var yamlB64 string
+
 	if len(porterYamlPath) != 0 {
 		porterYaml, err := os.ReadFile(filepath.Clean(porterYamlPath))
 		if err != nil {
@@ -91,7 +93,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		return fmt.Errorf("error creating porter app db entry: %w", err)
 	}
 
-	applyResp, err := client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, base64AppProto, targetResp.DeploymentTargetID, "")
+	applyResp, err := client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, base64AppProto, targetResp.DeploymentTargetID, "", fromCLI)
 	if err != nil {
 		return fmt.Errorf("error calling apply endpoint: %w", err)
 	}
@@ -149,7 +151,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 
 		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, eventID, types.PorterAppEventStatus_Success, buildMetadata)
 
-		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId)
+		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId, fromCLI)
 		if err != nil {
 			return fmt.Errorf("apply error post-build: %w", err)
 		}
@@ -189,7 +191,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		metadata["end_time"] = time.Now().UTC()
 		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, eventID, eventStatus, metadata)
 
-		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId)
+		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId, fromCLI)
 		if err != nil {
 			return fmt.Errorf("apply error post-predeploy: %w", err)
 		}

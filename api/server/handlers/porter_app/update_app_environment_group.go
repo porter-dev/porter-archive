@@ -168,7 +168,6 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "same-env-group", Value: sameEnvGroup})
 
 		if sameEnvGroup {
-
 			res := &UpdateAppEnvironmentResponse{
 				EnvGroupName:    latestEnvironmentGroup.Name,
 				EnvGroupVersion: latestEnvironmentGroup.Version,

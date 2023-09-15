@@ -17,6 +17,13 @@ type envVariarableOptions struct {
 // EnvVariableOption is a function that modifies AppEnvironmentFromProto
 type EnvVariableOption func(*envVariarableOptions)
 
+// WithSecrets includes secrets in the environment groups
+func WithSecrets() EnvVariableOption {
+	return func(opts *envVariarableOptions) {
+		opts.includeSecrets = true
+	}
+}
+
 // AppEnvironmentFromProtoInput is the input struct for AppEnvironmentFromProto
 type AppEnvironmentFromProtoInput struct {
 	App              *porterv1.PorterApp

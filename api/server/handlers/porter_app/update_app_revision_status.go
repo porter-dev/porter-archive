@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -35,8 +35,6 @@ func NewUpdateAppRevisionStatusHandler(
 type UpdateAppRevisionStatusRequest struct {
 	// Status is the new status to set for the app revision
 	Status models.AppRevisionStatus `json:"status"`
-	// AppRevisionID is the ID of the app revision to update
-	AppRevisionID string `json:"app_revision_id"`
 }
 
 // UpdateAppRevisionStatusResponse is the response object for the /apps/{porter_app_name}/revisions/{app_revision_id} endpoint
@@ -63,14 +61,15 @@ func (c *UpdateAppRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		return
 	}
 
-	appRevisionID, err := uuid.Parse(request.AppRevisionID)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error parsing app revision id")
+	appRevisionId, _ := requestutils.GetURLParamString(r, types.URLParamAppRevisionID)
+	if appRevisionId == "" {
+		err := telemetry.Error(ctx, span, nil, "app revision id is empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	if appRevisionID == uuid.Nil {
-		err := telemetry.Error(ctx, span, nil, "app revision id cannot be nil")
+
+	if appRevisionId == "" {
+		err := telemetry.Error(ctx, span, nil, "app revision id is empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
@@ -91,11 +90,11 @@ func (c *UpdateAppRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *htt
 
 	updateStatusReq := connect.NewRequest(&porterv1.UpdateRevisionStatusRequest{
 		ProjectId:      int64(project.ID),
-		AppRevisionId:  appRevisionID.String(),
+		AppRevisionId:  appRevisionId,
 		RevisionStatus: statusProto,
 	})
 
-	_, err = c.Config().ClusterControlPlaneClient.UpdateRevisionStatus(ctx, updateStatusReq)
+	_, err := c.Config().ClusterControlPlaneClient.UpdateRevisionStatus(ctx, updateStatusReq)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error updating revision status")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

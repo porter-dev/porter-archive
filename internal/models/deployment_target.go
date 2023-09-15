@@ -5,6 +5,13 @@ import (
 	"gorm.io/gorm"
 )
 
+type DeploymentTargetSelectorType string
+
+const (
+	// DeploymentTargetSelectorType_Namespace indicates that the selector is a namespace
+	DeploymentTargetSelectorType_Namespace DeploymentTargetSelectorType = "NAMESPACE"
+)
+
 // DeploymentTarget represents a deployment target on a given cluster
 type DeploymentTarget struct {
 	gorm.Model
@@ -22,5 +29,5 @@ type DeploymentTarget struct {
 	Selector string `json:"selector"`
 
 	// SelectorType is the kind of selector (i.e. NAMESPACE or LABEL).
-	SelectorType string `json:"selector_type"`
+	SelectorType DeploymentTargetSelectorType `json:"selector_type"`
 }

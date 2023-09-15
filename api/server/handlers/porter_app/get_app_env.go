@@ -14,46 +14,48 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// GetBuildEnvHandler is the handler for the /apps/{porter_app_name}/revisions/{app_revision_id}/build-env endpoint
-type GetBuildEnvHandler struct {
+// GetAppEnvHandler is the handler for the /apps/{porter_app_name}/revisions/{app_revision_id}/env endpoint
+type GetAppEnvHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewGetBuildEnvHandler handles GET requests to the /apps/{porter_app_name}/revisions/{app_revision_id}/build-env endpoint
-func NewGetBuildEnvHandler(
+// NewGetAppEnvHandler handles GET requests to the /apps/{porter_app_name}/revisions/{app_revision_id}/env endpoint
+func NewGetAppEnvHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetBuildEnvHandler {
-	return &GetBuildEnvHandler{
+) *GetAppEnvHandler {
+	return &GetAppEnvHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-// GetBuildEnvResponse is the response object for the /apps/{porter_app_name}/revisions/{app_revision_id}/build-env endpoint
-type GetBuildEnvResponse struct {
-	BuildEnvVariables map[string]string `json:"build_env_variables"`
+// GetAppEnvRequest is the request object for the /apps/{porter_app_name}/revisions/{app_revision_id}/env endpoint
+type GetAppEnvRequest struct {
+	// EnvGroups is a list of environment group names to query. If empty, all environment groups will be queried
+	EnvGroups []string `json:"env_groups"`
 }
 
-// ServeHTTP translates the request into a GetBuildEnvRequest request, uses the proto to query the cluster for the build env, and returns the response
-func (c *GetBuildEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-build-env")
+// GetAppEnvResponse is the response object for the /apps/{porter_app_name}/revisions/{app_revision_id}/env endpoint
+type GetAppEnvResponse struct {
+	EnvGroups []environment_groups.EnvironmentGroup `json:"env_groups"`
+}
+
+// ServeHTTP translates the request into a GetAppEnvRequest request, uses the revision proto to query the cluster for the requested env groups, and returns the response
+func (c *GetAppEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-app-env")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
-		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
-	)
 
 	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
@@ -80,6 +82,13 @@ func (c *GetBuildEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-revision-id", Value: appRevisionUuid.String()})
+
+	request := &GetAppEnvRequest{}
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
 
 	revision, err := porter_app.GetAppRevision(ctx, porter_app.GetAppRevisionInput{
 		AppRevisionID: appRevisionUuid,
@@ -144,22 +153,15 @@ func (c *GetBuildEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		DeploymentTarget: deploymentTarget,
 		K8SAgent:         agent,
 	}
-	envGroups, err := porter_app.AppEnvironmentFromProto(ctx, envFromProtoInp)
+	envGroups, err := porter_app.AppEnvironmentFromProto(ctx, envFromProtoInp, porter_app.WithEnvGroupFilter(request.EnvGroups), porter_app.WithSecrets())
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting app environment from revision")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	buildEnvVariables := make(map[string]string)
-	for _, envGroup := range envGroups {
-		for key, val := range envGroup.Variables {
-			buildEnvVariables[key] = val
-		}
-	}
-
-	res := &GetBuildEnvResponse{
-		BuildEnvVariables: buildEnvVariables,
+	res := &GetAppEnvResponse{
+		EnvGroups: envGroups,
 	}
 
 	c.WriteResult(w, r, res)

@@ -212,17 +212,17 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         const variables: Record<string, string> = {};
         const secrets: Record<string, string> = {};
+
         if (env) {
-          env?.forEach((item) => {
+          env.reduce((_, item) => {
             if (item && !item.deleted) {
-              // Ensure item exists and is not deleted
               if (item.hidden) {
                 secrets[item.key] = item.value;
               } else {
                 variables[item.key] = item.value;
               }
             }
-          });
+          }, null);
         }
         const envGroupResponse = await api.updateEnvironmentGroupV2(
           "<token>",
@@ -241,7 +241,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         const addedEnvGroup = await z
           .object({
             env_group_name: z.string(),
-            env_group_version: z.bigint(),
+            env_group_version: z.number(),
           })
           .parseAsync(envGroupResponse.data);
         const envGroups = [
@@ -257,6 +257,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           envGroups,
         });
 
+        console.log("appWithSeededEnv", appWithSeededEnv);
         await api.applyApp(
           "<token>",
           {
@@ -278,6 +279,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         return true;
       } catch (err) {
+        console.log(err)
         if (axios.isAxiosError(err) && err.response?.data?.error) {
           updateAppStep({
             step: "stack-launch-failure",
@@ -546,9 +548,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

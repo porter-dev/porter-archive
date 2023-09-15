@@ -1807,7 +1807,7 @@ const updateEnvironmentGroupV2 = baseApi<
     app_name: string;
   }
 >("POST", (pathParams) => {
-  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/apps/app_name/update-environment `;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/apps/${pathParams.app_name}/update-environment `;
 });
 
 const listEnvGroups = baseApi<

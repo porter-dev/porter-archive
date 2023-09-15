@@ -244,7 +244,7 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		sc.GithubAppSecret = append(sc.GithubAppSecret, secret...)
 	}
 
-	launchDarklyClient, err := features.GetClient(envConf.ServerConf.LaunchDarklySDKKey)
+	launchDarklyClient, err := features.GetClient(envConf.ServerConf.FeatureFlagClient, envConf.ServerConf.LaunchDarklySDKKey)
 	if err != nil {
 		return nil, fmt.Errorf("could not create launch darkly client: %s", err)
 	}

@@ -29,6 +29,7 @@ type Revision struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// GetAppRevisionsInput is the input struct for GetAppRevisions
 type GetAppRevisionInput struct {
 	ProjectID     uint
 	AppRevisionID uuid.UUID

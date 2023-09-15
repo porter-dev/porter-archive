@@ -27,6 +27,7 @@ func WithSecrets() EnvVariableOption {
 	}
 }
 
+// WithEnvGroupFilter filters the environment groups to only include the ones in this list of names
 func WithEnvGroupFilter(envGroups []string) EnvVariableOption {
 	return func(opts *envVariarableOptions) {
 		opts.envGroups = envGroups

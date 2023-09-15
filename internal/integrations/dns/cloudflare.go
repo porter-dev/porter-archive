@@ -47,7 +47,7 @@ func NewCloudflareClient(apiToken string, runDomain string) (*CloudflareClient, 
 //
 // The method ignores record.RootDomain in favor of the zoneID derived from c.runDomain
 func (c *CloudflareClient) CreateCNAMERecord(record Record) error {
-	proxy := true
+	proxy := false
 
 	cloudflareRecord := cloudflare.CreateDNSRecordParams{
 		Name:    record.Name,
@@ -69,7 +69,7 @@ func (c *CloudflareClient) CreateCNAMERecord(record Record) error {
 //
 // The method ignores record.RootDomain in favor of the zoneID derived from c.runDomain
 func (c *CloudflareClient) CreateARecord(record Record) error {
-	proxy := true
+	proxy := false
 
 	cloudflareRecord := cloudflare.CreateDNSRecordParams{
 		Name:    record.Name,

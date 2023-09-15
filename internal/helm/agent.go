@@ -189,7 +189,7 @@ func (a *Agent) GetRelease(
 //
 // The ideal case would be if we could sort on the server side, in which case
 // we could Limit results by 1 and not worry about the helm release status label,
-// but Kubernetes only supports ordering results api-side.
+// but Kubernetes only supports ordering results client-side.
 func (a *Agent) getLatestVersion(ctx context.Context, name string) int {
 	ctx, span := telemetry.NewSpan(ctx, "helm-get-latest-version")
 	defer span.End() // This span is one of most frequent spans. We need to sample this.

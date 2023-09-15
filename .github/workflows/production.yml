@@ -47,7 +47,7 @@ jobs:
           namespace: default
           project: "5"
           tag: ${{ steps.vars.outputs.sha_short }}
-          token: ${{ secrets.PORTER_TOKEN_5 }}
+          token: ${{ secrets.PORTER_PRODUCTION_DEPLOYMENT }}
       - name: Update Porter Auth
         timeout-minutes: 20
         uses: porter-dev/porter-update-config-action@v0.1.0
@@ -58,7 +58,7 @@ jobs:
           namespace: default
           project: "5"
           tag: ${{ steps.vars.outputs.sha_short }}
-          token: ${{ secrets.PORTER_TOKEN_5 }}
+          token: ${{ secrets.PORTER_PRODUCTION_DEPLOYMENT }}
 
   deploy-worker-pool:
     runs-on: ubuntu-latest
@@ -79,4 +79,4 @@ jobs:
           namespace: default
           project: "5"
           tag: ${{ steps.vars.outputs.sha_short }}
-          token: ${{ secrets.PORTER_TOKEN_5 }}
+          token: ${{ secrets.PORTER_PRODUCTION_DEPLOYMENT }}

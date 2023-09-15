@@ -32,6 +32,17 @@ import (
 type Agent struct {
 	ActionConfig *action.Configuration
 	K8sAgent     *kubernetes.Agent
+
+	// The namespace struct attribute is unexported to avoid cases
+	// where a developer might change this, thinking that it will
+	// apply to all api interactions. RESTClientGetter has an immutable
+	// copy of the value, so change this won't impact those requests.
+	namespace string
+}
+
+// Namespace returns the configured namespace
+func (a *Agent) Namespace() string {
+	return a.namespace
 }
 
 // ListReleases lists releases based on a ListFilter
@@ -111,13 +122,18 @@ func (a *Agent) GetRelease(
 	getDeps bool,
 ) (*release.Release, error) {
 	ctx, span := telemetry.NewSpan(ctx, "helm-get-release")
-	// defer span.End() // This span is one of most frequent spans. We need to sample this. For now, this span will not send
+	defer span.End() // This span is one of most frequent spans. We need to sample this.
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "name", Value: name},
 		telemetry.AttributeKV{Key: "version", Value: version},
 		telemetry.AttributeKV{Key: "getDeps", Value: getDeps},
 	)
+
+	if version == 0 && a.Namespace() != "" {
+		version = a.getLatestReleaseVersion(ctx, name)
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "computed-version", Value: version})
+	}
 
 	// Namespace is already known by the RESTClientGetter.
 	cmd := action.NewGet(a.ActionConfig)
@@ -157,6 +173,71 @@ func (a *Agent) GetRelease(
 	}
 
 	return release, err
+}
+
+// getLatestReleaseVersion retrieves the actual number for the last helm release
+// for a given name.
+//
+// If we use helm's built-in method of retrieving the last
+// release, it will retrieve _all_ releases and then only return the last one.
+// That works ~fine except in cases where you have hundreds of releases,
+// in which case any api calls will take significantly longer.
+//
+// Instead, we retrieve all non-supersceded versions, then grab the highest
+// version in that list. In the worst case, this would also retrieve every
+// release. In the best case, it only retrieves a single release (the latest).
+//
+// The ideal case would be if we could sort on the server side, in which case
+// we could Limit results by 1 and not worry about the helm release status label,
+// but Kubernetes only supports ordering results client-side.
+func (a *Agent) getLatestReleaseVersion(ctx context.Context, name string) int {
+	ctx, span := telemetry.NewSpan(ctx, "helm-get-latest-release-version")
+	defer span.End() // This span is one of most frequent spans. We need to sample this.
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "name", Value: name},
+		telemetry.AttributeKV{Key: "namespace", Value: a.Namespace()},
+	)
+	helmStatuses := []string{
+		string(release.StatusDeployed),
+		string(release.StatusFailed),
+		string(release.StatusPendingInstall),
+		string(release.StatusPendingRollback),
+		string(release.StatusPendingUpgrade),
+		string(release.StatusUninstalled),
+		string(release.StatusUninstalling),
+		string(release.StatusUnknown),
+	}
+
+	var labelSelectors []string
+	labelSelectors = append(labelSelectors, fmt.Sprintf("name in (%s)", name))
+	labelSelectors = append(labelSelectors, "owner in (helm)")
+	labelSelectors = append(labelSelectors, fmt.Sprintf("status in (%s)", strings.Join(helmStatuses, ",")))
+	listOptions := v1.ListOptions{
+		LabelSelector: strings.Join(labelSelectors, ","),
+	}
+
+	client, _ := a.ActionConfig.KubernetesClientSet()
+	secretListResp, err := client.CoreV1().Secrets(a.Namespace()).List(ctx, listOptions)
+
+	version := 0
+	if err == nil {
+		for _, secret := range secretListResp.Items {
+			versionString, ok := secret.Labels["version"]
+			if !ok {
+				continue // missing version label, not a helm release
+			}
+
+			// errors in conversion will implicitly set version to 0
+			// which is the original value
+			secretVersion, _ := strconv.Atoi(versionString)
+			if secretVersion > version {
+				version = secretVersion
+			}
+		}
+	}
+
+	return version
 }
 
 // DeleteReleaseRevision deletes a specific revision of a release

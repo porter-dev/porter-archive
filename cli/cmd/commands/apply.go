@@ -114,8 +114,15 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
 	}
 
+	var appName string
+	if os.Getenv("PORTER_APP_NAME") != "" {
+		appName = os.Getenv("PORTER_APP_NAME")
+	} else if os.Getenv("PORTER_STACK_NAME") != "" {
+		appName = os.Getenv("PORTER_STACK_NAME")
+	}
+
 	if project.ValidateApplyV2 {
-		err = v2.Apply(ctx, cliConfig, client, porterYAML)
+		err = v2.Apply(ctx, cliConfig, client, porterYAML, appName)
 		if err != nil {
 			return err
 		}
@@ -123,11 +130,8 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 	}
 
 	fileBytes, err := os.ReadFile(porterYAML) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
-	if err != nil {
-		stackName := os.Getenv("PORTER_STACK_NAME")
-		if stackName == "" {
-			return fmt.Errorf("a valid porter.yaml file must be specified. Run porter apply --help for more information")
-		}
+	if err != nil && appName == "" {
+		return fmt.Errorf("a valid porter.yaml file must be specified. Run porter apply --help for more information")
 	}
 
 	var previewVersion struct {
@@ -187,8 +191,8 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 		}
 
 		if parsed.Applications != nil {
-			for appName, app := range parsed.Applications {
-				resources, err := porter_app.CreateApplicationDeploy(ctx, client, worker, app, appName, cliConfig)
+			for name, app := range parsed.Applications {
+				resources, err := porter_app.CreateApplicationDeploy(ctx, client, worker, app, name, cliConfig)
 				if err != nil {
 					return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 				}
@@ -196,7 +200,6 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 				resGroup.Resources = append(resGroup.Resources, resources...)
 			}
 		} else {
-			appName := os.Getenv("PORTER_STACK_NAME")
 			if appName == "" {
 				return fmt.Errorf("environment variable PORTER_STACK_NAME must be set")
 			}

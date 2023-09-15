@@ -151,7 +151,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const validatedAppProto = await validateApp(data, latestProto);
+      const { validatedAppProto } = await validateApp(data, latestProto);
       await api.applyApp(
         "<token>",
         {

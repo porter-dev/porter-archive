@@ -15,6 +15,19 @@ ENABLE_CAPI_PROVISIONER=true
 NATS_URL=nats:4222
 CLUSTER_CONTROL_PLANE_ADDRESS=http://ccp-web:7833
 
+# Domain we use to generate custom subdomains from
+APP_ROOT_DOMAIN=withporter.run
+
+# Controls which external dns provider to use
+# Specific clients may require extra tokens
+# Options: cloudflare, powerdns, or empty string
+DNS_PROVIDER=powerdns
+
+# Cloudflare DNS provider
+# if set, can be used as an alternative to PowerDNS
+# Create a token here: https://dash.cloudflare.com/profile/api-tokens
+CLOUDFLARE_API_TOKEN=<cloudflare-edit-dns-api-token>
+
 # Github Login OAuth. More information found at https://docs.porter.run/enterprise/self-hosted/integrations/github#setting-up-github-repository-integrations
 
 GITHUB_LOGIN_ENABLED=false
@@ -34,6 +47,7 @@ GITHUB_APP_SECRET_PATH=<path_to_secret>
 # LAUNCHDARKLY_SDK_KEY is used to interact with the launchdarkly api
 # Retrieve your SDK key from https://app.launchdarkly.com/settings/projects/dev/environments
 
+FEATURE_FLAG_CLIENT=launch_darkly
 LAUNCHDARKLY_SDK_KEY=<launchdarkly_sdk_key>
 
 # Optional parameters

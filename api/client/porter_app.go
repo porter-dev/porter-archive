@@ -437,3 +437,33 @@ func (c *Client) GetBuildEnv(
 
 	return resp, err
 }
+
+// CreateOrUpdateAppEnvironment updates the app environment group and creates it if it doesn't exist
+func (c *Client) CreateOrUpdateAppEnvironment(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string,
+	deploymentTargetID string,
+	variables map[string]string,
+	secrets map[string]string,
+) (*porter_app.UpdateAppEnvironmentResponse, error) {
+	resp := &porter_app.UpdateAppEnvironmentResponse{}
+
+	req := &porter_app.UpdateAppEnvironmentRequest{
+		DeploymentTargetID: deploymentTargetID,
+		Variables:          variables,
+		Secrets:            secrets,
+		HardUpdate:         false,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/update-environment",
+			projectID, clusterID, appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}

@@ -308,7 +308,8 @@ export function clientAppFromProto(
       },
       services,
       predeploy: predeployList,
-      env: proto.env,
+      env: [],
+      envGroups: proto.envGroups.map((eg) => ({ name: eg.name, version: eg.version })),
       build: clientBuildFromProto(proto.build) ?? {
         method: "pack",
         context: "./",
@@ -339,7 +340,8 @@ export function clientAppFromProto(
     },
     services,
     predeploy,
-    env: proto.env,
+    env: [],
+    envGroups: proto.envGroups.map((eg) => ({ name: eg.name, version: eg.version })),
     build: clientBuildFromProto(proto.build) ?? {
       method: "pack",
       context: "./",

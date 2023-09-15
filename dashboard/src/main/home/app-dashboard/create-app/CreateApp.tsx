@@ -35,7 +35,7 @@ import EnvVariables from "../validate-apply/app-settings/EnvVariables";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import { valueExists } from "shared/util";
 import api from "shared/api";
-import { PorterApp } from "@porter-dev/api-contracts";
+import { EnvGroup, PorterApp } from "@porter-dev/api-contracts";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import Error from "components/porter/Error";
@@ -44,6 +44,7 @@ import { useAppValidation } from "lib/hooks/useAppValidation";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import PorterYamlModal from "./PorterYamlModal";
+import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -146,7 +147,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setDeployError("");
-      const validatedAppProto = await validateApp(data);
+      const { validatedAppProto, env } = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
 
       if (source.type === "github") {
@@ -154,7 +155,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         return;
       }
 
-      await createAndApply({ app: validatedAppProto, source });
+      await createAndApply({ app: validatedAppProto, source, env });
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
         setDeployError(err.response?.data?.error);
@@ -170,9 +171,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     async ({
       app,
       source,
+      env
     }: {
       app: PorterApp | null;
       source: SourceOptions;
+      env: KeyValueType[];
     }) => {
       setIsDeploying(true);
       // log analytics event that we started form submission
@@ -198,19 +201,34 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             cluster_id: currentCluster.id,
           }
         );
+
+        const variables: Record<string, string> = {};
+        const secret_variables: Record<string, string> = {};
+        if (env) {
+          env?.forEach(item => {
+            if (item && !item.deleted) { // Ensure item exists and is not deleted
+              if (item.hidden) {
+                secret_variables[item.key] = item.value;
+              } else {
+                variables[item.key] = item.value;
+              }
+            }
+          });
+        }
         await api.createEnvironmentGroups(
           "<token>",
           {
             name: app.name,
-            variables: app.env,
-            secret_variables: app.env,
+            variables,
+            secret_variables
           },
           {
             id: currentProject.id,
-            cluster_id: currentCluster.id,
+            cluster_id: currentCluster.id
           }
         );
-
+        const envGroup = new EnvGroup({ name: app.name, version: BigInt(1) })
+        app.envGroups = app.envGroups.concat(envGroup)
         await api.applyApp(
           "<token>",
           {

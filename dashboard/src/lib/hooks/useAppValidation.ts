@@ -70,12 +70,22 @@ export const useAppValidation = ({
       if (!deploymentTargetID) {
         throw new Error("No deployment target selected");
       }
+      const variables: Record<string, string> = {};
 
-      // const envVariableDeletions = removedEnvKeys(
-      //   data.app.env,
-      //   prevRevision?.env || {}
-      // );
+      if (data.app.env) {
+        data.app.env?.forEach(item => {
+          if (item && !item.deleted) { // Ensure item exists and is not deleted
 
+            variables[item.key] = item.value;
+
+          }
+        });
+      }
+      const envVariableDeletions = removedEnvKeys(
+        variables,
+        prevRevision?.env || {}
+      );
+      console.log(data.app.env)
       const proto = clientAppToProto(data);
       const commit_sha = await match(data.source)
         .with({ type: "github" }, async (src) => {
@@ -125,7 +135,7 @@ export const useAppValidation = ({
         atob(validAppData.validate_b64_app_proto)
       );
 
-      return validatedAppProto;
+      return { validatedAppProto: validatedAppProto, env: data.app.env };
     },
     [deploymentTargetID, currentProject, currentCluster]
   );

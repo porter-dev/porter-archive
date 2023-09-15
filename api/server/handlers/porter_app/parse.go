@@ -111,6 +111,8 @@ type ParseConf struct {
 	FullHelmValues string
 	// AddCustomNodeSelector is a flag to determine whether to add porter.run/workload-kind: application to the nodeselector attribute of the helm values
 	AddCustomNodeSelector bool
+	// RemoveDeletedServices is a flag to determine whether to remove values and dependencies for services that are not defined in the porter.yaml
+	RemoveDeletedServices bool
 }
 
 func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
@@ -199,7 +201,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 		Release:  parsed.Release,
 	}
 
-	values, err := buildUmbrellaChartValues(ctx, application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate, conf.Namespace, conf.AddCustomNodeSelector)
+	values, err := buildUmbrellaChartValues(ctx, application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate, conf.Namespace, conf.AddCustomNodeSelector, conf.RemoveDeletedServices)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error building values")
 		return nil, nil, nil, err
@@ -210,7 +212,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 		return nil, nil, nil, err
 	}
 
-	umbrellaChart, err := buildUmbrellaChart(application, conf.ServerConfig, conf.ProjectID, conf.ExistingChartDependencies)
+	umbrellaChart, err := buildUmbrellaChart(application, conf.ServerConfig, conf.ProjectID, conf.ExistingChartDependencies, conf.RemoveDeletedServices)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error building umbrella chart")
 		return nil, nil, nil, err
@@ -238,6 +240,7 @@ func buildUmbrellaChartValues(
 	userUpdate bool,
 	namespace string,
 	addCustomNodeSelector bool,
+	removeDeletedValues bool,
 ) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
@@ -259,6 +262,23 @@ func buildUmbrellaChartValues(
 		if existingValues != nil {
 			if existingValues[helmName] != nil {
 				existingValuesMap := existingValues[helmName].(map[string]interface{})
+				if removeDeletedValues {
+					// strip the env variables before coalescing
+					if existingValuesMap["container"] != nil {
+						containerMap := existingValuesMap["container"].(map[string]interface{})
+						if containerMap["env"] != nil {
+							envMap := containerMap["env"].(map[string]interface{})
+							if envMap["normal"] != nil {
+								envMap["normal"] = make(map[string]interface{})
+							}
+							if envMap["synced"] != nil {
+								envMap["synced"] = make([]map[string]interface{}, 0)
+							}
+							containerMap["env"] = envMap
+						}
+						existingValuesMap["container"] = containerMap
+					}
+				}
 				helm_values = utils.DeepCoalesceValues(existingValuesMap, helm_values)
 			}
 		}
@@ -290,10 +310,12 @@ func buildUmbrellaChartValues(
 		values[helmName] = helm_values
 	}
 
-	// add back in the existing services that were not overwritten
-	for k, v := range existingValues {
-		if values[k] == nil {
-			values[k] = v
+	if !removeDeletedValues {
+		// add back in the existing services that were not overwritten
+		for k, v := range existingValues {
+			if values[k] == nil {
+				values[k] = v
+			}
 		}
 	}
 
@@ -505,7 +527,7 @@ func deconstructSyncedEnvs(synced_env []*SyncedEnvSection, env map[string]string
 	return synced
 }
 
-func buildUmbrellaChart(application *Application, config *config.Config, projectID uint, existingDependencies []*chart.Dependency) (*chart.Chart, error) {
+func buildUmbrellaChart(application *Application, config *config.Config, projectID uint, existingDependencies []*chart.Dependency, removeDeletedDependencies bool) (*chart.Chart, error) {
 	deps := make([]*chart.Dependency, 0)
 	for alias, service := range application.Services {
 		var serviceType string
@@ -540,22 +562,24 @@ func buildUmbrellaChart(application *Application, config *config.Config, project
 		})
 	}
 
-	// add in the existing dependencies that were not overwritten
-	for _, dep := range existingDependencies {
-		if !dependencyExists(deps, dep) {
-			// have to repair the dependency name because of https://github.com/helm/helm/issues/9214
-			if strings.HasSuffix(dep.Name, "-web") || strings.HasSuffix(dep.Name, "-wkr") || strings.HasSuffix(dep.Name, "-job") {
-				dep.Name = getChartTypeFromHelmName(dep.Name)
-				if dep.Name == "" {
-					return nil, fmt.Errorf("unable to determine type of existing dependency")
+	if !removeDeletedDependencies {
+		// add in the existing dependencies that were not overwritten
+		for _, dep := range existingDependencies {
+			if !dependencyExists(deps, dep) {
+				// have to repair the dependency name because of https://github.com/helm/helm/issues/9214
+				if strings.HasSuffix(dep.Name, "-web") || strings.HasSuffix(dep.Name, "-wkr") || strings.HasSuffix(dep.Name, "-job") {
+					dep.Name = getChartTypeFromHelmName(dep.Name)
+					if dep.Name == "" {
+						return nil, fmt.Errorf("unable to determine type of existing dependency")
+					}
+					version, err := getLatestTemplateVersion(dep.Name, config, projectID)
+					if err != nil {
+						return nil, err
+					}
+					dep.Version = version
 				}
-				version, err := getLatestTemplateVersion(dep.Name, config, projectID)
-				if err != nil {
-					return nil, err
-				}
-				dep.Version = version
+				deps = append(deps, dep)
 			}
-			deps = append(deps, dep)
 		}
 	}
 

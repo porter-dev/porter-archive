@@ -70,9 +70,16 @@ export const clientAppValidator = z.object({
     readOnly: z.boolean(),
     value: z.string(),
   }),
+  envGroups: z.object({ name: z.string(), version: z.bigint() }).array().default([]),
   services: serviceValidator.array(),
   predeploy: serviceValidator.array().optional(),
-  env: z.record(z.string(), z.string()).default({}),
+  env: z.object({
+    key: z.string(),
+    value: z.string(),
+    hidden: z.boolean(),
+    locked: z.boolean(),
+    deleted: z.boolean(),
+  }).array().default([]),
   build: buildValidator,
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
@@ -181,7 +188,10 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
         new PorterApp({
           name: app.name.value,
           services,
-          env: app.env,
+          envGroups: app.envGroups.map((eg) => ({
+            name: eg.name,
+            version: eg.version,
+          })),
           build: clientBuildToProto(app.build),
           ...(predeploy && {
             predeploy: serviceProto(serializeService(predeploy)),
@@ -194,7 +204,10 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
         new PorterApp({
           name: app.name.value,
           services,
-          env: app.env,
+          envGroups: app.envGroups.map((eg) => ({
+            name: eg.name,
+            version: eg.version,
+          })),
           image: {
             repository: src.image.repository,
             tag: src.image.tag,
@@ -295,7 +308,8 @@ export function clientAppFromProto(
       },
       services,
       predeploy: predeployList,
-      env: proto.env,
+      env: [],
+      envGroups: proto.envGroups.map((eg) => ({ name: eg.name, version: eg.version })),
       build: clientBuildFromProto(proto.build) ?? {
         method: "pack",
         context: "./",
@@ -326,7 +340,8 @@ export function clientAppFromProto(
     },
     services,
     predeploy,
-    env: proto.env,
+    env: [],
+    envGroups: proto.envGroups.map((eg) => ({ name: eg.name, version: eg.version })),
     build: clientBuildFromProto(proto.build) ?? {
       method: "pack",
       context: "./",

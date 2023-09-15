@@ -413,3 +413,53 @@ func (c *Client) UpdateRevisionStatus(
 
 	return resp, err
 }
+
+// GetBuildEnv returns the build environment for a given app proto
+func (c *Client) GetBuildEnv(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string, appRevisionId string,
+) (*porter_app.GetBuildEnvResponse, error) {
+	resp := &porter_app.GetBuildEnvResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/revisions/%s/build-env",
+			projectID, clusterID, appName, appRevisionId,
+		),
+		nil,
+		resp,
+	)
+
+	return resp, err
+}
+
+// CreateOrUpdateAppEnvironment updates the app environment group and creates it if it doesn't exist
+func (c *Client) CreateOrUpdateAppEnvironment(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string,
+	deploymentTargetID string,
+	variables map[string]string,
+	secrets map[string]string,
+) (*porter_app.UpdateAppEnvironmentResponse, error) {
+	resp := &porter_app.UpdateAppEnvironmentResponse{}
+
+	req := &porter_app.UpdateAppEnvironmentRequest{
+		DeploymentTargetID: deploymentTargetID,
+		Variables:          variables,
+		Secrets:            secrets,
+		HardUpdate:         false,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/update-environment",
+			projectID, clusterID, appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}

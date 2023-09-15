@@ -15,28 +15,27 @@ import (
 )
 
 // AppProtoFromYaml converts an old version Porter YAML file into a PorterApp proto object
-func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName string) (*porterv1.PorterApp, error) {
+func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName string) (*porterv1.PorterApp, map[string]string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "v1-app-proto-from-yaml")
 	defer span.End()
 
 	if appName == "" {
-		return nil, telemetry.Error(ctx, span, nil, "app name is empty")
+		return nil, nil, telemetry.Error(ctx, span, nil, "app name is empty")
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
 
 	if porterYamlBytes == nil {
-		return nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
+		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
 	}
 
 	porterYaml := &PorterYAML{}
 	err := yaml.Unmarshal(porterYamlBytes, porterYaml)
 	if err != nil {
-		return nil, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
+		return nil, nil, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
 	}
 
 	appProto := &porterv1.PorterApp{
 		Name: appName,
-		Env:  porterYaml.Env,
 	}
 
 	if porterYaml.Build != nil {
@@ -58,12 +57,12 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 			}
 		} else {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "image", Value: porterYaml.Build.Image})
-			return nil, telemetry.Error(ctx, span, err, "error parsing image")
+			return nil, nil, telemetry.Error(ctx, span, err, "error parsing image")
 		}
 	}
 
 	if porterYaml.Apps != nil && porterYaml.Services != nil {
-		return nil, telemetry.Error(ctx, span, nil, "'apps' and 'services' are synonymous but both were defined")
+		return nil, nil, telemetry.Error(ctx, span, nil, "'apps' and 'services' are synonymous but both were defined")
 	}
 	var services map[string]Service
 	if porterYaml.Apps != nil {
@@ -75,7 +74,7 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 	}
 
 	if services == nil {
-		return nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
+		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
 	}
 
 	serviceProtoMap := make(map[string]*porterv1.Service, 0)
@@ -83,13 +82,13 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 		serviceType, err := protoEnumFromType(name, service)
 		if err != nil {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "failing-service-name", Value: name})
-			return nil, telemetry.Error(ctx, span, err, "error getting service type")
+			return nil, nil, telemetry.Error(ctx, span, err, "error getting service type")
 		}
 
 		serviceProto, err := serviceProtoFromConfig(service, serviceType)
 		if err != nil {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "failing-service-name", Value: name})
-			return nil, telemetry.Error(ctx, span, err, "error casting service config")
+			return nil, nil, telemetry.Error(ctx, span, err, "error casting service config")
 		}
 
 		serviceProtoMap[name] = serviceProto
@@ -99,12 +98,12 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 	if porterYaml.Release != nil {
 		predeployProto, err := serviceProtoFromConfig(*porterYaml.Release, porterv1.ServiceType_SERVICE_TYPE_JOB)
 		if err != nil {
-			return nil, telemetry.Error(ctx, span, err, "error casting predeploy config")
+			return nil, nil, telemetry.Error(ctx, span, err, "error casting predeploy config")
 		}
 		appProto.Predeploy = predeployProto
 	}
 
-	return appProto, nil
+	return appProto, porterYaml.Env, nil
 }
 
 func protoEnumFromType(name string, service Service) (porterv1.ServiceType, error) {

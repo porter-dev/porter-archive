@@ -76,7 +76,6 @@ export const useAppStatus = (
     };
 
     const updatePods = async (serviceName: string) => {
-        console.log("here is the revision id to number map", revisionIdToNumber)
         const selectors = `porter.run/service-name=${serviceName},porter.run/deployment-target-id=${deploymentTargetId}`;
 
         try {
@@ -209,9 +208,6 @@ export const useAppStatus = (
 
             return [serviceName, processReplicaSetArray(replicaSetMap)];
         }));
-
-        console.log(serviceReplicaSetMap);
-
 
         return serviceReplicaSetMap;
     }, [JSON.stringify(servicePodMap)]);

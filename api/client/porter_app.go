@@ -414,6 +414,7 @@ func (c *Client) UpdateRevisionStatus(
 	return resp, err
 }
 
+// GetBuildEnv returns the build environment for a given app proto
 func (c *Client) GetBuildEnv(
 	ctx context.Context,
 	projectID uint, clusterID uint,

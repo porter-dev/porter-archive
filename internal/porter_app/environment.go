@@ -17,6 +17,7 @@ type envVariarableOptions struct {
 // EnvVariableOption is a function that modifies AppEnvironmentFromProto
 type EnvVariableOption func(*envVariarableOptions)
 
+// AppEnvironmentFromProtoInput is the input struct for AppEnvironmentFromProto
 type AppEnvironmentFromProtoInput struct {
 	App              *porterv1.PorterApp
 	DeploymentTarget *models.DeploymentTarget

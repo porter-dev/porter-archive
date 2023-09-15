@@ -43,6 +43,17 @@ func NewUpdateAppEnvironmentHandler(
 	}
 }
 
+const (
+	// LabelKey_AppName is the label key for the app name
+	LabelKey_AppName = "porter.run/app-name"
+	// LabelKey_DeploymentTargetID is the label key for the deployment target id
+	LabelKey_DeploymentTargetID = "porter.run/deployment-target-id"
+	// LabelKey_DefaultAppEnvironment is the label key for the default app environment
+	LabelKey_DefaultAppEnvironment = "porter.run/default-app-environment"
+	// LabelKey_DefaultAppEnvironment is the label key signifying the resource is managed by porter
+	LabelKey_PorterManaged = "porter.run/managed"
+)
+
 // UpdateAppEnvironmentRequest represents the accepted fields on a request to the /apps/{porter_app_name}/environment-group endpoint
 type UpdateAppEnvironmentRequest struct {
 	DeploymentTargetID string            `json:"deployment_target_id"`
@@ -216,7 +227,14 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		CreatedAtUTC:    time.Now().UTC(),
 	}
 
-	err = environment_groups.CreateOrUpdateBaseEnvironmentGroup(ctx, agent, envGroup)
+	additionalEnvGroupLabels := map[string]string{
+		LabelKey_AppName:               appName,
+		LabelKey_DeploymentTargetID:    request.DeploymentTargetID,
+		LabelKey_DefaultAppEnvironment: "true",
+		LabelKey_PorterManaged:         "true",
+	}
+
+	err = environment_groups.CreateOrUpdateBaseEnvironmentGroup(ctx, agent, envGroup, additionalEnvGroupLabels)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "unable to create or update base environment group")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -228,7 +246,7 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		TargetNamespace:          namespace,
 	}
 
-	syncedEnvironment, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp)
+	syncedEnvironment, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp, additionalEnvGroupLabels)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "unable to create or update synced environment group")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

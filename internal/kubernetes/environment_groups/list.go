@@ -17,6 +17,8 @@ const (
 	LabelKey_EnvironmentGroupVersion = "porter.run/environment-group-version"
 	LabelKey_EnvironmentGroupName    = "porter.run/environment-group-name"
 
+	LabelKey_DefaultAppEnvironment = "porter.run/default-app-environment"
+
 	// Namespace_EnvironmentGroups is the base namespace for storing all environment groups.
 	// The configmaps and secrets here should be considered the source's of truth for a given version
 	Namespace_EnvironmentGroups = "porter-env-group"
@@ -37,9 +39,10 @@ type EnvironmentGroup struct {
 }
 
 type environmentGroupOptions struct {
-	namespace                    string
-	environmentGroupLabelName    string
-	environmentGroupLabelVersion int
+	namespace                          string
+	environmentGroupLabelName          string
+	environmentGroupLabelVersion       int
+	includeDefaultAppEnvironmentGroups bool
 }
 
 // EnvironmentGroupOption is a function that modifies ListEnvironmentGroups
@@ -63,6 +66,13 @@ func WithEnvironmentGroupName(name string) EnvironmentGroupOption {
 func WithEnvironmentGroupVersion(version int) EnvironmentGroupOption {
 	return func(opts *environmentGroupOptions) {
 		opts.environmentGroupLabelVersion = version
+	}
+}
+
+// WithDefaultAppEnvironmentGroup includes default app environment groups in the list
+func WithDefaultAppEnvironmentGroup() EnvironmentGroupOption {
+	return func(opts *environmentGroupOptions) {
+		opts.includeDefaultAppEnvironmentGroups = true
 	}
 }
 
@@ -108,6 +118,8 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 	// envGroupSet's key is the environment group's versioned name
 	envGroupSet := make(map[string]EnvironmentGroup)
 	for _, cm := range configMapListResp.Items {
+		fmt.Printf("cm: %+v\n", cm)
+
 		name, ok := cm.Labels[LabelKey_EnvironmentGroupName]
 		if !ok {
 			continue // missing name label, not an environment group
@@ -119,6 +131,13 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 		version, err := strconv.Atoi(versionString)
 		if err != nil {
 			continue // invalid version label as it should be an int, not an environment group
+		}
+
+		if !opts.includeDefaultAppEnvironmentGroups {
+			value, _ := cm.Labels[LabelKey_DefaultAppEnvironment]
+			if value == "true" {
+				continue // do not include default app environment groups
+			}
 		}
 
 		if _, ok := envGroupSet[cm.Name]; !ok {
@@ -146,6 +165,14 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 		if err != nil {
 			continue // invalid version label as it should be an int, not an environment group
 		}
+
+		if !opts.includeDefaultAppEnvironmentGroups {
+			value, ok := secret.Labels[LabelKey_DefaultAppEnvironment]
+			if ok && value == "true" {
+				continue // do not include default app environment groups
+			}
+		}
+
 		if _, ok := envGroupSet[secret.Name]; !ok {
 			envGroupSet[secret.Name] = EnvironmentGroup{}
 		}

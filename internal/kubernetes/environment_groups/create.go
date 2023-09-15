@@ -16,7 +16,7 @@ import (
 // If no existing environmentGroup exists by this name, a new one will be created as version 1, denoted by the label "porter.run/environment-group-version: 1".
 // If an environmentGroup already exists by this name, a new version will be created, and the label will be updated to reflect the new version.
 // Providing the Version field to this function will be ignored in order to not accidentally overwrite versions
-func CreateOrUpdateBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, environmentGroup EnvironmentGroup) error {
+func CreateOrUpdateBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, environmentGroup EnvironmentGroup, additionalLabels map[string]string) error {
 	ctx, span := telemetry.NewSpan(ctx, "create-environment-group")
 	defer span.End()
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "environment-group", Value: environmentGroup.Name})
@@ -51,7 +51,7 @@ func CreateOrUpdateBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent
 		CreatedAtUTC:    environmentGroup.CreatedAtUTC,
 	}
 
-	err = createVersionedEnvironmentGroupInNamespace(ctx, a, newEnvironmentGroup, Namespace_EnvironmentGroups)
+	err = createVersionedEnvironmentGroupInNamespace(ctx, a, newEnvironmentGroup, Namespace_EnvironmentGroups, additionalLabels)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "unable to create new versioned environment group")
 	}
@@ -62,7 +62,7 @@ func CreateOrUpdateBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent
 // createEnvironmentGroupInTargetNamespace creates a new environment group in the target namespace. If you want to create a new base environment group, use CreateOrUpdateBaseEnvironmentGroup instead.
 // This should only be used for sync from a base environment to a target environment.
 // If the target namespace does not exist, it will be created for you.
-func createEnvironmentGroupInTargetNamespace(ctx context.Context, a *kubernetes.Agent, namespace string, environmentGroup EnvironmentGroup) (string, error) {
+func createEnvironmentGroupInTargetNamespace(ctx context.Context, a *kubernetes.Agent, namespace string, environmentGroup EnvironmentGroup, additionalLabels map[string]string) (string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-environment-group-in-target")
 	defer span.End()
 	telemetry.WithAttributes(span,
@@ -95,7 +95,7 @@ func createEnvironmentGroupInTargetNamespace(ctx context.Context, a *kubernetes.
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "environment-group-namespace", Value: namespace})
 
-	err = createVersionedEnvironmentGroupInNamespace(ctx, a, environmentGroup, namespace)
+	err = createVersionedEnvironmentGroupInNamespace(ctx, a, environmentGroup, namespace, additionalLabels)
 	if err != nil {
 		return configMapName, telemetry.Error(ctx, span, err, "error creating environment group clone in target namespace")
 	}
@@ -104,7 +104,7 @@ func createEnvironmentGroupInTargetNamespace(ctx context.Context, a *kubernetes.
 }
 
 // createVersionedEnvironmentGroupInNamespace creates a new environment group in the target namespace. This is used to keep the configmap and secret version for an environment variable in sync
-func createVersionedEnvironmentGroupInNamespace(ctx context.Context, a *kubernetes.Agent, environmentGroup EnvironmentGroup, targetNamespace string) error {
+func createVersionedEnvironmentGroupInNamespace(ctx context.Context, a *kubernetes.Agent, environmentGroup EnvironmentGroup, targetNamespace string, additionalLabels map[string]string) error {
 	ctx, span := telemetry.NewSpan(ctx, "create-environment-group-on-cluster")
 	defer span.End()
 
@@ -119,6 +119,10 @@ func createVersionedEnvironmentGroupInNamespace(ctx context.Context, a *kubernet
 		},
 		Data: environmentGroup.Variables,
 	}
+	for k, v := range additionalLabels {
+		configMap.Labels[k] = v
+	}
+
 	err := createConfigMapWithVersion(ctx, a, configMap, environmentGroup.Version)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "unable to create new environment group variables version")

@@ -26,7 +26,7 @@ type SyncLatestVersionToNamespaceOutput struct {
 // SyncLatestVersionToNamespace gets the latest version of a given environment group, and makes a copy of it in the target
 // namespace. If the versions match, no changes will be made. In either case, the name of an environment group in the target namespace will be returned
 // unless an error has occurred.
-func SyncLatestVersionToNamespace(ctx context.Context, a *kubernetes.Agent, inp SyncLatestVersionToNamespaceInput) (SyncLatestVersionToNamespaceOutput, error) {
+func SyncLatestVersionToNamespace(ctx context.Context, a *kubernetes.Agent, inp SyncLatestVersionToNamespaceInput, additionalLabels map[string]string) (SyncLatestVersionToNamespaceOutput, error) {
 	ctx, span := telemetry.NewSpan(ctx, "sync-env-group-version-to-namespace")
 	defer span.End()
 
@@ -65,7 +65,7 @@ func SyncLatestVersionToNamespace(ctx context.Context, a *kubernetes.Agent, inp 
 		}, nil
 	}
 
-	targetConfigmapName, err := createEnvironmentGroupInTargetNamespace(ctx, a, inp.TargetNamespace, baseEnvironmentGroup)
+	targetConfigmapName, err := createEnvironmentGroupInTargetNamespace(ctx, a, inp.TargetNamespace, baseEnvironmentGroup, additionalLabels)
 	if err != nil {
 		return output, telemetry.Error(ctx, span, err, "unable to create environment group in target namespace")
 	}

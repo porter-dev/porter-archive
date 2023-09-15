@@ -932,12 +932,12 @@ const listAppRevisions = baseApi<
 });
 
 const getLatestAppRevisions = baseApi<
-{},{
+  {}, {
     project_id: number;
     cluster_id: number;
-}>("GET", ({ project_id, cluster_id }) => {
-  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/revisions`;
-})
+  }>("GET", ({ project_id, cluster_id }) => {
+    return `/api/projects/${project_id}/clusters/${cluster_id}/apps/revisions`;
+  })
 
 const getGitlabProcfileContents = baseApi<
   {
@@ -1792,6 +1792,22 @@ const getAllEnvGroups = baseApi<
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
+});
+
+const updateEnvironmentGroupV2 = baseApi<
+  {
+    deployment_target_id: string;
+    variables: Record<string, string>;
+    secrets: Record<string, string>;
+    remove_missing?: boolean;
+  },
+  {
+    id: number;
+    cluster_id: number;
+    app_name: string;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/apps/${pathParams.app_name}/update-environment `;
 });
 
 const listEnvGroups = baseApi<
@@ -3108,6 +3124,7 @@ export default {
   updateStacksEnvGroup,
   listEnvGroups,
   getAllEnvGroups,
+  updateEnvironmentGroupV2,
   getEnvGroup,
   deleteEnvGroup,
   deleteNewEnvGroup,

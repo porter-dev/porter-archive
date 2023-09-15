@@ -45,18 +45,18 @@ func NewUpdateAppEnvironmentHandler(
 
 // UpdateAppEnvironmentRequest represents the accepted fields on a request to the /apps/{porter_app_name}/environment-group endpoint
 type UpdateAppEnvironmentRequest struct {
-	DeploymentTargetID string            `schema:"deployment_target_id"`
-	Variables          map[string]string `schema:"variables"`
-	Secrets            map[string]string `schema:"secrets"`
+	DeploymentTargetID string            `json:"deployment_target_id"`
+	Variables          map[string]string `json:"variables"`
+	Secrets            map[string]string `json:"secrets"`
 	// HardUpdate is used to remove any variables that are not specified in the request.  If false, the request will only update the variables specified in the request,
 	// and leave all other variables untouched.
-	HardUpdate bool `schema:"remove_missing"`
+	HardUpdate bool `json:"remove_missing"`
 }
 
 // UpdateAppEnvironmentResponse represents the fields on the response object from the /apps/{porter_app_name}/environment-group endpoint
 type UpdateAppEnvironmentResponse struct {
-	EnvGroupName    string `schema:"env_group_name"`
-	EnvGroupVersion int    `schema:"env_group_version"`
+	EnvGroupName    string `json:"env_group_name"`
+	EnvGroupVersion int    `json:"env_group_version"`
 }
 
 // ServeHTTP updates or creates the environment group for an app
@@ -81,6 +81,18 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+	porterApp, err := c.Config().Repo.PorterApp().ReadPorterAppByName(cluster.ID, appName)
+	if err != nil {
+		err := telemetry.Error(ctx, span, nil, "error getting porter app by name")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+	if porterApp.ID == 0 {
+		err := telemetry.Error(ctx, span, nil, "porter app not found")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
+		return
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-id", Value: porterApp.ID})
 
 	if request.DeploymentTargetID == "" {
 		err := telemetry.Error(ctx, span, nil, "must provide deployment target id")

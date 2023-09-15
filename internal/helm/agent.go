@@ -132,6 +132,7 @@ func (a *Agent) GetRelease(
 
 	if version == 0 && a.Namespace() != "" {
 		version = a.getLatestVersion(ctx, name)
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "version-override", Value: version})
 	}
 
 	// Namespace is already known by the RESTClientGetter.

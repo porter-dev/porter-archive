@@ -68,8 +68,6 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 		return envGroups, telemetry.Error(ctx, span, err, "error reading deployment targets")
 	}
 
-	fmt.Printf("len deployment targets: %d\n", len(deploymentTargets))
-
 	if len(deploymentTargets) == 0 {
 		return envGroups, telemetry.Error(ctx, span, nil, "no deployment targets found")
 	}
@@ -81,8 +79,6 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 	if deploymentTarget.ClusterID != inp.ClusterID {
 		return envGroups, telemetry.Error(ctx, span, nil, "deployment target does not belong to cluster")
 	}
-
-	fmt.Printf("deployment target: %v\n", deploymentTarget)
 
 	var opts envVariarableOptions
 	for _, opt := range varOpts {
@@ -97,8 +93,6 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 		return envGroups, telemetry.Error(ctx, span, nil, "deployment target selector type not supported")
 	}
 
-	fmt.Printf("namespace: %s\n", namespace)
-
 	filteredEnvGroups := inp.App.EnvGroups
 	if len(opts.envGroups) > 0 {
 		filteredEnvGroups = []*porterv1.EnvGroup{}
@@ -110,8 +104,6 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 			}
 		}
 	}
-
-	fmt.Printf("filtered env groups: %v\n", filteredEnvGroups)
 
 	for _, envGroupRef := range filteredEnvGroups {
 		envGroup, err := environment_groups.EnvironmentGroupInTargetNamespace(ctx, inp.K8SAgent, environment_groups.EnvironmentGroupInTargetNamespaceInput{

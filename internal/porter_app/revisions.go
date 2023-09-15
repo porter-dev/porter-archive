@@ -125,6 +125,8 @@ type AttachEnvToRevisionInput struct {
 	DeploymentTargetRepository repository.DeploymentTargetRepository
 }
 
+// AttachEnvToRevision attaches the environment variables from the app's default env group to a revision
+// These are the variables that are displayed to the user in the UI as associated with the app rather than an env group
 func AttachEnvToRevision(ctx context.Context, inp AttachEnvToRevisionInput) (Revision, error) {
 	ctx, span := telemetry.NewSpan(ctx, "attach-env-to-revision")
 	defer span.End()

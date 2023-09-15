@@ -198,19 +198,19 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             cluster_id: currentCluster.id,
           }
         );
-
         await api.createEnvironmentGroups(
           "<token>",
           {
             name: app.name,
             variables: app.env,
-            secret_variables: undefined,
+            secret_variables: app.env,
           },
           {
             id: currentProject.id,
             cluster_id: currentCluster.id,
           }
         );
+
         await api.applyApp(
           "<token>",
           {

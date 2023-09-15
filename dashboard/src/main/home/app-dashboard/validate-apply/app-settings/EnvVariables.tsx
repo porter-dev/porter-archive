@@ -4,24 +4,8 @@ import { Controller, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import EnvGroupArrayV2 from "main/home/cluster-dashboard/env-groups/EnvGroupArrayV2";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArrayV2";
-
 const EnvVariables: React.FC = () => {
   const { control } = useFormContext<PorterAppFormData>();
-
-  const recordToKVType = useCallback((env?: Record<string, string>) => {
-    console.log("recordToKVType", env)
-    return Object.entries(env ?? []).map(([key, value]) => {
-      return { key, value, hidden: false, locked: value?.includes("PORTERLOCKED"), deleted: false };
-    });
-  }, []);
-
-  const kvTypeToRecord = useCallback((env: KeyValueType[]) => {
-    console.log("kvTypeToRecord", env)
-    return env.reduce((acc, { key, value }) => {
-      acc[key] = value;
-      return acc;
-    }, {} as Record<string, string>);
-  }, []);
 
   return (
     <Controller
@@ -29,9 +13,9 @@ const EnvVariables: React.FC = () => {
       control={control}
       render={({ field: { value, onChange } }) => (
         <EnvGroupArrayV2
-          values={recordToKVType(value)}
+          values={value ? value : []}
           setValues={(x: KeyValueType[]) => {
-            onChange(kvTypeToRecord(x));
+            onChange(x);
           }}
           fileUpload={true}
           syncedEnvGroups={[]}
@@ -40,5 +24,6 @@ const EnvVariables: React.FC = () => {
     />
   );
 };
+
 
 export default EnvVariables;

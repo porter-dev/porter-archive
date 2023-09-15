@@ -71,10 +71,10 @@ export const useAppValidation = ({
         throw new Error("No deployment target selected");
       }
 
-      const envVariableDeletions = removedEnvKeys(
-        data.app.env,
-        prevRevision?.env || {}
-      );
+      // const envVariableDeletions = removedEnvKeys(
+      //   data.app.env,
+      //   prevRevision?.env || {}
+      // );
 
       const proto = clientAppToProto(data);
       const commit_sha = await match(data.source)

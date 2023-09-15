@@ -32,9 +32,15 @@ import (
 type Agent struct {
 	ActionConfig *action.Configuration
 	K8sAgent     *kubernetes.Agent
+
+	// The namespace struct attribute is unexported to avoid cases
+	// where a developer might change this, thinking that it will
+	// apply to all api interactions. RESTClientGetter has an immutable
+	// copy of the value, so change this won't impact those requests.
 	namespace string
 }
 
+// Namespace returns the configured namespace
 func (a *Agent) Namespace() string {
 	return a.namespace
 }

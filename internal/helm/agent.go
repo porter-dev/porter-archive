@@ -131,8 +131,8 @@ func (a *Agent) GetRelease(
 	)
 
 	if version == 0 && a.Namespace() != "" {
-		version = a.getLatestVersion(ctx, name)
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "version-override", Value: version})
+		version = a.getLatestReleaseVersion(ctx, name)
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "computed-version", Value: version})
 	}
 
 	// Namespace is already known by the RESTClientGetter.
@@ -175,7 +175,7 @@ func (a *Agent) GetRelease(
 	return release, err
 }
 
-// getLatestVersion retrieves the actual number for the last helm release
+// getLatestReleaseVersion retrieves the actual number for the last helm release
 // for a given name.
 //
 // If we use helm's built-in method of retrieving the last
@@ -190,8 +190,8 @@ func (a *Agent) GetRelease(
 // The ideal case would be if we could sort on the server side, in which case
 // we could Limit results by 1 and not worry about the helm release status label,
 // but Kubernetes only supports ordering results client-side.
-func (a *Agent) getLatestVersion(ctx context.Context, name string) int {
-	ctx, span := telemetry.NewSpan(ctx, "helm-get-latest-version")
+func (a *Agent) getLatestReleaseVersion(ctx context.Context, name string) int {
+	ctx, span := telemetry.NewSpan(ctx, "helm-get-latest-release-version")
 	defer span.End() // This span is one of most frequent spans. We need to sample this.
 
 	telemetry.WithAttributes(span,

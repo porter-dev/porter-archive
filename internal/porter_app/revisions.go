@@ -5,8 +5,11 @@ import (
 	"encoding/base64"
 	"time"
 
+	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -24,6 +27,51 @@ type Revision struct {
 	CreatedAt time.Time `json:"created_at"`
 	// UpdatedAt is the time the revision was updated
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// GetAppRevisionInput is the input struct for GetAppRevisions
+type GetAppRevisionInput struct {
+	ProjectID     uint
+	AppRevisionID uuid.UUID
+
+	CCPClient porterv1connect.ClusterControlPlaneServiceClient
+}
+
+// GetAppRevision returns a single app revision by id
+func GetAppRevision(ctx context.Context, inp GetAppRevisionInput) (Revision, error) {
+	ctx, span := telemetry.NewSpan(ctx, "get-app-revision")
+	defer span.End()
+
+	var revision Revision
+
+	if inp.ProjectID == 0 {
+		return revision, telemetry.Error(ctx, span, nil, "must provide a project id")
+	}
+	if inp.AppRevisionID == uuid.Nil {
+		return revision, telemetry.Error(ctx, span, nil, "must provide an app revision id")
+	}
+
+	getRevisionReq := connect.NewRequest(&porterv1.GetAppRevisionRequest{
+		ProjectId:     int64(inp.ProjectID),
+		AppRevisionId: inp.AppRevisionID.String(),
+	})
+
+	ccpResp, err := inp.CCPClient.GetAppRevision(ctx, getRevisionReq)
+	if err != nil {
+		return revision, telemetry.Error(ctx, span, err, "error getting app revision")
+	}
+	if ccpResp == nil || ccpResp.Msg == nil {
+		return revision, telemetry.Error(ctx, span, nil, "get app revision response is nil")
+	}
+
+	appRevisionProto := ccpResp.Msg.AppRevision
+
+	revision, err = EncodedRevisionFromProto(ctx, appRevisionProto)
+	if err != nil {
+		return revision, telemetry.Error(ctx, span, err, "error converting app revision from proto")
+	}
+
+	return revision, nil
 }
 
 // EncodedRevisionFromProto converts an AppRevision proto object into a Revision object

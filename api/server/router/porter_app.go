@@ -978,5 +978,34 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/update-environment-group -> porter_app.NewUpdateAppEnvironmentGroupHandler
+	updateAppEnvironmentGroupEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("/apps/{%s}/update-environment-group", types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	updateAppEnvironmentGroupHandler := porter_app.NewUpdateAppEnvironmentGroupHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateAppEnvironmentGroupEndpoint,
+		Handler:  updateAppEnvironmentGroupHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

@@ -413,3 +413,33 @@ func (c *Client) UpdateRevisionStatus(
 
 	return resp, err
 }
+
+// CreateOrUpdateAppEnvironmentGroup updates the app environment group and creates it if it doesn't exist
+func (c *Client) CreateOrUpdateAppEnvironmentGroup(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string,
+	deploymentTargetID string,
+	variables map[string]string,
+	secrets map[string]string,
+) (*porter_app.UpdateAppEnvironmentGroupResponse, error) {
+	resp := &porter_app.UpdateAppEnvironmentGroupResponse{}
+
+	req := &porter_app.UpdateAppEnvironmentGroupRequest{
+		DeploymentTargetID: deploymentTargetID,
+		Variables:          variables,
+		Secrets:            secrets,
+		HardUpdate:         false,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/update-environment-group",
+			projectID, clusterID, appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}

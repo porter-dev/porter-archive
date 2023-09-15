@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// DeploymentTargetSelectorType is the type of selector for a deployment target
 type DeploymentTargetSelectorType string
 
 const (

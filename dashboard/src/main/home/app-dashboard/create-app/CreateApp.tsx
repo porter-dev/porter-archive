@@ -112,6 +112,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           builder: "",
           buildpacks: [],
         },
+        env: [],
       },
       source: {
         git_repo_name: "",
@@ -139,6 +140,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const build = watch("app.build");
   const image = watch("source.image");
   const services = watch("app.services");
+  const env = watch("app.env");
+
   const {
     detectedServices: servicesFromYaml,
     porterYamlFound,
@@ -155,7 +158,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setDeployError("");
-      const { validatedAppProto, env } = await validateApp(data);
+      const { validatedAppProto } = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
 
       if (source.type === "github") {
@@ -210,7 +213,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
         );
 
-         const variables = env
+        const variables = env
           .filter((e) => !e.hidden && !e.deleted)
           .reduce((acc: Record<string, string>, item) => {
             acc[item.key] = item.value;
@@ -241,7 +244,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         const addedEnvGroup = await z
           .object({
             env_group_name: z.string(),
-            env_group_version: z.number(),
+            env_group_version: z.coerce.bigint(),
           })
           .parseAsync(envGroupResponse.data);
         const envGroups = [
@@ -546,8 +549,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
-                              } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${
+                                  detectedServices.count > 1 ? "s" : ""
+                                } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>
@@ -618,7 +622,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           projectId={currentProject.id}
           clusterId={currentCluster.id}
           deployPorterApp={() =>
-            createAndApply({ app: validatedAppProto, source })
+            createAndApply({ app: validatedAppProto, source, env })
           }
           deploymentError={deployError}
           porterYamlPath={source.porter_yaml_path}

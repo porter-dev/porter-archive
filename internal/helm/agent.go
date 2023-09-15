@@ -32,6 +32,11 @@ import (
 type Agent struct {
 	ActionConfig *action.Configuration
 	K8sAgent     *kubernetes.Agent
+	namespace    string
+}
+
+func (a *Agent) Namespace() string {
+	return a.namespace
 }
 
 // ListReleases lists releases based on a ListFilter
@@ -119,6 +124,10 @@ func (a *Agent) GetRelease(
 		telemetry.AttributeKV{Key: "getDeps", Value: getDeps},
 	)
 
+	if version == 0 && a.Namespace() != "" {
+		version = a.getLatestVersion(ctx, name)
+	}
+
 	// Namespace is already known by the RESTClientGetter.
 	cmd := action.NewGet(a.ActionConfig)
 
@@ -157,6 +166,63 @@ func (a *Agent) GetRelease(
 	}
 
 	return release, err
+}
+
+// getLatestVersion retrieves the actual number for the last helm release
+// for a given name.
+//
+// If we use helm's built-in method of retrieving the last
+// release, it will retrieve _all_ releases and then only return the last one.
+// That works ~fine except in cases where you have hundreds of releases,
+// in which case any api calls will take significantly longer.
+//
+// Instead, we retrieve all non-supersceded versions, then grab the highest
+// version in that list. In the worst case, this would also retrieve every
+// release. In the best case, it only retrieves a single release (the latest).
+//
+// The ideal case would be if we could sort on the server side, in which case
+// we could Limit results by 1 and not worry about the helm release status label,
+// but Kubernetes only supports limiting results api-side.
+func (a *Agent) getLatestVersion(ctx context.Context, name string) int {
+	helmStatuses := []string{
+		string(release.StatusDeployed),
+		string(release.StatusFailed),
+		string(release.StatusPendingInstall),
+		string(release.StatusPendingRollback),
+		string(release.StatusPendingUpgrade),
+		string(release.StatusUninstalled),
+		string(release.StatusUninstalling),
+		string(release.StatusUnknown),
+	}
+
+	var labelSelectors []string
+	labelSelectors = append(labelSelectors, fmt.Sprintf("name in (%s)", name))
+	labelSelectors = append(labelSelectors, "owner in (helm)")
+	labelSelectors = append(labelSelectors, "status in (%s)", strings.Join(helmStatuses, ","))
+	listOptions := v1.ListOptions{
+		LabelSelector: fmt.Sprintf("name=%s", name),
+	}
+
+	client, _ := a.ActionConfig.KubernetesClientSet()
+	secretListResp, err := client.CoreV1().Secrets(a.Namespace()).List(ctx, listOptions)
+	version := 0
+	if err == nil {
+		for _, secret := range secretListResp.Items {
+			versionString, ok := secret.Labels["version"]
+			if !ok {
+				continue // missing version label, not a helm release
+			}
+
+			// errors in conversion will implicitly set version to 0
+			// which is the original value
+			secretVersion, _ := strconv.Atoi(versionString)
+			if secretVersion > version {
+				version = secretVersion
+			}
+		}
+	}
+
+	return version
 }
 
 // DeleteReleaseRevision deletes a specific revision of a release

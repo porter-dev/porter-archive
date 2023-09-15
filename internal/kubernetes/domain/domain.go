@@ -101,11 +101,16 @@ func (c *CreateDNSRecordConfig) NewDNSRecordForEndpoint() *models.DNSRecord {
 // CreateDomain creates a new record for the vanity domain
 func (e *DNSRecord) CreateDomain(dnsClient *dns.Client) error {
 	isIPv4 := net.ParseIP(e.Endpoint) != nil
-	domain := fmt.Sprintf("%s.%s", e.SubdomainPrefix, e.RootDomain)
 
+	dnsType := dns.RecordType_CNAME
 	if isIPv4 {
-		return dnsClient.CreateARecord(e.Endpoint, domain)
+		dnsType = dns.RecordType_A
 	}
 
-	return dnsClient.CreateCNAMERecord(e.Endpoint, domain)
+	return dnsClient.CreateRecord(dns.Record{
+		Type:       dnsType,
+		Value:      e.Endpoint,
+		Name:       e.SubdomainPrefix,
+		RootDomain: e.RootDomain,
+	})
 }

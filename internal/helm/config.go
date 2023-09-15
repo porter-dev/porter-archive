@@ -77,6 +77,7 @@ func GetAgentFromK8sAgent(stg string, ns string, l *logger.Logger, k8sAgent *kub
 	return &Agent{
 		ActionConfig: actionConf,
 		K8sAgent:     k8sAgent,
+		namespace:    ns,
 	}, nil
 }
 

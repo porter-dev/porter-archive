@@ -85,7 +85,6 @@ export const useAppValidation = ({
         variables,
         prevRevision?.env || {}
       );
-      console.log(data.app.env)
       const proto = clientAppToProto(data);
       const commit_sha = await match(data.source)
         .with({ type: "github" }, async (src) => {

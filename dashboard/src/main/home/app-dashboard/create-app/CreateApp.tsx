@@ -278,7 +278,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         return true;
       } catch (err) {
-        console.log(err)
         if (axios.isAxiosError(err) && err.response?.data?.error) {
           updateAppStep({
             step: "stack-launch-failure",

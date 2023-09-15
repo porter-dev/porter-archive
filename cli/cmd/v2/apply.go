@@ -73,7 +73,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 			return fmt.Errorf("error getting app name from b64 app proto: %w", err)
 		}
 
-		envGroupResp, err := client.CreateOrUpdateAppEnvironmentGroup(ctx, cliConf.Project, cliConf.Cluster, appName, targetResp.DeploymentTargetID, parseResp.EnvVariables, parseResp.EnvSecrets)
+		envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, targetResp.DeploymentTargetID, parseResp.EnvVariables, parseResp.EnvSecrets)
 		if err != nil {
 			return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
 		}

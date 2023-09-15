@@ -1,17 +1,15 @@
 package porter_app
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
-	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/porter_app"
 
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
+	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
 
 	"connectrpc.com/connect"
 
@@ -27,26 +25,26 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// UpdateAppEnvironmentGroupHandler handles the /apps/{porter_app_name}/update-environment-group endpoint
-type UpdateAppEnvironmentGroupHandler struct {
+// UpdateAppEnvironmentHandler handles the /apps/{porter_app_name}/update-environment endpoint
+type UpdateAppEnvironmentHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewUpdateAppEnvironmentGroupHandler returns a new UpdateAppEnvironmentGroupHandler
-func NewUpdateAppEnvironmentGroupHandler(
+// NewUpdateAppEnvironmentHandler returns a new UpdateAppEnvironmentHandler
+func NewUpdateAppEnvironmentHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *UpdateAppEnvironmentGroupHandler {
-	return &UpdateAppEnvironmentGroupHandler{
+) *UpdateAppEnvironmentHandler {
+	return &UpdateAppEnvironmentHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-// UpdateAppEnvironmentGroupRequest represents the accepted fields on a request to the /apps/{porter_app_name}/environment-group endpoint
-type UpdateAppEnvironmentGroupRequest struct {
+// UpdateAppEnvironmentRequest represents the accepted fields on a request to the /apps/{porter_app_name}/environment-group endpoint
+type UpdateAppEnvironmentRequest struct {
 	DeploymentTargetID string            `schema:"deployment_target_id"`
 	Variables          map[string]string `schema:"variables"`
 	Secrets            map[string]string `schema:"secrets"`
@@ -55,14 +53,14 @@ type UpdateAppEnvironmentGroupRequest struct {
 	HardUpdate bool `schema:"remove_missing"`
 }
 
-// UpdateAppEnvironmentGroupResponse represents the fields on the response object from the /apps/{porter_app_name}/environment-group endpoint
-type UpdateAppEnvironmentGroupResponse struct {
+// UpdateAppEnvironmentResponse represents the fields on the response object from the /apps/{porter_app_name}/environment-group endpoint
+type UpdateAppEnvironmentResponse struct {
 	EnvGroupName    string `schema:"env_group_name"`
 	EnvGroupVersion int    `schema:"env_group_version"`
 }
 
 // ServeHTTP updates or creates the environment group for an app
-func (c *UpdateAppEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-update-app-env-group")
 	defer span.End()
 	r = r.Clone(ctx)
@@ -77,7 +75,7 @@ func (c *UpdateAppEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *h
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
 
-	request := &UpdateAppEnvironmentGroupRequest{}
+	request := &UpdateAppEnvironmentRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "invalid request")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -120,7 +118,7 @@ func (c *UpdateAppEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "hard-update", Value: request.HardUpdate})
 
-	envGroupName, err := AppEnvGroupName(ctx, appName, request.DeploymentTargetID, cluster.ID, c.Repo().PorterApp())
+	envGroupName, err := porter_app.AppEnvGroupName(ctx, appName, request.DeploymentTargetID, cluster.ID, c.Repo().PorterApp())
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting app env group name")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -171,7 +169,7 @@ func (c *UpdateAppEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *h
 
 		if sameEnvGroup {
 
-			res := &UpdateAppEnvironmentGroupResponse{
+			res := &UpdateAppEnvironmentResponse{
 				EnvGroupName:    latestEnvironmentGroup.Name,
 				EnvGroupVersion: latestEnvironmentGroup.Version,
 			}
@@ -241,43 +239,10 @@ func (c *UpdateAppEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
-	res := &UpdateAppEnvironmentGroupResponse{
+	res := &UpdateAppEnvironmentResponse{
 		EnvGroupName:    split[0],
 		EnvGroupVersion: version,
 	}
 
 	c.WriteResult(w, r, res)
-}
-
-// AppEnvGroupName returns the name of the environment group for the app
-func AppEnvGroupName(ctx context.Context, appName string, deploymentTargetId string, clusterID uint, porterAppRepository repository.PorterAppRepository) (string, error) {
-	ctx, span := telemetry.NewSpan(ctx, "app-env-group-name")
-	defer span.End()
-
-	if appName == "" {
-		return "", telemetry.Error(ctx, span, nil, "app name is empty")
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
-
-	if deploymentTargetId == "" {
-		return "", telemetry.Error(ctx, span, nil, "deployment target id is empty")
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTargetId})
-
-	if clusterID == 0 {
-		return "", telemetry.Error(ctx, span, nil, "cluster id is empty")
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cluster-id", Value: clusterID})
-
-	porterApp, err := porterAppRepository.ReadPorterAppByName(clusterID, appName)
-	if err != nil {
-		return "", telemetry.Error(ctx, span, err, "error reading porter app by name")
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-id", Value: porterApp.ID})
-
-	if len(deploymentTargetId) < 6 {
-		return "", telemetry.Error(ctx, span, nil, "deployment target id is too short")
-	}
-
-	return fmt.Sprintf("%d-%s", porterApp.ID, deploymentTargetId[:6]), nil
 }

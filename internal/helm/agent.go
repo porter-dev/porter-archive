@@ -32,7 +32,7 @@ import (
 type Agent struct {
 	ActionConfig *action.Configuration
 	K8sAgent     *kubernetes.Agent
-	namespace    string
+	namespace string
 }
 
 func (a *Agent) Namespace() string {
@@ -200,7 +200,7 @@ func (a *Agent) getLatestVersion(ctx context.Context, name string) int {
 	labelSelectors = append(labelSelectors, "owner in (helm)")
 	labelSelectors = append(labelSelectors, "status in (%s)", strings.Join(helmStatuses, ","))
 	listOptions := v1.ListOptions{
-		LabelSelector: fmt.Sprintf("name=%s", name),
+		LabelSelector: strings.Join(labelSelectors, ","),
 	}
 
 	client, _ := a.ActionConfig.KubernetesClientSet()

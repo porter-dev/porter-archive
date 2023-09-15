@@ -1,59 +1,60 @@
-package dns
+package cloudflare
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/cloudflare/cloudflare-go"
+	"github.com/porter-dev/porter/internal/integrations/dns"
 )
 
-// CloudflareRecordType strongly types cloudflare dns entry types
-type CloudflareRecordType string
+// RecordType strongly types cloudflare dns entry types
+type RecordType string
 
 const (
-	// CloudflareA declares an A record type for cloudflare
-	CloudflareA CloudflareRecordType = "A"
+	// RecordType_A declares an A record type for cloudflare
+	RecordType_A RecordType = "A"
 
-	// CloudflareCNAME declares an CNME record type for cloudflare
-	CloudflareCNAME = "CNAME"
+	// RecordType_CNAME declares an CNME record type for cloudflare
+	RecordType_CNAME = "CNAME"
 )
 
-// CloudflareTTL sets the TTL for Cloudflare DNS records
-const CloudflareTTL = 300
+// TTL sets the TTL for Cloudflare DNS records
+const TTL = 300
 
-// CloudflareClient is a struct wrapper around the cloudflare client
-type CloudflareClient struct {
+// Client is a struct wrapper around the cloudflare client
+type Client struct {
 	zoneID string
 
 	client *cloudflare.API
 }
 
-// NewCloudflareClient creates a new cloudflare API client
-func NewCloudflareClient(apiToken string, runDomain string) (*CloudflareClient, error) {
+// NewClient creates a new cloudflare API client
+func NewClient(apiToken string, runDomain string) (Client, error) {
 	client, err := cloudflare.NewWithAPIToken(apiToken)
 	if err != nil {
-		return nil, err
+		return Client{}, err
 	}
 
 	zoneID, err := client.ZoneIDByName(runDomain)
 	if err != nil {
-		return nil, err
+		return Client{}, err
 	}
 
-	return &CloudflareClient{client: client, zoneID: zoneID}, nil
+	return Client{client: client, zoneID: zoneID}, nil
 }
 
 // CreateCNAMERecord creates a new CNAME record for the nameserver
 //
 // The method ignores record.RootDomain in favor of the zoneID derived from c.runDomain
-func (c *CloudflareClient) CreateCNAMERecord(record Record) error {
+func (c Client) CreateCNAMERecord(record dns.Record) error {
 	proxy := false
 
 	cloudflareRecord := cloudflare.CreateDNSRecordParams{
 		Name:    record.Name,
-		Type:    string(CloudflareCNAME),
+		Type:    string(RecordType_CNAME),
 		Content: record.Value,
-		TTL:     CloudflareTTL,
+		TTL:     TTL,
 		Proxied: &proxy,
 	}
 
@@ -68,14 +69,14 @@ func (c *CloudflareClient) CreateCNAMERecord(record Record) error {
 // CreateARecord creates a new A record for the nameserver
 //
 // The method ignores record.RootDomain in favor of the zoneID derived from c.runDomain
-func (c *CloudflareClient) CreateARecord(record Record) error {
+func (c Client) CreateARecord(record dns.Record) error {
 	proxy := false
 
 	cloudflareRecord := cloudflare.CreateDNSRecordParams{
 		Name:    record.Name,
-		Type:    string(CloudflareA),
+		Type:    string(RecordType_A),
 		Content: record.Value,
-		TTL:     CloudflareTTL,
+		TTL:     TTL,
 		Proxied: &proxy,
 	}
 

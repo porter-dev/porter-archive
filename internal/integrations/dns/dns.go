@@ -4,11 +4,11 @@ package dns
 type RecordType int
 
 const (
-	// RecordA represents a DNS RecordA record
-	RecordA RecordType = iota
+	// RecordType_A represents a DNS RecordType_A record
+	RecordType_A RecordType = iota
 
-	// RecordCNAME represents a DNS RecordCNAME record
-	RecordCNAME
+	// RecordType_CNAME represents a DNS RecordType_CNAME record
+	RecordType_CNAME
 )
 
 // WrappedClient is an interface describing a wrapper
@@ -35,7 +35,7 @@ type Record struct {
 
 // CreateRecord creates a new dns record
 func (c Client) CreateRecord(record Record) error {
-	if record.Type == RecordA {
+	if record.Type == RecordType_A {
 		return c.Client.CreateARecord(record)
 	}
 

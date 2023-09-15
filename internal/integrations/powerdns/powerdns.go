@@ -1,4 +1,4 @@
-package dns
+package powerdns
 
 import (
 	"encoding/json"
@@ -8,10 +8,12 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/porter-dev/porter/internal/integrations/dns"
 )
 
-// PowerDNSClient contains an API client for a PowerDNS server
-type PowerDNSClient struct {
+// Client contains an API client for a PowerDNS server
+type Client struct {
 	apiKey    string
 	serverURL string
 	runDomain string
@@ -19,33 +21,33 @@ type PowerDNSClient struct {
 	httpClient *http.Client
 }
 
-// NewPowerDNSClient creates a new bind API client
-func NewPowerDNSClient(serverURL, apiKey, runDomain string) *PowerDNSClient {
+// NewClient creates a new bind API client
+func NewClient(serverURL, apiKey, runDomain string) Client {
 	httpClient := &http.Client{
 		Timeout: time.Minute,
 	}
 
-	return &PowerDNSClient{apiKey, serverURL, runDomain, httpClient}
+	return Client{apiKey, serverURL, runDomain, httpClient}
 }
 
-// PowerDNSRecordData represents the data required to create or delete an A/CNAME record
+// RecordData represents the data required to create or delete an A/CNAME record
 // for the nameserver
-type PowerDNSRecordData struct {
-	RRSets []PowerDNSRR `json:"rrsets"`
+type RecordData struct {
+	RRSets []RR `json:"rrsets"`
 }
 
-// PowerDNSRR represents a dns resource record collection for PowerDNS
-type PowerDNSRR struct {
-	Name       string           `json:"name"`
-	Type       string           `json:"type"`
-	ChangeType string           `json:"changetype"`
-	TTL        uint             `json:"ttl"`
-	Records    []PowerDNSRecord `json:"records"`
+// RR represents a dns resource record collection for PowerDNS
+type RR struct {
+	Name       string   `json:"name"`
+	Type       string   `json:"type"`
+	ChangeType string   `json:"changetype"`
+	TTL        uint     `json:"ttl"`
+	Records    []Record `json:"records"`
 }
 
-// PowerDNSRecord represents an individual record for a given
+// Record represents an individual record for a given
 // PowerDNS resource record
-type PowerDNSRecord struct {
+type Record struct {
 	Content  string `json:"content"`
 	Disabled bool   `json:"disabled"`
 	Name     string `json:"name"`
@@ -54,17 +56,17 @@ type PowerDNSRecord struct {
 }
 
 // CreateCNAMERecord creates a new CNAME record for the nameserver
-func (c *PowerDNSClient) CreateCNAMERecord(record Record) error {
+func (c Client) CreateCNAMERecord(record dns.Record) error {
 	valueC := canonicalize(record.Value)
 	hostnameC := canonicalize(fmt.Sprintf("%s.%s", record.Name, record.RootDomain))
 
-	return c.sendRequest("PATCH", &PowerDNSRecordData{
-		RRSets: []PowerDNSRR{{
+	return c.sendRequest("PATCH", &RecordData{
+		RRSets: []RR{{
 			Name:       hostnameC,
 			Type:       "CNAME",
 			ChangeType: "REPLACE",
 			TTL:        300,
-			Records: []PowerDNSRecord{{
+			Records: []Record{{
 				Content:  valueC,
 				Disabled: false,
 				Name:     hostnameC,
@@ -76,16 +78,16 @@ func (c *PowerDNSClient) CreateCNAMERecord(record Record) error {
 }
 
 // CreateARecord creates a new A record for the nameserver
-func (c *PowerDNSClient) CreateARecord(record Record) error {
+func (c Client) CreateARecord(record dns.Record) error {
 	hostnameC := canonicalize(fmt.Sprintf("%s.%s", record.Name, record.RootDomain))
 
-	return c.sendRequest("PATCH", &PowerDNSRecordData{
-		RRSets: []PowerDNSRR{{
+	return c.sendRequest("PATCH", &RecordData{
+		RRSets: []RR{{
 			Name:       hostnameC,
 			Type:       "A",
 			ChangeType: "REPLACE",
 			TTL:        300,
-			Records: []PowerDNSRecord{{
+			Records: []Record{{
 				Content:  record.Value,
 				Disabled: false,
 				Name:     hostnameC,
@@ -105,7 +107,7 @@ func canonicalize(value string) string {
 	return fmt.Sprintf("%s.", value)
 }
 
-func (c *PowerDNSClient) sendRequest(method string, data *PowerDNSRecordData) error {
+func (c *Client) sendRequest(method string, data *RecordData) error {
 	reqURL, err := url.Parse(c.serverURL)
 	if err != nil {
 		return nil

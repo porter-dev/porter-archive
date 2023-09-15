@@ -150,7 +150,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		buildSettings.CurrentImageTag = currentImageTag
 		buildSettings.ProjectID = cliConf.Project
 
-		buildEnv, err := client.GetBuildEnv(ctx, cliConf.Project, cliConf.Cluster, base64AppProto)
+		buildEnv, err := client.GetBuildEnv(ctx, cliConf.Project, cliConf.Cluster, appName, targetResp.DeploymentTargetID)
 		if err != nil {
 			return fmt.Errorf("error getting build env: %w", err)
 		}

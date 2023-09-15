@@ -35,7 +35,7 @@ import EnvVariables from "../validate-apply/app-settings/EnvVariables";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import { valueExists } from "shared/util";
 import api from "shared/api";
-import { PorterApp } from "@porter-dev/api-contracts";
+import { EnvGroup, PorterApp } from "@porter-dev/api-contracts";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import Error from "components/porter/Error";
@@ -44,6 +44,7 @@ import { useAppValidation } from "lib/hooks/useAppValidation";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import PorterYamlModal from "./PorterYamlModal";
+import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -55,7 +56,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     count: number;
   }>({ detected: false, count: 0 });
   const [showGHAModal, setShowGHAModal] = React.useState(false);
-  const [userHasSeenNoPorterYamlFoundModal, setUserHasSeenNoPorterYamlFoundModal] = React.useState(false);
+  const [
+    userHasSeenNoPorterYamlFoundModal,
+    setUserHasSeenNoPorterYamlFoundModal,
+  ] = React.useState(false);
 
   const [
     validatedAppProto,
@@ -135,7 +139,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const build = watch("app.build");
   const image = watch("source.image");
   const services = watch("app.services");
-  const { detectedServices: servicesFromYaml, porterYamlFound, detectedName, loading: isLoadingPorterYaml } = usePorterYaml({ source: source?.type === "github" ? source : null });
+  const {
+    detectedServices: servicesFromYaml,
+    porterYamlFound,
+    detectedName,
+    loading: isLoadingPorterYaml,
+  } = usePorterYaml({ source: source?.type === "github" ? source : null });
   const deploymentTarget = useDefaultDeploymentTarget();
   const { updateAppStep } = useAppAnalytics(name.value);
   const { validateApp } = useAppValidation({
@@ -146,7 +155,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setDeployError("");
-      const validatedAppProto = await validateApp(data);
+      const { validatedAppProto, env } = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
 
       if (source.type === "github") {
@@ -154,7 +163,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         return;
       }
 
-      await createAndApply({ app: validatedAppProto, source });
+      await createAndApply({ app: validatedAppProto, source, env });
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
         setDeployError(err.response?.data?.error);
@@ -170,9 +179,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     async ({
       app,
       source,
+      env,
     }: {
       app: PorterApp | null;
       source: SourceOptions;
+      env: KeyValueType[];
     }) => {
       setIsDeploying(true);
       // log analytics event that we started form submission
@@ -199,10 +210,57 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
         );
 
+         const variables = env
+          .filter((e) => !e.hidden && !e.deleted)
+          .reduce((acc: Record<string, string>, item) => {
+            acc[item.key] = item.value;
+            return acc;
+          }, {});
+        const secrets = env
+          .filter((e) => !e.deleted)
+          .reduce((acc: Record<string, string>, item) => {
+            if (item.hidden) {
+              acc[item.key] = item.value;
+            }
+            return acc;
+          }, {});
+        const envGroupResponse = await api.updateEnvironmentGroupV2(
+          "<token>",
+          {
+            deployment_target_id: deploymentTarget.deployment_target_id,
+            variables: variables,
+            secrets: secrets,
+          },
+          {
+            id: currentProject.id,
+            cluster_id: currentCluster.id,
+            app_name: app.name,
+          }
+        );
+
+        const addedEnvGroup = await z
+          .object({
+            env_group_name: z.string(),
+            env_group_version: z.number(),
+          })
+          .parseAsync(envGroupResponse.data);
+        const envGroups = [
+          ...app.envGroups,
+          {
+            name: addedEnvGroup.env_group_name,
+            version: addedEnvGroup.env_group_version,
+          },
+        ];
+
+        const appWithSeededEnv = new PorterApp({
+          ...app,
+          envGroups,
+        });
+
         await api.applyApp(
           "<token>",
           {
-            b64_app_proto: btoa(app.toJsonString()),
+            b64_app_proto: btoa(appWithSeededEnv.toJsonString()),
             deployment_target_id: deploymentTarget.deployment_target_id,
           },
           {
@@ -440,21 +498,27 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               source={source}
                               projectId={currentProject.id}
                             />
-                            {!userHasSeenNoPorterYamlFoundModal && !porterYamlFound && !isLoadingPorterYaml &&
-                              <Controller
-                                name="source.porter_yaml_path"
-                                control={control}
-                                render={({ field: { onChange, value } }) => (
-                                  <PorterYamlModal
-                                    close={() => setUserHasSeenNoPorterYamlFoundModal(true)}
-                                    setPorterYamlPath={(porterYamlPath) => {
-                                      onChange(porterYamlPath);
-                                    }}
-                                    porterYamlPath={value}
-                                  />
-                                )}
-                              />
-                            }
+                            {!userHasSeenNoPorterYamlFoundModal &&
+                              !porterYamlFound &&
+                              !isLoadingPorterYaml && (
+                                <Controller
+                                  name="source.porter_yaml_path"
+                                  control={control}
+                                  render={({ field: { onChange, value } }) => (
+                                    <PorterYamlModal
+                                      close={() =>
+                                        setUserHasSeenNoPorterYamlFoundModal(
+                                          true
+                                        )
+                                      }
+                                      setPorterYamlPath={(porterYamlPath) => {
+                                        onChange(porterYamlPath);
+                                      }}
+                                      porterYamlPath={value}
+                                    />
+                                  )}
+                                />
+                              )}
                           </>
                         ) : (
                           <ImageSettings />

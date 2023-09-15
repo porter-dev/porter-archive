@@ -148,12 +148,12 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	revisionWithEnv, err := porter_app.AttachEnvToRevision(ctx, porter_app.AttachEnvToRevisionInput{
-		ProjectID:           project.ID,
-		ClusterID:           int(cluster.ID),
-		DeploymentTargetID:  request.DeploymentTargetID,
-		Revision:            encodedRevision,
-		K8SAgent:            agent,
-		PorterAppRepository: c.Repo().PorterApp(),
+		ProjectID:                  project.ID,
+		ClusterID:                  int(cluster.ID),
+		DeploymentTargetID:         request.DeploymentTargetID,
+		Revision:                   encodedRevision,
+		K8SAgent:                   agent,
+		PorterAppRepository:        c.Repo().PorterApp(),
 		DeploymentTargetRepository: c.Repo().DeploymentTarget(),
 	})
 	if err != nil {

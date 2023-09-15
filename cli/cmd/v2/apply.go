@@ -150,6 +150,12 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		buildSettings.CurrentImageTag = currentImageTag
 		buildSettings.ProjectID = cliConf.Project
 
+		buildEnv, err := client.GetBuildEnv(ctx, cliConf.Project, cliConf.Cluster, base64AppProto)
+		if err != nil {
+			return fmt.Errorf("error getting build env: %w", err)
+		}
+		buildSettings.Env = buildEnv.BuildEnvVariables
+
 		err = build(ctx, client, buildSettings)
 		buildMetadata := make(map[string]interface{})
 		buildMetadata["end_time"] = time.Now().UTC()

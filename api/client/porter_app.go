@@ -414,6 +414,30 @@ func (c *Client) UpdateRevisionStatus(
 	return resp, err
 }
 
+// GetBuildEnv returns the build environment for a given app proto
+func (c *Client) GetBuildEnv(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	base64AppProto string,
+) (*porter_app.GetBuildEnvResponse, error) {
+	resp := &porter_app.GetBuildEnvResponse{}
+
+	req := &porter_app.GetBuildEnvRequest{
+		Base64AppProto: base64AppProto,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/build-env",
+			projectID, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 // CreateOrUpdateAppEnvironment updates the app environment group and creates it if it doesn't exist
 func (c *Client) CreateOrUpdateAppEnvironment(
 	ctx context.Context,

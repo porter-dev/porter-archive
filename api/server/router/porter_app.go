@@ -949,7 +949,7 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/metrics -> porter_app.NewUpdateAppRevisionStatusHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id} -> porter_app.NewUpdateAppRevisionStatusHandler
 	updateAppRevisionStatusEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
@@ -975,6 +975,35 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: updateAppRevisionStatusEndpoint,
 		Handler:  updateAppRevisionStatusHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/build-env -> porter_app.NewGetBuildEnvHandler
+	getBuildEnvEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/apps/build-env",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getBuildEnvHandler := porter_app.NewGetBuildEnvHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getBuildEnvEndpoint,
+		Handler:  getBuildEnvHandler,
 		Router:   r,
 	})
 

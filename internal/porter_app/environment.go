@@ -83,7 +83,6 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 	return envGroups, nil
 }
 
-
 // AppEnvGroupName returns the name of the environment group for the app
 func AppEnvGroupName(ctx context.Context, appName string, deploymentTargetId string, clusterID uint, porterAppRepository repository.PorterAppRepository) (string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "app-env-group-name")

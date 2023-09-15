@@ -212,13 +212,14 @@ func (a *Agent) getLatestVersion(ctx context.Context, name string) int {
 	var labelSelectors []string
 	labelSelectors = append(labelSelectors, fmt.Sprintf("name in (%s)", name))
 	labelSelectors = append(labelSelectors, "owner in (helm)")
-	labelSelectors = append(labelSelectors, "status in (%s)", strings.Join(helmStatuses, ","))
+	labelSelectors = append(labelSelectors, fmt.Sprintf("status in (%s)", strings.Join(helmStatuses, ",")))
 	listOptions := v1.ListOptions{
 		LabelSelector: strings.Join(labelSelectors, ","),
 	}
 
 	client, _ := a.ActionConfig.KubernetesClientSet()
 	secretListResp, err := client.CoreV1().Secrets(a.Namespace()).List(ctx, listOptions)
+
 	version := 0
 	if err == nil {
 		for _, secret := range secretListResp.Items {

@@ -203,32 +203,41 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         );
 
         const variables: Record<string, string> = {};
-        const secret_variables: Record<string, string> = {};
+        const secrets: Record<string, string> = {};
         if (env) {
           env?.forEach(item => {
             if (item && !item.deleted) { // Ensure item exists and is not deleted
               if (item.hidden) {
-                secret_variables[item.key] = item.value;
+                secrets[item.key] = item.value;
               } else {
                 variables[item.key] = item.value;
               }
             }
           });
         }
-        await api.createEnvironmentGroups(
+        const envGroupResponse = await api.updateEnvironmentGroupV2(
           "<token>",
           {
-            name: app.name,
-            variables,
-            secret_variables
+            deployment_target_id: deploymentTarget.deployment_target_id,
+            variables: variables,
+            secrets: secrets
           },
           {
             id: currentProject.id,
-            cluster_id: currentCluster.id
+            cluster_id: currentCluster.id,
+            app_name: app.name,
           }
         );
-        const envGroup = new EnvGroup({ name: app.name, version: BigInt(1) })
-        app.envGroups = app.envGroups.concat(envGroup)
+
+        if (envGroupResponse?.data) {
+          console.log(envGroupResponse?.data)
+          const envGroup = new EnvGroup({ name: envGroupResponse.data.env_group_name, version: envGroupResponse.data.env_group_version, })
+          app.envGroups = app.envGroups.concat(envGroup)
+          console.log(app.envGroups)
+        }
+
+
+        console.log("APP: ", app)
         await api.applyApp(
           "<token>",
           {

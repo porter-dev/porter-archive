@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -45,12 +46,12 @@ func NewUpdateAppEnvironmentHandler(
 
 // UpdateAppEnvironmentRequest represents the accepted fields on a request to the /apps/{porter_app_name}/environment-group endpoint
 type UpdateAppEnvironmentRequest struct {
-	DeploymentTargetID string            `schema:"deployment_target_id"`
-	Variables          map[string]string `schema:"variables"`
-	Secrets            map[string]string `schema:"secrets"`
+	DeploymentTargetID string            `json:"deployment_target_id"`
+	Variables          map[string]string `json:"variables"`
+	Secrets            map[string]string `json:"secrets"`
 	// HardUpdate is used to remove any variables that are not specified in the request.  If false, the request will only update the variables specified in the request,
 	// and leave all other variables untouched.
-	HardUpdate bool `schema:"remove_missing"`
+	HardUpdate bool `json:"remove_missing"`
 }
 
 // UpdateAppEnvironmentResponse represents the fields on the response object from the /apps/{porter_app_name}/environment-group endpoint
@@ -81,6 +82,7 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+	fmt.Println("Request:", request)
 
 	if request.DeploymentTargetID == "" {
 		err := telemetry.Error(ctx, span, nil, "must provide deployment target id")

@@ -303,15 +303,20 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	res.AnalyticsClient = analytics.InitializeAnalyticsSegmentClient(sc.SegmentClientKey, res.Logger)
 	res.Logger.Info().Msg("Created analytics client")
 
-	if sc.PowerDNSAPIKey != "" && sc.PowerDNSAPIServerURL != "" {
-		res.DNSClient = &dns.Client{Client: dns.NewPowerDNSClient(sc.PowerDNSAPIServerURL, sc.PowerDNSAPIKey, sc.AppRootDomain)}
-	} else if sc.CloudflareAPIToken != "" {
-		cloudflareClient, err := dns.NewCloudflareClient(sc.CloudflareAPIToken, sc.AppRootDomain)
-		if err != nil {
-			return res, fmt.Errorf("unable to create cloudflare api: %w", err)
+	switch sc.DnsProvider {
+	case "powerdns":
+		if sc.PowerDNSAPIKey != "" && sc.PowerDNSAPIServerURL != "" {
+			res.DNSClient = &dns.Client{Client: dns.NewPowerDNSClient(sc.PowerDNSAPIServerURL, sc.PowerDNSAPIKey, sc.AppRootDomain)}
 		}
+	case "cloudflare":
+		if sc.CloudflareAPIToken != "" {
+			cloudflareClient, err := dns.NewCloudflareClient(sc.CloudflareAPIToken, sc.AppRootDomain)
+			if err != nil {
+				return res, fmt.Errorf("unable to create cloudflare api: %w", err)
+			}
 
-		res.DNSClient = &dns.Client{Client: cloudflareClient}
+			res.DNSClient = &dns.Client{Client: cloudflareClient}
+		}
 	}
 
 	res.EnableCAPIProvisioner = sc.EnableCAPIProvisioner

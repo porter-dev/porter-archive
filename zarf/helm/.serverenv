@@ -18,6 +18,11 @@ CLUSTER_CONTROL_PLANE_ADDRESS=http://ccp-web:7833
 # Domain we use to generate custom subdomains from
 APP_ROOT_DOMAIN=withporter.run
 
+# Controls which external dns provider to use
+# Specific clients may require extra tokens
+# Options: cloudflare, powerdns, or empty string
+DNS_PROVIDER=powerdns
+
 # Cloudflare DNS provider
 # if set, can be used as an alternative to PowerDNS
 # Create a token here: https://dash.cloudflare.com/profile/api-tokens

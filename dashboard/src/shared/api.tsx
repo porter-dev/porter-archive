@@ -300,6 +300,16 @@ const appLogs = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/apps/logs`
 );
 
+const appPodStatus = baseApi<
+  {
+    deployment_target_id: string;
+    selectors: string;
+  },
+  { id: number; cluster_id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/apps/pods`;
+});
+
 const getFeedEvents = baseApi<
   {},
   {
@@ -932,12 +942,12 @@ const listAppRevisions = baseApi<
 });
 
 const getLatestAppRevisions = baseApi<
-{},{
+  {}, {
     project_id: number;
     cluster_id: number;
-}>("GET", ({ project_id, cluster_id }) => {
-  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/revisions`;
-})
+  }>("GET", ({ project_id, cluster_id }) => {
+    return `/api/projects/${project_id}/clusters/${cluster_id}/apps/revisions`;
+  })
 
 const getGitlabProcfileContents = baseApi<
   {
@@ -2953,6 +2963,7 @@ export default {
   createSecretAndOpenGitHubPullRequest,
   getLogsWithinTimeRange,
   appLogs,
+  appPodStatus,
   getFeedEvents,
   updateStackStep,
   // -----------------------------------

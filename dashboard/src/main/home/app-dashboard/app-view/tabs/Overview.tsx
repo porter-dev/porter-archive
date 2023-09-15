@@ -2,7 +2,7 @@ import { PorterApp } from "@porter-dev/api-contracts";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { PorterAppFormData } from "lib/porter-apps";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useFormContext, useFormState } from "react-hook-form";
 import ServiceList from "../../validate-apply/services-settings/ServiceList";
 import {

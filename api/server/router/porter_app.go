@@ -980,5 +980,34 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/pods -> cluster.NewPodStatusHandler
+	appPodStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/pods", relPathV2),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appPodStatusHandler := porter_app.NewPodStatusHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appPodStatusEndpoint,
+		Handler:  appPodStatusHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

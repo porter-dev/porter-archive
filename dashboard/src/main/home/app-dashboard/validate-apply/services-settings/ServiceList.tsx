@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ServiceContainer from "./ServiceContainer";
 import styled from "styled-components";
 import Spacer from "components/porter/Spacer";
@@ -164,12 +164,15 @@ const ServiceList: React.FC<ServiceListProps> = ({
     }
   };
 
-  const replicaSetArray = useAppStatus({
-    projectId,
-    clusterId,
-    serviceNames: Object.keys(latestProto.services),
-    deploymentTargetId,
-  })
+  if (!isPredeploy) {
+    const { serviceVersionStatus } = useAppStatus({
+      projectId,
+      clusterId,
+      serviceNames: Object.keys(latestProto.services).filter(name => latestProto.services[name].config.case !== "jobConfig"),
+      deploymentTargetId,
+      appName: latestProto.name,
+    })
+  }
 
   return (
     <>

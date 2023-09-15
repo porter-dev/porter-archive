@@ -1,6 +1,22 @@
-import { ControllerTabPodType } from "main/home/app-dashboard/expanded-app/status/ControllerTab";
-import { useEffect, useState } from "react";
+import _ from "lodash";
+import { useEffect, useMemo, useState } from "react";
+import api from "shared/api";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
+import { useRevisionIdToNumber } from "./useRevisionList";
+
+export type PorterAppVersionStatus = {
+    status: string;
+    message: string;
+    crashLoopReason: string;
+}
+
+type ClientPod = {
+    revisionId: string,
+    helmRevision: string,
+    crashLoopReason: string,
+    isFailing: boolean,
+    replicaSetName: string,
+}
 
 export const useAppStatus = (
     {
@@ -8,22 +24,25 @@ export const useAppStatus = (
         clusterId,
         serviceNames,
         deploymentTargetId,
+        appName,
         kind = "pod",
     }: {
         projectId: number,
         clusterId: number,
         serviceNames: string[],
         deploymentTargetId: string,
+        appName: string,
         kind?: string,
     }
 ) => {
-    const [pods, setPods] = useState<ControllerTabPodType[]>([]);
+    const [servicePodMap, setServicePodMap] = useState<Record<string, ClientPod[]>>({});
+
+    const revisionIdToNumber = useRevisionIdToNumber(appName, deploymentTargetId);
 
     const {
         newWebsocket,
         openWebsocket,
         closeAllWebsockets,
-        getWebsocket,
         closeWebsocket,
     } = useWebsockets();
 
@@ -32,100 +51,166 @@ export const useAppStatus = (
     ) => {
         const selectors = `porter.run/service-name=${serviceName},porter.run/deployment-target-id=${deploymentTargetId}`;
         const apiEndpoint = `/api/projects/${projectId}/clusters/${clusterId}/apps/${kind}/status?selectors=${selectors}`;
+        const websocketKey = `${serviceName}-${Math.random().toString(36).substring(2, 15)}`
 
         const options: NewWebsocketOptions = {};
         options.onopen = () => {
-            console.log("opening status websocket")
+            console.log("opening status websocket for service: " + serviceName)
         };
 
         options.onmessage = async (evt: MessageEvent) => {
-            let event = JSON.parse(evt.data);
-            let object = event.Object;
-            object.metadata.kind = event.Kind;
-
-            console.log("event", event);
-            console.log("object", object);
-
-            // Make a new API call to update pods only when the event type is UPDATE
-            if (event.event_type !== "UPDATE") {
-                return;
-            }
-            // update pods no matter what if ws message is a pod event.
-            // If controller event, check if ws message corresponds to the designated controller in props.
-            // if (event.Kind != "pod" && object.metadata.uid !== controllerUid) {
-            //     return;
-            // }
-
-            // if (event.Kind === "deployment") {
-            //     let [available, total, stale, unavailable] = getAvailabilityStacks(
-            //         object
-            //     );
-
-            //     setAvailable(available);
-            //     setTotal(total);
-            //     setStale(stale);
-            //     setUnavailable(unavailable);
-            //     return;
-            // }
-            // await updatePods();
+            await updatePods(serviceName);
         };
 
-        options.onclose = () => { };
+        options.onclose = () => {
+            console.log("closing status websocket for service: " + serviceName)
+        };
 
         options.onerror = (err: ErrorEvent) => {
-            console.log(err);
-            closeWebsocket(kind);
+            closeWebsocket(websocketKey);
         };
 
-        newWebsocket(kind, apiEndpoint, options);
-        openWebsocket(kind);
+        newWebsocket(websocketKey, apiEndpoint, options);
+        openWebsocket(websocketKey);
     };
 
+    const updatePods = async (serviceName: string) => {
+        const selectors = `porter.run/service-name=${serviceName},porter.run/deployment-target-id=${deploymentTargetId}`;
+
+        try {
+            const res = await api.appPodStatus(
+                "<token>",
+                {
+                    deployment_target_id: deploymentTargetId,
+                    selectors,
+                },
+                {
+                    id: projectId,
+                    cluster_id: clusterId,
+                }
+            );
+            const data = res?.data as any[];
+            let newPods = data
+                // Parse only data that we need
+                .map((pod: any) => {
+                    const replicaSetName =
+                        Array.isArray(pod?.metadata?.ownerReferences) &&
+                        pod?.metadata?.ownerReferences[0]?.name;
+                    const containerStatus =
+                        Array.isArray(pod?.status?.containerStatuses) &&
+                        pod?.status?.containerStatuses[0];
+
+                    // const restartCount = containerStatus
+                    //     ? containerStatus.restartCount
+                    //     : "N/A";
+
+                    // const podAge = timeFormat("%H:%M:%S %b %d, '%y")(
+                    //     new Date(pod?.metadata?.creationTimestamp)
+                    // );
+
+                    const isFailing = containerStatus?.state?.waiting?.reason === "CrashLoopBackOff" ?? false;
+                    const crashLoopReason = containerStatus?.lastState?.terminated?.message ?? "";
+
+                    return {
+                        // namespace: pod?.metadata?.namespace,
+                        // name: pod?.metadata?.name,
+                        // phase: pod?.status?.phase,
+                        // status: pod?.status,
+                        // restartCount,
+                        // containerStatus,
+                        // podAge: pod?.metadata?.creationTimestamp ? podAge : "N/A",
+                        replicaSetName,
+                        revisionId: pod?.metadata?.labels?.["porter.run/app-revision-id"],
+                        helmRevision: pod?.metadata?.annotations?.["helm.sh/revision"] || "N/A",
+                        crashLoopReason,
+                        isFailing
+                    };
+                });
+            setServicePodMap((prevState) => ({
+                ...prevState,
+                [serviceName]: newPods,
+            }));
+        } catch (error) {
+            // TODO: handle error
+        }
+    };
+
+    const updateAllPods = async () => {
+        await Promise.all(serviceNames.map(updatePods));
+    }
+
     useEffect(() => {
+        updateAllPods();
         for (let serviceName of serviceNames) {
             setupWebsocket(serviceName);
         }
         return () => closeAllWebsockets();
-    }, [projectId, clusterId, serviceNames, deploymentTargetId]);
+    }, [projectId, clusterId, deploymentTargetId, appName, JSON.stringify(revisionIdToNumber)]);
+
+    const processReplicaSetArray = (replicaSetArray: ClientPod[][]): PorterAppVersionStatus[] => {
+        return replicaSetArray.map((replicaSet, i) => {
+            let status = "";
+            let message = "";
+
+            const version = revisionIdToNumber[replicaSet[0].revisionId];
+
+            if (replicaSet.some((r) => r.crashLoopReason !== "") || replicaSet.some((r) => r.isFailing)) {
+                status = "failing";
+                message = `${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
+                    } failing to run Version ${version}`;
+            } else if (
+                i > 0 && replicaSetArray[i - 1].every(p => !p.isFailing)
+            ) {
+                status = "spinningDown";
+                message = `${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
+                    } still running at Version ${version}. Spinning down...`;
+            } else {
+                status = "running";
+                message = `${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
+                    } running at Version ${version}`;
+            }
+
+            const crashLoopReason =
+                replicaSet.find((r) => r.crashLoopReason !== "")?.crashLoopReason || "";
+
+            return {
+                status,
+                message,
+                crashLoopReason,
+            };
+        });
+    }
+
+    const serviceVersionStatus: Record<string, PorterAppVersionStatus[]> = useMemo(() => {
+        const serviceReplicaSetMap = Object.fromEntries(Object.keys(servicePodMap).map((serviceName) => {
+            const pods = servicePodMap[serviceName];
+            const replicaSetMap = _.sortBy(pods, ["helmRevision"])
+                .reverse()
+                .reduce<ClientPod[][]>(function (
+                    prev,
+                    currentPod,
+                    i
+                ) {
+                    if (
+                        !i ||
+                        prev[prev.length - 1][0].replicaSetName !== currentPod.replicaSetName
+                    ) {
+                        return prev.concat([[currentPod]]);
+                    }
+                    prev[prev.length - 1].push(currentPod);
+                    return prev;
+                }, []);
+
+            return [serviceName, processReplicaSetArray(replicaSetMap)];
+        }));
+
+        console.log(serviceReplicaSetMap);
 
 
-    // useEffect(() => {
-    //     updatePods();
-    //     if (selectors.length > 0) {
-    //         // updatePods();
-    //         [controller?.kind, "pod"].forEach((kind) => {
-    //             setupWebsocket(kind, controller?.metadata?.uid, selectors);
-    //         });
-    //         return () => closeAllWebsockets();
-    //     }
-    // }, [controller]);
-
-    // const replicaSetArray = useMemo(() => {
-    //     setExpanded(false);
-    //     setHeight(0);
-    //     const podsDividedByReplicaSet = _.sortBy(pods, ["revisionNumber"])
-    //         .reverse()
-    //         .reduce<Array<Array<ControllerTabPodType>>>(function (
-    //             prev,
-    //             currentPod,
-    //             i
-    //         ) {
-    //             if (
-    //                 !i ||
-    //                 prev[prev.length - 1][0].replicaSetName !== currentPod.replicaSetName
-    //             ) {
-    //                 return prev.concat([[currentPod]]);
-    //             }
-    //             prev[prev.length - 1].push(currentPod);
-    //             return prev;
-    //         },
-    //             []);
-
-    //     return podsDividedByReplicaSet;
-    // }, [pods]);
-    const replicaSetArray = {};
+        return serviceReplicaSetMap;
+    }, [JSON.stringify(servicePodMap)]);
 
     return {
-        replicaSetArray,
+        serviceVersionStatus,
     };
 };

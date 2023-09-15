@@ -34,4 +34,4 @@ jobs:
           cluster: "11"
           host: https://dashboard.internal-tools.porter.run
           project: "8"
-          token: ${{ secrets.PORTER_STACK_8_11 }}
+          token: ${{ secrets.PORTER_INTERNAL_TOOLS_DEPLOYMENT }}

@@ -67,7 +67,6 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 			Version:   int(envGroupRef.GetVersion()),
 			Namespace: namespace,
 		})
-
 		if err != nil {
 			return nil, err
 		}

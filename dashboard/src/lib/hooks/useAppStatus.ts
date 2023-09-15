@@ -90,6 +90,7 @@ export const useAppStatus = (
                     cluster_id: clusterId,
                 }
             );
+            // TODO: type the response
             const data = res?.data as any[];
             let newPods = data
                 // Parse only data that we need

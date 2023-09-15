@@ -56,7 +56,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     count: number;
   }>({ detected: false, count: 0 });
   const [showGHAModal, setShowGHAModal] = React.useState(false);
-  const [userHasSeenNoPorterYamlFoundModal, setUserHasSeenNoPorterYamlFoundModal] = React.useState(false);
+  const [
+    userHasSeenNoPorterYamlFoundModal,
+    setUserHasSeenNoPorterYamlFoundModal,
+  ] = React.useState(false);
 
   const [
     validatedAppProto,
@@ -136,7 +139,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const build = watch("app.build");
   const image = watch("source.image");
   const services = watch("app.services");
-  const { detectedServices: servicesFromYaml, porterYamlFound, detectedName, loading: isLoadingPorterYaml } = usePorterYaml({ source: source?.type === "github" ? source : null });
+  const {
+    detectedServices: servicesFromYaml,
+    porterYamlFound,
+    detectedName,
+    loading: isLoadingPorterYaml,
+  } = usePorterYaml({ source: source?.type === "github" ? source : null });
   const deploymentTarget = useDefaultDeploymentTarget();
   const { updateAppStep } = useAppAnalytics(name.value);
   const { validateApp } = useAppValidation({
@@ -171,7 +179,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     async ({
       app,
       source,
-      env
+      env,
     }: {
       app: PorterApp | null;
       source: SourceOptions;
@@ -205,8 +213,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         const variables: Record<string, string> = {};
         const secrets: Record<string, string> = {};
         if (env) {
-          env?.forEach(item => {
-            if (item && !item.deleted) { // Ensure item exists and is not deleted
+          env?.forEach((item) => {
+            if (item && !item.deleted) {
+              // Ensure item exists and is not deleted
               if (item.hidden) {
                 secrets[item.key] = item.value;
               } else {
@@ -220,7 +229,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           {
             deployment_target_id: deploymentTarget.deployment_target_id,
             variables: variables,
-            secrets: secrets
+            secrets: secrets,
           },
           {
             id: currentProject.id,
@@ -229,19 +238,29 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
         );
 
-        if (envGroupResponse?.data) {
-          console.log(envGroupResponse?.data)
-          const envGroup = new EnvGroup({ name: envGroupResponse.data.env_group_name, version: envGroupResponse.data.env_group_version, })
-          app.envGroups = app.envGroups.concat(envGroup)
-          console.log(app.envGroups)
-        }
+        const addedEnvGroup = await z
+          .object({
+            env_group_name: z.string(),
+            env_group_version: z.bigint(),
+          })
+          .parseAsync(envGroupResponse.data);
+        const envGroups = [
+          ...app.envGroups,
+          {
+            name: addedEnvGroup.env_group_name,
+            version: addedEnvGroup.env_group_version,
+          },
+        ];
 
+        const appWithSeededEnv = new PorterApp({
+          ...app,
+          envGroups,
+        });
 
-        console.log("APP: ", app)
         await api.applyApp(
           "<token>",
           {
-            b64_app_proto: btoa(app.toJsonString()),
+            b64_app_proto: btoa(appWithSeededEnv.toJsonString()),
             deployment_target_id: deploymentTarget.deployment_target_id,
           },
           {
@@ -479,21 +498,27 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               source={source}
                               projectId={currentProject.id}
                             />
-                            {!userHasSeenNoPorterYamlFoundModal && !porterYamlFound && !isLoadingPorterYaml &&
-                              <Controller
-                                name="source.porter_yaml_path"
-                                control={control}
-                                render={({ field: { onChange, value } }) => (
-                                  <PorterYamlModal
-                                    close={() => setUserHasSeenNoPorterYamlFoundModal(true)}
-                                    setPorterYamlPath={(porterYamlPath) => {
-                                      onChange(porterYamlPath);
-                                    }}
-                                    porterYamlPath={value}
-                                  />
-                                )}
-                              />
-                            }
+                            {!userHasSeenNoPorterYamlFoundModal &&
+                              !porterYamlFound &&
+                              !isLoadingPorterYaml && (
+                                <Controller
+                                  name="source.porter_yaml_path"
+                                  control={control}
+                                  render={({ field: { onChange, value } }) => (
+                                    <PorterYamlModal
+                                      close={() =>
+                                        setUserHasSeenNoPorterYamlFoundModal(
+                                          true
+                                        )
+                                      }
+                                      setPorterYamlPath={(porterYamlPath) => {
+                                        onChange(porterYamlPath);
+                                      }}
+                                      porterYamlPath={value}
+                                    />
+                                  )}
+                                />
+                              )}
                           </>
                         ) : (
                           <ImageSettings />
@@ -521,8 +546,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
-                              } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${
+                                  detectedServices.count > 1 ? "s" : ""
+                                } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

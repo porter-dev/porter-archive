@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
+	"github.com/porter-dev/porter/internal/models"
 
 	"github.com/porter-dev/porter/api/types"
 )
@@ -213,6 +214,7 @@ func (c *Client) ApplyPorterApp(
 	base64AppProto string,
 	deploymentTarget string,
 	appRevisionID string,
+	forceBuild bool,
 ) (*porter_app.ApplyPorterAppResponse, error) {
 	resp := &porter_app.ApplyPorterAppResponse{}
 
@@ -220,6 +222,7 @@ func (c *Client) ApplyPorterApp(
 		Base64AppProto:     base64AppProto,
 		DeploymentTargetId: deploymentTarget,
 		AppRevisionID:      appRevisionID,
+		ForceBuild:         forceBuild,
 	}
 
 	err := c.postRequest(
@@ -382,6 +385,85 @@ func (c *Client) PredeployStatus(
 	if resp.Status == "" {
 		return nil, fmt.Errorf("no predeploy status found")
 	}
+
+	return resp, err
+}
+
+// UpdateRevisionStatus updates the status of an app revision
+func (c *Client) UpdateRevisionStatus(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string, appRevisionId string,
+	status models.AppRevisionStatus,
+) (*porter_app.UpdateAppRevisionStatusResponse, error) {
+	resp := &porter_app.UpdateAppRevisionStatusResponse{}
+
+	req := &porter_app.UpdateAppRevisionStatusRequest{
+		Status: status,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/revisions/%s",
+			projectID, clusterID, appName, appRevisionId,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// GetBuildEnv returns the build environment for a given app proto
+func (c *Client) GetBuildEnv(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	base64AppProto string,
+) (*porter_app.GetBuildEnvResponse, error) {
+	resp := &porter_app.GetBuildEnvResponse{}
+
+	req := &porter_app.GetBuildEnvRequest{
+		Base64AppProto: base64AppProto,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/build-env",
+			projectID, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// CreateOrUpdateAppEnvironment updates the app environment group and creates it if it doesn't exist
+func (c *Client) CreateOrUpdateAppEnvironment(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string,
+	deploymentTargetID string,
+	variables map[string]string,
+	secrets map[string]string,
+) (*porter_app.UpdateAppEnvironmentResponse, error) {
+	resp := &porter_app.UpdateAppEnvironmentResponse{}
+
+	req := &porter_app.UpdateAppEnvironmentRequest{
+		DeploymentTargetID: deploymentTargetID,
+		Variables:          variables,
+		Secrets:            secrets,
+		HardUpdate:         false,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/update-environment",
+			projectID, clusterID, appName,
+		),
+		req,
+		resp,
+	)
 
 	return resp, err
 }

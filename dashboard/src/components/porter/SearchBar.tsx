@@ -14,6 +14,7 @@ type Props = {
   error?: string;
   children?: React.ReactNode;
   autoFocus?: boolean;
+  onEnter?: () => void;
 };
 
 const SearchBar: React.FC<Props> = ({
@@ -27,6 +28,7 @@ const SearchBar: React.FC<Props> = ({
   error,
   children,
   autoFocus,
+  onEnter,
 }) => {
   return (
     <Block width={width}>
@@ -39,6 +41,14 @@ const SearchBar: React.FC<Props> = ({
         width={width}
         height={height}
         hasError={(error && true) || (error === "")}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            if (onEnter) {
+              onEnter();
+            }
+          }
+        }}
       >
         <Icon src={search} />
         <Input

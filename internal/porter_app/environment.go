@@ -12,6 +12,7 @@ import (
 
 type envVariarableOptions struct {
 	includeSecrets bool
+	envGroups      []string
 }
 
 // EnvVariableOption is a function that modifies AppEnvironmentFromProto
@@ -21,6 +22,12 @@ type EnvVariableOption func(*envVariarableOptions)
 func WithSecrets() EnvVariableOption {
 	return func(opts *envVariarableOptions) {
 		opts.includeSecrets = true
+	}
+}
+
+func WithEnvGroupFilter(envGroups []string) EnvVariableOption {
+	return func(opts *envVariarableOptions) {
+		opts.envGroups = envGroups
 	}
 }
 
@@ -36,7 +43,7 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 	ctx, span := telemetry.NewSpan(ctx, "porter-app-env-from-proto")
 	defer span.End()
 
-	var envGroups []environment_groups.EnvironmentGroup
+	envGroups := []environment_groups.EnvironmentGroup{}
 
 	if inp.DeploymentTarget == nil {
 		return nil, telemetry.Error(ctx, span, nil, "must provide a deployment target")
@@ -61,14 +68,26 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 		return envGroups, telemetry.Error(ctx, span, nil, "deployment target selector type not supported")
 	}
 
-	for _, envGroupRef := range inp.App.EnvGroups {
+	filteredEnvGroups := inp.App.EnvGroups
+	if len(opts.envGroups) > 0 {
+		filteredEnvGroups = []*porterv1.EnvGroup{}
+		for _, envGroup := range inp.App.EnvGroups {
+			for _, envGroupName := range opts.envGroups {
+				if envGroup.GetName() == envGroupName {
+					filteredEnvGroups = append(filteredEnvGroups, envGroup)
+				}
+			}
+		}
+	}
+
+	for _, envGroupRef := range filteredEnvGroups {
 		envGroup, err := environment_groups.EnvironmentGroupInTargetNamespace(ctx, inp.K8SAgent, environment_groups.EnvironmentGroupInTargetNamespaceInput{
 			Name:      envGroupRef.GetName(),
 			Version:   int(envGroupRef.GetVersion()),
 			Namespace: namespace,
 		})
 		if err != nil {
-			return nil, err
+			return nil, telemetry.Error(ctx, span, err, "error getting environment group in target namespace")
 		}
 
 		if !opts.includeSecrets {

@@ -418,20 +418,16 @@ func (c *Client) UpdateRevisionStatus(
 func (c *Client) GetBuildEnv(
 	ctx context.Context,
 	projectID uint, clusterID uint,
-	base64AppProto string,
+	appName string, appRevisionId string,
 ) (*porter_app.GetBuildEnvResponse, error) {
 	resp := &porter_app.GetBuildEnvResponse{}
 
-	req := &porter_app.GetBuildEnvRequest{
-		Base64AppProto: base64AppProto,
-	}
-
-	err := c.postRequest(
+	err := c.getRequest(
 		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/build-env",
-			projectID, clusterID,
+			"/projects/%d/clusters/%d/apps/%s/revisions/%s/build-env",
+			projectID, clusterID, appName, appRevisionId,
 		),
-		req,
+		nil,
 		resp,
 	)
 

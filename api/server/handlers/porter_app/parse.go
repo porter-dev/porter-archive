@@ -262,6 +262,23 @@ func buildUmbrellaChartValues(
 		if existingValues != nil {
 			if existingValues[helmName] != nil {
 				existingValuesMap := existingValues[helmName].(map[string]interface{})
+				if removeDeletedValues {
+					// strip the env variables before coalescing
+					if existingValuesMap["container"] != nil {
+						containerMap := existingValuesMap["container"].(map[string]interface{})
+						if containerMap["env"] != nil {
+							envMap := containerMap["env"].(map[string]interface{})
+							if envMap["normal"] != nil {
+								envMap["normal"] = make(map[string]interface{})
+							}
+							if envMap["synced"] != nil {
+								envMap["synced"] = make([]map[string]interface{}, 0)
+							}
+							containerMap["env"] = envMap
+						}
+						existingValuesMap["container"] = containerMap
+					}
+				}
 				helm_values = utils.DeepCoalesceValues(existingValuesMap, helm_values)
 			}
 		}

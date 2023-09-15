@@ -257,7 +257,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           envGroups,
         });
 
-        console.log("appWithSeededEnv", appWithSeededEnv);
         await api.applyApp(
           "<token>",
           {

@@ -3,9 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import { useRevisionIdToNumber } from "./useRevisionList";
+import { valueExists } from "shared/util";
 
 export type PorterAppVersionStatus = {
-    status: string;
+    status: 'running' | 'spinningDown' | 'failing';
     message: string;
     crashLoopReason: string;
 }
@@ -75,6 +76,7 @@ export const useAppStatus = (
     };
 
     const updatePods = async (serviceName: string) => {
+        console.log("here is the revision id to number map", revisionIdToNumber)
         const selectors = `porter.run/service-name=${serviceName},porter.run/deployment-target-id=${deploymentTargetId}`;
 
         try {
@@ -149,10 +151,14 @@ export const useAppStatus = (
 
     const processReplicaSetArray = (replicaSetArray: ClientPod[][]): PorterAppVersionStatus[] => {
         return replicaSetArray.map((replicaSet, i) => {
-            let status = "";
+            let status: 'running' | 'failing' | 'spinningDown' = "running";
             let message = "";
 
             const version = revisionIdToNumber[replicaSet[0].revisionId];
+
+            if (!version) {
+                return undefined;
+            }
 
             if (replicaSet.some((r) => r.crashLoopReason !== "") || replicaSet.some((r) => r.isFailing)) {
                 status = "failing";
@@ -163,7 +169,7 @@ export const useAppStatus = (
             ) {
                 status = "spinningDown";
                 message = `${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
-                    } still running at Version ${version}. Spinning down...`;
+                    } still running at Version ${version}. Attempting to spin down...`;
             } else {
                 status = "running";
                 message = `${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
@@ -178,7 +184,7 @@ export const useAppStatus = (
                 message,
                 crashLoopReason,
             };
-        });
+        }).filter(valueExists);
     }
 
     const serviceVersionStatus: Record<string, PorterAppVersionStatus[]> = useMemo(() => {

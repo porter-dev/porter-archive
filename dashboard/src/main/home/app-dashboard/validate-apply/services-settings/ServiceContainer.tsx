@@ -21,6 +21,8 @@ import { UseFieldArrayUpdate } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import { match } from "ts-pattern";
 import useResizeObserver from "lib/hooks/useResizeObserver";
+import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
+import ServiceStatusFooter from "./ServiceStatusFooter";
 
 interface ServiceProps {
   index: number;
@@ -28,6 +30,7 @@ interface ServiceProps {
   chart?: any;
   update: UseFieldArrayUpdate<PorterAppFormData, "app.services" | "app.predeploy">;
   remove: (index: number) => void;
+  status?: PorterAppVersionStatus[];
 }
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -36,6 +39,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   chart,
   update,
   remove,
+  status,
 }) => {
   const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
 
@@ -241,16 +245,11 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           </StyledSourceBox>
         )}
       </AnimateHeight>
-      {chart &&
-        service &&
-        // Check if has built image
-        hasBuiltImage && (
-          <StatusFooter
-            setExpandedJob={() => { }}
-            chart={chart}
-            service={service}
-          />
-        )}
+      {status && (
+        <ServiceStatusFooter
+          status={status}
+        />
+      )}
       <Spacer y={0.5} />
     </>
   );

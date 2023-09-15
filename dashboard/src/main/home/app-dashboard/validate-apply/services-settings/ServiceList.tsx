@@ -26,8 +26,7 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { ControlledInput } from "components/porter/ControlledInput";
-import { useLatestRevision } from "../../app-view/LatestRevisionContext";
-import { useAppStatus } from "lib/hooks/useAppStatus";
+import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
 
 const addServiceFormValidator = z.object({
   name: z
@@ -47,6 +46,7 @@ type ServiceListProps = {
   isPredeploy?: boolean;
   existingServiceNames?: string[];
   fieldArrayName: "app.services" | "app.predeploy";
+  serviceVersionStatus?: Record<string, PorterAppVersionStatus[]>;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
@@ -55,11 +55,10 @@ const ServiceList: React.FC<ServiceListProps> = ({
   isPredeploy = false,
   existingServiceNames = [],
   fieldArrayName,
+  serviceVersionStatus,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
-
-  const { projectId, clusterId, latestProto, deploymentTargetId } = useLatestRevision();
 
   // add service modal form
   const {
@@ -164,16 +163,6 @@ const ServiceList: React.FC<ServiceListProps> = ({
     }
   };
 
-  if (!isPredeploy) {
-    const { serviceVersionStatus } = useAppStatus({
-      projectId,
-      clusterId,
-      serviceNames: Object.keys(latestProto.services).filter(name => latestProto.services[name].config.case !== "jobConfig"),
-      deploymentTargetId,
-      appName: latestProto.name,
-    })
-  }
-
   return (
     <>
       {services.length > 0 && (
@@ -186,6 +175,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 service={svc}
                 update={update}
                 remove={onRemove}
+                status={serviceVersionStatus?.[svc.name.value]}
               />
             ) : null;
           })}

@@ -12,10 +12,19 @@ import {
 import Error from "components/porter/Error";
 import Button from "components/porter/Button";
 import { useLatestRevision } from "../LatestRevisionContext";
+import { useAppStatus } from "lib/hooks/useAppStatus";
 
 const Overview: React.FC = () => {
   const { formState } = useFormContext<PorterAppFormData>();
-  const { porterApp, latestProto, latestRevision } = useLatestRevision();
+  const { porterApp, latestProto, latestRevision, projectId, clusterId, deploymentTargetId } = useLatestRevision();
+
+  const { serviceVersionStatus } = useAppStatus({
+    projectId,
+    clusterId,
+    serviceNames: Object.keys(latestProto.services).filter(name => latestProto.services[name].config.case !== "jobConfig"),
+    deploymentTargetId,
+    appName: latestProto.name,
+  });
 
   const buttonStatus = useMemo(() => {
     if (formState.isSubmitting) {
@@ -56,6 +65,7 @@ const Overview: React.FC = () => {
         addNewText={"Add a new service"}
         fieldArrayName={"app.services"}
         existingServiceNames={Object.keys(latestProto.services)}
+        serviceVersionStatus={serviceVersionStatus}
       />
       <Spacer y={0.75} />
       <Button

@@ -210,20 +210,20 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
         );
 
-        const variables: Record<string, string> = {};
-        const secrets: Record<string, string> = {};
-
-        if (env) {
-          env.reduce((_, item) => {
-            if (item && !item.deleted) {
-              if (item.hidden) {
-                secrets[item.key] = item.value;
-              } else {
-                variables[item.key] = item.value;
-              }
+         const variables = env
+          .filter((e) => !e.hidden && !e.deleted)
+          .reduce((acc: Record<string, string>, item) => {
+            acc[item.key] = item.value;
+            return acc;
+          }, {});
+        const secrets = env
+          .filter((e) => !e.deleted)
+          .reduce((acc: Record<string, string>, item) => {
+            if (item.hidden) {
+              acc[item.key] = item.value;
             }
-          }, null);
-        }
+            return acc;
+          }, {});
         const envGroupResponse = await api.updateEnvironmentGroupV2(
           "<token>",
           {

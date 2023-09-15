@@ -3,6 +3,7 @@ package porter_app
 import (
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 
 	"connectrpc.com/connect"
@@ -25,6 +26,7 @@ import (
 // LatestAppRevisionHandler handles requests to the /apps/{porter_app_name}/latest endpoint
 type LatestAppRevisionHandler struct {
 	handlers.PorterHandlerReadWriter
+	authz.KubernetesAgentGetter
 }
 
 // NewLatestAppRevisionHandler returns a new LatestAppRevisionHandler
@@ -35,6 +37,7 @@ func NewLatestAppRevisionHandler(
 ) *LatestAppRevisionHandler {
 	return &LatestAppRevisionHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
@@ -105,7 +108,14 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	if porterApps[0].ID == 0 {
-		err := telemetry.Error(ctx, span, err, "porter app id is missiong")
+		err := telemetry.Error(ctx, span, err, "porter app id is missing")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	agent, err := c.GetAgent(r, cluster, "")
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting agent")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
@@ -137,8 +147,23 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	revisionWithEnv, err := porter_app.AttachEnvToRevision(ctx, porter_app.AttachEnvToRevisionInput{
+		ProjectID:           project.ID,
+		ClusterID:           int(cluster.ID),
+		DeploymentTargetID:  request.DeploymentTargetID,
+		Revision:            encodedRevision,
+		K8SAgent:            agent,
+		PorterAppRepository: c.Repo().PorterApp(),
+		DeploymentTargetRepository: c.Repo().DeploymentTarget(),
+	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error attaching env to revision")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	response := LatestAppRevisionResponse{
-		AppRevision: encodedRevision,
+		AppRevision: revisionWithEnv,
 	}
 
 	c.WriteResult(w, r, response)

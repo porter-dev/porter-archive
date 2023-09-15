@@ -10,6 +10,9 @@ import (
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
+	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
+	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -27,6 +30,8 @@ type Revision struct {
 	CreatedAt time.Time `json:"created_at"`
 	// UpdatedAt is the time the revision was updated
 	UpdatedAt time.Time `json:"updated_at"`
+	// Env is the environment variables for the revision
+	Env environment_groups.EnvironmentGroup `json:"env"`
 }
 
 // GetAppRevisionInput is the input struct for GetAppRevisions
@@ -104,6 +109,75 @@ func EncodedRevisionFromProto(ctx context.Context, appRevision *porterv1.AppRevi
 		RevisionNumber: appRevision.RevisionNumber,
 		CreatedAt:      appRevision.CreatedAt.AsTime(),
 		UpdatedAt:      appRevision.UpdatedAt.AsTime(),
+	}
+
+	return revision, nil
+}
+
+// AttachEnvToRevisionInput is the input struct for AttachEnvToRevision
+type AttachEnvToRevisionInput struct {
+	ProjectID                  uint
+	ClusterID                  int
+	DeploymentTargetID         string
+	Revision                   Revision
+	K8SAgent                   *kubernetes.Agent
+	PorterAppRepository        repository.PorterAppRepository
+	DeploymentTargetRepository repository.DeploymentTargetRepository
+}
+
+func AttachEnvToRevision(ctx context.Context, inp AttachEnvToRevisionInput) (Revision, error) {
+	ctx, span := telemetry.NewSpan(ctx, "attach-env-to-revision")
+	defer span.End()
+
+	revision := inp.Revision
+
+	if inp.ProjectID == 0 {
+		return revision, telemetry.Error(ctx, span, nil, "must provide a project id")
+	}
+	if inp.ClusterID == 0 {
+		return revision, telemetry.Error(ctx, span, nil, "must provide a cluster id")
+	}
+	if inp.DeploymentTargetID == "" {
+		return revision, telemetry.Error(ctx, span, nil, "must provide a deployment target id")
+	}
+	if inp.K8SAgent == nil {
+		return revision, telemetry.Error(ctx, span, nil, "k8s agent is nil")
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(revision.B64AppProto)
+	if err != nil {
+		return revision, telemetry.Error(ctx, span, err, "error decoding app proto")
+	}
+
+	appDef := &porterv1.PorterApp{}
+	err = helpers.UnmarshalContractObject(decoded, appDef)
+	if err != nil {
+		return revision, telemetry.Error(ctx, span, err, "error unmarshalling app proto")
+	}
+
+	envName, err := AppEnvGroupName(ctx, appDef.Name, inp.DeploymentTargetID, uint(inp.ClusterID), inp.PorterAppRepository)
+	if err != nil {
+		return revision, telemetry.Error(ctx, span, err, "error getting app env group name")
+	}
+	envNameFilter := []string{envName}
+
+	envFromProtoInp := AppEnvironmentFromProtoInput{
+		ProjectID:                  inp.ProjectID,
+		ClusterID:                  inp.ClusterID,
+		App:                        appDef,
+		K8SAgent:                   inp.K8SAgent,
+		DeploymentTargetRepository: inp.DeploymentTargetRepository,
+	}
+	envGroups, err := AppEnvironmentFromProto(ctx, envFromProtoInp, WithEnvGroupFilter(envNameFilter), WithSecrets())
+	if err != nil {
+		return revision, telemetry.Error(ctx, span, err, "error getting app environment from revision")
+	}
+
+	if len(envGroups) > 1 {
+		return revision, telemetry.Error(ctx, span, err, "multiple app envs groups returned for same name")
+	}
+	if len(envGroups) == 1 {
+		revision.Env = envGroups[0]
 	}
 
 	return revision, nil

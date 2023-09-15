@@ -48,9 +48,7 @@ const (
 	LabelKey_AppName = "porter.run/app-name"
 	// LabelKey_DeploymentTargetID is the label key for the deployment target id
 	LabelKey_DeploymentTargetID = "porter.run/deployment-target-id"
-	// LabelKey_DefaultAppEnvironment is the label key for the default app environment
-	LabelKey_DefaultAppEnvironment = "porter.run/default-app-environment"
-	// LabelKey_DefaultAppEnvironment is the label key signifying the resource is managed by porter
+	// LabelKey_PorterManaged is the label key signifying the resource is managed by porter
 	LabelKey_PorterManaged = "porter.run/managed"
 )
 
@@ -228,10 +226,10 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	additionalEnvGroupLabels := map[string]string{
-		LabelKey_AppName:               appName,
-		LabelKey_DeploymentTargetID:    request.DeploymentTargetID,
-		LabelKey_DefaultAppEnvironment: "true",
-		LabelKey_PorterManaged:         "true",
+		LabelKey_AppName:                                  appName,
+		LabelKey_DeploymentTargetID:                       request.DeploymentTargetID,
+		environment_groups.LabelKey_DefaultAppEnvironment: "true",
+		LabelKey_PorterManaged:                            "true",
 	}
 
 	err = environment_groups.CreateOrUpdateBaseEnvironmentGroup(ctx, agent, envGroup, additionalEnvGroupLabels)

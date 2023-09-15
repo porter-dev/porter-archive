@@ -118,8 +118,6 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 	// envGroupSet's key is the environment group's versioned name
 	envGroupSet := make(map[string]EnvironmentGroup)
 	for _, cm := range configMapListResp.Items {
-		fmt.Printf("cm: %+v\n", cm)
-
 		name, ok := cm.Labels[LabelKey_EnvironmentGroupName]
 		if !ok {
 			continue // missing name label, not an environment group
@@ -134,7 +132,7 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 		}
 
 		if !opts.includeDefaultAppEnvironmentGroups {
-			value, _ := cm.Labels[LabelKey_DefaultAppEnvironment]
+			value := cm.Labels[LabelKey_DefaultAppEnvironment]
 			if value == "true" {
 				continue // do not include default app environment groups
 			}

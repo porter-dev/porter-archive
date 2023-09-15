@@ -118,6 +118,8 @@ func (c *UpdateAppEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *h
 	namespace := deploymentTargetDetailsResp.Msg.Namespace
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: namespace})
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "hard-update", Value: request.HardUpdate})
+
 	envGroupName, err := AppEnvGroupName(ctx, appName, request.DeploymentTargetID, cluster.ID, c.Repo().PorterApp())
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting app env group name")
@@ -132,14 +134,75 @@ func (c *UpdateAppEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
+	latestEnvironmentGroup, err := environment_groups.LatestBaseEnvironmentGroup(ctx, agent, envGroupName)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "unable to get latest base environment group")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "env-group-exists", Value: latestEnvironmentGroup.Name != ""})
+
+	if latestEnvironmentGroup.Name != "" {
+		sameEnvGroup := true
+		for key, newValue := range request.Variables {
+			if existingValue, ok := latestEnvironmentGroup.Variables[key]; !ok || existingValue != newValue {
+				sameEnvGroup = false
+			}
+		}
+		for key, newValue := range request.Secrets {
+			if existingValue, ok := latestEnvironmentGroup.SecretVariables[key]; !ok || string(existingValue) != newValue {
+				sameEnvGroup = false
+			}
+		}
+		if request.HardUpdate {
+			for key, existingValue := range latestEnvironmentGroup.Variables {
+				if newValue, ok := request.Variables[key]; !ok || existingValue != newValue {
+					sameEnvGroup = false
+				}
+			}
+			for key, existingValue := range latestEnvironmentGroup.SecretVariables {
+				if newValue, ok := request.Secrets[key]; !ok || string(existingValue) != newValue {
+					sameEnvGroup = false
+				}
+			}
+		}
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "same-env-group", Value: sameEnvGroup})
+
+		if sameEnvGroup {
+
+			res := &UpdateAppEnvironmentGroupResponse{
+				EnvGroupName:    latestEnvironmentGroup.Name,
+				EnvGroupVersion: latestEnvironmentGroup.Version,
+			}
+
+			c.WriteResult(w, r, res)
+			return
+		}
+	}
+
+	variables := make(map[string]string)
 	secrets := make(map[string][]byte)
-	for k, v := range request.Secrets {
-		secrets[k] = []byte(v)
+
+	if !request.HardUpdate {
+		for key, value := range latestEnvironmentGroup.Variables {
+			variables[key] = value
+		}
+		for key, value := range latestEnvironmentGroup.SecretVariables {
+			secrets[key] = value
+		}
+	}
+
+	for key, value := range request.Variables {
+		variables[key] = value
+	}
+	for key, value := range request.Secrets {
+		secrets[key] = []byte(value)
 	}
 
 	envGroup := environment_groups.EnvironmentGroup{
 		Name:            envGroupName,
-		Variables:       request.Variables,
+		Variables:       variables,
 		SecretVariables: secrets,
 		CreatedAtUTC:    time.Now().UTC(),
 	}
@@ -186,6 +249,7 @@ func (c *UpdateAppEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *h
 	c.WriteResult(w, r, res)
 }
 
+// AppEnvGroupName returns the name of the environment group for the app
 func AppEnvGroupName(ctx context.Context, appName string, deploymentTargetId string, clusterID uint, porterAppRepository repository.PorterAppRepository) (string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "app-env-group-name")
 	defer span.End()

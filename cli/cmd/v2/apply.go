@@ -56,6 +56,17 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		}
 		b64AppProto = parseResp.B64AppProto
 
+		// we only need to create the app if a porter yaml is provided (otherwise it must already exist)
+		createPorterAppDBEntryInp, err := createPorterAppDbEntryInputFromProtoAndEnv(parseResp.B64AppProto)
+		if err != nil {
+			return fmt.Errorf("error creating porter app db entry input from proto: %w", err)
+		}
+
+		err = client.CreatePorterAppDBEntry(ctx, cliConf.Project, cliConf.Cluster, createPorterAppDBEntryInp)
+		if err != nil {
+			return fmt.Errorf("error creating porter app db entry: %w", err)
+		}
+
 		// override app name if provided
 		appName, err = appNameFromB64AppProto(parseResp.B64AppProto)
 		if err != nil {
@@ -93,16 +104,6 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		return errors.New("validated b64 app proto is empty")
 	}
 	base64AppProto := validateResp.ValidatedBase64AppProto
-
-	createPorterAppDBEntryInp, err := createPorterAppDbEntryInputFromProtoAndEnv(validateResp.ValidatedBase64AppProto)
-	if err != nil {
-		return fmt.Errorf("error creating porter app db entry input from proto: %w", err)
-	}
-
-	err = client.CreatePorterAppDBEntry(ctx, cliConf.Project, cliConf.Cluster, createPorterAppDBEntryInp)
-	if err != nil {
-		return fmt.Errorf("error creating porter app db entry: %w", err)
-	}
 
 	applyResp, err := client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, base64AppProto, targetResp.DeploymentTargetID, "", forceBuild)
 	if err != nil {

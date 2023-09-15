@@ -70,17 +70,12 @@ export const useAppValidation = ({
       if (!deploymentTargetID) {
         throw new Error("No deployment target selected");
       }
-      const variables: Record<string, string> = {};
-
-      if (data.app.env) {
-        data.app.env?.forEach(item => {
-          if (item && !item.deleted) { // Ensure item exists and is not deleted
-
-            variables[item.key] = item.value;
-
-          }
-        });
-      }
+      const variables = data.app.env
+        .filter((e) => !e.deleted)
+        .reduce((acc: Record<string, string>, curr) => {
+          acc[curr.key] = curr.value;
+          return acc;
+        }, {});
       const envVariableDeletions = removedEnvKeys(
         variables,
         prevRevision?.env || {}

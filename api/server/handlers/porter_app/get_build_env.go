@@ -104,14 +104,18 @@ func (c *GetBuildEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-
 	if len(deploymentTargets) > 1 {
-		err = telemetry.Error(ctx, span, err, "more than one deployment target found")
+		err = telemetry.Error(ctx, span, nil, "more than one deployment target found")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	deploymentTarget := deploymentTargets[0]
+	if deploymentTarget.ClusterID != int(cluster.ID) {
+		err := telemetry.Error(ctx, span, nil, "deployment target does not belong to cluster")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {

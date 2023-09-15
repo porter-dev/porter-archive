@@ -71,6 +71,12 @@ func (c *GetBuildEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if request.Base64AppProto == "" {
+		err := telemetry.Error(ctx, span, nil, "app proto is empty")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
 	decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error decoding base yaml")

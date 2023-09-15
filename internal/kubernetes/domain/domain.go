@@ -102,9 +102,9 @@ func (c *CreateDNSRecordConfig) NewDNSRecordForEndpoint() *models.DNSRecord {
 func (e *DNSRecord) CreateDomain(dnsClient *dns.Client) error {
 	isIPv4 := net.ParseIP(e.Endpoint) != nil
 
-	dnsType := dns.CNAME
+	dnsType := dns.RecordCNAME
 	if isIPv4 {
-		dnsType = dns.A
+		dnsType = dns.RecordA
 	}
 
 	return dnsClient.CreateRecord(dns.Record{

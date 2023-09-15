@@ -7,12 +7,12 @@ import (
 	"github.com/cloudflare/cloudflare-go"
 )
 
-// CloudflareRType strongly types cloudflare dns entry types
-type CloudflareRType string
+// CloudflareRecordType strongly types cloudflare dns entry types
+type CloudflareRecordType string
 
 const (
 	// CloudflareA declares an A record type for cloudflare
-	CloudflareA CloudflareRType = "A"
+	CloudflareA CloudflareRecordType = "A"
 
 	// CloudflareCNAME declares an CNME record type for cloudflare
 	CloudflareCNAME = "CNAME"

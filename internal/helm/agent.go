@@ -191,6 +191,13 @@ func (a *Agent) GetRelease(
 // we could Limit results by 1 and not worry about the helm release status label,
 // but Kubernetes only supports limiting results api-side.
 func (a *Agent) getLatestVersion(ctx context.Context, name string) int {
+	ctx, span := telemetry.NewSpan(ctx, "helm-get-latest-version")
+	defer span.End() // This span is one of most frequent spans. We need to sample this.
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "name", Value: name},
+		telemetry.AttributeKV{Key: "namespace", Value: a.Namespace()},
+	)
 	helmStatuses := []string{
 		string(release.StatusDeployed),
 		string(release.StatusFailed),

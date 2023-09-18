@@ -44,7 +44,6 @@ import { useAppValidation } from "lib/hooks/useAppValidation";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import PorterYamlModal from "./PorterYamlModal";
-import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -67,6 +66,13 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   ] = React.useState<PorterApp | null>(null);
   const [isDeploying, setIsDeploying] = React.useState(false);
   const [deployError, setDeployError] = React.useState("");
+  const [{ variables, secrets }, setFinalizedAppEnv] = React.useState<{
+    variables: Record<string, string>;
+    secrets: Record<string, string>;
+  }>({
+    variables: {},
+    secrets: {},
+  });
 
   const { data: porterApps = [] } = useQuery<string[]>(
     ["getPorterApps", currentProject?.id, currentCluster?.id],
@@ -140,7 +146,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const build = watch("app.build");
   const image = watch("source.image");
   const services = watch("app.services");
-  const env = watch("app.env");
 
   const {
     detectedServices: servicesFromYaml,
@@ -158,15 +163,21 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setDeployError("");
-      const { validatedAppProto, env } = await validateApp(data);
+      const { validatedAppProto, variables, secrets } = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
+      setFinalizedAppEnv({ variables, secrets });
 
       if (source.type === "github") {
         setShowGHAModal(true);
         return;
       }
 
-      await createAndApply({ app: validatedAppProto, source, env });
+      await createAndApply({
+        app: validatedAppProto,
+        source,
+        variables,
+        secrets,
+      });
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
         setDeployError(err.response?.data?.error);
@@ -182,11 +193,13 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     async ({
       app,
       source,
-      env,
+      variables,
+      secrets,
     }: {
       app: PorterApp | null;
       source: SourceOptions;
-      env: KeyValueType[];
+      variables: Record<string, string>;
+      secrets: Record<string, string>;
     }) => {
       setIsDeploying(true);
       // log analytics event that we started form submission
@@ -213,20 +226,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
         );
 
-        const variables = env
-          .filter((e) => !e.hidden && !e.deleted)
-          .reduce((acc: Record<string, string>, item) => {
-            acc[item.key] = item.value;
-            return acc;
-          }, {});
-        const secrets = env
-          .filter((e) => !e.deleted)
-          .reduce((acc: Record<string, string>, item) => {
-            if (item.hidden) {
-              acc[item.key] = item.value;
-            }
-            return acc;
-          }, {});
         const envGroupResponse = await api.updateEnvironmentGroupV2(
           "<token>",
           {
@@ -621,7 +620,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           projectId={currentProject.id}
           clusterId={currentCluster.id}
           deployPorterApp={() =>
-            createAndApply({ app: validatedAppProto, source, env })
+            createAndApply({
+              app: validatedAppProto,
+              source,
+              variables,
+              secrets,
+            })
           }
           deploymentError={deployError}
           porterYamlPath={source.porter_yaml_path}

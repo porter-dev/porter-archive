@@ -66,8 +66,10 @@ func WithEnvironmentGroupVersion(version int) EnvironmentGroupOption {
 	}
 }
 
-// ListEnvironmentGroups returns all environment groups stored in the provided namespace. If none is set, it will use the namespace "porter-env-group"
-func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ...EnvironmentGroupOption) ([]EnvironmentGroup, error) {
+// listEnvironmentGroups returns all environment groups stored in the provided namespace. If none is set, it will use the namespace "porter-env-group".
+// This method returns all secret values, which should never be returned out of this package.  If you are trying to get the environment group values to return to the user,
+// use the exported ListEnvironmentGroups instead.
+func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ...EnvironmentGroupOption) ([]EnvironmentGroup, error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-environment-groups")
 	defer span.End()
 
@@ -161,6 +163,29 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 	var envGroups []EnvironmentGroup
 	for _, envGroup := range envGroupSet {
 		envGroups = append(envGroups, envGroup)
+	}
+
+	return envGroups, nil
+}
+
+// EnvGroupSecretDummyValue is the value that will be returned for secret variables in environment groups
+const EnvGroupSecretDummyValue = "********"
+
+// ListEnvironmentGroups returns all environment groups stored in the provided namespace. If none is set, it will use the namespace "porter-env-group".
+// This method replaces all secret values with a dummy value so that they are not exposed to the user.
+func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ...EnvironmentGroupOption) ([]EnvironmentGroup, error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-environment-groups-obscured")
+	defer span.End()
+
+	envGroups, err := listEnvironmentGroups(ctx, a, listOpts...)
+	if err != nil {
+		return nil, telemetry.Error(ctx, span, err, "unable to list environment groups")
+	}
+
+	for _, envGroup := range envGroups {
+		for k := range envGroup.SecretVariables {
+			envGroup.SecretVariables[k] = []byte(EnvGroupSecretDummyValue)
+		}
 	}
 
 	return envGroups, nil

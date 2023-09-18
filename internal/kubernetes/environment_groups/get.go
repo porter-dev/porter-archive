@@ -7,7 +7,8 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// LatestBaseEnvironmentGroup returns the most recent version of an environment group stored in the porter-env-group namespace
+// LatestBaseEnvironmentGroup returns the most recent version of an environment group stored in the porter-env-group namespace.
+// It replaces all secret values with a dummy variable and can be used to return values to the user.
 func LatestBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, environmentGroupName string) (EnvironmentGroup, error) {
 	ctx, span := telemetry.NewSpan(ctx, "latest-base-env-group")
 	defer span.End()
@@ -16,6 +17,36 @@ func LatestBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, enviro
 	var eg EnvironmentGroup
 
 	baseEnvironmentGroupVersions, err := ListEnvironmentGroups(ctx, a, WithEnvironmentGroupName(environmentGroupName), WithNamespace(Namespace_EnvironmentGroups))
+	if err != nil {
+		return eg, telemetry.Error(ctx, span, err, "unable to list base environment groups")
+	}
+
+	var highestVersionEnvironmentGroup EnvironmentGroup
+	for _, baseEnvironmentGroup := range baseEnvironmentGroupVersions {
+		if baseEnvironmentGroup.Version > highestVersionEnvironmentGroup.Version {
+			highestVersionEnvironmentGroup = baseEnvironmentGroup
+		}
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "highest-version", Value: highestVersionEnvironmentGroup.Version},
+		telemetry.AttributeKV{Key: "highest-version-name", Value: highestVersionEnvironmentGroup.Name},
+	)
+
+	return highestVersionEnvironmentGroup, nil
+}
+
+// latestBaseEnvironmentGroup returns the most recent version of an environment group stored in the porter-env-group namespace.
+// This is a private function because it returns all secret values.  If you are trying to retreive the latest base environment group to return to the user,
+// use the exported LatestBaseEnvironmentGroup instead.
+func latestBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, environmentGroupName string) (EnvironmentGroup, error) {
+	ctx, span := telemetry.NewSpan(ctx, "latest-base-env-group")
+	defer span.End()
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "environment-group-name", Value: environmentGroupName})
+
+	var eg EnvironmentGroup
+
+	baseEnvironmentGroupVersions, err := listEnvironmentGroups(ctx, a, WithEnvironmentGroupName(environmentGroupName), WithNamespace(Namespace_EnvironmentGroups))
 	if err != nil {
 		return eg, telemetry.Error(ctx, span, err, "unable to list base environment groups")
 	}

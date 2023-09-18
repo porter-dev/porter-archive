@@ -42,6 +42,17 @@ func AssertResponseForbidden(t *testing.T, rr *httptest.ResponseRecorder) {
 	assert.Equal(t, expReqErr, reqErr, "body should be forbidden error")
 }
 
+// AssertForbiddenError asserts that the response has status code of a forbidden error
+func AssertForbiddenError(t *testing.T, rr *httptest.ResponseRecorder) {
+	reqErr := &types.ExternalError{}
+	err := json.NewDecoder(rr.Result().Body).Decode(reqErr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, http.StatusForbidden, rr.Result().StatusCode, "status code should be forbidden")
+}
+
 func AssertResponseInternalServerError(t *testing.T, rr *httptest.ResponseRecorder) {
 	reqErr := &types.ExternalError{}
 	err := json.NewDecoder(rr.Result().Body).Decode(reqErr)
@@ -55,6 +66,17 @@ func AssertResponseInternalServerError(t *testing.T, rr *httptest.ResponseRecord
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Result().StatusCode, "status code should be internal server error")
 	assert.Equal(t, expReqErr, reqErr, "body should be internal server error")
+}
+
+// AssertInternalServerError asserts that the response has status code of an internal server error
+func AssertInternalServerError(t *testing.T, rr *httptest.ResponseRecorder) {
+	reqErr := &types.ExternalError{}
+	err := json.NewDecoder(rr.Result().Body).Decode(reqErr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Result().StatusCode, "status code should be internal server error")
 }
 
 func AssertResponseError(t *testing.T, rr *httptest.ResponseRecorder, statusCode int, expReqErr *types.ExternalError) {

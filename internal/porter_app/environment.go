@@ -14,6 +14,7 @@ import (
 
 type envVariarableOptions struct {
 	includeSecrets bool
+	envGroups      []string
 }
 
 // EnvVariableOption is a function that modifies AppEnvironmentFromProto
@@ -26,11 +27,20 @@ func WithSecrets() EnvVariableOption {
 	}
 }
 
+// WithEnvGroupFilter filters the environment groups to only include the ones in this list of names
+func WithEnvGroupFilter(envGroups []string) EnvVariableOption {
+	return func(opts *envVariarableOptions) {
+		opts.envGroups = envGroups
+	}
+}
+
 // AppEnvironmentFromProtoInput is the input struct for AppEnvironmentFromProto
 type AppEnvironmentFromProtoInput struct {
-	App              *porterv1.PorterApp
-	DeploymentTarget *models.DeploymentTarget
-	K8SAgent         *kubernetes.Agent
+	ProjectID                  uint
+	ClusterID                  int
+	App                        *porterv1.PorterApp
+	K8SAgent                   *kubernetes.Agent
+	DeploymentTargetRepository repository.DeploymentTargetRepository
 }
 
 // AppEnvironmentFromProto returns all envfironment groups referenced in an app proto with their variables
@@ -38,10 +48,13 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 	ctx, span := telemetry.NewSpan(ctx, "porter-app-env-from-proto")
 	defer span.End()
 
-	var envGroups []environment_groups.EnvironmentGroup
+	envGroups := []environment_groups.EnvironmentGroup{}
 
-	if inp.DeploymentTarget == nil {
-		return nil, telemetry.Error(ctx, span, nil, "must provide a deployment target")
+	if inp.ProjectID == 0 {
+		return nil, telemetry.Error(ctx, span, nil, "must provide a project id")
+	}
+	if inp.ClusterID == 0 {
+		return nil, telemetry.Error(ctx, span, nil, "must provide a cluster id")
 	}
 	if inp.K8SAgent == nil {
 		return nil, telemetry.Error(ctx, span, nil, "must provide a kubernetes agent")
@@ -50,27 +63,56 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 		return nil, telemetry.Error(ctx, span, nil, "must provide an app")
 	}
 
+	deploymentTargets, err := inp.DeploymentTargetRepository.List(inp.ProjectID)
+	if err != nil {
+		return envGroups, telemetry.Error(ctx, span, err, "error reading deployment targets")
+	}
+
+	if len(deploymentTargets) == 0 {
+		return envGroups, telemetry.Error(ctx, span, nil, "no deployment targets found")
+	}
+	if len(deploymentTargets) > 1 {
+		return envGroups, telemetry.Error(ctx, span, nil, "more than one deployment target found")
+	}
+
+	deploymentTarget := deploymentTargets[0]
+	if deploymentTarget.ClusterID != inp.ClusterID {
+		return envGroups, telemetry.Error(ctx, span, nil, "deployment target does not belong to cluster")
+	}
+
 	var opts envVariarableOptions
 	for _, opt := range varOpts {
 		opt(&opts)
 	}
 
 	var namespace string
-	switch inp.DeploymentTarget.SelectorType {
+	switch deploymentTarget.SelectorType {
 	case models.DeploymentTargetSelectorType_Namespace:
-		namespace = inp.DeploymentTarget.Selector
+		namespace = deploymentTarget.Selector
 	default:
 		return envGroups, telemetry.Error(ctx, span, nil, "deployment target selector type not supported")
 	}
 
-	for _, envGroupRef := range inp.App.EnvGroups {
+	filteredEnvGroups := inp.App.EnvGroups
+	if len(opts.envGroups) > 0 {
+		filteredEnvGroups = []*porterv1.EnvGroup{}
+		for _, envGroup := range inp.App.EnvGroups {
+			for _, envGroupName := range opts.envGroups {
+				if envGroup.GetName() == envGroupName {
+					filteredEnvGroups = append(filteredEnvGroups, envGroup)
+				}
+			}
+		}
+	}
+
+	for _, envGroupRef := range filteredEnvGroups {
 		envGroup, err := environment_groups.EnvironmentGroupInTargetNamespace(ctx, inp.K8SAgent, environment_groups.EnvironmentGroupInTargetNamespaceInput{
 			Name:      envGroupRef.GetName(),
 			Version:   int(envGroupRef.GetVersion()),
 			Namespace: namespace,
 		})
 		if err != nil {
-			return nil, err
+			return nil, telemetry.Error(ctx, span, err, "error getting environment group in target namespace")
 		}
 
 		if !opts.includeSecrets {

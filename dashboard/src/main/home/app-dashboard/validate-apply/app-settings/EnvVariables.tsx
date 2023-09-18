@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 import React, { useCallback, useContext, useEffect, useState } from "react";
+=======
+import React, { useCallback, useEffect } from "react";
+>>>>>>> master
 import { Controller, useFormContext } from "react-hook-form";
 
 import { PorterAppFormData } from "lib/porter-apps";
 import EnvGroupArrayV2 from "main/home/cluster-dashboard/env-groups/EnvGroupArrayV2";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArrayV2";
+<<<<<<< HEAD
 import styled from "styled-components";
 import Spacer from "components/porter/Spacer";
 import EnvGroupModal from "../../expanded-app/env-vars/EnvGroupModal";
@@ -15,6 +20,8 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 
 
+=======
+>>>>>>> master
 const EnvVariables: React.FC = () => {
   const { control } = useFormContext<PorterAppFormData>();
   const [hovered, setHovered] = useState(false);
@@ -24,6 +31,7 @@ const EnvVariables: React.FC = () => {
   const [envGroups, setEnvGroups] = useState<any>([])
   const [deletedEnvGroups, setDeletedEnvGroups] = useState<NewPopulatedEnvGroup[]>([])
 
+<<<<<<< HEAD
   const maxEnvGroupsReached = syncedEnvGroups.length >= 4;
   const updateEnvGroups = async () => {
     let populateEnvGroupsPromises: NewPopulatedEnvGroup[] = [];
@@ -68,11 +76,14 @@ const EnvVariables: React.FC = () => {
       (env) => env.name !== envGroup.name
     ))
   }
+=======
+>>>>>>> master
   return (
     <Controller
       name={`app.env`}
       control={control}
       render={({ field: { value, onChange } }) => (
+<<<<<<< HEAD
         <>
           <EnvGroupArrayV2
             values={value ? value : []}
@@ -133,6 +144,16 @@ const EnvVariables: React.FC = () => {
               </>)} />
 
         </>
+=======
+        <EnvGroupArrayV2
+          values={value ? value : []}
+          setValues={(x: KeyValueType[]) => {
+            onChange(x);
+          }}
+          fileUpload={true}
+          syncedEnvGroups={[]}
+        />
+>>>>>>> master
       )}
     />
   );

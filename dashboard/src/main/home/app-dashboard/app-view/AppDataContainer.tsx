@@ -245,7 +245,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         deploymentTargetId,
         porterApp.name,
       ]);
-      setPreviewRevision(null);
+      await setPreviewRevision(null);
 
       // redirect to the default tab after save
       history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);

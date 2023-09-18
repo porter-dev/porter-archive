@@ -22,39 +22,10 @@ const EnvVariables: React.FC = () => {
   const [hovered, setHovered] = useState(false);
   const [syncedEnvGroups, setSyncedEnvGroups] = useState<NewPopulatedEnvGroup[]>([]);
   const [showEnvModal, setShowEnvModal] = useState(false);
-  const { currentCluster, currentProject } = useContext(Context);
-  const [envGroups, setEnvGroups] = useState<any>([])
+
   const [deletedEnvGroups, setDeletedEnvGroups] = useState<NewPopulatedEnvGroup[]>([])
 
   const maxEnvGroupsReached = syncedEnvGroups.length >= 4;
-  const updateEnvGroups = async () => {
-    let populateEnvGroupsPromises: NewPopulatedEnvGroup[] = [];
-    try {
-      populateEnvGroupsPromises = await api
-        .getAllEnvGroups<NewPopulatedEnvGroup[]>(
-          "<token>",
-          {},
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-          }
-        )
-        .then((res) => res?.data?.environment_groups);
-    } catch (error) {
-      return;
-    }
-
-    try {
-      const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
-      setEnvGroups(populatedEnvGroups)
-      const filteredEnvGroups = populatedEnvGroups?.filter(envGroup =>
-        envGroup.linked_applications && envGroup.linked_applications.includes(appData.chart.name)
-      );
-      setSyncedEnvGroups(filteredEnvGroups)
-    } catch (error) {
-      return;
-    }
-  }
 
   const convertSynced = (envGroups: NewPopulatedEnvGroup[]): {}[] => {
     return envGroups?.map(group => (

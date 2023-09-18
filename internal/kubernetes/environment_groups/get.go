@@ -8,7 +8,8 @@ import (
 )
 
 // LatestBaseEnvironmentGroup returns the most recent version of an environment group stored in the porter-env-group namespace.
-// It replaces all secret values with a dummy variable and can be used to return values to the user.
+// It replaces all secret values with a dummy variable and can be used to return values to the user.  If you need access to the true secret values,
+// use the private latestBaseEnvironmentGroup function instead.
 func LatestBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, environmentGroupName string) (EnvironmentGroup, error) {
 	ctx, span := telemetry.NewSpan(ctx, "latest-base-env-group")
 	defer span.End()
@@ -37,7 +38,7 @@ func LatestBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, enviro
 }
 
 // latestBaseEnvironmentGroup returns the most recent version of an environment group stored in the porter-env-group namespace.
-// This is a private function because it returns all secret values.  If you are trying to retreive the latest base environment group to return to the user,
+// This is a private function because it returns all secret values.  If you are trying to retrieve the latest base environment group to return to the user,
 // use the exported LatestBaseEnvironmentGroup instead.
 func latestBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, environmentGroupName string) (EnvironmentGroup, error) {
 	ctx, span := telemetry.NewSpan(ctx, "latest-base-env-group")

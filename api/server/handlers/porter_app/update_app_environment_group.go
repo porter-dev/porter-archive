@@ -161,18 +161,19 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			}
 		}
 		for key, newValue := range request.Secrets {
-			if existingValue, ok := latestEnvironmentGroup.SecretVariables[key]; !ok || string(existingValue) != newValue {
+			// We cannot check if the values are the same because the existing secrets are substituted with dummy values. However, if the new value is a dummy value, then it is unchanged.
+			if _, ok := latestEnvironmentGroup.SecretVariables[key]; !ok || newValue != environment_groups.EnvGroupSecretDummyValue {
 				sameEnvGroup = false
 			}
 		}
 		if request.HardUpdate {
-			for key, existingValue := range latestEnvironmentGroup.Variables {
-				if newValue, ok := request.Variables[key]; !ok || existingValue != newValue {
+			for key := range latestEnvironmentGroup.Variables {
+				if _, ok := request.Variables[key]; !ok {
 					sameEnvGroup = false
 				}
 			}
-			for key, existingValue := range latestEnvironmentGroup.SecretVariables {
-				if newValue, ok := request.Secrets[key]; !ok || string(existingValue) != newValue {
+			for key := range latestEnvironmentGroup.SecretVariables {
+				if _, ok := request.Secrets[key]; !ok {
 					sameEnvGroup = false
 				}
 			}

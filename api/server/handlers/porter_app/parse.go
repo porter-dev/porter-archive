@@ -360,6 +360,9 @@ func syncEnvironmentGroupToNamespaceIfLabelsExist(ctx context.Context, agent *ku
 		}
 	}
 
+	service.Config["configMapRefs"] = []string{}
+	service.Config["secretRefs"] = []string{}
+
 	for _, linkedGroupName := range strings.Split(linkedGroupNames, ".") {
 		inp := environment_groups.SyncLatestVersionToNamespaceInput{
 			BaseEnvironmentGroupName: linkedGroupName,
@@ -385,7 +388,7 @@ func syncEnvironmentGroupToNamespaceIfLabelsExist(ctx context.Context, agent *ku
 				service.Config["configMapRefs"] = append(service.Config["configMapRefs"].([]any), syncedEnvironment.EnvironmentGroupVersionedName)
 			}
 
-			switch service.Config["configMapRefs"].(type) {
+			switch service.Config["secretRefs"].(type) {
 			case []string:
 				service.Config["secretRefs"] = append(service.Config["secretRefs"].([]string), syncedEnvironment.EnvironmentGroupVersionedName)
 			case []any:

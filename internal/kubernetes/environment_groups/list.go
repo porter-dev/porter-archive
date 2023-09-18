@@ -29,9 +29,9 @@ type EnvironmentGroup struct {
 	// Version is the environment group version which can be found in the labels (LabelKey_EnvironmentGroupVersion) of the ConfigMap. This is NOT included in the configmap name
 	Version int `json:"latest_version"`
 	// Variables are non-secret values for the EnvironmentGroup. This usually will be a configmap
-	Variables map[string]string `json:"variables"`
+	Variables map[string]string `json:"variables,omitempty"`
 	// SecretVariables are secret values for the EnvironmentGroup. This usually will be a Secret on the kubernetes cluster
-	SecretVariables map[string][]byte `json:"variables_secrets,omitempty"`
+	SecretVariables map[string][]byte `json:"secrets,omitempty"`
 	// CreatedAt is only used for display purposes and is in UTC Unix time
 	CreatedAtUTC time.Time `json:"created_at"`
 }

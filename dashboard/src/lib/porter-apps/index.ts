@@ -15,7 +15,7 @@ import {
 } from "./services";
 import { Build, PorterApp, Service } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
-import { valueExists } from "shared/util";
+import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 
 // buildValidator is used to validate inputs for build setting fields
 export const buildValidator = z.discriminatedUnion("method", [
@@ -274,10 +274,17 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
     .exhaustive();
 };
 
-export function clientAppFromProto(
-  proto: PorterApp,
-  overrides: DetectedServices | null
-): ClientPorterApp {
+export function clientAppFromProto({
+  proto,
+  overrides,
+  variables = {},
+  secrets = {},
+}: {
+  proto: PorterApp;
+  overrides: DetectedServices | null;
+  variables?: Record<string, string>;
+  secrets?: Record<string, string>;
+}): ClientPorterApp {
   const services = Object.entries(proto.services)
     .map(([name, service]) => serializedServiceFromProto({ name, service }))
     .map((svc) => {
@@ -295,6 +302,23 @@ export function clientAppFromProto(
     });
 
   const predeployList = [];
+  const parsedEnv: KeyValueType[] = [
+    ...Object.entries(variables).map(([key, value]) => ({
+      key,
+      value,
+      hidden: false,
+      locked: false,
+      deleted: false,
+    })),
+    ...Object.entries(secrets).map(([key, value]) => ({
+      key,
+      value,
+      hidden: true,
+      locked: false,
+      deleted: false,
+    })),
+  ];
+
   if (proto.predeploy) {
     predeployList.push(
       deserializeService({
@@ -314,7 +338,7 @@ export function clientAppFromProto(
       },
       services,
       predeploy: predeployList,
-      env: [],
+      env: parsedEnv,
       envGroups: proto.envGroups.map((eg) => ({
         name: eg.name,
         version: eg.version,
@@ -349,7 +373,7 @@ export function clientAppFromProto(
     },
     services,
     predeploy,
-    env: [],
+    env: parsedEnv,
     envGroups: proto.envGroups.map((eg) => ({
       name: eg.name,
       version: eg.version,

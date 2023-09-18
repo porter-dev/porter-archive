@@ -246,14 +246,14 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             env_group_version: z.coerce.bigint(),
           })
           .parseAsync(envGroupResponse.data);
+
         const envGroups = [
-          ...app.envGroups,
+          ...app.envGroups.filter(group => group.name !== addedEnvGroup.env_group_name),
           {
             name: addedEnvGroup.env_group_name,
-            version: addedEnvGroup.env_group_version,
-          },
+            version: addedEnvGroup.env_group_version
+          }
         ];
-
         const appWithSeededEnv = new PorterApp({
           ...app,
           envGroups,
@@ -548,9 +548,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

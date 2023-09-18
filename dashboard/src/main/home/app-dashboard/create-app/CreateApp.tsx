@@ -412,6 +412,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     if (detectedName) {
       setValue("app.name", { value: detectedName, readOnly: true });
     }
+
+    if (!detectedName && name.readOnly) {
+      setValue("app.name", { value: "", readOnly: false });
+    }
   }, [servicesFromYaml, detectedName, detectedServices.detected]);
 
   useEffect(() => {

@@ -76,13 +76,16 @@ export const clientAppValidator = z.object({
     .default([]),
   services: serviceValidator.array(),
   predeploy: serviceValidator.array().optional(),
-  env: z.object({
-    key: z.string(),
-    value: z.string(),
-    hidden: z.boolean(),
-    locked: z.boolean(),
-    deleted: z.boolean(),
-  }).array().default([]),
+  env: z
+    .object({
+      key: z.string(),
+      value: z.string(),
+      hidden: z.boolean(),
+      locked: z.boolean(),
+      deleted: z.boolean(),
+    })
+    .array()
+    .default([]),
   build: buildValidator,
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
@@ -312,7 +315,10 @@ export function clientAppFromProto(
       services,
       predeploy: predeployList,
       env: [],
-      envGroups: proto.envGroups.map((eg) => ({ name: eg.name, version: eg.version })),
+      envGroups: proto.envGroups.map((eg) => ({
+        name: eg.name,
+        version: eg.version,
+      })),
       build: clientBuildFromProto(proto.build) ?? {
         method: "pack",
         context: "./",
@@ -325,15 +331,15 @@ export function clientAppFromProto(
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-      deserializeService({
-        service: serializedServiceFromProto({
-          name: "pre-deploy",
-          service: proto.predeploy,
-          isPredeploy: true,
+        deserializeService({
+          service: serializedServiceFromProto({
+            name: "pre-deploy",
+            service: proto.predeploy,
+            isPredeploy: true,
+          }),
+          override: predeployOverrides,
         }),
-        override: predeployOverrides,
-      }),
-    ]
+      ]
     : undefined;
 
   return {
@@ -344,7 +350,10 @@ export function clientAppFromProto(
     services,
     predeploy,
     env: [],
-    envGroups: proto.envGroups.map((eg) => ({ name: eg.name, version: eg.version })),
+    envGroups: proto.envGroups.map((eg) => ({
+      name: eg.name,
+      version: eg.version,
+    })),
     build: clientBuildFromProto(proto.build) ?? {
       method: "pack",
       context: "./",

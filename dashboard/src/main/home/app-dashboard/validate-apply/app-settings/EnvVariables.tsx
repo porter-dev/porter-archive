@@ -1,14 +1,9 @@
-<<<<<<< HEAD
 import React, { useCallback, useContext, useEffect, useState } from "react";
-=======
-import React, { useCallback, useEffect } from "react";
->>>>>>> master
 import { Controller, useFormContext } from "react-hook-form";
 
 import { PorterAppFormData } from "lib/porter-apps";
 import EnvGroupArrayV2 from "main/home/cluster-dashboard/env-groups/EnvGroupArrayV2";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArrayV2";
-<<<<<<< HEAD
 import styled from "styled-components";
 import Spacer from "components/porter/Spacer";
 import EnvGroupModal from "../../expanded-app/env-vars/EnvGroupModal";
@@ -18,10 +13,10 @@ import sliders from "assets/sliders.svg";
 import Text from "components/porter/Text";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { z } from "zod";
+import { EnvGroup } from "@porter-dev/api-contracts";
 
 
-=======
->>>>>>> master
 const EnvVariables: React.FC = () => {
   const { control } = useFormContext<PorterAppFormData>();
   const [hovered, setHovered] = useState(false);
@@ -31,7 +26,6 @@ const EnvVariables: React.FC = () => {
   const [envGroups, setEnvGroups] = useState<any>([])
   const [deletedEnvGroups, setDeletedEnvGroups] = useState<NewPopulatedEnvGroup[]>([])
 
-<<<<<<< HEAD
   const maxEnvGroupsReached = syncedEnvGroups.length >= 4;
   const updateEnvGroups = async () => {
     let populateEnvGroupsPromises: NewPopulatedEnvGroup[] = [];
@@ -57,17 +51,28 @@ const EnvVariables: React.FC = () => {
         envGroup.linked_applications && envGroup.linked_applications.includes(appData.chart.name)
       );
       setSyncedEnvGroups(filteredEnvGroups)
-      console.log(filteredEnvGroups)
     } catch (error) {
       return;
     }
   }
 
-  const convertSynced = (envGroups: NewPopulatedEnvGroup[]): { name: string; version: bigint }[] => {
-    return envGroups?.map(group => ({
-      name: group?.name,
-      version: BigInt(group?.current_version)
-    }));
+  const convertSynced = (envGroups: NewPopulatedEnvGroup[]): {}[] => {
+    return envGroups?.map(group => (
+      new EnvGroup(
+        {
+          name: group.name,
+          version: BigInt(group.latest_version),
+        },
+      )
+    )
+    )
+  }
+
+  const removeSynced = (envGroups: [], envGroup: NewPopulatedEnvGroup): {}[] => {
+    return envGroups?.filter(group => (
+      group?.name !== envGroup.name
+    )
+    )
   }
   const deleteEnvGroup = (envGroup: NewPopulatedEnvGroup) => {
 
@@ -76,14 +81,11 @@ const EnvVariables: React.FC = () => {
       (env) => env.name !== envGroup.name
     ))
   }
-=======
->>>>>>> master
   return (
-    <Controller
+    <><Controller
       name={`app.env`}
       control={control}
       render={({ field: { value, onChange } }) => (
-<<<<<<< HEAD
         <>
           <EnvGroupArrayV2
             values={value ? value : []}
@@ -91,71 +93,60 @@ const EnvVariables: React.FC = () => {
               onChange(x);
             }}
             fileUpload={true}
-            syncedEnvGroups={[]} />
-
-          <Controller
-            name={`app.envGroups`}
-            control={control}
-            render={({ field: { value, onChange } }) => (
-              <>
-                <TooltipWrapper
-                  onMouseOver={() => setHovered(true)}
-                  onMouseOut={() => setHovered(false)}>
-                  <LoadButton
-                    disabled={maxEnvGroupsReached}
-                    onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
-                  >
-                    <img src={sliders} /> Load from Env Group
-                  </LoadButton>
-                  <TooltipText visible={maxEnvGroupsReached && hovered}>Max 4 Env Groups allowed</TooltipText>
-                </TooltipWrapper>
-
-                {showEnvModal && <EnvGroupModal
-                  setValues={(x: KeyValueType[]) => {
-                    onChange(x);
-                  }}
-                  values={value}
-                  closeModal={() => setShowEnvModal(false)}
-                  syncedEnvGroups={syncedEnvGroups}
-                  setSyncedEnvGroups={
-                    (x: NewPopulatedEnvGroup[]) => {
-                      setSyncedEnvGroups(x)
-                      onChange(convertSynced(x))
-                    }
-                  }
-                  namespace={"default"}
-                  newApp={true} />}
-                {!!syncedEnvGroups?.length && (
-                  <>
-                    <Spacer y={0.5} />
-                    <Text size={16}>Synced environment groups</Text>
-                    {syncedEnvGroups?.map((envGroup: any) => {
-                      return (
-                        <ExpandableEnvGroup
-                          key={envGroup?.name}
-                          envGroup={envGroup}
-                          onDelete={() => {
-                            deleteEnvGroup(envGroup);
-                          }} />
-                      );
-                    })}
-                  </>
-                )}
-              </>)} />
-
+            syncedEnvGroups={syncedEnvGroups} />
         </>
-=======
-        <EnvGroupArrayV2
-          values={value ? value : []}
-          setValues={(x: KeyValueType[]) => {
-            onChange(x);
-          }}
-          fileUpload={true}
-          syncedEnvGroups={[]}
-        />
->>>>>>> master
-      )}
-    />
+      )} />
+      <Controller
+        name={`app.envGroups`}
+        control={control}
+        render={({ field: { value, onChange } }) => (
+          <>
+            <TooltipWrapper
+              onMouseOver={() => setHovered(true)}
+              onMouseOut={() => setHovered(false)}>
+              <LoadButton
+                disabled={maxEnvGroupsReached}
+                onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
+              >
+                <img src={sliders} /> Load from Env Group
+              </LoadButton>
+              <TooltipText visible={maxEnvGroupsReached && hovered}>Max 4 Env Groups allowed</TooltipText>
+            </TooltipWrapper>
+
+            {showEnvModal && <EnvGroupModal
+              setValues={(x: KeyValueType[]) => {
+                onChange(x);
+              }}
+              values={value}
+              closeModal={() => setShowEnvModal(false)}
+              syncedEnvGroups={syncedEnvGroups}
+              setSyncedEnvGroups={(x: NewPopulatedEnvGroup[]) => {
+                setSyncedEnvGroups(x);
+                onChange(convertSynced(x));
+              }}
+              namespace={"default"}
+              newApp={true} />}
+            {!!syncedEnvGroups?.length && (
+              <>
+                <Spacer y={0.5} />
+                <Text size={16}>Synced environment groups</Text>
+                {syncedEnvGroups?.map((envGroup: any) => {
+                  return (
+                    <ExpandableEnvGroup
+                      key={envGroup?.name}
+                      envGroup={envGroup}
+                      onDelete={() => {
+                        deleteEnvGroup(envGroup);
+                        onChange(removeSynced(value, envGroup));
+                      }} />
+                  );
+                })}
+              </>
+            )}
+          </>)} />
+
+    </>
+
   );
 };
 

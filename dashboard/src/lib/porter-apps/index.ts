@@ -70,8 +70,10 @@ export const clientAppValidator = z.object({
     readOnly: z.boolean(),
     value: z.string(),
   }),
-<<<<<<< HEAD
-  envGroups: z.object({ name: z.string(), version: z.bigint() }).array().default([]),
+  envGroups: z
+    .object({ name: z.string(), version: z.bigint() })
+    .array()
+    .default([]),
   services: serviceValidator.array(),
   predeploy: serviceValidator.array().optional(),
   env: z.object({
@@ -81,24 +83,6 @@ export const clientAppValidator = z.object({
     locked: z.boolean(),
     deleted: z.boolean(),
   }).array().default([]),
-=======
-  envGroups: z
-    .object({ name: z.string(), version: z.bigint() })
-    .array()
-    .default([]),
-  services: serviceValidator.array(),
-  predeploy: serviceValidator.array().optional(),
-  env: z
-    .object({
-      key: z.string(),
-      value: z.string(),
-      hidden: z.boolean(),
-      locked: z.boolean(),
-      deleted: z.boolean(),
-    })
-    .array()
-    .default([]),
->>>>>>> master
   build: buildValidator,
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
@@ -328,14 +312,7 @@ export function clientAppFromProto(
       services,
       predeploy: predeployList,
       env: [],
-<<<<<<< HEAD
       envGroups: proto.envGroups.map((eg) => ({ name: eg.name, version: eg.version })),
-=======
-      envGroups: proto.envGroups.map((eg) => ({
-        name: eg.name,
-        version: eg.version,
-      })),
->>>>>>> master
       build: clientBuildFromProto(proto.build) ?? {
         method: "pack",
         context: "./",
@@ -348,15 +325,15 @@ export function clientAppFromProto(
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-        deserializeService({
-          service: serializedServiceFromProto({
-            name: "pre-deploy",
-            service: proto.predeploy,
-            isPredeploy: true,
-          }),
-          override: predeployOverrides,
+      deserializeService({
+        service: serializedServiceFromProto({
+          name: "pre-deploy",
+          service: proto.predeploy,
+          isPredeploy: true,
         }),
-      ]
+        override: predeployOverrides,
+      }),
+    ]
     : undefined;
 
   return {
@@ -367,14 +344,7 @@ export function clientAppFromProto(
     services,
     predeploy,
     env: [],
-<<<<<<< HEAD
     envGroups: proto.envGroups.map((eg) => ({ name: eg.name, version: eg.version })),
-=======
-    envGroups: proto.envGroups.map((eg) => ({
-      name: eg.name,
-      version: eg.version,
-    })),
->>>>>>> master
     build: clientBuildFromProto(proto.build) ?? {
       method: "pack",
       context: "./",

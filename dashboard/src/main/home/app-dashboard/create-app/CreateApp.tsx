@@ -247,14 +247,14 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             env_group_version: z.coerce.bigint(),
           })
           .parseAsync(envGroupResponse.data);
+
         const envGroups = [
-          ...app.envGroups,
+          ...app.envGroups.filter(group => group.name !== addedEnvGroup.env_group_name),
           {
             name: addedEnvGroup.env_group_name,
-            version: addedEnvGroup.env_group_version,
-          },
+            version: addedEnvGroup.env_group_version
+          }
         ];
-
         const appWithSeededEnv = new PorterApp({
           ...app,
           envGroups,

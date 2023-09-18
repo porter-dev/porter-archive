@@ -70,7 +70,7 @@ func WithEnvironmentGroupVersion(version int) EnvironmentGroupOption {
 // This method returns all secret values, which should never be returned out of this package.  If you are trying to get the environment group values to return to the user,
 // use the exported ListEnvironmentGroups instead.
 func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ...EnvironmentGroupOption) ([]EnvironmentGroup, error) {
-	ctx, span := telemetry.NewSpan(ctx, "list-environment-groups")
+	ctx, span := telemetry.NewSpan(ctx, "list-environment-groups-private")
 	defer span.End()
 
 	var opts environmentGroupOptions
@@ -175,7 +175,7 @@ const EnvGroupSecretDummyValue = "********"
 // This method replaces all secret values with a dummy value so that they are not exposed to the user.  If you need access to the true secret values,
 // use the unexported listEnvironmentGroups instead.
 func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ...EnvironmentGroupOption) ([]EnvironmentGroup, error) {
-	ctx, span := telemetry.NewSpan(ctx, "list-environment-groups-obscured")
+	ctx, span := telemetry.NewSpan(ctx, "list-environment-groups")
 	defer span.End()
 
 	envGroups, err := listEnvironmentGroups(ctx, a, listOpts...)

@@ -41,7 +41,7 @@ func LatestBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, enviro
 // This is a private function because it returns all secret values.  If you are trying to retrieve the latest base environment group to return to the user,
 // use the exported LatestBaseEnvironmentGroup instead.
 func latestBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, environmentGroupName string) (EnvironmentGroup, error) {
-	ctx, span := telemetry.NewSpan(ctx, "latest-base-env-group")
+	ctx, span := telemetry.NewSpan(ctx, "latest-base-env-group-private")
 	defer span.End()
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "environment-group-name", Value: environmentGroupName})
 

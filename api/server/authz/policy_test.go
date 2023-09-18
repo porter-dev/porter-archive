@@ -158,7 +158,7 @@ func TestPolicyMiddlewareInvalidPermissions(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 
 	assert.False(t, next.WasCalled, "next handler should not have been called")
-	apitest.AssertResponseForbidden(t, rr)
+	apitest.AssertForbiddenError(t, rr)
 }
 
 func TestPolicyMiddlewareFailInvalidLoader(t *testing.T) {
@@ -296,5 +296,5 @@ func assertInternalError(t *testing.T, next *testHandler, rr *httptest.ResponseR
 	// first assert that that the next middleware was not called
 	assert.False(next.WasCalled, "next handler should not have been called")
 
-	apitest.AssertResponseInternalServerError(t, rr)
+	apitest.AssertInternalServerError(t, rr)
 }

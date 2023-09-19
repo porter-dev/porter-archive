@@ -33,7 +33,7 @@ type EnvironmentGroup struct {
 	// Variables are non-secret values for the EnvironmentGroup. This usually will be a configmap
 	Variables map[string]string `json:"variables,omitempty"`
 	// SecretVariables are secret values for the EnvironmentGroup. This usually will be a Secret on the kubernetes cluster
-	SecretVariables map[string][]byte `json:"secret_variables,omitempty"`
+	SecretVariables map[string]string `json:"secret_variables,omitempty"`
 	// CreatedAt is only used for display purposes and is in UTC Unix time
 	CreatedAtUTC time.Time `json:"created_at"`
 }
@@ -42,7 +42,7 @@ type environmentGroupOptions struct {
 	namespace                          string
 	environmentGroupLabelName          string
 	environmentGroupLabelVersion       int
-	includeDefaultAppEnvironmentGroups bool
+	excludeDefaultAppEnvironmentGroups bool
 }
 
 // EnvironmentGroupOption is a function that modifies ListEnvironmentGroups
@@ -69,10 +69,10 @@ func WithEnvironmentGroupVersion(version int) EnvironmentGroupOption {
 	}
 }
 
-// WithDefaultAppEnvironmentGroup includes default app environment groups in the list
-func WithDefaultAppEnvironmentGroup() EnvironmentGroupOption {
+// WithoutDefaultAppEnvironmentGroups includes default app environment groups in the list
+func WithoutDefaultAppEnvironmentGroups() EnvironmentGroupOption {
 	return func(opts *environmentGroupOptions) {
-		opts.includeDefaultAppEnvironmentGroups = true
+		opts.excludeDefaultAppEnvironmentGroups = true
 	}
 }
 
@@ -133,7 +133,7 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			continue // invalid version label as it should be an int, not an environment group
 		}
 
-		if !opts.includeDefaultAppEnvironmentGroups {
+		if opts.excludeDefaultAppEnvironmentGroups {
 			value := cm.Labels[LabelKey_DefaultAppEnvironment]
 			if value == "true" {
 				continue // do not include default app environment groups
@@ -153,6 +153,11 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 	}
 
 	for _, secret := range secretListResp.Items {
+		stringSecret := make(map[string]string)
+		for k, v := range secret.Data {
+			stringSecret[k] = string(v)
+		}
+
 		name, ok := secret.Labels[LabelKey_EnvironmentGroupName]
 		if !ok {
 			continue // missing name label, not an environment group
@@ -166,7 +171,7 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			continue // invalid version label as it should be an int, not an environment group
 		}
 
-		if !opts.includeDefaultAppEnvironmentGroups {
+		if opts.excludeDefaultAppEnvironmentGroups {
 			value, ok := secret.Labels[LabelKey_DefaultAppEnvironment]
 			if ok && value == "true" {
 				continue // do not include default app environment groups
@@ -179,7 +184,7 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 		envGroupSet[secret.Name] = EnvironmentGroup{
 			Name:            name,
 			Version:         version,
-			SecretVariables: secret.Data,
+			SecretVariables: stringSecret,
 			Variables:       envGroupSet[secret.Name].Variables,
 			CreatedAtUTC:    secret.CreationTimestamp.Time.UTC(),
 		}
@@ -210,7 +215,7 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 
 	for _, envGroup := range envGroups {
 		for k := range envGroup.SecretVariables {
-			envGroup.SecretVariables[k] = []byte(EnvGroupSecretDummyValue)
+			envGroup.SecretVariables[k] = EnvGroupSecretDummyValue
 		}
 	}
 

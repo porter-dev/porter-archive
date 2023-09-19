@@ -13,8 +13,9 @@ import (
 )
 
 type envVariarableOptions struct {
-	includeSecrets bool
-	envGroups      []string
+	includeSecrets             bool
+	envGroups                  []string
+	excludeDefaultAppEnvGroups bool
 }
 
 // EnvVariableOption is a function that modifies AppEnvironmentFromProto
@@ -31,6 +32,13 @@ func WithSecrets() EnvVariableOption {
 func WithEnvGroupFilter(envGroups []string) EnvVariableOption {
 	return func(opts *envVariarableOptions) {
 		opts.envGroups = envGroups
+	}
+}
+
+// WithoutDefaultAppEnvGroups filters out the default app environment groups from the returned list
+func WithoutDefaultAppEnvGroups() EnvVariableOption {
+	return func(opts *envVariarableOptions) {
+		opts.excludeDefaultAppEnvGroups = true
 	}
 }
 
@@ -107,9 +115,10 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 
 	for _, envGroupRef := range filteredEnvGroups {
 		envGroup, err := environment_groups.EnvironmentGroupInTargetNamespace(ctx, inp.K8SAgent, environment_groups.EnvironmentGroupInTargetNamespaceInput{
-			Name:      envGroupRef.GetName(),
-			Version:   int(envGroupRef.GetVersion()),
-			Namespace: namespace,
+			Name:                              envGroupRef.GetName(),
+			Version:                           int(envGroupRef.GetVersion()),
+			Namespace:                         namespace,
+			ExcludeDefaultAppEnvironmentGroup: opts.excludeDefaultAppEnvGroups,
 		})
 		if err != nil {
 			return nil, telemetry.Error(ctx, span, err, "error getting environment group in target namespace")
@@ -119,7 +128,10 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 			envGroup.SecretVariables = nil
 		}
 
-		envGroups = append(envGroups, envGroup)
+		// if envGroup.Name is empty, it means the environment group was a default app environment group
+		if envGroup.Name != "" {
+			envGroups = append(envGroups, envGroup)
+		}
 	}
 
 	return envGroups, nil

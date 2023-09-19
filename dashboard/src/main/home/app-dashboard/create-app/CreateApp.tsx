@@ -183,7 +183,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     porterYamlFound,
     detectedName,
     loading: isLoadingPorterYaml,
-  } = usePorterYaml({ source: source?.type === "github" ? source : null });
+  } = usePorterYaml({ source: source?.type === "github" ? source : null, appName: name.value });
   const deploymentTarget = useDefaultDeploymentTarget();
   const { updateAppStep } = useAppAnalytics(name.value);
   const { validateApp } = useAppValidation({

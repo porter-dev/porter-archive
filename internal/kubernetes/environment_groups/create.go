@@ -1,6 +1,7 @@
 package environment_groups
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strconv"
@@ -38,9 +39,24 @@ func CreateOrUpdateBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "environment-group-namespace", Value: Namespace_EnvironmentGroups})
 
-	latestEnvironmentGroup, err := LatestBaseEnvironmentGroup(ctx, a, environmentGroup.Name)
+	latestEnvironmentGroup, err := latestBaseEnvironmentGroup(ctx, a, environmentGroup.Name)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "unable to get latest base environment group by name")
+	}
+
+	// If any of the secret variables are set to the dummy value (i.e. are unchanged), replace them with the existing value.
+	for k, v := range environmentGroup.SecretVariables {
+		if bytes.Equal(v, []byte(EnvGroupSecretDummyValue)) {
+			existingValue, ok := latestEnvironmentGroup.SecretVariables[k]
+			if !ok {
+				return telemetry.Error(ctx, span, nil, "secret variable does not exist in latest environment group")
+			}
+			if string(existingValue) == "" {
+				return telemetry.Error(ctx, span, nil, "secret variable value is empty")
+			}
+
+			environmentGroup.SecretVariables[k] = existingValue
+		}
 	}
 
 	newEnvironmentGroup := EnvironmentGroup{

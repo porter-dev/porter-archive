@@ -44,7 +44,7 @@ func SyncLatestVersionToNamespace(ctx context.Context, a *kubernetes.Agent, inp 
 		telemetry.AttributeKV{Key: "target-environment-namespace", Value: inp.TargetNamespace},
 	)
 
-	baseEnvironmentGroup, err := LatestBaseEnvironmentGroup(ctx, a, inp.BaseEnvironmentGroupName)
+	baseEnvironmentGroup, err := latestBaseEnvironmentGroup(ctx, a, inp.BaseEnvironmentGroupName)
 	if err != nil {
 		return output, telemetry.Error(ctx, span, err, "unable to find latest environment group version")
 	}

@@ -1,7 +1,6 @@
 package environment_groups
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"strconv"
@@ -46,7 +45,7 @@ func CreateOrUpdateBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent
 
 	// If any of the secret variables are set to the dummy value (i.e. are unchanged), replace them with the existing value.
 	for k, v := range environmentGroup.SecretVariables {
-		if bytes.Equal(v, []byte(EnvGroupSecretDummyValue)) {
+		if v == EnvGroupSecretDummyValue {
 			existingValue, ok := latestEnvironmentGroup.SecretVariables[k]
 			if !ok {
 				return telemetry.Error(ctx, span, nil, "secret variable does not exist in latest environment group")
@@ -144,6 +143,11 @@ func createVersionedEnvironmentGroupInNamespace(ctx context.Context, a *kubernet
 		return telemetry.Error(ctx, span, err, "unable to create new environment group variables version")
 	}
 
+	secretData := make(map[string][]byte)
+	for k, v := range environmentGroup.SecretVariables {
+		secretData[k] = []byte(v)
+	}
+
 	secret := v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s.%d", environmentGroup.Name, environmentGroup.Version),
@@ -153,7 +157,10 @@ func createVersionedEnvironmentGroupInNamespace(ctx context.Context, a *kubernet
 				LabelKey_EnvironmentGroupVersion: strconv.Itoa(environmentGroup.Version),
 			},
 		},
-		Data: environmentGroup.SecretVariables,
+		Data: secretData,
+	}
+	for k, v := range additionalLabels {
+		secret.Labels[k] = v
 	}
 
 	err = createSecretWithVersion(ctx, a, secret, environmentGroup.Version)

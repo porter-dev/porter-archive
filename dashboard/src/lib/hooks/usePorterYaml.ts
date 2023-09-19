@@ -26,13 +26,17 @@ type PorterYamlStatus =
  * usePorterYaml is a hook that will fetch the porter.yaml file from the
  * specified source and parse it to determine the services that should be
  * added to an app by default with read-only values.
- *
+ * 
+ * `appName` is required to be passed in to accommodate v1 porter.yaml, since v1 porter.yaml does not explicitly specify the app name.
+ * if the porter.yaml is v2, and the file contains an app name, then the appName parameter here will be ignored.
  */
 export const usePorterYaml = ({
   source,
+  appName = "",
   useDefaults = true,
 }: {
   source: (SourceOptions & { type: "github" }) | null;
+  appName?: string;
   useDefaults?: boolean;
 }): PorterYamlStatus => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -95,15 +99,17 @@ export const usePorterYaml = ({
       b64Yaml,
       projectId,
       clusterId,
+      appName,
     }: {
       b64Yaml: string;
       projectId: number;
       clusterId: number;
+      appName: string;
     }) => {
       try {
         const res = await api.parsePorterYaml(
           "<token>",
-          { b64_yaml: b64Yaml },
+          { b64_yaml: b64Yaml, app_name: appName },
           {
             project_id: projectId,
             cluster_id: clusterId,
@@ -149,6 +155,7 @@ export const usePorterYaml = ({
         b64Yaml: data,
         projectId: currentProject.id,
         clusterId: currentCluster.id,
+        appName,
       });
     }
 

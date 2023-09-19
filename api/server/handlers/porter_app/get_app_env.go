@@ -124,10 +124,11 @@ func (c *GetAppEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	envFromProtoInp := porter_app.AppEnvironmentFromProtoInput{
-		ProjectID: project.ID,
-		ClusterID: int(cluster.ID),
-		App:       appProto,
-		K8SAgent:  agent,
+		ProjectID:                  project.ID,
+		ClusterID:                  int(cluster.ID),
+		App:                        appProto,
+		K8SAgent:                   agent,
+		DeploymentTargetRepository: c.Repo().DeploymentTarget(),
 	}
 
 	envGroups, err := porter_app.AppEnvironmentFromProto(ctx, envFromProtoInp, porter_app.WithEnvGroupFilter(request.EnvGroups), porter_app.WithSecrets())

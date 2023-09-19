@@ -6,6 +6,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { z } from "zod";
+import {useFormContext} from "react-hook-form";
 
 type PorterYamlStatus =
   | {
@@ -30,9 +31,11 @@ type PorterYamlStatus =
  */
 export const usePorterYaml = ({
   source,
+  appName = "",
   useDefaults = true,
 }: {
   source: (SourceOptions & { type: "github" }) | null;
+  appName?: string;
   useDefaults?: boolean;
 }): PorterYamlStatus => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -103,7 +106,7 @@ export const usePorterYaml = ({
       try {
         const res = await api.parsePorterYaml(
           "<token>",
-          { b64_yaml: b64Yaml },
+          { b64_yaml: b64Yaml, app_name: appName},
           {
             project_id: projectId,
             cluster_id: clusterId,

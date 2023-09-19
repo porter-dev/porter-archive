@@ -813,6 +813,7 @@ const getPorterYamlContents = baseApi<
 const parsePorterYaml = baseApi<
   {
     b64_yaml: string;
+    app_name?: string;
   },
   {
     project_id: number;

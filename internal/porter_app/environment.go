@@ -128,7 +128,7 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 			envGroup.SecretVariables = nil
 		}
 
-		// if envGroup.Name is empty, it means the environment group was a default app environment group
+		// if envGroup.Name is empty, it means the environment group was a default app environment group and was filtered out
 		if envGroup.Name != "" {
 			envGroups = append(envGroups, envGroup)
 		}

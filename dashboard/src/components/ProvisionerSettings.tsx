@@ -984,7 +984,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               </Text><Spacer height="10px" /><SelectRow
                 options={regionOptions}
                 width="350px"
-                disabled={isReadOnly}
+                disabled={isReadOnly || isLoading}
                 value={awsRegion}
                 scrollBuffer={true}
                 dropdownMaxHeight="240px"

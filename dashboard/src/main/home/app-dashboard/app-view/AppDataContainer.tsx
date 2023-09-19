@@ -110,11 +110,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         proto: latestProto,
         overrides: servicesFromYaml,
         variables: latestRevision.env.variables,
-        secrets: latestRevision.env.secrets,
+        secrets: latestRevision.env.secret_variables,
       }),
       source: latestSource,
       deletions: {
         serviceNames: [],
+        envGroupNames: [],
       },
     },
   });
@@ -258,10 +259,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         proto: latestProto,
         overrides: servicesFromYaml,
         variables: latestRevision.env.variables,
-        secrets: latestRevision.env.secrets,
+        secrets: latestRevision.env.secret_variables,
       }),
       source: latestSource,
       deletions: {
+        envGroupNames: [],
         serviceNames: [],
       },
     });

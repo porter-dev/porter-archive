@@ -62,6 +62,11 @@ export const deletionValidator = z.object({
       name: z.string(),
     })
     .array(),
+  envGroupNames: z
+    .object({
+      name: z.string(),
+    })
+    .array(),
 });
 
 // clientAppValidator is the representation of a Porter app on the client, and is used to validate inputs for app setting fields
@@ -314,7 +319,7 @@ export function clientAppFromProto({
       key,
       value,
       hidden: true,
-      locked: false,
+      locked: true,
       deleted: false,
     })),
   ];

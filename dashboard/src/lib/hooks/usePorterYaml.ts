@@ -95,10 +95,12 @@ export const usePorterYaml = ({
   const detectServices = useCallback(
     async ({
       b64Yaml,
+      appName,
       projectId,
       clusterId,
     }: {
       b64Yaml: string;
+      appName: string;
       projectId: number;
       clusterId: number;
     }) => {
@@ -149,6 +151,7 @@ export const usePorterYaml = ({
     if (data) {
       detectServices({
         b64Yaml: data,
+        appName: appName,
         projectId: currentProject.id,
         clusterId: currentCluster.id,
       });

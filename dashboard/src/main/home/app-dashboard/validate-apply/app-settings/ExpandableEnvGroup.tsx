@@ -1,12 +1,12 @@
-import { PorterAppFormData } from "lib/porter-apps";
 import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { IterableElement } from "type-fest";
+import { PopulatedEnvGroup } from "./types";
+import Spacer from "components/porter/Spacer";
 
 type Props = {
   index: number;
   remove: (index: number) => void;
-  envGroup: IterableElement<PorterAppFormData["app"]["envGroups"]>;
+  envGroup: PopulatedEnvGroup;
 };
 
 const ExpandableEnvGroup: React.FC<Props> = ({ index, remove, envGroup }) => {
@@ -21,17 +21,62 @@ const ExpandableEnvGroup: React.FC<Props> = ({ index, remove, envGroup }) => {
           </EventInformation>
         </ContentContainer>
         <ActionContainer>
-          <ActionButton onClick={() => remove(index)}>
+          <ActionButton type="button" onClick={() => remove(index)}>
             <span className="material-icons">delete</span>
           </ActionButton>
-          <ActionButton onClick={() => setIsExpanded((prev) => !prev)}>
+          <ActionButton
+            type="button"
+            onClick={() => setIsExpanded((prev) => !prev)}
+          >
             <i className="material-icons">
               {isExpanded ? "arrow_drop_up" : "arrow_drop_down"}
             </i>
           </ActionButton>
         </ActionContainer>
-      </Flex> 
-      {isExpanded ? <></> : null}
+      </Flex>
+      {isExpanded ? (
+        <>
+          {Object.entries(envGroup.variables ?? {}).map(([key, value], i) => (
+            <InputWrapper key={i}>
+              <KeyInput
+                placeholder="ex: key"
+                width="270px"
+                value={key}
+                disabled
+              />
+              <Spacer x={0.5} inline />
+              <MultiLineInput
+                placeholder="ex: value"
+                width="270px"
+                value={value}
+                disabled
+                rows={value.split("\n").length}
+                spellCheck={false}
+              />
+            </InputWrapper>
+          ))}
+          {Object.entries(envGroup.secret_variables ?? {}).map(
+            ([key, value], i) => (
+              <InputWrapper key={i}>
+                <KeyInput
+                  placeholder="ex: key"
+                  width="270px"
+                  value={key}
+                  disabled
+                />
+                <Spacer x={0.5} inline />
+                <KeyInput
+                  placeholder="ex: value"
+                  width="270px"
+                  value={value}
+                  disabled
+                  type="password"
+                />
+              </InputWrapper>
+            )
+          )}
+        </>
+      ) : null}
     </StyledCard>
   );
 };
@@ -125,4 +170,73 @@ const NoVariablesTextWrapper = styled.div`
   align-items: center;
   justify-content: center;
   color: #ffffff99;
+`;
+
+const InputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+`;
+
+type InputProps = {
+  disabled?: boolean;
+  width: string;
+  borderColor?: string;
+};
+
+const KeyInput = styled.input<InputProps>`
+  outline: none;
+  border: none;
+  margin-bottom: 5px;
+  font-size: 13px;
+  background: #ffffff11;
+  border: 1px solid
+    ${(props) => (props.borderColor ? props.borderColor : "#ffffff55")};
+  border-radius: 3px;
+  width: ${(props) => (props.width ? props.width : "270px")};
+  color: ${(props) => (props.disabled ? "#ffffff44" : "white")};
+  padding: 5px 10px;
+  height: 35px;
+`;
+
+export const MultiLineInput = styled.textarea<InputProps>`
+  outline: none;
+  border: none;
+  margin-bottom: 5px;
+  font-size: 13px;
+  background: #ffffff11;
+  border: 1px solid
+    ${(props) => (props.borderColor ? props.borderColor : "#ffffff55")};
+  border-radius: 3px;
+  min-width: ${(props) => (props.width ? props.width : "270px")};
+  max-width: ${(props) => (props.width ? props.width : "270px")};
+  color: ${(props) => (props.disabled ? "#ffffff44" : "white")};
+  padding: 8px 10px 5px 10px;
+  min-height: 35px;
+  max-height: 100px;
+  white-space: nowrap;
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    :horizontal {
+      height: 8px;
+    }
+  }
+
+  ::-webkit-scrollbar-corner {
+    width: 10px;
+    background: #ffffff11;
+    color: white;
+  }
+
+  ::-webkit-scrollbar-track {
+    width: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: darkgrey;
+    outline: 1px solid slategrey;
+  }
 `;

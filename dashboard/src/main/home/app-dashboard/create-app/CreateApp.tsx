@@ -44,6 +44,11 @@ import { useAppValidation } from "lib/hooks/useAppValidation";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import PorterYamlModal from "./PorterYamlModal";
+import EnvGroups from "../validate-apply/app-settings/EnvGroups";
+import {
+  PopulatedEnvGroup,
+  populatedEnvGroup,
+} from "../validate-apply/app-settings/types";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -100,6 +105,31 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     },
     {
       enabled: !!currentProject?.id && !!currentCluster?.id,
+    }
+  );
+
+  const { data: baseEnvGroups = [] } = useQuery(
+    ["getAllEnvGroups", currentProject?.id, currentCluster?.id],
+    async () => {
+      if (!currentProject?.id || !currentCluster?.id) {
+        return [];
+      }
+      const res = await api.getAllEnvGroups<PopulatedEnvGroup[]>(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      );
+
+      const { environment_groups } = await z
+        .object({
+          environment_groups: z.array(populatedEnvGroup).default([]),
+        })
+        .parseAsync(res.data);
+
+      return environment_groups;
     }
   );
 
@@ -248,11 +278,13 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           .parseAsync(envGroupResponse.data);
 
         const envGroups = [
-          ...app.envGroups.filter(group => group.name !== addedEnvGroup.env_group_name),
+          ...app.envGroups.filter(
+            (group) => group.name !== addedEnvGroup.env_group_name
+          ),
           {
             name: addedEnvGroup.env_group_name,
-            version: addedEnvGroup.env_group_version
-          }
+            version: addedEnvGroup.env_group_version,
+          },
         ];
         const appWithSeededEnv = new PorterApp({
           ...app,
@@ -552,8 +584,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
-                              } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${
+                                  detectedServices.count > 1 ? "s" : ""
+                                } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>
@@ -572,6 +605,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       Specify environment variables shared among all services.
                     </Text>
                     <EnvVariables />
+                    <EnvGroups baseEnvGroups={baseEnvGroups} />
                   </>,
                   source.type === "github" && (
                     <>

@@ -932,6 +932,18 @@ const applyApp = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/apply`;
 });
 
+const getAttachedEnvGroups = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    app_name: string;
+    revision_id: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.app_name}/revisions/${pathParams.revision_id}/env`;
+});
+
 const getLatestRevision = baseApi<
   {
     deployment_target_id: string;
@@ -3085,6 +3097,7 @@ export default {
   createApp,
   updateAppEnvironmentGroup,
   applyApp,
+  getAttachedEnvGroups,
   getLatestRevision,
   listAppRevisions,
   getLatestAppRevisions,

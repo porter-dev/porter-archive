@@ -190,7 +190,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                           proto: revision.app_proto,
                           overrides: servicesFromYaml,
                           variables: revision.env.variables,
-                          secrets: revision.env.secrets,
+                          secrets: revision.env.secret_variables,
                         }),
                         source: latestSource,
                         deletions: {
@@ -234,7 +234,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                             app: revision.app_proto,
                             revision: revision.revision_number,
                             variables: revision.env.variables ?? {},
-                            secrets: revision.env.secrets ?? {},
+                            secrets: revision.env.secret_variables ?? {},
                           });
                         }}
                       >

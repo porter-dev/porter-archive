@@ -1,15 +1,37 @@
-import React, { useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import styled from "styled-components";
-import { useLatestRevision } from "../../app-view/LatestRevisionContext";
+import { useFieldArray, useFormContext } from "react-hook-form";
+
+import sliders from "assets/sliders.svg";
+
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { useFieldArray, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import ExpandableEnvGroup from "./ExpandableEnvGroup";
+import { PopulatedEnvGroup, populatedEnvGroup } from "./types";
+import { useQuery } from "@tanstack/react-query";
+import { Context } from "shared/Context";
+import api from "shared/api";
+import { z } from "zod";
+import { valueExists } from "shared/util";
+import EnvGroupModal from "./EnvGroupModal";
 
-const EnvGroups: React.FC = () => {
+type Props = {
+  appName?: string;
+  revisionId?: string;
+  baseEnvGroups?: PopulatedEnvGroup[];
+};
+
+const EnvGroups: React.FC<Props> = ({
+  appName,
+  revisionId,
+  baseEnvGroups = [],
+}) => {
+  const { currentCluster, currentProject } = useContext(Context);
+
   const [showEnvModal, setShowEnvModal] = useState(false);
   const [hovered, setHovered] = useState(false);
+
   const { control } = useFormContext<PorterAppFormData>();
   const { append, remove, fields: envGroups } = useFieldArray({
     control,
@@ -17,6 +39,69 @@ const EnvGroups: React.FC = () => {
   });
 
   const maxEnvGroupsReached = envGroups.length >= 3;
+
+  const { data: attachedEnvGroups = [] } = useQuery(
+    ["getAttachedEnvGroups", appName, revisionId],
+    async () => {
+      if (!appName || !revisionId || !currentCluster?.id || !currentProject?.id)
+        return [];
+
+      const res = await api.getAttachedEnvGroups(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          app_name: appName,
+          revision_id: revisionId,
+        }
+      );
+
+      const { env_groups } = await z
+        .object({
+          env_groups: z.array(populatedEnvGroup),
+        })
+        .parseAsync(res.data);
+
+      return env_groups;
+    },
+    {
+      enabled:
+        !!appName && !!revisionId && !!currentCluster && !!currentProject,
+    }
+  );
+
+  const populatedEnvWithFallback = useMemo(() => {
+    return envGroups
+      .map((envGroup, index) => {
+        const attachedEnvGroup = attachedEnvGroups.find(
+          (attachedEnvGroup) => attachedEnvGroup.name === envGroup.name
+        );
+
+        if (attachedEnvGroup) {
+          return {
+            id: envGroup.id,
+            envGroup: attachedEnvGroup,
+            index,
+          };
+        }
+
+        const baseEnvGroup = baseEnvGroups.find(
+          (baseEnvGroup) => baseEnvGroup.name === envGroup.name
+        );
+
+        if (baseEnvGroup) {
+          return {
+            id: envGroup.id,
+            envGroup: baseEnvGroup,
+            index,
+          };
+        }
+
+        return undefined;
+      })
+      .filter(valueExists);
+  }, [envGroups, attachedEnvGroups, baseEnvGroups]);
 
   return (
     <div>
@@ -38,10 +123,10 @@ const EnvGroups: React.FC = () => {
         <>
           <Spacer y={0.5} />
           <Text size={16}>Synced environment groups</Text>
-          {envGroups.map((envGroup, index) => {
+          {populatedEnvWithFallback.map(({ envGroup, id, index }) => {
             return (
               <ExpandableEnvGroup
-                key={envGroup.id}
+                key={id}
                 index={index}
                 envGroup={envGroup}
                 remove={remove}
@@ -50,11 +135,65 @@ const EnvGroups: React.FC = () => {
           })}
         </>
       )}
+      {showEnvModal ? (
+        <EnvGroupModal
+          setOpen={setShowEnvModal}
+          baseEnvGroups={baseEnvGroups}
+          append={append}
+        />
+      ) : null}
     </div>
   );
 };
 
 export default EnvGroups;
+
+const AddRowButton = styled.div`
+  display: flex;
+  align-items: center;
+  width: 270px;
+  font-size: 13px;
+  color: #aaaabb;
+  height: 32px;
+  border-radius: 3px;
+  cursor: pointer;
+  background: #ffffff11;
+  :hover {
+    background: #ffffff22;
+  }
+
+  > i {
+    color: #ffffff44;
+    font-size: 16px;
+    margin-left: 8px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+`;
+
+const LoadButton = styled(AddRowButton)<{ disabled?: boolean }>`
+  background: ${(props) => (props.disabled ? "#aaaaaa55" : "none")};
+  border: 1px solid ${(props) => (props.disabled ? "#aaaaaa55" : "#ffffff55")};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
+
+  > i {
+    color: ${(props) => (props.disabled ? "#aaaaaa44" : "#ffffff44")};
+    font-size: 16px;
+    margin-left: 8px;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  > img {
+    width: 14px;
+    margin-left: 10px;
+    margin-right: 12px;
+    opacity: ${(props) => (props.disabled ? "0.5" : "1")};
+  }
+`;
 
 const TooltipWrapper = styled.div`
   position: relative;

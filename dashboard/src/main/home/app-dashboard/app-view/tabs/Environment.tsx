@@ -7,12 +7,44 @@ import Error from "components/porter/Error";
 import { useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import { useLatestRevision } from "../LatestRevisionContext";
+import { useQuery } from "@tanstack/react-query";
+import api from "shared/api";
+import { z } from "zod";
+import { populatedEnvGroup } from "../../validate-apply/app-settings/types";
+import EnvGroups from "../../validate-apply/app-settings/EnvGroups";
 
 const Environment: React.FC = () => {
-  const { latestRevision } = useLatestRevision();
+  const {
+    latestRevision,
+    latestProto,
+    clusterId,
+    projectId,
+  } = useLatestRevision();
   const {
     formState: { isSubmitting, errors },
   } = useFormContext<PorterAppFormData>();
+
+  const { data: baseEnvGroups = [] } = useQuery(
+    ["getAllEnvGroups", projectId, clusterId],
+    async () => {
+      const res = await api.getAllEnvGroups(
+        "<token>",
+        {},
+        {
+          id: projectId,
+          cluster_id: clusterId,
+        }
+      );
+
+      const { environment_groups } = await z
+        .object({
+          environment_groups: z.array(populatedEnvGroup).default([]),
+        })
+        .parseAsync(res.data);
+
+      return environment_groups;
+    }
+  );
 
   const buttonStatus = useMemo(() => {
     if (isSubmitting) {
@@ -32,6 +64,11 @@ const Environment: React.FC = () => {
       <Spacer y={0.5} />
       <Text color="helper">Shared among all services.</Text>
       <EnvVariables />
+      <EnvGroups
+        appName={latestProto.name}
+        revisionId={latestRevision.id}
+        baseEnvGroups={baseEnvGroups}
+      />
       <Spacer y={0.5} />
       <Button
         type="submit"
@@ -50,4 +87,3 @@ const Environment: React.FC = () => {
 };
 
 export default Environment;
-

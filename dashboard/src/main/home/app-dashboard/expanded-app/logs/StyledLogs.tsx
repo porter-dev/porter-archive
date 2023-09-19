@@ -30,7 +30,7 @@ const StyledLogs: React.FC<Props> = ({
                     return null;
                 }
                 return (
-                    <StyledLogsTableData width={"100px"}>
+                    <StyledLogsTableData width={"100px"} key={index}>
                         <LogInnerPill
                             color={getVersionTagColor(log.metadata.revision)}
                             key={index}
@@ -45,13 +45,28 @@ const StyledLogs: React.FC<Props> = ({
                     return null;
                 }
                 return (
-                    <StyledLogsTableData width={"100px"}>
+                    <StyledLogsTableData width={"100px"} key={index}>
                         <LogInnerPill
                             color={"white"}
                             key={index}
                             onClick={() => filter.setValue(getPodSelectorFromServiceName(getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName), services) ?? GenericLogFilter.getDefaultOption("pod_name").value)}
                         >
                             {getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName)}
+                        </LogInnerPill>
+                    </StyledLogsTableData>
+                )
+            case "service_name":
+                if (log.metadata?.raw_labels?.porter_run_service_name == null || log.metadata?.raw_labels?.porter_run_service_name === "") {
+                    return null;
+                }
+                return (
+                    <StyledLogsTableData width={"100px"} key={index}>
+                        <LogInnerPill
+                            color={"white"}
+                            key={index}
+                            onClick={() => filter.setValue(log.metadata?.raw_labels?.porter_run_service_name ?? GenericLogFilter.getDefaultOption("service_name").value)}
+                        >
+                            {log.metadata.raw_labels?.porter_run_service_name}
                         </LogInnerPill>
                     </StyledLogsTableData>
                 )

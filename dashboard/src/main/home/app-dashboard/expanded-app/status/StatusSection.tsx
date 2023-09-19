@@ -136,8 +136,6 @@ const StatusSectionFC: React.FunctionComponent<Props> = ({
 
   return (
     <>
-      <Banner type="info">An improved debugging view is under construction. Unable to debug your application? <MyLink id={"intercom_help"}>Contact us</MyLink></Banner>
-      <Spacer y={1} />
       <StyledStatusSection>
         {renderStatusSection()}
       </StyledStatusSection>

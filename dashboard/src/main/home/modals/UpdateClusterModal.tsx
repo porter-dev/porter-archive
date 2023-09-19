@@ -36,83 +36,15 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
     console.log(err);
   };
 
-
-  // getData = async ({
-  //   id: project_id,
-  //   name: project_name,
-  // }: {
-  //   id: number;
-  //   name: string;
-  // }): Promise<OnboardingSaveType> => {
-  //   let odata = null;
-
-  //   // Get general onboarding data
-  //   try {
-  //     const response = await api.getOnboardingState(
-  //       "<token>",
-  //       {},
-  //       { project_id: project_id }
-  //     );
-
-  //     if (response.data) {
-  //       odata = response.data;
-  //     }
-  //   } catch (error) {
-  //     console.error(
-  //       "Gouldn't get any previous state, going with a brand new onboarding!"
-  //     );
-  //   }
-
-  //   let registry_connection_data = null;
-  //   if (odata?.registry_connection_id) {
-  //     // Get subflows data
-  //     try {
-  //       const response = await api.getOnboardingRegistry(
-  //         "<token>",
-  //         {},
-  //         {
-  //           project_id: project_id,
-  //           registry_connection_id: odata.registry_connection_id,
-  //         }
-  //       );
-  //       //console.log(response);
-  //       if (response.data) {
-  //         registry_connection_data = response.data;
-  //       }
-  //     } catch (error) {
-  //       console.error("Couldn't get registry connection data");
-  //     }
-  //   }
-  //   let provision_connection_data = null;
-  //   if (odata?.registry_infra_id) {
-  //     try {
-  //       const response = await api.getOnboardingInfra(
-  //         "<token>",
-  //         {},
-  //         {
-  //           project_id: project_id,
-  //           registry_infra_id: odata.registry_infra_id,
-  //         }
-  //       );
-
-  //       if (response.data) {
-  //         provision_connection_data = response.data;
-  //       }
-  //     } catch (error) {
-  //       console.error("Couldn't get infra data");
-  //     }
-  //   }
-  //   return {
-  //     project_id,
-  //     project_name,
-  //     ...(odata || {}),
-  //     ...({ registry_connection_data } || {}),
-  //     ...({ provision_connection_data } || {}),
-  //   };
-  // };
-  handleDelete = () => {
+  handleDelete = async () => {
     let { currentProject, currentCluster } = this.context;
     this.setState({ status: "loading" });
+
+    await api.updateOnboardingStep(
+      "<token>",
+      { step: "cluster-delete" },
+      { project_id: currentProject.id }
+    );
 
     api
       .deleteCluster(

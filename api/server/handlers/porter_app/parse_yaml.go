@@ -37,11 +37,14 @@ func NewParsePorterYAMLToProtoHandler(
 // ParsePorterYAMLToProtoRequest is the request object for the /apps/parse endpoint
 type ParsePorterYAMLToProtoRequest struct {
 	B64Yaml string `json:"b64_yaml"`
+	AppName string `json:"app_name"`
 }
 
 // ParsePorterYAMLToProtoResponse is the response object for the /apps/parse endpoint
 type ParsePorterYAMLToProtoResponse struct {
-	B64AppProto string `json:"b64_app_proto"`
+	B64AppProto  string            `json:"b64_app_proto"`
+	EnvVariables map[string]string `json:"env_variables"`
+	EnvSecrets   map[string]string `json:"env_secrets"`
 }
 
 // ServeHTTP receives a base64-encoded porter.yaml, parses the version, and then translates it into a base64-encoded app proto object
@@ -51,9 +54,9 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if !project.ValidateApplyV2 {
+	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "project does not have apply v2 enabled")
-		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 		return
 	}
 
@@ -82,7 +85,7 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	appProto, err := porter_app.ParseYAML(ctx, yaml)
+	appProto, envVariables, err := porter_app.ParseYAML(ctx, yaml, request.AppName)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error parsing yaml")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -104,7 +107,8 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 	b64 := base64.StdEncoding.EncodeToString(by)
 
 	response := &ParsePorterYAMLToProtoResponse{
-		B64AppProto: b64,
+		B64AppProto:  b64,
+		EnvVariables: envVariables,
 	}
 
 	c.WriteResult(w, r, response)

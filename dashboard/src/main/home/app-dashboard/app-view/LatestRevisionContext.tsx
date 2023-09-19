@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
@@ -27,6 +27,8 @@ export const LatestRevisionContext = createContext<{
   clusterId: number;
   projectId: number;
   deploymentTargetId: string;
+  previewRevision: number | null;
+  setPreviewRevision: Dispatch<SetStateAction<number | null>>;
 } | null>(null);
 
 export const useLatestRevision = () => {
@@ -46,6 +48,7 @@ export const LatestRevisionProvider = ({
   appName?: string;
   children: JSX.Element;
 }) => {
+  const [previewRevision, setPreviewRevision] = useState<number | null>(null);
   const { currentCluster, currentProject } = useContext(Context);
   const deploymentTarget = useDefaultDeploymentTarget();
 
@@ -141,7 +144,7 @@ export const LatestRevisionProvider = ({
   }, [porterApp]);
 
   const { loading: porterYamlLoading, detectedServices } = usePorterYaml({
-    source: latestSource,
+    source: latestSource?.type === "github" ? latestSource : null,
     useDefaults: false,
   });
 
@@ -193,6 +196,8 @@ export const LatestRevisionProvider = ({
         projectId: currentProject.id,
         deploymentTargetId: deploymentTarget.deployment_target_id,
         servicesFromYaml: detectedServices,
+        previewRevision,
+        setPreviewRevision,
       }}
     >
       {children}

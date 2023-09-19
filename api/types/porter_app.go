@@ -93,8 +93,10 @@ type PorterAppEvent struct {
 	// UpdatedAt is the time (UTC) that an event was last updated. This can occur when an event was created as PROGRESSING, then was marked as SUCCESSFUL for example
 	UpdatedAt time.Time `json:"updated_at"`
 	// PorterAppID is the ID that the given event relates to
-	PorterAppID uint           `json:"porter_app_id"`
-	Metadata    map[string]any `json:"metadata,omitempty"`
+	PorterAppID uint `json:"porter_app_id"`
+	// DeploymentTargetID is the ID of the deployment target that the given event relates to
+	DeploymentTargetID string         `json:"deployment_target_id"`
+	Metadata           map[string]any `json:"metadata,omitempty"`
 }
 
 // PorterAppEventType is an alias for a string that represents a Porter Stack Event Type
@@ -137,6 +139,7 @@ type CreateOrUpdatePorterAppEventRequest struct {
 	// TypeExternalSource represents an external event source such as Github, or Gitlab. This is not always required but will commonly be see in build events
 	TypeExternalSource string         `json:"type_source,omitempty"`
 	Metadata           map[string]any `json:"metadata,omitempty"`
+	DeploymentTargetID string         `json:"deployment_target_id"`
 }
 
 // ServiceDeploymentMetadata contains information about a service when it deploys

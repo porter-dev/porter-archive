@@ -17,7 +17,7 @@ import { AWS_INSTANCE_LIMITS } from "./tabs/utils";
 import api from "shared/api";
 import StatusFooter from "../../expanded-app/StatusFooter";
 import { ClientService } from "lib/porter-apps/services";
-import { UseFieldArrayRemove, UseFieldArrayUpdate } from "react-hook-form";
+import { UseFieldArrayUpdate } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import { match } from "ts-pattern";
 import useResizeObserver from "lib/hooks/useResizeObserver";
@@ -26,16 +26,14 @@ interface ServiceProps {
   index: number;
   service: ClientService;
   chart?: any;
-  isPredeploy?: boolean;
-  update: UseFieldArrayUpdate<PorterAppFormData, "app.services">;
-  remove: UseFieldArrayRemove;
+  update: UseFieldArrayUpdate<PorterAppFormData, "app.services" | "app.predeploy">;
+  remove: (index: number) => void;
 }
 
 const ServiceContainer: React.FC<ServiceProps> = ({
   index,
   service,
   chart,
-  isPredeploy,
   update,
   remove,
 }) => {
@@ -49,7 +47,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   const [maxRAM, setMaxRAM] = useState(
     Math.round(
       convert(AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"], "GiB").to("MB") *
-        UPPER_BOUND
+      UPPER_BOUND
     )
   ); //default is set to a t3 medium
   const context = useContext(Context);
@@ -142,7 +140,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             );
           }
         })
-        .catch((error) => {});
+        .catch((error) => { });
     }
   }, []);
 
@@ -248,7 +246,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         // Check if has built image
         getHasBuiltImage() && (
           <StatusFooter
-            setExpandedJob={() => {}}
+            setExpandedJob={() => { }}
             chart={chart}
             service={service}
           />
@@ -333,7 +331,7 @@ const ServiceHeader = styled.div<{
     border-radius: 20px;
     margin-left: -10px;
     transform: ${(props: { showExpanded?: boolean; chart: any }) =>
-      props.showExpanded ? "" : "rotate(-90deg)"};
+    props.showExpanded ? "" : "rotate(-90deg)"};
   }
 `;
 

@@ -47,5 +47,5 @@ func (c *RenameProjectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	c.WriteResult(w, r, project.ToProjectType())
+	c.WriteResult(w, r, project.ToProjectType(c.Config().LaunchDarklyClient))
 }

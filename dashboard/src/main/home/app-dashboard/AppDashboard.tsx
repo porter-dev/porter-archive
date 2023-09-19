@@ -153,7 +153,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
               height="18px"
               src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
             />
-            <Text size={13} color="#ffffff44">{app.image_repo_uri}</Text>
+            <Text truncate={true} size={13} color="#ffffff44">{app.image_repo_uri}</Text>
           </Container>
         )}
       </>
@@ -215,7 +215,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
       {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (
-        filteredApps.length === 0 ? (
+        apps.length === 0 ? (
           isLoading ?
             (<Loading offset="-150px" />) : (
               <Fieldset>
@@ -283,7 +283,14 @@ const AppDashboard: React.FC<Props> = ({ }) => {
             </Container>
             <Spacer y={1} />
 
-            {isLoading ? (
+            {filteredApps.length === 0 ? (
+              <Fieldset>
+                <Container row>
+                  <PlaceholderIcon src={notFound} />
+                  <Text color="helper">No matching apps were found.</Text>
+                </Container>
+              </Fieldset>
+            ) : (isLoading ? (
               <Loading offset="-150px" />
             ) : view === "grid" ? (
               <GridList>
@@ -342,7 +349,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                   }
                 })}
               </List>
-            )}
+            ))}
           </>
         )
       )
@@ -413,7 +420,6 @@ const Block = styled.div`
   :hover {
     border: 1px solid #7a7b80;
   }
-
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {
     from {

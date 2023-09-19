@@ -182,6 +182,7 @@ func (c *Client) GetRelease(
 		),
 		nil,
 		resp,
+		withRetryCount(3),
 	)
 
 	return resp, err

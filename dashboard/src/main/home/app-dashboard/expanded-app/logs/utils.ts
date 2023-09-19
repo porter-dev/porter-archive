@@ -6,7 +6,7 @@ import Anser from "anser";
 import { Context } from "shared/Context";
 import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
 import { ChartType } from "shared/types";
-import { AgentLog, AgentLogSchema, Direction, PorterLog, PaginationInfo, GenericLogFilter, LogFilterName } from "./types";
+import { AgentLog, agentLogValidator, Direction, PorterLog, PaginationInfo, GenericLogFilter, LogFilterName } from "./types";
 import { Service } from "../../new-app-flow/serviceTypes";
 
 const MAX_LOGS = 5000;
@@ -16,7 +16,7 @@ const QUERY_LIMIT = 1000;
 export const parseLogs = (logs: any[] = []): PorterLog[] => {
   return logs.map((log: any, idx) => {
     try {
-      const parsed: AgentLog = AgentLogSchema.parse(log);
+      const parsed: AgentLog = agentLogValidator.parse(log);
 
       // TODO Move log parsing to the render method
       const ansiLog = Anser.ansiToJson(parsed.line);

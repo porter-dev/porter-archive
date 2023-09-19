@@ -1,4 +1,7 @@
-import { buildpackSchema } from "main/home/app-dashboard/types/buildpack";
+import {
+  BUILDPACK_TO_NAME,
+  buildpackSchema,
+} from "main/home/app-dashboard/types/buildpack";
 import { z } from "zod";
 import {
   DetectedServices,
@@ -12,7 +15,7 @@ import {
 } from "./services";
 import { Build, PorterApp, Service } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
-import { valueExists } from "shared/util";
+import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 
 // buildValidator is used to validate inputs for build setting fields
 export const buildValidator = z.discriminatedUnion("method", [
@@ -53,11 +56,36 @@ export const sourceValidator = z.discriminatedUnion("type", [
 ]);
 export type SourceOptions = z.infer<typeof sourceValidator>;
 
+export const deletionValidator = z.object({
+  serviceNames: z
+    .object({
+      name: z.string(),
+    })
+    .array(),
+});
+
 // clientAppValidator is the representation of a Porter app on the client, and is used to validate inputs for app setting fields
 export const clientAppValidator = z.object({
-  name: z.string().min(1),
+  name: z.object({
+    readOnly: z.boolean(),
+    value: z.string(),
+  }),
+  envGroups: z
+    .object({ name: z.string(), version: z.bigint() })
+    .array()
+    .default([]),
   services: serviceValidator.array(),
-  env: z.record(z.string(), z.string()).default({}),
+  predeploy: serviceValidator.array().optional(),
+  env: z
+    .object({
+      key: z.string(),
+      value: z.string(),
+      hidden: z.boolean(),
+      locked: z.boolean(),
+      deleted: z.boolean(),
+    })
+    .array()
+    .default([]),
   build: buildValidator,
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
@@ -66,6 +94,7 @@ export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 export const porterAppFormValidator = z.object({
   app: clientAppValidator,
   source: sourceValidator,
+  deletions: deletionValidator,
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
@@ -151,23 +180,24 @@ const clientBuildToProto = (build: BuildOptions) => {
 export function clientAppToProto(data: PorterAppFormData): PorterApp {
   const { app, source } = data;
 
-  const services = app.services
-    .filter((s) => !isPredeployService(s))
-    .reduce((acc: Record<string, Service>, svc) => {
-      acc[svc.name.value] = serviceProto(serializeService(svc));
-      return acc;
-    }, {});
+  const services = app.services.reduce((acc: Record<string, Service>, svc) => {
+    acc[svc.name.value] = serviceProto(serializeService(svc));
+    return acc;
+  }, {});
 
-  const predeploy = app.services.find((s) => isPredeployService(s));
+  const predeploy = app.predeploy?.[0];
 
   const proto = match(source)
     .with(
       { type: "github" },
       () =>
         new PorterApp({
-          name: app.name,
+          name: app.name.value,
           services,
-          env: app.env,
+          envGroups: app.envGroups.map((eg) => ({
+            name: eg.name,
+            version: eg.version,
+          })),
           build: clientBuildToProto(app.build),
           ...(predeploy && {
             predeploy: serviceProto(serializeService(predeploy)),
@@ -178,9 +208,12 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
       { type: "docker-registry" },
       (src) =>
         new PorterApp({
-          name: app.name,
+          name: app.name.value,
           services,
-          env: app.env,
+          envGroups: app.envGroups.map((eg) => ({
+            name: eg.name,
+            version: eg.version,
+          })),
           image: {
             repository: src.image.repository,
             tag: src.image.tag,
@@ -224,7 +257,10 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
       Object.freeze({
         method: b.method,
         context: b.context,
-        buildpacks: b.buildpacks.map((b) => ({ name: b, buildpack: b })),
+        buildpacks: b.buildpacks.map((b) => ({
+          name: BUILDPACK_TO_NAME[b],
+          buildpack: b,
+        })),
         builder: b.builder,
       })
     )
@@ -238,10 +274,17 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
     .exhaustive();
 };
 
-export function clientAppFromProto(
-  proto: PorterApp,
-  overrides: DetectedServices | null
-): ClientPorterApp {
+export function clientAppFromProto({
+  proto,
+  overrides,
+  variables = {},
+  secrets = {},
+}: {
+  proto: PorterApp;
+  overrides: DetectedServices | null;
+  variables?: Record<string, string>;
+  secrets?: Record<string, string>;
+}): ClientPorterApp {
   const services = Object.entries(proto.services)
     .map(([name, service]) => serializedServiceFromProto({ name, service }))
     .map((svc) => {
@@ -258,11 +301,48 @@ export function clientAppFromProto(
       return deserializeService({ service: svc });
     });
 
+  const predeployList = [];
+  const parsedEnv: KeyValueType[] = [
+    ...Object.entries(variables).map(([key, value]) => ({
+      key,
+      value,
+      hidden: false,
+      locked: false,
+      deleted: false,
+    })),
+    ...Object.entries(secrets).map(([key, value]) => ({
+      key,
+      value,
+      hidden: true,
+      locked: false,
+      deleted: false,
+    })),
+  ];
+
+  if (proto.predeploy) {
+    predeployList.push(
+      deserializeService({
+        service: serializedServiceFromProto({
+          name: "pre-deploy",
+          service: proto.predeploy,
+          isPredeploy: true,
+        }),
+      })
+    );
+  }
   if (!overrides?.predeploy) {
     return {
-      name: proto.name,
+      name: {
+        readOnly: true,
+        value: proto.name,
+      },
       services,
-      env: proto.env,
+      predeploy: predeployList,
+      env: parsedEnv,
+      envGroups: proto.envGroups.map((eg) => ({
+        name: eg.name,
+        version: eg.version,
+      })),
       build: clientBuildFromProto(proto.build) ?? {
         method: "pack",
         context: "./",
@@ -274,20 +354,30 @@ export function clientAppFromProto(
 
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
-    ? deserializeService({
-        service: serializedServiceFromProto({
-          name: "pre-deploy",
-          service: proto.predeploy,
-          isPredeploy: true,
+    ? [
+        deserializeService({
+          service: serializedServiceFromProto({
+            name: "pre-deploy",
+            service: proto.predeploy,
+            isPredeploy: true,
+          }),
+          override: predeployOverrides,
         }),
-        override: predeployOverrides,
-      })
+      ]
     : undefined;
 
   return {
-    name: proto.name,
-    services: [...services, predeploy].filter(valueExists),
-    env: proto.env,
+    name: {
+      readOnly: true,
+      value: proto.name,
+    },
+    services,
+    predeploy,
+    env: parsedEnv,
+    envGroups: proto.envGroups.map((eg) => ({
+      name: eg.name,
+      version: eg.version,
+    })),
     build: clientBuildFromProto(proto.build) ?? {
       method: "pack",
       context: "./",

@@ -132,13 +132,13 @@ func (c *CreateSubdomainHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	_record := domain.DNSRecord(*record)
 
-	if c.Config().PowerDNSClient == nil {
-		err := telemetry.Error(ctx, span, nil, "powerdns client is nil")
+	if c.Config().DNSClient == nil {
+		err := telemetry.Error(ctx, span, nil, "dns client is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	err = _record.CreateDomain(c.Config().PowerDNSClient)
+	err = _record.CreateDomain(c.Config().DNSClient)
 	if err != nil {
 		err := telemetry.Error(ctx, span, nil, "error creating domain")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

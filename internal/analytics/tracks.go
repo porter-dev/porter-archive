@@ -156,6 +156,29 @@ func ProjectDeleteTrack(opts *ProjectCreateDeleteTrackOpts) segmentTrack {
 	)
 }
 
+// ClusterDeleteTrackOpts are the options for creating a track when a cluster is deleted
+type ClusterDeleteTrackOpts struct {
+	*ProjectScopedTrackOpts
+
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
+}
+
+// ClusterDeleteTrack returns a track for when a cluster is deleted
+func ClusterDeleteTrack(opts *ClusterDeleteTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ClusterDelete),
+	)
+}
+
 // CostConsentOpenedTrackOpts are the options for creating a track when a user opens the cost consent
 type CostConsentOpenedTrackOpts struct {
 	*UserScopedTrackOpts
@@ -363,6 +386,7 @@ type ProvisioningAttemptTrackOpts struct {
 	CompanyName  string
 	ErrorMessage string
 	Region       string
+	Provider     string
 }
 
 // ProvisioningAttemptTrack returns a track for when a user attempts provisioning
@@ -372,6 +396,7 @@ func ProvisioningAttemptTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["region"] = opts.Region
+	additionalProps["provider"] = opts.Provider
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,

@@ -106,30 +106,29 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	var releaseValues map[string]interface{}
 	var releaseDependencies []*chart.Dependency
-	if shouldCreate || request.OverrideRelease {
+	// unless it is explicitly provided in the request, we avoid overwriting the image info
+	// by attempting to get it from the release or the provided helm values
+	if helmRelease != nil && (imageInfo.Repository == "" || imageInfo.Tag == "") {
+		if request.FullHelmValues != "" {
+			imageInfo, err = attemptToGetImageInfoFromFullHelmValues(request.FullHelmValues)
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "error getting image info from full helm values")
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+				return
+			}
+		} else {
+			imageInfo = attemptToGetImageInfoFromRelease(helmRelease.Config)
+		}
+	}
+	if shouldCreate {
 		releaseValues = nil
 		releaseDependencies = nil
-
-		// this is required because when the front-end sends an update request with overrideRelease=true, it is unable to
-		// get the image info from the release. unless it is explicitly provided in the request, we avoid overwriting it
-		// by attempting to get the image info from the release or the provided helm values
-		if helmRelease != nil && (imageInfo.Repository == "" || imageInfo.Tag == "") {
-			if request.FullHelmValues != "" {
-				imageInfo, err = attemptToGetImageInfoFromFullHelmValues(request.FullHelmValues)
-				if err != nil {
-					err = telemetry.Error(ctx, span, err, "error getting image info from full helm values")
-					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
-					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-					return
-				}
-			} else {
-				imageInfo = attemptToGetImageInfoFromRelease(helmRelease.Config)
-			}
-		}
 	} else {
 		releaseValues = helmRelease.Config
 		releaseDependencies = helmRelease.Chart.Metadata.Dependencies
 	}
+
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "image-repo", Value: imageInfo.Repository}, telemetry.AttributeKV{Key: "image-tag", Value: imageInfo.Tag})
 
 	if request.Builder == "" {
@@ -182,16 +181,17 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			ExistingHelmValues:        releaseValues,
 			ExistingChartDependencies: releaseDependencies,
 			SubdomainCreateOpts: SubdomainCreateOpts{
-				k8sAgent:       k8sAgent,
-				dnsRepo:        c.Repo().DNSRecord(),
-				powerDnsClient: c.Config().PowerDNSClient,
-				appRootDomain:  c.Config().ServerConf.AppRootDomain,
-				stackName:      appName,
+				k8sAgent:      k8sAgent,
+				dnsRepo:       c.Repo().DNSRecord(),
+				dnsClient:     c.Config().DNSClient,
+				appRootDomain: c.Config().ServerConf.AppRootDomain,
+				stackName:     appName,
 			},
 			InjectLauncherToStartCommand: injectLauncher,
 			ShouldValidateHelmValues:     shouldCreate,
 			FullHelmValues:               request.FullHelmValues,
 			AddCustomNodeSelector:        addCustomNodeSelector,
+			RemoveDeletedServices:        request.OverrideRelease,
 		},
 	)
 	if err != nil {

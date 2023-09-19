@@ -12,10 +12,12 @@ import Link from "components/porter/Link";
 type MainTabProps = {
   index: number;
   service: ClientService;
+  isPredeploy?: boolean;
 };
 
-const MainTab: React.FC<MainTabProps> = ({ index, service }) => {
-  const { register } = useFormContext<PorterAppFormData>();
+const MainTab: React.FC<MainTabProps> = ({ index, service, isPredeploy = false }) => {
+  const { register, watch } = useFormContext<PorterAppFormData>();
+  const cron = watch(`app.services.${index}.config.cron.value`);
 
   const getScheduleDescription = useCallback((cron: string) => {
     try {
@@ -44,7 +46,7 @@ const MainTab: React.FC<MainTabProps> = ({ index, service }) => {
         width="300px"
         disabled={service.run.readOnly}
         disabledTooltip={"You may only edit this field in your porter.yaml."}
-        {...register(`app.services.${index}.run.value`)}
+        {...register(isPredeploy ? `app.predeploy.${index}.run.value` : `app.services.${index}.run.value`)}
       />
       {service.config.type === "job" && (
         <>
@@ -61,7 +63,7 @@ const MainTab: React.FC<MainTabProps> = ({ index, service }) => {
             {...register(`app.services.${index}.config.cron.value`)}
           />
           <Spacer y={0.5} />
-          {getScheduleDescription(service.config.cron.value)}
+          {getScheduleDescription(cron)}
         </>
       )}
     </>

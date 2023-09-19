@@ -8,7 +8,11 @@ import Error from "components/porter/Error";
 import sliders from "assets/sliders.svg";
 import EnvGroupModal from "./EnvGroupModal";
 import ExpandableEnvGroup from "./ExpandableEnvGroup";
-import { PopulatedEnvGroup, PartialEnvGroup, NewPopulatedEnvGroup } from "../../../../../components/porter-form/types";
+import {
+  PopulatedEnvGroup,
+  PartialEnvGroup,
+  NewPopulatedEnvGroup,
+} from "../../../../../components/porter-form/types";
 import _, { isObject, differenceBy, omit } from "lodash";
 import api from "../../../../../shared/api";
 import { Context } from "../../../../../shared/Context";
@@ -44,10 +48,12 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
   const [hovered, setHovered] = useState(false);
 
   const [showEnvModal, setShowEnvModal] = useState(false);
-  const [envGroups, setEnvGroups] = useState<any>([])
+  const [envGroups, setEnvGroups] = useState<any>([]);
   const { currentCluster, currentProject } = useContext(Context);
 
-  const [values, setValues] = React.useState<string>(yaml.dump(appData.chart.config));
+  const [values, setValues] = React.useState<string>(
+    yaml.dump(appData.chart.config)
+  );
   const initialMount = useRef(true);
 
   useEffect(() => {
@@ -81,24 +87,24 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
 
     try {
       const populatedEnvGroups = await Promise.all(populateEnvGroupsPromises);
-      setEnvGroups(populatedEnvGroups)
-      const filteredEnvGroups = populatedEnvGroups?.filter(envGroup =>
-        envGroup.linked_applications && envGroup.linked_applications.includes(appData.chart.name)
+      setEnvGroups(populatedEnvGroups);
+      const filteredEnvGroups = populatedEnvGroups?.filter(
+        (envGroup) =>
+          envGroup.linked_applications &&
+          envGroup.linked_applications.includes(appData.chart.name)
       );
-      setSyncedEnvGroups(filteredEnvGroups)
-
+      setSyncedEnvGroups(filteredEnvGroups);
     } catch (error) {
       return;
     }
-  }
+  };
 
   const deleteEnvGroup = (envGroup: NewPopulatedEnvGroup) => {
-
     setDeletedEnvGroups([...deletedEnvGroups, envGroup]);
-    setSyncedEnvGroups(syncedEnvGroups?.filter(
-      (env) => env.name !== envGroup.name
-    ))
-  }
+    setSyncedEnvGroups(
+      syncedEnvGroups?.filter((env) => env.name !== envGroup.name)
+    );
+  };
   const maxEnvGroupsReached = syncedEnvGroups.length >= 4;
 
   return (
@@ -113,7 +119,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
           if (status !== "") {
             clearStatus();
           }
-          setEnvVars(x)
+          setEnvVars(x);
         }}
         fileUpload={true}
         syncedEnvGroups={syncedEnvGroups}
@@ -122,33 +128,38 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       <>
         <TooltipWrapper
           onMouseOver={() => setHovered(true)}
-          onMouseOut={() => setHovered(false)}>
+          onMouseOut={() => setHovered(false)}
+        >
           <LoadButton
             disabled={maxEnvGroupsReached}
             onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
           >
             <img src={sliders} /> Load from Env Group
           </LoadButton>
-          <TooltipText visible={maxEnvGroupsReached && hovered}>Max 4 Env Groups allowed</TooltipText>
+          <TooltipText visible={maxEnvGroupsReached && hovered}>
+            Max 4 Env Groups allowed
+          </TooltipText>
         </TooltipWrapper>
 
-        {showEnvModal && <EnvGroupModal
-          setValues={(x: any) => {
-            if (status !== "") {
-              clearStatus();
-            }
-            setEnvVars(x);
-          }}
-          values={envVars}
-          closeModal={() => setShowEnvModal(false)}
-          syncedEnvGroups={syncedEnvGroups}
-          setSyncedEnvGroups={setSyncedEnvGroups}
-          namespace={appData.chart.namespace}
-        />}
+        {showEnvModal && (
+          <EnvGroupModal
+            setValues={(x: any) => {
+              if (status !== "") {
+                clearStatus();
+              }
+              setEnvVars(x);
+            }}
+            values={envVars}
+            closeModal={() => setShowEnvModal(false)}
+            syncedEnvGroups={syncedEnvGroups}
+            setSyncedEnvGroups={setSyncedEnvGroups}
+            namespace={appData.chart.namespace}
+          />
+        )}
         {!!syncedEnvGroups?.length && (
           <>
             <Spacer y={0.5} />
-            <Text size={16}>Synced environment groups</Text >
+            <Text size={16}>Synced environment groups</Text>
             {syncedEnvGroups?.map((envGroup: any) => {
               return (
                 <ExpandableEnvGroup
@@ -164,11 +175,10 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
         )}
       </>
 
-
       <Spacer y={0.5} />
       <Button
         onClick={() => {
-          updatePorterApp()
+          updatePorterApp();
         }}
         status={status}
         loadingText={"Updating..."}
@@ -179,7 +189,6 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
     </>
   );
 };
-
 
 const AddRowButton = styled.div`
   display: flex;
@@ -206,7 +215,7 @@ const AddRowButton = styled.div`
   }
 `;
 
-const LoadButton = styled(AddRowButton) <{ disabled?: boolean }>`
+const LoadButton = styled(AddRowButton)<{ disabled?: boolean }>`
   background: ${(props) => (props.disabled ? "#aaaaaa55" : "none")};
   border: 1px solid ${(props) => (props.disabled ? "#aaaaaa55" : "#ffffff55")};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
@@ -227,7 +236,6 @@ const LoadButton = styled(AddRowButton) <{ disabled?: boolean }>`
     opacity: ${(props) => (props.disabled ? "0.5" : "1")};
   }
 `;
-
 
 type InputProps = {
   disabled?: boolean;
@@ -306,8 +314,8 @@ const TooltipWrapper = styled.div`
   display: inline-block;
 `;
 
-const TooltipText = styled.span`
-  visibility: ${(props) => (props.visible ? 'visible' : 'hidden')};
+const TooltipText = styled.span<{ visible: boolean }>`
+  visibility: ${(props) => (props.visible ? "visible" : "hidden")};
   width: 240px;
   color: #fff;
   text-align: center;
@@ -318,8 +326,7 @@ const TooltipText = styled.span`
   bottom: 100%;
   left: 50%;
   margin-left: -120px;
-  opacity: ${(props) => (props.visible ? '1' : '0')};
+  opacity: ${(props) => (props.visible ? "1" : "0")};
   transition: opacity 0.3s;
   font-size: 12px;
 `;
-

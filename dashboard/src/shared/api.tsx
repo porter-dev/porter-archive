@@ -300,6 +300,16 @@ const appLogs = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/apps/logs`
 );
 
+const appPodStatus = baseApi<
+  {
+    deployment_target_id: string;
+    selectors: string;
+  },
+  { id: number; cluster_id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/apps/pods`;
+});
+
 const getFeedEvents = baseApi<
   {},
   {
@@ -3013,6 +3023,7 @@ export default {
   createSecretAndOpenGitHubPullRequest,
   getLogsWithinTimeRange,
   appLogs,
+  appPodStatus,
   getFeedEvents,
   updateStackStep,
   // -----------------------------------

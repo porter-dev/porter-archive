@@ -49,7 +49,7 @@ export const useWebsockets = () => {
 
     const url = `${protocol}://${window.location.host}${apiEndpoint}`;
 
-    const mockFunction = () => {};
+    const mockFunction = () => { };
 
     const wsConfig: WebsocketConfig = {
       url,

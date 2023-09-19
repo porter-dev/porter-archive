@@ -133,6 +133,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [preflightData, setPreflightData] = useState(null)
   const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
+  const [preflightError, setPreflightError] = useState<string>("")
 
   const markStepStarted = async (step: string, errMessage?: string) => {
     try {
@@ -480,52 +481,60 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     if (!props.clusterId) {
       setStep(1)
-      setPreflightData(null)
       preflightChecks()
     }
   }, [props.selectedClusterVersion, awsRegion]);
 
 
   const preflightChecks = async () => {
-    setIsLoading(true);
-    setPreflightData(null);
 
-    var data = new PreflightCheckRequest({
-      projectId: BigInt(currentProject.id),
-      cloudProvider: EnumCloudProvider.AWS,
-      cloudProviderCredentialsId: props.credentialId,
-      preflightValues: {
-        case: "eksPreflightValues",
-        value: new EKSPreflightValues({
-          region: awsRegion,
-        })
+    try {
+      setIsLoading(true);
+      setPreflightData(null);
+      setPreflightFailed(true)
+      setPreflightError("");
+
+      var data = new PreflightCheckRequest({
+        projectId: BigInt(currentProject.id),
+        cloudProvider: EnumCloudProvider.AWS,
+        cloudProviderCredentialsId: props.credentialId,
+        preflightValues: {
+          case: "eksPreflightValues",
+          value: new EKSPreflightValues({
+            region: awsRegion,
+          })
+        }
+      });
+      const preflightDataResp = await api.preflightCheck(
+        "<token>", data,
+        {
+          id: currentProject.id,
+        }
+      )
+      // Check if any of the preflight checks has a message
+      let hasMessage = false;
+      let errors = "Preflight Checks Failed : ";
+      for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
+        if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
+          hasMessage = true;
+          errors = errors + check + ", "
+        }
       }
-    });
-    const preflightDataResp = await api.preflightCheck(
-      "<token>", data,
-      {
-        id: currentProject.id,
+      // If none of the checks have a message, set setPreflightFailed to false
+      if (hasMessage) {
+        markStepStarted("provisioning-failed", errors);
       }
-    )
-    // Check if any of the preflight checks has a message
-    let hasMessage = false;
-    let errors = "Preflight Checks Failed : ";
-    for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
-      if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
-        hasMessage = true;
-        errors = errors + check + ", "
+      if (!hasMessage) {
+        setPreflightFailed(false);
+        setStep(2);
       }
+      setPreflightData(preflightDataResp?.data?.Msg);
+      setIsLoading(false)
+    } catch (err) {
+      setPreflightError(err)
+      setIsLoading(false)
+      setPreflightFailed(true);
     }
-    // If none of the checks have a message, set setPreflightFailed to false
-    if (hasMessage) {
-      markStepStarted("provisioning-failed", errors);
-    }
-    if (!hasMessage) {
-      setPreflightFailed(false);
-      setStep(2);
-    }
-    setPreflightData(preflightDataResp?.data?.Msg);
-    setIsLoading(false)
 
   }
   const renderAdvancedSettings = () => {
@@ -984,7 +993,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               </Text><Spacer height="10px" /><SelectRow
                 options={regionOptions}
                 width="350px"
-                disabled={isReadOnly}
+                disabled={isReadOnly || isLoading}
                 value={awsRegion}
                 scrollBuffer={true}
                 dropdownMaxHeight="240px"
@@ -997,7 +1006,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               </>
             </>,
             <>
-              <PreflightChecks provider='AWS' preflightData={preflightData} />
+              <PreflightChecks provider='AWS' preflightData={preflightData} error={preflightError} />
               <Spacer y={.5} />
               {(preflightFailed && preflightData) &&
                 <>

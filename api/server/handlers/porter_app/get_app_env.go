@@ -131,7 +131,7 @@ func (c *GetAppEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		DeploymentTargetRepository: c.Repo().DeploymentTarget(),
 	}
 
-	envGroups, err := porter_app.AppEnvironmentFromProto(ctx, envFromProtoInp, porter_app.WithEnvGroupFilter(request.EnvGroups), porter_app.WithSecrets())
+	envGroups, err := porter_app.AppEnvironmentFromProto(ctx, envFromProtoInp, porter_app.WithEnvGroupFilter(request.EnvGroups), porter_app.WithSecrets(), porter_app.WithoutDefaultAppEnvGroups())
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting app environment from revision")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

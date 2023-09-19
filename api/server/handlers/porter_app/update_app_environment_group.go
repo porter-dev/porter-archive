@@ -201,7 +201,7 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	variables := make(map[string]string)
-	secrets := make(map[string][]byte)
+	secrets := make(map[string]string)
 
 	if !request.HardUpdate {
 		for key, value := range latestEnvironmentGroup.Variables {
@@ -216,7 +216,7 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		variables[key] = value
 	}
 	for key, value := range request.Secrets {
-		secrets[key] = []byte(value)
+		secrets[key] = value
 	}
 
 	envGroup := environment_groups.EnvironmentGroup{

@@ -26,12 +26,16 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { ControlledInput } from "components/porter/ControlledInput";
+<<<<<<< HEAD
 import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
+=======
+import { zodResolver } from "@hookform/resolvers/zod";
+>>>>>>> 1d15836218cdc2609d9d5960ec754243fc0632cd
 
 const addServiceFormValidator = z.object({
   name: z
     .string()
-    .min(1)
+    .min(1, { message: "A service name is required" })
     .max(30)
     .regex(/^[a-z0-9-]+$/, {
       message: 'Lowercase letters, numbers, and " - " only.',
@@ -69,7 +73,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
     handleSubmit,
     formState: { errors },
   } = useForm<AddServiceFormValues>({
-    reValidateMode: "onSubmit",
+    reValidateMode: "onChange",
+    resolver: zodResolver(addServiceFormValidator),
     defaultValues: {
       name: "",
       type: "web",

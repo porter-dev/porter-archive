@@ -2,7 +2,6 @@ package authz
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz/policy"
@@ -11,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type PolicyMiddleware struct {
@@ -39,11 +39,15 @@ type PolicyHandler struct {
 }
 
 func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-policy-handler")
+	defer span.End()
+
 	// get the full map of scopes to resource actions
 	reqScopes, reqErr := getRequestActionForEndpoint(r, h.endpointMeta)
 
 	if reqErr != nil {
-		apierrors.HandleAPIError(h.config.Logger, h.config.Alerter, w, r, reqErr, true)
+		err := telemetry.Error(ctx, span, reqErr, "unable to get request action for endpoint")
+		apierrors.HandleAPIError(h.config.Logger, h.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest), true)
 		return
 	}
 
@@ -70,7 +74,8 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	policyDocs, reqErr := h.loader.LoadPolicyDocuments(policyLoaderOpts)
 
 	if reqErr != nil {
-		apierrors.HandleAPIError(h.config.Logger, h.config.Alerter, w, r, reqErr, true)
+		err := telemetry.Error(ctx, span, reqErr, "unable to load policy documents")
+		apierrors.HandleAPIError(h.config.Logger, h.config.Alerter, w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError), true)
 		return
 	}
 
@@ -78,12 +83,13 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	hasAccess := policy.HasScopeAccess(policyDocs, reqScopes)
 
 	if !hasAccess {
+		err := telemetry.Error(ctx, span, nil, "insufficient permissions to perform action")
 		apierrors.HandleAPIError(
 			h.config.Logger,
 			h.config.Alerter,
 			w,
 			r,
-			apierrors.NewErrForbidden(fmt.Errorf("policy forbids action in project %d", policyLoaderOpts.ProjectID)),
+			apierrors.NewErrPassThroughToClient(err, http.StatusForbidden),
 			true,
 		)
 
@@ -91,7 +97,7 @@ func (h *PolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// add the set of resource ids to the request context
-	ctx := NewRequestScopeCtx(r.Context(), reqScopes)
+	ctx = NewRequestScopeCtx(ctx, reqScopes)
 	r = r.Clone(ctx)
 	h.next.ServeHTTP(w, r)
 }

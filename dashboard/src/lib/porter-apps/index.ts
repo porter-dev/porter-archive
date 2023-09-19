@@ -15,7 +15,7 @@ import {
 } from "./services";
 import { Build, PorterApp, Service } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
-import { valueExists } from "shared/util";
+import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 
 // buildValidator is used to validate inputs for build setting fields
 export const buildValidator = z.discriminatedUnion("method", [
@@ -70,16 +70,22 @@ export const clientAppValidator = z.object({
     readOnly: z.boolean(),
     value: z.string(),
   }),
-  envGroups: z.object({ name: z.string(), version: z.bigint() }).array().default([]),
+  envGroups: z
+    .object({ name: z.string(), version: z.bigint() })
+    .array()
+    .default([]),
   services: serviceValidator.array(),
   predeploy: serviceValidator.array().optional(),
-  env: z.object({
-    key: z.string(),
-    value: z.string(),
-    hidden: z.boolean(),
-    locked: z.boolean(),
-    deleted: z.boolean(),
-  }).array().default([]),
+  env: z
+    .object({
+      key: z.string(),
+      value: z.string(),
+      hidden: z.boolean(),
+      locked: z.boolean(),
+      deleted: z.boolean(),
+    })
+    .array()
+    .default([]),
   build: buildValidator,
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
@@ -268,10 +274,17 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
     .exhaustive();
 };
 
-export function clientAppFromProto(
-  proto: PorterApp,
-  overrides: DetectedServices | null
-): ClientPorterApp {
+export function clientAppFromProto({
+  proto,
+  overrides,
+  variables = {},
+  secrets = {},
+}: {
+  proto: PorterApp;
+  overrides: DetectedServices | null;
+  variables?: Record<string, string>;
+  secrets?: Record<string, string>;
+}): ClientPorterApp {
   const services = Object.entries(proto.services)
     .map(([name, service]) => serializedServiceFromProto({ name, service }))
     .map((svc) => {
@@ -289,6 +302,23 @@ export function clientAppFromProto(
     });
 
   const predeployList = [];
+  const parsedEnv: KeyValueType[] = [
+    ...Object.entries(variables).map(([key, value]) => ({
+      key,
+      value,
+      hidden: false,
+      locked: false,
+      deleted: false,
+    })),
+    ...Object.entries(secrets).map(([key, value]) => ({
+      key,
+      value,
+      hidden: true,
+      locked: false,
+      deleted: false,
+    })),
+  ];
+
   if (proto.predeploy) {
     predeployList.push(
       deserializeService({
@@ -308,8 +338,11 @@ export function clientAppFromProto(
       },
       services,
       predeploy: predeployList,
-      env: [],
-      envGroups: proto.envGroups.map((eg) => ({ name: eg.name, version: eg.version })),
+      env: parsedEnv,
+      envGroups: proto.envGroups.map((eg) => ({
+        name: eg.name,
+        version: eg.version,
+      })),
       build: clientBuildFromProto(proto.build) ?? {
         method: "pack",
         context: "./",
@@ -322,15 +355,15 @@ export function clientAppFromProto(
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-      deserializeService({
-        service: serializedServiceFromProto({
-          name: "pre-deploy",
-          service: proto.predeploy,
-          isPredeploy: true,
+        deserializeService({
+          service: serializedServiceFromProto({
+            name: "pre-deploy",
+            service: proto.predeploy,
+            isPredeploy: true,
+          }),
+          override: predeployOverrides,
         }),
-        override: predeployOverrides,
-      }),
-    ]
+      ]
     : undefined;
 
   return {
@@ -340,8 +373,11 @@ export function clientAppFromProto(
     },
     services,
     predeploy,
-    env: [],
-    envGroups: proto.envGroups.map((eg) => ({ name: eg.name, version: eg.version })),
+    env: parsedEnv,
+    envGroups: proto.envGroups.map((eg) => ({
+      name: eg.name,
+      version: eg.version,
+    })),
     build: clientBuildFromProto(proto.build) ?? {
       method: "pack",
       context: "./",

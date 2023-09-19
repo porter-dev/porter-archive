@@ -233,9 +233,15 @@ const RepoSettings: React.FC<Props> = ({
                       { value: "docker", label: "Docker" },
                       { value: "pack", label: "Buildpacks" },
                     ]}
-                    setValue={(option: string) =>
-                      setValue("app.build.method", option as BuildView)
-                    }
+                    setValue={(option: string) => {
+                      if (option == "docker") {
+                        setValue("app.build.method", "docker");4
+                      } else if (option == "pack") {
+                        // if toggling from docker to pack, initialize buildpacks to empty array
+                        setValue("app.build.method", "pack");
+                        setValue("app.build.buildpacks", []);
+                      }
+                    }}
                     label="Build method"
                   />
                   {match(build)

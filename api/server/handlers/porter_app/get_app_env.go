@@ -116,31 +116,6 @@ func (c *GetAppEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deploymentTargets, err := c.Repo().DeploymentTarget().List(project.ID)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error reading deployment targets")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	if len(deploymentTargets) == 0 {
-		err := telemetry.Error(ctx, span, nil, "no deployment targets found")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-	if len(deploymentTargets) > 1 {
-		err = telemetry.Error(ctx, span, nil, "more than one deployment target found")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	deploymentTarget := deploymentTargets[0]
-	if deploymentTarget.ClusterID != int(cluster.ID) {
-		err := telemetry.Error(ctx, span, nil, "deployment target does not belong to cluster")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting agent")
@@ -149,10 +124,12 @@ func (c *GetAppEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	envFromProtoInp := porter_app.AppEnvironmentFromProtoInput{
-		App:              appProto,
-		DeploymentTarget: deploymentTarget,
-		K8SAgent:         agent,
+		ProjectID: project.ID,
+		ClusterID: int(cluster.ID),
+		App:       appProto,
+		K8SAgent:  agent,
 	}
+
 	envGroups, err := porter_app.AppEnvironmentFromProto(ctx, envFromProtoInp, porter_app.WithEnvGroupFilter(request.EnvGroups), porter_app.WithSecrets())
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting app environment from revision")

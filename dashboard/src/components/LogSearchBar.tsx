@@ -29,7 +29,6 @@ const LogSearchBar: React.FC<Props> = ({
         setSearchText(x);
       }}
       onEnter={() => {
-        alert("ok")
         setEnteredSearchText(escapeRegExp(searchText));
         setSelectedDate();
       }}

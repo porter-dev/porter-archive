@@ -36,9 +36,11 @@ func WithEnvGroupFilter(envGroups []string) EnvVariableOption {
 
 // AppEnvironmentFromProtoInput is the input struct for AppEnvironmentFromProto
 type AppEnvironmentFromProtoInput struct {
-	App              *porterv1.PorterApp
-	DeploymentTarget *models.DeploymentTarget
-	K8SAgent         *kubernetes.Agent
+	ProjectID                  uint
+	ClusterID                  int
+	App                        *porterv1.PorterApp
+	K8SAgent                   *kubernetes.Agent
+	DeploymentTargetRepository repository.DeploymentTargetRepository
 }
 
 // AppEnvironmentFromProto returns all envfironment groups referenced in an app proto with their variables
@@ -48,8 +50,11 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 
 	envGroups := []environment_groups.EnvironmentGroup{}
 
-	if inp.DeploymentTarget == nil {
-		return nil, telemetry.Error(ctx, span, nil, "must provide a deployment target")
+	if inp.ProjectID == 0 {
+		return nil, telemetry.Error(ctx, span, nil, "must provide a project id")
+	}
+	if inp.ClusterID == 0 {
+		return nil, telemetry.Error(ctx, span, nil, "must provide a cluster id")
 	}
 	if inp.K8SAgent == nil {
 		return nil, telemetry.Error(ctx, span, nil, "must provide a kubernetes agent")
@@ -58,15 +63,32 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 		return nil, telemetry.Error(ctx, span, nil, "must provide an app")
 	}
 
+	deploymentTargets, err := inp.DeploymentTargetRepository.List(inp.ProjectID)
+	if err != nil {
+		return envGroups, telemetry.Error(ctx, span, err, "error reading deployment targets")
+	}
+
+	if len(deploymentTargets) == 0 {
+		return envGroups, telemetry.Error(ctx, span, nil, "no deployment targets found")
+	}
+	if len(deploymentTargets) > 1 {
+		return envGroups, telemetry.Error(ctx, span, nil, "more than one deployment target found")
+	}
+
+	deploymentTarget := deploymentTargets[0]
+	if deploymentTarget.ClusterID != inp.ClusterID {
+		return envGroups, telemetry.Error(ctx, span, nil, "deployment target does not belong to cluster")
+	}
+
 	var opts envVariarableOptions
 	for _, opt := range varOpts {
 		opt(&opts)
 	}
 
 	var namespace string
-	switch inp.DeploymentTarget.SelectorType {
+	switch deploymentTarget.SelectorType {
 	case models.DeploymentTargetSelectorType_Namespace:
-		namespace = inp.DeploymentTarget.Selector
+		namespace = deploymentTarget.Selector
 	default:
 		return envGroups, telemetry.Error(ctx, span, nil, "deployment target selector type not supported")
 	}

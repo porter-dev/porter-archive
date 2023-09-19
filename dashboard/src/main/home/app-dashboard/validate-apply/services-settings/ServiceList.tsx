@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ServiceContainer from "./ServiceContainer";
 import styled from "styled-components";
 import Spacer from "components/porter/Spacer";
@@ -26,6 +26,7 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { ControlledInput } from "components/porter/ControlledInput";
+import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 const addServiceFormValidator = z.object({
@@ -46,6 +47,7 @@ type ServiceListProps = {
   isPredeploy?: boolean;
   existingServiceNames?: string[];
   fieldArrayName: "app.services" | "app.predeploy";
+  serviceVersionStatus?: Record<string, PorterAppVersionStatus[]>;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
@@ -54,6 +56,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   isPredeploy = false,
   existingServiceNames = [],
   fieldArrayName,
+  serviceVersionStatus,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
@@ -174,6 +177,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 service={svc}
                 update={update}
                 remove={onRemove}
+                status={serviceVersionStatus?.[svc.name.value]}
               />
             ) : null;
           })}

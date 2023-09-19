@@ -914,22 +914,6 @@ const createApp = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/create`;
 });
 
-const updateAppEnvironmentGroup = baseApi<
-  {
-    deployment_target_id: string;
-    variables: Record<string, string>;
-    secrets: Record<string, string>;
-    remove_missing: boolean;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-    app_name: string;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.app_name}/update-environment`;
-});
-
 const applyApp = baseApi<
   {
     deployment_target_id: string;
@@ -1852,6 +1836,7 @@ const updateEnvironmentGroupV2 = baseApi<
     deployment_target_id: string;
     variables: Record<string, string>;
     secrets: Record<string, string>;
+    b64_app_proto: string;
     remove_missing?: boolean;
   },
   {
@@ -3108,7 +3093,6 @@ export default {
   getBranchHead,
   validatePorterApp,
   createApp,
-  updateAppEnvironmentGroup,
   applyApp,
   getAttachedEnvGroups,
   getLatestRevision,

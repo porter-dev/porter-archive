@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import AnimateHeight, { Height } from "react-animate-height";
 import styled from "styled-components";
 import _ from "lodash";
@@ -21,21 +21,23 @@ import { UseFieldArrayUpdate } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import { match } from "ts-pattern";
 import useResizeObserver from "lib/hooks/useResizeObserver";
+import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
+import ServiceStatusFooter from "./ServiceStatusFooter";
 
 interface ServiceProps {
   index: number;
   service: ClientService;
-  chart?: any;
   update: UseFieldArrayUpdate<PorterAppFormData, "app.services" | "app.predeploy">;
   remove: (index: number) => void;
+  status?: PorterAppVersionStatus[];
 }
 
 const ServiceContainer: React.FC<ServiceProps> = ({
   index,
   service,
-  chart,
   update,
   remove,
+  status,
 }) => {
   const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
 
@@ -79,22 +81,24 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     }
     var instanceType = "";
 
-    if (service) {
-      //first check if there is a nodeSelector for the given application (Can be null)
-      if (
-        chart?.config?.[`${service.name.value}-${service.config.type}`]
-          ?.nodeSelector?.["beta.kubernetes.io/instance-type"]
-      ) {
-        instanceType =
-          chart?.config?.[`${service.name.value}-${service.config.type}`]
-            ?.nodeSelector?.["beta.kubernetes.io/instance-type"];
-        const [instanceClass, instanceSize] = instanceType.split(".");
-        const currentInstance =
-          AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
-        setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
-        setMaxRAM(currentInstance.RAM * UPPER_BOUND);
-      }
-    }
+
+    // need to fix the below to not use chart
+    // if (service) {
+    //   //first check if there is a nodeSelector for the given application (Can be null)
+    //   if (
+    //     chart?.config?.[`${service.name.value}-${service.config.type}`]
+    //       ?.nodeSelector?.["beta.kubernetes.io/instance-type"]
+    //   ) {
+    //     instanceType =
+    //       chart?.config?.[`${service.name.value}-${service.config.type}`]
+    //         ?.nodeSelector?.["beta.kubernetes.io/instance-type"];
+    //     const [instanceClass, instanceSize] = instanceType.split(".");
+    //     const currentInstance =
+    //       AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
+    //     setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
+    //     setMaxRAM(currentInstance.RAM * UPPER_BOUND);
+    //   }
+    // }
     //Query the given nodes if no instance type is specified
     if (instanceType == "") {
       api
@@ -185,13 +189,6 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     }
   };
 
-  const getHasBuiltImage = () => {
-    if (!chart?.chart?.values) {
-      return false;
-    }
-    return !_.isEmpty((Object.values(chart.chart.values)[0] as any)?.global);
-  };
-
   return (
     <>
       <ServiceHeader
@@ -202,8 +199,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             expanded: !service.expanded,
           });
         }}
-        chart={chart}
-        bordersRounded={!getHasBuiltImage() && !service.expanded}
+        bordersRounded={!status && !service.expanded}
       >
         <ServiceTitle>
           <ActionButton>
@@ -234,23 +230,17 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         {height !== 0 && (
           <StyledSourceBox
             showExpanded={service.expanded}
-            chart={chart}
-            hasFooter={chart && service && getHasBuiltImage()}
+            hasFooter={status != null}
           >
             {renderTabs(service)}
           </StyledSourceBox>
         )}
       </AnimateHeight>
-      {chart &&
-        service &&
-        // Check if has built image
-        getHasBuiltImage() && (
-          <StatusFooter
-            setExpandedJob={() => { }}
-            chart={chart}
-            service={service}
-          />
-        )}
+      {status && (
+        <ServiceStatusFooter
+          status={status}
+        />
+      )}
       <Spacer y={0.5} />
     </>
   );
@@ -264,7 +254,6 @@ const ServiceTitle = styled.div`
 `;
 
 const StyledSourceBox = styled.div<{
-  chart: any;
   showExpanded?: boolean;
   hasFooter?: boolean;
 }>`
@@ -303,7 +292,6 @@ const ActionButton = styled.button`
 `;
 
 const ServiceHeader = styled.div<{
-  chart: any;
   showExpanded?: boolean;
   bordersRounded?: boolean;
 }>`
@@ -330,7 +318,7 @@ const ServiceHeader = styled.div<{
     cursor: pointer;
     border-radius: 20px;
     margin-left: -10px;
-    transform: ${(props: { showExpanded?: boolean; chart: any }) =>
+    transform: ${(props: { showExpanded?: boolean; }) =>
     props.showExpanded ? "" : "rotate(-90deg)"};
   }
 `;

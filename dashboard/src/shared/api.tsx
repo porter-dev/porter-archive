@@ -300,6 +300,16 @@ const appLogs = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/apps/logs`
 );
 
+const appPodStatus = baseApi<
+  {
+    deployment_target_id: string;
+    selectors: string;
+  },
+  { id: number; cluster_id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/apps/pods`;
+});
+
 const getFeedEvents = baseApi<
   {},
   {
@@ -867,6 +877,7 @@ const validatePorterApp = baseApi<
     deletions: {
       service_names: string[];
       env_variable_names: string[];
+      env_group_names: string[];
     };
   },
   {
@@ -930,6 +941,18 @@ const applyApp = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/apply`;
+});
+
+const getAttachedEnvGroups = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    app_name: string;
+    revision_id: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.app_name}/revisions/${pathParams.revision_id}/env`;
 });
 
 const getLatestRevision = baseApi<
@@ -3000,6 +3023,7 @@ export default {
   createSecretAndOpenGitHubPullRequest,
   getLogsWithinTimeRange,
   appLogs,
+  appPodStatus,
   getFeedEvents,
   updateStackStep,
   // -----------------------------------
@@ -3085,6 +3109,7 @@ export default {
   createApp,
   updateAppEnvironmentGroup,
   applyApp,
+  getAttachedEnvGroups,
   getLatestRevision,
   listAppRevisions,
   getLatestAppRevisions,

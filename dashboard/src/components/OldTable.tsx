@@ -10,6 +10,7 @@ import {
 import Loading from "components/Loading";
 import Selector from "./Selector";
 import loading from "assets/loading.gif";
+import Button from "./porter/Button";
 
 const GlobalFilter: React.FunctionComponent<any> = ({
   setGlobalFilter,
@@ -233,13 +234,14 @@ const Table: React.FC<TableProps> = ({
             <PaginationAction
               disabled={!canPreviousPage}
               onClick={previousPage}
+              type={"button"}
             >
               {"<"}
             </PaginationAction>
             <PageCounter>
               {pageIndex + 1} of {pageCount}
             </PageCounter>
-            <PaginationAction disabled={!canNextPage} onClick={nextPage}>
+            <PaginationAction disabled={!canNextPage} onClick={nextPage} type={"button"}>
               {">"}
             </PaginationAction>
           </PaginationActionsWrapper>
@@ -307,7 +309,7 @@ export const StyledTr = styled.tr`
   background: ${(props: StyledTrProps) => (props.selected ? "#ffffff11" : "")};
   :hover {
     background: ${(props: StyledTrProps) =>
-      props.disableHover ? "" : "#ffffff22"};
+    props.disableHover ? "" : "#ffffff22"};
   }
   cursor: ${(props: StyledTrProps) =>
     props.enablePointer ? "pointer" : "unset"};

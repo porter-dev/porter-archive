@@ -49,8 +49,6 @@ const EnvGroups: React.FC<Props> = ({
     name: "deletions.envGroupNames",
   });
 
-  console.log("deletedEnvGroups", deletedEnvGroups);
-
   const maxEnvGroupsReached = envGroups.length >= 3;
 
   const { data: attachedEnvGroups = [] } = useQuery(

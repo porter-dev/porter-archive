@@ -151,7 +151,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
     </Helper>
   );
 
-  if (!currentCluster?.infra_id || !currentCluster?.service) {
+  if (!currentCluster?.infra_id && !currentProject?.capi_provisioner_enabled || !currentCluster?.service) {
     helperText = (
       <Helper>
         Remove this cluster from Porter. Since this cluster was not provisioned

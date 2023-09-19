@@ -24,8 +24,8 @@ export const detectedBuildpackSchema = z.object({
 export type DetectedBuildpack = z.infer<typeof detectedBuildpackSchema>;
 
 export const DEFAULT_BUILDER_NAME = "heroku";
-export const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
-export const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
+export const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder-jammy-full:latest";
+export const DEFAULT_HEROKU_STACK = "heroku/buildpacks:22";
 
 export const BUILDPACK_TO_NAME: { [key: string]: string } = {
   "heroku/nodejs": "NodeJS",

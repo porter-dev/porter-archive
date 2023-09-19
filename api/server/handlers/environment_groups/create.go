@@ -87,7 +87,7 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 		CreatedAtUTC:    time.Now().UTC(),
 	}
 
-	err = environment_groups.CreateOrUpdateBaseEnvironmentGroup(ctx, agent, envGroup)
+	err = environment_groups.CreateOrUpdateBaseEnvironmentGroup(ctx, agent, envGroup, nil)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "unable to create or update environment group")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

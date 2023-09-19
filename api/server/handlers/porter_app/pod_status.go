@@ -16,11 +16,13 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+// PodStatusHandler is the handler for GET /apps/pods
 type PodStatusHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
+// NewPodStatusHandler returns a new PodStatusHandler
 func NewPodStatusHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -32,6 +34,7 @@ func NewPodStatusHandler(
 	}
 }
 
+// PodStatusRequest is the expected format for a request body on GET /apps/pods
 type PodStatusRequest struct {
 	DeploymentTargetID string `schema:"deployment_target_id"`
 	Selectors          string `schema:"selectors"`

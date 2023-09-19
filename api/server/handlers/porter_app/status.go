@@ -15,13 +15,13 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// AppLogsHandler handles the /apps/{kind}/status endpoint
+// AppStatusHandler handles the /apps/{kind}/status endpoint
 type AppStatusHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewAppLogsHandler returns a new AppLogsHandler
+// NewAppStatusHandler returns a new AppStatusHandler
 func NewAppStatusHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

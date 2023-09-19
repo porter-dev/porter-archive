@@ -26,11 +26,8 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { ControlledInput } from "components/porter/ControlledInput";
-<<<<<<< HEAD
 import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
-=======
 import { zodResolver } from "@hookform/resolvers/zod";
->>>>>>> 1d15836218cdc2609d9d5960ec754243fc0632cd
 
 const addServiceFormValidator = z.object({
   name: z

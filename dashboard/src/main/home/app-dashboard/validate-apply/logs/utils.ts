@@ -218,6 +218,10 @@ export const useLogs = (
         return false;
       }
 
+      if ((log.metadata.raw_labels?.porter_run_service_name ?? "").endsWith("predeploy")) {
+        return false;
+      }
+
       if (selectedFilterValues.revision !== GenericLogFilter.getDefaultOption("revision").value &&
         log.metadata.revision !== selectedFilterValues.revision) {
         return false;

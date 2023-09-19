@@ -867,6 +867,7 @@ const validatePorterApp = baseApi<
     deletions: {
       service_names: string[];
       env_variable_names: string[];
+      env_group_names: string[];
     };
   },
   {

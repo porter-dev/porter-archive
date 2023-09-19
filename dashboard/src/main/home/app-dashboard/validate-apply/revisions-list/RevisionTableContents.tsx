@@ -195,6 +195,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                         source: latestSource,
                         deletions: {
                           serviceNames: [],
+                          envGroupNames: [],
                         },
                       });
                       setPreviewRevision(

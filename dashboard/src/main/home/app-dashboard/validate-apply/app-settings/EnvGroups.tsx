@@ -15,17 +15,20 @@ import api from "shared/api";
 import { z } from "zod";
 import { valueExists } from "shared/util";
 import EnvGroupModal from "./EnvGroupModal";
+import { IterableElement } from "type-fest";
 
 type Props = {
   appName?: string;
   revisionId?: string;
   baseEnvGroups?: PopulatedEnvGroup[];
+  existingEnvGroupNames?: string[];
 };
 
 const EnvGroups: React.FC<Props> = ({
   appName,
   revisionId,
   baseEnvGroups = [],
+  existingEnvGroupNames = [],
 }) => {
   const { currentCluster, currentProject } = useContext(Context);
 
@@ -37,6 +40,16 @@ const EnvGroups: React.FC<Props> = ({
     control,
     name: "app.envGroups",
   });
+  const {
+    append: appendDeletion,
+    remove: removeDeletion,
+    fields: deletedEnvGroups,
+  } = useFieldArray({
+    control,
+    name: "deletions.envGroupNames",
+  });
+
+  console.log("deletedEnvGroups", deletedEnvGroups);
 
   const maxEnvGroupsReached = envGroups.length >= 3;
 
@@ -103,6 +116,29 @@ const EnvGroups: React.FC<Props> = ({
       .filter(valueExists);
   }, [envGroups, attachedEnvGroups, baseEnvGroups]);
 
+  const onAdd = (
+    inp: IterableElement<PorterAppFormData["app"]["envGroups"]>
+  ) => {
+    const previouslyDeleted = deletedEnvGroups.findIndex(
+      (s) => s.name === inp.name
+    );
+
+    if (previouslyDeleted !== -1) {
+      removeDeletion(previouslyDeleted);
+    }
+
+    append(inp);
+  };
+
+  const onRemove = (index: number) => {
+    const name = populatedEnvWithFallback[index].envGroup.name;
+    remove(index);
+
+    if (existingEnvGroupNames.includes(name)) {
+      appendDeletion({ name });
+    }
+  };
+
   return (
     <div>
       <TooltipWrapper
@@ -129,7 +165,7 @@ const EnvGroups: React.FC<Props> = ({
                 key={id}
                 index={index}
                 envGroup={envGroup}
-                remove={remove}
+                remove={onRemove}
               />
             );
           })}
@@ -139,7 +175,7 @@ const EnvGroups: React.FC<Props> = ({
         <EnvGroupModal
           setOpen={setShowEnvModal}
           baseEnvGroups={baseEnvGroups}
-          append={append}
+          append={onAdd}
         />
       ) : null}
     </div>

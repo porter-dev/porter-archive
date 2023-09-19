@@ -16,11 +16,12 @@ import Spacer from "components/porter/Spacer";
 import Modal from "components/porter/Modal";
 import styled, { css } from "styled-components";
 import Button from "components/porter/Button";
+import { IterableElement } from "type-fest";
 
 type Props = {
   baseEnvGroups: PopulatedEnvGroup[];
   setOpen: Dispatch<SetStateAction<boolean>>;
-  append: UseFieldArrayAppend<PorterAppFormData, "app.envGroups">;
+  append: (inp: IterableElement<PorterAppFormData["app"]["envGroups"]>) => void;
 };
 
 const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
@@ -91,14 +92,14 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
                             </div>
                           )
                         )}
-                        {Object.entries(selectedEnvGroup?.secret_variables || {}).map(
-                          ([key, value]) => (
-                            <div key={key}>
-                              <span className="key">{key} = </span>
-                              <span className="value">{value}</span>
-                            </div>
-                          )
-                        )}
+                        {Object.entries(
+                          selectedEnvGroup?.secret_variables || {}
+                        ).map(([key, value]) => (
+                          <div key={key}>
+                            <span className="key">{key} = </span>
+                            <span className="value">{value}</span>
+                          </div>
+                        ))}
                       </GroupEnvPreview>
                     </SidebarSection>
                   </>

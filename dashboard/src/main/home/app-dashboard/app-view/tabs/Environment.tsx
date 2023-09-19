@@ -22,7 +22,9 @@ const Environment: React.FC = () => {
   } = useLatestRevision();
   const {
     formState: { isSubmitting, errors },
+    watch,
   } = useFormContext<PorterAppFormData>();
+  const envGroupNames = watch("app.envGroups").map((eg) => eg.name);
 
   const { data: baseEnvGroups = [] } = useQuery(
     ["getAllEnvGroups", projectId, clusterId],
@@ -68,6 +70,7 @@ const Environment: React.FC = () => {
         appName={latestProto.name}
         revisionId={latestRevision.id}
         baseEnvGroups={baseEnvGroups}
+        existingEnvGroupNames={envGroupNames}
       />
       <Spacer y={0.5} />
       <Button

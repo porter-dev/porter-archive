@@ -115,6 +115,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       source: latestSource,
       deletions: {
         serviceNames: [],
+        envGroupNames: [],
       },
     },
   });
@@ -163,6 +164,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         latestProto
       );
 
+      console.log("validatedAppProto", validatedAppProto.toJsonString());
+
       // updates the default env group associated with this app to store app specific env vars
       const res = await api.updateAppEnvironmentGroup(
         "<token>",
@@ -199,6 +202,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           return envGroup;
         }),
       });
+
+      console.log("protoWithUpdatedEnv", protoWithUpdatedEnv.toJsonString());
 
       await api.applyApp(
         "<token>",
@@ -262,6 +267,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       }),
       source: latestSource,
       deletions: {
+        envGroupNames: [],
         serviceNames: [],
       },
     });

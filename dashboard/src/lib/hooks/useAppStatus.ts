@@ -56,7 +56,7 @@ export const useAppStatus = (
 
         const options: NewWebsocketOptions = {};
         options.onopen = () => {
-            console.log("opening status websocket for service: " + serviceName)
+            // console.log("opening status websocket for service: " + serviceName)
         };
 
         options.onmessage = async (evt: MessageEvent) => {
@@ -64,7 +64,7 @@ export const useAppStatus = (
         };
 
         options.onclose = () => {
-            console.log("closing status websocket for service: " + serviceName)
+            // console.log("closing status websocket for service: " + serviceName)
         };
 
         options.onerror = (err: ErrorEvent) => {
@@ -137,12 +137,8 @@ export const useAppStatus = (
         }
     };
 
-    const updateAllPods = async () => {
-        await Promise.all(serviceNames.map(updatePods));
-    }
-
     useEffect(() => {
-        updateAllPods();
+        Promise.all(serviceNames.map(updatePods));
         for (let serviceName of serviceNames) {
             setupWebsocket(serviceName);
         }

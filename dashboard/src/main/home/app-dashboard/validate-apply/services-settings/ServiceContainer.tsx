@@ -27,7 +27,6 @@ import ServiceStatusFooter from "./ServiceStatusFooter";
 interface ServiceProps {
   index: number;
   service: ClientService;
-  chart?: any;
   update: UseFieldArrayUpdate<PorterAppFormData, "app.services" | "app.predeploy">;
   remove: (index: number) => void;
   status?: PorterAppVersionStatus[];
@@ -36,7 +35,6 @@ interface ServiceProps {
 const ServiceContainer: React.FC<ServiceProps> = ({
   index,
   service,
-  chart,
   update,
   remove,
   status,
@@ -83,22 +81,24 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     }
     var instanceType = "";
 
-    if (service) {
-      //first check if there is a nodeSelector for the given application (Can be null)
-      if (
-        chart?.config?.[`${service.name.value}-${service.config.type}`]
-          ?.nodeSelector?.["beta.kubernetes.io/instance-type"]
-      ) {
-        instanceType =
-          chart?.config?.[`${service.name.value}-${service.config.type}`]
-            ?.nodeSelector?.["beta.kubernetes.io/instance-type"];
-        const [instanceClass, instanceSize] = instanceType.split(".");
-        const currentInstance =
-          AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
-        setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
-        setMaxRAM(currentInstance.RAM * UPPER_BOUND);
-      }
-    }
+
+    // need to fix the below to not use chart
+    // if (service) {
+    //   //first check if there is a nodeSelector for the given application (Can be null)
+    //   if (
+    //     chart?.config?.[`${service.name.value}-${service.config.type}`]
+    //       ?.nodeSelector?.["beta.kubernetes.io/instance-type"]
+    //   ) {
+    //     instanceType =
+    //       chart?.config?.[`${service.name.value}-${service.config.type}`]
+    //         ?.nodeSelector?.["beta.kubernetes.io/instance-type"];
+    //     const [instanceClass, instanceSize] = instanceType.split(".");
+    //     const currentInstance =
+    //       AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
+    //     setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
+    //     setMaxRAM(currentInstance.RAM * UPPER_BOUND);
+    //   }
+    // }
     //Query the given nodes if no instance type is specified
     if (instanceType == "") {
       api
@@ -189,13 +189,6 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     }
   };
 
-  const hasBuiltImage = useMemo(() => {
-    if (!chart?.chart?.values) {
-      return false;
-    }
-    return !_.isEmpty((Object.values(chart.chart.values)[0] as any)?.global);
-  }, [chart]);
-
   return (
     <>
       <ServiceHeader
@@ -206,8 +199,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             expanded: !service.expanded,
           });
         }}
-        chart={chart}
-        bordersRounded={!hasBuiltImage && !service.expanded}
+        bordersRounded={!status && !service.expanded}
       >
         <ServiceTitle>
           <ActionButton>
@@ -238,8 +230,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         {height !== 0 && (
           <StyledSourceBox
             showExpanded={service.expanded}
-            chart={chart}
-            hasFooter={chart && service && hasBuiltImage}
+            hasFooter={status != null}
           >
             {renderTabs(service)}
           </StyledSourceBox>
@@ -263,7 +254,6 @@ const ServiceTitle = styled.div`
 `;
 
 const StyledSourceBox = styled.div<{
-  chart: any;
   showExpanded?: boolean;
   hasFooter?: boolean;
 }>`
@@ -302,7 +292,6 @@ const ActionButton = styled.button`
 `;
 
 const ServiceHeader = styled.div<{
-  chart: any;
   showExpanded?: boolean;
   bordersRounded?: boolean;
 }>`
@@ -329,7 +318,7 @@ const ServiceHeader = styled.div<{
     cursor: pointer;
     border-radius: 20px;
     margin-left: -10px;
-    transform: ${(props: { showExpanded?: boolean; chart: any }) =>
+    transform: ${(props: { showExpanded?: boolean; }) =>
     props.showExpanded ? "" : "rotate(-90deg)"};
   }
 `;

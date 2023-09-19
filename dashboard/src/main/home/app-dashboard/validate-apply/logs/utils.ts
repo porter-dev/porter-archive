@@ -41,7 +41,22 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
   });
 };
 
-export const useLogs = (
+export const useLogs = ({
+  projectID,
+  clusterID,
+  selectedFilterValues,
+  appName,
+  serviceName,
+  deploymentTargetId,
+  searchParam,
+  notify,
+  setLoading,
+  revisionIdToNumber,
+  setDate,
+  appRevisionId = "",
+  timeRange,
+  filterPredeploy,
+}: {
   projectID: number,
   clusterID: number,
   selectedFilterValues: Record<LogFilterName, string>,
@@ -54,11 +69,13 @@ export const useLogs = (
   revisionIdToNumber: Record<string, number>,
   // if setDate is set, results are not live
   setDate?: Date,
-  appRevisionId: string = "",
+  appRevisionId?: string,
   timeRange?: {
     startTime?: Dayjs,
     endTime?: Dayjs,
   },
+  filterPredeploy: boolean,
+}
 ) => {
   const isLive = !setDate;
   const logsBufferRef = useRef<PorterLog[]>([]);
@@ -218,7 +235,7 @@ export const useLogs = (
         return false;
       }
 
-      if ((log.metadata.raw_labels?.porter_run_service_name ?? "").endsWith("predeploy")) {
+      if (filterPredeploy && (log.metadata.raw_labels?.porter_run_service_name ?? "").endsWith("predeploy")) {
         return false;
       }
 

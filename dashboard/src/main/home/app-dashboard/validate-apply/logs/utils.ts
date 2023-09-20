@@ -77,7 +77,7 @@ export const useLogs = ({
   filterPredeploy: boolean,
 }
 ) => {
-  const isLive = !setDate;
+  const [isLive, setIsLive] = useState<boolean>(!setDate && (timeRange?.startTime == null && timeRange?.endTime == null));
   const logsBufferRef = useRef<PorterLog[]>([]);
   const [logs, setLogs] = useState<PorterLog[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
@@ -177,7 +177,7 @@ export const useLogs = ({
   };
 
   const setupWebsocket = (websocketKey: string) => {
-    const websocketBaseURL = `/api/projects/${projectID}/clusters/${clusterID}/apps/logs/loki`;
+    const websocketBaseURL = `/api/projects/${projectID}/clusters/${clusterID}/apps/${appName}/logs/loki`;
 
     const searchParams = {
       app_name: appName,
@@ -277,6 +277,7 @@ export const useLogs = ({
         {
           cluster_id: clusterID,
           project_id: projectID,
+          porter_app_name: appName,
         }
       )
 
@@ -324,7 +325,7 @@ export const useLogs = ({
     }
   };
 
-  const refresh = async () => {
+  const refresh = async ({ isLive }: { isLive: boolean }) => {
     setLoading(true);
     setLogs([]);
     flushLogsBuffer(true);
@@ -358,7 +359,6 @@ export const useLogs = ({
 
     if (isLive) {
       setupWebsocket(websocketKey);
-
     }
   };
 
@@ -449,8 +449,20 @@ export const useLogs = ({
   }, []);
 
   useEffect(() => {
-    refresh();
-  }, [appName, serviceName, deploymentTargetId, searchParam, setDate, selectedFilterValues]);
+    // if a complete time range is not given, then we are live
+    const isLive = !setDate && (timeRange?.startTime == null || timeRange?.endTime == null);
+    refresh({ isLive });
+    setIsLive(isLive);
+  }, [
+    appName,
+    serviceName,
+    deploymentTargetId,
+    searchParam,
+    setDate,
+    JSON.stringify(selectedFilterValues),
+    JSON.stringify(timeRange?.endTime),
+    filterPredeploy
+  ]);
 
   useEffect(() => {
     // if the streaming is no longer live, close all websockets

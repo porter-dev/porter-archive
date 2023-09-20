@@ -3,9 +3,10 @@ import failure from "assets/failure.svg";
 import loading from "assets/loading.gif";
 import canceled from "assets/canceled.svg"
 import api from "shared/api";
-import { PorterAppBuildEvent, PorterAppEvent, PorterAppPreDeployEvent } from "./types";
+import { PorterAppBuildEvent, PorterAppPreDeployEvent } from "./types";
 import { PorterAppRecord } from "../../../AppView";
 import { match } from "ts-pattern";
+import { differenceInSeconds, formatDuration } from 'date-fns';
 
 export const getDuration = (event: PorterAppPreDeployEvent | PorterAppBuildEvent): string => {
     const startTimeStamp = match(event)
@@ -15,32 +16,9 @@ export const getDuration = (event: PorterAppPreDeployEvent | PorterAppBuildEvent
 
     const endTimeStamp = event.metadata.end_time ? new Date(event.metadata.end_time).getTime() : Date.now()
 
-    const timeDifferenceMilliseconds = endTimeStamp - startTimeStamp;
+    const timeDifferenceInSeconds = differenceInSeconds(endTimeStamp, startTimeStamp);
 
-    const seconds = Math.floor(timeDifferenceMilliseconds / 1000);
-    const weeks = Math.floor(seconds / 604800);
-    const remainingDays = Math.floor((seconds % 604800) / 86400);
-    const remainingHours = Math.floor((seconds % 86400) / 3600);
-    const remainingMinutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-
-    if (weeks > 0) {
-        return `${weeks}w ${remainingDays}d`;
-    }
-
-    if (remainingDays > 0) {
-        return `${remainingDays}d ${remainingHours}h`;
-    }
-
-    if (remainingHours > 0) {
-        return `${remainingHours}h ${remainingMinutes}m`;
-    }
-
-    if (remainingMinutes > 0) {
-        return `${remainingMinutes}m ${remainingSeconds}s`;
-    }
-
-    return `${remainingSeconds}s`;
+    return formatDuration({ seconds: timeDifferenceInSeconds });
 };
 
 export const getStatusIcon = (status: string) => {

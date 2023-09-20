@@ -31,6 +31,7 @@ import Activity from "./tabs/Activity";
 import EventFocusView from "./tabs/activity-feed/events/focus-views/EventFocusView";
 import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
+import JobsTab from "./tabs/JobsTab";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -45,7 +46,7 @@ const validTabs = [
   "build-settings",
   "settings",
   // "helm-values",
-  // "job-history",
+  "job-history",
 ] as const;
 const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
@@ -249,7 +250,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       // redirect to the default tab after save
       history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
-    } catch (err) {}
+    } catch (err) { }
   });
 
   useEffect(() => {
@@ -319,11 +320,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
+                {
+                  label: "Build Settings",
+                  value: "build-settings",
+                },
+              ]
               : []),
             { label: "Settings", value: "settings" },
           ]}
@@ -347,6 +348,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("logs", () => <LogsTab />)
           .with("metrics", () => <MetricsTab />)
           .with("events", () => <EventFocusView />)
+          .with("job-history", () => <JobsTab />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>

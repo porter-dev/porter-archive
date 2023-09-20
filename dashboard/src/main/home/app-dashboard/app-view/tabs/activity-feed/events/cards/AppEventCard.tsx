@@ -45,6 +45,7 @@ const AppEventCard: React.FC<Props> = ({ event, deploymentTargetId, projectId, c
         {
           project_id: projectId,
           cluster_id: clusterId,
+          app_name: appName,
         }
       )
 

@@ -15,6 +15,7 @@ const LogsTab: React.FC = () => {
             appName={appName}
             serviceNames={serviceNames}
             deploymentTargetId={deploymentTargetId}
+            filterPredeploy={true}
         />
     );
 };

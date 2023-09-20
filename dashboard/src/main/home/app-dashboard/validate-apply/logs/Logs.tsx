@@ -25,10 +25,8 @@ import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 import LogFilterContainer from "../../expanded-app/logs/LogFilterContainer";
 import StyledLogs from "../../expanded-app/logs/StyledLogs";
-import { AppRevision } from "lib/revisions/types";
 import { useLatestRevisionNumber, useRevisionIdToNumber } from "lib/hooks/useRevisionList";
 import { useLocation } from "react-router";
-import { valueExists } from "shared/util";
 
 type Props = {
     projectId: number;
@@ -38,6 +36,7 @@ type Props = {
     deploymentTargetId: string;
     appRevisionId?: string;
     logFilterNames?: LogFilterName[];
+    filterPredeploy?: boolean;
 };
 
 const Logs: React.FC<Props> = ({
@@ -48,6 +47,7 @@ const Logs: React.FC<Props> = ({
     deploymentTargetId,
     appRevisionId,
     logFilterNames = ["service_name", "revision", "output_stream"],
+    filterPredeploy = false,
 }) => {
     const { search } = useLocation();
     const queryParams = new URLSearchParams(search);
@@ -173,20 +173,21 @@ const Logs: React.FC<Props> = ({
         }, 5000);
     };
 
-    const { logs, refresh, moveCursor, paginationInfo } = useLogs(
-        projectId,
-        clusterId,
+    const { logs, refresh, moveCursor, paginationInfo } = useLogs({
+        projectID: projectId,
+        clusterID: clusterId,
         selectedFilterValues,
         appName,
-        selectedFilterValues.service_name,
+        serviceName: selectedFilterValues.service_name,
         deploymentTargetId,
-        enteredSearchText,
+        searchParam: enteredSearchText,
         notify,
-        setIsLoading,
+        setLoading: setIsLoading,
         revisionIdToNumber,
-        selectedDate,
+        setDate: selectedDate,
         appRevisionId,
-    );
+        filterPredeploy,
+    });
 
     useEffect(() => {
         setFilters([

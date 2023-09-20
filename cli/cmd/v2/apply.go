@@ -12,6 +12,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
 	"github.com/porter-dev/porter/internal/models"
 
 	"github.com/cli/cli/git"
@@ -88,12 +89,12 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 			return fmt.Errorf("error getting app name from b64 app proto: %w", err)
 		}
 
-		envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, targetResp.DeploymentTargetID, parseResp.EnvVariables, parseResp.EnvSecrets)
+		envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, targetResp.DeploymentTargetID, parseResp.EnvVariables, parseResp.EnvSecrets, parseResp.B64AppProto)
 		if err != nil {
 			return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
 		}
 
-		b64AppProto, err = updateAppEnvGroupInProto(ctx, b64AppProto, envGroupResp.EnvGroupName, envGroupResp.EnvGroupVersion)
+		b64AppProto, err = updateEnvGroupsInProto(ctx, b64AppProto, envGroupResp.EnvGroups)
 		if err != nil {
 			return fmt.Errorf("error updating app env group in proto: %w", err)
 		}
@@ -374,7 +375,7 @@ func imageTagFromBase64AppProto(base64AppProto string) (string, error) {
 	return app.Image.Tag, nil
 }
 
-func updateAppEnvGroupInProto(ctx context.Context, base64AppProto string, envGroupName string, envGroupVersion int) (string, error) {
+func updateEnvGroupsInProto(ctx context.Context, base64AppProto string, envGroups []environment_groups.EnvironmentGroup) (string, error) {
 	var editedB64AppProto string
 
 	decoded, err := base64.StdEncoding.DecodeString(base64AppProto)
@@ -388,20 +389,14 @@ func updateAppEnvGroupInProto(ctx context.Context, base64AppProto string, envGro
 		return editedB64AppProto, fmt.Errorf("unable to unmarshal app for revision: %w", err)
 	}
 
-	envGroupExists := false
-	for _, envGroup := range app.EnvGroups {
-		if envGroup.Name == envGroupName {
-			envGroup.Version = int64(envGroupVersion)
-			envGroupExists = true
-			break
-		}
-	}
-	if !envGroupExists {
-		app.EnvGroups = append(app.EnvGroups, &porterv1.EnvGroup{
-			Name:    envGroupName,
-			Version: int64(envGroupVersion),
+	egs := make([]*porterv1.EnvGroup, 0)
+	for _, envGroup := range envGroups {
+		egs = append(egs, &porterv1.EnvGroup{
+			Name:    envGroup.Name,
+			Version: int64(envGroup.Version),
 		})
 	}
+	app.EnvGroups = egs
 
 	marshalled, err := helpers.MarshalContractObject(ctx, app)
 	if err != nil {

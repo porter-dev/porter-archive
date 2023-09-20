@@ -10,7 +10,7 @@ import { ActionConfigType } from "shared/types";
 import styled, { keyframes } from "styled-components";
 
 const DEFAULT_BUILDER_NAME = "heroku";
-const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder:full";
+const DEFAULT_PAKETO_STACK = "paketobuildpacks/builder-jammy-full:latest";
 const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
 
 type BuildConfig = {

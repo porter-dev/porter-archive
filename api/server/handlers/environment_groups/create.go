@@ -75,15 +75,10 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	secrets := make(map[string][]byte)
-	for k, v := range request.SecretVariables {
-		secrets[k] = []byte(v)
-	}
-
 	envGroup := environment_groups.EnvironmentGroup{
 		Name:            request.Name,
 		Variables:       request.Variables,
-		SecretVariables: secrets,
+		SecretVariables: request.SecretVariables,
 		CreatedAtUTC:    time.Now().UTC(),
 	}
 

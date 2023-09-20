@@ -183,7 +183,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     porterYamlFound,
     detectedName,
     loading: isLoadingPorterYaml,
-  } = usePorterYaml({ source: source?.type === "github" ? source : null, appName: name.value });
+  } = usePorterYaml({
+    source: source?.type === "github" ? source : null,
+    appName: name.value,
+  });
   const deploymentTarget = useDefaultDeploymentTarget();
   const { updateAppStep } = useAppAnalytics(name.value);
   const { validateApp } = useAppValidation({
@@ -257,7 +260,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
         );
 
-        const envGroupResponse = await api.updateEnvironmentGroupV2(
+        const res = await api.updateEnvironmentGroupV2(
           "<token>",
           {
             deployment_target_id: deploymentTarget.deployment_target_id,
@@ -272,31 +275,29 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
         );
 
-        const addedEnvGroup = await z
+        const updatedEnvGroups = z
           .object({
-            env_group_name: z.string(),
-            env_group_version: z.coerce.bigint(),
+            env_groups: z
+              .object({
+                env_group_name: z.string(),
+                env_group_version: z.coerce.bigint(),
+              })
+              .array(),
           })
-          .parseAsync(envGroupResponse.data);
+          .parse(res.data);
 
-        const envGroups = [
-          ...app.envGroups.filter(
-            (group) => group.name !== addedEnvGroup.env_group_name
-          ),
-          {
-            name: addedEnvGroup.env_group_name,
-            version: addedEnvGroup.env_group_version,
-          },
-        ];
-        const appWithSeededEnv = new PorterApp({
+        const protoWithUpdatedEnv = new PorterApp({
           ...app,
-          envGroups,
+          envGroups: updatedEnvGroups.env_groups.map((eg) => ({
+            name: eg.env_group_name,
+            version: eg.env_group_version,
+          })),
         });
 
         await api.applyApp(
           "<token>",
           {
-            b64_app_proto: btoa(appWithSeededEnv.toJsonString()),
+            b64_app_proto: btoa(protoWithUpdatedEnv.toJsonString()),
             deployment_target_id: deploymentTarget.deployment_target_id,
           },
           {

@@ -233,7 +233,7 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 			latestEnvGroups = append(latestEnvGroups, environment_groups.EnvironmentGroup{
 				Name:    latestEnvironmentGroup.Name,
-				Version: int(latestEnvironmentGroup.Version),
+				Version: latestEnvironmentGroup.Version,
 			})
 
 			res := &UpdateAppEnvironmentResponse{

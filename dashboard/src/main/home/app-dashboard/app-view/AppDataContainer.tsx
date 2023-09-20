@@ -165,16 +165,17 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       );
 
       // updates the default env group associated with this app to store app specific env vars
-      const res = await api.updateAppEnvironmentGroup(
+      const res = await api.updateEnvironmentGroupV2(
         "<token>",
         {
           deployment_target_id: deploymentTargetId,
           variables,
           secrets,
+          b64_app_proto: btoa(validatedAppProto.toJsonString()),
           remove_missing: true,
         },
         {
-          project_id: projectId,
+          id: projectId,
           cluster_id: clusterId,
           app_name: porterApp.name,
         }

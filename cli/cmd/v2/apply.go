@@ -72,21 +72,24 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		}
 		b64AppProto = parseResp.B64AppProto
 
-		// we only need to create the app if a porter yaml is provided (otherwise it must already exist)
-		createPorterAppDBEntryInp, err := createPorterAppDbEntryInputFromProtoAndEnv(parseResp.B64AppProto)
-		if err != nil {
-			return fmt.Errorf("error creating porter app db entry input from proto: %w", err)
-		}
-
-		err = client.CreatePorterAppDBEntry(ctx, cliConf.Project, cliConf.Cluster, createPorterAppDBEntryInp)
-		if err != nil {
-			return fmt.Errorf("error creating porter app db entry: %w", err)
-		}
-
 		// override app name if provided
 		appName, err = appNameFromB64AppProto(parseResp.B64AppProto)
 		if err != nil {
 			return fmt.Errorf("error getting app name from b64 app proto: %w", err)
+		}
+
+		// we only need to create the app if a porter yaml is provided (otherwise it must already exist)
+		createPorterAppDBEntryInp, err := createPorterAppDbEntryInputFromProtoAndEnv(parseResp.B64AppProto)
+		if err != nil {
+			return fmt.Errorf("unable to form porter app creation input from yaml: %w", err)
+		}
+
+		err = client.CreatePorterAppDBEntry(ctx, cliConf.Project, cliConf.Cluster, createPorterAppDBEntryInp)
+		if err != nil {
+			if err.Error() == porter_app.ErrMissingSourceType.Error() {
+				return fmt.Errorf("cannot find existing Porter app with name %s and no build or image settings were specified in porter.yaml", appName)
+			}
+			return fmt.Errorf("unable to create porter app from yaml: %w", err)
 		}
 
 		envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, targetResp.DeploymentTargetID, parseResp.EnvVariables, parseResp.EnvSecrets, parseResp.B64AppProto)
@@ -309,7 +312,7 @@ func createPorterAppDbEntryInputFromProtoAndEnv(base64AppProto string) (api.Crea
 		return input, nil
 	}
 
-	return input, fmt.Errorf("app does not contain build or image settings")
+	return input, nil
 }
 
 func buildSettingsFromBase64AppProto(base64AppProto string) (buildInput, error) {

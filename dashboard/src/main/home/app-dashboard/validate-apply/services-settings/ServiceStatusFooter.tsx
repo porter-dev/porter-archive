@@ -11,44 +11,50 @@ import _ from "lodash";
 import Link from "components/porter/Link";
 import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
 import { match } from "ts-pattern";
+import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 
 interface ServiceStatusFooterProps {
+    serviceName: string;
     status: PorterAppVersionStatus[];
+    isJob: boolean,
 }
 const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
+    serviceName,
     status,
+    isJob
 }) => {
     const [expanded, setExpanded] = useState<boolean>(false);
+    const { latestProto } = useLatestRevision();
     const [height, setHeight] = useState<Height>(0);
 
-    // if (service.type === "job") {
-    //     return (
-    //         <StyledStatusFooter>
-    //             {service.type === "job" && (
-    //                 <Container row>
-    //                     {/*
-    //         <Mi className="material-icons">check</Mi>
-    //         <Text color="helper">
-    //           Last run succeeded at 12:39 PM on 4/13/23
-    //         </Text>
-    //         */}
-    //                     <Link to={`/apps/${chart.name}/job-history?service=${service.name}`}>
-    //                         <Button
-    //                             onClick={() => { }}
-    //                             height="30px"
-    //                             width="87px"
-    //                             color="#ffffff11"
-    //                             withBorder
-    //                         >
-    //                             <I className="material-icons">open_in_new</I>
-    //                             History
-    //                         </Button>
-    //                     </Link>
-    //                 </Container>
-    //             )}
-    //         </StyledStatusFooter>
-    //     );
-    // }
+    if (isJob) {
+        return (
+            <StyledStatusFooter>
+
+                <Container row>
+                    {/*
+            <Mi className="material-icons">check</Mi>
+            <Text color="helper">
+              Last run succeeded at 12:39 PM on 4/13/23
+            </Text>
+            */}
+                    <Link to={`/apps/${latestProto.name}/job-history?service=${serviceName}`}>
+                        <Button
+                            onClick={() => { }}
+                            height="30px"
+                            width="87px"
+                            color="#ffffff11"
+                            withBorder
+                        >
+                            <I className="material-icons">open_in_new</I>
+                            History
+                        </Button>
+                    </Link>
+                </Container>
+
+            </StyledStatusFooter>
+        );
+    }
 
     return (
         <>

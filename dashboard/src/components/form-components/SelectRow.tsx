@@ -78,6 +78,4 @@ const Label = styled.div<{ displayFlex?: boolean }>`
 
 const StyledSelectRow = styled.div<{ displayFlex?: boolean }>`
   display: ${props => props.displayFlex ? "flex" : "block"};
-  margin-bottom: 15px;
-  margin-top: 20px;
 `;

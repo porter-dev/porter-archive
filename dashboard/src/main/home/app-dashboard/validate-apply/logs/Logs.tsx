@@ -11,7 +11,7 @@ import styled from "styled-components";
 import spinner from "assets/loading.gif";
 import api from "shared/api";
 import { useLogs } from "./utils";
-import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName, LogFilterQueryParamOpts } from "../../expanded-app/logs/types";
+import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName } from "../../expanded-app/logs/types";
 import dayjs, { Dayjs } from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
@@ -36,6 +36,10 @@ type Props = {
     deploymentTargetId: string;
     appRevisionId?: string;
     logFilterNames?: LogFilterName[];
+    timeRange?: {
+        startTime?: Dayjs;
+        endTime?: Dayjs;
+    };
     filterPredeploy?: boolean;
 };
 
@@ -46,6 +50,7 @@ const Logs: React.FC<Props> = ({
     serviceNames,
     deploymentTargetId,
     appRevisionId,
+    timeRange,
     logFilterNames = ["service_name", "revision", "output_stream"],
     filterPredeploy = false,
 }) => {
@@ -187,6 +192,7 @@ const Logs: React.FC<Props> = ({
         setDate: selectedDate,
         appRevisionId,
         filterPredeploy,
+        timeRange,
     });
 
     useEffect(() => {
@@ -288,7 +294,7 @@ const Logs: React.FC<Props> = ({
                             setSelectedDate={setSelectedDateIfUndefined}
                         />
                         <LogQueryModeSelectionToggle
-                            selectedDate={selectedDate}
+                            selectedDate={selectedDate ?? timeRange?.endTime?.toDate()}
                             setSelectedDate={setSelectedDate}
                             resetSearch={resetSearch}
                         />
@@ -303,7 +309,7 @@ const Logs: React.FC<Props> = ({
                         <Spacer inline width="10px" />
                         <ScrollButton
                             onClick={() => {
-                                refresh();
+                                refresh({ isLive: selectedDate == null && timeRange?.endTime == null });
                             }}
                         >
                             <i className="material-icons">autorenew</i>

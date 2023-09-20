@@ -335,6 +335,7 @@ const MetricsHeader = styled.div`
   align-items: center;
   overflow: visible;
   justify-content: space-between;
+  margin-bottom: 20px;
 `;
 
 const RangeWrapper = styled.div`

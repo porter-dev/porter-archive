@@ -192,6 +192,7 @@ const Logs: React.FC<Props> = ({
         setDate: selectedDate,
         appRevisionId,
         filterPredeploy,
+        timeRange,
     });
 
     useEffect(() => {
@@ -293,7 +294,7 @@ const Logs: React.FC<Props> = ({
                             setSelectedDate={setSelectedDateIfUndefined}
                         />
                         <LogQueryModeSelectionToggle
-                            selectedDate={selectedDate}
+                            selectedDate={selectedDate ?? timeRange?.endTime?.toDate()}
                             setSelectedDate={setSelectedDate}
                             resetSearch={resetSearch}
                         />
@@ -308,7 +309,7 @@ const Logs: React.FC<Props> = ({
                         <Spacer inline width="10px" />
                         <ScrollButton
                             onClick={() => {
-                                refresh();
+                                refresh({ isLive: selectedDate == null && timeRange?.endTime == null });
                             }}
                         >
                             <i className="material-icons">autorenew</i>

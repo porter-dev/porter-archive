@@ -238,6 +238,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       </AnimateHeight>
       {status && (
         <ServiceStatusFooter
+          serviceName={service.name.value}
+          isJob={service.config.type === "job"}
           status={status}
         />
       )}

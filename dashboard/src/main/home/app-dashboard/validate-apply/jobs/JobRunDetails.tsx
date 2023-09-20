@@ -14,6 +14,7 @@ import { AppearingView } from "../../app-view/tabs/activity-feed/events/focus-vi
 import { getDuration } from "./utils";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import dayjs from "dayjs";
 
 type Props = {
     jobRun: JobRun;
@@ -22,10 +23,9 @@ type Props = {
 const JobRunDetails: React.FC<Props> = ({
     jobRun,
 }) => {
-    const { projectId, clusterId, latestProto, deploymentTargetId, latestRevision } = useLatestRevision();
+    const { projectId, clusterId, latestProto, deploymentTargetId } = useLatestRevision();
 
     const appName = latestProto.name
-    const serviceNames = [jobRun.jobName ?? "all"]
 
     const renderHeaderText = () => {
         return match(jobRun)
@@ -66,10 +66,14 @@ const JobRunDetails: React.FC<Props> = ({
                 projectId={projectId}
                 clusterId={clusterId}
                 appName={appName}
-                serviceNames={serviceNames}
+                serviceNames={[jobRun.jobName ?? "all"]}
                 deploymentTargetId={deploymentTargetId}
                 appRevisionId={jobRun.metadata.labels["porter.run/app-revision-id"]}
                 logFilterNames={["service_name"]}
+                timeRange={{
+                    startTime: dayjs(jobRun.status.startTime ?? jobRun.metadata.creationTimestamp).subtract(30, 'second'),
+                    endTime: jobRun.status.completionTime != null ? dayjs(jobRun.status.completionTime).add(30, 'second') : undefined,
+                }}
             />
         </>
     );

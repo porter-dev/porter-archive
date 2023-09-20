@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import {
   Column,
@@ -79,6 +79,7 @@ const Table: React.FC<TableProps> = ({
   onRefresh,
   isRefreshing = false,
 }) => {
+  const [currentPageIndex, setCurrentPageIndex] = useState<number>(0);
   const {
     getTableProps,
     getTableBodyProps,
@@ -102,6 +103,10 @@ const Table: React.FC<TableProps> = ({
     {
       columns: columnsData,
       data,
+      initialState: {
+        pageIndex: currentPageIndex,
+      },
+      autoResetPage: false,
     },
     useGlobalFilter,
     usePagination
@@ -233,15 +238,21 @@ const Table: React.FC<TableProps> = ({
           <PaginationActionsWrapper>
             <PaginationAction
               disabled={!canPreviousPage}
-              onClick={previousPage}
+              onClick={() => {
+                previousPage();
+                setCurrentPageIndex(currentPageIndex - 1);
+              }}
               type={"button"}
             >
               {"<"}
             </PaginationAction>
             <PageCounter>
-              {pageIndex + 1} of {pageCount}
+              {currentPageIndex + 1} of {pageCount}
             </PageCounter>
-            <PaginationAction disabled={!canNextPage} onClick={nextPage} type={"button"}>
+            <PaginationAction disabled={!canNextPage} onClick={() => {
+              nextPage();
+              setCurrentPageIndex(currentPageIndex + 1);
+            }} type={"button"}>
               {">"}
             </PaginationAction>
           </PaginationActionsWrapper>

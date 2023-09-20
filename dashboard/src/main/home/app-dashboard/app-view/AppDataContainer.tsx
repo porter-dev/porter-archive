@@ -327,8 +327,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
               ]
               : []),
             { label: "Settings", value: "settings" },
-            { label: "Jobs", value: "job-history" },
-
           ]}
           currentTab={currentTab}
           setCurrentTab={(tab) => {

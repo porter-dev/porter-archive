@@ -60,7 +60,8 @@ const InputSlider: React.FC<InputSliderProps> = ({
 
   const optimal = nodeCount ? Math.round((max / nodeCount) * 10) / 10 : 0;
 
-  const mid = min + (max - min) * 0.5;
+  const mid = min + (max - min) * 0.25;
+  const quarter = min + (max - min) * 0.125;
   const marks: Mark[] = [
     {
       value: max,
@@ -70,25 +71,34 @@ const InputSlider: React.FC<InputSliderProps> = ({
   var isExceedingLimit = false;
   var displayOptimalText = false;
   //Optimal Marks only give useful information to user if they are using more than 2 nodes
-  if (optimal != 0 && nodeCount && nodeCount > 2) {
-    marks.push({
-      value: optimal,
-      label: (
-        <Text color="helper" size={10}>
-          Recommended
-        </Text>
+  // if (optimal != 0 && nodeCount && nodeCount > 2) {
+  //   marks.push({
+  //     value: optimal,
+  //     label: (
+  //       <Text color="helper" size={10}>
+  //         Recommended
+  //       </Text>
 
-      )
-    });
-    displayOptimalText = Number(value) == optimal;
-  }
+  //     )
+  //   });
+  //   displayOptimalText = Number(value) == optimal;
+  // }
 
   if (smartLimit) {
+
     marks.push({
       value: smartLimit,
       label: smartLimit.toString(),
-    });
-
+    },
+      {
+        value: mid,
+        label: "",
+      },
+      {
+        value: quarter,
+        label: "",
+      },);
+    displayOptimalText = Number(value) == mid || Number(value) == quarter;
     isExceedingLimit = Number(value) > smartLimit;
   }
   const isCloseToMark = (value, marks, threshold = 0.1) => {
@@ -109,7 +119,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
           {label && <Label>{label}</Label>}
           <Value>{`${Math.floor(value * 100) / 100} ${unit}`}</Value>
           {displayOptimalText &&
-            <><Spacer inline x={1} /><Label>Recommended based on the available compute ({nodeCount} application nodes)  </Label>  <StyledIcon
+            <><Spacer inline x={1} /><Label>Recommended based on the available compute </Label>  <StyledIcon
               className="material-icons"
               onClick={() => {
                 setShowNeedHelpModal(true)
@@ -131,7 +141,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
           {/* <div style={{ position: 'absolute', bottom: '100%', left: `calc(${((threeQuarter - min) / (max - min)) * 100}% - 50px)` }}>
             Recommended
           </div> */}
-          <MaxedOutToolTip title={smartLimit?.toString() == value && !override ? "To increase value toggle off Smart Optimization" || '' : ''} arrow>
+          <MaxedOutToolTip title={smartLimit?.toString() == value && !override ? "Using resources beyond this limit is not recommended for cost - to override toggle off Smart Optimization" || '' : ''} arrow>
             <div style={{ position: 'relative' }}>
 
               <StyledSlider
@@ -144,18 +154,13 @@ const InputSlider: React.FC<InputSliderProps> = ({
                 onChange={(event, newValue) => {
                   if (!override && smartLimit && newValue > smartLimit) {
                     setValue(smartLimit);
+                  } else if (!override) {
+                    const closestMarkValue = getClosestMark(newValue, marks);
+                    setValue(closestMarkValue);
                   } else {
-                    if (isCloseToMark(newValue, marks)) {
-                      const closestMarkValue = getClosestMark(newValue, marks);
-                      setValue(closestMarkValue);
-                    }
-                    else {
-                      setValue(newValue as number);
-                    }
+                    setValue(newValue as number);
                   }
-                }
-
-                }
+                }}
                 classes={{
                   track: isExceedingLimit ? 'exceeds-limit' : '',
                   rail: isExceedingLimit ? 'exceeds-limit' : ''
@@ -163,7 +168,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
                 valueLabelDisplay={smartLimit && Number(value) > smartLimit ? "off" : "auto"}
                 disabled={disabled}
                 marks={marks}
-                step={step ? step : 1}
+                step={(step ? step : 1)}
                 style={{
                   color: disabled ? "gray" : color,
                 }}
@@ -236,20 +241,19 @@ const MaxedOutToolTip = withStyles(theme => ({
   tooltip: {
     backgroundColor: '#333',
     color: '#fff',
-    padding: '8px',
-    borderRadius: '4px',
-    fontSize: '14px',
+    padding: '5px',
+    borderRadius: '2px',
+    fontSize: '12px',
     textAlign: 'center',
     whiteSpace: 'pre-wrap',
     wordWrap: 'break-word',
     maxWidth: '200px',
     width: '200px',
     [theme.breakpoints.up('sm')]: {
-      margin: '0 14px',
+      margin: '0 2px',
     },
   },
 }))(Tooltip);
-
 
 const StyledSlider = withStyles({
   root: {

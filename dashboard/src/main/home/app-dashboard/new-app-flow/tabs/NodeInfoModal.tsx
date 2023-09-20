@@ -20,7 +20,7 @@ const NodeInfoModal: React.FC<Props> = ({
             <Text size={16}>Resource Optimization on Porter</Text>
             <Spacer y={1} />
             <Text color="helper">
-                Based on the number of nodes running in your cluster the recommended resource limits will be adjusted.
+                The marks represent values for your applications to run cost-efficiently on Porter.
             </Text>
             <Spacer y={1} />
             <Text color="helper">

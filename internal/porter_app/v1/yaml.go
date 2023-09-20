@@ -361,7 +361,9 @@ func webConfigProtoFromConfig(service Service) (*porterv1.WebServiceConfig, erro
 			return nil, errors.New("annotations are not supported")
 		}
 		webConfig.Domains = domains
-		webConfig.Private = !service.Config.Ingress.Enabled
+
+		private := !service.Config.Ingress.Enabled
+		webConfig.Private = &private
 	}
 
 	return webConfig, nil

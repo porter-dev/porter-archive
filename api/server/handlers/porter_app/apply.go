@@ -206,7 +206,7 @@ func addPorterSubdomainsIfNecessary(ctx context.Context, app *porterv1.PorterApp
 
 			webConfig := service.GetWebConfig()
 
-			if !webConfig.Private && len(webConfig.Domains) == 0 {
+			if !webConfig.GetPrivate() && len(webConfig.Domains) == 0 {
 				subdomain, err := porter_app.CreatePorterSubdomain(ctx, createSubdomainInput)
 				if err != nil {
 					return app, fmt.Errorf("error creating subdomain: %w", err)

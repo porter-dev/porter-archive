@@ -181,25 +181,23 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         }
       );
 
-      const updatedEnvGroup = z
+      const updatedEnvGroups = z
         .object({
-          env_group_name: z.string(),
-          env_group_version: z.coerce.bigint(),
+          env_groups: z
+            .object({
+              name: z.string(),
+              latest_version: z.coerce.bigint(),
+            })
+            .array(),
         })
         .parse(res.data);
 
       const protoWithUpdatedEnv = new PorterApp({
         ...validatedAppProto,
-        envGroups: validatedAppProto.envGroups.map((envGroup) => {
-          if (envGroup.name === updatedEnvGroup.env_group_name) {
-            return {
-              ...envGroup,
-              version: updatedEnvGroup.env_group_version,
-            };
-          }
-
-          return envGroup;
-        }),
+        envGroups: updatedEnvGroups.env_groups.map((eg) => ({
+          name: eg.name,
+          version: eg.latest_version,
+        })),
       });
 
       await api.applyApp(

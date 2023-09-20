@@ -12,6 +12,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
 	"github.com/porter-dev/porter/internal/models"
 
 	"github.com/cli/cli/git"
@@ -37,7 +38,22 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		return errors.New("deployment target id is empty")
 	}
 
-	if len(porterYamlPath) != 0 {
+	porterYamlExists := len(porterYamlPath) != 0
+
+	if porterYamlExists {
+		_, err = os.Stat(filepath.Clean(porterYamlPath))
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return fmt.Errorf("error checking if porter yaml exists at path %s: %w", porterYamlPath, err)
+			}
+			// If a path was specified but the file does not exist, we will not immediately error out.
+			// This supports users migrated from v1 who use a workflow file that always specifies a porter yaml path
+			// in the apply command.
+			porterYamlExists = false
+		}
+	}
+
+	if porterYamlExists {
 		porterYaml, err := os.ReadFile(filepath.Clean(porterYamlPath))
 		if err != nil {
 			return fmt.Errorf("could not read porter yaml file: %w", err)
@@ -81,12 +97,16 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 			return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
 		}
 
-		b64AppProto, err = updateAppEnvGroupInProto(ctx, b64AppProto, envGroupResp.EnvGroupName, envGroupResp.EnvGroupVersion)
+		b64AppProto, err = updateEnvGroupsInProto(ctx, b64AppProto, envGroupResp.EnvGroups)
 		if err != nil {
 			return fmt.Errorf("error updating app env group in proto: %w", err)
 		}
 
 		color.New(color.FgGreen).Printf("Successfully parsed Porter YAML: applying app \"%s\"\n", appName) // nolint:errcheck,gosec
+	}
+
+	if appName == "" {
+		return errors.New("App name is empty.  Please provide a Porter YAML file specifying the name of the app or set the PORTER_APP_NAME environment variable.")
 	}
 
 	var commitSHA string
@@ -358,7 +378,7 @@ func imageTagFromBase64AppProto(base64AppProto string) (string, error) {
 	return app.Image.Tag, nil
 }
 
-func updateAppEnvGroupInProto(ctx context.Context, base64AppProto string, envGroupName string, envGroupVersion int) (string, error) {
+func updateEnvGroupsInProto(ctx context.Context, base64AppProto string, envGroups []environment_groups.EnvironmentGroup) (string, error) {
 	var editedB64AppProto string
 
 	decoded, err := base64.StdEncoding.DecodeString(base64AppProto)
@@ -372,20 +392,14 @@ func updateAppEnvGroupInProto(ctx context.Context, base64AppProto string, envGro
 		return editedB64AppProto, fmt.Errorf("unable to unmarshal app for revision: %w", err)
 	}
 
-	envGroupExists := false
-	for _, envGroup := range app.EnvGroups {
-		if envGroup.Name == envGroupName {
-			envGroup.Version = int64(envGroupVersion)
-			envGroupExists = true
-			break
-		}
-	}
-	if !envGroupExists {
-		app.EnvGroups = append(app.EnvGroups, &porterv1.EnvGroup{
-			Name:    envGroupName,
-			Version: int64(envGroupVersion),
+	egs := make([]*porterv1.EnvGroup, 0)
+	for _, envGroup := range envGroups {
+		egs = append(egs, &porterv1.EnvGroup{
+			Name:    envGroup.Name,
+			Version: int64(envGroup.Version),
 		})
 	}
+	app.EnvGroups = egs
 
 	marshalled, err := helpers.MarshalContractObject(ctx, app)
 	if err != nil {

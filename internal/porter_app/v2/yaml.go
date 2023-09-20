@@ -125,7 +125,7 @@ type Service struct {
 	HealthCheck     *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
 	AllowConcurrent bool         `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
 	Cron            string       `yaml:"cron" validate:"excluded_unless=Type job"`
-	Private         bool         `yaml:"private" validate:"excluded_unless=Type web"`
+	Private         *bool        `yaml:"private" validate:"excluded_unless=Type web"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -232,7 +232,11 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			})
 		}
 		webConfig.Domains = domains
-		webConfig.Private = service.Private
+
+		fmt.Printf("private: %v\n", service.Private)
+		if service.Private != nil {
+			webConfig.Private = service.Private
+		}
 
 		serviceProto.Config = &porterv1.Service_WebConfig{
 			WebConfig: webConfig,

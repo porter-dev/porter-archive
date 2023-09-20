@@ -298,10 +298,11 @@ export function clientAppFromProto({
       );
 
       if (override) {
-        return deserializeService({
+        const ds = deserializeService({
           service: svc,
           override: serializeService(override),
         });
+        return ds;
       }
       return deserializeService({ service: svc });
     });

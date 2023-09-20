@@ -9,17 +9,17 @@ import { z } from "zod";
 
 type PorterYamlStatus =
   | {
-    loading: true;
-    detectedName: null;
-    detectedServices: null;
-    porterYamlFound: false;
-  }
+      loading: true;
+      detectedName: null;
+      detectedServices: null;
+      porterYamlFound: false;
+    }
   | {
-    detectedServices: DetectedServices | null;
-    detectedName: string | null;
-    loading: false;
-    porterYamlFound: boolean;
-  };
+      detectedServices: DetectedServices | null;
+      detectedName: string | null;
+      loading: false;
+      porterYamlFound: boolean;
+    };
 
 /*
  *
@@ -107,7 +107,7 @@ export const usePorterYaml = ({
       try {
         const res = await api.parsePorterYaml(
           "<token>",
-          { b64_yaml: b64Yaml, app_name: appName},
+          { b64_yaml: b64Yaml, app_name: appName },
           {
             project_id: projectId,
             cluster_id: clusterId,
@@ -121,10 +121,13 @@ export const usePorterYaml = ({
           .parseAsync(res.data);
         const proto = PorterApp.fromJsonString(atob(data.b64_app_proto));
 
+        console.log("proto", proto);
         const { services, predeploy } = serviceOverrides({
           overrides: proto,
           useDefaults,
         });
+
+        console.log("service overrides", services);
 
         if (services.length || predeploy) {
           setDetectedServices({

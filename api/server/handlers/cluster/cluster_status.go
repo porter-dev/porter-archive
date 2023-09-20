@@ -45,11 +45,6 @@ func (c *ClusterStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	defer span.End()
 
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "project-id", Value: cluster.ProjectID},
-		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
-	)
-
 	req := connect.NewRequest(&porterv1.ClusterStatusRequest{
 		ProjectId: int64(cluster.ProjectID),
 		ClusterId: int64(cluster.ID),

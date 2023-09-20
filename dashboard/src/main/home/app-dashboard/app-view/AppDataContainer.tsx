@@ -185,8 +185,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         .object({
           env_groups: z
             .object({
-              env_group_name: z.string(),
-              env_group_version: z.coerce.bigint(),
+              name: z.string(),
+              latest_version: z.coerce.bigint(),
             })
             .array(),
         })
@@ -195,8 +195,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       const protoWithUpdatedEnv = new PorterApp({
         ...validatedAppProto,
         envGroups: updatedEnvGroups.env_groups.map((eg) => ({
-          name: eg.env_group_name,
-          version: eg.env_group_version,
+          name: eg.name,
+          version: eg.latest_version,
         })),
       });
 

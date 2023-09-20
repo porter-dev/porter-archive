@@ -67,15 +67,9 @@ type UpdateAppEnvironmentRequest struct {
 	HardUpdate bool `json:"remove_missing"`
 }
 
-// EnvGroup is a struct containing metadata about an environment group
-type EnvGroup struct {
-	EnvGroupName    string `json:"env_group_name"`
-	EnvGroupVersion int    `json:"env_group_version"`
-}
-
 // UpdateAppEnvironmentResponse represents the fields on the response object from the /apps/{porter_app_name}/environment-group endpoint
 type UpdateAppEnvironmentResponse struct {
-	EnvGroups []EnvGroup `json:"env_groups"`
+	EnvGroups []environment_groups.EnvironmentGroup `json:"env_groups"`
 }
 
 // ServeHTTP updates or creates the environment group for an app
@@ -237,9 +231,9 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 				return
 			}
 
-			latestEnvGroups = append(latestEnvGroups, EnvGroup{
-				EnvGroupName:    latestEnvironmentGroup.Name,
-				EnvGroupVersion: int(latestEnvironmentGroup.Version),
+			latestEnvGroups = append(latestEnvGroups, environment_groups.EnvironmentGroup{
+				Name:    latestEnvironmentGroup.Name,
+				Version: int(latestEnvironmentGroup.Version),
 			})
 
 			res := &UpdateAppEnvironmentResponse{
@@ -333,9 +327,9 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	latestEnvGroups = append(latestEnvGroups, EnvGroup{
-		EnvGroupName:    split[0],
-		EnvGroupVersion: version,
+	latestEnvGroups = append(latestEnvGroups, environment_groups.EnvironmentGroup{
+		Name:    split[0],
+		Version: version,
 	})
 
 	res := &UpdateAppEnvironmentResponse{
@@ -361,11 +355,11 @@ type syncLatestEnvGroupVersionsInput struct {
 }
 
 // syncLatestEnvGroupVersions syncs the latest versions of the env groups to the namespace where an app is deployed
-func syncLatestEnvGroupVersions(ctx context.Context, inp syncLatestEnvGroupVersionsInput) ([]EnvGroup, error) {
+func syncLatestEnvGroupVersions(ctx context.Context, inp syncLatestEnvGroupVersionsInput) ([]environment_groups.EnvironmentGroup, error) {
 	ctx, span := telemetry.NewSpan(ctx, "sync-latest-env-group-versions")
 	defer span.End()
 
-	var envGroups []EnvGroup
+	var envGroups []environment_groups.EnvironmentGroup
 
 	if inp.deploymentTargetID == "" {
 		return envGroups, telemetry.Error(ctx, span, nil, "deployment target id is empty")
@@ -387,7 +381,7 @@ func syncLatestEnvGroupVersions(ctx context.Context, inp syncLatestEnvGroupVersi
 		if envGroup == nil {
 			continue
 		}
-		if envGroup.GetName() == inp.appEnvName { 
+		if envGroup.GetName() == inp.appEnvName {
 			continue
 		}
 
@@ -416,9 +410,9 @@ func syncLatestEnvGroupVersions(ctx context.Context, inp syncLatestEnvGroupVersi
 			return envGroups, telemetry.Error(ctx, span, err, "error converting environment group version to int")
 		}
 
-		envGroups = append(envGroups, EnvGroup{
-			EnvGroupName:    split[0],
-			EnvGroupVersion: version,
+		envGroups = append(envGroups, environment_groups.EnvironmentGroup{
+			Name:    split[0],
+			Version: version,
 		})
 	}
 

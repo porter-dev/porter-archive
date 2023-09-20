@@ -3,11 +3,13 @@ package powerdns
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/porter-dev/porter/internal/integrations/dns"
 )
 
 // Client contains an API client for a PowerDNS server
@@ -20,12 +22,12 @@ type Client struct {
 }
 
 // NewClient creates a new bind API client
-func NewClient(serverURL, apiKey, runDomain string) *Client {
+func NewClient(serverURL, apiKey, runDomain string) Client {
 	httpClient := &http.Client{
 		Timeout: time.Minute,
 	}
 
-	return &Client{apiKey, serverURL, runDomain, httpClient}
+	return Client{apiKey, serverURL, runDomain, httpClient}
 }
 
 // RecordData represents the data required to create or delete an A/CNAME record
@@ -34,6 +36,7 @@ type RecordData struct {
 	RRSets []RR `json:"rrsets"`
 }
 
+// RR represents a dns resource record collection for PowerDNS
 type RR struct {
 	Name       string   `json:"name"`
 	Type       string   `json:"type"`
@@ -42,6 +45,8 @@ type RR struct {
 	Records    []Record `json:"records"`
 }
 
+// Record represents an individual record for a given
+// PowerDNS resource record
 type Record struct {
 	Content  string `json:"content"`
 	Disabled bool   `json:"disabled"`
@@ -51,9 +56,9 @@ type Record struct {
 }
 
 // CreateCNAMERecord creates a new CNAME record for the nameserver
-func (c *Client) CreateCNAMERecord(value, hostname string) error {
-	valueC := canonicalize(value)
-	hostnameC := canonicalize(hostname)
+func (c Client) CreateCNAMERecord(record dns.Record) error {
+	valueC := canonicalize(record.Value)
+	hostnameC := canonicalize(fmt.Sprintf("%s.%s", record.Name, record.RootDomain))
 
 	return c.sendRequest("PATCH", &RecordData{
 		RRSets: []RR{{
@@ -73,8 +78,8 @@ func (c *Client) CreateCNAMERecord(value, hostname string) error {
 }
 
 // CreateARecord creates a new A record for the nameserver
-func (c *Client) CreateARecord(value, hostname string) error {
-	hostnameC := canonicalize(hostname)
+func (c Client) CreateARecord(record dns.Record) error {
+	hostnameC := canonicalize(fmt.Sprintf("%s.%s", record.Name, record.RootDomain))
 
 	return c.sendRequest("PATCH", &RecordData{
 		RRSets: []RR{{
@@ -83,7 +88,7 @@ func (c *Client) CreateARecord(value, hostname string) error {
 			ChangeType: "REPLACE",
 			TTL:        300,
 			Records: []Record{{
-				Content:  value,
+				Content:  record.Value,
 				Disabled: false,
 				Name:     hostnameC,
 				Type:     "A",
@@ -136,7 +141,7 @@ func (c *Client) sendRequest(method string, data *RecordData) error {
 	defer res.Body.Close()
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
-		resBytes, err := ioutil.ReadAll(res.Body)
+		resBytes, err := io.ReadAll(res.Body)
 		if err != nil {
 			return fmt.Errorf("request failed with status code %d, but could not read body (%s)\n", res.StatusCode, err.Error())
 		}

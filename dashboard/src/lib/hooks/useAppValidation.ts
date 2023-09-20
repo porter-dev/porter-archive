@@ -71,10 +71,21 @@ export const useAppValidation = ({
         throw new Error("No deployment target selected");
       }
 
-      const envVariableDeletions = removedEnvKeys(
-        data.app.env,
-        prevRevision?.env || {}
-      );
+      const { env } = data.app;
+      const variables = env
+        .filter((e) => !e.hidden && !e.deleted)
+        .reduce((acc: Record<string, string>, item) => {
+          acc[item.key] = item.value;
+          return acc;
+        }, {});
+      const secrets = env
+        .filter((e) => !e.deleted)
+        .reduce((acc: Record<string, string>, item) => {
+          if (item.hidden) {
+            acc[item.key] = item.value;
+          }
+          return acc;
+        }, {});
 
       const proto = clientAppToProto(data);
       const commit_sha = await match(data.source)
@@ -106,7 +117,8 @@ export const useAppValidation = ({
           commit_sha,
           deletions: {
             service_names: data.deletions.serviceNames.map((s) => s.name),
-            env_variable_names: envVariableDeletions,
+            env_group_names: data.deletions.envGroupNames.map((eg) => eg.name),
+            env_variable_names: [],
           },
         },
         {
@@ -125,7 +137,7 @@ export const useAppValidation = ({
         atob(validAppData.validate_b64_app_proto)
       );
 
-      return validatedAppProto;
+      return { validatedAppProto: validatedAppProto, variables, secrets };
     },
     [deploymentTargetID, currentProject, currentCluster]
   );

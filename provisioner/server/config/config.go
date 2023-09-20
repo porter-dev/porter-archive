@@ -126,6 +126,9 @@ type ProvisionerConf struct {
 	// Client key for segment to report provisioning events
 	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`
 
+	// FeatureFlagClient controls which client to use (database or launch_darkly)
+	FeatureFlagClient string `env:"FEATURE_FLAG_CLIENT,default=launch_darkly"`
+
 	// Launch Darkly SDK key
 	LaunchDarklySDKKey string `env:"LAUNCHDARKLY_SDK_KEY"`
 }
@@ -172,7 +175,7 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 
 	res.Repo = gorm.NewRepository(db, &key, InstanceCredentialBackend)
 
-	launchDarklyClient, err := features.GetClient(envConf.LaunchDarklySDKKey)
+	launchDarklyClient, err := features.GetClient(envConf.FeatureFlagClient, envConf.LaunchDarklySDKKey)
 	if err != nil {
 		return nil, fmt.Errorf("could not create launch darkly client: %s", err)
 	}

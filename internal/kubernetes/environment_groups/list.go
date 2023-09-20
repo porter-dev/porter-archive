@@ -17,6 +17,8 @@ const (
 	LabelKey_EnvironmentGroupVersion = "porter.run/environment-group-version"
 	LabelKey_EnvironmentGroupName    = "porter.run/environment-group-name"
 
+	LabelKey_DefaultAppEnvironment = "porter.run/default-app-environment"
+
 	// Namespace_EnvironmentGroups is the base namespace for storing all environment groups.
 	// The configmaps and secrets here should be considered the source's of truth for a given version
 	Namespace_EnvironmentGroups = "porter-env-group"
@@ -29,17 +31,18 @@ type EnvironmentGroup struct {
 	// Version is the environment group version which can be found in the labels (LabelKey_EnvironmentGroupVersion) of the ConfigMap. This is NOT included in the configmap name
 	Version int `json:"latest_version"`
 	// Variables are non-secret values for the EnvironmentGroup. This usually will be a configmap
-	Variables map[string]string `json:"variables"`
+	Variables map[string]string `json:"variables,omitempty"`
 	// SecretVariables are secret values for the EnvironmentGroup. This usually will be a Secret on the kubernetes cluster
-	SecretVariables map[string][]byte `json:"variables_secrets"`
+	SecretVariables map[string][]byte `json:"secret_variables,omitempty"`
 	// CreatedAt is only used for display purposes and is in UTC Unix time
 	CreatedAtUTC time.Time `json:"created_at"`
 }
 
 type environmentGroupOptions struct {
-	namespace                    string
-	environmentGroupLabelName    string
-	environmentGroupLabelVersion int
+	namespace                          string
+	environmentGroupLabelName          string
+	environmentGroupLabelVersion       int
+	includeDefaultAppEnvironmentGroups bool
 }
 
 // EnvironmentGroupOption is a function that modifies ListEnvironmentGroups
@@ -66,9 +69,18 @@ func WithEnvironmentGroupVersion(version int) EnvironmentGroupOption {
 	}
 }
 
-// ListEnvironmentGroups returns all environment groups stored in the provided namespace. If none is set, it will use the namespace "porter-env-group"
-func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ...EnvironmentGroupOption) ([]EnvironmentGroup, error) {
-	ctx, span := telemetry.NewSpan(ctx, "list-environment-groups")
+// WithDefaultAppEnvironmentGroup includes default app environment groups in the list
+func WithDefaultAppEnvironmentGroup() EnvironmentGroupOption {
+	return func(opts *environmentGroupOptions) {
+		opts.includeDefaultAppEnvironmentGroups = true
+	}
+}
+
+// listEnvironmentGroups returns all environment groups stored in the provided namespace. If none is set, it will use the namespace "porter-env-group".
+// This method returns all secret values, which should never be returned out of this package.  If you are trying to get the environment group values to return to the user,
+// use the exported ListEnvironmentGroups instead.
+func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ...EnvironmentGroupOption) ([]EnvironmentGroup, error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-environment-groups-private")
 	defer span.End()
 
 	var opts environmentGroupOptions
@@ -121,6 +133,13 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			continue // invalid version label as it should be an int, not an environment group
 		}
 
+		if !opts.includeDefaultAppEnvironmentGroups {
+			value := cm.Labels[LabelKey_DefaultAppEnvironment]
+			if value == "true" {
+				continue // do not include default app environment groups
+			}
+		}
+
 		if _, ok := envGroupSet[cm.Name]; !ok {
 			envGroupSet[cm.Name] = EnvironmentGroup{}
 		}
@@ -146,6 +165,14 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 		if err != nil {
 			continue // invalid version label as it should be an int, not an environment group
 		}
+
+		if !opts.includeDefaultAppEnvironmentGroups {
+			value, ok := secret.Labels[LabelKey_DefaultAppEnvironment]
+			if ok && value == "true" {
+				continue // do not include default app environment groups
+			}
+		}
+
 		if _, ok := envGroupSet[secret.Name]; !ok {
 			envGroupSet[secret.Name] = EnvironmentGroup{}
 		}
@@ -161,6 +188,30 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 	var envGroups []EnvironmentGroup
 	for _, envGroup := range envGroupSet {
 		envGroups = append(envGroups, envGroup)
+	}
+
+	return envGroups, nil
+}
+
+// EnvGroupSecretDummyValue is the value that will be returned for secret variables in environment groups
+const EnvGroupSecretDummyValue = "********"
+
+// ListEnvironmentGroups returns all environment groups stored in the provided namespace. If none is set, it will use the namespace "porter-env-group".
+// This method replaces all secret values with a dummy value so that they are not exposed to the user.  If you need access to the true secret values,
+// use the unexported listEnvironmentGroups instead.
+func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ...EnvironmentGroupOption) ([]EnvironmentGroup, error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-environment-groups")
+	defer span.End()
+
+	envGroups, err := listEnvironmentGroups(ctx, a, listOpts...)
+	if err != nil {
+		return nil, telemetry.Error(ctx, span, err, "unable to list environment groups")
+	}
+
+	for _, envGroup := range envGroups {
+		for k := range envGroup.SecretVariables {
+			envGroup.SecretVariables[k] = []byte(EnvGroupSecretDummyValue)
+		}
 	}
 
 	return envGroups, nil

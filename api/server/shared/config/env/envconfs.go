@@ -55,6 +55,8 @@ type ServerConf struct {
 	GoogleClientSecret     string `env:"GOOGLE_CLIENT_SECRET"`
 	GoogleRestrictedDomain string `env:"GOOGLE_RESTRICTED_DOMAIN"`
 
+	// FeatureFlagClient controls which client to use (database or launch_darkly)
+	FeatureFlagClient  string `env:"FEATURE_FLAG_CLIENT,default=launch_darkly"`
 	LaunchDarklySDKKey string `env:"LAUNCHDARKLY_SDK_KEY"`
 
 	SendgridAPIKey                     string `env:"SENDGRID_API_KEY"`
@@ -86,6 +88,13 @@ type ServerConf struct {
 	ClusterControlPlaneAddress string `env:"CLUSTER_CONTROL_PLANE_ADDRESS"`
 
 	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`
+
+	// DnsProvider controls which provider to use for dns (powerdns or cloudflare)
+	// Setting this to empty string will disable external dns
+	DnsProvider string `env:"DNS_PROVIDER,default=powerdns"`
+
+	// Cloudflare API Key
+	CloudflareAPIToken string `env:"CLOUDFLARE_API_TOKEN"`
 
 	// PowerDNS client API key and the host of the PowerDNS API server
 	PowerDNSAPIServerURL string `env:"POWER_DNS_API_SERVER_URL"`

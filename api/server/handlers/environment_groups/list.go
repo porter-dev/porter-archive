@@ -39,8 +39,8 @@ type ListEnvironmentGroupsResponse struct {
 type EnvironmentGroupListItem struct {
 	Name               string            `json:"name"`
 	LatestVersion      int               `json:"latest_version"`
-	Variables          map[string]string `json:"variables"`
-	SecretVariables    map[string]string `json:"secret_variables"`
+	Variables          map[string]string `json:"variables,omitempty"`
+	SecretVariables    map[string]string `json:"secret_variables,omitempty"`
 	CreatedAtUTC       time.Time         `json:"created_at"`
 	LinkedApplications []string          `json:"linked_applications,omitempty"`
 }

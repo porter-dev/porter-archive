@@ -2,6 +2,7 @@ package porter_app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -30,6 +31,9 @@ func NewCreateAppHandler(
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
+
+// ErrMissingSourceType is returned when the source type is not specified
+var ErrMissingSourceType = errors.New("missing source type")
 
 // SourceType is a string type specifying the source type of an app. This is specified in the incoming request
 type SourceType string
@@ -117,13 +121,6 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: request.Name})
 
-	if request.SourceType == "" {
-		err := telemetry.Error(ctx, span, nil, "source type is required")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "source-type", Value: request.SourceType})
-
 	porterAppDBEntries, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(project.ID, request.Name)
 	if err != nil {
 		err := telemetry.Error(ctx, span, nil, "error reading porter apps by project id and name")
@@ -141,6 +138,13 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.WriteResult(w, r, porterAppDBEntries[0].ToPorterAppType())
 		return
 	}
+
+	if request.SourceType == "" {
+		err := telemetry.Error(ctx, span, ErrMissingSourceType, "source type is required")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "source-type", Value: request.SourceType})
 
 	var porterApp *types.PorterApp
 	switch request.SourceType {

@@ -315,9 +315,6 @@ func (c *Client) CreatePorterAppDBEntry(
 			Tag:        inp.ImageTag,
 		}
 	}
-	if sourceType == "" {
-		return fmt.Errorf("cannot determine source type")
-	}
 
 	req := &porter_app.CreateAppRequest{
 		Name:           inp.AppName,

@@ -69,8 +69,7 @@ type UpdateAppEnvironmentRequest struct {
 
 // UpdateAppEnvironmentResponse represents the fields on the response object from the /apps/{porter_app_name}/environment-group endpoint
 type UpdateAppEnvironmentResponse struct {
-	EnvGroupName    string `json:"env_group_name"`
-	EnvGroupVersion int    `json:"env_group_version"`
+	EnvGroups []environment_groups.EnvironmentGroup `json:"env_groups"`
 }
 
 // ServeHTTP updates or creates the environment group for an app
@@ -221,21 +220,24 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 				envGroups:          appProto.EnvGroups,
 				appName:            appName,
 				appEnvName:         appEnvGroupName,
-				sameAppEnv:         true,
 				namespace:          namespace,
 				deploymentTargetID: request.DeploymentTargetID,
 				k8sAgent:           agent,
 			}
-			err = syncLatestEnvGroupVersions(ctx, syncInp)
+			latestEnvGroups, err := syncLatestEnvGroupVersions(ctx, syncInp)
 			if err != nil {
 				err := telemetry.Error(ctx, span, err, "error syncing latest env group versions")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 
+			latestEnvGroups = append(latestEnvGroups, environment_groups.EnvironmentGroup{
+				Name:    latestEnvironmentGroup.Name,
+				Version: latestEnvironmentGroup.Version,
+			})
+
 			res := &UpdateAppEnvironmentResponse{
-				EnvGroupName:    latestEnvironmentGroup.Name,
-				EnvGroupVersion: latestEnvironmentGroup.Version,
+				EnvGroups: latestEnvGroups,
 			}
 
 			c.WriteResult(w, r, res)
@@ -288,15 +290,30 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		TargetNamespace:          namespace,
 	}
 
-	syncedEnvironment, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp, additionalEnvGroupLabels)
+	syncedAppEnvironment, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp, additionalEnvGroupLabels)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "unable to create or update synced environment group")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "env-group-versioned-name", Value: syncedEnvironment.EnvironmentGroupVersionedName})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "env-group-versioned-name", Value: syncedAppEnvironment.EnvironmentGroupVersionedName})
 
-	split := strings.Split(syncedEnvironment.EnvironmentGroupVersionedName, ".")
+	syncInp := syncLatestEnvGroupVersionsInput{
+		envGroups:          appProto.EnvGroups,
+		appName:            appName,
+		appEnvName:         appEnvGroupName,
+		namespace:          namespace,
+		deploymentTargetID: request.DeploymentTargetID,
+		k8sAgent:           agent,
+	}
+	latestEnvGroups, err := syncLatestEnvGroupVersions(ctx, syncInp)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error syncing latest env group versions")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	split := strings.Split(syncedAppEnvironment.EnvironmentGroupVersionedName, ".")
 	if len(split) != 2 {
 		err := telemetry.Error(ctx, span, err, "unexpected environment group versioned name")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -310,25 +327,13 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	syncInp := syncLatestEnvGroupVersionsInput{
-		envGroups:          appProto.EnvGroups,
-		appName:            appName,
-		appEnvName:         appEnvGroupName,
-		sameAppEnv:         false,
-		namespace:          namespace,
-		deploymentTargetID: request.DeploymentTargetID,
-		k8sAgent:           agent,
-	}
-	err = syncLatestEnvGroupVersions(ctx, syncInp)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error syncing latest env group versions")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
+	latestEnvGroups = append(latestEnvGroups, environment_groups.EnvironmentGroup{
+		Name:    split[0],
+		Version: version,
+	})
 
 	res := &UpdateAppEnvironmentResponse{
-		EnvGroupName:    split[0],
-		EnvGroupVersion: version,
+		EnvGroups: latestEnvGroups,
 	}
 
 	c.WriteResult(w, r, res)
@@ -341,8 +346,6 @@ type syncLatestEnvGroupVersionsInput struct {
 	appName string
 	// appEnvName is the name of the app env. This is the env group created when the app is created for storing app-specific variables
 	appEnvName string
-	// sameAppEnv is true if the app env group variables are unchanged. If true, we do not need to sync the latest version of the app env group
-	sameAppEnv bool
 	// namespace is the namespace to sync the latest versions to
 	namespace string
 	// deploymentTargetID is the id of the deployment target
@@ -352,28 +355,33 @@ type syncLatestEnvGroupVersionsInput struct {
 }
 
 // syncLatestEnvGroupVersions syncs the latest versions of the env groups to the namespace where an app is deployed
-func syncLatestEnvGroupVersions(ctx context.Context, inp syncLatestEnvGroupVersionsInput) error {
+func syncLatestEnvGroupVersions(ctx context.Context, inp syncLatestEnvGroupVersionsInput) ([]environment_groups.EnvironmentGroup, error) {
 	ctx, span := telemetry.NewSpan(ctx, "sync-latest-env-group-versions")
 	defer span.End()
 
+	var envGroups []environment_groups.EnvironmentGroup
+
 	if inp.deploymentTargetID == "" {
-		return telemetry.Error(ctx, span, nil, "deployment target id is empty")
+		return envGroups, telemetry.Error(ctx, span, nil, "deployment target id is empty")
 	}
 	if inp.appName == "" {
-		return telemetry.Error(ctx, span, nil, "app name is empty")
+		return envGroups, telemetry.Error(ctx, span, nil, "app name is empty")
 	}
 	if inp.appEnvName == "" {
-		return telemetry.Error(ctx, span, nil, "app env name is empty")
+		return envGroups, telemetry.Error(ctx, span, nil, "app env name is empty")
 	}
 	if inp.namespace == "" {
-		return telemetry.Error(ctx, span, nil, "namespace is empty")
+		return envGroups, telemetry.Error(ctx, span, nil, "namespace is empty")
 	}
 	if inp.k8sAgent == nil {
-		return telemetry.Error(ctx, span, nil, "k8s agent is nil")
+		return envGroups, telemetry.Error(ctx, span, nil, "k8s agent is nil")
 	}
 
 	for _, envGroup := range inp.envGroups {
 		if envGroup == nil {
+			continue
+		}
+		if envGroup.GetName() == inp.appEnvName {
 			continue
 		}
 
@@ -383,23 +391,30 @@ func syncLatestEnvGroupVersions(ctx context.Context, inp syncLatestEnvGroupVersi
 			LabelKey_PorterManaged:      "true",
 		}
 
-		if envGroup.GetName() == inp.appEnvName {
-			if inp.sameAppEnv {
-				continue
-			}
-
-			additionalEnvGroupLabels[environment_groups.LabelKey_DefaultAppEnvironment] = "true"
-		}
-
-		_, err := environment_groups.SyncLatestVersionToNamespace(ctx, inp.k8sAgent, environment_groups.SyncLatestVersionToNamespaceInput{
+		syncedEnvironment, err := environment_groups.SyncLatestVersionToNamespace(ctx, inp.k8sAgent, environment_groups.SyncLatestVersionToNamespaceInput{
 			TargetNamespace:          inp.namespace,
 			BaseEnvironmentGroupName: envGroup.GetName(),
 		}, additionalEnvGroupLabels)
 		if err != nil {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "env-group-name", Value: envGroup.GetName()})
-			return telemetry.Error(ctx, span, err, "error syncing latest version to namespace")
+			return envGroups, telemetry.Error(ctx, span, err, "error syncing latest version to namespace")
 		}
+
+		split := strings.Split(syncedEnvironment.EnvironmentGroupVersionedName, ".")
+		if len(split) != 2 {
+			return envGroups, telemetry.Error(ctx, span, err, "unexpected environment group versioned name")
+		}
+
+		version, err := strconv.Atoi(split[1])
+		if err != nil {
+			return envGroups, telemetry.Error(ctx, span, err, "error converting environment group version to int")
+		}
+
+		envGroups = append(envGroups, environment_groups.EnvironmentGroup{
+			Name:    split[0],
+			Version: version,
+		})
 	}
 
-	return nil
+	return envGroups, nil
 }

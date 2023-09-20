@@ -31,8 +31,16 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 		porterYaml.Name = appName
 	}
 
+	if porterYaml.Name != "" && appName != "" && porterYaml.Name != appName {
+		return nil, nil, telemetry.Error(ctx, span, nil, "name specified in porter.yaml does not match app name")
+	}
+
 	appProto := &porterv1.PorterApp{
 		Name: porterYaml.Name,
+	}
+
+	if appProto.Name == "" {
+		return nil, nil, telemetry.Error(ctx, span, nil, "app name is empty")
 	}
 
 	if porterYaml.Build != nil {
@@ -92,6 +100,7 @@ type PorterYAML struct {
 	Env      map[string]string  `yaml:"env"`
 
 	Predeploy *Service `yaml:"predeploy"`
+	EnvGroups []string `yaml:"env_groups,omitempty"`
 }
 
 // Build represents the build settings for a Porter app

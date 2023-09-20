@@ -141,7 +141,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
           {/* <div style={{ position: 'absolute', bottom: '100%', left: `calc(${((threeQuarter - min) / (max - min)) * 100}% - 50px)` }}>
             Recommended
           </div> */}
-          <MaxedOutToolTip title={smartLimit?.toString() == value && !override ? "Using resources beyond this limit is not recommended for cost - to override toggle off Smart Optimization" || '' : ''} arrow>
+          <MaxedOutToolTip title={smartLimit?.toString() == value && !override ? "Using resources beyond this limit is not cost optimal - to override toggle off Smart Optimization" || '' : ''} arrow>
             <div style={{ position: 'relative' }}>
 
               <StyledSlider

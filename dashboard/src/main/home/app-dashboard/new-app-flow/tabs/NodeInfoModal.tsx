@@ -20,7 +20,7 @@ const NodeInfoModal: React.FC<Props> = ({
             <Text size={16}>Resource Optimization on Porter</Text>
             <Spacer y={1} />
             <Text color="helper">
-                The marks represent values for your applications to run cost-efficiently on Porter.
+                The recommended marks are so that the application can run cost-efficiently on Porter.
             </Text>
             <Spacer y={1} />
             <Text color="helper">

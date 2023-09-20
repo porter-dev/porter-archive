@@ -100,6 +100,7 @@ type PorterYAML struct {
 	Env      map[string]string  `yaml:"env"`
 
 	Predeploy *Service `yaml:"predeploy"`
+	EnvGroups []string `yaml:"env_groups,omitempty"`
 }
 
 // Build represents the build settings for a Porter app

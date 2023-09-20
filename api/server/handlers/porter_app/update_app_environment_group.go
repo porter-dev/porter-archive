@@ -1,11 +1,14 @@
 package porter_app
 
 import (
+	"context"
+	"encoding/base64"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/porter_app"
 
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
@@ -13,6 +16,7 @@ import (
 
 	"connectrpc.com/connect"
 
+	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -54,6 +58,7 @@ const (
 
 // UpdateAppEnvironmentRequest represents the accepted fields on a request to the /apps/{porter_app_name}/environment-group endpoint
 type UpdateAppEnvironmentRequest struct {
+	Base64AppProto     string            `json:"b64_app_proto"`
 	DeploymentTargetID string            `json:"deployment_target_id"`
 	Variables          map[string]string `json:"variables"`
 	Secrets            map[string]string `json:"secrets"`
@@ -110,6 +115,27 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
 
+	if request.Base64AppProto == "" {
+		err := telemetry.Error(ctx, span, nil, "b64 yaml is empty")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error decoding base yaml")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	appProto := &porterv1.PorterApp{}
+	err = helpers.UnmarshalContractObject(decoded, appProto)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error unmarshalling app proto")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	deploymentTargetDetailsReq := connect.NewRequest(&porterv1.DeploymentTargetDetailsRequest{
 		ProjectId:          int64(project.ID),
 		DeploymentTargetId: request.DeploymentTargetID,
@@ -139,7 +165,7 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "hard-update", Value: request.HardUpdate})
 
-	envGroupName, err := porter_app.AppEnvGroupName(ctx, appName, request.DeploymentTargetID, cluster.ID, c.Repo().PorterApp())
+	appEnvGroupName, err := porter_app.AppEnvGroupName(ctx, appName, request.DeploymentTargetID, cluster.ID, c.Repo().PorterApp())
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting app env group name")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -153,7 +179,7 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	latestEnvironmentGroup, err := environment_groups.LatestBaseEnvironmentGroup(ctx, agent, envGroupName)
+	latestEnvironmentGroup, err := environment_groups.LatestBaseEnvironmentGroup(ctx, agent, appEnvGroupName)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "unable to get latest base environment group")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -190,6 +216,23 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "same-env-group", Value: sameEnvGroup})
 
 		if sameEnvGroup {
+			// even if the env group is the same, we still need to sync the latest versions of the other env groups
+			syncInp := syncLatestEnvGroupVersionsInput{
+				envGroups:          appProto.EnvGroups,
+				appName:            appName,
+				appEnvName:         appEnvGroupName,
+				sameAppEnv:         true,
+				namespace:          namespace,
+				deploymentTargetID: request.DeploymentTargetID,
+				k8sAgent:           agent,
+			}
+			err = syncLatestEnvGroupVersions(ctx, syncInp)
+			if err != nil {
+				err := telemetry.Error(ctx, span, err, "error syncing latest env group versions")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
+
 			res := &UpdateAppEnvironmentResponse{
 				EnvGroupName:    latestEnvironmentGroup.Name,
 				EnvGroupVersion: latestEnvironmentGroup.Version,
@@ -220,7 +263,7 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	envGroup := environment_groups.EnvironmentGroup{
-		Name:            envGroupName,
+		Name:            appEnvGroupName,
 		Variables:       variables,
 		SecretVariables: secrets,
 		CreatedAtUTC:    time.Now().UTC(),
@@ -241,7 +284,7 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	inp := environment_groups.SyncLatestVersionToNamespaceInput{
-		BaseEnvironmentGroupName: envGroupName,
+		BaseEnvironmentGroupName: appEnvGroupName,
 		TargetNamespace:          namespace,
 	}
 
@@ -267,10 +310,96 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	syncInp := syncLatestEnvGroupVersionsInput{
+		envGroups:          appProto.EnvGroups,
+		appName:            appName,
+		appEnvName:         appEnvGroupName,
+		sameAppEnv:         false,
+		namespace:          namespace,
+		deploymentTargetID: request.DeploymentTargetID,
+		k8sAgent:           agent,
+	}
+	err = syncLatestEnvGroupVersions(ctx, syncInp)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error syncing latest env group versions")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	res := &UpdateAppEnvironmentResponse{
 		EnvGroupName:    split[0],
 		EnvGroupVersion: version,
 	}
 
 	c.WriteResult(w, r, res)
+}
+
+type syncLatestEnvGroupVersionsInput struct {
+	// envGroups is the list of env groups to sync. We only need the names and will get the latest version of each from the porter-env-group ns
+	envGroups []*porterv1.EnvGroup
+	// appName is the name of the app
+	appName string
+	// appEnvName is the name of the app env. This is the env group created when the app is created for storing app-specific variables
+	appEnvName string
+	// sameAppEnv is true if the app env group variables are unchanged. If true, we do not need to sync the latest version of the app env group
+	sameAppEnv bool
+	// namespace is the namespace to sync the latest versions to
+	namespace string
+	// deploymentTargetID is the id of the deployment target
+	deploymentTargetID string
+	// k8sAgent is the kubernetes agent
+	k8sAgent *kubernetes.Agent
+}
+
+// syncLatestEnvGroupVersions syncs the latest versions of the env groups to the namespace where an app is deployed
+func syncLatestEnvGroupVersions(ctx context.Context, inp syncLatestEnvGroupVersionsInput) error {
+	ctx, span := telemetry.NewSpan(ctx, "sync-latest-env-group-versions")
+	defer span.End()
+
+	if inp.deploymentTargetID == "" {
+		return telemetry.Error(ctx, span, nil, "deployment target id is empty")
+	}
+	if inp.appName == "" {
+		return telemetry.Error(ctx, span, nil, "app name is empty")
+	}
+	if inp.appEnvName == "" {
+		return telemetry.Error(ctx, span, nil, "app env name is empty")
+	}
+	if inp.namespace == "" {
+		return telemetry.Error(ctx, span, nil, "namespace is empty")
+	}
+	if inp.k8sAgent == nil {
+		return telemetry.Error(ctx, span, nil, "k8s agent is nil")
+	}
+
+	for _, envGroup := range inp.envGroups {
+		if envGroup == nil {
+			continue
+		}
+
+		additionalEnvGroupLabels := map[string]string{
+			LabelKey_AppName:            inp.appName,
+			LabelKey_DeploymentTargetID: inp.deploymentTargetID,
+			LabelKey_PorterManaged:      "true",
+		}
+
+		if envGroup.GetName() == inp.appEnvName {
+			if inp.sameAppEnv {
+				continue
+			}
+
+			additionalEnvGroupLabels[environment_groups.LabelKey_DefaultAppEnvironment] = "true"
+		}
+
+		_, err := environment_groups.SyncLatestVersionToNamespace(ctx, inp.k8sAgent, environment_groups.SyncLatestVersionToNamespaceInput{
+			TargetNamespace:          inp.namespace,
+			BaseEnvironmentGroupName: envGroup.GetName(),
+		}, additionalEnvGroupLabels)
+		if err != nil {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "env-group-name", Value: envGroup.GetName()})
+			return telemetry.Error(ctx, span, err, "error syncing latest version to namespace")
+		}
+	}
+
+	return nil
 }

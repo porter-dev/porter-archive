@@ -442,6 +442,7 @@ func (c *Client) CreateOrUpdateAppEnvironment(
 	deploymentTargetID string,
 	variables map[string]string,
 	secrets map[string]string,
+	Base64AppProto string,
 ) (*porter_app.UpdateAppEnvironmentResponse, error) {
 	resp := &porter_app.UpdateAppEnvironmentResponse{}
 
@@ -450,6 +451,7 @@ func (c *Client) CreateOrUpdateAppEnvironment(
 		Variables:          variables,
 		Secrets:            secrets,
 		HardUpdate:         false,
+		Base64AppProto:     Base64AppProto,
 	}
 
 	err := c.postRequest(

@@ -233,7 +233,6 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		}
 		webConfig.Domains = domains
 
-		fmt.Printf("private: %v\n", service.Private)
 		if service.Private != nil {
 			webConfig.Private = service.Private
 		}

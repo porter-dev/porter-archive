@@ -1,16 +1,17 @@
 import _ from "lodash";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "shared/api";
-import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
 import { useRevisionIdToNumber } from "./useRevisionList";
-import { valueExists } from "shared/util";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
 
 const jobRunValidator = z.object({
     metadata: z.object({
         labels: z.object({
             "porter.run/app-revision-id": z.string(),
+            "porter.run/service-name": z.string(),
         }),
+        creationTimestamp: z.string(),
         uid: z.string(),
     }),
     status: z.object({
@@ -22,71 +23,69 @@ const jobRunValidator = z.object({
         succeeded: z.number().optional(),
         failed: z.number().optional(),
     }),
+    revisionNumber: z.number().optional(),
+    jobName: z.string().optional(),
 });
-
-const jobEventValidator = z.object({
-    event_type: z.string(),
-    Object: jobRunValidator,
-})
 
 export type JobRun = z.infer<typeof jobRunValidator>;
 
 export const useJobs = (
     {
+        appName,
         projectId,
         clusterId,
         deploymentTargetId,
+        selectedJobName,
     }: {
+        appName: string,
         projectId: number,
         clusterId: number,
         deploymentTargetId: string,
+        selectedJobName: string,
     }
 ) => {
     const [jobRuns, setJobRuns] = useState<JobRun[]>([]);
 
-    const {
-        newWebsocket,
-        openWebsocket,
-        closeAllWebsockets,
-        closeWebsocket,
-    } = useWebsockets();
+    const revisionIdToNumber = useRevisionIdToNumber(appName, deploymentTargetId);
 
-    const setupWebsocket = (
-    ) => {
-        const websocketKey = `job-runs-for-all-charts-ws-${Math.random().toString(36).substring(2, 15)}`;
-        const apiEndpoint = `/api/projects/${projectId}/clusters/${clusterId}/apps/jobs?deployment_target_id=${deploymentTargetId}`;
-
-        const options: NewWebsocketOptions = {};
-        options.onopen = () => {
-            console.log("opening job websocket " + websocketKey)
-        };
-
-        options.onmessage = async (evt: MessageEvent) => {
-            const data = await jobEventValidator.parseAsync(JSON.parse(evt.data));
-            if (data.event_type === "ADD" || data.event_type === "UPDATE") {
-                console.log(data.Object);
-                setJobRuns((prev) => [...prev, data.Object]);
-            }
-        };
-
-        options.onclose = () => {
-            console.log("closing job websocket " + websocketKey)
-        };
-
-        options.onerror = (err: ErrorEvent) => {
-            console.log(err)
-            closeWebsocket(websocketKey);
-        };
-
-        newWebsocket(websocketKey, apiEndpoint, options);
-        openWebsocket(websocketKey);
-    };
+    const { data } = useQuery(
+        ["jobRuns", appName, deploymentTargetId, revisionIdToNumber, selectedJobName],
+        async () => {
+            let jobName = selectedJobName === "all" ? "" : selectedJobName;
+            const res = await api.appJobs(
+                "<token>",
+                {
+                    deployment_target_id: deploymentTargetId,
+                    job_name: jobName,
+                },
+                {
+                    project_id: projectId,
+                    cluster_id: clusterId,
+                });
+            const parsed = await z.array(jobRunValidator).parseAsync(res.data);
+            const parsedWithRevision = parsed.map((jobRun) => {
+                const revisionId = jobRun.metadata.labels["porter.run/app-revision-id"];
+                const revisionNumber = revisionIdToNumber[revisionId];
+                return {
+                    ...jobRun,
+                    revisionNumber,
+                    jobName: jobRun.metadata.labels["porter.run/service-name"],
+                };
+            });
+            return parsedWithRevision;
+        },
+        {
+            enabled: revisionIdToNumber != null,
+            refetchInterval: 5000,
+            refetchOnWindowFocus: false,
+        },
+    );
 
     useEffect(() => {
-        setupWebsocket();
-        return () => closeAllWebsockets();
-    }, [projectId, clusterId, deploymentTargetId]);
-
+        if (data != null) {
+            setJobRuns(data);
+        }
+    }, [data]);
 
     return {
         jobRuns,

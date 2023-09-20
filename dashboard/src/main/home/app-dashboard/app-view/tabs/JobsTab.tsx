@@ -14,7 +14,7 @@ const JobsTab: React.FC = () => {
                 clusterId={clusterId}
                 deploymentTargetId={deploymentTargetId}
                 appName={appName}
-                jobName={""}
+                jobNames={Object.keys(latestProto.services).filter(name => latestProto.services[name].config.case === "jobConfig")}
             />
         </>
     );

@@ -303,6 +303,7 @@ const appLogs = baseApi<
 const appJobs = baseApi<
   {
     deployment_target_id: string;
+    job_name: string;
   },
   {
     project_id: number;

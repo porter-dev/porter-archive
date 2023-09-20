@@ -1023,7 +1023,6 @@ func getPorterAppRoutes(
 				types.ProjectScope,
 				types.ClusterScope,
 			},
-			IsWebsocket: true,
 		},
 	)
 

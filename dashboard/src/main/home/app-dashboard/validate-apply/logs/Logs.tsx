@@ -25,10 +25,8 @@ import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 import LogFilterContainer from "../../expanded-app/logs/LogFilterContainer";
 import StyledLogs from "../../expanded-app/logs/StyledLogs";
-import { AppRevision } from "lib/revisions/types";
 import { useLatestRevisionNumber, useRevisionIdToNumber } from "lib/hooks/useRevisionList";
 import { useLocation } from "react-router";
-import { valueExists } from "shared/util";
 
 type Props = {
     projectId: number;
@@ -38,6 +36,10 @@ type Props = {
     deploymentTargetId: string;
     appRevisionId?: string;
     logFilterNames?: LogFilterName[];
+    timeRange?: {
+        startTime?: Dayjs;
+        endTime?: Dayjs;
+    };
 };
 
 const Logs: React.FC<Props> = ({
@@ -47,6 +49,7 @@ const Logs: React.FC<Props> = ({
     serviceNames,
     deploymentTargetId,
     appRevisionId,
+    timeRange,
     logFilterNames = ["service_name", "revision", "output_stream"],
 }) => {
     const { search } = useLocation();

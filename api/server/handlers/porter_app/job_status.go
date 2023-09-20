@@ -1,7 +1,6 @@
 package porter_app
 
 import (
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -11,8 +10,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
@@ -38,6 +37,7 @@ func NewJobStatusHandler(
 // JobStatusRequest is the expected format for a request body on GET /apps/jobs
 type JobStatusRequest struct {
 	DeploymentTargetID string `schema:"deployment_target_id"`
+	JobName            string `schema:"job_name"`
 }
 
 func (c *JobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +51,6 @@ func (c *JobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	safeRW := ctx.Value(types.RequestCtxWebsocketKey).(*websocket.WebsocketSafeReadWriter)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
@@ -96,13 +95,22 @@ func (c *JobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	selectors := fmt.Sprintf("porter.run/deployment-target-id=%s", request.DeploymentTargetID)
-
-	err = agent.StreamControllerStatus("job", selectors, safeRW)
-
+	labels := []kubernetes.Label{{
+		Key: "porter.run/deployment-target-id",
+		Val: request.DeploymentTargetID,
+	}}
+	if request.JobName != "" {
+		labels = append(labels, kubernetes.Label{
+			Key: "porter.run/service-name",
+			Val: request.JobName,
+		})
+	}
+	jobs, err := agent.ListJobsByLabel(namespace, labels...)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error streaming jobs")
+		err = telemetry.Error(ctx, span, err, "error listing jobs")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
+
+	c.WriteResult(w, r, jobs)
 }

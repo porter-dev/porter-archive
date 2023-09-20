@@ -38,7 +38,22 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		return errors.New("deployment target id is empty")
 	}
 
-	if len(porterYamlPath) != 0 {
+	porterYamlExists := len(porterYamlPath) != 0
+
+	if porterYamlExists {
+		_, err = os.Stat(filepath.Clean(porterYamlPath))
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return fmt.Errorf("error checking if porter yaml exists at path %s: %w", porterYamlPath, err)
+			}
+			// If a path was specified but the file does not exist, we will not immediately error out.
+			// This supports users migrated from v1 who use a workflow file that always specifies a porter yaml path
+			// in the apply command.
+			porterYamlExists = false
+		}
+	}
+
+	if porterYamlExists {
 		porterYaml, err := os.ReadFile(filepath.Clean(porterYamlPath))
 		if err != nil {
 			return fmt.Errorf("could not read porter yaml file: %w", err)
@@ -85,6 +100,10 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		}
 
 		color.New(color.FgGreen).Printf("Successfully parsed Porter YAML: applying app \"%s\"\n", appName) // nolint:errcheck,gosec
+	}
+
+	if appName == "" {
+		return errors.New("App name is empty.  Please provide a Porter YAML file specifying the name of the app or set the PORTER_APP_NAME environment variable.")
 	}
 
 	var commitSHA string

@@ -177,7 +177,7 @@ export const useLogs = ({
   };
 
   const setupWebsocket = (websocketKey: string) => {
-    const websocketBaseURL = `/api/projects/${projectID}/clusters/${clusterID}/apps/logs/loki`;
+    const websocketBaseURL = `/api/projects/${projectID}/clusters/${clusterID}/apps/${appName}/logs/loki`;
 
     const searchParams = {
       app_name: appName,
@@ -277,6 +277,7 @@ export const useLogs = ({
         {
           cluster_id: clusterID,
           project_id: projectID,
+          porter_app_name: appName,
         }
       )
 

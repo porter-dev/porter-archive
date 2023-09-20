@@ -293,11 +293,12 @@ const appLogs = baseApi<
   {
     project_id: number;
     cluster_id: number;
+    porter_app_name: string;
   }
 >(
   "GET",
-  ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/apps/logs`
+  ({ project_id, cluster_id, porter_app_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/logs`
 );
 
 const appJobs = baseApi<
@@ -308,11 +309,12 @@ const appJobs = baseApi<
   {
     project_id: number;
     cluster_id: number;
+    porter_app_name: string;
   }
 >(
   "GET",
-  ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/apps/jobs`
+  ({ project_id, cluster_id, porter_app_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/jobs`
 );
 
 const appPodStatus = baseApi<

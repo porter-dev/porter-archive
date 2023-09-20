@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
@@ -54,6 +55,15 @@ func (c *JobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
+	name, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
+	if reqErr != nil {
+		err := telemetry.Error(ctx, span, reqErr, "invalid porter app name")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: name})
+
 	if request.DeploymentTargetID == "" {
 		err := telemetry.Error(ctx, span, nil, "must provide deployment target id")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -95,10 +105,16 @@ func (c *JobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	labels := []kubernetes.Label{{
-		Key: "porter.run/deployment-target-id",
-		Val: request.DeploymentTargetID,
-	}}
+	labels := []kubernetes.Label{
+		{
+			Key: "porter.run/deployment-target-id",
+			Val: request.DeploymentTargetID,
+		},
+		{
+			Key: "porter.run/app-name",
+			Val: name,
+		},
+	}
 	if request.JobName != "" {
 		labels = append(labels, kubernetes.Label{
 			Key: "porter.run/service-name",

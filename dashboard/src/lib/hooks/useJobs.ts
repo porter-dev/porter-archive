@@ -51,16 +51,16 @@ export const useJobs = (
     const { data } = useQuery(
         ["jobRuns", appName, deploymentTargetId, revisionIdToNumber, selectedJobName],
         async () => {
-            let jobName = selectedJobName === "all" ? "" : selectedJobName;
             const res = await api.appJobs(
                 "<token>",
                 {
                     deployment_target_id: deploymentTargetId,
-                    job_name: jobName,
+                    job_name: selectedJobName === "all" ? "" : selectedJobName,
                 },
                 {
                     project_id: projectId,
                     cluster_id: clusterId,
+                    porter_app_name: appName,
                 });
             const parsed = await z.array(jobRunValidator).parseAsync(res.data);
             const parsedWithRevision = parsed.map((jobRun) => {

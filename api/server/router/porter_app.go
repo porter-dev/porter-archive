@@ -869,7 +869,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/logs", relPathV2),
+				RelativePath: fmt.Sprintf("%s/{%s}/logs", relPathV2, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -898,7 +898,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/logs/loki", relPathV2),
+				RelativePath: fmt.Sprintf("%s/{%s}/logs/loki", relPathV2, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -1009,14 +1009,14 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/jobs -> cluster.NewJobStatusHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/jobs -> cluster.NewJobStatusHandler
 	appJobStatusEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/jobs", relPathV2),
+				RelativePath: fmt.Sprintf("%s/{%s}/jobs", relPathV2, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

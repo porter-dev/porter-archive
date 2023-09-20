@@ -31,4 +31,5 @@ export const PREFLIGHT_MESSAGE_CONST_AWS = {
 export const PREFLIGHT_MESSAGE_CONST_GCP = {
   "apiEnabled": "APIs enabled on service account",
   "cidrAvailability": "CIDR availability",
+  "iamPermissions:": "IAM permissions",
 }

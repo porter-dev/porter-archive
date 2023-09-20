@@ -126,6 +126,7 @@ func (a *Agent) GetRelease(
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "name", Value: name},
+		telemetry.AttributeKV{Key: "namespace", Value: a.Namespace()},
 		telemetry.AttributeKV{Key: "version", Value: version},
 		telemetry.AttributeKV{Key: "getDeps", Value: getDeps},
 	)

@@ -66,7 +66,7 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
         render={({ field: { value, onChange } }) => (
           <Checkbox
             checked={!value}
-            disabled={service.config.private.readOnly}
+            disabled={service.config.private?.readOnly}
             toggleChecked={() => {
               onChange(!value);
             }}

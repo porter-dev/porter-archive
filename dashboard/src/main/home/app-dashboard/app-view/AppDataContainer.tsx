@@ -166,40 +166,39 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       );
 
       // updates the default env group associated with this app to store app specific env vars
-      const res = await api.updateAppEnvironmentGroup(
+      const res = await api.updateEnvironmentGroupV2(
         "<token>",
         {
           deployment_target_id: deploymentTargetId,
           variables,
           secrets,
+          b64_app_proto: btoa(validatedAppProto.toJsonString()),
           remove_missing: true,
         },
         {
-          project_id: projectId,
+          id: projectId,
           cluster_id: clusterId,
           app_name: porterApp.name,
         }
       );
 
-      const updatedEnvGroup = z
+      const updatedEnvGroups = z
         .object({
-          env_group_name: z.string(),
-          env_group_version: z.coerce.bigint(),
+          env_groups: z
+            .object({
+              name: z.string(),
+              latest_version: z.coerce.bigint(),
+            })
+            .array(),
         })
         .parse(res.data);
 
       const protoWithUpdatedEnv = new PorterApp({
         ...validatedAppProto,
-        envGroups: validatedAppProto.envGroups.map((envGroup) => {
-          if (envGroup.name === updatedEnvGroup.env_group_name) {
-            return {
-              ...envGroup,
-              version: updatedEnvGroup.env_group_version,
-            };
-          }
-
-          return envGroup;
-        }),
+        envGroups: updatedEnvGroups.env_groups.map((eg) => ({
+          name: eg.name,
+          version: eg.latest_version,
+        })),
       });
 
       await api.applyApp(

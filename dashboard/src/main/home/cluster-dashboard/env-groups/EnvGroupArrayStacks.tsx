@@ -45,9 +45,10 @@ const EnvGroupArray = ({
   }, [values]);
   const isKeyOverriding = (key: string) => {
     if (!syncedEnvGroups || !values) return false;
-    return syncedEnvGroups?.some(envGroup =>
-      (envGroup?.variables) && key in envGroup?.variables || key in envGroup?.secret_variables
-    );
+    return syncedEnvGroups?.some(envGroup => {
+      if (!envGroup || !envGroup.variables) return false;
+      return key in envGroup.variables || (envGroup.secret_variables && key in envGroup.secret_variables);
+    });
   };
 
   const readFile = (env: string) => {

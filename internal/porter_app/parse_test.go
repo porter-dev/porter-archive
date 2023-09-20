@@ -44,7 +44,7 @@ func TestParseYAML(t *testing.T) {
 }
 
 var result_nobuild = &porterv1.PorterApp{
-	Name: "js-test-app",
+	Name: "test-app",
 	Services: map[string]*porterv1.Service{
 		"example-job": {
 			Run:          "echo 'hello world'",

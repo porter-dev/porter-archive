@@ -1,5 +1,5 @@
 version: v2
-name: "js-test-app"
+name: "test-app"
 image:
   repository: nginx
   tag: latest

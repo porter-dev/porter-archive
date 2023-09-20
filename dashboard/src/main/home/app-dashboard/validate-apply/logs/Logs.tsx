@@ -11,7 +11,7 @@ import styled from "styled-components";
 import spinner from "assets/loading.gif";
 import api from "shared/api";
 import { useLogs } from "./utils";
-import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName, LogFilterQueryParamOpts } from "../../expanded-app/logs/types";
+import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName } from "../../expanded-app/logs/types";
 import dayjs, { Dayjs } from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
@@ -40,6 +40,7 @@ type Props = {
         startTime?: Dayjs;
         endTime?: Dayjs;
     };
+    filterPredeploy?: boolean;
 };
 
 const Logs: React.FC<Props> = ({
@@ -51,6 +52,7 @@ const Logs: React.FC<Props> = ({
     appRevisionId,
     timeRange,
     logFilterNames = ["service_name", "revision", "output_stream"],
+    filterPredeploy = false,
 }) => {
     const { search } = useLocation();
     const queryParams = new URLSearchParams(search);
@@ -176,20 +178,21 @@ const Logs: React.FC<Props> = ({
         }, 5000);
     };
 
-    const { logs, refresh, moveCursor, paginationInfo } = useLogs(
-        projectId,
-        clusterId,
+    const { logs, refresh, moveCursor, paginationInfo } = useLogs({
+        projectID: projectId,
+        clusterID: clusterId,
         selectedFilterValues,
         appName,
-        selectedFilterValues.service_name,
+        serviceName: selectedFilterValues.service_name,
         deploymentTargetId,
-        enteredSearchText,
+        searchParam: enteredSearchText,
         notify,
-        setIsLoading,
+        setLoading: setIsLoading,
         revisionIdToNumber,
-        selectedDate,
+        setDate: selectedDate,
         appRevisionId,
-    );
+        filterPredeploy,
+    });
 
     useEffect(() => {
         setFilters([

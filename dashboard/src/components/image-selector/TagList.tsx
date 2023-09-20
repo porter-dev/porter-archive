@@ -86,7 +86,7 @@ export default class TagList extends Component<PropsType, StateType> {
           const [latestImage] = tags.splice(latestImageIndex, 1);
           tags.unshift(latestImage);
         }
-        this.setState({ tags: tags.map((tag) => tag.tag), loading: false });
+        this.setState({ tags: tags.map((tag) => tag.tag), loading: false, error: false });
       })
       .catch((err) => {
         console.log(err);

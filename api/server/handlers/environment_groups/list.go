@@ -39,8 +39,8 @@ type ListEnvironmentGroupsResponse struct {
 type EnvironmentGroupListItem struct {
 	Name               string            `json:"name"`
 	LatestVersion      int               `json:"latest_version"`
-	Variables          map[string]string `json:"variables"`
-	SecretVariables    map[string]string `json:"secret_variables"`
+	Variables          map[string]string `json:"variables,omitempty"`
+	SecretVariables    map[string]string `json:"secret_variables,omitempty"`
 	CreatedAtUTC       time.Time         `json:"created_at"`
 	LinkedApplications []string          `json:"linked_applications,omitempty"`
 }
@@ -58,7 +58,7 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	allEnvGroupVersions, err := environmentgroups.ListEnvironmentGroups(ctx, agent, environmentgroups.WithNamespace(environmentgroups.Namespace_EnvironmentGroups))
+	allEnvGroupVersions, err := environmentgroups.ListEnvironmentGroups(ctx, agent, environmentgroups.WithNamespace(environmentgroups.Namespace_EnvironmentGroups), environmentgroups.WithoutDefaultAppEnvironmentGroups())
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "unable to list all environment groups")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

@@ -44,6 +44,8 @@ const RevisionsList: React.FC<Props> = ({
   const [revertData, setRevertData] = useState<{
     app: PorterApp;
     revision: number;
+    variables: Record<string, string>;
+    secrets: Record<string, string>;
   } | null>(null);
 
   const res = useQuery(
@@ -76,7 +78,15 @@ const RevisionsList: React.FC<Props> = ({
       return;
     }
 
-    setValue("app", clientAppFromProto(revertData.app, servicesFromYaml));
+    setValue(
+      "app",
+      clientAppFromProto({
+        proto: revertData.app,
+        overrides: servicesFromYaml,
+        variables: revertData.variables,
+        secrets: revertData.secrets,
+      })
+    );
     setRevertData(null);
 
     void onSubmit();

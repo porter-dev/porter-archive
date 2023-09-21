@@ -12,7 +12,7 @@ type PorterYamlStatus =
       loading: true;
       detectedName: null;
       detectedServices: null;
-      porterYamlFound: boolean;
+      porterYamlFound: false;
     }
   | {
       detectedServices: DetectedServices | null;
@@ -30,9 +30,11 @@ type PorterYamlStatus =
  */
 export const usePorterYaml = ({
   source,
+  appName = "",
   useDefaults = true,
 }: {
   source: (SourceOptions & { type: "github" }) | null;
+  appName?: string;
   useDefaults?: boolean;
 }): PorterYamlStatus => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -52,8 +54,6 @@ export const usePorterYaml = ({
       source?.porter_yaml_path,
     ],
     async () => {
-      setPorterYamlFound(false);
-
       if (!currentProject || !source) {
         return;
       }
@@ -95,17 +95,19 @@ export const usePorterYaml = ({
   const detectServices = useCallback(
     async ({
       b64Yaml,
+      appName,
       projectId,
       clusterId,
     }: {
       b64Yaml: string;
+      appName: string;
       projectId: number;
       clusterId: number;
     }) => {
       try {
         const res = await api.parsePorterYaml(
           "<token>",
-          { b64_yaml: b64Yaml },
+          { b64_yaml: b64Yaml, app_name: appName },
           {
             project_id: projectId,
             cluster_id: clusterId,
@@ -149,6 +151,7 @@ export const usePorterYaml = ({
     if (data) {
       detectServices({
         b64Yaml: data,
+        appName: appName,
         projectId: currentProject.id,
         clusterId: currentCluster.id,
       });
@@ -173,7 +176,7 @@ export const usePorterYaml = ({
       loading: true,
       detectedName: null,
       detectedServices: null,
-      porterYamlFound: true,
+      porterYamlFound: false,
     };
   }
 

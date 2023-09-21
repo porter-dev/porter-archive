@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"google.golang.org/protobuf/encoding/protojson"
+	"k8s.io/utils/pointer"
 
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -30,16 +31,21 @@ func TestParseYAML(t *testing.T) {
 			want, err := os.ReadFile(fmt.Sprintf("testdata/%s.yaml", tt.porterYamlFileName))
 			is.NoErr(err) // no error expected reading test file
 
-			got, err := ParseYAML(context.Background(), want, "test-app")
+			got, env, err := ParseYAML(context.Background(), want, "test-app")
 			is.NoErr(err) // umbrella chart values should convert to map[string]any without issues
 
 			diffProtoWithFailTest(t, is, tt.want, got)
+
+			is.Equal(env, map[string]string{
+				"PORT":     "8080",
+				"NODE_ENV": "production",
+			})
 		})
 	}
 }
 
 var result_nobuild = &porterv1.PorterApp{
-	Name: "js-test-app",
+	Name: "test-app",
 	Services: map[string]*porterv1.Service{
 		"example-job": {
 			Run:          "echo 'hello world'",
@@ -97,10 +103,6 @@ var result_nobuild = &porterv1.PorterApp{
 			},
 			Type: 1,
 		},
-	},
-	Env: map[string]string{
-		"PORT":     "8080",
-		"NODE_ENV": "production",
 	},
 	Predeploy: &porterv1.Service{
 		Run:          "ls",
@@ -172,14 +174,11 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 						Enabled:  true,
 						HttpPath: "/healthz",
 					},
+					Private: pointer.Bool(false),
 				},
 			},
 			Type: 1,
 		},
-	},
-	Env: map[string]string{
-		"PORT":     "8080",
-		"NODE_ENV": "production",
 	},
 	Predeploy: &porterv1.Service{
 		Run:          "ls",

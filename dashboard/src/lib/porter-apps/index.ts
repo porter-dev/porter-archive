@@ -15,7 +15,7 @@ import {
 } from "./services";
 import { Build, PorterApp, Service } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
-import { valueExists } from "shared/util";
+import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 
 // buildValidator is used to validate inputs for build setting fields
 export const buildValidator = z.discriminatedUnion("method", [
@@ -62,6 +62,11 @@ export const deletionValidator = z.object({
       name: z.string(),
     })
     .array(),
+  envGroupNames: z
+    .object({
+      name: z.string(),
+    })
+    .array(),
 });
 
 // clientAppValidator is the representation of a Porter app on the client, and is used to validate inputs for app setting fields
@@ -70,9 +75,22 @@ export const clientAppValidator = z.object({
     readOnly: z.boolean(),
     value: z.string(),
   }),
+  envGroups: z
+    .object({ name: z.string(), version: z.bigint() })
+    .array()
+    .default([]),
   services: serviceValidator.array(),
   predeploy: serviceValidator.array().optional(),
-  env: z.record(z.string(), z.string()).default({}),
+  env: z
+    .object({
+      key: z.string(),
+      value: z.string(),
+      hidden: z.boolean(),
+      locked: z.boolean(),
+      deleted: z.boolean(),
+    })
+    .array()
+    .default([]),
   build: buildValidator,
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
@@ -181,7 +199,10 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
         new PorterApp({
           name: app.name.value,
           services,
-          env: app.env,
+          envGroups: app.envGroups.map((eg) => ({
+            name: eg.name,
+            version: eg.version,
+          })),
           build: clientBuildToProto(app.build),
           ...(predeploy && {
             predeploy: serviceProto(serializeService(predeploy)),
@@ -194,7 +215,10 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
         new PorterApp({
           name: app.name.value,
           services,
-          env: app.env,
+          envGroups: app.envGroups.map((eg) => ({
+            name: eg.name,
+            version: eg.version,
+          })),
           image: {
             repository: src.image.repository,
             tag: src.image.tag,
@@ -255,10 +279,17 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
     .exhaustive();
 };
 
-export function clientAppFromProto(
-  proto: PorterApp,
-  overrides: DetectedServices | null
-): ClientPorterApp {
+export function clientAppFromProto({
+  proto,
+  overrides,
+  variables = {},
+  secrets = {},
+}: {
+  proto: PorterApp;
+  overrides: DetectedServices | null;
+  variables?: Record<string, string>;
+  secrets?: Record<string, string>;
+}): ClientPorterApp {
   const services = Object.entries(proto.services)
     .map(([name, service]) => serializedServiceFromProto({ name, service }))
     .map((svc) => {
@@ -267,15 +298,33 @@ export function clientAppFromProto(
       );
 
       if (override) {
-        return deserializeService({
+        const ds = deserializeService({
           service: svc,
           override: serializeService(override),
         });
+        return ds;
       }
       return deserializeService({ service: svc });
     });
 
   const predeployList = [];
+  const parsedEnv: KeyValueType[] = [
+    ...Object.entries(variables).map(([key, value]) => ({
+      key,
+      value,
+      hidden: false,
+      locked: false,
+      deleted: false,
+    })),
+    ...Object.entries(secrets).map(([key, value]) => ({
+      key,
+      value,
+      hidden: true,
+      locked: true,
+      deleted: false,
+    })),
+  ];
+
   if (proto.predeploy) {
     predeployList.push(
       deserializeService({
@@ -295,7 +344,11 @@ export function clientAppFromProto(
       },
       services,
       predeploy: predeployList,
-      env: proto.env,
+      env: parsedEnv,
+      envGroups: proto.envGroups.map((eg) => ({
+        name: eg.name,
+        version: eg.version,
+      })),
       build: clientBuildFromProto(proto.build) ?? {
         method: "pack",
         context: "./",
@@ -326,7 +379,11 @@ export function clientAppFromProto(
     },
     services,
     predeploy,
-    env: proto.env,
+    env: parsedEnv,
+    envGroups: proto.envGroups.map((eg) => ({
+      name: eg.name,
+      version: eg.version,
+    })),
     build: clientBuildFromProto(proto.build) ?? {
       method: "pack",
       context: "./",

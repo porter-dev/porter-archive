@@ -23,6 +23,8 @@ type RevisionTableContentsProps = {
     SetStateAction<{
       app: PorterApp;
       revision: number;
+      variables: Record<string, string>;
+      secrets: Record<string, string>;
     } | null>
   >;
 };
@@ -184,13 +186,16 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                     }
                     onClick={() => {
                       reset({
-                        app: clientAppFromProto(
-                          revision.app_proto,
-                          servicesFromYaml
-                        ),
+                        app: clientAppFromProto({
+                          proto: revision.app_proto,
+                          overrides: servicesFromYaml,
+                          variables: revision.env.variables,
+                          secrets: revision.env.secret_variables,
+                        }),
                         source: latestSource,
                         deletions: {
                           serviceNames: [],
+                          envGroupNames: [],
                         },
                       });
                       setPreviewRevision(
@@ -229,6 +234,8 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                           setRevertData({
                             app: revision.app_proto,
                             revision: revision.revision_number,
+                            variables: revision.env.variables ?? {},
+                            secrets: revision.env.secret_variables ?? {},
                           });
                         }}
                       >

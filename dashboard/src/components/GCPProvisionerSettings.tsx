@@ -90,6 +90,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [preflightError, setPreflightError] = useState<string>("")
 
   const markStepStarted = async (step: string, region?: string) => {
     try {
@@ -218,6 +219,20 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     setIsLoading(true);
 
     setIsClicked(true);
+
+
+    try {
+      window.dataLayer?.push({
+        event: 'provision-attempt',
+        data: {
+          cloud: 'gcp',
+          email: user?.email
+        }
+      });
+    } catch (err) {
+      console.log(err);
+    }
+
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -370,57 +385,65 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     if (statusPreflight() == "" && !props.clusterId) {
       setStep(1)
-      setPreflightData(null)
+
       preflightChecks()
     }
 
   }, [props.selectedClusterVersion, clusterNetworking, region]);
 
   const preflightChecks = async () => {
-    setIsLoading(true);
-    setPreflightData(null);
-    var data = new PreflightCheckRequest({
-      projectId: BigInt(currentProject.id),
-      cloudProvider: EnumCloudProvider.GCP,
-      cloudProviderCredentialsId: props.credentialId,
-      preflightValues: {
-        case: "gkePreflightValues",
-        value: new GKEPreflightValues({
-          network: new GKENetwork({
-            cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
-            controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
-            podCidr: defaultClusterNetworking.podCidr,
-            serviceCidr: defaultClusterNetworking.serviceCidr,
-          })
-        })
-      }
-    });
-    const preflightDataResp = await api.preflightCheck(
-      "<token>", data,
-      {
-        id: currentProject.id,
-      }
-    )
-    // Check if any of the preflight checks has a message
-    let hasMessage = false;
-    let errors = "Preflight Checks Failed : ";
-    for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
-      if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
-        hasMessage = true;
-        errors = errors + check + ", "
-      }
-    }
-    // If none of the checks have a message, set setPreflightFailed to false
-    if (hasMessage) {
-      markStepStarted("provisioning-failed", errors);
-    }
-    if (!hasMessage) {
-      setPreflightFailed(false);
-      setStep(2);
-    }
-    setPreflightData(preflightDataResp?.data?.Msg);
-    setIsLoading(false)
 
+    try {
+      setIsLoading(true);
+      setPreflightData(null);
+      setPreflightFailed(true)
+      setPreflightError("");
+      var data = new PreflightCheckRequest({
+        projectId: BigInt(currentProject.id),
+        cloudProvider: EnumCloudProvider.GCP,
+        cloudProviderCredentialsId: props.credentialId,
+        preflightValues: {
+          case: "gkePreflightValues",
+          value: new GKEPreflightValues({
+            network: new GKENetwork({
+              cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
+              controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
+              podCidr: defaultClusterNetworking.podCidr,
+              serviceCidr: defaultClusterNetworking.serviceCidr,
+            })
+          })
+        }
+      });
+      const preflightDataResp = await api.preflightCheck(
+        "<token>", data,
+        {
+          id: currentProject.id,
+        }
+      )
+      // Check if any of the preflight checks has a message
+      let hasMessage = false;
+      let errors = "Preflight Checks Failed : ";
+      for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
+        if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
+          hasMessage = true;
+          errors = errors + check + ", "
+        }
+      }
+      // If none of the checks have a message, set setPreflightFailed to false
+      if (hasMessage) {
+        markStepStarted("provisioning-failed", errors);
+      }
+      if (!hasMessage) {
+        setPreflightFailed(false);
+        setStep(2);
+      }
+      setPreflightData(preflightDataResp?.data?.Msg);
+      setIsLoading(false)
+    } catch (err) {
+      setPreflightError(err)
+      setIsLoading(false)
+      setPreflightFailed(true);
+    }
   }
 
   const renderForm = () => {
@@ -451,13 +474,13 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
 
             </>,
             <>
-              <PreflightChecks provider="GCP" preflightData={preflightData} />
+              <PreflightChecks provider='GCP' preflightData={preflightData} error={preflightError} />
               <Spacer y={.5} />
-              {(preflightFailed && preflightData) &&
+              {(preflightFailed && preflightData || preflightError) &&
                 <>
-                  <Text color="helper">
+                  {!preflightError && <Text color="helper">
                     Preflight checks for the account didn't pass. Please fix the issues and retry.
-                  </Text>
+                  </Text>}
                   < Button
                     // disabled={isDisabled()}
                     disabled={isLoading}
@@ -491,7 +514,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           <SelectRow
             options={locationOptions}
             width="350px"
-            disabled={isReadOnly || true}
+            disabled={isReadOnly || isLoading}
             value={region}
             scrollBuffer={true}
             dropdownMaxHeight="240px"

@@ -37,6 +37,8 @@ type buildInput struct {
 	// CurrentImageTag is used in docker build to cache from
 	CurrentImageTag string
 	RepositoryURL   string
+
+	Env map[string]string
 }
 
 // build will create an image repository if it does not exist, and then build and push the image
@@ -89,6 +91,7 @@ func build(ctx context.Context, client api.Client, inp buildInput) error {
 			BuildContext:      buildCtx,
 			DockerfilePath:    dockerfilePath,
 			IsDockerfileInCtx: isDockerfileInCtx,
+			Env:               inp.Env,
 		}
 
 		err = dockerAgent.BuildLocal(
@@ -105,6 +108,7 @@ func build(ctx context.Context, client api.Client, inp buildInput) error {
 			ImageRepo:    imageURL,
 			Tag:          tag,
 			BuildContext: inp.BuildContext,
+			Env:          inp.Env,
 		}
 
 		buildConfig := &types.BuildConfig{

@@ -1,7 +1,10 @@
 package porter_app
 
 import (
+	"context"
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -10,8 +13,10 @@ import (
 
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
 
+	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -23,6 +28,7 @@ import (
 // ApplyPorterAppHandler is the handler for the /apps/parse endpoint
 type ApplyPorterAppHandler struct {
 	handlers.PorterHandlerReadWriter
+	authz.KubernetesAgentGetter
 }
 
 // NewApplyPorterAppHandler handles POST requests to the endpoint /apps/apply
@@ -33,6 +39,7 @@ func NewApplyPorterAppHandler(
 ) *ApplyPorterAppHandler {
 	return &ApplyPorterAppHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
@@ -41,6 +48,7 @@ type ApplyPorterAppRequest struct {
 	Base64AppProto     string `json:"b64_app_proto"`
 	DeploymentTargetId string `json:"deployment_target_id"`
 	AppRevisionID      string `json:"app_revision_id"`
+	ForceBuild         bool   `json:"force_build"`
 }
 
 // ApplyPorterAppResponse is the response object for the /apps/apply endpoint
@@ -62,7 +70,7 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
 	)
 
-	if !project.ValidateApplyV2 {
+	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
@@ -115,6 +123,28 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			telemetry.AttributeKV{Key: "app-name", Value: appProto.Name},
 			telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetId},
 		)
+
+		agent, err := c.GetAgent(r, cluster, "")
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting kubernetes agent")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		subdomainCreateInput := porter_app.CreatePorterSubdomainInput{
+			AppName:             appProto.Name,
+			RootDomain:          c.Config().ServerConf.AppRootDomain,
+			DNSClient:           c.Config().DNSClient,
+			DNSRecordRepository: c.Repo().DNSRecord(),
+			KubernetesAgent:     agent,
+		}
+
+		appProto, err = addPorterSubdomainsIfNecessary(ctx, appProto, subdomainCreateInput)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error adding porter subdomains")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
 	}
 
 	applyReq := connect.NewRequest(&porterv1.ApplyPorterAppRequest{
@@ -122,6 +152,7 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		DeploymentTargetId:  deploymentTargetID,
 		App:                 appProto,
 		PorterAppRevisionId: appRevisionID,
+		ForceBuild:          request.ForceBuild,
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.ApplyPorterApp(ctx, applyReq)
 	if err != nil {
@@ -163,4 +194,36 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	c.WriteResult(w, r, response)
+}
+
+// addPorterSubdomainsIfNecessary adds porter subdomains to the app proto if a web service is changed to private and has no domains
+func addPorterSubdomainsIfNecessary(ctx context.Context, app *porterv1.PorterApp, createSubdomainInput porter_app.CreatePorterSubdomainInput) (*porterv1.PorterApp, error) {
+	for serviceName, service := range app.Services {
+		if service.Type == porterv1.ServiceType_SERVICE_TYPE_WEB {
+			if service.GetWebConfig() == nil {
+				return app, fmt.Errorf("web service %s does not contain web config", serviceName)
+			}
+
+			webConfig := service.GetWebConfig()
+
+			if !webConfig.GetPrivate() && len(webConfig.Domains) == 0 {
+				subdomain, err := porter_app.CreatePorterSubdomain(ctx, createSubdomainInput)
+				if err != nil {
+					return app, fmt.Errorf("error creating subdomain: %w", err)
+				}
+
+				if subdomain == "" {
+					return app, errors.New("response subdomain is empty")
+				}
+
+				webConfig.Domains = []*porterv1.Domain{
+					{Name: subdomain},
+				}
+
+				service.Config = &porterv1.Service_WebConfig{WebConfig: webConfig}
+			}
+		}
+	}
+
+	return app, nil
 }

@@ -26,8 +26,8 @@ import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 import { Service } from "../../new-app-flow/serviceTypes";
-import LogFilterContainer from "./LogFilterContainer";
 import StyledLogs from "./StyledLogs";
+import Filter from "components/porter/Filter";
 
 type Props = {
   appName: string;
@@ -215,6 +215,22 @@ const LogSection: React.FC<Props> = ({
     }
   };
 
+  const generateFilterString = () => {
+    let filterString = "";
+    if (selectedFilterValues["service_name"] !== "all") {
+      filterString += selectedFilterValues["service_name"];
+    } else if (selectedFilterValues["pod_name"] !== "all") {
+      filterString += selectedFilterValues["pod_name"].replace(/-[^-]*$/, '');
+    }
+    if (selectedFilterValues["revision"] !== "all") {
+      if (filterString !== "") {
+        filterString += " ";
+      }
+      filterString += "v" + selectedFilterValues["revision"];
+    }
+    return filterString;
+  };
+
   const renderContents = () => {
     return (
       <>
@@ -226,6 +242,7 @@ const LogSection: React.FC<Props> = ({
               setEnteredSearchText={setEnteredSearchText}
               setSelectedDate={setSelectedDateIfUndefined}
             />
+            <Spacer inline width="10px" />
             <LogQueryModeSelectionToggle
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
@@ -233,6 +250,14 @@ const LogSection: React.FC<Props> = ({
             />
           </Flex>
           <Flex>
+            {showFilter && (
+              <Filter
+                filters={filters}
+                selectedFilterValues={selectedFilterValues}
+                filterString={generateFilterString()}
+              />
+            )}
+            <Spacer inline width="10px" />
             <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
               <Checkbox checked={scrollToBottomEnabled}>
                 <i className="material-icons">done</i>
@@ -251,15 +276,6 @@ const LogSection: React.FC<Props> = ({
           </Flex>
         </FlexRow>
         <Spacer y={0.5} />
-        {showFilter &&
-          <>
-            <LogFilterContainer
-              filters={filters}
-              selectedFilterValues={selectedFilterValues}
-            />
-            <Spacer y={0.5} />
-          </>
-        }
         <LogsSectionWrapper>
           <StyledLogsSection>
             {isLoading && <Loading message="Waiting for logs..." />}
@@ -464,7 +480,7 @@ const Checkbox = styled.div<{ checked: boolean }>`
 `;
 
 const ScrollButton = styled.div`
-  background: #26292e;
+  background: #181B20;
   border-radius: 5px;
   height: 30px;
   font-size: 13px;
@@ -586,4 +602,5 @@ const NotificationWrapper = styled.div<{ active?: boolean }>`
 
 const LogsSectionWrapper = styled.div`
   position: relative;
+  margin-top: 10px;
 `;

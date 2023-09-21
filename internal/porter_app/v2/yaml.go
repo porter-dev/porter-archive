@@ -12,23 +12,35 @@ import (
 )
 
 // AppProtoFromYaml converts a Porter YAML file into a PorterApp proto object
-func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.PorterApp, error) {
+func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName string) (*porterv1.PorterApp, map[string]string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "v2-app-proto-from-yaml")
 	defer span.End()
 
 	if porterYamlBytes == nil {
-		return nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
+		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
 	}
 
 	porterYaml := &PorterYAML{}
 	err := yaml.Unmarshal(porterYamlBytes, porterYaml)
 	if err != nil {
-		return nil, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
+		return nil, nil, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
+	}
+
+	// if the porter yaml is missing a name field, use the app name that is provided in the request
+	if porterYaml.Name == "" {
+		porterYaml.Name = appName
+	}
+
+	if porterYaml.Name != "" && appName != "" && porterYaml.Name != appName {
+		return nil, nil, telemetry.Error(ctx, span, nil, "name specified in porter.yaml does not match app name")
 	}
 
 	appProto := &porterv1.PorterApp{
 		Name: porterYaml.Name,
-		Env:  porterYaml.Env,
+	}
+
+	if appProto.Name == "" {
+		return nil, nil, telemetry.Error(ctx, span, nil, "app name is empty")
 	}
 
 	if porterYaml.Build != nil {
@@ -49,19 +61,19 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 	}
 
 	if porterYaml.Services == nil {
-		return nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
+		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
 	}
 
 	services := make(map[string]*porterv1.Service, 0)
 	for name, service := range porterYaml.Services {
 		serviceType, err := protoEnumFromType(name, service)
 		if err != nil {
-			return nil, telemetry.Error(ctx, span, err, "error getting service type")
+			return nil, nil, telemetry.Error(ctx, span, err, "error getting service type")
 		}
 
 		serviceProto, err := serviceProtoFromConfig(service, serviceType)
 		if err != nil {
-			return nil, telemetry.Error(ctx, span, err, "error casting service config")
+			return nil, nil, telemetry.Error(ctx, span, err, "error casting service config")
 		}
 
 		services[name] = serviceProto
@@ -71,12 +83,12 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 	if porterYaml.Predeploy != nil {
 		predeployProto, err := serviceProtoFromConfig(*porterYaml.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
 		if err != nil {
-			return nil, telemetry.Error(ctx, span, err, "error casting predeploy config")
+			return nil, nil, telemetry.Error(ctx, span, err, "error casting predeploy config")
 		}
 		appProto.Predeploy = predeployProto
 	}
 
-	return appProto, nil
+	return appProto, porterYaml.Env, nil
 }
 
 // PorterYAML represents all the possible fields in a Porter YAML file
@@ -88,6 +100,7 @@ type PorterYAML struct {
 	Env      map[string]string  `yaml:"env"`
 
 	Predeploy *Service `yaml:"predeploy"`
+	EnvGroups []string `yaml:"env_groups,omitempty"`
 }
 
 // Build represents the build settings for a Porter app
@@ -112,7 +125,7 @@ type Service struct {
 	HealthCheck     *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
 	AllowConcurrent bool         `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
 	Cron            string       `yaml:"cron" validate:"excluded_unless=Type job"`
-	Private         bool         `yaml:"private" validate:"excluded_unless=Type web"`
+	Private         *bool        `yaml:"private" validate:"excluded_unless=Type web"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -219,7 +232,10 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			})
 		}
 		webConfig.Domains = domains
-		webConfig.Private = service.Private
+
+		if service.Private != nil {
+			webConfig.Private = service.Private
+		}
 
 		serviceProto.Config = &porterv1.Service_WebConfig{
 			WebConfig: webConfig,

@@ -46,8 +46,8 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.0
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/crypto v0.6.0
-	golang.org/x/net v0.10.0
+	golang.org/x/crypto v0.12.0
+	golang.org/x/net v0.14.0
 	golang.org/x/oauth2 v0.8.0
 	google.golang.org/api v0.114.0
 	google.golang.org/genproto v0.0.0-20230530153820-e85fd2cbaebc
@@ -73,6 +73,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.23.1
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerregistry/armcontainerregistry v0.5.0
 	github.com/briandowns/spinner v1.18.1
+	github.com/cloudflare/cloudflare-go v0.76.0
 	github.com/glebarez/sqlite v1.6.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/honeycombio/otel-config-go v1.11.0
@@ -81,7 +82,7 @@ require (
 	github.com/matryer/is v1.4.0
 	github.com/nats-io/nats.go v1.24.0
 	github.com/open-policy-agent/opa v0.44.0
-	github.com/porter-dev/api-contracts v0.0.100
+	github.com/porter-dev/api-contracts v0.1.7
 	github.com/riandyrn/otelchi v0.5.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d
@@ -131,12 +132,13 @@ require (
 	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.1 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/launchdarkly/ccache v1.1.0 // indirect
 	github.com/launchdarkly/eventsource v1.6.2 // indirect
@@ -341,9 +343,9 @@ require (
 	go.starlark.net v0.0.0-20220328144851-d1966c6b9fcd // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/term v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/term v0.11.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

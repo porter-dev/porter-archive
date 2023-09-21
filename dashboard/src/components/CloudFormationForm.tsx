@@ -66,7 +66,8 @@ const CloudFormationForm: React.FC<Props> = ({
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [hasClickedCloudformationButton, setHasClickedCloudformationButton] = useState(false);
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
-  const { currentProject } = useContext(Context);
+
+  const { currentProject, user } = useContext(Context);
   const markStepStarted = async (
     {
       step,
@@ -168,6 +169,18 @@ const CloudFormationForm: React.FC<Props> = ({
     }
     markStepStarted({ step: "aws-create-integration-success", account_id: AWSAccountID })
     proceed(`arn:aws:iam::${AWSAccountID}:role/porter-manager`);
+
+    try {
+      window.dataLayer?.push({
+        event: 'provision-attempt',
+        data: {
+          cloud: 'aws',
+          email: user?.email
+        }
+      });
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   const reportFailedCreateAWSIntegration = () => {

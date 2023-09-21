@@ -80,9 +80,23 @@ func NewClientWithConfig(ctx context.Context, input NewClientInput) (Client, err
 // ErrNoAuthCredential returns an error when no auth credentials have been provided such as cookies or tokens
 var ErrNoAuthCredential = errors.New("unable to create an API session with cookie nor token")
 
-func (c *Client) getRequest(relPath string, data interface{}, response interface{}) error {
+// getRequestConfig defines configuration for a GET request
+type getRequestConfig struct {
+	retryCount uint
+}
+
+// withRetryCount is a convenience function for setting the retry count
+func withRetryCount(retryCount uint) func(*getRequestConfig) {
+	return func(o *getRequestConfig) {
+		o.retryCount = retryCount
+	}
+}
+
+// getRequest makes a GET request to the API
+func (c *Client) getRequest(relPath string, data interface{}, response interface{}, opts ...func(*getRequestConfig)) error {
 	vals := make(map[string][]string)
-	err := schema.NewEncoder().Encode(data, vals)
+	_ = schema.NewEncoder().Encode(data, vals)
+	var err error
 
 	urlVals := url.Values(vals)
 	encodedURLVals := urlVals.Encode()
@@ -106,15 +120,36 @@ func (c *Client) getRequest(relPath string, data interface{}, response interface
 		return err
 	}
 
-	if httpErr, err := c.sendRequest(req, response, true); httpErr != nil || err != nil {
-		if httpErr != nil {
-			return fmt.Errorf("%v", httpErr.Error)
-		}
-
-		return err
+	config := &getRequestConfig{
+		retryCount: 1,
 	}
 
-	return nil
+	for _, opt := range opts {
+		opt(config)
+	}
+
+	var httpErr *types.ExternalError
+	for i := 0; i < int(config.retryCount); i++ {
+		httpErr, err = c.sendRequest(req, response, true)
+
+		if httpErr == nil && err == nil {
+			return nil
+		}
+
+		if i != int(config.retryCount)-1 {
+			if httpErr != nil {
+				fmt.Fprintf(os.Stderr, "Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
+			} else {
+				fmt.Fprintf(os.Stderr, "Error: %v, retrying request...\n", err)
+			}
+		}
+	}
+
+	if httpErr != nil {
+		return fmt.Errorf("%v", httpErr.Error)
+	}
+
+	return err
 }
 
 type postRequestOpts struct {

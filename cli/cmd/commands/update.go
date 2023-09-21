@@ -445,7 +445,7 @@ the image that the application uses if no --values file is specified:
 
 func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
-		err := v2.UpdateFull(ctx)
+		err := v2.UpdateFull(ctx, cliConf, client, app)
 		if err != nil {
 			return err
 		}

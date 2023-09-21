@@ -64,10 +64,13 @@ export const ServiceField = {
       value: getNumericValue(defaultValue, overrideValue, validAsZero),
     };
   },
-  boolean: (defaultValue: boolean, overrideValue?: boolean): ServiceBoolean => {
+  boolean: (
+    defaultValue?: boolean,
+    overrideValue?: boolean
+  ): ServiceBoolean => {
     return {
-      readOnly: overrideValue != null,
-      value: overrideValue ?? defaultValue,
+      readOnly: typeof overrideValue === "boolean",
+      value: overrideValue ?? defaultValue ?? false,
     };
   },
 };

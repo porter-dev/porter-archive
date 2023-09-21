@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config/env"
 	"github.com/porter-dev/porter/internal/adapter"
 	"github.com/porter-dev/porter/internal/analytics"
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	klocal "github.com/porter-dev/porter/internal/kubernetes/local"
 	"github.com/porter-dev/porter/internal/oauth"
@@ -69,6 +70,9 @@ type Config struct {
 	// DOConf is the configuration for a DigitalOcean OAuth client
 	DOConf *oauth2.Config
 
+	// LaunchDarklyClient is the client for the LaunchDarkly feature flag service
+	LaunchDarklyClient *features.Client
+
 	RedisClient *redis.Client
 
 	Provisioner provisioner.Provisioner
@@ -121,6 +125,12 @@ type ProvisionerConf struct {
 
 	// Client key for segment to report provisioning events
 	SegmentClientKey string `env:"SEGMENT_CLIENT_KEY"`
+
+	// FeatureFlagClient controls which client to use (database or launch_darkly)
+	FeatureFlagClient string `env:"FEATURE_FLAG_CLIENT,default=launch_darkly"`
+
+	// Launch Darkly SDK key
+	LaunchDarklySDKKey string `env:"LAUNCHDARKLY_SDK_KEY"`
 }
 
 type EnvConf struct {
@@ -164,6 +174,12 @@ func GetConfig(envConf *EnvConf) (*Config, error) {
 	}
 
 	res.Repo = gorm.NewRepository(db, &key, InstanceCredentialBackend)
+
+	launchDarklyClient, err := features.GetClient(envConf.FeatureFlagClient, envConf.LaunchDarklySDKKey)
+	if err != nil {
+		return nil, fmt.Errorf("could not create launch darkly client: %s", err)
+	}
+	res.LaunchDarklyClient = launchDarklyClient
 
 	if envConf.ProvisionerConf.SentryDSN != "" {
 		res.Alerter, err = alerter.NewSentryAlerter(envConf.ProvisionerConf.SentryDSN, envConf.ProvisionerConf.SentryEnv)

@@ -28,12 +28,16 @@ import LogsTab from "./tabs/LogsTab";
 import MetricsTab from "./tabs/MetricsTab";
 import RevisionsList from "../validate-apply/revisions-list/RevisionsList";
 import Activity from "./tabs/Activity";
+import EventFocusView from "./tabs/activity-feed/events/focus-views/EventFocusView";
+import { z } from "zod";
+import { PorterApp } from "@porter-dev/api-contracts";
+import JobsTab from "./tabs/JobsTab";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
 const validTabs = [
   "activity",
-  // "events",
+  "events",
   "overview",
   "logs",
   "metrics",
@@ -42,7 +46,7 @@ const validTabs = [
   "build-settings",
   "settings",
   // "helm-values",
-  // "job-history",
+  "job-history",
 ] as const;
 const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
@@ -103,10 +107,16 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     reValidateMode: "onSubmit",
     resolver: zodResolver(porterAppFormValidator),
     defaultValues: {
-      app: clientAppFromProto(latestProto, servicesFromYaml),
+      app: clientAppFromProto({
+        proto: latestProto,
+        overrides: servicesFromYaml,
+        variables: latestRevision.env.variables,
+        secrets: latestRevision.env.secret_variables,
+      }),
       source: latestSource,
       deletions: {
         serviceNames: [],
+        envGroupNames: [],
       },
     },
   });
@@ -150,11 +160,51 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const validatedAppProto = await validateApp(data, latestProto);
+      const { validatedAppProto, variables, secrets } = await validateApp(
+        data,
+        latestProto
+      );
+
+      // updates the default env group associated with this app to store app specific env vars
+      const res = await api.updateEnvironmentGroupV2(
+        "<token>",
+        {
+          deployment_target_id: deploymentTargetId,
+          variables,
+          secrets,
+          b64_app_proto: btoa(validatedAppProto.toJsonString()),
+          remove_missing: true,
+        },
+        {
+          id: projectId,
+          cluster_id: clusterId,
+          app_name: porterApp.name,
+        }
+      );
+
+      const updatedEnvGroups = z
+        .object({
+          env_groups: z
+            .object({
+              name: z.string(),
+              latest_version: z.coerce.bigint(),
+            })
+            .array(),
+        })
+        .parse(res.data);
+
+      const protoWithUpdatedEnv = new PorterApp({
+        ...validatedAppProto,
+        envGroups: updatedEnvGroups.env_groups.map((eg) => ({
+          name: eg.name,
+          version: eg.latest_version,
+        })),
+      });
+
       await api.applyApp(
         "<token>",
         {
-          b64_app_proto: btoa(validatedAppProto.toJsonString()),
+          b64_app_proto: btoa(protoWithUpdatedEnv.toJsonString()),
           deployment_target_id: deploymentTargetId,
         },
         {
@@ -197,14 +247,23 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         porterApp.name,
       ]);
       setPreviewRevision(null);
-    } catch (err) {}
+
+      // redirect to the default tab after save
+      history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
+    } catch (err) { }
   });
 
   useEffect(() => {
     reset({
-      app: clientAppFromProto(latestProto, servicesFromYaml),
+      app: clientAppFromProto({
+        proto: latestProto,
+        overrides: servicesFromYaml,
+        variables: latestRevision.env.variables,
+        secrets: latestRevision.env.secret_variables,
+      }),
       source: latestSource,
       deletions: {
+        envGroupNames: [],
         serviceNames: [],
       },
     });
@@ -261,11 +320,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
+                {
+                  label: "Build Settings",
+                  value: "build-settings",
+                },
+              ]
               : []),
             { label: "Settings", value: "settings" },
           ]}
@@ -288,6 +347,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("settings", () => <Settings />)
           .with("logs", () => <LogsTab />)
           .with("metrics", () => <MetricsTab />)
+          .with("events", () => <EventFocusView />)
+          .with("job-history", () => <JobsTab />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>

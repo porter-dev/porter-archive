@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import AnimateHeight, { Height } from "react-animate-height";
 import styled from "styled-components";
-import _ from "lodash";
+import _, { set } from "lodash";
 
 import web from "assets/web.png";
 import worker from "assets/worker.png";
@@ -34,11 +34,9 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   setExpandedJob,
 }) => {
   const [height, setHeight] = React.useState<Height>("auto");
-
-  const UPPER_BOUND = .5;
-
-  const [maxCPU, setMaxCPU] = useState(2 * UPPER_BOUND); //default is set to a t3 medium 
-  const [maxRAM, setMaxRAM] = useState(4 * UPPER_BOUND); //default is set to a t3 medium
+  const [applicationNodeCount, setApplicationNodeCount] = useState<number>(1);
+  const [maxCPU, setMaxCPU] = useState(2); //default is set to a t3 medium 
+  const [maxRAM, setMaxRAM] = useState(4); //default is set to a t3 medium
   const context = useContext(Context);
 
   useEffect(() => {
@@ -57,12 +55,13 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         instanceType = chart?.config?.[`${serviceName}-${service.type}`]?.nodeSelector?.["beta.kubernetes.io/instance-type"]
         const [instanceClass, instanceSize] = instanceType.split('.');
         const currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
-        setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
-        setMaxRAM(currentInstance.RAM * UPPER_BOUND);
+        setMaxCPU(currentInstance.vCPU);
+        setMaxRAM(currentInstance.RAM);
       }
     }
     //Query the given nodes if no instance type is specified
     if (instanceType == "") {
+
       api
         .getClusterNodes(
           "<token>",
@@ -74,7 +73,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         )
         .then(({ data }) => {
           if (data) {
-
+            var nodeCount = 0
             let largestInstanceType = {
               vCPUs: 2,
               RAM: 4,
@@ -83,6 +82,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             // TODO: type this response
             data.forEach((node: any) => {
               if (node.labels['porter.run/workload-kind'] == "application") {
+                nodeCount += 1
                 var instanceType: string = node.labels['beta.kubernetes.io/instance-type'];
                 const [instanceClass, instanceSize] = instanceType.split('.');
                 if (instanceClass && instanceSize) {
@@ -90,14 +90,13 @@ const ServiceContainer: React.FC<ServiceProps> = ({
                     let currentInstance = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
                     largestInstanceType.vCPUs = currentInstance.vCPU;
                     largestInstanceType.RAM = currentInstance.RAM;
-
                   }
                 }
               }
             });
-
-            setMaxCPU(largestInstanceType.vCPUs * UPPER_BOUND);
-            setMaxRAM(largestInstanceType.RAM * UPPER_BOUND);
+            setApplicationNodeCount(nodeCount);
+            setMaxCPU(largestInstanceType.vCPUs);
+            setMaxRAM(largestInstanceType.RAM);
           }
         }).catch((error) => {
 
@@ -115,6 +114,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             setHeight={setHeight}
             maxCPU={maxCPU}
             maxRAM={maxRAM}
+            nodeCount={applicationNodeCount}
           />
         );
       case "worker":
@@ -125,6 +125,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             setHeight={setHeight}
             maxCPU={maxCPU}
             maxRAM={maxRAM}
+            nodeCount={applicationNodeCount}
           />
         );
       case "job":
@@ -135,6 +136,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             setHeight={setHeight}
             maxCPU={maxCPU}
             maxRAM={maxRAM}
+            nodeCount={applicationNodeCount}
           />
         );
       case "release":
@@ -145,6 +147,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             setHeight={setHeight}
             maxCPU={maxCPU}
             maxRAM={maxRAM}
+            nodeCount={applicationNodeCount}
           />
         );
     }

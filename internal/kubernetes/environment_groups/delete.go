@@ -27,7 +27,7 @@ func DeleteEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, name strin
 	}
 
 	for _, environmentGroup := range environmentGroups {
-		applications, err := LinkedApplications(ctx, a, environmentGroup.Name)
+		applications, err := LinkedApplications(ctx, a, environmentGroup.Name, true)
 		if err != nil {
 			return telemetry.Error(ctx, span, err, "unable to list linked applications")
 		}

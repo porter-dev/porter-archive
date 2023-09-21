@@ -102,7 +102,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
     const { numDeployed, latestRevision } = args;
 
     if (previewRevision) {
-      return previewRevision;
+      return previewRevision.revision_number;
     }
 
     if (latestRevision && latestRevision.revision_number !== 0) {
@@ -181,7 +181,8 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                     key={revision.revision_number}
                     selected={
                       previewRevision
-                        ? revision.revision_number === previewRevision
+                        ? revision.revision_number ===
+                          previewRevision.revision_number
                         : isLatestDeployedRevision
                     }
                     onClick={() => {
@@ -198,10 +199,9 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                           envGroupNames: [],
                         },
                       });
+
                       setPreviewRevision(
-                        isLatestDeployedRevision
-                          ? null
-                          : revision.revision_number
+                        isLatestDeployedRevision ? null : revision
                       );
                     }}
                   >

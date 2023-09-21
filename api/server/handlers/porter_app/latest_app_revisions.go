@@ -15,7 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// LatestAppRevisionsHandler handles requests to the /apps/{porter_app_name}/revisions endpoint
+// LatestAppRevisionsHandler handles requests to the /apps/revisions endpoint
 type LatestAppRevisionsHandler struct {
 	handlers.PorterHandlerReadWriter
 }

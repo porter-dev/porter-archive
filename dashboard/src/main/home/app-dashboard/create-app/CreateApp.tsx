@@ -185,7 +185,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     loading: isLoadingPorterYaml,
   } = usePorterYaml({
     source: source?.type === "github" ? source : null,
-    appName: name.value,
+    appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
   });
   const deploymentTarget = useDefaultDeploymentTarget();
   const { updateAppStep } = useAppAnalytics(name.value);
@@ -426,9 +426,14 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   useEffect(() => {
     if (servicesFromYaml && !detectedServices.detected) {
-      const { services, predeploy } = servicesFromYaml;
+      const { services, predeploy, build: detectedBuild } = servicesFromYaml;
       setValue("app.services", services);
       setValue("app.predeploy", [predeploy].filter(valueExists));
+
+      console.log('detectedBuild', detectedBuild)
+      if (detectedBuild) {
+        setValue("app.build", detectedBuild);
+      }
       setDetectedServices({
         detected: true,
         count: services.length,

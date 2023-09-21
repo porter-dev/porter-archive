@@ -7,7 +7,8 @@ import Error from "components/porter/Error";
 import { Droppable, DragDropContext } from "react-beautiful-dnd";
 import { Buildpack } from "main/home/app-dashboard/types/buildpack";
 import { useFieldArray, useFormContext } from "react-hook-form";
-import { BuildOptions, PorterAppFormData } from "lib/porter-apps";
+import { PorterAppFormData } from "lib/porter-apps";
+import { BuildOptions } from "lib/porter-apps/build";
 
 interface Props {
   build: BuildOptions & {

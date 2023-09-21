@@ -317,7 +317,6 @@ const ImageItem = styled.div<{ lastItem: boolean; isSelected: boolean }>`
   padding: 10px 0px;
   user-select: text;
   cursor: text;
-  cursor: pointer;
   background: ${(props) => (props.isSelected ? "#ffffff11" : "")};
   :hover {
     background: #ffffff22;

@@ -274,7 +274,7 @@ const CloudFormationForm: React.FC<Props> = ({
                   onClick={directToCloudFormation}
                   color="linear-gradient(180deg, #26292e, #24272c)"
                   withBorder
-                  disabled={canProceed}
+                  disabled={canProceed || preflightData}
                   disabledTooltipMessage={"Porter can already access your account!"}
                 >
                   Grant permissions

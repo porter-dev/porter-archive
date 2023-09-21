@@ -49,6 +49,7 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-env-groups")
 	defer span.End()
 
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	agent, err := c.GetAgent(r, cluster, "")
@@ -84,26 +85,39 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 			return
 		}
 
-		applications, err := environmentgroups.LinkedApplications(ctx, agent, latestVersion.Name)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "unable to get linked applications")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		applicationSetForEnvGroup := make(map[string]struct{})
-		for _, app := range applications {
-			if app.Namespace == "" {
-				continue
-			}
-			if _, ok := applicationSetForEnvGroup[app.Namespace]; !ok {
-				applicationSetForEnvGroup[app.Namespace] = struct{}{}
-			}
-		}
 		var linkedApplications []string
-		for appNamespace := range applicationSetForEnvGroup {
-			porterAppName := strings.TrimPrefix(appNamespace, "porter-stack-")
-			linkedApplications = append(linkedApplications, porterAppName)
+		if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
+			applications, err := environmentgroups.LinkedApplications(ctx, agent, latestVersion.Name, true)
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "unable to get linked applications")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
+
+			applicationSetForEnvGroup := make(map[string]struct{})
+			for _, app := range applications {
+				if app.Namespace == "" {
+					continue
+				}
+				if _, ok := applicationSetForEnvGroup[app.Namespace]; !ok {
+					applicationSetForEnvGroup[app.Namespace] = struct{}{}
+				}
+			}
+			for appNamespace := range applicationSetForEnvGroup {
+				porterAppName := strings.TrimPrefix(appNamespace, "porter-stack-")
+				linkedApplications = append(linkedApplications, porterAppName)
+			}
+		} else {
+			applications, err := environmentgroups.LinkedApplications(ctx, agent, latestVersion.Name, false)
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "unable to get linked applications")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
+
+			for _, app := range applications {
+				linkedApplications = append(linkedApplications, app.Name)
+			}
 		}
 
 		secrets := make(map[string]string)

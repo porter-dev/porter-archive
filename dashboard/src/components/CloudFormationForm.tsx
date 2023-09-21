@@ -313,7 +313,7 @@ const CloudFormationForm: React.FC<Props> = ({
               </AWSButtonContainer>
               <Spacer y={1} />
               <StepChangeButtonsContainer>
-                {/* <Button onClick={() => setCurrentStep(3)} disabled={!canProceed}>Continue</Button> */}
+                <Button onClick={() => setCurrentStep(3)}>Continue</Button>
                 <Spacer inline x={0.5} />
                 <Button
                   onClick={() => setCurrentStep(1)}

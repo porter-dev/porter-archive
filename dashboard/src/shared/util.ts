@@ -13,7 +13,7 @@ export function valueExists<T>(value: T | null | undefined): value is T {
 
 
 export const PREFLIGHT_MESSAGE_CONST = {
-  "cloudFormation": "Cloudformation stack created",
+  "cloudFormation": "CloudFormation stack created",
 }
 
 export const PREFLIGHT_MESSAGE_CONST_AWS = {

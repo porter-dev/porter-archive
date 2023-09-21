@@ -143,7 +143,7 @@ const AppearingDiv = styled.div<{ color?: string }>`
   display: flex;
   flex-direction: column; 
   color: ${(props) => props.color || "#ffffff44"};
-  margin-left: 10px;
+ 
   @keyframes floatIn {
     from {
       opacity: 0;

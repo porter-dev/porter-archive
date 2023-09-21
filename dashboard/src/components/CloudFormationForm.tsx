@@ -15,7 +15,6 @@ import Button from "./porter/Button";
 import Link from "./porter/Link";
 import Container from "./porter/Container";
 import Step from "./porter/Step";
-import { Box, Step as MuiStep, StepContent, StepLabel, Stepper, ThemeProvider, Typography, createTheme } from "@material-ui/core";
 import { useQuery } from "@tanstack/react-query";
 import Modal from "./porter/Modal";
 import theme from "shared/themes/midnight";
@@ -27,36 +26,6 @@ type Props = {
   proceed: (id: string) => void;
   switchToCredentialFlow: () => void;
 };
-
-const stepperTheme = createTheme({
-  palette: {
-    background: {
-      paper: 'none',
-    },
-    text: {
-      primary: '#DFDFE1',
-      secondary: '#aaaabb',
-    },
-    action: {
-      active: '#001E3C',
-    },
-  },
-  typography: {
-    fontFamily: "Work Sans, sans-serif",
-  },
-  overrides: {
-    MuiStepIcon: {
-      root: {
-        '&$completed': {
-          color: theme.button,
-        },
-        '&$active': {
-          color: theme.button,
-        },
-      },
-    },
-  },
-});
 
 const CloudFormationForm: React.FC<Props> = ({
   goBack,
@@ -288,7 +257,7 @@ const CloudFormationForm: React.FC<Props> = ({
               </StepChangeButtonsContainer>
             </>,
             <>
-              <Text size={16}>Create an AWS Cloudformation stack</Text>
+              <Text size={16}>Create an AWS CloudFormation stack</Text>
               <Spacer y={.5} />
               <Text color="helper">
                 This grants Porter permissions to create infrastructure in your account.
@@ -327,7 +296,7 @@ const CloudFormationForm: React.FC<Props> = ({
               </StepChangeButtonsContainer>
             </>,
             <>
-              <Text size={16}>Permission checks</Text>
+              <Text size={16}>Check permissions</Text>
               <Spacer y={.5} />
               <Text color="helper">
                 Checking if Porter can access AWS account with ID {AWSAccountID}. This can take up to a minute.<Spacer inline width="10px" /><Link hasunderline onClick={() => setShowNeedHelpModal(true)}>

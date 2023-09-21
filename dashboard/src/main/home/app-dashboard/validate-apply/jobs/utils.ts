@@ -1,6 +1,6 @@
 import { JobRun } from "lib/hooks/useJobs";
 import { timeFrom } from "shared/string_utils";
-import { differenceInSeconds, formatDuration } from 'date-fns';
+import { differenceInSeconds, intervalToDuration } from 'date-fns';
 
 export const ranFor = (start: string, end?: string | number) => {
     const duration = timeFrom(start, end);
@@ -19,6 +19,16 @@ export const getDuration = (jobRun: JobRun): string => {
     const endTimeStamp = jobRun.status.completionTime ? new Date(jobRun.status.completionTime).getTime() : Date.now()
 
     const timeDifferenceInSeconds = differenceInSeconds(endTimeStamp, startTimeStamp);
-
-    return formatDuration({ seconds: timeDifferenceInSeconds });
+    const duration = intervalToDuration({ start: 0, end: timeDifferenceInSeconds * 1000 });
+    if (duration.weeks) {
+        return `${duration.weeks}w ${duration.days}d ${duration.hours}h`
+    } else if (duration.days) {
+        return `${duration.days}d ${duration.hours}h ${duration.minutes}m`
+    } else if (duration.hours) {
+        return `${duration.hours}h ${duration.minutes}m ${duration.seconds}s`
+    } else if (duration.minutes) {
+        return `${duration.minutes}m ${duration.seconds}s`
+    } else {
+        return `${duration.seconds}s`
+    }
 };

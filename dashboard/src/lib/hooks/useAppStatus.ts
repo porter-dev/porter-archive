@@ -127,7 +127,6 @@ export const useAppStatus = (
                         isFailing
                     };
                 });
-            console.log(newPods)
             setServicePodMap((prevState) => ({
                 ...prevState,
                 [serviceName]: newPods,
@@ -161,6 +160,7 @@ export const useAppStatus = (
                 message = `${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
                     } failing to run Version ${version}`;
             } else if (
+                // last check ensures that we don't say 'spinning down' unless there exists a version status above it
                 i > 0 && replicaSetArray[i - 1].every(p => !p.isFailing) && revisionIdToNumber[replicaSetArray[i - 1][0].revisionId] != null
             ) {
                 status = "spinningDown";
@@ -184,8 +184,6 @@ export const useAppStatus = (
     }
 
     const serviceVersionStatus: Record<string, PorterAppVersionStatus[]> = useMemo(() => {
-        console.log("updating service version status, revisionId to number: ", revisionIdToNumber)
-
         const serviceReplicaSetMap = Object.fromEntries(Object.keys(servicePodMap).map((serviceName) => {
             const pods = servicePodMap[serviceName];
             const replicaSetMap = _.sortBy(pods, ["helmRevision"])

@@ -249,7 +249,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       setPreviewRevision(null);
 
       // redirect to the default tab after save
-      // history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
+      history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
     } catch (err) { }
   });
 

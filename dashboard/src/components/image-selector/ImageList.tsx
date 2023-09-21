@@ -315,7 +315,8 @@ const ImageItem = styled.div<{ lastItem: boolean; isSelected: boolean }>`
   color: #ffffff;
   align-items: center;
   padding: 10px 0px;
-  cursor: pointer;
+  user-select: text;
+  cursor: text;
   background: ${(props) => (props.isSelected ? "#ffffff11" : "")};
   :hover {
     background: #ffffff22;
@@ -341,6 +342,8 @@ const LoadingWrapper = styled.div`
   font-size: 13px;
   justify-content: center;
   color: #ffffff44;
+  user-select: text;
+  cursor: text;
 `;
 
 const ExpandedWrapper = styled.div`

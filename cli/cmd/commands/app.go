@@ -167,15 +167,17 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 	// updated exec args includes launcher command prepended if needed, otherwise it is the same as execArgs
 	updatedExecArgs := make([]string, 0)
 	if project.ValidateApplyV2 {
-		podsSimple, updatedExecArgs, err = getPodsFromV2PorterYaml(ctx, execArgs, client, cliConfig, args[0])
+		podsSimple, updatedExecArgs, namespace, err = getPodsFromV2PorterYaml(ctx, execArgs, client, cliConfig, args[0])
 		if err != nil {
 			return err
 		}
+		appNamespace = namespace
 	} else {
 		podsSimple, updatedExecArgs, err = getPodsFromV1PorterYaml(ctx, execArgs, client, cliConfig, args[0])
 		if err != nil {
 			return err
 		}
+		appNamespace = fmt.Sprintf("porter-stack-%s", args[0])
 	}
 
 	// if length of pods is 0, throw error
@@ -442,16 +444,36 @@ func appGetPodsV1PorterYaml(ctx context.Context, cliConfig config.CLIConfig, cli
 	return res, nil
 }
 
-func appGetPodsV2PorterYaml(ctx context.Context, cliConfig config.CLIConfig, client api.Client, porterAppName string) ([]appPodSimple, error) {
+func appGetPodsV2PorterYaml(ctx context.Context, cliConfig config.CLIConfig, client api.Client, porterAppName string) ([]appPodSimple, string, error) {
 	pID := cliConfig.Project
 	cID := cliConfig.Cluster
 
-	resp, err := client.GetK8sAllPodsV2PorterYaml(ctx, pID, cID, porterAppName)
+	targetResp, err := client.DefaultDeploymentTarget(ctx, pID, cID)
 	if err != nil {
-		return nil, err
+		return nil, "", fmt.Errorf("error calling default deployment target endpoint: %w", err)
 	}
 
+	if targetResp.DeploymentTargetID == "" {
+		return nil, "", errors.New("deployment target id is empty")
+	}
+
+	resp, err := client.PorterYamlV2Pods(ctx, pID, cID, porterAppName, &types.PorterYamlV2PodsRequest{
+		DeploymentTargetID: targetResp.DeploymentTargetID,
+	})
+	if err != nil {
+		return nil, "", err
+	}
+
+	if resp == nil {
+		return nil, "", errors.New("get pods response is nil")
+	}
 	pods := *resp
+
+	if len(pods) == 0 {
+		return nil, "", errors.New("no running pods found for this application")
+	}
+
+	namespace := pods[0].Namespace
 
 	res := make([]appPodSimple, 0)
 
@@ -470,7 +492,7 @@ func appGetPodsV2PorterYaml(ctx context.Context, cliConfig config.CLIConfig, cli
 		}
 	}
 
-	return res, nil
+	return res, namespace, nil
 }
 
 func appExecuteRun(config *AppPorterRunSharedConfig, namespace, name, container string, args []string) error {
@@ -1139,30 +1161,30 @@ func getPodsFromV1PorterYaml(ctx context.Context, execArgs []string, client api.
 	return podsSimple, execArgs, nil
 }
 
-func getPodsFromV2PorterYaml(ctx context.Context, execArgs []string, client api.Client, cliConfig config.CLIConfig, porterAppName string) ([]appPodSimple, []string, error) {
-	if len(execArgs) > 0 {
-		res, err := client.GetPorterApp(ctx, cliConfig.Project, cliConfig.Cluster, porterAppName)
-		if err != nil {
-			return nil, nil, fmt.Errorf("Unable to run command: %w", err)
-		}
-		if res.Name == "" {
-			return nil, nil, fmt.Errorf("An application named \"%s\" was not found in your project (ID: %d). Please check your spelling and try again.", porterAppName, cliConfig.Project)
-		}
+func getPodsFromV2PorterYaml(ctx context.Context, execArgs []string, client api.Client, cliConfig config.CLIConfig, porterAppName string) ([]appPodSimple, []string, string, error) {
+	// if len(execArgs) > 0 {
+	// 	res, err := client.GetPorterApp(ctx, cliConfig.Project, cliConfig.Cluster, porterAppName)
+	// 	if err != nil {
+	// 		return nil, nil, fmt.Errorf("Unable to run command: %w", err)
+	// 	}
+	// 	if res.Name == "" {
+	// 		return nil, nil, fmt.Errorf("An application named \"%s\" was not found in your project (ID: %d). Please check your spelling and try again.", porterAppName, cliConfig.Project)
+	// 	}
 
-		if res.Builder != "" &&
-			(strings.Contains(res.Builder, "heroku") ||
-				strings.Contains(res.Builder, "paketo")) &&
-			execArgs[0] != "/cnb/lifecycle/launcher" &&
-			execArgs[0] != "launcher" {
-			// this is a buildpacks release using a heroku builder, prepend the launcher
-			execArgs = append([]string{"/cnb/lifecycle/launcher"}, execArgs...)
-		}
-	}
+	// 	if res.Builder != "" &&
+	// 		(strings.Contains(res.Builder, "heroku") ||
+	// 			strings.Contains(res.Builder, "paketo")) &&
+	// 		execArgs[0] != "/cnb/lifecycle/launcher" &&
+	// 		execArgs[0] != "launcher" {
+	// 		// this is a buildpacks release using a heroku builder, prepend the launcher
+	// 		execArgs = append([]string{"/cnb/lifecycle/launcher"}, execArgs...)
+	// 	}
+	// }
 
-	podsSimple, err := appGetPodsV1PorterYaml(ctx, cliConfig, client, porterAppName)
+	podsSimple, namespace, err := appGetPodsV2PorterYaml(ctx, cliConfig, client, porterAppName)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Could not retrieve list of pods: %w", err)
+		return nil, nil, "", fmt.Errorf("Could not retrieve list of pods: %w", err)
 	}
 
-	return podsSimple, execArgs, nil
+	return podsSimple, execArgs, namespace, nil
 }

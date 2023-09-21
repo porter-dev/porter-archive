@@ -27,8 +27,8 @@ export const LatestRevisionContext = createContext<{
   clusterId: number;
   projectId: number;
   deploymentTargetId: string;
-  previewRevision: number | null;
-  setPreviewRevision: Dispatch<SetStateAction<number | null>>;
+  previewRevision: AppRevision | null;
+  setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
 } | null>(null);
 
 export const useLatestRevision = () => {
@@ -48,7 +48,7 @@ export const LatestRevisionProvider = ({
   appName?: string;
   children: JSX.Element;
 }) => {
-  const [previewRevision, setPreviewRevision] = useState<number | null>(null);
+  const [previewRevision, setPreviewRevision] = useState<AppRevision | null>(null);
   const { currentCluster, currentProject } = useContext(Context);
   const deploymentTarget = useDefaultDeploymentTarget();
 

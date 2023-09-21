@@ -19,6 +19,7 @@ const Environment: React.FC = () => {
     latestProto,
     clusterId,
     projectId,
+    previewRevision,
   } = useLatestRevision();
   const {
     formState: { isSubmitting, errors },
@@ -68,7 +69,7 @@ const Environment: React.FC = () => {
       <EnvVariables />
       <EnvGroups
         appName={latestProto.name}
-        revisionId={latestRevision.id}
+        revisionId={previewRevision ? previewRevision.id : latestRevision.id} // get versions of env groups attached to preview revision if set
         baseEnvGroups={baseEnvGroups}
         existingEnvGroupNames={envGroupNames}
       />

@@ -91,33 +91,45 @@ const PreflightChecks: React.FC<Props> = (props) => {
     );
   };
   return (
-    <AppearingDiv>
-      <Text size={16}>Cluster provision check</Text>
-      <Spacer y={.5} />
-      <Text color="helper">
-        Porter checks that the account has the right permissions and resources to provision a cluster.
-      </Text>
-      <Spacer y={1} />
-      {
-        props.error ?
-          props.provider === 'AWS' ?
-            <Error message="Selected region is not available for your account. Please select another region" /> :
-            <>
-              <Error message="There is an error with your account. Please ensure billing is enabled or contact Porter Support: support@porter.run" />
-              <Spacer y={.5} />
-              <Link to="https://support.google.com/googleapi/answer/6158867?hl=en" target="_blank">
-                Check to see if billing is enabled on your account
-              </Link>
-              <Spacer y={.5} />
-            </>
-          :
-          Object.keys(currentMessageConst).map((checkKey) => (
-            <PreflightCheckItem key={checkKey} checkKey={checkKey} />
-          ))
 
-      }
-    </AppearingDiv >
-  );
+    props.provider === 'DEFAULT' ?
+      <AppearingDiv>
+        {Object.keys(currentMessageConst).map((checkKey) => (
+          <PreflightCheckItem key={checkKey} checkKey={checkKey} />
+        ))}
+      </AppearingDiv >
+      :
+
+      (
+
+        <AppearingDiv>
+          <Text size={16}>Cluster provision check</Text>
+          <Spacer y={.5} />
+          <Text color="helper">
+            Porter checks that the account has the right permissions and resources to provision a cluster.
+          </Text>
+          <Spacer y={1} />
+          {
+            props.error ?
+              props.provider === 'AWS' ?
+                <Error message="Selected region is not available for your account. Please select another region" /> :
+                <>
+                  <Error message="There is an error with your account. Please ensure billing is enabled or contact Porter Support: support@porter.run" />
+                  <Spacer y={.5} />
+                  <Link to="https://support.google.com/googleapi/answer/6158867?hl=en" target="_blank">
+                    Check to see if billing is enabled on your account
+                  </Link>
+                  <Spacer y={.5} />
+                </>
+              :
+              Object.keys(currentMessageConst).map((checkKey) => (
+                <PreflightCheckItem key={checkKey} checkKey={checkKey} />
+              ))
+
+          }
+        </AppearingDiv >
+      )
+  )
 };
 
 
@@ -131,7 +143,7 @@ const AppearingDiv = styled.div<{ color?: string }>`
   display: flex;
   flex-direction: column; 
   color: ${(props) => props.color || "#ffffff44"};
-  margin-left: 10px;
+ 
   @keyframes floatIn {
     from {
       opacity: 0;

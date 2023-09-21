@@ -19,9 +19,6 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 	ctx, span := telemetry.NewSpan(ctx, "v1-app-proto-from-yaml")
 	defer span.End()
 
-	if appName == "" {
-		return nil, nil, telemetry.Error(ctx, span, nil, "app name is empty")
-	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
 
 	if porterYamlBytes == nil {

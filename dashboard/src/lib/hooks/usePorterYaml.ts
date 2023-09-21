@@ -121,13 +121,14 @@ export const usePorterYaml = ({
           .parseAsync(res.data);
         const proto = PorterApp.fromJsonString(atob(data.b64_app_proto));
 
-        const { services, predeploy } = serviceOverrides({
+        const { services, predeploy, build } = serviceOverrides({
           overrides: proto,
           useDefaults,
         });
 
-        if (services.length || predeploy) {
+        if (services.length || predeploy || build) {
           setDetectedServices({
+            build,
             services,
             predeploy,
           });

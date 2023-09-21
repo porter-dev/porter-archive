@@ -320,11 +320,11 @@ const appJobs = baseApi<
 const appPodStatus = baseApi<
   {
     deployment_target_id: string;
-    selectors: string;
+    service: string;
   },
-  { id: number; cluster_id: number }
->("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/apps/pods`;
+  { project_id: number; cluster_id: number, app_name: string }
+>("GET", ({ project_id, cluster_id, app_name }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${app_name}/pods`;
 });
 
 const getFeedEvents = baseApi<

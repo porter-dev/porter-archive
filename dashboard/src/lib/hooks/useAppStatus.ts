@@ -2,7 +2,7 @@ import _ from "lodash";
 import { useEffect, useMemo, useState } from "react";
 import api from "shared/api";
 import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
-import { useRevisionIdToNumber } from "./useRevisionList";
+import { useRevisionList } from "./useRevisionList";
 import { valueExists } from "shared/util";
 
 export type PorterAppVersionStatus = {
@@ -38,7 +38,7 @@ export const useAppStatus = (
 ) => {
     const [servicePodMap, setServicePodMap] = useState<Record<string, ClientPod[]>>({});
 
-    const revisionIdToNumber = useRevisionIdToNumber(appName, deploymentTargetId);
+    const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
 
     const {
         newWebsocket,
@@ -76,18 +76,17 @@ export const useAppStatus = (
     };
 
     const updatePods = async (serviceName: string) => {
-        const selectors = `porter.run/service-name=${serviceName},porter.run/deployment-target-id=${deploymentTargetId}`;
-
         try {
             const res = await api.appPodStatus(
                 "<token>",
                 {
                     deployment_target_id: deploymentTargetId,
-                    selectors,
+                    service: serviceName,
                 },
                 {
-                    id: projectId,
+                    project_id: projectId,
                     cluster_id: clusterId,
+                    app_name: appName,
                 }
             );
             // TODO: type the response
@@ -128,6 +127,7 @@ export const useAppStatus = (
                         isFailing
                     };
                 });
+            console.log(newPods)
             setServicePodMap((prevState) => ({
                 ...prevState,
                 [serviceName]: newPods,
@@ -143,7 +143,7 @@ export const useAppStatus = (
             setupWebsocket(serviceName);
         }
         return () => closeAllWebsockets();
-    }, [projectId, clusterId, deploymentTargetId, appName, JSON.stringify(revisionIdToNumber)]);
+    }, [projectId, clusterId, deploymentTargetId, appName]);
 
     const processReplicaSetArray = (replicaSetArray: ClientPod[][]): PorterAppVersionStatus[] => {
         return replicaSetArray.map((replicaSet, i) => {
@@ -161,7 +161,7 @@ export const useAppStatus = (
                 message = `${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
                     } failing to run Version ${version}`;
             } else if (
-                i > 0 && replicaSetArray[i - 1].every(p => !p.isFailing)
+                i > 0 && replicaSetArray[i - 1].every(p => !p.isFailing) && revisionIdToNumber[replicaSetArray[i - 1][0].revisionId] != null
             ) {
                 status = "spinningDown";
                 message = `${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
@@ -184,6 +184,8 @@ export const useAppStatus = (
     }
 
     const serviceVersionStatus: Record<string, PorterAppVersionStatus[]> = useMemo(() => {
+        console.log("updating service version status, revisionId to number: ", revisionIdToNumber)
+
         const serviceReplicaSetMap = Object.fromEntries(Object.keys(servicePodMap).map((serviceName) => {
             const pods = servicePodMap[serviceName];
             const replicaSetMap = _.sortBy(pods, ["helmRevision"])
@@ -207,7 +209,7 @@ export const useAppStatus = (
         }));
 
         return serviceReplicaSetMap;
-    }, [JSON.stringify(servicePodMap)]);
+    }, [JSON.stringify(servicePodMap), JSON.stringify(revisionIdToNumber)]);
 
     return {
         serviceVersionStatus,

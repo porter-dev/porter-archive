@@ -25,8 +25,9 @@ import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 import LogFilterContainer from "../../expanded-app/logs/LogFilterContainer";
 import StyledLogs from "../../expanded-app/logs/StyledLogs";
-import { useLatestRevisionNumber, useRevisionIdToNumber } from "lib/hooks/useRevisionList";
+import { useRevisionList } from "lib/hooks/useRevisionList";
 import { useLocation } from "react-router";
+import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 
 type Props = {
     projectId: number;
@@ -81,8 +82,8 @@ const Logs: React.FC<Props> = ({
         output_stream: logQueryParamOpts.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
     });
 
-    const revisionIdToNumber = useRevisionIdToNumber(appName, deploymentTargetId)
-    const latestRevisionNumber = useLatestRevisionNumber(appName, deploymentTargetId)
+    const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
+    const { latestRevision: { revision_number: latestRevisionNumber } } = useLatestRevision();
 
     const isAgentVersionUpdated = (agentImage: string | undefined) => {
         if (agentImage == null) {

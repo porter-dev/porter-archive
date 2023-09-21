@@ -77,7 +77,7 @@ const AppHeader: React.FC = () => {
       []
     );
 
-    return domains.length === 1 ? prefixSubdomain(domains[0]) : "";
+    return domains.length === 1 ? domains[0] : "";
   }, [latestProto]);
 
   return (
@@ -125,7 +125,7 @@ const AppHeader: React.FC = () => {
         <>
           <Container>
             <Text>
-              <a href={displayDomain} target="_blank">
+              <a href={prefixSubdomain(displayDomain)} target="_blank">
                 {displayDomain}
               </a>
             </Text>

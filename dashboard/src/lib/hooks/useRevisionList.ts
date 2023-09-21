@@ -1,26 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
-import { useContext, useEffect, useState } from "react";
-import { Context } from "shared/Context";
+import { useEffect, useState } from "react";
 import api from "shared/api";
 import { z } from "zod";
 import { AppRevision, appRevisionValidator } from "../revisions/types";
-import { useLatestRevision } from "../../main/home/app-dashboard/app-view/LatestRevisionContext";
+import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 
-export function useRevisionList(appName: string, deploymentTargetId: string) {
-  const { currentProject, currentCluster } = useContext(Context);
-  const { latestRevision } = useLatestRevision();
-
+export function useRevisionList({
+  appName,
+  deploymentTargetId,
+  projectId,
+  clusterId,
+}: {
+  appName: string,
+  deploymentTargetId: string,
+  projectId: number,
+  clusterId: number
+}): { revisionList: AppRevision[], revisionIdToNumber: Record<string, number> } {
   const [
     revisionList,
     setRevisionList,
   ] = useState<AppRevision[]>([]);
-
-  if (currentProject == null || currentCluster == null) {
-    return [];
-  }
+  const [revisionIdToNumber, setRevisionIdToNumber] = useState<Record<string, number>>({});
+  const { latestRevision } = useLatestRevision();
 
   const { data } = useQuery(
-    ["listAppRevisions", currentProject.id, currentCluster.id, appName, deploymentTargetId, latestRevision],
+    ["listAppRevisions", projectId, clusterId, appName, deploymentTargetId, latestRevision],
     async () => {
       const res = await api.listAppRevisions(
         "<token>",
@@ -28,8 +32,8 @@ export function useRevisionList(appName: string, deploymentTargetId: string) {
           deployment_target_id: deploymentTargetId,
         },
         {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
+          project_id: projectId,
+          cluster_id: clusterId,
           porter_app_name: appName,
         }
       );
@@ -39,32 +43,21 @@ export function useRevisionList(appName: string, deploymentTargetId: string) {
           app_revisions: z.array(appRevisionValidator),
         })
         .parseAsync(res.data);
-
       return revisions;
     },
     {
-      enabled: !!currentProject && !!currentCluster,
       refetchInterval: 5000,
+      refetchOnWindowFocus: false,
     }
   );
 
   useEffect(() => {
     if (data) {
-      setRevisionList(data.app_revisions);
+      const revisionList = data.app_revisions
+      setRevisionList(revisionList);
+      setRevisionIdToNumber(Object.fromEntries(revisionList.map(r => ([r.id, r.revision_number]))))
     }
   }, [data]);
 
-  return revisionList;
-}
-
-export function useRevisionIdToNumber(appName: string, deploymentTargetId: string) {
-  const revisionList = useRevisionList(appName, deploymentTargetId);
-  const revisionIdToNumber: Record<string, number> = Object.fromEntries(revisionList.map(r => ([r.id, r.revision_number])))
-
-  return revisionIdToNumber;
-}
-
-export function useLatestRevisionNumber(appName: string, deploymentTargetId: string) {
-  const revisionList = useRevisionList(appName, deploymentTargetId);
-  return revisionList.map((revision) => revision.revision_number).reduce((a, b) => Math.max(a, b), 0)
+  return { revisionList, revisionIdToNumber };
 }

@@ -21,7 +21,7 @@ const EventCard: React.FC<Props> = ({ event, deploymentTargetId, isLatestDeployE
   return match(event)
     .with({ type: "APP_EVENT" }, (ev) => <AppEventCard event={ev} deploymentTargetId={deploymentTargetId} projectId={projectId} clusterId={clusterId} appName={appName} />)
     .with({ type: "BUILD" }, (ev) => <BuildEventCard event={ev} projectId={projectId} clusterId={clusterId} appName={appName} />)
-    .with({ type: "DEPLOY" }, (ev) => <DeployEventCard event={ev} appName={appName} showServiceStatusDetail={isLatestDeployEvent} deploymentTargetId={deploymentTargetId} appName={appName} />)
+    .with({ type: "DEPLOY" }, (ev) => <DeployEventCard event={ev} appName={appName} showServiceStatusDetail={isLatestDeployEvent} deploymentTargetId={deploymentTargetId} projectId={projectId} clusterId={clusterId} />)
     .with({ type: "PRE_DEPLOY" }, (ev) => <PreDeployEventCard event={ev} appName={appName} projectId={projectId} clusterId={clusterId} />)
     .exhaustive();
 };

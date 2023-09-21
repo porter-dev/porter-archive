@@ -100,7 +100,16 @@ const PreflightChecks: React.FC<Props> = (props) => {
       <Spacer y={1} />
       {
         props.error ?
-          <Error message="Selected region is not available for your account. Please select another region" />
+          props.provider === 'AWS' ?
+            <Error message="Selected region is not available for your account. Please select another region" /> :
+            <>
+              <Error message="There is an error with your account. Please ensure billing is enabled or contact Porter Support: support@porter.run" />
+              <Spacer y={.5} />
+              <Link to="https://support.google.com/googleapi/answer/6158867?hl=en" target="_blank">
+                Check to see if billing is enabled on your account
+              </Link>
+              <Spacer y={.5} />
+            </>
           :
           Object.keys(currentMessageConst).map((checkKey) => (
             <PreflightCheckItem key={checkKey} checkKey={checkKey} />

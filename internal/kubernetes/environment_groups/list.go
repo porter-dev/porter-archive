@@ -35,7 +35,7 @@ type EnvironmentGroup struct {
 	// SecretVariables are secret values for the EnvironmentGroup. This usually will be a Secret on the kubernetes cluster
 	SecretVariables map[string]string `json:"secret_variables,omitempty"`
 	// CreatedAt is only used for display purposes and is in UTC Unix time
-	CreatedAtUTC time.Time `json:"created_at"`
+	CreatedAtUTC time.Time `json:"created_at,omitempty"`
 }
 
 type environmentGroupOptions struct {

@@ -83,7 +83,8 @@ const RevisionsList: React.FC<Props> = ({
       clientAppFromProto({
         proto: revertData.app,
         overrides: servicesFromYaml,
-        
+        variables: revertData.variables,
+        secrets: revertData.secrets,
       })
     );
     setRevertData(null);

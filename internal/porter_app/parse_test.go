@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"google.golang.org/protobuf/encoding/protojson"
+	"k8s.io/utils/pointer"
 
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -173,6 +174,7 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 						Enabled:  true,
 						HttpPath: "/healthz",
 					},
+					Private: pointer.Bool(false),
 				},
 			},
 			Type: 1,

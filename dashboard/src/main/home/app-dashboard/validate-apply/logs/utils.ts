@@ -41,7 +41,22 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
   });
 };
 
-export const useLogs = (
+export const useLogs = ({
+  projectID,
+  clusterID,
+  selectedFilterValues,
+  appName,
+  serviceName,
+  deploymentTargetId,
+  searchParam,
+  notify,
+  setLoading,
+  revisionIdToNumber,
+  setDate,
+  appRevisionId = "",
+  timeRange,
+  filterPredeploy,
+}: {
   projectID: number,
   clusterID: number,
   selectedFilterValues: Record<LogFilterName, string>,
@@ -54,13 +69,15 @@ export const useLogs = (
   revisionIdToNumber: Record<string, number>,
   // if setDate is set, results are not live
   setDate?: Date,
-  appRevisionId: string = "",
+  appRevisionId?: string,
   timeRange?: {
     startTime?: Dayjs,
     endTime?: Dayjs,
   },
+  filterPredeploy: boolean,
+}
 ) => {
-  const isLive = !setDate;
+  const [isLive, setIsLive] = useState<boolean>(!setDate && (timeRange?.startTime == null && timeRange?.endTime == null));
   const logsBufferRef = useRef<PorterLog[]>([]);
   const [logs, setLogs] = useState<PorterLog[]>([]);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
@@ -160,7 +177,7 @@ export const useLogs = (
   };
 
   const setupWebsocket = (websocketKey: string) => {
-    const websocketBaseURL = `/api/projects/${projectID}/clusters/${clusterID}/apps/logs/loki`;
+    const websocketBaseURL = `/api/projects/${projectID}/clusters/${clusterID}/apps/${appName}/logs/loki`;
 
     const searchParams = {
       app_name: appName,
@@ -218,6 +235,10 @@ export const useLogs = (
         return false;
       }
 
+      if (filterPredeploy && (log.metadata.raw_labels?.porter_run_service_name ?? "").endsWith("predeploy")) {
+        return false;
+      }
+
       if (selectedFilterValues.revision !== GenericLogFilter.getDefaultOption("revision").value &&
         log.metadata.revision !== selectedFilterValues.revision) {
         return false;
@@ -256,6 +277,7 @@ export const useLogs = (
         {
           cluster_id: clusterID,
           project_id: projectID,
+          porter_app_name: appName,
         }
       )
 
@@ -303,7 +325,7 @@ export const useLogs = (
     }
   };
 
-  const refresh = async () => {
+  const refresh = async ({ isLive }: { isLive: boolean }) => {
     setLoading(true);
     setLogs([]);
     flushLogsBuffer(true);
@@ -337,7 +359,6 @@ export const useLogs = (
 
     if (isLive) {
       setupWebsocket(websocketKey);
-
     }
   };
 
@@ -428,8 +449,20 @@ export const useLogs = (
   }, []);
 
   useEffect(() => {
-    refresh();
-  }, [appName, serviceName, deploymentTargetId, searchParam, setDate, selectedFilterValues]);
+    // if a complete time range is not given, then we are live
+    const isLive = !setDate && (timeRange?.startTime == null || timeRange?.endTime == null);
+    refresh({ isLive });
+    setIsLive(isLive);
+  }, [
+    appName,
+    serviceName,
+    deploymentTargetId,
+    searchParam,
+    setDate,
+    JSON.stringify(selectedFilterValues),
+    JSON.stringify(timeRange?.endTime),
+    filterPredeploy
+  ]);
 
   useEffect(() => {
     // if the streaming is no longer live, close all websockets

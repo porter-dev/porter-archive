@@ -80,7 +80,7 @@ func (repo *TagRepository) ReadTagByNameAndProjectId(tagName string, projectId u
 func (repo *TagRepository) ListTagsByProjectId(projectId uint) ([]*models.Tag, error) {
 	tags := make([]*models.Tag, 0)
 
-	err := repo.db.Preload("Releases").Where("project_id = ?", projectId).Find(&tags).Error
+	err := repo.db.Preload("Releases").Where("project_id = ?", projectId).Order("name asc").Find(&tags).Error
 	if err != nil {
 		return nil, err
 	}

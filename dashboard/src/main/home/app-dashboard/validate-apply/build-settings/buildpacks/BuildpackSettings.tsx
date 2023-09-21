@@ -18,11 +18,8 @@ import Button from "components/porter/Button";
 import BuildpackList from "./BuildpackList";
 import BuildpackConfigurationModal from "./BuildpackConfigurationModal";
 import { useFieldArray, useFormContext } from "react-hook-form";
-import {
-  BuildOptions,
-  PorterAppFormData,
-  SourceOptions,
-} from "lib/porter-apps";
+import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
+import { BuildOptions } from "lib/porter-apps/build";
 
 type Props = {
   projectId: number;

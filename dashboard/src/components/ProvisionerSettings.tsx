@@ -1013,6 +1013,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                   <Text color="helper">
                     Preflight checks for the account didn't pass. Please fix the issues and retry.
                   </Text>
+                  <Spacer y={.5} />
                   < Button
                     // disabled={isDisabled()}
                     disabled={isLoading}

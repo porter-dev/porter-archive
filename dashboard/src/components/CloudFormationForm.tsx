@@ -20,6 +20,7 @@ import { useQuery } from "@tanstack/react-query";
 import Modal from "./porter/Modal";
 import theme from "shared/themes/midnight";
 import VerticalSteps from "./porter/VerticalSteps";
+import PreflightChecks from "./PreflightChecks";
 
 type Props = {
   goBack: () => void;
@@ -66,6 +67,7 @@ const CloudFormationForm: React.FC<Props> = ({
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [hasClickedCloudformationButton, setHasClickedCloudformationButton] = useState(false);
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
+  const [preflightData, setPreflightData] = useState<any>(undefined);
 
   const { currentProject, user } = useContext(Context);
   const markStepStarted = async (
@@ -117,10 +119,17 @@ const CloudFormationForm: React.FC<Props> = ({
             id: currentProject.id,
           }
         );
+      setPreflightData({
+        "Msg": {
+          "preflight_checks": {
+            cloudFormation: {},
+          }
+        }
+      })
       return true;
     },
     {
-      enabled: currentStep === 2,
+      enabled: currentStep === 3,
       retry: (failureCount, err) => {
         // if they've waited over 35 seconds notify us on slack. Cloudformation stack should only take around 20-25 seconds to create
         if (failureCount === 7 && hasClickedCloudformationButton) {
@@ -204,6 +213,7 @@ const CloudFormationForm: React.FC<Props> = ({
   }
 
   const directToCloudFormation = () => {
+    setCurrentStep(3)
     const externalId = getExternalId();
     let trustArn = process.env.TRUST_ARN ? process.env.TRUST_ARN : "arn:aws:iam::108458755588:role/CAPIManagement";
     const cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`
@@ -303,12 +313,12 @@ const CloudFormationForm: React.FC<Props> = ({
               </AWSButtonContainer>
               <Spacer y={1} />
               <StepChangeButtonsContainer>
-                <Button onClick={() => setCurrentStep(3)} disabled={!canProceed}>Continue</Button>
+                {/* <Button onClick={() => setCurrentStep(3)} disabled={!canProceed}>Continue</Button> */}
                 <Spacer inline x={0.5} />
                 <Button
                   onClick={() => setCurrentStep(1)}
                   color="#222222"
-                  status={canProceed ? "success" : hasClickedCloudformationButton ? "loading" : undefined}
+                  // status={canProceed ? "success" : hasClickedCloudformationButton ? "loading" : undefined}
                   loadingText={`Checking if Porter can access AWS account ID ${AWSAccountID}...`}
                   successText={`Porter can access AWS account ID ${AWSAccountID}`}
                 >
@@ -324,6 +334,8 @@ const CloudFormationForm: React.FC<Props> = ({
                   Need help?
                 </Link>
               </Text>
+              <Spacer y={1} />
+              <PreflightChecks preflightData={preflightData} provider={"DEFAULT"} />
               <Spacer y={1} />
               <Container row>
                 <Button

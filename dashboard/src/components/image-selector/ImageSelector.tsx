@@ -245,7 +245,6 @@ const ImageItem = styled.div`
     ${(props: { lastItem: boolean; isSelected: boolean }) =>
     props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;
-  user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;
@@ -307,7 +306,6 @@ const StyledImageSelector = styled.div`
   background: ${(props: { isExpanded: boolean; forceExpanded: boolean }) =>
     props.isExpanded ? "#ffffff11" : ""};
   border-radius: 3px;
-  user-select: none;
   height: 40px;
   font-size: 13px;
   color: #ffffff;

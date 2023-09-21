@@ -153,7 +153,7 @@ const EnvGroups: React.FC<Props> = ({
           Max 4 Env Groups allowed
         </TooltipText>
       </TooltipWrapper>
-      {envGroups.length > 0 && (
+      {populatedEnvWithFallback.length > 0 && (
         <>
           <Spacer y={0.5} />
           <Text size={16}>Synced environment groups</Text>

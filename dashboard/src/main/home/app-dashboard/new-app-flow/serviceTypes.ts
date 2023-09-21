@@ -148,6 +148,7 @@ type SharedServiceParams = {
     type: ServiceType;
     canDelete: boolean;
     expanded: boolean;
+    smartOptimization: boolean;
     cloudsql: CloudSql;
 }
 
@@ -160,6 +161,7 @@ export type WebService = SharedServiceParams & Omit<WorkerService, 'type'> & {
 const WebService = {
     default: (name: string, porterJson?: PorterJson): WebService => ({
         name,
+        smartOptimization: true,
         expanded: true,
         cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
@@ -211,6 +213,7 @@ const WebService = {
     }),
     serialize: (service: WebService) => {
         return {
+            smartOptimization: service.smartOptimization,
             replicaCount: service.replicas.value,
             resources: {
                 requests: {
@@ -271,6 +274,7 @@ const WebService = {
         return {
             name,
             expanded: false,
+            smartOptimization: values.smartOptimization,
             cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
             ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
@@ -331,6 +335,7 @@ const WorkerService = {
     default: (name: string, porterJson?: PorterJson): WorkerService => ({
         name,
         expanded: true,
+        smartOptimization: true,
         cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
@@ -376,12 +381,14 @@ const WorkerService = {
                 dbPort: service.cloudsql.dbPort.value,
                 serviceAccountJSON: service.cloudsql.serviceAccountJSON.value,
             },
+            smartOptimization: service.smartOptimization,
         }
     },
     deserialize: (name: string, values: any, porterJson?: PorterJson): WorkerService => {
         return {
             name,
             expanded: false,
+            smartOptimization: values.smartOptimization,
             cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
             ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
@@ -414,6 +421,7 @@ const JobService = {
     default: (name: string, porterJson?: PorterJson): JobService => ({
         name,
         expanded: true,
+        smartOptimization: true,
         cpu: ServiceField.string('100', porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.apps?.[name]?.run),
@@ -430,6 +438,7 @@ const JobService = {
     }),
     serialize: (service: JobService) => {
         return {
+            smartOptimization: service.smartOptimization,
             allowConcurrent: service.jobsExecuteConcurrently.value,
             container: {
                 command: service.startCommand.value,
@@ -457,6 +466,7 @@ const JobService = {
         return {
             name,
             expanded: false,
+            smartOptimization: values.smartOptimization,
             cpu: ServiceField.string(values.resources?.requests?.cpu?.replace('m', ''), porterJson?.apps?.[name]?.config?.resources?.requests?.cpu ? porterJson?.apps?.[name]?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
             ram: ServiceField.string(values.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.apps?.[name]?.config?.resources?.requests?.memory ? porterJson?.apps?.[name]?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values.container?.command ?? '', porterJson?.apps?.[name]?.run),
@@ -481,6 +491,7 @@ const ReleaseService = {
     default: (name: string, porterJson?: PorterJson): ReleaseService => ({
         name,
         expanded: true,
+        smartOptimization: true,
         cpu: ServiceField.string('100', porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
         ram: ServiceField.string('256', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
         startCommand: ServiceField.string('', porterJson?.release?.run),
@@ -496,6 +507,7 @@ const ReleaseService = {
 
     serialize: (service: ReleaseService) => {
         return {
+            smartOptimization: service.smartOptimization,
             container: {
                 command: service.startCommand.value,
             },
@@ -519,6 +531,7 @@ const ReleaseService = {
         return {
             name,
             expanded: false,
+            smartOptimization: values.smartOptimization,
             cpu: ServiceField.string(values?.resources?.requests?.cpu?.replace('m', ''), porterJson?.release?.config?.resources?.requests?.cpu ? porterJson?.release?.config?.resources?.requests?.cpu.replace('m', '') : undefined),
             ram: ServiceField.string(values?.resources?.requests?.memory?.replace('Mi', '') ?? '', porterJson?.release?.config?.resources?.requests?.memory ? porterJson?.release?.config?.resources?.requests?.memory.replace('Mi', '') : undefined),
             startCommand: ServiceField.string(values?.container?.command ?? '', porterJson?.release?.run),

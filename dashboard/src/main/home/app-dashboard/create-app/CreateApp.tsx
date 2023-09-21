@@ -430,7 +430,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       setValue("app.services", services);
       setValue("app.predeploy", [predeploy].filter(valueExists));
 
-      console.log('detectedBuild', detectedBuild)
       if (detectedBuild) {
         setValue("app.build", detectedBuild);
       }

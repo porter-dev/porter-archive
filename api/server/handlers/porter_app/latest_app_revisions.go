@@ -15,7 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// LatestAppRevisionsHandler handles requests to the /apps/{porter_app_name}/revisions endpoint
+// LatestAppRevisionsHandler handles requests to the /apps/revisions endpoint
 type LatestAppRevisionsHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -31,7 +31,7 @@ func NewLatestAppRevisionsHandler(
 	}
 }
 
-// LatestAppRevisionsRequest represents the response from the /apps/{porter_app_name}/revisions endpoint
+// LatestAppRevisionsRequest represents the response from the /apps/revisions endpoint
 type LatestAppRevisionsRequest struct{}
 
 // LatestRevisionWithSource is an app revision and its source porter app
@@ -40,7 +40,7 @@ type LatestRevisionWithSource struct {
 	Source      types.PorterApp     `json:"source"`
 }
 
-// LatestAppRevisionsResponse represents the response from the /apps/{porter_app_name}/revisions endpoint
+// LatestAppRevisionsResponse represents the response from the /apps/revisions endpoint
 type LatestAppRevisionsResponse struct {
 	AppRevisions []LatestRevisionWithSource `json:"app_revisions"`
 }

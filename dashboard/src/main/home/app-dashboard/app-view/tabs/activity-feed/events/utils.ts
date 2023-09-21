@@ -6,7 +6,7 @@ import api from "shared/api";
 import { PorterAppBuildEvent, PorterAppPreDeployEvent } from "./types";
 import { PorterAppRecord } from "../../../AppView";
 import { match } from "ts-pattern";
-import { differenceInSeconds, formatDuration } from 'date-fns';
+import { differenceInSeconds, intervalToDuration } from 'date-fns';
 
 export const getDuration = (event: PorterAppPreDeployEvent | PorterAppBuildEvent): string => {
     const startTimeStamp = match(event)
@@ -17,8 +17,18 @@ export const getDuration = (event: PorterAppPreDeployEvent | PorterAppBuildEvent
     const endTimeStamp = event.metadata.end_time ? new Date(event.metadata.end_time).getTime() : Date.now()
 
     const timeDifferenceInSeconds = differenceInSeconds(endTimeStamp, startTimeStamp);
-
-    return formatDuration({ seconds: timeDifferenceInSeconds });
+    const duration = intervalToDuration({ start: 0, end: timeDifferenceInSeconds * 1000 });
+    if (duration.weeks) {
+        return `${duration.weeks}w ${duration.days}d ${duration.hours}h`
+    } else if (duration.days) {
+        return `${duration.days}d ${duration.hours}h ${duration.minutes}m`
+    } else if (duration.hours) {
+        return `${duration.hours}h ${duration.minutes}m ${duration.seconds}s`
+    } else if (duration.minutes) {
+        return `${duration.minutes}m ${duration.seconds}s`
+    } else {
+        return `${duration.seconds}s`
+    }
 };
 
 export const getStatusIcon = (status: string) => {

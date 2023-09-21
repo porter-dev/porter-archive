@@ -88,6 +88,16 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 		appProto.Predeploy = predeployProto
 	}
 
+	envGroups := make([]*porterv1.EnvGroup, 0)
+	if porterYaml.EnvGroups != nil {
+		for _, envGroupName := range porterYaml.EnvGroups {
+			envGroups = append(envGroups, &porterv1.EnvGroup{
+				Name: envGroupName,
+			})
+		}
+	}
+	appProto.EnvGroups = envGroups
+
 	return appProto, porterYaml.Env, nil
 }
 
@@ -100,7 +110,7 @@ type PorterYAML struct {
 	Env      map[string]string  `yaml:"env"`
 
 	Predeploy *Service `yaml:"predeploy"`
-	EnvGroups []string `yaml:"env_groups,omitempty"`
+	EnvGroups []string `yaml:"envGroups,omitempty"`
 }
 
 // Build represents the build settings for a Porter app

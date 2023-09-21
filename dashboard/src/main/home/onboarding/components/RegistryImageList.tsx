@@ -32,7 +32,7 @@ const RegistryImageList: React.FC<{
         setImageList(res.data);
       })
       .catch(console.error);
-    return () => {};
+    return () => { };
   }, []);
 
   const getIcon = () => {
@@ -90,7 +90,8 @@ const ImageRow = styled.div<{ isLast?: boolean }>`
   align-items: center;
   font-size: 13px;
   padding: 12px;
-
+  user-select: text;
+  
   > img {
     width: 20px;
     filter: grayscale(100%);
@@ -105,4 +106,5 @@ const ImageList = styled.div`
   overflow-y: auto;
   background: #ffffff11;
   margin: 20px 0 20px;
+  user-select: text;
 `;

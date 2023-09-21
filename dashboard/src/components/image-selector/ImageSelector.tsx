@@ -242,6 +242,8 @@ const ImageItem = styled.div`
   width: 100%;
   font-size: 13px;
   border-bottom: 1px solid
+  user-select: text;
+  cursor: text;
     ${(props: { lastItem: boolean; isSelected: boolean }) =>
     props.lastItem ? "#00000000" : "#606166"};
   color: #ffffff;

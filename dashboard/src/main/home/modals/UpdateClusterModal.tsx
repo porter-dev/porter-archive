@@ -55,7 +55,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
           cluster_id: currentCluster.id,
         }
       )
-      .then((_) => {
+      .then(async (_) => {
         if (!currentCluster?.infra_id) {
           // TODO: make this more declarative from the Home component
           this.props.setRefreshClusters(true);
@@ -64,37 +64,33 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
           pushFiltered(this.props, "/dashboard", ["project_id"], {
             tab: "overview",
           });
+
+
+          // Handle destroying infra we've provisioned
+          api
+            .destroyInfra(
+              "<token>",
+              {},
+              {
+                project_id: currentProject.id,
+                infra_id: currentCluster.infra_id,
+              }
+            )
+            .then(() =>
+              console.log("destroyed provisioned infra:", currentCluster.infra_id)
+            )
+            .catch(console.log);
+
+          if (currentProject.simplified_view_enabled) {
+            await api.saveOnboardingState(
+              "<token>",
+              { current_step: "connect_source" },
+              { project_id: currentProject.id }
+            );
+            window.location.reload();
+          }
           return;
         }
-
-        // Handle destroying infra we've provisioned
-        api
-          .destroyInfra(
-            "<token>",
-            {},
-            {
-              project_id: currentProject.id,
-              infra_id: currentCluster.infra_id,
-            }
-          )
-          .then(() =>
-            console.log("destroyed provisioned infra:", currentCluster.infra_id)
-          )
-          .catch(console.log);
-
-
-        // this.getData(this.context.currentProject).then((data: OnboardingSaveType) => {
-        //   OFState.actions.initializeState(data);
-        // });
-        // OFState.actions.clearState();
-        api.saveOnboardingState(
-          "<token>",
-          {
-            "current_step": "connect_source"
-          },
-          {
-            project_id: currentProject.id,
-          })
 
         this.props.setRefreshClusters(true);
         this.setState({ status: "successful", showDeleteOverlay: false });

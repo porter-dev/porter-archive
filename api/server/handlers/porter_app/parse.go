@@ -369,7 +369,7 @@ func syncEnvironmentGroupToNamespaceIfLabelsExist(ctx context.Context, agent *ku
 			TargetNamespace:          targetNamespace,
 		}
 
-		syncedEnvironment, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp)
+		syncedEnvironment, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp, nil)
 		if err != nil {
 			return fmt.Errorf("error syncing environment group: %w", err)
 		}

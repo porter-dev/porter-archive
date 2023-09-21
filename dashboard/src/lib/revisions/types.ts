@@ -20,7 +20,7 @@ export const appRevisionValidator = z.object({
     name: z.string(),
     latest_version: z.number(),
     variables: z.record(z.string(), z.string()).optional(),
-    secrets: z.record(z.string(), z.string()).optional(),
+    secret_variables: z.record(z.string(), z.string()).optional(),
     created_at: z.string(),
   }),
 });

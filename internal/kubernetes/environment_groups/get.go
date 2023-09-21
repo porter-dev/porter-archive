@@ -71,9 +71,10 @@ func latestBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, enviro
 // If you are looking for envrionment groups in the base namespace, consider using LatestBaseEnvironmentGroup or ListBaseEnvironmentGroups instead
 type EnvironmentGroupInTargetNamespaceInput struct {
 	// Name is the environment group name which can be found on the configmap label
-	Name      string
-	Version   int
-	Namespace string
+	Name                              string
+	Version                           int
+	Namespace                         string
+	ExcludeDefaultAppEnvironmentGroup bool
 }
 
 // EnvironmentGroupInTargetNamespace checks if an environment group of a specific name and version exists in a target namespace.
@@ -99,7 +100,17 @@ func EnvironmentGroupInTargetNamespace(ctx context.Context, a *kubernetes.Agent,
 		telemetry.AttributeKV{Key: "namespace", Value: inp.Namespace},
 	)
 
-	environmentGroups, err := ListEnvironmentGroups(ctx, a, WithEnvironmentGroupName(inp.Name), WithEnvironmentGroupVersion(inp.Version), WithNamespace(inp.Namespace))
+	opts := []EnvironmentGroupOption{
+		WithEnvironmentGroupName(inp.Name),
+		WithEnvironmentGroupVersion(inp.Version),
+		WithNamespace(inp.Namespace),
+	}
+
+	if inp.ExcludeDefaultAppEnvironmentGroup {
+		opts = append(opts, WithoutDefaultAppEnvironmentGroups())
+	}
+
+	environmentGroups, err := ListEnvironmentGroups(ctx, a, opts...)
 	if err != nil {
 		return eg, telemetry.Error(ctx, span, err, "unable to list environment groups in target namespace")
 	}

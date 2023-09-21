@@ -12,6 +12,9 @@ import Text from "components/porter/Text";
 import Button from "components/porter/Button";
 import Spacer from "./porter/Spacer";
 import Container from "./porter/Container";
+import VerticalSteps from "./porter/VerticalSteps";
+import Link from "./porter/Link";
+import { Flex } from "main/home/cluster-dashboard/stacks/components/styles";
 
 
 type Props = {
@@ -28,8 +31,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [detected, setDetected] = useState<Detected | undefined>(undefined);
   const [gcpCloudProviderCredentialID, setGCPCloudProviderCredentialId] = useState<string>("")
-
-
+  const [step, setStep] = useState(0);
   useEffect(() => {
     setDetected(undefined);
   }, []);
@@ -133,7 +135,9 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
     setIsContinueEnabled(true);
   }
 
-
+  const incrementStep = () => {
+    setStep(step + 1)
+  }
 
   return (
     <>
@@ -146,44 +150,59 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
         <Img src={gcp} />
         Set GKE credentials
       </Container>
-      <Helper>Service account credentials for GCP permissions.</Helper>
-      <UploadArea
-        setValue={(x: string) => handleLoadJSON(x)}
-        label="🔒 GCP Key Data (JSON)"
-        placeholder="Drag a GCP Service Account JSON here, or click to browse."
-        width="100%"
-        height="100%"
-        isRequired={true}
-      />
+      <Spacer y={1} />
+      <VerticalSteps
+        currentStep={step}
+        steps={[
+          <>
+            <Text size={16}> Create the service account </Text>
+            <Spacer y={.5} />
+            <Link onClick={incrementStep} to="https://docs.porter.run/standard/getting-started/provisioning-on-gcp" target="_blank">
+              Follow the steps in the Porter docs to generate your service account credentials
+            </Link>
+            <Spacer y={.5} />
+            <Button onClick={incrementStep} height={"15px"} disabled={step > 1}>Continue</Button>
+          </>,
+          <>
+            <Text size={16}>Upload service account credentials</Text>
+            <Spacer y={1} />
+            <UploadArea
+              setValue={(x: string) => handleLoadJSON(x)}
+              label="🔒 GCP Key Data (JSON)"
+              placeholder="Drag a GCP Service Account JSON here, or click to browse."
+              width="100%"
+              height="100%"
+              isRequired={true}
+            />
 
-      {detected && serviceAccountKey && (<>
-
-
-        <>
-          <AppearingDiv color={projectId ? "#8590ff" : "#fcba03"}>
-            {detected.detected ? (
+            {detected && serviceAccountKey && (<>
               <>
-                <I className="material-icons">check</I>
+                <AppearingDiv color={projectId ? "#8590ff" : "#fcba03"}>
+                  {detected.detected ? (
+                    <>
+                      {incrementStep}
+                      <I className="material-icons">check</I>
+                    </>
+                  ) : (
+                    <I className="material-icons">error</I>
+                  )}
+
+                  <Text color={detected.detected ? "#8590ff" : "#fcba03"}>
+                    {detected.message}
+                  </Text>
+                </AppearingDiv>
+                <Spacer y={1} />
               </>
-            ) : (
-              <I className="material-icons">error</I>
+            </>
             )}
-
-            <Text color={detected.detected ? "#8590ff" : "#fcba03"}>
-              {detected.message}
-            </Text>
-          </AppearingDiv>
-          <Spacer y={1} />
-        </>
-      </>
-      )}
-
-      <Spacer y={0.5} />
-      <Button
-        disabled={!isContinueEnabled || isLoading}
-        onClick={saveCredentials}
-      >Continue</Button>
-
+            <Spacer y={0.5} />
+            <Button
+              disabled={!isContinueEnabled || isLoading}
+              onClick={saveCredentials}
+            >Continue</Button>
+          </>
+        ].filter((x) => x)}
+      />
     </>
   );
 };
@@ -267,3 +286,4 @@ const StatusIcon = styled.img`
         right: 20px;
         height: 18px;
         `;
+

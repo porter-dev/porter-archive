@@ -31,8 +31,16 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 		porterYaml.Name = appName
 	}
 
+	if porterYaml.Name != "" && appName != "" && porterYaml.Name != appName {
+		return nil, nil, telemetry.Error(ctx, span, nil, "name specified in porter.yaml does not match app name")
+	}
+
 	appProto := &porterv1.PorterApp{
 		Name: porterYaml.Name,
+	}
+
+	if appProto.Name == "" {
+		return nil, nil, telemetry.Error(ctx, span, nil, "app name is empty")
 	}
 
 	if porterYaml.Build != nil {
@@ -80,6 +88,16 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 		appProto.Predeploy = predeployProto
 	}
 
+	envGroups := make([]*porterv1.EnvGroup, 0)
+	if porterYaml.EnvGroups != nil {
+		for _, envGroupName := range porterYaml.EnvGroups {
+			envGroups = append(envGroups, &porterv1.EnvGroup{
+				Name: envGroupName,
+			})
+		}
+	}
+	appProto.EnvGroups = envGroups
+
 	return appProto, porterYaml.Env, nil
 }
 
@@ -92,6 +110,7 @@ type PorterYAML struct {
 	Env      map[string]string  `yaml:"env"`
 
 	Predeploy *Service `yaml:"predeploy"`
+	EnvGroups []string `yaml:"envGroups,omitempty"`
 }
 
 // Build represents the build settings for a Porter app
@@ -116,7 +135,7 @@ type Service struct {
 	HealthCheck     *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
 	AllowConcurrent bool         `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
 	Cron            string       `yaml:"cron" validate:"excluded_unless=Type job"`
-	Private         bool         `yaml:"private" validate:"excluded_unless=Type web"`
+	Private         *bool        `yaml:"private" validate:"excluded_unless=Type web"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -223,7 +242,10 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			})
 		}
 		webConfig.Domains = domains
-		webConfig.Private = service.Private
+
+		if service.Private != nil {
+			webConfig.Private = service.Private
+		}
 
 		serviceProto.Config = &porterv1.Service_WebConfig{
 			WebConfig: webConfig,

@@ -47,6 +47,7 @@ func getPorterAppRoutes(
 	factory shared.APIEndpointFactory,
 ) ([]*router.Route, *types.Path) {
 	relPath := "/applications"
+	relPathV2 := "/apps"
 
 	newPath := &types.Path{
 		Parent:       basePath,
@@ -578,7 +579,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/apps/parse",
+				RelativePath: fmt.Sprintf("%s/parse", relPathV2),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -607,7 +608,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/apps/validate",
+				RelativePath: fmt.Sprintf("%s/validate", relPathV2),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -636,7 +637,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/apps/create",
+				RelativePath: fmt.Sprintf("%s/create", relPathV2),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -665,7 +666,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/apps/apply",
+				RelativePath: fmt.Sprintf("%s/apply", relPathV2),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -723,7 +724,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("/apps/{%s}/latest", types.URLParamPorterAppName),
+				RelativePath: fmt.Sprintf("%s/{%s}/latest", relPathV2, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -752,7 +753,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("/apps/{%s}/revisions", types.URLParamPorterAppName),
+				RelativePath: fmt.Sprintf("%s/{%s}/revisions", relPathV2, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -781,7 +782,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/apps/revisions",
+				RelativePath: fmt.Sprintf("%s/revisions", relPathV2),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -810,7 +811,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("/apps/{%s}/subdomain", types.URLParamPorterAppName),
+				RelativePath: fmt.Sprintf("%s/{%s}/subdomain", relPathV2, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -839,7 +840,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("/apps/{%s}/{%s}/predeploy-status", types.URLParamPorterAppName, types.URLParamAppRevisionID),
+				RelativePath: fmt.Sprintf("%s/{%s}/{%s}/predeploy-status", relPathV2, types.URLParamPorterAppName, types.URLParamAppRevisionID),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -868,7 +869,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/apps/logs",
+				RelativePath: fmt.Sprintf("%s/{%s}/logs", relPathV2, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -897,7 +898,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/apps/logs/loki",
+				RelativePath: fmt.Sprintf("%s/{%s}/logs/loki", relPathV2, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -927,7 +928,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/apps/metrics",
+				RelativePath: fmt.Sprintf("%s/metrics", relPathV2),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -946,6 +947,94 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: appMetricsEndpoint,
 		Handler:  appMetricsHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/status -> cluster.NewAppStatusHandler
+	appStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/status", relPathV2, types.URLParamKind),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+			IsWebsocket: true,
+		},
+	)
+
+	appStatusHandler := porter_app.NewAppStatusHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appStatusEndpoint,
+		Handler:  appStatusHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/pods -> cluster.NewPodStatusHandler
+	appPodStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/pods", relPathV2),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appPodStatusHandler := porter_app.NewPodStatusHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appPodStatusEndpoint,
+		Handler:  appPodStatusHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/jobs -> cluster.NewJobStatusHandler
+	appJobStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/jobs", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appJobStatusHandler := porter_app.NewJobStatusHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appJobStatusEndpoint,
+		Handler:  appJobStatusHandler,
 		Router:   r,
 	})
 

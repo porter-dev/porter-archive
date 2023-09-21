@@ -117,6 +117,7 @@ export const useAppValidation = ({
           commit_sha,
           deletions: {
             service_names: data.deletions.serviceNames.map((s) => s.name),
+            env_group_names: data.deletions.envGroupNames.map((eg) => eg.name),
             env_variable_names: [],
           },
         },

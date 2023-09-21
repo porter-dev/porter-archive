@@ -40,6 +40,7 @@ func NewValidatePorterAppHandler(
 type Deletions struct {
 	ServiceNames     []string `json:"service_names"`
 	EnvVariableNames []string `json:"env_variable_names"`
+	EnvGroupNames    []string `json:"env_group_names"`
 }
 
 // ValidatePorterAppRequest is the request object for the /apps/validate endpoint
@@ -128,6 +129,7 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		Deletions: &porterv1.Deletions{
 			ServiceNames:     request.Deletions.ServiceNames,
 			EnvVariableNames: request.Deletions.EnvVariableNames,
+			EnvGroupNames:    request.Deletions.EnvGroupNames,
 		},
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.ValidatePorterApp(ctx, validateReq)

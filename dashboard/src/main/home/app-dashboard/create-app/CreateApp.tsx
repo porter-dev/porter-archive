@@ -44,6 +44,11 @@ import { useAppValidation } from "lib/hooks/useAppValidation";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import PorterYamlModal from "./PorterYamlModal";
+import EnvGroups from "../validate-apply/app-settings/EnvGroups";
+import {
+  PopulatedEnvGroup,
+  populatedEnvGroup,
+} from "../validate-apply/app-settings/types";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -103,6 +108,31 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     }
   );
 
+  const { data: baseEnvGroups = [] } = useQuery(
+    ["getAllEnvGroups", currentProject?.id, currentCluster?.id],
+    async () => {
+      if (!currentProject?.id || !currentCluster?.id) {
+        return [];
+      }
+      const res = await api.getAllEnvGroups<PopulatedEnvGroup[]>(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+      );
+
+      const { environment_groups } = await z
+        .object({
+          environment_groups: z.array(populatedEnvGroup).default([]),
+        })
+        .parseAsync(res.data);
+
+      return environment_groups;
+    }
+  );
+
   const porterAppFormMethods = useForm<PorterAppFormData>({
     resolver: zodResolver(porterAppFormValidator),
     reValidateMode: "onSubmit",
@@ -127,6 +157,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       },
       deletions: {
         serviceNames: [],
+        envGroupNames: [],
       },
     },
   });
@@ -152,7 +183,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     porterYamlFound,
     detectedName,
     loading: isLoadingPorterYaml,
-  } = usePorterYaml({ source: source?.type === "github" ? source : null });
+  } = usePorterYaml({
+    source: source?.type === "github" ? source : null,
+    appName: name.value,
+  });
   const deploymentTarget = useDefaultDeploymentTarget();
   const { updateAppStep } = useAppAnalytics(name.value);
   const { validateApp } = useAppValidation({
@@ -226,11 +260,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
         );
 
-        const envGroupResponse = await api.updateEnvironmentGroupV2(
+        const res = await api.updateEnvironmentGroupV2(
           "<token>",
           {
             deployment_target_id: deploymentTarget.deployment_target_id,
             variables: variables,
+            b64_app_proto: btoa(app.toJsonString()),
             secrets: secrets,
           },
           {
@@ -240,29 +275,29 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
         );
 
-        const addedEnvGroup = await z
+        const updatedEnvGroups = z
           .object({
-            env_group_name: z.string(),
-            env_group_version: z.coerce.bigint(),
+            env_groups: z
+              .object({
+                name: z.string(),
+                latest_version: z.coerce.bigint(),
+              })
+              .array(),
           })
-          .parseAsync(envGroupResponse.data);
+          .parse(res.data);
 
-        const envGroups = [
-          ...app.envGroups.filter(group => group.name !== addedEnvGroup.env_group_name),
-          {
-            name: addedEnvGroup.env_group_name,
-            version: addedEnvGroup.env_group_version
-          }
-        ];
-        const appWithSeededEnv = new PorterApp({
+        const protoWithUpdatedEnv = new PorterApp({
           ...app,
-          envGroups,
+          envGroups: updatedEnvGroups.env_groups.map((eg) => ({
+            name: eg.name,
+            version: eg.latest_version,
+          })),
         });
 
         await api.applyApp(
           "<token>",
           {
-            b64_app_proto: btoa(appWithSeededEnv.toJsonString()),
+            b64_app_proto: btoa(protoWithUpdatedEnv.toJsonString()),
             deployment_target_id: deploymentTarget.deployment_target_id,
           },
           {
@@ -412,6 +447,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     if (detectedName) {
       setValue("app.name", { value: detectedName, readOnly: true });
     }
+
+    if (!detectedName && name.readOnly) {
+      setValue("app.name", { value: "", readOnly: false });
+    }
   }, [servicesFromYaml, detectedName, detectedServices.detected]);
 
   useEffect(() => {
@@ -500,7 +539,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               source={source}
                               projectId={currentProject.id}
                             />
-                            {!userHasSeenNoPorterYamlFoundModal &&
+                            {/* todo(ianedwards): re-enable porter.yaml modal after validate/apply v2 is rolled out and proven to be stable */}
+                            {/* {!userHasSeenNoPorterYamlFoundModal &&
                               !porterYamlFound &&
                               !isLoadingPorterYaml && (
                                 <Controller
@@ -520,7 +560,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                                     />
                                   )}
                                 />
-                              )}
+                              )} */}
                           </>
                         ) : (
                           <ImageSettings />
@@ -548,8 +588,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
-                              } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${
+                                  detectedServices.count > 1 ? "s" : ""
+                                } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>
@@ -568,6 +609,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       Specify environment variables shared among all services.
                     </Text>
                     <EnvVariables />
+                    <EnvGroups baseEnvGroups={baseEnvGroups} />
                   </>,
                   source.type === "github" && (
                     <>

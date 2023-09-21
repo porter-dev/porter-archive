@@ -293,12 +293,39 @@ const appLogs = baseApi<
   {
     project_id: number;
     cluster_id: number;
+    porter_app_name: string;
   }
 >(
   "GET",
-  ({ project_id, cluster_id }) =>
-    `/api/projects/${project_id}/clusters/${cluster_id}/apps/logs`
+  ({ project_id, cluster_id, porter_app_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/logs`
 );
+
+const appJobs = baseApi<
+  {
+    deployment_target_id: string;
+    job_name: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }
+>(
+  "GET",
+  ({ project_id, cluster_id, porter_app_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/jobs`
+);
+
+const appPodStatus = baseApi<
+  {
+    deployment_target_id: string;
+    selectors: string;
+  },
+  { id: number; cluster_id: number }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/apps/pods`;
+});
 
 const getFeedEvents = baseApi<
   {},
@@ -310,9 +337,8 @@ const getFeedEvents = baseApi<
   }
 >("GET", (pathParams) => {
   let { project_id, cluster_id, stack_name, page } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/events?page=${
-    page || 1
-  }`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/events?page=${page || 1
+    }`;
 });
 
 const createEnvironment = baseApi<
@@ -737,11 +763,9 @@ const detectBuildpack = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${
-    pathParams.git_repo_id
-  }/repos/${pathParams.kind}/${pathParams.owner}/${
-    pathParams.name
-  }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
 });
 
 const detectGitlabBuildpack = baseApi<
@@ -772,11 +796,9 @@ const getBranchContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${
-    pathParams.git_repo_id
-  }/repos/${pathParams.kind}/${pathParams.owner}/${
-    pathParams.name
-  }/${encodeURIComponent(pathParams.branch)}/contents`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/contents`;
 });
 
 const getProcfileContents = baseApi<
@@ -792,11 +814,9 @@ const getProcfileContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${
-    pathParams.git_repo_id
-  }/repos/${pathParams.kind}/${pathParams.owner}/${
-    pathParams.name
-  }/${encodeURIComponent(pathParams.branch)}/procfile`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/procfile`;
 });
 
 const getPorterYamlContents = baseApi<
@@ -812,16 +832,15 @@ const getPorterYamlContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${
-    pathParams.git_repo_id
-  }/repos/${pathParams.kind}/${pathParams.owner}/${
-    pathParams.name
-  }/${encodeURIComponent(pathParams.branch)}/porteryaml`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/porteryaml`;
 });
 
 const parsePorterYaml = baseApi<
   {
     b64_yaml: string;
+    app_name?: string;
   },
   {
     project_id: number;
@@ -852,11 +871,9 @@ const getBranchHead = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${
-    pathParams.git_repo_id
-  }/repos/${pathParams.kind}/${pathParams.owner}/${
-    pathParams.name
-  }/${encodeURIComponent(pathParams.branch)}/head`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
+    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
+    }/${encodeURIComponent(pathParams.branch)}/head`;
 });
 
 const validatePorterApp = baseApi<
@@ -867,6 +884,7 @@ const validatePorterApp = baseApi<
     deletions: {
       service_names: string[];
       env_variable_names: string[];
+      env_group_names: string[];
     };
   },
   {
@@ -879,43 +897,27 @@ const validatePorterApp = baseApi<
 
 const createApp = baseApi<
   | {
-      name: string;
-      type: "github";
-      git_repo_id: number;
-      git_branch: string;
-      git_repo_name: string;
-      porter_yaml_path: string;
-    }
+    name: string;
+    type: "github";
+    git_repo_id: number;
+    git_branch: string;
+    git_repo_name: string;
+    porter_yaml_path: string;
+  }
   | {
-      name: string;
-      type: "docker-registry";
-      image: {
-        repository: string;
-        tag: string;
-      };
-    },
+    name: string;
+    type: "docker-registry";
+    image: {
+      repository: string;
+      tag: string;
+    };
+  },
   {
     project_id: number;
     cluster_id: number;
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/create`;
-});
-
-const updateAppEnvironmentGroup = baseApi<
-  {
-    deployment_target_id: string;
-    variables: Record<string, string>;
-    secrets: Record<string, string>;
-    remove_missing: boolean;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-    app_name: string;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.app_name}/update-environment`;
 });
 
 const applyApp = baseApi<
@@ -930,6 +932,18 @@ const applyApp = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/apply`;
+});
+
+const getAttachedEnvGroups = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    app_name: string;
+    revision_id: string;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.app_name}/revisions/${pathParams.revision_id}/env`;
 });
 
 const getLatestRevision = baseApi<
@@ -1828,6 +1842,7 @@ const updateEnvironmentGroupV2 = baseApi<
     deployment_target_id: string;
     variables: Record<string, string>;
     secrets: Record<string, string>;
+    b64_app_proto: string;
     remove_missing?: boolean;
   },
   {
@@ -1871,11 +1886,9 @@ const getEnvGroup = baseApi<
     version?: number;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/clusters/${
-    pathParams.cluster_id
-  }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${
-    pathParams.version ? "&version=" + pathParams.version : ""
-  }`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id
+    }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${pathParams.version ? "&version=" + pathParams.version : ""
+    }`;
 });
 
 const getConfigMap = baseApi<
@@ -2932,7 +2945,7 @@ const removeStackEnvGroup = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/remove_env_group/${env_group_name}`
 );
 
-const getGithubStatus = baseApi<{}, {}>("GET", ({}) => `/api/status/github`);
+const getGithubStatus = baseApi<{}, {}>("GET", ({ }) => `/api/status/github`);
 
 const createSecretAndOpenGitHubPullRequest = baseApi<
   {
@@ -3000,6 +3013,8 @@ export default {
   createSecretAndOpenGitHubPullRequest,
   getLogsWithinTimeRange,
   appLogs,
+  appJobs,
+  appPodStatus,
   getFeedEvents,
   updateStackStep,
   // -----------------------------------
@@ -3083,8 +3098,8 @@ export default {
   getBranchHead,
   validatePorterApp,
   createApp,
-  updateAppEnvironmentGroup,
   applyApp,
+  getAttachedEnvGroups,
   getLatestRevision,
   listAppRevisions,
   getLatestAppRevisions,

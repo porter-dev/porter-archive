@@ -9,6 +9,8 @@ import (
 
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/telemetry"
+	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -17,9 +19,14 @@ const (
 	LabelKey_EnvironmentGroupVersion = "porter.run/environment-group-version"
 	LabelKey_EnvironmentGroupName    = "porter.run/environment-group-name"
 
+	LabelKey_DefaultAppEnvironment = "porter.run/default-app-environment"
+
 	// Namespace_EnvironmentGroups is the base namespace for storing all environment groups.
 	// The configmaps and secrets here should be considered the source's of truth for a given version
 	Namespace_EnvironmentGroups = "porter-env-group"
+
+	// LabelKey_AppName is the label key for the app name
+	LabelKey_AppName = "porter.run/app-name"
 )
 
 // EnvironmentGroup represents a ConfigMap in the porter-env-group namespace
@@ -31,15 +38,16 @@ type EnvironmentGroup struct {
 	// Variables are non-secret values for the EnvironmentGroup. This usually will be a configmap
 	Variables map[string]string `json:"variables,omitempty"`
 	// SecretVariables are secret values for the EnvironmentGroup. This usually will be a Secret on the kubernetes cluster
-	SecretVariables map[string][]byte `json:"secrets,omitempty"`
+	SecretVariables map[string]string `json:"secret_variables,omitempty"`
 	// CreatedAt is only used for display purposes and is in UTC Unix time
-	CreatedAtUTC time.Time `json:"created_at"`
+	CreatedAtUTC time.Time `json:"created_at,omitempty"`
 }
 
 type environmentGroupOptions struct {
-	namespace                    string
-	environmentGroupLabelName    string
-	environmentGroupLabelVersion int
+	namespace                          string
+	environmentGroupLabelName          string
+	environmentGroupLabelVersion       int
+	excludeDefaultAppEnvironmentGroups bool
 }
 
 // EnvironmentGroupOption is a function that modifies ListEnvironmentGroups
@@ -63,6 +71,13 @@ func WithEnvironmentGroupName(name string) EnvironmentGroupOption {
 func WithEnvironmentGroupVersion(version int) EnvironmentGroupOption {
 	return func(opts *environmentGroupOptions) {
 		opts.environmentGroupLabelVersion = version
+	}
+}
+
+// WithoutDefaultAppEnvironmentGroups includes default app environment groups in the list
+func WithoutDefaultAppEnvironmentGroups() EnvironmentGroupOption {
+	return func(opts *environmentGroupOptions) {
+		opts.excludeDefaultAppEnvironmentGroups = true
 	}
 }
 
@@ -123,6 +138,13 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			continue // invalid version label as it should be an int, not an environment group
 		}
 
+		if opts.excludeDefaultAppEnvironmentGroups {
+			value := cm.Labels[LabelKey_DefaultAppEnvironment]
+			if value == "true" {
+				continue // do not include default app environment groups
+			}
+		}
+
 		if _, ok := envGroupSet[cm.Name]; !ok {
 			envGroupSet[cm.Name] = EnvironmentGroup{}
 		}
@@ -136,6 +158,11 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 	}
 
 	for _, secret := range secretListResp.Items {
+		stringSecret := make(map[string]string)
+		for k, v := range secret.Data {
+			stringSecret[k] = string(v)
+		}
+
 		name, ok := secret.Labels[LabelKey_EnvironmentGroupName]
 		if !ok {
 			continue // missing name label, not an environment group
@@ -148,13 +175,21 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 		if err != nil {
 			continue // invalid version label as it should be an int, not an environment group
 		}
+
+		if opts.excludeDefaultAppEnvironmentGroups {
+			value, ok := secret.Labels[LabelKey_DefaultAppEnvironment]
+			if ok && value == "true" {
+				continue // do not include default app environment groups
+			}
+		}
+
 		if _, ok := envGroupSet[secret.Name]; !ok {
 			envGroupSet[secret.Name] = EnvironmentGroup{}
 		}
 		envGroupSet[secret.Name] = EnvironmentGroup{
 			Name:            name,
 			Version:         version,
-			SecretVariables: secret.Data,
+			SecretVariables: stringSecret,
 			Variables:       envGroupSet[secret.Name].Variables,
 			CreatedAtUTC:    secret.CreationTimestamp.Time.UTC(),
 		}
@@ -185,7 +220,7 @@ func ListEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 
 	for _, envGroup := range envGroups {
 		for k := range envGroup.SecretVariables {
-			envGroup.SecretVariables[k] = []byte(EnvGroupSecretDummyValue)
+			envGroup.SecretVariables[k] = EnvGroupSecretDummyValue
 		}
 	}
 
@@ -198,8 +233,77 @@ type LinkedPorterApplication struct {
 	Namespace string
 }
 
+func listLinkedAppsByUniqueAppLabel(environmentGroupName string, deployments []appsv1.Deployment, cronJobs []batchv1.CronJob) []LinkedPorterApplication {
+	appsByName := make(map[string]LinkedPorterApplication)
+
+	for _, d := range deployments {
+		applicationsLinkedEnvironmentGroups := strings.Split(d.Labels[LabelKey_LinkedEnvironmentGroup], ".")
+		appName := d.Labels[LabelKey_AppName]
+
+		for _, linkedEnvironmentGroup := range applicationsLinkedEnvironmentGroups {
+			if linkedEnvironmentGroup == environmentGroupName && appName != "" {
+				appsByName[appName] = LinkedPorterApplication{
+					Name:      appName,
+					Namespace: d.Namespace,
+				}
+			}
+		}
+	}
+
+	for _, d := range cronJobs {
+		applicationsLinkedEnvironmentGroups := strings.Split(d.Labels[LabelKey_LinkedEnvironmentGroup], ".")
+		appName := d.Labels[LabelKey_AppName]
+
+		for _, linkedEnvironmentGroup := range applicationsLinkedEnvironmentGroups {
+			if linkedEnvironmentGroup == environmentGroupName && appName != "" {
+				appsByName[appName] = LinkedPorterApplication{
+					Name:      appName,
+					Namespace: d.Namespace,
+				}
+			}
+		}
+	}
+
+	var apps []LinkedPorterApplication
+	for _, app := range appsByName {
+		apps = append(apps, app)
+	}
+
+	return apps
+}
+
+func listLinkedAppsByUniqueNamespace(environmentGroupName string, deployments []appsv1.Deployment, cronJobs []batchv1.CronJob) []LinkedPorterApplication {
+	var apps []LinkedPorterApplication
+	for _, d := range deployments {
+		applicationsLinkedEnvironmentGroups := strings.Split(d.Labels[LabelKey_LinkedEnvironmentGroup], ".")
+
+		for _, linkedEnvironmentGroup := range applicationsLinkedEnvironmentGroups {
+			if linkedEnvironmentGroup == environmentGroupName {
+				apps = append(apps, LinkedPorterApplication{
+					Name:      d.Name,
+					Namespace: d.Namespace,
+				})
+			}
+		}
+	}
+
+	for _, d := range cronJobs {
+		applicationsLinkedEnvironmentGroups := strings.Split(d.Labels[LabelKey_LinkedEnvironmentGroup], ".")
+		for _, linkedEnvironmentGroup := range applicationsLinkedEnvironmentGroups {
+			if linkedEnvironmentGroup == environmentGroupName {
+				apps = append(apps, LinkedPorterApplication{
+					Name:      d.Name,
+					Namespace: d.Namespace,
+				})
+			}
+		}
+	}
+
+	return apps
+}
+
 // LinkedApplications lists all applications that are linked to a given environment group. Since there can be multiple linked environment groups we must check by the presence of a label on the deployment and job
-func LinkedApplications(ctx context.Context, a *kubernetes.Agent, environmentGroupName string) ([]LinkedPorterApplication, error) {
+func LinkedApplications(ctx context.Context, a *kubernetes.Agent, environmentGroupName string, byUniqueNamespace bool) ([]LinkedPorterApplication, error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-linked-applications")
 	defer span.End()
 
@@ -215,21 +319,6 @@ func LinkedApplications(ctx context.Context, a *kubernetes.Agent, environmentGro
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "unable to list linked deployment applications")
 	}
-
-	var apps []LinkedPorterApplication
-	for _, d := range deployListResp.Items {
-		applicationsLinkedEnvironmentGroups := strings.Split(d.Labels[LabelKey_LinkedEnvironmentGroup], ".")
-
-		for _, linkedEnvironmentGroup := range applicationsLinkedEnvironmentGroups {
-			if linkedEnvironmentGroup == environmentGroupName {
-				apps = append(apps, LinkedPorterApplication{
-					Name:      d.Name,
-					Namespace: d.Namespace,
-				})
-			}
-		}
-	}
-
 	cronListResp, err := a.Clientset.BatchV1().CronJobs(metav1.NamespaceAll).List(ctx,
 		metav1.ListOptions{
 			LabelSelector: LabelKey_LinkedEnvironmentGroup,
@@ -238,17 +327,12 @@ func LinkedApplications(ctx context.Context, a *kubernetes.Agent, environmentGro
 		return nil, telemetry.Error(ctx, span, err, "unable to list linked cronjob applications")
 	}
 
-	for _, d := range cronListResp.Items {
-		applicationsLinkedEnvironmentGroups := strings.Split(d.Labels[LabelKey_LinkedEnvironmentGroup], ".")
-		for _, linkedEnvironmentGroup := range applicationsLinkedEnvironmentGroups {
-			if linkedEnvironmentGroup == environmentGroupName {
-				apps = append(apps, LinkedPorterApplication{
-					Name:      d.Name,
-					Namespace: d.Namespace,
-				})
-			}
-		}
+	var apps []LinkedPorterApplication
+	if byUniqueNamespace {
+		apps = listLinkedAppsByUniqueNamespace(environmentGroupName, deployListResp.Items, cronListResp.Items)
+		return apps, nil
 	}
 
+	apps = listLinkedAppsByUniqueAppLabel(environmentGroupName, deployListResp.Items, cronListResp.Items)
 	return apps, nil
 }

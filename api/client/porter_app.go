@@ -315,9 +315,6 @@ func (c *Client) CreatePorterAppDBEntry(
 			Tag:        inp.ImageTag,
 		}
 	}
-	if sourceType == "" {
-		return fmt.Errorf("cannot determine source type")
-	}
 
 	req := &porter_app.CreateAppRequest{
 		Name:           inp.AppName,
@@ -442,6 +439,7 @@ func (c *Client) CreateOrUpdateAppEnvironment(
 	deploymentTargetID string,
 	variables map[string]string,
 	secrets map[string]string,
+	Base64AppProto string,
 ) (*porter_app.UpdateAppEnvironmentResponse, error) {
 	resp := &porter_app.UpdateAppEnvironmentResponse{}
 
@@ -450,6 +448,7 @@ func (c *Client) CreateOrUpdateAppEnvironment(
 		Variables:          variables,
 		Secrets:            secrets,
 		HardUpdate:         false,
+		Base64AppProto:     Base64AppProto,
 	}
 
 	err := c.postRequest(

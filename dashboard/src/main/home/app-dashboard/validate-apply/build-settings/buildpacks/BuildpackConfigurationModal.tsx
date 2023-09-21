@@ -11,7 +11,8 @@ import Select from "components/porter/Select";
 import stars from "assets/stars-white.svg";
 import { Buildpack } from "main/home/app-dashboard/types/buildpack";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
-import { BuildOptions, PorterAppFormData } from "lib/porter-apps";
+import { PorterAppFormData } from "lib/porter-apps";
+import { BuildOptions } from "lib/porter-apps/build";
 
 type Props = {
   build: BuildOptions & {

@@ -109,12 +109,12 @@ export const LatestRevisionProvider = ({
           app_revision: appRevisionValidator,
         })
         .parseAsync(res.data);
-
       return revisionData.app_revision;
     },
     {
       enabled: appParamsExist,
       refetchInterval: 5000,
+      refetchOnWindowFocus: false,
     }
   );
 

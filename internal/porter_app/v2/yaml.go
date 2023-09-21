@@ -39,9 +39,6 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 		Name: porterYaml.Name,
 	}
 
-	if appProto.Name == "" {
-		return nil, nil, telemetry.Error(ctx, span, nil, "app name is empty")
-	}
 
 	if porterYaml.Build != nil {
 		appProto.Build = &porterv1.Build{

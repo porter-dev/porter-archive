@@ -313,7 +313,6 @@ const ImageItem = styled.div<{ lastItem: boolean; isSelected: boolean }>`
   border-bottom: 1px solid
     ${(props) => (props.lastItem ? "#00000000" : "#606166")};
   color: #ffffff;
-  user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;

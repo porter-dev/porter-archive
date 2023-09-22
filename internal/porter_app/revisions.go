@@ -30,8 +30,10 @@ type Revision struct {
 	CreatedAt time.Time `json:"created_at"`
 	// UpdatedAt is the time the revision was updated
 	UpdatedAt time.Time `json:"updated_at"`
+	// DeploymentTargetID is the id of the deployment target the revision is associated with
+	DeploymentTargetID string `json:"deployment_target_id"`
 	// Env is the environment variables for the revision
-	Env environment_groups.EnvironmentGroup `json:"env"`
+	Env environment_groups.EnvironmentGroup `json:"env,omitempty"`
 }
 
 // GetAppRevisionInput is the input struct for GetAppRevisions
@@ -109,6 +111,7 @@ func EncodedRevisionFromProto(ctx context.Context, appRevision *porterv1.AppRevi
 		RevisionNumber: appRevision.RevisionNumber,
 		CreatedAt:      appRevision.CreatedAt.AsTime(),
 		UpdatedAt:      appRevision.UpdatedAt.AsTime(),
+		DeploymentTargetID: appRevision.DeploymentTargetId,
 	}
 
 	return revision, nil

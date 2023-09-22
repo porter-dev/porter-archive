@@ -783,10 +783,11 @@ func ClusterDestroyingSuccessTrack(opts *ClusterDestroyingSuccessTrackOpts) segm
 type StackLaunchStartOpts struct {
 	*ProjectScopedTrackOpts
 
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ValidateApplyV2 bool
 }
 
 // StackLaunchStartTrack returns a track for when a user starts creating a stack
@@ -806,11 +807,12 @@ func StackLaunchStartTrack(opts *StackLaunchStartOpts) segmentTrack {
 type StackLaunchCompleteOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName   string
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	StackName       string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ValidateApplyV2 bool
 }
 
 // StackLaunchCompleteTrack returns a track for when a user completes creating a stack
@@ -831,11 +833,12 @@ func StackLaunchCompleteTrack(opts *StackLaunchCompleteOpts) segmentTrack {
 type StackLaunchSuccessOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName   string
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	StackName       string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ValidateApplyV2 bool
 }
 
 // StackLaunchCompleteTrack returns a track for when a user completes creating a stack
@@ -856,12 +859,13 @@ func StackLaunchSuccessTrack(opts *StackLaunchSuccessOpts) segmentTrack {
 type StackLaunchFailureOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName    string
-	Email        string
-	FirstName    string
-	LastName     string
-	CompanyName  string
-	ErrorMessage string
+	StackName       string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ErrorMessage    string
+	ValidateApplyV2 bool
 }
 
 // StackLaunchFailureTrack returns a track for when a user fails creating a stack
@@ -889,6 +893,7 @@ type StackDeletionOpts struct {
 	LastName           string
 	CompanyName        string
 	DeleteWorkflowFile bool
+	ValidateApplyV2    bool
 }
 
 // StackDeletionTrack returns a track for when a user deletes a stack
@@ -910,12 +915,13 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 type StackBuildOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName    string
-	ErrorMessage string
-	Email        string
-	FirstName    string
-	LastName     string
-	CompanyName  string
+	StackName       string
+	ErrorMessage    string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ValidateApplyV2 bool
 }
 
 // StackBuildFailureTrack returns a track for when a stack fails to build

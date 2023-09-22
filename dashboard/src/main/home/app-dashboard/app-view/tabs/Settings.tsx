@@ -17,7 +17,7 @@ const Settings: React.FC = () => {
   const history = useHistory();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { porterApp, clusterId, projectId } = useLatestRevision();
-  const { updateAppStep } = useAppAnalytics(porterApp.name);
+  const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const githubWorkflowFilename = `porter_stack_${porterApp.name}.yml`;
@@ -98,7 +98,7 @@ const Settings: React.FC = () => {
             window.open(res.data.url, "_blank", "noreferrer");
           }
 
-          updateAppStep({ step: "stack-deletion", deleteWorkflow: true });
+          updateAppStep({ step: "stack-deletion", deleteWorkflow: true, appName: porterApp.name });
           history.push("/apps");
           return;
         }

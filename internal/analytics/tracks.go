@@ -796,6 +796,7 @@ func StackLaunchStartTrack(opts *StackLaunchStartOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -822,6 +823,7 @@ func StackLaunchCompleteTrack(opts *StackLaunchCompleteOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -848,6 +850,7 @@ func StackLaunchSuccessTrack(opts *StackLaunchSuccessOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -876,6 +879,7 @@ func StackLaunchFailureTrack(opts *StackLaunchFailureOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -904,6 +908,7 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["delete_workflow_file"] = opts.DeleteWorkflowFile
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -932,6 +937,7 @@ func StackBuildFailureTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -946,6 +952,7 @@ func StackBuildSuccessTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -960,6 +967,7 @@ func StackBuildProgressingTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,

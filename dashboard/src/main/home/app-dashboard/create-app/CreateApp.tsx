@@ -49,6 +49,7 @@ import {
   PopulatedEnvGroup,
   populatedEnvGroup,
 } from "../validate-apply/app-settings/types";
+import EnvSettings from "../validate-apply/app-settings/EnvSettings";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -612,8 +613,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <Text color="helper">
                       Specify environment variables shared among all services.
                     </Text>
-                    <EnvVariables />
-                    <EnvGroups baseEnvGroups={baseEnvGroups} />
+                    <EnvSettings
+                      baseEnvGroups={baseEnvGroups}
+                      servicesFromYaml={null}
+                    />
                   </>,
                   source.type === "github" && (
                     <>

@@ -108,7 +108,12 @@ func (c *PodStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	pods := []v1.Pod{}
 
-	selectors := fmt.Sprintf("porter.run/service-name=%s,porter.run/deployment-target-id=%s,porter.run/app-name=%s", request.ServiceName, request.DeploymentTargetID, appName)
+	var selectors string
+	if request.ServiceName == "" {
+		selectors = fmt.Sprintf("porter.run/deployment-target-id=%s,porter.run/app-name=%s", request.DeploymentTargetID, appName)
+	} else {
+		selectors = fmt.Sprintf("porter.run/service-name=%s,porter.run/deployment-target-id=%s,porter.run/app-name=%s", request.ServiceName, request.DeploymentTargetID, appName)
+	}
 	podsList, err := agent.GetPodsByLabel(selectors, namespace)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "unable to get pods by label")

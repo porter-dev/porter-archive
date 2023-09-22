@@ -462,3 +462,25 @@ func (c *Client) CreateOrUpdateAppEnvironment(
 
 	return resp, err
 }
+
+// PorterYamlV2Pods gets all pods for a given deployment target id and app name
+func (c *Client) PorterYamlV2Pods(
+	ctx context.Context,
+	projectID, clusterID uint,
+	porterAppName string,
+	req *types.PorterYamlV2PodsRequest,
+) (*types.GetReleaseAllPodsResponse, error) {
+	resp := &types.GetReleaseAllPodsResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/pods",
+			projectID, clusterID,
+			porterAppName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}

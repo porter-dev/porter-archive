@@ -47,6 +47,7 @@ type GetAppEnvRequest struct {
 // GetAppEnvResponse is the response object for the /apps/{porter_app_name}/revisions/{app_revision_id}/env endpoint
 type GetAppEnvResponse struct {
 	EnvGroups []environment_groups.EnvironmentGroup `json:"env_groups"`
+	AppEnv    environment_groups.EnvironmentGroup   `json:"app_env"`
 }
 
 // ServeHTTP translates the request into a GetAppEnvRequest request, uses the revision proto to query the cluster for the requested env groups, and returns the response
@@ -138,8 +139,24 @@ func (c *GetAppEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	revisionWithEnv, err := porter_app.AttachEnvToRevision(ctx, porter_app.AttachEnvToRevisionInput{
+		ProjectID:                  project.ID,
+		ClusterID:                  int(cluster.ID),
+		DeploymentTargetID:         revision.DeploymentTargetID,
+		Revision:                   revision,
+		K8SAgent:                   agent,
+		PorterAppRepository:        c.Repo().PorterApp(),
+		DeploymentTargetRepository: c.Repo().DeploymentTarget(),
+	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error attaching env to revision")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	res := &GetAppEnvResponse{
 		EnvGroups: envGroups,
+		AppEnv:    revisionWithEnv.Env,
 	}
 
 	c.WriteResult(w, r, res)

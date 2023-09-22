@@ -118,13 +118,6 @@ func (c *ListAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		appRevisions = []*porterv1.AppRevision{}
 	}
 
-	agent, err := c.GetAgent(r, cluster, "")
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting agent")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
 	res := &ListAppRevisionsResponse{
 		AppRevisions: make([]porter_app.Revision, 0),
 	}
@@ -137,22 +130,7 @@ func (c *ListAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		revisionWithEnv, err := porter_app.AttachEnvToRevision(ctx, porter_app.AttachEnvToRevisionInput{
-			Revision:                   encodedRevision,
-			ProjectID:                  project.ID,
-			ClusterID:                  int(cluster.ID),
-			DeploymentTargetID:         request.DeploymentTargetID,
-			K8SAgent:                   agent,
-			PorterAppRepository:        c.Repo().PorterApp(),
-			DeploymentTargetRepository: c.Repo().DeploymentTarget(),
-		})
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error attaching env to revision")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		res.AppRevisions = append(res.AppRevisions, revisionWithEnv)
+		res.AppRevisions = append(res.AppRevisions, encodedRevision)
 	}
 
 	c.WriteResult(w, r, res)

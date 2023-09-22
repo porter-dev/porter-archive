@@ -105,7 +105,7 @@ const RevisionsList: React.FC<Props> = ({
     setValue(
       "app",
       clientAppFromProto({
-        proto: PorterApp.fromJsonString(btoa(app_revision.b64_app_proto)),
+        proto: PorterApp.fromJsonString(atob(app_revision.b64_app_proto)),
         overrides: servicesFromYaml,
         variables: app_revision.env.variables,
         secrets: app_revision.env.secret_variables,

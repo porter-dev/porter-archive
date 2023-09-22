@@ -44,8 +44,8 @@ var (
 )
 
 const (
-	cnb_life_cycle_launcher = "/cnb/lifecycle/launcher"
-	launcher = "launcher"
+	CommandPrefix_CNB_LIFECYCLE_LAUNCHER = "/cnb/lifecycle/launcher"
+	CommandPrefix_LAUNCHER               = "launcher"
 )
 
 func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
@@ -445,24 +445,24 @@ func appGetPodsV1PorterYaml(ctx context.Context, cliConfig config.CLIConfig, cli
 	pID := cliConfig.Project
 	cID := cliConfig.Cluster
 
+	var containerHasLauncherStartCommand bool
+
 	resp, err := client.GetK8sAllPods(ctx, pID, cID, namespace, releaseName)
 	if err != nil {
-		return nil, false, err
+		return nil, containerHasLauncherStartCommand, err
 	}
 
 	if resp == nil {
-		return nil, false, errors.New("get pods response is nil")
+		return nil, containerHasLauncherStartCommand, errors.New("get pods response is nil")
 	}
 	pods := *resp
 
 	if len(pods) == 0 {
-		return nil, false, errors.New("no running pods found for this application")
+		return nil, containerHasLauncherStartCommand, errors.New("no running pods found for this application")
 	}
 
-	var containerHasLauncherStartCommand bool
-
 	for _, container := range pods[0].Spec.Containers {
-		if len(container.Command) > 0 && (container.Command[0] == launcher || container.Command[0] == cnb_life_cycle_launcher) {
+		if len(container.Command) > 0 && (container.Command[0] == CommandPrefix_LAUNCHER || container.Command[0] == CommandPrefix_CNB_LIFECYCLE_LAUNCHER) {
 			containerHasLauncherStartCommand = true
 		}
 	}
@@ -490,37 +490,37 @@ func appGetPodsV1PorterYaml(ctx context.Context, cliConfig config.CLIConfig, cli
 func appGetPodsV2PorterYaml(ctx context.Context, cliConfig config.CLIConfig, client api.Client, porterAppName string) ([]appPodSimple, string, bool, error) {
 	pID := cliConfig.Project
 	cID := cliConfig.Cluster
+	var containerHasLauncherStartCommand bool
 
 	targetResp, err := client.DefaultDeploymentTarget(ctx, pID, cID)
 	if err != nil {
-		return nil, "", false, fmt.Errorf("error calling default deployment target endpoint: %w", err)
+		return nil, "", containerHasLauncherStartCommand, fmt.Errorf("error calling default deployment target endpoint: %w", err)
 	}
 
 	if targetResp.DeploymentTargetID == "" {
-		return nil, "", false, errors.New("deployment target id is empty")
+		return nil, "", containerHasLauncherStartCommand, errors.New("deployment target id is empty")
 	}
 
 	resp, err := client.PorterYamlV2Pods(ctx, pID, cID, porterAppName, &types.PorterYamlV2PodsRequest{
 		DeploymentTargetID: targetResp.DeploymentTargetID,
 	})
 	if err != nil {
-		return nil, "", false, err
+		return nil, "", containerHasLauncherStartCommand, err
 	}
 
 	if resp == nil {
-		return nil, "", false, errors.New("get pods response is nil")
+		return nil, "", containerHasLauncherStartCommand, errors.New("get pods response is nil")
 	}
 	pods := *resp
 
 	if len(pods) == 0 {
-		return nil, "", false, errors.New("no running pods found for this application")
+		return nil, "", containerHasLauncherStartCommand, errors.New("no running pods found for this application")
 	}
 
 	namespace := pods[0].Namespace
-	var containerHasLauncherStartCommand bool
 
 	for _, container := range pods[0].Spec.Containers {
-		if len(container.Command) > 0 && (container.Command[0] == launcher || container.Command[0] == cnb_life_cycle_launcher) {
+		if len(container.Command) > 0 && (container.Command[0] == CommandPrefix_LAUNCHER || container.Command[0] == CommandPrefix_CNB_LIFECYCLE_LAUNCHER) {
 			containerHasLauncherStartCommand = true
 		}
 	}
@@ -1189,8 +1189,8 @@ func getPodsFromV1PorterYaml(ctx context.Context, execArgs []string, client api.
 		return nil, nil, fmt.Errorf("could not retrieve list of pods: %s", err.Error())
 	}
 
-	if len(execArgs) > 0 && execArgs[0] != cnb_life_cycle_launcher && execArgs[0] != launcher && containerHasLauncherStartCommand {
-		execArgs = append([]string{cnb_life_cycle_launcher}, execArgs...)
+	if len(execArgs) > 0 && execArgs[0] != CommandPrefix_CNB_LIFECYCLE_LAUNCHER && execArgs[0] != CommandPrefix_LAUNCHER && containerHasLauncherStartCommand {
+		execArgs = append([]string{CommandPrefix_CNB_LIFECYCLE_LAUNCHER}, execArgs...)
 	}
 
 	return podsSimple, execArgs, nil
@@ -1202,8 +1202,8 @@ func getPodsFromV2PorterYaml(ctx context.Context, execArgs []string, client api.
 		return nil, nil, "", fmt.Errorf("could not retrieve list of pods: %w", err)
 	}
 
-	if len(execArgs) > 0 && execArgs[0] != cnb_life_cycle_launcher && execArgs[0] != launcher && containerHasLauncherStartCommand {
-		execArgs = append([]string{cnb_life_cycle_launcher}, execArgs...)
+	if len(execArgs) > 0 && execArgs[0] != CommandPrefix_CNB_LIFECYCLE_LAUNCHER && execArgs[0] != CommandPrefix_LAUNCHER && containerHasLauncherStartCommand {
+		execArgs = append([]string{CommandPrefix_CNB_LIFECYCLE_LAUNCHER}, execArgs...)
 	}
 
 	return podsSimple, execArgs, namespace, nil

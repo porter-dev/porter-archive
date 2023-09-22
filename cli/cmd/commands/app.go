@@ -44,8 +44,10 @@ var (
 )
 
 const (
+	// CommandPrefix_CNB_LIFECYCLE_LAUNCHER is the prefix for the container start command if the image is built using heroku buildpacks
 	CommandPrefix_CNB_LIFECYCLE_LAUNCHER = "/cnb/lifecycle/launcher"
-	CommandPrefix_LAUNCHER               = "launcher"
+	// CommandPrefix_LAUNCHER is a shortened form of the above
+	CommandPrefix_LAUNCHER = "launcher"
 )
 
 func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {

@@ -171,6 +171,7 @@ type EnvironmentGroupListItem struct {
 	LinkedApplications []string `json:"linked_applications,omitempty"`
 }
 
+// PorterYamlV2PodsRequest is the request object for client.PorterYamlV2Pods
 type PorterYamlV2PodsRequest struct {
 	DeploymentTargetID string `schema:"deployment_target_id"`
 }

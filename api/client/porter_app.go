@@ -463,7 +463,7 @@ func (c *Client) CreateOrUpdateAppEnvironment(
 	return resp, err
 }
 
-// Pods gets all pods for a given deployment target and app name (porter yaml v2)
+// PorterYamlV2Pods gets all pods for a given deployment target id and app name
 func (c *Client) PorterYamlV2Pods(
 	ctx context.Context,
 	projectID, clusterID uint,

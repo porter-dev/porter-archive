@@ -128,7 +128,6 @@ export const usePorterYaml = ({
           overrides: proto,
           useDefaults,
         });
-        console.log("build from serviceOverrides", build);
 
         if (services.length || predeploy || build) {
           setDetectedServices({

@@ -1202,7 +1202,7 @@ func getPodsFromV2PorterYaml(ctx context.Context, execArgs []string, client api.
 		return nil, nil, "", fmt.Errorf("could not retrieve list of pods: %w", err)
 	}
 
-	if len(execArgs) > 0 && execArgs[0] != cnb_life_cycle_launcher && execArgs[0] != "launcher" && containerHasLauncherStartCommand {
+	if len(execArgs) > 0 && execArgs[0] != cnb_life_cycle_launcher && execArgs[0] != launcher && containerHasLauncherStartCommand {
 		execArgs = append([]string{cnb_life_cycle_launcher}, execArgs...)
 	}
 

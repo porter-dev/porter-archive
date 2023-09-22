@@ -30,7 +30,23 @@ import Text from "./porter/Text";
 
 const locationOptions = [
   { value: "eastus", label: "East US" },
+  { value: "eastus2", label: "East US 2" },
     { value: "westus2", label: "West US 2" },
+    { value: "westus3", label: "West US 3" },
+    { value: "centralus", label: "Central US" },
+    { value: "southcentralus", label: "South Central US" },
+    { value: "australiaeast", label: "Australia East" },
+    { value: "brazilsouth", label: "Brazil South" },
+    { value: "centralindia", label: "Central India" },
+    { value: "southcentralus", label: "South Central US" },
+    { value: "eastasia", label: "East Asia" },
+    { value: "francecentral", label: "France Central" },
+    { value: "northeurope", label: "North Europe" },
+    { value: "norwayeast", label: "Norway East" },
+    { value: "swedencentral", label: "Sweden Central" },
+    { value: "switzerlandnorth", label: "Switzerland North" },
+    { value: "uksouth", label: "UK South" },
+    { value: "westeurope", label: "West Europe" },
 ];
 
 const machineTypeOptions = [

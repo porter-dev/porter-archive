@@ -484,3 +484,28 @@ func (c *Client) PorterYamlV2Pods(
 
 	return resp, err
 }
+
+// UpdateImage updates the image for a porter app (porter yaml v2 only)
+func (c *Client) UpdateImage(
+	ctx context.Context,
+	projectID, clusterID uint,
+	appName, deploymentTargetId, tag string,
+) (*porter_app.UpdateImageResponse, error) {
+	req := &porter_app.UpdateImageRequest{
+		Tag:                tag,
+		DeploymentTargetId: deploymentTargetId,
+	}
+
+	resp := &porter_app.UpdateImageResponse{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/update-image",
+			projectID, clusterID, appName,
+		),
+		&req,
+		resp,
+	)
+
+	return resp, err
+}

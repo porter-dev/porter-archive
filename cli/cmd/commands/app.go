@@ -1145,44 +1145,72 @@ func appCreateEphemeralPodFromExisting(
 }
 
 func appUpdateTag(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, args []string) error {
-	namespace := fmt.Sprintf("porter-stack-%s", args[0])
-	if appTag == "" {
-		appTag = "latest"
-	}
-	release, err := client.GetRelease(ctx, cliConfig.Project, cliConfig.Cluster, namespace, args[0])
+	project, err := client.GetProject(ctx, cliConfig.Project)
 	if err != nil {
-		return fmt.Errorf("Unable to find application %s", args[0])
-	}
-	repository, ok := release.Config["global"].(map[string]interface{})["image"].(map[string]interface{})["repository"].(string)
-	if !ok || repository == "" {
-		return fmt.Errorf("Application %s does not have an associated image repository. Unable to update tag", args[0])
-	}
-	imageInfo := types.ImageInfo{
-		Repository: repository,
-		Tag:        appTag,
-	}
-	createUpdatePorterAppRequest := &types.CreatePorterAppRequest{
-		ClusterID:       cliConfig.Cluster,
-		ProjectID:       cliConfig.Project,
-		ImageInfo:       imageInfo,
-		OverrideRelease: false,
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
 	}
 
-	color.New(color.FgGreen).Printf("Updating application %s to build using tag \"%s\"\n", args[0], appTag)
+	if project.ValidateApplyV2 {
+		targetResp, err := client.DefaultDeploymentTarget(ctx, cliConfig.Project, cliConfig.Cluster)
+		if err != nil {
+			return fmt.Errorf("unable to update image: error calling default deployment target endpoint: %w", err)
+		}
 
-	_, err = client.CreatePorterApp(
-		ctx,
-		cliConfig.Project,
-		cliConfig.Cluster,
-		args[0],
-		createUpdatePorterAppRequest,
-	)
-	if err != nil {
-		return fmt.Errorf("Unable to update application %s: %w", args[0], err)
+		if targetResp.DeploymentTargetID == "" {
+			return errors.New("unable to update image: deployment target id is empty")
+		}
+
+		if appTag == "" {
+			appTag = "latest"
+		}
+
+		resp, err := client.UpdateImage(ctx, cliConfig.Project, cliConfig.Cluster, args[0], targetResp.DeploymentTargetID, appTag)
+		if err != nil {
+			return fmt.Errorf("unable to update image: %w", err)
+		}
+
+		color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], resp.Tag)
+		return nil
+	} else {
+		namespace := fmt.Sprintf("porter-stack-%s", args[0])
+		if appTag == "" {
+			appTag = "latest"
+		}
+		release, err := client.GetRelease(ctx, cliConfig.Project, cliConfig.Cluster, namespace, args[0])
+		if err != nil {
+			return fmt.Errorf("Unable to find application %s", args[0])
+		}
+		repository, ok := release.Config["global"].(map[string]interface{})["image"].(map[string]interface{})["repository"].(string)
+		if !ok || repository == "" {
+			return fmt.Errorf("Application %s does not have an associated image repository. Unable to update tag", args[0])
+		}
+		imageInfo := types.ImageInfo{
+			Repository: repository,
+			Tag:        appTag,
+		}
+		createUpdatePorterAppRequest := &types.CreatePorterAppRequest{
+			ClusterID:       cliConfig.Cluster,
+			ProjectID:       cliConfig.Project,
+			ImageInfo:       imageInfo,
+			OverrideRelease: false,
+		}
+
+		color.New(color.FgGreen).Printf("Updating application %s to build using tag \"%s\"\n", args[0], appTag)
+
+		_, err = client.CreatePorterApp(
+			ctx,
+			cliConfig.Project,
+			cliConfig.Cluster,
+			args[0],
+			createUpdatePorterAppRequest,
+		)
+		if err != nil {
+			return fmt.Errorf("Unable to update application %s: %w", args[0], err)
+		}
+
+		color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], appTag)
+		return nil
 	}
-
-	color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], appTag)
-	return nil
 }
 
 func getPodsFromV1PorterYaml(ctx context.Context, execArgs []string, client api.Client, cliConfig config.CLIConfig, porterAppName string, namespace string) ([]appPodSimple, []string, error) {

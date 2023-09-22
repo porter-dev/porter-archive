@@ -110,8 +110,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       app: clientAppFromProto({
         proto: latestProto,
         overrides: servicesFromYaml,
-        variables: latestRevision.env.variables,
-        secrets: latestRevision.env.secret_variables,
       }),
       source: latestSource,
       deletions: {
@@ -250,7 +248,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       // redirect to the default tab after save
       history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
-    } catch (err) { }
+    } catch (err) {}
   });
 
   useEffect(() => {
@@ -258,8 +256,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       app: clientAppFromProto({
         proto: latestProto,
         overrides: servicesFromYaml,
-        variables: latestRevision.env.variables,
-        secrets: latestRevision.env.secret_variables,
       }),
       source: latestSource,
       deletions: {
@@ -267,12 +263,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         serviceNames: [],
       },
     });
-  }, [
-    servicesFromYaml,
-    currentTab,
-    latestProto,
-    latestRevision.revision_number,
-  ]);
+  }, [servicesFromYaml, latestProto, latestRevision.revision_number]);
 
   return (
     <FormProvider {...porterAppFormMethods}>
@@ -320,11 +311,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                {
-                  label: "Build Settings",
-                  value: "build-settings",
-                },
-              ]
+                  {
+                    label: "Build Settings",
+                    value: "build-settings",
+                  },
+                ]
               : []),
             { label: "Settings", value: "settings" },
           ]}
@@ -343,7 +334,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
               setRedeployOnSave={setRedeployOnSave}
             />
           ))
-          .with("environment", () => <Environment />)
+          .with("environment", () => <Environment latestSource={latestSource} />)
           .with("settings", () => <Settings />)
           .with("logs", () => <LogsTab />)
           .with("metrics", () => <MetricsTab />)

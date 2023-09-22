@@ -43,9 +43,8 @@ const RevisionsList: React.FC<Props> = ({
   const [expandRevisions, setExpandRevisions] = useState(false);
   const [revertData, setRevertData] = useState<{
     app: PorterApp;
-    revision: number;
-    variables: Record<string, string>;
-    secrets: Record<string, string>;
+    revisionId: string;
+    number: number;
   } | null>(null);
 
   const res = useQuery(
@@ -78,13 +77,38 @@ const RevisionsList: React.FC<Props> = ({
       return;
     }
 
+    const res = await api.getRevision(
+      "<token>",
+      {},
+      {
+        project_id: projectId,
+        cluster_id: clusterId,
+        porter_app_name: appName,
+        revision_id: revertData.revisionId,
+      }
+    );
+
+    const { app_revision } = await z
+      .object({
+        app_revision: appRevisionValidator.extend({
+          env: z.object({
+            name: z.string(),
+            latest_version: z.number(),
+            variables: z.record(z.string(), z.string()).optional(),
+            secret_variables: z.record(z.string(), z.string()).optional(),
+            created_at: z.string(),
+          }),
+        }),
+      })
+      .parseAsync(res.data);
+
     setValue(
       "app",
       clientAppFromProto({
-        proto: revertData.app,
+        proto: PorterApp.fromJsonString(btoa(app_revision.b64_app_proto)),
         overrides: servicesFromYaml,
-        variables: revertData.variables,
-        secrets: revertData.secrets,
+        variables: app_revision.env.variables,
+        secrets: app_revision.env.secret_variables,
       })
     );
     setRevertData(null);
@@ -116,7 +140,7 @@ const RevisionsList: React.FC<Props> = ({
           .otherwise(() => null)}
         {revertData ? (
           <ConfirmOverlay
-            message={`Are you sure you want to revert to revision ${revertData?.revision}?`}
+            message={`Are you sure you want to revert to revision ${revertData?.number}?`}
             onYes={onRevert}
             onNo={() => {
               setRevertData(null);

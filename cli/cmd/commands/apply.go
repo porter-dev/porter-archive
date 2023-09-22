@@ -39,7 +39,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var porterYAML string
+var (
+	porterYAML   string
+	previewApply bool
+)
 
 func registerCommand_Apply(cliConf config.CLIConfig) *cobra.Command {
 	applyCmd := &cobra.Command{
@@ -103,6 +106,7 @@ applying a configuration:
 	applyCmd.AddCommand(applyValidateCmd)
 
 	applyCmd.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
+	applyCmd.PersistentFlags().BoolVarP(&previewApply, "preview", "p", false, "apply as preview environment based on current git branch")
 	applyCmd.MarkFlagRequired("file")
 
 	return applyCmd
@@ -122,7 +126,14 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 	}
 
 	if project.ValidateApplyV2 {
-		err = v2.Apply(ctx, cliConfig, client, porterYAML, appName)
+		inp := v2.ApplyInput{
+			CLIConfig:      cliConfig,
+			Client:         client,
+			PorterYamlPath: porterYAML,
+			AppName:        appName,
+			PreviewApply:   previewApply,
+		}
+		err = v2.Apply(ctx, inp)
 		if err != nil {
 			return err
 		}

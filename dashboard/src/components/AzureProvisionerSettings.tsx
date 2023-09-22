@@ -30,9 +30,27 @@ import Text from "./porter/Text";
 
 const locationOptions = [
   { value: "eastus", label: "East US" },
+  { value: "eastus2", label: "East US 2" },
+    { value: "westus2", label: "West US 2" },
+    { value: "westus3", label: "West US 3" },
+    { value: "centralus", label: "Central US" },
+    { value: "southcentralus", label: "South Central US" },
+    { value: "australiaeast", label: "Australia East" },
+    { value: "brazilsouth", label: "Brazil South" },
+    { value: "centralindia", label: "Central India" },
+    { value: "southcentralus", label: "South Central US" },
+    { value: "eastasia", label: "East Asia" },
+    { value: "francecentral", label: "France Central" },
+    { value: "northeurope", label: "North Europe" },
+    { value: "norwayeast", label: "Norway East" },
+    { value: "swedencentral", label: "Sweden Central" },
+    { value: "switzerlandnorth", label: "Switzerland North" },
+    { value: "uksouth", label: "UK South" },
+    { value: "westeurope", label: "West Europe" },
 ];
 
 const machineTypeOptions = [
+  { value: "Standard_B2als_v2", label: "Standard_B2als_v2"},
   { value: "Standard_A2_v2", label: "Standard_A2_v2" },
   { value: "Standard_A4_v2", label: "Standard_A4_v2" },
 ];
@@ -60,7 +78,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [azureLocation, setAzureLocation] = useState("eastus");
-  const [machineType, setMachineType] = useState("Standard_A2_v2");
+  const [machineType, setMachineType] = useState("Standard_B2als_v2");
   const [isExpanded, setIsExpanded] = useState(false);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
@@ -170,14 +188,14 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
             location: azureLocation,
             nodePools: [
               new AKSNodePool({
-                instanceType: "Standard_D2ps_v5",
+                instanceType: "Standard_B2als_v2",
                 minInstances: 1,
                 maxInstances: 3,
                 nodePoolType: NodePoolType.SYSTEM,
                 mode: "User",
               }),
               new AKSNodePool({
-                instanceType: "Standard_A2_v2",
+                instanceType: "Standard_B2als_v2",
                 minInstances: 1,
                 maxInstances: 3,
                 nodePoolType: NodePoolType.MONITORING,

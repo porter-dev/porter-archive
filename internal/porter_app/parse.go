@@ -42,7 +42,7 @@ func ParseYAML(ctx context.Context, porterYaml []byte, appName string) (*porterv
 
 	switch version.Version {
 	case PorterYamlVersion_V2:
-		appProto, envVariables, err = v2.AppProtoFromYaml(ctx, porterYaml, appName)
+		appProto, envVariables, err = v2.AppProtoFromYaml(ctx, porterYaml)
 		if err != nil {
 			return nil, nil, telemetry.Error(ctx, span, err, "error converting v2 yaml to proto")
 		}
@@ -50,10 +50,7 @@ func ParseYAML(ctx context.Context, porterYaml []byte, appName string) (*porterv
 	// track this span in telemetry and reach out to customers who are still using old porter.yaml if they exist.
 	// once no one is converting from old porter.yaml, we can remove this code
 	case PorterYamlVersion_V1, "":
-		if appName == "" {
-			return nil, nil, telemetry.Error(ctx, span, nil, "v1 porter yaml requires externally-provided app name")
-		}
-		appProto, envVariables, err = v1.AppProtoFromYaml(ctx, porterYaml, appName)
+		appProto, envVariables, err = v1.AppProtoFromYaml(ctx, porterYaml)
 		if err != nil {
 			return nil, nil, telemetry.Error(ctx, span, err, "error converting v1 yaml to proto")
 		}
@@ -63,6 +60,16 @@ func ParseYAML(ctx context.Context, porterYaml []byte, appName string) (*porterv
 
 	if appProto == nil {
 		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml output is nil")
+	}
+
+	if appName != "" {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "override-name", Value: appName})
+		if appProto.Name != "" && appProto.Name != appName {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "parsed-name", Value: appProto.Name})
+			return nil, nil, telemetry.Error(ctx, span, nil, "name specified in porter.yaml does not match app name")
+		}
+
+		appProto.Name = appName
 	}
 
 	return appProto, envVariables, nil

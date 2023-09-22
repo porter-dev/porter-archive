@@ -82,7 +82,10 @@ export const usePorterYaml = ({
         Boolean(source.git_repo_name) &&
         Boolean(source.git_branch),
       retry: (_failureCount, error) => {
-        if (error.response.data?.error?.includes("404")) {
+        if (
+          error.response.data?.error?.includes("404") ||
+          error.response.data?.error?.includes("not found")
+        ) {
           setPorterYamlFound(false);
           return false;
         }
@@ -125,6 +128,7 @@ export const usePorterYaml = ({
           overrides: proto,
           useDefaults,
         });
+        console.log("build from serviceOverrides", build);
 
         if (services.length || predeploy || build) {
           setDetectedServices({

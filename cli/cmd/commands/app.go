@@ -45,6 +45,7 @@ var (
 
 const (
 	cnb_life_cycle_launcher = "/cnb/lifecycle/launcher"
+	launcher = "launcher"
 )
 
 func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
@@ -461,7 +462,7 @@ func appGetPodsV1PorterYaml(ctx context.Context, cliConfig config.CLIConfig, cli
 	var containerHasLauncherStartCommand bool
 
 	for _, container := range pods[0].Spec.Containers {
-		if len(container.Command) > 0 && (container.Command[0] == "launcher" || container.Command[0] == cnb_life_cycle_launcher) {
+		if len(container.Command) > 0 && (container.Command[0] == launcher || container.Command[0] == cnb_life_cycle_launcher) {
 			containerHasLauncherStartCommand = true
 		}
 	}
@@ -519,7 +520,7 @@ func appGetPodsV2PorterYaml(ctx context.Context, cliConfig config.CLIConfig, cli
 	var containerHasLauncherStartCommand bool
 
 	for _, container := range pods[0].Spec.Containers {
-		if len(container.Command) > 0 && (container.Command[0] == "launcher" || container.Command[0] == cnb_life_cycle_launcher) {
+		if len(container.Command) > 0 && (container.Command[0] == launcher || container.Command[0] == cnb_life_cycle_launcher) {
 			containerHasLauncherStartCommand = true
 		}
 	}
@@ -1188,7 +1189,7 @@ func getPodsFromV1PorterYaml(ctx context.Context, execArgs []string, client api.
 		return nil, nil, fmt.Errorf("could not retrieve list of pods: %s", err.Error())
 	}
 
-	if len(execArgs) > 0 && execArgs[0] != cnb_life_cycle_launcher && execArgs[0] != "launcher" && containerHasLauncherStartCommand {
+	if len(execArgs) > 0 && execArgs[0] != cnb_life_cycle_launcher && execArgs[0] != launcher && containerHasLauncherStartCommand {
 		execArgs = append([]string{cnb_life_cycle_launcher}, execArgs...)
 	}
 

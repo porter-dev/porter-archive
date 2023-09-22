@@ -358,8 +358,6 @@ func webConfigProtoFromConfig(service Service) (*porterv1.WebServiceConfig, erro
 		private := !service.Config.Ingress.Enabled
 		webConfig.Private = &private
 	}
-	fmt.Printf("service: %+v\n", service.Config)
-	fmt.Printf("webConfig: %+v\n", webConfig)
 
 	return webConfig, nil
 }

@@ -121,6 +121,7 @@ export function serviceOverrides({
 
   if (!overrides.predeploy) {
     return {
+      build: validatedBuild,
       services,
     };
   }

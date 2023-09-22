@@ -16,13 +16,6 @@ export const appRevisionValidator = z.object({
   id: z.string(),
   created_at: z.string(),
   updated_at: z.string(),
-  env: z.object({
-    name: z.string(),
-    latest_version: z.number(),
-    variables: z.record(z.string(), z.string()).optional(),
-    secret_variables: z.record(z.string(), z.string()).optional(),
-    created_at: z.string(),
-  }),
 });
 
 export type AppRevision = z.infer<typeof appRevisionValidator>;

@@ -189,7 +189,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
   });
   const deploymentTarget = useDefaultDeploymentTarget();
-  const { updateAppStep } = useAppAnalytics(name.value);
+  const { updateAppStep } = useAppAnalytics();
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget?.deployment_target_id,
     creating: true,
@@ -238,7 +238,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     }) => {
       setIsDeploying(true);
       // log analytics event that we started form submission
-      updateAppStep({ step: "stack-launch-complete" });
+      updateAppStep({ step: "stack-launch-complete", appName: name.value });
 
       try {
         if (!currentProject?.id || !currentCluster?.id) {
@@ -308,7 +308,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         );
 
         // log analytics event that we successfully deployed
-        updateAppStep({ step: "stack-launch-success" });
+        updateAppStep({ step: "stack-launch-success", appName: name.value });
 
         if (source.type === "docker-registry") {
           history.push(`/apps/${app.name}`);
@@ -320,6 +320,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           updateAppStep({
             step: "stack-launch-failure",
             errorMessage: err.response?.data?.error,
+            appName: name.value,
           });
           setDeployError(err.response?.data?.error);
           return false;
@@ -327,7 +328,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         const msg =
           "An error occurred while deploying your application. Please try again.";
-        updateAppStep({ step: "stack-launch-failure", errorMessage: msg });
+        updateAppStep({ step: "stack-launch-failure", errorMessage: msg, appName: name.value });
         setDeployError(msg);
         return false;
       } finally {
@@ -593,9 +594,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

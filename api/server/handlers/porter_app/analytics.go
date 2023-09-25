@@ -35,6 +35,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	validateApplyV2 := project.GetFeatureFlag(models.ValidateApplyV2, v.Config().LaunchDarklyClient)
 	if request.Step == "stack-launch-start" {
 		v.Config().AnalyticsClient.Track(analytics.StackLaunchStartTrack(&analytics.StackLaunchStartOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
@@ -42,6 +43,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -53,6 +55,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -64,6 +67,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -76,6 +80,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
 			ErrorMessage:           request.ErrorMessage,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -88,6 +93,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
 			DeleteWorkflowFile:     request.DeleteWorkflowFile,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 

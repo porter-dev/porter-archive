@@ -1212,5 +1212,34 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/events -> porter_app.NewPorterAppV2EventListHandler
+	listPorterAppV2EventsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/events", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	listPorterAppV2EventsHandler := porter_app.NewPorterAppV2EventListHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listPorterAppV2EventsEndpoint,
+		Handler:  listPorterAppV2EventsHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

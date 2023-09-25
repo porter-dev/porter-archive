@@ -41,6 +41,7 @@ import Loading from "./Loading";
 import PreflightChecks from "./PreflightChecks";
 import Placeholder from "./Placeholder";
 import VerticalSteps from "./porter/VerticalSteps";
+import Modal from "components/porter/Modal";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -134,6 +135,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [preflightData, setPreflightData] = useState(null)
   const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
   const [preflightError, setPreflightError] = useState<string>("")
+  const [showPreflightModal, setShowPreflightModal] = useState(false);
+  const [showHelpMessage, setShowHelpMessage] = useState(true);
+
 
   const markStepStarted = async (step: string, errMessage?: string) => {
     try {
@@ -522,6 +526,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       }
       // If none of the checks have a message, set setPreflightFailed to false
       if (hasMessage) {
+        setShowPreflightModal(true)
         markStepStarted("provisioning-failed", errors);
       }
       if (!hasMessage) {
@@ -979,6 +984,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     );
   };
 
+  const dismissPreflight = () => {
+    setShowHelpMessage(false);
+    preflightChecks();
+  }
+
   const renderForm = () => {
     // Render simplified form if initial create
     if (!props.clusterId) {
@@ -1010,19 +1020,86 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Spacer y={.5} />
               {(preflightFailed && preflightData) &&
                 <>
-                  <Text color="helper">
-                    Preflight checks for the account didn't pass. Please fix the issues and retry.
-                  </Text>
-                  <Spacer y={.5} />
-                  < Button
-                    // disabled={isDisabled()}
-                    disabled={isLoading}
-                    onClick={preflightChecks}
-                  >
-                    Retry Checks
-                  </Button>
+                  {showHelpMessage ? <>
+                    <Text color="helper">
+                      Your account currently is blocked from provisioning in {awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
+                    </Text>
+                    <Spacer y={.5} />
+                    <Text color="helper">
+                      Porter can automatically request quota increases for you and email you once the cluster is provisioned.
+                    </Text>
+                    <Spacer y={.5} />
+                    <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '15px' }}>
+                      <Button
+                        disabled={isLoading}
+                        onClick={preflightChecks}
+
+                      >
+                        Email me once cluster is provisioned
+                      </Button>
+                      <Button
+                        disabled={isLoading}
+                        onClick={dismissPreflight}
+                        color="#313539"
+                      >
+                        I'll do it myself and retry checks
+                      </Button>
+                    </div>
+                  </> : (
+                    <><Text color="helper">
+                      Your account currently is blocked from provisioning in {awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
+                    </Text><Spacer y={.5} /><Button
+                      disabled={isLoading}
+                      onClick={preflightChecks}
+
+                    >
+                        Retry checks
+                      </Button></>)}
                 </>
               }
+              {/* {showPreflightModal && (preflightFailed && preflightData) &&
+                <Modal closeModal={() => setShowPreflightModal(false)} width="800px">
+                  <Text size={16}>Request quota increase on Porter</Text>
+                  <Spacer y={1} />
+                  <Text color="helper">
+                    Your AWS account currently is blocked from provisioning in {awsRegion} due to a quota limit imposed by AWS. Would you like to request a quota increase?
+                  </Text>
+                  <Spacer y={1} />
+                  <Text color="helper">
+                    Porter will request an increase and send you an email when your cluster has been provisioned.
+                  </Text>
+                  <Spacer y={1} />
+                  <SelectRow
+                    options={regionOptions}
+                    width="350px"
+                    disabled={isReadOnly || isLoading}
+                    value={awsRegion}
+                    scrollBuffer={true}
+                    dropdownMaxHeight="240px"
+                    setActiveValue={setAwsRegion}
+                    label="Request increase and provision in: " />
+                  <Spacer y={1} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Button
+                      // disabled={isDisabled() || preflightFailed || isLoading}
+                      onClick={createCluster}
+                      status={getStatus()}
+                    >
+                      Email me once cluster is provisioned.
+                    </Button>
+
+                    <Button
+                      // disabled={isDisabled() || preflightFailed || isLoading}
+                      onClick={createCluster}
+                      status={getStatus()}
+                      color="#ffffff11"
+                    >
+                      No thanks, I'll do it myself.
+                    </Button>
+                  </div>
+
+                </Modal>
+              } */}
             </>,
             <>
               <Text size={16}>Provision your cluster</Text>
@@ -1092,49 +1169,49 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 export default withRouter(ProvisionerSettings);
 
 const ExpandHeader = styled.div<{ isExpanded: boolean }>`
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+              display: flex;
+              align-items: center;
+              cursor: pointer;
   > i {
-    margin-right: 7px;
-    margin-left: -7px;
-    transform: ${(props) =>
+                margin - right: 7px;
+              margin-left: -7px;
+              transform: ${(props) =>
     props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
-    transition: transform 0.1s ease;
+              transition: transform 0.1s ease;
   }
-`;
+              `;
 
 const StyledForm = styled.div`
-  position: relative;
-  padding: 30px 30px 25px;
-  border-radius: 5px;
-  background: ${({ theme }) => theme.fg};
-  border: 1px solid #494b4f;
-  font-size: 13px;
-  margin-bottom: 30px;
-`;
+              position: relative;
+              padding: 30px 30px 25px;
+              border-radius: 5px;
+              background: ${({ theme }) => theme.fg};
+              border: 1px solid #494b4f;
+              font-size: 13px;
+              margin-bottom: 30px;
+              `;
 
 const FlexCenter = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 3px;
-`;
+              display: flex;
+              align-items: center;
+              gap: 3px;
+              `;
 const Wrapper = styled.div`
-  transform: translateY(+13px);
-`;
+              transform: translateY(+13px);
+              `;
 
 const ErrorInLine = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  color: #ff3b62;
-  margin-top: 10px;
+              display: flex;
+              align-items: center;
+              font-size: 13px;
+              color: #ff3b62;
+              margin-top: 10px;
 
   > i {
-    font-size: 18px;
-    margin-right: 5px;
+                font - size: 18px;
+              margin-right: 5px;
   }
-`;
+              `;
 
 const AWS_LOGIN_ERROR_MESSAGE =
   "Porter could not access your AWS account. Please make sure you have granted permissions and try again.";

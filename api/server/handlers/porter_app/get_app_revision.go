@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/deployment_target"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -86,14 +87,25 @@ func (c *GetAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
+		ProjectID:          int64(project.ID),
+		ClusterID:          int64(cluster.ID),
+		DeploymentTargetID: ccpResp.Msg.AppRevision.DeploymentTargetId,
+		CCPClient:          c.Config().ClusterControlPlaneClient,
+	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting deployment target details")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	revisionWithEnv, err := porter_app.AttachEnvToRevision(ctx, porter_app.AttachEnvToRevisionInput{
-		ProjectID:                  project.ID,
-		ClusterID:                  int(cluster.ID),
-		Revision:                   encodedRevision,
-		DeploymentTargetID:         ccpResp.Msg.AppRevision.DeploymentTargetId,
-		K8SAgent:                   agent,
-		PorterAppRepository:        c.Repo().PorterApp(),
-		DeploymentTargetRepository: c.Repo().DeploymentTarget(),
+		ProjectID:           project.ID,
+		ClusterID:           int(cluster.ID),
+		Revision:            encodedRevision,
+		DeploymentTarget:    deploymentTarget,
+		K8SAgent:            agent,
+		PorterAppRepository: c.Repo().PorterApp(),
 	})
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error attaching env to revision")

@@ -60,7 +60,7 @@ const AzureCostConsent: React.FC<Props> = ({
               <Fieldset background="#1b1d2688">
                 • Azure Kubernetes Service (AKS) = $73/mo
                 <Spacer height="15px" />
-                • Amazon EC2:
+                • Azure virtual machines:
                 <Spacer height="15px" />
                 <Tab />+ System workloads: Standard_B2als_v2 instance (3) =
                 $82.34/mo

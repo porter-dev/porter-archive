@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
 	"github.com/spf13/cobra"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -353,7 +354,7 @@ func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 	}
 
 	for _, podName := range selectedPods {
-		color.New(color.FgBlue).Printf("Deleting ephemeral pod: %s\n", podName)
+		_, _ = color.New(color.FgBlue).Printf("Deleting ephemeral pod: %s\n", podName)
 
 		err = config.Clientset.CoreV1().Pods(appNamespace).Delete(
 			ctx, podName, metav1.DeleteOptions{},
@@ -602,7 +603,7 @@ func appExecuteRunEphemeral(ctx context.Context, config *AppPorterRunSharedConfi
 	// delete the ephemeral pod no matter what
 	defer appDeletePod(ctx, config, podName, namespace) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
-	color.New(color.FgYellow).Printf("Waiting for pod %s to be ready...", podName)
+	_, _ = color.New(color.FgYellow).Printf("Waiting for pod %s to be ready...", podName)
 	if err = appWaitForPod(ctx, config, newPod); err != nil {
 		color.New(color.FgRed).Println("failed")
 		return appHandlePodAttachError(ctx, err, config, namespace, podName, container)
@@ -1145,44 +1146,58 @@ func appCreateEphemeralPodFromExisting(
 }
 
 func appUpdateTag(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, args []string) error {
-	namespace := fmt.Sprintf("porter-stack-%s", args[0])
-	if appTag == "" {
-		appTag = "latest"
-	}
-	release, err := client.GetRelease(ctx, cliConfig.Project, cliConfig.Cluster, namespace, args[0])
+	project, err := client.GetProject(ctx, cliConfig.Project)
 	if err != nil {
-		return fmt.Errorf("Unable to find application %s", args[0])
-	}
-	repository, ok := release.Config["global"].(map[string]interface{})["image"].(map[string]interface{})["repository"].(string)
-	if !ok || repository == "" {
-		return fmt.Errorf("Application %s does not have an associated image repository. Unable to update tag", args[0])
-	}
-	imageInfo := types.ImageInfo{
-		Repository: repository,
-		Tag:        appTag,
-	}
-	createUpdatePorterAppRequest := &types.CreatePorterAppRequest{
-		ClusterID:       cliConfig.Cluster,
-		ProjectID:       cliConfig.Project,
-		ImageInfo:       imageInfo,
-		OverrideRelease: false,
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
 	}
 
-	color.New(color.FgGreen).Printf("Updating application %s to build using tag \"%s\"\n", args[0], appTag)
+	if project.ValidateApplyV2 {
+		tag, err := v2.UpdateImage(ctx, appTag, client, cliConfig.Project, cliConfig.Cluster, args[0])
+		if err != nil {
+			return fmt.Errorf("error updating tag: %w", err)
+		}
+		_, _ = color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], tag)
+		return nil
+	} else {
+		namespace := fmt.Sprintf("porter-stack-%s", args[0])
+		if appTag == "" {
+			appTag = "latest"
+		}
+		release, err := client.GetRelease(ctx, cliConfig.Project, cliConfig.Cluster, namespace, args[0])
+		if err != nil {
+			return fmt.Errorf("Unable to find application %s", args[0])
+		}
+		repository, ok := release.Config["global"].(map[string]interface{})["image"].(map[string]interface{})["repository"].(string)
+		if !ok || repository == "" {
+			return fmt.Errorf("Application %s does not have an associated image repository. Unable to update tag", args[0])
+		}
+		imageInfo := types.ImageInfo{
+			Repository: repository,
+			Tag:        appTag,
+		}
+		createUpdatePorterAppRequest := &types.CreatePorterAppRequest{
+			ClusterID:       cliConfig.Cluster,
+			ProjectID:       cliConfig.Project,
+			ImageInfo:       imageInfo,
+			OverrideRelease: false,
+		}
 
-	_, err = client.CreatePorterApp(
-		ctx,
-		cliConfig.Project,
-		cliConfig.Cluster,
-		args[0],
-		createUpdatePorterAppRequest,
-	)
-	if err != nil {
-		return fmt.Errorf("Unable to update application %s: %w", args[0], err)
+		_, _ = color.New(color.FgGreen).Printf("Updating application %s to build using tag \"%s\"\n", args[0], appTag)
+
+		_, err = client.CreatePorterApp(
+			ctx,
+			cliConfig.Project,
+			cliConfig.Cluster,
+			args[0],
+			createUpdatePorterAppRequest,
+		)
+		if err != nil {
+			return fmt.Errorf("Unable to update application %s: %w", args[0], err)
+		}
+
+		_, _ = color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], appTag)
+		return nil
 	}
-
-	color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], appTag)
-	return nil
 }
 
 func getPodsFromV1PorterYaml(ctx context.Context, execArgs []string, client api.Client, cliConfig config.CLIConfig, porterAppName string, namespace string) ([]appPodSimple, []string, error) {

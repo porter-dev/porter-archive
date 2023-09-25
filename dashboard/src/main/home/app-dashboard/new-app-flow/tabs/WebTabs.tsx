@@ -119,7 +119,7 @@ const WebTabs: React.FC<Props> = ({
         <Spacer y={1} />
         <Input
           label="Container port"
-          placeholder="ex: 80"
+          placeholder="ex: 3000"
           value={service.port.value}
           disabled={service.port.readOnly}
           width="300px"
@@ -538,7 +538,7 @@ const WebTabs: React.FC<Props> = ({
           <Spacer y={0.5} />
           <Input
             label="Liveness Check Endpoint "
-            placeholder="ex: 80"
+            placeholder="ex: /liveness"
             value={service.health.livenessProbe.path.value}
             width="300px"
             setValue={(e) => {
@@ -564,7 +564,7 @@ const WebTabs: React.FC<Props> = ({
           <Spacer y={0.5} />
           <Input
             label="Failure Threshold"
-            placeholder="ex: 80"
+            placeholder="ex: 10"
             value={service.health.livenessProbe.failureThreshold.value}
             width="300px"
             setValue={(e) => {
@@ -592,7 +592,7 @@ const WebTabs: React.FC<Props> = ({
           <Spacer y={0.5} />
           <Input
             label="Retry Interval"
-            placeholder="ex: 80"
+            placeholder="ex: 5"
             value={service.health.livenessProbe.periodSeconds.value}
             width="300px"
             setValue={(e) => {
@@ -645,7 +645,7 @@ const WebTabs: React.FC<Props> = ({
           <Spacer y={0.5} />
           <Input
             label="Start Up Check Endpoint "
-            placeholder="ex: 80"
+            placeholder="ex: /startupz"
             value={service.health.startupProbe.path.value}
             width="300px"
             setValue={(e) => {
@@ -671,7 +671,7 @@ const WebTabs: React.FC<Props> = ({
           <Spacer y={0.5} />
           <Input
             label="Failure Threshold"
-            placeholder="ex: 80"
+            placeholder="ex: 5"
             value={service.health.startupProbe.failureThreshold.value}
             width="300px"
             setValue={(e) => {
@@ -697,7 +697,7 @@ const WebTabs: React.FC<Props> = ({
           <Spacer y={0.5} />
           <Input
             label="Retry Interval"
-            placeholder="ex: 80"
+            placeholder="ex: 5"
             value={service.health.startupProbe.periodSeconds.value}
             disabled={service.health.startupProbe.periodSeconds.readOnly}
             width="300px"
@@ -750,7 +750,7 @@ const WebTabs: React.FC<Props> = ({
           <Spacer y={0.5} />
           <Input
             label="Readiness Check Endpoint "
-            placeholder="ex: 80"
+            placeholder="ex: /readiness"
             value={service.health.readinessProbe.path.value}
             disabled={service.health.readinessProbe.path.readOnly}
             width="300px"
@@ -776,7 +776,7 @@ const WebTabs: React.FC<Props> = ({
           <Spacer y={0.5} />
           <Input
             label="Failure Threshold"
-            placeholder="ex: 80"
+            placeholder="ex: 5"
             value={service.health.readinessProbe.failureThreshold.value}
             disabled={
               service.health.readinessProbe.failureThreshold.readOnly
@@ -804,7 +804,7 @@ const WebTabs: React.FC<Props> = ({
           <Spacer y={0.5} />
           <Input
             label="Initial Delay Threshold"
-            placeholder="ex: 80"
+            placeholder="ex: 100"
             value={service.health.readinessProbe.initialDelaySeconds.value}
             disabled={
               service.health.readinessProbe.initialDelaySeconds.readOnly

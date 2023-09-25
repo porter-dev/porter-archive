@@ -95,89 +95,85 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
 
   const renderContent = () => {
     return (
-      <>
-        <>
-          <VerticalSteps
-              onlyShowCurrentStep={true}
-              currentStep={currentStep}
-              steps={[
-                <>
-                  <Text size={16}>Set up your Azure subscription</Text>
-                  <Spacer y={.5} />
-                  <Text color="helper">
-                    Follow our <Link to="https://docs.porter.run/standard/getting-started/provisioning-on-azure" target="_blank">documentation</Link> to create your service principal and prepare your subscription for use with Porter.
-                  </Text>
-                  <Spacer y={1} />
-                  <Button onClick={() => setCurrentStep(1)}>
-                    Continue
+      <VerticalSteps
+          onlyShowCurrentStep={true}
+          currentStep={currentStep}
+          steps={[
+            <>
+              <Text size={16}>Set up your Azure subscription</Text>
+              <Spacer y={.5} />
+              <Text color="helper">
+                Follow our <Link to="https://docs.porter.run/standard/getting-started/provisioning-on-azure" target="_blank">documentation</Link> to create your service principal and prepare your subscription for use with Porter.
+              </Text>
+              <Spacer y={1} />
+              <Button onClick={() => setCurrentStep(1)}>
+                Continue
+              </Button>
+            </>,
+            <>
+                <Text size={16}>
+                  Input Azure service principal credentials
+                </Text>
+                <Spacer height="15px" />
+                <Text color="helper">
+                  Provide the credentials for an Azure Service Principal authorized on
+                  your Azure subscription.
+                </Text>
+                <Spacer y={1} />
+                <Input
+                    label={<Flex>Subscription ID</Flex>}
+                    value={subscriptionId}
+                    setValue={(e) => {
+                      setSubscriptionId(e.trim());
+                    }}
+                    placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
+                    width="100%"
+                />
+                <Spacer y={1} />
+                <Input
+                    label={<Flex>App ID</Flex>}
+                    value={clientId}
+                    setValue={(e) => {
+                      setClientId(e.trim());
+                    }}
+                    placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
+                    width="100%"
+                />
+                <Spacer y={1} />
+                <Input
+                    type="password"
+                    label={<Flex>Password</Flex>}
+                    value={servicePrincipalKey}
+                    setValue={(e) => {
+                      setServicePrincipalKey(e.trim());
+                    }}
+                    placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
+                    width="100%"
+                />
+                <Spacer y={1} />
+                <Input
+                    label={<Flex>Tenant ID</Flex>}
+                    value={tenantId}
+                    setValue={(e) => {
+                      setTenantId(e.trim());
+                    }}
+                    placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
+                    width="100%"
+                />
+              <Spacer y={1} />
+              <Container row>
+                  <Button onClick={() => setCurrentStep(0)} color="#222222">Back</Button>
+                  <Spacer inline x={0.5} />
+                  <Button
+                    onClick={saveCredentials}
+                    status={getButtonStatus()}
+                  >
+                  Continue
                   </Button>
-                </>,
-                <>
-                    <Text size={16}>
-                      Input Azure service principal credentials
-                    </Text>
-                    <Spacer height="15px" />
-                    <Text color="helper">
-                      Provide the credentials for an Azure Service Principal authorized on
-                      your Azure subscription.
-                    </Text>
-                    <Spacer y={1} />
-                    <Input
-                        label={<Flex>Subscription ID</Flex>}
-                        value={subscriptionId}
-                        setValue={(e) => {
-                          setSubscriptionId(e.trim());
-                        }}
-                        placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
-                        width="100%"
-                    />
-                    <Spacer y={1} />
-                    <Input
-                        label={<Flex>App ID</Flex>}
-                        value={clientId}
-                        setValue={(e) => {
-                          setClientId(e.trim());
-                        }}
-                        placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
-                        width="100%"
-                    />
-                    <Spacer y={1} />
-                    <Input
-                        type="password"
-                        label={<Flex>Password</Flex>}
-                        value={servicePrincipalKey}
-                        setValue={(e) => {
-                          setServicePrincipalKey(e.trim());
-                        }}
-                        placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
-                        width="100%"
-                    />
-                    <Spacer y={1} />
-                    <Input
-                        label={<Flex>Tenant ID</Flex>}
-                        value={tenantId}
-                        setValue={(e) => {
-                          setTenantId(e.trim());
-                        }}
-                        placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
-                        width="100%"
-                    />
-                  <Spacer y={1} />
-                  <Container row>
-                      <Button onClick={() => setCurrentStep(0)} color="#222222">Back</Button>
-                      <Spacer inline x={0.5} />
-                      <Button
-                        onClick={saveCredentials}
-                        status={getButtonStatus()}
-                      >
-                      Continue
-                      </Button>
-                  </Container>
-                </>,
-              ]}
-          />
-        </>
-      </>
+              </Container>
+            </>,
+          ]}
+      />
     );
   };
 

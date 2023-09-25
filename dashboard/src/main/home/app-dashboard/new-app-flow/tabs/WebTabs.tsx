@@ -776,7 +776,7 @@ const WebTabs: React.FC<Props> = ({
           <Spacer y={0.5} />
           <Input
             label="Failure Threshold"
-            placeholder="ex: 3000"
+            placeholder="ex: 5"
             value={service.health.readinessProbe.failureThreshold.value}
             disabled={
               service.health.readinessProbe.failureThreshold.readOnly

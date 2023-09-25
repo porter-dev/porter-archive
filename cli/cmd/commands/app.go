@@ -354,7 +354,7 @@ func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 	}
 
 	for _, podName := range selectedPods {
-		_,_ = color.New(color.FgBlue).Printf("Deleting ephemeral pod: %s\n", podName)
+		_, _ = color.New(color.FgBlue).Printf("Deleting ephemeral pod: %s\n", podName)
 
 		err = config.Clientset.CoreV1().Pods(appNamespace).Delete(
 			ctx, podName, metav1.DeleteOptions{},

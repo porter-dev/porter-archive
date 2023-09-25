@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import { useHistory } from "react-router";
 
@@ -20,7 +20,7 @@ const Settings: React.FC = () => {
   const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const githubWorkflowFilename = `porter_stack_${porterApp.name}.yml`;
+  const [githubWorkflowFilename, setGithubWorkflowFilename] = useState(`porter_stack_${porterApp.name}.yml`);
 
   const workflowFileExists = useCallback(async () => {
     try {
@@ -51,7 +51,18 @@ const Settings: React.FC = () => {
     } catch (err) {
       return false;
     }
-  }, [githubWorkflowFilename, porterApp.name, clusterId, projectId]);
+  }, [porterApp.name, clusterId, projectId]);
+
+  useEffect(() => {
+    const checkWorkflowExists = async () => {
+      const exists = await workflowFileExists();
+      if (!exists) {
+        setGithubWorkflowFilename("");
+      }
+    };
+
+    checkWorkflowExists();
+  }, [workflowFileExists]);
 
   const onDelete = useCallback(
     async (deleteWorkflow?: boolean) => {
@@ -103,7 +114,7 @@ const Settings: React.FC = () => {
           return;
         }
 
-        updateAppStep({ step: "stack-deletion", deleteWorkflow: false });
+        updateAppStep({ step: "stack-deletion", deleteWorkflow: false, appName: porterApp.name });
         history.push("/apps");
       } catch (err) {
       } finally {

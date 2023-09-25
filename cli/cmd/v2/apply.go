@@ -34,7 +34,7 @@ type ApplyInput struct {
 	PorterYamlPath string
 	// AppName is the name of the app
 	AppName string
-	// PreviewApply is true if this is a preview apply
+	// PreviewApply is true when Apply should create a new deployment target matching current git branch and apply to that target
 	PreviewApply bool
 }
 
@@ -49,9 +49,6 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	deploymentTargetID, err := deploymentTargetFromConfig(ctx, client, cliConf.Project, cliConf.Cluster, inp.PreviewApply)
 	if err != nil {
 		return fmt.Errorf("error getting deployment target from config: %w", err)
-	}
-	if deploymentTargetID == "" {
-		return errors.New("deployment target id is empty")
 	}
 
 	porterYamlExists := len(inp.PorterYamlPath) != 0
@@ -126,14 +123,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		return errors.New("App name is empty.  Please provide a Porter YAML file specifying the name of the app or set the PORTER_APP_NAME environment variable.")
 	}
 
-	var commitSHA string
-	if os.Getenv("PORTER_COMMIT_SHA") != "" {
-		commitSHA = os.Getenv("PORTER_COMMIT_SHA")
-	} else if os.Getenv("GITHUB_SHA") != "" {
-		commitSHA = os.Getenv("GITHUB_SHA")
-	} else if commit, err := git.LastCommit(); err == nil && commit != nil {
-		commitSHA = commit.Sha
-	}
+	commitSHA := commitSHAFromEnv()
 
 	validateResp, err := client.ValidatePorterApp(ctx, cliConf.Project, cliConf.Cluster, appName, b64AppProto, deploymentTargetID, commitSHA)
 	if err != nil {
@@ -269,6 +259,19 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	return nil
 }
 
+func commitSHAFromEnv() string {
+	var commitSHA string
+	if os.Getenv("PORTER_COMMIT_SHA") != "" {
+		commitSHA = os.Getenv("PORTER_COMMIT_SHA")
+	} else if os.Getenv("GITHUB_SHA") != "" {
+		commitSHA = os.Getenv("GITHUB_SHA")
+	} else if commit, err := git.LastCommit(); err == nil && commit != nil {
+		commitSHA = commit.Sha
+	}
+
+	return commitSHA
+}
+
 // checkPredeployTimeout is the maximum amount of time the CLI will wait for a predeploy to complete before calling apply again
 const checkPredeployTimeout = 60 * time.Minute
 
@@ -377,13 +380,14 @@ func buildSettingsFromBase64AppProto(base64AppProto string) (buildInput, error) 
 
 func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectID, clusterID uint, previewApply bool) (string, error) {
 	var deploymentTargetID string
-	if !previewApply {
-		targetResp, err := client.DefaultDeploymentTarget(ctx, projectID, clusterID)
-		if err != nil {
-			return deploymentTargetID, fmt.Errorf("error calling default deployment target endpoint: %w", err)
-		}
-		deploymentTargetID = targetResp.DeploymentTargetID
-	} else {
+
+	targetResp, err := client.DefaultDeploymentTarget(ctx, projectID, clusterID)
+	if err != nil {
+		return deploymentTargetID, fmt.Errorf("error calling default deployment target endpoint: %w", err)
+	}
+	deploymentTargetID = targetResp.DeploymentTargetID
+
+	if previewApply {
 		var branchName string
 		if os.Getenv("GITHUB_REF_NAME") != "" {
 			branchName = os.Getenv("GITHUB_REF_NAME")
@@ -400,6 +404,10 @@ func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectI
 			return deploymentTargetID, fmt.Errorf("error calling create deployment target endpoint: %w", err)
 		}
 		deploymentTargetID = targetResp.DeploymentTargetID
+	}
+
+	if deploymentTargetID == "" {
+		return deploymentTargetID, errors.New("deployment target id is empty")
 	}
 
 	return deploymentTargetID, nil

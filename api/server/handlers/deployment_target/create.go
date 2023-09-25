@@ -3,6 +3,7 @@ package deployment_target
 import (
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -65,6 +66,28 @@ func (c *CreateDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
+	var res *CreateDeploymentTargetResponse
+
+	existingDeploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(
+		project.ID,
+		cluster.ID,
+		request.Selector,
+		string(models.DeploymentTargetSelectorType_Namespace),
+	)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error checking for existing deployment target")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	if existingDeploymentTarget.ID != uuid.Nil {
+		res = &CreateDeploymentTargetResponse{
+			DeploymentTargetID: existingDeploymentTarget.ID.String(),
+		}
+		c.WriteResult(w, r, res)
+		return
+	}
+
 	deploymentTarget := &models.DeploymentTarget{
 		ProjectID:    int(project.ID),
 		ClusterID:    int(cluster.ID),
@@ -72,14 +95,19 @@ func (c *CreateDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http
 		SelectorType: models.DeploymentTargetSelectorType_Namespace,
 		Preview:      request.Preview,
 	}
-	deploymentTarget, err := c.Repo().DeploymentTarget().CreateDeploymentTarget(deploymentTarget)
+	deploymentTarget, err = c.Repo().DeploymentTarget().CreateDeploymentTarget(deploymentTarget)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error creating deployment target")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
+	if deploymentTarget.ID == uuid.Nil {
+		err := telemetry.Error(ctx, span, nil, "deployment target id is nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
 
-	res := &CreateDeploymentTargetResponse{
+	res = &CreateDeploymentTargetResponse{
 		DeploymentTargetID: deploymentTarget.ID.String(),
 	}
 

@@ -126,6 +126,10 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 	}
 
 	if project.ValidateApplyV2 {
+		if previewApply && !project.PreviewEnvsEnabled {
+			return fmt.Errorf("preview environments are not enabled for this project. Please contact support@porter.run")
+		}
+
 		inp := v2.ApplyInput{
 			CLIConfig:      cliConfig,
 			Client:         client,

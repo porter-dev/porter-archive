@@ -9,7 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-// HandleDeploymentTargetScopedRoutes applies /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets routes to the gin Router
+// NewDeploymentTargetScopedRegisterer applies /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets routes to the gin Router
 func NewDeploymentTargetScopedRegisterer(children ...*router.Registerer) *router.Registerer {
 	return &router.Registerer{
 		GetRoutes: GetDeploymentTargetScopedRoutes,

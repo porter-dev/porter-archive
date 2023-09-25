@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
+// HandleDeploymentTargetScopedRoutes applies /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets routes to the gin Router
 func NewDeploymentTargetScopedRegisterer(children ...*router.Registerer) *router.Registerer {
 	return &router.Registerer{
 		GetRoutes: GetDeploymentTargetScopedRoutes,
@@ -16,6 +17,7 @@ func NewDeploymentTargetScopedRegisterer(children ...*router.Registerer) *router
 	}
 }
 
+// GetDeploymentTargetScopedRoutes returns the router handlers specific to deployment targets
 func GetDeploymentTargetScopedRoutes(
 	r chi.Router,
 	config *config.Config,
@@ -38,6 +40,7 @@ func GetDeploymentTargetScopedRoutes(
 	return routes
 }
 
+// getDeploymentTargetRoutes gets the routes specific to deployment targets
 func getDeploymentTargetRoutes(
 	r chi.Router,
 	config *config.Config,

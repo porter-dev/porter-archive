@@ -46,32 +46,10 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	cliConf := inp.CLIConfig
 	client := inp.Client
 
-	var deploymentTargetID string
-	if !inp.PreviewApply {
-		targetResp, err := client.DefaultDeploymentTarget(ctx, cliConf.Project, cliConf.Cluster)
-		if err != nil {
-			return fmt.Errorf("error calling default deployment target endpoint: %w", err)
-		}
-		deploymentTargetID = targetResp.DeploymentTargetID
-	} else {
-		var branchName string
-		if os.Getenv("GITHUB_REF_NAME") != "" {
-			branchName = os.Getenv("GITHUB_REF_NAME")
-		} else if branch, err := git.CurrentBranch(); err == nil {
-			branchName = branch
-		}
-
-		if branchName == "" {
-			return errors.New("Branch name is empty. Please run apply in a git repository with access to the git CLI.")
-		}
-
-		targetResp, err := client.CreateDeploymentTarget(ctx, cliConf.Project, cliConf.Cluster, branchName, true)
-		if err != nil {
-			return fmt.Errorf("error calling create deployment target endpoint: %w", err)
-		}
-		deploymentTargetID = targetResp.DeploymentTargetID
+	deploymentTargetID, err := deploymentTargetFromConfig(ctx, client, cliConf.Project, cliConf.Cluster, inp.PreviewApply)
+	if err != nil {
+		return fmt.Errorf("error getting deployment target from config: %w", err)
 	}
-
 	if deploymentTargetID == "" {
 		return errors.New("deployment target id is empty")
 	}
@@ -395,6 +373,36 @@ func buildSettingsFromBase64AppProto(base64AppProto string) (buildInput, error) 
 		ImageTag:      app.Image.Tag,
 		RepositoryURL: app.Image.Repository,
 	}, nil
+}
+
+func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectID, clusterID uint, previewApply bool) (string, error) {
+	var deploymentTargetID string
+	if !previewApply {
+		targetResp, err := client.DefaultDeploymentTarget(ctx, projectID, clusterID)
+		if err != nil {
+			return deploymentTargetID, fmt.Errorf("error calling default deployment target endpoint: %w", err)
+		}
+		deploymentTargetID = targetResp.DeploymentTargetID
+	} else {
+		var branchName string
+		if os.Getenv("GITHUB_REF_NAME") != "" {
+			branchName = os.Getenv("GITHUB_REF_NAME")
+		} else if branch, err := git.CurrentBranch(); err == nil {
+			branchName = branch
+		}
+
+		if branchName == "" {
+			return deploymentTargetID, errors.New("Branch name is empty. Please run apply in a git repository with access to the git CLI.")
+		}
+
+		targetResp, err := client.CreateDeploymentTarget(ctx, projectID, clusterID, branchName, true)
+		if err != nil {
+			return deploymentTargetID, fmt.Errorf("error calling create deployment target endpoint: %w", err)
+		}
+		deploymentTargetID = targetResp.DeploymentTargetID
+	}
+
+	return deploymentTargetID, nil
 }
 
 func imageTagFromBase64AppProto(base64AppProto string) (string, error) {

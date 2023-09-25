@@ -47,6 +47,7 @@ func (repo *DeploymentTargetRepository) List(projectID uint) ([]*models.Deployme
 	return deploymentTargets, nil
 }
 
+// CreateDeploymentTarget creates a new deployment target
 func (repo *DeploymentTargetRepository) CreateDeploymentTarget(deploymentTarget *models.DeploymentTarget) (*models.DeploymentTarget, error) {
 	if deploymentTarget == nil {
 		return nil, errors.New("deployment target is nil")

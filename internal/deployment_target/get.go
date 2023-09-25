@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// DeploymentTargetDetailsInput is the input to the DeploymentTargetDetails function
 type DeploymentTargetDetailsInput struct {
 	ProjectID          int64
 	ClusterID          int64
@@ -16,11 +17,13 @@ type DeploymentTargetDetailsInput struct {
 	CCPClient          porterv1connect.ClusterControlPlaneServiceClient
 }
 
+// DeploymentTarget is a struct representing the unique cluster, namespace pair for a deployment target
 type DeploymentTarget struct {
 	ClusterID int64  `json:"cluster_id"`
 	Namespace string `json:"namespace"`
 }
 
+// DeploymentTargetDetails gets the deployment target details from CCP
 func DeploymentTargetDetails(ctx context.Context, inp DeploymentTargetDetailsInput) (DeploymentTarget, error) {
 	ctx, span := telemetry.NewSpan(ctx, "deployment-target-details")
 	defer span.End()

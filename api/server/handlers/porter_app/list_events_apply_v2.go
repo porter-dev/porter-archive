@@ -17,15 +17,18 @@ import (
 	"gorm.io/gorm"
 )
 
+// PorterAppV2EventListHandler handles the /apps/{app_name}/events endpoint (used for validate_apply v2)
 type PorterAppV2EventListHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
+// ListPorterAppEventsRequest represents the accepted fields on a request to the /apps/{app_name}/events endpoint
 type ListPorterAppEventsRequest struct {
 	DeploymentTargetId string `schema:"deployment_target_id"`
 	Page               int64  `schema:"page"`
 }
 
+// NewPorterAppV2EventListHandler returns a new PorterAppV2EventListHandler
 func NewPorterAppV2EventListHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

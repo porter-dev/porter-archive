@@ -119,7 +119,7 @@ const WebTabs: React.FC<Props> = ({
         <Spacer y={1} />
         <Input
           label="Container port"
-          placeholder=""
+          placeholder="ex: 3000"
           value={service.port.value}
           disabled={service.port.readOnly}
           width="300px"

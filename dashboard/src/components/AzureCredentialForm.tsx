@@ -9,16 +9,12 @@ import { Context } from "shared/Context";
 
 import Text from "./porter/Text";
 import Spacer from "./porter/Spacer";
-import InputRow from "./form-components/InputRow";
-import SaveButton from "./SaveButton";
-import Fieldset from "./porter/Fieldset";
 import Input from "./porter/Input";
 import Button from "./porter/Button";
-import DocsHelper from "./DocsHelper";
 import Error from "./porter/Error";
-import Step from "./porter/Step";
 import Link from "./porter/Link";
 import Container from "./porter/Container";
+import VerticalSteps from "./porter/VerticalSteps";
 
 type Props = {
   goBack: () => void;
@@ -33,6 +29,7 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
   const [subscriptionId, setSubscriptionId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState<number>(0);
 
   const saveCredentials = async () => {
     setIsLoading(true);
@@ -98,67 +95,85 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
 
   const renderContent = () => {
     return (
-      <>
-        <Spacer y={1} />
-        <Fieldset>
-          <Text size={16}>
-            Create an Azure Service Principal and input credentials
-          </Text>
-          <Spacer height="15px" />
-          <Text color="helper">
-            Provide the credentials for an Azure Service Principal authorized on
-            your Azure subscription.
-          </Text>
-          <Spacer y={1} />
-          <Input
-            label={<Flex>Subscription ID</Flex>}
-            value={subscriptionId}
-            setValue={(e) => {
-              setSubscriptionId(e.trim());
-            }}
-            placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
-            width="100%"
-          />
-          <Spacer y={1} />
-          <Input
-            label={<Flex>App ID</Flex>}
-            value={clientId}
-            setValue={(e) => {
-              setClientId(e.trim());
-            }}
-            placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
-            width="100%"
-          />
-          <Spacer y={1} />
-          <Input
-            type="password"
-            label={<Flex>Password</Flex>}
-            value={servicePrincipalKey}
-            setValue={(e) => {
-              setServicePrincipalKey(e.trim());
-            }}
-            placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
-            width="100%"
-          />
-          <Spacer y={1} />
-          <Input
-            label={<Flex>Tenant ID</Flex>}
-            value={tenantId}
-            setValue={(e) => {
-              setTenantId(e.trim());
-            }}
-            placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
-            width="100%"
-          />
-        </Fieldset>
-        <Spacer y={1} />
-        <Button
-          onClick={saveCredentials}
-          status={getButtonStatus()}
-        >
-          Continue
-        </Button>
-      </>
+      <VerticalSteps
+          onlyShowCurrentStep={true}
+          currentStep={currentStep}
+          steps={[
+            <>
+              <Text size={16}>Set up your Azure subscription</Text>
+              <Spacer y={.5} />
+              <Text color="helper">
+                Follow our <Link to="https://docs.porter.run/standard/getting-started/provisioning-on-azure" target="_blank">documentation</Link> to create your service principal and prepare your subscription for use with Porter.
+              </Text>
+              <Spacer y={1} />
+              <Button onClick={() => setCurrentStep(1)}>
+                Continue
+              </Button>
+            </>,
+            <>
+                <Text size={16}>
+                  Input Azure service principal credentials
+                </Text>
+                <Spacer height="15px" />
+                <Text color="helper">
+                  Provide the credentials for an Azure Service Principal authorized on
+                  your Azure subscription.
+                </Text>
+                <Spacer y={1} />
+                <Input
+                    label={<Flex>Subscription ID</Flex>}
+                    value={subscriptionId}
+                    setValue={(e) => {
+                      setSubscriptionId(e.trim());
+                    }}
+                    placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
+                    width="100%"
+                />
+                <Spacer y={1} />
+                <Input
+                    label={<Flex>App ID</Flex>}
+                    value={clientId}
+                    setValue={(e) => {
+                      setClientId(e.trim());
+                    }}
+                    placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
+                    width="100%"
+                />
+                <Spacer y={1} />
+                <Input
+                    type="password"
+                    label={<Flex>Password</Flex>}
+                    value={servicePrincipalKey}
+                    setValue={(e) => {
+                      setServicePrincipalKey(e.trim());
+                    }}
+                    placeholder="○ ○ ○ ○ ○ ○ ○ ○ ○"
+                    width="100%"
+                />
+                <Spacer y={1} />
+                <Input
+                    label={<Flex>Tenant ID</Flex>}
+                    value={tenantId}
+                    setValue={(e) => {
+                      setTenantId(e.trim());
+                    }}
+                    placeholder="ex: 12345678-abcd-1234-abcd-12345678abcd"
+                    width="100%"
+                />
+              <Spacer y={1} />
+              <Container row>
+                  <Button onClick={() => setCurrentStep(0)} color="#222222">Back</Button>
+                  <Spacer inline x={0.5} />
+                  <Button
+                    onClick={saveCredentials}
+                    status={getButtonStatus()}
+                  >
+                  Continue
+                  </Button>
+              </Container>
+            </>,
+          ]}
+      />
     );
   };
 
@@ -178,6 +193,7 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
         Grant Porter permissions to create infrastructure in your Azure
         subscription.
       </Text>
+      <Spacer y={1} />
       {renderContent()}
     </>
   );

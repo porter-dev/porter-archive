@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { useEffect, useState } from "react";
 import api from "shared/api";
-import { useRevisionIdToNumber } from "./useRevisionList";
+import { useRevisionList } from "./useRevisionList";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 
@@ -46,7 +46,7 @@ export const useJobs = (
 ) => {
     const [jobRuns, setJobRuns] = useState<JobRun[]>([]);
 
-    const revisionIdToNumber = useRevisionIdToNumber(appName, deploymentTargetId);
+    const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
 
     const { data } = useQuery(
         ["jobRuns", appName, deploymentTargetId, revisionIdToNumber, selectedJobName],

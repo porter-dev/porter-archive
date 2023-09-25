@@ -303,7 +303,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		if features.AreAgentDeployEventsEnabled(k8sAgent) {
 			serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, types.PorterAppEventStatus_Progressing)
-			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, types.PorterAppEventStatus_Progressing, porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		} else {
 			_, err = createOldPorterAppDeployEvent(ctx, types.PorterAppEventStatus_Success, porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		}
@@ -492,7 +492,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		if features.AreAgentDeployEventsEnabled(k8sAgent) {
 			serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, types.PorterAppEventStatus_Progressing)
-			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, types.PorterAppEventStatus_Progressing, updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		} else {
 			_, err = createOldPorterAppDeployEvent(ctx, types.PorterAppEventStatus_Success, updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		}
@@ -542,7 +542,6 @@ func createOldPorterAppDeployEvent(ctx context.Context, status types.PorterAppEv
 func createNewPorterAppDeployEvent(
 	ctx context.Context,
 	serviceStatusMap map[string]types.ServiceDeploymentMetadata,
-	status types.PorterAppEventStatus,
 	appID uint,
 	revision int,
 	tag string,
@@ -554,9 +553,17 @@ func createNewPorterAppDeployEvent(
 	// mark all pending deployments from the deploy event of the previous revision as canceled
 	updatePreviousPorterAppDeployEvent(ctx, appID, revision, repo)
 
+	deployEventStatus := types.PorterAppEventStatus_Success
+	for _, metadata := range serviceStatusMap {
+		if metadata.Status != types.PorterAppEventStatus_Success {
+			deployEventStatus = types.PorterAppEventStatus_Progressing
+			break
+		}
+	}
+
 	event := models.PorterAppEvent{
 		ID:                 uuid.New(),
-		Status:             string(status),
+		Status:             string(deployEventStatus),
 		Type:               "DEPLOY",
 		TypeExternalSource: "KUBERNETES",
 		PorterAppID:        appID,

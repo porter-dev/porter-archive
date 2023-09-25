@@ -688,6 +688,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/update-image -> porter_app.NewUpdateImageHandler
+	updatePorterAppImageEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/update-image", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	updatePorterAppImageHandler := porter_app.NewUpdateImageHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updatePorterAppImageEndpoint,
+		Handler:  updatePorterAppImageHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/default-deployment-target -> porter_app.NewDefaultDeploymentTargetHandler
 	defaultDeploymentTargetEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

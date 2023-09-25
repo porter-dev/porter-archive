@@ -354,7 +354,7 @@ func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 	}
 
 	for _, podName := range selectedPods {
-		color.New(color.FgBlue).Printf("Deleting ephemeral pod: %s\n", podName)
+		_,_ = color.New(color.FgBlue).Printf("Deleting ephemeral pod: %s\n", podName)
 
 		err = config.Clientset.CoreV1().Pods(appNamespace).Delete(
 			ctx, podName, metav1.DeleteOptions{},
@@ -603,7 +603,7 @@ func appExecuteRunEphemeral(ctx context.Context, config *AppPorterRunSharedConfi
 	// delete the ephemeral pod no matter what
 	defer appDeletePod(ctx, config, podName, namespace) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
-	color.New(color.FgYellow).Printf("Waiting for pod %s to be ready...", podName)
+	_, _ = color.New(color.FgYellow).Printf("Waiting for pod %s to be ready...", podName)
 	if err = appWaitForPod(ctx, config, newPod); err != nil {
 		color.New(color.FgRed).Println("failed")
 		return appHandlePodAttachError(ctx, err, config, namespace, podName, container)
@@ -1156,7 +1156,7 @@ func appUpdateTag(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 		if err != nil {
 			return fmt.Errorf("error updating tag: %w", err)
 		}
-		color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], tag)
+		_, _ = color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], tag)
 		return nil
 	} else {
 		namespace := fmt.Sprintf("porter-stack-%s", args[0])
@@ -1182,7 +1182,7 @@ func appUpdateTag(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 			OverrideRelease: false,
 		}
 
-		color.New(color.FgGreen).Printf("Updating application %s to build using tag \"%s\"\n", args[0], appTag)
+		_, _ = color.New(color.FgGreen).Printf("Updating application %s to build using tag \"%s\"\n", args[0], appTag)
 
 		_, err = client.CreatePorterApp(
 			ctx,
@@ -1195,7 +1195,7 @@ func appUpdateTag(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 			return fmt.Errorf("Unable to update application %s: %w", args[0], err)
 		}
 
-		color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], appTag)
+		_, _ = color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], appTag)
 		return nil
 	}
 }

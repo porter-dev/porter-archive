@@ -155,7 +155,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	if features.AreAgentDeployEventsEnabled(k8sAgent) {
 		serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, types.PorterAppEventStatus_Progressing)
-		_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, types.PorterAppEventStatus_Progressing, porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 	} else {
 		_, err = createOldPorterAppDeployEvent(ctx, types.PorterAppEventStatus_Success, porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 	}

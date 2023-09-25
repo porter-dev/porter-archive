@@ -70,7 +70,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	RDSDatabasesEnabled:    false,
 	SimplifiedViewEnabled:  true,
 	StacksEnabled:          false,
-	ValidateApplyV2:        false,
+	ValidateApplyV2:        true,
 }
 
 type ProjectPlan string

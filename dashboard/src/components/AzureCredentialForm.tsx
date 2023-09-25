@@ -9,21 +9,12 @@ import { Context } from "shared/Context";
 
 import Text from "./porter/Text";
 import Spacer from "./porter/Spacer";
-import InputRow from "./form-components/InputRow";
-import SaveButton from "./SaveButton";
-import Fieldset from "./porter/Fieldset";
 import Input from "./porter/Input";
 import Button from "./porter/Button";
-import DocsHelper from "./DocsHelper";
 import Error from "./porter/Error";
-import Step from "./porter/Step";
 import Link from "./porter/Link";
 import Container from "./porter/Container";
 import VerticalSteps from "./porter/VerticalSteps";
-import aws from "../assets/aws.png";
-import PreflightChecks from "./PreflightChecks";
-import Modal from "./porter/Modal";
-import cloudformationStatus from "../assets/cloud-formation-stack-complete.png";
 
 type Props = {
   goBack: () => void;

@@ -105,7 +105,7 @@ const AzureCredentialForm: React.FC<Props> = ({ goBack, proceed }) => {
                   <Text size={16}>Set up your Azure subscription</Text>
                   <Spacer y={.5} />
                   <Text color="helper">
-                    Follow our <Link to="https://docs.porter.run/standard/getting-started/provisioning-on-azure">documentation</Link> to create your service principal and prepare your subscription for use with Porter.
+                    Follow our <Link to="https://docs.porter.run/standard/getting-started/provisioning-on-azure" target="_blank">documentation</Link> to create your service principal and prepare your subscription for use with Porter.
                   </Text>
                   <Spacer y={1} />
                   <Button onClick={() => setCurrentStep(1)}>

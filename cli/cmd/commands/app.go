@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
+	v2 "github.com/porter-dev/porter/cli/cmd/v2"
 	"github.com/spf13/cobra"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -1151,25 +1152,11 @@ func appUpdateTag(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 	}
 
 	if project.ValidateApplyV2 {
-		targetResp, err := client.DefaultDeploymentTarget(ctx, cliConfig.Project, cliConfig.Cluster)
+		tag, err := v2.UpdateImage(ctx, appTag, client, cliConfig.Project, cliConfig.Cluster, args[0])
 		if err != nil {
-			return fmt.Errorf("unable to update image: error calling default deployment target endpoint: %w", err)
+			return fmt.Errorf("error updating tag: %w", err)
 		}
-
-		if targetResp.DeploymentTargetID == "" {
-			return errors.New("unable to update image: deployment target id is empty")
-		}
-
-		if appTag == "" {
-			appTag = "latest"
-		}
-
-		resp, err := client.UpdateImage(ctx, cliConfig.Project, cliConfig.Cluster, args[0], targetResp.DeploymentTargetID, appTag)
-		if err != nil {
-			return fmt.Errorf("unable to update image: %w", err)
-		}
-
-		color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], resp.Tag)
+		color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], tag)
 		return nil
 	} else {
 		namespace := fmt.Sprintf("porter-stack-%s", args[0])

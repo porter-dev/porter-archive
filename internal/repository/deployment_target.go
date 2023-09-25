@@ -10,4 +10,6 @@ type DeploymentTargetRepository interface {
 	DeploymentTargetBySelectorAndSelectorType(projectID uint, clusterID uint, selector, selectorType string) (*models.DeploymentTarget, error)
 	// List returns all deployment targets for a project
 	List(projectID uint) ([]*models.DeploymentTarget, error)
+	// CreateDeploymentTarget creates a new deployment target
+	CreateDeploymentTarget(deploymentTarget *models.DeploymentTarget) (*models.DeploymentTarget, error)
 }

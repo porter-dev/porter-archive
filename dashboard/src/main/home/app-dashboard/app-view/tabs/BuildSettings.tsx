@@ -8,6 +8,8 @@ import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
 import Button from "components/porter/Button";
 import Error from "components/porter/Error";
+import { match } from "ts-pattern";
+import ImageSettings from "../../image-settings/ImageSettings";
 
 type Props = {
   redeployOnSave: boolean;
@@ -39,18 +41,26 @@ const BuildSettings: React.FC<Props> = ({
     return "";
   }, [isSubmitting, errors]);
 
-  if (source.type !== "github") {
-    return null;
-  }
-
   return (
     <>
-      <RepoSettings
-        build={build}
-        source={source}
-        projectId={projectId}
-        appExists
-      />
+      {match(source)
+        .with({ type: "github" }, (source) => (
+          <RepoSettings
+            build={build}
+            source={source}
+            projectId={projectId}
+            appExists
+          />
+        ))
+        .with({ type: "docker-registry" }, (source) => (
+          <ImageSettings
+            projectId={projectId}
+            source={source}
+            appExists
+          />
+        ))
+        .exhaustive()
+      }
       <Spacer y={1} />
       <Checkbox
         checked={redeployOnSave}

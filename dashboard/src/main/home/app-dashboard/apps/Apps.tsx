@@ -30,7 +30,7 @@ import { z } from "zod";
 
 type Props = {};
 
-const Apps: React.FC<Props> = ({}) => {
+const Apps: React.FC<Props> = ({ }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
 
@@ -66,6 +66,9 @@ const Apps: React.FC<Props> = ({}) => {
         .parseAsync(res.data);
 
       return apps.app_revisions;
+    },
+    {
+      refetchOnWindowFocus: false,
     }
   );
 

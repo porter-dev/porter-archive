@@ -44,6 +44,7 @@ const validTabs = [
   // "debug",
   "environment",
   "build-settings",
+  "image-settings",
   "settings",
   // "helm-values",
   "job-history",
@@ -248,7 +249,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       // redirect to the default tab after save
       history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
-    } catch (err) {}
+    } catch (err) { }
   });
 
   useEffect(() => {
@@ -311,12 +312,17 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
-              : []),
+                {
+                  label: "Build Settings",
+                  value: "build-settings",
+                },
+              ]
+              : [
+                {
+                  label: "Image Settings",
+                  value: "image-settings",
+                },
+              ]),
             { label: "Settings", value: "settings" },
           ]}
           currentTab={currentTab}
@@ -329,6 +335,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("activity", () => <Activity />)
           .with("overview", () => <Overview />)
           .with("build-settings", () => (
+            <BuildSettings
+              redeployOnSave={redeployOnSave}
+              setRedeployOnSave={setRedeployOnSave}
+            />
+          ))
+          .with("image-settings", () => (
             <BuildSettings
               redeployOnSave={redeployOnSave}
               setRedeployOnSave={setRedeployOnSave}

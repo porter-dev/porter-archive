@@ -75,6 +75,10 @@ const Apps: React.FC<Props> = ({}) => {
         .parseAsync(res.data);
 
       return apps.app_revisions;
+    },
+    {
+      enabled:
+        !!currentCluster && !!currentProject && !!currentDeploymentTarget,
     }
   );
 

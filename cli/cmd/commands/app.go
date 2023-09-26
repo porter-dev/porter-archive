@@ -1146,13 +1146,13 @@ func appCreateEphemeralPodFromExisting(
 }
 
 func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
-	project, err := client.GetProject(ctx, cliConfig.Project)
+	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
 	}
 
 	if project.ValidateApplyV2 {
-		tag, err := v2.UpdateImage(ctx, appTag, client, cliConfig.Project, cliConfig.Cluster, args[0])
+		tag, err := v2.UpdateImage(ctx, appTag, client, cliConf.Project, cliConf.Cluster, args[0])
 		if err != nil {
 			return fmt.Errorf("error updating tag: %w", err)
 		}
@@ -1163,7 +1163,7 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 		if appTag == "" {
 			appTag = "latest"
 		}
-		release, err := client.GetRelease(ctx, cliConfig.Project, cliConfig.Cluster, namespace, args[0])
+		release, err := client.GetRelease(ctx, cliConf.Project, cliConf.Cluster, namespace, args[0])
 		if err != nil {
 			return fmt.Errorf("Unable to find application %s", args[0])
 		}
@@ -1176,8 +1176,8 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 			Tag:        appTag,
 		}
 		createUpdatePorterAppRequest := &types.CreatePorterAppRequest{
-			ClusterID:       cliConfig.Cluster,
-			ProjectID:       cliConfig.Project,
+			ClusterID:       cliConf.Cluster,
+			ProjectID:       cliConf.Project,
 			ImageInfo:       imageInfo,
 			OverrideRelease: false,
 		}
@@ -1186,8 +1186,8 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 
 		_, err = client.CreatePorterApp(
 			ctx,
-			cliConfig.Project,
-			cliConfig.Cluster,
+			cliConf.Project,
+			cliConf.Cluster,
 			args[0],
 			createUpdatePorterAppRequest,
 		)

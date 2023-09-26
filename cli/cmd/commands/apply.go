@@ -39,7 +39,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var porterYAML string
+var (
+	porterYAML   string
+	previewApply bool
+)
 
 func registerCommand_Apply(cliConf config.CLIConfig) *cobra.Command {
 	applyCmd := &cobra.Command{
@@ -103,26 +106,43 @@ applying a configuration:
 	applyCmd.AddCommand(applyValidateCmd)
 
 	applyCmd.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
+	applyCmd.PersistentFlags().BoolVarP(&previewApply, "preview", "p", false, "apply as preview environment based on current git branch")
 	applyCmd.MarkFlagRequired("file")
 
 	return applyCmd
 }
 
-func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ []string) (err error) {
+func appNameFromEnvironmentVariable() string {
+	if os.Getenv("PORTER_APP_NAME") != "" {
+		return os.Getenv("PORTER_APP_NAME")
+	}
+	if os.Getenv("PORTER_STACK_NAME") != "" {
+		return os.Getenv("PORTER_STACK_NAME")
+	}
+	return ""
+}
+
+func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, _ []string) (err error) {
 	project, err := client.GetProject(ctx, cliConfig.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
 	}
 
-	var appName string
-	if os.Getenv("PORTER_APP_NAME") != "" {
-		appName = os.Getenv("PORTER_APP_NAME")
-	} else if os.Getenv("PORTER_STACK_NAME") != "" {
-		appName = os.Getenv("PORTER_STACK_NAME")
-	}
+	appName := appNameFromEnvironmentVariable()
 
 	if project.ValidateApplyV2 {
-		err = v2.Apply(ctx, cliConfig, client, porterYAML, appName)
+		if previewApply && !project.PreviewEnvsEnabled {
+			return fmt.Errorf("preview environments are not enabled for this project. Please contact support@porter.run")
+		}
+
+		inp := v2.ApplyInput{
+			CLIConfig:      cliConfig,
+			Client:         client,
+			PorterYamlPath: porterYAML,
+			AppName:        appName,
+			PreviewApply:   previewApply,
+		}
+		err = v2.Apply(ctx, inp)
 		if err != nil {
 			return err
 		}

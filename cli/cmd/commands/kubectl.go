@@ -23,13 +23,20 @@ func registerCommand_Kubectl(cliConf config.CLIConfig) *cobra.Command {
 			}
 		},
 	}
+	var printKubeconfig bool
+	kubectlCmd.Flags().BoolVar(&printKubeconfig, "print-kubeconfig", false, "Print an authenticated kubeconfig to the console with a 15 minute expiry")
 	return kubectlCmd
 }
 
-func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	_, err := exec.LookPath("kubectl")
 	if err != nil {
 		return fmt.Errorf("error finding kubectl: %w", err)
+	}
+
+	printKubeconfig, err := cmd.Flags().GetBool("print-kubeconfig")
+	if err != nil {
+		return fmt.Errorf("error when retrieving print-kubeconfig flag")
 	}
 
 	tmpFile, err := downloadTempKubeconfig(ctx, client, cliConf)
@@ -41,15 +48,26 @@ func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 		os.Remove(tmpFile)
 	}()
 
-	os.Setenv("KUBECONFIG", tmpFile)
+	if printKubeconfig {
+		kc, err := os.ReadFile(tmpFile) //nolint:gosec
+		if err != nil {
+			return fmt.Errorf("erro reading downloaded kubeconfig for printing: %w", err)
+		}
+		fmt.Println(string(kc))
+		return nil
+	}
 
-	cmd := exec.Command("kubectl", args...)
+	err = os.Setenv("KUBECONFIG", tmpFile)
+	if err != nil {
+		return fmt.Errorf("unable to set KUBECONFIG env var: %w", err)
+	}
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	execCommand := exec.Command("kubectl", args...)
 
-	err = cmd.Run()
+	execCommand.Stdout = os.Stdout
+	execCommand.Stderr = os.Stderr
 
+	err = execCommand.Run()
 	if err != nil {
 		return fmt.Errorf("error running helm: %w", err)
 	}

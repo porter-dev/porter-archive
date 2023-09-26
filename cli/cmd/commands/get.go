@@ -71,7 +71,7 @@ type getReleaseInfo struct {
 	RevisionID   int       `json:"revision_id" yaml:"revision_id"`
 }
 
-func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.Get(ctx)
 		if err != nil {
@@ -118,7 +118,7 @@ func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.
 	return nil
 }
 
-func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.GetValues(ctx)
 		if err != nil {

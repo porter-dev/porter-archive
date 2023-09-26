@@ -27,7 +27,6 @@ type Props = {
 const EVENTS_POLL_INTERVAL = 5000; // poll every 5 seconds
 
 const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentCluster, currentProject }) => {
-
     const [events, setEvents] = useState<PorterAppEvent[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [hasError, setHasError] = useState<boolean>(false);
@@ -40,14 +39,16 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
     const getEvents = async () => {
         setLoading(true)
         try {
-            const res = await api.getFeedEvents(
+            const res = await api.appEvents(
                 "<token>",
-                {},
+                {
+                    deployment_target_id: deploymentTargetId,
+                    page
+                },
                 {
                     cluster_id: currentCluster,
                     project_id: currentProject,
-                    stack_name: appName,
-                    page,
+                    porter_app_name: appName,
                 }
             );
 
@@ -74,14 +75,16 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
 
     const updateEvents = async () => {
         try {
-            const res = await api.getFeedEvents(
+            const res = await api.appEvents(
                 "<token>",
-                {},
+                {
+                    deployment_target_id: deploymentTargetId,
+                    page
+                },
                 {
                     cluster_id: currentCluster,
                     project_id: currentProject,
-                    stack_name: appName,
-                    page,
+                    porter_app_name: appName,
                 }
             );
             setHasError(false)

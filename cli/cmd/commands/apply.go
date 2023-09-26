@@ -112,18 +112,23 @@ applying a configuration:
 	return applyCmd
 }
 
+func appNameFromEnvironmentVariable() string {
+	if os.Getenv("PORTER_APP_NAME") != "" {
+		return os.Getenv("PORTER_APP_NAME")
+	}
+	if os.Getenv("PORTER_STACK_NAME") != "" {
+		return os.Getenv("PORTER_STACK_NAME")
+	}
+	return ""
+}
+
 func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, _ []string) (err error) {
 	project, err := client.GetProject(ctx, cliConfig.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
 	}
 
-	var appName string
-	if os.Getenv("PORTER_APP_NAME") != "" {
-		appName = os.Getenv("PORTER_APP_NAME")
-	} else if os.Getenv("PORTER_STACK_NAME") != "" {
-		appName = os.Getenv("PORTER_STACK_NAME")
-	}
+	appName := appNameFromEnvironmentVariable()
 
 	if project.ValidateApplyV2 {
 		if previewApply && !project.PreviewEnvsEnabled {

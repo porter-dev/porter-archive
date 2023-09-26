@@ -37,7 +37,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
     }, [isLoading, logs, scrollToBottomRef]);
 
     const getBuildLogs = async () => {
-        if (event == null || porterApp.git_repo_id == null || porterApp.repo_name == null) {
+        if (event == null || porterApp.git_repo_id == null || porterApp.repo_name == null || event.metadata.action_run_id == null) {
             return;
         }
         try {

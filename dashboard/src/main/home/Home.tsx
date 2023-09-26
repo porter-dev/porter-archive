@@ -142,6 +142,13 @@ const Home: React.FC<Props> = (props) => {
             Number(localStorage.getItem("currentProject")) || projectList[0].id;
         }
 
+        const foundProjectListEntry = projectList.find(
+          (item: ProjectListType) => item.id === id
+        );
+        if (foundProjectListEntry === undefined) {
+          id = projectList[0].id
+        }
+
         const project = await api
           .getProject("<token>", {}, { id: id })
           .then((res) => res.data as ProjectType);

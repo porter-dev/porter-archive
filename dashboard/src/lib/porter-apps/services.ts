@@ -16,10 +16,12 @@ import {
   ServiceField,
 } from "./values";
 import { Service, ServiceType } from "@porter-dev/api-contracts";
+import { BuildOptions } from "./build";
 
 export type DetectedServices = {
   services: ClientService[];
   predeploy?: ClientService;
+  build?: BuildOptions;
 };
 type ClientServiceType = "web" | "worker" | "job" | "predeploy";
 
@@ -40,10 +42,7 @@ export const serviceValidator = z.object({
       autoscaling: autoscalingValidator.optional(),
       domains: domainsValidator,
       healthCheck: healthcheckValidator.optional(),
-      private: serviceBooleanValidator.default({
-        value: false,
-        readOnly: false,
-      }),
+      private: serviceBooleanValidator.optional(),
     }),
     z.object({
       type: z.literal("worker"),
@@ -72,27 +71,27 @@ export type SerializedService = {
   cpuCores: number;
   ramMegabytes: number;
   config:
-  | {
-    type: "web";
-    domains: {
-      name: string;
-    }[];
-    autoscaling?: SerializedAutoscaling;
-    healthCheck?: SerializedHealthcheck;
-    private: boolean;
-  }
-  | {
-    type: "worker";
-    autoscaling?: SerializedAutoscaling;
-  }
-  | {
-    type: "job";
-    allowConcurrent: boolean;
-    cron: string;
-  }
-  | {
-    type: "predeploy";
-  };
+    | {
+        type: "web";
+        domains: {
+          name: string;
+        }[];
+        autoscaling?: SerializedAutoscaling;
+        healthCheck?: SerializedHealthcheck;
+        private?: boolean;
+      }
+    | {
+        type: "worker";
+        autoscaling?: SerializedAutoscaling;
+      }
+    | {
+        type: "job";
+        allowConcurrent: boolean;
+        cron: string;
+      }
+    | {
+        type: "predeploy";
+      };
 };
 
 export function isPredeployService(service: SerializedService | ClientService) {
@@ -192,7 +191,7 @@ export function serializeService(service: ClientService): SerializedService {
           domains: config.domains.map((domain) => ({
             name: domain.name.value,
           })),
-          private: config.private.value,
+          private: config.private?.value,
         },
       })
     )
@@ -286,7 +285,9 @@ export function deserializeService({
             override: overrideWebConfig?.healthCheck,
           }),
 
-          domains: Array.from(new Set([...config.domains, ...(overrideWebConfig?.domains ?? [])])).map((domain) => ({
+          domains: Array.from(
+            new Set([...config.domains, ...(overrideWebConfig?.domains ?? [])])
+          ).map((domain) => ({
             name: ServiceField.string(
               domain.name,
               overrideWebConfig?.domains.find(
@@ -294,10 +295,11 @@ export function deserializeService({
               )?.name
             ),
           })),
-          private: ServiceField.boolean(
-            config.private,
-            overrideWebConfig?.private
-          ),
+          private:
+            typeof config.private === "boolean" ||
+            typeof overrideWebConfig?.private === "boolean"
+              ? ServiceField.boolean(config.private, overrideWebConfig?.private)
+              : undefined,
         },
       };
     })

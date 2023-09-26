@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import styled from "styled-components";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
@@ -8,30 +8,23 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { PorterAppFormData } from "lib/porter-apps";
 import ExpandableEnvGroup from "./ExpandableEnvGroup";
-import { PopulatedEnvGroup, populatedEnvGroup } from "./types";
-import { useQuery } from "@tanstack/react-query";
-import { Context } from "shared/Context";
-import api from "shared/api";
-import { z } from "zod";
+import { PopulatedEnvGroup } from "./types";
+
 import { valueExists } from "shared/util";
 import EnvGroupModal from "./EnvGroupModal";
 import { IterableElement } from "type-fest";
 
 type Props = {
-  appName?: string;
-  revisionId?: string;
   baseEnvGroups?: PopulatedEnvGroup[];
   existingEnvGroupNames?: string[];
+  attachedEnvGroups?: PopulatedEnvGroup[];
 };
 
 const EnvGroups: React.FC<Props> = ({
-  appName,
-  revisionId,
   baseEnvGroups = [],
   existingEnvGroupNames = [],
+  attachedEnvGroups = [],
 }) => {
-  const { currentCluster, currentProject } = useContext(Context);
-
   const [showEnvModal, setShowEnvModal] = useState(false);
   const [hovered, setHovered] = useState(false);
 
@@ -50,37 +43,6 @@ const EnvGroups: React.FC<Props> = ({
   });
 
   const maxEnvGroupsReached = envGroups.length >= 3;
-
-  const { data: attachedEnvGroups = [] } = useQuery(
-    ["getAttachedEnvGroups", appName, revisionId],
-    async () => {
-      if (!appName || !revisionId || !currentCluster?.id || !currentProject?.id)
-        return [];
-
-      const res = await api.getAttachedEnvGroups(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          app_name: appName,
-          revision_id: revisionId,
-        }
-      );
-
-      const { env_groups } = await z
-        .object({
-          env_groups: z.array(populatedEnvGroup),
-        })
-        .parseAsync(res.data);
-
-      return env_groups;
-    },
-    {
-      enabled:
-        !!appName && !!revisionId && !!currentCluster && !!currentProject,
-    }
-  );
 
   const populatedEnvWithFallback = useMemo(() => {
     return envGroups
@@ -153,7 +115,7 @@ const EnvGroups: React.FC<Props> = ({
           Max 4 Env Groups allowed
         </TooltipText>
       </TooltipWrapper>
-      {envGroups.length > 0 && (
+      {populatedEnvWithFallback.length > 0 && (
         <>
           <Spacer y={0.5} />
           <Text size={16}>Synced environment groups</Text>

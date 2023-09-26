@@ -49,6 +49,7 @@ import {
   PopulatedEnvGroup,
   populatedEnvGroup,
 } from "../validate-apply/app-settings/types";
+import EnvSettings from "../validate-apply/app-settings/EnvSettings";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -183,9 +184,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     porterYamlFound,
     detectedName,
     loading: isLoadingPorterYaml,
-  } = usePorterYaml({ source: source?.type === "github" ? source : null, appName: name.value });
+  } = usePorterYaml({
+    source: source?.type === "github" ? source : null,
+    appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
+  });
   const deploymentTarget = useDefaultDeploymentTarget();
-  const { updateAppStep } = useAppAnalytics(name.value);
+  const { updateAppStep } = useAppAnalytics();
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget?.deployment_target_id,
     creating: true,
@@ -234,7 +238,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     }) => {
       setIsDeploying(true);
       // log analytics event that we started form submission
-      updateAppStep({ step: "stack-launch-complete" });
+      updateAppStep({ step: "stack-launch-complete", appName: name.value });
 
       try {
         if (!currentProject?.id || !currentCluster?.id) {
@@ -257,11 +261,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
         );
 
-        const envGroupResponse = await api.updateEnvironmentGroupV2(
+        const res = await api.updateEnvironmentGroupV2(
           "<token>",
           {
             deployment_target_id: deploymentTarget.deployment_target_id,
             variables: variables,
+            b64_app_proto: btoa(app.toJsonString()),
             secrets: secrets,
           },
           {
@@ -271,31 +276,29 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
         );
 
-        const addedEnvGroup = await z
+        const updatedEnvGroups = z
           .object({
-            env_group_name: z.string(),
-            env_group_version: z.coerce.bigint(),
+            env_groups: z
+              .object({
+                name: z.string(),
+                latest_version: z.coerce.bigint(),
+              })
+              .array(),
           })
-          .parseAsync(envGroupResponse.data);
+          .parse(res.data);
 
-        const envGroups = [
-          ...app.envGroups.filter(
-            (group) => group.name !== addedEnvGroup.env_group_name
-          ),
-          {
-            name: addedEnvGroup.env_group_name,
-            version: addedEnvGroup.env_group_version,
-          },
-        ];
-        const appWithSeededEnv = new PorterApp({
+        const protoWithUpdatedEnv = new PorterApp({
           ...app,
-          envGroups,
+          envGroups: updatedEnvGroups.env_groups.map((eg) => ({
+            name: eg.name,
+            version: eg.latest_version,
+          })),
         });
 
         await api.applyApp(
           "<token>",
           {
-            b64_app_proto: btoa(appWithSeededEnv.toJsonString()),
+            b64_app_proto: btoa(protoWithUpdatedEnv.toJsonString()),
             deployment_target_id: deploymentTarget.deployment_target_id,
           },
           {
@@ -305,7 +308,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         );
 
         // log analytics event that we successfully deployed
-        updateAppStep({ step: "stack-launch-success" });
+        updateAppStep({ step: "stack-launch-success", appName: name.value });
 
         if (source.type === "docker-registry") {
           history.push(`/apps/${app.name}`);
@@ -317,6 +320,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           updateAppStep({
             step: "stack-launch-failure",
             errorMessage: err.response?.data?.error,
+            appName: name.value,
           });
           setDeployError(err.response?.data?.error);
           return false;
@@ -324,7 +328,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         const msg =
           "An error occurred while deploying your application. Please try again.";
-        updateAppStep({ step: "stack-launch-failure", errorMessage: msg });
+        updateAppStep({ step: "stack-launch-failure", errorMessage: msg, appName: name.value });
         setDeployError(msg);
         return false;
       } finally {
@@ -424,9 +428,13 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   useEffect(() => {
     if (servicesFromYaml && !detectedServices.detected) {
-      const { services, predeploy } = servicesFromYaml;
+      const { services, predeploy, build: detectedBuild } = servicesFromYaml;
       setValue("app.services", services);
       setValue("app.predeploy", [predeploy].filter(valueExists));
+
+      if (detectedBuild) {
+        setValue("app.build", detectedBuild);
+      }
       setDetectedServices({
         detected: true,
         count: services.length,
@@ -537,7 +545,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               source={source}
                               projectId={currentProject.id}
                             />
-                            {!userHasSeenNoPorterYamlFoundModal &&
+                            {/* todo(ianedwards): re-enable porter.yaml modal after validate/apply v2 is rolled out and proven to be stable */}
+                            {/* {!userHasSeenNoPorterYamlFoundModal &&
                               !porterYamlFound &&
                               !isLoadingPorterYaml && (
                                 <Controller
@@ -557,7 +566,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                                     />
                                   )}
                                 />
-                              )}
+                              )} */}
                           </>
                         ) : (
                           <ImageSettings />
@@ -585,9 +594,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>
@@ -605,8 +613,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <Text color="helper">
                       Specify environment variables shared among all services.
                     </Text>
-                    <EnvVariables />
-                    <EnvGroups baseEnvGroups={baseEnvGroups} />
+                    <EnvSettings
+                      baseEnvGroups={baseEnvGroups}
+                      servicesFromYaml={null}
+                    />
                   </>,
                   source.type === "github" && (
                     <>

@@ -31,6 +31,7 @@ import Activity from "./tabs/Activity";
 import EventFocusView from "./tabs/activity-feed/events/focus-views/EventFocusView";
 import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
+import JobsTab from "./tabs/JobsTab";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -45,7 +46,7 @@ const validTabs = [
   "build-settings",
   "settings",
   // "helm-values",
-  // "job-history",
+  "job-history",
 ] as const;
 const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
@@ -109,8 +110,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       app: clientAppFromProto({
         proto: latestProto,
         overrides: servicesFromYaml,
-        variables: latestRevision.env.variables,
-        secrets: latestRevision.env.secret_variables,
       }),
       source: latestSource,
       deletions: {
@@ -165,40 +164,39 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       );
 
       // updates the default env group associated with this app to store app specific env vars
-      const res = await api.updateAppEnvironmentGroup(
+      const res = await api.updateEnvironmentGroupV2(
         "<token>",
         {
           deployment_target_id: deploymentTargetId,
           variables,
           secrets,
+          b64_app_proto: btoa(validatedAppProto.toJsonString()),
           remove_missing: true,
         },
         {
-          project_id: projectId,
+          id: projectId,
           cluster_id: clusterId,
           app_name: porterApp.name,
         }
       );
 
-      const updatedEnvGroup = z
+      const updatedEnvGroups = z
         .object({
-          env_group_name: z.string(),
-          env_group_version: z.coerce.bigint(),
+          env_groups: z
+            .object({
+              name: z.string(),
+              latest_version: z.coerce.bigint(),
+            })
+            .array(),
         })
         .parse(res.data);
 
       const protoWithUpdatedEnv = new PorterApp({
         ...validatedAppProto,
-        envGroups: validatedAppProto.envGroups.map((envGroup) => {
-          if (envGroup.name === updatedEnvGroup.env_group_name) {
-            return {
-              ...envGroup,
-              version: updatedEnvGroup.env_group_version,
-            };
-          }
-
-          return envGroup;
-        }),
+        envGroups: updatedEnvGroups.env_groups.map((eg) => ({
+          name: eg.name,
+          version: eg.latest_version,
+        })),
       });
 
       await api.applyApp(
@@ -258,8 +256,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       app: clientAppFromProto({
         proto: latestProto,
         overrides: servicesFromYaml,
-        variables: latestRevision.env.variables,
-        secrets: latestRevision.env.secret_variables,
       }),
       source: latestSource,
       deletions: {
@@ -267,12 +263,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         serviceNames: [],
       },
     });
-  }, [
-    servicesFromYaml,
-    currentTab,
-    latestProto,
-    latestRevision.revision_number,
-  ]);
+  }, [servicesFromYaml, latestProto, latestRevision.revision_number]);
 
   return (
     <FormProvider {...porterAppFormMethods}>
@@ -343,11 +334,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
               setRedeployOnSave={setRedeployOnSave}
             />
           ))
-          .with("environment", () => <Environment />)
+          .with("environment", () => <Environment latestSource={latestSource} />)
           .with("settings", () => <Settings />)
           .with("logs", () => <LogsTab />)
           .with("metrics", () => <MetricsTab />)
           .with("events", () => <EventFocusView />)
+          .with("job-history", () => <JobsTab />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>

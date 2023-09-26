@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -10,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -37,7 +39,7 @@ func NewPodStatusHandler(
 // PodStatusRequest is the expected format for a request body on GET /apps/pods
 type PodStatusRequest struct {
 	DeploymentTargetID string `schema:"deployment_target_id"`
-	Selectors          string `schema:"selectors"`
+	ServiceName        string `schema:"service"`
 }
 
 func (c *PodStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -51,10 +53,17 @@ func (c *PodStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
+	if reqErr != nil {
+		err := telemetry.Error(ctx, span, reqErr, "porter app name not found in request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "selectors", Value: request.Selectors})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName}, telemetry.AttributeKV{Key: "app-name", Value: appName})
 
 	if request.DeploymentTargetID == "" {
 		err := telemetry.Error(ctx, span, nil, "must provide deployment target id")
@@ -99,7 +108,13 @@ func (c *PodStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	pods := []v1.Pod{}
 
-	podsList, err := agent.GetPodsByLabel(request.Selectors, namespace)
+	var selectors string
+	if request.ServiceName == "" {
+		selectors = fmt.Sprintf("porter.run/deployment-target-id=%s,porter.run/app-name=%s", request.DeploymentTargetID, appName)
+	} else {
+		selectors = fmt.Sprintf("porter.run/service-name=%s,porter.run/deployment-target-id=%s,porter.run/app-name=%s", request.ServiceName, request.DeploymentTargetID, appName)
+	}
+	podsList, err := agent.GetPodsByLabel(selectors, namespace)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "unable to get pods by label")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

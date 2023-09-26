@@ -53,7 +53,7 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
       <ControlledInput
         label="Container port"
         type="text"
-        placeholder="ex: 80"
+        placeholder="ex: 3000"
         disabled={service.port.readOnly}
         width="300px"
         disabledTooltip={"You may only edit this field in your porter.yaml."}
@@ -66,7 +66,7 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
         render={({ field: { value, onChange } }) => (
           <Checkbox
             checked={!value}
-            disabled={service.config.private.readOnly}
+            disabled={service.config.private?.readOnly}
             toggleChecked={() => {
               onChange(!value);
             }}

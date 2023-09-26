@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/deployment_target"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -114,11 +115,24 @@ func (c *GetBuildEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
+		ProjectID:          int64(project.ID),
+		ClusterID:          int64(cluster.ID),
+		DeploymentTargetID: revision.DeploymentTargetID,
+		CCPClient:          c.Config().ClusterControlPlaneClient,
+	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting deployment target details")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	envFromProtoInp := porter_app.AppEnvironmentFromProtoInput{
-		ProjectID: project.ID,
-		ClusterID: int(cluster.ID),
-		App:       appProto,
-		K8SAgent:  agent,
+		ProjectID:        project.ID,
+		ClusterID:        int(cluster.ID),
+		DeploymentTarget: deploymentTarget,
+		App:              appProto,
+		K8SAgent:         agent,
 	}
 	envGroups, err := porter_app.AppEnvironmentFromProto(ctx, envFromProtoInp)
 	if err != nil {

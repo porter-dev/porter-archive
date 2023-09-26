@@ -315,9 +315,6 @@ func (c *Client) CreatePorterAppDBEntry(
 			Tag:        inp.ImageTag,
 		}
 	}
-	if sourceType == "" {
-		return fmt.Errorf("cannot determine source type")
-	}
 
 	req := &porter_app.CreateAppRequest{
 		Name:           inp.AppName,
@@ -442,6 +439,7 @@ func (c *Client) CreateOrUpdateAppEnvironment(
 	deploymentTargetID string,
 	variables map[string]string,
 	secrets map[string]string,
+	Base64AppProto string,
 ) (*porter_app.UpdateAppEnvironmentResponse, error) {
 	resp := &porter_app.UpdateAppEnvironmentResponse{}
 
@@ -450,6 +448,7 @@ func (c *Client) CreateOrUpdateAppEnvironment(
 		Variables:          variables,
 		Secrets:            secrets,
 		HardUpdate:         false,
+		Base64AppProto:     Base64AppProto,
 	}
 
 	err := c.postRequest(
@@ -458,6 +457,53 @@ func (c *Client) CreateOrUpdateAppEnvironment(
 			projectID, clusterID, appName,
 		),
 		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// PorterYamlV2Pods gets all pods for a given deployment target id and app name
+func (c *Client) PorterYamlV2Pods(
+	ctx context.Context,
+	projectID, clusterID uint,
+	porterAppName string,
+	req *types.PorterYamlV2PodsRequest,
+) (*types.GetReleaseAllPodsResponse, error) {
+	resp := &types.GetReleaseAllPodsResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/pods",
+			projectID, clusterID,
+			porterAppName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// UpdateImage updates the image for a porter app (porter yaml v2 only)
+func (c *Client) UpdateImage(
+	ctx context.Context,
+	projectID, clusterID uint,
+	appName, deploymentTargetId, tag string,
+) (*porter_app.UpdateImageResponse, error) {
+	req := &porter_app.UpdateImageRequest{
+		Tag:                tag,
+		DeploymentTargetId: deploymentTargetId,
+	}
+
+	resp := &porter_app.UpdateImageResponse{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/update-image",
+			projectID, clusterID, appName,
+		),
+		&req,
 		resp,
 	)
 

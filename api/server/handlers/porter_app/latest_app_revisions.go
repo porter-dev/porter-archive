@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -15,7 +16,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// LatestAppRevisionsHandler handles requests to the /apps/{porter_app_name}/revisions endpoint
+// LatestAppRevisionsHandler handles requests to the /apps/revisions endpoint
 type LatestAppRevisionsHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -31,7 +32,7 @@ func NewLatestAppRevisionsHandler(
 	}
 }
 
-// LatestAppRevisionsRequest represents the response from the /apps/{porter_app_name}/revisions endpoint
+// LatestAppRevisionsRequest represents the response from the /apps/revisions endpoint
 type LatestAppRevisionsRequest struct{}
 
 // LatestRevisionWithSource is an app revision and its source porter app
@@ -40,7 +41,7 @@ type LatestRevisionWithSource struct {
 	Source      types.PorterApp     `json:"source"`
 }
 
-// LatestAppRevisionsResponse represents the response from the /apps/{porter_app_name}/revisions endpoint
+// LatestAppRevisionsResponse represents the response from the /apps/revisions endpoint
 type LatestAppRevisionsResponse struct {
 	AppRevisions []LatestRevisionWithSource `json:"app_revisions"`
 }
@@ -52,34 +53,22 @@ func (c *LatestAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	deploymentTargets, err := c.Repo().DeploymentTarget().List(project.ID)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error reading deployment targets")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	if len(deploymentTargets) == 0 {
-		res := &LatestAppRevisionsResponse{
-			AppRevisions: []LatestRevisionWithSource{},
-		}
-
-		c.WriteResult(w, r, res)
-		return
-	}
-
-	if len(deploymentTargets) > 1 {
-		err = telemetry.Error(ctx, span, err, "more than one deployment target found")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
 	// todo(ianedwards): once we have a way to select a deployment target, we can add it to the request
-	deploymentTarget := deploymentTargets[0]
+	defaultDeploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(project.ID, cluster.ID, DeploymentTargetSelector_Default, DeploymentTargetSelectorType_Default)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting default deployment target from repo")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+	if defaultDeploymentTarget.ID == uuid.Nil {
+		err := telemetry.Error(ctx, span, err, "default deployment target not found")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
 
 	listAppRevisionsReq := connect.NewRequest(&porterv1.LatestAppRevisionsRequest{
 		ProjectId:          int64(project.ID),
-		DeploymentTargetId: deploymentTarget.ID.String(),
+		DeploymentTargetId: defaultDeploymentTarget.ID.String(),
 	})
 
 	latestAppRevisionsResp, err := c.Config().ClusterControlPlaneClient.LatestAppRevisions(ctx, listAppRevisionsReq)

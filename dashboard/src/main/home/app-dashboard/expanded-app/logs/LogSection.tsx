@@ -26,7 +26,6 @@ import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 import { Service } from "../../new-app-flow/serviceTypes";
-import LogFilterContainer from "./LogFilterContainer";
 import StyledLogs from "./StyledLogs";
 import Filter from "components/porter/Filter";
 
@@ -252,7 +251,7 @@ const LogSection: React.FC<Props> = ({
           </Flex>
           <Flex>
             {showFilter && (
-              <Filter 
+              <Filter
                 filters={filters}
                 selectedFilterValues={selectedFilterValues}
                 filterString={generateFilterString()}

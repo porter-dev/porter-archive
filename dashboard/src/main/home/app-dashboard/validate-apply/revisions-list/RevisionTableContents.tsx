@@ -22,9 +22,8 @@ type RevisionTableContentsProps = {
   setRevertData: Dispatch<
     SetStateAction<{
       app: PorterApp;
-      revision: number;
-      variables: Record<string, string>;
-      secrets: Record<string, string>;
+      revisionId: string;
+      number: number;
     } | null>
   >;
 };
@@ -102,7 +101,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
     const { numDeployed, latestRevision } = args;
 
     if (previewRevision) {
-      return previewRevision;
+      return previewRevision.revision_number;
     }
 
     if (latestRevision && latestRevision.revision_number !== 0) {
@@ -181,7 +180,8 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                     key={revision.revision_number}
                     selected={
                       previewRevision
-                        ? revision.revision_number === previewRevision
+                        ? revision.revision_number ===
+                          previewRevision.revision_number
                         : isLatestDeployedRevision
                     }
                     onClick={() => {
@@ -189,8 +189,6 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                         app: clientAppFromProto({
                           proto: revision.app_proto,
                           overrides: servicesFromYaml,
-                          variables: revision.env.variables,
-                          secrets: revision.env.secret_variables,
                         }),
                         source: latestSource,
                         deletions: {
@@ -198,10 +196,9 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                           envGroupNames: [],
                         },
                       });
+
                       setPreviewRevision(
-                        isLatestDeployedRevision
-                          ? null
-                          : revision.revision_number
+                        isLatestDeployedRevision ? null : revision
                       );
                     }}
                   >
@@ -233,9 +230,8 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
 
                           setRevertData({
                             app: revision.app_proto,
-                            revision: revision.revision_number,
-                            variables: revision.env.variables ?? {},
-                            secrets: revision.env.secret_variables ?? {},
+                            revisionId: revision.id,
+                            number: revision.revision_number,
                           });
                         }}
                       >

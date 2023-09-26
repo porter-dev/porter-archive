@@ -13,7 +13,14 @@ func UpdateFull(ctx context.Context, cliConf config.CLIConfig, client api.Client
 	// use empty string for porterYamlPath,legacy projects wont't have a v2 porter.yaml
 	var porterYamlPath string
 
-	err := Apply(ctx, cliConf, client, porterYamlPath, appName)
+	inp := ApplyInput{
+		CLIConfig:      cliConf,
+		Client:         client,
+		PorterYamlPath: porterYamlPath,
+		AppName:        appName,
+	}
+
+	err := Apply(ctx, inp)
 	if err != nil {
 		return err
 	}

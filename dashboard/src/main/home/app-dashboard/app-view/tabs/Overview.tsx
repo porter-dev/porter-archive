@@ -21,7 +21,7 @@ const Overview: React.FC = () => {
   const { serviceVersionStatus } = useAppStatus({
     projectId,
     clusterId,
-    serviceNames: Object.keys(latestProto.services).filter(name => latestProto.services[name].config.case !== "jobConfig"),
+    serviceNames: Object.keys(latestProto.services),
     deploymentTargetId,
     appName: latestProto.name,
   });

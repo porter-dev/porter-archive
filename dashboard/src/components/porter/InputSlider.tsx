@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Slider, { Mark } from '@material-ui/core/Slider';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import styled from 'styled-components';
 import { withStyles } from '@material-ui/core/styles';
-import Container from './Container';
-
+import Text from './Text';
+import Spacer from './Spacer';
+import SmartOptModal from 'main/home/app-dashboard/new-app-flow/tabs/SmartOptModal';
+import NodeInfoModal from 'main/home/app-dashboard/new-app-flow/tabs/NodeInfoModal';
 
 type InputSliderProps = {
   label?: string;
@@ -19,6 +21,9 @@ type InputSliderProps = {
   color?: string;
   width?: string;
   step?: number;
+  smartLimit?: number;
+  override?: boolean;
+  nodeCount?: number;
 };
 
 const ValueLabelComponent: React.FC<any> = (props) => {
@@ -47,41 +52,129 @@ const InputSlider: React.FC<InputSliderProps> = ({
   color,
   step,
   width,
-
+  smartLimit,
+  override,
+  nodeCount
 }) => {
-  const marks: Mark[] = [
+  const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
 
+  const optimal = nodeCount ? Math.round((max / nodeCount) * 10) / 10 : 0;
+
+  const mid = min + (max - min) * 0.25;
+  const quarter = min + (max - min) * 0.125;
+  const marks: Mark[] = [
     {
       value: max,
       label: max.toString(),
     },
   ];
+  var isExceedingLimit = false;
+  var displayOptimalText = false;
+  //Optimal Marks only give useful information to user if they are using more than 2 nodes
+  // if (optimal != 0 && nodeCount && nodeCount > 2) {
+  //   marks.push({
+  //     value: optimal,
+  //     label: (
+  //       <Text color="helper" size={10}>
+  //         Recommended
+  //       </Text>
+
+  //     )
+  //   });
+  //   displayOptimalText = Number(value) == optimal;
+  // }
+
+  if (smartLimit) {
+
+    marks.push({
+      value: smartLimit,
+      label: smartLimit.toString(),
+    },
+      {
+        value: mid,
+        label: "",
+      },
+      {
+        value: quarter,
+        label: "",
+      },);
+    displayOptimalText = Number(value) == mid || Number(value) == quarter;
+    isExceedingLimit = Number(value) > smartLimit;
+  }
+  const isCloseToMark = (value, marks, threshold = 0.1) => {
+    return marks.some(mark => Math.abs(mark.value - value) < threshold);
+  };
+
+  const getClosestMark = (value, marks) => {
+    return marks.reduce((prev, curr) => (
+      Math.abs(curr.value - value) < Math.abs(prev.value - value) ? curr : prev
+    )).value;
+  };
+
 
   return (
     <SliderContainer width={width}>
       <LabelContainer>
-        {label && <Label>{label}</Label>}
-        <Value>{`${value} ${unit}`}</Value>
+        <>
+          {label && <Label>{label}</Label>}
+          <Value>{`${Math.floor(value * 100) / 100} ${unit}`}</Value>
+          {displayOptimalText &&
+            <><Spacer inline x={1} /><Label>Recommended based on the available compute </Label>  <StyledIcon
+              className="material-icons"
+              onClick={() => {
+                setShowNeedHelpModal(true)
+              }}
+            >
+              help_outline
+            </StyledIcon></>}
+          {showNeedHelpModal &&
+            <NodeInfoModal
+              setModalVisible={setShowNeedHelpModal}
+            />}
+          {isExceedingLimit &&
+            <><Spacer inline x={1} /><Label color="#FFBF00"> Value is not optimal for cost</Label></>}
+        </>
       </LabelContainer>
-      <DisabledTooltip title={disabled ? disabledTooltip || '' : ''} arrow>
 
+      <DisabledTooltip title={disabled ? disabledTooltip || '' : ''} arrow>
         <div style={{ position: 'relative' }}>
-          <StyledSlider
-            ValueLabelComponent={ValueLabelComponent}
-            aria-label="input slider"
-            min={min}
-            max={max}
-            value={Number(value)}
-            onChange={(event, newValue) => {
-              setValue(newValue as number);
-            }}
-            disabled={disabled}
-            marks={marks}
-            step={step ? step : 1}
-            style={{
-              color: disabled ? "gray" : color,
-            }}
-          />
+          {/* <div style={{ position: 'absolute', bottom: '100%', left: `calc(${((threeQuarter - min) / (max - min)) * 100}% - 50px)` }}>
+            Recommended
+          </div> */}
+          <MaxedOutToolTip title={smartLimit?.toString() == value && !override ? "Using resources beyond this limit is not cost optimal - to override toggle off Smart Optimization" || '' : ''} arrow>
+            <div style={{ position: 'relative' }}>
+
+              <StyledSlider
+                ValueLabelComponent={ValueLabelComponent}
+                aria-label="input slider"
+                isExceedingLimit={isExceedingLimit}
+                min={min}
+                max={max}
+                value={(!override && isExceedingLimit) ? smartLimit : Number(value)}
+                onChange={(event, newValue) => {
+                  if (!override && smartLimit && newValue > smartLimit) {
+                    setValue(smartLimit);
+                  } else if (!override && smartLimit) {
+                    const closestMarkValue = getClosestMark(newValue, marks);
+                    setValue(closestMarkValue);
+                  } else {
+                    setValue(newValue as number);
+                  }
+                }}
+                classes={{
+                  track: isExceedingLimit ? 'exceeds-limit' : '',
+                  rail: isExceedingLimit ? 'exceeds-limit' : ''
+                }}
+                valueLabelDisplay={smartLimit && Number(value) > smartLimit ? "off" : "auto"}
+                disabled={disabled}
+                marks={marks}
+                step={(step ? step : 1)}
+                style={{
+                  color: disabled ? "gray" : color,
+                }}
+              />
+            </div>
+          </MaxedOutToolTip>
           {disabled && (
             <div
               style={{
@@ -106,7 +199,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
 export default InputSlider;
 
 const SliderContainer = styled.div<{ width?: string }>`
-  width: ${({ width }) => width || '300px'};
+  width: ${({ width }) => width || '90%'};
   margin: 1px 0;
 `;
 
@@ -114,7 +207,7 @@ const Label = styled.div<{ color?: string }>`
   font-size: 13px;
   margin-right: 5px;
   margin-bottom: 10px;
-  color: #aaaabb;
+  color: ${props => props.color ? props.color : '#aaaabb'};
 `;
 
 const Value = styled.div<{ color?: string }>`
@@ -144,6 +237,23 @@ const DisabledTooltip = withStyles(theme => ({
   },
 }))(Tooltip);
 
+const MaxedOutToolTip = withStyles(theme => ({
+  tooltip: {
+    backgroundColor: '#333',
+    color: '#fff',
+    padding: '5px',
+    borderRadius: '2px',
+    fontSize: '12px',
+    textAlign: 'center',
+    whiteSpace: 'pre-wrap',
+    wordWrap: 'break-word',
+    maxWidth: '200px',
+    width: '200px',
+    [theme.breakpoints.up('sm')]: {
+      margin: '0 2px',
+    },
+  },
+}))(Tooltip);
 
 const StyledSlider = withStyles({
   root: {
@@ -164,7 +274,10 @@ const StyledSlider = withStyles({
     color: '#6e717d',
     fontSize: '12px',
     marginRight: 5,
-
+    '&[data-mark-value="Recommended"]': { // targeting the Recommended label
+      transform: 'translateY(-100%)', // move it upwards
+      marginBottom: '15px', // adjust the margin to position it
+    },
   },
   markLabelActive: {
     color: '#6e717d',
@@ -183,21 +296,24 @@ const StyledSlider = withStyles({
       width: 16,
     },
   },
-  track: {
-    height: 8, // Same as root height for consistency
+  track: (props) => ({
+    height: 8,
     borderRadius: 4,
-  },
-  rail: {
-    height: 8, // Same as root height for consistency
+    backgroundColor: props.isExceedingLimit ? '#FFBF00' : '',  // setting color conditionally
+  }),
+  rail: (props) => ({
+    height: 8,
     borderRadius: 4,
-  },
+    backgroundColor: props.isExceedingLimit ? '#FFBF00' : '',  // setting color conditionally
+  }),
   valueLabel: {
     top: -22,
     '& *': {
       background: 'transparent',
       border: 'none', // remove the default border
     },
-  },
+  }
+  ,
   disabled: {},
 })(Slider);
 
@@ -213,4 +329,13 @@ const StyledTooltip = withStyles({
 const LabelContainer = styled.div`
   display: flex;
   align-items: center;
+`;
+
+const StyledIcon = styled.i`
+  cursor: pointer;
+  font-size: 16px; 
+  margin-bottom : 10px;
+  &:hover {
+    color: #666;  
+  }
 `;

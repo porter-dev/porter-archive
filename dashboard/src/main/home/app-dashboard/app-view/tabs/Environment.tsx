@@ -5,20 +5,27 @@ import EnvVariables from "../../validate-apply/app-settings/EnvVariables";
 import Button from "components/porter/Button";
 import Error from "components/porter/Error";
 import { useFormContext } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
+import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
 import { useLatestRevision } from "../LatestRevisionContext";
 import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
 import { z } from "zod";
 import { populatedEnvGroup } from "../../validate-apply/app-settings/types";
 import EnvGroups from "../../validate-apply/app-settings/EnvGroups";
+import EnvSettings from "../../validate-apply/app-settings/EnvSettings";
 
-const Environment: React.FC = () => {
+type Props = {
+  latestSource: SourceOptions;
+};
+
+const Environment: React.FC<Props> = ({ latestSource }) => {
   const {
     latestRevision,
     latestProto,
     clusterId,
     projectId,
+    previewRevision,
+    servicesFromYaml,
   } = useLatestRevision();
   const {
     formState: { isSubmitting, errors },
@@ -65,12 +72,13 @@ const Environment: React.FC = () => {
       <Text size={16}>Environment variables</Text>
       <Spacer y={0.5} />
       <Text color="helper">Shared among all services.</Text>
-      <EnvVariables />
-      <EnvGroups
+      <EnvSettings
         appName={latestProto.name}
-        revisionId={latestRevision.id}
+        revision={previewRevision ? previewRevision : latestRevision} // get versions of env groups attached to preview revision if set
         baseEnvGroups={baseEnvGroups}
         existingEnvGroupNames={envGroupNames}
+        latestSource={latestSource}
+        servicesFromYaml={servicesFromYaml}
       />
       <Spacer y={0.5} />
       <Button

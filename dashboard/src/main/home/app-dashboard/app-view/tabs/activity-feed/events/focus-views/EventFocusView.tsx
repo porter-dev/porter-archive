@@ -21,7 +21,7 @@ const EventFocusView: React.FC = ({ }) => {
     const { search } = useLocation();
     const queryParams = new URLSearchParams(search);
     const eventId = queryParams.get("event_id");
-    const { projectId, clusterId, latestProto, deploymentTargetId, latestRevision } = useLatestRevision();
+    const { projectId, clusterId, latestProto } = useLatestRevision();
 
     const [event, setEvent] = useState<SupportedEventFocusViewEvent | null>(null);
 

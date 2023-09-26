@@ -3,7 +3,7 @@ import { useLatestRevision } from "../LatestRevisionContext";
 import MetricsSection from "../../validate-apply/metrics/MetricsSection";
 
 const MetricsTab: React.FC = () => {
-    const { projectId, clusterId, latestProto , deploymentTargetId} = useLatestRevision();
+    const { projectId, clusterId, latestProto , deploymentTarget} = useLatestRevision();
 
     const appName = latestProto.name
 
@@ -14,7 +14,7 @@ const MetricsTab: React.FC = () => {
                 clusterId={clusterId}
                 appName={appName}
                 services={latestProto.services}
-                deploymentTargetId={deploymentTargetId}
+                deploymentTargetId={deploymentTarget.id}
             />
         </>
     );

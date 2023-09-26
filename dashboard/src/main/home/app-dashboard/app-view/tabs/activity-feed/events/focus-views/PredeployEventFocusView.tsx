@@ -19,7 +19,7 @@ type Props = {
 const PreDeployEventFocusView: React.FC<Props> = ({
   event,
 }) => {
-  const { projectId, clusterId, latestProto, deploymentTargetId, latestRevision } = useLatestRevision();
+  const { projectId, clusterId, latestProto, deploymentTarget } = useLatestRevision();
 
   const appName = latestProto.name
   const serviceNames = [`${latestProto.name}-predeploy`]
@@ -63,7 +63,7 @@ const PreDeployEventFocusView: React.FC<Props> = ({
         clusterId={clusterId}
         appName={appName}
         serviceNames={serviceNames}
-        deploymentTargetId={deploymentTargetId}
+        deploymentTargetId={deploymentTarget.id}
         appRevisionId={event.metadata.app_revision_id}
         logFilterNames={["service_name"]}
       />

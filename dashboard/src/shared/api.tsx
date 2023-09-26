@@ -322,7 +322,7 @@ const appPodStatus = baseApi<
     deployment_target_id: string;
     service: string;
   },
-  { project_id: number; cluster_id: number, app_name: string }
+  { project_id: number; cluster_id: number; app_name: string }
 >("GET", ({ project_id, cluster_id, app_name }) => {
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${app_name}/pods`;
 });
@@ -996,13 +996,27 @@ const listAppRevisions = baseApi<
 });
 
 const getLatestAppRevisions = baseApi<
-  {},
+  {
+    deployment_target_id: string;
+  },
   {
     project_id: number;
     cluster_id: number;
   }
 >("GET", ({ project_id, cluster_id }) => {
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/revisions`;
+});
+
+const listDeploymentTargets = baseApi<
+  {
+    preview: boolean;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", ({ project_id, cluster_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/deployment-targets`;
 });
 
 const getGitlabProcfileContents = baseApi<
@@ -3129,6 +3143,7 @@ export default {
   getRevision,
   listAppRevisions,
   getLatestAppRevisions,
+  listDeploymentTargets,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,

@@ -20,6 +20,7 @@ import { PorterApp } from "@porter-dev/api-contracts";
 import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import { readableDate } from "shared/string_utils";
+import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 
 type AppGridProps = {
   apps: AppRevisionWithSource[];
@@ -37,6 +38,7 @@ const icons = [
 ];
 
 const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
+  const { currentDeploymentTarget } = useDeploymentTarget();
   const appsWithProto = useMemo(() => {
     return apps.map((app) => {
       return {
@@ -138,7 +140,14 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
         {(filteredApps ?? []).map(
           ({ app_revision: { proto, updated_at }, source }, i) => {
             return (
-              <Link to={`/apps/${proto.name}`} key={i}>
+              <Link
+                to={
+                  currentDeploymentTarget?.preview
+                    ? `/preview-environments/apps/${proto.name}/activity?target=${currentDeploymentTarget.id}`
+                    : `/apps/${proto.name}`
+                }
+                key={i}
+              >
                 <Block>
                   <Container row>
                     {renderIcon(proto.build?.buildpacks ?? [])}
@@ -166,7 +175,14 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
         {(filteredApps ?? []).map(
           ({ app_revision: { proto, updated_at }, source }, i) => {
             return (
-              <Link to={`/apps/${proto.name}`} key={i}>
+              <Link
+                to={
+                  currentDeploymentTarget?.preview
+                    ? `/preview-environments/apps/${proto.name}/activity?target=${currentDeploymentTarget.id}`
+                    : `/apps/${proto.name}`
+                }
+                key={i}
+              >
                 <Row>
                   <Container row>
                     <Spacer inline width="1px" />

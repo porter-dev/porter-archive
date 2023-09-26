@@ -64,7 +64,7 @@ func registerCommand_Project(cliConf config.CLIConfig) *cobra.Command {
 	return projectCmd
 }
 
-func createProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func createProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	resp, err := client.CreateProject(ctx, &types.CreateProjectRequest{
 		Name: args[0],
 	})
@@ -77,7 +77,7 @@ func createProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 	return cliConf.SetProject(ctx, client, resp.ID)
 }
 
-func listProjects(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func listProjects(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	resp, err := client.ListUserProjects(ctx)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func listProjects(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 	return nil
 }
 
-func deleteProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, args []string) error {
+func deleteProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Are you sure you'd like to delete the project with id %s? %s `,

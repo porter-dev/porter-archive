@@ -44,7 +44,7 @@ func registerCommand_Logs(cliConf config.CLIConfig) *cobra.Command {
 	return logsCmd
 }
 
-func logs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, args []string) error {
+func logs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
 	podsSimple, err := getPods(ctx, client, cliConfig, namespace, args[0])
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())

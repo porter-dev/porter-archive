@@ -126,7 +126,7 @@ func registerCommand_Run(cliConf config.CLIConfig) *cobra.Command {
 	return runCmd
 }
 
-func run(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func run(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	execArgs := args[1:]
 
 	color.New(color.FgGreen).Println("Running", strings.Join(execArgs, " "), "for release", args[0])
@@ -242,7 +242,7 @@ func run(ctx context.Context, user *types.GetAuthenticatedUserResponse, client a
 	return executeRunEphemeral(ctx, config, namespace, selectedPod.Name, selectedContainerName, execArgs)
 }
 
-func cleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ []string) error {
+func cleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, _ []string) error {
 	config := &PorterRunSharedConfig{
 		Client:    client,
 		CLIConfig: cliConfig,

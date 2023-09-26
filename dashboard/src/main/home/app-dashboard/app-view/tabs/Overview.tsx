@@ -16,13 +16,13 @@ import { useAppStatus } from "lib/hooks/useAppStatus";
 
 const Overview: React.FC = () => {
   const { formState } = useFormContext<PorterAppFormData>();
-  const { porterApp, latestProto, latestRevision, projectId, clusterId, deploymentTargetId } = useLatestRevision();
+  const { porterApp, latestProto, latestRevision, projectId, clusterId, deploymentTarget } = useLatestRevision();
 
   const { serviceVersionStatus } = useAppStatus({
     projectId,
     clusterId,
     serviceNames: Object.keys(latestProto.services),
-    deploymentTargetId,
+    deploymentTargetId: deploymentTarget.id,
     appName: latestProto.name,
   });
 

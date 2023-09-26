@@ -389,7 +389,12 @@ func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectI
 
 	if previewApply {
 		var branchName string
-		if os.Getenv("GITHUB_REF_NAME") != "" {
+
+		// branch name is set to different values in the GH env, depending on whether or not the workflow is triggered by a PR
+		// issue is being tracked here: https://github.com/github/docs/issues/15319
+		if os.Getenv("GITHUB_HEAD_REF") != "" {
+			branchName = os.Getenv("GITHUB_HEAD_REF")
+		} else if os.Getenv("GITHUB_REF_NAME") != "" {
 			branchName = os.Getenv("GITHUB_REF_NAME")
 		} else if branch, err := git.CurrentBranch(); err == nil {
 			branchName = branch

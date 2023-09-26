@@ -146,7 +146,7 @@ const Home: React.FC<Props> = (props) => {
           (item: ProjectListType) => item.id === id
         );
         if (foundProjectListEntry === undefined) {
-          id = projectList[0].id
+          id = projectList[0].id;
         }
 
         const project = await api
@@ -451,7 +451,8 @@ const Home: React.FC<Props> = (props) => {
                   <AppDashboard />
                 )}
               </Route>
-              {currentProject?.validate_apply_v2 ? (
+              {currentProject?.validate_apply_v2 &&
+              currentProject.preview_envs_enabled ? (
                 <>
                   <Route path={`/preview-environments/apps/:appName/:tab`}>
                     <AppView />
@@ -551,6 +552,7 @@ const Home: React.FC<Props> = (props) => {
                 render={() => <GuardedIntegrations />}
               />
               <Route
+                exact
                 path={"/project-settings"}
                 render={() => <GuardedProjectSettings />}
               />

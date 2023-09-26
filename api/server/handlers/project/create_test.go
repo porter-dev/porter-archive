@@ -47,6 +47,7 @@ func TestCreateProjectSuccessful(t *testing.T) {
 		HelmValuesEnabled:      false,
 		MultiCluster:           false,
 		EnableReprovision:      false,
+		ValidateApplyV2:        true,
 	}
 
 	gotProject := &types.CreateProjectResponse{}

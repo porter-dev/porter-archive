@@ -30,14 +30,32 @@ import Text from "./porter/Text";
 
 const locationOptions = [
   { value: "eastus", label: "East US" },
+  { value: "eastus2", label: "East US 2" },
+    { value: "westus2", label: "West US 2" },
+    { value: "westus3", label: "West US 3" },
+    { value: "centralus", label: "Central US" },
+    { value: "southcentralus", label: "South Central US" },
+    { value: "australiaeast", label: "Australia East" },
+    { value: "brazilsouth", label: "Brazil South" },
+    { value: "centralindia", label: "Central India" },
+    { value: "southcentralus", label: "South Central US" },
+    { value: "eastasia", label: "East Asia" },
+    { value: "francecentral", label: "France Central" },
+    { value: "northeurope", label: "North Europe" },
+    { value: "norwayeast", label: "Norway East" },
+    { value: "swedencentral", label: "Sweden Central" },
+    { value: "switzerlandnorth", label: "Switzerland North" },
+    { value: "uksouth", label: "UK South" },
+    { value: "westeurope", label: "West Europe" },
 ];
 
 const machineTypeOptions = [
+  { value: "Standard_B2als_v2", label: "Standard_B2als_v2"},
   { value: "Standard_A2_v2", label: "Standard_A2_v2" },
   { value: "Standard_A4_v2", label: "Standard_A4_v2" },
 ];
 
-const clusterVersionOptions = [{ value: "v1.26.6", label: "v1.26.6" }, { value: "v1.24.9", label: "v1.24.9" }];
+const clusterVersionOptions = [{ value: "v1.27.3", label: "v1.27" }, { value: "v1.24.9", label: "v1.24" }];
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
@@ -60,12 +78,12 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [azureLocation, setAzureLocation] = useState("eastus");
-  const [machineType, setMachineType] = useState("Standard_A2_v2");
+  const [machineType, setMachineType] = useState("Standard_B2als_v2");
   const [isExpanded, setIsExpanded] = useState(false);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
   const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
-  const [clusterVersion, setClusterVersion] = useState("v1.26.6");
+  const [clusterVersion, setClusterVersion] = useState("v1.27.3");
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
@@ -165,19 +183,19 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
           case: "aksKind",
           value: new AKS({
             clusterName: clusterName,
-            clusterVersion: clusterVersion || "v1.26.6",
+            clusterVersion: clusterVersion || "v1.27.3",
             cidrRange: cidrRange || "10.78.0.0/16",
             location: azureLocation,
             nodePools: [
               new AKSNodePool({
-                instanceType: "Standard_D2ps_v5",
+                instanceType: "Standard_B2als_v2",
                 minInstances: 1,
                 maxInstances: 3,
                 nodePoolType: NodePoolType.SYSTEM,
                 mode: "User",
               }),
               new AKSNodePool({
-                instanceType: "Standard_A2_v2",
+                instanceType: "Standard_B2als_v2",
                 minInstances: 1,
                 maxInstances: 3,
                 nodePoolType: NodePoolType.MONITORING,
@@ -350,6 +368,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
               setActiveValue={setClusterVersion}
               label="Cluster version"
             />
+            <Spacer y={.75} />
             <SelectRow
               options={machineTypeOptions}
               width="350px"
@@ -498,7 +517,7 @@ const errorMessageToModal = (errorMessage: string) => {
           </Step>
           <Spacer y={1} />
           <Text color="helper">
-            We recommend an initial quota of 30 vCPUs for both Total Regional Cores and Standard Av2 Family.
+            We recommend an initial quota of 20 vCPUs for both Total Regional Cores and Standard Basv2 Family.
           </Text>
           <Spacer y={1} />
           <Step number={5}>

@@ -255,7 +255,7 @@ func listLinkedAppsByUniqueAppLabel(environmentGroupName string, deployments []a
 		appName := d.Labels[LabelKey_AppName]
 
 		for _, linkedEnvironmentGroup := range applicationsLinkedEnvironmentGroups {
-			if linkedEnvironmentGroup == environmentGroupName && appName != "" {
+			if linkedEnvironmentGroup == environmentGroupName && !strings.HasSuffix(d.Name, "predeploy") && appName != "" {
 				appsByName[appName] = LinkedPorterApplication{
 					Name:      appName,
 					Namespace: d.Namespace,

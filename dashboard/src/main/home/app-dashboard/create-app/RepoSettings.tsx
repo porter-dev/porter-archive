@@ -10,15 +10,12 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Select from "components/porter/Select";
 import AnimateHeight from "react-animate-height";
 import { z } from "zod";
-import {
-  BuildOptions,
-  PorterAppFormData,
-  SourceOptions,
-} from "lib/porter-apps";
+import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
 import RepositorySelector from "../build-settings/RepositorySelector";
 import BranchSelector from "../build-settings/BranchSelector";
 import BuildpackSettings from "../validate-apply/build-settings/buildpacks/BuildpackSettings";
 import { match } from "ts-pattern";
+import { BuildOptions } from "lib/porter-apps/build";
 
 type Props = {
   projectId: number;
@@ -85,6 +82,9 @@ const RepoSettings: React.FC<Props> = ({
       item.path.includes("Dockerfile")
     );
     setValue("app.build.method", hasDockerfile ? "docker" : "pack");
+    if (!hasDockerfile) {
+      setValue("app.build.buildpacks", []);
+    }
   }, [branchContents]);
 
   return (
@@ -235,7 +235,7 @@ const RepoSettings: React.FC<Props> = ({
                     ]}
                     setValue={(option: string) => {
                       if (option == "docker") {
-                        setValue("app.build.method", "docker");4
+                        setValue("app.build.method", "docker");
                       } else if (option == "pack") {
                         // if toggling from docker to pack, initialize buildpacks to empty array
                         setValue("app.build.method", "pack");

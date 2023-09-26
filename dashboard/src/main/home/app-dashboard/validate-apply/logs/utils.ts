@@ -461,7 +461,7 @@ export const useLogs = ({
     setDate,
     JSON.stringify(selectedFilterValues),
     JSON.stringify(timeRange?.endTime),
-    filterPredeploy
+    filterPredeploy,
   ]);
 
   useEffect(() => {

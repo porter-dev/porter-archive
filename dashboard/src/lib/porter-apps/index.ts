@@ -1,13 +1,9 @@
-import {
-  BUILDPACK_TO_NAME,
-  buildpackSchema,
-} from "main/home/app-dashboard/types/buildpack";
+import { BUILDPACK_TO_NAME } from "main/home/app-dashboard/types/buildpack";
 import { z } from "zod";
 import {
   DetectedServices,
   defaultSerialized,
   deserializeService,
-  isPredeployService,
   serializeService,
   serializedServiceFromProto,
   serviceProto,
@@ -16,22 +12,7 @@ import {
 import { Build, PorterApp, Service } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
-
-// buildValidator is used to validate inputs for build setting fields
-export const buildValidator = z.discriminatedUnion("method", [
-  z.object({
-    method: z.literal("pack"),
-    context: z.string().default("./"),
-    buildpacks: z.array(buildpackSchema).default([]),
-    builder: z.string(),
-  }),
-  z.object({
-    method: z.literal("docker"),
-    context: z.string().default("./"),
-    dockerfile: z.string().default("./Dockerfile"),
-  }),
-]);
-export type BuildOptions = z.infer<typeof buildValidator>;
+import { BuildOptions, buildValidator } from "./build";
 
 // sourceValidator is used to validate inputs for source setting fields
 export const sourceValidator = z.discriminatedUnion("type", [
@@ -117,7 +98,10 @@ export function serviceOverrides({
     .map((svc) => {
       if (useDefaults) {
         return deserializeService({
-          service: defaultSerialized({ name: svc.name, type: svc.config.type }),
+          service: defaultSerialized({
+            name: svc.name,
+            type: svc.config.type,
+          }),
           override: svc,
           expanded: true,
         });
@@ -126,14 +110,25 @@ export function serviceOverrides({
       return deserializeService({ service: svc });
     });
 
+  const validatedBuild = buildValidator
+    .default({
+      method: "pack",
+      context: "./",
+      buildpacks: [],
+      builder: "",
+    })
+    .parse(overrides.build);
+
   if (!overrides.predeploy) {
     return {
+      build: validatedBuild,
       services,
     };
   }
 
   if (useDefaults) {
     return {
+      build: validatedBuild,
       services,
       predeploy: deserializeService({
         service: defaultSerialized({
@@ -151,6 +146,7 @@ export function serviceOverrides({
   }
 
   return {
+    build: validatedBuild,
     services,
     predeploy: deserializeService({
       service: serializedServiceFromProto({

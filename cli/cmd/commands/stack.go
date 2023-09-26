@@ -101,7 +101,7 @@ func registerCommand_Stack(cliConf config.CLIConfig) *cobra.Command {
 	return stackCmd
 }
 
-func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.StackAddEnvGroup(ctx)
 		if err != nil {
@@ -179,7 +179,7 @@ func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	return nil
 }
 
-func stackRemoveEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func stackRemoveEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.StackRemoveEnvGroup(ctx)
 		if err != nil {

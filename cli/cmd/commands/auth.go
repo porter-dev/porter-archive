@@ -281,7 +281,7 @@ func register(ctx context.Context, cliConf config.CLIConfig) error {
 	return nil
 }
 
-func logout(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func logout(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	err := client.Logout(ctx)
 	if err != nil {
 		if !strings.Contains(err.Error(), "You are not logged in.") {

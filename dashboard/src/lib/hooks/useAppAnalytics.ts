@@ -9,14 +9,16 @@ type AppStep =
   | "stack-launch-failure"
   | "stack-deletion";
 
-export const useAppAnalytics = (appName?: string) => {
+export const useAppAnalytics = () => {
   const { currentCluster, currentProject } = useContext(Context);
 
   const updateAppStep = async ({
+    appName,
     step,
     errorMessage = "",
     deleteWorkflow = false,
   }: {
+    appName?: string;
     step: AppStep;
     errorMessage?: string;
     deleteWorkflow?: boolean;
@@ -38,7 +40,7 @@ export const useAppAnalytics = (appName?: string) => {
           project_id: currentProject.id,
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   return {

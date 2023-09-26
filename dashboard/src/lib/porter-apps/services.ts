@@ -16,10 +16,12 @@ import {
   ServiceField,
 } from "./values";
 import { Service, ServiceType } from "@porter-dev/api-contracts";
+import { BuildOptions } from "./build";
 
 export type DetectedServices = {
   services: ClientService[];
   predeploy?: ClientService;
+  build?: BuildOptions;
 };
 type ClientServiceType = "web" | "worker" | "job" | "predeploy";
 

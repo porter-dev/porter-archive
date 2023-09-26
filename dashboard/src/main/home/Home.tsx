@@ -42,6 +42,8 @@ import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
 import CreateApp from "./app-dashboard/create-app/CreateApp";
 import AppView from "./app-dashboard/app-view/AppView";
 import Apps from "./app-dashboard/apps/Apps";
+import DeploymentTargetProvider from "shared/DeploymentTargetContext";
+import PreviewEnvs from "./cluster-dashboard/preview-environments/v2/PreviewEnvs";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -138,6 +140,13 @@ const Home: React.FC<Props> = (props) => {
         if (!id) {
           id =
             Number(localStorage.getItem("currentProject")) || projectList[0].id;
+        }
+
+        const foundProjectListEntry = projectList.find(
+          (item: ProjectListType) => item.id === id
+        );
+        if (foundProjectListEntry === undefined) {
+          id = projectList[0].id;
         }
 
         const project = await api
@@ -378,187 +387,213 @@ const Home: React.FC<Props> = (props) => {
     <ThemeProvider
       theme={currentProject?.simplified_view_enabled ? midnight : standard}
     >
-      <StyledHome>
-        <ModalHandler setRefreshClusters={setForceRefreshClusters} />
-        {currentOverlay &&
-          createPortal(
-            <ConfirmOverlay
-              show={true}
-              message={currentOverlay.message}
-              onYes={currentOverlay.onYes}
-              onNo={currentOverlay.onNo}
-            />,
-            document.body
-          )}
-        {/* Render sidebar when there's at least one project */}
-        {projects?.length > 0 && baseRoute !== "new-project" ? (
-          <Sidebar
-            key="sidebar"
-            forceSidebar={forceSidebar}
-            setWelcome={setShowWelcome}
-            currentView={props.currentRoute}
-            forceRefreshClusters={forceRefreshClusters}
-            setRefreshClusters={setForceRefreshClusters}
-          />
-        ) : (
-          <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
-            <Icon src={discordLogo} />
-            Join Our Discord
-          </DiscordButton>
-        )}
-        <ViewWrapper id="HomeViewWrapper">
-          <Navbar
-            logOut={props.logOut}
-            currentView={props.currentRoute} // For form feedback
-          />
-
-          <Switch>
-            <Route path="/apps/new/app">
-              {currentProject?.validate_apply_v2 ? (
-                <CreateApp />
-              ) : (
-                <NewAppFlow />
-              )}
-            </Route>
-            <Route path="/apps/:appName/:tab">
-              {currentProject?.validate_apply_v2 ? (
-                <AppView />
-              ) : (
-                <ExpandedApp />
-              )}
-            </Route>
-            <Route path="/apps/:appName">
-              {currentProject?.validate_apply_v2 ? (
-                <AppView />
-              ) : (
-                <ExpandedApp />
-              )}
-            </Route>
-            <Route path="/apps">
-              {currentProject?.validate_apply_v2 ? <Apps /> : <AppDashboard />}
-            </Route>
-            <Route path="/addons/new">
-              <NewAddOnFlow />
-            </Route>
-            <Route path="/addons">
-              <AddOnDashboard />
-            </Route>
-            <Route
-              path="/new-project"
-              render={() => {
-                return <NewProjectFC />;
-              }}
-            ></Route>
-            <Route
-              path="/onboarding"
-              render={() => {
-                return <Onboarding />;
-              }}
+      <DeploymentTargetProvider>
+        <StyledHome>
+          <ModalHandler setRefreshClusters={setForceRefreshClusters} />
+          {currentOverlay &&
+            createPortal(
+              <ConfirmOverlay
+                show={true}
+                message={currentOverlay.message}
+                onYes={currentOverlay.onYes}
+                onNo={currentOverlay.onNo}
+              />,
+              document.body
+            )}
+          {/* Render sidebar when there's at least one project */}
+          {projects?.length > 0 && baseRoute !== "new-project" ? (
+            <Sidebar
+              key="sidebar"
+              forceSidebar={forceSidebar}
+              setWelcome={setShowWelcome}
+              currentView={props.currentRoute}
+              forceRefreshClusters={forceRefreshClusters}
+              setRefreshClusters={setForceRefreshClusters}
             />
-            {(user?.isPorterUser ||
-              overrideInfraTabEnabled({
-                projectID: currentProject?.id,
-              })) && (
+          ) : (
+            <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
+              <Icon src={discordLogo} />
+              Join Our Discord
+            </DiscordButton>
+          )}
+          <ViewWrapper id="HomeViewWrapper">
+            <Navbar
+              logOut={props.logOut}
+              currentView={props.currentRoute} // For form feedback
+            />
+
+            <Switch>
+              <Route path="/apps/new/app">
+                {currentProject?.validate_apply_v2 ? (
+                  <CreateApp />
+                ) : (
+                  <NewAppFlow />
+                )}
+              </Route>
+              <Route path="/apps/:appName/:tab">
+                {currentProject?.validate_apply_v2 ? (
+                  <AppView />
+                ) : (
+                  <ExpandedApp />
+                )}
+              </Route>
+              <Route path="/apps/:appName">
+                {currentProject?.validate_apply_v2 ? (
+                  <AppView />
+                ) : (
+                  <ExpandedApp />
+                )}
+              </Route>
+              <Route path="/apps">
+                {currentProject?.validate_apply_v2 ? (
+                  <Apps />
+                ) : (
+                  <AppDashboard />
+                )}
+              </Route>
+              {currentProject?.validate_apply_v2 &&
+              currentProject.preview_envs_enabled ? (
+                <>
+                  <Route path={`/preview-environments/apps/:appName/:tab`}>
+                    <AppView />
+                  </Route>
+                  <Route exact path="/preview-environments/apps/:appName">
+                    <AppView />
+                  </Route>
+                  <Route exact path={`/preview-environments/apps`}>
+                    <Apps />
+                  </Route>
+                  <Route exact path={`/preview-environments`}>
+                    <PreviewEnvs />
+                  </Route>
+                </>
+              ) : null}
+              <Route path="/addons/new">
+                <NewAddOnFlow />
+              </Route>
+              <Route path="/addons">
+                <AddOnDashboard />
+              </Route>
               <Route
-                path="/infrastructure"
+                path="/new-project"
+                render={() => {
+                  return <NewProjectFC />;
+                }}
+              ></Route>
+              <Route
+                path="/onboarding"
+                render={() => {
+                  return <Onboarding />;
+                }}
+              />
+              {(user?.isPorterUser ||
+                overrideInfraTabEnabled({
+                  projectID: currentProject?.id,
+                })) && (
+                <Route
+                  path="/infrastructure"
+                  render={() => {
+                    return (
+                      <DashboardWrapper>
+                        <InfrastructureRouter />
+                      </DashboardWrapper>
+                    );
+                  }}
+                />
+              )}
+              <Route
+                path="/dashboard"
                 render={() => {
                   return (
                     <DashboardWrapper>
-                      <InfrastructureRouter />
+                      <Dashboard
+                        projectId={currentProject?.id}
+                        setRefreshClusters={setForceRefreshClusters}
+                      />
                     </DashboardWrapper>
                   );
                 }}
               />
-            )}
-            <Route
-              path="/dashboard"
-              render={() => {
-                return (
-                  <DashboardWrapper>
-                    <Dashboard
-                      projectId={currentProject?.id}
-                      setRefreshClusters={setForceRefreshClusters}
-                    />
-                  </DashboardWrapper>
-                );
-              }}
-            />
-            <Route
-              path={[
-                "/cluster-dashboard",
-                "/applications",
-                "/jobs",
-                "/env-groups",
-                "/databases",
-                "/preview-environments",
-                "/stacks",
-              ]}
-              render={() => {
-                if (currentCluster?.id === -1) {
-                  return <Loading />;
-                } else if (!currentCluster || !currentCluster.name) {
+              <Route
+                path={[
+                  "/cluster-dashboard",
+                  "/applications",
+                  "/jobs",
+                  "/env-groups",
+                  "/databases",
+                  ...(!currentProject?.validate_apply_v2
+                    ? ["/preview-environments"]
+                    : []),
+                  "/stacks",
+                ]}
+                render={() => {
+                  if (currentCluster?.id === -1) {
+                    return <Loading />;
+                  } else if (!currentCluster || !currentCluster.name) {
+                    return (
+                      <DashboardWrapper>
+                        <NoClusterPlaceHolder></NoClusterPlaceHolder>
+                      </DashboardWrapper>
+                    );
+                  }
                   return (
                     <DashboardWrapper>
-                      <NoClusterPlaceHolder></NoClusterPlaceHolder>
+                      <DashboardRouter
+                        currentCluster={currentCluster}
+                        setSidebar={setForceSidebar}
+                        currentView={props.currentRoute}
+                      />
                     </DashboardWrapper>
                   );
-                }
-                return (
-                  <DashboardWrapper>
-                    <DashboardRouter
-                      currentCluster={currentCluster}
-                      setSidebar={setForceSidebar}
-                      currentView={props.currentRoute}
-                    />
-                  </DashboardWrapper>
-                );
-              }}
-            />
-            <Route
-              path={"/integrations"}
-              render={() => <GuardedIntegrations />}
-            />
-            <Route
-              path={"/project-settings"}
-              render={() => <GuardedProjectSettings />}
-            />
-            <Route path={"*"} render={() => <LaunchWrapper />} />
-          </Switch>
-        </ViewWrapper>
-        {createPortal(
-          <ConfirmOverlay
-            show={currentModal === "UpdateProjectModal"}
-            message={
-              currentProject
-                ? `Are you sure you want to delete ${currentProject.name}?`
-                : ""
-            }
-            onYes={handleDelete}
-            onNo={() => setCurrentModal(null, null)}
-          />,
-          document.body
-        )}
-        {showWrongEmailModal && (
-          <Modal>
-            <Text size={16}>
-              Oops! This invite link wasn't for {user?.email}
-            </Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              Your account email does not match the email associated with this
-              project invite. Please log out and sign up again with the correct
-              email using the invite link.
-            </Text>
-            <Spacer y={1} />
-            <Text color="helper">
-              You should reach out to the person who sent you the invite link to
-              get the correct email.
-            </Text>
-            <Spacer y={1} />
-            <Button onClick={props.logOut}>Log out</Button>
-          </Modal>
-        )}
-      </StyledHome>
+                }}
+              />
+              <Route
+                path={"/integrations"}
+                render={() => <GuardedIntegrations />}
+              />
+              <Route
+                exact
+                path={"/project-settings"}
+                render={() => <GuardedProjectSettings />}
+              />
+              <Route path={"*"} render={() => <LaunchWrapper />} />
+            </Switch>
+          </ViewWrapper>
+          {createPortal(
+            <ConfirmOverlay
+              show={currentModal === "UpdateProjectModal"}
+              message={
+                currentProject
+                  ? `Are you sure you want to delete ${currentProject.name}?`
+                  : ""
+              }
+              onYes={handleDelete}
+              onNo={() => setCurrentModal(null, null)}
+            />,
+            document.body
+          )}
+          {showWrongEmailModal && (
+            <Modal>
+              <Text size={16}>
+                Oops! This invite link wasn't for {user?.email}
+              </Text>
+              <Spacer y={1} />
+              <Text color="helper">
+                Your account email does not match the email associated with this
+                project invite. Please log out and sign up again with the
+                correct email using the invite link.
+              </Text>
+              <Spacer y={1} />
+              <Text color="helper">
+                You should reach out to the person who sent you the invite link
+                to get the correct email.
+              </Text>
+              <Spacer y={1} />
+              <Button onClick={props.logOut}>Log out</Button>
+            </Modal>
+          )}
+        </StyledHome>
+      </DeploymentTargetProvider>
     </ThemeProvider>
   );
 };

@@ -154,7 +154,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
                 onChange={(event, newValue) => {
                   if (!override && smartLimit && newValue > smartLimit) {
                     setValue(smartLimit);
-                  } else if (!override) {
+                  } else if (!override && smartLimit) {
                     const closestMarkValue = getClosestMark(newValue, marks);
                     setValue(closestMarkValue);
                   } else {
@@ -199,7 +199,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
 export default InputSlider;
 
 const SliderContainer = styled.div<{ width?: string }>`
-  width: ${({ width }) => width || '800px'};
+  width: ${({ width }) => width || '90%'};
   margin: 1px 0;
 `;
 

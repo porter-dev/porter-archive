@@ -320,11 +320,26 @@ const appJobs = baseApi<
 const appPodStatus = baseApi<
   {
     deployment_target_id: string;
-    selectors: string;
+    service: string;
   },
-  { id: number; cluster_id: number }
+  { project_id: number; cluster_id: number; app_name: string }
+>("GET", ({ project_id, cluster_id, app_name }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${app_name}/pods`;
+});
+
+const appEvents = baseApi<
+  {
+    page?: number;
+    deployment_target_id: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/apps/pods`;
+  let { project_id, cluster_id, porter_app_name } = pathParams;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/events`;
 });
 
 const getFeedEvents = baseApi<
@@ -959,6 +974,18 @@ const getLatestRevision = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/latest`;
 });
 
+const getRevision = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+    revision_id: string;
+  }
+>("GET", ({ project_id, cluster_id, porter_app_name, revision_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/revisions/${revision_id}`;
+});
+
 const listAppRevisions = baseApi<
   {
     deployment_target_id: string;
@@ -973,13 +1000,27 @@ const listAppRevisions = baseApi<
 });
 
 const getLatestAppRevisions = baseApi<
-  {},
+  {
+    deployment_target_id: string;
+  },
   {
     project_id: number;
     cluster_id: number;
   }
 >("GET", ({ project_id, cluster_id }) => {
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/revisions`;
+});
+
+const listDeploymentTargets = baseApi<
+  {
+    preview: boolean;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", ({ project_id, cluster_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/deployment-targets`;
 });
 
 const getGitlabProcfileContents = baseApi<
@@ -3014,6 +3055,7 @@ export default {
   getLogsWithinTimeRange,
   appLogs,
   appJobs,
+  appEvents,
   appPodStatus,
   getFeedEvents,
   updateStackStep,
@@ -3101,8 +3143,10 @@ export default {
   applyApp,
   getAttachedEnvGroups,
   getLatestRevision,
+  getRevision,
   listAppRevisions,
   getLatestAppRevisions,
+  listDeploymentTargets,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,

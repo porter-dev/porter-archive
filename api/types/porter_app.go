@@ -170,3 +170,8 @@ type EnvironmentGroupListItem struct {
 	// LinkedApplications is the list of applications this env group is linked to
 	LinkedApplications []string `json:"linked_applications,omitempty"`
 }
+
+// PorterYamlV2PodsRequest is the request object for client.PorterYamlV2Pods
+type PorterYamlV2PodsRequest struct {
+	DeploymentTargetID string `schema:"deployment_target_id"`
+}

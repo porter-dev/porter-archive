@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/deployment_target"
 	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/porter_app"
@@ -47,6 +48,7 @@ type GetAppEnvRequest struct {
 // GetAppEnvResponse is the response object for the /apps/{porter_app_name}/revisions/{app_revision_id}/env endpoint
 type GetAppEnvResponse struct {
 	EnvGroups []environment_groups.EnvironmentGroup `json:"env_groups"`
+	AppEnv    environment_groups.EnvironmentGroup   `json:"app_env"`
 }
 
 // ServeHTTP translates the request into a GetAppEnvRequest request, uses the revision proto to query the cluster for the requested env groups, and returns the response
@@ -123,12 +125,24 @@ func (c *GetAppEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
+		ProjectID:          int64(project.ID),
+		ClusterID:          int64(cluster.ID),
+		DeploymentTargetID: revision.DeploymentTargetID,
+		CCPClient:          c.Config().ClusterControlPlaneClient,
+	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting deployment target details")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	envFromProtoInp := porter_app.AppEnvironmentFromProtoInput{
-		ProjectID:                  project.ID,
-		ClusterID:                  int(cluster.ID),
-		App:                        appProto,
-		K8SAgent:                   agent,
-		DeploymentTargetRepository: c.Repo().DeploymentTarget(),
+		ProjectID:        project.ID,
+		ClusterID:        int(cluster.ID),
+		DeploymentTarget: deploymentTarget,
+		App:              appProto,
+		K8SAgent:         agent,
 	}
 
 	envGroups, err := porter_app.AppEnvironmentFromProto(ctx, envFromProtoInp, porter_app.WithEnvGroupFilter(request.EnvGroups), porter_app.WithSecrets(), porter_app.WithoutDefaultAppEnvGroups())
@@ -138,8 +152,23 @@ func (c *GetAppEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	revisionWithEnv, err := porter_app.AttachEnvToRevision(ctx, porter_app.AttachEnvToRevisionInput{
+		ProjectID:           project.ID,
+		ClusterID:           int(cluster.ID),
+		Revision:            revision,
+		DeploymentTarget:    deploymentTarget,
+		K8SAgent:            agent,
+		PorterAppRepository: c.Repo().PorterApp(),
+	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error attaching env to revision")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	res := &GetAppEnvResponse{
 		EnvGroups: envGroups,
+		AppEnv:    revisionWithEnv.Env,
 	}
 
 	c.WriteResult(w, r, res)

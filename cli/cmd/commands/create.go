@@ -180,7 +180,7 @@ To deploy an application from a Docker registry, use "--source registry" and pas
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
 
-func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.CreateFull(ctx)
 		if err != nil {

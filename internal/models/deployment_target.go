@@ -31,4 +31,7 @@ type DeploymentTarget struct {
 
 	// SelectorType is the kind of selector (i.e. NAMESPACE or LABEL).
 	SelectorType DeploymentTargetSelectorType `json:"selector_type"`
+
+	// Preview is a boolean indicating whether this target is a preview target.
+	Preview bool `gorm:"default:false" json:"preview"`
 }

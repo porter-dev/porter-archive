@@ -116,6 +116,7 @@ func TrackStackBuildStatus(
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			ValidateApplyV2:        project.ValidateApplyV2,
 		}))
 	}
 
@@ -127,6 +128,7 @@ func TrackStackBuildStatus(
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			ValidateApplyV2:        project.ValidateApplyV2,
 		}))
 	}
 
@@ -139,6 +141,7 @@ func TrackStackBuildStatus(
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			ValidateApplyV2:        project.ValidateApplyV2,
 		}))
 	}
 

@@ -20,7 +20,7 @@ var (
 	ErrCannotConnect error = errors.New("Unable to connect to the Porter server.")
 )
 
-type authenticatedRunnerFunc func(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error
+type authenticatedRunnerFunc func(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error
 
 func checkLoginAndRunWithConfig(cmd *cobra.Command, cliConf config.CLIConfig, args []string, runner authenticatedRunnerFunc) error {
 	ctx := cmd.Context()
@@ -65,7 +65,7 @@ func checkLoginAndRunWithConfig(cmd *cobra.Command, cliConf config.CLIConfig, ar
 		ValidateApplyV2Enabled: project.ValidateApplyV2,
 	}
 
-	err = runner(ctx, user, client, cliConf, flags, args)
+	err = runner(ctx, user, client, cliConf, flags, cmd, args)
 	if err != nil {
 		red := color.New(color.FgRed)
 

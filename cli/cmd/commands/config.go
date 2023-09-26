@@ -186,7 +186,7 @@ func printConfig() error {
 	return nil
 }
 
-func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	_ = s.Color("cyan")
 	s.Suffix = " Loading list of projects"
@@ -230,7 +230,7 @@ func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 	return nil
 }
 
-func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	_ = s.Color("cyan")
 	s.Suffix = " Loading list of clusters"
@@ -273,7 +273,7 @@ func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 	return nil
 }
 
-func listAndSetRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func listAndSetRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	_ = s.Color("cyan")
 	s.Suffix = " Loading list of registries"

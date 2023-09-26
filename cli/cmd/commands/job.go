@@ -177,7 +177,7 @@ use the --namespace flag:
 	return jobCmd
 }
 
-func batchImageUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func batchImageUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.BatchImageUpdate(ctx)
 		if err != nil {
@@ -201,7 +201,7 @@ func batchImageUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 }
 
 // waits for a job with a given name/namespace
-func waitForJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func waitForJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.WaitForJob(ctx)
 		if err != nil {
@@ -218,7 +218,7 @@ func waitForJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 	})
 }
 
-func runJob(ctx context.Context, authRes *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func runJob(ctx context.Context, authRes *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.RunJob(ctx)
 		if err != nil {
@@ -252,7 +252,7 @@ func runJob(ctx context.Context, authRes *types.GetAuthenticatedUserResponse, cl
 		return fmt.Errorf("error running job: %w", err)
 	}
 
-	err = waitForJob(ctx, authRes, client, cliConf, featureFlags, args)
+	err = waitForJob(ctx, authRes, client, cliConf, featureFlags, cmd, args)
 	if err != nil {
 		return fmt.Errorf("error waiting for job to complete: %w", err)
 	}

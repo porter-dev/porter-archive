@@ -46,6 +46,7 @@ func getGithubClientFromEnvironment(config *config.Config, env *models.Environme
 
 func isSystemNamespace(namespace string) bool {
 	systemNamespaces := map[string]bool{
+		"ack-system":            true,
 		"cert-manager":          true,
 		"default":               true,
 		"ingress-nginx":         true,

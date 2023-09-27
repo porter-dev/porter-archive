@@ -436,6 +436,7 @@ func (c *GithubIncomingWebhookHandler) processPushEvent(event *github.PushEvent,
 
 func isSystemNamespace(namespace string) bool {
 	systemNamespaces := map[string]bool{
+		"ack-system":            true,
 		"cert-manager":          true,
 		"default":               true,
 		"ingress-nginx":         true,

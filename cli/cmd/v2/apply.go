@@ -203,7 +203,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 
 		buildMetadata := make(map[string]interface{})
 		buildMetadata["end_time"] = time.Now().UTC()
-		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, eventID, types.PorterAppEventStatus_Success, buildMetadata)
+		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_Build, eventID, types.PorterAppEventStatus_Success, buildMetadata)
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId, !forceBuild)
 		if err != nil {
@@ -243,7 +243,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 
 		metadata := make(map[string]interface{})
 		metadata["end_time"] = time.Now().UTC()
-		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, eventID, eventStatus, metadata)
+		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId, !forceBuild)
 		if err != nil {
@@ -474,7 +474,7 @@ func updateEnvGroupsInProto(ctx context.Context, base64AppProto string, envGroup
 func reportBuildFailure(ctx context.Context, client api.Client, appName string, cliConf config.CLIConfig, deploymentTargetID string, appRevisionID string, eventID string) error {
 	buildMetadata := make(map[string]interface{})
 	buildMetadata["end_time"] = time.Now().UTC()
-	err := updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, eventID, types.PorterAppEventStatus_Failed, buildMetadata)
+	err := updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_Build, eventID, types.PorterAppEventStatus_Failed, buildMetadata)
 	if err != nil {
 		return err
 	}

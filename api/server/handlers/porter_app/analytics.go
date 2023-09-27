@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -9,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type PorterAppAnalyticsHandler struct {
@@ -101,6 +103,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 }
 
 func TrackStackBuildStatus(
+	ctx context.Context,
 	config *config.Config,
 	user *models.User,
 	project *models.Project,
@@ -108,6 +111,13 @@ func TrackStackBuildStatus(
 	errorMessage string,
 	status types.PorterAppEventStatus,
 ) error {
+	_, span := telemetry.NewSpan(ctx, "track-build-status")
+	defer span.End()
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-build-status", Value: string(status)})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-name", Value: stackName})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-error-message", Value: errorMessage})
+
 	if status == types.PorterAppEventStatus_Progressing {
 		return config.AnalyticsClient.Track(analytics.StackBuildProgressingTrack(&analytics.StackBuildOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),

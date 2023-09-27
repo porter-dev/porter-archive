@@ -83,7 +83,7 @@ func createPredeployEvent(ctx context.Context, client api.Client, applicationNam
 	return event.ID, nil
 }
 
-func updateExistingEvent(ctx context.Context, client api.Client, applicationName string, projectId, clusterId uint, deploymentTargetID string, eventID string, status types.PorterAppEventStatus, metadata map[string]interface{}) error {
+func updateExistingEvent(ctx context.Context, client api.Client, applicationName string, projectId, clusterId uint, deploymentTargetID string, eventType types.PorterAppEventType, eventID string, status types.PorterAppEventStatus, metadata map[string]interface{}) error {
 	ctx, span := telemetry.NewSpan(ctx, "update-existing-event")
 	defer span.End()
 
@@ -92,6 +92,7 @@ func updateExistingEvent(ctx context.Context, client api.Client, applicationName
 		Status:             status,
 		Metadata:           metadata,
 		DeploymentTargetID: deploymentTargetID,
+		Type:               eventType,
 	}
 
 	_, err := client.CreateOrUpdatePorterAppEvent(ctx, projectId, clusterId, applicationName, req)

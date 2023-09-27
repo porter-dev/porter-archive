@@ -1,10 +1,12 @@
 package porter_app
 
 import (
+	"context"
 	"encoding/base64"
 	"net/http"
 
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 
 	"github.com/porter-dev/porter/internal/porter_app"
 
@@ -40,11 +42,17 @@ type ParsePorterYAMLToProtoRequest struct {
 	AppName string `json:"app_name"`
 }
 
-// ParsePorterYAMLToProtoResponse is the response object for the /apps/parse endpoint
-type ParsePorterYAMLToProtoResponse struct {
+// EncodedAppWithEnv is a struct that contains a base64-encoded app proto object and a map of env variables
+type EncodedAppWithEnv struct {
 	B64AppProto  string            `json:"b64_app_proto"`
 	EnvVariables map[string]string `json:"env_variables"`
-	EnvSecrets   map[string]string `json:"env_secrets"`
+}
+
+// ParsePorterYAMLToProtoResponse is the response object for the /apps/parse endpoint
+type ParsePorterYAMLToProtoResponse struct {
+	EncodedAppWithEnv
+	// PreviewApp contains preview environment specific overrides, if they exist
+	PreviewApp *EncodedAppWithEnv `json:"preview_app,omitempty"`
 }
 
 // ServeHTTP receives a base64-encoded porter.yaml, parses the version, and then translates it into a base64-encoded app proto object
@@ -85,31 +93,57 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	appProto, envVariables, err := porter_app.ParseYAML(ctx, yaml, request.AppName)
+	appDefinition, err := porter_app.ParseYAML(ctx, yaml, request.AppName)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error parsing yaml")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	if appProto == nil {
+	if appDefinition.AppProto == nil {
 		err := telemetry.Error(ctx, span, nil, "app proto is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	by, err := helpers.MarshalContractObject(ctx, appProto)
+	response := &ParsePorterYAMLToProtoResponse{}
+
+	encodedApp, err := encodeAppProto(ctx, appDefinition.AppProto)
 	if err != nil {
-		err := telemetry.Error(ctx, span, nil, "error marshalling app proto")
+		err := telemetry.Error(ctx, span, err, "error encoding app proto")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
+	response.B64AppProto = encodedApp
+	response.EnvVariables = appDefinition.EnvVariables
 
-	b64 := base64.StdEncoding.EncodeToString(by)
-
-	response := &ParsePorterYAMLToProtoResponse{
-		B64AppProto:  b64,
-		EnvVariables: envVariables,
+	if appDefinition.PreviewApp != nil {
+		encodedPreviewApp, err := encodeAppProto(ctx, appDefinition.PreviewApp.AppProto)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error encoding preview app proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		response.PreviewApp = &EncodedAppWithEnv{
+			B64AppProto:  encodedPreviewApp,
+			EnvVariables: appDefinition.PreviewApp.EnvVariables,
+		}
 	}
 
 	c.WriteResult(w, r, response)
+}
+
+func encodeAppProto(ctx context.Context, app *porterv1.PorterApp) (string, error) {
+	ctx, span := telemetry.NewSpan(ctx, "encode-app-proto")
+	defer span.End()
+
+	var encodedApp string
+
+	by, err := helpers.MarshalContractObject(ctx, app)
+	if err != nil {
+		return encodedApp, err
+	}
+
+	encodedApp = base64.StdEncoding.EncodeToString(by)
+
+	return encodedApp, nil
 }

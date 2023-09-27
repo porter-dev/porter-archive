@@ -11,85 +11,58 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// AppProtoWithEnv is a struct containing a PorterApp proto object and its environment variables
+type AppProtoWithEnv struct {
+	AppProto     *porterv1.PorterApp
+	EnvVariables map[string]string
+}
+
+// AppWithPreviewOverrides is a porter app definition with its preview app definition, if it exists
+type AppWithPreviewOverrides struct {
+	AppProtoWithEnv
+	PreviewApp *AppProtoWithEnv
+}
+
 // AppProtoFromYaml converts a Porter YAML file into a PorterApp proto object
-func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.PorterApp, map[string]string, error) {
+func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPreviewOverrides, error) {
 	ctx, span := telemetry.NewSpan(ctx, "v2-app-proto-from-yaml")
 	defer span.End()
 
+	var out AppWithPreviewOverrides
+
 	if porterYamlBytes == nil {
-		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
+		return out, telemetry.Error(ctx, span, nil, "porter yaml is nil")
 	}
 
 	porterYaml := &PorterYAML{}
 	err := yaml.Unmarshal(porterYamlBytes, porterYaml)
 	if err != nil {
-		return nil, nil, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
+		return out, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
 	}
 
-	appProto := &porterv1.PorterApp{
-		Name: porterYaml.Name,
+	appProto, envVariables, err := buildAppProto(ctx, porterYaml.PorterApp)
+	if err != nil {
+		return out, telemetry.Error(ctx, span, err, "error converting porter yaml to proto")
 	}
+	out.AppProto = appProto
+	out.EnvVariables = envVariables
 
-	if porterYaml.Build != nil {
-		appProto.Build = &porterv1.Build{
-			Context:    porterYaml.Build.Context,
-			Method:     porterYaml.Build.Method,
-			Builder:    porterYaml.Build.Builder,
-			Buildpacks: porterYaml.Build.Buildpacks,
-			Dockerfile: porterYaml.Build.Dockerfile,
-		}
-	}
-
-	if porterYaml.Image != nil {
-		appProto.Image = &porterv1.AppImage{
-			Repository: porterYaml.Image.Repository,
-			Tag:        porterYaml.Image.Tag,
-		}
-	}
-
-	if porterYaml.Services == nil {
-		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
-	}
-
-	services := make(map[string]*porterv1.Service, 0)
-	for name, service := range porterYaml.Services {
-		serviceType, err := protoEnumFromType(name, service)
+	if porterYaml.Previews != nil {
+		previewAppProto, previewEnvVariables, err := buildAppProto(ctx, *porterYaml.Previews)
 		if err != nil {
-			return nil, nil, telemetry.Error(ctx, span, err, "error getting service type")
+			return out, telemetry.Error(ctx, span, err, "error converting preview porter yaml to proto")
 		}
-
-		serviceProto, err := serviceProtoFromConfig(service, serviceType)
-		if err != nil {
-			return nil, nil, telemetry.Error(ctx, span, err, "error casting service config")
-		}
-
-		services[name] = serviceProto
-	}
-	appProto.Services = services
-
-	if porterYaml.Predeploy != nil {
-		predeployProto, err := serviceProtoFromConfig(*porterYaml.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
-		if err != nil {
-			return nil, nil, telemetry.Error(ctx, span, err, "error casting predeploy config")
-		}
-		appProto.Predeploy = predeployProto
-	}
-
-	envGroups := make([]*porterv1.EnvGroup, 0)
-	if porterYaml.EnvGroups != nil {
-		for _, envGroupName := range porterYaml.EnvGroups {
-			envGroups = append(envGroups, &porterv1.EnvGroup{
-				Name: envGroupName,
-			})
+		out.PreviewApp = &AppProtoWithEnv{
+			AppProto:     previewAppProto,
+			EnvVariables: previewEnvVariables,
 		}
 	}
-	appProto.EnvGroups = envGroups
 
-	return appProto, porterYaml.Env, nil
+	return out, nil
 }
 
-// PorterYAML represents all the possible fields in a Porter YAML file
-type PorterYAML struct {
+// PorterApp represents all the possible fields in a Porter YAML file
+type PorterApp struct {
 	Name     string             `yaml:"name"`
 	Services map[string]Service `yaml:"services"`
 	Image    *Image             `yaml:"image"`
@@ -98,6 +71,12 @@ type PorterYAML struct {
 
 	Predeploy *Service `yaml:"predeploy"`
 	EnvGroups []string `yaml:"envGroups,omitempty"`
+}
+
+// PorterYAML represents all the possible fields in a Porter YAML file
+type PorterYAML struct {
+	PorterApp
+	Previews *PorterApp `yaml:"previews,omitempty"`
 }
 
 // Build represents the build settings for a Porter app
@@ -149,6 +128,72 @@ type HealthCheck struct {
 type Image struct {
 	Repository string `yaml:"repository"`
 	Tag        string `yaml:"tag"`
+}
+
+func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp, map[string]string, error) {
+	ctx, span := telemetry.NewSpan(ctx, "build-app-proto")
+	defer span.End()
+
+	appProto := &porterv1.PorterApp{
+		Name: porterApp.Name,
+	}
+
+	if porterApp.Build != nil {
+		appProto.Build = &porterv1.Build{
+			Context:    porterApp.Build.Context,
+			Method:     porterApp.Build.Method,
+			Builder:    porterApp.Build.Builder,
+			Buildpacks: porterApp.Build.Buildpacks,
+			Dockerfile: porterApp.Build.Dockerfile,
+		}
+	}
+
+	if porterApp.Image != nil {
+		appProto.Image = &porterv1.AppImage{
+			Repository: porterApp.Image.Repository,
+			Tag:        porterApp.Image.Tag,
+		}
+	}
+
+	if porterApp.Services == nil {
+		return appProto, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
+	}
+
+	services := make(map[string]*porterv1.Service, 0)
+	for name, service := range porterApp.Services {
+		serviceType, err := protoEnumFromType(name, service)
+		if err != nil {
+			return appProto, nil, telemetry.Error(ctx, span, err, "error getting service type")
+		}
+
+		serviceProto, err := serviceProtoFromConfig(service, serviceType)
+		if err != nil {
+			return appProto, nil, telemetry.Error(ctx, span, err, "error casting service config")
+		}
+
+		services[name] = serviceProto
+	}
+	appProto.Services = services
+
+	if porterApp.Predeploy != nil {
+		predeployProto, err := serviceProtoFromConfig(*porterApp.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
+		if err != nil {
+			return appProto, nil, telemetry.Error(ctx, span, err, "error casting predeploy config")
+		}
+		appProto.Predeploy = predeployProto
+	}
+
+	envGroups := make([]*porterv1.EnvGroup, 0)
+	if porterApp.EnvGroups != nil {
+		for _, envGroupName := range porterApp.EnvGroups {
+			envGroups = append(envGroups, &porterv1.EnvGroup{
+				Name: envGroupName,
+			})
+		}
+	}
+	appProto.EnvGroups = envGroups
+
+	return appProto, porterApp.Env, nil
 }
 
 func protoEnumFromType(name string, service Service) (porterv1.ServiceType, error) {

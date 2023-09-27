@@ -11,11 +11,13 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// AppProtoWithEnv is a struct containing a PorterApp proto object and its environment variables
 type AppProtoWithEnv struct {
 	AppProto     *porterv1.PorterApp
 	EnvVariables map[string]string
 }
 
+// AppWithPreviewOverrides is a porter app definition with its preview app definition, if it exists
 type AppWithPreviewOverrides struct {
 	AppProtoWithEnv
 	PreviewApp *AppProtoWithEnv
@@ -71,6 +73,7 @@ type PorterApp struct {
 	EnvGroups []string `yaml:"envGroups,omitempty"`
 }
 
+// PorterYAML represents all the possible fields in a Porter YAML file
 type PorterYAML struct {
 	PorterApp
 	Previews *PorterApp `yaml:"previews,omitempty"`

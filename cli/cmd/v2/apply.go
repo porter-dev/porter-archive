@@ -66,6 +66,9 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		}
 	}
 
+	// overrides incorporated into the app contract baed on the deployment target
+	var b64AppOverides string
+
 	appName := inp.AppName
 	if porterYamlExists {
 		porterYaml, err := os.ReadFile(filepath.Clean(inp.PorterYamlPath))
@@ -116,6 +119,20 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 			return fmt.Errorf("error updating app env group in proto: %w", err)
 		}
 
+		if inp.PreviewApply && parseResp.PreviewApp != nil {
+			b64AppOverides = parseResp.PreviewApp.B64AppProto
+
+			envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID, parseResp.PreviewApp.EnvVariables, parseResp.PreviewApp.EnvSecrets, parseResp.PreviewApp.B64AppProto)
+			if err != nil {
+				return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
+			}
+
+			b64AppOverides, err = updateEnvGroupsInProto(ctx, b64AppOverides, envGroupResp.EnvGroups)
+			if err != nil {
+				return fmt.Errorf("error updating app env group in proto: %w", err)
+			}
+		}
+
 		color.New(color.FgGreen).Printf("Successfully parsed Porter YAML: applying app \"%s\"\n", appName) // nolint:errcheck,gosec
 	}
 
@@ -125,7 +142,15 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 
 	commitSHA := commitSHAFromEnv()
 
-	validateResp, err := client.ValidatePorterApp(ctx, cliConf.Project, cliConf.Cluster, appName, b64AppProto, deploymentTargetID, commitSHA)
+	validateResp, err := client.ValidatePorterApp(ctx, api.ValidatePorterAppInput{
+		ProjectID:          cliConf.Project,
+		ClusterID:          cliConf.Cluster,
+		AppName:            appName,
+		Base64AppProto:     b64AppProto,
+		Base64AppOverrides: b64AppOverides,
+		DeploymentTarget:   deploymentTargetID,
+		CommitSHA:          commitSHA,
+	})
 	if err != nil {
 		return fmt.Errorf("error calling validate endpoint: %w", err)
 	}

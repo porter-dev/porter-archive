@@ -176,29 +176,37 @@ func (c *Client) ParseYAML(
 	return resp, err
 }
 
+// ValidatePorterAppInput is the input struct to ValidatePorterApp
+type ValidatePorterAppInput struct {
+	ProjectID          uint
+	ClusterID          uint
+	AppName            string
+	Base64AppProto     string
+	Base64AppOverrides string
+	DeploymentTarget   string
+	CommitSHA          string
+}
+
 // ValidatePorterApp takes in a base64 encoded app definition that is potentially partial and returns a complete definition
 // using any previous app revisions and defaults
 func (c *Client) ValidatePorterApp(
 	ctx context.Context,
-	projectID, clusterID uint,
-	appName string,
-	base64AppProto string,
-	deploymentTarget string,
-	commitSHA string,
+	inp ValidatePorterAppInput,
 ) (*porter_app.ValidatePorterAppResponse, error) {
 	resp := &porter_app.ValidatePorterAppResponse{}
 
 	req := &porter_app.ValidatePorterAppRequest{
-		AppName:            appName,
-		Base64AppProto:     base64AppProto,
-		DeploymentTargetId: deploymentTarget,
-		CommitSHA:          commitSHA,
+		AppName:            inp.AppName,
+		Base64AppProto:     inp.Base64AppProto,
+		Base64AppOverrides: inp.Base64AppOverrides,
+		DeploymentTargetId: inp.DeploymentTarget,
+		CommitSHA:          inp.CommitSHA,
 	}
 
 	err := c.postRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/validate",
-			projectID, clusterID,
+			inp.ProjectID, inp.ClusterID,
 		),
 		req,
 		resp,

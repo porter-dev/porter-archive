@@ -3,7 +3,7 @@ import Logs from "../../validate-apply/logs/Logs"
 import { useLatestRevision } from "../LatestRevisionContext";
 
 const LogsTab: React.FC = () => {
-    const { projectId, clusterId, latestProto, deploymentTargetId } = useLatestRevision();
+    const { projectId, clusterId, latestProto, deploymentTarget } = useLatestRevision();
 
     const appName = latestProto.name
     const serviceNames = Object.keys(latestProto.services)
@@ -14,7 +14,7 @@ const LogsTab: React.FC = () => {
             clusterId={clusterId}
             appName={appName}
             serviceNames={serviceNames}
-            deploymentTargetId={deploymentTargetId}
+            deploymentTargetId={deploymentTarget.id}
             filterPredeploy={true}
         />
     );

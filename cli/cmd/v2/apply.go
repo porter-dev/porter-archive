@@ -203,7 +203,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 
 		buildMetadata := make(map[string]interface{})
 		buildMetadata["end_time"] = time.Now().UTC()
-		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, eventID, types.PorterAppEventStatus_Success, buildMetadata)
+		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_Build, eventID, types.PorterAppEventStatus_Success, buildMetadata)
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId, !forceBuild)
 		if err != nil {
@@ -243,7 +243,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 
 		metadata := make(map[string]interface{})
 		metadata["end_time"] = time.Now().UTC()
-		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, eventID, eventStatus, metadata)
+		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId, !forceBuild)
 		if err != nil {
@@ -389,7 +389,12 @@ func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectI
 
 	if previewApply {
 		var branchName string
-		if os.Getenv("GITHUB_REF_NAME") != "" {
+
+		// branch name is set to different values in the GH env, depending on whether or not the workflow is triggered by a PR
+		// issue is being tracked here: https://github.com/github/docs/issues/15319
+		if os.Getenv("GITHUB_HEAD_REF") != "" {
+			branchName = os.Getenv("GITHUB_HEAD_REF")
+		} else if os.Getenv("GITHUB_REF_NAME") != "" {
 			branchName = os.Getenv("GITHUB_REF_NAME")
 		} else if branch, err := git.CurrentBranch(); err == nil {
 			branchName = branch
@@ -474,7 +479,7 @@ func updateEnvGroupsInProto(ctx context.Context, base64AppProto string, envGroup
 func reportBuildFailure(ctx context.Context, client api.Client, appName string, cliConf config.CLIConfig, deploymentTargetID string, appRevisionID string, eventID string) error {
 	buildMetadata := make(map[string]interface{})
 	buildMetadata["end_time"] = time.Now().UTC()
-	err := updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, eventID, types.PorterAppEventStatus_Failed, buildMetadata)
+	err := updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_Build, eventID, types.PorterAppEventStatus_Failed, buildMetadata)
 	if err != nil {
 		return err
 	}

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ghodss/yaml"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/internal/telemetry"
+	"gopkg.in/yaml.v2"
 )
 
 // AppProtoWithEnv is a struct containing a PorterApp proto object and its environment variables
@@ -75,8 +75,8 @@ type PorterApp struct {
 
 // PorterYAML represents all the possible fields in a Porter YAML file
 type PorterYAML struct {
-	PorterApp
-	Previews *PorterApp `yaml:"previews,omitempty"`
+	PorterApp `yaml:",inline"`
+	Previews  *PorterApp `yaml:"previews,omitempty"`
 }
 
 // Build represents the build settings for a Porter app

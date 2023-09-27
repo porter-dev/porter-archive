@@ -1,7 +1,7 @@
 name: Node PR Checks
 
 on:
-  push:
+  pull_request:
     paths:
       - 'dashboard/*'
       - '.github/workflows/pr_push_checks_node.yaml'

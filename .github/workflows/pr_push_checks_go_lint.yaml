@@ -1,7 +1,7 @@
 name: Go Lint PR Checks
 
 on:
-  push:
+  pull_request:
     paths:
       - '**.go'
       - '**.mod'

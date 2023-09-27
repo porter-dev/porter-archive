@@ -1,3 +1,5 @@
+import { EnumQuotaIncrease } from "@porter-dev/api-contracts";
+
 export const isJSON = (value: string): boolean => {
   try {
     JSON.parse(value);
@@ -26,5 +28,12 @@ export const PREFLIGHT_MESSAGE_CONST_AWS = {
 export const PREFLIGHT_MESSAGE_CONST_GCP = {
   "apiEnabled": "APIs enabled on service account",
   "cidrAvailability": "CIDR availability",
-  "iamPermissions:": "IAM permissions",
+  "iamPermissions": "IAM permissions",
+}
+
+export const PREFLIGHT_TO_ENUM = {
+  "eip": EnumQuotaIncrease.AWS_EIP,
+  "natGateway": EnumQuotaIncrease.AWS_NAT,
+  "vpc": EnumQuotaIncrease.AWS_VPC,
+  "vcpus": EnumQuotaIncrease.AWS_VCPU,
 }

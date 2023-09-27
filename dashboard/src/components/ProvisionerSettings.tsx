@@ -23,7 +23,9 @@ import {
   EKSLogging,
   EKSPreflightValues,
   PreflightCheckRequest,
-  GKE
+  GKE,
+  QuotaIncreaseRequest,
+  EnumQuotaIncrease
 } from "@porter-dev/api-contracts";
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
@@ -42,6 +44,8 @@ import PreflightChecks from "./PreflightChecks";
 import Placeholder from "./Placeholder";
 import VerticalSteps from "./porter/VerticalSteps";
 import Modal from "components/porter/Modal";
+import { PREFLIGHT_TO_ENUM } from "shared/util";
+
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -137,6 +141,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [preflightError, setPreflightError] = useState<string>("")
   const [showPreflightModal, setShowPreflightModal] = useState(false);
   const [showHelpMessage, setShowHelpMessage] = useState(true);
+  const [quotaIncrease, setQuotaIncrease] = useState<EnumQuotaIncrease[]>([]);
 
 
   const markStepStarted = async (step: string, errMessage?: string) => {
@@ -489,6 +494,40 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
   }, [props.selectedClusterVersion, awsRegion]);
 
+  const requestQuotaIncrease = async () => {
+
+    try {
+      setIsLoading(true);
+      console.log(quotaIncrease)
+      var data = new QuotaIncreaseRequest({
+        projectId: BigInt(currentProject.id),
+        cloudProvider: EnumCloudProvider.AWS,
+        cloudProviderCredentialsId: props.credentialId,
+        preflightValues: {
+          case: "eksPreflightValues",
+          value: new EKSPreflightValues({
+            region: awsRegion,
+          })
+        },
+        quotaIncreases: quotaIncrease
+      });
+      await api.requestQuotaIncrease(
+        "<token>", data,
+        {
+          id: currentProject.id,
+        }
+      )
+
+
+      setIsLoading(false)
+    } catch (err) {
+      console.log(err)
+      setIsLoading(false)
+    }
+
+  }
+
+
 
   const preflightChecks = async () => {
 
@@ -518,12 +557,17 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       // Check if any of the preflight checks has a message
       let hasMessage = false;
       let errors = "Preflight Checks Failed : ";
+      let quotas: EnumQuotaIncrease[] = [];
       for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
+
         if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
+          quotas.push(PREFLIGHT_TO_ENUM[check])
           hasMessage = true;
           errors = errors + check + ", "
         }
       }
+      console.log(quotas)
+      setQuotaIncrease(quotas)
       // If none of the checks have a message, set setPreflightFailed to false
       if (hasMessage) {
         setShowPreflightModal(true)
@@ -1032,7 +1076,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                     <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '15px' }}>
                       <Button
                         disabled={isLoading}
-                        onClick={preflightChecks}
+                        onClick={requestQuotaIncrease}
 
                       >
                         Email me once cluster is provisioned

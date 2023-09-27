@@ -41,7 +41,7 @@ const flow: FlowType = {
   initial: "connect_source",
   steps: {
     connect_source: {
-      url: "/onboarding/source",
+      url: "/onboarding/source/",
       on: {
         continue: "connect_registry",
       },
@@ -288,7 +288,7 @@ export const useSteps = (isParentLoading?: boolean) => {
   const snap = useSnapshot(StepHandler);
   const location = useLocation();
   const { pushFiltered } = useRouting();
-  const { setHasFinishedOnboarding } = useContext(Context);
+  const { setHasFinishedOnboarding, currentProject } = useContext(Context);
 
   useEffect(() => {
     if (isParentLoading) {
@@ -298,6 +298,11 @@ export const useSteps = (isParentLoading?: boolean) => {
       StepHandler.actions.clearState();
       setHasFinishedOnboarding(true);
     }
-    pushFiltered(snap.currentStep.url, ["tab"]);
+    if (currentProject && currentProject.id) {
+      pushFiltered(`${snap.currentStep.url}?project_id=${currentProject.id}`, ["tab"]);
+    } else {
+      pushFiltered(snap.currentStep.url, ["tab"]);
+    }
+
   }, [location.pathname, snap.currentStep?.url, isParentLoading]);
 };

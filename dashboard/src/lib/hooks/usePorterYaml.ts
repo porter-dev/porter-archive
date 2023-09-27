@@ -85,7 +85,7 @@ export const usePorterYaml = ({
         if (
           // error response will be 403 status if user does not have access to the github installation
           error.response?.status === 404 || error.response?.status === 403 ||
-          error.response.data?.error?.includes("not found")
+          error.response.data?.error?.includes("not found") || error.response.data?.error?.includes("404")
         ) {
           setPorterYamlFound(false);
           return false;

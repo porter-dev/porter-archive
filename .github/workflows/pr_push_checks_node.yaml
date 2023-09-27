@@ -29,11 +29,11 @@ jobs:
           done
       - name: Setup Node
         uses: actions/setup-node@v3
-        if: steps.changed-files.outputs.test_any_changed == 'true'
+        if: steps.changed-files.outputs.any_changed == 'true'
         with:
           node-version: 16
       - name: Setup NPM
-        if: steps.changed-files.outputs.test_any_changed == 'true'
+        if: steps.changed-files.outputs.any_changed == 'true'
         working-directory: dashboard
         run: |
           # installing updated npm
@@ -50,12 +50,12 @@ jobs:
           npm --version 2>&1 1>/dev/null
           echo "npm $(npm --version) installed"
       - name: Install NPM Dependencies
-        if: steps.changed-files.outputs.test_any_changed == 'true'
+        if: steps.changed-files.outputs.any_changed == 'true'
         working-directory: dashboard
         run: |
           npm i --legacy-peer-deps
       - name: Run NPM Build
-        if: steps.changed-files.outputs.test_any_changed == 'true'
+        if: steps.changed-files.outputs.any_changed == 'true'
         working-directory: dashboard
         run: |
           npm run build

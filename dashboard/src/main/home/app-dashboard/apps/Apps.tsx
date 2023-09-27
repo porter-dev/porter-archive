@@ -27,12 +27,14 @@ import { appRevisionWithSourceValidator } from "./types";
 import AppGrid from "./AppGrid";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { z } from "zod";
+import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 
 type Props = {};
 
 const Apps: React.FC<Props> = ({ }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
+  const { currentDeploymentTarget } = useDeploymentTarget();
 
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -41,21 +43,28 @@ const Apps: React.FC<Props> = ({ }) => {
   const { data: apps = [], status } = useQuery(
     [
       "getLatestAppRevisions",
-      { cluster_id: currentCluster?.id, project_id: currentProject?.id },
+      {
+        cluster_id: currentCluster?.id,
+        project_id: currentProject?.id,
+        deployment_target_id: currentDeploymentTarget?.id,
+      },
     ],
     async () => {
       if (
         !currentCluster ||
         !currentProject ||
         currentCluster.id === -1 ||
-        currentProject.id === -1
+        currentProject.id === -1 ||
+        !currentDeploymentTarget
       ) {
         return;
       }
 
       const res = await api.getLatestAppRevisions(
         "<token>",
-        {},
+        {
+          deployment_target_id: currentDeploymentTarget?.id,
+        },
         { cluster_id: currentCluster.id, project_id: currentProject.id }
       );
 
@@ -69,6 +78,8 @@ const Apps: React.FC<Props> = ({ }) => {
     },
     {
       refetchOnWindowFocus: false,
+      enabled:
+        !!currentCluster && !!currentProject && !!currentDeploymentTarget,
     }
   );
 
@@ -82,28 +93,30 @@ const Apps: React.FC<Props> = ({ }) => {
     }
 
     if (apps.length === 0) {
-      <Fieldset>
-        <CentralContainer>
-          <Text size={16}>No apps have been deployed yet.</Text>
-          <Spacer y={1} />
+      return (
+        <Fieldset>
+          <CentralContainer>
+            <Text size={16}>No apps have been deployed yet.</Text>
+            <Spacer y={1} />
 
-          <Text color={"helper"}>Get started by deploying your app.</Text>
-          <Spacer y={0.5} />
-          <PorterLink to="/apps/new/app">
-            <Button
-              onClick={async () =>
-                updateAppStep({ step: "stack-launch-start" })
-              }
-              height="35px"
-            >
-              Deploy app <Spacer inline x={1} />{" "}
-              <i className="material-icons" style={{ fontSize: "18px" }}>
-                east
-              </i>
-            </Button>
-          </PorterLink>
-        </CentralContainer>
-      </Fieldset>;
+            <Text color={"helper"}>Get started by deploying your app.</Text>
+            <Spacer y={0.5} />
+            <PorterLink to="/apps/new/app">
+              <Button
+                onClick={async () =>
+                  updateAppStep({ step: "stack-launch-start" })
+                }
+                height="35px"
+              >
+                Deploy app <Spacer inline x={1} />{" "}
+                <i className="material-icons" style={{ fontSize: "18px" }}>
+                  east
+                </i>
+              </Button>
+            </PorterLink>
+          </CentralContainer>
+        </Fieldset>
+      );
     }
 
     return (

@@ -67,12 +67,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     latestRevision,
     projectId,
     clusterId,
-    deploymentTargetId,
+    deploymentTarget,
     servicesFromYaml,
     setPreviewRevision,
   } = useLatestRevision();
   const { validateApp } = useAppValidation({
-    deploymentTargetID: deploymentTargetId,
+    deploymentTargetID: deploymentTarget.id,
   });
 
   const currentTab = useMemo(() => {
@@ -168,7 +168,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       const res = await api.updateEnvironmentGroupV2(
         "<token>",
         {
-          deployment_target_id: deploymentTargetId,
+          deployment_target_id: deploymentTarget.id,
           variables,
           secrets,
           b64_app_proto: btoa(validatedAppProto.toJsonString()),
@@ -204,7 +204,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         "<token>",
         {
           b64_app_proto: btoa(protoWithUpdatedEnv.toJsonString()),
-          deployment_target_id: deploymentTargetId,
+          deployment_target_id: deploymentTarget.id,
         },
         {
           project_id: projectId,
@@ -242,10 +242,17 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         "getLatestRevision",
         projectId,
         clusterId,
-        deploymentTargetId,
+        deploymentTarget.id,
         porterApp.name,
       ]);
       setPreviewRevision(null);
+
+      if (deploymentTarget.preview) {
+        history.push(
+          `/preview-environments/apps/${porterApp.name}/${DEFAULT_TAB}?target=${deploymentTarget.id}`
+        );
+        return;
+      }
 
       // redirect to the default tab after save
       history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
@@ -271,7 +278,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       <form onSubmit={onSubmit}>
         <RevisionsList
           latestRevisionNumber={latestRevision.revision_number}
-          deploymentTargetId={deploymentTargetId}
+          deploymentTargetId={deploymentTarget.id}
           projectId={projectId}
           clusterId={clusterId}
           appName={porterApp.name}
@@ -327,6 +334,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           ]}
           currentTab={currentTab}
           setCurrentTab={(tab) => {
+            if (deploymentTarget.preview) {
+              history.push(
+                `/preview-environments/apps/${porterApp.name}/${tab}?target=${deploymentTarget.id}`
+              );
+              return;
+            }
             history.push(`/apps/${porterApp.name}/${tab}`);
           }}
         />
@@ -346,7 +359,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
               setRedeployOnSave={setRedeployOnSave}
             />
           ))
-          .with("environment", () => <Environment latestSource={latestSource} />)
+          .with("environment", () => (
+            <Environment latestSource={latestSource} />
+          ))
           .with("settings", () => <Settings />)
           .with("logs", () => <LogsTab />)
           .with("metrics", () => <MetricsTab />)

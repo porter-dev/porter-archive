@@ -1,7 +1,6 @@
 import React, { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
-import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import { createContext, useContext } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -18,6 +17,10 @@ import styled from "styled-components";
 import { SourceOptions } from "lib/porter-apps";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import { DetectedServices } from "lib/porter-apps/services";
+import {
+  DeploymentTarget,
+  useDeploymentTarget,
+} from "shared/DeploymentTargetContext";
 
 export const LatestRevisionContext = createContext<{
   porterApp: PorterAppRecord;
@@ -26,7 +29,7 @@ export const LatestRevisionContext = createContext<{
   servicesFromYaml: DetectedServices | null;
   clusterId: number;
   projectId: number;
-  deploymentTargetId: string;
+  deploymentTarget: DeploymentTarget;
   previewRevision: AppRevision | null;
   setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
 } | null>(null);
@@ -48,12 +51,17 @@ export const LatestRevisionProvider = ({
   appName?: string;
   children: JSX.Element;
 }) => {
-  const [previewRevision, setPreviewRevision] = useState<AppRevision | null>(null);
+  const [previewRevision, setPreviewRevision] = useState<AppRevision | null>(
+    null
+  );
   const { currentCluster, currentProject } = useContext(Context);
-  const deploymentTarget = useDefaultDeploymentTarget();
+  const { currentDeploymentTarget } = useDeploymentTarget();
 
   const appParamsExist =
-    !!appName && !!currentCluster && !!currentProject && !!deploymentTarget;
+    !!appName &&
+    !!currentCluster &&
+    !!currentProject &&
+    !!currentDeploymentTarget;
 
   const { data: porterApp, status: porterAppStatus } = useQuery(
     ["getPorterApp", currentCluster?.id, currentProject?.id, appName],
@@ -85,7 +93,7 @@ export const LatestRevisionProvider = ({
       "getLatestRevision",
       currentProject?.id,
       currentCluster?.id,
-      deploymentTarget?.deployment_target_id,
+      currentDeploymentTarget,
       appName,
     ],
     async () => {
@@ -95,7 +103,7 @@ export const LatestRevisionProvider = ({
       const res = await api.getLatestRevision(
         "<token>",
         {
-          deployment_target_id: deploymentTarget.deployment_target_id,
+          deployment_target_id: currentDeploymentTarget.id,
         },
         {
           project_id: currentProject.id,
@@ -195,7 +203,7 @@ export const LatestRevisionProvider = ({
         porterApp,
         clusterId: currentCluster.id,
         projectId: currentProject.id,
-        deploymentTargetId: deploymentTarget.deployment_target_id,
+        deploymentTarget: currentDeploymentTarget,
         servicesFromYaml: detectedServices,
         previewRevision,
         setPreviewRevision,

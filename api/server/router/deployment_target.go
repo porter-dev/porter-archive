@@ -85,5 +85,34 @@ func getDeploymentTargetRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets -> deployment_target.ListDeploymentTargetsHandler
+	listDeploymentTargetsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath,
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	listDeploymentTargetsHandler := deployment_target.NewListDeploymentTargetsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listDeploymentTargetsEndpoint,
+		Handler:  listDeploymentTargetsHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

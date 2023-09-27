@@ -114,7 +114,7 @@ const AppHeader: React.FC = () => {
                 src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
               />
               <Text size={13} color="helper">
-                {`${latestProto.image.repository}:${latestProto.image.tag}`}
+                {`${latestProto.image.repository}`}
               </Text>
             </Container>
           </>

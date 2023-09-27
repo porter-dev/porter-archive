@@ -12,6 +12,7 @@ import {
   SourceOptions,
   clientAppFromProto,
 } from "lib/porter-apps";
+import { PorterAppRecord } from "../../app-view/AppView";
 
 type RevisionTableContentsProps = {
   latestRevisionNumber: number;
@@ -26,6 +27,7 @@ type RevisionTableContentsProps = {
       number: number;
     } | null>
   >;
+  porterAppRecord: PorterAppRecord;
 };
 
 const RED = "#ff0000";
@@ -38,6 +40,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
   expandRevisions,
   setExpandRevisions,
   setRevertData,
+  porterAppRecord,
 }) => {
   const { reset } = useFormContext<PorterAppFormData>();
   const {
@@ -175,13 +178,21 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                     ? revision.revision_number === latestRevisionNumber
                     : i === 0;
 
+                const source = porterAppRecord.image_repo_uri && revision.app_proto.image ? {
+                  type: "docker-registry" as const,
+                  image: {
+                    repository: revision.app_proto.image.repository,
+                    tag: revision.app_proto.image.tag
+                  }
+                } : latestSource; // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
+
                 return (
                   <Tr
                     key={revision.revision_number}
                     selected={
                       previewRevision
                         ? revision.revision_number ===
-                          previewRevision.revision_number
+                        previewRevision.revision_number
                         : isLatestDeployedRevision
                     }
                     onClick={() => {
@@ -190,7 +201,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                           proto: revision.app_proto,
                           overrides: servicesFromYaml,
                         }),
-                        source: latestSource,
+                        source,
                         deletions: {
                           serviceNames: [],
                           envGroupNames: [],
@@ -272,7 +283,7 @@ const RevisionHeader = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-      props.showRevisions ? "" : "rotate(-90deg)"};
+    props.showRevisions ? "" : "rotate(-90deg)"};
     transition: transform 0.1s ease;
   }
 `;
@@ -313,7 +324,7 @@ const Tr = styled.tr`
     props.selected ? "#ffffff11" : ""};
   :hover {
     background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-      props.disableHover ? "" : "#ffffff22"};
+    props.disableHover ? "" : "#ffffff22"};
   }
 `;
 
@@ -345,7 +356,7 @@ const RollbackButton = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled: boolean }) =>
-      props.disabled ? "" : "#405eddbb"};
+    props.disabled ? "" : "#405eddbb"};
   }
 `;
 

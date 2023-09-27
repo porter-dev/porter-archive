@@ -62,7 +62,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const [redeployOnSave, setRedeployOnSave] = useState(false);
 
   const {
-    porterApp,
+    porterApp: porterAppRecord,
     latestProto,
     latestRevision,
     projectId,
@@ -84,7 +84,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [tabParam]);
 
   const latestSource: SourceOptions = useMemo(() => {
-    if (porterApp.image_repo_uri && latestProto.image) {
+    // because we store the image info in the app proto, we can refer to that for repository/tag instead of the app record
+    if (porterAppRecord.image_repo_uri && latestProto.image) {
       return {
         type: "docker-registry",
         image: {
@@ -94,14 +95,15 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       };
     }
 
+    // the app proto does not contain the fields below, so we must pull them from the app record
     return {
       type: "github",
-      git_repo_id: porterApp.git_repo_id ?? 0,
-      git_repo_name: porterApp.repo_name ?? "",
-      git_branch: porterApp.git_branch ?? "",
-      porter_yaml_path: porterApp.porter_yaml_path ?? "./porter.yaml",
+      git_repo_id: porterAppRecord.git_repo_id ?? 0,
+      git_repo_name: porterAppRecord.repo_name ?? "",
+      git_branch: porterAppRecord.git_branch ?? "",
+      porter_yaml_path: porterAppRecord.porter_yaml_path ?? "./porter.yaml",
     };
-  }, [porterApp, latestProto]);
+  }, [porterAppRecord, latestProto]);
 
   const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",
@@ -176,7 +178,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         {
           id: projectId,
           cluster_id: clusterId,
-          app_name: porterApp.name,
+          app_name: porterAppRecord.name,
         }
       );
 
@@ -225,8 +227,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             git_installation_id: latestSource.git_repo_id,
             owner: latestSource.git_repo_name.split("/")[0],
             name: latestSource.git_repo_name.split("/")[1],
-            branch: porterApp.git_branch,
-            filename: "porter_stack_" + porterApp.name + ".yml",
+            branch: porterAppRecord.git_branch,
+            filename: "porter_stack_" + porterAppRecord.name + ".yml",
           }
         );
 
@@ -242,19 +244,19 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         projectId,
         clusterId,
         deploymentTarget.id,
-        porterApp.name,
+        porterAppRecord.name,
       ]);
       setPreviewRevision(null);
 
       if (deploymentTarget.preview) {
         history.push(
-          `/preview-environments/apps/${porterApp.name}/${DEFAULT_TAB}?target=${deploymentTarget.id}`
+          `/preview-environments/apps/${porterAppRecord.name}/${DEFAULT_TAB}?target=${deploymentTarget.id}`
         );
         return;
       }
 
       // redirect to the default tab after save
-      history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
+      history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
     } catch (err) { }
   });
 
@@ -280,9 +282,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           deploymentTargetId={deploymentTarget.id}
           projectId={projectId}
           clusterId={clusterId}
-          appName={porterApp.name}
+          appName={porterAppRecord.name}
           latestSource={latestSource}
           onSubmit={onSubmit}
+          porterAppRecord={porterAppRecord}
         />
         <AnimateHeight height={isDirty && !onlyExpandedChanged ? "auto" : 0}>
           <Banner
@@ -335,11 +338,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           setCurrentTab={(tab) => {
             if (deploymentTarget.preview) {
               history.push(
-                `/preview-environments/apps/${porterApp.name}/${tab}?target=${deploymentTarget.id}`
+                `/preview-environments/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`
               );
               return;
             }
-            history.push(`/apps/${porterApp.name}/${tab}`);
+            history.push(`/apps/${porterAppRecord.name}/${tab}`);
           }}
         />
         <Spacer y={1} />

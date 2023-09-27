@@ -15,7 +15,6 @@ import copy from "assets/copy-left.svg"
 import CopyToClipboard from "components/CopyToClipboard";
 import Link from "components/porter/Link";
 
-
 type Props = {
   redeployOnSave: boolean;
   setRedeployOnSave: Dispatch<SetStateAction<boolean>>;

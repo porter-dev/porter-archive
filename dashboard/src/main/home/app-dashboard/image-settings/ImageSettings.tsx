@@ -88,7 +88,7 @@ const ImageSettings: React.FC<Props> = ({
                                     setSelectedImage={(image: ImageType) => {
                                         setSelectedImage(image);
                                         onChange({
-                                            repository: image.name,
+                                            repository: image.uri,
                                         });
                                     }}
                                     images={images}

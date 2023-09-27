@@ -65,7 +65,7 @@ const ImageSettings: React.FC<Props> = ({
         if (imageResp) {
             setImages(imageResp);
             if (source.image && source.image.repository) {
-                setSelectedImage(imageResp.find((image) => image.name === source.image.repository));
+                setSelectedImage(imageResp.find((image) => image.uri === source.image.repository));
             }
         }
     }, [imageResp]);

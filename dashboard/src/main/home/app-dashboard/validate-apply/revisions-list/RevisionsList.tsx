@@ -91,6 +91,7 @@ const RevisionsList: React.FC<Props> = ({
       }
     );
 
+    // hydrate revision with env variables only on revert
     const { app_revision } = await z
       .object({
         app_revision: appRevisionValidator.extend({

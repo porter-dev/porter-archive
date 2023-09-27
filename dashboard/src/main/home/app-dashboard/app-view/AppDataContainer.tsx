@@ -261,26 +261,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   });
 
   useEffect(() => {
-    if (previewRevision) {
-      reset({
-        app: clientAppFromProto({
-          proto: PorterApp.fromJsonString(atob(previewRevision.b64_app_proto)),
-          overrides: servicesFromYaml,
-          variables: appEnv?.variables,
-          secrets: appEnv?.secret_variables,
-        }),
-        source: latestSource,
-        deletions: {
-          envGroupNames: [],
-          serviceNames: [],
-        },
-      });
-      return;
-    }
-
     reset({
       app: clientAppFromProto({
-        proto: latestProto,
+        proto: previewRevision
+          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto))
+          : latestProto,
         overrides: servicesFromYaml,
         variables: appEnv?.variables,
         secrets: appEnv?.secret_variables,

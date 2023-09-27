@@ -46,6 +46,7 @@ type ParsePorterYAMLToProtoRequest struct {
 type EncodedAppWithEnv struct {
 	B64AppProto  string            `json:"b64_app_proto"`
 	EnvVariables map[string]string `json:"env_variables"`
+	EnvSecrets   map[string]string `json:"env_secrets"`
 }
 
 // ParsePorterYAMLToProtoResponse is the response object for the /apps/parse endpoint

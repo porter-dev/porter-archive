@@ -1,0 +1,49 @@
+name: Go Cache PR Checks
+
+on:
+  push:
+    paths:
+      - '**.go'
+      - '**.mod'
+      - '**.sum'
+      - '.github/golangci-lint.yaml'
+      - '.github/workflows/pr_push_checks_go.yaml'
+      - '.github/workflows/pr_push_checks_go_cache.yaml'
+      - '.github/workflows/pr_push_checks_go_lint.yaml'
+
+concurrency:
+  group: pr-go-cache-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testing_matrix:
+    name: Setup cache
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Go Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: porter-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: porter-go-
+      - uses: actions/setup-go@v4
+        with:
+          cache: false
+          go-version-file: go.mod
+      - name: Download Go Modules
+        run: go mod download
+      - name: Trigger lint workflow
+        run: |
+          if [[ -n "$GITHUB_HEAD_REF" ]]; then
+            branch="$GITHUB_HEAD_REF"
+          elif [[ -n "$GITHUB_REF_NAME" ]]; then
+            branch="$GITHUB_REF_NAME"
+          fi
+            
+          gh workflow run pr_push_checks_go_lint.yaml -r "$branch"
+          gh workflow run pr_push_checks_go.yaml -r "$branch"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

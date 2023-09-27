@@ -1,12 +1,7 @@
 name: Go PR Checks
 
 on:
-  pull_request:
-    paths:
-      - '**.go'
-      - '**.mod'
-      - '**.sum'
-      - '.github/workflows/pr_push_checks_go.yaml'
+  workflow_dispatch: {}
 
 concurrency:
   group: pr-go-${{ github.event.pull_request.number || github.ref }}
@@ -23,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Go Cache
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v3
         with:
           path: |
             ~/.cache/go-build
@@ -32,7 +27,6 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           cache: false
-          go-version: '1.20.5'
           go-version-file: go.mod
       - name: Download Go Modules
         run: go mod download

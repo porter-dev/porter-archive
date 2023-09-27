@@ -29,6 +29,11 @@ jobs:
             **/*.go
             **/*.mod
             **/*.sum
+      - name: List all changed files
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "$file was changed"
+          done
       - name: Setup Go Cache
         uses: actions/cache@v3
         if: steps.changed-files.outputs.test_any_changed == 'true'

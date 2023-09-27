@@ -22,6 +22,11 @@ jobs:
         with:
           files: |
             dashboard/**
+      - name: List all changed files
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "$file was changed"
+          done
       - name: Setup Node
         uses: actions/setup-node@v3
         if: steps.changed-files.outputs.test_any_changed == 'true'

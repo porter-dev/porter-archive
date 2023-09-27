@@ -1,0 +1,41 @@
+name: Go Lint PR Checks
+
+on:
+  pull_request:
+    paths:
+      - '**.go'
+      - '**.mod'
+      - '**.sum'
+      - '.github/golangci-lint.yaml'
+      - '.github/workflows/pr_push_checks_go_lint.yaml'
+
+concurrency:
+  group: pr-go-lint-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linting:
+    name: Go Linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v4
+        with:
+          cache: false
+          go-version: '1.20.5'
+          go-version-file: go.mod
+      - uses: actions/checkout@v3
+      - name: Setup Go Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: porter-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: porter-go-`
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: -c .github/golangci-lint.yaml --verbose
+          skip-pkg-cache: true
+          only-new-issues: true # this is needed until the following is merged: https://github.com/golangci/golangci-lint-action/issues/820

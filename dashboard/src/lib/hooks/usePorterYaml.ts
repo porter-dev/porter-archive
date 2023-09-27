@@ -85,6 +85,7 @@ export const usePorterYaml = ({
         setPorterYamlFound(false);
       },
       refetchOnWindowFocus: false,
+      retry: 0,
     }
   );
 

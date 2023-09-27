@@ -21,6 +21,10 @@ import {
   DeploymentTarget,
   useDeploymentTarget,
 } from "shared/DeploymentTargetContext";
+import {
+  PopulatedEnvGroup,
+  populatedEnvGroup,
+} from "../validate-apply/app-settings/types";
 
 export const LatestRevisionContext = createContext<{
   porterApp: PorterAppRecord;
@@ -31,6 +35,8 @@ export const LatestRevisionContext = createContext<{
   projectId: number;
   deploymentTarget: DeploymentTarget;
   previewRevision: AppRevision | null;
+  attachedEnvGroups: PopulatedEnvGroup[];
+  appEnv?: PopulatedEnvGroup;
   setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
 } | null>(null);
 
@@ -126,6 +132,51 @@ export const LatestRevisionProvider = ({
     }
   );
 
+  const revisionId = previewRevision?.id ?? latestRevision?.id;
+  const { data: { attachedEnvGroups = [], appEnv } = {} } = useQuery(
+    ["getAttachedEnvGroups", appName, revisionId],
+    async () => {
+      if (
+        !appName ||
+        !revisionId ||
+        !currentCluster?.id ||
+        !currentProject?.id
+      ) {
+        return {
+          attachedEnvGroups: [],
+          appEnv: undefined,
+        };
+      }
+
+      const res = await api.getAttachedEnvGroups(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          app_name: appName,
+          revision_id: revisionId,
+        }
+      );
+
+      const { env_groups: attachedEnvGroups, app_env: appEnv } = await z
+        .object({
+          env_groups: z.array(populatedEnvGroup),
+          app_env: populatedEnvGroup,
+        })
+        .parseAsync(res.data);
+
+      return {
+        attachedEnvGroups,
+        appEnv,
+      };
+    },
+    {
+      enabled:
+        !!appName && !!revisionId && !!currentCluster && !!currentProject,
+    }
+  );
+
   const latestSource: SourceOptions | null = useMemo(() => {
     if (!porterApp) {
       return null;
@@ -205,6 +256,8 @@ export const LatestRevisionProvider = ({
         projectId: currentProject.id,
         deploymentTarget: currentDeploymentTarget,
         servicesFromYaml: detectedServices,
+        attachedEnvGroups,
+        appEnv,
         previewRevision,
         setPreviewRevision,
       }}

@@ -16,13 +16,11 @@ import { IterableElement } from "type-fest";
 
 type Props = {
   baseEnvGroups?: PopulatedEnvGroup[];
-  existingEnvGroupNames?: string[];
   attachedEnvGroups?: PopulatedEnvGroup[];
 };
 
 const EnvGroups: React.FC<Props> = ({
   baseEnvGroups = [],
-  existingEnvGroupNames = [],
   attachedEnvGroups = [],
 }) => {
   const [showEnvModal, setShowEnvModal] = useState(false);
@@ -94,6 +92,7 @@ const EnvGroups: React.FC<Props> = ({
     const name = populatedEnvWithFallback[index].envGroup.name;
     remove(index);
 
+    const existingEnvGroupNames = envGroups.map((eg) => eg.name);
     if (existingEnvGroupNames.includes(name)) {
       appendDeletion({ name });
     }

@@ -9,17 +9,17 @@ import { z } from "zod";
 
 type PorterYamlStatus =
   | {
-      loading: true;
-      detectedName: null;
-      detectedServices: null;
-      porterYamlFound: false;
-    }
+    loading: true;
+    detectedName: null;
+    detectedServices: null;
+    porterYamlFound: false;
+  }
   | {
-      detectedServices: DetectedServices | null;
-      detectedName: string | null;
-      loading: false;
-      porterYamlFound: boolean;
-    };
+    detectedServices: DetectedServices | null;
+    detectedName: string | null;
+    loading: false;
+    porterYamlFound: boolean;
+  };
 
 /*
  *
@@ -83,7 +83,8 @@ export const usePorterYaml = ({
         Boolean(source.git_branch),
       retry: (_failureCount, error) => {
         if (
-          error.response.data?.error?.includes("404") ||
+          // error response will be 403 status if user does not have access to the github installation
+          error.response?.status === 404 || error.response?.status === 403 ||
           error.response.data?.error?.includes("not found")
         ) {
           setPorterYamlFound(false);

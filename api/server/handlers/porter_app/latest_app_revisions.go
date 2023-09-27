@@ -32,8 +32,10 @@ func NewLatestAppRevisionsHandler(
 	}
 }
 
-// LatestAppRevisionsRequest represents the response from the /apps/revisions endpoint
-type LatestAppRevisionsRequest struct{}
+// LatestAppRevisionsRequest represents the request for the /apps/revisions endpoint
+type LatestAppRevisionsRequest struct {
+	DeploymentTargetID string `schema:"deployment_target_id"`
+}
 
 // LatestRevisionWithSource is an app revision and its source porter app
 type LatestRevisionWithSource struct {
@@ -53,22 +55,28 @@ func (c *LatestAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
-	// todo(ianedwards): once we have a way to select a deployment target, we can add it to the request
-	defaultDeploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(project.ID, cluster.ID, DeploymentTargetSelector_Default, DeploymentTargetSelectorType_Default)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting default deployment target from repo")
+	request := &LatestAppRevisionsRequest{}
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding request")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	if defaultDeploymentTarget.ID == uuid.Nil {
-		err := telemetry.Error(ctx, span, err, "default deployment target not found")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+
+	deploymentTargetID, err := uuid.Parse(request.DeploymentTargetID)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error parsing deployment target id")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+	if deploymentTargetID == uuid.Nil {
+		err := telemetry.Error(ctx, span, err, "deployment target id is nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
 	listAppRevisionsReq := connect.NewRequest(&porterv1.LatestAppRevisionsRequest{
 		ProjectId:          int64(project.ID),
-		DeploymentTargetId: defaultDeploymentTarget.ID.String(),
+		DeploymentTargetId: deploymentTargetID.String(),
 	})
 
 	latestAppRevisionsResp, err := c.Config().ClusterControlPlaneClient.LatestAppRevisions(ctx, listAppRevisionsReq)

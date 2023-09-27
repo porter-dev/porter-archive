@@ -84,13 +84,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [tabParam]);
 
   const latestSource: SourceOptions = useMemo(() => {
-    if (porterApp.image_repo_uri) {
-      const [repository, tag] = porterApp.image_repo_uri.split(":");
+    if (porterApp.image_repo_uri && latestProto.image) {
       return {
         type: "docker-registry",
         image: {
-          repository,
-          tag,
+          repository: latestProto.image.repository,
+          tag: latestProto.image.tag,
         },
       };
     }
@@ -102,7 +101,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       git_branch: porterApp.git_branch ?? "",
       porter_yaml_path: porterApp.porter_yaml_path ?? "./porter.yaml",
     };
-  }, [porterApp]);
+  }, [porterApp, latestProto]);
 
   const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",

@@ -61,25 +61,44 @@ const BuildSettings: React.FC<Props> = ({
         ))
         .exhaustive()
       }
-      <Spacer y={1} />
-      <Checkbox
-        checked={redeployOnSave}
-        toggleChecked={() => setRedeployOnSave(!redeployOnSave)}
-      >
-        <Text>Re-run build and deploy on save</Text>
-      </Checkbox>
-      <Spacer y={1} />
-      <Button
-        type="submit"
-        status={buttonStatus}
-        disabled={
-          isSubmitting ||
-          latestRevision.status === "CREATED" ||
-          latestRevision.status === "AWAITING_BUILD_ARTIFACT"
-        }
-      >
-        Save build settings
-      </Button>
+      {source.type === "github" ?
+        <>
+          <Spacer y={1} />
+          <Checkbox
+            checked={redeployOnSave}
+            toggleChecked={() => setRedeployOnSave(!redeployOnSave)}
+          >
+            <Text>Re-run build and deploy on save</Text>
+          </Checkbox>
+          <Spacer y={1} />
+          <Button
+            type="submit"
+            status={buttonStatus}
+            disabled={
+              isSubmitting ||
+              latestRevision.status === "CREATED" ||
+              latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+            }
+          >
+            Save build settings
+          </Button>
+        </> :
+        <>
+          <Spacer y={1} />
+          <Button
+            type="submit"
+            status={buttonStatus}
+            disabled={
+              isSubmitting ||
+              latestRevision.status === "CREATED" ||
+              latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+            }
+          >
+            Save image settings
+          </Button>
+        </>
+      }
+
     </>
   );
 };

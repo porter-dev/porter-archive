@@ -105,7 +105,7 @@ const AppHeader: React.FC = () => {
             </TagWrapper>
           </>
         )}
-        {!gitData && porterApp.image_repo_uri && (
+        {!gitData && latestProto.image && (
           <>
             <Spacer inline x={1} />
             <Container row>
@@ -114,7 +114,7 @@ const AppHeader: React.FC = () => {
                 src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
               />
               <Text size={13} color="helper">
-                {porterApp.image_repo_uri}
+                {`${latestProto.image.repository}:${latestProto.image.tag}`}
               </Text>
             </Container>
           </>

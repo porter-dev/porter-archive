@@ -1,10 +1,7 @@
 name: Node PR Checks
 
 on:
-  pull_request:
-    paths:
-      - 'dashboard/*'
-      - '.github/workflows/pr_push_checks_node.yaml'
+  - pull_request
 
 concurrency:
   group: pr-node-${{ github.event.pull_request.number || github.ref }}
@@ -16,12 +13,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get changed dashboard files
+        id: changed-files
+        uses: tj-actions/changed-files@v35
+        with:
+          files: |
+            dashboard/**
+      - name: List all changed files
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "$file was changed"
+          done
       - name: Setup Node
         uses: actions/setup-node@v3
+        if: steps.changed-files.outputs.test_any_changed == 'true'
         with:
           node-version: 16
       - name: Setup NPM
+        if: steps.changed-files.outputs.test_any_changed == 'true'
         working-directory: dashboard
         run: |
           # installing updated npm
@@ -38,10 +50,12 @@ jobs:
           npm --version 2>&1 1>/dev/null
           echo "npm $(npm --version) installed"
       - name: Install NPM Dependencies
+        if: steps.changed-files.outputs.test_any_changed == 'true'
         working-directory: dashboard
         run: |
           npm i --legacy-peer-deps
       - name: Run NPM Build
+        if: steps.changed-files.outputs.test_any_changed == 'true'
         working-directory: dashboard
         run: |
           npm run build

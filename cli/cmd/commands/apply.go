@@ -1453,11 +1453,19 @@ func getReleaseType(ctx context.Context, projectID uint, res *switchboardTypes.R
 }
 
 func isSystemNamespace(namespace string) bool {
-	return namespace == "cert-manager" || namespace == "ingress-nginx" ||
-		namespace == "kube-node-lease" || namespace == "kube-public" ||
-		namespace == "kube-system" || namespace == "monitoring" ||
-		namespace == "porter-agent-system" || namespace == "default" ||
-		namespace == "ingress-nginx-private"
+	systemNamespaces := map[string]bool{
+		"cert-manager":          true,
+		"default":               true,
+		"ingress-nginx":         true,
+		"ingress-nginx-private": true,
+		"kube-node-lease":       true,
+		"kube-public":           true,
+		"kube-system":           true,
+		"monitoring":            true,
+		"porter-agent-system":   true,
+	}
+
+	return systemNamespaces[namespace]
 }
 
 type ErrorEmitterHook struct{}

@@ -1,40 +1,111 @@
 name: Go PR Checks
 
 on:
-  pull_request:
-    paths:
-      - '**.go'
-      - '**.mod'
-      - '**.sum'
-      - '.github/workflows/pr_push_checks_go.yaml'
+  - pull_request
 
 concurrency:
   group: pr-go-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  cache:
+    name: Setup cache
+    runs-on: ubuntu-latest
+    outputs:
+      go-changes: ${{ steps.changed-files.outputs.test_any_changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get changed go files
+        id: changed-files
+        uses: tj-actions/changed-files@v35
+        with:
+          files: |
+            *.go
+            *.mod
+            *.sum
+            **/*.go
+            **/*.mod
+            **/*.sum
+      - name: List all changed files
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "$file was changed"
+          done
+      - name: Setup Go Cache
+        uses: actions/cache@v3
+        if: steps.changed-files.outputs.test_any_changed == 'true'
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: porter-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: porter-go-
+      - uses: actions/setup-go@v4
+        if: steps.changed-files.outputs.test_any_changed == 'true'
+        with:
+          cache: false
+          go-version-file: go.mod
+      - name: Download Go Modules
+        if: steps.changed-files.outputs.test_any_changed == 'true'
+        run: go mod download
+
   testing_matrix:
+    name: Running Go Tests
+    runs-on: ${{ matrix.os }}
+    needs: cache
     strategy:
       matrix:
         os: [ubuntu-latest]
         folder: [cli, api, cmd, internal, provisioner]
-    name: Running Go Tests
-    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - name: Setup Go Cache
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v3
+        if: needs.cache.outputs.go-changes == 'true'
         with:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
           key: porter-go-${{ hashFiles('**/go.sum') }}
       - uses: actions/setup-go@v4
+        if: needs.cache.outputs.go-changes == 'true'
         with:
           cache: false
-          go-version: '1.20.5'
           go-version-file: go.mod
       - name: Download Go Modules
+        if: needs.cache.outputs.go-changes == 'true'
         run: go mod download
       - name: Run Go tests
+        if: needs.cache.outputs.go-changes == 'true'
         run: go test ./${{ matrix.folder }}/...
+
+  linting:
+    name: Go Linter
+    runs-on: ubuntu-latest
+    needs: cache
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Go Cache
+        uses: actions/cache/restore@v3
+        if: needs.cache.outputs.go-changes == 'true'
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: porter-go-${{ hashFiles('**/go.sum') }}
+      - uses: actions/setup-go@v4
+        if: needs.cache.outputs.go-changes == 'true'
+        with:
+          cache: false
+          go-version-file: go.mod
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        if: needs.cache.outputs.go-changes == 'true'
+        with:
+          version: latest
+          args: -c .github/golangci-lint.yaml --verbose
+          skip-pkg-cache: true
+          only-new-issues: true # this is needed until the following is merged: https://github.com/golangci/golangci-lint-action/issues/820

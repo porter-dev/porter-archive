@@ -63,11 +63,13 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const {
     porterApp,
     latestProto,
+    previewRevision,
     latestRevision,
     projectId,
     clusterId,
     deploymentTarget,
     servicesFromYaml,
+    appEnv,
     setPreviewRevision,
   } = useLatestRevision();
   const { validateApp } = useAppValidation({
@@ -261,8 +263,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   useEffect(() => {
     reset({
       app: clientAppFromProto({
-        proto: latestProto,
+        proto: previewRevision
+          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto))
+          : latestProto,
         overrides: servicesFromYaml,
+        variables: appEnv?.variables,
+        secrets: appEnv?.secret_variables,
       }),
       source: latestSource,
       deletions: {
@@ -270,7 +276,13 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         serviceNames: [],
       },
     });
-  }, [servicesFromYaml, latestProto, latestRevision.revision_number]);
+  }, [
+    servicesFromYaml,
+    latestProto,
+    previewRevision,
+    latestRevision.revision_number,
+    appEnv,
+  ]);
 
   return (
     <FormProvider {...porterAppFormMethods}>

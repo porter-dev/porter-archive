@@ -9,17 +9,17 @@ import { z } from "zod";
 
 type PorterYamlStatus =
   | {
-      loading: true;
-      detectedName: null;
-      detectedServices: null;
-      porterYamlFound: false;
-    }
+    loading: true;
+    detectedName: null;
+    detectedServices: null;
+    porterYamlFound: false;
+  }
   | {
-      detectedServices: DetectedServices | null;
-      detectedName: string | null;
-      loading: false;
-      porterYamlFound: boolean;
-    };
+    detectedServices: DetectedServices | null;
+    detectedName: string | null;
+    loading: false;
+    porterYamlFound: boolean;
+  };
 
 /*
  *
@@ -81,17 +81,11 @@ export const usePorterYaml = ({
         source?.type === "github" &&
         Boolean(source.git_repo_name) &&
         Boolean(source.git_branch),
-      retry: (_failureCount, error) => {
-        if (
-          error.response.data?.error?.includes("404") ||
-          error.response.data?.error?.includes("not found")
-        ) {
-          setPorterYamlFound(false);
-          return false;
-        }
-        return true;
+      onError: () => {
+        setPorterYamlFound(false);
       },
       refetchOnWindowFocus: false,
+      retry: 0,
     }
   );
 

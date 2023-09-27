@@ -8,7 +8,6 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -23,56 +22,58 @@ const (
 )
 
 // ParseYAML converts a Porter YAML file into a PorterApp proto object
-func ParseYAML(ctx context.Context, porterYaml []byte, appName string) (*porterv1.PorterApp, map[string]string, error) {
+func ParseYAML(ctx context.Context, porterYaml []byte, appName string) (v2.AppWithPreviewOverrides, error) {
 	ctx, span := telemetry.NewSpan(ctx, "porter-app-parse-yaml")
 	defer span.End()
 
+	var appDefinition v2.AppWithPreviewOverrides
+
 	if porterYaml == nil {
-		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml input is nil")
+		return appDefinition, telemetry.Error(ctx, span, nil, "porter yaml input is nil")
 	}
 
 	version := &yamlVersion{}
 	err := yaml.Unmarshal(porterYaml, version)
 	if err != nil {
-		return nil, nil, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
+		return appDefinition, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
 	}
-
-	var appProto *porterv1.PorterApp
-	var envVariables map[string]string
 
 	switch version.Version {
 	case PorterYamlVersion_V2:
-		appProto, envVariables, err = v2.AppProtoFromYaml(ctx, porterYaml)
+		appDefinition, err = v2.AppProtoFromYaml(ctx, porterYaml)
 		if err != nil {
-			return nil, nil, telemetry.Error(ctx, span, err, "error converting v2 yaml to proto")
+			return appDefinition, telemetry.Error(ctx, span, err, "error converting v2 yaml to proto")
 		}
 	// backwards compatibility for old porter.yaml files
 	// track this span in telemetry and reach out to customers who are still using old porter.yaml if they exist.
 	// once no one is converting from old porter.yaml, we can remove this code
 	case PorterYamlVersion_V1, "":
-		appProto, envVariables, err = v1.AppProtoFromYaml(ctx, porterYaml)
+		appProto, envVariables, err := v1.AppProtoFromYaml(ctx, porterYaml)
 		if err != nil {
-			return nil, nil, telemetry.Error(ctx, span, err, "error converting v1 yaml to proto")
+			return appDefinition, telemetry.Error(ctx, span, err, "error converting v1 yaml to proto")
 		}
+
+		appDefinition.AppProto = appProto
+		appDefinition.EnvVariables = envVariables
 	default:
-		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml version not supported")
+		return appDefinition, telemetry.Error(ctx, span, nil, "porter yaml version not supported")
 	}
 
-	if appProto == nil {
-		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml output is nil")
+	if appDefinition.AppProto == nil {
+		return appDefinition, telemetry.Error(ctx, span, nil, "porter yaml output is nil")
 	}
 
 	if appName != "" {
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "override-name", Value: appName})
-		if appProto.Name != "" && appProto.Name != appName {
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "parsed-name", Value: appProto.Name})
-			return nil, nil, telemetry.Error(ctx, span, nil, "name specified in porter.yaml does not match app name")
+		if appDefinition.AppProto.Name != "" && appDefinition.AppProto.Name != appName {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "parsed-name", Value: appDefinition.AppProto.Name})
+			return appDefinition, telemetry.Error(ctx, span, nil, "name specified in porter.yaml does not match app name")
 		}
 
-		appProto.Name = appName
+		appDefinition.AppProto.Name = appName
 	}
 
-	return appProto, envVariables, nil
+	return appDefinition, nil
 }
 
 // yamlVersion is a struct used to unmarshal the version field of a Porter YAML file

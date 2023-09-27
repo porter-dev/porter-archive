@@ -464,7 +464,7 @@ const StyledForm = styled.div`
 `;
 
 const DEFAULT_ERROR_MESSAGE =
-  "An error occurred while provisioning your infrastructure. Please try again.";
+  "An error occurred while provisioning your infrastructure. Please confirm you have completed all required setup as described in our docs, and try again.  If issues persist, contact support@porter.run.";
 const AZURE_CORE_QUOTA_ERROR_MESSAGE =
   "Your Azure subscription has reached a vCPU core quota in the location";
 const AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE =

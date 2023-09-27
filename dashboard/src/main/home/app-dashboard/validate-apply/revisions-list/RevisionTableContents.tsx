@@ -185,18 +185,6 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                         : isLatestDeployedRevision
                     }
                     onClick={() => {
-                      reset({
-                        app: clientAppFromProto({
-                          proto: revision.app_proto,
-                          overrides: servicesFromYaml,
-                        }),
-                        source: latestSource,
-                        deletions: {
-                          serviceNames: [],
-                          envGroupNames: [],
-                        },
-                      });
-
                       setPreviewRevision(
                         isLatestDeployedRevision ? null : revision
                       );

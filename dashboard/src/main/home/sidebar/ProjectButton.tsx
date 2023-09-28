@@ -75,6 +75,13 @@ const ProjectButton: React.FC<PropsType> = (props) => {
 
           {/* <i className="material-icons">arrow_drop_down</i> */}
         </MainSelector>
+        {user.isPorterUser && currentProject.simplified_view_enabled &&
+          <PorterAppDetailContainer>
+            <ProjectName>(Visible to @porter.run only)</ProjectName>
+            <Spacer y={0.5} />
+            <ProjectName>Porter Apps {currentProject.validate_apply_v2 ? "V2" : "V1"}</ProjectName>
+          </PorterAppDetailContainer>
+        }
         {/* {renderDropdown()} */}
       </StyledProjectSection >
     );
@@ -219,6 +226,33 @@ const MainSelector = styled.div`
   font-size: 14px;
   cursor: ${props => (props.projectsLength > 1 || props.isPorterUser) ? "pointer" : "default"};
   padding: 10px 20px;
+  position: relative;
+  :hover {
+    > i {
+      background: #ffffff22;
+    }
+  }
+
+  > i {
+    margin-left: 7px;
+    margin-right: 12px;
+    font-size: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    background: "#ffffff22" 
+  }
+`;
+
+const PorterAppDetailContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  background: #ffffff11;
+  border: 1px solid #ffffff11;
+  font-size: 14px;
+  cursor: ${props => (props.projectsLength > 1 || props.isPorterUser) ? "pointer" : "default"};
+  padding: 10px;
   position: relative;
   :hover {
     > i {

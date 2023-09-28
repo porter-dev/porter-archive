@@ -898,6 +898,7 @@ const validatePorterApp = baseApi<
     commit_sha: string;
     deletions: {
       service_names: string[];
+      predeploy: string[];
       env_variable_names: string[];
       env_group_names: string[];
     };

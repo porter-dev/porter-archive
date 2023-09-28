@@ -449,10 +449,12 @@ export const useLogs = ({
   }, []);
 
   useEffect(() => {
-    // if a complete time range is not given, then we are live
-    const isLive = !setDate && (timeRange?.startTime == null || timeRange?.endTime == null);
-    refresh({ isLive });
-    setIsLive(isLive);
+    if (Object.keys(revisionIdToNumber).length) {
+      // if a complete time range is not given, then we are live
+      const isLive = !setDate && (timeRange?.startTime == null || timeRange?.endTime == null);
+      refresh({ isLive });
+      setIsLive(isLive);
+    }
   }, [
     appName,
     serviceName,
@@ -462,6 +464,7 @@ export const useLogs = ({
     JSON.stringify(selectedFilterValues),
     JSON.stringify(timeRange?.endTime),
     filterPredeploy,
+    JSON.stringify(revisionIdToNumber),
   ]);
 
   useEffect(() => {

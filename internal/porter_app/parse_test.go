@@ -31,12 +31,12 @@ func TestParseYAML(t *testing.T) {
 			want, err := os.ReadFile(fmt.Sprintf("testdata/%s.yaml", tt.porterYamlFileName))
 			is.NoErr(err) // no error expected reading test file
 
-			got, env, err := ParseYAML(context.Background(), want, "test-app")
+			got, err := ParseYAML(context.Background(), want, "test-app")
 			is.NoErr(err) // umbrella chart values should convert to map[string]any without issues
 
-			diffProtoWithFailTest(t, is, tt.want, got)
+			diffProtoWithFailTest(t, is, tt.want, got.AppProto)
 
-			is.Equal(env, map[string]string{
+			is.Equal(got.EnvVariables, map[string]string{
 				"PORT":     "8080",
 				"NODE_ENV": "production",
 			})

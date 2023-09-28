@@ -1,0 +1,61 @@
+name: Node PR Checks
+
+on:
+  - pull_request
+
+concurrency:
+  group: pr-node-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-npm:
+    name: Running smoke test npm build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get changed dashboard files
+        id: changed-files
+        uses: tj-actions/changed-files@v35
+        with:
+          files: |
+            dashboard/**
+      - name: List all changed files
+        run: |
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "$file was changed"
+          done
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        if: steps.changed-files.outputs.any_changed == 'true'
+        with:
+          node-version: 16
+      - name: Setup NPM
+        if: steps.changed-files.outputs.any_changed == 'true'
+        working-directory: dashboard
+        run: |
+          # installing updated npm
+
+          # Verify npm works before capturing and ensure its stderr is inspectable later
+          version="$(jq -r '.engines.npm' package.json)"
+          npm --version 2>&1 1>/dev/null
+
+          npm_version="$(npm --version)"
+          echo "Bootstrapping npm $version (replacing $npm_version)..."
+          npm install --unsafe-perm -g --quiet "npm@$version"
+
+          # Verify npm works before capturing and ensure its stderr is inspectable later
+          npm --version 2>&1 1>/dev/null
+          echo "npm $(npm --version) installed"
+      - name: Install NPM Dependencies
+        if: steps.changed-files.outputs.any_changed == 'true'
+        working-directory: dashboard
+        run: |
+          npm i --legacy-peer-deps
+      - name: Run NPM Build
+        if: steps.changed-files.outputs.any_changed == 'true'
+        working-directory: dashboard
+        run: |
+          npm run build

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Spacer from "components/porter/Spacer";
 import { ClientService } from "lib/porter-apps/services";
 import { Controller, useFormContext } from "react-hook-form";
@@ -8,6 +8,10 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
 import { match } from "ts-pattern";
+import { MIB_TO_GIB, MILI_TO_CORE, RESOURCE_ALLOCATION_RAM_V2, UPPER_BOUND_SMART } from "main/home/app-dashboard/new-app-flow/tabs/utils";
+import SmartOptModal from "main/home/app-dashboard/new-app-flow/tabs/SmartOptModal";
+import { FormControlLabel, Switch } from "@material-ui/core";
+import styled from "styled-components";
 
 type ResourcesProps = {
   index: number;
@@ -25,7 +29,9 @@ const Resources: React.FC<ResourcesProps> = ({
   isPredeploy = false,
 }) => {
   const { control, register, watch } = useFormContext<PorterAppFormData>();
-
+  const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
+  const smartLimitRAM = (maxRAM - RESOURCE_ALLOCATION_RAM_V2) * UPPER_BOUND_SMART
+  const smartLimitCPU = Math.round((maxCPU - (RESOURCE_ALLOCATION_RAM_V2 * (maxCPU / maxRAM))) * UPPER_BOUND_SMART * 100) / 100
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`
   );
@@ -33,6 +39,30 @@ const Resources: React.FC<ResourcesProps> = ({
   return (
     <>
       <Spacer y={1} />
+      <Spacer y={1} />
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+        <StyledIcon
+          className="material-icons"
+          onClick={() => {
+            setShowNeedHelpModal(true)
+          }}
+        >
+          help_outline
+        </StyledIcon>
+        <Text style={{ marginRight: '10px' }}>Smart Optimization</Text>
+        <Switch
+          size="small"
+          color="primary"
+          checked={true}
+          onChange={console.log('hi')}
+          inputProps={{ 'aria-label': 'controlled' }}
+        />
+      </div>
+      {showNeedHelpModal &&
+        <SmartOptModal
+          setModalVisible={setShowNeedHelpModal}
+        />}
+
       <Controller
         name={isPredeploy ? `app.predeploy.${index}.cpuCores` : `app.services.${index}.cpuCores`}
         control={control}
@@ -40,9 +70,11 @@ const Resources: React.FC<ResourcesProps> = ({
           <InputSlider
             label="CPUs: "
             unit="Cores"
+            override={false}
             min={0}
-            max={maxCPU}
-            color={"#3a48ca"}
+            max={Math.floor((maxCPU - (RESOURCE_ALLOCATION_RAM_V2 * maxCPU / maxRAM)) * 10) / 10}
+            color={"#3f51b5"}
+            smartLimit={smartLimitCPU}
             value={value.value.toString()}
             setValue={(e) => {
               onChange({
@@ -67,16 +99,17 @@ const Resources: React.FC<ResourcesProps> = ({
             label="RAM: "
             unit="MB"
             min={0}
-            max={maxRAM}
-            color={"#3a48ca"}
-            value={value.value.toString()}
+            smartLimit={smartLimitRAM}
+            max={Math.floor((maxRAM - RESOURCE_ALLOCATION_RAM_V2) * 10) / 10}
+            color={"#3f51b5"}
+            value={(value.value).toString()}
             setValue={(e) => {
               onChange({
                 ...value,
                 value: e,
               });
             }}
-            step={10}
+            step={.1}
             disabled={value.readOnly}
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
@@ -233,3 +266,12 @@ const Resources: React.FC<ResourcesProps> = ({
 };
 
 export default Resources;
+
+const StyledIcon = styled.i`
+  cursor: pointer;
+  font-size: 16px; 
+  margin-right : 5px;
+  &:hover {
+    color: #666;  
+  }
+`;

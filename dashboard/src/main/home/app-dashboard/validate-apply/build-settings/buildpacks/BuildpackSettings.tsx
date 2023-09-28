@@ -36,6 +36,9 @@ const BuildpackSettings: React.FC<Props> = ({
   source,
   autoDetectionDisabled,
 }) => {
+  const [enableAutoDetection, setEnableAutoDetection] = useState(
+    !autoDetectionDisabled
+  );
   const [stackOptions, setStackOptions] = useState<
     { label: string; value: string }[]
   >([]);
@@ -80,7 +83,7 @@ const BuildpackSettings: React.FC<Props> = ({
       return detectedBuildpacks;
     },
     {
-      enabled: !autoDetectionDisabled,
+      enabled: enableAutoDetection,
     }
   );
 
@@ -93,7 +96,7 @@ const BuildpackSettings: React.FC<Props> = ({
   );
 
   useEffect(() => {
-    if (autoDetectionDisabled) {
+    if (!enableAutoDetection) {
       // in this case, we are not detecting buildpacks, so we just populate based on the DB
       if (build.builder) {
         setValue("app.build.builder", build.builder);
@@ -154,7 +157,7 @@ const BuildpackSettings: React.FC<Props> = ({
         detectedBuilder = defaultBuilder.builders[0];
       }
 
-      if (!autoDetectionDisabled) {
+      if (enableAutoDetection) {
         setValue("app.build.builder", detectedBuilder);
         replace(
           defaultBuilder.detected.map((bp) => ({
@@ -193,7 +196,7 @@ const BuildpackSettings: React.FC<Props> = ({
           />
         </>
       )}
-      {!autoDetectionDisabled && status === "error" && (
+      {enableAutoDetection && status === "error" && (
         <>
           <Spacer y={1} />
           <Error
@@ -204,6 +207,7 @@ const BuildpackSettings: React.FC<Props> = ({
       <Spacer y={1} />
       <Button
         onClick={() => {
+          setEnableAutoDetection(true);
           setIsModalOpen(true);
         }}
       >
@@ -212,7 +216,10 @@ const BuildpackSettings: React.FC<Props> = ({
       {isModalOpen && (
         <BuildpackConfigurationModal
           build={build}
-          closeModal={() => setIsModalOpen(false)}
+          closeModal={() => {
+            setEnableAutoDetection(false);
+            setIsModalOpen(false);
+          }}
           sortedStackOptions={stackOptions}
           availableBuildpacks={availableBuildpacks}
           setAvailableBuildpacks={setAvailableBuildpacks}

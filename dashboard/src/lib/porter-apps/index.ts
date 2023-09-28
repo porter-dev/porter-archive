@@ -86,6 +86,7 @@ export const porterAppFormValidator = z.object({
   app: clientAppValidator,
   source: sourceValidator,
   deletions: deletionValidator,
+  redeployOnSave: z.boolean().default(false),
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 

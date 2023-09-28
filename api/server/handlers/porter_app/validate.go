@@ -39,6 +39,7 @@ func NewValidatePorterAppHandler(
 // Deletions are the names of services and env variables to delete
 type Deletions struct {
 	ServiceNames     []string `json:"service_names"`
+	Predeploy        []string `json:"predeploy"`
 	EnvVariableNames []string `json:"env_variable_names"`
 	EnvGroupNames    []string `json:"env_group_names"`
 }
@@ -150,6 +151,7 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		AppOverrides:       overrides,
 		Deletions: &porterv1.Deletions{
 			ServiceNames:     request.Deletions.ServiceNames,
+			PredeployNames:   request.Deletions.Predeploy,
 			EnvVariableNames: request.Deletions.EnvVariableNames,
 			EnvGroupNames:    request.Deletions.EnvGroupNames,
 		},

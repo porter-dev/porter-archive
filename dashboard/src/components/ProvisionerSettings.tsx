@@ -23,8 +23,9 @@ import {
   EKSLogging,
   EKSPreflightValues,
   PreflightCheckRequest,
-  GKE
+  AWSClusterNetwork,
 } from "@porter-dev/api-contracts";
+
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
 import Error from "./porter/Error";
@@ -94,6 +95,9 @@ const clusterVersionOptions = [
   { value: "v1.24.0", label: "1.24.0" },
 ];
 
+const defaultCidrVpc = "10.78.0.0/16"
+const defaultCidrServices = "172.20.0.0/16"
+
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   provisionerError?: string;
@@ -134,7 +138,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [additionalNodePolicies, setAdditionalNodePolicies] = useState<
     string[]
   >([]);
-  const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
+  const [cidrRangeVPC, setCidrRangeVPC] = useState(defaultCidrVpc);
+  const [cidrRangeServices, setCidrRangeServices] = useState(defaultCidrServices);
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
@@ -295,12 +300,16 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           value: new EKS({
             clusterName,
             clusterVersion: clusterVersion || "v1.24.0",
-            cidrRange: cidrRange || "10.78.0.0/16",
+            cidrRange: cidrRangeVPC || defaultCidrVpc, // deprecated in favour of network.cidrRangeVPC: can be removed after december 2023
             region: awsRegion,
             loadBalancer: loadBalancerObj,
             logging: controlPlaneLogs,
             enableGuardDuty: guardDutyEnabled,
             enableKmsEncryption: kmsEncryptionEnabled,
+            network: new AWSClusterNetwork({
+              vpcCidr: cidrRangeVPC || defaultCidrVpc,
+              serviceCidr: cidrRangeServices || defaultCidrServices,
+            }),
             nodeGroups: [
               new EKSNodeGroup({
                 instanceType: "t3.medium",
@@ -450,7 +459,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       setClusterName(eksValues.clusterName);
       setAwsRegion(eksValues.region);
       setClusterVersion(eksValues.clusterVersion);
-      setCidrRange(eksValues.cidrRange);
+      setCidrRangeVPC(eksValues.cidrRange);
+      if (eksValues.network != null) {
+        setCidrRangeVPC(eksValues.network?.vpcCidr || defaultCidrVpc);
+        setCidrRangeServices(eksValues.network?.serviceCidr || defaultCidrServices);
+      }
       if (eksValues.loadBalancer != null) {
         setIPAllowList(eksValues.loadBalancer.allowlistIpRanges);
         setWildCardDomain(eksValues.loadBalancer.wildcardDomain);
@@ -618,11 +631,21 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Input
                 width="350px"
                 type="string"
-                value={cidrRange}
+                value={cidrRangeVPC}
                 disabled={!user.isPorterUser}
-                setValue={(x: string) => setCidrRange(x)}
-                label="VPC CIDR range"
+                setValue={(x: string) => setCidrRangeVPC(x)}
+                label="CIDR range for AWS VPC"
                 placeholder="ex: 10.78.0.0/16"
+              />
+              <Spacer y={1} />
+              <Input
+                width="350px"
+                type="string"
+                value={cidrRangeServices}
+                disabled={!user.isPorterUser}
+                setValue={(x: string) => setCidrRangeServices(x)}
+                label="CIDR range for Kubernetes internal services"
+                placeholder="ex: 172.20.0.0/16"
               />
               {!currentProject.simplified_view_enabled && (
                 <>

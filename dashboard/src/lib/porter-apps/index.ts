@@ -182,7 +182,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
   const { app, source } = data;
 
   const services = app.services.reduce((acc: Record<string, Service>, svc) => {
-    acc[svc.name.value] = serviceProto(serializeService(svc));
+    const serialized = serializeService(svc)
+    const proto = serviceProto(serialized)
+    acc[svc.name.value] = proto
     return acc;
   }, {});
 
@@ -357,15 +359,15 @@ export function clientAppFromProto({
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-        deserializeService({
-          service: serializedServiceFromProto({
-            name: "pre-deploy",
-            service: proto.predeploy,
-            isPredeploy: true,
-          }),
-          override: predeployOverrides,
+      deserializeService({
+        service: serializedServiceFromProto({
+          name: "pre-deploy",
+          service: proto.predeploy,
+          isPredeploy: true,
         }),
-      ]
+        override: predeployOverrides,
+      }),
+    ]
     : undefined;
 
   return {

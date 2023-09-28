@@ -28,36 +28,58 @@ const Resources: React.FC<ResourcesProps> = ({
   service,
   isPredeploy = false,
 }) => {
-  const { control, register, watch } = useFormContext<PorterAppFormData>();
+  const { control, register, watch, setValue } = useFormContext<PorterAppFormData>();
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
-  const smartLimitRAM = (maxRAM - RESOURCE_ALLOCATION_RAM_V2) * UPPER_BOUND_SMART
-  const smartLimitCPU = Math.round((maxCPU - (RESOURCE_ALLOCATION_RAM_V2 * (maxCPU / maxRAM))) * UPPER_BOUND_SMART * 100) / 100
+  const smartLimitRAM = Math.round((maxRAM - RESOURCE_ALLOCATION_RAM_V2) * UPPER_BOUND_SMART)
+  const smartLimitCPU = (maxCPU - Math.round((RESOURCE_ALLOCATION_RAM_V2 * (maxCPU / maxRAM) * 100)) / 100) * UPPER_BOUND_SMART
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`
   );
+
+  const smartOpt = watch(
+    `app.services.${index}.smartOptimization`
+  );
+
+
+
 
   return (
     <>
       <Spacer y={1} />
       <Spacer y={1} />
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-        <StyledIcon
-          className="material-icons"
-          onClick={() => {
-            setShowNeedHelpModal(true)
-          }}
-        >
-          help_outline
-        </StyledIcon>
-        <Text style={{ marginRight: '10px' }}>Smart Optimization</Text>
-        <Switch
-          size="small"
-          color="primary"
-          checked={true}
-          onChange={console.log('hi')}
-          inputProps={{ 'aria-label': 'controlled' }}
-        />
-      </div>
+      <Controller
+        name={isPredeploy ? `app.predeploy.${index}.smartOptimization` : `app.services.${index}.smartOptimization`}
+        control={control}
+        render={({ field: { value, onChange } }) => (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+            <StyledIcon
+              className="material-icons"
+              onClick={() => {
+                setShowNeedHelpModal(true)
+              }}
+            >
+              help_outline
+            </StyledIcon>
+            <Text style={{ marginRight: '10px' }}>Smart Optimization</Text>
+            <Switch
+              size="small"
+              color="primary"
+              checked={value.value}
+              onChange={
+                () => {
+                  if (!value.value) {
+                    setValue(`app.services.${index}.cpuCores.value`, smartLimitCPU)
+                    setValue(`app.services.${index}.ramMegabytes.value`, smartLimitRAM)
+                  }
+                  onChange({
+                    ...value,
+                    value: !value.value,
+                  });
+                }
+              }
+              inputProps={{ 'aria-label': 'controlled' }}
+            />
+          </div>)} />
       {showNeedHelpModal &&
         <SmartOptModal
           setModalVisible={setShowNeedHelpModal}
@@ -70,16 +92,21 @@ const Resources: React.FC<ResourcesProps> = ({
           <InputSlider
             label="CPUs: "
             unit="Cores"
-            override={false}
+            override={!smartOpt?.value}
             min={0}
             max={Math.floor((maxCPU - (RESOURCE_ALLOCATION_RAM_V2 * maxCPU / maxRAM)) * 10) / 10}
             color={"#3f51b5"}
             smartLimit={smartLimitCPU}
             value={value.value.toString()}
             setValue={(e) => {
+              if (smartOpt?.value) {
+                setValue(`app.services.${index}.smartOptimization.value`, true)
+                setValue(`app.services.${index}.ramMegabytes.value`, Math.round((e * (maxRAM / maxCPU) * 10) / 10))
+              }
               onChange({
                 ...value,
                 value: e,
+
               });
             }}
             step={0.1}
@@ -99,17 +126,22 @@ const Resources: React.FC<ResourcesProps> = ({
             label="RAM: "
             unit="MB"
             min={0}
+            override={!smartOpt?.value}
             smartLimit={smartLimitRAM}
-            max={Math.floor((maxRAM - RESOURCE_ALLOCATION_RAM_V2) * 10) / 10}
+            max={Math.round((maxRAM - RESOURCE_ALLOCATION_RAM_V2))}
             color={"#3f51b5"}
             value={(value.value).toString()}
             setValue={(e) => {
+              if (smartOpt?.value) {
+                setValue(`app.services.${index}.smartOptimization.value`, true)
+                setValue(`app.services.${index}.cpuCores.value`, (e * (maxCPU / maxRAM)))
+              }
               onChange({
                 ...value,
                 value: e,
               });
             }}
-            step={.1}
+            step={10}
             disabled={value.readOnly}
             disabledTooltip={
               "You may only edit this field in your porter.yaml."

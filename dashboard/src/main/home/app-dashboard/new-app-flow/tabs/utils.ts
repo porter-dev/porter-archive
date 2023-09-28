@@ -1,3 +1,5 @@
+import convert from "convert";
+
 export const DATABASE_HEIGHT_ENABLED = 374;
 export const DATABASE_HEIGHT_DISABLED = 119;
 export const RESOURCE_HEIGHT_WITHOUT_AUTOSCALING = 446;
@@ -85,5 +87,5 @@ export const AWS_INSTANCE_LIMITS: InstanceTypes = {
 
 
 export const UPPER_BOUND_SMART = .5
-export const RESOURCE_ALLOCATION_RAM = 1
-export const RESOURCE_ALLOCATION_RAM_V2 = 1024
+export const RESOURCE_ALLOCATION_RAM = 1;
+export const RESOURCE_ALLOCATION_RAM_V2 = convert(RESOURCE_ALLOCATION_RAM, "GiB").to("MB");

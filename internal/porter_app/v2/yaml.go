@@ -90,18 +90,19 @@ type Build struct {
 
 // Service represents a single service in a porter app
 type Service struct {
-	Run             string       `yaml:"run"`
-	Type            string       `yaml:"type" validate:"required, oneof=web worker job"`
-	Instances       int          `yaml:"instances"`
-	CpuCores        float32      `yaml:"cpuCores"`
-	RamMegabytes    int          `yaml:"ramMegabytes"`
-	Port            int          `yaml:"port"`
-	Autoscaling     *AutoScaling `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
-	Domains         []Domains    `yaml:"domains" validate:"excluded_unless=Type web"`
-	HealthCheck     *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
-	AllowConcurrent bool         `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
-	Cron            string       `yaml:"cron" validate:"excluded_unless=Type job"`
-	Private         *bool        `yaml:"private" validate:"excluded_unless=Type web"`
+	Run               string       `yaml:"run"`
+	Type              string       `yaml:"type" validate:"required, oneof=web worker job"`
+	Instances         int          `yaml:"instances"`
+	CpuCores          float32      `yaml:"cpuCores"`
+	RamMegabytes      int          `yaml:"ramMegabytes"`
+	SmartOptimization *bool        `yaml:"smartOptimization"`
+	Port              int          `yaml:"port"`
+	Autoscaling       *AutoScaling `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
+	Domains           []Domains    `yaml:"domains" validate:"excluded_unless=Type web"`
+	HealthCheck       *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
+	AllowConcurrent   bool         `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
+	Cron              string       `yaml:"cron" validate:"excluded_unless=Type job"`
+	Private           *bool        `yaml:"private" validate:"excluded_unless=Type web"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -230,12 +231,13 @@ func protoEnumFromType(name string, service Service) (porterv1.ServiceType, erro
 
 func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {
 	serviceProto := &porterv1.Service{
-		Run:          service.Run,
-		Type:         serviceType,
-		Instances:    int32(service.Instances),
-		CpuCores:     service.CpuCores,
-		RamMegabytes: int32(service.RamMegabytes),
-		Port:         int32(service.Port),
+		Run:               service.Run,
+		Type:              serviceType,
+		Instances:         int32(service.Instances),
+		CpuCores:          service.CpuCores,
+		RamMegabytes:      int32(service.RamMegabytes),
+		Port:              int32(service.Port),
+		SmartOptimization: service.SmartOptimization,
 	}
 
 	switch serviceType {

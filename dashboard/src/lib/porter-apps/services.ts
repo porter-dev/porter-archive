@@ -36,6 +36,7 @@ export const serviceValidator = z.object({
   port: serviceNumberValidator,
   cpuCores: serviceNumberValidator,
   ramMegabytes: serviceNumberValidator,
+  smartOptimization: serviceBooleanValidator.optional(),
   config: z.discriminatedUnion("type", [
     z.object({
       type: z.literal("web"),
@@ -70,28 +71,29 @@ export type SerializedService = {
   port: number;
   cpuCores: number;
   ramMegabytes: number;
+  smartOptimization?: boolean;
   config:
-    | {
-        type: "web";
-        domains: {
-          name: string;
-        }[];
-        autoscaling?: SerializedAutoscaling;
-        healthCheck?: SerializedHealthcheck;
-        private?: boolean;
-      }
-    | {
-        type: "worker";
-        autoscaling?: SerializedAutoscaling;
-      }
-    | {
-        type: "job";
-        allowConcurrent: boolean;
-        cron: string;
-      }
-    | {
-        type: "predeploy";
-      };
+  | {
+    type: "web";
+    domains: {
+      name: string;
+    }[];
+    autoscaling?: SerializedAutoscaling;
+    healthCheck?: SerializedHealthcheck;
+    private?: boolean;
+  }
+  | {
+    type: "worker";
+    autoscaling?: SerializedAutoscaling;
+  }
+  | {
+    type: "job";
+    allowConcurrent: boolean;
+    cron: string;
+  }
+  | {
+    type: "predeploy";
+  };
 };
 
 export function isPredeployService(service: SerializedService | ClientService) {
@@ -119,6 +121,7 @@ export function defaultSerialized({
     port: 3000,
     cpuCores: 0.1,
     ramMegabytes: 256,
+    smartOptimization: true,
   };
 
   const defaultAutoscaling: SerializedAutoscaling = {
@@ -182,6 +185,7 @@ export function serializeService(service: ClientService): SerializedService {
         port: service.port.value,
         cpuCores: service.cpuCores.value,
         ramMegabytes: service.ramMegabytes.value,
+        smartOptimization: service.smartOptimization?.value,
         config: {
           type: "web" as const,
           autoscaling: serializeAutoscaling({
@@ -203,6 +207,7 @@ export function serializeService(service: ClientService): SerializedService {
         port: service.port.value,
         cpuCores: service.cpuCores.value,
         ramMegabytes: service.ramMegabytes.value,
+        smartOptimization: service.smartOptimization?.value,
         config: {
           type: "worker" as const,
           autoscaling: serializeAutoscaling({
@@ -219,6 +224,7 @@ export function serializeService(service: ClientService): SerializedService {
         port: service.port.value,
         cpuCores: service.cpuCores.value,
         ramMegabytes: service.ramMegabytes.value,
+        smartOptimization: service.smartOptimization?.value,
         config: {
           type: "job" as const,
           allowConcurrent: config.allowConcurrent.value,
@@ -233,6 +239,7 @@ export function serializeService(service: ClientService): SerializedService {
         instances: service.instances.value,
         port: service.port.value,
         cpuCores: service.cpuCores.value,
+        smartOptimization: service.smartOptimization?.value,
         ramMegabytes: service.ramMegabytes.value,
         config: {
           type: "predeploy" as const,
@@ -265,6 +272,7 @@ export function deserializeService({
       service.ramMegabytes,
       override?.ramMegabytes
     ),
+    smartOptimization: ServiceField.boolean(service.smartOptimization, override?.smartOptimization),
   };
 
   return match(service.config)
@@ -297,7 +305,7 @@ export function deserializeService({
           })),
           private:
             typeof config.private === "boolean" ||
-            typeof overrideWebConfig?.private === "boolean"
+              typeof overrideWebConfig?.private === "boolean"
               ? ServiceField.boolean(config.private, overrideWebConfig?.private)
               : undefined,
         },

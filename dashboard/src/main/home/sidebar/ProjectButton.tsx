@@ -10,6 +10,7 @@ import Icon from "components/porter/Icon";
 import swap from "assets/swap.svg";
 import Spacer from "components/porter/Spacer";
 import ProjectSelectionModal from "./ProjectSelectionModal";
+import Tooltip from "components/porter/Tooltip";
 
 type PropsType = RouteComponentProps & {
   currentProject: ProjectType;
@@ -58,29 +59,43 @@ const ProjectButton: React.FC<PropsType> = (props) => {
             closeModal={() => setShowModal(false)}
           />
         )}
-        <MainSelector
-          projectsLength={props.projects.length}
-          isPorterUser={user.isPorterUser}
-          onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowModal(true)} >
-          <ProjectIcon>
-            <ProjectImage src={gradient} />
-            <Letter>{currentProject.name[0].toUpperCase()}</Letter>
-          </ProjectIcon>
-          <ProjectName>{currentProject.name}</ProjectName>
-          <Spacer inline x={.5} />
 
-          {(props.projects.length > 1 || user.isPorterUser) && <RefreshButton>
-            <img src={swap} />
-          </RefreshButton>}
+        {(user.isPorterUser && currentProject.simplified_view_enabled) ?
+          <Tooltip
+            content={`Porter Apps ${currentProject.validate_apply_v2 ? "V2" : "V1"}`}
+            position="right"
+          >
+            <MainSelector
+              projectsLength={props.projects.length}
+              isPorterUser={user.isPorterUser}
+              onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowModal(true)} >
+              <ProjectIcon>
+                <ProjectImage src={gradient} />
+                <Letter>{currentProject.name[0].toUpperCase()}</Letter>
+              </ProjectIcon>
+              <ProjectName>{currentProject.name}</ProjectName>
+              <Spacer inline x={.5} />
 
-          {/* <i className="material-icons">arrow_drop_down</i> */}
-        </MainSelector>
-        {user.isPorterUser && currentProject.simplified_view_enabled &&
-          <PorterAppDetailContainer>
-            <ProjectName>(Visible to @porter.run only)</ProjectName>
-            <Spacer y={0.5} />
-            <ProjectName>Porter Apps {currentProject.validate_apply_v2 ? "V2" : "V1"}</ProjectName>
-          </PorterAppDetailContainer>
+              {(props.projects.length > 1 || user.isPorterUser) && <RefreshButton>
+                <img src={swap} />
+              </RefreshButton>}
+            </MainSelector>
+          </Tooltip>
+          :
+          <MainSelector
+            projectsLength={props.projects.length}
+            isPorterUser={user.isPorterUser}
+            onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowModal(true)} >
+            <ProjectIcon>
+              <ProjectImage src={gradient} />
+              <Letter>{currentProject.name[0].toUpperCase()}</Letter>
+            </ProjectIcon>
+            <ProjectName>{currentProject.name}</ProjectName>
+            <Spacer inline x={.5} />
+            {(props.projects.length > 1 || user.isPorterUser) && <RefreshButton>
+              <img src={swap} />
+            </RefreshButton>}
+          </MainSelector>
         }
         {/* {renderDropdown()} */}
       </StyledProjectSection >
@@ -226,33 +241,6 @@ const MainSelector = styled.div`
   font-size: 14px;
   cursor: ${props => (props.projectsLength > 1 || props.isPorterUser) ? "pointer" : "default"};
   padding: 10px 20px;
-  position: relative;
-  :hover {
-    > i {
-      background: #ffffff22;
-    }
-  }
-
-  > i {
-    margin-left: 7px;
-    margin-right: 12px;
-    font-size: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 20px;
-    background: "#ffffff22" 
-  }
-`;
-
-const PorterAppDetailContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  background: #ffffff11;
-  border: 1px solid #ffffff11;
-  font-size: 14px;
-  cursor: ${props => (props.projectsLength > 1 || props.isPorterUser) ? "pointer" : "default"};
-  padding: 10px;
   position: relative;
   :hover {
     > i {

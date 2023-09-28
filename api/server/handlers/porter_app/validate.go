@@ -128,8 +128,8 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		CommitSha:          request.CommitSHA,
 		App:                appProto,
 		Deletions: &porterv1.Deletions{
-			ServiceNames: request.Deletions.ServiceNames,
-			Predeploy:        request.Deletions.Predeploy,
+			ServiceNames:     request.Deletions.ServiceNames,
+			PredeployNames:   request.Deletions.Predeploy,
 			EnvVariableNames: request.Deletions.EnvVariableNames,
 			EnvGroupNames:    request.Deletions.EnvGroupNames,
 		},

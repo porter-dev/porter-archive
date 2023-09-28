@@ -1,23 +1,13 @@
-import React, { Dispatch, SetStateAction, useMemo } from "react";
+import React, { useMemo } from "react";
 import RepoSettings from "../../create-app/RepoSettings";
 import { useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import { useLatestRevision } from "../LatestRevisionContext";
 import Spacer from "components/porter/Spacer";
-import Checkbox from "components/porter/Checkbox";
-import Text from "components/porter/Text";
 import Button from "components/porter/Button";
 import Error from "components/porter/Error";
 
-type Props = {
-  redeployOnSave: boolean;
-  setRedeployOnSave: Dispatch<SetStateAction<boolean>>;
-};
-
-const BuildSettings: React.FC<Props> = ({
-  redeployOnSave,
-  setRedeployOnSave,
-}) => {
+const BuildSettings: React.FC = () => {
   const {
     watch,
     formState: { isSubmitting, errors },
@@ -52,13 +42,6 @@ const BuildSettings: React.FC<Props> = ({
         appExists
       />
       <Spacer y={1} />
-      <Checkbox
-        checked={redeployOnSave}
-        toggleChecked={() => setRedeployOnSave(!redeployOnSave)}
-      >
-        <Text>Re-run build and deploy on save</Text>
-      </Checkbox>
-      <Spacer y={1} />
       <Button
         type="submit"
         status={buttonStatus}
@@ -67,6 +50,7 @@ const BuildSettings: React.FC<Props> = ({
           latestRevision.status === "CREATED" ||
           latestRevision.status === "AWAITING_BUILD_ARTIFACT"
         }
+        disabledTooltipMessage="Please wait for the build to complete before updating build settings"
       >
         Save build settings
       </Button>

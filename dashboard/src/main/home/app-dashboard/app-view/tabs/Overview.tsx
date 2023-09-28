@@ -52,7 +52,7 @@ const Overview: React.FC = () => {
                 type: "predeploy",
               }),
             })}
-            existingServiceNames={Object.keys(latestProto.services)}
+            existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
             isPredeploy
             fieldArrayName={"app.predeploy"}
           />

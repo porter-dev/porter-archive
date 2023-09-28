@@ -275,6 +275,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       deletions: {
         envGroupNames: [],
         serviceNames: [],
+        predeploy: [],
       },
     });
   }, [

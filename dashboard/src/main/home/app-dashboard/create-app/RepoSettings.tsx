@@ -74,7 +74,7 @@ const RepoSettings: React.FC<Props> = ({
   );
 
   useEffect(() => {
-    if (!branchContents) {
+    if (!branchContents || appExists) {
       return;
     }
 
@@ -85,7 +85,7 @@ const RepoSettings: React.FC<Props> = ({
     if (!hasDockerfile) {
       setValue("app.build.buildpacks", []);
     }
-  }, [branchContents]);
+  }, [branchContents, appExists]);
 
   return (
     <div>

@@ -67,7 +67,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	}
 
 	// overrides incorporated into the app contract baed on the deployment target
-	var b64AppOverides string
+	var b64AppOverrides string
 
 	appName := inp.AppName
 	if porterYamlExists {
@@ -120,14 +120,14 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		}
 
 		if inp.PreviewApply && parseResp.PreviewApp != nil {
-			b64AppOverides = parseResp.PreviewApp.B64AppProto
+			b64AppOverrides = parseResp.PreviewApp.B64AppProto
 
 			envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID, parseResp.PreviewApp.EnvVariables, parseResp.PreviewApp.EnvSecrets, parseResp.PreviewApp.B64AppProto)
 			if err != nil {
 				return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
 			}
 
-			b64AppOverides, err = updateEnvGroupsInProto(ctx, b64AppOverides, envGroupResp.EnvGroups)
+			b64AppOverrides, err = updateEnvGroupsInProto(ctx, b64AppOverrides, envGroupResp.EnvGroups)
 			if err != nil {
 				return fmt.Errorf("error updating app env group in proto: %w", err)
 			}
@@ -147,7 +147,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		ClusterID:          cliConf.Cluster,
 		AppName:            appName,
 		Base64AppProto:     b64AppProto,
-		Base64AppOverrides: b64AppOverides,
+		Base64AppOverrides: b64AppOverrides,
 		DeploymentTarget:   deploymentTargetID,
 		CommitSHA:          commitSHA,
 	})

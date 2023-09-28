@@ -128,6 +128,7 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 			B64AppProto:  encodedPreviewApp,
 			EnvVariables: appDefinition.PreviewApp.EnvVariables,
 		}
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "includes-preview-app", Value: true})
 	}
 
 	c.WriteResult(w, r, response)

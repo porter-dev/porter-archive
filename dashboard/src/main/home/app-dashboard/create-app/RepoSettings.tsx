@@ -266,6 +266,7 @@ const RepoSettings: React.FC<Props> = ({
                         projectId={projectId}
                         build={b}
                         source={source}
+                        autoDetectionDisabled={appExists}
                       />
                     ))
                     .exhaustive()}

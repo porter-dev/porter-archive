@@ -99,6 +99,11 @@ export interface ArrayInputField extends GenericInputField {
   label?: string;
 }
 
+export interface DictionaryArrayField extends GenericInputField {
+  type: "dictionary-array";
+  label?: string;
+}
+
 export interface SelectField extends GenericInputField {
   type: "select";
   settings:
@@ -168,6 +173,7 @@ export type FormField =
   | VariableField
   | CronField
   | TextAreaField
+  | DictionaryArrayField
   | UrlLinkField;
 
 export interface ShowIfAnd {
@@ -256,6 +262,7 @@ export interface KeyValueArrayFieldState {
   synced_env_groups: PopulatedEnvGroup[];
 }
 export interface ArrayInputFieldState { }
+export interface DictionaryArrayFieldState { }
 export interface SelectFieldState { }
 
 export type PorterFormFieldFieldState =
@@ -263,6 +270,7 @@ export type PorterFormFieldFieldState =
   | CheckboxFieldState
   | KeyValueArrayField
   | ArrayInputFieldState
+  | DictionaryArrayFieldState
   | SelectFieldState;
 
 // reducer interfaces
@@ -324,7 +332,7 @@ export type PorterFormAction =
 
 export type GetFinalVariablesFunction = (
   vars: PorterFormVariableList,
-  props: FormField,
+  props: FormField | any,
   state: PorterFormFieldFieldState,
   context: Partial<ContextProps>
 ) => PorterFormVariableList;

@@ -52,6 +52,7 @@ export const serviceValidator = z.object({
       type: z.literal("job"),
       allowConcurrent: serviceBooleanValidator,
       cron: serviceStringValidator,
+      timeoutSeconds: serviceNumberValidator,
     }),
     z.object({
       type: z.literal("predeploy"),
@@ -88,6 +89,7 @@ export type SerializedService = {
         type: "job";
         allowConcurrent: boolean;
         cron: string;
+        timeoutSeconds: number;
       }
     | {
         type: "predeploy";
@@ -158,6 +160,7 @@ export function defaultSerialized({
         type: "job" as const,
         allowConcurrent: false,
         cron: "",
+        timeoutSeconds: 3600,
       },
     }))
     .with("predeploy", () => ({
@@ -223,6 +226,7 @@ export function serializeService(service: ClientService): SerializedService {
           type: "job" as const,
           allowConcurrent: config.allowConcurrent.value,
           cron: config.cron.value,
+          timeoutSeconds: config.timeoutSeconds.value
         },
       })
     )
@@ -331,6 +335,7 @@ export function deserializeService({
             overrideJobConfig?.allowConcurrent
           ),
           cron: ServiceField.string(config.cron, overrideJobConfig?.cron),
+          timeoutSeconds: ServiceField.number(config.timeoutSeconds, overrideJobConfig?.timeoutSeconds)
         },
       };
     })

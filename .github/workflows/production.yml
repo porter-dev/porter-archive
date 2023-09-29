@@ -7,19 +7,38 @@ jobs:
   slack-notification:
     name: Slack Notification
     runs-on: ubuntu-latest
+    outputs:
+      deploy-ts: ${{ steps.deploy.outputs.ts }}
     steps:
     - uses: actions/checkout@v2
     - name: Slack Notification
-      uses: rtCamp/action-slack-notify@v2
+      uses: slackapi/slack-github-action@v2
+      id: deploy
+      continue-on-error: true
       env:
-        SLACK_WEBHOOK: ${{ secrets.PORTER_PROD_NOTIFICATIONS_SLACK_WEBHOOK }}
-        SLACK_TITLE: 'Production Deploy Started :rocket:'
-        SLACK_MESSAGE: '@here'
-        SLACK_COLOR: '#8590ff'
-        MSG_MINIMAL: true
-        SLACK_USERNAME: 'Production Deploy Bot'
+        SLACK_WEBHOOK_URL: ${{ secrets.PORTER_PROD_NOTIFICATIONS_SLACK_WEBHOOK }}
+      with:
+        payload: |
+          {
+            "text": "porter prod deploy started (In Progress)",
+            "attachments": [
+              {
+                "pretext": "Deployment started",
+                "color": "dbab09", 8590ff
+                "fields": [
+                  {
+                    "title": "Status",
+                    "short": true,
+                    "value": "In Progress"
+                  }
+                ]
+              }
+            ]
+          }
   build-go:
     runs-on: ubuntu-latest
+    needs:
+      - slack-notification
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -54,6 +73,8 @@ jobs:
           retention-days: 1
   build-npm:
     runs-on: ubuntu-latest
+    needs:
+      - slack-notification
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

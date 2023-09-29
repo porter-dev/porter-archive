@@ -20,19 +20,22 @@ const BuildpackCard: React.FC<Props> = ({
   draggable,
 }) => {
   const iconClassName = useMemo(() => {
-    if (buildpack.name) {
-      const [languageName] = buildpack.name.split("/").reverse();
-
-      const devicon = DeviconsNameList.find(
-        (devicon) => languageName.toLowerCase() === devicon.name
-      );
-
-      if (devicon) {
-        return `devicon-${devicon.name}-plain colored`
-      }
+    if (!buildpack.name) {
+      return "";
     }
 
-    return "";
+    const splits = buildpack.name.split("/");
+    if (splits.length !== 1) {
+      return "";
+    }
+
+    const devicon = DeviconsNameList.find(
+      (devicon) => splits[0].toLowerCase() === devicon.name
+    );
+    if (!devicon) {
+      return "";
+    }
+    return `devicon-${devicon.name}-plain colored`
   }, [buildpack.name]);
 
   const renderedBuildpackName = useMemo(() => {

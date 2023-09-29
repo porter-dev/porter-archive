@@ -27,21 +27,19 @@ type Props = {
     method: "pack";
   };
   source: SourceOptions & { type: "github" };
-  autoDetectionDisabled?: boolean;
+  populateBuildValuesOnceAfterDetection?: boolean;
 };
 
 const BuildpackSettings: React.FC<Props> = ({
   projectId,
   build,
   source,
-  autoDetectionDisabled,
+  populateBuildValuesOnceAfterDetection,
 }) => {
-  const [enableAutoDetection, setEnableAutoDetection] = useState(
-    !autoDetectionDisabled
-  );
-  const [stackOptions, setStackOptions] = useState<
+  const [builderOptions, setBuilderOptions] = useState<
     { label: string; value: string }[]
-  >([]);
+  >(build.builder ? [{ label: build.builder, value: build.builder }] : []);
+  const [populateBuild, setPopulateBuild] = useState<boolean>(populateBuildValuesOnceAfterDetection ?? false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [availableBuildpacks, setAvailableBuildpacks] = useState<Buildpack[]>(
     []
@@ -59,6 +57,7 @@ const BuildpackSettings: React.FC<Props> = ({
       source.git_repo_name,
       source.git_branch,
       build.context,
+      isModalOpen,
     ],
     async () => {
       const detectBuildPackRes = await api.detectBuildpack<DetectedBuildpack[]>(
@@ -83,7 +82,9 @@ const BuildpackSettings: React.FC<Props> = ({
       return detectedBuildpacks;
     },
     {
-      enabled: enableAutoDetection,
+      enabled: populateBuild || isModalOpen,
+      retry: 0,
+      refetchOnWindowFocus: false,
     }
   );
 
@@ -96,84 +97,65 @@ const BuildpackSettings: React.FC<Props> = ({
   );
 
   useEffect(() => {
-    if (!enableAutoDetection) {
-      // in this case, we are not detecting buildpacks, so we just populate based on the DB
-      if (build.builder) {
-        setValue("app.build.builder", build.builder);
-        setStackOptions([{ label: build.builder, value: build.builder }]);
-      }
-      if (build.buildpacks.length) {
-        const bps = build.buildpacks.map((bp) => ({
-          name: BUILDPACK_TO_NAME[bp.buildpack] ?? bp.buildpack,
-          buildpack: bp.buildpack,
-        }));
-        replace(bps);
-      }
-    } else {
-      if (!data) {
-        return;
-      }
+    if (!data || data.length === 0) {
+      return;
+    }
 
-      if (data.length === 0) {
-        return;
-      }
-      setStackOptions(
-        data
-          .flatMap((builder) => {
-            return builder.builders.map((stack) => ({
-              label: `${builder.name} - ${stack}`,
-              value: stack.toLowerCase(),
-            }));
-          })
-          .sort((a, b) => {
-            if (a.label < b.label) {
-              return -1;
-            }
-            if (a.label > b.label) {
-              return 1;
-            }
-            return 0;
-          })
-      );
+    setBuilderOptions(
+      data
+        .flatMap((builder) => {
+          return builder.builders.map((stack) => ({
+            label: `${builder.name} - ${stack}`,
+            value: stack.toLowerCase(),
+          }));
+        })
+        .sort((a, b) => {
+          if (a.label < b.label) {
+            return -1;
+          }
+          if (a.label > b.label) {
+            return 1;
+          }
+          return 0;
+        })
+    );
 
-      const defaultBuilder =
-        data.find(
-          (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
-        ) ?? data[0];
+    const defaultBuilder =
+      data.find(
+        (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
+      ) ?? data[0];
 
-      const allBuildpacks = defaultBuilder.others.concat(
-        defaultBuilder.detected
-      );
+    const allBuildpacks = defaultBuilder.others.concat(
+      defaultBuilder.detected
+    );
 
+    setAvailableBuildpacks(
+      allBuildpacks.filter(
+        (bp) => !build.buildpacks.some((b) => b.buildpack === bp.buildpack)
+      )
+    );
+
+    if (populateBuild) {
       let detectedBuilder: string;
       if (
         defaultBuilder.builders.length &&
         defaultBuilder.builders.includes(DEFAULT_HEROKU_STACK)
       ) {
-        setValue("app.build.builder", DEFAULT_HEROKU_STACK);
         detectedBuilder = DEFAULT_HEROKU_STACK;
       } else {
-        setValue("app.build.builder", defaultBuilder.builders[0]);
         detectedBuilder = defaultBuilder.builders[0];
       }
 
-      if (enableAutoDetection) {
-        setValue("app.build.builder", detectedBuilder);
-        replace(
-          defaultBuilder.detected.map((bp) => ({
-            name: bp.name,
-            buildpack: bp.buildpack,
-          }))
-        );
-        setAvailableBuildpacks(defaultBuilder.others);
-      } else {
-        setValue("app.build.builder", detectedBuilder);
-        setAvailableBuildpacks(
-          allBuildpacks.filter(
-            (bp) => !build.buildpacks.some((b) => b.buildpack === bp.buildpack)
-          )
-        );
-      }
+      setValue("app.build.builder", detectedBuilder);
+      // set buildpacks as well
+      replace(
+        defaultBuilder.detected.map((bp) => ({
+          name: bp.name,
+          buildpack: bp.buildpack,
+        }))
+      );
+      // we only want to change the form values once
+      setPopulateBuild(false);
     }
   }, [data]);
 
@@ -196,31 +178,29 @@ const BuildpackSettings: React.FC<Props> = ({
           />
         </>
       )}
-      {enableAutoDetection && status === "error" && (
+      {errorMessage && (
         <>
           <Spacer y={1} />
           <Error
-            message={`Unable to detect buildpacks at path: ${build.context}. Please make sure your repo, branch, and application root path are all set correctly and attempt to detect again.`}
+            message={errorMessage}
           />
         </>
       )}
       <Spacer y={1} />
       <Button
         onClick={() => {
-          setEnableAutoDetection(true);
           setIsModalOpen(true);
         }}
       >
-        <I className="material-icons">add</I> Add / detect buildpacks
+        <I className="material-icons">add</I> Add buildpacks
       </Button>
       {isModalOpen && (
         <BuildpackConfigurationModal
           build={build}
           closeModal={() => {
-            setEnableAutoDetection(false);
             setIsModalOpen(false);
           }}
-          sortedStackOptions={stackOptions}
+          sortedStackOptions={builderOptions}
           availableBuildpacks={availableBuildpacks}
           setAvailableBuildpacks={setAvailableBuildpacks}
           isDetectingBuildpacks={status === "loading"}

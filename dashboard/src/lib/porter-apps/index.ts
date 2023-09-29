@@ -265,7 +265,7 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
         method: b.method,
         context: b.context,
         buildpacks: b.buildpacks.map((b) => ({
-          name: BUILDPACK_TO_NAME[b],
+          name: BUILDPACK_TO_NAME[b] ?? b,
           buildpack: b,
         })),
         builder: b.builder,

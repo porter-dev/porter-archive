@@ -953,6 +953,7 @@ const applyApp = baseApi<
     deployment_target_id: string;
     b64_app_proto?: string;
     app_revision_id?: string;
+    force_build?: boolean;
   },
   {
     project_id: number;

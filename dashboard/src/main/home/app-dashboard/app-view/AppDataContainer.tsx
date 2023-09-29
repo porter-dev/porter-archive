@@ -175,7 +175,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         latestProto
       );
 
-      if (buildIsDirty && !data.redeployOnSave) {
+      const needsRebuild =
+        buildIsDirty || latestRevision.status === "BUILD_FAILED";
+
+      if (needsRebuild && !data.redeployOnSave) {
         setConfirmDeployModalOpen(true);
         return;
       }
@@ -216,11 +219,14 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         })),
       });
 
+      // force_build will create a new 0 revision that will not be deployed
+      // but will be used to hydrate values when the workflow is run
       await api.applyApp(
         "<token>",
         {
           b64_app_proto: btoa(protoWithUpdatedEnv.toJsonString()),
           deployment_target_id: deploymentTarget.id,
+          force_build: needsRebuild,
         },
         {
           project_id: projectId,
@@ -228,7 +234,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         }
       );
 
-      if (latestSource.type === "github" && buildIsDirty) {
+      if (latestSource.type === "github" && needsRebuild) {
         const res = await api.reRunGHWorkflow(
           "<token>",
           {},
@@ -247,7 +253,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           window.open(res.data, "_blank", "noreferrer");
         }
       }
-
       await queryClient.invalidateQueries([
         "getLatestRevision",
         projectId,
@@ -266,7 +271,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       // redirect to the default tab after save
       history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
-    } catch (err) { }
+    } catch (err) {}
   });
 
   const cancelRedeploy = useCallback(() => {
@@ -372,11 +377,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                {
-                  label: "Build Settings",
-                  value: "build-settings",
-                },
-              ]
+                  {
+                    label: "Build Settings",
+                    value: "build-settings",
+                  },
+                ]
               : []),
             { label: "Settings", value: "settings" },
           ]}
@@ -412,6 +417,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           setOpen={setConfirmDeployModalOpen}
           cancelRedeploy={cancelRedeploy}
           finalizeDeploy={finalizeDeploy}
+          buildIsDirty={buildIsDirty}
         />
       ) : null}
     </FormProvider>

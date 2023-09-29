@@ -84,7 +84,7 @@ const Overview: React.FC = () => {
           latestRevision.status === "CREATED" ||
           latestRevision.status === "AWAITING_BUILD_ARTIFACT"
         }
-        disabledTooltipMessage="Please wait for the build to complete before updating services"
+        disabledTooltipMessage="Please wait for the deploy to complete before updating services"
       >
         Update app
       </Button>

@@ -314,6 +314,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     });
   }, [
     servicesFromYaml,
+    currentTab,
     latestProto,
     previewRevision,
     latestRevision.revision_number,
@@ -347,7 +348,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                     latestRevision.status === "CREATED" ||
                     latestRevision.status === "AWAITING_BUILD_ARTIFACT"
                   }
-                  disabledTooltipMessage="Please wait for the build to complete before updating the app"
+                  disabledTooltipMessage="Please wait for the deploy to complete before updating the app"
                 >
                   <Icon src={save} height={"13px"} />
                   <Spacer inline x={0.5} />

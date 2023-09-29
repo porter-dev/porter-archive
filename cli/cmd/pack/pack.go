@@ -47,7 +47,9 @@ func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	if err := file.Close(); err != nil {
+		return err
+	}
 
 	buildOpts := packclient.BuildOptions{
 		RelativeBaseDir: filepath.Dir(absPath),

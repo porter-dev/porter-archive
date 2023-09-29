@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { DeviconsNameList } from "assets/devicons-name-list";
 import styled, { keyframes } from "styled-components";
 import { Draggable } from "react-beautiful-dnd";
@@ -19,28 +19,43 @@ const BuildpackCard: React.FC<Props> = ({
   index,
   draggable,
 }) => {
-  const [languageName] = buildpack.name?.split("/").reverse();
+  const iconClassName = useMemo(() => {
+    if (!buildpack.name) {
+      return "";
+    }
 
-  const devicon = DeviconsNameList.find(
-    (devicon) => languageName.toLowerCase() === devicon.name
-  );
+    const splits = buildpack.name.split("/");
+    if (splits.length !== 1) {
+      return "";
+    }
 
-  const icon = `devicon-${devicon?.name}-plain colored`;
+    const devicon = DeviconsNameList.find(
+      (devicon) => splits[0].toLowerCase() === devicon.name
+    );
+    if (!devicon) {
+      return "";
+    }
+    return `devicon-${devicon.name}-plain colored`
+  }, [buildpack.name]);
+
+  const renderedBuildpackName = useMemo(() => {
+    return buildpack.name ?? buildpack.buildpack;
+  }, [buildpack.name]);
 
   return draggable ? (
-    <Draggable draggableId={buildpack.name} index={index} key={buildpack.name}>
+    <Draggable draggableId={renderedBuildpackName} index={index} key={renderedBuildpackName}>
       {(provided) => (
         <StyledCard
           marginBottom="5px"
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           ref={provided.innerRef}
-          key={buildpack.name}
+          key={renderedBuildpackName}
         >
           <ContentContainer>
-            <Icon disableMarginRight={devicon == null} className={icon} />
+            {iconClassName && <Icon className={iconClassName} />}
             <EventInformation>
-              <EventName>{buildpack?.name}</EventName>
+              <EventName>{renderedBuildpackName}</EventName>
             </EventInformation>
           </ContentContainer>
           <ActionContainer>
@@ -54,11 +69,11 @@ const BuildpackCard: React.FC<Props> = ({
       )}
     </Draggable>
   ) : (
-    <StyledCard marginBottom="5px" key={buildpack.name}>
+    <StyledCard marginBottom="5px" key={renderedBuildpackName}>
       <ContentContainer>
-        <Icon disableMarginRight={devicon == null} className={icon} />
+        {iconClassName && <Icon className={iconClassName} />}
         <EventInformation>
-          <EventName>{buildpack?.name}</EventName>
+          <EventName>{renderedBuildpackName}</EventName>
         </EventInformation>
       </ContentContainer>
       <ActionContainer>
@@ -105,14 +120,10 @@ const ContentContainer = styled.div`
   align-items: center;
 `;
 
-const Icon = styled.span<{ disableMarginRight: boolean }>`
+const Icon = styled.span`
   font-size: 20px;
   margin-left: 10px;
-  ${(props) => {
-    if (!props.disableMarginRight) {
-      return "margin-right: 20px";
-    }
-  }}
+  margin-right: 20px
 `;
 
 const EventInformation = styled.div`

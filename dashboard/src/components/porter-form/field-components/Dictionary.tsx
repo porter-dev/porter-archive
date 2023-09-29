@@ -27,7 +27,6 @@ const Dictionary: React.FC<DictionaryField> = (props) => {
   if (state == undefined) return <></>;
 
   return (
-    <>
     <DictionaryEditor
       value={props?.value && props.value[0]}
       onChange={(x: any) => {
@@ -45,37 +44,6 @@ const Dictionary: React.FC<DictionaryField> = (props) => {
         });
       }}
     />
-    {/*
-    <InputRow
-      width="100%"
-      type={settings?.type || "text"}
-      value={curValue}
-      unit={settings?.unit}
-      setValue={(x: string | number) => {
-        setVars((vars) => {
-          return {
-            ...vars,
-            [variable]: x,
-          };
-        });
-        setValidation((prev) => {
-          return {
-            ...prev,
-            validated:
-              settings?.type == "number"
-                ? !isNaN(x as number)
-                : !!(x as string).trim(),
-          };
-        });
-      }}
-      label={label}
-      isRequired={required}
-      placeholder={placeholder}
-      info={info}
-      disabled={isReadOnly}
-    />
-    */}
-    </>
   );
 };
 

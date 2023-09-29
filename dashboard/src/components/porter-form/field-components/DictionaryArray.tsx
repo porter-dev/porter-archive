@@ -88,41 +88,6 @@ const DictionaryArray: React.FC<DictionaryArrayField> = (props) => {
                   });
                 }}
               />
-              {/*
-                <Input
-                  placeholder=""
-                  width="270px"
-                  value={value}
-                  onChange={(e: any) => {
-                    e.persist();
-                    setVars((prev) => {
-                      const val = prev[props.variable]?.map(
-                        (t: string, j: number) => {
-                          return i == j ? e.target.value : t;
-                        }
-                      );
-                      setValidation((prev) => {
-                        return {
-                          ...prev,
-                          validated: validateArray(val),
-                        };
-                      });
-                      return {
-                        [props.variable]: [{
-                          host: "my-golly",
-                          paths: [
-                            {
-                              path: "/",
-                              value: "coolio",
-                            },
-                          ]
-                        }],
-                      };
-                    });
-                  }}
-                  disabled={props.isReadOnly}
-                />
-              */}
               {renderDeleteButton(values, i)}
             </InputWrapper>
           );

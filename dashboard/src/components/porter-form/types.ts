@@ -99,6 +99,11 @@ export interface ArrayInputField extends GenericInputField {
   label?: string;
 }
 
+export interface DictionaryField extends GenericInputField {
+  type: "dictionary";
+  label?: string;
+}
+
 export interface DictionaryArrayField extends GenericInputField {
   type: "dictionary-array";
   label?: string;
@@ -173,6 +178,7 @@ export type FormField =
   | VariableField
   | CronField
   | TextAreaField
+  | DictionaryField
   | DictionaryArrayField
   | UrlLinkField;
 
@@ -262,6 +268,7 @@ export interface KeyValueArrayFieldState {
   synced_env_groups: PopulatedEnvGroup[];
 }
 export interface ArrayInputFieldState { }
+export interface DictionaryFieldState {}
 export interface DictionaryArrayFieldState { }
 export interface SelectFieldState { }
 
@@ -270,6 +277,7 @@ export type PorterFormFieldFieldState =
   | CheckboxFieldState
   | KeyValueArrayField
   | ArrayInputFieldState
+  | DictionaryFieldState
   | DictionaryArrayFieldState
   | SelectFieldState;
 

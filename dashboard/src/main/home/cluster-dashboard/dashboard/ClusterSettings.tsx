@@ -357,7 +357,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
         {/* Disabled this field due to https://discord.com/channels/542888846271184896/856554532972134420/1042497537912864788 */}
         {/* {renameClusterSection}
         <DarkMatter /> */}
-        <Heading>Delete cluster</Heading>
+        <Heading>Delete Infrastructure</Heading>
         {helperText}
         <Button
           disabled={

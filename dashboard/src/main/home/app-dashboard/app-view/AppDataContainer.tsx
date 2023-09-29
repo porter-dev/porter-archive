@@ -222,11 +222,14 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         })),
       });
 
+      // force_build will create a new 0 revision that will not be deployed
+      // but will be used to hydrate values when the workflow is run
       await api.applyApp(
         "<token>",
         {
           b64_app_proto: btoa(protoWithUpdatedEnv.toJsonString()),
           deployment_target_id: deploymentTarget.id,
+          force_build: needsRebuild,
         },
         {
           project_id: projectId,
@@ -253,7 +256,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           window.open(res.data, "_blank", "noreferrer");
         }
       }
-
       await queryClient.invalidateQueries([
         "getLatestRevision",
         projectId,

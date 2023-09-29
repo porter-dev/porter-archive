@@ -127,7 +127,7 @@ const RepoSettings: React.FC<Props> = ({
             label="GitHub repository:"
             width="100%"
             value={source.git_repo_name}
-            setValue={() => {}}
+            setValue={() => { }}
             placeholder=""
           />
           {!appExists && (
@@ -176,7 +176,7 @@ const RepoSettings: React.FC<Props> = ({
                 type="text"
                 width="100%"
                 value={source.git_branch}
-                setValue={() => {}}
+                setValue={() => { }}
                 placeholder=""
               />
               <BackButton
@@ -266,7 +266,7 @@ const RepoSettings: React.FC<Props> = ({
                         projectId={projectId}
                         build={b}
                         source={source}
-                        autoDetectionDisabled={appExists}
+                        populateBuildValuesOnceAfterDetection={!appExists}
                       />
                     ))
                     .exhaustive()}
@@ -345,7 +345,7 @@ const StyledAdvancedBuildSettings = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
-      props.showSettings ? "" : "rotate(-90deg)"};
+    props.showSettings ? "" : "rotate(-90deg)"};
   }
 `;
 

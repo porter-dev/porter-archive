@@ -1241,5 +1241,63 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/app-templates -> porter_app.NewGetAppTemplateHandler
+	getAppTemplateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/app-templates", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getAppTemplateHandler := porter_app.NewGetAppTemplateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getAppTemplateEndpoint,
+		Handler:  getAppTemplateHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/app-templates -> porter_app.NewCreateAppTemplateHandler
+	createAppTemplateEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/app-templates", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	createAppTemplateHandler := porter_app.NewCreateAppTemplateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createAppTemplateEndpoint,
+		Handler:  createAppTemplateHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

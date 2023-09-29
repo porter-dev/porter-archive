@@ -185,6 +185,7 @@ export const Dashboard: React.FunctionComponent = () => {
   }, [context.currentCluster]);
 
   const renderContents = () => {
+    console.log(context.currentCluster)
     if (context.currentProject?.capi_provisioner_enabled) {
       return (
         <>
@@ -199,6 +200,7 @@ export const Dashboard: React.FunctionComponent = () => {
               context.currentCluster.status === "UPDATING_UNAVAILABLE") && (
               <>
                 <ProvisionerStatus
+
                   provisionFailureReason={provisionFailureReason}
                 />
                 <Spacer y={1} />

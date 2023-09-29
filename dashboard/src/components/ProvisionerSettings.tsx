@@ -433,7 +433,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
-
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
       if (eksValues == null) {

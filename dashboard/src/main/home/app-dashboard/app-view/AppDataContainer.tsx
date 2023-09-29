@@ -13,10 +13,7 @@ import TabSelector from "components/TabSelector";
 import { useHistory } from "react-router";
 import { match } from "ts-pattern";
 import Overview from "./tabs/Overview";
-import {
-  AppValidationResult,
-  useAppValidation,
-} from "lib/hooks/useAppValidation";
+import { useAppValidation } from "lib/hooks/useAppValidation";
 import api from "shared/api";
 import { useQueryClient } from "@tanstack/react-query";
 import Settings from "./tabs/Settings";

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -38,6 +39,16 @@ type Agent struct{}
 func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *types.BuildConfig, cacheImage string) error {
 	absPath, err := filepath.Abs(opts.BuildContext)
 	if err != nil {
+		return err
+	}
+
+	mode := os.FileMode(0o600)
+	procfilePath := filepath.Clean(filepath.Join(absPath, "Procfile"))
+	file, err := os.OpenFile(procfilePath, os.O_RDONLY|os.O_CREATE, mode)
+	if err != nil {
+		return err
+	}
+	if err := file.Close(); err != nil {
 		return err
 	}
 

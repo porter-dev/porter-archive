@@ -159,6 +159,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       deletions: {
         serviceNames: [],
         envGroupNames: [],
+        predeploy: [],
       },
     },
   });

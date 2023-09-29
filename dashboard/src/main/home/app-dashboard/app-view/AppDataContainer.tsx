@@ -121,6 +121,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       deletions: {
         serviceNames: [],
         envGroupNames: [],
+        predeploy: [],
       },
     },
   });
@@ -268,7 +269,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       // redirect to the default tab after save
       history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
-    } catch (err) {}
+    } catch (err) { }
   });
 
   const cancelRedeploy = useCallback(() => {
@@ -310,6 +311,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       deletions: {
         envGroupNames: [],
         serviceNames: [],
+        predeploy: [],
       },
       redeployOnSave: false,
     });
@@ -373,11 +375,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
+                {
+                  label: "Build Settings",
+                  value: "build-settings",
+                },
+              ]
               : []),
             { label: "Settings", value: "settings" },
           ]}

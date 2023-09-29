@@ -15,13 +15,11 @@ import { ImageType } from "./types";
 type Props = {
     projectId: number;
     source: SourceOptions & { type: "docker-registry" };
-    appExists?: boolean;
 };
 
 const ImageSettings: React.FC<Props> = ({
     projectId,
     source,
-    appExists,
 }) => {
     const { control, setValue } = useFormContext<PorterAppFormData>();
     const [images, setImages] = useState<ImageType[]>([]);
@@ -38,7 +36,7 @@ const ImageSettings: React.FC<Props> = ({
     )
 
     const { data: imageResp, isLoading: isLoadingImages } = useQuery(
-        ["getImages", projectId],
+        ["getImages", projectId, source],
         async () => {
             if (registries == null) {
                 return [];

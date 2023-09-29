@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import {
   PorterAppFormData,
@@ -17,7 +17,7 @@ import { useAppValidation } from "lib/hooks/useAppValidation";
 import api from "shared/api";
 import { useQueryClient } from "@tanstack/react-query";
 import Settings from "./tabs/Settings";
-import BuildSettings from "./tabs/BuildSettings";
+import BuildSettingsTab from "./tabs/BuildSettingsTab";
 import Environment from "./tabs/Environment";
 import AnimateHeight from "react-animate-height";
 import Banner from "components/porter/Banner";
@@ -32,6 +32,8 @@ import EventFocusView from "./tabs/activity-feed/events/focus-views/EventFocusVi
 import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import JobsTab from "./tabs/JobsTab";
+import ConfirmRedeployModal from "./ConfirmRedeployModal";
+import ImageSettingsTab from "./tabs/ImageSettingsTab";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -59,16 +61,18 @@ type AppDataContainerProps = {
 const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const history = useHistory();
   const queryClient = useQueryClient();
-  const [redeployOnSave, setRedeployOnSave] = useState(false);
+  const [confirmDeployModalOpen, setConfirmDeployModalOpen] = useState(false);
 
   const {
     porterApp: porterAppRecord,
     latestProto,
+    previewRevision,
     latestRevision,
     projectId,
     clusterId,
     deploymentTarget,
     servicesFromYaml,
+    appEnv,
     setPreviewRevision,
   } = useLatestRevision();
   const { validateApp } = useAppValidation({
@@ -117,6 +121,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       deletions: {
         serviceNames: [],
         envGroupNames: [],
+        predeploy: [],
       },
     },
   });
@@ -158,12 +163,25 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     return dirty.every((f) => f === "expanded" || f === "id");
   }, [isDirty, JSON.stringify(dirtyFields)]);
 
+  const buildIsDirty = useMemo(() => {
+    if (!isDirty) return false;
+
+    // get all entries in entire dirtyFields object that are true
+    const dirty = getAllDirtyFields(dirtyFields.app?.build ?? {});
+    return dirty.some((f) => f);
+  }, [isDirty, JSON.stringify(dirtyFields)]);
+
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const { validatedAppProto, variables, secrets } = await validateApp(
+      const { variables, secrets, validatedAppProto } = await validateApp(
         data,
         latestProto
       );
+
+      if (buildIsDirty && !data.redeployOnSave) {
+        setConfirmDeployModalOpen(true);
+        return;
+      }
 
       // updates the default env group associated with this app to store app specific env vars
       const res = await api.updateEnvironmentGroupV2(
@@ -213,11 +231,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         }
       );
 
-      if (
-        redeployOnSave &&
-        latestSource.type === "github" &&
-        dirtyFields.app?.build
-      ) {
+      if (latestSource.type === "github" && buildIsDirty) {
         const res = await api.reRunGHWorkflow(
           "<token>",
           {},
@@ -235,8 +249,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         if (res.data != null) {
           window.open(res.data, "_blank", "noreferrer");
         }
-
-        setRedeployOnSave(false);
       }
 
       await queryClient.invalidateQueries([
@@ -260,19 +272,78 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     } catch (err) { }
   });
 
-  useEffect(() => {
+  const cancelRedeploy = useCallback(() => {
+    const resetProto = previewRevision ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto)) : latestProto;
+
+    // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
+    // however, for image settings, we can pull image repo and tag from the proto
+    const resetSource = porterAppRecord.image_repo_uri && resetProto.image ? {
+      type: "docker-registry" as const,
+      image: {
+        repository: resetProto.image.repository,
+        tag: resetProto.image.tag
+      }
+    } : latestSource;
+
     reset({
       app: clientAppFromProto({
-        proto: latestProto,
+        proto: resetProto,
         overrides: servicesFromYaml,
+        variables: appEnv?.variables,
+        secrets: appEnv?.secret_variables,
       }),
-      source: latestSource,
+      source: resetSource,
       deletions: {
         envGroupNames: [],
         serviceNames: [],
       },
+      redeployOnSave: false,
     });
-  }, [servicesFromYaml, latestProto, latestRevision.revision_number]);
+    setConfirmDeployModalOpen(false);
+  }, [previewRevision, latestProto, servicesFromYaml, appEnv, latestSource]);
+
+  const finalizeDeploy = useCallback(() => {
+    setConfirmDeployModalOpen(false);
+    onSubmit();
+  }, [onSubmit, setConfirmDeployModalOpen]);
+
+  useEffect(() => {
+    const newProto = previewRevision
+      ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto))
+      : latestProto;
+
+    // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
+    // however, for image settings, we can pull image repo and tag from the proto
+    const newSource = porterAppRecord.image_repo_uri && newProto.image ? {
+      type: "docker-registry" as const,
+      image: {
+        repository: newProto.image.repository,
+        tag: newProto.image.tag
+      }
+    } : latestSource;
+
+    reset({
+      app: clientAppFromProto({
+        proto: newProto,
+        overrides: servicesFromYaml,
+        variables: appEnv?.variables,
+        secrets: appEnv?.secret_variables,
+      }),
+      source: newSource,
+      deletions: {
+        envGroupNames: [],
+        serviceNames: [],
+        predeploy: [],
+      },
+      redeployOnSave: false,
+    });
+  }, [
+    servicesFromYaml,
+    latestProto,
+    previewRevision,
+    latestRevision.revision_number,
+    appEnv,
+  ]);
 
   return (
     <FormProvider {...porterAppFormMethods}>
@@ -297,7 +368,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                   loadingText={"Updating..."}
                   height={"10px"}
                   status={isSubmitting ? "loading" : ""}
-                  disabled={isSubmitting}
+                  disabled={
+                    isSubmitting ||
+                    latestRevision.status === "CREATED" ||
+                    latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+                  }
+                  disabledTooltipMessage="Please wait for the build to complete before updating the app"
                 >
                   <Icon src={save} height={"13px"} />
                   <Spacer inline x={0.5} />
@@ -350,16 +426,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("activity", () => <Activity />)
           .with("overview", () => <Overview />)
           .with("build-settings", () => (
-            <BuildSettings
-              redeployOnSave={redeployOnSave}
-              setRedeployOnSave={setRedeployOnSave}
-            />
+            <BuildSettingsTab />
           ))
           .with("image-settings", () => (
-            <BuildSettings
-              redeployOnSave={redeployOnSave}
-              setRedeployOnSave={setRedeployOnSave}
-            />
+            <ImageSettingsTab />
           ))
           .with("environment", () => (
             <Environment latestSource={latestSource} />
@@ -372,6 +442,13 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>
+      {confirmDeployModalOpen ? (
+        <ConfirmRedeployModal
+          setOpen={setConfirmDeployModalOpen}
+          cancelRedeploy={cancelRedeploy}
+          finalizeDeploy={finalizeDeploy}
+        />
+      ) : null}
     </FormProvider>
   );
 };

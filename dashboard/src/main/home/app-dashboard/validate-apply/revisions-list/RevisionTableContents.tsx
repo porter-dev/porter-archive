@@ -10,7 +10,6 @@ import { useFormContext } from "react-hook-form";
 import {
   PorterAppFormData,
   SourceOptions,
-  clientAppFromProto,
 } from "lib/porter-apps";
 import { PorterAppRecord } from "../../app-view/AppView";
 
@@ -42,11 +41,10 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
   setRevertData,
   porterAppRecord,
 }) => {
-  const { reset } = useFormContext<PorterAppFormData>();
+  const { setValue } = useFormContext<PorterAppFormData>();
   const {
     previewRevision,
     setPreviewRevision,
-    servicesFromYaml,
   } = useLatestRevision();
 
   const revisionsWithProto = revisions.map((revision) => {
@@ -178,14 +176,6 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                     ? revision.revision_number === latestRevisionNumber
                     : i === 0;
 
-                const source = porterAppRecord.image_repo_uri && revision.app_proto.image ? {
-                  type: "docker-registry" as const,
-                  image: {
-                    repository: revision.app_proto.image.repository,
-                    tag: revision.app_proto.image.tag
-                  }
-                } : latestSource; // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
-
                 return (
                   <Tr
                     key={revision.revision_number}
@@ -196,21 +186,11 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                         : isLatestDeployedRevision
                     }
                     onClick={() => {
-                      reset({
-                        app: clientAppFromProto({
-                          proto: revision.app_proto,
-                          overrides: servicesFromYaml,
-                        }),
-                        source,
-                        deletions: {
-                          serviceNames: [],
-                          envGroupNames: [],
-                        },
-                      });
-
-                      setPreviewRevision(
-                        isLatestDeployedRevision ? null : revision
-                      );
+                      if (isLatestDeployedRevision) {
+                        setPreviewRevision(null);
+                      } else {
+                        setPreviewRevision(revision);
+                      }
                     }}
                   >
                     <Td>{revision.revision_number}</Td>

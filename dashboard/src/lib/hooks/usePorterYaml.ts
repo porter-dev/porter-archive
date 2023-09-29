@@ -81,18 +81,11 @@ export const usePorterYaml = ({
         source?.type === "github" &&
         Boolean(source.git_repo_name) &&
         Boolean(source.git_branch),
-      retry: (_failureCount, error) => {
-        if (
-          // error response will be 403 status if user does not have access to the github installation
-          error.response?.status === 404 || error.response?.status === 403 ||
-          error.response.data?.error?.includes("not found")
-        ) {
-          setPorterYamlFound(false);
-          return false;
-        }
-        return true;
+      onError: () => {
+        setPorterYamlFound(false);
       },
       refetchOnWindowFocus: false,
+      retry: 0,
     }
   );
 

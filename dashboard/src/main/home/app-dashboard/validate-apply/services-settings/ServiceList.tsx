@@ -87,7 +87,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
     fields: deletedServices,
   } = useFieldArray({
     control: appControl,
-    name: "deletions.serviceNames",
+    name: fieldArrayName === "app.services" ? "deletions.serviceNames" : "deletions.predeploy",
   });
 
   const serviceType = watch("type");

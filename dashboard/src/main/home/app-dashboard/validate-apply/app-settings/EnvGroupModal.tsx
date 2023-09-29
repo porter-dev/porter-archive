@@ -55,7 +55,7 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
       <Spacer height="15px" />
       <ColumnContainer>
         <ScrollableContainer>
-          {baseEnvGroups?.length != envGroups?.length ? (
+          {remainingEnvGroupOptions.length ? (
             <>
               <Text color="helper">
                 Select an Env Group to load into your application.

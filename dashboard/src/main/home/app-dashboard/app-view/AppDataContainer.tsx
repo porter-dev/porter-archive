@@ -178,7 +178,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         latestProto
       );
 
-      if (buildIsDirty && !data.redeployOnSave) {
+      const needsRebuild =
+        buildIsDirty || latestRevision.status === "BUILD_FAILED";
+
+      if (needsRebuild && !data.redeployOnSave) {
         setConfirmDeployModalOpen(true);
         return;
       }
@@ -231,7 +234,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         }
       );
 
-      if (latestSource.type === "github" && buildIsDirty) {
+      if (latestSource.type === "github" && needsRebuild) {
         const res = await api.reRunGHWorkflow(
           "<token>",
           {},
@@ -269,7 +272,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       // redirect to the default tab after save
       history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
-    } catch (err) { }
+    } catch (err) {}
   });
 
   const cancelRedeploy = useCallback(() => {
@@ -374,11 +377,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                {
-                  label: "Build Settings",
-                  value: "build-settings",
-                },
-              ]
+                  {
+                    label: "Build Settings",
+                    value: "build-settings",
+                  },
+                ]
               : []),
             { label: "Settings", value: "settings" },
           ]}
@@ -414,6 +417,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           setOpen={setConfirmDeployModalOpen}
           cancelRedeploy={cancelRedeploy}
           finalizeDeploy={finalizeDeploy}
+          buildIsDirty={buildIsDirty}
         />
       ) : null}
     </FormProvider>

@@ -81,6 +81,8 @@ const ProvisionerStatus: React.FC<Props> = ( props ) => {
   }, []);
 
   useEffect(() => {
+    // check if this is create or update operation
+    // TODO: CCP should distinguish between create vs update.
     api
     .getContracts("<token>", {}, { project_id: currentProject.id })
     .then(({ data }) => {

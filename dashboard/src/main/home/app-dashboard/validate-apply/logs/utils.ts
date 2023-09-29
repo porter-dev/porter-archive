@@ -212,7 +212,7 @@ export const useLogs = ({
           }
         });
         const newLogsParsed = parseLogs(newLogs);
-        newLogs.filter((log) => {
+        newLogsParsed.filter((log) => {
           return log.metadata?.raw_labels?.porter_run_app_revision_id != null
             && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != null
             && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != 0

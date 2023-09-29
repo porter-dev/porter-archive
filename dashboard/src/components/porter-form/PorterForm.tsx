@@ -13,6 +13,8 @@ import {
   ServiceIPListField,
   TextAreaField,
   UrlLinkField,
+  DictionaryField,
+  DictionaryArrayField,
 } from "./types";
 import TabRegion, { TabOption } from "../TabRegion";
 import Heading from "../form-components/Heading";
@@ -32,6 +34,8 @@ import CronInput from "./field-components/CronInput";
 import TextAreaInput from "./field-components/TextAreaInput";
 import UrlLink from "./field-components/UrlLink";
 import Button from "components/porter/Button";
+import DictionaryArray from "./field-components/DictionaryArray";
+import Dictionary from "./field-components/Dictionary";
 
 interface Props {
   leftTabOptions?: TabOption[];
@@ -88,6 +92,10 @@ const PorterForm: React.FC<Props> = (props) => {
         return <Helper>{field.label}</Helper>;
       case "input":
         return <Input {...(bundledProps as InputField)} />;
+      case "dictionary":
+        return <Dictionary {...(bundledProps as DictionaryField)} />;
+      case "dictionary-array":
+        return <DictionaryArray {...(bundledProps as DictionaryArrayField)} />;
       case "checkbox":
         return <Checkbox {...(bundledProps as CheckboxField)} />;
       case "key-value-array":

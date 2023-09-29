@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -40,6 +41,13 @@ func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *
 	if err != nil {
 		return err
 	}
+
+	mode := os.FileMode(0600)
+	file, err := os.OpenFile(filepath.Join(absPath, "Procfile"), os.O_RDONLY|os.O_CREATE, mode)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
 	buildOpts := packclient.BuildOptions{
 		RelativeBaseDir: filepath.Dir(absPath),

@@ -8,7 +8,7 @@ import { PorterAppFormData } from "lib/porter-apps";
 import { ClientService } from "lib/porter-apps/services";
 import Text from "components/porter/Text";
 import Link from "components/porter/Link";
-import Checkbox from "../../../../../../components/porter/Checkbox";
+import Checkbox from "components/porter/Checkbox";
 
 type MainTabProps = {
   index: number;

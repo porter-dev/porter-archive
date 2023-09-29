@@ -16,6 +16,17 @@ const CustomDomains: React.FC<Props> = ({ index }) => {
     control,
     name: `app.services.${index}.config.domains`,
   });
+  const { append: appendDomainDeletion } = useFieldArray({
+    control,
+    name: `app.services.${index}.domainDeletions`,
+  });
+
+  const onRemove = (i: number, name: string) => {
+    remove(i);
+    appendDomainDeletion({
+      name,
+    });
+  };
 
   return (
     <CustomDomainsContainer>
@@ -39,8 +50,7 @@ const CustomDomains: React.FC<Props> = ({ index }) => {
                   />
                   <DeleteButton
                     onClick={() => {
-                      //remove customDomain at the index
-                      remove(i);
+                      onRemove(i, customDomain.name.value);
                     }}
                   >
                     <i className="material-icons">cancel</i>

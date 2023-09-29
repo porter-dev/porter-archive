@@ -53,12 +53,18 @@ export const serviceValidator = z.object({
       allowConcurrent: serviceBooleanValidator.optional(),
       cron: serviceStringValidator,
       suspendCron: serviceBooleanValidator.optional(),
-      timeoutSeconds: serviceNumberValidator
+      timeoutSeconds: serviceNumberValidator,
     }),
     z.object({
       type: z.literal("predeploy"),
     }),
   ]),
+  domainDeletions: z
+    .object({
+      name: z.string(),
+    })
+    .array()
+    .default([]),
 });
 
 export type ClientService = z.infer<typeof serviceValidator>;
@@ -273,6 +279,7 @@ export function deserializeService({
       service.ramMegabytes,
       override?.ramMegabytes
     ),
+    domainDeletions: [],
   };
 
   return match(service.config)
@@ -337,15 +344,27 @@ export function deserializeService({
           allowConcurrent:
             typeof config.allowConcurrent === "boolean" ||
             typeof overrideJobConfig?.allowConcurrent === "boolean"
-              ? ServiceField.boolean(config.allowConcurrent, overrideJobConfig?.allowConcurrent)
+              ? ServiceField.boolean(
+                  config.allowConcurrent,
+                  overrideJobConfig?.allowConcurrent
+                )
               : ServiceField.boolean(false, undefined),
           cron: ServiceField.string(config.cron, overrideJobConfig?.cron),
           suspendCron:
             typeof config.suspendCron === "boolean" ||
             typeof overrideJobConfig?.suspendCron === "boolean"
-              ? ServiceField.boolean(config.suspendCron, overrideJobConfig?.suspendCron)
+              ? ServiceField.boolean(
+                  config.suspendCron,
+                  overrideJobConfig?.suspendCron
+                )
               : ServiceField.boolean(false, undefined),
-           timeoutSeconds: config.timeoutSeconds == 0 ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds) : ServiceField.number(config.timeoutSeconds, overrideJobConfig?.timeoutSeconds),
+          timeoutSeconds:
+            config.timeoutSeconds == 0
+              ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds)
+              : ServiceField.number(
+                  config.timeoutSeconds,
+                  overrideJobConfig?.timeoutSeconds
+                ),
         },
       };
     })
@@ -410,6 +429,7 @@ export function serviceProto(service: SerializedService): Service {
             value: {
               ...config,
               allowConcurrentOptional: config.allowConcurrent,
+              timeoutSeconds: BigInt(config.timeoutSeconds),
             },
             case: "jobConfig",
           },
@@ -466,14 +486,25 @@ export function serializedServiceFromProto({
         ...value,
       },
     }))
-    .with({ case: "jobConfig" }, ({ value }) => ({
-      ...service,
-      name,
-      config: {
-        type: isPredeploy ? ("predeploy" as const) : ("job" as const),
-        ...value,
-        allowConcurrent: value.allowConcurrentOptional
-      },
-    }))
+    .with({ case: "jobConfig" }, ({ value }) =>
+      isPredeploy
+        ? {
+            ...service,
+            name,
+            config: {
+              type: "predeploy" as const,
+            },
+          }
+        : {
+            ...service,
+            name,
+            config: {
+              type: "job" as const,
+              ...value,
+              allowConcurrent: value.allowConcurrentOptional,
+              timeoutSeconds: Number(value.timeoutSeconds),
+            },
+          }
+    )
     .exhaustive();
 }

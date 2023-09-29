@@ -287,6 +287,13 @@ export function deserializeService({
       const overrideWebConfig =
         override?.config.type == "web" ? override.config : undefined;
 
+      const uniqueDomains = Array.from(
+        new Set([
+          ...config.domains.map((domain) => domain.name),
+          ...(overrideWebConfig?.domains ?? []).map((domain) => domain.name),
+        ])
+      ).map((domain) => ({ name: domain }));
+
       return {
         ...baseService,
         config: {
@@ -300,9 +307,7 @@ export function deserializeService({
             override: overrideWebConfig?.healthCheck,
           }),
 
-          domains: Array.from(
-            new Set([...config.domains, ...(overrideWebConfig?.domains ?? [])])
-          ).map((domain) => ({
+          domains: uniqueDomains.map((domain) => ({
             name: ServiceField.string(
               domain.name,
               overrideWebConfig?.domains.find(

@@ -50,7 +50,9 @@ const CustomDomains: React.FC<Props> = ({ index }) => {
                   />
                   <DeleteButton
                     onClick={() => {
-                      onRemove(i, customDomain.name.value);
+                      if (!customDomain.name.readOnly) {
+                        onRemove(i, customDomain.name.value);
+                      }
                     }}
                   >
                     <i className="material-icons">cancel</i>

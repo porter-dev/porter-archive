@@ -912,6 +912,7 @@ const validatePorterApp = baseApi<
       predeploy: string[];
       env_variable_names: string[];
       env_group_names: string[];
+      domain_name_deletions: Record<string, string[]>;
     };
   },
   {

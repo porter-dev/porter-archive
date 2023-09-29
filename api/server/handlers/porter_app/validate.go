@@ -38,10 +38,11 @@ func NewValidatePorterAppHandler(
 
 // Deletions are the names of services and env variables to delete
 type Deletions struct {
-	ServiceNames     []string `json:"service_names"`
-	Predeploy        []string `json:"predeploy"`
-	EnvVariableNames []string `json:"env_variable_names"`
-	EnvGroupNames    []string `json:"env_group_names"`
+	ServiceNames        []string            `json:"service_names"`
+	Predeploy           []string            `json:"predeploy"`
+	EnvVariableNames    []string            `json:"env_variable_names"`
+	EnvGroupNames       []string            `json:"env_group_names"`
+	DomainNameDeletions map[string][]string `json:"domain_name_deletions"`
 }
 
 // ValidatePorterAppRequest is the request object for the /apps/validate endpoint
@@ -143,6 +144,16 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "validated-with-overrides", Value: true})
 	}
 
+	var ServiceDomainsDeletions map[string]*porterv1.DomainNameList
+	if request.Deletions.DomainNameDeletions != nil {
+		ServiceDomainsDeletions = make(map[string]*porterv1.DomainNameList)
+		for k, v := range request.Deletions.DomainNameDeletions {
+			ServiceDomainsDeletions[k] = &porterv1.DomainNameList{
+				DomainNames: v,
+			}
+		}
+	}
+
 	validateReq := connect.NewRequest(&porterv1.ValidatePorterAppRequest{
 		ProjectId:          int64(project.ID),
 		DeploymentTargetId: request.DeploymentTargetId,
@@ -154,6 +165,7 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			PredeployNames:   request.Deletions.Predeploy,
 			EnvVariableNames: request.Deletions.EnvVariableNames,
 			EnvGroupNames:    request.Deletions.EnvGroupNames,
+			ServiceDomains:   ServiceDomainsDeletions,
 		},
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.ValidatePorterApp(ctx, validateReq)

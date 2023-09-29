@@ -34,7 +34,11 @@ const Resources: React.FC<ResourcesProps> = ({
     <>
       <Spacer y={1} />
       <Controller
-        name={isPredeploy ? `app.predeploy.${index}.cpuCores` : `app.services.${index}.cpuCores`}
+        name={
+          isPredeploy
+            ? `app.predeploy.${index}.cpuCores`
+            : `app.services.${index}.cpuCores`
+        }
         control={control}
         render={({ field: { value, onChange } }) => (
           <InputSlider
@@ -60,7 +64,11 @@ const Resources: React.FC<ResourcesProps> = ({
       />
       <Spacer y={1} />
       <Controller
-        name={isPredeploy ? `app.predeploy.${index}.ramMegabytes` : `app.services.${index}.ramMegabytes`}
+        name={
+          isPredeploy
+            ? `app.predeploy.${index}.ramMegabytes`
+            : `app.services.${index}.ramMegabytes`
+        }
         control={control}
         render={({ field: { value, onChange } }) => (
           <InputSlider

@@ -114,7 +114,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           if (data) {
             let largestInstanceType = {
               vCPUs: 2,
-              RAM: 4294,
+              RAM: 4,
             };
 
             data.forEach((node: any) => {

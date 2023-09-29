@@ -77,7 +77,20 @@ const AppHeader: React.FC = () => {
       []
     );
 
-    return domains.length === 1 ? domains[0] : "";
+    // we only show the custom domain if 1 exists; if no custom domain exists, we show the porter domain, if one exists
+    const nonPorterDomains = domains.filter((n: string) => !n.endsWith(".onporter.run"));
+    if (nonPorterDomains.length) {
+      if (nonPorterDomains.length === 1) {
+        return nonPorterDomains[0];
+      }
+    } else {
+      const porterDomains = domains.filter((n: string) => n.endsWith(".onporter.run"));
+      if (porterDomains.length === 1) {
+        return porterDomains[0];
+      }
+    }
+
+    return "";
   }, [latestProto]);
 
   return (

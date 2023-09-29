@@ -43,6 +43,11 @@ export const deletionValidator = z.object({
       name: z.string(),
     })
     .array(),
+  predeploy: z
+    .object({
+      name: z.string(),
+    })
+    .array(),
   envGroupNames: z
     .object({
       name: z.string(),
@@ -81,6 +86,7 @@ export const porterAppFormValidator = z.object({
   app: clientAppValidator,
   source: sourceValidator,
   deletions: deletionValidator,
+  redeployOnSave: z.boolean().default(false),
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
@@ -357,15 +363,15 @@ export function clientAppFromProto({
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-        deserializeService({
-          service: serializedServiceFromProto({
-            name: "pre-deploy",
-            service: proto.predeploy,
-            isPredeploy: true,
-          }),
-          override: predeployOverrides,
+      deserializeService({
+        service: serializedServiceFromProto({
+          name: "pre-deploy",
+          service: proto.predeploy,
+          isPredeploy: true,
         }),
-      ]
+        override: predeployOverrides,
+      }),
+    ]
     : undefined;
 
   return {

@@ -16,7 +16,14 @@ import { useAppStatus } from "lib/hooks/useAppStatus";
 
 const Overview: React.FC = () => {
   const { formState } = useFormContext<PorterAppFormData>();
-  const { porterApp, latestProto, latestRevision, projectId, clusterId, deploymentTarget } = useLatestRevision();
+  const {
+    porterApp,
+    latestProto,
+    latestRevision,
+    projectId,
+    clusterId,
+    deploymentTarget,
+  } = useLatestRevision();
 
   const { serviceVersionStatus } = useAppStatus({
     projectId,
@@ -52,7 +59,7 @@ const Overview: React.FC = () => {
                 type: "predeploy",
               }),
             })}
-            existingServiceNames={Object.keys(latestProto.services)}
+            existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
             isPredeploy
             fieldArrayName={"app.predeploy"}
           />
@@ -77,6 +84,7 @@ const Overview: React.FC = () => {
           latestRevision.status === "CREATED" ||
           latestRevision.status === "AWAITING_BUILD_ARTIFACT"
         }
+        disabledTooltipMessage="Please wait for the build to complete before updating services"
       >
         Update app
       </Button>

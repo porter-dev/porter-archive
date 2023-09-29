@@ -226,23 +226,29 @@ const RepoSettings: React.FC<Props> = ({
 
               <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
                 <StyledSourceBox>
-                  <Select
-                    value={build.method}
-                    width="300px"
-                    options={[
-                      { value: "docker", label: "Docker" },
-                      { value: "pack", label: "Buildpacks" },
-                    ]}
-                    setValue={(option: string) => {
-                      if (option == "docker") {
-                        setValue("app.build.method", "docker");
-                      } else if (option == "pack") {
-                        // if toggling from docker to pack, initialize buildpacks to empty array
-                        setValue("app.build.method", "pack");
-                        setValue("app.build.buildpacks", []);
-                      }
-                    }}
-                    label="Build method"
+                  <Controller
+                    name="app.build.method"
+                    control={control}
+                    render={({ field: { value, onChange } }) => (
+                      <Select
+                        value={value}
+                        width="300px"
+                        options={[
+                          { value: "docker", label: "Docker" },
+                          { value: "pack", label: "Buildpacks" },
+                        ]}
+                        setValue={(option: string) => {
+                          if (option == "docker") {
+                            onChange("docker");
+                          } else if (option == "pack") {
+                            // if toggling from docker to pack, initialize buildpacks to empty array
+                            onChange("pack");
+                            setValue("app.build.buildpacks", []);
+                          }
+                        }}
+                        label="Build method"
+                      />
+                    )}
                   />
                   {match(build)
                     .with({ method: "docker" }, () => (

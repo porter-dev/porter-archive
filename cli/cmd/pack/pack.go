@@ -42,8 +42,9 @@ func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *
 		return err
 	}
 
-	mode := os.FileMode(0600)
-	file, err := os.OpenFile(filepath.Join(absPath, "Procfile"), os.O_RDONLY|os.O_CREATE, mode)
+	mode := os.FileMode(0o600)
+	procfilePath := filepath.Clean(filepath.Join(absPath, "Procfile"))
+	file, err := os.OpenFile(procfilePath, os.O_RDONLY|os.O_CREATE, mode)
 	if err != nil {
 		return err
 	}

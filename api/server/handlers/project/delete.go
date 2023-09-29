@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -33,7 +33,7 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	user, _ := ctx.Value(types.UserScope).(*models.User)
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if proj.CapiProvisionerEnabled {
+	if proj.GetFeatureFlag(models.CapiProvisionerEnabled, p.Config().LaunchDarklyClient) {
 		clusters, err := p.Config().Repo.Cluster().ListClustersByProjectID(proj.ID)
 		if err != nil {
 			p.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error finding clusters for project: %w", err)))
@@ -87,7 +87,7 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	p.WriteResult(w, r, deletedProject.ToProjectType())
+	p.WriteResult(w, r, deletedProject.ToProjectType(p.Config().LaunchDarklyClient))
 
 	// delete the billing team
 	if err := p.Config().BillingManager.DeleteTeam(user, proj); err != nil {

@@ -173,6 +173,7 @@ export interface PorterTemplate {
   description: string;
   icon: string;
   repo_url?: string;
+  tags?: string[]
 }
 
 export interface ExpandedPorterTemplate {
@@ -258,6 +259,10 @@ export interface FileType {
   path: string;
   type: string;
 }
+export interface ProjectListType {
+  id: number;
+  name: string;
+}
 
 export interface ProjectType {
   id: number;
@@ -271,8 +276,10 @@ export interface ProjectType {
   simplified_view_enabled: boolean;
   azure_enabled: boolean;
   helm_values_enabled: boolean;
-  env_group_enabled: boolean;
   multi_cluster: boolean;
+  full_add_ons: boolean;
+  enable_reprovision: boolean;
+  validate_apply_v2: boolean;
   roles: {
     id: number;
     kind: string;
@@ -366,8 +373,8 @@ export interface ContextProps {
   setCurrentCluster: (currentCluster: ClusterType, callback?: any) => void;
   currentProject?: ProjectType;
   setCurrentProject: (currentProject: ProjectType, callback?: any) => void;
-  projects: ProjectType[];
-  setProjects: (projects: ProjectType[]) => void;
+  projects: ProjectListType[];
+  setProjects: (projects: ProjectListType[]) => void;
   user: any;
   setUser: (userId: number, email: string) => void;
   devOpsMode: boolean;
@@ -666,5 +673,3 @@ export interface CreateUpdatePorterAppOptions {
   override_release?: boolean;
   full_helm_values?: string;
 }
-
-

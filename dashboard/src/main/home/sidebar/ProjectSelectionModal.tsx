@@ -1,16 +1,14 @@
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
 import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import { Context } from "shared/Context";
-import { DetailedClusterType, ProjectType } from "shared/types";
-import gradient from "assets/gradient.png";
+import { DetailedClusterType, ProjectListType, ProjectType } from "shared/types";
 import { pushFiltered } from "shared/routing";
 import SearchBar from "components/porter/SearchBar";
-import { search } from "shared/search";
 import _ from 'lodash';
 import { useMemo } from 'react';
 import api from "shared/api";
@@ -19,7 +17,7 @@ import Container from "components/porter/Container";
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
-  projects: ProjectType[];
+  projects: ProjectListType[];
   currentProject: ProjectType;
 }
 
@@ -52,6 +50,20 @@ const ProjectSelectionModal: React.FC<Props> = ({
 
     return sortedProjects;
   }, [projects, searchValue, currentProject]);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape" || e.keyCode === 27) {
+          closeModal();
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [closeModal]);
 
   const updateClusterList = async (projectId: number) => {
     try {
@@ -76,38 +88,37 @@ const ProjectSelectionModal: React.FC<Props> = ({
     }
   };
   const renderBlockList = () => {
-    return filteredProjects.map((project: ProjectType, i: number) => {
+    return filteredProjects.map((projectListEntry: ProjectListType, i: number) => {
       return (
         <IdContainer
           key={i}
-          selected={project.id === currentProject.id}
+          selected={projectListEntry.id === currentProject.id}
           onClick={async () => {
-            // if (project.id !== currentProject.id) {
-            //   setCurrentCluster(null);
-            // }
+            const project = await api
+              .getProject("<token>", {}, { id: projectListEntry.id })
+              .then((res) => res.data as ProjectType);
+
             setCurrentProject(project);
 
             const clusters_list = await updateClusterList(project.id);
-            console.log(clusters_list);
-
             if (clusters_list?.length > 0) {
               setCurrentCluster(clusters_list[0]);
-              pushFiltered(props, "/apps", ["project_id"], {});
+              setCurrentProject(project, () => {
+                pushFiltered(props, "/dashboard", [], { project_id: project.id });
+              });
             } else {
-              pushFiltered(props, "/onboarding", ["project_id"], {});
+              setCurrentProject(project, () => {
+                pushFiltered(props, "/dashboard", [], { project_id: project.id });
+              });
             }
             closeModal();
           }}
         >
-          {/* <BlockIcon src={gradient} /> */}
-          <BlockTitle>{project.name}</BlockTitle>
-          {/* <ProjectIcon>
-            <ProjectImage src={gradient} />
-            <Letter>{project.name[0].toUpperCase()}</Letter>
-          </ProjectIcon> */}
+          <BlockTitle>{projectListEntry.name}</BlockTitle>
+
 
           <BlockDescription>
-            Project Id: {project.id}
+            Project ID: {projectListEntry.id}
           </BlockDescription>
         </IdContainer>
       );
@@ -129,6 +140,7 @@ const ProjectSelectionModal: React.FC<Props> = ({
           }}
           placeholder="Search projects..."
           width="100%"
+          autoFocus={true}
         />
 
         <Spacer inline x={1} />

@@ -28,15 +28,14 @@ import (
 type Agent struct {
 	*client.Client
 	authGetter *AuthGetter
-	ctx        context.Context
 	label      string
 }
 
 // CreateLocalVolumeIfNotExist creates a volume using driver type "local" with the
 // given name if it does not exist. If the volume does exist but does not contain
 // the required label (a.label), an error is thrown.
-func (a *Agent) CreateLocalVolumeIfNotExist(name string) (*types.Volume, error) {
-	volListBody, err := a.VolumeList(a.ctx, filters.Args{})
+func (a *Agent) CreateLocalVolumeIfNotExist(ctx context.Context, name string) (*types.Volume, error) {
+	volListBody, err := a.VolumeList(ctx, filters.Args{})
 	if err != nil {
 		return nil, a.handleDockerClientErr(err, "Could not list volumes")
 	}
@@ -49,14 +48,14 @@ func (a *Agent) CreateLocalVolumeIfNotExist(name string) (*types.Volume, error) 
 		}
 	}
 
-	return a.CreateLocalVolume(name)
+	return a.CreateLocalVolume(ctx, name)
 }
 
 // CreateLocalVolume creates a volume using driver type "local" with no
 // configured options. The equivalent of:
 //
 // docker volume create --driver local [name]
-func (a *Agent) CreateLocalVolume(name string) (*types.Volume, error) {
+func (a *Agent) CreateLocalVolume(ctx context.Context, name string) (*types.Volume, error) {
 	labels := make(map[string]string)
 	labels[a.label] = "true"
 
@@ -66,7 +65,7 @@ func (a *Agent) CreateLocalVolume(name string) (*types.Volume, error) {
 		Labels: labels,
 	}
 
-	vol, err := a.VolumeCreate(a.ctx, opts)
+	vol, err := a.VolumeCreate(ctx, opts)
 	if err != nil {
 		return nil, a.handleDockerClientErr(err, "Could not create volume "+name)
 	}
@@ -75,15 +74,15 @@ func (a *Agent) CreateLocalVolume(name string) (*types.Volume, error) {
 }
 
 // RemoveLocalVolume removes a volume by name
-func (a *Agent) RemoveLocalVolume(name string) error {
-	return a.VolumeRemove(a.ctx, name, true)
+func (a *Agent) RemoveLocalVolume(ctx context.Context, name string) error {
+	return a.VolumeRemove(ctx, name, true)
 }
 
 // CreateBridgeNetworkIfNotExist creates a volume using driver type "local" with the
 // given name if it does not exist. If the volume does exist but does not contain
 // the required label (a.label), an error is thrown.
-func (a *Agent) CreateBridgeNetworkIfNotExist(name string) (id string, err error) {
-	networks, err := a.NetworkList(a.ctx, types.NetworkListOptions{})
+func (a *Agent) CreateBridgeNetworkIfNotExist(ctx context.Context, name string) (id string, err error) {
+	networks, err := a.NetworkList(ctx, types.NetworkListOptions{})
 	if err != nil {
 		return "", a.handleDockerClientErr(err, "Could not list volumes")
 	}
@@ -96,12 +95,12 @@ func (a *Agent) CreateBridgeNetworkIfNotExist(name string) (id string, err error
 		}
 	}
 
-	return a.CreateBridgeNetwork(name)
+	return a.CreateBridgeNetwork(ctx, name)
 }
 
 // CreateBridgeNetwork creates a volume using the default driver type (bridge)
 // with the CLI label attached
-func (a *Agent) CreateBridgeNetwork(name string) (id string, err error) {
+func (a *Agent) CreateBridgeNetwork(ctx context.Context, name string) (id string, err error) {
 	labels := make(map[string]string)
 	labels[a.label] = "true"
 
@@ -110,7 +109,7 @@ func (a *Agent) CreateBridgeNetwork(name string) (id string, err error) {
 		Attachable: true,
 	}
 
-	net, err := a.NetworkCreate(a.ctx, name, opts)
+	net, err := a.NetworkCreate(ctx, name, opts)
 	if err != nil {
 		return "", a.handleDockerClientErr(err, "Could not create network "+name)
 	}
@@ -119,9 +118,9 @@ func (a *Agent) CreateBridgeNetwork(name string) (id string, err error) {
 }
 
 // ConnectContainerToNetwork attaches a container to a specified network
-func (a *Agent) ConnectContainerToNetwork(networkID, containerID, containerName string) error {
+func (a *Agent) ConnectContainerToNetwork(ctx context.Context, networkID, containerID, containerName string) error {
 	// check if the container is connected already
-	net, err := a.NetworkInspect(a.ctx, networkID, types.NetworkInspectOptions{})
+	net, err := a.NetworkInspect(ctx, networkID, types.NetworkInspectOptions{})
 	if err != nil {
 		return a.handleDockerClientErr(err, "Could not inspect network"+networkID)
 	}
@@ -133,11 +132,12 @@ func (a *Agent) ConnectContainerToNetwork(networkID, containerID, containerName 
 		}
 	}
 
-	return a.NetworkConnect(a.ctx, networkID, containerID, &network.EndpointSettings{})
+	return a.NetworkConnect(ctx, networkID, containerID, &network.EndpointSettings{})
 }
 
-func (a *Agent) TagImage(old, new string) error {
-	return a.ImageTag(a.ctx, old, new)
+// TagImage tags an image
+func (a *Agent) TagImage(ctx context.Context, old, new string) error {
+	return a.ImageTag(ctx, old, new)
 }
 
 // PullImageEvent represents a response from the Docker API with an image pull event
@@ -167,13 +167,13 @@ func getRegistryRepositoryPair(imageRepo string) ([]string, error) {
 }
 
 // CheckIfImageExists checks if the image exists in the registry
-func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
-	registryToken, err := a.getContainerRegistryToken(imageRepo)
+func (a *Agent) CheckIfImageExists(ctx context.Context, imageRepo, imageTag string) bool {
+	registryToken, err := a.getContainerRegistryToken(ctx, imageRepo)
 	if err != nil {
 		return false
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
 	if strings.Contains(imageRepo, "gcr.io") {
@@ -248,12 +248,12 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
 	}
 
 	image := imageRepo + ":" + imageTag
-	encodedRegistryAuth, err := a.getEncodedRegistryAuth(image)
+	encodedRegistryAuth, err := a.getEncodedRegistryAuth(ctx, image)
 	if err != nil {
 		return false
 	}
 
-	_, err = a.DistributionInspect(context.Background(), image, encodedRegistryAuth)
+	_, err = a.DistributionInspect(ctx, image, encodedRegistryAuth)
 
 	if err == nil {
 		return true
@@ -266,14 +266,14 @@ func (a *Agent) CheckIfImageExists(imageRepo, imageTag string) bool {
 }
 
 // PullImage pulls an image specified by the image string
-func (a *Agent) PullImage(image string) error {
-	opts, err := a.getPullOptions(image)
+func (a *Agent) PullImage(ctx context.Context, image string) error {
+	opts, err := a.getPullOptions(ctx, image)
 	if err != nil {
 		return err
 	}
 
 	// pull the specified image
-	out, err := a.ImagePull(a.ctx, image, opts)
+	out, err := a.ImagePull(ctx, image, opts)
 	if err != nil {
 		if client.IsErrNotFound(err) ||
 			(strings.Contains(image, "gcr.io") && strings.Contains(err.Error(), "or it may not exist")) {
@@ -293,14 +293,14 @@ func (a *Agent) PullImage(image string) error {
 }
 
 // PushImage pushes an image specified by the image string
-func (a *Agent) PushImage(image string) error {
-	opts, err := a.getPushOptions(image)
+func (a *Agent) PushImage(ctx context.Context, image string) error {
+	opts, err := a.getPushOptions(ctx, image)
 	if err != nil {
 		return err
 	}
 
 	out, err := a.ImagePush(
-		context.Background(),
+		ctx,
 		image,
 		opts,
 	)
@@ -323,13 +323,13 @@ func (a *Agent) PushImage(image string) error {
 	return nil
 }
 
-func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {
+func (a *Agent) getPullOptions(ctx context.Context, image string) (types.ImagePullOptions, error) {
 	// check if agent has an auth getter; otherwise, assume public usage
 	if a.authGetter == nil {
 		return types.ImagePullOptions{}, nil
 	}
 
-	authConfigEncoded, err := a.getEncodedRegistryAuth(image)
+	authConfigEncoded, err := a.getEncodedRegistryAuth(ctx, image)
 	if err != nil {
 		return types.ImagePullOptions{}, err
 	}
@@ -340,13 +340,13 @@ func (a *Agent) getPullOptions(image string) (types.ImagePullOptions, error) {
 	}, nil
 }
 
-func (a *Agent) getContainerRegistryToken(image string) (string, error) {
+func (a *Agent) getContainerRegistryToken(ctx context.Context, image string) (string, error) {
 	serverURL, err := GetServerURLFromTag(image)
 	if err != nil {
 		return "", err
 	}
 
-	_, secret, err := a.authGetter.GetCredentials(serverURL)
+	_, secret, err := a.authGetter.GetCredentials(ctx, serverURL)
 	if err != nil {
 		return "", err
 	}
@@ -354,14 +354,14 @@ func (a *Agent) getContainerRegistryToken(image string) (string, error) {
 	return secret, nil
 }
 
-func (a *Agent) getEncodedRegistryAuth(image string) (string, error) {
+func (a *Agent) getEncodedRegistryAuth(ctx context.Context, image string) (string, error) {
 	// get using server url
 	serverURL, err := GetServerURLFromTag(image)
 	if err != nil {
 		return "", err
 	}
 
-	user, secret, err := a.authGetter.GetCredentials(serverURL)
+	user, secret, err := a.authGetter.GetCredentials(ctx, serverURL)
 	if err != nil {
 		return "", err
 	}
@@ -385,8 +385,8 @@ func (a *Agent) getEncodedRegistryAuth(image string) (string, error) {
 	return base64.URLEncoding.EncodeToString(authConfigBytes), nil
 }
 
-func (a *Agent) getPushOptions(image string) (types.ImagePushOptions, error) {
-	pullOpts, err := a.getPullOptions(image)
+func (a *Agent) getPushOptions(ctx context.Context, image string) (types.ImagePushOptions, error) {
+	pullOpts, err := a.getPullOptions(ctx, image)
 
 	return types.ImagePushOptions(pullOpts), err
 }
@@ -430,9 +430,9 @@ func GetServerURLFromTag(image string) (string, error) {
 }
 
 // WaitForContainerStop waits until a container has stopped to exit
-func (a *Agent) WaitForContainerStop(id string) error {
+func (a *Agent) WaitForContainerStop(ctx context.Context, id string) error {
 	// wait for container to stop before exit
-	statusCh, errCh := a.ContainerWait(a.ctx, id, container.WaitConditionNotRunning)
+	statusCh, errCh := a.ContainerWait(ctx, id, container.WaitConditionNotRunning)
 
 	select {
 	case err := <-errCh:
@@ -448,9 +448,9 @@ func (a *Agent) WaitForContainerStop(id string) error {
 // WaitForContainerHealthy waits until a container is returning a healthy status. Streak
 // is the maximum number of failures in a row, while timeout is the length of time between
 // checks.
-func (a *Agent) WaitForContainerHealthy(id string, streak int) error {
+func (a *Agent) WaitForContainerHealthy(ctx context.Context, id string, streak int) error {
 	for {
-		cont, err := a.ContainerInspect(a.ctx, id)
+		cont, err := a.ContainerInspect(ctx, id)
 		if err != nil {
 			return a.handleDockerClientErr(err, "Error waiting for stopped container")
 		}

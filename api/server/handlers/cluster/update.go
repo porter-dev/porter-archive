@@ -72,7 +72,7 @@ func (c *ClusterUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		cluster.Name = request.Name
 	}
 
-	cluster, err := c.Repo().Cluster().UpdateCluster(cluster)
+	cluster, err := c.Repo().Cluster().UpdateCluster(cluster, c.Config().LaunchDarklyClient)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

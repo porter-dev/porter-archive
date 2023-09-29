@@ -23,8 +23,6 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import SidebarLink from "./SidebarLink";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
 import ClusterListContainer from "./ClusterListContainer";
-import ProjectButtonContainer from "./ProjectButtonContainer";
-import ProjectButtonContianer from "./ProjectButtonContainer";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -223,16 +221,15 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={addOns} />
               Add-ons
             </NavButton>
-            {currentProject.env_group_enabled && <NavButton
+            <NavButton
               path="/env-groups"
               active={
                 window.location.pathname.startsWith("/env-groups")
               }
             >
               <Img src={sliders} />
-
               Env groups
-            </NavButton>}
+            </NavButton>
             {this.props.isAuthorized("settings", "", [
               "get",
               "update",
@@ -278,7 +275,7 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={addOns} />
               Add-ons
             </NavButton>
-            {currentProject.env_group_enabled && <NavButton
+            <NavButton
               path="/env-groups"
               active={
                 window.location.pathname.startsWith("/env-groups")
@@ -286,7 +283,7 @@ class Sidebar extends Component<PropsType, StateType> {
             >
               <Img src={sliders} />
               Env groups
-            </NavButton>}
+            </NavButton>
             {this.props.isAuthorized("settings", "", [
               "get",
               "update",

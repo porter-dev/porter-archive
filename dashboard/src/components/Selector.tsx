@@ -1,13 +1,14 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 import { Context } from "shared/Context";
+import Loading from "./Loading";
 
-export type SelectorPropsType = {
-  activeValue: string;
+export type SelectorPropsType<T> = {
+  activeValue: T;
   refreshOptions?: () => void;
-  options: { value: string; label: string; icon?: any }[];
+  options: { value: T; label: string; icon?: any }[];
   addButton?: boolean;
-  setActiveValue: (x: string) => void;
+  setActiveValue: (x: T) => void;
   width: string;
   height?: string;
   disabled?: boolean;
@@ -18,11 +19,12 @@ export type SelectorPropsType = {
   placeholder?: string;
   scrollBuffer?: boolean;
   disableTooltip?: boolean;
+  isLoading?: boolean;
 };
 
 type StateType = {};
 
-export default class Selector extends Component<SelectorPropsType, StateType> {
+export default class Selector<T> extends Component<SelectorPropsType<T>, StateType> {
   state = {
     expanded: false,
     showTooltip: false,
@@ -157,7 +159,7 @@ export default class Selector extends Component<SelectorPropsType, StateType> {
   };
 
   render() {
-    let { activeValue } = this.props;
+    let { activeValue, isLoading } = this.props;
 
     return (
       <StyledSelector width={this.props.width}>
@@ -178,17 +180,23 @@ export default class Selector extends Component<SelectorPropsType, StateType> {
           onMouseEnter={() => this.setState({ showTooltip: true })}
           onMouseLeave={() => this.setState({ showTooltip: false })}
         >
-          <Flex>
-            {this.renderIcon()}
-            <TextWrap>
-              {activeValue
-                ? activeValue === ""
-                  ? "All"
-                  : this.getLabel(activeValue)
-                : this.props.placeholder}
-            </TextWrap>
-          </Flex>
-          <i className="material-icons">arrow_drop_down</i>
+          {isLoading ?
+            <Loading />
+            :
+            <>
+              <Flex>
+                {this.renderIcon()}
+                <TextWrap>
+                  {activeValue
+                    ? activeValue === ""
+                      ? "All"
+                      : this.getLabel(activeValue)
+                    : this.props.placeholder}
+                </TextWrap>
+              </Flex>
+              <i className="material-icons">arrow_drop_down</i>
+            </>
+          }
         </MainSelector>
         {!this.props.disableTooltip && this.state.showTooltip && (
           <Tooltip>
@@ -328,7 +336,7 @@ const StyledSelector = styled.div<{ width: string }>`
   width: ${(props) => props.width};
 `;
 
-const MainSelector = styled.div<{ 
+const MainSelector = styled.div<{
   disabled?: boolean;
   expanded: boolean;
   width: string;
@@ -349,8 +357,8 @@ const MainSelector = styled.div<{
   background: ${props => props.expanded ? "#ffffff33" : props.theme.fg};
   :hover {
     background: ${props => props.expanded ? "#ffffff33" : (
-      props.disabled ? "#ffffff11" : "#ffffff22"
-    )};
+    props.disabled ? "#ffffff11" : "#ffffff22"
+  )};
   }
 
   > i {

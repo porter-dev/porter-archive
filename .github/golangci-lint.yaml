@@ -5,23 +5,21 @@ run:
   build-tags:
     - codeanalysis
 
-# enable exported entity commenting lint rule
 issues:
-  exclude:
-    - EXC0012
+  new-from-rev: origin/master # default: HEAD, this will only show linting changes in the current change
   exclude-use-default: false
 linters-settings:
   revive:
     rules:
       - name: exported
         severity: error
-  # gocyclo:
-  #   min-complexity: 15
+  gocyclo:
+    min-complexity: 40 # should drop to 15 max
   gomoddirectives:
     replace-local: false
   gosec:
     excludes:
-    - G307
+    - G307 # exclude duplicated errcheck checks
 
 linters:
   # disable all default-enabled linters so nothing is mysterious

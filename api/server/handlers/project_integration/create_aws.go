@@ -3,7 +3,7 @@ package project_integration
 import (
 	"net/http"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -56,7 +56,7 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AWSIntegration: aws.ToAWSIntegrationType(),
 	}
 
-	if project.CapiProvisionerEnabled && p.Config().EnableCAPIProvisioner {
+	if project.GetFeatureFlag(models.CapiProvisionerEnabled, p.Config().LaunchDarklyClient) && p.Config().EnableCAPIProvisioner {
 		credReq := porterv1.CreateAssumeRoleChainRequest{
 			ProjectId:       int64(project.ID),
 			SourceArn:       "arn:aws:iam::108458755588:role/CAPIManagement", // hard coded as this is the final hop for a CAPI cluster

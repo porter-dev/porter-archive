@@ -53,30 +53,30 @@ const AzureCostConsent: React.FC<Props> = ({
           noWrapper
           expandText="[+] Show details"
           collapseText="[-] Hide details"
-          Header={<Cost>$411.72 / mo</Cost>}
+          Header={<Cost>$210.24 / mo</Cost>}
           ExpandedSection={
             <>
               <Spacer height="15px" />
               <Fieldset background="#1b1d2688">
                 • Azure Kubernetes Service (AKS) = $73/mo
                 <Spacer height="15px" />
-                • Amazon EC2:
+                • Azure virtual machines:
                 <Spacer height="15px" />
-                <Tab />+ System workloads: Standard_A2_v2 instance (2) =
-                $132.86/mo
+                <Tab />+ System workloads: Standard_B2als_v2 instance (3) =
+                $82.34/mo
                 <Spacer height="15px" />
-                <Tab />+ Monitoring workloads: Standard_A4_v2 instance (1) =
-                $139.43/mo
+                <Tab />+ Monitoring workloads: Standard_B2als_v2 instance (1) =
+                $27.45/mo
                 <Spacer height="15px" />
-                <Tab />+ Application workloads: Standard_A2_v2 instance (1) =
-                $66.43/mo
+                <Tab />+ Application workloads: Standard_B2als_v2 instance (1) =
+                $27.45/mo
               </Fieldset>
             </>
           }
         />
         <Spacer y={1} />
         <Text color="helper">
-          The base Azure infrastructure covers up to 2 vCPU and 4GB of RAM.
+          The base Azure infrastructure covers up to 2 vCPU and 4GB of RAM for application workloads.
           Separate from the Azure cost, Porter charges based on your resource
           usage.
         </Text>
@@ -103,12 +103,12 @@ const AzureCostConsent: React.FC<Props> = ({
         <Spacer y={0.5} />
         <Text color="helper">
           All Azure resources will be automatically deleted when you delete your
-          Porter project. Please enter the Azure base cost ("411.72") below to
+          Porter project. Please enter the Azure base cost ("210.24") below to
           proceed:
         </Text>
         <Spacer y={1} />
         <Input
-          placeholder="411.72"
+          placeholder="210.24"
           value={confirmCost}
           setValue={setConfirmCost}
           width="100%"
@@ -116,7 +116,7 @@ const AzureCostConsent: React.FC<Props> = ({
         />
         <Spacer y={1} />
         <Button
-          disabled={confirmCost !== "411.72"}
+          disabled={confirmCost !== "210.24"}
           onClick={() => {
             setShowCostConfirmModal(false);
             setConfirmCost("");

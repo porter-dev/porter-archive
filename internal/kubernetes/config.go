@@ -12,7 +12,7 @@ import (
 
 	"github.com/porter-dev/porter/internal/telemetry"
 
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 	"github.com/porter-dev/porter/internal/models"
@@ -108,7 +108,7 @@ func GetAgentOutOfClusterConfig(ctx context.Context, conf *OutOfClusterConfig) (
 // restConfigForCAPICluster gets the kubernetes rest API client for a CAPI cluster
 func restConfigForCAPICluster(ctx context.Context, mgmtClusterConnection porterv1connect.ClusterControlPlaneServiceClient, cluster models.Cluster) (*rest.Config, error) {
 	ctx, span := telemetry.NewSpan(ctx, "rest-config-for-capi-cluster")
-	defer span.End()
+	// defer span.End() // This span is one of most frequent spans. We need to sample this. For now, this span will not send
 
 	kc, err := kubeConfigForCAPICluster(ctx, mgmtClusterConnection, cluster)
 	if err != nil {
@@ -331,7 +331,7 @@ func (conf *OutOfClusterConfig) ToRESTMapper() (meta.RESTMapper, error) {
 // the configuration saved within a Cluster model
 func (conf *OutOfClusterConfig) GetClientConfigFromCluster(ctx context.Context) (clientcmd.ClientConfig, error) {
 	ctx, span := telemetry.NewSpan(ctx, "ooc-get-client-config-from-cluster")
-	defer span.End()
+	// defer span.End() // This span is one of most frequent spans. We need to sample this. For now, this span will not send
 
 	if conf.Cluster == nil {
 		return nil, telemetry.Error(ctx, span, nil, "cluster cannot be nil")
@@ -400,7 +400,7 @@ func (conf *OutOfClusterConfig) GetClientConfigFromCluster(ctx context.Context) 
 
 func (conf *OutOfClusterConfig) CreateRawConfigFromCluster(ctx context.Context) (*api.Config, error) {
 	ctx, span := telemetry.NewSpan(ctx, "ooc-create-raw-config-from-cluster")
-	defer span.End()
+	// defer span.End() // This span is one of most frequent spans. We need to sample this. For now, this span will not send
 
 	cluster := conf.Cluster
 

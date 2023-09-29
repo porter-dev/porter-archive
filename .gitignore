@@ -16,6 +16,8 @@ staging.sh
 bin
 openapi.yaml
 .idea
+portercli
+local
 
 
 vendor

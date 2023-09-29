@@ -44,8 +44,8 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		CapiProvisionerEnabled: true,
 		SimplifiedViewEnabled:  true,
 		HelmValuesEnabled:      false,
-		EnvGroupEnabled:        true,
 		MultiCluster:           false,
+		EnableReprovision:      false,
 	}
 
 	var err error
@@ -81,7 +81,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	p.WriteResult(w, r, proj.ToProjectType())
+	p.WriteResult(w, r, proj.ToProjectType(p.Config().LaunchDarklyClient))
 
 	// add project to billing team
 	_, err = p.Config().BillingManager.CreateTeam(user, proj)

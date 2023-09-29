@@ -8,10 +8,12 @@ import api from "shared/api";
 import ProvisionerForm from "components/ProvisionerForm";
 import CloudFormationForm from "components/CloudFormationForm";
 import CredentialsForm from "components/CredentialsForm";
+import GCPCredentialsForm from "components/GCPCredentialsForm";
 import Helper from "components/form-components/Helper";
 import AzureCredentialForm from "components/AzureCredentialForm";
 import AWSCostConsent from "./AWSCostConsent";
 import AzureCostConsent from "./AzureCostConsent";
+import GCPCostConsent from "./GCPCostConsent";
 
 const providers = ["aws", "gcp", "azure"];
 
@@ -65,28 +67,25 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                   key={i}
                   disabled={
                     isUsageExceeded ||
-                    (provider === "azure" && !currentProject?.azure_enabled) ||
-                    provider === "gcp"
+                    (provider === "gcp" && !currentProject?.azure_enabled)
                   }
                   onClick={() => {
                     if (
                       !(
                         isUsageExceeded ||
-                        (provider === "azure" && !currentProject?.azure_enabled) ||
-                        provider === "gcp"
+                        (provider === "gcp" && !currentProject?.azure_enabled)
                       )
                     ) {
-                      // openCostConsentModal(provider);
-                      setSelectedProvider(provider);
-                      setCurrentStep("credentials");
+                      openCostConsentModal(provider);
+                      // setSelectedProvider(provider);
+                      // setCurrentStep("credentials");
                     }
                   }}
                 >
                   <Icon src={providerInfo.icon} />
                   <BlockTitle>{providerInfo.label}</BlockTitle>
                   <BlockDescription>
-                    {(provider === "azure" && !currentProject?.azure_enabled) ||
-                      provider === "gcp" ? providerInfo.tagline : "Hosted in your own cloud"}
+                    {(provider === "gcp" && !currentProject?.azure_enabled) ? providerInfo.tagline : "Hosted in your own cloud"}
                   </BlockDescription>
                 </Block>
               );
@@ -119,6 +118,31 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
               }}
             />
           )) ||
+            ((selectedProvider === "gcp" && (
+              <GCPCostConsent
+                setCurrentStep={setCurrentStep}
+                setShowCostConfirmModal={setShowCostConfirmModal}
+                markCostConsentComplete={() => {
+                  try {
+                    markStepCostConsent("cost-consent-complete", "gcp");
+                  } catch (err) {
+                    console.log(err);
+                  }
+
+                  if (currentProject != null) {
+                    try {
+                      api.inviteAdmin(
+                        "<token>",
+                        {},
+                        { project_id: currentProject.id }
+                      );
+                    } catch (err) {
+                      console.log(err);
+                    }
+                  }
+                }}
+              />
+            ))) ||
             (selectedProvider === "azure" && (
               <AzureCostConsent
                 setCurrentStep={setCurrentStep}
@@ -168,6 +192,15 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
         ))) ||
       (selectedProvider === "azure" && (
         <AzureCredentialForm
+          goBack={() => setCurrentStep("cloud")}
+          proceed={(id) => {
+            setCredentialId(id);
+            setCurrentStep("cluster");
+          }}
+        />
+      )) ||
+      (selectedProvider === "gcp" && (
+        <GCPCredentialsForm
           goBack={() => setCurrentStep("cloud")}
           proceed={(id) => {
             setCredentialId(id);

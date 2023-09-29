@@ -156,6 +156,29 @@ func ProjectDeleteTrack(opts *ProjectCreateDeleteTrackOpts) segmentTrack {
 	)
 }
 
+// ClusterDeleteTrackOpts are the options for creating a track when a cluster is deleted
+type ClusterDeleteTrackOpts struct {
+	*ProjectScopedTrackOpts
+
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
+}
+
+// ClusterDeleteTrack returns a track for when a cluster is deleted
+func ClusterDeleteTrack(opts *ClusterDeleteTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ClusterDelete),
+	)
+}
+
 // CostConsentOpenedTrackOpts are the options for creating a track when a user opens the cost consent
 type CostConsentOpenedTrackOpts struct {
 	*UserScopedTrackOpts
@@ -363,6 +386,7 @@ type ProvisioningAttemptTrackOpts struct {
 	CompanyName  string
 	ErrorMessage string
 	Region       string
+	Provider     string
 }
 
 // ProvisioningAttemptTrack returns a track for when a user attempts provisioning
@@ -372,6 +396,7 @@ func ProvisioningAttemptTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["region"] = opts.Region
+	additionalProps["provider"] = opts.Provider
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -758,10 +783,11 @@ func ClusterDestroyingSuccessTrack(opts *ClusterDestroyingSuccessTrackOpts) segm
 type StackLaunchStartOpts struct {
 	*ProjectScopedTrackOpts
 
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ValidateApplyV2 bool
 }
 
 // StackLaunchStartTrack returns a track for when a user starts creating a stack
@@ -770,6 +796,7 @@ func StackLaunchStartTrack(opts *StackLaunchStartOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -781,11 +808,12 @@ func StackLaunchStartTrack(opts *StackLaunchStartOpts) segmentTrack {
 type StackLaunchCompleteOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName   string
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	StackName       string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ValidateApplyV2 bool
 }
 
 // StackLaunchCompleteTrack returns a track for when a user completes creating a stack
@@ -795,6 +823,7 @@ func StackLaunchCompleteTrack(opts *StackLaunchCompleteOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -806,11 +835,12 @@ func StackLaunchCompleteTrack(opts *StackLaunchCompleteOpts) segmentTrack {
 type StackLaunchSuccessOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName   string
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	StackName       string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ValidateApplyV2 bool
 }
 
 // StackLaunchCompleteTrack returns a track for when a user completes creating a stack
@@ -820,6 +850,7 @@ func StackLaunchSuccessTrack(opts *StackLaunchSuccessOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -831,12 +862,13 @@ func StackLaunchSuccessTrack(opts *StackLaunchSuccessOpts) segmentTrack {
 type StackLaunchFailureOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName    string
-	Email        string
-	FirstName    string
-	LastName     string
-	CompanyName  string
-	ErrorMessage string
+	StackName       string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ErrorMessage    string
+	ValidateApplyV2 bool
 }
 
 // StackLaunchFailureTrack returns a track for when a user fails creating a stack
@@ -847,6 +879,7 @@ func StackLaunchFailureTrack(opts *StackLaunchFailureOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -864,6 +897,7 @@ type StackDeletionOpts struct {
 	LastName           string
 	CompanyName        string
 	DeleteWorkflowFile bool
+	ValidateApplyV2    bool
 }
 
 // StackDeletionTrack returns a track for when a user deletes a stack
@@ -874,6 +908,7 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["delete_workflow_file"] = opts.DeleteWorkflowFile
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -885,12 +920,13 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 type StackBuildOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName    string
-	ErrorMessage string
-	Email        string
-	FirstName    string
-	LastName     string
-	CompanyName  string
+	StackName       string
+	ErrorMessage    string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ValidateApplyV2 bool
 }
 
 // StackBuildFailureTrack returns a track for when a stack fails to build
@@ -901,6 +937,7 @@ func StackBuildFailureTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -915,6 +952,7 @@ func StackBuildSuccessTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -929,6 +967,7 @@ func StackBuildProgressingTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,

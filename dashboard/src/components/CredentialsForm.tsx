@@ -188,7 +188,7 @@ const CredentialsForm: React.FC<Props> = ({
         <HSpacer />
         <Img src={aws} />
         Set AWS credentials
-        <HelperButton onClick={() => window.open("https://docs.porter.run/getting-started/provisioning-on-aws/", "_blank")}>
+        <HelperButton onClick={() => window.open("https://docs.porter.run/standard/getting-started/provisioning-on-aws", "_blank")}>
           <i className="material-icons">help_outline</i>
         </HelperButton>
       </Text>

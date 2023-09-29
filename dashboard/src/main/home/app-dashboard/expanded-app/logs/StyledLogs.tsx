@@ -3,19 +3,22 @@ import { GenericLogFilter, PorterLog } from "./types";
 import styled from "styled-components";
 import Anser from "anser";
 import dayjs from "dayjs";
-import { getPodSelectorFromPodNameAndAppName, getServiceNameFromPodNameAndAppName, getVersionTagColor } from "./utils";
+import { getPodSelectorFromServiceName, getServiceNameFromPodNameAndAppName, getVersionTagColor } from "./utils";
+import { Service } from "../../new-app-flow/serviceTypes";
 
 
 type Props = {
     logs: PorterLog[];
     appName: string;
     filters: GenericLogFilter[];
+    services?: Service[];
 };
 
 const StyledLogs: React.FC<Props> = ({
     logs,
     appName,
     filters,
+    services,
 }) => {
     const renderFilterTagForLog = (filter: GenericLogFilter, log: PorterLog, index: number) => {
         if (log.metadata == null) {
@@ -27,7 +30,7 @@ const StyledLogs: React.FC<Props> = ({
                     return null;
                 }
                 return (
-                    <StyledLogsTableData width={"100px"}>
+                    <StyledLogsTableData width={"100px"} key={index}>
                         <LogInnerPill
                             color={getVersionTagColor(log.metadata.revision)}
                             key={index}
@@ -42,13 +45,28 @@ const StyledLogs: React.FC<Props> = ({
                     return null;
                 }
                 return (
-                    <StyledLogsTableData width={"100px"}>
+                    <StyledLogsTableData width={"100px"} key={index}>
                         <LogInnerPill
                             color={"white"}
                             key={index}
-                            onClick={() => filter.setValue(getPodSelectorFromPodNameAndAppName(log.metadata.pod_name, appName))}
+                            onClick={() => filter.setValue(getPodSelectorFromServiceName(getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName), services) ?? GenericLogFilter.getDefaultOption("pod_name").value)}
                         >
                             {getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName)}
+                        </LogInnerPill>
+                    </StyledLogsTableData>
+                )
+            case "service_name":
+                if (log.metadata?.raw_labels?.porter_run_service_name == null || log.metadata?.raw_labels?.porter_run_service_name === "") {
+                    return null;
+                }
+                return (
+                    <StyledLogsTableData width={"100px"} key={index}>
+                        <LogInnerPill
+                            color={"white"}
+                            key={index}
+                            onClick={() => filter.setValue(log.metadata?.raw_labels?.porter_run_service_name ?? GenericLogFilter.getDefaultOption("service_name").value)}
+                        >
+                            {log.metadata.raw_labels?.porter_run_service_name}
                         </LogInnerPill>
                     </StyledLogsTableData>
                 )
@@ -95,7 +113,6 @@ const StyledLogs: React.FC<Props> = ({
                     )
                 })}
             </StyledLogsTableBody>
-
         </StyledLogsTable>
     );
 };
@@ -148,6 +165,7 @@ const LogInnerPill = styled.div<{ color: string }>`
 `
 
 const LogOuter = styled.div`
+  user-select: text;
   display: inline-block;
   word-wrap: anywhere;
   flex-grow: 1;
@@ -156,6 +174,7 @@ const LogOuter = styled.div`
 `;
 
 const LogInnerSpan = styled.span`
+  user-select: text;
   font-family: monospace, sans-serif;
   font-size: 12px;
   font-weight: ${(props: { ansi: Anser.AnserJsonEntry }) =>

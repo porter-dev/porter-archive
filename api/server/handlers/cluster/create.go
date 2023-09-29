@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/kubernetes/resolver"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -46,7 +47,7 @@ func (c *CreateClusterManualHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	cluster, err = c.Repo().Cluster().CreateCluster(cluster)
+	cluster, err = c.Repo().Cluster().CreateCluster(cluster, c.Config().LaunchDarklyClient)
 
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
@@ -117,6 +118,7 @@ func createClusterFromCandidate(
 	user *models.User,
 	candidate *models.ClusterCandidate,
 	clResolver *types.ClusterResolverAll,
+	launchDarklyClient *features.Client,
 ) (*models.Cluster, *models.ClusterCandidate, error) {
 	// we query the repo again to get the decrypted version of the cluster candidate
 	cc, err := repo.Cluster().ReadClusterCandidate(project.ID, candidate.ID)
@@ -137,7 +139,7 @@ func createClusterFromCandidate(
 		return nil, nil, err
 	}
 
-	cluster, err := cResolver.ResolveCluster(repo)
+	cluster, err := cResolver.ResolveCluster(repo, launchDarklyClient)
 	if err != nil {
 		return nil, nil, err
 	}

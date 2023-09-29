@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/commonutils"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 	"gopkg.in/yaml.v2"
 )
@@ -37,6 +38,9 @@ func NewGithubGetPorterYamlHandler(
 func (c *GithubGetPorterYamlHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-porter-yaml")
 	defer span.End()
+
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+
 	request := &types.GetPorterYamlRequest{}
 	ok := c.DecodeAndValidate(w, r, request)
 	if !ok {
@@ -97,8 +101,17 @@ func (c *GithubGetPorterYamlHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+
+	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
+		if parsed.Version != nil && *parsed.Version != "v2" {
+			err = telemetry.Error(ctx, span, nil, "porter YAML version is not supported")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+	}
+
 	// backwards compatibility so that old porter yamls are no longer valid
-	if parsed.Version != nil {
+	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) && parsed.Version != nil {
 		version := *parsed.Version
 		if version != "v1stack" {
 			err = telemetry.Error(ctx, span, nil, "porter YAML version is not supported")

@@ -4,8 +4,6 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
-import refresh from "assets/refresh.png";
-
 import Text from "components/porter/Text";
 
 import EventCard from "./events/cards/EventCard";
@@ -17,9 +15,7 @@ import { feedDate } from "shared/string_utils";
 import Pagination from "components/porter/Pagination";
 import _ from "lodash";
 import Button from "components/porter/Button";
-import Icon from "components/porter/Icon";
-import Container from "components/porter/Container";
-import { PorterAppEvent } from "./events/types";
+import { PorterAppEvent, PorterAppEventType } from "./events/types";
 
 type Props = {
   chart: any;
@@ -41,6 +37,11 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
   const [shouldAnimate, setShouldAnimate] = useState(true);
 
+  // remove this filter when https://linear.app/porter/issue/POR-1676/disable-porter-agent-code-for-cpu-alerts is resolved
+  const isNotFilteredAppEvent = (event: PorterAppEvent) => {
+    return !(event.type === PorterAppEventType.APP_EVENT && (event.metadata?.short_summary?.includes("requesting more memory than is available") || event.metadata?.short_summary?.includes("requesting more CPU than is available")));
+  }
+
   const getEvents = async () => {
     setLoading(true)
     if (!currentProject || !currentCluster) {
@@ -61,13 +62,21 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
       );
 
       setNumPages(res.data.num_pages);
-      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)) ?? []);
+      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)).filter(isNotFilteredAppEvent) ?? []);
     } catch (err) {
       setError(err);
     } finally {
       setLoading(false);
       setShouldAnimate(false);
     }
+  };
+
+  const getLatestDeployEventIndex = () => {
+    const deployEvents = events.filter((event) => event.type === PorterAppEventType.DEPLOY);
+    if (deployEvents.length === 0) {
+      return -1;
+    }
+    return events.indexOf(deployEvents[0]);
   };
 
   const updateEvents = async () => {
@@ -87,7 +96,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
       );
       setError(undefined)
       setNumPages(res.data.num_pages);
-      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)) ?? []);
+      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)).filter(isNotFilteredAppEvent) ?? []);
     } catch (err) {
       setError(err);
     }
@@ -209,7 +218,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
               <Spacer x={0.5} />
               <Text>{feedDate(event.created_at).split(", ")[1]}</Text>
             </Time>
-            <EventCard appData={appData} event={event} key={i} />
+            <EventCard appData={appData} event={event} key={i} isLatestDeployEvent={i === getLatestDeployEventIndex()} />
           </EventWrapper>
         );
       })}
@@ -219,20 +228,6 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
           <Pagination page={page} setPage={setPage} totalPages={numPages} />
         </>
       )}
-      <Spacer y={1} />
-      <Container row spaced>
-        <Spacer inline x={1} />
-        <Button
-          onClick={getEvents}
-          height="20px"
-          color="fg"
-          withBorder
-        >
-          <Icon src={refresh} height="10px"></Icon>
-          <Spacer inline x={0.5} />
-          Refresh feed
-        </Button>
-      </Container>
     </StyledActivityFeed>
   );
 };
@@ -268,9 +263,9 @@ const Dot = styled.div<{ shouldAnimate: boolean }>`
   height: 7px;
   background: #fff;
   border-radius: 50%;
-  position: absolute;
-  left: 0;
-  top: 36px;
+  margin-left: -29px;
+  margin-right: 20px;
+  z-index: 1;
   opacity: ${(props) => props.shouldAnimate ? "0" : "1"};
   ${(props) => props.shouldAnimate && "animation: fadeIn 0.3s 0.1s;"}
   ${(props) => props.shouldAnimate && "animation-fill-mode: forwards;"}

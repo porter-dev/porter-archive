@@ -502,6 +502,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   services={formState.serviceList.filter(Service.isNonRelease)}
                   defaultExpanded={true}
                   addNewText={"Add a new service"}
+                  appName={porterApp.name}
                 />
               </>,
               <>
@@ -519,59 +520,58 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   fileUpload={true}
                   syncedEnvGroups={syncedEnvGroups}
                 />
-                {currentProject?.env_group_enabled && (
-                  <>
-                    <TooltipWrapper
-                      onMouseOver={() => setHovered(true)}
-                      onMouseOut={() => setHovered(false)}>
-                      <LoadButton
-                        disabled={maxEnvGroupsReached}
-                        onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
-                      >
-                        <img src={sliders} /> Load from Env Group
-                      </LoadButton>
-                      <TooltipText visible={maxEnvGroupsReached && hovered}>Max 4 Env Groups allowed</TooltipText>
-                    </TooltipWrapper>
 
-                    {showEnvModal && <EnvGroupModal
-                      setValues={(x: any) => {
-                        setFormState({ ...formState, envVariables: x });
-                      }}
-                      values={formState.envVariables}
-                      closeModal={() => setShowEnvModal(false)}
-                      syncedEnvGroups={syncedEnvGroups}
-                      setSyncedEnvGroups={setSyncedEnvGroups}
-                      namespace={"porter-stack-" + porterApp.name}
-                      newApp={true}
-                    />}
-                    {!!syncedEnvGroups?.length && (
-                      <>
-                        <Spacer y={0.5} />
-                        <Text size={16}>Synced environment groups</Text >
-                        {syncedEnvGroups?.map((envGroup: any) => {
-                          return (
-                            <ExpandableEnvGroup
-                              key={envGroup?.name}
-                              envGroup={envGroup}
-                              onDelete={() => {
-                                deleteEnvGroup(envGroup);
-                              }}
-                            />
-                          );
-                        })}
-                      </>
-                    )}
-                  </>
-                )}
+                <>
+                  <TooltipWrapper
+                    onMouseOver={() => setHovered(true)}
+                    onMouseOut={() => setHovered(false)}>
+                    <LoadButton
+                      disabled={maxEnvGroupsReached}
+                      onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
+                    >
+                      <img src={sliders} /> Load from Env Group
+                    </LoadButton>
+                    <TooltipText visible={maxEnvGroupsReached && hovered}>Max 4 Env Groups allowed</TooltipText>
+                  </TooltipWrapper>
+
+                  {showEnvModal && <EnvGroupModal
+                    setValues={(x: any) => {
+                      setFormState({ ...formState, envVariables: x });
+                    }}
+                    values={formState.envVariables}
+                    closeModal={() => setShowEnvModal(false)}
+                    syncedEnvGroups={syncedEnvGroups}
+                    setSyncedEnvGroups={setSyncedEnvGroups}
+                    namespace={"porter-stack-" + porterApp.name}
+                    newApp={true}
+                  />}
+                  {!!syncedEnvGroups?.length && (
+                    <>
+                      <Spacer y={0.5} />
+                      <Text size={16}>Synced environment groups</Text >
+                      {syncedEnvGroups?.map((envGroup: any) => {
+                        return (
+                          <ExpandableEnvGroup
+                            key={envGroup?.name}
+                            envGroup={envGroup}
+                            onDelete={() => {
+                              deleteEnvGroup(envGroup);
+                            }}
+                          />
+                        );
+                      })}
+                    </>
+                  )}
+                </>
+
               </>,
               formState.selectedSourceType == "github" &&
               <>
                 <Text size={16}>Pre-deploy job (optional)</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
-                  You may add a pre-deploy job to
-                  perform an operation before your application services
-                  deploy each time, like a database migration.
+                  After your application is built each time, your pre-deploy command will run before your services
+                  are deployed. Use this for operations like a database migration.
                 </Text>
                 <Spacer y={0.5} />
                 <Services
@@ -583,6 +583,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   limitOne={true}
                   addNewText={"Add a new pre-deploy job"}
                   prePopulateService={Service.default("pre-deploy", "release", porterJsonWithPath?.porterJson)}
+                  appName={porterApp.name}
                 />
               </>,
               <Button

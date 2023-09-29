@@ -10,8 +10,6 @@ import info from "assets/info-outlined.svg";
 
 import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import InputRow from "./form-components/InputRow";
 import {
   Contract,
   EnumKubernetesKind,
@@ -23,7 +21,11 @@ import {
   LoadBalancer,
   LoadBalancerType,
   EKSLogging,
+  EKSPreflightValues,
+  PreflightCheckRequest,
+  AWSClusterNetwork,
 } from "@porter-dev/api-contracts";
+
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
 import Error from "./porter/Error";
@@ -34,11 +36,12 @@ import Text from "./porter/Text";
 import Select from "./porter/Select";
 import Input from "./porter/Input";
 import Checkbox from "./porter/Checkbox";
-import { Certificate } from "crypto";
 import Tooltip from "./porter/Tooltip";
 import Icon from "./porter/Icon";
-import { set } from "traverse";
-import { load } from "js-yaml";
+import Loading from "./Loading";
+import PreflightChecks from "./PreflightChecks";
+import Placeholder from "./Placeholder";
+import VerticalSteps from "./porter/VerticalSteps";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -76,13 +79,24 @@ const machineTypeOptions = [
   { value: "c6i.2xlarge", label: "c6i.2xlarge" },
   { value: "c6i.4xlarge", label: "c6i.4xlarge" },
   { value: "c6i.8xlarge", label: "c6i.8xlarge" },
+  { value: "r6i.large", label: "r6i.large" },
+  { value: "r6i.xlarge", label: "r6i.xlarge" },
+  { value: "r6i.2xlarge", label: "r6i.2xlarge" },
+  { value: "r6i.4xlarge", label: "r6i.4xlarge" },
+  { value: "r6i.8xlarge", label: "r6i.8xlarge" },
+  { value: "r6i.12xlarge", label: "r6i.12xlarge" },
+  { value: "r6i.16xlarge", label: "r6i.16xlarge" },
+  { value: "r6i.24xlarge", label: "r6i.24xlarge" },
+  { value: "r6i.32xlarge", label: "r6i.32xlarge" },
   { value: "g4dn.xlarge", label: "g4dn.xlarge" },
 ];
 
 const clusterVersionOptions = [
   { value: "v1.24.0", label: "1.24.0" },
-  { value: "v1.25.0", label: "1.25.0" },
 ];
+
+const defaultCidrVpc = "10.78.0.0/16"
+const defaultCidrServices = "172.20.0.0/16"
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
@@ -98,9 +112,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     currentCluster,
     setCurrentCluster,
     setShouldRefreshClusters,
-    setHasFinishedOnboarding,
   } = useContext(Context);
-  const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
   const [machineType, setMachineType] = useState("t3.medium");
@@ -108,6 +120,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [kmsEncryptionEnabled, setKmsEncryptionEnabled] = useState<boolean>(
     false
   );
+  const [step, setStep] = useState(0);
   const [loadBalancerType, setLoadBalancerType] = useState(false);
   const [wildCardDomain, setWildCardDomain] = useState("");
   const [IPAllowList, setIPAllowList] = useState<string>("");
@@ -125,11 +138,17 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [additionalNodePolicies, setAdditionalNodePolicies] = useState<
     string[]
   >([]);
-  const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
+  const [cidrRangeVPC, setCidrRangeVPC] = useState(defaultCidrVpc);
+  const [cidrRangeServices, setCidrRangeServices] = useState(defaultCidrServices);
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [preflightData, setPreflightData] = useState(null)
+  const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
+  const [preflightError, setPreflightError] = useState<string>("")
+
   const markStepStarted = async (step: string, errMessage?: string) => {
     try {
       await api.updateOnboardingStep(
@@ -138,6 +157,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           step,
           error_message: errMessage,
           region: awsRegion,
+          provider: "aws",
         },
         {
           project_id: currentProject.id,
@@ -149,6 +169,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   };
 
   const getStatus = () => {
+    if (isLoading) {
+      return <Loading />
+    }
     if (isReadOnly && props.provisionerError == "") {
       return "Provisioning is still in progress...";
     } else if (errorMessage) {
@@ -218,9 +241,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   const isDisabled = () => {
     return (
-      !user?.isPorterUser &&
-      (clusterNameDoesNotExist() || userProvisioning() || isClicked)
-    );
+      (clusterNameDoesNotExist() || userProvisioning() || isClicked || (currentCluster && !currentProject?.enable_reprovision)
+      ))
   };
   function convertStringToTags(tagString) {
     if (typeof tagString !== "string" || tagString.trim() === "") {
@@ -239,6 +261,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return tags;
   }
   const createCluster = async () => {
+    setIsLoading(true);
     setIsClicked(true);
 
     let loadBalancerObj = new LoadBalancer({});
@@ -277,12 +300,16 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           value: new EKS({
             clusterName,
             clusterVersion: clusterVersion || "v1.24.0",
-            cidrRange: cidrRange || "10.78.0.0/16",
+            cidrRange: cidrRangeVPC || defaultCidrVpc, // deprecated in favour of network.cidrRangeVPC: can be removed after december 2023
             region: awsRegion,
             loadBalancer: loadBalancerObj,
             logging: controlPlaneLogs,
             enableGuardDuty: guardDutyEnabled,
             enableKmsEncryption: kmsEncryptionEnabled,
+            network: new AWSClusterNetwork({
+              vpcCidr: cidrRangeVPC || defaultCidrVpc,
+              serviceCidr: cidrRangeServices || defaultCidrServices,
+            }),
             nodeGroups: [
               new EKSNodeGroup({
                 instanceType: "t3.medium",
@@ -368,9 +395,10 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       // }
       setErrorMessage(undefined);
     } catch (err) {
-      const errMessage = err.response.data.error.replace("unknown: ", "");
+      const errMessage = err.response.data?.error.replace("unknown: ", "");
       // hacky, need to standardize error contract with backend
       setIsClicked(false);
+      setIsLoading(false)
       if (errMessage.includes("elastic IP")) {
         setErrorMessage(AWS_EIP_QUOTA_ERROR_MESSAGE);
       } else if (errMessage.includes("VPC")) {
@@ -387,6 +415,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       markStepStarted("provisioning-failed", errMessage);
     } finally {
       setIsReadOnly(false);
+      setIsLoading(false);
+
       setIsClicked(false);
     }
   };
@@ -426,11 +456,14 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           setAdditionalNodePolicies(nodeGroup.additionalPolicies);
         }
       });
-      setCreateStatus("");
       setClusterName(eksValues.clusterName);
       setAwsRegion(eksValues.region);
       setClusterVersion(eksValues.clusterVersion);
-      setCidrRange(eksValues.cidrRange);
+      setCidrRangeVPC(eksValues.cidrRange);
+      if (eksValues.network != null) {
+        setCidrRangeVPC(eksValues.network?.vpcCidr || defaultCidrVpc);
+        setCidrRangeServices(eksValues.network?.serviceCidr || defaultCidrServices);
+      }
       if (eksValues.loadBalancer != null) {
         setIPAllowList(eksValues.loadBalancer.allowlistIpRanges);
         setWildCardDomain(eksValues.loadBalancer.wildcardDomain);
@@ -467,35 +500,582 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
   }, [isExpanded, props.selectedClusterVersion]);
 
+  useEffect(() => {
+    if (!props.clusterId) {
+      setStep(1)
+      preflightChecks()
+    }
+  }, [props.selectedClusterVersion, awsRegion]);
+
+
+  const preflightChecks = async () => {
+
+    try {
+      setIsLoading(true);
+      setPreflightData(null);
+      setPreflightFailed(true)
+      setPreflightError("");
+
+      var data = new PreflightCheckRequest({
+        projectId: BigInt(currentProject.id),
+        cloudProvider: EnumCloudProvider.AWS,
+        cloudProviderCredentialsId: props.credentialId,
+        preflightValues: {
+          case: "eksPreflightValues",
+          value: new EKSPreflightValues({
+            region: awsRegion,
+          })
+        }
+      });
+      const preflightDataResp = await api.preflightCheck(
+        "<token>", data,
+        {
+          id: currentProject.id,
+        }
+      )
+      // Check if any of the preflight checks has a message
+      let hasMessage = false;
+      let errors = "Preflight Checks Failed : ";
+      for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
+        if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
+          hasMessage = true;
+          errors = errors + check + ", "
+        }
+      }
+      // If none of the checks have a message, set setPreflightFailed to false
+      if (hasMessage) {
+        markStepStarted("provisioning-failed", errors);
+      }
+      if (!hasMessage) {
+        setPreflightFailed(false);
+        setStep(2);
+      }
+      setPreflightData(preflightDataResp?.data?.Msg);
+      setIsLoading(false)
+    } catch (err) {
+      setPreflightError(err)
+      setIsLoading(false)
+      setPreflightFailed(true);
+    }
+
+  }
+  const renderAdvancedSettings = () => {
+    return (
+      <>
+        {
+          < Heading >
+            <ExpandHeader
+              onClick={() => setIsExpanded(!isExpanded)}
+              isExpanded={isExpanded}
+            >
+              <i className="material-icons">arrow_drop_down</i>
+              Advanced settings
+            </ExpandHeader>
+          </Heading >
+        }
+        {
+          isExpanded && (
+            <>
+              {user?.isPorterUser && (
+                <Select
+                  options={clusterVersionOptions}
+                  width="350px"
+                  disabled={isReadOnly}
+                  value={clusterVersion}
+                  setValue={setClusterVersion}
+                  label="Cluster version"
+                />
+              )}
+              <Spacer y={1} />
+              <Select
+                options={machineTypeOptions}
+                width="350px"
+                disabled={isReadOnly}
+                value={machineType}
+                setValue={setMachineType}
+                label="Machine type"
+              />
+              <Spacer y={1} />
+              <Input
+                width="350px"
+                type="number"
+                disabled={isReadOnly}
+                value={maxInstances.toString()}
+                setValue={(x: string) => {
+                  const num = parseInt(x, 10)
+                  if (num == undefined) {
+                    return
+                  }
+                  setMaxInstances(num)
+                }}
+                label="Maximum number of application nodes"
+                placeholder="ex: 1"
+              />
+              <Spacer y={1} />
+              <Input
+                width="350px"
+                type="number"
+                disabled={isReadOnly}
+                value={minInstances.toString()}
+                setValue={(x: string) => {
+                  const num = parseInt(x, 10)
+                  if (num == undefined) {
+                    return
+                  }
+                  setMinInstances(num)
+                }}
+                label="Minimum number of application nodes. If set to 0, no applications will be deployed."
+                placeholder="ex: 1"
+              />
+              <Spacer y={1} />
+              <Input
+                width="350px"
+                type="string"
+                value={cidrRangeVPC}
+                disabled={!user.isPorterUser}
+                setValue={(x: string) => setCidrRangeVPC(x)}
+                label="CIDR range for AWS VPC"
+                placeholder="ex: 10.78.0.0/16"
+              />
+              <Spacer y={1} />
+              <Input
+                width="350px"
+                type="string"
+                value={cidrRangeServices}
+                disabled={!user.isPorterUser}
+                setValue={(x: string) => setCidrRangeServices(x)}
+                label="CIDR range for Kubernetes internal services"
+                placeholder="ex: 172.20.0.0/16"
+              />
+              {!currentProject.simplified_view_enabled && (
+                <>
+                  <Spacer y={1} />
+                  <Checkbox
+                    checked={controlPlaneLogs.enableApiServerLogs}
+                    disabled={isReadOnly}
+                    toggleChecked={() => {
+                      setControlPlaneLogs(
+                        new EKSLogging({
+                          ...controlPlaneLogs,
+                          enableApiServerLogs: !controlPlaneLogs.enableApiServerLogs,
+                        })
+                      );
+                    }}
+                    disabledTooltip={
+                      "Wait for provisioning to complete before editing this field."
+                    }
+                  >
+                    <Text color="helper">
+                      Enable API Server logs in CloudWatch for this cluster
+                    </Text>
+                  </Checkbox>
+
+                  <Spacer y={1} />
+                  <Checkbox
+                    checked={controlPlaneLogs.enableAuditLogs}
+                    disabled={isReadOnly}
+                    toggleChecked={() => {
+                      setControlPlaneLogs(
+                        new EKSLogging({
+                          ...controlPlaneLogs,
+                          enableAuditLogs: !controlPlaneLogs.enableAuditLogs,
+                        })
+                      );
+                    }}
+                    disabledTooltip={
+                      "Wait for provisioning to complete before editing this field."
+                    }
+                  >
+                    <Text color="helper">
+                      Enable Audit logs in CloudWatch for this cluster
+                    </Text>
+                  </Checkbox>
+
+                  <Spacer y={1} />
+                  <Checkbox
+                    checked={controlPlaneLogs.enableAuthenticatorLogs}
+                    disabled={isReadOnly}
+                    toggleChecked={() => {
+                      setControlPlaneLogs(
+                        new EKSLogging({
+                          ...controlPlaneLogs,
+                          enableAuthenticatorLogs: !controlPlaneLogs.enableAuthenticatorLogs,
+                        })
+                      );
+                    }}
+                    disabledTooltip={
+                      "Wait for provisioning to complete before editing this field."
+                    }
+                  >
+                    <Text color="helper">
+                      Enable Authenticator logs in CloudWatch for this cluster
+                    </Text>
+                  </Checkbox>
+
+                  <Spacer y={1} />
+                  <Checkbox
+                    checked={controlPlaneLogs.enableControllerManagerLogs}
+                    disabled={isReadOnly}
+                    toggleChecked={() => {
+                      setControlPlaneLogs(
+                        new EKSLogging({
+                          ...controlPlaneLogs,
+                          enableControllerManagerLogs: !controlPlaneLogs.enableControllerManagerLogs,
+                        })
+                      );
+                    }}
+                    disabledTooltip={
+                      "Wait for provisioning to complete before editing this field."
+                    }
+                  >
+                    <Text color="helper">
+                      Enable Controller Manager logs in CloudWatch for this
+                      cluster
+                    </Text>
+                  </Checkbox>
+
+                  <Spacer y={1} />
+                  <Checkbox
+                    checked={controlPlaneLogs.enableSchedulerLogs}
+                    disabled={isReadOnly}
+                    toggleChecked={() => {
+                      setControlPlaneLogs(
+                        new EKSLogging({
+                          ...controlPlaneLogs,
+                          enableSchedulerLogs: !controlPlaneLogs.enableSchedulerLogs,
+                        })
+                      );
+                    }}
+                    disabledTooltip={
+                      "Wait for provisioning to complete before editing this field."
+                    }
+                  >
+                    <Text color="helper">
+                      Enable Scheduler logs in CloudWatch for this cluster
+                    </Text>
+                  </Checkbox>
+
+                  <Spacer y={1} />
+                  <Checkbox
+                    checked={loadBalancerType}
+                    disabled={isReadOnly}
+                    toggleChecked={() => {
+                      if (loadBalancerType) {
+                        setWildCardDomain("");
+                        setIPAllowList("");
+                        setwafV2ARN("");
+                        setAwsTags("");
+                        seCertificateARN("");
+                        setWaf2Enabled(false);
+                        //setAccessS3Logs(false);
+                      }
+
+                      setLoadBalancerType(!loadBalancerType);
+                    }}
+                    disabledTooltip={
+                      "Wait for provisioning to complete before editing this field."
+                    }
+                  >
+                    <Text color="helper">Set Load Balancer Type to ALB</Text>
+                  </Checkbox>
+                  <Spacer y={1} />
+                  {loadBalancerType && (
+                    <>
+                      <FlexCenter>
+                        <Input
+                          width="350px"
+                          disabled={isReadOnly}
+                          value={wildCardDomain}
+                          setValue={(x: string) => setWildCardDomain(x)}
+                          label="Wildcard domain"
+                          placeholder="user-2.porter.run"
+                        />
+                        <Wrapper>
+                          <Tooltip
+                            children={<Icon src={info} />}
+                            content={
+                              "The provided domain should have a wildcard subdomain pointed to the LoadBalancer address. Using testing.porter.run will create a certificate for testing.porter.run with a SAN *.testing.porter.run"
+                            }
+                            position="right"
+                          />
+                        </Wrapper>
+                      </FlexCenter>
+
+                      {validateInput(wildCardDomain) && (
+                        <ErrorInLine>
+                          <i className="material-icons">error</i>
+                          {validateInput(wildCardDomain)}
+                        </ErrorInLine>
+                      )}
+                      <Spacer y={1} />
+
+                      <FlexCenter>
+                        <>
+                          <Input
+                            width="350px"
+                            disabled={isReadOnly}
+                            value={IPAllowList}
+                            setValue={(x: string) => setIPAllowList(x)}
+                            label="IP Allow List"
+                            placeholder="160.72.72.58/32,160.72.72.59/32"
+                          />
+                          <Wrapper>
+                            <Tooltip
+                              children={<Icon src={info} />}
+                              content={
+                                "Each range should be a CIDR, including netmask such as 10.1.2.3/21. To use multiple values, they should be comma-separated with no spaces"
+                              }
+                              position="right"
+                            />
+                          </Wrapper>
+                        </>
+                      </FlexCenter>
+                      {validateIPInput(IPAllowList) && (
+                        <ErrorInLine>
+                          <i className="material-icons">error</i>
+                          {"Needs to be Comma Separated Valid IP addresses"}
+                        </ErrorInLine>
+                      )}
+                      <Spacer y={1} />
+
+                      <Input
+                        width="350px"
+                        disabled={isReadOnly}
+                        value={certificateARN}
+                        setValue={(x: string) => seCertificateARN(x)}
+                        label="Certificate ARN"
+                        placeholder="arn:aws:acm:REGION:ACCOUNT_ID:certificate/ACM_ID"
+                      />
+                      <Spacer y={1} />
+
+                      <FlexCenter>
+                        <>
+                          <Input
+                            width="350px"
+                            disabled={isReadOnly}
+                            value={awsTags}
+                            setValue={(x: string) => setAwsTags(x)}
+                            label="AWS Tags"
+                            placeholder="costcenter=1,environment=10,project=32"
+                          />
+                          <Wrapper>
+                            <Tooltip
+                              children={<Icon src={info} />}
+                              content={
+                                "Each tag should be of the format 'key=value'. To use multiple values, they should be comma-separated with no spaces."
+                              }
+                              position="right"
+                            />
+                          </Wrapper>
+                        </>
+                      </FlexCenter>
+                      {validateTags(awsTags) && (
+                        <ErrorInLine>
+                          <i className="material-icons">error</i>
+                          {"Needs to be Comma Separated Valid Tags"}
+                        </ErrorInLine>
+                      )}
+
+                      <Spacer y={1} />
+                      {/* <Checkbox
+              checked={accessS3Logs}
+              disabled={isReadOnly}
+              toggleChecked={() => {
+                {
+                  console.log(!accessS3Logs)
+                }
+                setAccessS3Logs(!accessS3Logs)
+              }}
+              disabledTooltip={"Wait for provisioning to complete before editing this field."}
+            >
+              <Text color="helper">Access Logs to S3</Text>
+            </Checkbox> */}
+                      {/*<Spacer y={1} />*/}
+                      <Checkbox
+                        checked={wafV2Enabled}
+                        disabled={isReadOnly}
+                        toggleChecked={() => {
+                          if (wafV2Enabled) {
+                            setwafV2ARN("");
+                          }
+                          setWaf2Enabled(!wafV2Enabled);
+                        }}
+                        disabledTooltip={
+                          "Wait for provisioning to complete before editing this field."
+                        }
+                      >
+                        <Text color="helper">WAFv2 Enabled</Text>
+                      </Checkbox>
+                      {wafV2Enabled && (
+                        <>
+                          <Spacer y={1} />
+
+                          <FlexCenter>
+                            <>
+                              <Input
+                                width="500px"
+                                type="string"
+                                label="WAFv2 ARN"
+                                disabled={isReadOnly}
+                                value={wafV2ARN}
+                                setValue={(x: string) => setwafV2ARN(x)}
+                                placeholder="arn:aws:wafv2:REGION:ACCOUNT_ID:regional/webacl/ACL_NAME/RULE_ID"
+                              />
+                              <Wrapper>
+                                <Tooltip
+                                  children={<Icon src={info} />}
+                                  content={
+                                    'Only Regional WAFv2 is supported. To find your ARN, navigate to the WAF console, click the Gear icon in the top right, and toggle "ARN" to on'
+                                  }
+                                  position="right"
+                                />
+                              </Wrapper>
+                            </>
+                          </FlexCenter>
+
+                          {(wafV2ARN == undefined || wafV2ARN?.length == 0) && (
+                            <ErrorInLine>
+                              <i className="material-icons">error</i>
+                              {"Required if WafV2 is enabled"}
+                            </ErrorInLine>
+                          )}
+                        </>
+                      )}
+                      <Spacer y={1} />
+                    </>
+                  )}
+                  <FlexCenter>
+                    <Checkbox
+                      checked={guardDutyEnabled}
+                      disabled={isReadOnly}
+                      toggleChecked={() => {
+                        setGuardDutyEnabled(!guardDutyEnabled);
+                      }}
+                      disabledTooltip={
+                        "Wait for provisioning to complete before editing this field."
+                      }
+                    >
+                      <Text color="helper">
+                        Install AWS GuardDuty agent on this cluster (see details to fully enable)
+                      </Text>
+                      <Spacer x={.5} inline />
+                      <Tooltip
+                        children={<Icon src={info} />}
+                        content={
+                          "In addition to installing the agent, you must enable GuardDuty through your AWS Console and enable EKS Protection in the EKS Protection tab of the GuardDuty console."
+                        }
+                        position="right"
+                      />
+                    </Checkbox>
+                  </FlexCenter>
+                  <Spacer y={1} />
+                  <FlexCenter>
+                    <Checkbox
+                      checked={kmsEncryptionEnabled}
+                      disabled={isReadOnly || currentCluster != null}
+                      toggleChecked={() => {
+                        setKmsEncryptionEnabled(!kmsEncryptionEnabled);
+                      }}
+                      disabledTooltip={kmsEncryptionEnabled ? "KMS encryption can never be disabled." :
+                        "Encryption is only supported at cluster creation."
+                      }
+                    >
+                      <Text color="helper">
+                        Enable KMS encryption for this cluster
+                      </Text>
+                      <Spacer x={.5} inline />
+                      <Tooltip
+                        children={<Icon src={info} />}
+                        content={
+                          "KMS encryption can never be disabled. Deletion of the KMS key will permanently place this cluster in a degraded state."
+                        }
+                        position="right"
+                      />
+                    </Checkbox>
+                  </FlexCenter>
+                  {kmsEncryptionEnabled && (
+                    <ErrorInLine>
+                      <i className="material-icons">error</i>
+                      {
+                        "KMS encryption can never be disabled. Deletion of the KMS key will permanently place this cluster in a degraded state."
+                      }
+                    </ErrorInLine>
+                  )}
+                  <Spacer y={1} />
+                </>
+              )}
+            </>
+          )
+        }
+      </>
+    );
+  };
+
   const renderForm = () => {
     // Render simplified form if initial create
     if (!props.clusterId) {
       return (
-        <>
-          <Text size={16}>Select an AWS region</Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            Porter will automatically provision your infrastructure in the
-            specified region.
-          </Text>
-          <Spacer height="10px" />
-          <SelectRow
-            options={regionOptions}
-            width="350px"
-            disabled={isReadOnly}
-            value={awsRegion}
-            scrollBuffer={true}
-            dropdownMaxHeight="240px"
-            setActiveValue={setAwsRegion}
-            label="📍 AWS region"
-          />
-        </>
+        <VerticalSteps
+          currentStep={step}
+          steps={[
+            <>
+              <Text size={16}>Select an AWS region</Text><Spacer y={.5} /><Text color="helper">
+                Porter will automatically provision your infrastructure in the
+                specified region.
+              </Text><Spacer height="10px" /><SelectRow
+                options={regionOptions}
+                width="350px"
+                disabled={isReadOnly || isLoading}
+                value={awsRegion}
+                scrollBuffer={true}
+                dropdownMaxHeight="240px"
+                setActiveValue={setAwsRegion}
+                label="📍 AWS region" />
+              <>
+                {
+                  user?.isPorterUser && renderAdvancedSettings()
+                }
+              </>
+            </>,
+            <>
+              <PreflightChecks provider='AWS' preflightData={preflightData} error={preflightError} />
+              <Spacer y={.5} />
+              {(preflightFailed && preflightData) &&
+                <>
+                  <Text color="helper">
+                    Preflight checks for the account didn't pass. Please fix the issues and retry.
+                  </Text>
+                  <Spacer y={.5} />
+                  < Button
+                    // disabled={isDisabled()}
+                    disabled={isLoading}
+                    onClick={preflightChecks}
+                  >
+                    Retry Checks
+                  </Button>
+                </>
+              }
+            </>,
+            <>
+              <Text size={16}>Provision your cluster</Text>
+              <Spacer y={1} />
+              <Button
+                // disabled={isDisabled()}
+                disabled={isDisabled() || preflightFailed || isLoading}
+                onClick={createCluster}
+                status={getStatus()}
+              >
+                Provision
+              </Button>
+              <Spacer y={1} /></>
+          ].filter((x) => x)}
+        />
       );
     }
 
     // If settings, update full form
     return (
-      <>
+      <><StyledForm>
         <Heading isAtTop>EKS configuration</Heading>
         <SelectRow
           options={regionOptions}
@@ -505,392 +1085,38 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           scrollBuffer={true}
           dropdownMaxHeight="240px"
           setActiveValue={setAwsRegion}
-          label="📍 AWS region"
-        />
-
-        <Heading>
-          <ExpandHeader
-            onClick={() => setIsExpanded(!isExpanded)}
-            isExpanded={isExpanded}
-          >
-            <i className="material-icons">arrow_drop_down</i>
-            Advanced settings
-          </ExpandHeader>
-        </Heading>
-
-        {isExpanded && (
-          <>
-            {user?.isPorterUser && (
-              <Select
-                options={clusterVersionOptions}
-                width="350px"
-                disabled={isReadOnly}
-                value={clusterVersion}
-                setValue={setClusterVersion}
-                label="Cluster version"
-              />
-            )}
-            <Spacer y={1} />
-            <Select
-              options={machineTypeOptions}
-              width="350px"
-              disabled={isReadOnly}
-              value={machineType}
-              setValue={setMachineType}
-              label="Machine type"
-            />
-            <Spacer y={1} />
-            <Input
-              width="350px"
-              type="number"
-              disabled={isReadOnly}
-              value={maxInstances}
-              setValue={(x: number) => setMaxInstances(x)}
-              label="Maximum number of application nodes"
-              placeholder="ex: 1"
-            />
-            <Spacer y={1} />
-            <Input
-              width="350px"
-              type="number"
-              disabled={isReadOnly}
-              value={minInstances}
-              setValue={(x: number) => setMinInstances(x)}
-              label="Minimum number of application nodes. If set to 0, no applications will be deployed."
-              placeholder="ex: 1"
-            />
-            <Spacer y={1} />
-            <Input
-              width="350px"
-              type="string"
-              disabled={true}
-              value={cidrRange}
-              setValue={(x: string) => setCidrRange(x)}
-              label="VPC CIDR range"
-              placeholder="ex: 10.78.0.0/16"
-            />
-            {!currentProject.simplified_view_enabled && (
-              <>
-                <Spacer y={1} />
-                <Checkbox
-                  checked={controlPlaneLogs.enableApiServerLogs}
-                  disabled={isReadOnly}
-                  toggleChecked={() => {
-                    setControlPlaneLogs(
-                      new EKSLogging({
-                        ...controlPlaneLogs,
-                        enableApiServerLogs: !controlPlaneLogs.enableApiServerLogs,
-                      })
-                    );
-                  }}
-                  disabledTooltip={
-                    "Wait for provisioning to complete before editing this field."
-                  }
-                >
-                  <Text color="helper">
-                    Enable API Server logs in CloudWatch for this cluster
-                  </Text>
-                </Checkbox>
-
-                <Spacer y={1} />
-                <Checkbox
-                  checked={controlPlaneLogs.enableAuditLogs}
-                  disabled={isReadOnly}
-                  toggleChecked={() => {
-                    setControlPlaneLogs(
-                      new EKSLogging({
-                        ...controlPlaneLogs,
-                        enableAuditLogs: !controlPlaneLogs.enableAuditLogs,
-                      })
-                    );
-                  }}
-                  disabledTooltip={
-                    "Wait for provisioning to complete before editing this field."
-                  }
-                >
-                  <Text color="helper">
-                    Enable Audit logs in CloudWatch for this cluster
-                  </Text>
-                </Checkbox>
-
-                <Spacer y={1} />
-                <Checkbox
-                  checked={controlPlaneLogs.enableAuthenticatorLogs}
-                  disabled={isReadOnly}
-                  toggleChecked={() => {
-                    setControlPlaneLogs(
-                      new EKSLogging({
-                        ...controlPlaneLogs,
-                        enableAuthenticatorLogs: !controlPlaneLogs.enableAuthenticatorLogs,
-                      })
-                    );
-                  }}
-                  disabledTooltip={
-                    "Wait for provisioning to complete before editing this field."
-                  }
-                >
-                  <Text color="helper">
-                    Enable Authenticator logs in CloudWatch for this cluster
-                  </Text>
-                </Checkbox>
-
-                <Spacer y={1} />
-                <Checkbox
-                  checked={controlPlaneLogs.enableControllerManagerLogs}
-                  disabled={isReadOnly}
-                  toggleChecked={() => {
-                    setControlPlaneLogs(
-                      new EKSLogging({
-                        ...controlPlaneLogs,
-                        enableControllerManagerLogs: !controlPlaneLogs.enableControllerManagerLogs,
-                      })
-                    );
-                  }}
-                  disabledTooltip={
-                    "Wait for provisioning to complete before editing this field."
-                  }
-                >
-                  <Text color="helper">
-                    Enable Controller Manager logs in CloudWatch for this
-                    cluster
-                  </Text>
-                </Checkbox>
-
-                <Spacer y={1} />
-                <Checkbox
-                  checked={controlPlaneLogs.enableSchedulerLogs}
-                  disabled={isReadOnly}
-                  toggleChecked={() => {
-                    setControlPlaneLogs(
-                      new EKSLogging({
-                        ...controlPlaneLogs,
-                        enableSchedulerLogs: !controlPlaneLogs.enableSchedulerLogs,
-                      })
-                    );
-                  }}
-                  disabledTooltip={
-                    "Wait for provisioning to complete before editing this field."
-                  }
-                >
-                  <Text color="helper">
-                    Enable Scheduler logs in CloudWatch for this cluster
-                  </Text>
-                </Checkbox>
-
-                <Spacer y={1} />
-                <Checkbox
-                  checked={loadBalancerType}
-                  disabled={isReadOnly}
-                  toggleChecked={() => {
-                    if (loadBalancerType) {
-                      setWildCardDomain("");
-                      setIPAllowList("");
-                      setwafV2ARN("");
-                      setAwsTags("");
-                      seCertificateARN("");
-                      setWaf2Enabled(false);
-                      //setAccessS3Logs(false);
-                    }
-
-                    setLoadBalancerType(!loadBalancerType);
-                  }}
-                  disabledTooltip={
-                    "Wait for provisioning to complete before editing this field."
-                  }
-                >
-                  <Text color="helper">Set Load Balancer Type to ALB</Text>
-                </Checkbox>
-                <Spacer y={1} />
-                {loadBalancerType && (
-                  <>
-                    <FlexCenter>
-                      <Input
-                        width="350px"
-                        disabled={isReadOnly}
-                        value={wildCardDomain}
-                        setValue={(x: string) => setWildCardDomain(x)}
-                        label="Wildcard domain"
-                        placeholder="user-2.porter.run"
-                      />
-                      <Wrapper>
-                        <Tooltip
-                          children={<Icon src={info} />}
-                          content={
-                            "The provided domain should have a wildcard subdomain pointed to the LoadBalancer address. Using testing.porter.run will create a certificate for testing.porter.run with a SAN *.testing.porter.run"
-                          }
-                          position="right"
-                        />
-                      </Wrapper>
-                    </FlexCenter>
-
-                    {validateInput(wildCardDomain) && (
-                      <ErrorInLine>
-                        <i className="material-icons">error</i>
-                        {validateInput(wildCardDomain)}
-                      </ErrorInLine>
-                    )}
-                    <Spacer y={1} />
-
-                    <FlexCenter>
-                      <>
-                        <Input
-                          width="350px"
-                          disabled={isReadOnly}
-                          value={IPAllowList}
-                          setValue={(x: string) => setIPAllowList(x)}
-                          label="IP Allow List"
-                          placeholder="160.72.72.58/32,160.72.72.59/32"
-                        />
-                        <Wrapper>
-                          <Tooltip
-                            children={<Icon src={info} />}
-                            content={
-                              "Each range should be a CIDR, including netmask such as 10.1.2.3/21. To use multiple values, they should be comma-separated with no spaces"
-                            }
-                            position="right"
-                          />
-                        </Wrapper>
-                      </>
-                    </FlexCenter>
-                    {validateIPInput(IPAllowList) && (
-                      <ErrorInLine>
-                        <i className="material-icons">error</i>
-                        {"Needs to be Comma Separated Valid IP addresses"}
-                      </ErrorInLine>
-                    )}
-                    <Spacer y={1} />
-
-                    <Input
-                      width="350px"
-                      disabled={isReadOnly}
-                      value={certificateARN}
-                      setValue={(x: string) => seCertificateARN(x)}
-                      label="Certificate ARN"
-                      placeholder="arn:aws:acm:REGION:ACCOUNT_ID:certificate/ACM_ID"
-                    />
-                    <Spacer y={1} />
-
-                    <FlexCenter>
-                      <>
-                        <Input
-                          width="350px"
-                          disabled={isReadOnly}
-                          value={awsTags}
-                          setValue={(x: string) => setAwsTags(x)}
-                          label="AWS Tags"
-                          placeholder="costcenter=1,environment=10,project=32"
-                        />
-                        <Wrapper>
-                          <Tooltip
-                            children={<Icon src={info} />}
-                            content={
-                              "Each tag should be of the format 'key=value'. To use multiple values, they should be comma-separated with no spaces."
-                            }
-                            position="right"
-                          />
-                        </Wrapper>
-                      </>
-                    </FlexCenter>
-                    {validateTags(awsTags) && (
-                      <ErrorInLine>
-                        <i className="material-icons">error</i>
-                        {"Needs to be Comma Separated Valid Tags"}
-                      </ErrorInLine>
-                    )}
-
-                    <Spacer y={1} />
-                    {/* <Checkbox
-                    checked={accessS3Logs}
-                    disabled={isReadOnly}
-                    toggleChecked={() => {
-                      {
-                        console.log(!accessS3Logs)
-                      }
-                      setAccessS3Logs(!accessS3Logs)
-                    }}
-                    disabledTooltip={"Wait for provisioning to complete before editing this field."}
-                  >
-                    <Text color="helper">Access Logs to S3</Text>
-                  </Checkbox> */}
-                    <Spacer y={1} />
-                    <Checkbox
-                      checked={wafV2Enabled}
-                      disabled={isReadOnly}
-                      toggleChecked={() => {
-                        if (wafV2Enabled) {
-                          setwafV2ARN("");
-                        }
-                        setWaf2Enabled(!wafV2Enabled);
-                      }}
-                      disabledTooltip={
-                        "Wait for provisioning to complete before editing this field."
-                      }
-                    >
-                      <Text color="helper">WAFv2 Enabled</Text>
-                    </Checkbox>
-                    {wafV2Enabled && (
-                      <>
-                        <Spacer y={1} />
-
-                        <FlexCenter>
-                          <>
-                            <Input
-                              width="500px"
-                              type="string"
-                              label="WAFv2 ARN"
-                              disabled={isReadOnly}
-                              value={wafV2ARN}
-                              setValue={(x: string) => setwafV2ARN(x)}
-                              placeholder="arn:aws:wafv2:REGION:ACCOUNT_ID:regional/webacl/ACL_NAME/RULE_ID"
-                            />
-                            <Wrapper>
-                              <Tooltip
-                                children={<Icon src={info} />}
-                                content={
-                                  'Only Regional WAFv2 is supported. To find your ARN, navigate to the WAF console, click the Gear icon in the top right, and toggle "ARN" to on'
-                                }
-                                position="right"
-                              />
-                            </Wrapper>
-                          </>
-                        </FlexCenter>
-
-                        {(wafV2ARN == undefined || wafV2ARN?.length == 0) && (
-                          <ErrorInLine>
-                            <i className="material-icons">error</i>
-                            {"Required if WafV2 is enabled"}
-                          </ErrorInLine>
-                        )}
-                      </>
-                    )}
-                    <Spacer y={1} />
-                  </>
-                )}
-              </>
-            )}
-          </>
-        )}
-      </>
+          label="📍 AWS region" />
+        {renderAdvancedSettings()}
+      </StyledForm>
+        <Button
+          // disabled={isDisabled()}
+          disabled={isDisabled() || isLoading}
+          onClick={createCluster}
+          status={getStatus()}
+        >
+          Provision
+        </Button></>
     );
   };
 
   return (
     <>
-      <StyledForm>{renderForm()}</StyledForm>
-      <Button
-        // disabled={isDisabled()}
-        disabled={
-          user?.email === "admin@porter.run" || currentProject?.id === 7760 || currentProject?.id === 7257 || currentProject?.id === 7645
-            ? false
-            : currentCluster
-              ? true
-              : isDisabled()
-        }
-        onClick={createCluster}
-        status={getStatus()}
-      >
-        Provision
-      </Button>
+      {renderForm()}
+      {
+        user.isPorterUser &&
+        <>
+
+          <Spacer y={1} />
+          <Text color="yellow">Visible to Admin Only</Text>
+          <Button
+            color="red"
+            onClick={createCluster}
+            status={getStatus()}
+          >
+            Override Provision
+          </Button>
+        </>
+      }
     </>
   );
 };
@@ -906,6 +1132,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
     margin-left: -7px;
     transform: ${(props) =>
     props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+    transition: transform 0.1s ease;
   }
 `;
 

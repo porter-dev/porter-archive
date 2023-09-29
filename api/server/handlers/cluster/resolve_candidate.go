@@ -45,7 +45,7 @@ func (c *ResolveClusterCandidateHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		return
 	}
 
-	cluster, cc, err := createClusterFromCandidate(c.Repo(), proj, user, cc, request)
+	cluster, cc, err := createClusterFromCandidate(c.Repo(), proj, user, cc, request, c.Config().LaunchDarklyClient)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return

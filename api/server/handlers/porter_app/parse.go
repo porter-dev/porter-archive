@@ -8,8 +8,9 @@ import (
 
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	porterAppUtils "github.com/porter-dev/porter/api/utils/porter_app"
 	"github.com/porter-dev/porter/internal/helm/loader"
-	"github.com/porter-dev/porter/internal/integrations/powerdns"
+	"github.com/porter-dev/porter/internal/integrations/dns"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/domain"
 	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
@@ -69,14 +70,16 @@ type SyncedEnvSectionKey struct {
 }
 
 type SubdomainCreateOpts struct {
-	k8sAgent       *kubernetes.Agent
-	dnsRepo        repository.DNSRecordRepository
-	powerDnsClient *powerdns.Client
-	appRootDomain  string
-	stackName      string
+	k8sAgent      *kubernetes.Agent
+	dnsRepo       repository.DNSRecordRepository
+	dnsClient     *dns.Client
+	appRootDomain string
+	stackName     string
 }
 
 type ParseConf struct {
+	// PorterAppName is the name of the porter app
+	PorterAppName string
 	// PorterYaml is the raw porter yaml which is used to build the values + chart for helm upgrade
 	PorterYaml []byte
 	// ImageInfo contains the repository and tag of the image to use for the helm upgrade. Kept separate from the PorterYaml because the image info
@@ -108,6 +111,8 @@ type ParseConf struct {
 	FullHelmValues string
 	// AddCustomNodeSelector is a flag to determine whether to add porter.run/workload-kind: application to the nodeselector attribute of the helm values
 	AddCustomNodeSelector bool
+	// RemoveDeletedServices is a flag to determine whether to remove values and dependencies for services that are not defined in the porter.yaml
+	RemoveDeletedServices bool
 }
 
 func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interface{}, map[string]interface{}, error) {
@@ -196,7 +201,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 		Release:  parsed.Release,
 	}
 
-	values, err := buildUmbrellaChartValues(ctx, application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate, conf.Namespace, conf.AddCustomNodeSelector)
+	values, err := buildUmbrellaChartValues(ctx, application, synced_env, conf.ImageInfo, conf.ExistingHelmValues, conf.SubdomainCreateOpts, conf.InjectLauncherToStartCommand, conf.ShouldValidateHelmValues, conf.UserUpdate, conf.Namespace, conf.AddCustomNodeSelector, conf.RemoveDeletedServices)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error building values")
 		return nil, nil, nil, err
@@ -207,7 +212,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 		return nil, nil, nil, err
 	}
 
-	umbrellaChart, err := buildUmbrellaChart(application, conf.ServerConfig, conf.ProjectID, conf.ExistingChartDependencies)
+	umbrellaChart, err := buildUmbrellaChart(application, conf.ServerConfig, conf.ProjectID, conf.ExistingChartDependencies, conf.RemoveDeletedServices)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error building umbrella chart")
 		return nil, nil, nil, err
@@ -217,7 +222,7 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 	var preDeployJobValues map[string]interface{}
 	if application.Release != nil && application.Release.Run != nil {
 		application.Release = addLabelsToService(application.Release, conf.EnvironmentGroups, porter_app.LabelKey_PorterApplicationPreDeploy)
-		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, strings.TrimSuffix(strings.TrimPrefix(conf.Namespace, "porter-stack-"), "")+"-r", conf.UserUpdate, conf.AddCustomNodeSelector)
+		preDeployJobValues = buildPreDeployJobChartValues(application.Release, application.Env, synced_env, conf.ImageInfo, conf.InjectLauncherToStartCommand, conf.ExistingHelmValues, porterAppUtils.PredeployJobNameFromPorterAppName(conf.PorterAppName), conf.UserUpdate, conf.AddCustomNodeSelector)
 	}
 
 	return umbrellaChart, convertedValues, preDeployJobValues, nil
@@ -235,6 +240,7 @@ func buildUmbrellaChartValues(
 	userUpdate bool,
 	namespace string,
 	addCustomNodeSelector bool,
+	removeDeletedValues bool,
 ) (map[string]interface{}, error) {
 	values := make(map[string]interface{})
 
@@ -256,6 +262,23 @@ func buildUmbrellaChartValues(
 		if existingValues != nil {
 			if existingValues[helmName] != nil {
 				existingValuesMap := existingValues[helmName].(map[string]interface{})
+				if removeDeletedValues {
+					// strip the env variables before coalescing
+					if existingValuesMap["container"] != nil {
+						containerMap := existingValuesMap["container"].(map[string]interface{})
+						if containerMap["env"] != nil {
+							envMap := containerMap["env"].(map[string]interface{})
+							if envMap["normal"] != nil {
+								envMap["normal"] = make(map[string]interface{})
+							}
+							if envMap["synced"] != nil {
+								envMap["synced"] = make([]map[string]interface{}, 0)
+							}
+							containerMap["env"] = envMap
+						}
+						existingValuesMap["container"] = containerMap
+					}
+				}
 				helm_values = utils.DeepCoalesceValues(existingValuesMap, helm_values)
 			}
 		}
@@ -287,10 +310,12 @@ func buildUmbrellaChartValues(
 		values[helmName] = helm_values
 	}
 
-	// add back in the existing services that were not overwritten
-	for k, v := range existingValues {
-		if values[k] == nil {
-			values[k] = v
+	if !removeDeletedValues {
+		// add back in the existing services that were not overwritten
+		for k, v := range existingValues {
+			if values[k] == nil {
+				values[k] = v
+			}
 		}
 	}
 
@@ -335,13 +360,16 @@ func syncEnvironmentGroupToNamespaceIfLabelsExist(ctx context.Context, agent *ku
 		}
 	}
 
+	service.Config["configMapRefs"] = []string{}
+	service.Config["secretRefs"] = []string{}
+
 	for _, linkedGroupName := range strings.Split(linkedGroupNames, ".") {
 		inp := environment_groups.SyncLatestVersionToNamespaceInput{
 			BaseEnvironmentGroupName: linkedGroupName,
 			TargetNamespace:          targetNamespace,
 		}
 
-		syncedEnvironment, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp)
+		syncedEnvironment, err := environment_groups.SyncLatestVersionToNamespace(ctx, agent, inp, nil)
 		if err != nil {
 			return fmt.Errorf("error syncing environment group: %w", err)
 		}
@@ -360,7 +388,7 @@ func syncEnvironmentGroupToNamespaceIfLabelsExist(ctx context.Context, agent *ku
 				service.Config["configMapRefs"] = append(service.Config["configMapRefs"].([]any), syncedEnvironment.EnvironmentGroupVersionedName)
 			}
 
-			switch service.Config["configMapRefs"].(type) {
+			switch service.Config["secretRefs"].(type) {
 			case []string:
 				service.Config["secretRefs"] = append(service.Config["secretRefs"].([]string), syncedEnvironment.EnvironmentGroupVersionedName)
 			case []any:
@@ -502,7 +530,7 @@ func deconstructSyncedEnvs(synced_env []*SyncedEnvSection, env map[string]string
 	return synced
 }
 
-func buildUmbrellaChart(application *Application, config *config.Config, projectID uint, existingDependencies []*chart.Dependency) (*chart.Chart, error) {
+func buildUmbrellaChart(application *Application, config *config.Config, projectID uint, existingDependencies []*chart.Dependency, removeDeletedDependencies bool) (*chart.Chart, error) {
 	deps := make([]*chart.Dependency, 0)
 	for alias, service := range application.Services {
 		var serviceType string
@@ -537,14 +565,24 @@ func buildUmbrellaChart(application *Application, config *config.Config, project
 		})
 	}
 
-	// add in the existing dependencies that were not overwritten
-	for _, dep := range existingDependencies {
-		if !dependencyExists(deps, dep) {
-			// have to repair the dependency name because of https://github.com/helm/helm/issues/9214
-			if strings.HasSuffix(dep.Name, "-web") || strings.HasSuffix(dep.Name, "-wkr") || strings.HasSuffix(dep.Name, "-job") {
-				dep.Name = getChartTypeFromHelmName(dep.Name)
+	if !removeDeletedDependencies {
+		// add in the existing dependencies that were not overwritten
+		for _, dep := range existingDependencies {
+			if !dependencyExists(deps, dep) {
+				// have to repair the dependency name because of https://github.com/helm/helm/issues/9214
+				if strings.HasSuffix(dep.Name, "-web") || strings.HasSuffix(dep.Name, "-wkr") || strings.HasSuffix(dep.Name, "-job") {
+					dep.Name = getChartTypeFromHelmName(dep.Name)
+					if dep.Name == "" {
+						return nil, fmt.Errorf("unable to determine type of existing dependency")
+					}
+					version, err := getLatestTemplateVersion(dep.Name, config, projectID)
+					if err != nil {
+						return nil, err
+					}
+					dep.Version = version
+				}
+				deps = append(deps, dep)
 			}
-			deps = append(deps, dep)
 		}
 	}
 
@@ -710,8 +748,8 @@ func createSubdomainIfRequired(
 }
 
 func createDNSRecord(opts SubdomainCreateOpts) (*types.DNSRecord, error) {
-	if opts.powerDnsClient == nil {
-		return nil, fmt.Errorf("cannot create subdomain because powerdns client is nil")
+	if opts.dnsClient == nil {
+		return nil, fmt.Errorf("cannot create subdomain because dns client is nil")
 	}
 
 	endpoint, found, err := domain.GetNGINXIngressServiceIP(opts.k8sAgent.Clientset)
@@ -738,7 +776,7 @@ func createDNSRecord(opts SubdomainCreateOpts) (*types.DNSRecord, error) {
 
 	_record := domain.DNSRecord(*record)
 
-	err = _record.CreateDomain(opts.powerDnsClient)
+	err = _record.CreateDomain(opts.dnsClient)
 
 	if err != nil {
 		return nil, err
@@ -892,8 +930,19 @@ func convertHelmValuesToPorterYaml(helmValues string) (*PorterStackYAML, error) 
 			return nil, fmt.Errorf("invalid service key: %s. make sure that service key ends in either -web, -wkr, or -job", k)
 		}
 
+		config := convertMap(v).(map[string]interface{})
+		var runCommand string
+
+		if config["container"] != nil {
+			containerMap := config["container"].(map[string]interface{})
+			if containerMap["command"] != nil {
+				runCommand = containerMap["command"].(string)
+			}
+		}
+
 		services[serviceName] = &Service{
-			Config: convertMap(v).(map[string]interface{}),
+			Run:    &runCommand,
+			Config: config,
 			Type:   &serviceType,
 		}
 	}
@@ -939,5 +988,75 @@ func addLabelsToService(service *Service, envGroups []string, defaultLabelKey st
 		}
 	}
 
+	if _, ok := service.Config["podLabels"]; !ok {
+		service.Config["podLabels"] = make(map[string]string)
+	}
+	switch service.Config["podLabels"].(type) {
+	case map[string]string:
+		service.Config["podLabels"].(map[string]string)[defaultLabelKey] = porter_app.LabelValue_PorterApplication
+	case map[string]any:
+		service.Config["podLabels"].(map[string]any)[defaultLabelKey] = porter_app.LabelValue_PorterApplication
+	case any:
+		if val, ok := service.Config["podLabels"].(string); ok {
+			if val == "" {
+				service.Config["podLabels"] = map[string]string{
+					defaultLabelKey: porter_app.LabelValue_PorterApplication,
+				}
+			}
+		}
+	}
+
 	return service
+}
+
+func getServiceDeploymentMetadataFromValues(values map[string]interface{}, status types.PorterAppEventStatus) map[string]types.ServiceDeploymentMetadata {
+	serviceDeploymentMap := make(map[string]types.ServiceDeploymentMetadata)
+
+	for key := range values {
+		if key != "global" {
+			serviceName, serviceType := getServiceNameAndTypeFromHelmName(key)
+			externalURI := getServiceExternalURIFromServiceValues(values[key].(map[string]interface{}))
+			// jobs don't technically have a deployment, so hardcode the deployment status to success
+			serviceStatus := status
+			if serviceType == "job" {
+				serviceStatus = types.PorterAppEventStatus_Success
+			}
+			serviceDeploymentMap[serviceName] = types.ServiceDeploymentMetadata{
+				ExternalURI: externalURI,
+				Status:      serviceStatus,
+				Type:        serviceType,
+			}
+		}
+	}
+	return serviceDeploymentMap
+}
+
+func getServiceExternalURIFromServiceValues(serviceValues map[string]interface{}) string {
+	ingressMap, err := getNestedMap(serviceValues, "ingress")
+	if err == nil {
+		enabledVal, enabledExists := ingressMap["enabled"]
+		if enabledExists {
+			enabled, eOK := enabledVal.(bool)
+			if eOK && enabled {
+				customDomVal, customDomExists := ingressMap["custom_domain"]
+				if customDomExists {
+					customDomain, cOK := customDomVal.(bool)
+					if cOK && customDomain {
+						hostsExists, hostsExistsOK := ingressMap["hosts"]
+						if hostsExistsOK {
+							if hosts, hostsOK := hostsExists.([]interface{}); hostsOK && len(hosts) == 1 {
+								return hosts[0].(string)
+							}
+						}
+					}
+				}
+
+				if porterHosts, ok := ingressMap["porter_hosts"].([]interface{}); ok && len(porterHosts) == 1 {
+					return porterHosts[0].(string)
+				}
+			}
+		}
+	}
+
+	return ""
 }

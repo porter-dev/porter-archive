@@ -68,6 +68,11 @@ type UpdatePorterAppRequest struct {
 	PullRequestURL string `json:"pull_request_url"`
 }
 
+// RunPorterAppCommandRequest represents a request to run a command on a pod of a porter app
+type RunPorterAppCommandRequest struct {
+	Command string `json:"command" form:"required"`
+}
+
 type RollbackPorterAppRequest struct {
 	Revision int `json:"revision" form:"required"`
 }
@@ -88,8 +93,10 @@ type PorterAppEvent struct {
 	// UpdatedAt is the time (UTC) that an event was last updated. This can occur when an event was created as PROGRESSING, then was marked as SUCCESSFUL for example
 	UpdatedAt time.Time `json:"updated_at"`
 	// PorterAppID is the ID that the given event relates to
-	PorterAppID uint           `json:"porter_app_id"`
-	Metadata    map[string]any `json:"metadata,omitempty"`
+	PorterAppID uint `json:"porter_app_id"`
+	// DeploymentTargetID is the ID of the deployment target that the given event relates to
+	DeploymentTargetID string         `json:"deployment_target_id"`
+	Metadata           map[string]any `json:"metadata,omitempty"`
 }
 
 // PorterAppEventType is an alias for a string that represents a Porter Stack Event Type
@@ -106,16 +113,65 @@ const (
 	PorterAppEventType_AppEvent PorterAppEventType = "APP_EVENT"
 )
 
+// PorterAppEventStatus is an alias for a string that represents a Porter Stack Event Status
+type PorterAppEventStatus string
+
+const (
+	// PorterAppEventStatus_Success represents a Porter Stack Event that was successful
+	PorterAppEventStatus_Success PorterAppEventStatus = "SUCCESS"
+	// PorterAppEventStatus_Failed represents a Porter Stack Event that failed
+	PorterAppEventStatus_Failed PorterAppEventStatus = "FAILED"
+	// PorterAppEventStatus_Progressing represents a Porter Stack Event that is in progress
+	PorterAppEventStatus_Progressing PorterAppEventStatus = "PROGRESSING"
+	// PorterAppEventStatus_Canceled represents a Porter Stack Event that has been canceled
+	PorterAppEventStatus_Canceled PorterAppEventStatus = "CANCELED"
+)
+
 // PorterAppEvent represents a simplified event for creating a Porter stack app event
 // swagger:model
 type CreateOrUpdatePorterAppEventRequest struct {
 	// ID, if supplied, will be assumed to be an update event
 	ID string `json:"id"`
 	// Status contains the accepted status' of a given event such as SUCCESS, FAILED, PROGRESSING, etc.
-	Status string `json:"status,omitempty"`
+	Status PorterAppEventStatus `json:"status,omitempty"`
 	// Type represents a supported Porter Stack Event
 	Type PorterAppEventType `json:"type"`
 	// TypeExternalSource represents an external event source such as Github, or Gitlab. This is not always required but will commonly be see in build events
 	TypeExternalSource string         `json:"type_source,omitempty"`
 	Metadata           map[string]any `json:"metadata,omitempty"`
+	DeploymentTargetID string         `json:"deployment_target_id"`
+}
+
+// ServiceDeploymentMetadata contains information about a service when it deploys
+type ServiceDeploymentMetadata struct {
+	// Status is the status of the service deployment
+	Status PorterAppEventStatus `json:"status"`
+	// ExternalURI is the external URI of a service (if it is web)
+	ExternalURI string `json:"external_uri"`
+	// Type is the type of the service - one of web, worker, or job
+	Type string `json:"type"`
+}
+type ListEnvironmentGroupsResponse struct {
+	// EnvironmentGroups is a list of environment groups
+	EnvironmentGroups []EnvironmentGroupListItem `json:"environment_groups,omitempty"`
+}
+
+type EnvironmentGroupListItem struct {
+	// Name is the name of the environment group
+	Name string `json:"name"`
+	// LatestVersion is the latest version of the environment group
+	LatestVersion int `json:"latest_version"`
+	// Variables is a map of variables for the environment group
+	Variables map[string]string `json:"variables"`
+	// SecretVariables is a map of secret variables for the environment group
+	SecretVariables map[string]string `json:"secret_variables"`
+	// CreatedAtUTC is the time the environment group was created
+	CreatedAtUTC time.Time `json:"created_at"`
+	// LinkedApplications is the list of applications this env group is linked to
+	LinkedApplications []string `json:"linked_applications,omitempty"`
+}
+
+// PorterYamlV2PodsRequest is the request object for client.PorterYamlV2Pods
+type PorterYamlV2PodsRequest struct {
+	DeploymentTargetID string `schema:"deployment_target_id"`
 }

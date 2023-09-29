@@ -22,12 +22,14 @@ func initBuilderInfo() map[string]*buildpacks.BuilderInfo {
 	builders[buildpacks.PaketoBuilder] = &buildpacks.BuilderInfo{
 		Name: "Paketo",
 		Builders: []string{
+			"paketobuildpacks/builder-jammy-full:latest",
 			"paketobuildpacks/builder:full",
 		},
 	}
 	builders[buildpacks.HerokuBuilder] = &buildpacks.BuilderInfo{
 		Name: "Heroku",
 		Builders: []string{
+			"heroku/builder:22",
 			"heroku/buildpacks:20",
 			"heroku/buildpacks:18",
 		},

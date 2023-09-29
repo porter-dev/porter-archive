@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/features"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -344,6 +345,7 @@ func (rcf *CandidateResolver) resolveAWS(
 // rcf.ResolveIntegration, since it relies on the previously created integration.
 func (rcf *CandidateResolver) ResolveCluster(
 	repo repository.Repository,
+	launchDarklyClient *features.Client,
 ) (*models.Cluster, error) {
 	// build a cluster from the candidate
 	cluster, err := rcf.buildCluster()
@@ -352,7 +354,7 @@ func (rcf *CandidateResolver) ResolveCluster(
 	}
 
 	// save cluster to db
-	return repo.Cluster().CreateCluster(cluster)
+	return repo.Cluster().CreateCluster(cluster, launchDarklyClient)
 }
 
 func (rcf *CandidateResolver) buildCluster() (*models.Cluster, error) {

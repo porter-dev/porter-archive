@@ -3,51 +3,50 @@ import styled from "styled-components";
 
 import Selector, { SelectorPropsType } from "../Selector";
 
-type PropsType = {
+type PropsType<T> = {
   label: string;
-  value: string;
-  setActiveValue: (x: string) => void;
-  options: { value: string; label: string }[];
+  value: T;
+  setActiveValue: (x: T) => void;
+  options: { value: T; label: string }[];
+  displayFlex?: boolean;
   dropdownLabel?: string;
   width?: string;
   dropdownMaxHeight?: string;
   scrollBuffer?: boolean;
   doc?: string;
   disabled?: boolean;
-  selectorProps?: Partial<SelectorPropsType>;
+  selectorProps?: Partial<SelectorPropsType<T>>;
+  isLoading?: boolean;
 };
 
-type StateType = {};
-
-export default class SelectRow extends Component<PropsType, StateType> {
-  render() {
-    return (
-      <StyledSelectRow>
-        <Wrapper>
-          <Label>{this.props.label}</Label>
-          {this.props.doc ? (
-            <a href={this.props.doc} target="_blank">
-              <i className="material-icons">help_outline</i>
-            </a>
-          ) : null}
-        </Wrapper>
-        <SelectWrapper>
-          <Selector
-            disabled={this.props.disabled}
-            scrollBuffer={this.props.scrollBuffer}
-            activeValue={this.props.value}
-            setActiveValue={this.props.setActiveValue}
-            options={this.props.options}
-            dropdownLabel={this.props.dropdownLabel}
-            width={this.props.width || "270px"}
-            dropdownWidth={this.props.width}
-            dropdownMaxHeight={this.props.dropdownMaxHeight}
-            {...(this.props.selectorProps || {})}
-          />
-        </SelectWrapper>
-      </StyledSelectRow>
-    );
-  }
+export default function SelectRow<T>(props: PropsType<T>) {
+  return (
+    <StyledSelectRow displayFlex={props.displayFlex}>
+      <Wrapper>
+        <Label displayFlex={props.displayFlex}>{props.label}</Label>
+        {props.doc ? (
+          <a href={props.doc} target="_blank">
+            <i className="material-icons">help_outline</i>
+          </a>
+        ) : null}
+      </Wrapper>
+      <SelectWrapper>
+        <Selector
+          disabled={props.disabled}
+          scrollBuffer={props.scrollBuffer}
+          activeValue={props.value}
+          setActiveValue={props.setActiveValue}
+          options={props.options}
+          dropdownLabel={props.dropdownLabel}
+          width={props.width || "270px"}
+          dropdownWidth={props.width}
+          dropdownMaxHeight={props.dropdownMaxHeight}
+          isLoading={props.isLoading}
+          {...(props.selectorProps || {})}
+        />
+      </SelectWrapper>
+    </StyledSelectRow>
+  );
 }
 
 const SelectWrapper = styled.div``;
@@ -69,13 +68,14 @@ const Wrapper = styled.div`
   }
 `;
 
-const Label = styled.div`
+const Label = styled.div<{ displayFlex?: boolean }>`
   color: #ffffff;
-  margin-bottom: 10px;
   font-size: 13px;
+  margin-bottom: 10px;
+  margin-top: ${props => props.displayFlex ? "10px" : 0};
+  margin-right: ${props => props.displayFlex ? "10px" : 0};
 `;
 
-const StyledSelectRow = styled.div`
-  margin-bottom: 15px;
-  margin-top: 20px;
+const StyledSelectRow = styled.div<{ displayFlex?: boolean }>`
+  display: ${props => props.displayFlex ? "flex" : "block"};
 `;

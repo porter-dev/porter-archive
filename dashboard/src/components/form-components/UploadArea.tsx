@@ -4,7 +4,7 @@ import upload from "assets/upload.svg";
 
 type PropsType = {
   label?: string;
-  setValue: (x: any) => void;
+  setValue: (x: string) => void;
   width?: string;
   height?: string;
   placeholder?: string;
@@ -17,16 +17,16 @@ type StateType = {
 
 export default class UploadArea extends Component<PropsType, StateType> {
   state = {
-    fileName: null as string,
+    fileName: "",
   };
   handleChange = (e: any) => {
     this.props.setValue(e.target.value);
   };
 
-  readFile = (file: any) => {
+  readFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
-      let text = e.target.result;
+      let text = e.target?.result as string;
       this.props.setValue(text);
     };
     reader.readAsText(file, "UTF-8");
@@ -61,7 +61,7 @@ export default class UploadArea extends Component<PropsType, StateType> {
             this.readFile(files[0]);
           }}
           onClick={() => {
-            document.getElementById("file").click();
+            document.getElementById("file")?.click();
           }}
         >
           <input
@@ -71,8 +71,11 @@ export default class UploadArea extends Component<PropsType, StateType> {
             accept=".json"
             onChange={(event) => {
               event.preventDefault();
+              if (!event?.target?.files) {
+                return;
+              }
               this.readFile(event.target.files[0]);
-              event.currentTarget.value = null;
+              event.currentTarget.value = "";
             }}
           />
           <Message>

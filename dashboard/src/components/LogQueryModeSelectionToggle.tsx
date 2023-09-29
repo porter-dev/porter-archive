@@ -69,7 +69,7 @@ const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`
 `;
 
 const ToggleButton = styled.div`
-  background: #26292e;
+  background: #181B20;
   border-radius: 5px;
   font-size: 13px;
   height: 30px;

@@ -89,16 +89,7 @@ const BuildpackConfigurationModal: React.FC<Props> = ({
             append(bp);
           }}
         />
-        <Spacer y={2} />
       </Scrollable>
-      <Footer>
-        <Shade />
-        <FooterButtons>
-          <Button onClick={closeModal} width={"75px"}>
-            Confirm
-          </Button>
-        </FooterButtons>
-      </Footer>
     </Modal>
   );
 };

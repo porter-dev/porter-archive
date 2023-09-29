@@ -74,7 +74,7 @@ func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *
 				continue
 			}
 			u, err := url.Parse(bp)
-			if err == nil && u.Scheme != "" {
+			if err == nil && u.Scheme != "" && u.Scheme != "urn" {
 				// could be a git repository containing the buildpack
 				if !strings.HasSuffix(u.Path, ".zip") && u.Host != "github.com" && u.Host != "www.github.com" {
 					return fmt.Errorf("please provide either a github.com URL or a ZIP file URL")
@@ -152,7 +152,7 @@ func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *
 	}
 
 	if len(buildOpts.Buildpacks) > 0 && strings.HasPrefix(buildOpts.Builder, "heroku") {
-		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile@1.0.1")
+		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile@2.0.1")
 	}
 
 	return sharedPackClient.Build(ctx, buildOpts)

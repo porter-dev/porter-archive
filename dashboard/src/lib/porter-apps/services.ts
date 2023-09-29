@@ -338,14 +338,14 @@ export function deserializeService({
             typeof config.allowConcurrent === "boolean" ||
             typeof overrideJobConfig?.allowConcurrent === "boolean"
               ? ServiceField.boolean(config.allowConcurrent, overrideJobConfig?.allowConcurrent)
-              : undefined,
+              : ServiceField.boolean(false, undefined),
           cron: ServiceField.string(config.cron, overrideJobConfig?.cron),
           suspendCron:
             typeof config.suspendCron === "boolean" ||
             typeof overrideJobConfig?.suspendCron === "boolean"
               ? ServiceField.boolean(config.suspendCron, overrideJobConfig?.suspendCron)
               : ServiceField.boolean(false, undefined),
-           timeoutSeconds: ServiceField.number(config.timeoutSeconds, overrideJobConfig?.timeoutSeconds),
+           timeoutSeconds: config.timeoutSeconds == 0 ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds) : ServiceField.number(config.timeoutSeconds, overrideJobConfig?.timeoutSeconds),
         },
       };
     })

@@ -63,7 +63,6 @@ const DictionaryArray: React.FC<DictionaryArrayField> = (props) => {
     return (
       <>
         {values.length > 0 && values.map((value: string, i: number) => {
-          console.log(value);
           return (
             <InputWrapper>
               <DictionaryEditor

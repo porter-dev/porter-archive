@@ -39,7 +39,6 @@ const Overview: React.FC = () => {
     }
 
     if (Object.keys(formState.errors).length > 0) {
-        console.log(formState.errors)
       return <Error message="Unable to update app" />;
     }
 

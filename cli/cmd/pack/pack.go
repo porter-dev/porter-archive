@@ -74,7 +74,7 @@ func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *
 				continue
 			}
 			u, err := url.Parse(bp)
-			if err == nil && u.Scheme != "" {
+			if err == nil && u.Scheme != "" && u.Scheme != "urn" {
 				// could be a git repository containing the buildpack
 				if !strings.HasSuffix(u.Path, ".zip") && u.Host != "github.com" && u.Host != "www.github.com" {
 					return fmt.Errorf("please provide either a github.com URL or a ZIP file URL")

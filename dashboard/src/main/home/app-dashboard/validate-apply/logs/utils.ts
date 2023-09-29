@@ -212,6 +212,18 @@ export const useLogs = ({
           }
         });
         const newLogsParsed = parseLogs(newLogs);
+        newLogs.filter((log) => {
+          return log.metadata?.raw_labels?.porter_run_app_revision_id != null
+            && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != null
+            && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != 0
+        }).forEach((log) => {
+          if (log.metadata?.raw_labels?.porter_run_app_revision_id != null) {
+            const revisionNumber = revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id];
+            if (revisionNumber != null && revisionNumber != 0) {
+              log.metadata.revision = revisionNumber.toString();
+            }
+          }
+        })
         const newLogsFiltered = filterLogs(newLogsParsed);
         pushLogs(newLogsFiltered);
       },

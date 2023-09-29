@@ -43,6 +43,11 @@ export const deletionValidator = z.object({
       name: z.string(),
     })
     .array(),
+  predeploy: z
+    .object({
+      name: z.string(),
+    })
+    .array(),
   envGroupNames: z
     .object({
       name: z.string(),
@@ -81,6 +86,7 @@ export const porterAppFormValidator = z.object({
   app: clientAppValidator,
   source: sourceValidator,
   deletions: deletionValidator,
+  redeployOnSave: z.boolean().default(false),
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
@@ -261,7 +267,7 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
         method: b.method,
         context: b.context,
         buildpacks: b.buildpacks.map((b) => ({
-          name: BUILDPACK_TO_NAME[b],
+          name: BUILDPACK_TO_NAME[b] ?? b,
           buildpack: b,
         })),
         builder: b.builder,

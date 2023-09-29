@@ -48,9 +48,11 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"]
   ); //default is set to a t3 medium
   const [maxRAM, setMaxRAM] = useState(
+    // round to 100
     Math.round(
-      convert(AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"], "GiB").to("MB") - UPPER_RAM
-    )
+      convert(AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"], "GiB").to("MB") *
+      UPPER_BOUND / 100
+    ) * 100
   ); //default is set to a t3 medium
   const context = useContext(Context);
 
@@ -114,7 +116,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           if (data) {
             let largestInstanceType = {
               vCPUs: 2,
-              RAM: 4294,
+              RAM: 4,
             };
 
             data.forEach((node: any) => {
@@ -139,8 +141,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             setMaxCPU(Math.fround(largestInstanceType.vCPUs));
             setMaxRAM(
               Math.round(
-                convert(largestInstanceType.RAM, "GiB").to("MB"))
-
+                convert(largestInstanceType.RAM, "GiB").to("MB") * UPPER_BOUND / 100
+              ) * 100
             );
           }
         })

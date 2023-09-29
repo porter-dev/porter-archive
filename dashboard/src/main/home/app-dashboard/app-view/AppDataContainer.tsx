@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import {
   PorterAppFormData,
@@ -32,6 +32,7 @@ import EventFocusView from "./tabs/activity-feed/events/focus-views/EventFocusVi
 import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import JobsTab from "./tabs/JobsTab";
+import ConfirmRedeployModal from "./ConfirmRedeployModal";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -58,7 +59,7 @@ type AppDataContainerProps = {
 const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const history = useHistory();
   const queryClient = useQueryClient();
-  const [redeployOnSave, setRedeployOnSave] = useState(false);
+  const [confirmDeployModalOpen, setConfirmDeployModalOpen] = useState(false);
 
   const {
     porterApp,
@@ -117,6 +118,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       deletions: {
         serviceNames: [],
         envGroupNames: [],
+        predeploy: [],
       },
     },
   });
@@ -158,12 +160,28 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     return dirty.every((f) => f === "expanded" || f === "id");
   }, [isDirty, JSON.stringify(dirtyFields)]);
 
+  const buildIsDirty = useMemo(() => {
+    if (!isDirty) return false;
+
+    // get all entries in entire dirtyFields object that are true
+    const dirty = getAllDirtyFields(dirtyFields.app?.build ?? {});
+    return dirty.some((f) => f);
+  }, [isDirty, JSON.stringify(dirtyFields)]);
+
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const { validatedAppProto, variables, secrets } = await validateApp(
+      const { variables, secrets, validatedAppProto } = await validateApp(
         data,
         latestProto
       );
+
+      const needsRebuild =
+        buildIsDirty || latestRevision.status === "BUILD_FAILED";
+
+      if (needsRebuild && !data.redeployOnSave) {
+        setConfirmDeployModalOpen(true);
+        return;
+      }
 
       // updates the default env group associated with this app to store app specific env vars
       const res = await api.updateEnvironmentGroupV2(
@@ -201,11 +219,14 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         })),
       });
 
+      // force_build will create a new 0 revision that will not be deployed
+      // but will be used to hydrate values when the workflow is run
       await api.applyApp(
         "<token>",
         {
           b64_app_proto: btoa(protoWithUpdatedEnv.toJsonString()),
           deployment_target_id: deploymentTarget.id,
+          force_build: needsRebuild,
         },
         {
           project_id: projectId,
@@ -213,11 +234,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         }
       );
 
-      if (
-        redeployOnSave &&
-        latestSource.type === "github" &&
-        dirtyFields.app?.build
-      ) {
+      if (latestSource.type === "github" && needsRebuild) {
         const res = await api.reRunGHWorkflow(
           "<token>",
           {},
@@ -235,10 +252,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         if (res.data != null) {
           window.open(res.data, "_blank", "noreferrer");
         }
-
-        setRedeployOnSave(false);
       }
-
       await queryClient.invalidateQueries([
         "getLatestRevision",
         projectId,
@@ -260,7 +274,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     } catch (err) {}
   });
 
-  useEffect(() => {
+  const cancelRedeploy = useCallback(() => {
     reset({
       app: clientAppFromProto({
         proto: previewRevision
@@ -275,9 +289,37 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         envGroupNames: [],
         serviceNames: [],
       },
+      redeployOnSave: false,
+    });
+    setConfirmDeployModalOpen(false);
+  }, [previewRevision, latestProto, servicesFromYaml, appEnv, latestSource]);
+
+  const finalizeDeploy = useCallback(() => {
+    setConfirmDeployModalOpen(false);
+    onSubmit();
+  }, [onSubmit, setConfirmDeployModalOpen]);
+
+  useEffect(() => {
+    reset({
+      app: clientAppFromProto({
+        proto: previewRevision
+          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto))
+          : latestProto,
+        overrides: servicesFromYaml,
+        variables: appEnv?.variables,
+        secrets: appEnv?.secret_variables,
+      }),
+      source: latestSource,
+      deletions: {
+        envGroupNames: [],
+        serviceNames: [],
+        predeploy: [],
+      },
+      redeployOnSave: false,
     });
   }, [
     servicesFromYaml,
+    currentTab,
     latestProto,
     previewRevision,
     latestRevision.revision_number,
@@ -306,7 +348,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                   loadingText={"Updating..."}
                   height={"10px"}
                   status={isSubmitting ? "loading" : ""}
-                  disabled={isSubmitting}
+                  disabled={
+                    isSubmitting ||
+                    latestRevision.status === "CREATED" ||
+                    latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+                  }
+                  disabledTooltipMessage="Please wait for the deploy to complete before updating the app"
                 >
                   <Icon src={save} height={"13px"} />
                   <Spacer inline x={0.5} />
@@ -353,12 +400,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         {match(currentTab)
           .with("activity", () => <Activity />)
           .with("overview", () => <Overview />)
-          .with("build-settings", () => (
-            <BuildSettings
-              redeployOnSave={redeployOnSave}
-              setRedeployOnSave={setRedeployOnSave}
-            />
-          ))
+          .with("build-settings", () => <BuildSettings />)
           .with("environment", () => (
             <Environment latestSource={latestSource} />
           ))
@@ -370,6 +412,14 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>
+      {confirmDeployModalOpen ? (
+        <ConfirmRedeployModal
+          setOpen={setConfirmDeployModalOpen}
+          cancelRedeploy={cancelRedeploy}
+          finalizeDeploy={finalizeDeploy}
+          buildIsDirty={buildIsDirty}
+        />
+      ) : null}
     </FormProvider>
   );
 };

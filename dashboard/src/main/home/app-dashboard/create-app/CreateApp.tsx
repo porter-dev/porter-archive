@@ -159,6 +159,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       deletions: {
         serviceNames: [],
         envGroupNames: [],
+        predeploy: [],
       },
     },
   });
@@ -328,7 +329,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         const msg =
           "An error occurred while deploying your application. Please try again.";
-        updateAppStep({ step: "stack-launch-failure", errorMessage: msg, appName: name.value });
+        updateAppStep({
+          step: "stack-launch-failure",
+          errorMessage: msg,
+          appName: name.value,
+        });
         setDeployError(msg);
         return false;
       } finally {
@@ -372,7 +377,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       setStep((prev) => Math.max(prev, 5));
     } else {
       setStep((prev) => Math.min(prev, 2));
-    };
+    }
   }, [services]);
 
   // todo(ianedwards): it's a bit odd that the button error can be set to either a string or JSX,
@@ -605,8 +610,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
-                              } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${
+                                  detectedServices.count > 1 ? "s" : ""
+                                } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

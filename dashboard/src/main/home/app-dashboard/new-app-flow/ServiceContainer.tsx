@@ -94,6 +94,9 @@ const ServiceContainer: React.FC<ServiceProps> = ({
                 }
               }
             });
+
+            console.log(largestInstanceType.RAM)
+
             setApplicationNodeCount(nodeCount);
             setMaxCPU(largestInstanceType.vCPUs);
             setMaxRAM(largestInstanceType.RAM);

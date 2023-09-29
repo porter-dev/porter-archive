@@ -23,6 +23,8 @@ const BuildSettings: React.FC = () => {
     }
 
     if (Object.keys(errors).length > 0) {
+      // TODO: remove console.log once rollout is stable
+      console.log(errors);
       return <Error message="Unable to update app" />;
     }
 

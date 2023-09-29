@@ -8,13 +8,13 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/aws/aws-sdk-go v1.44.160
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.3
-	github.com/buildpacks/pack v0.30.0
+	github.com/buildpacks/pack v0.31.0
 	github.com/cli/cli v1.11.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/digitalocean/godo v1.75.0
-	github.com/docker/cli v24.0.5+incompatible
+	github.com/docker/cli v24.0.6+incompatible
 	github.com/docker/distribution v2.8.2+incompatible
-	github.com/docker/docker v24.0.5+incompatible
+	github.com/docker/docker v24.0.6+incompatible
 	github.com/docker/docker-credential-helpers v0.7.0
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.13.0
@@ -37,7 +37,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/moby/moby v20.10.6+incompatible
 	github.com/moby/term v0.5.0
-	github.com/opencontainers/image-spec v1.1.0-rc4
+	github.com/opencontainers/image-spec v1.1.0-rc5
 	github.com/pkg/errors v0.9.1
 	github.com/porter-dev/switchboard v0.0.3
 	github.com/rs/zerolog v1.26.0
@@ -46,9 +46,9 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.0
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/crypto v0.12.0
-	golang.org/x/net v0.14.0
-	golang.org/x/oauth2 v0.11.0
+	golang.org/x/crypto v0.13.0
+	golang.org/x/net v0.15.0
+	golang.org/x/oauth2 v0.12.0
 	google.golang.org/api v0.126.0
 	google.golang.org/genproto v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/grpc v1.57.0
@@ -211,14 +211,14 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/buildpacks/imgutil v0.0.0-20230626185301-726f02e4225c // indirect
-	github.com/buildpacks/lifecycle v0.17.0 // indirect
+	github.com/buildpacks/lifecycle v0.17.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/cli/safeexec v1.0.0 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/containerd/containerd v1.7.2 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.14.3 // indirect
-	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
+	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -343,9 +343,9 @@ require (
 	go.starlark.net v0.0.0-20220328144851-d1966c6b9fcd // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/sync v0.3.0
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/term v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/term v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

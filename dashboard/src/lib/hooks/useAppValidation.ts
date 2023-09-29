@@ -10,6 +10,12 @@ import api from "shared/api";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
+export type AppValidationResult = {
+  validatedAppProto: PorterApp;
+  variables: Record<string, string>;
+  secrets: Record<string, string>;
+};
+
 export const useAppValidation = ({
   deploymentTargetID,
   creating = false,
@@ -18,13 +24,6 @@ export const useAppValidation = ({
   creating?: boolean;
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
-
-  const removedEnvKeys = (
-    current: Record<string, string>,
-    previous: Record<string, string>
-  ) => {
-    return Object.keys(previous).filter((key) => !current[key]);
-  };
 
   const getBranchHead = async ({
     projectID,
@@ -62,7 +61,10 @@ export const useAppValidation = ({
   };
 
   const validateApp = useCallback(
-    async (data: PorterAppFormData, prevRevision?: PorterApp) => {
+    async (
+      data: PorterAppFormData,
+      prevRevision?: PorterApp
+    ): Promise<AppValidationResult> => {
       if (!currentProject || !currentCluster) {
         throw new Error("No project or cluster selected");
       }
@@ -117,6 +119,7 @@ export const useAppValidation = ({
           commit_sha,
           deletions: {
             service_names: data.deletions.serviceNames.map((s) => s.name),
+            predeploy: data.deletions.predeploy.map((s) => s.name),
             env_group_names: data.deletions.envGroupNames.map((eg) => eg.name),
             env_variable_names: [],
           },

@@ -225,7 +225,7 @@ export const useLogs = (
       }
 
       // TODO: refactor this extremely hacky way to filter out pre-deploy logs
-      if (!currentChart?.name.endsWith("-r") && log.metadata.pod_name.startsWith(`${appName}-r`)) {
+      if (!currentChart?.name.endsWith("-r") && log.metadata.pod_name.startsWith(`${appName}-r-`)) {
         return false;
       }
 

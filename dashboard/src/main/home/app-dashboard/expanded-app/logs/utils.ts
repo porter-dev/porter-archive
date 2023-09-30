@@ -27,10 +27,20 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
         metadata: parsed.metadata,
       };
     } catch (err) {
-      return {
-        line: Anser.ansiToJson(log.toString()),
-        lineNumber: idx + 1,
-        timestamp: undefined,
+      console.log(err);
+      try {
+        return {
+          line: Anser.ansiToJson(log.toString()),
+          lineNumber: idx + 1,
+          timestamp: undefined,
+        }
+      } catch (error) {
+        console.log(error);
+        return {
+          line: [],
+          lineNumber: idx + 1,
+          timestamp: undefined,
+        }
       }
     }
   });
@@ -192,7 +202,7 @@ export const useLogs = (
             newLogs.push(jsonLog)
           } catch (err) {
             // TODO: better error handling
-            // console.log(err)
+            console.log(err)
           }
         });
         const newLogsParsed = parseLogs(newLogs);

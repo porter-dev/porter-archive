@@ -1248,7 +1248,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}/app-templates", relPathV2, types.URLParamPorterAppName),
+				RelativePath: fmt.Sprintf("%s/{%s}/templates", relPathV2, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -1277,7 +1277,7 @@ func getPorterAppRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}/app-templates", relPathV2, types.URLParamPorterAppName),
+				RelativePath: fmt.Sprintf("%s/{%s}/templates", relPathV2, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

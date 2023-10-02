@@ -20,7 +20,11 @@ export function useDefaultDeploymentTarget() {
     ["getDefaultDeploymentTarget", currentProject?.id, currentCluster?.id],
     async () => {
       // see Context.tsx L98 for why the last check is necessary
-      if (!currentProject?.id || !currentCluster?.id || currentCluster.id === -1) {
+      if (
+        !currentProject?.id ||
+        !currentCluster?.id ||
+        currentCluster.id === -1
+      ) {
         return;
       }
       const res = await api.getDefaultDeploymentTarget(
@@ -35,7 +39,10 @@ export function useDefaultDeploymentTarget() {
       return deploymentTargetValidator.parseAsync(res.data);
     },
     {
-      enabled: !!currentProject && !!currentCluster,
+      enabled:
+        !!currentProject &&
+        !!currentCluster &&
+        currentProject.validate_apply_v2,
     }
   );
 

@@ -52,6 +52,7 @@ type TestRepository struct {
 	porterApp                 repository.PorterAppRepository
 	porterAppEvent            repository.PorterAppEventRepository
 	deploymentTarget          repository.DeploymentTargetRepository
+	appTemplate               repository.AppTemplateRepository
 }
 
 func (t *TestRepository) User() repository.UserRepository {
@@ -243,6 +244,11 @@ func (t *TestRepository) DeploymentTarget() repository.DeploymentTargetRepositor
 	return t.deploymentTarget
 }
 
+// AppTemplate returns a test AppTemplateRepository
+func (t *TestRepository) AppTemplate() repository.AppTemplateRepository {
+	return t.appTemplate
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(canQuery bool, failingMethods ...string) repository.Repository {
@@ -294,5 +300,6 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		porterApp:                 NewPorterAppRepository(canQuery, failingMethods...),
 		porterAppEvent:            NewPorterAppEventRepository(canQuery),
 		deploymentTarget:          NewDeploymentTargetRepository(),
+		appTemplate:               NewAppTemplateRepository(),
 	}
 }

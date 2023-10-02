@@ -48,4 +48,5 @@ type Repository interface {
 	PorterApp() PorterAppRepository
 	PorterAppEvent() PorterAppEventRepository
 	DeploymentTarget() DeploymentTargetRepository
+	AppTemplate() AppTemplateRepository
 }

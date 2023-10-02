@@ -144,3 +144,27 @@ func AppEnvGroupName(ctx context.Context, appName string, deploymentTargetId str
 
 	return fmt.Sprintf("%d-%s", porterApp.ID, deploymentTargetId[:6]), nil
 }
+
+// AppTemplateEnvGroupName returns the name of the environment group for an app template
+func AppTemplateEnvGroupName(ctx context.Context, appName string, clusterID uint, porterAppRepository repository.PorterAppRepository) (string, error) {
+	ctx, span := telemetry.NewSpan(ctx, "app-template-env-group-name")
+	defer span.End()
+
+	if appName == "" {
+		return "", telemetry.Error(ctx, span, nil, "app name is empty")
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
+
+	if clusterID == 0 {
+		return "", telemetry.Error(ctx, span, nil, "cluster id is empty")
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cluster-id", Value: clusterID})
+
+	porterApp, err := porterAppRepository.ReadPorterAppByName(clusterID, appName)
+	if err != nil {
+		return "", telemetry.Error(ctx, span, err, "error reading porter app by name")
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-id", Value: porterApp.ID})
+
+	return fmt.Sprintf("%d-template-preview", porterApp.ID), nil
+}

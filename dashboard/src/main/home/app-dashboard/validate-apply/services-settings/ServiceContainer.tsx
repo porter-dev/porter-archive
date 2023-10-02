@@ -47,10 +47,11 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"] * UPPER_BOUND
   ); //default is set to a t3 medium
   const [maxRAM, setMaxRAM] = useState(
+    // round to 100
     Math.round(
       convert(AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"], "GiB").to("MB") *
-      UPPER_BOUND
-    )
+      UPPER_BOUND / 100
+    ) * 100
   ); //default is set to a t3 medium
   const context = useContext(Context);
 
@@ -114,7 +115,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           if (data) {
             let largestInstanceType = {
               vCPUs: 2,
-              RAM: 4294,
+              RAM: 4,
             };
 
             data.forEach((node: any) => {
@@ -136,12 +137,24 @@ const ServiceContainer: React.FC<ServiceProps> = ({
               }
             });
 
-            setMaxCPU(Math.fround(largestInstanceType.vCPUs * UPPER_BOUND));
-            setMaxRAM(
-              Math.round(
-                convert(largestInstanceType.RAM, "GiB").to("MB") * UPPER_BOUND
-              )
-            );
+            // if the instance type has more than 4 GB ram, we use 90% of the ram/cpu
+            // otherwise, we use 75%
+            if (largestInstanceType.RAM > 4) {
+              // round down to nearest 0.5 cores
+              setMaxCPU(Math.floor(largestInstanceType.vCPUs * 0.9 * 2) / 2);
+              setMaxRAM(
+                Math.round(
+                  convert(largestInstanceType.RAM, "GiB").to("MB") * 0.9 / 100
+                ) * 100
+              );
+            } else {
+              setMaxCPU(Math.floor(largestInstanceType.vCPUs * UPPER_BOUND * 2) / 2);
+              setMaxRAM(
+                Math.round(
+                  convert(largestInstanceType.RAM, "GiB").to("MB") * UPPER_BOUND / 100
+                ) * 100
+              );
+            }
           }
         })
         .catch((error) => { });

@@ -33,6 +33,7 @@ import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import JobsTab from "./tabs/JobsTab";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
+import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -76,6 +77,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget.id,
   });
+
+  const { maxCPU, maxRAM } = useClusterResourceLimits({ projectId, clusterId });
 
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
@@ -271,7 +274,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       // redirect to the default tab after save
       history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
-    } catch (err) {}
+    } catch (err) { }
   });
 
   const cancelRedeploy = useCallback(() => {
@@ -377,11 +380,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
+                {
+                  label: "Build Settings",
+                  value: "build-settings",
+                },
+              ]
               : []),
             { label: "Settings", value: "settings" },
           ]}
@@ -399,7 +402,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         <Spacer y={1} />
         {match(currentTab)
           .with("activity", () => <Activity />)
-          .with("overview", () => <Overview />)
+          .with("overview", () => <Overview maxCPU={maxCPU} maxRAM={maxRAM} />)
           .with("build-settings", () => <BuildSettings />)
           .with("environment", () => (
             <Environment latestSource={latestSource} />

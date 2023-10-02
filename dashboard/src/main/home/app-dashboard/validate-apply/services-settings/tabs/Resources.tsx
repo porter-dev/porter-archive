@@ -8,10 +8,9 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
 import { match } from "ts-pattern";
-import { MIB_TO_GIB, MILI_TO_CORE, RESOURCE_ALLOCATION_RAM_V2, UPPER_BOUND_SMART } from "main/home/app-dashboard/new-app-flow/tabs/utils";
-import SmartOptModal from "main/home/app-dashboard/new-app-flow/tabs/SmartOptModal";
-import { FormControlLabel, Switch } from "@material-ui/core";
 import styled from "styled-components";
+import { Switch } from "@material-ui/core";
+import SmartOptModal from "main/home/app-dashboard/new-app-flow/tabs/SmartOptModal";
 
 type ResourcesProps = {
   index: number;
@@ -28,10 +27,9 @@ const Resources: React.FC<ResourcesProps> = ({
   service,
   isPredeploy = false,
 }) => {
-  const { control, register, watch, setValue } = useFormContext<PorterAppFormData>();
+  const { control, register, watch } = useFormContext<PorterAppFormData>();
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
-  const smartLimitRAM = Math.round((maxRAM - RESOURCE_ALLOCATION_RAM_V2) * UPPER_BOUND_SMART)
-  const smartLimitCPU = (maxCPU - Math.round((RESOURCE_ALLOCATION_RAM_V2 * (maxCPU / maxRAM) * 100)) / 100) * UPPER_BOUND_SMART
+
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`
   );
@@ -40,12 +38,8 @@ const Resources: React.FC<ResourcesProps> = ({
     `app.services.${index}.smartOptimization`
   );
 
-
-
-
   return (
     <>
-      <Spacer y={1} />
       <Spacer y={1} />
       <Controller
         name={isPredeploy ? `app.predeploy.${index}.smartOptimization` : `app.services.${index}.smartOptimization`}
@@ -84,7 +78,6 @@ const Resources: React.FC<ResourcesProps> = ({
         <SmartOptModal
           setModalVisible={setShowNeedHelpModal}
         />}
-
       <Controller
         name={
           isPredeploy

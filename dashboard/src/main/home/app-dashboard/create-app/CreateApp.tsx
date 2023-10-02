@@ -31,7 +31,6 @@ import {
   defaultSerialized,
   deserializeService,
 } from "lib/porter-apps/services";
-import EnvVariables from "../validate-apply/app-settings/EnvVariables";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import { valueExists } from "shared/util";
 import api from "shared/api";
@@ -180,12 +179,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const image = watch("source.image");
   const services = watch("app.services");
 
-  const {
-    detectedServices: servicesFromYaml,
-    porterYamlFound,
-    detectedName,
-    loading: isLoadingPorterYaml,
-  } = usePorterYaml({
+  const { detectedServices: servicesFromYaml, detectedName } = usePorterYaml({
     source: source?.type === "github" ? source : null,
     appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
   });
@@ -630,10 +624,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <Text color="helper">
                       Specify environment variables shared among all services.
                     </Text>
-                    <EnvSettings
-                      baseEnvGroups={baseEnvGroups}
-                      servicesFromYaml={null}
-                    />
+                    <EnvSettings baseEnvGroups={baseEnvGroups} />
                   </>,
                   source.type === "github" && (
                     <>

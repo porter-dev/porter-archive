@@ -22,8 +22,42 @@ export type DetectedServices = {
   services: ClientService[];
   predeploy?: ClientService;
   build?: BuildOptions;
+  previews?: {
+    services: ClientService[];
+    predeploy?: ClientService;
+    variables?: Record<string, string>;
+  };
 };
 type ClientServiceType = "web" | "worker" | "job" | "predeploy";
+
+const webConfigValidator = z.object({
+  type: z.literal("web"),
+  autoscaling: autoscalingValidator.optional(),
+  domains: domainsValidator,
+  healthCheck: healthcheckValidator.optional(),
+  private: serviceBooleanValidator.optional(),
+});
+export type ClientWebConfig = z.infer<typeof webConfigValidator>;
+
+const workerConfigValidator = z.object({
+  type: z.literal("worker"),
+  autoscaling: autoscalingValidator.optional(),
+});
+export type ClientWorkerConfig = z.infer<typeof workerConfigValidator>;
+
+const jobConfigValidator = z.object({
+  type: z.literal("job"),
+  allowConcurrent: serviceBooleanValidator.optional(),
+  cron: serviceStringValidator,
+  suspendCron: serviceBooleanValidator.optional(),
+  timeoutSeconds: serviceNumberValidator,
+});
+export type ClientJobConfig = z.infer<typeof jobConfigValidator>;
+
+const predeployConfigValidator = z.object({
+  type: z.literal("predeploy"),
+});
+export type ClientPredeployConfig = z.infer<typeof predeployConfigValidator>;
 
 // serviceValidator is the validator for a ClientService
 // This is used to validate a service when creating or updating an app
@@ -37,27 +71,10 @@ export const serviceValidator = z.object({
   cpuCores: serviceNumberValidator,
   ramMegabytes: serviceNumberValidator,
   config: z.discriminatedUnion("type", [
-    z.object({
-      type: z.literal("web"),
-      autoscaling: autoscalingValidator.optional(),
-      domains: domainsValidator,
-      healthCheck: healthcheckValidator.optional(),
-      private: serviceBooleanValidator.optional(),
-    }),
-    z.object({
-      type: z.literal("worker"),
-      autoscaling: autoscalingValidator.optional(),
-    }),
-    z.object({
-      type: z.literal("job"),
-      allowConcurrent: serviceBooleanValidator.optional(),
-      cron: serviceStringValidator,
-      suspendCron: serviceBooleanValidator.optional(),
-      timeoutSeconds: serviceNumberValidator,
-    }),
-    z.object({
-      type: z.literal("predeploy"),
-    }),
+    webConfigValidator,
+    workerConfigValidator,
+    jobConfigValidator,
+    predeployConfigValidator,
   ]),
   domainDeletions: z
     .object({

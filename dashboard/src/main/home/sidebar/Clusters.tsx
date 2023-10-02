@@ -147,9 +147,9 @@ class Clusters extends Component<PropsType, StateType> {
     let { clusters } = this.state;
     let { currentCluster, setCurrentCluster, currentProject } = this.context;
 
-    if (currentProject?.simplified_view_enabled ) {
+    if (currentProject?.simplified_view_enabled) {
       const cluster = clusters[0];
-      return currentProject?.preview_envs_enabled && currentCluster?.preview_envs_enabled ? (
+      return currentProject?.preview_envs_enabled ? (
         <NavButton
           path="/preview-environments"
           targetClusterName={cluster?.name}

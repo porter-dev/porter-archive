@@ -117,3 +117,31 @@ export const useClusterResourceLimits = (
         maxRAM
     }
 }
+
+// this function returns the fraction which the resource sliders 'snap' to when the user turns on smart optimization
+export const lowestClosestResourceMultipler = (min: number, max: number, value: number): number => {
+    const fractions = [0.5, 0.25, 0.125];
+
+    for (const fraction of fractions) {
+        const newValue = fraction * (max - min) + min;
+        if (newValue <= value) {
+            return fraction;
+        }
+    }
+
+    return 0.125; // Return 0 if no fraction rounds down
+}
+
+// this function is used to snap both resource sliders in unison when one is changed
+export const closestMultiplier = (min: number, max: number, value: number): number => {
+    const fractions = [0.5, 0.25, 0.125];
+    let closestFraction = 0.125;
+    for (const fraction of fractions) {
+        const newValue = fraction * (max - min) + min;
+        if (Math.abs(newValue - value) < Math.abs(closestFraction * (max - min) + min - value)) {
+            closestFraction = fraction;
+        }
+    }
+
+    return closestFraction;
+}

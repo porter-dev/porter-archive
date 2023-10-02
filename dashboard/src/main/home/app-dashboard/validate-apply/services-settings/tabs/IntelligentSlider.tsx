@@ -1,12 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Slider, { Mark } from '@material-ui/core/Slider';
 import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
 import styled from 'styled-components';
 import { withStyles } from '@material-ui/core/styles';
-import Text from 'components/porter/Text';
 import Spacer from 'components/porter/Spacer';
-import SmartOptModal from 'main/home/app-dashboard/new-app-flow/tabs/SmartOptModal';
 import NodeInfoModal from 'main/home/app-dashboard/new-app-flow/tabs/NodeInfoModal';
 
 type IntelligentSliderProps = {
@@ -21,9 +18,8 @@ type IntelligentSliderProps = {
     color?: string;
     width?: string;
     step?: number;
-    smartLimit?: number;
-    override?: boolean;
-    nodeCount?: number;
+    isSmartOptimizationOn: boolean;
+    decimalsToRoundTo?: number;
 };
 
 const ValueLabelComponent: React.FC<any> = (props) => {
@@ -52,113 +48,134 @@ const IntelligentSlider: React.FC<IntelligentSliderProps> = ({
     color,
     step,
     width,
-    smartLimit,
-    override,
-    nodeCount
+    isSmartOptimizationOn,
+    decimalsToRoundTo = 0,
 }) => {
     const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
 
-    const optimal = nodeCount ? Math.round((max / nodeCount) * 10) / 10 : 0;
-
-    const mid = min + (max - min) * 0.25;
-    const quarter = min + (max - min) * 0.125;
-    const marks: Mark[] = [
-        {
-            value: max,
-            label: max.toString(),
-        },
-    ];
-    var isExceedingLimit = false;
-    var displayOptimalText = false;
-    //Optimal Marks only give useful information to user if they are using more than 2 nodes
-    // if (optimal != 0 && nodeCount && nodeCount > 2) {
-    //   marks.push({
-    //     value: optimal,
-    //     label: (
-    //       <Text color="helper" size={10}>
-    //         Recommended
-    //       </Text>
-
-    //     )
-    //   });
-    //   displayOptimalText = Number(value) == optimal;
-    // }
-
-    if (smartLimit) {
-
-        marks.push({
-            value: smartLimit,
-            label: smartLimit.toString(),
-        },
+    const marks: Mark[] = useMemo(() => {
+        const marks: Mark[] = [
             {
-                value: mid,
-                label: "",
+                value: max,
+                label: max.toString(),
             },
             {
-                value: quarter,
-                label: "",
-            },);
-        displayOptimalText = Number(value) == mid || Number(value) == quarter;
-        isExceedingLimit = Number(value) > smartLimit;
-    }
-    const isCloseToMark = (value, marks, threshold = 0.1) => {
-        return marks.some(mark => Math.abs(mark.value - value) < threshold);
-    };
+                value: min,
+                label: min.toString(),
+            }
+        ];
 
-    const getClosestMark = (value, marks) => {
+        if (isSmartOptimizationOn) {
+            let half = min + (max - min) * 0.5;
+            let quarter = min + (max - min) * 0.25;
+            let eighth = min + (max - min) * 0.125;
+            if (decimalsToRoundTo > 0) {
+                half = Number(half.toFixed(decimalsToRoundTo));
+                quarter = Number(quarter.toFixed(decimalsToRoundTo));
+                eighth = Number(eighth.toFixed(decimalsToRoundTo));
+            }
+            marks.push(
+                {
+                    value: half,
+                    label: half.toString(),
+                },
+                {
+                    value: quarter,
+                    label: quarter.toString(),
+                },
+                {
+                    value: eighth,
+                    label: eighth.toString(),
+                },
+            );
+        }
+
+        return marks;
+    }, [isSmartOptimizationOn, min, max, decimalsToRoundTo]);
+
+    const displayOptimalText = useMemo(() => {
+        let half = min + (max - min) * 0.5;
+        let quarter = min + (max - min) * 0.25;
+        let eighth = min + (max - min) * 0.125;
+        if (decimalsToRoundTo > 0) {
+            half = Number(half.toFixed(decimalsToRoundTo));
+            quarter = Number(quarter.toFixed(decimalsToRoundTo));
+            eighth = Number(eighth.toFixed(decimalsToRoundTo));
+        }
+
+        return isSmartOptimizationOn && (Number(value) === quarter || Number(value) === eighth || Number(value) === half);
+    }, [value, min, max, isSmartOptimizationOn]);
+
+    const smartLimit = useMemo(() => {
+        let half = min + (max - min) * 0.5;
+        if (decimalsToRoundTo > 0) {
+            half = Number(half.toFixed(decimalsToRoundTo));
+        }
+        return min + (max - min) * 0.5;
+    }, [min, max]);
+
+    const isExceedingLimit = useMemo(() => {
+        return isSmartOptimizationOn && Number(value) > smartLimit;
+    }, [value, min, max, isSmartOptimizationOn]);
+
+    const getClosestMark = (value: string, marks: Mark[]) => {
         return marks.reduce((prev, curr) => (
-            Math.abs(curr.value - value) < Math.abs(prev.value - value) ? curr : prev
+            Math.abs(curr.value - Number(value)) < Math.abs(prev.value - Number(value)) ? curr : prev
         )).value;
     };
-
 
     return (
         <SliderContainer width={width}>
             <LabelContainer>
-                <>
-                    {label && <Label>{label}</Label>}
-                    <Value>{`${Math.round(value * 10 / step) / (10 / step)} ${unit}`}</Value>
-                    {displayOptimalText &&
-                        <><Spacer inline x={1} /><Label>Recommended based on the available compute </Label>  <StyledIcon
+                {label && <Label>{label}</Label>}
+                <Value>{`${value} ${unit}`}</Value>
+                {displayOptimalText &&
+                    <>
+                        <Spacer inline x={1} /><Label>Recommended based on the available compute </Label>  <StyledIcon
                             className="material-icons"
                             onClick={() => {
                                 setShowNeedHelpModal(true)
                             }}
                         >
                             help_outline
-                        </StyledIcon></>}
-                    {showNeedHelpModal &&
-                        <NodeInfoModal
-                            setModalVisible={setShowNeedHelpModal}
-                        />}
-                    {isExceedingLimit &&
-                        <><Spacer inline x={1} /><Label color="#FFBF00"> Value is not optimal for cost</Label></>}
-                </>
+                        </StyledIcon>
+                    </>
+                }
+                {showNeedHelpModal &&
+                    <NodeInfoModal
+                        setModalVisible={setShowNeedHelpModal}
+                    />
+                }
+                {isExceedingLimit &&
+                    <>
+                        <Spacer inline x={1} />
+                        <Label color="#FFBF00"> Value is not optimal for cost</Label>
+                    </>
+                }
             </LabelContainer>
 
             <DisabledTooltip title={disabled ? disabledTooltip || '' : ''} arrow>
                 <div style={{ position: 'relative' }}>
-                    {/* <div style={{ position: 'absolute', bottom: '100%', left: `calc(${((threeQuarter - min) / (max - min)) * 100}% - 50px)` }}>
-            Recommended
-          </div> */}
-                    <MaxedOutToolTip title={smartLimit?.toString() == value && !override ? "Using resources beyond this limit is not cost optimal - to override toggle off Smart Optimization" || '' : ''} arrow>
+                    <MaxedOutToolTip title={Number(value) === smartLimit && isSmartOptimizationOn ? "Using resources beyond this limit is not cost-optimal - to override, toggle off Smart Optimization" : ""} arrow>
                         <div style={{ position: 'relative' }}>
-
                             <StyledSlider
                                 ValueLabelComponent={ValueLabelComponent}
                                 aria-label="input slider"
                                 isExceedingLimit={isExceedingLimit}
                                 min={min}
                                 max={max}
-                                value={(!override && isExceedingLimit) ? smartLimit : Number(value)}
-                                onChange={(event, newValue) => {
-                                    if (!override && smartLimit && newValue > smartLimit) {
-                                        setValue(smartLimit);
-                                    } else if (!override && smartLimit) {
-                                        const closestMarkValue = getClosestMark(newValue, marks);
-                                        setValue(closestMarkValue);
-                                    } else {
-                                        setValue(newValue as number);
+                                value={(Number(value))}
+                                onChange={(_, newValue) => {
+                                    if (!Array.isArray(newValue)) {
+                                        if (isSmartOptimizationOn) {
+                                            if (newValue > smartLimit) {
+                                                return; // can't go beyond the limit
+                                            }
+                                            const closestMark = getClosestMark(newValue.toString(), marks);
+                                            setValue(closestMark);
+                                        } else {
+                                            setValue(newValue);
+                                        }
                                     }
                                 }}
                                 classes={{

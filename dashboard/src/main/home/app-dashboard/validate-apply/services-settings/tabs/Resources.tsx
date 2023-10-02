@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Spacer from "components/porter/Spacer";
 import { ClientService } from "lib/porter-apps/services";
 import { Controller, useFormContext } from "react-hook-form";
@@ -10,9 +10,9 @@ import { match } from "ts-pattern";
 import styled from "styled-components";
 import { Switch } from "@material-ui/core";
 import SmartOptModal from "main/home/app-dashboard/new-app-flow/tabs/SmartOptModal";
-import { RESOURCE_ALLOCATION_RAM_V2, UPPER_BOUND_SMART } from "main/home/app-dashboard/new-app-flow/tabs/utils";
 import IntelligentSlider from "./IntelligentSlider";
 import InputSlider from "components/porter/InputSlider";
+import { closestMultiplier, lowestClosestResourceMultipler } from "lib/hooks/useClusterResourceLimits";
 
 type ResourcesProps = {
   index: number;
@@ -32,15 +32,19 @@ const Resources: React.FC<ResourcesProps> = ({
   const { control, register, watch, setValue } = useFormContext<PorterAppFormData>();
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
 
-  const smartLimitCPU = (maxCPU - Math.round((RESOURCE_ALLOCATION_RAM_V2 * (maxCPU / maxRAM) * 100)) / 100) * UPPER_BOUND_SMART
-  const smartLimitRAM = Math.round((maxRAM - RESOURCE_ALLOCATION_RAM_V2) * UPPER_BOUND_SMART)
-
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`
   );
 
   const smartOpt = watch(
     `app.services.${index}.smartOptimization`
+  );
+
+  const memory = watch(
+    `app.services.${index}.ramMegabytes`
+  );
+  const cpu = watch(
+    `app.services.${index}.cpuCores`
   );
 
   return (
@@ -63,12 +67,22 @@ const Resources: React.FC<ResourcesProps> = ({
             <Switch
               size="small"
               color="primary"
+              disabled={memory.readOnly || cpu.readOnly || service.smartOptimization?.readOnly}
               checked={value?.value}
               onChange={
                 () => {
                   if (!value?.value) {
-                    setValue(`app.services.${index}.cpuCores.value`, smartLimitCPU)
-                    setValue(`app.services.${index}.ramMegabytes.value`, smartLimitRAM)
+                    const lowestRAM = lowestClosestResourceMultipler(0, maxRAM, memory.value);
+                    const lowestCPU = lowestClosestResourceMultipler(0, maxCPU, cpu.value);
+                    const lowestFraction = Math.min(lowestRAM, lowestCPU);
+                    setValue(`app.services.${index}.cpuCores`, {
+                      readOnly: false,
+                      value: Number((maxCPU * lowestFraction).toFixed(2))
+                    });
+                    setValue(`app.services.${index}.ramMegabytes`, {
+                      readOnly: false,
+                      value: maxRAM * lowestFraction
+                    });
                   }
                   onChange({
                     ...value,
@@ -94,21 +108,21 @@ const Resources: React.FC<ResourcesProps> = ({
           <IntelligentSlider
             label="CPUs: "
             unit="Cores"
-            override={!smartOpt?.value}
             min={0}
             max={maxCPU}
             color={"#3f51b5"}
-            smartLimit={smartLimitCPU}
             value={value.value.toString()}
             setValue={(e) => {
               if (smartOpt?.value) {
-                setValue(`app.services.${index}.smartOptimization.value`, true)
-                setValue(`app.services.${index}.ramMegabytes.value`, Math.round((e * (maxRAM / maxCPU) * 10) / 10))
+                setValue(
+                  `app.services.${index}.ramMegabytes`, {
+                  readOnly: false,
+                  value: closestMultiplier(0, maxCPU, value.value) * maxRAM
+                });
               }
               onChange({
                 ...value,
                 value: e,
-
               });
             }}
             step={0.1}
@@ -116,6 +130,8 @@ const Resources: React.FC<ResourcesProps> = ({
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
+            isSmartOptimizationOn={smartOpt?.value ?? false}
+            decimalsToRoundTo={2}
           />
         )}
       />
@@ -132,15 +148,15 @@ const Resources: React.FC<ResourcesProps> = ({
             label="RAM: "
             unit="MB"
             min={0}
-            override={!smartOpt?.value}
-            smartLimit={smartLimitRAM}
             max={maxRAM}
             color={"#3f51b5"}
             value={(value.value).toString()}
             setValue={(e) => {
               if (smartOpt?.value) {
-                setValue(`app.services.${index}.smartOptimization.value`, true)
-                setValue(`app.services.${index}.cpuCores.value`, (e * (maxCPU / maxRAM)))
+                setValue(`app.services.${index}.cpuCores`, {
+                  readOnly: false,
+                  value: Number((closestMultiplier(0, maxRAM, value.value) * maxCPU).toFixed(2))
+                })
               }
               onChange({
                 ...value,
@@ -152,6 +168,7 @@ const Resources: React.FC<ResourcesProps> = ({
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
+            isSmartOptimizationOn={smartOpt?.value ?? false}
           />
         )}
       />
@@ -165,14 +182,12 @@ const Resources: React.FC<ResourcesProps> = ({
               type="text"
               label="Instances"
               placeholder="ex: 1"
-              disabled={
-                service.instances.readOnly ?? config.autoscaling?.enabled
-              }
+              disabled={service.instances.readOnly || autoscalingEnabled.value}
               width="300px"
               disabledTooltip={
                 service.instances.readOnly
                   ? "You may only edit this field in your porter.yaml."
-                  : "Disable autoscaling to specify replicas."
+                  : "Disable autoscaling to specify instances."
               }
               {...register(`app.services.${index}.instances.value`)}
             />
@@ -248,6 +263,7 @@ const Resources: React.FC<ResourcesProps> = ({
                   render={({ field: { value, onChange } }) => (
                     <InputSlider
                       label="CPU threshold: "
+                      step={1}
                       unit="%"
                       min={0}
                       max={100}
@@ -276,6 +292,7 @@ const Resources: React.FC<ResourcesProps> = ({
                     <InputSlider
                       label="RAM threshold: "
                       unit="%"
+                      step={1}
                       min={0}
                       max={100}
                       value={value?.value.toString() ?? "50"}

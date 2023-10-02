@@ -27,7 +27,7 @@ const Resources: React.FC<ResourcesProps> = ({
   service,
   isPredeploy = false,
 }) => {
-  const { control, register, watch } = useFormContext<PorterAppFormData>();
+  const { control, register, watch, setValue } = useFormContext<PorterAppFormData>();
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
 
   const autoscalingEnabled = watch(

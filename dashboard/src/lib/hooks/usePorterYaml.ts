@@ -9,17 +9,17 @@ import { z } from "zod";
 
 type PorterYamlStatus =
   | {
-    loading: true;
-    detectedName: null;
-    detectedServices: null;
-    porterYamlFound: false;
-  }
+      loading: true;
+      detectedName: null;
+      detectedServices: null;
+      porterYamlFound: false;
+    }
   | {
-    detectedServices: DetectedServices | null;
-    detectedName: string | null;
-    loading: false;
-    porterYamlFound: boolean;
-  };
+      detectedServices: DetectedServices | null;
+      detectedName: string | null;
+      loading: false;
+      porterYamlFound: boolean;
+    };
 
 /*
  *
@@ -114,6 +114,15 @@ export const usePorterYaml = ({
         const data = await z
           .object({
             b64_app_proto: z.string(),
+            env_variables: z.record(z.string()).nullable(),
+            env_secrets: z.record(z.string()).nullable(),
+            preview_app: z
+              .object({
+                b64_app_proto: z.string(),
+                env_variables: z.record(z.string()).nullable(),
+                env_secrets: z.record(z.string()).nullable(),
+              })
+              .optional(),
           })
           .parseAsync(res.data);
         const proto = PorterApp.fromJsonString(atob(data.b64_app_proto));
@@ -129,6 +138,33 @@ export const usePorterYaml = ({
             services,
             predeploy,
           });
+        }
+
+        if (data.preview_app) {
+          const previewProto = PorterApp.fromJsonString(
+            atob(data.preview_app.b64_app_proto)
+          );
+          const {
+            services: previewServices,
+            predeploy: previewPredeploy,
+            build: previewBuild,
+          } = serviceOverrides({
+            overrides: previewProto,
+            useDefaults,
+          });
+
+          if (previewServices.length || previewPredeploy || previewBuild) {
+            setDetectedServices((prev) => ({
+              ...prev,
+              services: prev?.services ? prev.services : [],
+              previews: {
+                services: previewServices,
+                predeploy: previewPredeploy,
+                build: previewBuild,
+                variables: data.preview_app?.env_variables ?? {},
+              },
+            }));
+          }
         }
 
         if (proto.name) {

@@ -162,10 +162,7 @@ func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterAp
 
 	services := make(map[string]*porterv1.Service, 0)
 	for name, service := range porterApp.Services {
-		serviceType, err := protoEnumFromType(name, service)
-		if err != nil {
-			return appProto, nil, telemetry.Error(ctx, span, err, "error getting service type")
-		}
+		serviceType := protoEnumFromType(name, service)
 
 		serviceProto, err := serviceProtoFromConfig(service, serviceType)
 		if err != nil {
@@ -197,36 +194,29 @@ func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterAp
 	return appProto, porterApp.Env, nil
 }
 
-func protoEnumFromType(name string, service Service) (porterv1.ServiceType, error) {
-	var serviceType porterv1.ServiceType
-
-	if service.Type != "" {
-		if service.Type == "web" {
-			return porterv1.ServiceType_SERVICE_TYPE_WEB, nil
-		}
-		if service.Type == "worker" {
-			return porterv1.ServiceType_SERVICE_TYPE_WORKER, nil
-		}
-		if service.Type == "job" {
-			return porterv1.ServiceType_SERVICE_TYPE_JOB, nil
-		}
-
-		return serviceType, fmt.Errorf("invalid service type '%s'", service.Type)
-	}
+func protoEnumFromType(name string, service Service) porterv1.ServiceType {
+	serviceType := porterv1.ServiceType_SERVICE_TYPE_WORKER
 
 	if strings.Contains(name, "web") {
-		return porterv1.ServiceType_SERVICE_TYPE_WEB, nil
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WEB
 	}
-
-	if strings.Contains(name, "wkr") {
-		return porterv1.ServiceType_SERVICE_TYPE_WORKER, nil
+	if strings.Contains(name, "wkr") || strings.Contains(name, "worker") {
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WORKER
 	}
-
 	if strings.Contains(name, "job") {
-		return porterv1.ServiceType_SERVICE_TYPE_JOB, nil
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_JOB
 	}
 
-	return serviceType, errors.New("no type provided and could not parse service type from name")
+	switch service.Type {
+	case "web":
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WEB
+	case "worker":
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WORKER
+	case "job":
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_JOB
+	}
+
+	return serviceType
 }
 
 func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {

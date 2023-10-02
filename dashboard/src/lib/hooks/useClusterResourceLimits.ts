@@ -90,11 +90,24 @@ export const useClusterResourceLimits = (
             const maxRAM = data.reduce((acc, curr) => {
                 return Math.max(acc, curr.maxRAM);
             }, 0);
-            setMaxCPU(maxCPU * UPPER_BOUND);
-            setMaxRAM(
-                // round to 100
-                Math.round(convert(maxRAM, "GiB").to("MB") * UPPER_BOUND / 100) * 100
-            );
+            // if the instance type has more than 4 GB ram, we use 90% of the ram/cpu
+            // otherwise, we use 75%
+            if (maxRAM > 4) {
+                // round down to nearest 0.5 cores
+                setMaxCPU(Math.floor(maxCPU * 0.9 * 2) / 2);
+                setMaxRAM(
+                    Math.round(
+                        convert(maxRAM, "GiB").to("MB") * 0.9 / 100
+                    ) * 100
+                );
+            } else {
+                setMaxCPU(Math.floor(maxCPU * UPPER_BOUND * 2) / 2);
+                setMaxRAM(
+                    Math.round(
+                        convert(maxRAM, "GiB").to("MB") * UPPER_BOUND / 100
+                    ) * 100
+                );
+            }
         }
     }, [data])
 

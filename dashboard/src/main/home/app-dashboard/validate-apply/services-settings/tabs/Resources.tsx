@@ -3,7 +3,6 @@ import Spacer from "components/porter/Spacer";
 import { ClientService } from "lib/porter-apps/services";
 import { Controller, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
-import InputSlider from "components/porter/InputSlider";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
@@ -11,6 +10,9 @@ import { match } from "ts-pattern";
 import styled from "styled-components";
 import { Switch } from "@material-ui/core";
 import SmartOptModal from "main/home/app-dashboard/new-app-flow/tabs/SmartOptModal";
+import { RESOURCE_ALLOCATION_RAM_V2, UPPER_BOUND_SMART } from "main/home/app-dashboard/new-app-flow/tabs/utils";
+import IntelligentSlider from "./IntelligentSlider";
+import InputSlider from "components/porter/InputSlider";
 
 type ResourcesProps = {
   index: number;
@@ -30,6 +32,9 @@ const Resources: React.FC<ResourcesProps> = ({
   const { control, register, watch, setValue } = useFormContext<PorterAppFormData>();
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
 
+  const smartLimitCPU = (maxCPU - Math.round((RESOURCE_ALLOCATION_RAM_V2 * (maxCPU / maxRAM) * 100)) / 100) * UPPER_BOUND_SMART
+  const smartLimitRAM = Math.round((maxRAM - RESOURCE_ALLOCATION_RAM_V2) * UPPER_BOUND_SMART)
+
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`
   );
@@ -45,7 +50,7 @@ const Resources: React.FC<ResourcesProps> = ({
         name={isPredeploy ? `app.predeploy.${index}.smartOptimization` : `app.services.${index}.smartOptimization`}
         control={control}
         render={({ field: { value, onChange } }) => (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+          <SmartOptHeader>
             <StyledIcon
               className="material-icons"
               onClick={() => {
@@ -54,26 +59,26 @@ const Resources: React.FC<ResourcesProps> = ({
             >
               help_outline
             </StyledIcon>
-            <Text style={{ marginRight: '10px' }}>Smart Optimization</Text>
+            <Text>Smart Optimization</Text>
             <Switch
               size="small"
               color="primary"
-              checked={value.value}
+              checked={value?.value}
               onChange={
                 () => {
-                  if (!value.value) {
+                  if (!value?.value) {
                     setValue(`app.services.${index}.cpuCores.value`, smartLimitCPU)
                     setValue(`app.services.${index}.ramMegabytes.value`, smartLimitRAM)
                   }
                   onChange({
                     ...value,
-                    value: !value.value,
+                    value: !value?.value,
                   });
                 }
               }
               inputProps={{ 'aria-label': 'controlled' }}
             />
-          </div>)} />
+          </SmartOptHeader>)} />
       {showNeedHelpModal &&
         <SmartOptModal
           setModalVisible={setShowNeedHelpModal}
@@ -86,12 +91,12 @@ const Resources: React.FC<ResourcesProps> = ({
         }
         control={control}
         render={({ field: { value, onChange } }) => (
-          <InputSlider
+          <IntelligentSlider
             label="CPUs: "
             unit="Cores"
             override={!smartOpt?.value}
             min={0}
-            max={Math.floor((maxCPU - (RESOURCE_ALLOCATION_RAM_V2 * maxCPU / maxRAM)) * 10) / 10}
+            max={maxCPU}
             color={"#3f51b5"}
             smartLimit={smartLimitCPU}
             value={value.value.toString()}
@@ -123,13 +128,13 @@ const Resources: React.FC<ResourcesProps> = ({
         }
         control={control}
         render={({ field: { value, onChange } }) => (
-          <InputSlider
+          <IntelligentSlider
             label="RAM: "
             unit="MB"
             min={0}
             override={!smartOpt?.value}
             smartLimit={smartLimitRAM}
-            max={Math.round((maxRAM - RESOURCE_ALLOCATION_RAM_V2))}
+            max={maxRAM}
             color={"#3f51b5"}
             value={(value.value).toString()}
             setValue={(e) => {
@@ -308,3 +313,9 @@ const StyledIcon = styled.i`
     color: #666;  
   }
 `;
+
+const SmartOptHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+`

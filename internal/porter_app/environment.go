@@ -166,5 +166,5 @@ func AppTemplateEnvGroupName(ctx context.Context, appName string, clusterID uint
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-id", Value: porterApp.ID})
 
-	return fmt.Sprintf("template-preview-%d", porterApp.ID), nil
+	return fmt.Sprintf("%d-template-preview", porterApp.ID), nil
 }

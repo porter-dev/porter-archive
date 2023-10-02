@@ -196,15 +196,6 @@ func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterAp
 func protoEnumFromType(name string, service Service) porterv1.ServiceType {
 	serviceType := porterv1.ServiceType_SERVICE_TYPE_WORKER
 
-	switch service.Type {
-	case "web":
-		serviceType = porterv1.ServiceType_SERVICE_TYPE_WEB
-	case "worker":
-		serviceType = porterv1.ServiceType_SERVICE_TYPE_WORKER
-	case "job":
-		serviceType = porterv1.ServiceType_SERVICE_TYPE_JOB
-	}
-
 	if strings.Contains(name, "web") {
 		serviceType = porterv1.ServiceType_SERVICE_TYPE_WEB
 	}
@@ -212,6 +203,15 @@ func protoEnumFromType(name string, service Service) porterv1.ServiceType {
 		serviceType = porterv1.ServiceType_SERVICE_TYPE_WORKER
 	}
 	if strings.Contains(name, "job") {
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_JOB
+	}
+
+	switch service.Type {
+	case "web":
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WEB
+	case "worker":
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WORKER
+	case "job":
 		serviceType = porterv1.ServiceType_SERVICE_TYPE_JOB
 	}
 

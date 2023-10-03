@@ -53,7 +53,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
             );
 
             setNumPages(res.data.num_pages);
-            const events = z.array(porterAppEventValidator).optional().default([]).parse(res.data.events);
+            const events = z.array(porterAppEventValidator).optional().default([]).parse(res.data.events).filter(e => e.type !== "APP_EVENT");
             setEvents(events);
             setHasError(false)
         } catch (err) {
@@ -89,7 +89,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
             );
             setHasError(false)
             setNumPages(res.data.num_pages);
-            const events = z.array(porterAppEventValidator).optional().default([]).parse(res.data.events);
+            const events = z.array(porterAppEventValidator).optional().default([]).parse(res.data.events).filter(e => e.type !== "APP_EVENT");
             setEvents(events);
         } catch (err) {
             setHasError(true);

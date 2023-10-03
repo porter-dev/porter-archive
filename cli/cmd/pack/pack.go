@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -168,13 +167,13 @@ func getBuildpackName(ctx context.Context, bp string) (string, error) {
 		return bpRealName, err
 	}
 
-	dstFiles, err := ioutil.ReadDir(dstDir)
+	dstFiles, err := os.ReadDir(dstDir)
 	if err != nil {
 		return bpRealName, err
 	}
 
 	for _, info := range dstFiles {
-		if info.Mode().IsDir() && strings.Contains(info.Name(), urlPaths[1]) {
+		if info.Type().IsDir() && strings.Contains(info.Name(), urlPaths[1]) {
 			bpRealName = filepath.Join(dstDir, info.Name())
 		}
 	}

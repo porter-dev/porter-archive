@@ -23,9 +23,13 @@ import {
   EKSLogging,
   EKSPreflightValues,
   PreflightCheckRequest,
+<<<<<<< HEAD
   GKE,
   QuotaIncreaseRequest,
   EnumQuotaIncrease
+=======
+  AWSClusterNetwork,
+>>>>>>> master
 } from "@porter-dev/api-contracts";
 
 import { ClusterType } from "shared/types";
@@ -96,9 +100,8 @@ const machineTypeOptions = [
   { value: "g4dn.xlarge", label: "g4dn.xlarge" },
 ];
 
-const clusterVersionOptions = [
-  { value: "v1.24.0", label: "1.24.0" },
-];
+const defaultCidrVpc = "10.78.0.0/16"
+const defaultCidrServices = "172.20.0.0/16"
 
 const defaultCidrVpc = "10.78.0.0/16"
 const defaultCidrServices = "172.20.0.0/16"
@@ -422,11 +425,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         setErrorMessage(DEFAULT_ERROR_MESSAGE);
       }
       markStepStarted("provisioning-failed", errMessage);
-    } finally {
-      setIsReadOnly(false);
-      setIsLoading(false);
-
+      
+      // enable edit again only in the case of an error
       setIsClicked(false);
+      setIsReadOnly(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -445,7 +449,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
-
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
       if (eksValues == null) {
@@ -626,14 +629,15 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           isExpanded && (
             <>
               {user?.isPorterUser && (
-                <Select
-                  options={clusterVersionOptions}
-                  width="350px"
-                  disabled={isReadOnly}
-                  value={clusterVersion}
-                  setValue={setClusterVersion}
-                  label="Cluster version"
-                />
+                <Input
+                width="350px"
+                type="string"
+                value={clusterVersion}
+                disabled={true}
+                setValue={(x: string) => setCidrRangeServices(x)}
+                label="Cluster version (only shown to porter.run emails)"
+              />
+
               )}
               <Spacer y={1} />
               <Select
@@ -681,7 +685,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 width="350px"
                 type="string"
                 value={cidrRangeVPC}
+<<<<<<< HEAD
                 disabled={!user.isPorterUser}
+=======
+                disabled={props.clusterId}
+>>>>>>> master
                 setValue={(x: string) => setCidrRangeVPC(x)}
                 label="CIDR range for AWS VPC"
                 placeholder="ex: 10.78.0.0/16"
@@ -691,7 +699,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 width="350px"
                 type="string"
                 value={cidrRangeServices}
+<<<<<<< HEAD
                 disabled={!user.isPorterUser}
+=======
+                disabled={props.clusterId}
+>>>>>>> master
                 setValue={(x: string) => setCidrRangeServices(x)}
                 label="CIDR range for Kubernetes internal services"
                 placeholder="ex: 172.20.0.0/16"

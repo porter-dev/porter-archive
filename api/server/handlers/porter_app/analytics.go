@@ -110,6 +110,7 @@ func TrackStackBuildStatus(
 	stackName string,
 	errorMessage string,
 	status types.PorterAppEventStatus,
+	validateApplyV2 bool,
 ) error {
 	_, span := telemetry.NewSpan(ctx, "track-build-status")
 	defer span.End()
@@ -126,7 +127,7 @@ func TrackStackBuildStatus(
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
-			ValidateApplyV2:        project.ValidateApplyV2,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -138,7 +139,7 @@ func TrackStackBuildStatus(
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
-			ValidateApplyV2:        project.ValidateApplyV2,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -151,7 +152,7 @@ func TrackStackBuildStatus(
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
-			ValidateApplyV2:        project.ValidateApplyV2,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 

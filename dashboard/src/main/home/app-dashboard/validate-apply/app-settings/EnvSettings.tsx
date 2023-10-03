@@ -11,7 +11,6 @@ type Props = {
   appName?: string;
   revision?: AppRevision;
   baseEnvGroups?: PopulatedEnvGroup[];
-  servicesFromYaml: DetectedServices | null;
   latestSource?: SourceOptions;
   attachedEnvGroups?: PopulatedEnvGroup[];
 };

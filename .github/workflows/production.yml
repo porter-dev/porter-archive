@@ -4,8 +4,40 @@
       - production
 name: Deploy Porter to Production
 jobs:
+  deploy-start:
+    name: Mark deploy as started
+    runs-on: ubuntu-latest
+    outputs:
+      deploy-ts: ${{ steps.deploy.outputs.ts }}
+    steps:
+    - name: Slack Notification
+      uses: slackapi/slack-github-action@v1
+      id: deploy
+      continue-on-error: true
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.PORTER_PROD_NOTIFICATIONS_SLACK_WEBHOOK }}
+      with:
+        payload: |
+          {
+            "text": "porter prod deploy started (In Progress)",
+            "attachments": [
+              {
+                "pretext": "Deployment started",
+                "color": "dbab09",
+                "fields": [
+                  {
+                    "title": "Status",
+                    "short": true,
+                    "value": "In Progress"
+                  }
+                ]
+              }
+            ]
+          }
   build-go:
     runs-on: ubuntu-latest
+    needs:
+      - deploy-start
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -13,12 +45,14 @@ jobs:
         uses: ./.github/actions/build-go
   build-npm:
     runs-on: ubuntu-latest
+    needs:
+      - deploy-start
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: build-npm
         uses: ./.github/actions/build-npm
-  porter-deploy:
+  deploy-porter:
     runs-on: ubuntu-latest
     needs: [build-go, build-npm]
     steps:
@@ -80,3 +114,42 @@ jobs:
           project: "5"
           tag: ${{ steps.vars.outputs.sha_short }}
           token: ${{ secrets.PORTER_PRODUCTION_DEPLOYMENT }}
+
+  deploy-end:
+    name: Mark deploy as ended
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - deploy-start
+      - deploy-porter
+      - deploy-worker-pool
+    steps:
+    - name: Slack Notification
+      uses: slackapi/slack-github-action@v1
+      continue-on-error: true
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.PORTER_PROD_NOTIFICATIONS_SLACK_WEBHOOK }}
+      with:
+        update-ts: ${{ steps.deploy-start.outputs.deploy-ts }}
+        payload: |
+          {
+            "text": "porter prod deploy completed",
+            "attachments": [
+              {
+                "pretext": "Deployment completed",
+                "color": "8590ff",
+                "fields": [
+                  {
+                    "title": "Porter Result",
+                    "short": true,
+                    "value": "${{ needs.deploy-porter.result }}"
+                  },
+                  {
+                    "title": "Worker Pool Result",
+                    "short": true,
+                    "value": "${{ needs.deploy-worker-pool.result }}"
+                  }
+                ]
+              }
+            ]
+          }

@@ -64,6 +64,7 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.PorterAppEvent{},
 		&models.AppRevision{},
 		&models.DeploymentTarget{},
+		&models.AppTemplate{},
 		&ints.KubeIntegration{},
 		&ints.BasicIntegration{},
 		&ints.OIDCIntegration{},

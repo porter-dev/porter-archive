@@ -10,6 +10,7 @@ import Icon from "components/porter/Icon";
 import swap from "assets/swap.svg";
 import Spacer from "components/porter/Spacer";
 import ProjectSelectionModal from "./ProjectSelectionModal";
+import Tooltip from "components/porter/Tooltip";
 
 type PropsType = RouteComponentProps & {
   currentProject: ProjectType;
@@ -58,23 +59,44 @@ const ProjectButton: React.FC<PropsType> = (props) => {
             closeModal={() => setShowModal(false)}
           />
         )}
-        <MainSelector
-          projectsLength={props.projects.length}
-          isPorterUser={user.isPorterUser}
-          onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowModal(true)} >
-          <ProjectIcon>
-            <ProjectImage src={gradient} />
-            <Letter>{currentProject.name[0].toUpperCase()}</Letter>
-          </ProjectIcon>
-          <ProjectName>{currentProject.name}</ProjectName>
-          <Spacer inline x={.5} />
 
-          {(props.projects.length > 1 || user.isPorterUser) && <RefreshButton>
-            <img src={swap} />
-          </RefreshButton>}
+        {(user.isPorterUser && currentProject.simplified_view_enabled) ?
+          <Tooltip
+            content={`Porter Apps ${currentProject.validate_apply_v2 ? "V2" : "V1"}`}
+            position="right"
+          >
+            <MainSelector
+              projectsLength={props.projects.length}
+              isPorterUser={user.isPorterUser}
+              onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowModal(true)} >
+              <ProjectIcon>
+                <ProjectImage src={gradient} />
+                <Letter>{currentProject.name[0].toUpperCase()}</Letter>
+              </ProjectIcon>
+              <ProjectName>{currentProject.name}</ProjectName>
+              <Spacer inline x={.5} />
 
-          {/* <i className="material-icons">arrow_drop_down</i> */}
-        </MainSelector>
+              {(props.projects.length > 1 || user.isPorterUser) && <RefreshButton>
+                <img src={swap} />
+              </RefreshButton>}
+            </MainSelector>
+          </Tooltip>
+          :
+          <MainSelector
+            projectsLength={props.projects.length}
+            isPorterUser={user.isPorterUser}
+            onClick={() => (props.projects.length > 1 || user.isPorterUser) && setShowModal(true)} >
+            <ProjectIcon>
+              <ProjectImage src={gradient} />
+              <Letter>{currentProject.name[0].toUpperCase()}</Letter>
+            </ProjectIcon>
+            <ProjectName>{currentProject.name}</ProjectName>
+            <Spacer inline x={.5} />
+            {(props.projects.length > 1 || user.isPorterUser) && <RefreshButton>
+              <img src={swap} />
+            </RefreshButton>}
+          </MainSelector>
+        }
         {/* {renderDropdown()} */}
       </StyledProjectSection >
     );

@@ -213,7 +213,9 @@ export const LatestRevisionProvider = ({
       return;
     }
 
-    return PorterApp.fromJsonString(atob(latestRevision.b64_app_proto));
+    return PorterApp.fromJsonString(atob(latestRevision.b64_app_proto), {
+      ignoreUnknownFields: true,
+    });
   }, [latestRevision]);
 
   if (

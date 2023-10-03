@@ -73,17 +73,13 @@ func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *
 			if bp == "" {
 				continue
 			}
-			u, err := url.Parse(bp)
-			if err == nil {
-				bpRealName, err := getBuildpackName(ctx, u, bp)
-				if err != nil {
-					return err
-				}
 
-				buildOpts.Buildpacks = append(buildOpts.Buildpacks, bpRealName)
-			} else {
-				buildOpts.Buildpacks = append(buildOpts.Buildpacks, bp)
+			bpRealName, err := getBuildpackName(ctx, bp)
+			if err != nil {
+				return err
 			}
+
+			buildOpts.Buildpacks = append(buildOpts.Buildpacks, bpRealName)
 		}
 		// FIXME: use all the config vars
 	}
@@ -95,7 +91,12 @@ func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *
 	return sharedPackClient.Build(ctx, buildOpts)
 }
 
-func getBuildpackName(ctx context.Context, u *url.URL, bp string) (string, error) {
+func getBuildpackName(ctx context.Context, bp string) (string, error) {
+	u, err := url.Parse(bp)
+	if err != nil {
+		return bp, nil
+	}
+
 	// if there is no scheme, it's likely something like `heroku/nodejs`
 	// if the scheme is `urn`, it's like something like `urn:cnb:registry:heroku/nodejs`
 	if u.Scheme == "" || u.Scheme == "urn" {

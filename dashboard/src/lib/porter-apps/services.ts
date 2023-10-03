@@ -66,7 +66,6 @@ export const serviceValidator = z.object({
   canDelete: z.boolean().default(true).optional(),
   name: serviceStringValidator,
   run: serviceStringValidator,
-  runOptional: serviceStringValidator.optional(),
   instances: serviceNumberValidator,
   port: serviceNumberValidator,
   cpuCores: serviceNumberValidator,
@@ -210,7 +209,7 @@ export function serializeService(service: ClientService): SerializedService {
     .with({ type: "web" }, (config) =>
       Object.freeze({
         name: service.name.value,
-        runOptional: service.runOptional?.value,
+        runOptional: service.run.value,
         instances: service.instances.value,
         port: service.port.value,
         cpuCores: service.cpuCores.value,
@@ -232,7 +231,7 @@ export function serializeService(service: ClientService): SerializedService {
     .with({ type: "worker" }, (config) =>
       Object.freeze({
         name: service.name.value,
-        runOptional: service.runOptional?.value,
+        runOptional: service.run.value,
         instances: service.instances.value,
         port: service.port.value,
         cpuCores: service.cpuCores.value,
@@ -249,7 +248,7 @@ export function serializeService(service: ClientService): SerializedService {
     .with({ type: "job" }, (config) =>
       Object.freeze({
         name: service.name.value,
-        runOptional: service.runOptional?.value,
+        runOptional: service.run.value,
         instances: service.instances.value,
         port: service.port.value,
         cpuCores: service.cpuCores.value,
@@ -267,7 +266,7 @@ export function serializeService(service: ClientService): SerializedService {
     .with({ type: "predeploy" }, () =>
       Object.freeze({
         name: service.name.value,
-        runOptional: service.runOptional?.value,
+        runOptional: service.run.value,
         instances: service.instances.value,
         port: service.port.value,
         cpuCores: service.cpuCores.value,

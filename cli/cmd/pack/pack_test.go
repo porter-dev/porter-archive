@@ -33,7 +33,7 @@ func TestGetBuildpackName(t *testing.T) {
 		{
 			"cnb urn",
 			"urn:cnb:registry:heroku/nodejs",
-			BuildpackNameTestResult{"heroku/nodejs", nil},
+			BuildpackNameTestResult{"urn:cnb:registry:heroku/nodejs", nil},
 		},
 		{
 			"cnb shim",

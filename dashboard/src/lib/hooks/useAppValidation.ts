@@ -148,7 +148,9 @@ export const useAppValidation = ({
         .parseAsync(res.data);
 
       const validatedAppProto = PorterApp.fromJsonString(
-        atob(validAppData.validate_b64_app_proto)
+        atob(validAppData.validate_b64_app_proto), {
+          ignoreUnknownFields: true,
+        }
       );
 
       return { validatedAppProto: validatedAppProto, variables, secrets };

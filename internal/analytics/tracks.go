@@ -996,6 +996,8 @@ func PorterAppUpdateFailureTrack(opts *PorterAppUpdateOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["error_stack_trace"] = opts.ErrorStackTrace
 	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(

@@ -18,14 +18,11 @@ const clusterDataValidator = z.object({
         return defaultResources;
     }
     const instanceType = data.labels["beta.kubernetes.io/instance-type"];
-    if (!instanceType) {
+    const res = z.tuple([z.string(), z.string()]).safeParse(instanceType)
+    if (!res.success) {
         return defaultResources;
     }
-    const splits = instanceType.split(".");
-    if (splits.length !== 2) {
-        return defaultResources;
-    }
-    const [instanceClass, instanceSize] = splits;
+    const [instanceClass, instanceSize] = res.data;
     if (AWS_INSTANCE_LIMITS[instanceClass] && AWS_INSTANCE_LIMITS[instanceClass][instanceSize]) {
         const { vCPU, RAM } = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
         return {

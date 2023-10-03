@@ -50,7 +50,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
   disabled,
   disabledTooltip,
   color,
-  step,
+  step = 1,
   width,
   smartLimit,
   override,

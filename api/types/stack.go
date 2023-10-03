@@ -31,5 +31,6 @@ type PorterAppAnalyticsRequest struct {
 	Step               string `json:"step" form:"required,max=255"`
 	StackName          string `json:"stack_name"`
 	ErrorMessage       string `json:"error_message"`
+	ErrorStackTrace    string `json:"error_stack_trace"`
 	DeleteWorkflowFile bool   `json:"delete_workflow_file"`
 }

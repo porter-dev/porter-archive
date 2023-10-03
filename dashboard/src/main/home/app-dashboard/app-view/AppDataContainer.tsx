@@ -34,6 +34,7 @@ import { PorterApp } from "@porter-dev/api-contracts";
 import JobsTab from "./tabs/JobsTab";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -79,6 +80,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget.id,
   });
+
+  const { maxCPU, maxRAM } = useClusterResourceLimits({ projectId, clusterId });
 
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
@@ -295,8 +298,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       app: clientAppFromProto({
         proto: previewRevision
           ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
-              ignoreUnknownFields: true,
-            })
+            ignoreUnknownFields: true,
+          })
           : latestProto,
         overrides: servicesFromYaml,
         variables: appEnv?.variables,
@@ -322,8 +325,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       app: clientAppFromProto({
         proto: previewRevision
           ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
-              ignoreUnknownFields: true,
-            })
+            ignoreUnknownFields: true,
+          })
           : latestProto,
         overrides: servicesFromYaml,
         variables: appEnv?.variables,
@@ -419,7 +422,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         <Spacer y={1} />
         {match(currentTab)
           .with("activity", () => <Activity />)
-          .with("overview", () => <Overview />)
+          .with("overview", () => <Overview maxCPU={maxCPU} maxRAM={maxRAM} />)
           .with("build-settings", () => <BuildSettings />)
           .with("environment", () => (
             <Environment latestSource={latestSource} />

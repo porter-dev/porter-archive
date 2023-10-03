@@ -70,6 +70,7 @@ export const serviceValidator = z.object({
   port: serviceNumberValidator,
   cpuCores: serviceNumberValidator,
   ramMegabytes: serviceNumberValidator,
+  smartOptimization: serviceBooleanValidator.optional(),
   config: z.discriminatedUnion("type", [
     webConfigValidator,
     workerConfigValidator,
@@ -95,30 +96,31 @@ export type SerializedService = {
   port: number;
   cpuCores: number;
   ramMegabytes: number;
+  smartOptimization?: boolean;
   config:
-    | {
-        type: "web";
-        domains: {
-          name: string;
-        }[];
-        autoscaling?: SerializedAutoscaling;
-        healthCheck?: SerializedHealthcheck;
-        private?: boolean;
-      }
-    | {
-        type: "worker";
-        autoscaling?: SerializedAutoscaling;
-      }
-    | {
-        type: "job";
-        allowConcurrent?: boolean;
-        cron: string;
-        suspendCron?: boolean;
-        timeoutSeconds: number;
-      }
-    | {
-        type: "predeploy";
-      };
+  | {
+    type: "web";
+    domains: {
+      name: string;
+    }[];
+    autoscaling?: SerializedAutoscaling;
+    healthCheck?: SerializedHealthcheck;
+    private?: boolean;
+  }
+  | {
+    type: "worker";
+    autoscaling?: SerializedAutoscaling;
+  }
+  | {
+    type: "job";
+    allowConcurrent?: boolean;
+    cron: string;
+    suspendCron?: boolean;
+    timeoutSeconds: number;
+  }
+  | {
+    type: "predeploy";
+  };
 };
 
 export function isPredeployService(service: SerializedService | ClientService) {
@@ -146,6 +148,7 @@ export function defaultSerialized({
     port: 3000,
     cpuCores: 0.1,
     ramMegabytes: 256,
+    smartOptimization: true,
   };
 
   const defaultAutoscaling: SerializedAutoscaling = {
@@ -211,6 +214,7 @@ export function serializeService(service: ClientService): SerializedService {
         port: service.port.value,
         cpuCores: service.cpuCores.value,
         ramMegabytes: service.ramMegabytes.value,
+        smartOptimization: service.smartOptimization?.value,
         config: {
           type: "web" as const,
           autoscaling: serializeAutoscaling({
@@ -232,6 +236,7 @@ export function serializeService(service: ClientService): SerializedService {
         port: service.port.value,
         cpuCores: service.cpuCores.value,
         ramMegabytes: service.ramMegabytes.value,
+        smartOptimization: service.smartOptimization?.value,
         config: {
           type: "worker" as const,
           autoscaling: serializeAutoscaling({
@@ -248,6 +253,7 @@ export function serializeService(service: ClientService): SerializedService {
         port: service.port.value,
         cpuCores: service.cpuCores.value,
         ramMegabytes: service.ramMegabytes.value,
+        smartOptimization: service.smartOptimization?.value,
         config: {
           type: "job" as const,
           allowConcurrent: config.allowConcurrent?.value,
@@ -264,6 +270,7 @@ export function serializeService(service: ClientService): SerializedService {
         instances: service.instances.value,
         port: service.port.value,
         cpuCores: service.cpuCores.value,
+        smartOptimization: service.smartOptimization?.value,
         ramMegabytes: service.ramMegabytes.value,
         config: {
           type: "predeploy" as const,
@@ -296,6 +303,7 @@ export function deserializeService({
       service.ramMegabytes,
       override?.ramMegabytes
     ),
+    smartOptimization: ServiceField.boolean(service.smartOptimization, override?.smartOptimization),
     domainDeletions: [],
   };
 
@@ -334,7 +342,7 @@ export function deserializeService({
           })),
           private:
             typeof config.private === "boolean" ||
-            typeof overrideWebConfig?.private === "boolean"
+              typeof overrideWebConfig?.private === "boolean"
               ? ServiceField.boolean(config.private, overrideWebConfig?.private)
               : undefined,
         },
@@ -365,28 +373,28 @@ export function deserializeService({
           type: "job" as const,
           allowConcurrent:
             typeof config.allowConcurrent === "boolean" ||
-            typeof overrideJobConfig?.allowConcurrent === "boolean"
+              typeof overrideJobConfig?.allowConcurrent === "boolean"
               ? ServiceField.boolean(
-                  config.allowConcurrent,
-                  overrideJobConfig?.allowConcurrent
-                )
+                config.allowConcurrent,
+                overrideJobConfig?.allowConcurrent
+              )
               : ServiceField.boolean(false, undefined),
           cron: ServiceField.string(config.cron, overrideJobConfig?.cron),
           suspendCron:
             typeof config.suspendCron === "boolean" ||
-            typeof overrideJobConfig?.suspendCron === "boolean"
+              typeof overrideJobConfig?.suspendCron === "boolean"
               ? ServiceField.boolean(
-                  config.suspendCron,
-                  overrideJobConfig?.suspendCron
-                )
+                config.suspendCron,
+                overrideJobConfig?.suspendCron
+              )
               : ServiceField.boolean(false, undefined),
           timeoutSeconds:
             config.timeoutSeconds == 0
               ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds)
               : ServiceField.number(
-                  config.timeoutSeconds,
-                  overrideJobConfig?.timeoutSeconds
-                ),
+                config.timeoutSeconds,
+                overrideJobConfig?.timeoutSeconds
+              ),
         },
       };
     })
@@ -511,22 +519,22 @@ export function serializedServiceFromProto({
     .with({ case: "jobConfig" }, ({ value }) =>
       isPredeploy
         ? {
-            ...service,
-            name,
-            config: {
-              type: "predeploy" as const,
-            },
-          }
+          ...service,
+          name,
+          config: {
+            type: "predeploy" as const,
+          },
+        }
         : {
-            ...service,
-            name,
-            config: {
-              type: "job" as const,
-              ...value,
-              allowConcurrent: value.allowConcurrentOptional,
-              timeoutSeconds: Number(value.timeoutSeconds),
-            },
-          }
+          ...service,
+          name,
+          config: {
+            type: "job" as const,
+            ...value,
+            allowConcurrent: value.allowConcurrentOptional,
+            timeoutSeconds: Number(value.timeoutSeconds),
+          },
+        }
     )
     .exhaustive();
 }

@@ -60,7 +60,7 @@ func TestGetBuildpackName(t *testing.T) {
 
 	t.Run("initialize", func(t *testing.T) {
 		porterHome := filepath.Join(homedir.HomeDir(), ".porter")
-		if err := os.MkdirAll(porterHome, 0o755); err != nil {
+		if err := os.MkdirAll(porterHome, 0o750); err != nil {
 			t.Errorf("unable to initialize porter home folder for tests: %s", err.Error())
 		}
 	})

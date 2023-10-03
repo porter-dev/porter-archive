@@ -55,6 +55,7 @@ const (
 	lokiLabel_PorterAppName       = "porter_run_app_name"
 	lokiLabel_PorterServiceName   = "porter_run_service_name"
 	lokiLabel_PorterAppRevisionID = "porter_run_app_revision_id"
+	lokiLabel_DeploymentTargetId  = "porter_run_deployment_target_id"
 	lokiLabel_Namespace           = "namespace"
 )
 
@@ -157,6 +158,8 @@ func (c *AppLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if request.AppRevisionID != "" {
 		matchLabels[lokiLabel_PorterAppRevisionID] = request.AppRevisionID
 	}
+
+	matchLabels[lokiLabel_DeploymentTargetId] = request.DeploymentTargetID
 
 	logRequest := &types.LogRequest{
 		Limit:       request.Limit,

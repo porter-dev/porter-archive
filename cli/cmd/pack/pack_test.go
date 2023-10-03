@@ -15,6 +15,26 @@ type BuildpackNameTestResult struct {
 	err  error
 }
 
+func setupPackTest(tb testing.TB) func(tb testing.TB) {
+	porterHome := filepath.Join(homedir.HomeDir(), ".porter")
+	if err := os.MkdirAll(porterHome, 0o750); err != nil {
+		tb.Errorf("unable to initialize porter home folder for tests: %s", err.Error())
+	}
+
+	return func(tb testing.TB) {
+		dstFiles, err := os.ReadDir(porterHome)
+		if err != nil {
+			return
+		}
+
+		for _, info := range dstFiles {
+			if info.Type().IsDir() {
+				os.RemoveAll(filepath.Join(porterHome, info.Name()))
+			}
+		}
+	}
+}
+
 func TestGetBuildpackName(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -58,15 +78,11 @@ func TestGetBuildpackName(t *testing.T) {
 		},
 	}
 
-	t.Run("initialize", func(t *testing.T) {
-		porterHome := filepath.Join(homedir.HomeDir(), ".porter")
-		if err := os.MkdirAll(porterHome, 0o750); err != nil {
-			t.Errorf("unable to initialize porter home folder for tests: %s", err.Error())
-		}
-	})
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			teardownPackTest := setupPackTest(t)
+			defer teardownPackTest(t)
+
 			ctx := context.Background()
 			actual, err := getBuildpackName(ctx, tt.input)
 			if actual != tt.expected.name {

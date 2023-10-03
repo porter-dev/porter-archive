@@ -57,7 +57,7 @@ func (repo *AppTemplateRepository) CreateAppTemplate(appTemplate *models.AppTemp
 		appTemplate.UpdatedAt = time.Now().UTC()
 	}
 
-	if err := repo.db.Create(appTemplate).Error; err != nil {
+	if err := repo.db.Save(appTemplate).Error; err != nil {
 		return nil, err
 	}
 

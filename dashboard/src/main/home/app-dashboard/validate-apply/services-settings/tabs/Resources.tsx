@@ -263,7 +263,6 @@ const Resources: React.FC<ResourcesProps> = ({
                   render={({ field: { value, onChange } }) => (
                     <InputSlider
                       label="CPU threshold: "
-                      step={1}
                       unit="%"
                       min={0}
                       max={100}
@@ -292,7 +291,6 @@ const Resources: React.FC<ResourcesProps> = ({
                     <InputSlider
                       label="RAM threshold: "
                       unit="%"
-                      step={1}
                       min={0}
                       max={100}
                       value={value?.value.toString() ?? "50"}

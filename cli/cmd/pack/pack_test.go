@@ -16,7 +16,7 @@ type BuildpackNameTestResult struct {
 }
 
 func TestGetBuildpackName(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		name     string
 		input    string
 		expected BuildpackNameTestResult
@@ -60,7 +60,7 @@ func TestGetBuildpackName(t *testing.T) {
 
 	t.Run("initialize", func(t *testing.T) {
 		porterHome := filepath.Join(homedir.HomeDir(), ".porter")
-		if err := os.MkdirAll(porterHome, 0755); err != nil {
+		if err := os.MkdirAll(porterHome, 0o755); err != nil {
 			t.Errorf("unable to initialize porter home folder for tests: %s", err.Error())
 		}
 	})

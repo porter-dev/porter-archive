@@ -278,7 +278,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     reset({
       app: clientAppFromProto({
         proto: previewRevision
-          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto))
+          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
+              ignoreUnknownFields: true,
+            })
           : latestProto,
         overrides: servicesFromYaml,
         variables: appEnv?.variables,
@@ -303,7 +305,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     reset({
       app: clientAppFromProto({
         proto: previewRevision
-          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto))
+          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
+              ignoreUnknownFields: true,
+            })
           : latestProto,
         overrides: servicesFromYaml,
         variables: appEnv?.variables,

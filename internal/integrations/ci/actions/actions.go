@@ -231,8 +231,8 @@ type GithubActionYAMLOnPullRequest struct {
 
 // GithubActionYAMLOnPullRequestTypes is a struct that represents the "types" field of a Github Action YAML file for pull request events
 type GithubActionYAMLOnPullRequestTypes struct {
-	Types []string `yaml:"types,omitempty"`
-	BranchesIgnore []string `yaml:"branches-ignore,omitempty"`
+	Branches []string `yaml:"branches,omitempty"`
+	Types    []string `yaml:"types,omitempty"`
 }
 
 type GithubActionYAMLJob struct {

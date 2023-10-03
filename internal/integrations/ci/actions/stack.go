@@ -9,7 +9,20 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// GithubPRAction is an action to take when opening a PR
+type GithubPRAction string
+
+const (
+	// GithubPRAction_NewAppWorkflow is the action for creating a workflow for a new application
+	GithubPRAction_NewAppWorkflow GithubPRAction = "new-app-workflow"
+	// GithubPRAction_DeleteAppWorkflow is the action for deleting an application workflow
+	GithubPRAction_DeleteAppWorkflow GithubPRAction = "delete-app-workflow"
+	// GithubPRAction_PreviewAppWorkflow is the action for creating the preview app workflow
+	GithubPRAction_PreviewAppWorkflow GithubPRAction = "preview-app-workflow"
+)
+
 type GithubPROpts struct {
+	PRAction                  GithubPRAction
 	Client                    *github.Client
 	GitRepoOwner, GitRepoName string
 	ApplyWorkflowYAML         string
@@ -20,8 +33,8 @@ type GithubPROpts struct {
 	SecretName                string
 	PorterYamlPath            string
 	Body                      string
-	DeleteWorkflowFilename    string
-	PreviewWorkflowFilename   string
+	WorkflowFileName          string
+	PRBranch                  string
 }
 
 type GetStackApplyActionYAMLOpts struct {
@@ -36,45 +49,32 @@ type GetStackApplyActionYAMLOpts struct {
 
 func OpenGithubPR(opts *GithubPROpts) (*github.PullRequest, error) {
 	var pr *github.PullRequest
-	var prBranchName string
 
 	if opts == nil {
 		return pr, fmt.Errorf("input options cannot be nil")
-	}
-
-	if opts.DeleteWorkflowFilename != "" {
-		prBranchName = "porter-stack-delete"
-	} else if opts.PreviewWorkflowFilename != "" {
-		prBranchName = "porter-stack-preview"
-	} else {
-		prBranchName = "porter-stack"
 	}
 
 	err := createNewBranch(opts.Client,
 		opts.GitRepoOwner,
 		opts.GitRepoName,
 		opts.DefaultBranch,
-		prBranchName,
+		opts.PRBranch,
 	)
 	if err != nil {
 		return pr, fmt.Errorf("error creating branch: %w", err)
 	}
 
-	err = commitChange(prBranchName, *opts)
-
-	var prTitle string
-	if opts.DeleteWorkflowFilename != "" {
-		prTitle = fmt.Sprintf("Delete Porter Application %s", opts.StackName)
-	} else if opts.PreviewWorkflowFilename != "" {
-		prTitle = "Enable Preview Environments on Porter"
-	} else {
-		prTitle = fmt.Sprintf("Enable Porter Application %s", opts.StackName)
+	err = commitChange(opts.PRBranch, *opts)
+	if err != nil {
+		return pr, fmt.Errorf("error committing change: %w", err)
 	}
+
+	prTitle := getPRTitle(opts.PRAction, opts.StackName)
 	pr, _, err = opts.Client.PullRequests.Create(
 		context.Background(), opts.GitRepoOwner, opts.GitRepoName, &github.NewPullRequest{
 			Title: github.String(prTitle),
 			Base:  github.String(opts.DefaultBranch),
-			Head:  github.String(prBranchName),
+			Head:  github.String(opts.PRBranch),
 			Body:  github.String(opts.Body),
 		},
 	)
@@ -87,11 +87,51 @@ func OpenGithubPR(opts *GithubPROpts) (*github.PullRequest, error) {
 	return pr, nil
 }
 
+func getPRTitle(action GithubPRAction, stackName string) string {
+	switch action {
+	case GithubPRAction_NewAppWorkflow:
+		return fmt.Sprintf("Enable Porter Application %s", stackName)
+	case GithubPRAction_DeleteAppWorkflow:
+		return fmt.Sprintf("Delete Porter Application %s", stackName)
+	case GithubPRAction_PreviewAppWorkflow:
+		return "Enable Preview Environments on Porter"
+	default:
+		return ""
+	}
+}
+
 func commitChange(prBranchName string, opts GithubPROpts) error {
-	if opts.DeleteWorkflowFilename != "" {
+	switch opts.PRAction {
+	case GithubPRAction_NewAppWorkflow:
+		applyWorkflowYAML, err := getStackApplyActionYAML(&GetStackApplyActionYAMLOpts{
+			ServerURL:      opts.ServerURL,
+			ClusterID:      opts.ClusterID,
+			ProjectID:      opts.ProjectID,
+			StackName:      opts.StackName,
+			DefaultBranch:  opts.DefaultBranch,
+			SecretName:     opts.SecretName,
+			PorterYamlPath: opts.PorterYamlPath,
+			Preview:        false,
+		})
+		if err != nil {
+			return err
+		}
+
+		_, err = commitWorkflowFile(
+			opts.Client,
+			fmt.Sprintf("porter_stack_%s.yml", strings.ToLower(opts.StackName)),
+			applyWorkflowYAML, opts.GitRepoOwner,
+			opts.GitRepoName, prBranchName, false,
+		)
+		if err != nil {
+			return fmt.Errorf("error committing file: %w", err)
+		}
+
+		return nil
+	case GithubPRAction_DeleteAppWorkflow:
 		err := deleteGithubFile(
 			opts.Client,
-			opts.DeleteWorkflowFilename,
+			opts.WorkflowFileName,
 			opts.GitRepoOwner,
 			opts.GitRepoName,
 			prBranchName,
@@ -102,43 +142,35 @@ func commitChange(prBranchName string, opts GithubPROpts) error {
 		}
 
 		return nil
-	}
+	case GithubPRAction_PreviewAppWorkflow:
+		previewWorkflowYAML, err := getStackApplyActionYAML(&GetStackApplyActionYAMLOpts{
+			ServerURL:      opts.ServerURL,
+			ClusterID:      opts.ClusterID,
+			ProjectID:      opts.ProjectID,
+			StackName:      opts.StackName,
+			DefaultBranch:  opts.DefaultBranch,
+			SecretName:     opts.SecretName,
+			PorterYamlPath: opts.PorterYamlPath,
+			Preview:        true,
+		})
+		if err != nil {
+			return err
+		}
 
-	var preview bool
-	if opts.PreviewWorkflowFilename != "" {
-		preview = true
-	}
+		_, err = commitWorkflowFile(
+			opts.Client,
+			fmt.Sprintf("porter_preview_%s.yml", strings.ToLower(opts.StackName)),
+			previewWorkflowYAML, opts.GitRepoOwner,
+			opts.GitRepoName, prBranchName, false,
+		)
+		if err != nil {
+			return fmt.Errorf("error committing file: %w", err)
+		}
 
-	applyWorkflowYAML, err := getStackApplyActionYAML(&GetStackApplyActionYAMLOpts{
-		ServerURL:      opts.ServerURL,
-		ClusterID:      opts.ClusterID,
-		ProjectID:      opts.ProjectID,
-		StackName:      opts.StackName,
-		DefaultBranch:  opts.DefaultBranch,
-		SecretName:     opts.SecretName,
-		PorterYamlPath: opts.PorterYamlPath,
-		Preview:        preview,
-	})
-	if err != nil {
-		return err
+		return nil
+	default:
+		return fmt.Errorf("invalid PR action: %s", opts.PRAction)
 	}
-
-	filename := fmt.Sprintf("porter_stack_%s.yml", strings.ToLower(opts.StackName))
-	if preview {
-		filename = fmt.Sprintf("porter_preview_%s.yml", strings.ToLower(opts.StackName))
-	}
-
-	_, err = commitWorkflowFile(
-		opts.Client,
-		filename,
-		applyWorkflowYAML, opts.GitRepoOwner,
-		opts.GitRepoName, prBranchName, false,
-	)
-	if err != nil {
-		return fmt.Errorf("error committing file: %w", err)
-	}
-
-	return nil
 }
 
 func getStackApplyActionYAML(opts *GetStackApplyActionYAMLOpts) ([]byte, error) {
@@ -161,12 +193,12 @@ func getStackApplyActionYAML(opts *GetStackApplyActionYAMLOpts) ([]byte, error) 
 		actionYaml := GithubActionYAML{
 			On: GithubActionYAMLOnPullRequest{
 				PullRequest: GithubActionYAMLOnPullRequestTypes{
+					Branches: []string{
+						"!porter-**",
+					},
 					Types: []string{
 						"opened",
 						"synchronize",
-					},
-					BranchesIgnore: []string{
-						"porter-*",
 					},
 				},
 			},

@@ -61,11 +61,12 @@ export const getPreviewGithubAction = (
 ) => {
   return `on:
   pull_request:
+    branches:
+    - '!porter-**'
     types:
     - opened
     - synchronize
-    branches-ignore:
-    - porter-*
+    
 name: Deploy preview environment
 jobs:
   porter-deploy:

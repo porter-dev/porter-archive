@@ -116,22 +116,35 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		prRequestBody = "Hello 👋 from Porter! Please merge this PR to enable preview environments for your application."
 	}
+
 	if request.OpenPr || request.DeleteWorkflowFilename != "" {
-		pr, err = actions.OpenGithubPR(&actions.GithubPROpts{
-			Client:                  client,
-			GitRepoOwner:            request.GithubRepoOwner,
-			GitRepoName:             request.GithubRepoName,
-			StackName:               appName,
-			ProjectID:               project.ID,
-			ClusterID:               cluster.ID,
-			ServerURL:               c.Config().ServerConf.ServerURL,
-			DefaultBranch:           request.Branch,
-			SecretName:              secretName,
-			PorterYamlPath:          request.PorterYamlPath,
-			Body:                    prRequestBody,
-			DeleteWorkflowFilename:  request.DeleteWorkflowFilename,
-			PreviewWorkflowFilename: request.PreviewsWorkflowFilename,
-		})
+		openPRInput := &actions.GithubPROpts{
+			PRAction:       actions.GithubPRAction_NewAppWorkflow,
+			Client:         client,
+			GitRepoOwner:   request.GithubRepoOwner,
+			GitRepoName:    request.GithubRepoName,
+			StackName:      appName,
+			ProjectID:      project.ID,
+			ClusterID:      cluster.ID,
+			ServerURL:      c.Config().ServerConf.ServerURL,
+			DefaultBranch:  request.Branch,
+			SecretName:     secretName,
+			PorterYamlPath: request.PorterYamlPath,
+			Body:           prRequestBody,
+			PRBranch:       "porter-stack",
+		}
+		if request.DeleteWorkflowFilename != "" {
+			openPRInput.PRAction = actions.GithubPRAction_DeleteAppWorkflow
+			openPRInput.WorkflowFileName = request.DeleteWorkflowFilename
+			openPRInput.PRBranch = "porter-stack-delete"
+		}
+		if request.PreviewsWorkflowFilename != "" {
+			openPRInput.PRAction = actions.GithubPRAction_PreviewAppWorkflow
+			openPRInput.WorkflowFileName = request.PreviewsWorkflowFilename
+			openPRInput.PRBranch = "porter-stack-preview"
+		}
+
+		pr, err = actions.OpenGithubPR(openPRInput)
 	}
 
 	if err != nil {

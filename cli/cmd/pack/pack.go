@@ -102,6 +102,11 @@ func getBuildpackName(ctx context.Context, u *url.URL, bp string) (string, error
 		return bp, nil
 	}
 
+	// pass cnb-shimmed buildpacks as is
+	if u.Host == "cnb-shim.herokuapp.com" {
+		return bp, nil
+	}
+
 	var bpRealName string
 	// could be a git repository containing the buildpack
 	if !strings.HasSuffix(u.Path, ".zip") && u.Host != "github.com" && u.Host != "www.github.com" {

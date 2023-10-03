@@ -3,6 +3,7 @@ package pack
 import (
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -56,6 +57,14 @@ func TestGetBuildpackName(t *testing.T) {
 			BuildpackNameTestResult{filepath.Join(homedir.HomeDir(), ".porter", "v1.1.6"), nil},
 		},
 	}
+
+	t.Run("initialize", func(t *testing.T) {
+		porterHome := filepath.Join(homedir.HomeDir(), ".porter")
+		if err := os.MkdirAll(porterHome, 0755); err != nil {
+			t.Errorf("unable to initialize porter home folder for tests: %s", err.Error())
+		}
+	})
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()

@@ -74,73 +74,10 @@ func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *
 				continue
 			}
 			u, err := url.Parse(bp)
-			if err == nil && u.Scheme != "" && u.Scheme != "urn" {
-				// could be a git repository containing the buildpack
-				if !strings.HasSuffix(u.Path, ".zip") && u.Host != "github.com" && u.Host != "www.github.com" {
-					return fmt.Errorf("please provide either a github.com URL or a ZIP file URL")
-				}
-
-				urlPaths := strings.Split(u.Path[1:], "/")
-				dstDir := filepath.Join(homedir.HomeDir(), ".porter")
-				bpCustomName := regexp.MustCompile("/|-").ReplaceAllString(u.Path[1:], "_")
-
-				var zipFileName string
-				if strings.HasSuffix(bpCustomName, ".zip") {
-					zipFileName = bpCustomName
-				} else {
-					zipFileName = fmt.Sprintf("%s.zip", bpCustomName)
-				}
-				downloader := &github.ZIPDownloader{
-					ZipFolderDest:       dstDir,
-					AssetFolderDest:     dstDir,
-					ZipName:             zipFileName,
-					RemoveAfterDownload: true,
-				}
-
-				if zipFileName != bpCustomName {
-					// try to download the repo ZIP from github
-					githubClient := githubApi.NewClient(nil)
-					rel, _, err := githubClient.Repositories.GetLatestRelease(
-						ctx,
-						urlPaths[0],
-						urlPaths[1],
-					)
-					if err == nil {
-						bp = rel.GetZipballURL()
-					} else {
-						// default to the current default branch
-						repo, _, err := githubClient.Repositories.Get(
-							ctx,
-							urlPaths[0],
-							urlPaths[1],
-						)
-						if err != nil {
-							return fmt.Errorf("could not fetch git repo details")
-						}
-						bp = fmt.Sprintf("%s/archive/refs/heads/%s.zip", bp, repo.GetDefaultBranch())
-					}
-				}
-
-				err = downloader.DownloadToFile(bp)
+			if err == nil {
+				bpRealName, err := getBuildpackName(ctx, u, bp)
 				if err != nil {
 					return err
-				}
-
-				err = downloader.UnzipToDir()
-				if err != nil {
-					return err
-				}
-
-				dstFiles, err := ioutil.ReadDir(dstDir)
-				if err != nil {
-					return err
-				}
-
-				var bpRealName string
-				for _, info := range dstFiles {
-					if info.Mode().IsDir() && strings.Contains(info.Name(), urlPaths[1]) {
-						bpRealName = filepath.Join(dstDir, info.Name())
-					}
 				}
 
 				buildOpts.Buildpacks = append(buildOpts.Buildpacks, bpRealName)
@@ -156,4 +93,80 @@ func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *
 	}
 
 	return sharedPackClient.Build(ctx, buildOpts)
+}
+
+func getBuildpackName(ctx context.Context, u *url.URL, bp string) (string, error) {
+	// if there is no scheme, it's likely something like `heroku/nodejs`
+	// if the scheme is `urn`, it's like something like `urn:cnb:registry:heroku/nodejs`
+	if u.Scheme == "" || u.Scheme == "urn" {
+		return bp, nil
+	}
+
+	var bpRealName string
+	// could be a git repository containing the buildpack
+	if !strings.HasSuffix(u.Path, ".zip") && u.Host != "github.com" && u.Host != "www.github.com" {
+		return bpRealName, fmt.Errorf("please provide either a github.com URL or a ZIP file URL")
+	}
+
+	urlPaths := strings.Split(u.Path[1:], "/")
+	dstDir := filepath.Join(homedir.HomeDir(), ".porter")
+	bpCustomName := regexp.MustCompile("/|-").ReplaceAllString(u.Path[1:], "_")
+
+	var zipFileName string
+	if strings.HasSuffix(bpCustomName, ".zip") {
+		zipFileName = bpCustomName
+	} else {
+		zipFileName = fmt.Sprintf("%s.zip", bpCustomName)
+	}
+	downloader := &github.ZIPDownloader{
+		ZipFolderDest:       dstDir,
+		AssetFolderDest:     dstDir,
+		ZipName:             zipFileName,
+		RemoveAfterDownload: true,
+	}
+
+	if zipFileName != bpCustomName {
+		// try to download the repo ZIP from github
+		githubClient := githubApi.NewClient(nil)
+		rel, _, err := githubClient.Repositories.GetLatestRelease(
+			ctx,
+			urlPaths[0],
+			urlPaths[1],
+		)
+		if err == nil {
+			bp = rel.GetZipballURL()
+		} else {
+			// default to the current default branch
+			repo, _, err := githubClient.Repositories.Get(
+				ctx,
+				urlPaths[0],
+				urlPaths[1],
+			)
+			if err != nil {
+				return bpRealName, fmt.Errorf("could not fetch git repo details")
+			}
+			bp = fmt.Sprintf("%s/archive/refs/heads/%s.zip", bp, repo.GetDefaultBranch())
+		}
+	}
+
+	if err := downloader.DownloadToFile(bp); err != nil {
+		return bpRealName, err
+	}
+
+	if err := downloader.UnzipToDir(); err != nil {
+		return bpRealName, err
+	}
+
+	dstFiles, err := ioutil.ReadDir(dstDir)
+	if err != nil {
+		return bpRealName, err
+	}
+
+	for _, info := range dstFiles {
+		if info.Mode().IsDir() && strings.Contains(info.Name(), urlPaths[1]) {
+			bpRealName = filepath.Join(dstDir, info.Name())
+		}
+	}
+
+	return bpRealName, nil
 }

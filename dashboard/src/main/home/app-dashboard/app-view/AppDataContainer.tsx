@@ -33,6 +33,7 @@ import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import JobsTab from "./tabs/JobsTab";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
+import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 
 // commented out tabs are not yet implemented
@@ -61,6 +62,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const history = useHistory();
   const queryClient = useQueryClient();
   const [confirmDeployModalOpen, setConfirmDeployModalOpen] = useState(false);
+
+  const { updateAppStep } = useAppAnalytics();
 
   const {
     porterApp,
@@ -274,14 +277,29 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       // redirect to the default tab after save
       history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
-    } catch (err) { }
+    } catch (err) {
+      let message = "Unable to get error message";
+      let stack = "Unable to get error stack";
+      if (err instanceof Error) {
+        message = err.message;
+        stack = err.stack ?? "(No error stack)";
+      }
+      updateAppStep({
+        step: "porter-app-update-failure",
+        errorMessage: message,
+        appName: latestProto.name,
+        errorStackTrace: stack,
+      });
+    }
   });
 
   const cancelRedeploy = useCallback(() => {
     reset({
       app: clientAppFromProto({
         proto: previewRevision
-          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto))
+          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
+            ignoreUnknownFields: true,
+          })
           : latestProto,
         overrides: servicesFromYaml,
         variables: appEnv?.variables,
@@ -306,7 +324,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     reset({
       app: clientAppFromProto({
         proto: previewRevision
-          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto))
+          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
+            ignoreUnknownFields: true,
+          })
           : latestProto,
         overrides: servicesFromYaml,
         variables: appEnv?.variables,

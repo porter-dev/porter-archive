@@ -125,7 +125,9 @@ export const usePorterYaml = ({
               .optional(),
           })
           .parseAsync(res.data);
-        const proto = PorterApp.fromJsonString(atob(data.b64_app_proto));
+        const proto = PorterApp.fromJsonString(atob(data.b64_app_proto), {
+          ignoreUnknownFields: true,
+        });
 
         const { services, predeploy, build } = serviceOverrides({
           overrides: proto,
@@ -142,7 +144,10 @@ export const usePorterYaml = ({
 
         if (data.preview_app) {
           const previewProto = PorterApp.fromJsonString(
-            atob(data.preview_app.b64_app_proto)
+            atob(data.preview_app.b64_app_proto),
+            {
+              ignoreUnknownFields: true,
+            }
           );
           const {
             services: previewServices,

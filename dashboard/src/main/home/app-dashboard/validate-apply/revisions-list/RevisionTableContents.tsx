@@ -39,7 +39,9 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
   const revisionsWithProto = revisions.map((revision) => {
     return {
       ...revision,
-      app_proto: PorterApp.fromJsonString(atob(revision.b64_app_proto)),
+      app_proto: PorterApp.fromJsonString(atob(revision.b64_app_proto), {
+        ignoreUnknownFields: true,
+      }),
     };
   });
 

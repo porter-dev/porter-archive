@@ -12,13 +12,14 @@ type ImageInfo struct {
 }
 
 type CreateSecretAndOpenGHPRRequest struct {
-	GithubAppInstallationID int64  `json:"github_app_installation_id" form:"required"`
-	GithubRepoOwner         string `json:"github_repo_owner" form:"required"`
-	GithubRepoName          string `json:"github_repo_name" form:"required"`
-	OpenPr                  bool   `json:"open_pr"`
-	Branch                  string `json:"branch"`
-	PorterYamlPath          string `json:"porter_yaml_path"`
-	DeleteWorkflowFilename  string `json:"delete_workflow_filename"`
+	GithubAppInstallationID  int64  `json:"github_app_installation_id" form:"required"`
+	GithubRepoOwner          string `json:"github_repo_owner" form:"required"`
+	GithubRepoName           string `json:"github_repo_name" form:"required"`
+	OpenPr                   bool   `json:"open_pr"`
+	Branch                   string `json:"branch"`
+	PorterYamlPath           string `json:"porter_yaml_path"`
+	DeleteWorkflowFilename   string `json:"delete_workflow_filename"`
+	PreviewsWorkflowFilename string `json:"previews_workflow_filename"`
 }
 
 type CreateSecretAndOpenGHPRResponse struct {

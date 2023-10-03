@@ -28,8 +28,12 @@ func setupPackTest(tb testing.TB) func(tb testing.TB) {
 		}
 
 		for _, info := range dstFiles {
-			if info.Type().IsDir() {
-				os.RemoveAll(filepath.Join(porterHome, info.Name()))
+			if !info.Type().IsDir() {
+				continue
+			}
+
+			if err := os.RemoveAll(filepath.Join(porterHome, info.Name())); err != nil {
+				tb.Errorf("unable to delete porter home subfolder for tests: %s", err.Error())
 			}
 		}
 	}

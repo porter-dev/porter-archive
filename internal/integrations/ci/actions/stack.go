@@ -21,6 +21,7 @@ type GithubPROpts struct {
 	PorterYamlPath            string
 	Body                      string
 	DeleteWorkflowFilename    string
+	PreviewWorkflowFilename   string
 }
 
 type GetStackApplyActionYAMLOpts struct {
@@ -30,13 +31,21 @@ type GetStackApplyActionYAMLOpts struct {
 	DefaultBranch        string
 	SecretName           string
 	PorterYamlPath       string
+	Preview              bool
 }
 
 func OpenGithubPR(opts *GithubPROpts) (*github.PullRequest, error) {
 	var pr *github.PullRequest
 	var prBranchName string
+
+	if opts == nil {
+		return pr, fmt.Errorf("input options cannot be nil")
+	}
+
 	if opts.DeleteWorkflowFilename != "" {
 		prBranchName = "porter-stack-delete"
+	} else if opts.PreviewWorkflowFilename != "" {
+		prBranchName = "porter-stack-preview"
 	} else {
 		prBranchName = "porter-stack"
 	}
@@ -48,58 +57,16 @@ func OpenGithubPR(opts *GithubPROpts) (*github.PullRequest, error) {
 		prBranchName,
 	)
 	if err != nil {
-		return pr, fmt.Errorf(
-			"error creating branch: %w",
-			err,
-		)
+		return pr, fmt.Errorf("error creating branch: %w", err)
 	}
 
-	if opts.DeleteWorkflowFilename == "" {
-		applyWorkflowYAML, err := getStackApplyActionYAML(&GetStackApplyActionYAMLOpts{
-			ServerURL:      opts.ServerURL,
-			ClusterID:      opts.ClusterID,
-			ProjectID:      opts.ProjectID,
-			StackName:      opts.StackName,
-			DefaultBranch:  opts.DefaultBranch,
-			SecretName:     opts.SecretName,
-			PorterYamlPath: opts.PorterYamlPath,
-		})
-		if err != nil {
-			return pr, err
-		}
-		_, err = commitWorkflowFile(
-			opts.Client,
-			fmt.Sprintf("porter_stack_%s.yml", strings.ToLower(opts.StackName)),
-			applyWorkflowYAML, opts.GitRepoOwner,
-			opts.GitRepoName, prBranchName, false,
-		)
-		if err != nil {
-			return pr, fmt.Errorf(
-				"error committing file: %w",
-				err,
-			)
-		}
-	} else {
-		err = deleteGithubFile(
-			opts.Client,
-			opts.DeleteWorkflowFilename,
-			opts.GitRepoOwner,
-			opts.GitRepoName,
-			prBranchName,
-			false,
-		)
-		if err != nil {
-			return pr, fmt.Errorf(
-				"error committing deletion: %w",
-				err,
-			)
-		}
-
-	}
+	err = commitChange(prBranchName, *opts)
 
 	var prTitle string
 	if opts.DeleteWorkflowFilename != "" {
 		prTitle = fmt.Sprintf("Delete Porter Application %s", opts.StackName)
+	} else if opts.PreviewWorkflowFilename != "" {
+		prTitle = "Enable Preview Environments on Porter"
 	} else {
 		prTitle = fmt.Sprintf("Enable Porter Application %s", opts.StackName)
 	}
@@ -120,6 +87,60 @@ func OpenGithubPR(opts *GithubPROpts) (*github.PullRequest, error) {
 	return pr, nil
 }
 
+func commitChange(prBranchName string, opts GithubPROpts) error {
+	if opts.DeleteWorkflowFilename != "" {
+		err := deleteGithubFile(
+			opts.Client,
+			opts.DeleteWorkflowFilename,
+			opts.GitRepoOwner,
+			opts.GitRepoName,
+			prBranchName,
+			false,
+		)
+		if err != nil {
+			return fmt.Errorf("error committing deletion: %w", err)
+		}
+
+		return nil
+	}
+
+	var preview bool
+	if opts.PreviewWorkflowFilename != "" {
+		preview = true
+	}
+
+	applyWorkflowYAML, err := getStackApplyActionYAML(&GetStackApplyActionYAMLOpts{
+		ServerURL:      opts.ServerURL,
+		ClusterID:      opts.ClusterID,
+		ProjectID:      opts.ProjectID,
+		StackName:      opts.StackName,
+		DefaultBranch:  opts.DefaultBranch,
+		SecretName:     opts.SecretName,
+		PorterYamlPath: opts.PorterYamlPath,
+		Preview:        preview,
+	})
+	if err != nil {
+		return err
+	}
+
+	filename := fmt.Sprintf("porter_stack_%s.yml", strings.ToLower(opts.StackName))
+	if preview {
+		filename = fmt.Sprintf("porter_preview_%s.yml", strings.ToLower(opts.StackName))
+	}
+
+	_, err = commitWorkflowFile(
+		opts.Client,
+		filename,
+		applyWorkflowYAML, opts.GitRepoOwner,
+		opts.GitRepoName, prBranchName, false,
+	)
+	if err != nil {
+		return fmt.Errorf("error committing file: %w", err)
+	}
+
+	return nil
+}
+
 func getStackApplyActionYAML(opts *GetStackApplyActionYAMLOpts) ([]byte, error) {
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
@@ -132,7 +153,33 @@ func getStackApplyActionYAML(opts *GetStackApplyActionYAMLOpts) ([]byte, error) 
 			opts.PorterYamlPath,
 			opts.ProjectID,
 			opts.ClusterID,
+			opts.Preview,
 		),
+	}
+
+	if opts.Preview {
+		actionYaml := GithubActionYAML{
+			On: GithubActionYAMLOnPullRequest{
+				PullRequest: GithubActionYAMLOnPullRequestTypes{
+					Types: []string{
+						"opened",
+						"synchronize",
+					},
+					BranchesIgnore: []string{
+						"porter-*",
+					},
+				},
+			},
+			Name: "Deploy to Preview Environment",
+			Jobs: map[string]GithubActionYAMLJob{
+				"porter-deploy": {
+					RunsOn: "ubuntu-latest",
+					Steps:  gaSteps,
+				},
+			},
+		}
+
+		return yaml.Marshal(actionYaml)
 	}
 
 	actionYAML := GithubActionYAML{

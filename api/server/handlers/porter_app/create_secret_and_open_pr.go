@@ -54,6 +54,17 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if request.Branch == "" {
+		err := telemetry.Error(ctx, span, nil, "branch cannot be empty")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+	if request.PreviewsWorkflowFilename != "" && request.DeleteWorkflowFilename != "" {
+		err := telemetry.Error(ctx, span, nil, "both preview and delete workflow filenames cannot be set")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
 	client, err := getGithubClient(c.Config(), request.GithubAppInstallationID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error creating github client")
@@ -100,23 +111,26 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var prRequestBody string
 	if request.DeleteWorkflowFilename == "" {
 		prRequestBody = "Hello 👋 from Porter! Please merge this PR to finish setting up your application."
-	} else {
+	} else if request.PreviewsWorkflowFilename == "" {
 		prRequestBody = "Please merge this PR to delete the workflow file associated with your application."
+	} else {
+		prRequestBody = "Hello 👋 from Porter! Please merge this PR to enable preview environments for your application."
 	}
 	if request.OpenPr || request.DeleteWorkflowFilename != "" {
 		pr, err = actions.OpenGithubPR(&actions.GithubPROpts{
-			Client:                 client,
-			GitRepoOwner:           request.GithubRepoOwner,
-			GitRepoName:            request.GithubRepoName,
-			StackName:              appName,
-			ProjectID:              project.ID,
-			ClusterID:              cluster.ID,
-			ServerURL:              c.Config().ServerConf.ServerURL,
-			DefaultBranch:          request.Branch,
-			SecretName:             secretName,
-			PorterYamlPath:         request.PorterYamlPath,
-			Body:                   prRequestBody,
-			DeleteWorkflowFilename: request.DeleteWorkflowFilename,
+			Client:                  client,
+			GitRepoOwner:            request.GithubRepoOwner,
+			GitRepoName:             request.GithubRepoName,
+			StackName:               appName,
+			ProjectID:               project.ID,
+			ClusterID:               cluster.ID,
+			ServerURL:               c.Config().ServerConf.ServerURL,
+			DefaultBranch:           request.Branch,
+			SecretName:              secretName,
+			PorterYamlPath:          request.PorterYamlPath,
+			Body:                    prRequestBody,
+			DeleteWorkflowFilename:  request.DeleteWorkflowFilename,
+			PreviewWorkflowFilename: request.PreviewsWorkflowFilename,
 		})
 	}
 

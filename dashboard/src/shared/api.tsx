@@ -948,6 +948,20 @@ const createApp = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/create`;
 });
 
+const createAppTemplate = baseApi<
+{
+  b64_app_proto: string;
+  variables: Record<string, string>
+  secrets: Record<string, string>
+},
+{
+  project_id: number;
+  cluster_id: number;
+  porter_app_name: string;
+}>("POST", ({ project_id, cluster_id, porter_app_name}) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/templates`;
+})
+
 const applyApp = baseApi<
   {
     deployment_target_id: string;
@@ -3013,6 +3027,7 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
     open_pr?: boolean;
     porter_yaml_path?: string;
     delete_workflow_filename?: string;
+    previews_workflow_filename?: string;
   },
   {
     project_id: number;
@@ -3156,6 +3171,7 @@ export default {
   getBranchHead,
   validatePorterApp,
   createApp,
+  createAppTemplate,
   applyApp,
   getAttachedEnvGroups,
   getLatestRevision,

@@ -224,6 +224,17 @@ type GithubActionYAMLOnPush struct {
 	Push GithubActionYAMLOnPushBranches `yaml:"push,omitempty"`
 }
 
+// GithubActionYAMLOnPullRequest is a struct that represents the "on" field of a Github Action YAML file for pull request events
+type GithubActionYAMLOnPullRequest struct {
+	PullRequest GithubActionYAMLOnPullRequestTypes `yaml:"pull_request,omitempty"`
+}
+
+// GithubActionYAMLOnPullRequestTypes is a struct that represents the "types" field of a Github Action YAML file for pull request events
+type GithubActionYAMLOnPullRequestTypes struct {
+	Types []string `yaml:"types,omitempty"`
+	BranchesIgnore []string `yaml:"branches-ignore,omitempty"`
+}
+
 type GithubActionYAMLJob struct {
 	RunsOn      string                 `yaml:"runs-on,omitempty"`
 	Steps       []GithubActionYAMLStep `yaml:"steps,omitempty"`

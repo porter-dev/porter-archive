@@ -974,3 +974,32 @@ func StackBuildProgressingTrack(opts *StackBuildOpts) segmentTrack {
 		getDefaultSegmentTrack(additionalProps, StackBuildProgressing),
 	)
 }
+
+// PorterAppUpdateOpts are the options for creating a track when a user updates a porter app
+type PorterAppUpdateOpts struct {
+	*ProjectScopedTrackOpts
+
+	StackName       string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ErrorMessage    string
+	ErrorStackTrace string
+	ValidateApplyV2 bool
+}
+
+// PorterAppUpdateFailureTrack returns a track for when a user attempts to update an app and receives an error
+func PorterAppUpdateFailureTrack(opts *PorterAppUpdateOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, PorterAppUpdateFailure),
+	)
+}

@@ -33,6 +33,7 @@ import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import JobsTab from "./tabs/JobsTab";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
+import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -60,6 +61,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const history = useHistory();
   const queryClient = useQueryClient();
   const [confirmDeployModalOpen, setConfirmDeployModalOpen] = useState(false);
+
+  const { updateAppStep } = useAppAnalytics();
 
   const {
     porterApp,
@@ -271,7 +274,20 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       // redirect to the default tab after save
       history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
-    } catch (err) {}
+    } catch (err) {
+      let message = "Unable to get error message";
+      let stack = "Unable to get error stack";
+      if (err instanceof Error) {
+        message = err.message;
+        stack = err.stack ?? "(No error stack)";
+      }
+      updateAppStep({
+        step: "porter-app-update-failure",
+        errorMessage: message,
+        appName: latestProto.name,
+        errorStackTrace: stack,
+      });
+    }
   });
 
   const cancelRedeploy = useCallback(() => {
@@ -377,11 +393,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
+                {
+                  label: "Build Settings",
+                  value: "build-settings",
+                },
+              ]
               : []),
             { label: "Settings", value: "settings" },
           ]}

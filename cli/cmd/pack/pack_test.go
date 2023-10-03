@@ -74,7 +74,7 @@ func TestGetBuildpackName(t *testing.T) {
 		{
 			"github repo zip",
 			"https://github.com/heroku/buildpacks-nodejs/archive/refs/tags/v1.1.6.zip",
-			BuildpackNameTestResult{filepath.Join(homedir.HomeDir(), ".porter", "heroku-buildpacks-nodejs-fa2dc15"), nil},
+			BuildpackNameTestResult{filepath.Join(homedir.HomeDir(), ".porter", "heroku-buildpacks-nodejs-1.1.6"), nil},
 		},
 	}
 

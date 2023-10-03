@@ -45,7 +45,12 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
         ...app,
         app_revision: {
           ...app.app_revision,
-          proto: PorterApp.fromJsonString(atob(app.app_revision.b64_app_proto)),
+          proto: PorterApp.fromJsonString(
+            atob(app.app_revision.b64_app_proto),
+            {
+              ignoreUnknownFields: true,
+            }
+          ),
         },
       };
     });

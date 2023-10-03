@@ -10,6 +10,12 @@ import api from "shared/api";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
+export type AppValidationResult = {
+  validatedAppProto: PorterApp;
+  variables: Record<string, string>;
+  secrets: Record<string, string>;
+};
+
 export const useAppValidation = ({
   deploymentTargetID,
   creating = false,
@@ -18,13 +24,6 @@ export const useAppValidation = ({
   creating?: boolean;
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
-
-  const removedEnvKeys = (
-    current: Record<string, string>,
-    previous: Record<string, string>
-  ) => {
-    return Object.keys(previous).filter((key) => !current[key]);
-  };
 
   const getBranchHead = async ({
     projectID,
@@ -62,7 +61,10 @@ export const useAppValidation = ({
   };
 
   const validateApp = useCallback(
-    async (data: PorterAppFormData, prevRevision?: PorterApp) => {
+    async (
+      data: PorterAppFormData,
+      prevRevision?: PorterApp
+    ): Promise<AppValidationResult> => {
       if (!currentProject || !currentCluster) {
         throw new Error("No project or cluster selected");
       }
@@ -105,6 +107,16 @@ export const useAppValidation = ({
         })
         .exhaustive();
 
+      const domainDeletions = data.app.services.reduce(
+        (acc: Record<string, string[]>, svc) => {
+          if (svc.domainDeletions.length) {
+            acc[svc.name.value] = svc.domainDeletions.map((d) => d.name);
+          }
+          return acc;
+        },
+        {}
+      );
+
       const res = await api.validatePorterApp(
         "<token>",
         {
@@ -117,8 +129,10 @@ export const useAppValidation = ({
           commit_sha,
           deletions: {
             service_names: data.deletions.serviceNames.map((s) => s.name),
+            predeploy: data.deletions.predeploy.map((s) => s.name),
             env_group_names: data.deletions.envGroupNames.map((eg) => eg.name),
             env_variable_names: [],
+            domain_name_deletions: domainDeletions,
           },
         },
         {
@@ -134,7 +148,9 @@ export const useAppValidation = ({
         .parseAsync(res.data);
 
       const validatedAppProto = PorterApp.fromJsonString(
-        atob(validAppData.validate_b64_app_proto)
+        atob(validAppData.validate_b64_app_proto), {
+          ignoreUnknownFields: true,
+        }
       );
 
       return { validatedAppProto: validatedAppProto, variables, secrets };

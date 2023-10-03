@@ -43,6 +43,11 @@ export const deletionValidator = z.object({
       name: z.string(),
     })
     .array(),
+  predeploy: z
+    .object({
+      name: z.string(),
+    })
+    .array(),
   envGroupNames: z
     .object({
       name: z.string(),
@@ -81,6 +86,7 @@ export const porterAppFormValidator = z.object({
   app: clientAppValidator,
   source: sourceValidator,
   deletions: deletionValidator,
+  redeployOnSave: z.boolean().default(false),
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
@@ -259,7 +265,7 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
         method: b.method,
         context: b.context,
         buildpacks: b.buildpacks.map((b) => ({
-          name: BUILDPACK_TO_NAME[b],
+          name: BUILDPACK_TO_NAME[b] ?? b,
           buildpack: b,
         })),
         builder: b.builder,
@@ -387,4 +393,85 @@ export function clientAppFromProto({
       builder: "",
     },
   };
+}
+
+export function applyPreviewOverrides({
+  app,
+  overrides,
+}: {
+  app: ClientPorterApp;
+  overrides: DetectedServices["previews"];
+}): ClientPorterApp {
+  if (!overrides) {
+    return app;
+  }
+
+  const services = app.services.map((svc) => {
+    const override = overrides.services.find(
+      (s) => s.name.value === svc.name.value
+    );
+    if (override) {
+      const ds = deserializeService({
+        service: serializeService(svc),
+        override: serializeService(override),
+      });
+
+      if (ds.config.type == "web") {
+        ds.config.domains = [];
+      }
+      return ds;
+    }
+
+    if (svc.config.type == "web") {
+      svc.config.domains = [];
+    }
+    return svc;
+  });
+  const additionalServices = overrides.services
+    .filter((s) => !app.services.find((svc) => svc.name.value === s.name.value))
+    .map((svc) => deserializeService({ service: serializeService(svc) }));
+
+  app.services = [...services, ...additionalServices];
+
+  if (app.predeploy) {
+    const predeployOverride = overrides.predeploy;
+    if (predeployOverride) {
+      app.predeploy = [
+        deserializeService({
+          service: serializeService(app.predeploy[0]),
+          override: serializeService(predeployOverride),
+        }),
+      ];
+    }
+  }
+
+  const envOverrides = overrides.variables;
+  if (envOverrides) {
+    const env = app.env.map((e) => {
+      const override = envOverrides[e.key];
+      if (override) {
+        return {
+          ...e,
+          locked: true,
+          value: override,
+        };
+      }
+
+      return e;
+    });
+
+    const additionalEnv = Object.entries(envOverrides)
+      .filter(([key]) => !app.env.find((e) => e.key === key))
+      .map(([key, value]) => ({
+        key,
+        value,
+        hidden: false,
+        locked: true,
+        deleted: false,
+      }));
+
+    app.env = [...env, ...additionalEnv];
+  }
+
+  return app;
 }

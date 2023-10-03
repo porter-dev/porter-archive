@@ -87,6 +87,7 @@ const Environment: React.FC<Props> = ({ latestSource }) => {
           latestRevision.status === "CREATED" ||
           latestRevision.status === "AWAITING_BUILD_ARTIFACT"
         }
+        disabledTooltipMessage="Please wait for the deploy to complete before updating environment variables"
       >
         Update app
       </Button>

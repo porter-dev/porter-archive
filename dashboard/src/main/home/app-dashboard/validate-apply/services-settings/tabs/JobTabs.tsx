@@ -11,6 +11,7 @@ import MainTab from "./Main";
 import Resources from "./Resources";
 import { Controller, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
+import {ControlledInput} from "../../../../../../components/porter/ControlledInput";
 
 interface Props {
   index: number;
@@ -32,7 +33,7 @@ const JobTabs: React.FC<Props> = ({
   maxCPU,
   isPredeploy,
 }) => {
-  const { control } = useFormContext<PorterAppFormData>();
+  const { control, register } = useFormContext<PorterAppFormData>();
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "advanced"
   >("main");
@@ -89,6 +90,18 @@ const JobTabs: React.FC<Props> = ({
                   <Text color="helper">Allow jobs to execute concurrently</Text>
                 </Checkbox>
               )}
+            />
+            <Spacer y={1} />
+            <ControlledInput
+                type="text"
+                label="Timeout (seconds)"
+                placeholder="ex: 3600"
+                width="300px"
+                disabled={service.config.timeoutSeconds.readOnly}
+                disabledTooltip={
+                  "You may only edit this field in your porter.yaml."
+                }
+                {...register(`app.services.${index}.config.timeoutSeconds.value`)}
             />
           </>
         ))

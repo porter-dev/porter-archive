@@ -48,10 +48,10 @@ const getNumericValue = (
 
 // ServiceField is a helper to create a ServiceString, ServiceNumber, or ServiceBoolean
 export const ServiceField = {
-  string: (defaultValue: string, overrideValue?: string): ServiceString => {
+  string: (defaultValue?: string, overrideValue?: string): ServiceString => {
     return {
       readOnly: !!overrideValue,
-      value: overrideValue ?? defaultValue,
+      value: overrideValue ?? defaultValue ?? "",
     };
   },
   number: (
@@ -126,15 +126,15 @@ export function deserializeAutoscaling({
         : ServiceField.number(10, undefined),
       cpuThresholdPercent: autoscaling.cpuThresholdPercent
         ? ServiceField.number(
-            autoscaling.cpuThresholdPercent,
-            override?.cpuThresholdPercent
-          )
+          autoscaling.cpuThresholdPercent,
+          override?.cpuThresholdPercent
+        )
         : ServiceField.number(50, undefined),
       memoryThresholdPercent: autoscaling.memoryThresholdPercent
         ? ServiceField.number(
-            autoscaling.memoryThresholdPercent,
-            override?.memoryThresholdPercent
-          )
+          autoscaling.memoryThresholdPercent,
+          override?.memoryThresholdPercent
+        )
         : ServiceField.number(50, undefined),
     }
   );
@@ -175,7 +175,7 @@ export function deserializeHealthCheck({
       enabled: ServiceField.boolean(health.enabled, override?.enabled),
       httpPath: health.httpPath
         ? ServiceField.string(health.httpPath, override?.httpPath)
-        :  ServiceField.string("", undefined),
+        : ServiceField.string("", undefined),
     }
   );
 }

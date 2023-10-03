@@ -66,6 +66,7 @@ export const serviceValidator = z.object({
   canDelete: z.boolean().default(true).optional(),
   name: serviceStringValidator,
   run: serviceStringValidator,
+  runOptional: serviceStringValidator.optional(),
   instances: serviceNumberValidator,
   port: serviceNumberValidator,
   cpuCores: serviceNumberValidator,
@@ -91,7 +92,7 @@ export type ClientService = z.infer<typeof serviceValidator>;
 // This is used as an intermediate step to convert a ClientService to a protobuf Service
 export type SerializedService = {
   name: string;
-  run: string;
+  runOptional?: string;
   instances: number;
   port: number;
   cpuCores: number;
@@ -143,7 +144,7 @@ export function defaultSerialized({
 }): SerializedService {
   const baseService = {
     name,
-    run: "",
+    runOptional: "",
     instances: 1,
     port: 3000,
     cpuCores: 0.1,
@@ -209,7 +210,7 @@ export function serializeService(service: ClientService): SerializedService {
     .with({ type: "web" }, (config) =>
       Object.freeze({
         name: service.name.value,
-        run: service.run.value,
+        runOptional: service.runOptional?.value,
         instances: service.instances.value,
         port: service.port.value,
         cpuCores: service.cpuCores.value,
@@ -231,7 +232,7 @@ export function serializeService(service: ClientService): SerializedService {
     .with({ type: "worker" }, (config) =>
       Object.freeze({
         name: service.name.value,
-        run: service.run.value,
+        runOptional: service.runOptional?.value,
         instances: service.instances.value,
         port: service.port.value,
         cpuCores: service.cpuCores.value,
@@ -248,7 +249,7 @@ export function serializeService(service: ClientService): SerializedService {
     .with({ type: "job" }, (config) =>
       Object.freeze({
         name: service.name.value,
-        run: service.run.value,
+        runOptional: service.runOptional?.value,
         instances: service.instances.value,
         port: service.port.value,
         cpuCores: service.cpuCores.value,
@@ -266,7 +267,7 @@ export function serializeService(service: ClientService): SerializedService {
     .with({ type: "predeploy" }, () =>
       Object.freeze({
         name: service.name.value,
-        run: service.run.value,
+        runOptional: service.runOptional?.value,
         instances: service.instances.value,
         port: service.port.value,
         cpuCores: service.cpuCores.value,
@@ -295,7 +296,7 @@ export function deserializeService({
     expanded,
     canDelete: !override,
     name: ServiceField.string(service.name, override?.name),
-    run: ServiceField.string(service.run, override?.run),
+    run: ServiceField.string(service.runOptional, override?.runOptional),
     instances: ServiceField.number(service.instances, override?.instances),
     port: ServiceField.number(service.port, override?.port),
     cpuCores: ServiceField.number(service.cpuCores, override?.cpuCores),

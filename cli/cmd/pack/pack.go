@@ -2,6 +2,7 @@ package pack
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -92,6 +93,10 @@ func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *
 }
 
 func getBuildpackName(ctx context.Context, bp string) (string, error) {
+	if bp == "" {
+		return "", errors.New("please specify a buildpack name")
+	}
+
 	u, err := url.Parse(bp)
 	if err != nil {
 		return bp, nil
@@ -111,7 +116,7 @@ func getBuildpackName(ctx context.Context, bp string) (string, error) {
 	var bpRealName string
 	// could be a git repository containing the buildpack
 	if !strings.HasSuffix(u.Path, ".zip") && u.Host != "github.com" && u.Host != "www.github.com" {
-		return bpRealName, fmt.Errorf("please provide either a github.com URL or a ZIP file URL")
+		return bpRealName, errors.New("please provide either a github.com URL or a ZIP file URL")
 	}
 
 	urlPaths := strings.Split(u.Path[1:], "/")
@@ -149,7 +154,7 @@ func getBuildpackName(ctx context.Context, bp string) (string, error) {
 				urlPaths[1],
 			)
 			if err != nil {
-				return bpRealName, fmt.Errorf("could not fetch git repo details")
+				return bpRealName, errors.New("could not fetch git repo details")
 			}
 			bp = fmt.Sprintf("%s/archive/refs/heads/%s.zip", bp, repo.GetDefaultBranch())
 		}

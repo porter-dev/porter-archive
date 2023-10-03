@@ -8,9 +8,12 @@ function isValidBuildpack(url: string): boolean {
   if (url.startsWith(urnPrefix)) {
     return true;
   }
-
-  const pattern = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,})(:\d{2,5})?([\/\w.-]*)*\/?$/i;
-  return pattern.test(url);
+  try {
+    new URL(url);
+    return true;
+  } catch (error) {
+    return false;
+  }
 }
 
 const AddCustomBuildpack: React.FC<{
@@ -53,7 +56,7 @@ const AddCustomBuildpack: React.FC<{
         </EventInformation>
       </ContentContainer>
       <ActionContainer>
-        <ActionButton onClick={() => handleAddCustomBuildpack()}>
+        <ActionButton onClick={() => handleAddCustomBuildpack()} type="button">
           <span className="material-icons-outlined">add</span>
         </ActionButton>
       </ActionContainer>

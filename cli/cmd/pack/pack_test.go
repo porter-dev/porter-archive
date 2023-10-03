@@ -48,13 +48,13 @@ func TestGetBuildpackName(t *testing.T) {
 		},
 		{
 			"github repo",
-			"https://github.com/heroku/buildpacks-nodejs",
-			BuildpackNameTestResult{filepath.Join(homedir.HomeDir(), ".porter", "buildpack-nodejs-main"), nil},
+			"https://github.com/heroku/buildpacks-nodejs/archive/fa2dc153e4683181608307ecb3922eaaeb43d92c.zip",
+			BuildpackNameTestResult{filepath.Join(homedir.HomeDir(), ".porter", "heroku-buildpacks-nodejs-fa2dc15"), nil},
 		},
 		{
 			"github repo zip",
 			"https://github.com/heroku/buildpacks-nodejs/archive/refs/tags/v1.1.6.zip",
-			BuildpackNameTestResult{filepath.Join(homedir.HomeDir(), ".porter", "v1.1.6"), nil},
+			BuildpackNameTestResult{filepath.Join(homedir.HomeDir(), ".porter", "heroku-buildpacks-nodejs-fa2dc15"), nil},
 		},
 	}
 

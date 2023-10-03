@@ -50,7 +50,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
   disabled,
   disabledTooltip,
   color,
-  step = 1,
+  step,
   width,
   smartLimit,
   override,
@@ -117,7 +117,7 @@ const InputSlider: React.FC<InputSliderProps> = ({
       <LabelContainer>
         <>
           {label && <Label>{label}</Label>}
-          <Value>{`${Math.round(value * 10 / step) / (10 / step)} ${unit}`}</Value>
+          <Value>{`${Math.floor(value * 100) / 100} ${unit}`}</Value>
           {displayOptimalText &&
             <><Spacer inline x={1} /><Label>Recommended based on the available compute </Label>  <StyledIcon
               className="material-icons"

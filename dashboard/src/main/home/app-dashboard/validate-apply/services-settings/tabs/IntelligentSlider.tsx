@@ -6,6 +6,8 @@ import { withStyles } from '@material-ui/core/styles';
 import Spacer from 'components/porter/Spacer';
 import NodeInfoModal from 'main/home/app-dashboard/new-app-flow/tabs/NodeInfoModal';
 
+const SMART_LIMIT_FRACTION = 0.5;
+
 type IntelligentSliderProps = {
     label?: string;
     unit?: string;
@@ -66,14 +68,10 @@ const IntelligentSlider: React.FC<IntelligentSliderProps> = ({
         ];
 
         if (isSmartOptimizationOn) {
-            let half = min + (max - min) * 0.5;
-            let quarter = min + (max - min) * 0.25;
-            let eighth = min + (max - min) * 0.125;
-            if (decimalsToRoundTo > 0) {
-                half = Number(half.toFixed(decimalsToRoundTo));
-                quarter = Number(quarter.toFixed(decimalsToRoundTo));
-                eighth = Number(eighth.toFixed(decimalsToRoundTo));
-            }
+            const half = Number((min + (max - min) * 0.5).toFixed(decimalsToRoundTo));
+            const quarter = Number((min + (max - min) * 0.25).toFixed(decimalsToRoundTo));
+            const eighth = Number((min + (max - min) * 0.125).toFixed(decimalsToRoundTo));
+
             marks.push(
                 {
                     value: half,
@@ -94,24 +92,15 @@ const IntelligentSlider: React.FC<IntelligentSliderProps> = ({
     }, [isSmartOptimizationOn, min, max, decimalsToRoundTo]);
 
     const displayOptimalText = useMemo(() => {
-        let half = min + (max - min) * 0.5;
-        let quarter = min + (max - min) * 0.25;
-        let eighth = min + (max - min) * 0.125;
-        if (decimalsToRoundTo > 0) {
-            half = Number(half.toFixed(decimalsToRoundTo));
-            quarter = Number(quarter.toFixed(decimalsToRoundTo));
-            eighth = Number(eighth.toFixed(decimalsToRoundTo));
-        }
+        const half = Number((min + (max - min) * 0.5).toFixed(decimalsToRoundTo));
+        const quarter = Number((min + (max - min) * 0.25).toFixed(decimalsToRoundTo));
+        const eighth = Number((min + (max - min) * 0.125).toFixed(decimalsToRoundTo));
 
         return isSmartOptimizationOn && (Number(value) === quarter || Number(value) === eighth || Number(value) === half);
     }, [value, min, max, isSmartOptimizationOn]);
 
     const smartLimit = useMemo(() => {
-        let half = min + (max - min) * 0.5;
-        if (decimalsToRoundTo > 0) {
-            half = Number(half.toFixed(decimalsToRoundTo));
-        }
-        return min + (max - min) * 0.5;
+        return Number((min + (max - min) * SMART_LIMIT_FRACTION).toFixed(decimalsToRoundTo));
     }, [min, max]);
 
     const isExceedingLimit = useMemo(() => {

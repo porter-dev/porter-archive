@@ -47,7 +47,7 @@ export const useClusterResourceLimits = (
         AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"] * UPPER_BOUND
     ); //default is set to a t3 medium
     const [maxRAM, setMaxRAM] = useState(
-        // round to 100
+        // round to nearest 100
         Math.round(
             convert(AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"], "GiB").to("MB") *
             UPPER_BOUND / 100

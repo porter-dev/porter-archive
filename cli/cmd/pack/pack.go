@@ -160,16 +160,16 @@ func getBuildpackName(ctx context.Context, bp string) (string, error) {
 	}
 
 	if err := downloader.DownloadToFile(bp); err != nil {
-		return bpRealName, err
+		return bpRealName, fmt.Errorf("failed to download buildpack: %w", err)
 	}
 
 	if err := downloader.UnzipToDir(); err != nil {
-		return bpRealName, err
+		return bpRealName, fmt.Errorf("failed to extract buildpack: %w", err)
 	}
 
 	dstFiles, err := os.ReadDir(dstDir)
 	if err != nil {
-		return bpRealName, err
+		return bpRealName, fmt.Errorf("failed to list files in extracted buildpack: %w", err)
 	}
 
 	for _, info := range dstFiles {

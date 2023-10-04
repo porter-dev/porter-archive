@@ -136,9 +136,14 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTarget.ID.String()})
 
+		if deploymentTarget.ClusterID != int(clusterID) {
+			err := telemetry.Error(ctx, span, err, "deployment target cluster id does not match")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
 		deleteTargetReq := connect.NewRequest(&porterv1.DeleteDeploymentTargetRequest{
 			ProjectId:          int64(projectID),
-			ClusterId:          int64(clusterID),
 			DeploymentTargetId: deploymentTarget.ID.String(),
 		})
 

@@ -218,6 +218,11 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		WebhookURL:          webhookURL,
 		PorterAppRepository: c.Repo().PorterApp(),
 	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "unable to set repo webhook")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
 
 	res := &CreateAppTemplateResponse{
 		AppTemplateID: updatedAppTemplate.ID.String(),

@@ -49,7 +49,6 @@ import EventFocusView from "./activity-feed/events/focus-views/EventFocusView";
 import HelmValuesTab from "./HelmValuesTab";
 import SettingsTab from "./SettingsTab";
 import PorterAppRevisionSection from "./PorterAppRevisionSection";
-import ImageSettingsTab from "./ImageSettingsTab";
 
 type Props = RouteComponentProps & {};
 
@@ -70,7 +69,6 @@ const validTabs = [
   "debug",
   "environment",
   "build-settings",
-  "image-settings",
   "settings",
   "helm-values",
   "job-history",
@@ -232,17 +230,8 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       setSyncedEnvGroups(filteredEnvGroups || []);
       setPorterJson(porterJson);
       setAppData(newAppData);
-      const globalImage = resChartData.data.config?.global?.image
-      const hasBuiltImage = globalImage != null &&
-        globalImage.repository != null &&
-        globalImage.tag != null &&
-        !(globalImage.repository === ImageInfo.BASE_IMAGE.repository &&
-          globalImage.tag === ImageInfo.BASE_IMAGE.tag)
       // annoying that we have to parse buildpacks like this but alas
       const parsedPorterApp = { ...resPorterApp?.data, buildpacks: newAppData.app.buildpacks?.split(",") ?? [] };
-      if (parsedPorterApp.image_repo_uri && hasBuiltImage) {
-        parsedPorterApp.image_info = { repository: globalImage.repository, tag: globalImage.tag };
-      }
       setPorterApp(parsedPorterApp);
       setTempPorterApp(parsedPorterApp);
       setBuildView(!_.isEmpty(parsedPorterApp.dockerfile) ? "docker" : "buildpacks")
@@ -260,6 +249,12 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
       );
       setPorterYaml(finalPorterYaml);
       // Only check GHA status if no built image is set
+      const globalImage = resChartData.data.config?.global?.image
+      const hasBuiltImage = globalImage != null &&
+        globalImage.repository != null &&
+        globalImage.tag != null &&
+        globalImage.repository !== ImageInfo.BASE_IMAGE.repository &&
+        globalImage.tag !== ImageInfo.BASE_IMAGE.tag
       if (hasBuiltImage || !resPorterApp.data.repo_name) {
         setWorkflowCheckPassed(true);
         setHasBuiltImage(true);
@@ -407,7 +402,7 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
         );
         const yamlString = yaml.dump(finalPorterYaml);
         const base64Encoded = btoa(yamlString);
-        let updatedPorterApp = {
+        const updatedPorterApp = {
           porter_yaml: base64Encoded,
           override_release: true,
           ...PorterApp.empty(),
@@ -427,9 +422,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
           updatedPorterApp.builder = tempPorterApp.builder;
           updatedPorterApp.buildpacks = tempPorterApp.buildpacks.join(",");
           updatedPorterApp.dockerfile = "null";
-        }
-        if (tempPorterApp.image_info?.repository && tempPorterApp.image_info?.tag) {
-          updatedPorterApp = { ...updatedPorterApp, image_info: tempPorterApp.image_info, image_repo_uri: tempPorterApp.image_info.repository }
         }
 
         await api.createPorterApp(
@@ -686,14 +678,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
             setBuildView={setBuildView}
           />
         );
-      case "image-settings":
-        return (
-          <ImageSettingsTab
-            porterApp={tempPorterApp}
-            setTempPorterApp={(attrs: Partial<PorterApp>) => setTempPorterApp(PorterApp.setAttributes(tempPorterApp, attrs))}
-            updatePorterApp={updatePorterApp}
-          />
-        )
       case "settings":
         return <SettingsTab
           appName={appData.app.name}
@@ -950,10 +934,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
                   appData.app.git_repo_id && {
                     label: "Build settings",
                     value: "build-settings",
-                  },
-                  hasBuiltImage && !appData.app.git_repo_id && {
-                    label: "Image settings",
-                    value: "image-settings",
                   },
                   { label: "Settings", value: "settings" },
                   (user.email.endsWith("porter.run") || currentProject.helm_values_enabled) && { label: "Helm values", value: "helm-values" },

@@ -9,10 +9,6 @@ export interface PorterApp {
     dockerfile: string;
     image_repo_uri: string;
     porter_yaml_path: string;
-    image_info?: {
-        repository: string;
-        tag: string;
-    }
 }
 
 export const PorterApp = {
@@ -27,10 +23,6 @@ export const PorterApp = {
         dockerfile: "",
         image_repo_uri: "",
         porter_yaml_path: "",
-        image_info: {
-            repository: "",
-            tag: "",
-        }
     }),
 
     setAttribute: <K extends keyof PorterApp>(

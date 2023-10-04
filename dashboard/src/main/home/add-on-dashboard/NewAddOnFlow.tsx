@@ -28,7 +28,7 @@ type Props = {
 
 const HIDDEN_CHARTS = [
   "agent",
-  "elasticache-chart"
+  "elasticache-chart",
   "loki",
   "porter-agent",
   "rds-chart",

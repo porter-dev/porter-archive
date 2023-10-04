@@ -18,6 +18,9 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// GithubPRStatus_Closed is the status for a closed PR (closed, merged)
+const GithubPRStatus_Closed = "closed"
+
 // GithubWebhookHandler handles webhooks sent to /api/webhooks/github/{project_id}/{cluster_id}/{porter_app_name}
 type GithubWebhookHandler struct {
 	handlers.PorterHandlerReadWriter
@@ -113,7 +116,7 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	switch event := event.(type) {
 	case *github.PullRequestEvent:
-		if event.GetAction() != "closed" {
+		if event.GetAction() != GithubPRStatus_Closed {
 			c.WriteResult(w, r, nil)
 			return
 		}

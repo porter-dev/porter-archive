@@ -9,6 +9,8 @@ import applications from "assets/applications.svg";
 import infra from "assets/cluster.svg";
 import sliders from "assets/env-groups.svg";
 import addOns from "assets/add-ons.svg"
+import database from "assets/database.svg";
+import collapseSidebar from "assets/collapse-sidebar.svg";
 
 import { Context } from "shared/Context";
 
@@ -97,7 +99,7 @@ class Sidebar extends Component<PropsType, StateType> {
     if (!this.state.showSidebar) {
       return (
         <PullTab onClick={this.toggleSidebar}>
-          <i className="material-icons">double_arrow</i>
+          <img src={collapseSidebar} />
         </PullTab>
       );
     }
@@ -175,7 +177,6 @@ class Sidebar extends Component<PropsType, StateType> {
         </ScrollWrapper>
       );
     } else if (currentProject.simplified_view_enabled) {
-
       if (currentProject.multi_cluster) {
         return (
           <ScrollWrapper>
@@ -269,6 +270,15 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={applications} />
               Applications
             </NavButton>
+            {currentProject.db_enabled && (
+              <NavButton
+                path="/databases"
+                active={window.location.pathname.startsWith("/apps")}
+              >
+                <Img src={database} />
+                Databases
+              </NavButton>
+            )}
             <NavButton
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}
@@ -411,12 +421,6 @@ const NavButton = styled(SidebarLink)`
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 
-  background: ${(props: any) => (props.active ? "#ffffff11" : "")};
-
-  :hover {
-    background: ${(props: any) => (props.active ? "#ffffff11" : "#ffffff08")};
-  }
-
   &.active {
     background: #202126;
 
@@ -426,7 +430,7 @@ const NavButton = styled(SidebarLink)`
   }
 
   :hover {
-    background: #ffffff08;
+    background: #ffffff09;
   }
 
   > i {
@@ -468,25 +472,31 @@ const SidebarLabel = styled.div`
 const PullTab = styled.div`
   position: fixed;
   width: 30px;
-  height: 50px;
-  background: #7a838f77;
+  height: 30px;
+  border: 1px solid #383a3f;
+  border-left: none;
   top: calc(50vh - 60px);
   left: 0;
   z-index: 1;
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  :hover {
-    background: #99a5af77;
+  > img {
+    height: 14px;
+    width: 14px;
+    opacity: 0.5;
   }
 
-  > i {
-    color: #ffffff77;
-    font-size: 18px;
-    position: absolute;
-    top: 15px;
-    left: 4px;
+  :hover {
+    border: 1px solid ${props => props.theme.text.primary};
+    border-left: none;
+    > img {
+      opacity: 0.9;
+    }
   }
 `;
 

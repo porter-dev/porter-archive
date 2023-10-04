@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/google/uuid"
+	"github.com/porter-dev/porter/api/types"
 	"gorm.io/gorm"
 )
 
@@ -31,4 +32,20 @@ type DeploymentTarget struct {
 
 	// SelectorType is the kind of selector (i.e. NAMESPACE or LABEL).
 	SelectorType DeploymentTargetSelectorType `json:"selector_type"`
+
+	// Preview is a boolean indicating whether this target is a preview target.
+	Preview bool `gorm:"default:false" json:"preview"`
+}
+
+// ToDeploymentTargetType generates an external types.PorterApp to be shared over REST
+func (d *DeploymentTarget) ToDeploymentTargetType() *types.DeploymentTarget {
+	return &types.DeploymentTarget{
+		ID:           d.ID,
+		ProjectID:    uint(d.ProjectID),
+		ClusterID:    uint(d.ClusterID),
+		Selector:     d.Selector,
+		SelectorType: string(d.SelectorType),
+		CreatedAt:    d.CreatedAt,
+		UpdatedAt:    d.UpdatedAt,
+	}
 }

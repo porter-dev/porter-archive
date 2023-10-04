@@ -42,11 +42,13 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
 
   const UPPER_BOUND = 0.75;
+  const UPPER_RAM = 1024;
 
   const [maxCPU, setMaxCPU] = useState(
-    AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"] * UPPER_BOUND
+    AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"]
   ); //default is set to a t3 medium
   const [maxRAM, setMaxRAM] = useState(
+    // round to 100
     Math.round(
       convert(AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"], "GiB").to("MB") *
       UPPER_BOUND
@@ -114,7 +116,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           if (data) {
             let largestInstanceType = {
               vCPUs: 2,
-              RAM: 4294,
+              RAM: 4,
             };
 
             data.forEach((node: any) => {

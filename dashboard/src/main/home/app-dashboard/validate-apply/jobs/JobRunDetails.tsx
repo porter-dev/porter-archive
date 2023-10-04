@@ -23,7 +23,7 @@ type Props = {
 const JobRunDetails: React.FC<Props> = ({
     jobRun,
 }) => {
-    const { projectId, clusterId, latestProto, deploymentTargetId } = useLatestRevision();
+    const { projectId, clusterId, latestProto, deploymentTarget } = useLatestRevision();
 
     const appName = latestProto.name
 
@@ -67,7 +67,7 @@ const JobRunDetails: React.FC<Props> = ({
                 clusterId={clusterId}
                 appName={appName}
                 serviceNames={[jobRun.jobName ?? "all"]}
-                deploymentTargetId={deploymentTargetId}
+                deploymentTargetId={deploymentTarget.id}
                 appRevisionId={jobRun.metadata.labels["porter.run/app-revision-id"]}
                 logFilterNames={["service_name"]}
                 timeRange={{

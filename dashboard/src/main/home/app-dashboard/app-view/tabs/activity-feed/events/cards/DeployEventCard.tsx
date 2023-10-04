@@ -12,22 +12,24 @@ import { PorterAppDeployEvent } from "../types";
 import AnimateHeight from "react-animate-height";
 import ServiceStatusDetail from "./ServiceStatusDetail";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import { useRevisionIdToNumber } from "lib/hooks/useRevisionList";
+import { useRevisionList } from "lib/hooks/useRevisionList";
 
 type Props = {
   event: PorterAppDeployEvent;
   appName: string;
   showServiceStatusDetail?: boolean;
   deploymentTargetId: string;
+  projectId: number;
+  clusterId: number;
 };
 
-const DeployEventCard: React.FC<Props> = ({ event, appName, deploymentTargetId, showServiceStatusDetail = false }) => {
+const DeployEventCard: React.FC<Props> = ({ event, appName, deploymentTargetId, projectId, clusterId, showServiceStatusDetail = false }) => {
   const { latestRevision } = useLatestRevision();
   const [diffModalVisible, setDiffModalVisible] = useState(false);
   const [revertModalVisible, setRevertModalVisible] = useState(false);
   const [serviceStatusVisible, setServiceStatusVisible] = useState(showServiceStatusDetail);
 
-  const revisionIdToNumber = useRevisionIdToNumber(appName, deploymentTargetId);
+  const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
 
   const renderStatusText = () => {
     switch (event.status) {

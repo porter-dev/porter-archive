@@ -23,6 +23,11 @@ func (repo *DeploymentTargetRepository) DeploymentTargetBySelectorAndSelectorTyp
 }
 
 // List returns all deployment targets for a project
-func (repo *DeploymentTargetRepository) List(projectID uint) ([]*models.DeploymentTarget, error) {
+func (repo *DeploymentTargetRepository) List(projectID uint, clusterID uint, preview bool) ([]*models.DeploymentTarget, error) {
 	return nil, errors.New("cannot read database")
+}
+
+// CreateDeploymentTarget creates a new deployment target
+func (repo *DeploymentTargetRepository) CreateDeploymentTarget(deploymentTarget *models.DeploymentTarget) (*models.DeploymentTarget, error) {
+	return nil, errors.New("cannot write database")
 }

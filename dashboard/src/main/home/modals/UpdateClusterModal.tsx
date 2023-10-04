@@ -100,14 +100,14 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
   };
 
   renderWarning = () => {
-    let { currentCluster } = this.context;
-    if (!currentCluster?.infra_id || !currentCluster.service) {
-      return (
-        <Warning highlight={true}>
-          ⚠️ Deleting the cluster will only detach this cluster from your project. To delete resources you must do so manually.
-        </Warning>
-      );
-    }
+    // let { currentCluster } = this.context;
+    // if (!currentCluster?.infra_id || !currentCluster.service) {
+    //   return (
+    //     <Warning highlight={true}>
+    //       ⚠️ Deleting the cluster will only detach this cluster from your project. To delete resources you must do so manually.
+    //     </Warning>
+    //   );
+    // }
 
     return (
       <Warning highlight={true}>

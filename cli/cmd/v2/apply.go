@@ -24,27 +24,40 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 )
 
+// ApplyInput is the input for the Apply function
+type ApplyInput struct {
+	// CLIConfig is the CLI configuration
+	CLIConfig config.CLIConfig
+	// Client is the Porter API client
+	Client api.Client
+	// PorterYamlPath is the path to the porter.yaml file
+	PorterYamlPath string
+	// AppName is the name of the app
+	AppName string
+	// PreviewApply is true when Apply should create a new deployment target matching current git branch and apply to that target
+	PreviewApply bool
+}
+
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
-func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, porterYamlPath string, appName string) error {
+func Apply(ctx context.Context, inp ApplyInput) error {
 	const forceBuild = true
 	var b64AppProto string
 
-	targetResp, err := client.DefaultDeploymentTarget(ctx, cliConf.Project, cliConf.Cluster)
+	cliConf := inp.CLIConfig
+	client := inp.Client
+
+	deploymentTargetID, err := deploymentTargetFromConfig(ctx, client, cliConf.Project, cliConf.Cluster, inp.PreviewApply)
 	if err != nil {
-		return fmt.Errorf("error calling default deployment target endpoint: %w", err)
+		return fmt.Errorf("error getting deployment target from config: %w", err)
 	}
 
-	if targetResp.DeploymentTargetID == "" {
-		return errors.New("deployment target id is empty")
-	}
-
-	porterYamlExists := len(porterYamlPath) != 0
+	porterYamlExists := len(inp.PorterYamlPath) != 0
 
 	if porterYamlExists {
-		_, err = os.Stat(filepath.Clean(porterYamlPath))
+		_, err := os.Stat(filepath.Clean(inp.PorterYamlPath))
 		if err != nil {
 			if !os.IsNotExist(err) {
-				return fmt.Errorf("error checking if porter yaml exists at path %s: %w", porterYamlPath, err)
+				return fmt.Errorf("error checking if porter yaml exists at path %s: %w", inp.PorterYamlPath, err)
 			}
 			// If a path was specified but the file does not exist, we will not immediately error out.
 			// This supports users migrated from v1 who use a workflow file that always specifies a porter yaml path
@@ -53,8 +66,12 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		}
 	}
 
+	// overrides incorporated into the app contract baed on the deployment target
+	var b64AppOverrides string
+
+	appName := inp.AppName
 	if porterYamlExists {
-		porterYaml, err := os.ReadFile(filepath.Clean(porterYamlPath))
+		porterYaml, err := os.ReadFile(filepath.Clean(inp.PorterYamlPath))
 		if err != nil {
 			return fmt.Errorf("could not read porter yaml file: %w", err)
 		}
@@ -75,7 +92,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		// override app name if provided
 		appName, err = appNameFromB64AppProto(parseResp.B64AppProto)
 		if err != nil {
-			return fmt.Errorf("error getting app name from b64 app proto: %w", err)
+			return fmt.Errorf("error getting app name from porter.yaml: %w", err)
 		}
 
 		// we only need to create the app if a porter yaml is provided (otherwise it must already exist)
@@ -92,7 +109,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 			return fmt.Errorf("unable to create porter app from yaml: %w", err)
 		}
 
-		envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, targetResp.DeploymentTargetID, parseResp.EnvVariables, parseResp.EnvSecrets, parseResp.B64AppProto)
+		envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID, parseResp.EnvVariables, parseResp.EnvSecrets, parseResp.B64AppProto)
 		if err != nil {
 			return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
 		}
@@ -102,6 +119,20 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 			return fmt.Errorf("error updating app env group in proto: %w", err)
 		}
 
+		if inp.PreviewApply && parseResp.PreviewApp != nil {
+			b64AppOverrides = parseResp.PreviewApp.B64AppProto
+
+			envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID, parseResp.PreviewApp.EnvVariables, parseResp.PreviewApp.EnvSecrets, parseResp.PreviewApp.B64AppProto)
+			if err != nil {
+				return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
+			}
+
+			b64AppOverrides, err = updateEnvGroupsInProto(ctx, b64AppOverrides, envGroupResp.EnvGroups)
+			if err != nil {
+				return fmt.Errorf("error updating app env group in proto: %w", err)
+			}
+		}
+
 		color.New(color.FgGreen).Printf("Successfully parsed Porter YAML: applying app \"%s\"\n", appName) // nolint:errcheck,gosec
 	}
 
@@ -109,16 +140,17 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		return errors.New("App name is empty.  Please provide a Porter YAML file specifying the name of the app or set the PORTER_APP_NAME environment variable.")
 	}
 
-	var commitSHA string
-	if os.Getenv("PORTER_COMMIT_SHA") != "" {
-		commitSHA = os.Getenv("PORTER_COMMIT_SHA")
-	} else if os.Getenv("GITHUB_SHA") != "" {
-		commitSHA = os.Getenv("GITHUB_SHA")
-	} else if commit, err := git.LastCommit(); err == nil && commit != nil {
-		commitSHA = commit.Sha
-	}
+	commitSHA := commitSHAFromEnv()
 
-	validateResp, err := client.ValidatePorterApp(ctx, cliConf.Project, cliConf.Cluster, appName, b64AppProto, targetResp.DeploymentTargetID, commitSHA)
+	validateResp, err := client.ValidatePorterApp(ctx, api.ValidatePorterAppInput{
+		ProjectID:          cliConf.Project,
+		ClusterID:          cliConf.Cluster,
+		AppName:            appName,
+		Base64AppProto:     b64AppProto,
+		Base64AppOverrides: b64AppOverrides,
+		DeploymentTarget:   deploymentTargetID,
+		CommitSHA:          commitSHA,
+	})
 	if err != nil {
 		return fmt.Errorf("error calling validate endpoint: %w", err)
 	}
@@ -128,7 +160,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 	}
 	base64AppProto := validateResp.ValidatedBase64AppProto
 
-	applyResp, err := client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, base64AppProto, targetResp.DeploymentTargetID, "", forceBuild)
+	applyResp, err := client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, base64AppProto, deploymentTargetID, "", forceBuild)
 	if err != nil {
 		return fmt.Errorf("error calling apply endpoint: %w", err)
 	}
@@ -140,40 +172,46 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 	if applyResp.CLIAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_BUILD {
 		color.New(color.FgGreen).Printf("Building new image...\n") // nolint:errcheck,gosec
 
-		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID)
+		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID)
 
 		if commitSHA == "" {
-			_ = reportBuildFailure(ctx, client, appName, cliConf, targetResp.DeploymentTargetID, applyResp.AppRevisionId, eventID)
-			return errors.New("Build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI.")
+			err := errors.New("Build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI.")
+			_ = reportBuildFailure(ctx, client, appName, cliConf, deploymentTargetID, applyResp.AppRevisionId, eventID, err)
+			return err
 		}
 
 		buildSettings, err := buildSettingsFromBase64AppProto(base64AppProto)
 		if err != nil {
-			_ = reportBuildFailure(ctx, client, appName, cliConf, targetResp.DeploymentTargetID, applyResp.AppRevisionId, eventID)
-			return fmt.Errorf("error building settings from base64 app proto: %w", err)
+			err := fmt.Errorf("error getting build settings from base64 app proto: %w", err)
+			_ = reportBuildFailure(ctx, client, appName, cliConf, deploymentTargetID, applyResp.AppRevisionId, eventID, err)
+			return err
 		}
 
-		currentAppRevisionResp, err := client.CurrentAppRevision(ctx, cliConf.Project, cliConf.Cluster, appName, targetResp.DeploymentTargetID)
+		currentAppRevisionResp, err := client.CurrentAppRevision(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID)
 		if err != nil {
-			_ = reportBuildFailure(ctx, client, appName, cliConf, targetResp.DeploymentTargetID, applyResp.AppRevisionId, eventID)
-			return fmt.Errorf("error getting current app revision: %w", err)
+			err := fmt.Errorf("error getting current app revision: %w", err)
+			_ = reportBuildFailure(ctx, client, appName, cliConf, deploymentTargetID, applyResp.AppRevisionId, eventID, err)
+			return err
 		}
 
 		if currentAppRevisionResp == nil {
-			_ = reportBuildFailure(ctx, client, appName, cliConf, targetResp.DeploymentTargetID, applyResp.AppRevisionId, eventID)
-			return errors.New("current app revision is nil")
+			err := errors.New("current app revision is nil")
+			_ = reportBuildFailure(ctx, client, appName, cliConf, deploymentTargetID, applyResp.AppRevisionId, eventID, err)
+			return err
 		}
 
 		appRevision := currentAppRevisionResp.AppRevision
 		if appRevision.B64AppProto == "" {
-			_ = reportBuildFailure(ctx, client, appName, cliConf, targetResp.DeploymentTargetID, applyResp.AppRevisionId, eventID)
-			return errors.New("current app revision b64 app proto is empty")
+			err := errors.New("current app revision b64 app proto is empty")
+			_ = reportBuildFailure(ctx, client, appName, cliConf, deploymentTargetID, applyResp.AppRevisionId, eventID, err)
+			return err
 		}
 
 		currentImageTag, err := imageTagFromBase64AppProto(appRevision.B64AppProto)
 		if err != nil {
-			_ = reportBuildFailure(ctx, client, appName, cliConf, targetResp.DeploymentTargetID, applyResp.AppRevisionId, eventID)
-			return fmt.Errorf("error getting image tag from current app revision: %w", err)
+			err := fmt.Errorf("error getting image tag from current app revision: %w", err)
+			_ = reportBuildFailure(ctx, client, appName, cliConf, deploymentTargetID, applyResp.AppRevisionId, eventID, err)
+			return err
 		}
 
 		buildSettings.CurrentImageTag = currentImageTag
@@ -181,22 +219,24 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 
 		buildEnv, err := client.GetBuildEnv(ctx, cliConf.Project, cliConf.Cluster, appName, appRevision.ID)
 		if err != nil {
-			_ = reportBuildFailure(ctx, client, appName, cliConf, targetResp.DeploymentTargetID, applyResp.AppRevisionId, eventID)
-			return fmt.Errorf("error getting build env: %w", err)
+			err := fmt.Errorf("error getting build env: %w", err)
+			_ = reportBuildFailure(ctx, client, appName, cliConf, deploymentTargetID, applyResp.AppRevisionId, eventID, err)
+			return err
 		}
 		buildSettings.Env = buildEnv.BuildEnvVariables
 
 		err = build(ctx, client, buildSettings)
 		if err != nil {
-			_ = reportBuildFailure(ctx, client, appName, cliConf, targetResp.DeploymentTargetID, applyResp.AppRevisionId, eventID)
-			return fmt.Errorf("error building app: %w", err)
+			err := fmt.Errorf("error building app: %w", err)
+			_ = reportBuildFailure(ctx, client, appName, cliConf, deploymentTargetID, applyResp.AppRevisionId, eventID, err)
+			return err
 		}
 
 		color.New(color.FgGreen).Printf("Successfully built image (tag: %s)\n", buildSettings.ImageTag) // nolint:errcheck,gosec
 
 		buildMetadata := make(map[string]interface{})
 		buildMetadata["end_time"] = time.Now().UTC()
-		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, eventID, types.PorterAppEventStatus_Success, buildMetadata)
+		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_Build, eventID, types.PorterAppEventStatus_Success, buildMetadata)
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId, !forceBuild)
 		if err != nil {
@@ -210,7 +250,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 		color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec
 
 		now := time.Now().UTC()
-		eventID, _ := createPredeployEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, now, applyResp.AppRevisionId)
+		eventID, _ := createPredeployEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, now, applyResp.AppRevisionId)
 
 		eventStatus := types.PorterAppEventStatus_Success
 		for {
@@ -236,7 +276,7 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 
 		metadata := make(map[string]interface{})
 		metadata["end_time"] = time.Now().UTC()
-		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, targetResp.DeploymentTargetID, eventID, eventStatus, metadata)
+		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
 
 		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId, !forceBuild)
 		if err != nil {
@@ -250,6 +290,19 @@ func Apply(ctx context.Context, cliConf config.CLIConfig, client api.Client, por
 
 	color.New(color.FgGreen).Printf("Successfully applied new revision %s for app %s\n", applyResp.AppRevisionId, appName) // nolint:errcheck,gosec
 	return nil
+}
+
+func commitSHAFromEnv() string {
+	var commitSHA string
+	if os.Getenv("PORTER_COMMIT_SHA") != "" {
+		commitSHA = os.Getenv("PORTER_COMMIT_SHA")
+	} else if os.Getenv("GITHUB_SHA") != "" {
+		commitSHA = os.Getenv("GITHUB_SHA")
+	} else if commit, err := git.LastCommit(); err == nil && commit != nil {
+		commitSHA = commit.Sha
+	}
+
+	return commitSHA
 }
 
 // checkPredeployTimeout is the maximum amount of time the CLI will wait for a predeploy to complete before calling apply again
@@ -358,6 +411,46 @@ func buildSettingsFromBase64AppProto(base64AppProto string) (buildInput, error) 
 	}, nil
 }
 
+func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectID, clusterID uint, previewApply bool) (string, error) {
+	var deploymentTargetID string
+
+	targetResp, err := client.DefaultDeploymentTarget(ctx, projectID, clusterID)
+	if err != nil {
+		return deploymentTargetID, fmt.Errorf("error calling default deployment target endpoint: %w", err)
+	}
+	deploymentTargetID = targetResp.DeploymentTargetID
+
+	if previewApply {
+		var branchName string
+
+		// branch name is set to different values in the GH env, depending on whether or not the workflow is triggered by a PR
+		// issue is being tracked here: https://github.com/github/docs/issues/15319
+		if os.Getenv("GITHUB_HEAD_REF") != "" {
+			branchName = os.Getenv("GITHUB_HEAD_REF")
+		} else if os.Getenv("GITHUB_REF_NAME") != "" {
+			branchName = os.Getenv("GITHUB_REF_NAME")
+		} else if branch, err := git.CurrentBranch(); err == nil {
+			branchName = branch
+		}
+
+		if branchName == "" {
+			return deploymentTargetID, errors.New("Branch name is empty. Please run apply in a git repository with access to the git CLI.")
+		}
+
+		targetResp, err := client.CreateDeploymentTarget(ctx, projectID, clusterID, branchName, true)
+		if err != nil {
+			return deploymentTargetID, fmt.Errorf("error calling create deployment target endpoint: %w", err)
+		}
+		deploymentTargetID = targetResp.DeploymentTargetID
+	}
+
+	if deploymentTargetID == "" {
+		return deploymentTargetID, errors.New("deployment target id is empty")
+	}
+
+	return deploymentTargetID, nil
+}
+
 func imageTagFromBase64AppProto(base64AppProto string) (string, error) {
 	var image string
 
@@ -416,10 +509,16 @@ func updateEnvGroupsInProto(ctx context.Context, base64AppProto string, envGroup
 	return editedB64AppProto, nil
 }
 
-func reportBuildFailure(ctx context.Context, client api.Client, appName string, cliConf config.CLIConfig, deploymentTargetID string, appRevisionID string, eventID string) error {
+func reportBuildFailure(ctx context.Context, client api.Client, appName string, cliConf config.CLIConfig, deploymentTargetID string, appRevisionID string, eventID string, buildError error) error {
 	buildMetadata := make(map[string]interface{})
 	buildMetadata["end_time"] = time.Now().UTC()
-	err := updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, eventID, types.PorterAppEventStatus_Failed, buildMetadata)
+
+	// the below is a temporary solution until we can report build errors via telemetry from the CLI
+	errorStringMap := make(map[string]string)
+	errorStringMap["build-error"] = fmt.Sprintf("%+v", buildError)
+	buildMetadata["errors"] = errorStringMap
+
+	err := updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_Build, eventID, types.PorterAppEventStatus_Failed, buildMetadata)
 	if err != nil {
 		return err
 	}

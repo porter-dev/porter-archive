@@ -3,9 +3,17 @@ import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Buildpack } from "../../types/buildpack";
 
-function isValidURL(url: string): boolean {
-  const pattern = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,})(:\d{2,5})?([\/\w.-]*)*\/?$/i;
-  return pattern.test(url);
+function isValidBuildpack(url: string): boolean {
+  const urnPrefix = "urn:cnb:registry:";
+  if (url.startsWith(urnPrefix)) {
+    return true;
+  }
+  try {
+    new URL(url);
+    return true;
+  } catch (error) {
+    return false;
+  }
 }
 
 const AddCustomBuildpackComponent: React.FC<{
@@ -15,7 +23,7 @@ const AddCustomBuildpackComponent: React.FC<{
   const [error, setError] = useState(false);
 
   const handleAddCustomBuildpack = () => {
-    if (buildpackUrl === "" || !isValidURL(buildpackUrl)) {
+    if (buildpackUrl === "" || !isValidBuildpack(buildpackUrl)) {
       setError(true);
       return;
     }

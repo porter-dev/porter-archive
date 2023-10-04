@@ -15,14 +15,9 @@ import (
 )
 
 // AppProtoFromYaml converts an old version Porter YAML file into a PorterApp proto object
-func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName string) (*porterv1.PorterApp, map[string]string, error) {
+func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.PorterApp, map[string]string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "v1-app-proto-from-yaml")
 	defer span.End()
-
-	if appName == "" {
-		return nil, nil, telemetry.Error(ctx, span, nil, "app name is empty")
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
 
 	if porterYamlBytes == nil {
 		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
@@ -34,9 +29,7 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 		return nil, nil, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
 	}
 
-	appProto := &porterv1.PorterApp{
-		Name: appName,
-	}
+	appProto := &porterv1.PorterApp{}
 
 	if porterYaml.Build != nil {
 		appProto.Build = &porterv1.Build{
@@ -79,11 +72,7 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 
 	serviceProtoMap := make(map[string]*porterv1.Service, 0)
 	for name, service := range services {
-		serviceType, err := protoEnumFromType(name, service)
-		if err != nil {
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "failing-service-name", Value: name})
-			return nil, nil, telemetry.Error(ctx, span, err, "error getting service type")
-		}
+		serviceType := protoEnumFromType(name, service)
 
 		serviceProto, err := serviceProtoFromConfig(service, serviceType)
 		if err != nil {
@@ -106,40 +95,29 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName strin
 	return appProto, porterYaml.Env, nil
 }
 
-func protoEnumFromType(name string, service Service) (porterv1.ServiceType, error) {
-	var serviceType porterv1.ServiceType
-
-	if service.Type != "" {
-		if service.Type == "web" {
-			return porterv1.ServiceType_SERVICE_TYPE_WEB, nil
-		}
-		if service.Type == "worker" {
-			return porterv1.ServiceType_SERVICE_TYPE_WORKER, nil
-		}
-		if service.Type == "job" {
-			return porterv1.ServiceType_SERVICE_TYPE_JOB, nil
-		}
-
-		return serviceType, fmt.Errorf("invalid service type '%s'", service.Type)
-	}
+func protoEnumFromType(name string, service Service) porterv1.ServiceType {
+	serviceType := porterv1.ServiceType_SERVICE_TYPE_WORKER
 
 	if strings.Contains(name, "web") {
-		return porterv1.ServiceType_SERVICE_TYPE_WEB, nil
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WEB
 	}
-
-	if strings.Contains(name, "wkr") {
-		return porterv1.ServiceType_SERVICE_TYPE_WORKER, nil
+	if strings.Contains(name, "wkr") || strings.Contains(name, "worker") {
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WORKER
 	}
-
 	if strings.Contains(name, "job") {
-		return porterv1.ServiceType_SERVICE_TYPE_JOB, nil
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_JOB
 	}
 
-	if name == "release" {
-		return porterv1.ServiceType_SERVICE_TYPE_JOB, nil
+	switch service.Type {
+	case "web":
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WEB
+	case "worker":
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WORKER
+	case "job":
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_JOB
 	}
 
-	return serviceType, errors.New("no type provided and could not parse service type from name")
+	return serviceType
 }
 
 func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {

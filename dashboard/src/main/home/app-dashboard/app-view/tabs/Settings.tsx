@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import { useHistory } from "react-router";
 
@@ -11,16 +11,21 @@ import { useLatestRevision } from "../LatestRevisionContext";
 import api from "shared/api";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { Context } from "shared/Context";
 
 const Settings: React.FC = () => {
+  const { currentProject } = useContext(Context);
   const queryClient = useQueryClient();
   const history = useHistory();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { porterApp, clusterId, projectId } = useLatestRevision();
-  const { updateAppStep } = useAppAnalytics(porterApp.name);
+  const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const githubWorkflowFilename = `porter_stack_${porterApp.name}.yml`;
+  const [githubWorkflowFilename, setGithubWorkflowFilename] = useState(
+    `porter_stack_${porterApp.name}.yml`
+  );
 
   const workflowFileExists = useCallback(async () => {
     try {
@@ -51,7 +56,18 @@ const Settings: React.FC = () => {
     } catch (err) {
       return false;
     }
-  }, [githubWorkflowFilename, porterApp.name, clusterId, projectId]);
+  }, [porterApp.name, clusterId, projectId]);
+
+  useEffect(() => {
+    const checkWorkflowExists = async () => {
+      const exists = await workflowFileExists();
+      if (!exists) {
+        setGithubWorkflowFilename("");
+      }
+    };
+
+    checkWorkflowExists();
+  }, [workflowFileExists]);
 
   const onDelete = useCallback(
     async (deleteWorkflow?: boolean) => {
@@ -98,12 +114,20 @@ const Settings: React.FC = () => {
             window.open(res.data.url, "_blank", "noreferrer");
           }
 
-          updateAppStep({ step: "stack-deletion", deleteWorkflow: true });
+          updateAppStep({
+            step: "stack-deletion",
+            deleteWorkflow: true,
+            appName: porterApp.name,
+          });
           history.push("/apps");
           return;
         }
 
-        updateAppStep({ step: "stack-deletion", deleteWorkflow: false });
+        updateAppStep({
+          step: "stack-deletion",
+          deleteWorkflow: false,
+          appName: porterApp.name,
+        });
         history.push("/apps");
       } catch (err) {
       } finally {
@@ -115,12 +139,38 @@ const Settings: React.FC = () => {
 
   return (
     <StyledSettingsTab>
+      {currentProject?.preview_envs_enabled && (
+        <>
+          <Text size={16}>
+            Enable preview environments for "{porterApp.name}"
+          </Text>
+          <Spacer y={0.5} />
+          <Text color="helper">
+            Setup your application to automatically create preview environments
+            for each pull request.
+          </Text>
+          <Spacer y={0.5} />
+          <Link
+            to={`/preview-environments/configure?app_name=${porterApp.name}`}
+          >
+            <Button
+              type="button"
+              onClick={() => {
+                setIsDeleteModalOpen(true);
+              }}
+            >
+              Enable
+            </Button>
+          </Link>
+          <Spacer y={1} />
+        </>
+      )}
       <Text size={16}>Delete "{porterApp.name}"</Text>
-      <Spacer y={1} />
+      <Spacer y={0.5} />
       <Text color="helper">
         Delete this application and all of its resources.
       </Text>
-      <Spacer y={1} />
+      <Spacer y={0.5} />
       <Button
         type="button"
         onClick={() => {

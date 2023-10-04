@@ -81,14 +81,11 @@ export const usePorterYaml = ({
         source?.type === "github" &&
         Boolean(source.git_repo_name) &&
         Boolean(source.git_branch),
-      retry: (_failureCount, error) => {
-        if (error.response.data?.error?.includes("404")) {
-          setPorterYamlFound(false);
-          return false;
-        }
-        return true;
+      onError: () => {
+        setPorterYamlFound(false);
       },
       refetchOnWindowFocus: false,
+      retry: 0,
     }
   );
 
@@ -117,20 +114,62 @@ export const usePorterYaml = ({
         const data = await z
           .object({
             b64_app_proto: z.string(),
+            env_variables: z.record(z.string()).nullable(),
+            env_secrets: z.record(z.string()).nullable(),
+            preview_app: z
+              .object({
+                b64_app_proto: z.string(),
+                env_variables: z.record(z.string()).nullable(),
+                env_secrets: z.record(z.string()).nullable(),
+              })
+              .optional(),
           })
           .parseAsync(res.data);
-        const proto = PorterApp.fromJsonString(atob(data.b64_app_proto));
+        const proto = PorterApp.fromJsonString(atob(data.b64_app_proto), {
+          ignoreUnknownFields: true,
+        });
 
-        const { services, predeploy } = serviceOverrides({
+        const { services, predeploy, build } = serviceOverrides({
           overrides: proto,
           useDefaults,
         });
 
-        if (services.length || predeploy) {
+        if (services.length || predeploy || build) {
           setDetectedServices({
+            build,
             services,
             predeploy,
           });
+        }
+
+        if (data.preview_app) {
+          const previewProto = PorterApp.fromJsonString(
+            atob(data.preview_app.b64_app_proto),
+            {
+              ignoreUnknownFields: true,
+            }
+          );
+          const {
+            services: previewServices,
+            predeploy: previewPredeploy,
+            build: previewBuild,
+          } = serviceOverrides({
+            overrides: previewProto,
+            useDefaults,
+          });
+
+          if (previewServices.length || previewPredeploy || previewBuild) {
+            setDetectedServices((prev) => ({
+              ...prev,
+              services: prev?.services ? prev.services : [],
+              previews: {
+                services: previewServices,
+                predeploy: previewPredeploy,
+                build: previewBuild,
+                variables: data.preview_app?.env_variables ?? {},
+              },
+            }));
+          }
         }
 
         if (proto.name) {

@@ -48,6 +48,8 @@ type ServiceListProps = {
   existingServiceNames?: string[];
   fieldArrayName: "app.services" | "app.predeploy";
   serviceVersionStatus?: Record<string, PorterAppVersionStatus[]>;
+  maxCPU: number;
+  maxRAM: number;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
@@ -57,6 +59,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
   existingServiceNames = [],
   fieldArrayName,
   serviceVersionStatus,
+  maxCPU,
+  maxRAM,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
@@ -87,7 +91,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
     fields: deletedServices,
   } = useFieldArray({
     control: appControl,
-    name: "deletions.serviceNames",
+    name: fieldArrayName === "app.services" ? "deletions.serviceNames" : "deletions.predeploy",
   });
 
   const serviceType = watch("type");
@@ -178,6 +182,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 update={update}
                 remove={onRemove}
                 status={serviceVersionStatus?.[svc.name.value]}
+                maxCPU={maxCPU}
+                maxRAM={maxRAM}
               />
             ) : null;
           })}

@@ -10,15 +10,12 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Select from "components/porter/Select";
 import AnimateHeight from "react-animate-height";
 import { z } from "zod";
-import {
-  BuildOptions,
-  PorterAppFormData,
-  SourceOptions,
-} from "lib/porter-apps";
+import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
 import RepositorySelector from "../build-settings/RepositorySelector";
 import BranchSelector from "../build-settings/BranchSelector";
 import BuildpackSettings from "../validate-apply/build-settings/buildpacks/BuildpackSettings";
 import { match } from "ts-pattern";
+import { BuildOptions } from "lib/porter-apps/build";
 
 type Props = {
   projectId: number;
@@ -77,7 +74,7 @@ const RepoSettings: React.FC<Props> = ({
   );
 
   useEffect(() => {
-    if (!branchContents) {
+    if (!branchContents || appExists) {
       return;
     }
 
@@ -85,7 +82,10 @@ const RepoSettings: React.FC<Props> = ({
       item.path.includes("Dockerfile")
     );
     setValue("app.build.method", hasDockerfile ? "docker" : "pack");
-  }, [branchContents]);
+    if (!hasDockerfile) {
+      setValue("app.build.buildpacks", []);
+    }
+  }, [branchContents, appExists]);
 
   return (
     <div>
@@ -127,7 +127,7 @@ const RepoSettings: React.FC<Props> = ({
             label="GitHub repository:"
             width="100%"
             value={source.git_repo_name}
-            setValue={() => {}}
+            setValue={() => { }}
             placeholder=""
           />
           {!appExists && (
@@ -176,7 +176,7 @@ const RepoSettings: React.FC<Props> = ({
                 type="text"
                 width="100%"
                 value={source.git_branch}
-                setValue={() => {}}
+                setValue={() => { }}
                 placeholder=""
               />
               <BackButton
@@ -226,23 +226,29 @@ const RepoSettings: React.FC<Props> = ({
 
               <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
                 <StyledSourceBox>
-                  <Select
-                    value={build.method}
-                    width="300px"
-                    options={[
-                      { value: "docker", label: "Docker" },
-                      { value: "pack", label: "Buildpacks" },
-                    ]}
-                    setValue={(option: string) => {
-                      if (option == "docker") {
-                        setValue("app.build.method", "docker");4
-                      } else if (option == "pack") {
-                        // if toggling from docker to pack, initialize buildpacks to empty array
-                        setValue("app.build.method", "pack");
-                        setValue("app.build.buildpacks", []);
-                      }
-                    }}
-                    label="Build method"
+                  <Controller
+                    name="app.build.method"
+                    control={control}
+                    render={({ field: { value, onChange } }) => (
+                      <Select
+                        value={value}
+                        width="300px"
+                        options={[
+                          { value: "docker", label: "Docker" },
+                          { value: "pack", label: "Buildpacks" },
+                        ]}
+                        setValue={(option: string) => {
+                          if (option == "docker") {
+                            onChange("docker");
+                          } else if (option == "pack") {
+                            // if toggling from docker to pack, initialize buildpacks to empty array
+                            onChange("pack");
+                            setValue("app.build.buildpacks", []);
+                          }
+                        }}
+                        label="Build method"
+                      />
+                    )}
                   />
                   {match(build)
                     .with({ method: "docker" }, () => (
@@ -266,6 +272,7 @@ const RepoSettings: React.FC<Props> = ({
                         projectId={projectId}
                         build={b}
                         source={source}
+                        populateBuildValuesOnceAfterDetection={!appExists}
                       />
                     ))
                     .exhaustive()}
@@ -344,7 +351,7 @@ const StyledAdvancedBuildSettings = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
-      props.showSettings ? "" : "rotate(-90deg)"};
+    props.showSettings ? "" : "rotate(-90deg)"};
   }
 `;
 

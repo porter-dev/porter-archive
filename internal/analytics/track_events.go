@@ -58,4 +58,6 @@ const (
 	StackBuildProgressing SegmentEvent = "Stack Build Progressing"
 	StackBuildFailure     SegmentEvent = "Stack Build Failure"
 	StackBuildSuccess     SegmentEvent = "Stack Build Success"
+
+	PorterAppUpdateFailure SegmentEvent = "Porter App Update Failure"
 )

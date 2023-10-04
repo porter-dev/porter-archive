@@ -176,29 +176,37 @@ func (c *Client) ParseYAML(
 	return resp, err
 }
 
+// ValidatePorterAppInput is the input struct to ValidatePorterApp
+type ValidatePorterAppInput struct {
+	ProjectID          uint
+	ClusterID          uint
+	AppName            string
+	Base64AppProto     string
+	Base64AppOverrides string
+	DeploymentTarget   string
+	CommitSHA          string
+}
+
 // ValidatePorterApp takes in a base64 encoded app definition that is potentially partial and returns a complete definition
 // using any previous app revisions and defaults
 func (c *Client) ValidatePorterApp(
 	ctx context.Context,
-	projectID, clusterID uint,
-	appName string,
-	base64AppProto string,
-	deploymentTarget string,
-	commitSHA string,
+	inp ValidatePorterAppInput,
 ) (*porter_app.ValidatePorterAppResponse, error) {
 	resp := &porter_app.ValidatePorterAppResponse{}
 
 	req := &porter_app.ValidatePorterAppRequest{
-		AppName:            appName,
-		Base64AppProto:     base64AppProto,
-		DeploymentTargetId: deploymentTarget,
-		CommitSHA:          commitSHA,
+		AppName:            inp.AppName,
+		Base64AppProto:     inp.Base64AppProto,
+		Base64AppOverrides: inp.Base64AppOverrides,
+		DeploymentTargetId: inp.DeploymentTarget,
+		CommitSHA:          inp.CommitSHA,
 	}
 
 	err := c.postRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/validate",
-			projectID, clusterID,
+			inp.ProjectID, inp.ClusterID,
 		),
 		req,
 		resp,
@@ -457,6 +465,53 @@ func (c *Client) CreateOrUpdateAppEnvironment(
 			projectID, clusterID, appName,
 		),
 		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// PorterYamlV2Pods gets all pods for a given deployment target id and app name
+func (c *Client) PorterYamlV2Pods(
+	ctx context.Context,
+	projectID, clusterID uint,
+	porterAppName string,
+	req *types.PorterYamlV2PodsRequest,
+) (*types.GetReleaseAllPodsResponse, error) {
+	resp := &types.GetReleaseAllPodsResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/pods",
+			projectID, clusterID,
+			porterAppName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// UpdateImage updates the image for a porter app (porter yaml v2 only)
+func (c *Client) UpdateImage(
+	ctx context.Context,
+	projectID, clusterID uint,
+	appName, deploymentTargetId, tag string,
+) (*porter_app.UpdateImageResponse, error) {
+	req := &porter_app.UpdateImageRequest{
+		Tag:                tag,
+		DeploymentTargetId: deploymentTargetId,
+	}
+
+	resp := &porter_app.UpdateImageResponse{}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/update-image",
+			projectID, clusterID, appName,
+		),
+		&req,
 		resp,
 	)
 

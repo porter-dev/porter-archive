@@ -58,14 +58,15 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "porter-app-name", Value: appName},
 		telemetry.AttributeKV{Key: "porter-app-event-type", Value: string(request.Type)},
-		telemetry.AttributeKV{Key: "porter-app-event-status", Value: request.Status},
+		telemetry.AttributeKV{Key: "porter-app-event-status", Value: string(request.Status)},
 		telemetry.AttributeKV{Key: "porter-app-event-external-source", Value: request.TypeExternalSource},
 		telemetry.AttributeKV{Key: "porter-app-event-id", Value: request.ID},
 		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
 	)
 
 	if request.Type == types.PorterAppEventType_Build {
-		reportBuildStatus(ctx, request, p.Config(), user, project, appName)
+		validateApplyV2 := project.GetFeatureFlag(models.ValidateApplyV2, p.Config().LaunchDarklyClient)
+		reportBuildStatus(ctx, request, p.Config(), user, project, appName, validateApplyV2)
 	}
 
 	if request.ID == "" {
@@ -88,11 +89,11 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	p.WriteResult(w, r, event)
 }
 
-func reportBuildStatus(ctx context.Context, request *types.CreateOrUpdatePorterAppEventRequest, config *config.Config, user *models.User, project *models.Project, stackName string) {
+func reportBuildStatus(ctx context.Context, request *types.CreateOrUpdatePorterAppEventRequest, config *config.Config, user *models.User, project *models.Project, stackName string, validateApplyV2 bool) {
 	ctx, span := telemetry.NewSpan(ctx, "report-build-status")
 	defer span.End()
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-build-status", Value: request.Status})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-build-status", Value: string(request.Status)})
 
 	var errStr string
 	if errors, ok := request.Metadata["errors"]; ok {
@@ -113,7 +114,7 @@ func reportBuildStatus(ctx context.Context, request *types.CreateOrUpdatePorterA
 		}
 	}
 
-	_ = TrackStackBuildStatus(config, user, project, stackName, errStr, request.Status)
+	_ = TrackStackBuildStatus(ctx, config, user, project, stackName, errStr, request.Status, validateApplyV2)
 }
 
 // createNewAppEvent will create a new app event for the given porter app name. If the app event is an agent event, then it will be created only if there is no existing event which has the agent ID. In the case that an existing event is found, that will be returned instead

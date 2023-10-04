@@ -19,12 +19,12 @@ const porterAppDeployEventMetadataValidator = z.object({
     service_deployment_metadata: z.record(z.object({
         status: z.string(),
         type: z.string(),
-    })),
+    })).optional(),
 });
 const porterAppBuildEventMetadataValidator = z.object({
-    repo: z.string(),
-    action_run_id: z.number(),
-    github_account_id: z.number(),
+    repo: z.string().optional(),
+    action_run_id: z.number().optional(),
+    github_account_id: z.number().optional(),
     end_time: z.string().optional(),
 })
 const porterAppPreDeployEventMetadataValidator = z.object({

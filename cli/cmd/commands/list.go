@@ -91,7 +91,7 @@ func registerCommand_List(cliConf config.CLIConfig) *cobra.Command {
 	return listCmd
 }
 
-func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.ListAll(ctx)
 		if err != nil {
@@ -108,7 +108,7 @@ func listAll(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client 
 	return nil
 }
 
-func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.ListApps(ctx)
 		if err != nil {
@@ -125,7 +125,7 @@ func listApps(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client
 	return nil
 }
 
-func listJobs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func listJobs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.ListJobs(ctx)
 		if err != nil {
@@ -142,7 +142,7 @@ func listJobs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client
 	return nil
 }
 
-func listAddons(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func listAddons(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	err := writeReleases(ctx, client, cliConf, "addon")
 	if err != nil {
 		return err

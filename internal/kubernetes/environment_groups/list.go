@@ -41,6 +41,8 @@ type EnvironmentGroup struct {
 	SecretVariables map[string]string `json:"secret_variables,omitempty"`
 	// CreatedAt is only used for display purposes and is in UTC Unix time
 	CreatedAtUTC time.Time `json:"created_at,omitempty"`
+	// DefaultAppEnvironment is a boolean value that determines whether or not this environment group is the default environment group for an app
+	DefaultAppEnvironment bool `json:"default_app_environment"`
 }
 
 type environmentGroupOptions struct {
@@ -154,6 +156,7 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			Variables:       cm.Data,
 			SecretVariables: envGroupSet[cm.Name].SecretVariables,
 			CreatedAtUTC:    cm.CreationTimestamp.Time.UTC(),
+			DefaultAppEnvironment: cm.Labels[LabelKey_DefaultAppEnvironment] == "true",
 		}
 	}
 
@@ -192,6 +195,7 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			SecretVariables: stringSecret,
 			Variables:       envGroupSet[secret.Name].Variables,
 			CreatedAtUTC:    secret.CreationTimestamp.Time.UTC(),
+			DefaultAppEnvironment: secret.Labels[LabelKey_DefaultAppEnvironment] == "true",
 		}
 	}
 
@@ -255,7 +259,7 @@ func listLinkedAppsByUniqueAppLabel(environmentGroupName string, deployments []a
 		appName := d.Labels[LabelKey_AppName]
 
 		for _, linkedEnvironmentGroup := range applicationsLinkedEnvironmentGroups {
-			if linkedEnvironmentGroup == environmentGroupName && appName != "" {
+			if linkedEnvironmentGroup == environmentGroupName && !strings.HasSuffix(d.Name, "predeploy") && appName != "" {
 				appsByName[appName] = LinkedPorterApplication{
 					Name:      appName,
 					Namespace: d.Namespace,

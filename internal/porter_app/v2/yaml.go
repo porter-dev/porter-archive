@@ -6,103 +6,63 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ghodss/yaml"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/internal/telemetry"
+	"gopkg.in/yaml.v2"
 )
 
+// AppProtoWithEnv is a struct containing a PorterApp proto object and its environment variables
+type AppProtoWithEnv struct {
+	AppProto     *porterv1.PorterApp
+	EnvVariables map[string]string
+}
+
+// AppWithPreviewOverrides is a porter app definition with its preview app definition, if it exists
+type AppWithPreviewOverrides struct {
+	AppProtoWithEnv
+	PreviewApp *AppProtoWithEnv
+}
+
 // AppProtoFromYaml converts a Porter YAML file into a PorterApp proto object
-func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, appName string) (*porterv1.PorterApp, map[string]string, error) {
+func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPreviewOverrides, error) {
 	ctx, span := telemetry.NewSpan(ctx, "v2-app-proto-from-yaml")
 	defer span.End()
 
+	var out AppWithPreviewOverrides
+
 	if porterYamlBytes == nil {
-		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml is nil")
+		return out, telemetry.Error(ctx, span, nil, "porter yaml is nil")
 	}
 
 	porterYaml := &PorterYAML{}
 	err := yaml.Unmarshal(porterYamlBytes, porterYaml)
 	if err != nil {
-		return nil, nil, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
+		return out, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
 	}
 
-	// if the porter yaml is missing a name field, use the app name that is provided in the request
-	if porterYaml.Name == "" {
-		porterYaml.Name = appName
+	appProto, envVariables, err := buildAppProto(ctx, porterYaml.PorterApp)
+	if err != nil {
+		return out, telemetry.Error(ctx, span, err, "error converting porter yaml to proto")
 	}
+	out.AppProto = appProto
+	out.EnvVariables = envVariables
 
-	if porterYaml.Name != "" && appName != "" && porterYaml.Name != appName {
-		return nil, nil, telemetry.Error(ctx, span, nil, "name specified in porter.yaml does not match app name")
-	}
-
-	appProto := &porterv1.PorterApp{
-		Name: porterYaml.Name,
-	}
-
-	if appProto.Name == "" {
-		return nil, nil, telemetry.Error(ctx, span, nil, "app name is empty")
-	}
-
-	if porterYaml.Build != nil {
-		appProto.Build = &porterv1.Build{
-			Context:    porterYaml.Build.Context,
-			Method:     porterYaml.Build.Method,
-			Builder:    porterYaml.Build.Builder,
-			Buildpacks: porterYaml.Build.Buildpacks,
-			Dockerfile: porterYaml.Build.Dockerfile,
-		}
-	}
-
-	if porterYaml.Image != nil {
-		appProto.Image = &porterv1.AppImage{
-			Repository: porterYaml.Image.Repository,
-			Tag:        porterYaml.Image.Tag,
-		}
-	}
-
-	if porterYaml.Services == nil {
-		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
-	}
-
-	services := make(map[string]*porterv1.Service, 0)
-	for name, service := range porterYaml.Services {
-		serviceType, err := protoEnumFromType(name, service)
+	if porterYaml.Previews != nil {
+		previewAppProto, previewEnvVariables, err := buildAppProto(ctx, *porterYaml.Previews)
 		if err != nil {
-			return nil, nil, telemetry.Error(ctx, span, err, "error getting service type")
+			return out, telemetry.Error(ctx, span, err, "error converting preview porter yaml to proto")
 		}
-
-		serviceProto, err := serviceProtoFromConfig(service, serviceType)
-		if err != nil {
-			return nil, nil, telemetry.Error(ctx, span, err, "error casting service config")
-		}
-
-		services[name] = serviceProto
-	}
-	appProto.Services = services
-
-	if porterYaml.Predeploy != nil {
-		predeployProto, err := serviceProtoFromConfig(*porterYaml.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
-		if err != nil {
-			return nil, nil, telemetry.Error(ctx, span, err, "error casting predeploy config")
-		}
-		appProto.Predeploy = predeployProto
-	}
-
-	envGroups := make([]*porterv1.EnvGroup, 0)
-	if porterYaml.EnvGroups != nil {
-		for _, envGroupName := range porterYaml.EnvGroups {
-			envGroups = append(envGroups, &porterv1.EnvGroup{
-				Name: envGroupName,
-			})
+		out.PreviewApp = &AppProtoWithEnv{
+			AppProto:     previewAppProto,
+			EnvVariables: previewEnvVariables,
 		}
 	}
-	appProto.EnvGroups = envGroups
 
-	return appProto, porterYaml.Env, nil
+	return out, nil
 }
 
-// PorterYAML represents all the possible fields in a Porter YAML file
-type PorterYAML struct {
+// PorterApp represents all the possible fields in a Porter YAML file
+type PorterApp struct {
 	Name     string             `yaml:"name"`
 	Services map[string]Service `yaml:"services"`
 	Image    *Image             `yaml:"image"`
@@ -111,6 +71,12 @@ type PorterYAML struct {
 
 	Predeploy *Service `yaml:"predeploy"`
 	EnvGroups []string `yaml:"envGroups,omitempty"`
+}
+
+// PorterYAML represents all the possible fields in a Porter YAML file
+type PorterYAML struct {
+	PorterApp `yaml:",inline"`
+	Previews  *PorterApp `yaml:"previews,omitempty"`
 }
 
 // Build represents the build settings for a Porter app
@@ -124,18 +90,19 @@ type Build struct {
 
 // Service represents a single service in a porter app
 type Service struct {
-	Run             string       `yaml:"run"`
-	Type            string       `yaml:"type" validate:"required, oneof=web worker job"`
-	Instances       int          `yaml:"instances"`
-	CpuCores        float32      `yaml:"cpuCores"`
-	RamMegabytes    int          `yaml:"ramMegabytes"`
-	Port            int          `yaml:"port"`
-	Autoscaling     *AutoScaling `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
-	Domains         []Domains    `yaml:"domains" validate:"excluded_unless=Type web"`
-	HealthCheck     *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
-	AllowConcurrent bool         `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
-	Cron            string       `yaml:"cron" validate:"excluded_unless=Type job"`
-	Private         *bool        `yaml:"private" validate:"excluded_unless=Type web"`
+	Run               string       `yaml:"run"`
+	Type              string       `yaml:"type" validate:"required, oneof=web worker job"`
+	Instances         int          `yaml:"instances"`
+	CpuCores          float32      `yaml:"cpuCores"`
+	RamMegabytes      int          `yaml:"ramMegabytes"`
+	SmartOptimization *bool        `yaml:"smartOptimization"`
+	Port              int          `yaml:"port"`
+	Autoscaling       *AutoScaling `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
+	Domains           []Domains    `yaml:"domains" validate:"excluded_unless=Type web"`
+	HealthCheck       *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
+	AllowConcurrent   bool         `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
+	Cron              string       `yaml:"cron" validate:"excluded_unless=Type job"`
+	Private           *bool        `yaml:"private" validate:"excluded_unless=Type web"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -164,46 +131,103 @@ type Image struct {
 	Tag        string `yaml:"tag"`
 }
 
-func protoEnumFromType(name string, service Service) (porterv1.ServiceType, error) {
-	var serviceType porterv1.ServiceType
+func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp, map[string]string, error) {
+	ctx, span := telemetry.NewSpan(ctx, "build-app-proto")
+	defer span.End()
 
-	if service.Type != "" {
-		if service.Type == "web" {
-			return porterv1.ServiceType_SERVICE_TYPE_WEB, nil
-		}
-		if service.Type == "worker" {
-			return porterv1.ServiceType_SERVICE_TYPE_WORKER, nil
-		}
-		if service.Type == "job" {
-			return porterv1.ServiceType_SERVICE_TYPE_JOB, nil
-		}
-
-		return serviceType, fmt.Errorf("invalid service type '%s'", service.Type)
+	appProto := &porterv1.PorterApp{
+		Name: porterApp.Name,
 	}
+
+	if porterApp.Build != nil {
+		appProto.Build = &porterv1.Build{
+			Context:    porterApp.Build.Context,
+			Method:     porterApp.Build.Method,
+			Builder:    porterApp.Build.Builder,
+			Buildpacks: porterApp.Build.Buildpacks,
+			Dockerfile: porterApp.Build.Dockerfile,
+		}
+	}
+
+	if porterApp.Image != nil {
+		appProto.Image = &porterv1.AppImage{
+			Repository: porterApp.Image.Repository,
+			Tag:        porterApp.Image.Tag,
+		}
+	}
+
+	if porterApp.Services == nil {
+		return appProto, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
+	}
+
+	services := make(map[string]*porterv1.Service, 0)
+	for name, service := range porterApp.Services {
+		serviceType := protoEnumFromType(name, service)
+
+		serviceProto, err := serviceProtoFromConfig(service, serviceType)
+		if err != nil {
+			return appProto, nil, telemetry.Error(ctx, span, err, "error casting service config")
+		}
+
+		services[name] = serviceProto
+	}
+	appProto.Services = services
+
+	if porterApp.Predeploy != nil {
+		predeployProto, err := serviceProtoFromConfig(*porterApp.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
+		if err != nil {
+			return appProto, nil, telemetry.Error(ctx, span, err, "error casting predeploy config")
+		}
+		appProto.Predeploy = predeployProto
+	}
+
+	envGroups := make([]*porterv1.EnvGroup, 0)
+	if porterApp.EnvGroups != nil {
+		for _, envGroupName := range porterApp.EnvGroups {
+			envGroups = append(envGroups, &porterv1.EnvGroup{
+				Name: envGroupName,
+			})
+		}
+	}
+	appProto.EnvGroups = envGroups
+
+	return appProto, porterApp.Env, nil
+}
+
+func protoEnumFromType(name string, service Service) porterv1.ServiceType {
+	serviceType := porterv1.ServiceType_SERVICE_TYPE_WORKER
 
 	if strings.Contains(name, "web") {
-		return porterv1.ServiceType_SERVICE_TYPE_WEB, nil
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WEB
 	}
-
-	if strings.Contains(name, "wkr") {
-		return porterv1.ServiceType_SERVICE_TYPE_WORKER, nil
+	if strings.Contains(name, "wkr") || strings.Contains(name, "worker") {
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WORKER
 	}
-
 	if strings.Contains(name, "job") {
-		return porterv1.ServiceType_SERVICE_TYPE_JOB, nil
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_JOB
 	}
 
-	return serviceType, errors.New("no type provided and could not parse service type from name")
+	switch service.Type {
+	case "web":
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WEB
+	case "worker":
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_WORKER
+	case "job":
+		serviceType = porterv1.ServiceType_SERVICE_TYPE_JOB
+	}
+
+	return serviceType
 }
 
 func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {
 	serviceProto := &porterv1.Service{
-		Run:          service.Run,
-		Type:         serviceType,
-		Instances:    int32(service.Instances),
-		CpuCores:     service.CpuCores,
-		RamMegabytes: int32(service.RamMegabytes),
-		Port:         int32(service.Port),
+		Run:               service.Run,
+		Type:              serviceType,
+		Instances:         int32(service.Instances),
+		CpuCores:          service.CpuCores,
+		RamMegabytes:      int32(service.RamMegabytes),
+		Port:              int32(service.Port),
+		SmartOptimization: service.SmartOptimization,
 	}
 
 	switch serviceType {

@@ -30,6 +30,7 @@ func initBuilderInfo() map[string]*buildpacks.BuilderInfo {
 		Name: "Heroku",
 		Builders: []string{
 			"heroku/builder:22",
+			"heroku/builder-classic:22",
 			"heroku/buildpacks:20",
 			"heroku/buildpacks:18",
 		},

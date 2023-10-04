@@ -7,19 +7,24 @@ type AppStep =
   | "stack-launch-complete"
   | "stack-launch-success"
   | "stack-launch-failure"
-  | "stack-deletion";
+  | "stack-deletion"
+  | "porter-app-update-failure";
 
-export const useAppAnalytics = (appName?: string) => {
+export const useAppAnalytics = () => {
   const { currentCluster, currentProject } = useContext(Context);
 
   const updateAppStep = async ({
+    appName,
     step,
     errorMessage = "",
+    errorStackTrace = "",
     deleteWorkflow = false,
   }: {
+    appName?: string;
     step: AppStep;
     errorMessage?: string;
     deleteWorkflow?: boolean;
+    errorStackTrace?: string;
   }) => {
     try {
       if (!currentCluster?.id || !currentProject?.id) {
@@ -31,6 +36,7 @@ export const useAppAnalytics = (appName?: string) => {
           step,
           stack_name: appName,
           error_message: errorMessage,
+          error_stack_trace: errorStackTrace,
           delete_workflow_file: deleteWorkflow,
         },
         {
@@ -38,7 +44,7 @@ export const useAppAnalytics = (appName?: string) => {
           project_id: currentProject.id,
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   return {

@@ -1,13 +1,9 @@
-import {
-  BUILDPACK_TO_NAME,
-  buildpackSchema,
-} from "main/home/app-dashboard/types/buildpack";
+import { BUILDPACK_TO_NAME } from "main/home/app-dashboard/types/buildpack";
 import { z } from "zod";
 import {
   DetectedServices,
   defaultSerialized,
   deserializeService,
-  isPredeployService,
   serializeService,
   serializedServiceFromProto,
   serviceProto,
@@ -16,22 +12,7 @@ import {
 import { Build, PorterApp, Service } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
-
-// buildValidator is used to validate inputs for build setting fields
-export const buildValidator = z.discriminatedUnion("method", [
-  z.object({
-    method: z.literal("pack"),
-    context: z.string().default("./"),
-    buildpacks: z.array(buildpackSchema).default([]),
-    builder: z.string(),
-  }),
-  z.object({
-    method: z.literal("docker"),
-    context: z.string().default("./"),
-    dockerfile: z.string().default("./Dockerfile"),
-  }),
-]);
-export type BuildOptions = z.infer<typeof buildValidator>;
+import { BuildOptions, buildValidator } from "./build";
 
 // sourceValidator is used to validate inputs for source setting fields
 export const sourceValidator = z.discriminatedUnion("type", [
@@ -58,6 +39,11 @@ export type SourceOptions = z.infer<typeof sourceValidator>;
 
 export const deletionValidator = z.object({
   serviceNames: z
+    .object({
+      name: z.string(),
+    })
+    .array(),
+  predeploy: z
     .object({
       name: z.string(),
     })
@@ -100,6 +86,7 @@ export const porterAppFormValidator = z.object({
   app: clientAppValidator,
   source: sourceValidator,
   deletions: deletionValidator,
+  redeployOnSave: z.boolean().default(false),
 });
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
@@ -117,7 +104,10 @@ export function serviceOverrides({
     .map((svc) => {
       if (useDefaults) {
         return deserializeService({
-          service: defaultSerialized({ name: svc.name, type: svc.config.type }),
+          service: defaultSerialized({
+            name: svc.name,
+            type: svc.config.type,
+          }),
           override: svc,
           expanded: true,
         });
@@ -126,14 +116,25 @@ export function serviceOverrides({
       return deserializeService({ service: svc });
     });
 
+  const validatedBuild = buildValidator
+    .default({
+      method: "pack",
+      context: "./",
+      buildpacks: [],
+      builder: "",
+    })
+    .parse(overrides.build);
+
   if (!overrides.predeploy) {
     return {
+      build: validatedBuild,
       services,
     };
   }
 
   if (useDefaults) {
     return {
+      build: validatedBuild,
       services,
       predeploy: deserializeService({
         service: defaultSerialized({
@@ -151,6 +152,7 @@ export function serviceOverrides({
   }
 
   return {
+    build: validatedBuild,
     services,
     predeploy: deserializeService({
       service: serializedServiceFromProto({
@@ -186,7 +188,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
   const { app, source } = data;
 
   const services = app.services.reduce((acc: Record<string, Service>, svc) => {
-    acc[svc.name.value] = serviceProto(serializeService(svc));
+    const serialized = serializeService(svc)
+    const proto = serviceProto(serialized)
+    acc[svc.name.value] = proto
     return acc;
   }, {});
 
@@ -263,7 +267,7 @@ const clientBuildFromProto = (proto?: Build): BuildOptions | undefined => {
         method: b.method,
         context: b.context,
         buildpacks: b.buildpacks.map((b) => ({
-          name: BUILDPACK_TO_NAME[b],
+          name: BUILDPACK_TO_NAME[b] ?? b,
           buildpack: b,
         })),
         builder: b.builder,
@@ -361,15 +365,15 @@ export function clientAppFromProto({
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-        deserializeService({
-          service: serializedServiceFromProto({
-            name: "pre-deploy",
-            service: proto.predeploy,
-            isPredeploy: true,
-          }),
-          override: predeployOverrides,
+      deserializeService({
+        service: serializedServiceFromProto({
+          name: "pre-deploy",
+          service: proto.predeploy,
+          isPredeploy: true,
         }),
-      ]
+        override: predeployOverrides,
+      }),
+    ]
     : undefined;
 
   return {
@@ -391,4 +395,85 @@ export function clientAppFromProto({
       builder: "",
     },
   };
+}
+
+export function applyPreviewOverrides({
+  app,
+  overrides,
+}: {
+  app: ClientPorterApp;
+  overrides: DetectedServices["previews"];
+}): ClientPorterApp {
+  if (!overrides) {
+    return app;
+  }
+
+  const services = app.services.map((svc) => {
+    const override = overrides.services.find(
+      (s) => s.name.value === svc.name.value
+    );
+    if (override) {
+      const ds = deserializeService({
+        service: serializeService(svc),
+        override: serializeService(override),
+      });
+
+      if (ds.config.type == "web") {
+        ds.config.domains = [];
+      }
+      return ds;
+    }
+
+    if (svc.config.type == "web") {
+      svc.config.domains = [];
+    }
+    return svc;
+  });
+  const additionalServices = overrides.services
+    .filter((s) => !app.services.find((svc) => svc.name.value === s.name.value))
+    .map((svc) => deserializeService({ service: serializeService(svc) }));
+
+  app.services = [...services, ...additionalServices];
+
+  if (app.predeploy) {
+    const predeployOverride = overrides.predeploy;
+    if (predeployOverride) {
+      app.predeploy = [
+        deserializeService({
+          service: serializeService(app.predeploy[0]),
+          override: serializeService(predeployOverride),
+        }),
+      ];
+    }
+  }
+
+  const envOverrides = overrides.variables;
+  if (envOverrides) {
+    const env = app.env.map((e) => {
+      const override = envOverrides[e.key];
+      if (override) {
+        return {
+          ...e,
+          locked: true,
+          value: override,
+        };
+      }
+
+      return e;
+    });
+
+    const additionalEnv = Object.entries(envOverrides)
+      .filter(([key]) => !app.env.find((e) => e.key === key))
+      .map(([key, value]) => ({
+        key,
+        value,
+        hidden: false,
+        locked: true,
+        deleted: false,
+      }));
+
+    app.env = [...env, ...additionalEnv];
+  }
+
+  return app;
 }

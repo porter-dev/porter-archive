@@ -212,6 +212,18 @@ export const useLogs = ({
           }
         });
         const newLogsParsed = parseLogs(newLogs);
+        newLogsParsed.filter((log) => {
+          return log.metadata?.raw_labels?.porter_run_app_revision_id != null
+            && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != null
+            && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != 0
+        }).forEach((log) => {
+          if (log.metadata?.raw_labels?.porter_run_app_revision_id != null) {
+            const revisionNumber = revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id];
+            if (revisionNumber != null && revisionNumber != 0) {
+              log.metadata.revision = revisionNumber.toString();
+            }
+          }
+        })
         const newLogsFiltered = filterLogs(newLogsParsed);
         pushLogs(newLogsFiltered);
       },
@@ -449,10 +461,12 @@ export const useLogs = ({
   }, []);
 
   useEffect(() => {
-    // if a complete time range is not given, then we are live
-    const isLive = !setDate && (timeRange?.startTime == null || timeRange?.endTime == null);
-    refresh({ isLive });
-    setIsLive(isLive);
+    if (Object.keys(revisionIdToNumber).length) {
+      // if a complete time range is not given, then we are live
+      const isLive = !setDate && (timeRange?.startTime == null || timeRange?.endTime == null);
+      refresh({ isLive });
+      setIsLive(isLive);
+    }
   }, [
     appName,
     serviceName,
@@ -461,7 +475,8 @@ export const useLogs = ({
     setDate,
     JSON.stringify(selectedFilterValues),
     JSON.stringify(timeRange?.endTime),
-    filterPredeploy
+    filterPredeploy,
+    JSON.stringify(revisionIdToNumber),
   ]);
 
   useEffect(() => {

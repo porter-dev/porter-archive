@@ -1,31 +1,34 @@
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import React, { useMemo } from "react";
-import EnvVariables from "../../validate-apply/app-settings/EnvVariables";
 import Button from "components/porter/Button";
 import Error from "components/porter/Error";
 import { useFormContext } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
+import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
 import { useLatestRevision } from "../LatestRevisionContext";
 import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
 import { z } from "zod";
 import { populatedEnvGroup } from "../../validate-apply/app-settings/types";
-import EnvGroups from "../../validate-apply/app-settings/EnvGroups";
+import EnvSettings from "../../validate-apply/app-settings/EnvSettings";
 
-const Environment: React.FC = () => {
+type Props = {
+  latestSource: SourceOptions;
+};
+
+const Environment: React.FC<Props> = ({ latestSource }) => {
   const {
     latestRevision,
     latestProto,
     clusterId,
     projectId,
     previewRevision,
+    servicesFromYaml,
+    attachedEnvGroups,
   } = useLatestRevision();
   const {
     formState: { isSubmitting, errors },
-    watch,
   } = useFormContext<PorterAppFormData>();
-  const envGroupNames = watch("app.envGroups").map((eg) => eg.name);
 
   const { data: baseEnvGroups = [] } = useQuery(
     ["getAllEnvGroups", projectId, clusterId],
@@ -66,12 +69,13 @@ const Environment: React.FC = () => {
       <Text size={16}>Environment variables</Text>
       <Spacer y={0.5} />
       <Text color="helper">Shared among all services.</Text>
-      <EnvVariables />
-      <EnvGroups
+      <EnvSettings
         appName={latestProto.name}
-        revisionId={previewRevision ? previewRevision.id : latestRevision.id} // get versions of env groups attached to preview revision if set
+        revision={previewRevision ? previewRevision : latestRevision} // get versions of env groups attached to preview revision if set
         baseEnvGroups={baseEnvGroups}
-        existingEnvGroupNames={envGroupNames}
+        latestSource={latestSource}
+        servicesFromYaml={servicesFromYaml}
+        attachedEnvGroups={attachedEnvGroups}
       />
       <Spacer y={0.5} />
       <Button
@@ -83,6 +87,7 @@ const Environment: React.FC = () => {
           latestRevision.status === "CREATED" ||
           latestRevision.status === "AWAITING_BUILD_ARTIFACT"
         }
+        disabledTooltipMessage="Please wait for the deploy to complete before updating environment variables"
       >
         Update app
       </Button>

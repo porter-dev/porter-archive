@@ -18,11 +18,13 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// GithubWebhookHandler handles webhooks sent to /api/webhooks/github/{project_id}/{cluster_id}/{porter_app_name}
 type GithubWebhookHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
+// NewGithubWebhookHandler returns a GithubWebhookHandler
 func NewGithubWebhookHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -34,6 +36,7 @@ func NewGithubWebhookHandler(
 	}
 }
 
+// ServeHTTP handles the webhook and deletes the deployment target if a PR has been closed
 func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-github-webhook")
 	defer span.End()

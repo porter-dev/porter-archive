@@ -45,8 +45,8 @@ const SidebarLink: React.FC<
 
   return (
       <NavLink to={withQueryParams(path)} {...rest}>
-        {!noHighlight && window.location.pathname.split("/")[1] === path.split("/")[1] && <Highlight src={sidebarHighlight} />}
-        <StyledSideBarLink active={window.location.pathname.split("/")[1] === path.split("/")[1]}>
+        {!noHighlight && window.location.pathname.split("/")[1] === path?.split("/")[1] && <Highlight src={sidebarHighlight} />}
+        <StyledSideBarLink active={window.location.pathname.split("/")[1] === path?.split("/")[1]}>
           {children}
         </StyledSideBarLink>
       </NavLink>

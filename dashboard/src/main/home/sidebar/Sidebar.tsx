@@ -243,7 +243,7 @@ class Sidebar extends Component<PropsType, StateType> {
                     window.location.pathname.startsWith("/cluster-dashboard")
                   }
                 >
-                  <Img src={infra} />
+                  <Img src={settings} />
                   Infrastructure
                 </NavButton>
               )}

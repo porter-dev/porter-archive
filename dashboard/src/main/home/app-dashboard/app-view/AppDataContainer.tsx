@@ -17,7 +17,7 @@ import { useAppValidation } from "lib/hooks/useAppValidation";
 import api from "shared/api";
 import { useQueryClient } from "@tanstack/react-query";
 import Settings from "./tabs/Settings";
-import BuildSettings from "./tabs/BuildSettings";
+import BuildSettingsTab from "./tabs/BuildSettingsTab";
 import Environment from "./tabs/Environment";
 import AnimateHeight from "react-animate-height";
 import Banner from "components/porter/Banner";
@@ -33,6 +33,7 @@ import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import JobsTab from "./tabs/JobsTab";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
+import ImageSettingsTab from "./tabs/ImageSettingsTab";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 
@@ -47,6 +48,7 @@ const validTabs = [
   // "debug",
   "environment",
   "build-settings",
+  "image-settings",
   "settings",
   // "helm-values",
   "job-history",
@@ -66,7 +68,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const { updateAppStep } = useAppAnalytics();
 
   const {
-    porterApp,
+    porterApp: porterAppRecord,
     latestProto,
     previewRevision,
     latestRevision,
@@ -92,25 +94,26 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [tabParam]);
 
   const latestSource: SourceOptions = useMemo(() => {
-    if (porterApp.image_repo_uri) {
-      const [repository, tag] = porterApp.image_repo_uri.split(":");
+    // because we store the image info in the app proto, we can refer to that for repository/tag instead of the app record
+    if (porterAppRecord.image_repo_uri && latestProto.image) {
       return {
         type: "docker-registry",
         image: {
-          repository,
-          tag,
+          repository: latestProto.image.repository,
+          tag: latestProto.image.tag,
         },
       };
     }
 
+    // the app proto does not contain the fields below, so we must pull them from the app record
     return {
       type: "github",
-      git_repo_id: porterApp.git_repo_id ?? 0,
-      git_repo_name: porterApp.repo_name ?? "",
-      git_branch: porterApp.git_branch ?? "",
-      porter_yaml_path: porterApp.porter_yaml_path ?? "./porter.yaml",
+      git_repo_id: porterAppRecord.git_repo_id ?? 0,
+      git_repo_name: porterAppRecord.repo_name ?? "",
+      git_branch: porterAppRecord.git_branch ?? "",
+      porter_yaml_path: porterAppRecord.porter_yaml_path ?? "./porter.yaml",
     };
-  }, [porterApp]);
+  }, [porterAppRecord, latestProto]);
 
   const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",
@@ -202,7 +205,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         {
           id: projectId,
           cluster_id: clusterId,
-          app_name: porterApp.name,
+          app_name: porterAppRecord.name,
         }
       );
 
@@ -250,8 +253,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             git_installation_id: latestSource.git_repo_id,
             owner: latestSource.git_repo_name.split("/")[0],
             name: latestSource.git_repo_name.split("/")[1],
-            branch: porterApp.git_branch,
-            filename: "porter_stack_" + porterApp.name + ".yml",
+            branch: porterAppRecord.git_branch,
+            filename: "porter_stack_" + porterAppRecord.name + ".yml",
           }
         );
 
@@ -264,19 +267,19 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         projectId,
         clusterId,
         deploymentTarget.id,
-        porterApp.name,
+        porterAppRecord.name,
       ]);
       setPreviewRevision(null);
 
       if (deploymentTarget.preview) {
         history.push(
-          `/preview-environments/apps/${porterApp.name}/${DEFAULT_TAB}?target=${deploymentTarget.id}`
+          `/preview-environments/apps/${porterAppRecord.name}/${DEFAULT_TAB}?target=${deploymentTarget.id}`
         );
         return;
       }
 
       // redirect to the default tab after save
-      history.push(`/apps/${porterApp.name}/${DEFAULT_TAB}`);
+      history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
     } catch (err) {
       let message = "Unable to get error message";
       let stack = "Unable to get error stack";
@@ -294,18 +297,28 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   });
 
   const cancelRedeploy = useCallback(() => {
+    const resetProto = previewRevision ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
+      ignoreUnknownFields: true,
+    }) : latestProto;
+
+    // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
+    // however, for image settings, we can pull image repo and tag from the proto
+    const resetSource = porterAppRecord.image_repo_uri && resetProto.image ? {
+      type: "docker-registry" as const,
+      image: {
+        repository: resetProto.image.repository,
+        tag: resetProto.image.tag
+      }
+    } : latestSource;
+
     reset({
       app: clientAppFromProto({
-        proto: previewRevision
-          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
-            ignoreUnknownFields: true,
-          })
-          : latestProto,
+        proto: resetProto,
         overrides: servicesFromYaml,
         variables: appEnv?.variables,
         secrets: appEnv?.secret_variables,
       }),
-      source: latestSource,
+      source: resetSource,
       deletions: {
         envGroupNames: [],
         serviceNames: [],
@@ -321,18 +334,30 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [onSubmit, setConfirmDeployModalOpen]);
 
   useEffect(() => {
+    const newProto = previewRevision
+      ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
+        ignoreUnknownFields: true,
+      })
+      : latestProto;
+
+    // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
+    // however, for image settings, we can pull image repo and tag from the proto
+    const newSource = porterAppRecord.image_repo_uri && newProto.image ? {
+      type: "docker-registry" as const,
+      image: {
+        repository: newProto.image.repository,
+        tag: newProto.image.tag
+      }
+    } : latestSource;
+
     reset({
       app: clientAppFromProto({
-        proto: previewRevision
-          ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
-            ignoreUnknownFields: true,
-          })
-          : latestProto,
+        proto: newProto,
         overrides: servicesFromYaml,
         variables: appEnv?.variables,
         secrets: appEnv?.secret_variables,
       }),
-      source: latestSource,
+      source: newSource,
       deletions: {
         envGroupNames: [],
         serviceNames: [],
@@ -357,9 +382,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           deploymentTargetId={deploymentTarget.id}
           projectId={projectId}
           clusterId={clusterId}
-          appName={porterApp.name}
+          appName={porterAppRecord.name}
           latestSource={latestSource}
           onSubmit={onSubmit}
+          porterAppRecord={porterAppRecord}
         />
         <AnimateHeight height={isDirty && !onlyExpandedChanged ? "auto" : 0}>
           <Banner
@@ -405,25 +431,31 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                   value: "build-settings",
                 },
               ]
-              : []),
+              : [
+                {
+                  label: "Image Settings",
+                  value: "image-settings",
+                },
+              ]),
             { label: "Settings", value: "settings" },
           ]}
           currentTab={currentTab}
           setCurrentTab={(tab) => {
             if (deploymentTarget.preview) {
               history.push(
-                `/preview-environments/apps/${porterApp.name}/${tab}?target=${deploymentTarget.id}`
+                `/preview-environments/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`
               );
               return;
             }
-            history.push(`/apps/${porterApp.name}/${tab}`);
+            history.push(`/apps/${porterAppRecord.name}/${tab}`);
           }}
         />
         <Spacer y={1} />
         {match(currentTab)
           .with("activity", () => <Activity />)
           .with("overview", () => <Overview maxCPU={maxCPU} maxRAM={maxRAM} />)
-          .with("build-settings", () => <BuildSettings />)
+          .with("build-settings", () => <BuildSettingsTab />)
+          .with("image-settings", () => <ImageSettingsTab />)
           .with("environment", () => (
             <Environment latestSource={latestSource} />
           ))

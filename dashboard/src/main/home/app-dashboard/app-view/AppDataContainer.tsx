@@ -33,12 +33,9 @@ import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import JobsTab from "./tabs/JobsTab";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
-<<<<<<< HEAD
 import ImageSettingsTab from "./tabs/ImageSettingsTab";
-=======
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
->>>>>>> 47e999b4c65c6e8dd863784d0bdf24bcce662052
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases

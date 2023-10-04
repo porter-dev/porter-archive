@@ -59,7 +59,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
   const [error, setError] = useState(null);
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("grid");
-  const [sort, setSort] = useState<"alphabetical" | "last modified">("last modified");
+  const [sort, setSort] = useState<"calendar" | "letter">("calendar");
 
   const [isLoading, setIsLoading] = useState(true);
   const [shouldLoadTime, setShouldLoadTime] = useState(true);
@@ -70,9 +70,9 @@ const AppDashboard: React.FC<Props> = ({ }) => {
       isCaseSensitive: false,
     });
 
-    if (sort === "alphabetical") {
+    if (sort === "letter") {
       return _.sortBy(filteredBySearch, ["name"]);
-    } else if (sort === "last modified") {
+    } else if (sort === "calendar") {
       return _.sortBy(filteredBySearch, ["last_deployed"]).reverse(); // Assuming that the latest date should come first.
     }
 
@@ -257,8 +257,8 @@ const AppDashboard: React.FC<Props> = ({ }) => {
               <Spacer inline x={2} />
               <Toggle
                 items={[
-                  { label: <ToggleIcon src={calendar} />, value: "last modified" },
-                  { label: <ToggleIcon src={letter} />, value: "alphabetical" },
+                  { label: <ToggleIcon src={calendar} />, value: "calendar" },
+                  { label: <ToggleIcon src={letter} />, value: "letter" },
                 ]}
                 active={sort}
                 setActive={setSort}

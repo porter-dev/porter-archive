@@ -23,7 +23,6 @@ const Toggle: React.FC<Props> = ({
           onClick={() => {
             setActive(item.value);
           }}
-          title={item.value}  // This adds a tooltip on hover showing the item value
           highlightColor={highlightColor}
         >
           {item.label}
@@ -53,9 +52,4 @@ const Item = styled.div<{ active: boolean; highlightColor?: string }>`
   padding: 10px;
   background: ${(props) =>
     props.active ? props.highlightColor ?? "#ffffff11" : "transparent"};
-
-  // Add a hover effect
-  &:hover {
-    background: ${(props) => props.highlightColor ? `${props.highlightColor}55` : "#ffffff22"};
-  }
 `;

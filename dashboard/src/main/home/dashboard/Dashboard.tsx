@@ -91,7 +91,7 @@ const Dashboard: React.FC<Props> = ({
   const currentTab = () => new URLSearchParams(props.location.search).get("tab") || "overview";
 
   useEffect(() => {
-    if (user?.isPorterUser) {
+    if (user?.isPorterUser && usage && usage?.current?.clusters < usage?.limit?.clusters) {
       tabOptions.push({ label: "Create a cluster", value: "create-cluster" });
     }
 
@@ -99,7 +99,7 @@ const Dashboard: React.FC<Props> = ({
 
     if (!capabilities?.provisioner) {
       let newTabs = [{ label: "Project overview", value: "overview" }];
-      setTabOptions(tabOptions);
+      setTabOptions(newTabs);
     } else {
       setTabOptions(tabOptions);
     }

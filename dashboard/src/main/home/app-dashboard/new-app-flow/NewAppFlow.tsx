@@ -77,7 +77,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [porterApp, setPorterApp] = useState<PorterApp>(PorterApp.empty());
   const [hovered, setHovered] = useState(false);
 
-  const [imageTag, setImageTag] = useState("");
+  const [imageTag, setImageTag] = useState("latest");
   const { currentCluster, currentProject } = useContext(Context);
   const [deploying, setDeploying] = useState<boolean>(false);
   const [deploymentError, setDeploymentError] = useState<string | undefined>(undefined);
@@ -470,11 +470,6 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setImageTag={setImageTag}
                   buildView={buildView}
                   setBuildView={setBuildView}
-                  projectId={currentProject?.id ?? 0}
-                  resetImageInfo={() => {
-                    setPorterApp(PorterApp.setAttribute(porterApp, "image_repo_uri", ""));
-                    setImageTag("");
-                  }}
                 />
               </>,
               <>

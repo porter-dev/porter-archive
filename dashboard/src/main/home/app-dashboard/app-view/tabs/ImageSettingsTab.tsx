@@ -5,19 +5,18 @@ import { useLatestRevision } from "../LatestRevisionContext";
 import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
 import Error from "components/porter/Error";
+import { match } from "ts-pattern";
 import styled from "styled-components";
 import copy from "assets/copy-left.svg"
 import CopyToClipboard from "components/CopyToClipboard";
 import Link from "components/porter/Link";
 import Text from "components/porter/Text";
 import ImageSettings from "../../image-settings/ImageSettings";
-import { match } from "ts-pattern";
 
 const ImageSettingsTab: React.FC = () => {
     const {
         watch,
         formState: { isSubmitting, errors },
-        setValue,
     } = useFormContext<PorterAppFormData>();
     const { projectId, latestRevision, latestProto } = useLatestRevision();
 
@@ -35,47 +34,46 @@ const ImageSettingsTab: React.FC = () => {
         return "";
     }, [isSubmitting, errors]);
 
-    return match(source)
-        .with({ type: "docker-registry" }, (source) => (
-            <>
-                <ImageSettings
-                    projectId={projectId}
-                    imageUri={source.image?.repository ?? ""}
-                    setImageUri={(uri: string) => setValue("source.image", { ...(source?.image ?? {}), repository: uri })}
-                    imageTag={source.image?.tag ?? ""}
-                    setImageTag={(tag: string) => setValue("source.image", { ...(source?.image ?? {}), tag })}
-                    resetImageInfo={() => setValue("source.image", { repository: "", tag: "" })}
-                />
-                <Spacer y={1} />
-                <Button
-                    type="submit"
-                    status={buttonStatus}
-                    disabled={
-                        isSubmitting
-                        || latestRevision.status === "CREATED"
-                        || latestRevision.status === "AWAITING_BUILD_ARTIFACT"
-                        || !source.image?.repository
-                        || !source.image?.tag
-                    }
-                >
-                    Save image settings
-                </Button>
-                <Spacer y={1} />
-                <Text size={16}>Update command</Text>
-                <Spacer y={0.5} />
-                <Text color="helper">If you have the <Link to="https://docs.porter.run/standard/cli/command-reference/porter-update" target="_blank"><Text>Porter CLI</Text></Link> installed, you can update your application image tag by running the following command: </Text>
-                <Spacer y={0.5} />
-                <IdContainer>
-                    <Code>{`$ porter app update-tag ${latestProto.name} --tag latest`}</Code>
-                    <CopyContainer>
-                        <CopyToClipboard text={`porter app update-tag ${latestProto.name} --tag latest`}>
-                            <CopyIcon src={copy} alt="copy" />
-                        </CopyToClipboard>
-                    </CopyContainer>
-                </IdContainer>
-            </>
-        ))
-        .otherwise(() => null);
+    return (
+        <>
+            {match(source)
+                .with({ type: "docker-registry" }, (source) => (
+                    <>
+                        <ImageSettings
+                            projectId={projectId}
+                            source={source}
+                        />
+                        <Spacer y={1} />
+                        <Button
+                            type="submit"
+                            status={buttonStatus}
+                            disabled={
+                                isSubmitting ||
+                                latestRevision.status === "CREATED" ||
+                                latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+                            }
+                        >
+                            Save image settings
+                        </Button>
+                        <Spacer y={1} />
+                        <Text size={16}>Update command</Text>
+                        <Spacer y={0.5} />
+                        <Text color="helper">If you have the <Link to="https://docs.porter.run/standard/cli/command-reference/porter-update" target="_blank"><Text>Porter CLI</Text></Link> installed, you can update your application image tag by running the following command: </Text>
+                        <Spacer y={0.5} />
+                        <IdContainer>
+                            <Code>{`$ porter app update-tag ${latestProto.name} --tag latest`}</Code>
+                            <CopyContainer>
+                                <CopyToClipboard text={`porter app update-tag ${latestProto.name} --tag latest`}>
+                                    <CopyIcon src={copy} alt="copy" />
+                                </CopyToClipboard>
+                            </CopyContainer>
+                        </IdContainer>
+                    </>
+                ))
+                .otherwise(() => null)
+            }
+        </>
+    );
 };
 
 export default ImageSettingsTab;

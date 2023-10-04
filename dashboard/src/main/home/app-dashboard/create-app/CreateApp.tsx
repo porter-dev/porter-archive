@@ -582,14 +582,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               )} */}
                           </>
                         ) : (
-                          <ImageSettings
-                            projectId={currentProject.id}
-                            imageUri={image?.repository ?? ""}
-                            setImageUri={(uri: string) => setValue("source.image", { ...image, repository: uri })}
-                            imageTag={image?.tag ?? ""}
-                            setImageTag={(tag: string) => setValue("source.image", { ...image, tag })}
-                            resetImageInfo={() => setValue("source.image", { ...image, repository: "", tag: "" })}
-                          />
+                          <ImageSettings projectId={currentProject.id} source={source} />
                         )
                       ) : null}
                     </AnimateHeight>

@@ -4,10 +4,7 @@ import Spacer from "components/porter/Spacer";
 import styled from "styled-components";
 import { SourceType } from "./SourceSelector";
 import { RouteComponentProps, withRouter } from "react-router";
-import { pushFiltered } from "shared/routing";
-import ImageSelector from "components/image-selector/ImageSelector";
 import SharedBuildSettings from "../build-settings/SharedBuildSettings";
-import Link from "components/porter/Link";
 import { BuildMethod, PorterApp } from "../types/porterApp";
 import ImageSettings from "../image-settings/ImageSettings";
 
@@ -23,6 +20,7 @@ type Props = RouteComponentProps & {
   buildView: BuildMethod;
   setBuildView: (buildView: BuildMethod) => void;
   projectId: number;
+  resetImageInfo: () => void;
 };
 
 const SourceSettings: React.FC<Props> = ({
@@ -37,6 +35,7 @@ const SourceSettings: React.FC<Props> = ({
   buildView,
   setBuildView,
   projectId,
+  resetImageInfo,
 }) => {
   return (
     <SourceSettingsContainer>
@@ -55,7 +54,11 @@ const SourceSettings: React.FC<Props> = ({
         ) :
           <ImageSettings
             projectId={projectId}
-            source={source}
+            imageTag={imageTag}
+            setImageTag={setImageTag}
+            imageUri={imageUrl}
+            setImageUri={setImageUrl}
+            resetImageInfo={resetImageInfo}
           />
         }
       </AnimateHeight>

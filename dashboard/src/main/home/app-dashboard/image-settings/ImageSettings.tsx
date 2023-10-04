@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
-import { Controller, useFormContext } from "react-hook-form";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import styled from "styled-components";
 import Input from "components/porter/Input";
 import { z } from "zod";
-import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
 import ImageList from "./ImageList";
 import TagList from "./TagList";
 import { ImageType } from "./types";
@@ -16,14 +14,19 @@ type Props = {
     projectId: number;
     imageUri: string;
     imageTag: string;
+    setImageUri: (uri: string) => void;
+    setImageTag: (tag: string) => void;
+    resetImageInfo: () => void;
 };
 
 const ImageSettings: React.FC<Props> = ({
     projectId,
     imageUri,
     imageTag,
+    setImageUri,
+    setImageTag,
+    resetImageInfo,
 }) => {
-    const { control, setValue } = useFormContext<PorterAppFormData>();
     const [images, setImages] = useState<ImageType[]>([]);
     const [selectedImage, setSelectedImage] = useState<ImageType | undefined>(undefined);
     const { data: registries, isLoading: isLoadingRegistries } = useQuery(
@@ -38,7 +41,7 @@ const ImageSettings: React.FC<Props> = ({
     )
 
     const { data: imageResp, isLoading: isLoadingImages } = useQuery(
-        ["getImages", projectId, imageTag, imageUrl],
+        ["getImages", projectId, imageTag, imageUri],
         async () => {
             if (registries == null) {
                 return [];
@@ -64,8 +67,8 @@ const ImageSettings: React.FC<Props> = ({
     useEffect(() => {
         if (imageResp) {
             setImages(imageResp);
-            if (imageUrl) {
-                setSelectedImage(imageResp.find((image) => image.uri === source.image.repository));
+            if (imageUri) {
+                setSelectedImage(imageResp.find((image) => image.uri === imageUri));
             }
         }
     }, [imageResp]);
@@ -77,49 +80,36 @@ const ImageSettings: React.FC<Props> = ({
             <Text color="helper">Specify your image URL.</Text>
             <Spacer y={0.5} />
 
-            {(!source.image || !source.image.repository) && (
-                <Controller
-                    name="source.image"
-                    control={control}
-                    render={({ field: { onChange } }) => (
-                        <>
-                            <ExpandedWrapper>
-                                <ImageList
-                                    setSelectedImage={(image: ImageType) => {
-                                        setSelectedImage(image);
-                                        onChange({
-                                            repository: image.uri,
-                                        });
-                                    }}
-                                    images={images}
-                                    loading={isLoadingImages || isLoadingRegistries}
-                                />
-                            </ExpandedWrapper>
-                            <DarkMatter antiHeight="-4px" />
-                            <Spacer y={0.3} />
-                        </>
-                    )}
-                />
+            {!imageUri && (
+                <>
+                    <ExpandedWrapper>
+                        <ImageList
+                            setSelectedImage={(image: ImageType) => {
+                                setSelectedImage(image);
+                                setImageUri(image.uri);
+                            }}
+                            images={images}
+                            loading={isLoadingImages || isLoadingRegistries}
+                        />
+                    </ExpandedWrapper>
+                    <DarkMatter antiHeight="-4px" />
+                    <Spacer y={0.3} />
+                </>
             )}
 
-            {source.image && source.image.repository && (
+            {imageUri && (
                 <>
                     <Input
                         disabled={true}
                         label="Image URL:"
                         width="100%"
-                        value={selectedImage?.uri ?? source.image.repository}
+                        value={selectedImage?.uri ?? imageUri}
                         setValue={() => { }}
                         placeholder=""
                     />
                     <BackButton
                         width="170px"
-                        onClick={() => {
-                            setValue("source.image", {
-                                repository: "",
-                                tag: "",
-                            });
-                        }}
+                        onClick={resetImageInfo}
                     >
                         <i className="material-icons">keyboard_backspace</i>
                         Select image URL
@@ -127,46 +117,36 @@ const ImageSettings: React.FC<Props> = ({
                     <Spacer y={1} />
                     <Text color="helper">Specify your image tag.</Text>
                     <Spacer y={0.5} />
-                    {!source.image.tag && (
-                        <Controller
-                            name="source.image"
-                            control={control}
-                            render={({ field: { onChange } }) => (
-                                <ExpandedWrapper>
-                                    <TagList
-                                        selectedImage={selectedImage}
-                                        projectId={projectId}
-                                        setSelectedTag={
-                                            (tag: string) => {
-                                                onChange({
-                                                    repository: source.image.repository,
-                                                    tag,
-                                                });
-                                            }
+                    {!imageTag && (
+                        <>
+                            <ExpandedWrapper>
+                                <TagList
+                                    selectedImage={selectedImage}
+                                    projectId={projectId}
+                                    setSelectedTag={
+                                        (tag: string) => {
+                                            setImageTag(tag);
                                         }
-                                    />
-                                </ExpandedWrapper>
-                            )}
-                        />
+                                    }
+                                />
+                            </ExpandedWrapper>
+                        </>
                     )}
-                    {source.image.tag && (
+                    {imageTag && (
                         <>
                             <Input
                                 disabled={true}
                                 label="Image tag:"
                                 type="text"
                                 width="100%"
-                                value={source.image.tag}
+                                value={imageTag}
                                 setValue={() => { }}
                                 placeholder=""
                             />
                             <BackButton
                                 width="170px"
                                 onClick={() => {
-                                    setValue("source.image", {
-                                        repository: source.image.repository,
-                                        tag: "",
-                                    });
+                                    setImageTag("")
                                 }}
                             >
                                 <i className="material-icons">keyboard_backspace</i>

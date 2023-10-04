@@ -2,7 +2,7 @@ import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import settings from "assets/settings.png";
+import settings from "assets/settings.svg";
 
 import InvitePage from "./InviteList";
 import TabRegion from "components/TabRegion";

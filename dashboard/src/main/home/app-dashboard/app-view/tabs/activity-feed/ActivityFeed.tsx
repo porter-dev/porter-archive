@@ -16,6 +16,8 @@ import _ from "lodash";
 import Button from "components/porter/Button";
 import { PorterAppEvent, porterAppEventValidator } from "./events/types";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 type Props = {
     appName: string;
@@ -27,18 +29,22 @@ type Props = {
 const EVENTS_POLL_INTERVAL = 5000; // poll every 5 seconds
 
 const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentCluster, currentProject }) => {
-    const [events, setEvents] = useState<PorterAppEvent[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [events, setEvents] = useState<PorterAppEvent[] | undefined>(undefined);
     const [hasError, setHasError] = useState<boolean>(false);
     const [page, setPage] = useState<number>(1);
     const [numPages, setNumPages] = useState<number>(0);
-    const [hasPorterAgent, setHasPorterAgent] = useState(false);
+    const [hasPorterAgent, setHasPorterAgent] = useState<boolean | undefined>(undefined);
     const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
     const [shouldAnimate, setShouldAnimate] = useState(true);
 
-    const getEvents = async () => {
-        setLoading(true)
-        try {
+    // remove this filter when https://linear.app/porter/issue/POR-1676/disable-porter-agent-code-for-cpu-alerts is resolved
+    const isNotFilteredAppEvent = (event: PorterAppEvent) => {
+        return !(event.type === "APP_EVENT" && event.metadata?.short_summary?.includes("non-zero exit code"));
+    }
+
+    const { data: eventFetchData, isLoading: isEventFetchLoading } = useQuery(
+        ["appEvents", deploymentTargetId, page],
+        async () => {
             const res = await api.appEvents(
                 "<token>",
                 {
@@ -52,20 +58,25 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
                 }
             );
 
-            setNumPages(res.data.num_pages);
-            const events = z.array(porterAppEventValidator).optional().default([]).parse(res.data.events);
-            setEvents(events);
-            setHasError(false)
-        } catch (err) {
-            setHasError(true);
-            console.log(err);
-        } finally {
-            setLoading(false);
-            setShouldAnimate(false);
+            const parsed = await z.object({ events: z.array(porterAppEventValidator).optional().default([]), num_pages: z.number() }).parseAsync(res.data);
+            return { events: parsed.events.filter(isNotFilteredAppEvent), pages: parsed.num_pages };
+        },
+        {
+            enabled: hasPorterAgent,
+            refetchInterval: EVENTS_POLL_INTERVAL,
         }
-    };
+    );
+    useEffect(() => {
+        if (eventFetchData) {
+            setEvents(eventFetchData.events);
+            setNumPages(eventFetchData.pages);
+        }
+    }, [eventFetchData]);
 
     const getLatestDeployEventIndex = () => {
+        if (events == null) {
+            return -1;
+        }
         const deployEvents = events.filter((event) => event.type === 'DEPLOY');
         if (deployEvents.length === 0) {
             return -1;
@@ -73,55 +84,30 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
         return events.indexOf(deployEvents[0]);
     };
 
-    const updateEvents = async () => {
-        try {
-            const res = await api.appEvents(
-                "<token>",
-                {
-                    deployment_target_id: deploymentTargetId,
-                    page
-                },
-                {
-                    cluster_id: currentCluster,
-                    project_id: currentProject,
-                    porter_app_name: appName,
-                }
-            );
-            setHasError(false)
-            setNumPages(res.data.num_pages);
-            const events = z.array(porterAppEventValidator).optional().default([]).parse(res.data.events);
-            setEvents(events);
-        } catch (err) {
-            setHasError(true);
-        }
-    }
-
-    useEffect(() => {
-        const checkForAgent = async () => {
-            try {
-                const project_id = currentProject;
-                const cluster_id = currentCluster;
-                const res = await api.detectPorterAgent("<token>", {}, { project_id, cluster_id });
-                const hasAgent = res.data?.version === "v3";
-                setHasPorterAgent(hasAgent);
-            } catch (err) {
-                if (err.response?.status === 404) {
+    const { data: porterAgentCheck, isLoading: porterAgentCheckLoading } = useQuery(
+        ["detectPorterAgent", currentProject, currentCluster],
+        async () => {
+            const res = await api.detectPorterAgent("<token>", {}, { project_id: currentProject, cluster_id: currentCluster });
+            // response will either have version key if porter agent found, or error key if not
+            const parsed = await z.object({ version: z.string().optional() }).parseAsync(res.data);
+            return parsed.version === "v3";
+        },
+        {
+            enabled: !hasPorterAgent,
+            retry: (_, error) => {
+                if (axios.isAxiosError(error) && error.response?.status === 404) {
                     setHasPorterAgent(false);
                 }
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (!hasPorterAgent) {
-            checkForAgent();
-        } else {
-            const intervalId = setInterval(updateEvents, EVENTS_POLL_INTERVAL);
-            getEvents();
-            return () => clearInterval(intervalId);
+                return false;
+            },
+            refetchOnWindowFocus: false,
         }
-
-    }, [currentProject, currentCluster, hasPorterAgent, page]);
+    );
+    useEffect(() => {
+        if (porterAgentCheck != null) {
+            setHasPorterAgent(porterAgentCheck);
+        }
+    }, [porterAgentCheck])
 
     const installAgent = async () => {
         const project_id = currentProject;
@@ -157,7 +143,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
         );
     }
 
-    if (loading) {
+    if (isEventFetchLoading || porterAgentCheckLoading || events == null) {
         return (
             <div>
                 <Spacer y={2} />
@@ -166,7 +152,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
         );
     }
 
-    if (!loading && !hasPorterAgent) {
+    if (hasPorterAgent != null && !hasPorterAgent) {
         return (
             <Fieldset>
                 <Text size={16}>
@@ -184,7 +170,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
         );
     }
 
-    if (!loading && events?.length === 0) {
+    if (events != null && events.length === 0) {
         return (
             <Fieldset>
                 <Text size={16}>No events found for "{appName}"</Text>

@@ -84,6 +84,5 @@ export const AWS_INSTANCE_LIMITS: InstanceTypes = {
 }
 
 
-export const UPPER_BOUND_SMART = .5
-export const RESOURCE_ALLOCATION_RAM = 1
-export const RESOURCE_ALLOCATION_RAM_V2 = 1024
+export const UPPER_BOUND_SMART = .5;
+export const RESOURCE_ALLOCATION_RAM = 1;

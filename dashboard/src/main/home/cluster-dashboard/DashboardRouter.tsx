@@ -143,9 +143,6 @@ const DashboardRouter: React.FC<Props> = ({
           setSortType={setSortType}
         />
       </GuardedRoute>
-      <Route path={"/databases"}>
-        <div>coolio</div>
-      </Route>
       <GuardedRoute
         path={"/jobs"}
         scope="job"

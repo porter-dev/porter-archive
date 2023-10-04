@@ -328,8 +328,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const porterAppRequest = {
         porter_yaml: base64Encoded,
         override_release: true,
-        image_info: imageInfo,
         ...PorterApp.empty(),
+        image_info: imageInfo,
         buildpacks: "",
         // for some reason I couldn't get the path to update the porterApp object correctly here so I just grouped it with the porter json :/
         porter_yaml_path: porterJsonWithPath?.porterYamlPath,
@@ -350,7 +350,15 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         porterAppRequest.git_branch = "";
         porterAppRequest.git_repo_id = 0;
       } else if (buildView === "docker") {
-        porterAppRequest.dockerfile = porterApp.dockerfile;
+        if (porterApp.dockerfile === "") {
+          porterAppRequest.dockerfile = "./Dockerfile";
+        } else {
+          if (!porterApp.dockerfile.startsWith("./") && !porterApp.dockerfile.startsWith("/")) {
+            porterAppRequest.dockerfile = `./${porterApp.dockerfile}`;
+          } else {
+            porterAppRequest.dockerfile = porterApp.dockerfile;
+          }
+        }
       } else {
         porterAppRequest.builder = porterApp.builder;
         porterAppRequest.buildpacks = porterApp.buildpacks.join(",");

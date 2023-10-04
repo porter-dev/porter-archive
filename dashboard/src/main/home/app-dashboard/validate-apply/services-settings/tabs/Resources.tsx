@@ -1,17 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 import Spacer from "components/porter/Spacer";
 import { ClientService } from "lib/porter-apps/services";
 import { Controller, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
-import InputSlider from "components/porter/InputSlider";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
 import { match } from "ts-pattern";
-import { MIB_TO_GIB, MILI_TO_CORE, RESOURCE_ALLOCATION_RAM_V2, UPPER_BOUND_SMART } from "main/home/app-dashboard/new-app-flow/tabs/utils";
-import SmartOptModal from "main/home/app-dashboard/new-app-flow/tabs/SmartOptModal";
-import { FormControlLabel, Switch } from "@material-ui/core";
-import styled from "styled-components";
 
 type ResourcesProps = {
   index: number;
@@ -29,40 +24,25 @@ const Resources: React.FC<ResourcesProps> = ({
   isPredeploy = false,
 }) => {
   const { control, register, watch } = useFormContext<PorterAppFormData>();
-  const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
-  const smartLimitRAM = (maxRAM - RESOURCE_ALLOCATION_RAM_V2) * UPPER_BOUND_SMART
-  const smartLimitCPU = Math.round((maxCPU - (RESOURCE_ALLOCATION_RAM_V2 * (maxCPU / maxRAM))) * UPPER_BOUND_SMART * 100) / 100
+
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`
+  );
+
+  const smartOpt = watch(
+    `app.services.${index}.smartOptimization`
+  );
+
+  const memory = watch(
+    `app.services.${index}.ramMegabytes`
+  );
+  const cpu = watch(
+    `app.services.${index}.cpuCores`
   );
 
   return (
     <>
       <Spacer y={1} />
-      <Spacer y={1} />
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-        <StyledIcon
-          className="material-icons"
-          onClick={() => {
-            setShowNeedHelpModal(true)
-          }}
-        >
-          help_outline
-        </StyledIcon>
-        <Text style={{ marginRight: '10px' }}>Smart Optimization</Text>
-        <Switch
-          size="small"
-          color="primary"
-          checked={true}
-          onChange={console.log('hi')}
-          inputProps={{ 'aria-label': 'controlled' }}
-        />
-      </div>
-      {showNeedHelpModal &&
-        <SmartOptModal
-          setModalVisible={setShowNeedHelpModal}
-        />}
-
       <Controller
         name={
           isPredeploy
@@ -71,16 +51,22 @@ const Resources: React.FC<ResourcesProps> = ({
         }
         control={control}
         render={({ field: { value, onChange } }) => (
-          <InputSlider
+          <IntelligentSlider
             label="CPUs: "
             unit="Cores"
             override={false}
             min={0}
-            max={Math.floor((maxCPU - (RESOURCE_ALLOCATION_RAM_V2 * maxCPU / maxRAM)) * 10) / 10}
-            color={"#3f51b5"}
-            smartLimit={smartLimitCPU}
+            max={maxCPU}
+            color={"#3a48ca"}
             value={value.value.toString()}
             setValue={(e) => {
+              if (smartOpt?.value) {
+                setValue(
+                  `app.services.${index}.ramMegabytes`, {
+                  readOnly: false,
+                  value: closestMultiplier(0, maxCPU, value.value) * maxRAM
+                });
+              }
               onChange({
                 ...value,
                 value: e,
@@ -91,6 +77,8 @@ const Resources: React.FC<ResourcesProps> = ({
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
+            isSmartOptimizationOn={smartOpt?.value ?? false}
+            decimalsToRoundTo={2}
           />
         )}
       />
@@ -103,15 +91,20 @@ const Resources: React.FC<ResourcesProps> = ({
         }
         control={control}
         render={({ field: { value, onChange } }) => (
-          <InputSlider
+          <IntelligentSlider
             label="RAM: "
             unit="MB"
             min={0}
-            smartLimit={smartLimitRAM}
-            max={Math.floor((maxRAM - RESOURCE_ALLOCATION_RAM_V2) * 10) / 10}
-            color={"#3f51b5"}
-            value={(value.value).toString()}
+            max={maxRAM}
+            color={"#3a48ca"}
+            value={value.value.toString()}
             setValue={(e) => {
+              if (smartOpt?.value) {
+                setValue(`app.services.${index}.cpuCores`, {
+                  readOnly: false,
+                  value: Number((closestMultiplier(0, maxRAM, value.value) * maxCPU).toFixed(2))
+                })
+              }
               onChange({
                 ...value,
                 value: e,
@@ -122,6 +115,7 @@ const Resources: React.FC<ResourcesProps> = ({
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
+            isSmartOptimizationOn={smartOpt?.value ?? false}
           />
         )}
       />
@@ -135,14 +129,12 @@ const Resources: React.FC<ResourcesProps> = ({
               type="text"
               label="Instances"
               placeholder="ex: 1"
-              disabled={
-                service.instances.readOnly ?? config.autoscaling?.enabled
-              }
+              disabled={service.instances.readOnly || autoscalingEnabled.value}
               width="300px"
               disabledTooltip={
                 service.instances.readOnly
                   ? "You may only edit this field in your porter.yaml."
-                  : "Disable autoscaling to specify replicas."
+                  : "Disable autoscaling to specify instances."
               }
               {...register(`app.services.${index}.instances.value`)}
             />
@@ -274,6 +266,21 @@ const Resources: React.FC<ResourcesProps> = ({
 };
 
 export default Resources;
+
+const StyledIcon = styled.i`
+  cursor: pointer;
+  font-size: 16px; 
+  margin-right : 5px;
+  &:hover {
+    color: #666;  
+  }
+`;
+
+const SmartOptHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+`
 
 const StyledIcon = styled.i`
   cursor: pointer;

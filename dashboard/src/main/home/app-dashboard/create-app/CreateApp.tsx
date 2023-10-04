@@ -49,6 +49,7 @@ import {
   populatedEnvGroup,
 } from "../validate-apply/app-settings/types";
 import EnvSettings from "../validate-apply/app-settings/EnvSettings";
+import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -78,6 +79,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     variables: {},
     secrets: {},
   });
+  const { maxCPU, maxRAM } = useClusterResourceLimits({
+    projectId: currentProject?.id,
+    clusterId: currentCluster?.id,
+  })
 
   const { data: porterApps = [] } = useQuery<string[]>(
     ["getPorterApps", currentProject?.id, currentCluster?.id],
@@ -604,9 +609,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>
@@ -616,6 +620,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ServiceList
                       addNewText={"Add a new service"}
                       fieldArrayName={"app.services"}
+                      maxCPU={maxCPU}
+                      maxRAM={maxRAM}
                     />
                   </>,
                   <>
@@ -647,6 +653,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                         })}
                         isPredeploy
                         fieldArrayName={"app.predeploy"}
+                        maxCPU={maxCPU}
+                        maxRAM={maxRAM}
                       />
                     </>
                   ),

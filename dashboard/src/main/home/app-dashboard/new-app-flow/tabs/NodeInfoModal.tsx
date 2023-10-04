@@ -20,12 +20,12 @@ const NodeInfoModal: React.FC<Props> = ({
             <Text size={16}>Resource Optimization on Porter</Text>
             <Spacer y={1} />
             <Text color="helper">
-                The recommended marks are so that the application can run cost-efficiently on Porter.
+                Using the recommended marks ensures that your service runs cost-efficiently on Porter.
             </Text>
             <Spacer y={1} />
             <Text color="helper">
                 <Link to="https://docs.porter.run/other/kubernetes-101" target="_blank">
-                    For more information about Kubernetes resource management visit our docs.
+                    For more information about Kubernetes resource management, visit our docs.
                 </Link>
             </Text>
 

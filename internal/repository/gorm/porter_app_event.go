@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
@@ -49,16 +51,20 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppID(ctx context.Contex
 
 // ListEventsByPorterAppIDAndDeploymentTargetID returns a list of events for a given porter app id and deployment target id
 func (repo *PorterAppEventRepository) ListEventsByPorterAppIDAndDeploymentTargetID(ctx context.Context, porterAppID uint, deploymentTargetID uuid.UUID, opts ...helpers.QueryOption) ([]*models.PorterAppEvent, helpers.PaginatedResult, error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-events-by-porter-app-id-and-deployment-target-id")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "porter-app-id", Value: porterAppID},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTargetID},
+	)
+
 	apps := []*models.PorterAppEvent{}
 	paginatedResult := helpers.PaginatedResult{}
 
 	id := strconv.Itoa(int(porterAppID))
 	if id == "" {
-		return nil, paginatedResult, errors.New("invalid porter app id supplied")
-	}
-
-	if deploymentTargetID == uuid.Nil {
-		return nil, paginatedResult, errors.New("invalid deployment target id supplied")
+		return nil, paginatedResult, telemetry.Error(ctx, span, nil, "invalid porter app id supplied")
 	}
 
 	db := repo.db.Model(&models.PorterAppEvent{})
@@ -67,7 +73,7 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppIDAndDeploymentTarget
 
 	if err := resultDB.Find(&apps).Error; err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, paginatedResult, err
+			return nil, paginatedResult, telemetry.Error(ctx, span, err, "error finding events by porter app id and deployment target id")
 		}
 	}
 

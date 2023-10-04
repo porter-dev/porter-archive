@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// SetRepoWebhookInput is the input to the SetRepoWebhook function
 type SetRepoWebhookInput struct {
 	PorterAppName       string
 	ClusterID           uint
@@ -23,6 +24,8 @@ type SetRepoWebhookInput struct {
 	PorterAppRepository repository.PorterAppRepository
 }
 
+// SetRepoWebhook creates or updates a github webhook for a porter app associated with a given repo
+// The webhook watches for pull request and push events, used for managing preview environments
 func SetRepoWebhook(ctx context.Context, inp SetRepoWebhookInput) error {
 	ctx, span := telemetry.NewSpan(ctx, "porter-app-set-repo-webhook")
 	defer span.End()

@@ -39,7 +39,13 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
 
   // remove this filter when https://linear.app/porter/issue/POR-1676/disable-porter-agent-code-for-cpu-alerts is resolved
   const isNotFilteredAppEvent = (event: PorterAppEvent) => {
-    return !(event.type === PorterAppEventType.APP_EVENT && (event.metadata?.short_summary?.includes("requesting more memory than is available") || event.metadata?.short_summary?.includes("requesting more CPU than is available")));
+    return !(event.type === PorterAppEventType.APP_EVENT &&
+      (
+        event.metadata?.short_summary?.includes("requesting more memory than is available")
+        || event.metadata?.short_summary?.includes("requesting more CPU than is available")
+        || event.metadata?.short_summary?.includes("non-zero exit code")
+      )
+    );
   }
 
   const getEvents = async () => {

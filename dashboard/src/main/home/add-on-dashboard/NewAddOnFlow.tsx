@@ -26,7 +26,13 @@ import Select from "components/porter/Select";
 type Props = {
 };
 
-const HIDDEN_CHARTS = ["porter-agent", "loki", "agent"];
+const HIDDEN_CHARTS = [
+  "agent",
+  "elasticache-chart",
+  "loki",
+  "porter-agent",
+  "rds-chart",
+];
 
 //For Charts that don't exist locally we need to add them in manually
 const TAG_MAPPING = {

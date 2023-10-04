@@ -31,7 +31,7 @@ import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 
 type Props = {};
 
-const Apps: React.FC<Props> = ({}) => {
+const Apps: React.FC<Props> = ({ }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
   const { currentDeploymentTarget } = useDeploymentTarget();
@@ -77,6 +77,7 @@ const Apps: React.FC<Props> = ({}) => {
       return apps.app_revisions;
     },
     {
+      refetchOnWindowFocus: false,
       enabled:
         !!currentCluster && !!currentProject && !!currentDeploymentTarget,
     }

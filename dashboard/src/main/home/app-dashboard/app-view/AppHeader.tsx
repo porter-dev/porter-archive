@@ -78,13 +78,13 @@ const AppHeader: React.FC = () => {
     );
 
     // we only show the custom domain if 1 exists; if no custom domain exists, we show the porter domain, if one exists
-    const nonPorterDomains = domains.filter((n: string) => !n.endsWith(".onporter.run"));
+    const nonPorterDomains = domains.filter((n: string) => !n.endsWith(".onporter.run") && !n.endsWith(".withporter.run"));
     if (nonPorterDomains.length) {
       if (nonPorterDomains.length === 1) {
         return nonPorterDomains[0];
       }
     } else {
-      const porterDomains = domains.filter((n: string) => n.endsWith(".onporter.run"));
+      const porterDomains = domains.filter((n: string) => n.endsWith(".onporter.run") || n.endsWith(".withporter.run"));
       if (porterDomains.length === 1) {
         return porterDomains[0];
       }
@@ -118,7 +118,7 @@ const AppHeader: React.FC = () => {
             </TagWrapper>
           </>
         )}
-        {!gitData && porterApp.image_repo_uri && (
+        {!gitData && latestProto.image && (
           <>
             <Spacer inline x={1} />
             <Container row>
@@ -127,7 +127,7 @@ const AppHeader: React.FC = () => {
                 src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
               />
               <Text size={13} color="helper">
-                {porterApp.image_repo_uri}
+                {`${latestProto.image.repository}`}
               </Text>
             </Container>
           </>

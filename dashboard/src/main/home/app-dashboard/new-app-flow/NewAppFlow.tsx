@@ -470,6 +470,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setImageTag={setImageTag}
                   buildView={buildView}
                   setBuildView={setBuildView}
+                  projectId={currentProject?.id ?? 0}
                 />
               </>,
               <>

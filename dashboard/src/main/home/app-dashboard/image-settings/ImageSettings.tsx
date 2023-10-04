@@ -14,12 +14,14 @@ import { ImageType } from "./types";
 
 type Props = {
     projectId: number;
-    source: SourceOptions & { type: "docker-registry" };
+    imageUri: string;
+    imageTag: string;
 };
 
 const ImageSettings: React.FC<Props> = ({
     projectId,
-    source,
+    imageUri,
+    imageTag,
 }) => {
     const { control, setValue } = useFormContext<PorterAppFormData>();
     const [images, setImages] = useState<ImageType[]>([]);
@@ -36,7 +38,7 @@ const ImageSettings: React.FC<Props> = ({
     )
 
     const { data: imageResp, isLoading: isLoadingImages } = useQuery(
-        ["getImages", projectId, source],
+        ["getImages", projectId, imageTag, imageUrl],
         async () => {
             if (registries == null) {
                 return [];
@@ -62,7 +64,7 @@ const ImageSettings: React.FC<Props> = ({
     useEffect(() => {
         if (imageResp) {
             setImages(imageResp);
-            if (source.image && source.image.repository) {
+            if (imageUrl) {
                 setSelectedImage(imageResp.find((image) => image.uri === source.image.repository));
             }
         }

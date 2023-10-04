@@ -74,11 +74,6 @@ const ProjectButton: React.FC<PropsType> = (props) => {
                 <Letter>{currentProject.name[0].toUpperCase()}</Letter>
               </ProjectIcon>
               <ProjectName>{currentProject.name}</ProjectName>
-              <Spacer inline x={.5} />
-
-              {(props.projects.length > 1 || user.isPorterUser) && <RefreshButton>
-                <img src={swap} />
-              </RefreshButton>}
             </MainSelector>
           </Tooltip>
           :
@@ -92,9 +87,6 @@ const ProjectButton: React.FC<PropsType> = (props) => {
             </ProjectIcon>
             <ProjectName>{currentProject.name}</ProjectName>
             <Spacer inline x={.5} />
-            {(props.projects.length > 1 || user.isPorterUser) && <RefreshButton>
-              <img src={swap} />
-            </RefreshButton>}
           </MainSelector>
         }
         {/* {renderDropdown()} */}
@@ -211,9 +203,9 @@ const ProjectImage = styled.img`
 `;
 
 const ProjectIcon = styled.div`
-  width: 25px;
-  min-width: 25px;
-  height: 25px;
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
   border-radius: 3px;
   overflow: hidden;
   position: relative;
@@ -229,18 +221,18 @@ const ProjectIconAlt = styled(ProjectIcon)`
 
 const StyledProjectSection = styled.div`
   position: relative;
-  margin-left: 3px;
   color: ${props => props.theme.text.primary};
+  max-width: 200px;
 `;
 
 const MainSelector = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 10px 0 0;
+  margin: 0;
   font-size: 14px;
   cursor: ${props => (props.projectsLength > 1 || props.isPorterUser) ? "pointer" : "default"};
-  padding: 10px 20px;
+  padding: 10px 22px;
   position: relative;
   :hover {
     > i {
@@ -264,8 +256,8 @@ const ProjectName = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  flex-grow: 1; // <-- Add flex-grow here
-  padding-right: 20px; // <-- Add padding-right here
+  max-width: 145px;
+  font-size: 14px;
 `;
 
 const RefreshButton = styled.div`

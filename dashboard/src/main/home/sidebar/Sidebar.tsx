@@ -2,13 +2,13 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 import category from "assets/category.svg";
-import integrations from "assets/integrations-bold.png";
+import integrations from "assets/integrations.svg";
 import rocket from "assets/rocket.png";
-import settings from "assets/settings-bold.png";
-import web from "assets/web-bold.png";
-import addOns from "assets/add-ons-bold.png";
-import infra from "assets/infra.png";
-import sliders from "assets/sliders.svg";
+import settings from "assets/settings.svg";
+import applications from "assets/applications.svg";
+import infra from "assets/cluster.svg";
+import sliders from "assets/env-groups.svg";
+import addOns from "assets/add-ons.svg"
 
 import { Context } from "shared/Context";
 
@@ -115,6 +115,7 @@ class Sidebar extends Component<PropsType, StateType> {
     if (!currentProject?.simplified_view_enabled) {
       return (
         <ScrollWrapper>
+          <Spacer y={.5} />
           <SidebarLabel>Home</SidebarLabel>
           <NavButton path={"/dashboard"}>
             <Img src={category} />
@@ -211,7 +212,7 @@ class Sidebar extends Component<PropsType, StateType> {
               path="/apps"
               active={window.location.pathname.startsWith("/apps")}
             >
-              <Img src={web} />
+              <Img src={applications} />
               Applications
             </NavButton>
             <NavButton
@@ -260,12 +261,12 @@ class Sidebar extends Component<PropsType, StateType> {
 
         return (
           <ScrollWrapper>
-            <Spacer y={.5} />
+            <Spacer y={.4} />
             <NavButton
               path="/apps"
               active={window.location.pathname.startsWith("/apps")}
             >
-              <Img src={web} />
+              <Img src={applications} />
               Applications
             </NavButton>
             <NavButton
@@ -354,20 +355,8 @@ class Sidebar extends Component<PropsType, StateType> {
         {this.renderPullTab()}
         <StyledSidebar showSidebar={this.state.showSidebar}>
           <SidebarBg />
-          <CollapseButton
-            onClick={this.toggleSidebar}
-            onMouseOver={() => {
-              this.setState({ showTooltip: true });
-            }}
-            onMouseOut={() => {
-              this.setState({ showTooltip: false });
-            }}
-          >
-            {this.renderTooltip()}
-            <i className="material-icons">double_arrow</i>
-          </CollapseButton>
-
-          <ProjectSectionContainer />
+          <Spacer y={0.5} />
+          <ProjectSectionContainer collapseSidebar={this.toggleSidebar} />
           {this.renderProjectContents()}
           {this.context.featurePreview && (
             <Container row>
@@ -415,11 +404,10 @@ const NavButton = styled(SidebarLink)`
   border-radius: 5px;
   position: relative;
   text-decoration: none;
-  height: 34px;
-  margin: 5px 15px;
-  padding: 0 30px 2px 6px;
+  height: 45px;
+  margin: 7px 22px;
+  padding: 0 30px 2px 7px;
   font-size: 13px;
-  color: ${props => props.theme.text.primary};
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 
@@ -430,10 +418,10 @@ const NavButton = styled(SidebarLink)`
   }
 
   &.active {
-    background: #ffffff11;
+    background: #202126;
 
     :hover {
-      background: #ffffff11;
+      background: #202126;
     }
   }
 
@@ -451,7 +439,7 @@ const NavButton = styled(SidebarLink)`
 
 const Img = styled.img<{ enlarge?: boolean }>`
   padding: ${(props) => (props.enlarge ? "0 0 0 1px" : "4px")};
-  height: 22px;
+  height: 25px;
   padding-top: 4px;
   border-radius: 3px;
   margin-right: 8px;
@@ -556,7 +544,7 @@ const CollapseButton = styled.div`
 `;
 
 const StyledSidebar = styled.section`
-  width: 240px;
+  width: 260px;
   position: relative;
   padding-top: 20px;
   height: 100vh;
@@ -566,7 +554,7 @@ const StyledSidebar = styled.section`
   animation-fill-mode: forwards;
   @keyframes showSidebar {
     from {
-      margin-left: -240px;
+      margin-left: -260px;
     }
     to {
       margin-left: 0px;
@@ -577,7 +565,7 @@ const StyledSidebar = styled.section`
       margin-left: 0px;
     }
     to {
-      margin-left: -240px;
+      margin-left: -260px;
     }
   }
 `;

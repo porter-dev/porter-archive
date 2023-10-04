@@ -6,8 +6,9 @@ import { useLatestRevision } from "../LatestRevisionContext";
 import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
 import Error from "components/porter/Error";
+import { match } from "ts-pattern";
 
-const BuildSettings: React.FC = () => {
+const BuildSettingsTab: React.FC = () => {
   const {
     watch,
     formState: { isSubmitting, errors },
@@ -31,33 +32,36 @@ const BuildSettings: React.FC = () => {
     return "";
   }, [isSubmitting, errors]);
 
-  if (source.type !== "github") {
-    return null;
-  }
-
   return (
     <>
-      <RepoSettings
-        build={build}
-        source={source}
-        projectId={projectId}
-        appExists
-      />
-      <Spacer y={1} />
-      <Button
-        type="submit"
-        status={buttonStatus}
-        disabled={
-          isSubmitting ||
-          latestRevision.status === "CREATED" ||
-          latestRevision.status === "AWAITING_BUILD_ARTIFACT"
-        }
-        disabledTooltipMessage="Please wait for the build to complete before updating build settings"
-      >
-        Save build settings
-      </Button>
+      {match(source)
+        .with({ type: "github" }, (source) => (
+          <>
+            <RepoSettings
+              build={build}
+              source={source}
+              projectId={projectId}
+              appExists
+            />
+            <Spacer y={1} />
+            <Button
+              type="submit"
+              status={buttonStatus}
+              disabled={
+                isSubmitting ||
+                latestRevision.status === "CREATED" ||
+                latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+              }
+              disabledTooltipMessage="Please wait for the build to complete before updating build settings"
+            >
+              Save build settings
+            </Button>
+          </>
+        ))
+        .otherwise(() => null)
+      }
     </>
   );
 };
 
-export default BuildSettings;
+export default BuildSettingsTab;

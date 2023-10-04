@@ -77,7 +77,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
   const [porterApp, setPorterApp] = useState<PorterApp>(PorterApp.empty());
   const [hovered, setHovered] = useState(false);
 
-  const [imageTag, setImageTag] = useState("latest");
+  const [imageTag, setImageTag] = useState("");
   const { currentCluster, currentProject } = useContext(Context);
   const [deploying, setDeploying] = useState<boolean>(false);
   const [deploymentError, setDeploymentError] = useState<string | undefined>(undefined);
@@ -328,8 +328,8 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       const porterAppRequest = {
         porter_yaml: base64Encoded,
         override_release: true,
-        image_info: imageInfo,
         ...PorterApp.empty(),
+        image_info: imageInfo,
         buildpacks: "",
         // for some reason I couldn't get the path to update the porterApp object correctly here so I just grouped it with the porter json :/
         porter_yaml_path: porterJsonWithPath?.porterYamlPath,
@@ -470,6 +470,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                   setImageTag={setImageTag}
                   buildView={buildView}
                   setBuildView={setBuildView}
+                  projectId={currentProject?.id ?? 0}
+                  resetImageInfo={() => {
+                    setPorterApp(PorterApp.setAttribute(porterApp, "image_repo_uri", ""));
+                    setImageTag("");
+                  }}
                 />
               </>,
               <>

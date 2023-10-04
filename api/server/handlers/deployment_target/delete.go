@@ -16,11 +16,13 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// DeleteDeploymentTargetHandler is the handler for DELETE /api/projects/{project_id}/clusters/{cluster_id}/deployment-targets/{deployment_target_id}
 type DeleteDeploymentTargetHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
+// NewDeleteDeploymentTargetHandler creates a new DeleteDeploymentTargetHandler
 func NewDeleteDeploymentTargetHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -32,6 +34,7 @@ func NewDeleteDeploymentTargetHandler(
 	}
 }
 
+// ServeHTTP deletes the deployment target from the cluster
 func (c *DeleteDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "server-delete-deployment-target-by-id")
 	defer span.End()

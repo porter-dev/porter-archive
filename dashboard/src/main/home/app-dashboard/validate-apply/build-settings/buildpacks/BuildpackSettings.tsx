@@ -5,7 +5,6 @@ import Error from "components/porter/Error";
 import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
 import {
-  BUILDPACK_TO_NAME,
   Buildpack,
   DEFAULT_BUILDER_NAME,
   DEFAULT_HEROKU_STACK,
@@ -30,15 +29,21 @@ type Props = {
   populateBuildValuesOnceAfterDetection?: boolean;
 };
 
+const DEFAULT_BUILDERS = [
+  "paketobuildpacks/builder-jammy-full:latest",
+  "paketobuildpacks/builder:full",
+  "heroku/builder:22",
+  "heroku/builder-classic:22",
+  "heroku/buildpacks:20",
+  "heroku/buildpacks:18",
+]
+
 const BuildpackSettings: React.FC<Props> = ({
   projectId,
   build,
   source,
   populateBuildValuesOnceAfterDetection,
 }) => {
-  const [builderOptions, setBuilderOptions] = useState<
-    { label: string; value: string }[]
-  >(build.builder ? [{ label: build.builder, value: build.builder }] : []);
   const [populateBuild, setPopulateBuild] = useState<boolean>(populateBuildValuesOnceAfterDetection ?? false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [availableBuildpacks, setAvailableBuildpacks] = useState<Buildpack[]>(
@@ -96,29 +101,22 @@ const BuildpackSettings: React.FC<Props> = ({
     [build.context]
   );
 
+  const builderOptions = useMemo(() => {
+    const allBuilderOptions = [
+      build.builder,
+      ...DEFAULT_BUILDERS
+    ].sort();
+
+    return Array.from(new Set(allBuilderOptions)).map((builder) => ({
+      label: builder,
+      value: builder,
+    }));
+  }, [build.builder])
+
   useEffect(() => {
     if (!data || data.length === 0) {
       return;
     }
-
-    setBuilderOptions(
-      data
-        .flatMap((builder) => {
-          return builder.builders.map((stack) => ({
-            label: `${builder.name} - ${stack}`,
-            value: stack.toLowerCase(),
-          }));
-        })
-        .sort((a, b) => {
-          if (a.label < b.label) {
-            return -1;
-          }
-          if (a.label > b.label) {
-            return 1;
-          }
-          return 0;
-        })
-    );
 
     const defaultBuilder =
       data.find(

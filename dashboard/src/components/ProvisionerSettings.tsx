@@ -416,7 +416,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         setErrorMessage(DEFAULT_ERROR_MESSAGE);
       }
       markStepStarted("provisioning-failed", errMessage);
-      
+
       // enable edit again only in the case of an error
       setIsClicked(false);
       setIsReadOnly(false);
@@ -581,13 +581,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             <>
               {user?.isPorterUser && (
                 <Input
-                width="350px"
-                type="string"
-                value={clusterVersion}
-                disabled={true}
-                setValue={(x: string) => setCidrRangeServices(x)}
-                label="Cluster version (only shown to porter.run emails)"
-              />
+                  width="350px"
+                  type="string"
+                  value={clusterVersion}
+                  disabled={true}
+                  setValue={(x: string) => setCidrRangeServices(x)}
+                  label="Cluster version (only shown to porter.run emails)"
+                />
 
               )}
               <Spacer y={1} />

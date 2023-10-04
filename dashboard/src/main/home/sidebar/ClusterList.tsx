@@ -95,7 +95,7 @@ const ClusterList: React.FC<PropsType> = (props) => {
 
             }}>
 
-            Connect Cluster
+            <Plus>+</Plus>    Deploy new cluster
           </Option>
 
         </Dropdown>
@@ -225,7 +225,7 @@ const ClusterName = styled.div`
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  max-width: 180px; // You can adjust this value according to your needs
+  max-width: 200px; 
 `;
 
 const MainSelector = styled.div`

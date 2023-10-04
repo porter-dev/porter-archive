@@ -51,7 +51,7 @@ const CredentialList: React.FunctionComponent<Props> = (props) => {
               <i className="material-icons">account_circle</i>
               {cred.display_name || "Name N/A"}
             </Flex>
-            <Right>Connected at {readableDate(cred.created_at)}</Right>
+            {/* <Right>Connected at {readableDate(cred.created_at)}</Right> */}
           </PreviewRow>
         );
       })}

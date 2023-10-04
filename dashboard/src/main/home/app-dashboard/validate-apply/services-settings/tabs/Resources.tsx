@@ -7,6 +7,7 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
 import { match } from "ts-pattern";
+import styled from "styled-components";
 
 type ResourcesProps = {
   index: number;
@@ -281,12 +282,3 @@ const SmartOptHeader = styled.div`
   align-items: center;
   justify-content: flex-end;
 `
-
-const StyledIcon = styled.i`
-  cursor: pointer;
-  font-size: 16px; 
-  margin-right : 5px;
-  &:hover {
-    color: #666;  
-  }
-`;

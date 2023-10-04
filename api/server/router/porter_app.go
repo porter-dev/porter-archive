@@ -1241,7 +1241,7 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/app-templates -> porter_app.NewGetAppTemplateHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/templates -> porter_app.NewGetAppTemplateHandler
 	getAppTemplateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -1270,7 +1270,7 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/app-templates -> porter_app.NewCreateAppTemplateHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/templates -> porter_app.NewCreateAppTemplateHandler
 	createAppTemplateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,

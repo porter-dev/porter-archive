@@ -37,3 +37,10 @@ export const PREFLIGHT_TO_ENUM = {
   "vpc": EnumQuotaIncrease.AWS_VPC,
   "vcpus": EnumQuotaIncrease.AWS_VCPU,
 }
+
+export const PROVISIONING_STATUS = {
+  0: "Waiting for Quota Increase",
+  1: "Generating Resources",
+  2: "Provisioning Cluster ",
+
+}

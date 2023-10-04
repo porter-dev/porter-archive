@@ -137,15 +137,6 @@ const ServiceContainer: React.FC<ServiceProps> = ({
                 }
               }
             });
-
-<<<<<<< HEAD
-            setMaxCPU(Math.fround(largestInstanceType.vCPUs));
-            setMaxRAM(
-              Math.round(
-                convert(largestInstanceType.RAM, "GiB").to("MB"))
-
-            );
-=======
             // if the instance type has more than 4 GB ram, we use 90% of the ram/cpu
             // otherwise, we use 75%
             if (largestInstanceType.RAM > 4) {
@@ -164,7 +155,6 @@ const ServiceContainer: React.FC<ServiceProps> = ({
                 ) * 100
               );
             }
->>>>>>> a5e37367d1889ae870a488b92f11210ed63fc173
           }
         })
         .catch((error) => { });

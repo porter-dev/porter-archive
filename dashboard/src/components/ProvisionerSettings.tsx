@@ -354,20 +354,20 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       setIsReadOnly(true);
       setErrorMessage(undefined);
 
-      if (!props.clusterId) {
-        markStepStarted("pre-provisioning-check-started");
+      // if (!props.clusterId) {
+      //   markStepStarted("pre-provisioning-check-started");
 
-        await api.preflightCheckAWSUsage(
-          "<token>",
-          {
-            target_arn: props.credentialId,
-            region: awsRegion,
-          },
-          {
-            id: currentProject.id,
-          }
-        );
-      }
+      //   await api.preflightCheckAWSUsage(
+      //     "<token>",
+      //     {
+      //       target_arn: props.credentialId,
+      //       region: awsRegion,
+      //     },
+      //     {
+      //       id: currentProject.id,
+      //     }
+      //   );
+      // }
 
       const res = await api.createContract("<token>", data, {
         project_id: currentProject.id,
@@ -511,6 +511,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       preflightChecks()
     }
   }, [props.selectedClusterVersion, awsRegion]);
+
+  const requestQuotasAndProvision = async () => {
+    await requestQuotaIncrease()
+    await createCluster()
+  }
 
   const requestQuotaIncrease = async () => {
 
@@ -1105,7 +1110,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                     <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '15px' }}>
                       <Button
                         disabled={isLoading}
-                        onClick={requestQuotaIncrease}
+                        onClick={requestQuotasAndProvision}
 
                       >
                         Email me once cluster is provisioned

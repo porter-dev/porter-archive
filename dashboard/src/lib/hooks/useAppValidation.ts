@@ -107,6 +107,16 @@ export const useAppValidation = ({
         })
         .exhaustive();
 
+      const domainDeletions = data.app.services.reduce(
+        (acc: Record<string, string[]>, svc) => {
+          if (svc.domainDeletions.length) {
+            acc[svc.name.value] = svc.domainDeletions.map((d) => d.name);
+          }
+          return acc;
+        },
+        {}
+      );
+
       const res = await api.validatePorterApp(
         "<token>",
         {
@@ -122,6 +132,7 @@ export const useAppValidation = ({
             predeploy: data.deletions.predeploy.map((s) => s.name),
             env_group_names: data.deletions.envGroupNames.map((eg) => eg.name),
             env_variable_names: [],
+            domain_name_deletions: domainDeletions,
           },
         },
         {
@@ -137,7 +148,9 @@ export const useAppValidation = ({
         .parseAsync(res.data);
 
       const validatedAppProto = PorterApp.fromJsonString(
-        atob(validAppData.validate_b64_app_proto)
+        atob(validAppData.validate_b64_app_proto), {
+          ignoreUnknownFields: true,
+        }
       );
 
       return { validatedAppProto: validatedAppProto, variables, secrets };

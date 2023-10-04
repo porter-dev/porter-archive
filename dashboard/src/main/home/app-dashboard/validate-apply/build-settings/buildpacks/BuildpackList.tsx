@@ -9,6 +9,7 @@ import { Buildpack } from "main/home/app-dashboard/types/buildpack";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import { BuildOptions } from "lib/porter-apps/build";
+import Container from "components/porter/Container";
 
 interface Props {
   build: BuildOptions & {
@@ -77,7 +78,12 @@ const BuildpackList: React.FC<Props> = ({
 
   const renderAvailableBuildpacks = () => {
     if (isDetectingBuildpacks) {
-      return <Loading />;
+      return (
+        <Container row>
+          <Text color="helper">Detecting buildpacks in your repo from path {build.context} </Text>
+          <Loading width="100px" />
+        </Container>
+      );
     }
 
     if (detectBuildpacksError) {

@@ -6,12 +6,7 @@ import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import styled from "styled-components";
 import { readableDate } from "shared/string_utils";
 import Text from "components/porter/Text";
-import { useFormContext } from "react-hook-form";
-import {
-  PorterAppFormData,
-  SourceOptions,
-} from "lib/porter-apps";
-import { PorterAppRecord } from "../../app-view/AppView";
+import { SourceOptions } from "lib/porter-apps";
 
 type RevisionTableContentsProps = {
   latestRevisionNumber: number;
@@ -26,7 +21,6 @@ type RevisionTableContentsProps = {
       number: number;
     } | null>
   >;
-  porterAppRecord: PorterAppRecord;
 };
 
 const RED = "#ff0000";
@@ -39,18 +33,15 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
   expandRevisions,
   setExpandRevisions,
   setRevertData,
-  porterAppRecord,
 }) => {
-  const { setValue } = useFormContext<PorterAppFormData>();
-  const {
-    previewRevision,
-    setPreviewRevision,
-  } = useLatestRevision();
+  const { previewRevision, setPreviewRevision } = useLatestRevision();
 
   const revisionsWithProto = revisions.map((revision) => {
     return {
       ...revision,
-      app_proto: PorterApp.fromJsonString(atob(revision.b64_app_proto)),
+      app_proto: PorterApp.fromJsonString(atob(revision.b64_app_proto), {
+        ignoreUnknownFields: true,
+      }),
     };
   });
 
@@ -128,7 +119,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
             <Revision>
               No.{" "}
               {getSelectedRevisionNumber({
-                numDeployed: deployedRevisions.length,
+                numDeployed: deployedRevisions[0]?.revision_number || 0,
                 latestRevision: revisions[0],
               })}
             </Revision>
@@ -153,7 +144,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
               {pendingRevisions.length > 0 &&
                 pendingRevisions.map((revision) => (
                   <Tr key={new Date(revision.updated_at).toUTCString()}>
-                    <Td>{deployedRevisions.length + 1}</Td>
+                    <Td>{(deployedRevisions[0]?.revision_number || 0) + 1}</Td>
                     <Td>
                       {revision.app_proto.build
                         ? revision.app_proto.build.commitSha.substring(0, 7)

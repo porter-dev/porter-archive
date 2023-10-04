@@ -127,6 +127,7 @@ func (c *StreamLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	labels := []string{
 		fmt.Sprintf("%s=%s", lokiLabel_Namespace, namespace),
 		fmt.Sprintf("%s=%s", lokiLabel_PorterAppName, request.AppName),
+		fmt.Sprintf("%s=%s", lokiLabel_DeploymentTargetId, request.DeploymentTargetID),
 	}
 
 	if request.ServiceName != "all" {

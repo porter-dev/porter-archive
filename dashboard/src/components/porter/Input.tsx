@@ -4,6 +4,7 @@ import { boolean } from "zod";
 import Tooltip from "./Tooltip";
 
 type Props = {
+  autoFocus?: boolean;
   placeholder: string;
   width?: string;
   value: string;
@@ -19,6 +20,7 @@ type Props = {
 };
 
 const Input: React.FC<Props> = ({
+  autoFocus,
   placeholder,
   width,
   value,
@@ -67,6 +69,7 @@ const Input: React.FC<Props> = ({
     <Block width={width}>
       {label && <Label>{label}</Label>}
       <StyledInput
+        autoFocus={autoFocus}
         value={value}
         onChange={handleChange}
         placeholder={placeholder}

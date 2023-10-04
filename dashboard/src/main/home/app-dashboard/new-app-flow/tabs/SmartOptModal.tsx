@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import Modal from "components/porter/Modal";
 
 import Text from "components/porter/Text";
@@ -40,7 +40,7 @@ const SmartOptModal: React.FC<Props> = ({
             <Spacer y={1} />
             <Text color="helper">
                 <Link to="https://docs.porter.run/other/kubernetes-101" target="_blank">
-                    For more information about Kubernetes resource management visit our docs.
+                    For more information about Kubernetes resource management, visit our docs.
                 </Link>
             </Text>
 

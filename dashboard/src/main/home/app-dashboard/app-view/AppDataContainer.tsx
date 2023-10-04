@@ -33,7 +33,12 @@ import { z } from "zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import JobsTab from "./tabs/JobsTab";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
+<<<<<<< HEAD
 import ImageSettingsTab from "./tabs/ImageSettingsTab";
+=======
+import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
+>>>>>>> 47e999b4c65c6e8dd863784d0bdf24bcce662052
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -63,6 +68,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const queryClient = useQueryClient();
   const [confirmDeployModalOpen, setConfirmDeployModalOpen] = useState(false);
 
+  const { updateAppStep } = useAppAnalytics();
+
   const {
     porterApp: porterAppRecord,
     latestProto,
@@ -78,6 +85,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget.id,
   });
+
+  const { maxCPU, maxRAM } = useClusterResourceLimits({ projectId, clusterId });
 
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
@@ -178,7 +187,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         latestProto
       );
 
-      if (buildIsDirty && !data.redeployOnSave) {
+      const needsRebuild =
+        buildIsDirty || latestRevision.status === "BUILD_FAILED";
+
+      if (needsRebuild && !data.redeployOnSave) {
         setConfirmDeployModalOpen(true);
         return;
       }
@@ -219,11 +231,14 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         })),
       });
 
+      // force_build will create a new 0 revision that will not be deployed
+      // but will be used to hydrate values when the workflow is run
       await api.applyApp(
         "<token>",
         {
           b64_app_proto: btoa(protoWithUpdatedEnv.toJsonString()),
           deployment_target_id: deploymentTarget.id,
+          force_build: needsRebuild,
         },
         {
           project_id: projectId,
@@ -231,7 +246,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         }
       );
 
-      if (latestSource.type === "github" && buildIsDirty) {
+      if (latestSource.type === "github" && needsRebuild) {
         const res = await api.reRunGHWorkflow(
           "<token>",
           {},
@@ -250,7 +265,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           window.open(res.data, "_blank", "noreferrer");
         }
       }
-
       await queryClient.invalidateQueries([
         "getLatestRevision",
         projectId,
@@ -269,11 +283,26 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       // redirect to the default tab after save
       history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
-    } catch (err) { }
+    } catch (err) {
+      let message = "Unable to get error message";
+      let stack = "Unable to get error stack";
+      if (err instanceof Error) {
+        message = err.message;
+        stack = err.stack ?? "(No error stack)";
+      }
+      updateAppStep({
+        step: "porter-app-update-failure",
+        errorMessage: message,
+        appName: latestProto.name,
+        errorStackTrace: stack,
+      });
+    }
   });
 
   const cancelRedeploy = useCallback(() => {
-    const resetProto = previewRevision ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto)) : latestProto;
+    const resetProto = previewRevision ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
+      ignoreUnknownFields: true,
+    }) : latestProto;
 
     // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
     // however, for image settings, we can pull image repo and tag from the proto
@@ -309,7 +338,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
   useEffect(() => {
     const newProto = previewRevision
-      ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto))
+      ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
+        ignoreUnknownFields: true,
+      })
       : latestProto;
 
     // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
@@ -339,6 +370,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     });
   }, [
     servicesFromYaml,
+    currentTab,
     latestProto,
     previewRevision,
     latestRevision.revision_number,
@@ -373,7 +405,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                     latestRevision.status === "CREATED" ||
                     latestRevision.status === "AWAITING_BUILD_ARTIFACT"
                   }
-                  disabledTooltipMessage="Please wait for the build to complete before updating the app"
+                  disabledTooltipMessage="Please wait for the deploy to complete before updating the app"
                 >
                   <Icon src={save} height={"13px"} />
                   <Spacer inline x={0.5} />
@@ -424,13 +456,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         <Spacer y={1} />
         {match(currentTab)
           .with("activity", () => <Activity />)
-          .with("overview", () => <Overview />)
-          .with("build-settings", () => (
-            <BuildSettingsTab />
-          ))
-          .with("image-settings", () => (
-            <ImageSettingsTab />
-          ))
+          .with("overview", () => <Overview maxCPU={maxCPU} maxRAM={maxRAM} />)
+          .with("build-settings", () => <BuildSettingsTab />)
+          .with("image-settings", () => <ImageSettingsTab />)
           .with("environment", () => (
             <Environment latestSource={latestSource} />
           ))
@@ -447,6 +475,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           setOpen={setConfirmDeployModalOpen}
           cancelRedeploy={cancelRedeploy}
           finalizeDeploy={finalizeDeploy}
+          buildIsDirty={buildIsDirty}
         />
       ) : null}
     </FormProvider>

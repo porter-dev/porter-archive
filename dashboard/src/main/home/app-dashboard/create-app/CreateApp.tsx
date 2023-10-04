@@ -47,6 +47,7 @@ import {
 } from "../validate-apply/app-settings/types";
 import EnvSettings from "../validate-apply/app-settings/EnvSettings";
 import ImageSettings from "../image-settings/ImageSettings";
+import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -76,6 +77,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     variables: {},
     secrets: {},
   });
+  const { maxCPU, maxRAM } = useClusterResourceLimits({
+    projectId: currentProject?.id,
+    clusterId: currentCluster?.id,
+  })
 
   const { data: porterApps = [] } = useQuery<string[]>(
     ["getPorterApps", currentProject?.id, currentCluster?.id],
@@ -177,12 +182,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const image = watch("source.image");
   const services = watch("app.services");
 
-  const {
-    detectedServices: servicesFromYaml,
-    porterYamlFound,
-    detectedName,
-    loading: isLoadingPorterYaml,
-  } = usePorterYaml({
+  const { detectedServices: servicesFromYaml, detectedName } = usePorterYaml({
     source: source?.type === "github" ? source : null,
     appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
   });
@@ -326,7 +326,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         const msg =
           "An error occurred while deploying your application. Please try again.";
-        updateAppStep({ step: "stack-launch-failure", errorMessage: msg, appName: name.value });
+        updateAppStep({
+          step: "stack-launch-failure",
+          errorMessage: msg,
+          appName: name.value,
+        });
         setDeployError(msg);
         return false;
       } finally {
@@ -370,7 +374,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       setStep((prev) => Math.max(prev, 5));
     } else {
       setStep((prev) => Math.min(prev, 2));
-    };
+    }
   }, [services]);
 
   // todo(ianedwards): it's a bit odd that the button error can be set to either a string or JSX,
@@ -614,6 +618,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ServiceList
                       addNewText={"Add a new service"}
                       fieldArrayName={"app.services"}
+                      maxCPU={maxCPU}
+                      maxRAM={maxRAM}
                     />
                   </>,
                   <>
@@ -622,10 +628,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <Text color="helper">
                       Specify environment variables shared among all services.
                     </Text>
-                    <EnvSettings
-                      baseEnvGroups={baseEnvGroups}
-                      servicesFromYaml={null}
-                    />
+                    <EnvSettings baseEnvGroups={baseEnvGroups} />
                   </>,
                   source.type === "github" && (
                     <>
@@ -648,6 +651,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                         })}
                         isPredeploy
                         fieldArrayName={"app.predeploy"}
+                        maxCPU={maxCPU}
+                        maxRAM={maxRAM}
                       />
                     </>
                   ),

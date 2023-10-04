@@ -74,6 +74,7 @@ func getCreatePreviewEnvStep(
 func getDeployStackStep(
 	serverURL, porterTokenSecretName, stackName, actionVersion, porterYamlPath string,
 	projectID, clusterID uint,
+	preview bool,
 ) GithubActionYAMLStep {
 	var path string
 	if porterYamlPath != "" {
@@ -81,11 +82,22 @@ func getDeployStackStep(
 	} else {
 		path = "porter.yaml"
 	}
+
+	command := fmt.Sprintf("apply -f %s", path)
+	if preview {
+		command = fmt.Sprintf("%s --preview", command)
+	}
+
+	name := "Deploy stack"
+	if preview {
+		name = "Build and deploy preview environment"
+	}
+
 	return GithubActionYAMLStep{
-		Name: "Deploy stack",
+		Name: name,
 		Uses: fmt.Sprintf("%s@%s", cliActionName, actionVersion),
 		With: map[string]string{
-			"command": fmt.Sprintf("apply -f %s", path),
+			"command": command,
 		},
 		Env: map[string]string{
 			"PORTER_CLUSTER":    fmt.Sprintf("%d", clusterID),

@@ -99,6 +99,20 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		}))
 	}
 
+	if request.Step == "porter-app-update-failure" {
+		v.Config().AnalyticsClient.Track(analytics.PorterAppUpdateFailureTrack(&analytics.PorterAppUpdateOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			StackName:              request.StackName,
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			ErrorMessage:           request.ErrorMessage,
+			ErrorStackTrace:        request.ErrorStackTrace,
+			ValidateApplyV2:        validateApplyV2,
+		}))
+	}
+
 	v.WriteResult(w, r, user.ToUserType())
 }
 

@@ -4,11 +4,9 @@ import Spacer from "components/porter/Spacer";
 import styled from "styled-components";
 import { SourceType } from "./SourceSelector";
 import { RouteComponentProps, withRouter } from "react-router";
-import { pushFiltered } from "shared/routing";
-import ImageSelector from "components/image-selector/ImageSelector";
 import SharedBuildSettings from "../build-settings/SharedBuildSettings";
-import Link from "components/porter/Link";
 import { BuildMethod, PorterApp } from "../types/porterApp";
+import ImageSettings from "../image-settings/ImageSettings";
 
 type Props = RouteComponentProps & {
   source: SourceType | undefined;
@@ -21,6 +19,8 @@ type Props = RouteComponentProps & {
   setPorterApp: (x: PorterApp) => void;
   buildView: BuildMethod;
   setBuildView: (buildView: BuildMethod) => void;
+  projectId: number;
+  resetImageInfo: () => void;
 };
 
 const SourceSettings: React.FC<Props> = ({
@@ -34,8 +34,8 @@ const SourceSettings: React.FC<Props> = ({
   setPorterApp,
   buildView,
   setBuildView,
-  location,
-  history,
+  projectId,
+  resetImageInfo,
 }) => {
   return (
     <SourceSettingsContainer>
@@ -51,31 +51,15 @@ const SourceSettings: React.FC<Props> = ({
             buildView={buildView}
             setBuildView={setBuildView}
           />
-        ) : (
-          <StyledSourceBox>
-            <Subtitle>
-              Specify the container image you would like to connect to this
-              template.
-              <Spacer inline width="5px" />
-              <Link
-                hasunderline
-                onClick={() =>
-                  pushFiltered({ location, history }, "/integrations/registry", ["project_id"])
-                }
-              >
-                Manage Docker registries
-              </Link>
-            </Subtitle>
-            <DarkMatter antiHeight="-4px" />
-            <ImageSelector
-              selectedTag={imageTag}
-              selectedImageUrl={imageUrl}
-              setSelectedImageUrl={setImageUrl}
-              setSelectedTag={setImageTag}
-              forceExpanded={true}
-            />
-            <br />
-          </StyledSourceBox>)
+        ) :
+          <ImageSettings
+            projectId={projectId}
+            imageTag={imageTag}
+            setImageTag={setImageTag}
+            imageUri={imageUrl}
+            setImageUri={setImageUrl}
+            resetImageInfo={resetImageInfo}
+          />
         }
       </AnimateHeight>
     </SourceSettingsContainer>

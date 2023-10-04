@@ -42,7 +42,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
         return !(event.type === "APP_EVENT" && event.metadata?.short_summary?.includes("non-zero exit code"));
     }
 
-    const { data: eventFetchData, isLoading: isEventFetchLoading } = useQuery(
+    const { data: eventFetchData, isLoading: isEventFetchLoading, isRefetching } = useQuery(
         ["appEvents", deploymentTargetId, page],
         async () => {
             const res = await api.appEvents(
@@ -67,11 +67,11 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
         }
     );
     useEffect(() => {
-        if (eventFetchData) {
+        if (eventFetchData && isRefetching) {
             setEvents(eventFetchData.events);
             setNumPages(eventFetchData.pages);
         }
-    }, [eventFetchData]);
+    }, [eventFetchData, isRefetching]);
 
     const getLatestDeployEventIndex = () => {
         if (events == null) {

@@ -37,7 +37,6 @@ func (c *DeleteDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
-	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	deploymentTargetID, reqErr := requestutils.GetURLParamString(r, types.URLParamDeploymentTargetID)
 	if reqErr != nil {
@@ -53,7 +52,6 @@ func (c *DeleteDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	deleteReq := connect.NewRequest(&porterv1.DeleteDeploymentTargetRequest{
 		ProjectId:          int64(project.ID),
-		ClusterId:          int64(cluster.ID),
 		DeploymentTargetId: deploymentTargetID,
 	})
 

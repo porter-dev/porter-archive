@@ -117,6 +117,7 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	switch event := event.(type) {
 	case *github.PullRequestEvent:
 		if event.GetAction() != GithubPRStatus_Closed {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "event-processed", Value: false})
 			c.WriteResult(w, r, nil)
 			return
 		}
@@ -159,6 +160,9 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
+
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "event-processed", Value: true})
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "pr-id", Value: event.GetPullRequest().GetID()})
 	}
 
 	c.WriteResult(w, r, nil)

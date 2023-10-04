@@ -136,6 +136,9 @@ func getGithubClientByRepoID(ctx context.Context, repoID uint, githubAppSecret [
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "could not create github app client")
 	}
+	if itr == nil {
+		return nil, telemetry.Error(ctx, span, nil, "github app client is nil")
+	}
 
 	return github.NewClient(&http.Client{Transport: itr}), nil
 }

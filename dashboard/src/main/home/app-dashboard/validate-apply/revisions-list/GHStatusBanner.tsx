@@ -36,7 +36,11 @@ const GHStatusBanner: React.FC<GHStatusBannerProps> = ({ revisions }) => {
     githubWorkflowFilename,
     userHasGithubAccess,
     isLoading,
-  } = useGithubWorkflow(porterApp, previouslyBuilt);
+  } = useGithubWorkflow({
+    porterApp,
+    previouslyBuilt,
+    fileNames: ["porter.yml", `porter_stack_${porterApp.name}.yml`],
+  });
 
   if (previouslyBuilt) {
     return null;
@@ -87,7 +91,7 @@ const GHStatusBanner: React.FC<GHStatusBannerProps> = ({ revisions }) => {
     );
   }
 
-  return null
+  return null;
 };
 
 export default GHStatusBanner;

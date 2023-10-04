@@ -14,12 +14,12 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// GetAppTemplateHandler is the handler for the /app-template endpoint
+// GetAppTemplateHandler is the handler for the /apps/{porter_app_name}/templates endpoint
 type GetAppTemplateHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-// NewGetAppTemplateHandler handles GET requests to the endpoint /apps/{porter_app_name}/app-template
+// NewGetAppTemplateHandler handles GET requests to the endpoint /apps/{porter_app_name}/templates
 func NewGetAppTemplateHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -30,7 +30,7 @@ func NewGetAppTemplateHandler(
 	}
 }
 
-// GetAppTemplateResponse is the response object for the /apps/{porter_app_name}/app-template GET endpoint
+// GetAppTemplateResponse is the response object for the /apps/{porter_app_name}/templates GET endpoint
 type GetAppTemplateResponse struct {
 	TemplateB64AppProto string `json:"template_b64_app_proto"`
 }

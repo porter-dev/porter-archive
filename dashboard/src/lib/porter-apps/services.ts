@@ -344,7 +344,7 @@ export function deserializeService({
             typeof config.private === "boolean" ||
               typeof overrideWebConfig?.private === "boolean"
               ? ServiceField.boolean(config.private, overrideWebConfig?.private)
-              : undefined,
+              : ServiceField.boolean(false, undefined),
         },
       };
     })

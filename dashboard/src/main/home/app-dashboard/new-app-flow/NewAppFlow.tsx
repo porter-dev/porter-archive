@@ -350,7 +350,15 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         porterAppRequest.git_branch = "";
         porterAppRequest.git_repo_id = 0;
       } else if (buildView === "docker") {
-        porterAppRequest.dockerfile = porterApp.dockerfile;
+        if (porterApp.dockerfile === "") {
+          porterAppRequest.dockerfile = "./Dockerfile";
+        } else {
+          if (!porterApp.dockerfile.startsWith("./") && !porterApp.dockerfile.startsWith("/")) {
+            porterAppRequest.dockerfile = `./${porterApp.dockerfile}`;
+          } else {
+            porterAppRequest.dockerfile = porterApp.dockerfile;
+          }
+        }
       } else {
         porterAppRequest.builder = porterApp.builder;
         porterAppRequest.buildpacks = porterApp.buildpacks.join(",");

@@ -240,6 +240,13 @@ const Logs: React.FC<Props> = ({
                 }
             } as GenericLogFilter,
         ].filter((f: GenericLogFilter) => logFilterNames.includes(f.name)))
+
+        if (latestRevisionNumber && !logQueryParamOpts.revision) {
+            setSelectedFilterValues({
+                ...selectedFilterValues,
+                revision: latestRevisionNumber.toString(),
+            })
+        }
     }, [latestRevisionNumber]);
 
     useEffect(() => {

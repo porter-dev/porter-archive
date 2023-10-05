@@ -1,8 +1,7 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import AnimateHeight, { Height } from "react-animate-height";
 import styled from "styled-components";
 import _ from "lodash";
-import convert from "convert";
 
 import web from "assets/web.png";
 import worker from "assets/worker.png";
@@ -12,10 +11,6 @@ import Spacer from "components/porter/Spacer";
 import WebTabs from "./tabs/WebTabs";
 import WorkerTabs from "./tabs/WorkerTabs";
 import JobTabs from "./tabs/JobTabs";
-import { Context } from "shared/Context";
-import { AWS_INSTANCE_LIMITS } from "./tabs/utils";
-import api from "shared/api";
-import StatusFooter from "../../expanded-app/StatusFooter";
 import { ClientService } from "lib/porter-apps/services";
 import { UseFieldArrayUpdate } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
@@ -30,6 +25,8 @@ interface ServiceProps {
   update: UseFieldArrayUpdate<PorterAppFormData, "app.services" | "app.predeploy">;
   remove: (index: number) => void;
   status?: PorterAppVersionStatus[];
+  maxCPU: number;
+  maxRAM: number;
 }
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -38,9 +35,12 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   update,
   remove,
   status,
+  maxCPU,
+  maxRAM,
 }) => {
   const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
 
+<<<<<<< HEAD
   const UPPER_BOUND = 0.75;
   const UPPER_RAM = 1024;
 
@@ -56,6 +56,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   ); //default is set to a t3 medium
   const context = useContext(Context);
 
+=======
+>>>>>>> master
   // onResize is called when the height of the service container changes
   // used to set the height of the AnimateHeight component on tab swtich
   const onResize = useCallback(
@@ -76,6 +78,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     }
   }, [service.expanded]);
 
+<<<<<<< HEAD
   useEffect(() => {
     const { currentCluster, currentProject } = context;
     if (!currentCluster || !currentProject) {
@@ -161,6 +164,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     }
   }, []);
 
+=======
+>>>>>>> master
   const renderTabs = (service: ClientService) => {
     return match(service)
       .with({ config: { type: "web" } }, (svc) => (

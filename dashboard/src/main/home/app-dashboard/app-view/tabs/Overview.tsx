@@ -14,7 +14,11 @@ import Button from "components/porter/Button";
 import { useLatestRevision } from "../LatestRevisionContext";
 import { useAppStatus } from "lib/hooks/useAppStatus";
 
-const Overview: React.FC = () => {
+type Props = {
+  maxCPU: number;
+  maxRAM: number;
+}
+const Overview: React.FC<Props> = ({ maxCPU, maxRAM }) => {
   const { formState } = useFormContext<PorterAppFormData>();
   const {
     porterApp,
@@ -62,6 +66,8 @@ const Overview: React.FC = () => {
             existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
             isPredeploy
             fieldArrayName={"app.predeploy"}
+            maxCPU={maxCPU}
+            maxRAM={maxRAM}
           />
           <Spacer y={0.5} />
         </>
@@ -73,6 +79,8 @@ const Overview: React.FC = () => {
         fieldArrayName={"app.services"}
         existingServiceNames={Object.keys(latestProto.services)}
         serviceVersionStatus={serviceVersionStatus}
+        maxCPU={maxCPU}
+        maxRAM={maxRAM}
       />
       <Spacer y={0.75} />
       <Button

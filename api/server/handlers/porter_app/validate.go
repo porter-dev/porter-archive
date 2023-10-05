@@ -99,7 +99,7 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	} else {
 		decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
 		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error decoding base  yaml")
+			err := telemetry.Error(ctx, span, err, "error decoding base yaml")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
 		}

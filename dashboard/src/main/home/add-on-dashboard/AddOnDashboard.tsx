@@ -8,7 +8,7 @@ import React, {
 import styled from "styled-components";
 import _ from "lodash";
 
-import addOn from "assets/add-ons.png";
+import addOn from "assets/add-ons.svg";
 import github from "assets/github.png";
 import time from "assets/time.png";
 import healthy from "assets/status-healthy.png";
@@ -40,6 +40,7 @@ type Props = {
 };
 
 const namespaceBlacklist = [
+  "ack-system",
   "cert-manager",
   "ingress-nginx",
   "kube-node-lease",

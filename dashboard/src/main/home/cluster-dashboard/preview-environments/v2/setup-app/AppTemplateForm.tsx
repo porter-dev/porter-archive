@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 
 import VerticalSteps from "components/porter/VerticalSteps";
@@ -7,6 +7,7 @@ import {
   SourceOptions,
   applyPreviewOverrides,
   clientAppFromProto,
+  clientAppToProto,
   porterAppFormValidator,
 } from "lib/porter-apps";
 import {
@@ -28,14 +29,15 @@ import Button from "components/porter/Button";
 import { useAppValidation } from "lib/hooks/useAppValidation";
 import { PorterApp } from "@porter-dev/api-contracts";
 import axios from "axios";
+import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
 
 const AppTemplateForm: React.FC = () => {
   const [step, setStep] = useState(0);
   const [validatedAppProto, setValidatedAppProto] = useState<PorterApp | null>(
     null
   );
-  const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [showGHAModal, setShowGHAModal] = useState(false);
   const [{ variables, secrets }, setFinalizedAppEnv] = useState<{
     variables: Record<string, string>;
     secrets: Record<string, string>;
@@ -132,12 +134,28 @@ const AppTemplateForm: React.FC = () => {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setCreateError("");
-      const { validatedAppProto, variables, secrets } = await validateApp(data);
-      setValidatedAppProto(validatedAppProto);
+
+      const proto = clientAppToProto(data);
+      setValidatedAppProto(proto);
+
+      const { env } = data.app;
+      const variables = env
+        .filter((e) => !e.hidden && !e.deleted)
+        .reduce((acc: Record<string, string>, item) => {
+          acc[item.key] = item.value;
+          return acc;
+        }, {});
+      const secrets = env
+        .filter((e) => !e.deleted)
+        .reduce((acc: Record<string, string>, item) => {
+          if (item.hidden) {
+            acc[item.key] = item.value;
+          }
+          return acc;
+        }, {});
       setFinalizedAppEnv({ variables, secrets });
 
-      // todo(ianedwards): this is essentially a no-op for now
-      // follow up will be to actually create the template and commit the workflow
+      setShowGHAModal(true);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
         setCreateError(err.response?.data?.error);
@@ -148,6 +166,51 @@ const AppTemplateForm: React.FC = () => {
       );
     }
   });
+
+  const createTemplateAndWorkflow = useCallback(
+    async ({
+      app,
+      variables,
+      secrets,
+    }: {
+      app: PorterApp | null;
+      variables: Record<string, string>;
+      secrets: Record<string, string>;
+    }) => {
+      try {
+        if (!app) {
+          return false;
+        }
+
+        await api.createAppTemplate(
+          "<token>",
+          {
+            b64_app_proto: btoa(app.toJsonString()),
+            variables,
+            secrets,
+          },
+          {
+            project_id: projectId,
+            cluster_id: clusterId,
+            porter_app_name: porterApp.name,
+          }
+        );
+
+        return true;
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.data?.error) {
+          setCreateError(err.response?.data?.error);
+          return false;
+        }
+
+        setCreateError(
+          "An error occurred while creating the CI workflow. Please try again."
+        );
+        return false;
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     reset({
@@ -169,7 +232,7 @@ const AppTemplateForm: React.FC = () => {
     <FormProvider {...porterAppFormMethods}>
       <form onSubmit={onSubmit}>
         <VerticalSteps
-          currentStep={step}
+          currentStep={3}
           steps={[
             <>
               <Text size={16}>Application services</Text>
@@ -217,6 +280,28 @@ const AppTemplateForm: React.FC = () => {
           ].filter((x) => x)}
         />
       </form>
+      {showGHAModal && (
+        <GithubActionModal
+          type="preview"
+          closeModal={() => setShowGHAModal(false)}
+          githubAppInstallationID={latestSource.git_repo_id}
+          githubRepoOwner={latestSource.git_repo_name.split("/")[0]}
+          githubRepoName={latestSource.git_repo_name.split("/")[1]}
+          branch={latestSource.git_branch}
+          stackName={porterApp.name}
+          projectId={projectId}
+          clusterId={clusterId}
+          deployPorterApp={() =>
+            createTemplateAndWorkflow({
+              app: validatedAppProto,
+              variables,
+              secrets,
+            })
+          }
+          deploymentError={createError}
+          porterYamlPath={latestSource.porter_yaml_path}
+        />
+      )}
     </FormProvider>
   );
 };

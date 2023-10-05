@@ -1,10 +1,14 @@
 package porter_app
 
 import (
+	"context"
+	"encoding/base64"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/porter-dev/api-contracts/generated/go/helpers"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -12,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/porter_app"
@@ -135,10 +140,18 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		appTemplate = &models.AppTemplate{
 			ProjectID:   int(project.ID),
 			PorterAppID: int(porterApps[0].ID),
-			Base64App:   request.B64AppProto,
 		}
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "update-app-template", Value: false})
 	}
+
+	protoWithoutDefaultAppEnvGroups, err := filterDefaultAppEnvGroups(ctx, request.B64AppProto, agent)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error filtering default app env groups")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	appTemplate.Base64App = protoWithoutDefaultAppEnvGroups
 
 	updatedAppTemplate, err := c.Repo().AppTemplate().CreateAppTemplate(appTemplate)
 	if err != nil {
@@ -199,4 +212,56 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	c.WriteResult(w, r, res)
+}
+
+// filterDefaultAppEnvGroups filters out any default app env groups found when creating an app template
+// app templates are based on the latest version of a given app, so it is possible for this env group to be included
+// however, the app template will get its own default env group when used to deploy to a preview environment
+func filterDefaultAppEnvGroups(ctx context.Context, b64AppProto string, agent *kubernetes.Agent) (string, error) {
+	ctx, span := telemetry.NewSpan(ctx, "filter-default-app-env-groups")
+	defer span.End()
+
+	var finalAppProto string
+
+	if b64AppProto == "" {
+		return finalAppProto, telemetry.Error(ctx, span, nil, "b64 app proto is empty")
+	}
+	if agent == nil {
+		return finalAppProto, telemetry.Error(ctx, span, nil, "agent is nil")
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(b64AppProto)
+	if err != nil {
+		return finalAppProto, telemetry.Error(ctx, span, err, "error decoding base app")
+	}
+
+	appProto := &porterv1.PorterApp{}
+	err = helpers.UnmarshalContractObject(decoded, appProto)
+	if err != nil {
+		return finalAppProto, telemetry.Error(ctx, span, err, "error unmarshalling app proto")
+	}
+
+	filteredEnvGroups := []*porterv1.EnvGroup{}
+	for _, envGroup := range appProto.EnvGroups {
+		baseEnvGroup, err := environment_groups.LatestBaseEnvironmentGroup(ctx, agent, envGroup.Name)
+		if err != nil {
+			return finalAppProto, telemetry.Error(ctx, span, err, "unable to get latest base environment group")
+		}
+		if baseEnvGroup.DefaultAppEnvironment {
+			continue
+		}
+
+		filteredEnvGroups = append(filteredEnvGroups, envGroup)
+	}
+
+	appProto.EnvGroups = filteredEnvGroups
+
+	encoded, err := helpers.MarshalContractObject(ctx, appProto)
+	if err != nil {
+		return finalAppProto, telemetry.Error(ctx, span, err, "error marshalling app proto")
+	}
+
+	finalAppProto = base64.StdEncoding.EncodeToString(encoded)
+
+	return finalAppProto, nil
 }

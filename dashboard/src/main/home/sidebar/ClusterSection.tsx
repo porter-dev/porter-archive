@@ -60,6 +60,7 @@ export const ClusterSection: React.FC<Props> = ({
         <Relative>
           <SideLine />
           <NavButton
+            noHighlight
             path="/applications"
             targetClusterName={cluster?.name}
             active={
@@ -71,6 +72,7 @@ export const ClusterSection: React.FC<Props> = ({
             Applications
           </NavButton>
           <NavButton
+            noHighlight
             path="/jobs"
             targetClusterName={cluster?.name}
             active={
@@ -82,6 +84,7 @@ export const ClusterSection: React.FC<Props> = ({
             Jobs
           </NavButton>
           <NavButton
+            noHighlight
             path="/env-groups"
             targetClusterName={cluster?.name}
             active={
@@ -96,6 +99,7 @@ export const ClusterSection: React.FC<Props> = ({
             cluster.infra_id > 0 &&
             currentProject.enable_rds_databases && (
               <NavButton
+                noHighlight
                 path="/databases"
                 targetClusterName={cluster?.name}
                 active={
@@ -109,6 +113,7 @@ export const ClusterSection: React.FC<Props> = ({
             )}
           {currentProject?.stacks_enabled ? (
             <NavButton
+              noHighlight
               path="/stacks"
               targetClusterName={cluster?.name}
               active={
@@ -122,6 +127,7 @@ export const ClusterSection: React.FC<Props> = ({
           ) : null}
           {cluster?.preview_envs_enabled && (
             <NavButton
+              noHighlight
               path="/preview-environments"
               targetClusterName={cluster?.name}
               active={
@@ -141,6 +147,7 @@ export const ClusterSection: React.FC<Props> = ({
             </NavButton>
           )}
           <NavButton
+            noHighlight
             path={"/cluster-dashboard"}
             targetClusterName={cluster?.name}
             active={

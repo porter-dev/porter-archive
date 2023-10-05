@@ -24,7 +24,6 @@ import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
 import Button from "components/porter/Button";
 import RepoSettings from "./RepoSettings";
-import ImageSettings from "./ImageSettings";
 import Container from "components/porter/Container";
 import ServiceList from "../validate-apply/services-settings/ServiceList";
 import {
@@ -34,7 +33,7 @@ import {
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import { valueExists } from "shared/util";
 import api from "shared/api";
-import { EnvGroup, PorterApp } from "@porter-dev/api-contracts";
+import { PorterApp } from "@porter-dev/api-contracts";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import Error from "components/porter/Error";
@@ -42,13 +41,13 @@ import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import PorterYamlModal from "./PorterYamlModal";
-import EnvGroups from "../validate-apply/app-settings/EnvGroups";
 import {
   PopulatedEnvGroup,
   populatedEnvGroup,
 } from "../validate-apply/app-settings/types";
 import EnvSettings from "../validate-apply/app-settings/EnvSettings";
+import ImageSettings from "../image-settings/ImageSettings";
+import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -78,6 +77,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     variables: {},
     secrets: {},
   });
+  const { maxCPU, maxRAM } = useClusterResourceLimits({
+    projectId: currentProject?.id,
+    clusterId: currentCluster?.id,
+  })
 
   const { data: porterApps = [] } = useQuery<string[]>(
     ["getPorterApps", currentProject?.id, currentCluster?.id],
@@ -579,7 +582,14 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               )} */}
                           </>
                         ) : (
-                          <ImageSettings />
+                          <ImageSettings
+                            projectId={currentProject.id}
+                            imageUri={image?.repository ?? ""}
+                            setImageUri={(uri: string) => setValue("source.image", { ...image, repository: uri })}
+                            imageTag={image?.tag ?? ""}
+                            setImageTag={(tag: string) => setValue("source.image", { ...image, tag })}
+                            resetImageInfo={() => setValue("source.image", { ...image, repository: "", tag: "" })}
+                          />
                         )
                       ) : null}
                     </AnimateHeight>
@@ -604,9 +614,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>
@@ -616,6 +625,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ServiceList
                       addNewText={"Add a new service"}
                       fieldArrayName={"app.services"}
+                      maxCPU={maxCPU}
+                      maxRAM={maxRAM}
                     />
                   </>,
                   <>
@@ -647,6 +658,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                         })}
                         isPredeploy
                         fieldArrayName={"app.predeploy"}
+                        maxCPU={maxCPU}
+                        maxRAM={maxRAM}
                       />
                     </>
                   ),

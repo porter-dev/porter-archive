@@ -1,8 +1,7 @@
 import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import sliders from "assets/sliders.svg";
-import loading from "assets/loading.gif";
+import sliders from "assets/env-groups.svg";
 
 import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";

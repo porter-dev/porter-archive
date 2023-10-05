@@ -111,32 +111,40 @@ export function serializeAutoscaling({
 export function deserializeAutoscaling({
   autoscaling,
   override,
+  setDefaults,
 }: {
   autoscaling?: SerializedAutoscaling;
   override?: SerializedAutoscaling;
+    setDefaults: boolean;
 }): ClientAutoscaling | undefined {
   return (
-    autoscaling && {
+    autoscaling ? {
       enabled: ServiceField.boolean(autoscaling.enabled, override?.enabled),
       minInstances: autoscaling.minInstances
         ? ServiceField.number(autoscaling.minInstances, override?.minInstances)
-        : undefined,
+        : ServiceField.number(1, undefined),
       maxInstances: autoscaling.maxInstances
         ? ServiceField.number(autoscaling.maxInstances, override?.maxInstances)
-        : undefined,
+        : ServiceField.number(10, undefined),
       cpuThresholdPercent: autoscaling.cpuThresholdPercent
         ? ServiceField.number(
             autoscaling.cpuThresholdPercent,
             override?.cpuThresholdPercent
           )
-        : undefined,
+        : ServiceField.number(50, undefined),
       memoryThresholdPercent: autoscaling.memoryThresholdPercent
         ? ServiceField.number(
             autoscaling.memoryThresholdPercent,
             override?.memoryThresholdPercent
           )
-        : undefined,
-    }
+        : ServiceField.number(50, undefined),
+    } : (setDefaults ?  {
+        enabled: ServiceField.boolean(false, undefined),
+        minInstances: ServiceField.number(1, undefined),
+        maxInstances: ServiceField.number(10, undefined),
+        cpuThresholdPercent: ServiceField.number(50, undefined),
+        memoryThresholdPercent: ServiceField.number(50, undefined),
+    } : undefined )
   );
 }
 
@@ -166,17 +174,22 @@ export function serializeHealth({
 export function deserializeHealthCheck({
   health,
   override,
+  setDefaults,
 }: {
   health?: SerializedHealthcheck;
   override?: SerializedHealthcheck;
+  setDefaults: boolean;
 }): ClientHealthCheck | undefined {
   return (
-    health && {
+    health ? {
       enabled: ServiceField.boolean(health.enabled, override?.enabled),
       httpPath: health.httpPath
         ? ServiceField.string(health.httpPath, override?.httpPath)
-        : undefined,
-    }
+        :  ServiceField.string("", undefined),
+    } : (setDefaults ? {
+        enabled: ServiceField.boolean(false, undefined),
+        httpPath: ServiceField.string("", undefined),
+    } : undefined)
   );
 }
 

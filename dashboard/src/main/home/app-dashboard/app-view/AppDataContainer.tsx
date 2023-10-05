@@ -307,7 +307,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
       if (err.response?.data?.message) {
         setError("app", {
-          message: `App updated failed: ${err.response.data.message}`,
+          message: `App update failed: ${err.response.data.message}`,
         });
       }
     }
@@ -364,7 +364,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       return errors.app?.message ? (
         <Error message={errors.app.message} />
       ) : (
-        <Error message="App update failed!" />
+        <Error message="App update failed. If the error persists, please contact support." />
       );
     }
 

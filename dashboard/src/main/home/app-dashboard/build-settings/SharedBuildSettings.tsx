@@ -133,6 +133,7 @@ const SharedBuildSettings: React.FC<Props> = ({
                   porterApp={porterApp}
                   updatePorterApp={updatePorterApp}
                   updateDockerfileFound={() => setBuildView("docker")}
+                  setBuildpackView={() => setBuildView("buildpacks")}
                 />
               )}
               <AdvancedBuildSettings

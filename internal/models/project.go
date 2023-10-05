@@ -25,6 +25,9 @@ const (
 	// CapiProvisionerEnabled enables the CAPI Provisioning flow
 	CapiProvisionerEnabled FeatureFlagLabel = "capi_provisioner_enabled"
 
+	// DBEnabled enables the "Databases" tab
+	DBEnabled FeatureFlagLabel = "db_enabled"
+
 	// EnableReprovision enables the provisioning button after initial creation of the cluster
 	EnableReprovision FeatureFlagLabel = "enable_reprovision"
 
@@ -61,6 +64,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	APITokensEnabled:       false,
 	AzureEnabled:           false,
 	CapiProvisionerEnabled: true,
+	DBEnabled:              false,
 	EnableReprovision:      false,
 	FullAddOns:             false,
 	HelmValuesEnabled:      false,
@@ -177,6 +181,8 @@ func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *
 			return p.AzureEnabled
 		case "capi_provisioner_enabled":
 			return p.CapiProvisionerEnabled
+		case "db_enabled":
+			return false
 		case "enable_reprovision":
 			return p.EnableReprovision
 		case "full_add_ons":
@@ -231,6 +237,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		StacksEnabled:          p.GetFeatureFlag(StacksEnabled, launchDarklyClient),
 		APITokensEnabled:       p.GetFeatureFlag(APITokensEnabled, launchDarklyClient),
 		CapiProvisionerEnabled: p.GetFeatureFlag(CapiProvisionerEnabled, launchDarklyClient),
+		DBEnabled:              p.GetFeatureFlag(DBEnabled, launchDarklyClient),
 		SimplifiedViewEnabled:  p.GetFeatureFlag(SimplifiedViewEnabled, launchDarklyClient),
 		AzureEnabled:           p.GetFeatureFlag(AzureEnabled, launchDarklyClient),
 		HelmValuesEnabled:      p.GetFeatureFlag(HelmValuesEnabled, launchDarklyClient),
@@ -263,6 +270,7 @@ func (p *Project) ToProjectListType() *types.ProjectList {
 		ManagedInfraEnabled:    p.ManagedInfraEnabled,
 		StacksEnabled:          p.StacksEnabled,
 		APITokensEnabled:       p.APITokensEnabled,
+		DBEnabled:              false,
 		CapiProvisionerEnabled: p.CapiProvisionerEnabled,
 		SimplifiedViewEnabled:  p.SimplifiedViewEnabled,
 		AzureEnabled:           p.AzureEnabled,

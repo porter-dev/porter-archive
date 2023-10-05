@@ -82,12 +82,23 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
             .catch(console.log);
 
           if (currentProject.simplified_view_enabled) {
-            await api.saveOnboardingState(
-              "<token>",
-              { current_step: "connect_source" },
-              { project_id: currentProject.id }
-            );
-            window.location.reload();
+            await api
+              .getClusters("<token>", {}, { id: currentProject?.id })
+              .then(async (res) => {
+                if (res.data) {
+                  let clusters = res.data;
+
+                  if (!currentProject.multi_cluster || !clusters) {
+                    await api.saveOnboardingState(
+                      "<token>",
+                      { current_step: "connect_source" },
+                      { project_id: currentProject.id }
+                    );
+                    window.location.reload();
+                  }
+
+                }
+              })
           }
           return;
         }

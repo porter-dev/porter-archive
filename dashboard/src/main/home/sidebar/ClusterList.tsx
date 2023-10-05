@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from "react";
 import styled from "styled-components";
 import gradient from "assets/gradient.png";
 import api from "shared/api";
-import infra from "assets/infra.png";
+import infra from "assets/cluster.svg";
 
 import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";
@@ -60,13 +60,14 @@ const ClusterList: React.FC<PropsType> = (props) => {
         });
     }
   }, [currentProject, currentCluster]);
-  const truncate = (input: string) => input.length > 21 ? `${input.substring(0, 21)}...` : input;
+  const truncate = (input: string) => input.length > 28 ? `${input.substring(0, 28)}...` : input;
 
   const renderOptionList = () =>
     options.map((option, i: number) => (
       <Option
         key={i}
         selected={option.value === currentCluster?.name}
+        title={option.label}
         onClick={() => {
           setExpanded(false);
           const cluster = clusters.find(c => c.name === option.value);
@@ -74,7 +75,6 @@ const ClusterList: React.FC<PropsType> = (props) => {
           pushFiltered(props, "/apps", ["project_id"], {});
         }}
       >
-
         <Icon src={infra} height={"14px"} />
         <ClusterLabel>{option.label}</ClusterLabel>
       </Option>
@@ -88,15 +88,17 @@ const ClusterList: React.FC<PropsType> = (props) => {
           {renderOptionList()}
 
           {/* Connect Cluster Option */}
-          <Option
-            onClick={() => {
-              setClusterModalVisible(true)
-              setExpanded(false);
+          {
+            currentProject?.enable_reprovision && <Option
+              onClick={() => {
+                setClusterModalVisible(true)
+                setExpanded(false);
 
-            }}>
+              }}>
 
-            <Plus>+</Plus>    Deploy new cluster
-          </Option>
+              <Plus>+</Plus>    Deploy new cluster
+            </Option>
+          }
 
         </Dropdown>
 
@@ -146,8 +148,7 @@ const ClusterLabel = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  flex-grow: 1;
-  margin-left: 5px
+  margin-left: 12px
 `;
 
 const Plus = styled.div`
@@ -176,25 +177,22 @@ const InitializeButton = styled.div`
   }
 `;
 
-const Option = styled.div`
+const Option = styled.div<{ selected: boolean }>`
   width: 100%;
-  border-top: 1px solid #00000000;
-  border-bottom: 1px solid
-    ${(props: { selected?: boolean; lastItem?: boolean }) =>
-    props.lastItem ? "#ffffff00" : "#ffffff15"};
   height: 45px;
   display: flex;
   align-items: center;
   font-size: 13px;
   align-items: center;
-  padding-left: 10px;
+  padding: 0 15px;
   cursor: pointer;
   padding-right: 10px;
-  background: ${(props: { selected?: boolean; lastItem?: boolean }) =>
-    props.selected ? "#ffffff11" : ""};
+  text-decoration: ${props => props.selected ? "underline" : "none"};
+  color: ${props => props.theme.text.primary};
+  opacity: 0.6;
   :hover {
-    background: ${(props: { selected?: boolean; lastItem?: boolean }) =>
-    props?.selected ? "" : "#ffffff22"};
+    opacity: 1;
+
   }
 
   > i {
@@ -207,16 +205,16 @@ const Option = styled.div`
 
 const Dropdown = styled.div`
   position: absolute;
-  right: 13px;
-  top: calc(100% + 5px);
-  background: #171b20;
-  width: 210px;
+  left: 12px;
+  top: calc(100% + 10px);
+  background: #121212;
+  width: 230px;
   max-height: 500px;
-  border-radius: 3px;
+  border-radius: 5px;
+  border: 1px solid #494B4F;
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
-  box-shadow: 0 5px 15px 5px #00000077;
 `;
 
 const ClusterName = styled.div`
@@ -259,9 +257,11 @@ const MainSelector = styled.div`
 const StyledClusterSection = styled.div`
   position: relative;
   margin-left: 3px;
-  background: #545ec7;
-  border-right: 1px solid #2c2e31;
+  background: #181B20;
+  border: 1px solid #383a3f;
+  border-left: none;
 `;
+
 const NavButton = styled(SidebarLink)`
   display: flex;
   align-items: center;
@@ -303,7 +303,7 @@ const NavButton = styled(SidebarLink)`
 
 const Img = styled.img<{ enlarge?: boolean }>`
   padding: ${(props) => (props.enlarge ? "0 0 0 1px" : "4px")};
-  height: 22px;
+  height: 25px;
   padding-top: 4px;
   border-radius: 3px;
   margin-right: 8px;

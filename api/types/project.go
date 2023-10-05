@@ -14,6 +14,7 @@ type ProjectList struct {
 	APITokensEnabled       bool   `json:"api_tokens_enabled"`
 	StacksEnabled          bool   `json:"stacks_enabled"`
 	CapiProvisionerEnabled bool   `json:"capi_provisioner_enabled"`
+	DBEnabled              bool   `json:"db_enabled"`
 	SimplifiedViewEnabled  bool   `json:"simplified_view_enabled"`
 	AzureEnabled           bool   `json:"azure_enabled"`
 	HelmValuesEnabled      bool   `json:"helm_values_enabled"`
@@ -33,6 +34,7 @@ type Project struct {
 	APITokensEnabled       bool    `json:"api_tokens_enabled"`
 	StacksEnabled          bool    `json:"stacks_enabled"`
 	CapiProvisionerEnabled bool    `json:"capi_provisioner_enabled"`
+	DBEnabled              bool    `json:"db_enabled"`
 	SimplifiedViewEnabled  bool    `json:"simplified_view_enabled"`
 	AzureEnabled           bool    `json:"azure_enabled"`
 	HelmValuesEnabled      bool    `json:"helm_values_enabled"`

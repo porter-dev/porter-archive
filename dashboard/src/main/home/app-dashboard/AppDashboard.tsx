@@ -3,7 +3,7 @@ import styled from "styled-components";
 import _ from "lodash";
 import { Link, LinkProps } from "react-router-dom";
 
-import web from "assets/web.png";
+import applications from "assets/applications.svg";
 import box from "assets/box.png";
 import github from "assets/github.png";
 import time from "assets/time.png";
@@ -39,7 +39,7 @@ const icons = [
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg",
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-plain.svg",
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg",
-  web,
+  applications,
 ];
 
 const namespaceBlacklist = [
@@ -207,7 +207,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
   return (
     <StyledAppDashboard>
       <DashboardHeader
-        image={web}
+        image={applications}
         title="Applications"
         description="Web services, workers, and jobs for this project."
         disableLineBreak

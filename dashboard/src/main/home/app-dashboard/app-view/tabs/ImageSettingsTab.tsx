@@ -12,28 +12,21 @@ import Link from "components/porter/Link";
 import Text from "components/porter/Text";
 import ImageSettings from "../../image-settings/ImageSettings";
 import { match } from "ts-pattern";
+import { ButtonStatus } from "../AppDataContainer";
 
-const ImageSettingsTab: React.FC = () => {
+type Props = {
+    buttonStatus: ButtonStatus;
+}
+
+const ImageSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
     const {
         watch,
-        formState: { isSubmitting, errors },
+        formState: { isSubmitting },
         setValue,
     } = useFormContext<PorterAppFormData>();
     const { projectId, latestRevision, latestProto } = useLatestRevision();
 
     const source = watch("source");
-
-    const buttonStatus = useMemo(() => {
-        if (isSubmitting) {
-            return "loading";
-        }
-
-        if (Object.keys(errors).length > 0) {
-            return <Error message="Unable to update app" />;
-        }
-
-        return "";
-    }, [isSubmitting, errors]);
 
     return match(source)
         .with({ type: "docker-registry" }, (source) => (

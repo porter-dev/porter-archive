@@ -36,6 +36,7 @@ import ConfirmRedeployModal from "./ConfirmRedeployModal";
 import ImageSettingsTab from "./tabs/ImageSettingsTab";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
+import Error from "components/porter/Error";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -59,6 +60,9 @@ type ValidTab = typeof validTabs[number];
 type AppDataContainerProps = {
   tabParam?: string;
 };
+
+// todo(ianedwards): refactor button to use more predictable state
+export type ButtonStatus = "" | "loading" | JSX.Element | "success";
 
 const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const history = useHistory();
@@ -135,7 +139,14 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const {
     reset,
     handleSubmit,
-    formState: { isDirty, dirtyFields, isSubmitting },
+    setError,
+    formState: {
+      isDirty,
+      dirtyFields,
+      isSubmitting,
+      errors,
+      isSubmitSuccessful,
+    },
   } = porterAppFormMethods;
 
   // getAllDirtyFields recursively gets all dirty fields from the dirtyFields object
@@ -293,23 +304,34 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         appName: latestProto.name,
         errorStackTrace: stack,
       });
+
+      if (err.response?.data?.message) {
+        setError("app", {
+          message: `App update failed: ${err.response.data.message}`,
+        });
+      }
     }
   });
 
   const cancelRedeploy = useCallback(() => {
-    const resetProto = previewRevision ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
-      ignoreUnknownFields: true,
-    }) : latestProto;
+    const resetProto = previewRevision
+      ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
+          ignoreUnknownFields: true,
+        })
+      : latestProto;
 
     // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
     // however, for image settings, we can pull image repo and tag from the proto
-    const resetSource = porterAppRecord.image_repo_uri && resetProto.image ? {
-      type: "docker-registry" as const,
-      image: {
-        repository: resetProto.image.repository,
-        tag: resetProto.image.tag
-      }
-    } : latestSource;
+    const resetSource =
+      porterAppRecord.image_repo_uri && resetProto.image
+        ? {
+            type: "docker-registry" as const,
+            image: {
+              repository: resetProto.image.repository,
+              tag: resetProto.image.tag,
+            },
+          }
+        : latestSource;
 
     reset({
       app: clientAppFromProto({
@@ -333,22 +355,45 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     onSubmit();
   }, [onSubmit, setConfirmDeployModalOpen]);
 
+  const buttonStatus = useMemo(() => {
+    if (isSubmitting) {
+      return "loading";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return errors.app?.message ? (
+        <Error message={errors.app.message} />
+      ) : (
+        <Error message="App update failed. If the error persists, please contact support." />
+      );
+    }
+
+    if (isSubmitSuccessful) {
+      return "success";
+    }
+
+    return "";
+  }, [isSubmitting, errors]);
+
   useEffect(() => {
     const newProto = previewRevision
       ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
-        ignoreUnknownFields: true,
-      })
+          ignoreUnknownFields: true,
+        })
       : latestProto;
 
     // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
     // however, for image settings, we can pull image repo and tag from the proto
-    const newSource = porterAppRecord.image_repo_uri && newProto.image ? {
-      type: "docker-registry" as const,
-      image: {
-        repository: newProto.image.repository,
-        tag: newProto.image.tag
-      }
-    } : latestSource;
+    const newSource =
+      porterAppRecord.image_repo_uri && newProto.image
+        ? {
+            type: "docker-registry" as const,
+            image: {
+              repository: newProto.image.repository,
+              tag: newProto.image.tag,
+            },
+          }
+        : latestSource;
 
     reset({
       app: clientAppFromProto({
@@ -426,17 +471,17 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                {
-                  label: "Build Settings",
-                  value: "build-settings",
-                },
-              ]
+                  {
+                    label: "Build Settings",
+                    value: "build-settings",
+                  },
+                ]
               : [
-                {
-                  label: "Image Settings",
-                  value: "image-settings",
-                },
-              ]),
+                  {
+                    label: "Image Settings",
+                    value: "image-settings",
+                  },
+                ]),
             { label: "Settings", value: "settings" },
           ]}
           currentTab={currentTab}
@@ -453,11 +498,24 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         <Spacer y={1} />
         {match(currentTab)
           .with("activity", () => <Activity />)
-          .with("overview", () => <Overview maxCPU={maxCPU} maxRAM={maxRAM} />)
-          .with("build-settings", () => <BuildSettingsTab />)
-          .with("image-settings", () => <ImageSettingsTab />)
+          .with("overview", () => (
+            <Overview
+              maxCPU={maxCPU}
+              maxRAM={maxRAM}
+              buttonStatus={buttonStatus}
+            />
+          ))
+          .with("build-settings", () => (
+            <BuildSettingsTab buttonStatus={buttonStatus} />
+          ))
+          .with("image-settings", () => (
+            <ImageSettingsTab buttonStatus={buttonStatus} />
+          ))
           .with("environment", () => (
-            <Environment latestSource={latestSource} />
+            <Environment
+              latestSource={latestSource}
+              buttonStatus={buttonStatus}
+            />
           ))
           .with("settings", () => <Settings />)
           .with("logs", () => <LogsTab />)

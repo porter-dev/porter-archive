@@ -13,12 +13,15 @@ import Error from "components/porter/Error";
 import Button from "components/porter/Button";
 import { useLatestRevision } from "../LatestRevisionContext";
 import { useAppStatus } from "lib/hooks/useAppStatus";
+import { ButtonStatus } from "../AppDataContainer";
 
 type Props = {
   maxCPU: number;
   maxRAM: number;
-}
-const Overview: React.FC<Props> = ({ maxCPU, maxRAM }) => {
+  buttonStatus: ButtonStatus;
+};
+
+const Overview: React.FC<Props> = ({ maxCPU, maxRAM, buttonStatus }) => {
   const { formState } = useFormContext<PorterAppFormData>();
   const {
     porterApp,
@@ -36,18 +39,6 @@ const Overview: React.FC<Props> = ({ maxCPU, maxRAM }) => {
     deploymentTargetId: deploymentTarget.id,
     appName: latestProto.name,
   });
-
-  const buttonStatus = useMemo(() => {
-    if (formState.isSubmitting) {
-      return "loading";
-    }
-
-    if (Object.keys(formState.errors).length > 0) {
-      return <Error message="Unable to update app" />;
-    }
-
-    return "";
-  }, [formState.isSubmitting, formState.errors]);
 
   return (
     <>

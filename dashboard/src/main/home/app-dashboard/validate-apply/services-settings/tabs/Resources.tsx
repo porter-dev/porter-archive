@@ -134,14 +134,8 @@ const Resources: React.FC<ResourcesProps> = ({
             unit="Cores"
             override={false}
             min={0}
-<<<<<<< HEAD
-            max={Math.floor((maxCPU - (RESOURCE_ALLOCATION_RAM_V2 * maxCPU / maxRAM)) * 10) / 10}
-            color={"#3f51b5"}
-            smartLimit={smartLimitCPU}
-=======
             max={maxCPU}
             color={"#3f51b5"}
->>>>>>> master
             value={value.value.toString()}
             setValue={(e) => {
               if (smartOpt?.value) {

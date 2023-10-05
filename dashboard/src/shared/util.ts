@@ -42,5 +42,4 @@ export const PROVISIONING_STATUS = {
   0: "Waiting for Quota Increase",
   1: "Generating Resources",
   2: "Provisioning Cluster ",
-
 }

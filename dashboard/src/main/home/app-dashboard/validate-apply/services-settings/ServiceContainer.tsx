@@ -40,24 +40,6 @@ const ServiceContainer: React.FC<ServiceProps> = ({
 }) => {
   const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
 
-<<<<<<< HEAD
-  const UPPER_BOUND = 0.75;
-  const UPPER_RAM = 1024;
-
-  const [maxCPU, setMaxCPU] = useState(
-    AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"]
-  ); //default is set to a t3 medium
-  const [maxRAM, setMaxRAM] = useState(
-    // round to 100
-    Math.round(
-      convert(AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"], "GiB").to("MB") *
-      UPPER_BOUND / 100
-    ) * 100
-  ); //default is set to a t3 medium
-  const context = useContext(Context);
-
-=======
->>>>>>> master
   // onResize is called when the height of the service container changes
   // used to set the height of the AnimateHeight component on tab swtich
   const onResize = useCallback(
@@ -78,94 +60,6 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     }
   }, [service.expanded]);
 
-<<<<<<< HEAD
-  useEffect(() => {
-    const { currentCluster, currentProject } = context;
-    if (!currentCluster || !currentProject) {
-      return;
-    }
-    var instanceType = "";
-
-
-    // need to fix the below to not use chart
-    // if (service) {
-    //   //first check if there is a nodeSelector for the given application (Can be null)
-    //   if (
-    //     chart?.config?.[`${service.name.value}-${service.config.type}`]
-    //       ?.nodeSelector?.["beta.kubernetes.io/instance-type"]
-    //   ) {
-    //     instanceType =
-    //       chart?.config?.[`${service.name.value}-${service.config.type}`]
-    //         ?.nodeSelector?.["beta.kubernetes.io/instance-type"];
-    //     const [instanceClass, instanceSize] = instanceType.split(".");
-    //     const currentInstance =
-    //       AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
-    //     setMaxCPU(currentInstance.vCPU * UPPER_BOUND);
-    //     setMaxRAM(currentInstance.RAM * UPPER_BOUND);
-    //   }
-    // }
-    //Query the given nodes if no instance type is specified
-    if (instanceType == "") {
-      api
-        .getClusterNodes(
-          "<token>",
-          {},
-          {
-            cluster_id: currentCluster.id,
-            project_id: currentProject.id,
-          }
-        )
-        .then(({ data }) => {
-          if (data) {
-            let largestInstanceType = {
-              vCPUs: 2,
-              RAM: 4,
-            };
-
-            data.forEach((node: any) => {
-              if (node.labels["porter.run/workload-kind"] == "application") {
-                var instanceType: string =
-                  node.labels["beta.kubernetes.io/instance-type"];
-                const [instanceClass, instanceSize] = instanceType.split(".");
-                if (instanceClass && instanceSize) {
-                  if (
-                    AWS_INSTANCE_LIMITS[instanceClass] &&
-                    AWS_INSTANCE_LIMITS[instanceClass][instanceSize]
-                  ) {
-                    let currentInstance =
-                      AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
-                    largestInstanceType.vCPUs = currentInstance.vCPU;
-                    largestInstanceType.RAM = currentInstance.RAM;
-                  }
-                }
-              }
-            });
-            // if the instance type has more than 4 GB ram, we use 90% of the ram/cpu
-            // otherwise, we use 75%
-            if (largestInstanceType.RAM > 4) {
-              // round down to nearest 0.5 cores
-              setMaxCPU(Math.floor(largestInstanceType.vCPUs * 0.9 * 2) / 2);
-              setMaxRAM(
-                Math.round(
-                  convert(largestInstanceType.RAM, "GiB").to("MB") * 0.9 / 100
-                ) * 100
-              );
-            } else {
-              setMaxCPU(Math.floor(largestInstanceType.vCPUs * UPPER_BOUND * 2) / 2);
-              setMaxRAM(
-                Math.round(
-                  convert(largestInstanceType.RAM, "GiB").to("MB") * UPPER_BOUND / 100
-                ) * 100
-              );
-            }
-          }
-        })
-        .catch((error) => { });
-    }
-  }, []);
-
-=======
->>>>>>> master
   const renderTabs = (service: ClientService) => {
     return match(service)
       .with({ config: { type: "web" } }, (svc) => (

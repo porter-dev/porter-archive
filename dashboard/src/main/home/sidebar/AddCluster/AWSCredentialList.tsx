@@ -7,6 +7,9 @@ import Placeholder from "components/OldPlaceholder";
 import AWSCredentialForm from "./AWSCredentialForm";
 import CredentialList from "./CredentialList";
 import Description from "components/Description";
+import ProvisionerForm from "components/ProvisionerForm";
+import CloudFormationForm from "components/CloudFormationForm";
+import ProvisionerFlow from "components/ProvisionerFlow";
 
 type Props = {
   selectCredential: (aws_integration_id: number) => void;
@@ -71,10 +74,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
   const renderContents = () => {
     if (shouldCreateCred) {
       return (
-        <AWSCredentialForm
-          setCreatedCredential={selectCredential}
-          cancel={() => { }}
-        />
+        <ProvisionerFlow />
       );
     }
 
@@ -94,8 +94,8 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           })}
           selectCredential={selectCredential}
           setTargetARN={setTargetARN}
-          shouldCreateCred={() => setShouldCreateCred(false)}
-          addNewText="Add New AWS Credential"
+          shouldCreateCred={() => setShouldCreateCred(true)}
+          addNewText="Create new CloudFormation stack"
         />
       </>
     );

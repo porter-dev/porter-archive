@@ -19,22 +19,22 @@ type GenericCredential = {
 };
 
 const CredentialList: React.FunctionComponent<Props> = (props) => {
-  // const renderCreateSection = () => {
-  //   let inner = (
-  //     <Flex>
-  //       <i className="material-icons">account_circle</i>
-  //       {props.addNewText}
-  //     </Flex>
-  //   );
+  const renderCreateSection = () => {
+    let inner = (
+      <Flex>
+        <i className="material-icons">account_circle</i>
+        {props.addNewText}
+      </Flex>
+    );
 
-  //   if (props.isLink) {
-  //     return <CreateNewRowLink href={props.linkHref}>{inner}</CreateNewRowLink>;
-  //   }
+    if (props.isLink) {
+      return <CreateNewRowLink href={props.linkHref}>{inner}</CreateNewRowLink>;
+    }
 
-  //   return (
-  //     <CreateNewRow onClick={props.shouldCreateCred}>{inner}</CreateNewRow>
-  //   );
-  // };
+    return (
+      <CreateNewRow onClick={props.shouldCreateCred}>{inner}</CreateNewRow>
+    );
+  };
 
   return (
     <>
@@ -55,7 +55,7 @@ const CredentialList: React.FunctionComponent<Props> = (props) => {
           </PreviewRow>
         );
       })}
-      {/* {renderCreateSection()} */}
+      {renderCreateSection()}
     </>
   );
 };

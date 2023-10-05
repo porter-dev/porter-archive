@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import {
   PorterAppFormData,
   SourceOptions,
@@ -37,6 +37,8 @@ import ImageSettingsTab from "./tabs/ImageSettingsTab";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 import { Error as ErrorComponent } from "components/porter/Error";
+import _ from "lodash";
+import axios from "axios";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -305,9 +307,13 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         errorStackTrace: stack,
       });
 
-      if ((err as any).response?.data?.message) {
+      if (axios.isAxiosError(err)) {
         setError("app", {
-          message: `App update failed: ${(err as any).response.data.message}`,
+          message: `App update failed: ${err.message}`,
+        });
+      } else {
+        setError("app", {
+          message: `App update failed: Please try again or contact support if the error persists.`,
         });
       }
     }
@@ -355,16 +361,20 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     onSubmit();
   }, [onSubmit, setConfirmDeployModalOpen]);
 
+  const errorMessagesDeep = useMemo(() => {
+    return Object.values(_.mapValues(errors, (error) => error?.message));
+  }, [errors]);
+
   const buttonStatus = useMemo(() => {
     if (isSubmitting) {
       return "loading";
     }
 
-    if (Object.keys(errors).length > 0) {
-      return errors.app?.message ? (
-        <ErrorComponent message={errors.app.message} />
-      ) : (
-        <ErrorComponent message="App update failed. If the error persists, please contact support." />
+    if (errorMessagesDeep.length > 0) {
+      return (
+        <ErrorComponent
+          message={`App update failed. ${errorMessagesDeep[0]}`}
+        />
       );
     }
 
@@ -373,7 +383,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     }
 
     return "";
-  }, [isSubmitting, errors]);
+  }, [isSubmitting, errorMessagesDeep]);
 
   useEffect(() => {
     const newProto = previewRevision

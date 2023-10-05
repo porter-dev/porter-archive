@@ -82,12 +82,23 @@ export const clientAppValidator = z.object({
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 
 // porterAppFormValidator is used to validate inputs when creating + updating an app
-export const porterAppFormValidator = z.object({
-  app: clientAppValidator,
-  source: sourceValidator,
-  deletions: deletionValidator,
-  redeployOnSave: z.boolean().default(false),
-});
+export const porterAppFormValidator = z
+  .object({
+    app: clientAppValidator,
+    source: sourceValidator,
+    deletions: deletionValidator,
+    redeployOnSave: z.boolean().default(false),
+  })
+  .refine(
+    ({ app, source }) => {
+      if (source.type === "docker-registry" || app.build.method === "pack") {
+        return app.services.every((svc) => svc.run.value.length > 0);
+      }
+
+      return true;
+    },
+    { message: "All services must include a run command" }
+  );
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
 // serviceOverrides is used to generate the services overrides for an app from porter.yaml

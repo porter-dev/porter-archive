@@ -36,7 +36,7 @@ import ConfirmRedeployModal from "./ConfirmRedeployModal";
 import ImageSettingsTab from "./tabs/ImageSettingsTab";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
-import Error from "components/porter/Error";
+import { Error as ErrorComponent } from "components/porter/Error";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -305,9 +305,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         errorStackTrace: stack,
       });
 
-      if (err.response?.data?.message) {
+      if ((err as any).response?.data?.message) {
         setError("app", {
-          message: `App update failed: ${err.response.data.message}`,
+          message: `App update failed: ${(err as any).response.data.message}`,
         });
       }
     }
@@ -316,8 +316,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const cancelRedeploy = useCallback(() => {
     const resetProto = previewRevision
       ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
-          ignoreUnknownFields: true,
-        })
+        ignoreUnknownFields: true,
+      })
       : latestProto;
 
     // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
@@ -325,12 +325,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     const resetSource =
       porterAppRecord.image_repo_uri && resetProto.image
         ? {
-            type: "docker-registry" as const,
-            image: {
-              repository: resetProto.image.repository,
-              tag: resetProto.image.tag,
-            },
-          }
+          type: "docker-registry" as const,
+          image: {
+            repository: resetProto.image.repository,
+            tag: resetProto.image.tag,
+          },
+        }
         : latestSource;
 
     reset({
@@ -361,10 +361,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     }
 
     if (Object.keys(errors).length > 0) {
+      console.log(errors);
       return errors.app?.message ? (
-        <Error message={errors.app.message} />
+        <ErrorComponent message={errors.app.message} />
       ) : (
-        <Error message="App update failed. If the error persists, please contact support." />
+        <ErrorComponent message="App update failed. If the error persists, please contact support." />
       );
     }
 
@@ -378,8 +379,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   useEffect(() => {
     const newProto = previewRevision
       ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
-          ignoreUnknownFields: true,
-        })
+        ignoreUnknownFields: true,
+      })
       : latestProto;
 
     // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
@@ -387,12 +388,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     const newSource =
       porterAppRecord.image_repo_uri && newProto.image
         ? {
-            type: "docker-registry" as const,
-            image: {
-              repository: newProto.image.repository,
-              tag: newProto.image.tag,
-            },
-          }
+          type: "docker-registry" as const,
+          image: {
+            repository: newProto.image.repository,
+            tag: newProto.image.tag,
+          },
+        }
         : latestSource;
 
     reset({
@@ -471,17 +472,17 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
+                {
+                  label: "Build Settings",
+                  value: "build-settings",
+                },
+              ]
               : [
-                  {
-                    label: "Image Settings",
-                    value: "image-settings",
-                  },
-                ]),
+                {
+                  label: "Image Settings",
+                  value: "image-settings",
+                },
+              ]),
             { label: "Settings", value: "settings" },
           ]}
           currentTab={currentTab}

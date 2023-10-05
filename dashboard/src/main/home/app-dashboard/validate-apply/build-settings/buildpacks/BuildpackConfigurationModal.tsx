@@ -24,7 +24,6 @@ type Props = {
   setAvailableBuildpacks: (buildpacks: Buildpack[]) => void;
   isDetectingBuildpacks: boolean;
   detectBuildpacksError: string;
-  detectAndSetBuildPacks: () => void;
 };
 
 const BuildpackConfigurationModal: React.FC<Props> = ({

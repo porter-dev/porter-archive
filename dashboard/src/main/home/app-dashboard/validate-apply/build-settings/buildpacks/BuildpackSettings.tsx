@@ -29,12 +29,12 @@ type Props = {
   populateBuildValuesOnceAfterDetection?: boolean;
 };
 
-const DEFAULT_BUILDERS = [
+export const DEFAULT_BUILDERS = [
+  "heroku/buildpacks:20",
   "paketobuildpacks/builder-jammy-full:latest",
   "paketobuildpacks/builder:full",
   "heroku/builder:22",
   "heroku/builder-classic:22",
-  "heroku/buildpacks:20",
   "heroku/buildpacks:18",
 ]
 
@@ -55,7 +55,7 @@ const BuildpackSettings: React.FC<Props> = ({
     name: "app.build.buildpacks",
   });
 
-  const { data, status, refetch } = useQuery(
+  const { data, status } = useQuery(
     [
       "detectBuildpacks",
       projectId,
@@ -203,7 +203,6 @@ const BuildpackSettings: React.FC<Props> = ({
           setAvailableBuildpacks={setAvailableBuildpacks}
           isDetectingBuildpacks={status === "loading"}
           detectBuildpacksError={errorMessage}
-          detectAndSetBuildPacks={refetch}
         />
       )}
     </BuildpackConfigurationContainer>

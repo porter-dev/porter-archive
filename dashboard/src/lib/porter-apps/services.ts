@@ -398,7 +398,7 @@ export function deserializeService({
              ? ServiceField.number(
                 config.timeoutSeconds,
                 overrideJobConfig?.timeoutSeconds
-              ) : (setDefaults ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds) : 0),
+              ) : (setDefaults ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds) : ServiceField.number(0, overrideJobConfig?.timeoutSeconds)),
         },
       };
     })

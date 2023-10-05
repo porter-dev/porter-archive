@@ -90,7 +90,7 @@ type Build struct {
 
 // Service represents a single service in a porter app
 type Service struct {
-	Run               string       `yaml:"run"`
+	Run               *string      `yaml:"run,omitempty"`
 	Type              string       `yaml:"type" validate:"required, oneof=web worker job"`
 	Instances         int          `yaml:"instances"`
 	CpuCores          float32      `yaml:"cpuCores"`
@@ -221,7 +221,7 @@ func protoEnumFromType(name string, service Service) porterv1.ServiceType {
 
 func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {
 	serviceProto := &porterv1.Service{
-		Run:               service.Run,
+		RunOptional:       service.Run,
 		Type:              serviceType,
 		Instances:         int32(service.Instances),
 		CpuCores:          service.CpuCores,

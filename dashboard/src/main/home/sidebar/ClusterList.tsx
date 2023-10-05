@@ -60,7 +60,7 @@ const ClusterList: React.FC<PropsType> = (props) => {
         });
     }
   }, [currentProject, currentCluster]);
-  const truncate = (input: string) => input.length > 28 ? `${input.substring(0, 28)}...` : input;
+  const truncate = (input: string) => input.length > 27 ? `${input.substring(0, 27)}...` : input;
 
   const renderOptionList = () =>
     options.map((option, i: number) => (

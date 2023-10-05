@@ -19,6 +19,8 @@ type MainTabProps = {
 const MainTab: React.FC<MainTabProps> = ({ index, service, isPredeploy = false }) => {
   const { register, control, watch } = useFormContext<PorterAppFormData>();
   const cron = watch(`app.services.${index}.config.cron.value`);
+  const run = watch(`app.services.${index}.run.value`);
+  const predeployRun = watch(`app.predeploy.${index}.run.value`);
 
   const getScheduleDescription = useCallback((cron: string) => {
     try {
@@ -37,6 +39,21 @@ const MainTab: React.FC<MainTabProps> = ({ index, service, isPredeploy = false }
     }
   }, []);
 
+    const getValidStartCommand = useCallback((run: string) => {
+        if (run && (run.includes("&&") || run.includes(";"))) {
+            return (
+                <>
+                <Spacer y={0.5} />
+                <Text color="warner">Multiple commands are not supported at this time. To run multiple commands, move all commands into a script that can be run from a single endpoint.</Text>
+                </>
+            );
+        } else {
+            return (
+                <></>
+            );
+        }
+    }, []);
+
   return (
     <>
       <Spacer y={1} />
@@ -49,6 +66,8 @@ const MainTab: React.FC<MainTabProps> = ({ index, service, isPredeploy = false }
         disabledTooltip={"You may only edit this field in your porter.yaml."}
         {...register(isPredeploy ? `app.predeploy.${index}.run.value` : `app.services.${index}.run.value`)}
       />
+
+      {getValidStartCommand(isPredeploy ? predeployRun :run)}
       {service.config.type === "job" && (
         <>
           <Spacer y={1} />

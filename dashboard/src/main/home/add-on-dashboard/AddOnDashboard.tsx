@@ -35,6 +35,7 @@ import { Link } from "react-router-dom";
 import Fieldset from "components/porter/Fieldset";
 import Select from "components/porter/Select";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 
 type Props = {
 };
@@ -159,27 +160,21 @@ const AddOnDashboard: React.FC<Props> = ({
 
           isLoading ?
             (<Loading offset="-150px" />) : (
-              <Fieldset>
-
-                <CentralContainer>
-                  <Text size={16}>
-                    No add-ons have been deployed yet.
-                  </Text>
-                  <Spacer y={1} />
-
-                  <Text color={"helper"}>
-                    Deploy from our suite of curated add-ons.
-                  </Text>
-                  <Spacer y={.5} />
-                  <Link to="/addons/new">
-                    <Button onClick={() => { }} height="35px" >
-                      Deploy add-ons <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
-                    </Button>
-                  </Link>
-                </CentralContainer>
-
-
-              </Fieldset >
+              <DashboardPlaceholder>
+                <Text size={16}>
+                  No add-ons have been deployed yet
+                </Text>
+                <Spacer y={0.5} />
+                <Text color={"helper"}>
+                  Deploy from our suite of curated add-ons.
+                </Text>
+                <Spacer y={1} />
+                <Link to="/addons/new">
+                  <Button alt onClick={() => { }} height="35px" >
+                    Deploy add-ons <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
+                  </Button>
+                </Link>
+              </DashboardPlaceholder>
             )
         ) : (
           <>

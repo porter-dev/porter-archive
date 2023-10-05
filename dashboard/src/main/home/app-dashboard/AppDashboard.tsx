@@ -31,6 +31,7 @@ import Loading from "components/Loading";
 import Fieldset from "components/porter/Fieldset";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Icon from "components/porter/Icon";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 
 type Props = {};
 
@@ -218,27 +219,21 @@ const AppDashboard: React.FC<Props> = ({ }) => {
         apps.length === 0 ? (
           isLoading ?
             (<Loading offset="-150px" />) : (
-              <Fieldset>
-
-                <CentralContainer>
-                  <Text size={16}>
-                    No apps have been deployed yet.
-                  </Text>
-                  <Spacer y={1} />
-
-                  <Text color={"helper"}>
-                    Get started by deploying your app.
-                  </Text>
-                  <Spacer y={.5} />
-                  <PorterLink to="/apps/new/app">
-                    <Button onClick={async () => updateStackStartedStep()} height="35px">
-                      Deploy app <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
-                    </Button>
-                  </PorterLink>
-                </CentralContainer>
-
-
-              </Fieldset >
+              <DashboardPlaceholder>
+                <Text size={16}>
+                  No apps have been deployed yet
+                </Text>
+                <Spacer y={0.5} />
+                <Text color={"helper"}>
+                  Get started by deploying your app.
+                </Text>
+                <Spacer y={1} />
+                <PorterLink to="/apps/new/app">
+                  <Button alt onClick={async () => updateStackStartedStep()} height="35px">
+                    Deploy app <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
+                  </Button>
+                </PorterLink>
+              </DashboardPlaceholder>
             )
         ) : (
           <>

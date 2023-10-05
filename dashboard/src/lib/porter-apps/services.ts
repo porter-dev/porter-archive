@@ -286,10 +286,12 @@ export function deserializeService({
   service,
   override,
   expanded,
+  setDefaults = true,
 }: {
   service: SerializedService;
   override?: SerializedService;
   expanded?: boolean;
+  setDefaults?: boolean;
 }): ClientService {
   const baseService = {
     expanded,
@@ -326,10 +328,12 @@ export function deserializeService({
           autoscaling: deserializeAutoscaling({
             autoscaling: config.autoscaling,
             override: overrideWebConfig?.autoscaling,
+              setDefaults: setDefaults,
           }),
           healthCheck: deserializeHealthCheck({
             health: config.healthCheck,
             override: overrideWebConfig?.healthCheck,
+              setDefaults: setDefaults,
           }),
 
           domains: uniqueDomains.map((domain) => ({
@@ -344,7 +348,7 @@ export function deserializeService({
             typeof config.private === "boolean" ||
               typeof overrideWebConfig?.private === "boolean"
               ? ServiceField.boolean(config.private, overrideWebConfig?.private)
-              : ServiceField.boolean(false, undefined),
+              : (setDefaults ? ServiceField.boolean(false, undefined) : undefined),
         },
       };
     })
@@ -359,6 +363,7 @@ export function deserializeService({
           autoscaling: deserializeAutoscaling({
             autoscaling: config.autoscaling,
             override: overrideWorkerConfig?.autoscaling,
+              setDefaults: setDefaults,
           }),
         },
       };
@@ -378,7 +383,7 @@ export function deserializeService({
                 config.allowConcurrent,
                 overrideJobConfig?.allowConcurrent
               )
-              : ServiceField.boolean(false, undefined),
+              : (setDefaults ? ServiceField.boolean(false, undefined) : undefined),
           cron: ServiceField.string(config.cron, overrideJobConfig?.cron),
           suspendCron:
             typeof config.suspendCron === "boolean" ||
@@ -387,14 +392,13 @@ export function deserializeService({
                 config.suspendCron,
                 overrideJobConfig?.suspendCron
               )
-              : ServiceField.boolean(false, undefined),
+              : (setDefaults ? ServiceField.boolean(false, undefined) : undefined),
           timeoutSeconds:
-            config.timeoutSeconds == 0
-              ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds)
-              : ServiceField.number(
+            config.timeoutSeconds != 0
+             ? ServiceField.number(
                 config.timeoutSeconds,
                 overrideJobConfig?.timeoutSeconds
-              ),
+              ) : (setDefaults ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds) : ServiceField.number(0, overrideJobConfig?.timeoutSeconds)),
         },
       };
     })

@@ -33,7 +33,7 @@ const CustomDomains: React.FC<Props> = ({ index }) => {
       {fields.length !== 0 && (
         <>
           {fields.map((customDomain, i) => {
-            return !customDomain.name.value.includes("onporter.run") ? (
+            return !customDomain.name.value.includes("onporter.run") && !customDomain.name.value.includes("withporter.run") ? (
               <div key={customDomain.id}>
                 <AnnotationContainer>
                   <ControlledInput

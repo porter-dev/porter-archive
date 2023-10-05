@@ -174,9 +174,6 @@ const DashboardRouter: React.FC<Props> = ({
       >
         <EnvGroupDashboard currentCluster={currentCluster} />
       </GuardedRoute>
-      <Route path={"/databases"}>
-        <LazyDatabasesRoutes />
-      </Route>
       <Route path={["/cluster-dashboard"]}>
         <DashboardRoutes />
       </Route>

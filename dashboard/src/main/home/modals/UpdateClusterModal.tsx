@@ -88,7 +88,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
                 if (res.data) {
                   let clusters = res.data;
 
-                  if (!currentProject.multi_cluster || !clusters) {
+                  if (!currentProject.multi_cluster || clusters?.length() == 1) {
                     await api.saveOnboardingState(
                       "<token>",
                       { current_step: "connect_source" },

@@ -18,9 +18,10 @@ type PorterApp struct {
 	ImageRepoURI string
 
 	// Git repo information (optional)
-	GitRepoID uint
-	RepoName  string
-	GitBranch string
+	GitRepoID       uint
+	RepoName        string
+	GitBranch       string
+	GithubWebhookID int64 `gorm:"-"` // do not use in read/writes. this is temporary until migrations are run
 
 	BuildContext   string
 	Builder        string

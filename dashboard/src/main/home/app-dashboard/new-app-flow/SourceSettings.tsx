@@ -45,7 +45,7 @@ const SourceSettings: React.FC<Props> = ({
           <SharedBuildSettings
             setPorterYaml={setPorterYaml}
             porterApp={porterApp}
-            updatePorterApp={(attrs: Partial<PorterApp>) => setPorterApp((prev: PorterApp) => ({ ...prev, ...PorterApp.setAttributes(prev, attrs) }))}
+            updatePorterApp={(attrs: Partial<PorterApp>) => setPorterApp((prev: PorterApp) => PorterApp.setAttributes(prev, attrs))}
             autoDetectionOn={true}
             canChangeRepo={true}
             buildView={buildView}

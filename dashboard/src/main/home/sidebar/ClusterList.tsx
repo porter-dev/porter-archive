@@ -11,10 +11,14 @@ import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import { pushFiltered } from "shared/routing";
 import SidebarLink from "./SidebarLink";
+import { OFState } from "main/home/onboarding/state";
+import ProvisionClusterModal from "./ProvisionClusterModal";
+
 
 const ClusterList: React.FC<PropsType> = (props) => {
-  const { setCurrentCluster, user, currentCluster, currentProject } = useContext(Context);
+  const { setCurrentCluster, user, currentCluster, currentProject, setHasFinishedOnboarding } = useContext(Context);
   const [expanded, setExpanded] = useState<boolean>(false);
+  const [clusterModalVisible, setClusterModalVisible] = useState<boolean>(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [clusters, setClusters] = useState<ClusterType[]>([]);
   const [options, setOptions] = useState<any[]>([]);
@@ -55,14 +59,15 @@ const ClusterList: React.FC<PropsType> = (props) => {
           }
         });
     }
-  }, [currentProject]);
-  const truncate = (input: string) => input.length > 21 ? `${input.substring(0, 21)}...` : input;
+  }, [currentProject, currentCluster]);
+  const truncate = (input: string) => input.length > 27 ? `${input.substring(0, 27)}...` : input;
 
   const renderOptionList = () =>
     options.map((option, i: number) => (
       <Option
         key={i}
         selected={option.value === currentCluster?.name}
+        title={option.label}
         onClick={() => {
           setExpanded(false);
           const cluster = clusters.find(c => c.name === option.value);
@@ -73,13 +78,31 @@ const ClusterList: React.FC<PropsType> = (props) => {
         <Icon src={infra} height={"14px"} />
         <ClusterLabel>{option.label}</ClusterLabel>
       </Option>
+
     ));
 
   const renderDropdown = () =>
     expanded && (
-      <Dropdown>
-        {renderOptionList()}
-      </Dropdown>
+      <>
+        <Dropdown>
+          {renderOptionList()}
+
+          {/* Connect Cluster Option */}
+          {
+            currentProject?.enable_reprovision && <Option
+              onClick={() => {
+                setClusterModalVisible(true)
+                setExpanded(false);
+
+              }}>
+
+              <Plus>+</Plus>    Deploy new cluster
+            </Option>
+          }
+
+        </Dropdown>
+
+      </>
     );
 
   if (currentCluster) {
@@ -94,10 +117,14 @@ const ClusterList: React.FC<PropsType> = (props) => {
             <Img src={infra} />
             <ClusterName>{truncate(currentCluster.vanity_name ? currentCluster.vanity_name : currentCluster?.name)}</ClusterName>
 
-            {clusters.length > 1 && <i className="material-icons">arrow_drop_down</i>}
+            {(clusters.length > 1 || user.isPorterUser) && <i className="material-icons">arrow_drop_down</i>}
           </NavButton>
         </MainSelector>
-        {clusters.length > 1 && renderDropdown()}
+        {(clusters.length > 1 || user.isPorterUser) && renderDropdown()}
+        {
+          clusterModalVisible && <ProvisionClusterModal
+            closeModal={() => setClusterModalVisible(false)} />
+        }
       </StyledClusterSection >
     );
   }
@@ -165,6 +192,7 @@ const Option = styled.div<{ selected: boolean }>`
   opacity: 0.6;
   :hover {
     opacity: 1;
+
   }
 
   > i {
@@ -195,7 +223,7 @@ const ClusterName = styled.div`
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  max-width: 180px; // You can adjust this value according to your needs
+  max-width: 200px; 
 `;
 
 const MainSelector = styled.div`

@@ -21,6 +21,7 @@ type PorterApp struct {
 	GitRepoID uint
 	RepoName  string
 	GitBranch string
+	GithubWebhookID int64
 
 	BuildContext   string
 	Builder        string

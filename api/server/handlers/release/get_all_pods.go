@@ -42,6 +42,13 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	helmRelease, _ := ctx.Value(types.ReleaseScope).(*release.Release)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+
+	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
+		err := telemetry.Error(ctx, span, nil, "unable to get pods: please upgrade the CLI and try again")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
+		return
+	}
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {

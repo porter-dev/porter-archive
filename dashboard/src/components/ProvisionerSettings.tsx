@@ -104,6 +104,7 @@ type Props = RouteComponentProps & {
   provisionerError?: string;
   credentialId: string;
   clusterId?: number;
+  closeModal?: () => void;
 };
 
 const ProvisionerSettings: React.FC<Props> = (props) => {
@@ -269,6 +270,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setIsLoading(true);
     setIsClicked(true);
 
+
     let loadBalancerObj = new LoadBalancer({});
     loadBalancerObj.loadBalancerType = LoadBalancerType.NLB;
     if (loadBalancerType) {
@@ -398,6 +400,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           console.error(err);
         });
       // }
+      {
+        props?.closeModal &&
+          props?.closeModal()
+      };
+
       setErrorMessage(undefined);
     } catch (err) {
       const errMessage = err.response.data?.error.replace("unknown: ", "");
@@ -1184,7 +1191,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Spacer y={1} />
               <Button
                 // disabled={isDisabled()}
-                disabled={isDisabled() || preflightFailed || isLoading}
+                // disabled={isDisabled() || preflightFailed || isLoading}
+                disabled={preflightFailed || isLoading}
                 onClick={createCluster}
                 status={getStatus()}
               >

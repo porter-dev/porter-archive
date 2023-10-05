@@ -54,6 +54,12 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-porter-app")
 	defer span.End()
 
+	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
+		err := telemetry.Error(ctx, span, nil, "unable to update app: please upgrade the CLI and try again")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
+		return
+	}
+
 	request := &types.CreatePorterAppRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding request")

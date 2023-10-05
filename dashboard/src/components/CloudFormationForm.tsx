@@ -69,6 +69,41 @@ const CloudFormationForm: React.FC<Props> = ({
     }
   };
 
+  const checkCloudFormation = async () => {
+    try {
+      if (currentProject == null) {
+        return false;
+      };
+      let externalId = getExternalId();
+      let targetARN = `arn:aws:iam::${AWSAccountID}:role/porter-manager`
+      await api
+        .createAWSIntegration(
+          "<token>",
+          {
+            aws_target_arn: targetARN,
+            aws_external_id: externalId,
+          },
+          {
+            id: currentProject.id,
+          }
+        );
+      setPreflightData({
+        "Msg": {
+          "preflight_checks": {
+            cloudFormation: {},
+          }
+        }
+      })
+      console.log("true")
+
+      return true;
+
+    } catch (err) {
+      console.log("false")
+      return false
+    }
+  }
+
   const { data: canProceed } = useQuery(
     ["createAWSIntegration", currentStep, hasClickedCloudformationButton, AWSAccountID],
     async () => {
@@ -122,14 +157,16 @@ const CloudFormationForm: React.FC<Props> = ({
 
   const handleAWSAccountIDChange = (accountId: string) => {
     setAWSAccountID(accountId);
+    setPreflightData(undefined);
     setHasClickedCloudformationButton(false);
     if (accountId === "open-sesame") {
       switchToCredentialFlow();
     }
   };
 
-  const handleContinueWithAWSAccountId = () => {
-    setCurrentStep(2);
+  const handleContinueWithAWSAccountId = async () => {
+    const cloudFormationCheck = await checkCloudFormation();
+    cloudFormationCheck ? setCurrentStep(3) : setCurrentStep(2);
     markStepStarted({ step: "aws-account-id-complete", account_id: AWSAccountID });
   }
 

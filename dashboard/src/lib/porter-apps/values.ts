@@ -111,11 +111,11 @@ export function serializeAutoscaling({
 export function deserializeAutoscaling({
   autoscaling,
   override,
-  allowUndefined,
+  setDefaults,
 }: {
   autoscaling?: SerializedAutoscaling;
   override?: SerializedAutoscaling;
-    allowUndefined: boolean;
+    setDefaults: boolean;
 }): ClientAutoscaling | undefined {
   return (
     autoscaling ? {
@@ -138,13 +138,13 @@ export function deserializeAutoscaling({
             override?.memoryThresholdPercent
           )
         : ServiceField.number(50, undefined),
-    } : (allowUndefined ? undefined : {
+    } : (setDefaults ?  {
         enabled: ServiceField.boolean(false, undefined),
         minInstances: ServiceField.number(1, undefined),
         maxInstances: ServiceField.number(10, undefined),
         cpuThresholdPercent: ServiceField.number(50, undefined),
         memoryThresholdPercent: ServiceField.number(50, undefined),
-    })
+    } : undefined )
   );
 }
 
@@ -174,11 +174,11 @@ export function serializeHealth({
 export function deserializeHealthCheck({
   health,
   override,
-  allowUndefined,
+  setDefaults,
 }: {
   health?: SerializedHealthcheck;
   override?: SerializedHealthcheck;
-  allowUndefined: boolean;
+  setDefaults: boolean;
 }): ClientHealthCheck | undefined {
   return (
     health ? {
@@ -186,10 +186,10 @@ export function deserializeHealthCheck({
       httpPath: health.httpPath
         ? ServiceField.string(health.httpPath, override?.httpPath)
         :  ServiceField.string("", undefined),
-    } : (allowUndefined ? undefined : {
+    } : (setDefaults ? {
         enabled: ServiceField.boolean(false, undefined),
         httpPath: ServiceField.string("", undefined),
-    })
+    } : undefined)
   );
 }
 

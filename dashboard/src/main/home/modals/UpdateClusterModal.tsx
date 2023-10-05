@@ -5,6 +5,9 @@ import close from "assets/close.png";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
+import { OFState } from "main/home/onboarding/state";
+import { Onboarding as OnboardingSaveType } from "../onboarding/types"
+
 
 import SaveButton from "components/SaveButton";
 import InputRow from "components/form-components/InputRow";
@@ -79,12 +82,23 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
             .catch(console.log);
 
           if (currentProject.simplified_view_enabled) {
-            await api.saveOnboardingState(
-              "<token>",
-              { current_step: "connect_source" },
-              { project_id: currentProject.id }
-            );
-            window.location.reload();
+            await api
+              .getClusters("<token>", {}, { id: currentProject?.id })
+              .then(async (res) => {
+                if (res.data) {
+                  let clusters = res.data;
+
+                  if (!currentProject.multi_cluster || clusters?.length() == 1) {
+                    await api.saveOnboardingState(
+                      "<token>",
+                      { current_step: "connect_source" },
+                      { project_id: currentProject.id }
+                    );
+                    window.location.reload();
+                  }
+
+                }
+              })
           }
           return;
         }

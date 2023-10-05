@@ -143,4 +143,5 @@ const StepWrapper = styled(AnimateHeight)<{
 const StyledVerticalSteps = styled.div<{
 }>`
   position: relative;
+  margin-left: 8px;
 `;

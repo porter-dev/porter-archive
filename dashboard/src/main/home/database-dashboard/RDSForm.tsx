@@ -20,24 +20,24 @@ import Button from "components/porter/Button";
 import { generateSlug } from "random-word-slugs";
 import { RouteComponentProps, withRouter } from "react-router";
 import Error from "components/porter/Error";
+import Fieldset from "components/porter/Fieldset";
+import Container from "components/porter/Container";
 
 type Props = RouteComponentProps & {
   currentTemplate: any;
-  currentForm?: any;
   goBack: () => void;
 };
 
-const ConfigureTemplate: React.FC<Props> = ({
+const RDSForm: React.FC<Props> = ({
   currentTemplate,
-  currentForm,
   goBack,
   ...props
 }) => {
   const { currentCluster, currentProject, capabilities } = useContext(Context);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [name, setName] = useState<string>("");
   const [buttonStatus, setButtonStatus] = useState<string>("");
+  const [credentialsSaved, setCredentialsSaved] = useState<boolean>(false);
 
   const waitForHelmRelease = () => {
     setTimeout(() => {
@@ -45,9 +45,9 @@ const ConfigureTemplate: React.FC<Props> = ({
         "<token>",
         {},
         {
-          id: currentProject.id,
-          namespace: "default",
-          cluster_id: currentCluster.id,
+          id: currentProject?.id || -1,
+          namespace: "ack-system",
+          cluster_id: currentCluster?.id || -1,
           name,
           revision: 0,
         }
@@ -56,7 +56,7 @@ const ConfigureTemplate: React.FC<Props> = ({
           if (res?.data?.version) {
             setButtonStatus("success");
             pushFiltered(props, "/addons", ["project_id"], {
-              cluster: currentCluster.name,
+              cluster: currentCluster?.name,
             });
           } else {
             waitForHelmRelease();
@@ -68,13 +68,14 @@ const ConfigureTemplate: React.FC<Props> = ({
     }, 500);
   };
 
-  const deployAddOn = async (wildcard?: any) => {
+  const deploy = async (wildcard?: any) => {
     setButtonStatus("loading");
     
     let values: any = {};
     for (let key in wildcard) {
       _.set(values, key, wildcard[key]);
     }
+    /* TODO: Helm installation
     api
       .deployAddon(
         "<token>",
@@ -111,6 +112,7 @@ const ConfigureTemplate: React.FC<Props> = ({
         });
         return;
       });
+    */
   };
 
   const getStatus = () => {
@@ -125,49 +127,6 @@ const ConfigureTemplate: React.FC<Props> = ({
       );
     }
   };
-  
-  const renderAddOnSettings = () => {
-    if (currentForm) {
-      return (
-        <PorterFormWrapper
-          formData={currentForm}
-          valuesToOverride={{
-            namespace: "default",
-            clusterId: currentCluster.id,
-          }}
-          buttonStatus={getStatus()}
-          isLaunch={true}
-          onSubmit={deployAddOn}
-        />
-      );
-    } else {
-      return (
-        <>
-          <Placeholder>
-            <div>
-              To configure this chart through Porter
-              <Spacer inline width="5px" />
-              <Link
-                target="_blank"
-                to="https://github.com/porter-dev/porter-charts/blob/master/docs/form-yaml-reference.md"
-              >
-                refer to our docs
-              </Link>
-              .
-            </div>
-          </Placeholder>
-          <Spacer y={1.2} />
-          <Button
-            width="150px"
-            onClick={deployAddOn}
-            status={getStatus()}
-          >
-            Deploy application
-          </Button>
-        </>
-      );
-    };
-  };
 
   return (
     <CenterWrapper>
@@ -180,7 +139,7 @@ const ConfigureTemplate: React.FC<Props> = ({
                 src={hardcodedIcons[currentTemplate.name] || currentTemplate.icon}
               />
             }
-            title={`Configure new "${hardcodedNames[currentTemplate.name] || currentTemplate.name}" instance`}
+            title="Create an RDS Postgres instance"
             capitalize={false}
             disableLineBreak
           />
@@ -189,7 +148,7 @@ const ConfigureTemplate: React.FC<Props> = ({
             currentStep={currentStep}
             steps={[
               <>
-                <Text size={16}>Add-on name</Text>
+                <Text size={16}>Database name</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
                   Lowercase letters, numbers, and "-" only.
@@ -201,7 +160,7 @@ const ConfigureTemplate: React.FC<Props> = ({
                   width="300px"
                   setValue={(e) => {
                     if (e) {
-                      setCurrentStep(1);
+                      credentialsSaved ? setCurrentStep(2) : setCurrentStep(1);
                     } else {
                       setCurrentStep(0);
                     }
@@ -210,13 +169,71 @@ const ConfigureTemplate: React.FC<Props> = ({
                 />
               </>,
               <>
-                <Text size={16}>Add-on settings</Text>
+                <Text size={16}>Postgres credentials</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
-                Configure settings for this add-on.
+                  Postgres credentials for this database. 
                 </Text>
                 <Spacer height="20px" />
-                {renderAddOnSettings()}
+                <Fieldset>
+                  <Text>Database name: placeholder</Text>
+                  <Spacer y={.5} />
+                  <Text>Password: placeholder</Text>
+                  <Spacer y={.5} />
+                  <Text>Username: placeholder</Text>
+                </Fieldset>
+                <Spacer y={1} />
+                <Button onClick={() => {
+                  setCredentialsSaved(true);
+                  setCurrentStep(2);
+                }}>
+                  Continue
+                </Button>
+              </>,
+              <>
+                <Text size={16}>Database resources</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  Specify your database CPU, RAM, and storage.
+                </Text>
+                <Spacer y={.5} />
+                <Text>
+                  Select an instance tier:
+                </Text>
+                <Spacer height="20px" />
+                <ResourceOption>
+                  <Container row>
+                    <Text>Small</Text>
+                    <Spacer inline width="5px" />
+                    <Text color="helper">- 2 CPU, 2 GB RAM</Text>
+                  </Container>
+                  <StorageTag>30 GB Storage</StorageTag>
+                </ResourceOption>
+                <Spacer height="15px" />
+                <ResourceOption>
+                  <Container row>
+                    <Text>Medium</Text>
+                    <Spacer inline width="5px" />
+                    <Text color="helper">- 4 CPU, 4 GB RAM</Text>
+                  </Container>
+                  <StorageTag>100 GB Storage</StorageTag>
+                </ResourceOption>
+                <Spacer height="15px" />
+                <ResourceOption>
+                  <Container row>
+                    <Text>Large</Text>
+                    <Spacer inline width="5px" />
+                    <Text color="helper">- 8 CPU, 8 GB RAM</Text>
+                  </Container>
+                  <StorageTag>256 GB Storage</StorageTag>
+                </ResourceOption>
+              </>,
+              <>
+                <Text size={16}>Provision a database</Text>
+                <Spacer y={0.5} />
+                <Button>
+                  Create database
+                </Button>
               </>
             ]}
           />
@@ -227,7 +244,31 @@ const ConfigureTemplate: React.FC<Props> = ({
   );
 };
 
-export default withRouter(ConfigureTemplate);
+export default withRouter(RDSForm);
+
+const StorageTag = styled.div`
+  background: #202227;
+  color: #aaaabb;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 13px;
+  margin-left: 5px;
+`;
+
+const ResourceOption = styled.div`
+  background: ${(props) => props.theme.clickable.bg};
+  border: 1px solid ${props => props.theme.border};
+  width: 350px;
+  padding: 10px 15px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  :hover {
+    border: 1px solid #ffffff;
+  }
+`;
 
 const Div = styled.div`
   width: 100%;

@@ -21,6 +21,7 @@ import Back from "components/porter/Back";
 import Fieldset from "components/porter/Fieldset";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
+import RDSForm from "./RDSForm";
 
 type Props = {
 };
@@ -70,17 +71,20 @@ const CreateDatabase: React.FC<Props> = ({
     <StyledTemplateComponent>
       {
         (currentTemplate) ? (
-          <div>proceed to next</div>
+          <RDSForm
+            currentTemplate={currentTemplate}
+            goBack={() => setCurrentTemplate(null)}
+          />
         ) : (
           <>
             <Back to="/databases" />
             <DashboardHeader
               image={database}
-              title="Create a new databasae"
+              title="Create a new database"
               capitalize={false}
-              description="Select a database type to create on this project."
               disableLineBreak
             />
+            {/*
             <SearchBar
               value={searchValue}
               setValue={setSearchValue}
@@ -88,6 +92,7 @@ const CreateDatabase: React.FC<Props> = ({
               width="100%"
             />
             <Spacer y={1} />
+            */}
 
             {allFilteredTemplates.length === 0 && (
               <Fieldset>

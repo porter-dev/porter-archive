@@ -13,9 +13,10 @@ import { z } from "zod";
 import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
 import RepositorySelector from "../build-settings/RepositorySelector";
 import BranchSelector from "../build-settings/BranchSelector";
-import BuildpackSettings from "../validate-apply/build-settings/buildpacks/BuildpackSettings";
+import BuildpackSettings, { DEFAULT_BUILDERS } from "../validate-apply/build-settings/buildpacks/BuildpackSettings";
 import { match } from "ts-pattern";
 import { BuildOptions } from "lib/porter-apps/build";
+import Loading from "components/Loading";
 
 type Props = {
   projectId: number;
@@ -32,7 +33,6 @@ const branchContentsSchema = z
   .array();
 
 type BranchContents = z.infer<typeof branchContentsSchema>;
-type BuildView = "docker" | "pack";
 
 const RepoSettings: React.FC<Props> = ({
   projectId,
@@ -50,8 +50,8 @@ const RepoSettings: React.FC<Props> = ({
     source.git_branch,
   ]);
 
-  const { data: branchContents } = useQuery<BranchContents>(
-    ["getBranchContents", projectId, source.git_branch, source.git_repo_name],
+  const { data: branchContents, isLoading } = useQuery<BranchContents>(
+    ["getBranchContents", projectId, source.git_branch, source.git_repo_name, appExists],
     async () => {
       const res = await api.getBranchContents(
         "<token>",
@@ -69,23 +69,26 @@ const RepoSettings: React.FC<Props> = ({
       return branchContentsSchema.parse(res.data);
     },
     {
-      enabled: repoIsSet && branchIsSet,
+      enabled: repoIsSet && branchIsSet && !appExists,
     }
   );
 
   useEffect(() => {
-    if (!branchContents || appExists) {
+    if (!branchContents) {
       return;
     }
 
-    const hasDockerfile = branchContents.some((item) =>
-      item.path.includes("Dockerfile")
+    const item = branchContents.find((item) =>
+      item.path.includes("Dockerfile") && item.type === "file"
     );
-    setValue("app.build.method", hasDockerfile ? "docker" : "pack");
-    if (!hasDockerfile) {
+    if (item) {
+      setValue("app.build.dockerfile", item.path.startsWith("./") || item.path.startsWith("/") ? item.path : `./${item.path}`);
+      setValue("app.build.method", "docker");
+    } else {
       setValue("app.build.buildpacks", []);
+      setValue("app.build.method", "pack");
     }
-  }, [branchContents, appExists]);
+  }, [branchContents]);
 
   return (
     <div>
@@ -131,25 +134,27 @@ const RepoSettings: React.FC<Props> = ({
             placeholder=""
           />
           {!appExists && (
-            <BackButton
-              width="135px"
-              onClick={() => {
-                setValue("source", {
-                  type: "github",
-                  git_repo_name: "",
-                  git_branch: "",
-                  git_repo_id: 0,
-                  porter_yaml_path: "./porter.yaml",
-                });
+            <>
+              <BackButton
+                width="135px"
+                onClick={() => {
+                  setValue("source", {
+                    type: "github",
+                    git_repo_name: "",
+                    git_branch: "",
+                    git_repo_id: 0,
+                    porter_yaml_path: "./porter.yaml",
+                  });
 
-                setValue("app.build.context", "./");
-              }}
-            >
-              <i className="material-icons">keyboard_backspace</i>
-              Select repo
-            </BackButton>
+                  setValue("app.build.context", "./");
+                }}
+              >
+                <i className="material-icons">keyboard_backspace</i>
+                Select repo
+              </BackButton>
+              <Spacer y={0.5} />
+            </>
           )}
-          <Spacer y={0.5} />
           <Spacer y={0.5} />
           <Text color="helper">Specify your GitHub branch.</Text>
           <Spacer y={0.5} />
@@ -179,22 +184,27 @@ const RepoSettings: React.FC<Props> = ({
                 setValue={() => { }}
                 placeholder=""
               />
-              <BackButton
-                width="145px"
-                onClick={() => {
-                  setValue("source", {
-                    ...source,
-                    git_branch: "",
-                    porter_yaml_path: "./porter.yaml",
-                  });
+              {!appExists &&
+                <>
+                  <BackButton
+                    width="145px"
+                    onClick={() => {
+                      setValue("source", {
+                        ...source,
+                        git_branch: "",
+                        porter_yaml_path: "./porter.yaml",
+                      });
 
-                  setValue("app.build.context", "./");
-                }}
-              >
-                <i className="material-icons">keyboard_backspace</i>
-                Select branch
-              </BackButton>
-              <Spacer y={1} />
+                      setValue("app.build.context", "./");
+                    }}
+                  >
+                    <i className="material-icons">keyboard_backspace</i>
+                    Select branch
+                  </BackButton>
+                  <Spacer y={0.5} />
+                </>
+              }
+              <Spacer y={0.5} />
               <Text color="helper">Specify your application root path.</Text>
               <Spacer y={0.5} />
               <ControlledInput
@@ -204,25 +214,30 @@ const RepoSettings: React.FC<Props> = ({
                 {...register("app.build.context")}
               />
               <Spacer y={1} />
-              <StyledAdvancedBuildSettings
-                showSettings={showSettings}
-                isCurrent={true}
-                onClick={() => {
-                  setShowSettings(!showSettings);
-                }}
-              >
-                {build.method == "docker" ? (
-                  <AdvancedBuildTitle>
-                    <i className="material-icons dropdown">arrow_drop_down</i>
-                    Configure Dockerfile settings
-                  </AdvancedBuildTitle>
-                ) : (
-                  <AdvancedBuildTitle>
-                    <i className="material-icons dropdown">arrow_drop_down</i>
-                    Configure buildpack settings
-                  </AdvancedBuildTitle>
-                )}
-              </StyledAdvancedBuildSettings>
+              {isLoading && !appExists ?
+                <AdvancedBuildTitle>
+                  <Loading />
+                </AdvancedBuildTitle>
+                :
+                <StyledAdvancedBuildSettings
+                  showSettings={showSettings}
+                  onClick={() => {
+                    setShowSettings(!showSettings);
+                  }}
+                >
+                  {build.method == "docker" ? (
+                    <AdvancedBuildTitle>
+                      <i className="material-icons dropdown">arrow_drop_down</i>
+                      Configure Dockerfile settings
+                    </AdvancedBuildTitle>
+                  ) : (
+                    <AdvancedBuildTitle>
+                      <i className="material-icons dropdown">arrow_drop_down</i>
+                      Configure buildpack settings
+                    </AdvancedBuildTitle>
+                  )}
+                </StyledAdvancedBuildSettings>
+              }
 
               <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
                 <StyledSourceBox>
@@ -241,9 +256,10 @@ const RepoSettings: React.FC<Props> = ({
                           if (option == "docker") {
                             onChange("docker");
                           } else if (option == "pack") {
-                            // if toggling from docker to pack, initialize buildpacks to empty array
+                            // if toggling from docker to pack, initialize buildpacks to empty array and builder to default
                             onChange("pack");
                             setValue("app.build.buildpacks", []);
+                            setValue("app.build.builder", DEFAULT_BUILDERS[0])
                           }
                         }}
                         label="Build method"
@@ -350,7 +366,7 @@ const StyledAdvancedBuildSettings = styled.div`
     font-size: 20px;
     cursor: pointer;
     border-radius: 20px;
-    transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
+    transform: ${(props: { showSettings: boolean }) =>
     props.showSettings ? "" : "rotate(-90deg)"};
   }
 `;

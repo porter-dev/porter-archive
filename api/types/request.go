@@ -53,7 +53,6 @@ const (
 	URLParamPorterAppName         URLParam = "porter_app_name"
 	URLParamPorterAppEventID      URLParam = "porter_app_event_id"
 	URLParamAppRevisionID         URLParam = "app_revision_id"
-	URLParamDeploymentTargetID    URLParam = "deployment_target_id"
 )
 
 type Path struct {

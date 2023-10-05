@@ -233,7 +233,6 @@ type GithubActionYAMLOnPullRequest struct {
 type GithubActionYAMLOnPullRequestTypes struct {
 	Branches []string `yaml:"branches,omitempty"`
 	Types    []string `yaml:"types,omitempty"`
-	Paths    []string `yaml:"paths,omitempty"`
 }
 
 type GithubActionYAMLJob struct {

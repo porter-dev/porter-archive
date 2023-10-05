@@ -46,7 +46,7 @@ func (c *GetAllPodsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "unable to get pods: please upgrade the CLI and try again")
-		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 		return
 	}
 

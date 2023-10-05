@@ -11,23 +11,24 @@ import api from "shared/api";
 import { z } from "zod";
 import { populatedEnvGroup } from "../../validate-apply/app-settings/types";
 import EnvSettings from "../../validate-apply/app-settings/EnvSettings";
+import { ButtonStatus } from "../AppDataContainer";
 
 type Props = {
   latestSource: SourceOptions;
+  buttonStatus: ButtonStatus;
 };
 
-const Environment: React.FC<Props> = ({ latestSource }) => {
+const Environment: React.FC<Props> = ({ latestSource, buttonStatus }) => {
   const {
     latestRevision,
     latestProto,
     clusterId,
     projectId,
     previewRevision,
-    servicesFromYaml,
     attachedEnvGroups,
   } = useLatestRevision();
   const {
-    formState: { isSubmitting, errors },
+    formState: { isSubmitting },
   } = useFormContext<PorterAppFormData>();
 
   const { data: baseEnvGroups = [] } = useQuery(
@@ -52,18 +53,6 @@ const Environment: React.FC<Props> = ({ latestSource }) => {
     }
   );
 
-  const buttonStatus = useMemo(() => {
-    if (isSubmitting) {
-      return "loading";
-    }
-
-    if (Object.keys(errors).length > 0) {
-      return <Error message="Unable to update app" />;
-    }
-
-    return "";
-  }, [isSubmitting, errors]);
-
   return (
     <>
       <Text size={16}>Environment variables</Text>
@@ -74,7 +63,6 @@ const Environment: React.FC<Props> = ({ latestSource }) => {
         revision={previewRevision ? previewRevision : latestRevision} // get versions of env groups attached to preview revision if set
         baseEnvGroups={baseEnvGroups}
         latestSource={latestSource}
-        servicesFromYaml={servicesFromYaml}
         attachedEnvGroups={attachedEnvGroups}
       />
       <Spacer y={0.5} />

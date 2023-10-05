@@ -7,8 +7,13 @@ import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
 import Error from "components/porter/Error";
 import { match } from "ts-pattern";
+import { ButtonStatus } from "../AppDataContainer";
 
-const BuildSettingsTab: React.FC = () => {
+type Props = {
+  buttonStatus: ButtonStatus;
+};
+
+const BuildSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
   const {
     watch,
     formState: { isSubmitting, errors },
@@ -17,20 +22,6 @@ const BuildSettingsTab: React.FC = () => {
 
   const build = watch("app.build");
   const source = watch("source");
-
-  const buttonStatus = useMemo(() => {
-    if (isSubmitting) {
-      return "loading";
-    }
-
-    if (Object.keys(errors).length > 0) {
-      // TODO: remove console.log once rollout is stable
-      console.log(errors);
-      return <Error message="Unable to update app" />;
-    }
-
-    return "";
-  }, [isSubmitting, errors]);
 
   return (
     <>
@@ -58,8 +49,7 @@ const BuildSettingsTab: React.FC = () => {
             </Button>
           </>
         ))
-        .otherwise(() => null)
-      }
+        .otherwise(() => null)}
     </>
   );
 };

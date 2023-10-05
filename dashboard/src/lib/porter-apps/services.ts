@@ -286,10 +286,12 @@ export function deserializeService({
   service,
   override,
   expanded,
+  allowUndefined = false,
 }: {
   service: SerializedService;
   override?: SerializedService;
   expanded?: boolean;
+  allowUndefined?: boolean;
 }): ClientService {
   const baseService = {
     expanded,
@@ -326,10 +328,12 @@ export function deserializeService({
           autoscaling: deserializeAutoscaling({
             autoscaling: config.autoscaling,
             override: overrideWebConfig?.autoscaling,
+              allowUndefined: allowUndefined,
           }),
           healthCheck: deserializeHealthCheck({
             health: config.healthCheck,
             override: overrideWebConfig?.healthCheck,
+              allowUndefined: allowUndefined,
           }),
 
           domains: uniqueDomains.map((domain) => ({
@@ -344,7 +348,7 @@ export function deserializeService({
             typeof config.private === "boolean" ||
               typeof overrideWebConfig?.private === "boolean"
               ? ServiceField.boolean(config.private, overrideWebConfig?.private)
-              : ServiceField.boolean(false, undefined),
+              : (allowUndefined ? undefined : ServiceField.boolean(false, undefined)),
         },
       };
     })
@@ -359,6 +363,7 @@ export function deserializeService({
           autoscaling: deserializeAutoscaling({
             autoscaling: config.autoscaling,
             override: overrideWorkerConfig?.autoscaling,
+              allowUndefined: allowUndefined,
           }),
         },
       };
@@ -378,7 +383,7 @@ export function deserializeService({
                 config.allowConcurrent,
                 overrideJobConfig?.allowConcurrent
               )
-              : ServiceField.boolean(false, undefined),
+              : (allowUndefined ? undefined : ServiceField.boolean(false, undefined)),
           cron: ServiceField.string(config.cron, overrideJobConfig?.cron),
           suspendCron:
             typeof config.suspendCron === "boolean" ||
@@ -387,7 +392,7 @@ export function deserializeService({
                 config.suspendCron,
                 overrideJobConfig?.suspendCron
               )
-              : ServiceField.boolean(false, undefined),
+              : (allowUndefined ? undefined : ServiceField.boolean(false, undefined)),
           timeoutSeconds:
             config.timeoutSeconds == 0
               ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds)

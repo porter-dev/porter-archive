@@ -110,10 +110,11 @@ export function serviceOverrides({
           }),
           override: svc,
           expanded: true,
+          allowUndefined: true,
         });
       }
 
-      return deserializeService({ service: svc });
+      return deserializeService({ service: svc,  allowUndefined: true});
     });
 
   const validatedBuild = buildValidator

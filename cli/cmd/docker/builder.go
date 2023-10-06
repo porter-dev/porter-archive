@@ -30,6 +30,8 @@ type BuildOpts struct {
 	UseCache          bool
 
 	Env map[string]string
+
+	LogFile *os.File
 }
 
 // BuildLocal
@@ -55,6 +57,13 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 	})
 	if err != nil {
 		return err
+	}
+
+	var writer io.Writer
+	if opts.LogFile != nil {
+		writer = io.MultiWriter(os.Stderr, opts.LogFile)
+	} else {
+		writer = os.Stderr
 	}
 
 	if !opts.IsDockerfileInCtx {
@@ -104,7 +113,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 
 	termFd, isTerm := term.GetFdInfo(os.Stderr)
 
-	return jsonmessage.DisplayJSONMessagesStream(out.Body, os.Stderr, termFd, isTerm, nil)
+	return jsonmessage.DisplayJSONMessagesStream(out.Body, writer, termFd, isTerm, nil)
 }
 
 func trimBuildFilesFromExcludes(excludes []string, dockerfile string) []string {

@@ -223,10 +223,10 @@ func (p *PorterAppEventListHandler) updateBuildEvent_Github(
 	if *actionRun.Status == "completed" {
 		if *actionRun.Conclusion == "success" {
 			event.Status = string(types.PorterAppEventStatus_Success)
-			_ = TrackStackBuildStatus(ctx, p.Config(), user, project, stackName, "", types.PorterAppEventStatus_Success, validateApplyV2)
+			_ = TrackStackBuildStatus(ctx, p.Config(), user, project, stackName, "", types.PorterAppEventStatus_Success, validateApplyV2, "")
 		} else {
 			event.Status = string(types.PorterAppEventStatus_Failed)
-			_ = TrackStackBuildStatus(ctx, p.Config(), user, project, stackName, "", types.PorterAppEventStatus_Failed, validateApplyV2)
+			_ = TrackStackBuildStatus(ctx, p.Config(), user, project, stackName, "", types.PorterAppEventStatus_Failed, validateApplyV2, "")
 		}
 		event.Metadata["end_time"] = actionRun.GetUpdatedAt().Time
 	}

@@ -125,6 +125,7 @@ func TrackStackBuildStatus(
 	errorMessage string,
 	status types.PorterAppEventStatus,
 	validateApplyV2 bool,
+	buildLogs string,
 ) error {
 	_, span := telemetry.NewSpan(ctx, "track-build-status")
 	defer span.End()
@@ -162,6 +163,7 @@ func TrackStackBuildStatus(
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			StackName:              stackName,
 			ErrorMessage:           errorMessage,
+			B64BuildLogs:           buildLogs,
 			Email:                  user.Email,
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,

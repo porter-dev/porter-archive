@@ -19,6 +19,7 @@ import (
 const (
 	buildMethodPack   = "pack"
 	buildMethodDocker = "docker"
+	buildLogFilename  = "PORTER_BUILD_LOGS.txt"
 )
 
 // buildInput is the input struct for the build method
@@ -39,40 +40,56 @@ type buildInput struct {
 	RepositoryURL   string
 
 	Env map[string]string
+
+	// LogFilename is the name of the file to write the build logs to
+	LogFilename string
+}
+
+type buildOutput struct {
+	Error error
+	Logs  string
 }
 
 // build will create an image repository if it does not exist, and then build and push the image
-func build(ctx context.Context, client api.Client, inp buildInput) error {
+func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
+	output := buildOutput{}
+
 	if inp.ProjectID == 0 {
-		return errors.New("must specify a project id")
+		output.Error = errors.New("must specify a project id")
+		return output
 	}
 	projectID := inp.ProjectID
 
 	if inp.ImageTag == "" {
-		return errors.New("must specify an image tag")
+		output.Error = errors.New("must specify an image tag")
+		return output
 	}
 	tag := inp.ImageTag
 
 	if inp.RepositoryURL == "" {
-		return errors.New("must specify a registry url")
+		output.Error = errors.New("must specify a registry url")
+		return output
 	}
 	imageURL := strings.TrimPrefix(inp.RepositoryURL, "https://")
 
 	err := createImageRepositoryIfNotExists(ctx, client, projectID, imageURL)
 	if err != nil {
-		return fmt.Errorf("error creating image repository: %w", err)
+		output.Error = fmt.Errorf("error creating image repository: %w", err)
+		return output
 	}
 
 	dockerAgent, err := docker.NewAgentWithAuthGetter(ctx, client, projectID)
 	if err != nil {
-		return fmt.Errorf("error getting docker agent: %w", err)
+		output.Error = fmt.Errorf("error getting docker agent: %w", err)
+		return output
 	}
 
 	switch inp.BuildMethod {
 	case buildMethodDocker:
 		basePath, err := filepath.Abs(".")
 		if err != nil {
-			return fmt.Errorf("error getting absolute path: %w", err)
+			output.Error = fmt.Errorf("error getting absolute path: %w", err)
+			return output
 		}
 
 		buildCtx, dockerfilePath, isDockerfileInCtx, err := resolveDockerPaths(
@@ -81,7 +98,17 @@ func build(ctx context.Context, client api.Client, inp buildInput) error {
 			inp.Dockerfile,
 		)
 		if err != nil {
-			return fmt.Errorf("error resolving docker paths: %w", err)
+			output.Error = fmt.Errorf("error resolving docker paths: %w", err)
+			return output
+		}
+
+		var logFile *os.File
+		if inp.LogFilename != "" {
+			// Create a file for PORTER_BUILD_OUTPUT.txt
+			logFile, err = os.Create(inp.LogFilename)
+			if err == nil {
+				defer logFile.Close()
+			}
 		}
 
 		opts := &docker.BuildOpts{
@@ -92,6 +119,7 @@ func build(ctx context.Context, client api.Client, inp buildInput) error {
 			DockerfilePath:    dockerfilePath,
 			IsDockerfileInCtx: isDockerfileInCtx,
 			Env:               inp.Env,
+			LogFile:           logFile,
 		}
 
 		err = dockerAgent.BuildLocal(
@@ -99,7 +127,22 @@ func build(ctx context.Context, client api.Client, inp buildInput) error {
 			opts,
 		)
 		if err != nil {
-			return fmt.Errorf("error building image with docker: %w", err)
+			output.Error = fmt.Errorf("error building image with docker: %w", err)
+			logString := "Error reading contents of build log file"
+
+			if logFile != nil {
+				content, err := os.ReadFile(logFile.Name())
+				if err == nil {
+					logString = string(content)
+				}
+				_ = os.Remove(logFile.Name())
+			}
+			output.Logs = logString
+			return output
+		}
+
+		if logFile != nil {
+			_ = os.Remove(logFile.Name())
 		}
 	case buildMethodPack:
 		packAgent := &pack.Agent{}
@@ -118,18 +161,21 @@ func build(ctx context.Context, client api.Client, inp buildInput) error {
 
 		err := packAgent.Build(ctx, opts, buildConfig, "")
 		if err != nil {
-			return fmt.Errorf("error building image with pack: %w", err)
+			output.Error = fmt.Errorf("error building image with pack: %w", err)
+			return output
 		}
 	default:
-		return fmt.Errorf("invalid build method: %s", inp.BuildMethod)
+		output.Error = fmt.Errorf("invalid build method: %s", inp.BuildMethod)
+		return output
 	}
 
 	err = dockerAgent.PushImage(ctx, fmt.Sprintf("%s:%s", imageURL, tag))
 	if err != nil {
-		return fmt.Errorf("error pushing image url: %w\n", err)
+		output.Error = fmt.Errorf("error pushing image: %w", err)
+		return output
 	}
 
-	return nil
+	return output
 }
 
 func createImageRepositoryIfNotExists(ctx context.Context, client api.Client, projectID uint, imageURL string) error {

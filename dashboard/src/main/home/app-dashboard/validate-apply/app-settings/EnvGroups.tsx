@@ -40,7 +40,7 @@ const EnvGroups: React.FC<Props> = ({
     name: "deletions.envGroupNames",
   });
 
-  const maxEnvGroupsReached = envGroups.length > 3;
+  const maxEnvGroupsReached = envGroups.length >= 4;
 
   const populatedEnvWithFallback = useMemo(() => {
     return envGroups

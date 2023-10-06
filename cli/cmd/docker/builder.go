@@ -59,11 +59,9 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 		return err
 	}
 
-	var writer io.Writer
+	var writer io.Writer = os.Stderr
 	if opts.LogFile != nil {
 		writer = io.MultiWriter(os.Stderr, opts.LogFile)
-	} else {
-		writer = os.Stderr
 	}
 
 	if !opts.IsDockerfileInCtx {

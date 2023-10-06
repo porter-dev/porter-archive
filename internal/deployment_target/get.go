@@ -21,6 +21,7 @@ type DeploymentTargetDetailsInput struct {
 type DeploymentTarget struct {
 	ClusterID int64  `json:"cluster_id"`
 	Namespace string `json:"namespace"`
+	Preview   bool   `json:"preview"`
 }
 
 // DeploymentTargetDetails gets the deployment target details from CCP
@@ -64,6 +65,7 @@ func DeploymentTargetDetails(ctx context.Context, inp DeploymentTargetDetailsInp
 	deploymentTarget = DeploymentTarget{
 		Namespace: deploymentTargetDetailsResp.Msg.Namespace,
 		ClusterID: deploymentTargetDetailsResp.Msg.ClusterId,
+		Preview:   deploymentTargetDetailsResp.Msg.IsPreview,
 	}
 
 	return deploymentTarget, nil

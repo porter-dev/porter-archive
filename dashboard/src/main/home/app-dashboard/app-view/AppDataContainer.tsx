@@ -385,6 +385,36 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     return "";
   }, [isSubmitting, errorMessagesDeep]);
 
+  const tabs = useMemo(() => {
+    const base = [
+      { label: "Activity", value: "activity" },
+      { label: "Overview", value: "overview" },
+      { label: "Logs", value: "logs" },
+      { label: "Metrics", value: "metrics" },
+      { label: "Environment", value: "environment" },
+    ];
+
+    if (deploymentTarget.preview) {
+      return base;
+    }
+
+    if (latestProto.build) {
+      base.push({
+        label: "Build Settings",
+        value: "build-settings",
+      });
+      base.push({ label: "Settings", value: "settings" });
+      return base;
+    }
+
+    base.push({
+      label: "Image Settings",
+      value: "image-settings",
+    });
+    base.push({ label: "Settings", value: "settings" });
+    return base;
+  }, [deploymentTarget.preview, latestProto.build]);
+
   useEffect(() => {
     const newProto = previewRevision
       ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
@@ -473,27 +503,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         </AnimateHeight>
         <TabSelector
           noBuffer
-          options={[
-            { label: "Activity", value: "activity" },
-            { label: "Overview", value: "overview" },
-            { label: "Logs", value: "logs" },
-            { label: "Metrics", value: "metrics" },
-            { label: "Environment", value: "environment" },
-            ...(latestProto.build
-              ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
-              : [
-                  {
-                    label: "Image Settings",
-                    value: "image-settings",
-                  },
-                ]),
-            { label: "Settings", value: "settings" },
-          ]}
+          options={tabs}
           currentTab={currentTab}
           setCurrentTab={(tab) => {
             if (deploymentTarget.preview) {

@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/internal/deployment_target"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
@@ -24,7 +25,7 @@ type Revision struct {
 	// B64AppProto is the base64 encoded app proto definition
 	B64AppProto string `json:"b64_app_proto"`
 	// Status is the status of the revision
-	Status string `json:"status"`
+	Status models.AppRevisionStatus `json:"status"`
 	// RevisionNumber is the revision number with respect to the app and deployment target
 	RevisionNumber uint64 `json:"revision_number"`
 	// CreatedAt is the time the revision was created
@@ -105,9 +106,31 @@ func EncodedRevisionFromProto(ctx context.Context, appRevision *porterv1.AppRevi
 
 	b64 := base64.StdEncoding.EncodeToString(encoded)
 
+	var status models.AppRevisionStatus
+	switch appRevision.Status {
+	case string(models.AppRevisionStatus_AwaitingBuild):
+		status = models.AppRevisionStatus_AwaitingBuild
+	case string(models.AppRevisionStatus_AwaitingPredeploy):
+		status = models.AppRevisionStatus_AwaitingPredeploy
+	case string(models.AppRevisionStatus_Deployed):
+		status = models.AppRevisionStatus_Deployed
+	case string(models.AppRevisionStatus_BuildCanceled):
+		status = models.AppRevisionStatus_BuildCanceled
+	case string(models.AppRevisionStatus_BuildFailed):
+		status = models.AppRevisionStatus_BuildFailed
+	case string(models.AppRevisionStatus_PredeployFailed):
+		status = models.AppRevisionStatus_PredeployFailed
+	case string(models.AppRevisionStatus_DeployFailed):
+		status = models.AppRevisionStatus_DeployFailed
+	case string(models.AppRevisionStatus_Created):
+		status = models.AppRevisionStatus_Created
+	default:
+		return revision, telemetry.Error(ctx, span, nil, "unknown app revision status")
+	}
+
 	revision = Revision{
 		B64AppProto:        b64,
-		Status:             appRevision.Status,
+		Status:             status,
 		ID:                 appRevision.Id,
 		RevisionNumber:     appRevision.RevisionNumber,
 		CreatedAt:          appRevision.CreatedAt.AsTime(),

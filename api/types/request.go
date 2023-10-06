@@ -54,6 +54,7 @@ const (
 	URLParamPorterAppEventID      URLParam = "porter_app_event_id"
 	URLParamAppRevisionID         URLParam = "app_revision_id"
 	URLParamDeploymentTargetID    URLParam = "deployment_target_id"
+	URLParamWebhookID             URLParam = "webhook_id"
 )
 
 type Path struct {

@@ -3,7 +3,6 @@ package porter_app
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -208,15 +207,16 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	webhookURL := fmt.Sprintf("%s/api/webhooks/github/%d/%d/%s", c.Config().ServerConf.ServerURL, project.ID, cluster.ID, appName)
-	err = porter_app.SetRepoWebhook(ctx, porter_app.SetRepoWebhookInput{
-		PorterAppName:       appName,
-		ClusterID:           cluster.ID,
-		GithubAppSecret:     c.Config().ServerConf.GithubAppSecret,
-		GithubAppID:         c.Config().ServerConf.GithubAppID,
-		GithubWebhookSecret: c.Config().ServerConf.GithubIncomingWebhookSecret,
-		WebhookURL:          webhookURL,
-		PorterAppRepository: c.Repo().PorterApp(),
+	err = porter_app.CreateAppWebhook(ctx, porter_app.CreateAppWebhookInput{
+		PorterAppName:           appName,
+		ProjectID:               project.ID,
+		ClusterID:               cluster.ID,
+		GithubAppSecret:         c.Config().ServerConf.GithubAppSecret,
+		GithubAppID:             c.Config().ServerConf.GithubAppID,
+		GithubWebhookSecret:     c.Config().ServerConf.GithubIncomingWebhookSecret,
+		ServerURL: 						 c.Config().ServerConf.ServerURL,
+		PorterAppRepository:     c.Repo().PorterApp(),
+		GithubWebhookRepository: c.Repo().GithubWebhook(),
 	})
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "unable to set repo webhook")

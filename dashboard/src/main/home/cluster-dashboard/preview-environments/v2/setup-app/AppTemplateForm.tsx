@@ -30,6 +30,7 @@ import { useAppValidation } from "lib/hooks/useAppValidation";
 import { PorterApp } from "@porter-dev/api-contracts";
 import axios from "axios";
 import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
+import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 
 const AppTemplateForm: React.FC = () => {
   const [step, setStep] = useState(0);
@@ -55,10 +56,7 @@ const AppTemplateForm: React.FC = () => {
     projectId,
     deploymentTarget,
   } = useLatestRevision();
-  const { validateApp } = useAppValidation({
-    deploymentTargetID: deploymentTarget.id,
-    creating: true,
-  });
+  const { maxCPU, maxRAM } = useClusterResourceLimits({ projectId, clusterId });
 
   const { data: baseEnvGroups = [] } = useQuery(
     ["getAllEnvGroups", projectId, clusterId],
@@ -240,6 +238,8 @@ const AppTemplateForm: React.FC = () => {
               <ServiceList
                 addNewText={"Add a new service"}
                 fieldArrayName={"app.services"}
+                maxCPU={maxCPU}
+                maxRAM={maxRAM}
               />
             </>,
             <>
@@ -272,6 +272,8 @@ const AppTemplateForm: React.FC = () => {
                 }
                 isPredeploy
                 fieldArrayName={"app.predeploy"}
+                maxCPU={maxCPU}
+                maxRAM={maxRAM}
               />
             </>,
             <Button type="submit" loadingText={"Deploying..."} width={"150px"}>

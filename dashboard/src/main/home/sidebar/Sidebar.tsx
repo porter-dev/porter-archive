@@ -248,10 +248,12 @@ class Sidebar extends Component<PropsType, StateType> {
               </NavButton>
             )}
 
-            <NavButton path="/preview-environments">
-              <Img src={pr_icon} />
-              Preview environments
-            </NavButton>
+            {currentProject.preview_envs_enabled && (
+              <NavButton path="/preview-environments">
+                <Img src={pr_icon} />
+                Preview environments
+              </NavButton>
+            )}
 
             {/* Hacky workaround for setting currentCluster with legacy method */}
             <Clusters
@@ -313,10 +315,12 @@ class Sidebar extends Component<PropsType, StateType> {
               </NavButton>
             )}
 
-            <NavButton path="/preview-environments">
-              <Img src={pr_icon} />
-              Preview environments
-            </NavButton>
+            {currentProject.preview_envs_enabled && (
+              <NavButton path="/preview-environments">
+                <Img src={pr_icon} />
+                Preview environments
+              </NavButton>
+            )}
 
             {this.props.isAuthorized("integrations", "", [
               "get",

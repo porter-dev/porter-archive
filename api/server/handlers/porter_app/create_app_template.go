@@ -214,7 +214,7 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		GithubAppSecret:         c.Config().ServerConf.GithubAppSecret,
 		GithubAppID:             c.Config().ServerConf.GithubAppID,
 		GithubWebhookSecret:     c.Config().ServerConf.GithubIncomingWebhookSecret,
-		ServerURL: 						 c.Config().ServerConf.ServerURL,
+		ServerURL:               c.Config().ServerConf.ServerURL,
 		PorterAppRepository:     c.Repo().PorterApp(),
 		GithubWebhookRepository: c.Repo().GithubWebhook(),
 	})

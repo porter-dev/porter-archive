@@ -125,7 +125,7 @@ func CreateAppWebhook(ctx context.Context, inp CreateAppWebhookInput) error {
 		GithubWebhookID: hook.GetID(),
 	}
 
-	webhook, err = inp.GithubWebhookRepository.Insert(ctx, webhook)
+	_, err = inp.GithubWebhookRepository.Insert(ctx, webhook)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "error saving github webhook")
 	}

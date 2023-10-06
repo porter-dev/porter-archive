@@ -91,7 +91,7 @@ export const porterAppFormValidator = z
   })
   .refine(
     ({ app, source }) => {
-      if (source.type === "docker-registry" || app.build.method === "pack") {
+      if (source.type !== "docker-registry" && app.build.method === "pack") {
         return app.services.every((svc) => svc.run.value.length > 0);
       }
 

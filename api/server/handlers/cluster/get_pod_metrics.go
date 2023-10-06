@@ -38,7 +38,7 @@ func (c *GetPodMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.GetPodMetricsRequest{}
+	request := &prometheus.GetPodMetricsRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding request")
@@ -61,7 +61,7 @@ func (c *GetPodMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	rawQuery, err := prometheus.QueryPrometheus(agent.Clientset, promSvc, &request.QueryOpts)
+	rawQuery, err := prometheus.QueryPrometheus(ctx, agent.Clientset, promSvc, &request.QueryOpts)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error querying prometheus")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

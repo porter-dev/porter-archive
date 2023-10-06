@@ -111,7 +111,7 @@ type Build struct {
 
 // Service represents a service in a Porter app
 type Service struct {
-	Run    string        `yaml:"run"`
+	Run    *string       `yaml:"run,omitempty"`
 	Config ServiceConfig `yaml:"config"`
 	Type   string        `yaml:"type" validate:"required, oneof=web worker job"`
 }

@@ -8,9 +8,10 @@ import settings from "assets/settings.svg";
 import applications from "assets/applications.svg";
 import infra from "assets/cluster.svg";
 import sliders from "assets/env-groups.svg";
-import addOns from "assets/add-ons.svg"
+import addOns from "assets/add-ons.svg";
 import database from "assets/database.svg";
 import collapseSidebar from "assets/collapse-sidebar.svg";
+import pr_icon from "assets/pull_request_icon.svg";
 
 import { Context } from "shared/Context";
 
@@ -113,11 +114,16 @@ class Sidebar extends Component<PropsType, StateType> {
 
   renderProjectContents = () => {
     let { currentView } = this.props;
-    let { currentProject, user, currentCluster, hasFinishedOnboarding } = this.context;
+    let {
+      currentProject,
+      user,
+      currentCluster,
+      hasFinishedOnboarding,
+    } = this.context;
     if (!currentProject?.simplified_view_enabled) {
       return (
         <ScrollWrapper>
-          <Spacer y={.5} />
+          <Spacer y={0.5} />
           <SidebarLabel>Home</SidebarLabel>
           <NavButton path={"/dashboard"}>
             <Img src={category} />
@@ -142,30 +148,28 @@ class Sidebar extends Component<PropsType, StateType> {
             "update",
             "delete",
           ]) && (
-              <NavButton path={"/integrations"}>
-                <Img src={integrations} />
-                Integrations
-              </NavButton>
-            )}
+            <NavButton path={"/integrations"}>
+              <Img src={integrations} />
+              Integrations
+            </NavButton>
+          )}
           {this.props.isAuthorized("settings", "", [
             "get",
             "update",
             "delete",
           ]) && (
-              <NavButton path={"/project-settings"}>
-                <Img src={settings} />
-                Project settings
-              </NavButton>
-            )}
+            <NavButton path={"/project-settings"}>
+              <Img src={settings} />
+              Project settings
+            </NavButton>
+          )}
 
           <br />
 
           <SidebarLabel>
-            {currentProject?.capi_provisioner_enabled ? (
-              "Your team"
-            ) : (
-              "Clusters"
-            )}
+            {currentProject?.capi_provisioner_enabled
+              ? "Your team"
+              : "Clusters"}
           </SidebarLabel>
           <Clusters
             setWelcome={this.props.setWelcome}
@@ -185,30 +189,28 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-                <NavButton path={"/project-settings"}
-                >
-                  <Img src={settings} />
-                  Project settings
-                </NavButton>
-              )}
+              <NavButton path={"/project-settings"}>
+                <Img src={settings} />
+                Project settings
+              </NavButton>
+            )}
             {this.props.isAuthorized("integrations", "", [
               "get",
               "create",
               "update",
               "delete",
             ]) && (
-                <NavButton path={"/integrations"}
-                >
-                  <Img src={integrations} />
-                  Integrations
-                </NavButton>
-              )}
-            {currentCluster &&
+              <NavButton path={"/integrations"}>
+                <Img src={integrations} />
+                Integrations
+              </NavButton>
+            )}
+            {currentCluster && (
               <>
-                <Spacer y={.5} />
+                <Spacer y={0.5} />
                 <ClusterListContainer />
               </>
-            }
+            )}
             <NavButton
               path="/apps"
               active={window.location.pathname.startsWith("/apps")}
@@ -225,9 +227,7 @@ class Sidebar extends Component<PropsType, StateType> {
             </NavButton>
             <NavButton
               path="/env-groups"
-              active={
-                window.location.pathname.startsWith("/env-groups")
-              }
+              active={window.location.pathname.startsWith("/env-groups")}
             >
               <Img src={sliders} />
               Env groups
@@ -237,16 +237,21 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-                <NavButton
-                  path={"/cluster-dashboard"}
-                  active={
-                    window.location.pathname.startsWith("/cluster-dashboard")
-                  }
-                >
-                  <Img src={settings} />
-                  Infrastructure
-                </NavButton>
-              )}
+              <NavButton
+                path={"/cluster-dashboard"}
+                active={window.location.pathname.startsWith(
+                  "/cluster-dashboard"
+                )}
+              >
+                <Img src={settings} />
+                Infrastructure
+              </NavButton>
+            )}
+
+            <NavButton path="/preview-environments">
+              <Img src={pr_icon} />
+              Preview environments
+            </NavButton>
 
             {/* Hacky workaround for setting currentCluster with legacy method */}
             <Clusters
@@ -259,10 +264,9 @@ class Sidebar extends Component<PropsType, StateType> {
           </ScrollWrapper>
         );
       } else {
-
         return (
           <ScrollWrapper>
-            <Spacer y={.4} />
+            <Spacer y={0.4} />
             <NavButton
               path="/apps"
               active={window.location.pathname.startsWith("/apps")}
@@ -288,9 +292,7 @@ class Sidebar extends Component<PropsType, StateType> {
             </NavButton>
             <NavButton
               path="/env-groups"
-              active={
-                window.location.pathname.startsWith("/env-groups")
-              }
+              active={window.location.pathname.startsWith("/env-groups")}
             >
               <Img src={sliders} />
               Env groups
@@ -300,17 +302,21 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
+              <NavButton
+                path={"/cluster-dashboard"}
+                active={window.location.pathname.startsWith(
+                  "/cluster-dashboard"
+                )}
+              >
+                <Img src={infra} />
+                Infrastructure
+              </NavButton>
+            )}
 
-                <NavButton
-                  path={"/cluster-dashboard"}
-                  active={
-                    window.location.pathname.startsWith("/cluster-dashboard")
-                  }
-                >
-                  <Img src={infra} />
-                  Infrastructure
-                </NavButton>
-              )}
+            <NavButton path="/preview-environments">
+              <Img src={pr_icon} />
+              Preview environments
+            </NavButton>
 
             {this.props.isAuthorized("integrations", "", [
               "get",
@@ -318,25 +324,22 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-                <NavButton path={"/integrations"}
-                >
-                  <Img src={integrations} />
-                  Integrations
-                </NavButton>
-              )}
+              <NavButton path={"/integrations"}>
+                <Img src={integrations} />
+                Integrations
+              </NavButton>
+            )}
 
             {this.props.isAuthorized("settings", "", [
               "get",
               "update",
               "delete",
             ]) && (
-                <NavButton path={"/project-settings"}
-                >
-                  <Img src={settings} />
-                  Project settings
-                </NavButton>
-
-              )}
+              <NavButton path={"/project-settings"}>
+                <Img src={settings} />
+                Project settings
+              </NavButton>
+            )}
 
             {/* Hacky workaround for setting currentCluster with legacy method */}
             <Clusters
@@ -348,14 +351,11 @@ class Sidebar extends Component<PropsType, StateType> {
             />
           </ScrollWrapper>
         );
-
       }
     }
 
     // Render placeholder if no project exists
     return <ProjectPlaceholder>No projects found.</ProjectPlaceholder>;
-
-
   };
 
   // SidebarBg is separate to cover retracted drawer
@@ -455,14 +455,14 @@ const SidebarBg = styled.div`
   top: 0;
   left: 0;
   width: 100%;
-  background-color: ${props => props.theme.bg};
+  background-color: ${(props) => props.theme.bg};
   height: 100%;
   z-index: -1;
   border-right: 1px solid #383a3f;
 `;
 
 const SidebarLabel = styled.div`
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   padding: 5px 23px;
   margin-bottom: 5px;
   font-size: 13px;
@@ -492,7 +492,7 @@ const PullTab = styled.div`
   }
 
   :hover {
-    border: 1px solid ${props => props.theme.text.primary};
+    border: 1px solid ${(props) => props.theme.text.primary};
     border-left: none;
     > img {
       opacity: 0.9;

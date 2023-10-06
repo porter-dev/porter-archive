@@ -2,36 +2,44 @@ package porter_app
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/google/go-github/v39/github"
+	"github.com/google/uuid"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// SetRepoWebhookInput is the input to the SetRepoWebhook function
-type SetRepoWebhookInput struct {
-	PorterAppName       string
+// CreateAppWebhookInput is the input to the CreateAppWebhook function
+type CreateAppWebhookInput struct {
+	ProjectID           uint
 	ClusterID           uint
+	PorterAppName       string
 	GithubAppSecret     []byte
 	GithubAppID         string
 	GithubWebhookSecret string
-	WebhookURL          string
+	ServerURL           string
 
-	PorterAppRepository repository.PorterAppRepository
+	PorterAppRepository     repository.PorterAppRepository
+	GithubWebhookRepository repository.GithubWebhookRepository
 }
 
-// SetRepoWebhook creates or updates a github webhook for a porter app associated with a given repo
+// CreateAppWebhook creates or updates a github webhook for a porter app associated with a given project / cluster / app
 // The webhook watches for pull request and push events, used for managing preview environments
-func SetRepoWebhook(ctx context.Context, inp SetRepoWebhookInput) error {
-	ctx, span := telemetry.NewSpan(ctx, "porter-app-set-repo-webhook")
+func CreateAppWebhook(ctx context.Context, inp CreateAppWebhookInput) error {
+	ctx, span := telemetry.NewSpan(ctx, "porter-app-create-app-webhook")
 	defer span.End()
 
 	if inp.PorterAppName == "" {
 		return telemetry.Error(ctx, span, nil, "porter app name is empty")
+	}
+	if inp.ProjectID == 0 {
+		return telemetry.Error(ctx, span, nil, "project id is empty")
 	}
 	if inp.ClusterID == 0 {
 		return telemetry.Error(ctx, span, nil, "cluster id is empty")
@@ -47,6 +55,9 @@ func SetRepoWebhook(ctx context.Context, inp SetRepoWebhookInput) error {
 	}
 	if inp.PorterAppRepository == nil {
 		return telemetry.Error(ctx, span, nil, "porter app repository is nil")
+	}
+	if inp.GithubWebhookRepository == nil {
+		return telemetry.Error(ctx, span, nil, "github webhook repository is nil")
 	}
 
 	porterApp, err := inp.PorterAppRepository.ReadPorterAppByName(inp.ClusterID, inp.PorterAppName)
@@ -75,7 +86,6 @@ func SetRepoWebhook(ctx context.Context, inp SetRepoWebhookInput) error {
 
 	hook := &github.Hook{
 		Config: map[string]interface{}{
-			"url":          inp.WebhookURL,
 			"content_type": "json",
 			"secret":       inp.GithubWebhookSecret,
 		},
@@ -83,29 +93,41 @@ func SetRepoWebhook(ctx context.Context, inp SetRepoWebhookInput) error {
 		Active: github.Bool(true),
 	}
 
-	if porterApp.GithubWebhookID != 0 {
-		_, _, err := githubClient.Repositories.EditHook(
-			context.Background(), repoDetails[0], repoDetails[1], porterApp.GithubWebhookID, hook,
-		)
+	// check if the webhook already exists
+	webhook, err := inp.GithubWebhookRepository.GetByClusterAndAppID(ctx, inp.ClusterID, porterApp.ID)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error getting github webhook")
+	}
+
+	if webhook.ID != uuid.Nil {
+		hook.Config["url"] = fmt.Sprintf("%s/api/webhooks/github/%s", inp.ServerURL, webhook.ID.String())
+		_, _, err := githubClient.Repositories.EditHook(ctx, repoDetails[0], repoDetails[1], webhook.GithubWebhookID, hook)
 		if err != nil {
-			return telemetry.Error(ctx, span, err, "could not edit hook")
+			return telemetry.Error(ctx, span, err, "error editing github webhook")
 		}
 
 		return nil
 	}
 
-	hook, _, err = githubClient.Repositories.CreateHook(
-		context.Background(), repoDetails[0], repoDetails[1], hook,
-	)
+	webhookID := uuid.New()
+
+	hook.Config["url"] = fmt.Sprintf("%s/api/webhooks/github/%s", inp.ServerURL, webhookID)
+	hook, _, err = githubClient.Repositories.CreateHook(ctx, repoDetails[0], repoDetails[1], hook)
 	if err != nil {
-		return telemetry.Error(ctx, span, err, "could not create hook")
+		return telemetry.Error(ctx, span, err, "error creating github webhook")
 	}
 
-	porterApp.GithubWebhookID = hook.GetID()
+	webhook = &models.GithubWebhook{
+		ID:              webhookID,
+		ProjectID:       int(porterApp.ProjectID),
+		ClusterID:       int(porterApp.ClusterID),
+		PorterAppID:     int(porterApp.ID),
+		GithubWebhookID: hook.GetID(),
+	}
 
-	_, err = inp.PorterAppRepository.UpdatePorterApp(porterApp)
+	webhook, err = inp.GithubWebhookRepository.Insert(ctx, webhook)
 	if err != nil {
-		return telemetry.Error(ctx, span, err, "could not update porter app")
+		return telemetry.Error(ctx, span, err, "error saving github webhook")
 	}
 
 	return nil

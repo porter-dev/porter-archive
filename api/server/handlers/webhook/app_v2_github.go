@@ -58,61 +58,43 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
+	webhookID, reqErr := requestutils.GetURLParamString(r, types.URLParamWebhookID)
 	if reqErr != nil {
 		err := telemetry.Error(ctx, span, nil, "error parsing porter app name")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "application-name", Value: appName})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "webhook-id", Value: webhookID})
 
-	clusterID, reqErr := requestutils.GetURLParamUint(r, types.URLParamClusterID)
-	if reqErr != nil {
-		err := telemetry.Error(ctx, span, nil, "error parsing cluster id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	projectID, reqErr := requestutils.GetURLParamUint(r, types.URLParamProjectID)
-	if reqErr != nil {
-		err := telemetry.Error(ctx, span, nil, "error parsing project id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "project-id", Value: projectID})
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cluster-id", Value: clusterID})
-
-	porterApps, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(projectID, appName)
+	webhookUUID, err := uuid.Parse(webhookID)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting porter app from repo")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		err := telemetry.Error(ctx, span, err, "error parsing webhook id")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	if len(porterApps) == 0 {
-		err := telemetry.Error(ctx, span, err, "error getting porter app from repo")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-	if len(porterApps) > 1 {
-		err := telemetry.Error(ctx, span, err, "multiple porter apps returned; unable to determine which one to use")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+	if webhookUUID == uuid.Nil {
+		err := telemetry.Error(ctx, span, err, "webhook id is nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
-	app := porterApps[0]
-	if app.ID == 0 {
-		err := telemetry.Error(ctx, span, err, "porter app id is missing")
+	webhook, err := c.Repo().GithubWebhook().Get(ctx, webhookUUID)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting github webhook")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-	if app.ClusterID != clusterID {
-		err := telemetry.Error(ctx, span, err, "porter app cluster id does not match")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+	if webhook.ID == uuid.Nil {
+		err := telemetry.Error(ctx, span, err, "github webhook id is nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-id", Value: app.ID})
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "porter-app-id", Value: webhook.PorterAppID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: webhook.ClusterID},
+		telemetry.AttributeKV{Key: "project-id", Value: webhook.ProjectID},
+	)
 
 	switch event := event.(type) {
 	case *github.PullRequestEvent:
@@ -126,8 +108,8 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "event-branch", Value: branch})
 
 		deploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(
-			projectID,
-			clusterID,
+			uint(webhook.ProjectID),
+			uint(webhook.ClusterID),
 			branch,
 			string(models.DeploymentTargetSelectorType_Namespace),
 		)
@@ -143,14 +125,14 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTarget.ID.String()})
 
-		if deploymentTarget.ClusterID != int(clusterID) {
+		if deploymentTarget.ClusterID != webhook.ClusterID {
 			err := telemetry.Error(ctx, span, err, "deployment target cluster id does not match")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
 		}
 
 		deleteTargetReq := connect.NewRequest(&porterv1.DeleteDeploymentTargetRequest{
-			ProjectId:          int64(projectID),
+			ProjectId:          int64(webhook.ProjectID),
 			DeploymentTargetId: deploymentTarget.ID.String(),
 		})
 

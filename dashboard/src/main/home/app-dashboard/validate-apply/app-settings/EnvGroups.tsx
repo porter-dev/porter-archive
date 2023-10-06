@@ -40,7 +40,7 @@ const EnvGroups: React.FC<Props> = ({
     name: "deletions.envGroupNames",
   });
 
-  const maxEnvGroupsReached = envGroups.length >= 3;
+  const maxEnvGroupsReached = envGroups.length > 3;
 
   const populatedEnvWithFallback = useMemo(() => {
     return envGroups
@@ -111,7 +111,7 @@ const EnvGroups: React.FC<Props> = ({
           <img src={sliders} /> Load from Env Group
         </LoadButton>
         <TooltipText visible={maxEnvGroupsReached && hovered}>
-          Max 4 Env Groups allowed
+          Max 3 Env Groups allowed
         </TooltipText>
       </TooltipWrapper>
       {populatedEnvWithFallback.length > 0 && (
@@ -168,7 +168,7 @@ const AddRowButton = styled.div`
   }
 `;
 
-const LoadButton = styled(AddRowButton)<{ disabled?: boolean }>`
+const LoadButton = styled(AddRowButton) <{ disabled?: boolean }>`
   background: ${(props) => (props.disabled ? "#aaaaaa55" : "none")};
   border: 1px solid ${(props) => (props.disabled ? "#aaaaaa55" : "#ffffff55")};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};

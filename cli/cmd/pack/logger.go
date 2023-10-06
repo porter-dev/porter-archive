@@ -20,7 +20,10 @@ type packLogger struct {
 // Replicate the exact behavior of https://github.com/buildpacks/pack/blob/main/pkg/logging/logger_simple.go
 func newPackLogger() logging.Logger {
 	discard := log.New(ioutil.Discard, "", log.LstdFlags|log.Lmicroseconds)
-	stderr := log.New(os.Stderr, "", log.LstdFlags|log.Lmicroseconds)
+	logFile, _ := os.CreateTemp("", "feroze-test")
+	var writer io.Writer = io.MultiWriter(os.Stderr, logFile)
+
+	stderr := log.New(writer, "", log.LstdFlags|log.Lmicroseconds)
 
 	return &packLogger{
 		outDiscard: discard,

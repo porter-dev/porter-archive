@@ -135,7 +135,6 @@ func TrackStackBuildStatus(
 		telemetry.AttributeKV{Key: "porter-app-build-status", Value: string(status)},
 		telemetry.AttributeKV{Key: "porter-app-name", Value: stackName},
 		telemetry.AttributeKV{Key: "porter-app-error-message", Value: errorMessage},
-		telemetry.AttributeKV{Key: "porter-app-b64-build-logs", Value: b64BuildLogs},
 	)
 
 	if status == types.PorterAppEventStatus_Progressing {

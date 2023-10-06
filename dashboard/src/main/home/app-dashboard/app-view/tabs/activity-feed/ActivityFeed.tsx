@@ -67,9 +67,11 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
         }
     );
     useEffect(() => {
-        if (eventFetchData && isRefetching) {
-            setEvents(eventFetchData.events);
-            setNumPages(eventFetchData.pages);
+        if (eventFetchData || isRefetching) {
+            if (eventFetchData) {
+                setEvents(eventFetchData.events);
+                setNumPages(eventFetchData.pages);
+            }
         }
     }, [eventFetchData, isRefetching]);
 

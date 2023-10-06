@@ -8,11 +8,19 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+type ListNGINXIngressesResponse []SimpleIngress
+
+type GetPodMetricsRequest struct {
+	QueryOpts
+}
 
 // GetPrometheusService returns the prometheus service name. The prometheus-community/prometheus chart @ v15.5.3 uses non-FQDN labels, unlike v22.6.2. This function checks for both labels.
 func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, error) {
@@ -126,18 +134,37 @@ type QueryOpts struct {
 }
 
 func QueryPrometheus(
+	ctx context.Context,
 	clientset kubernetes.Interface,
 	service *v1.Service,
 	opts *QueryOpts,
 ) ([]*promParsedSingletonQuery, error) {
+	ctx, span := telemetry.NewSpan(ctx, "query-prometheus")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "metric", Value: opts.Metric},
+		telemetry.AttributeKV{Key: "should-sum", Value: opts.ShouldSum},
+		telemetry.AttributeKV{Key: "kind", Value: opts.Kind},
+		telemetry.AttributeKV{Key: "pod-list", Value: strings.Join(opts.PodList, ",")},
+		telemetry.AttributeKV{Key: "name", Value: opts.Name},
+		telemetry.AttributeKV{Key: "namespace", Value: opts.Namespace},
+		telemetry.AttributeKV{Key: "start-range", Value: opts.StartRange},
+		telemetry.AttributeKV{Key: "end-range", Value: opts.EndRange},
+		telemetry.AttributeKV{Key: "resolution", Value: opts.Resolution},
+		telemetry.AttributeKV{Key: "percentile", Value: opts.Percentile},
+	)
+
 	if len(service.Spec.Ports) == 0 {
-		return nil, fmt.Errorf("prometheus service has no exposed ports to query")
+		return nil, telemetry.Error(ctx, span, nil, "prometheus service has no exposed ports to query")
 	}
 
 	selectionRegex, err := getSelectionRegex(opts.Kind, opts.Name)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "failed to get selection regex")
 	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "selection-regex", Value: selectionRegex})
 
 	var podSelector string
 
@@ -146,6 +173,8 @@ func QueryPrometheus(
 	} else {
 		podSelector = fmt.Sprintf(`namespace="%s",pod=~"%s",container!="POD",container!=""`, opts.Namespace, selectionRegex)
 	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "pod-selector", Value: podSelector})
 
 	query := ""
 
@@ -169,7 +198,7 @@ func QueryPrometheus(
 	} else if opts.Metric == "nginx:status" {
 		query, err = getNginxStatusQuery(opts, selectionRegex)
 		if err != nil {
-			return nil, err
+			return nil, telemetry.Error(ctx, span, err, "failed to get nginx status query")
 		}
 	} else if opts.Metric == "cpu_hpa_threshold" {
 		// get the name of the kube hpa metric
@@ -206,6 +235,8 @@ func QueryPrometheus(
 		query = createHPACurrentReplicasQuery(metricName, opts.Name, opts.Namespace, appLabel, hpaMetricName)
 	}
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "query", Value: query})
+
 	if opts.ShouldSum {
 		query = fmt.Sprintf("sum(%s)", query)
 	}
@@ -232,10 +263,15 @@ func QueryPrometheus(
 			return []*promParsedSingletonQuery{}, nil
 		}
 
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "failed to get raw query")
 	}
 
-	return parseQuery(rawQuery, opts.Metric)
+	parsedQuery, err := parseQuery(rawQuery, opts.Metric)
+	if err != nil {
+		return nil, telemetry.Error(ctx, span, err, "failed to parse query")
+	}
+
+	return parsedQuery, nil
 }
 
 func getNginxStatusQuery(opts *QueryOpts, selectionRegex string) (string, error) {

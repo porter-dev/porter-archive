@@ -145,7 +145,7 @@ func (c *AppMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Percentile: request.Percentile,
 	}
 
-	rawQuery, err := prometheus.QueryPrometheus(agent.Clientset, promSvc, queryOpts)
+	rawQuery, err := prometheus.QueryPrometheus(ctx, agent.Clientset, promSvc, queryOpts)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error querying prometheus")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

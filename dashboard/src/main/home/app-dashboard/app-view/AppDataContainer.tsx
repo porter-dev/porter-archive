@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import {
   PorterAppFormData,
   SourceOptions,
@@ -37,6 +37,8 @@ import ImageSettingsTab from "./tabs/ImageSettingsTab";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 import { Error as ErrorComponent } from "components/porter/Error";
+import _ from "lodash";
+import axios from "axios";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -305,9 +307,13 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         errorStackTrace: stack,
       });
 
-      if ((err as any).response?.data?.message) {
+      if (axios.isAxiosError(err)) {
         setError("app", {
-          message: `App update failed: ${(err as any).response.data.message}`,
+          message: `App update failed: ${err.message}`,
+        });
+      } else {
+        setError("app", {
+          message: `App update failed: Please try again or contact support if the error persists.`,
         });
       }
     }
@@ -316,8 +322,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const cancelRedeploy = useCallback(() => {
     const resetProto = previewRevision
       ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
-        ignoreUnknownFields: true,
-      })
+          ignoreUnknownFields: true,
+        })
       : latestProto;
 
     // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
@@ -325,12 +331,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     const resetSource =
       porterAppRecord.image_repo_uri && resetProto.image
         ? {
-          type: "docker-registry" as const,
-          image: {
-            repository: resetProto.image.repository,
-            tag: resetProto.image.tag,
-          },
-        }
+            type: "docker-registry" as const,
+            image: {
+              repository: resetProto.image.repository,
+              tag: resetProto.image.tag,
+            },
+          }
         : latestSource;
 
     reset({
@@ -355,17 +361,20 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     onSubmit();
   }, [onSubmit, setConfirmDeployModalOpen]);
 
+  const errorMessagesDeep = useMemo(() => {
+    return Object.values(_.mapValues(errors, (error) => error?.message));
+  }, [errors]);
+
   const buttonStatus = useMemo(() => {
     if (isSubmitting) {
       return "loading";
     }
 
-    if (Object.keys(errors).length > 0) {
-      console.log(errors);
-      return errors.app?.message ? (
-        <ErrorComponent message={errors.app.message} />
-      ) : (
-        <ErrorComponent message="App update failed. If the error persists, please contact support." />
+    if (errorMessagesDeep.length > 0) {
+      return (
+        <ErrorComponent
+          message={`App update failed. ${errorMessagesDeep[0]}`}
+        />
       );
     }
 
@@ -374,13 +383,13 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     }
 
     return "";
-  }, [isSubmitting, errors]);
+  }, [isSubmitting, errorMessagesDeep]);
 
   useEffect(() => {
     const newProto = previewRevision
       ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
-        ignoreUnknownFields: true,
-      })
+          ignoreUnknownFields: true,
+        })
       : latestProto;
 
     // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
@@ -388,12 +397,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     const newSource =
       porterAppRecord.image_repo_uri && newProto.image
         ? {
-          type: "docker-registry" as const,
-          image: {
-            repository: newProto.image.repository,
-            tag: newProto.image.tag,
-          },
-        }
+            type: "docker-registry" as const,
+            image: {
+              repository: newProto.image.repository,
+              tag: newProto.image.tag,
+            },
+          }
         : latestSource;
 
     reset({
@@ -472,17 +481,17 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             { label: "Environment", value: "environment" },
             ...(latestProto.build
               ? [
-                {
-                  label: "Build Settings",
-                  value: "build-settings",
-                },
-              ]
+                  {
+                    label: "Build Settings",
+                    value: "build-settings",
+                  },
+                ]
               : [
-                {
-                  label: "Image Settings",
-                  value: "image-settings",
-                },
-              ]),
+                  {
+                    label: "Image Settings",
+                    value: "image-settings",
+                  },
+                ]),
             { label: "Settings", value: "settings" },
           ]}
           currentTab={currentTab}

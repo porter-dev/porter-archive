@@ -33,7 +33,7 @@ export const LatestRevisionContext = createContext<{
   servicesFromYaml: DetectedServices | null;
   clusterId: number;
   projectId: number;
-  deploymentTarget: DeploymentTarget;
+  deploymentTarget: DeploymentTarget & { namespace: string };
   previewRevision: AppRevision | null;
   attachedEnvGroups: PopulatedEnvGroup[];
   appEnv?: PopulatedEnvGroup;
@@ -132,6 +132,46 @@ export const LatestRevisionProvider = ({
     }
   );
 
+  const { data, status: deploymentTargetStatus } = useQuery(
+    [
+      "getDeploymentTarget",
+      {
+        cluster_id: currentCluster?.id,
+        project_id: currentProject?.id,
+        deployment_target_id: currentDeploymentTarget?.id,
+      },
+    ],
+    async () => {
+      if (!currentCluster || !currentProject || !currentDeploymentTarget) {
+        return;
+      }
+      const res = await api.getDeploymentTarget(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          deployment_target_id: currentDeploymentTarget.id,
+        }
+      );
+
+      const { deployment_target } = await z
+        .object({
+          deployment_target: z.object({
+            cluster_id: z.number(),
+            namespace: z.string(),
+            preview: z.boolean(),
+          }),
+        })
+        .parseAsync(res.data);
+
+      return deployment_target;
+    },
+    {
+      enabled: !!currentCluster && !!currentProject,
+    }
+  );
+
   const revisionId = previewRevision?.id ?? latestRevision?.id;
   const { data: { attachedEnvGroups = [], appEnv } = {} } = useQuery(
     ["getAttachedEnvGroups", appName, revisionId],
@@ -221,6 +261,7 @@ export const LatestRevisionProvider = ({
   if (
     status === "loading" ||
     porterAppStatus === "loading" ||
+    deploymentTargetStatus === "loading" ||
     !appParamsExist ||
     porterYamlLoading
   ) {
@@ -230,6 +271,7 @@ export const LatestRevisionProvider = ({
   if (
     status === "error" ||
     porterAppStatus === "error" ||
+    deploymentTargetStatus === "error" ||
     !latestRevision ||
     !latestProto ||
     !porterApp
@@ -256,7 +298,10 @@ export const LatestRevisionProvider = ({
         porterApp,
         clusterId: currentCluster.id,
         projectId: currentProject.id,
-        deploymentTarget: currentDeploymentTarget,
+        deploymentTarget: {
+          ...currentDeploymentTarget,
+          namespace: data?.namespace ?? "",
+        },
         servicesFromYaml: detectedServices,
         attachedEnvGroups,
         appEnv,

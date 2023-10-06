@@ -3,7 +3,6 @@ package porter_app
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -204,22 +203,6 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	err = environment_groups.CreateOrUpdateBaseEnvironmentGroup(ctx, agent, envGroup, additionalEnvGroupLabels)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "unable to create or update base environment group")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	webhookURL := fmt.Sprintf("%s/api/webhooks/github/%d/%d/%s", c.Config().ServerConf.ServerURL, project.ID, cluster.ID, appName)
-	err = porter_app.SetRepoWebhook(ctx, porter_app.SetRepoWebhookInput{
-		PorterAppName:       appName,
-		ClusterID:           cluster.ID,
-		GithubAppSecret:     c.Config().ServerConf.GithubAppSecret,
-		GithubAppID:         c.Config().ServerConf.GithubAppID,
-		GithubWebhookSecret: c.Config().ServerConf.GithubIncomingWebhookSecret,
-		WebhookURL:          webhookURL,
-		PorterAppRepository: c.Repo().PorterApp(),
-	})
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to set repo webhook")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

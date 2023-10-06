@@ -51,7 +51,7 @@ const GithubActionModal: React.FC<Props> = ({
   const [isChecked, setIsChecked] = React.useState<boolean>(false);
 
   const actionYamlContents = useMemo(() => {
-    if (!projectId || !clusterId || !stackName || !branch || !porterYamlPath) {
+    if (!projectId || !clusterId || !stackName || !branch) {
       return "";
     }
     if (type === "preview") {

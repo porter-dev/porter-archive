@@ -57,16 +57,12 @@ export const getPreviewGithubAction = (
   projectID: number,
   clusterId: number,
   stackName: string,
-  branchName: string,
   porterYamlPath: string = "porter.yaml"
 ) => {
   return `on:
   pull_request:
-    paths:
-    - *
-    - '!./github/workflows/porter-**'
     branches:
-    - ${branchName}
+    - '!porter-**'
     types:
     - opened
     - synchronize

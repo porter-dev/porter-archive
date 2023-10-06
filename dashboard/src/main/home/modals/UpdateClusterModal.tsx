@@ -37,7 +37,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
   };
 
   handleDelete = async () => {
-    let { currentProject, currentCluster } = this.context;
+    let { currentProject, currentCluster, setCurrentCluster } = this.context;
     this.setState({ status: "loading" });
 
     await api.updateOnboardingStep(
@@ -87,8 +87,8 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
               .then(async (res) => {
                 if (res.data) {
                   let clusters = res.data;
-
-                  if (!currentProject.multi_cluster || clusters?.length() == 1) {
+                  if (clusters.length == 0 || !currentProject.multi_cluster) {
+                    setCurrentCluster(null)
                     await api.saveOnboardingState(
                       "<token>",
                       { current_step: "connect_source" },

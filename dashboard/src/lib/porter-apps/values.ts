@@ -51,7 +51,7 @@ export const ServiceField = {
   string: (defaultValue: string, overrideValue?: string): ServiceString => {
     return {
       readOnly: !!overrideValue,
-      value: overrideValue ?? defaultValue,
+      value: overrideValue || defaultValue,
     };
   },
   number: (
@@ -70,7 +70,7 @@ export const ServiceField = {
   ): ServiceBoolean => {
     return {
       readOnly: typeof overrideValue === "boolean",
-      value: overrideValue ?? defaultValue ?? false,
+      value: overrideValue || defaultValue || false,
     };
   },
 };

@@ -106,7 +106,7 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 		if inp.LogFilename != "" {
 			logFile, err = os.Create(inp.LogFilename)
 			if err == nil {
-				defer logFile.Close()
+				defer logFile.Close() // nolint: errcheck
 			}
 		}
 

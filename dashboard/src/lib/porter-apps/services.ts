@@ -472,7 +472,7 @@ export function serviceProto(service: SerializedService): Service {
       (config) =>
         new Service({
           ...service,
-          runOptional: service.run ? service.run : undefined,
+          runOptional: service.run,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {
@@ -489,7 +489,7 @@ export function serviceProto(service: SerializedService): Service {
       (config) =>
         new Service({
           ...service,
-          runOptional: service.run ? service.run : undefined,
+          runOptional: service.run,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {},

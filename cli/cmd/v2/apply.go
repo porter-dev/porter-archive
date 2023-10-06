@@ -408,7 +408,6 @@ func buildSettingsFromBase64AppProto(base64AppProto string) (buildInput, error) 
 		BuildPacks:    app.Build.Buildpacks,
 		ImageTag:      app.Image.Tag,
 		RepositoryURL: app.Image.Repository,
-		LogFilename:   buildLogFilename,
 	}, nil
 }
 

@@ -19,7 +19,7 @@ import (
 const (
 	buildMethodPack   = "pack"
 	buildMethodDocker = "docker"
-	buildLogFilename  = "PORTER_BUILD_LOGS.txt"
+	buildLogFilename  = "PORTER_BUILD_LOGS"
 )
 
 // buildInput is the input struct for the build method
@@ -40,9 +40,6 @@ type buildInput struct {
 	RepositoryURL   string
 
 	Env map[string]string
-
-	// LogFilename is the name of the file to write the build logs to
-	LogFilename string
 }
 
 type buildOutput struct {
@@ -102,13 +99,9 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 			return output
 		}
 
-		var logFile *os.File
-		if inp.LogFilename != "" {
-			logFile, err = os.Create(inp.LogFilename)
-			if err == nil {
-				defer logFile.Close() // nolint: errcheck
-			}
-		}
+		// create a temp file which build logs will be written to
+		// temp file gets cleaned up when os exits (i.e. when the GHA completes), so no need to remove it manually
+		logFile, _ := os.CreateTemp("", buildLogFilename)
 
 		opts := &docker.BuildOpts{
 			ImageRepo:         inp.RepositoryURL,
@@ -131,17 +124,13 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 
 			if logFile != nil {
 				content, err := os.ReadFile(logFile.Name())
+				// only continue if we can read the file. if we cannot, logString will be the default
 				if err == nil {
 					logString = string(content)
 				}
-				_ = os.Remove(logFile.Name())
 			}
 			output.Logs = logString
 			return output
-		}
-
-		if logFile != nil {
-			_ = os.Remove(logFile.Name())
 		}
 	case buildMethodPack:
 		packAgent := &pack.Agent{}

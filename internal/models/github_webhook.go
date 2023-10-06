@@ -5,10 +5,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type GithhubWebhook struct {
+// GithubWebhook represents a webhook that is created on Github which can trigger actions in Porter for the specified project/cluster
+type GithubWebhook struct {
 	gorm.Model
 
-	// ID is a UUID for the Revision
+	// ID is a UUID for the webhook
 	ID uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
 
 	// ClusterID is the ID of the cluster that the webhook is associated with.

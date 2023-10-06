@@ -104,7 +104,6 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 
 		var logFile *os.File
 		if inp.LogFilename != "" {
-			// Create a file for PORTER_BUILD_OUTPUT.txt
 			logFile, err = os.Create(inp.LogFilename)
 			if err == nil {
 				defer logFile.Close()

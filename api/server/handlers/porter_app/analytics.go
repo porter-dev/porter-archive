@@ -125,14 +125,18 @@ func TrackStackBuildStatus(
 	errorMessage string,
 	status types.PorterAppEventStatus,
 	validateApplyV2 bool,
-	buildLogs string,
+	b64BuildLogs string,
 ) error {
 	_, span := telemetry.NewSpan(ctx, "track-build-status")
 	defer span.End()
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-build-status", Value: string(status)})
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-name", Value: stackName})
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-error-message", Value: errorMessage})
+	telemetry.WithAttributes(
+		span,
+		telemetry.AttributeKV{Key: "porter-app-build-status", Value: string(status)},
+		telemetry.AttributeKV{Key: "porter-app-name", Value: stackName},
+		telemetry.AttributeKV{Key: "porter-app-error-message", Value: errorMessage},
+		telemetry.AttributeKV{Key: "porter-app-b64-build-logs", Value: b64BuildLogs},
+	)
 
 	if status == types.PorterAppEventStatus_Progressing {
 		return config.AnalyticsClient.Track(analytics.StackBuildProgressingTrack(&analytics.StackBuildOpts{
@@ -163,7 +167,7 @@ func TrackStackBuildStatus(
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			StackName:              stackName,
 			ErrorMessage:           errorMessage,
-			B64BuildLogs:           buildLogs,
+			B64BuildLogs:           b64BuildLogs,
 			Email:                  user.Email,
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,

@@ -11,7 +11,7 @@ type Props = {
   errorModalContents?: React.ReactNode;
 };
 
-const Error: React.FC<Props> = ({
+export const Error: React.FC<Props> = ({
   message,
   ctaText,
   ctaOnClick,
@@ -24,16 +24,16 @@ const Error: React.FC<Props> = ({
       <StyledError>
         <i className="material-icons">error_outline</i>
         <Block>
-        <Bold>Error:</Bold>
-        <Text>{message}</Text>
-        {ctaText && (errorModalContents != null || ctaOnClick != null) && (
-          <Cta onClick={() => {
-            errorModalContents ? setErrorModalOpen(true) : ctaOnClick();
-          }}>
-            <Underline>{ctaText}</Underline>
-            <i className="material-icons">open_in_new</i>
-          </Cta>
-        )}
+          <Bold>Error:</Bold>
+          <Text>{message}</Text>
+          {ctaText && (errorModalContents != null || ctaOnClick != null) && (
+            <Cta onClick={() => {
+              errorModalContents ? setErrorModalOpen(true) : ctaOnClick();
+            }}>
+              <Underline>{ctaText}</Underline>
+              <i className="material-icons">open_in_new</i>
+            </Cta>
+          )}
         </Block>
       </StyledError>
       {errorModalOpen &&

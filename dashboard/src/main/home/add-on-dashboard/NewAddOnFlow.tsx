@@ -29,9 +29,12 @@ type Props = {
 const HIDDEN_CHARTS = [
   "agent",
   "elasticache-chart",
+  "elasticache-memcached",
+  "elasticache-redis",
   "loki",
   "porter-agent",
   "rds-chart",
+  "rds-postgresql"
 ];
 
 //For Charts that don't exist locally we need to add them in manually

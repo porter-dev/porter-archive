@@ -16,7 +16,7 @@ type Props = RouteComponentProps & {
   setImageTag: (x: string) => void;
   setPorterYaml: (yaml: string, filename: string) => void;
   porterApp: PorterApp;
-  setPorterApp: (x: PorterApp) => void;
+  setPorterApp: React.Dispatch<React.SetStateAction<PorterApp>>;
   buildView: BuildMethod;
   setBuildView: (buildView: BuildMethod) => void;
   projectId: number;
@@ -45,7 +45,7 @@ const SourceSettings: React.FC<Props> = ({
           <SharedBuildSettings
             setPorterYaml={setPorterYaml}
             porterApp={porterApp}
-            updatePorterApp={(attrs: Partial<PorterApp>) => setPorterApp(PorterApp.setAttributes(porterApp, attrs))}
+            updatePorterApp={(attrs: Partial<PorterApp>) => setPorterApp((prev: PorterApp) => PorterApp.setAttributes(prev, attrs))}
             autoDetectionOn={true}
             canChangeRepo={true}
             buildView={buildView}

@@ -608,6 +608,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                     setShowGHAModal(true);
                   }
                 }}
+                disabled={formState.serviceList.length === 0 || deploying}
                 status={
                   deploying ? (
                     "loading"

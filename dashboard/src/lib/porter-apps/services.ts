@@ -98,29 +98,29 @@ export type SerializedService = {
   ramMegabytes: number;
   smartOptimization?: boolean;
   config:
-  | {
-    type: "web";
-    domains: {
-      name: string;
-    }[];
-    autoscaling?: SerializedAutoscaling;
-    healthCheck?: SerializedHealthcheck;
-    private?: boolean;
-  }
-  | {
-    type: "worker";
-    autoscaling?: SerializedAutoscaling;
-  }
-  | {
-    type: "job";
-    allowConcurrent?: boolean;
-    cron: string;
-    suspendCron?: boolean;
-    timeoutSeconds: number;
-  }
-  | {
-    type: "predeploy";
-  };
+    | {
+        type: "web";
+        domains: {
+          name: string;
+        }[];
+        autoscaling?: SerializedAutoscaling;
+        healthCheck?: SerializedHealthcheck;
+        private?: boolean;
+      }
+    | {
+        type: "worker";
+        autoscaling?: SerializedAutoscaling;
+      }
+    | {
+        type: "job";
+        allowConcurrent?: boolean;
+        cron: string;
+        suspendCron?: boolean;
+        timeoutSeconds: number;
+      }
+    | {
+        type: "predeploy";
+      };
 };
 
 export function isPredeployService(service: SerializedService | ClientService) {
@@ -305,7 +305,10 @@ export function deserializeService({
       service.ramMegabytes,
       override?.ramMegabytes
     ),
-    smartOptimization: ServiceField.boolean(service.smartOptimization, override?.smartOptimization),
+    smartOptimization: ServiceField.boolean(
+      service.smartOptimization,
+      override?.smartOptimization
+    ),
     domainDeletions: [],
   };
 
@@ -328,12 +331,12 @@ export function deserializeService({
           autoscaling: deserializeAutoscaling({
             autoscaling: config.autoscaling,
             override: overrideWebConfig?.autoscaling,
-              setDefaults: setDefaults,
+            setDefaults: setDefaults,
           }),
           healthCheck: deserializeHealthCheck({
             health: config.healthCheck,
             override: overrideWebConfig?.healthCheck,
-              setDefaults: setDefaults,
+            setDefaults: setDefaults,
           }),
 
           domains: uniqueDomains.map((domain) => ({
@@ -346,9 +349,11 @@ export function deserializeService({
           })),
           private:
             typeof config.private === "boolean" ||
-              typeof overrideWebConfig?.private === "boolean"
+            typeof overrideWebConfig?.private === "boolean"
               ? ServiceField.boolean(config.private, overrideWebConfig?.private)
-              : (setDefaults ? ServiceField.boolean(false, undefined) : undefined),
+              : setDefaults
+              ? ServiceField.boolean(false, undefined)
+              : undefined,
         },
       };
     })
@@ -363,7 +368,7 @@ export function deserializeService({
           autoscaling: deserializeAutoscaling({
             autoscaling: config.autoscaling,
             override: overrideWorkerConfig?.autoscaling,
-              setDefaults: setDefaults,
+            setDefaults: setDefaults,
           }),
         },
       };
@@ -378,27 +383,34 @@ export function deserializeService({
           type: "job" as const,
           allowConcurrent:
             typeof config.allowConcurrent === "boolean" ||
-              typeof overrideJobConfig?.allowConcurrent === "boolean"
+            typeof overrideJobConfig?.allowConcurrent === "boolean"
               ? ServiceField.boolean(
-                config.allowConcurrent,
-                overrideJobConfig?.allowConcurrent
-              )
-              : (setDefaults ? ServiceField.boolean(false, undefined) : undefined),
+                  config.allowConcurrent,
+                  overrideJobConfig?.allowConcurrent
+                )
+              : setDefaults
+              ? ServiceField.boolean(false, undefined)
+              : undefined,
           cron: ServiceField.string(config.cron, overrideJobConfig?.cron),
           suspendCron:
             typeof config.suspendCron === "boolean" ||
-              typeof overrideJobConfig?.suspendCron === "boolean"
+            typeof overrideJobConfig?.suspendCron === "boolean"
               ? ServiceField.boolean(
-                config.suspendCron,
-                overrideJobConfig?.suspendCron
-              )
-              : (setDefaults ? ServiceField.boolean(false, undefined) : undefined),
+                  config.suspendCron,
+                  overrideJobConfig?.suspendCron
+                )
+              : setDefaults
+              ? ServiceField.boolean(false, undefined)
+              : undefined,
           timeoutSeconds:
             config.timeoutSeconds != 0
-             ? ServiceField.number(
-                config.timeoutSeconds,
-                overrideJobConfig?.timeoutSeconds
-              ) : (setDefaults ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds) : ServiceField.number(0, overrideJobConfig?.timeoutSeconds)),
+              ? ServiceField.number(
+                  config.timeoutSeconds,
+                  overrideJobConfig?.timeoutSeconds
+                )
+              : setDefaults
+              ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds)
+              : ServiceField.number(0, overrideJobConfig?.timeoutSeconds),
         },
       };
     })
@@ -430,6 +442,7 @@ export function serviceProto(service: SerializedService): Service {
       (config) =>
         new Service({
           ...service,
+          runOptional: service.run,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {
@@ -444,6 +457,7 @@ export function serviceProto(service: SerializedService): Service {
       (config) =>
         new Service({
           ...service,
+          runOptional: service.run,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {
@@ -458,6 +472,7 @@ export function serviceProto(service: SerializedService): Service {
       (config) =>
         new Service({
           ...service,
+          runOptional: service.run ? service.run : undefined,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {
@@ -474,6 +489,7 @@ export function serviceProto(service: SerializedService): Service {
       (config) =>
         new Service({
           ...service,
+          runOptional: service.run ? service.run : undefined,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {},
@@ -504,6 +520,7 @@ export function serializedServiceFromProto({
     .with({ case: "webConfig" }, ({ value }) => ({
       ...service,
       name,
+      run: service.runOptional ? service.runOptional : "",
       config: {
         type: "web" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -514,6 +531,7 @@ export function serializedServiceFromProto({
     .with({ case: "workerConfig" }, ({ value }) => ({
       ...service,
       name,
+      run: service.runOptional ? service.runOptional : "",
       config: {
         type: "worker" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -523,22 +541,24 @@ export function serializedServiceFromProto({
     .with({ case: "jobConfig" }, ({ value }) =>
       isPredeploy
         ? {
-          ...service,
-          name,
-          config: {
-            type: "predeploy" as const,
-          },
-        }
+            ...service,
+            name,
+            run: service.runOptional ? service.runOptional : "",
+            config: {
+              type: "predeploy" as const,
+            },
+          }
         : {
-          ...service,
-          name,
-          config: {
-            type: "job" as const,
-            ...value,
-            allowConcurrent: value.allowConcurrentOptional,
-            timeoutSeconds: Number(value.timeoutSeconds),
-          },
-        }
+            ...service,
+            name,
+            run: service.runOptional ? service.runOptional : "",
+            config: {
+              type: "job" as const,
+              ...value,
+              allowConcurrent: value.allowConcurrentOptional,
+              timeoutSeconds: Number(value.timeoutSeconds),
+            },
+          }
     )
     .exhaustive();
 }

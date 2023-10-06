@@ -122,8 +122,8 @@ func protoEnumFromType(name string, service Service) porterv1.ServiceType {
 
 func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {
 	serviceProto := &porterv1.Service{
-		Run:  service.Run,
-		Type: serviceType,
+		RunOptional: service.Run,
+		Type:        serviceType,
 	}
 
 	// if the revision number cannot be converted, it will default to 0

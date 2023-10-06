@@ -624,7 +624,6 @@ export const ExpandedEnvGroupFC = ({
           );
           //const newEnvGroup = await pollForEnvGroup(name, currentProject, currentCluster);
           if (linkedApp) {
-            // Map through each linked application and return a Promise
             const promises = linkedApp.map(async appName => {
               if (!currentProject.validate_apply_v2) {
                 return getPorterApp({ appName: appName });
@@ -651,10 +650,9 @@ export const ExpandedEnvGroupFC = ({
                         if (group.name === currentEnvGroup.name) {
                           return { ...group, version: group.version + 1 }; // bumping up the version
                         }
-                        return group; // if not matching, return as is
+                        return group;
                       });
                     }
-                    // Re-encode the modified JSON to base64
                     const updatedBase64 = btoa(JSON.stringify(decoded))
 
                     return api.applyApp(
@@ -670,13 +668,11 @@ export const ExpandedEnvGroupFC = ({
                     );
                   }
                 } catch (err) {
-                  // Handle error, maybe push to an array of errors if needed
-                  setCurrentError(error); // or you can reject the promise with the error
+
+                  setCurrentError(error);
                 }
               }
             });
-
-            // Wait for all Promises to resolve
             await Promise.all(promises);
           }
           const populatedEnvGroup = await api.getAllEnvGroups("<token>", {}, {

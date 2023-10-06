@@ -1,22 +1,23 @@
+import { Service, ServiceType } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { z } from "zod";
+
+import { BuildOptions } from "./build";
 import {
-  SerializedAutoscaling,
-  SerializedHealthcheck,
   autoscalingValidator,
-  healthcheckValidator,
   deserializeAutoscaling,
   deserializeHealthCheck,
-  serializeAutoscaling,
-  serializeHealth,
   domainsValidator,
-  serviceStringValidator,
-  serviceNumberValidator,
+  healthcheckValidator,
+  serializeAutoscaling,
+  SerializedAutoscaling,
+  SerializedHealthcheck,
+  serializeHealth,
   serviceBooleanValidator,
   ServiceField,
+  serviceNumberValidator,
+  serviceStringValidator,
 } from "./values";
-import { Service, ServiceType } from "@porter-dev/api-contracts";
-import { BuildOptions } from "./build";
 
 export type DetectedServices = {
   services: ClientService[];
@@ -520,7 +521,7 @@ export function serializedServiceFromProto({
     .with({ case: "webConfig" }, ({ value }) => ({
       ...service,
       name,
-      run: service.runOptional ? service.runOptional : "",
+      run: service.runOptional ?? service.run,
       config: {
         type: "web" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -531,7 +532,7 @@ export function serializedServiceFromProto({
     .with({ case: "workerConfig" }, ({ value }) => ({
       ...service,
       name,
-      run: service.runOptional ? service.runOptional : "",
+      run: service.runOptional ?? service.run,
       config: {
         type: "worker" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -543,7 +544,7 @@ export function serializedServiceFromProto({
         ? {
             ...service,
             name,
-            run: service.runOptional ? service.runOptional : "",
+            run: service.runOptional ?? service.run,
             config: {
               type: "predeploy" as const,
             },
@@ -551,7 +552,7 @@ export function serializedServiceFromProto({
         : {
             ...service,
             name,
-            run: service.runOptional ? service.runOptional : "",
+            run: service.runOptional ?? service.run,
             config: {
               type: "job" as const,
               ...value,

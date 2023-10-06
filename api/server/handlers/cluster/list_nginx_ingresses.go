@@ -43,7 +43,7 @@ func (c *ListNGINXIngressesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	var res types.ListNGINXIngressesResponse = ingresses
+	var res prometheus.ListNGINXIngressesResponse = ingresses
 
 	c.WriteResult(w, r, res)
 }

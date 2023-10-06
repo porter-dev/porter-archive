@@ -39,6 +39,7 @@ import { PorterJson } from "main/home/app-dashboard/new-app-flow/schema";
 import { BuildMethod, PorterApp } from "main/home/app-dashboard/types/porterApp";
 import { Service } from "main/home/app-dashboard/new-app-flow/serviceTypes";
 import { consoleSandbox } from "@sentry/utils";
+import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 
 type PropsType = WithAuthProps & {
   namespace: string;
@@ -91,6 +92,7 @@ export const ExpandedEnvGroupFC = ({
     false
   );
   const [isLoading, setIsLoading] = useState(true);
+  const { currentDeploymentTarget } = useDeploymentTarget();
 
   const [currentTab, setCurrentTab] = useState("variables-editor");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -575,7 +577,7 @@ export const ExpandedEnvGroupFC = ({
         }),
         {}
       );
-      
+
       if (currentProject?.simplified_view_enabled) {
         try {
 
@@ -622,9 +624,60 @@ export const ExpandedEnvGroupFC = ({
           );
           //const newEnvGroup = await pollForEnvGroup(name, currentProject, currentCluster);
           if (linkedApp) {
-            for (let appName of linkedApp) {
-              await getPorterApp({ appName: appName });
-            }
+            // Map through each linked application and return a Promise
+            const promises = linkedApp.map(async appName => {
+              if (!currentProject.validate_apply_v2) {
+                return getPorterApp({ appName: appName });
+              } else {
+                try {
+                  const res = await api.getLatestRevision(
+                    "<token>",
+                    {
+                      deployment_target_id: currentDeploymentTarget.id,
+                    },
+                    {
+                      project_id: currentProject.id,
+                      cluster_id: currentCluster.id,
+                      porter_app_name: appName,
+                    }
+                  )
+                  if (res) {
+                    // Decode the base64 string to get the JSON
+                    const decoded = JSON.parse(atob(res.data?.app_revision?.b64_app_proto));
+
+                    // Update the version for the matching environment group
+                    if (decoded?.envGroups) {
+                      decoded.envGroups = decoded.envGroups.map(group => {
+                        if (group.name === currentEnvGroup.name) {
+                          return { ...group, version: group.version + 1 }; // bumping up the version
+                        }
+                        return group; // if not matching, return as is
+                      });
+                    }
+                    // Re-encode the modified JSON to base64
+                    const updatedBase64 = btoa(JSON.stringify(decoded))
+
+                    return api.applyApp(
+                      "<token>",
+                      {
+                        b64_app_proto: updatedBase64,
+                        deployment_target_id: currentDeploymentTarget.id,
+                      },
+                      {
+                        project_id: currentProject.id,
+                        cluster_id: currentCluster.id,
+                      }
+                    );
+                  }
+                } catch (err) {
+                  // Handle error, maybe push to an array of errors if needed
+                  setCurrentError(error); // or you can reject the promise with the error
+                }
+              }
+            });
+
+            // Wait for all Promises to resolve
+            await Promise.all(promises);
           }
           const populatedEnvGroup = await api.getAllEnvGroups("<token>", {}, {
             id: currentProject.id,

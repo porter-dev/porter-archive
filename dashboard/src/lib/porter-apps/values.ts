@@ -115,37 +115,45 @@ export function deserializeAutoscaling({
 }: {
   autoscaling?: SerializedAutoscaling;
   override?: SerializedAutoscaling;
-    setDefaults: boolean;
+  setDefaults: boolean;
 }): ClientAutoscaling | undefined {
-  return (
-    autoscaling ? {
-      enabled: ServiceField.boolean(autoscaling.enabled, override?.enabled),
-      minInstances: autoscaling.minInstances
-        ? ServiceField.number(autoscaling.minInstances, override?.minInstances)
-        : ServiceField.number(1, undefined),
-      maxInstances: autoscaling.maxInstances
-        ? ServiceField.number(autoscaling.maxInstances, override?.maxInstances)
-        : ServiceField.number(10, undefined),
-      cpuThresholdPercent: autoscaling.cpuThresholdPercent
-        ? ServiceField.number(
-            autoscaling.cpuThresholdPercent,
-            override?.cpuThresholdPercent
-          )
-        : ServiceField.number(50, undefined),
-      memoryThresholdPercent: autoscaling.memoryThresholdPercent
-        ? ServiceField.number(
-            autoscaling.memoryThresholdPercent,
-            override?.memoryThresholdPercent
-          )
-        : ServiceField.number(50, undefined),
-    } : (setDefaults ?  {
+  return autoscaling
+    ? {
+        enabled: ServiceField.boolean(autoscaling.enabled, override?.enabled),
+        minInstances: autoscaling.minInstances
+          ? ServiceField.number(
+              autoscaling.minInstances,
+              override?.minInstances
+            )
+          : ServiceField.number(1, undefined),
+        maxInstances: autoscaling.maxInstances
+          ? ServiceField.number(
+              autoscaling.maxInstances,
+              override?.maxInstances
+            )
+          : ServiceField.number(10, undefined),
+        cpuThresholdPercent: autoscaling.cpuThresholdPercent
+          ? ServiceField.number(
+              autoscaling.cpuThresholdPercent,
+              override?.cpuThresholdPercent
+            )
+          : ServiceField.number(50, undefined),
+        memoryThresholdPercent: autoscaling.memoryThresholdPercent
+          ? ServiceField.number(
+              autoscaling.memoryThresholdPercent,
+              override?.memoryThresholdPercent
+            )
+          : ServiceField.number(50, undefined),
+      }
+    : setDefaults
+    ? {
         enabled: ServiceField.boolean(false, undefined),
         minInstances: ServiceField.number(1, undefined),
         maxInstances: ServiceField.number(10, undefined),
         cpuThresholdPercent: ServiceField.number(50, undefined),
         memoryThresholdPercent: ServiceField.number(50, undefined),
-    } : undefined )
-  );
+      }
+    : undefined;
 }
 
 // Health Check
@@ -180,17 +188,19 @@ export function deserializeHealthCheck({
   override?: SerializedHealthcheck;
   setDefaults: boolean;
 }): ClientHealthCheck | undefined {
-  return (
-    health ? {
-      enabled: ServiceField.boolean(health.enabled, override?.enabled),
-      httpPath: health.httpPath
-        ? ServiceField.string(health.httpPath, override?.httpPath)
-        :  ServiceField.string("", undefined),
-    } : (setDefaults ? {
+  return health
+    ? {
+        enabled: ServiceField.boolean(health.enabled, override?.enabled),
+        httpPath: health.httpPath
+          ? ServiceField.string(health.httpPath, override?.httpPath)
+          : ServiceField.string("", undefined),
+      }
+    : setDefaults
+    ? {
         enabled: ServiceField.boolean(false, undefined),
         httpPath: ServiceField.string("", undefined),
-    } : undefined)
-  );
+      }
+    : undefined;
 }
 
 // Domains
@@ -200,3 +210,15 @@ export const domainsValidator = z.array(
   })
 );
 export type ClientDomains = z.infer<typeof domainsValidator>;
+
+// Ingress Annotations
+export const ingressAnnotationsValidator = z.array(
+  z.object({
+    key: z.string(),
+    value: z.string(),
+    readOnly: z.boolean(),
+  })
+);
+export type ClientIngressAnnotations = z.infer<
+  typeof ingressAnnotationsValidator
+>;

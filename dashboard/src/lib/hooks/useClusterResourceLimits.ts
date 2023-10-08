@@ -18,7 +18,7 @@ const clusterDataValidator = z.object({
         return defaultResources;
     }
     const instanceType = data.labels["beta.kubernetes.io/instance-type"];
-    const res = z.tuple([z.string(), z.string()]).safeParse(instanceType)
+    const res = z.tuple([z.string(), z.string()]).safeParse(instanceType?.split("."))
     if (!res.success) {
         return defaultResources;
     }

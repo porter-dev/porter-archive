@@ -71,7 +71,7 @@ func (c *UpdateLinkedAppsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	})
 	_, err := c.Config().ClusterControlPlaneClient.UpdateAppsLinkedToEnvGroup(ctx, updateLinkedAppsReq)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error calling ccp update porter app image")
+		err := telemetry.Error(ctx, span, err, "error calling ccp update apps linked to env group")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

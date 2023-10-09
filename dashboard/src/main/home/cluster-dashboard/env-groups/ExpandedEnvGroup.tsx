@@ -8,7 +8,6 @@ import React, {
 import yaml from "js-yaml";
 import { createFinalPorterYaml, PorterYamlSchema } from "../../app-dashboard/new-app-flow/schema"
 import styled, { keyframes } from "styled-components";
-import backArrow from "assets/back_arrow.png";
 import key from "assets/key.svg";
 import loading from "assets/loading.gif";
 import leftArrow from "assets/left-arrow.svg";

@@ -46,6 +46,7 @@ type ReportRevisionStatusRequest struct {
 	CommitSHA string `json:"commit_sha"`
 }
 
+// ReportRevisionStatusResponse is the response object for the /apps/{porter_app_name}/revisions/{app_revision_id}/status endpoint
 type ReportRevisionStatusResponse struct{}
 
 // ServeHTTP reports the status of a revision to Github and other integrations, depending on the status and the deployment target

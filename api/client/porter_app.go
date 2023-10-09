@@ -439,6 +439,7 @@ func (c *Client) GetBuildEnv(
 	return resp, err
 }
 
+// ReportRevisionStatusInput is the input struct to ReportRevisionStatus
 type ReportRevisionStatusInput struct {
 	ProjectID     uint
 	ClusterID     uint

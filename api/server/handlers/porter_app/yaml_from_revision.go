@@ -8,8 +8,6 @@ import (
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"gopkg.in/yaml.v2"
 
-	"github.com/porter-dev/porter/internal/deployment_target"
-	"github.com/porter-dev/porter/internal/porter_app"
 	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 	"github.com/porter-dev/porter/internal/telemetry"
 
@@ -46,24 +44,17 @@ type PorterYAMLFromRevisionResponse struct {
 	B64PorterYAML string `json:"b64_porter_yaml"`
 }
 
+// ServeHTTP takes a porter app revision and returns the porter yaml for it
 func (c *PorterYAMLFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-porter-yaml-from-revision")
 	defer span.End()
 
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	appRevisionID, reqErr := requestutils.GetURLParamString(r, types.URLParamAppRevisionID)
 	if reqErr != nil {
 		err := telemetry.Error(ctx, span, nil, "error parsing app revision id")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	agent, err := c.GetAgent(r, cluster, "")
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting agent")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -84,40 +75,13 @@ func (c *PorterYAMLFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	encodedRevision, err := porter_app.EncodedRevisionFromProto(ctx, ccpResp.Msg.AppRevision)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting encoded revision from proto")
+	if ccpResp.Msg.AppRevision == nil {
+		err = telemetry.Error(ctx, span, nil, "app revision is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
-		ProjectID:          int64(project.ID),
-		ClusterID:          int64(cluster.ID),
-		DeploymentTargetID: ccpResp.Msg.AppRevision.DeploymentTargetId,
-		CCPClient:          c.Config().ClusterControlPlaneClient,
-	})
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting deployment target details")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	revisionWithEnv, err := porter_app.AttachEnvToRevision(ctx, porter_app.AttachEnvToRevisionInput{
-		ProjectID:           project.ID,
-		ClusterID:           int(cluster.ID),
-		Revision:            encodedRevision,
-		DeploymentTarget:    deploymentTarget,
-		K8SAgent:            agent,
-		PorterAppRepository: c.Repo().PorterApp(),
-	})
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error attaching env to revision")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	appProto := revisionWithEnv.B64AppProto
+	appProto := ccpResp.Msg.AppRevision.App
 	if appProto == nil {
 		err = telemetry.Error(ctx, span, nil, "app proto is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

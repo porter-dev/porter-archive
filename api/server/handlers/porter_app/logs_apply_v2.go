@@ -14,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	porter_agent "github.com/porter-dev/porter/internal/kubernetes/porter_agent/v2"
 	"github.com/porter-dev/porter/internal/models"
@@ -42,7 +43,7 @@ func NewAppLogsHandler(
 type AppLogsRequest struct {
 	DeploymentTargetID string    `schema:"deployment_target_id"`
 	ServiceName        string    `schema:"service_name"`
-	AppName            string    `schema:"app_name"`
+	AppID              uint      `schema:"app_id"`
 	Limit              uint      `schema:"limit"`
 	StartRange         time.Time `schema:"start_range,omitempty"`
 	EndRange           time.Time `schema:"end_range,omitempty"`
@@ -53,6 +54,7 @@ type AppLogsRequest struct {
 
 const (
 	lokiLabel_PorterAppName       = "porter_run_app_name"
+	lokiLabel_PorterAppID         = "porter_run_app_id"
 	lokiLabel_PorterServiceName   = "porter_run_service_name"
 	lokiLabel_PorterAppRevisionID = "porter_run_app_revision_id"
 	lokiLabel_DeploymentTargetId  = "porter_run_deployment_target_id"
@@ -74,12 +76,19 @@ func (c *AppLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if request.AppName == "" {
-		err := telemetry.Error(ctx, span, nil, "must provide app name")
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
+	if reqErr != nil {
+		err := telemetry.Error(ctx, span, reqErr, "porter app name not found in request")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: request.AppName})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
+
+	if request.AppID == 0 {
+		err := telemetry.Error(ctx, span, nil, "must provide app id")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
 
 	if request.ServiceName == "" {
 		err := telemetry.Error(ctx, span, nil, "must provide service name")
@@ -148,7 +157,8 @@ func (c *AppLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	matchLabels := map[string]string{
 		lokiLabel_Namespace:     namespace,
-		lokiLabel_PorterAppName: request.AppName,
+		lokiLabel_PorterAppName: appName,
+		lokiLabel_PorterAppID:   fmt.Sprintf("%d", request.AppID),
 	}
 
 	if request.ServiceName != "all" {

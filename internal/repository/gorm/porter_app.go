@@ -34,6 +34,7 @@ func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*mo
 	return apps, nil
 }
 
+// ListPorterAppsByProjectID returns a list of PorterApps by project ID.
 func (repo *PorterAppRepository) ListPorterAppsByProjectID(projectID uint) ([]*models.PorterApp, error) {
 	apps := []*models.PorterApp{}
 

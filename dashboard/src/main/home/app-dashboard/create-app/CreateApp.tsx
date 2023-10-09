@@ -481,8 +481,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     }
   }, [porterApps, name.value]);
 
-  console.log("errors", errors);
-
   if (!currentProject || !currentCluster) {
     return null;
   }

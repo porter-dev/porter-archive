@@ -19,6 +19,7 @@ import {
   serviceNumberValidator,
   serviceStringValidator,
 } from "./values";
+import _ from "lodash";
 
 export type DetectedServices = {
   services: ClientService[];
@@ -335,6 +336,28 @@ export function deserializeService({
         ])
       ).map((domain) => ({ name: domain }));
 
+      const uniqueAnnotations = _.uniqBy(
+        [
+          ...Object.entries(overrideWebConfig?.ingressAnnotations ?? {}).map(
+            (annotation) => {
+              return {
+                key: annotation[0],
+                value: annotation[1],
+                readOnly: true,
+              };
+            }
+          ),
+          ...Object.entries(config.ingressAnnotations).map((annotation) => {
+            return {
+              key: annotation[0],
+              value: annotation[1],
+              readOnly: false,
+            };
+          }),
+        ],
+        "key"
+      );
+
       return {
         ...baseService,
         config: {
@@ -358,17 +381,7 @@ export function deserializeService({
               )?.name
             ),
           })),
-          ingressAnnotations: Object.entries(config.ingressAnnotations).map(
-            (annotation) => {
-              const overrideAnnotation =
-                overrideWebConfig?.ingressAnnotations[annotation[0]];
-              return {
-                key: annotation[0],
-                value: overrideAnnotation ?? annotation[1],
-                readOnly: !!overrideAnnotation,
-              };
-            }
-          ),
+          ingressAnnotations: uniqueAnnotations,
           private:
             typeof config.private === "boolean" ||
             typeof overrideWebConfig?.private === "boolean"

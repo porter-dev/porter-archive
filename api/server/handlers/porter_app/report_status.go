@@ -246,7 +246,7 @@ func writePRComment(ctx context.Context, inp writePRCommentInput) error {
 		ctx,
 		repoDetails[0],
 		repoDetails[1],
-		int(inp.prNumber),
+		inp.prNumber,
 		&github.IssueComment{
 			Body: pointer.String(body),
 		},

@@ -71,7 +71,7 @@ func CreateAppWebhook(ctx context.Context, inp CreateAppWebhookInput) error {
 		return telemetry.Error(ctx, span, nil, "porter app git repo id is empty")
 	}
 
-	githubClient, err := getGithubClientByRepoID(ctx, porterApp.GitRepoID, inp.GithubAppSecret, inp.GithubAppID)
+	githubClient, err := GetGithubClientByRepoID(ctx, porterApp.GitRepoID, inp.GithubAppSecret, inp.GithubAppID)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "error creating github client")
 	}
@@ -133,7 +133,8 @@ func CreateAppWebhook(ctx context.Context, inp CreateAppWebhookInput) error {
 	return nil
 }
 
-func getGithubClientByRepoID(ctx context.Context, repoID uint, githubAppSecret []byte, githubAppID string) (*github.Client, error) {
+// GetGithubClientByRepoID creates a github client for a given repo id
+func GetGithubClientByRepoID(ctx context.Context, repoID uint, githubAppSecret []byte, githubAppID string) (*github.Client, error) {
 	ctx, span := telemetry.NewSpan(ctx, "get-github-client-by-repo-id")
 	defer span.End()
 

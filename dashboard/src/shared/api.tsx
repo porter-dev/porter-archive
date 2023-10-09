@@ -1925,7 +1925,7 @@ const updateAppsLinkedToEnvironmentGroup = baseApi<
         id: number;
         cluster_id: number;
     }
->("GET", (pathParams) => {
+>("POST", (pathParams) => {
     return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups/update-linked-apps`;
 });
 

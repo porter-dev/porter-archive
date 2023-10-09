@@ -1695,8 +1695,8 @@ func getClusterRoutes(
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/environment-groups/update-linked-apps
 	updateLinkedAppsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbList,
-			Method: types.HTTPVerbGet,
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
 				RelativePath: relPath + "/environment-groups/update-linked-apps",

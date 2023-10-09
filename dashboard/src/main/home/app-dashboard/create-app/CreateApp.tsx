@@ -80,7 +80,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const { maxCPU, maxRAM } = useClusterResourceLimits({
     projectId: currentProject?.id,
     clusterId: currentCluster?.id,
-  })
+  });
 
   const { data: porterApps = [] } = useQuery<string[]>(
     ["getPorterApps", currentProject?.id, currentCluster?.id],
@@ -481,6 +481,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     }
   }, [porterApps, name.value]);
 
+  console.log("errors", errors);
+
   if (!currentProject || !currentCluster) {
     return null;
   }
@@ -513,7 +515,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       placeholder="ex: academic-sophon"
                       type="text"
                       width="300px"
-                      error={errors.app?.name?.message}
+                      error={errors.app?.name?.value?.message}
                       disabled={name.readOnly}
                       disabledTooltip={
                         "You may only edit this field in your porter.yaml."
@@ -585,10 +587,23 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                           <ImageSettings
                             projectId={currentProject.id}
                             imageUri={image?.repository ?? ""}
-                            setImageUri={(uri: string) => setValue("source.image", { ...image, repository: uri })}
+                            setImageUri={(uri: string) =>
+                              setValue("source.image", {
+                                ...image,
+                                repository: uri,
+                              })
+                            }
                             imageTag={image?.tag ?? ""}
-                            setImageTag={(tag: string) => setValue("source.image", { ...image, tag })}
-                            resetImageInfo={() => setValue("source.image", { ...image, repository: "", tag: "" })}
+                            setImageTag={(tag: string) =>
+                              setValue("source.image", { ...image, tag })
+                            }
+                            resetImageInfo={() =>
+                              setValue("source.image", {
+                                ...image,
+                                repository: "",
+                                tag: "",
+                              })
+                            }
                           />
                         )
                       ) : null}
@@ -614,8 +629,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
-                              } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${
+                                  detectedServices.count > 1 ? "s" : ""
+                                } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

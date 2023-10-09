@@ -273,15 +273,23 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 
 		now := time.Now().UTC()
 		eventID, _ := createPredeployEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, now, applyResp.AppRevisionId)
-
+		metadata := make(map[string]interface{})
 		eventStatus := types.PorterAppEventStatus_Success
 		for {
 			if time.Since(now) > checkPredeployTimeout {
+				eventStatus = types.PorterAppEventStatus_Failed
+				metadata["end_time"] = time.Now().UTC()
+				_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
+
 				return errors.New("timed out waiting for predeploy to complete")
 			}
 
 			predeployStatusResp, err := client.PredeployStatus(ctx, cliConf.Project, cliConf.Cluster, appName, applyResp.AppRevisionId)
 			if err != nil {
+				eventStatus = types.PorterAppEventStatus_Failed
+				metadata["end_time"] = time.Now().UTC()
+				_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
+
 				return fmt.Errorf("error calling predeploy status endpoint: %w", err)
 			}
 
@@ -296,7 +304,6 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 			time.Sleep(checkPredeployFrequency)
 		}
 
-		metadata := make(map[string]interface{})
 		metadata["end_time"] = time.Now().UTC()
 		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
 

@@ -1037,7 +1037,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 label="📍 AWS region" />
               <>
                 {
-                  user?.isPorterUser && renderAdvancedSettings()
+                  (user?.isPorterUser || currentProject?.multi_cluster) && renderAdvancedSettings()
                 }
               </>
             </>,

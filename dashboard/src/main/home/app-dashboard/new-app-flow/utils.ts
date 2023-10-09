@@ -71,7 +71,7 @@ export const getPreviewGithubAction = (
     - opened
     - synchronize
     
-name: Deploy preview environment
+name: Deploy to Preview Environment
 jobs:
   porter-deploy:
     runs-on: ubuntu-latest
@@ -92,5 +92,6 @@ jobs:
         PORTER_PROJECT: ${projectID}
         PORTER_STACK_NAME: ${stackName}
         PORTER_TAG: \${{ steps.vars.outputs.sha_short }}
-        PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}`;
+        PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}
+        PORTER_PR_NUMBER: \${{ github.event.inputs.pr_number }}`;
 };

@@ -439,6 +439,40 @@ func (c *Client) GetBuildEnv(
 	return resp, err
 }
 
+// ReportRevisionStatusInput is the input struct to ReportRevisionStatus
+type ReportRevisionStatusInput struct {
+	ProjectID     uint
+	ClusterID     uint
+	AppName       string
+	AppRevisionID string
+	PRNumber      int
+	CommitSHA     string
+}
+
+// ReportRevisionStatus reports the status of an app revision to external services
+func (c *Client) ReportRevisionStatus(
+	ctx context.Context,
+	inp ReportRevisionStatusInput,
+) (*porter_app.ReportRevisionStatusResponse, error) {
+	resp := &porter_app.ReportRevisionStatusResponse{}
+
+	req := &porter_app.ReportRevisionStatusRequest{
+		PRNumber:  inp.PRNumber,
+		CommitSHA: inp.CommitSHA,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/revisions/%s/status",
+			inp.ProjectID, inp.ClusterID, inp.AppName, inp.AppRevisionID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 // CreateOrUpdateAppEnvironment updates the app environment group and creates it if it doesn't exist
 func (c *Client) CreateOrUpdateAppEnvironment(
 	ctx context.Context,

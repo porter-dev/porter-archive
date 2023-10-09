@@ -583,6 +583,9 @@ func reportBuildFailure(ctx context.Context, inp reportBuildFailureInput) error 
 		PRNumber:      inp.prNumber,
 		CommitSHA:     inp.commitSHA,
 	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

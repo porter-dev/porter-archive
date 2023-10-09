@@ -34,6 +34,17 @@ func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*mo
 	return apps, nil
 }
 
+// ListPorterAppsByProjectID returns a list of PorterApps by project ID.
+func (repo *PorterAppRepository) ListPorterAppsByProjectID(projectID uint) ([]*models.PorterApp, error) {
+	apps := []*models.PorterApp{}
+
+	if err := repo.db.Where("project_id = ?", projectID).Find(&apps).Error; err != nil {
+		return nil, err
+	}
+
+	return apps, nil
+}
+
 func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string) (*models.PorterApp, error) {
 	app := &models.PorterApp{}
 

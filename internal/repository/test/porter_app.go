@@ -34,7 +34,13 @@ func (repo *PorterAppRepository) UpdatePorterApp(app *models.PorterApp) (*models
 	return nil, errors.New("cannot write database")
 }
 
+// ListPorterAppByClusterID is a test method that is not implemented
 func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*models.PorterApp, error) {
+	return nil, errors.New("cannot write database")
+}
+
+// ListPorterAppsByProjectID is a test method that is not implemented
+func (repo *PorterAppRepository) ListPorterAppsByProjectID(projectID uint) ([]*models.PorterApp, error) {
 	return nil, errors.New("cannot write database")
 }
 

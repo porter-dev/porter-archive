@@ -53,8 +53,8 @@ var result_nobuild = &porterv1.PorterApp{
 			RamMegabytes: 256,
 			Config: &porterv1.Service_JobConfig{
 				JobConfig: &porterv1.JobServiceConfig{
-					AllowConcurrent: true,
-					Cron:            "*/10 * * * *",
+					AllowConcurrentOptional: pointer.Bool(true),
+					Cron:                    "*/10 * * * *",
 				},
 			},
 			Type: 3,

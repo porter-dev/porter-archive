@@ -9,6 +9,7 @@ import {
   deserializeHealthCheck,
   domainsValidator,
   healthcheckValidator,
+  ingressAnnotationsValidator,
   serializeAutoscaling,
   SerializedAutoscaling,
   SerializedHealthcheck,
@@ -18,6 +19,7 @@ import {
   serviceNumberValidator,
   serviceStringValidator,
 } from "./values";
+import _ from "lodash";
 
 export type DetectedServices = {
   services: ClientService[];
@@ -37,6 +39,7 @@ const webConfigValidator = z.object({
   domains: domainsValidator,
   healthCheck: healthcheckValidator.optional(),
   private: serviceBooleanValidator.optional(),
+  ingressAnnotations: ingressAnnotationsValidator.default([]),
 });
 export type ClientWebConfig = z.infer<typeof webConfigValidator>;
 
@@ -107,6 +110,7 @@ export type SerializedService = {
         autoscaling?: SerializedAutoscaling;
         healthCheck?: SerializedHealthcheck;
         private?: boolean;
+        ingressAnnotations: Record<string, string>;
       }
     | {
         type: "worker";
@@ -174,6 +178,7 @@ export function defaultSerialized({
         healthCheck: defaultHealthCheck,
         domains: [],
         private: false,
+        ingressAnnotations: {},
       },
     }))
     .with("worker", () => ({
@@ -225,6 +230,12 @@ export function serializeService(service: ClientService): SerializedService {
           domains: config.domains.map((domain) => ({
             name: domain.name.value,
           })),
+          ingressAnnotations: Object.fromEntries(
+            config.ingressAnnotations.map((annotation) => [
+              annotation.key,
+              annotation.value,
+            ])
+          ),
           private: config.private?.value,
         },
       })
@@ -325,6 +336,28 @@ export function deserializeService({
         ])
       ).map((domain) => ({ name: domain }));
 
+      const uniqueAnnotations = _.uniqBy(
+        [
+          ...Object.entries(overrideWebConfig?.ingressAnnotations ?? {}).map(
+            (annotation) => {
+              return {
+                key: annotation[0],
+                value: annotation[1],
+                readOnly: true,
+              };
+            }
+          ),
+          ...Object.entries(config.ingressAnnotations).map((annotation) => {
+            return {
+              key: annotation[0],
+              value: annotation[1],
+              readOnly: false,
+            };
+          }),
+        ],
+        "key"
+      );
+
       return {
         ...baseService,
         config: {
@@ -348,6 +381,7 @@ export function deserializeService({
               )?.name
             ),
           })),
+          ingressAnnotations: uniqueAnnotations,
           private:
             typeof config.private === "boolean" ||
             typeof overrideWebConfig?.private === "boolean"

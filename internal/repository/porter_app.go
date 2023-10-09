@@ -10,7 +10,6 @@ type PorterAppRepository interface {
 	ReadPorterAppsByProjectIDAndName(projectID uint, name string) ([]*models.PorterApp, error)
 	CreatePorterApp(app *models.PorterApp) (*models.PorterApp, error)
 	ListPorterAppByClusterID(clusterID uint) ([]*models.PorterApp, error)
-	ListPorterAppsByProjectID(projectID uint) ([]*models.PorterApp, error)
 	UpdatePorterApp(app *models.PorterApp) (*models.PorterApp, error)
 	DeletePorterApp(app *models.PorterApp) (*models.PorterApp, error)
 }

@@ -112,10 +112,24 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
+	existingApps, err := c.Repo().PorterApp().ListPorterAppsByProjectID(project.ID)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error listing porter apps by project id")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	if appProto.Name == "" {
 		err := telemetry.Error(ctx, span, nil, "app proto name is empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
+	}
+	for _, existingApp := range existingApps {
+		if existingApp.Name == appProto.Name {
+			err := telemetry.Error(ctx, span, nil, "app with the provided name already exists in the project")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
 	}
 
 	telemetry.WithAttributes(span,

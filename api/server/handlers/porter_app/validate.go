@@ -124,6 +124,8 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appProto.Name})
+
 	for _, existingApp := range existingApps {
 		if existingApp.Name == appProto.Name {
 			err := telemetry.Error(ctx, span, nil, "app with the provided name already exists in the project")
@@ -131,9 +133,7 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			return
 		}
 	}
-
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "app-name", Value: appProto.Name},
 		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetId},
 		telemetry.AttributeKV{Key: "commit-sha", Value: request.CommitSHA},
 	)

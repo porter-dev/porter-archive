@@ -6,6 +6,7 @@ import Spacer from "components/porter/Spacer";
 import api from "shared/api";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
+import styled from "styled-components";
 
 type Props = {
     close: () => void;
@@ -82,7 +83,7 @@ const RevisionDiffModal: React.FC<Props> = ({
                 {isLoading ? (
                     <Loading />
                 ) : (
-                    <>
+                    <RevisionDiffContainer>
                         {baseYamlString === changedYamlString && (
                             <div style={{ textAlign: "center" }}>
                                 <h3>No changes found</h3>
@@ -98,7 +99,7 @@ const RevisionDiffModal: React.FC<Props> = ({
                             useDarkTheme={true}
                             compareMethod={DiffMethod.TRIMMED_LINES}
                         />
-                    </>
+                    </RevisionDiffContainer>
                 )}
             </Modal>
         </>
@@ -106,3 +107,9 @@ const RevisionDiffModal: React.FC<Props> = ({
 };
 
 export default RevisionDiffModal;
+
+export const RevisionDiffContainer = styled.div`
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 8px;
+`;

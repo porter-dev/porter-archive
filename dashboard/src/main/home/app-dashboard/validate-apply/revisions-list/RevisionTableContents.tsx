@@ -35,7 +35,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
   setExpandRevisions,
   setRevertData,
 }) => {
-  const { previewRevision, setPreviewRevision, projectId, clusterId } = useLatestRevision();
+  const { previewRevision, setPreviewRevision } = useLatestRevision();
 
   const revisionsWithProto = revisions.map((revision) => {
     return {
@@ -177,21 +177,10 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                         previewRevision.revision_number
                         : isLatestDeployedRevision
                     }
-                    onClick={async () => {
+                    onClick={() => {
                       if (isLatestDeployedRevision) {
                         setPreviewRevision(null);
                       } else {
-                        const res = await api.porterYamlFromRevision(
-                          "<token>",
-                          {},
-                          {
-                            revision_id: revision.id,
-                            project_id: projectId,
-                            cluster_id: clusterId,
-                            porter_app_name: revision.app_proto.name,
-                          }
-                        )
-                        console.log(res);
                         setPreviewRevision(revision);
                       }
                     }}

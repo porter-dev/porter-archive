@@ -227,6 +227,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		RamMegabytes:      int32(service.RamMegabytes),
 		Port:              int32(service.Port),
 		SmartOptimization: service.SmartOptimization,
+		Type:              serviceType,
 	}
 
 	switch serviceType {
@@ -235,7 +236,6 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	case porterv1.ServiceType_SERVICE_TYPE_UNSPECIFIED:
 		return nil, errors.New("Service type unspecified")
 	case porterv1.ServiceType_SERVICE_TYPE_WEB:
-		service.Type = "web"
 		webConfig := &porterv1.WebServiceConfig{}
 
 		var autoscaling *porterv1.Autoscaling
@@ -275,7 +275,6 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			WebConfig: webConfig,
 		}
 	case porterv1.ServiceType_SERVICE_TYPE_WORKER:
-		service.Type = "worker"
 		workerConfig := &porterv1.WorkerServiceConfig{}
 
 		var autoscaling *porterv1.Autoscaling
@@ -294,7 +293,6 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			WorkerConfig: workerConfig,
 		}
 	case porterv1.ServiceType_SERVICE_TYPE_JOB:
-		service.Type = "job"
 		jobConfig := &porterv1.JobServiceConfig{
 			AllowConcurrentOptional: service.AllowConcurrent,
 			Cron:                    service.Cron,
@@ -366,7 +364,6 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		RamMegabytes:      int(service.RamMegabytes),
 		Port:              int(service.Port),
 		SmartOptimization: service.SmartOptimization,
-		Type:              string(service.Type),
 	}
 
 	switch service.Type {

@@ -59,13 +59,7 @@ export const deletionValidator = z.object({
 export const clientAppValidator = z.object({
   name: z.object({
     readOnly: z.boolean(),
-    value: z
-      .string()
-      .min(1, { message: "Name must be at least 1 character" })
-      .max(30, { message: "Name must be 30 characters or less" })
-      .regex(/^[a-z0-9-]{1,61}$/, {
-        message: 'Lowercase letters, numbers, and "-" only.',
-      }),
+    value: z.string(),
   }),
   envGroups: z
     .object({ name: z.string(), version: z.bigint() })

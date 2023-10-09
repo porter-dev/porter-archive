@@ -9,6 +9,7 @@ import { dotenv_parse } from "shared/string_utils";
 import { NewPopulatedEnvGroup, PopulatedEnvGroup } from "components/porter-form/types";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
+import Tooltip from "components/porter/Tooltip";
 export type KeyValueType = {
   key: string;
   value: string;
@@ -21,9 +22,7 @@ type PropsType = {
   label?: string;
   values: KeyValueType[];
   setValues: (x: KeyValueType[]) => void;
-  disabled?: boolean;
   fileUpload?: boolean;
-  secretOption?: boolean;
   syncedEnvGroups?: NewPopulatedEnvGroup[];
 };
 
@@ -31,9 +30,7 @@ const EnvGroupArrayV2 = ({
   label,
   values,
   setValues,
-  disabled,
   fileUpload,
-  secretOption,
   syncedEnvGroups
 }: PropsType) => {
   const [showEditorModal, setShowEditorModal] = useState(false);
@@ -43,11 +40,24 @@ const EnvGroupArrayV2 = ({
       setValues([]);
     }
   }, [values]);
+
   const isKeyOverriding = (key: string) => {
     if (!syncedEnvGroups) return false;
     return syncedEnvGroups.some(envGroup =>
       key in envGroup.variables || key in envGroup?.secret_variables
     );
+  };
+
+  const handleKeyChange = (values: KeyValueType[], i: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const _values = [...values];
+    _values[i].key = e.target.value;
+    setValues(_values);
+  };
+
+  const handleValueChange = (values: KeyValueType[], i: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const _values = [...values];
+    _values[i].value = e.target.value;
+    setValues(_values);
   };
 
   const readFile = (env: string) => {
@@ -89,142 +99,160 @@ const EnvGroupArrayV2 = ({
       <StyledInputArray>
         <Label>{label}</Label>
         {!!values?.length &&
-          values.map((entry: KeyValueType, i: number) => {
+          values.map((entry, i) => {
             if (!entry.deleted) {
               return (
                 <InputWrapper key={i}>
-                  <Input
-                    placeholder="ex: key"
-                    width="270px"
-                    value={entry.key}
-                    onChange={(e: any) => {
-                      const _values = [...values];
-                      _values[i].key = e.target.value;
-                      setValues(_values);
-                    }}
-                    disabled={disabled || entry.locked}
-                    spellCheck={false}
-                    override={isKeyOverriding(entry.key)}
-                  />
-                  < Spacer x={.5} inline />
-                  {entry.hidden ? (
-                    entry.value?.includes("PORTERSECRET") ? (
+                  {entry.locked ? (
+                    <Tooltip
+                      content={"This key is part of a secret and cannot be edited"}
+                      position={"bottom"}
+                    >
                       <Input
-                        placeholder="ex: value"
+                        placeholder="ex: key"
                         width="270px"
-                        value={entry.value}
+                        value={entry.key}
+                        onChange={(e) => handleKeyChange(values, i, e)}
                         disabled
-                        type={"password"}
-                        spellCheck={false}
-                        override={isKeyOverriding(entry.key)}
-                      />) : (
-                      <Input
-                        placeholder="ex: value"
-                        width="270px"
-                        value={entry.value}
-                        onChange={(e: any) => {
-                          const _values = [...values];
-                          _values[i].value = e.target.value;
-                          setValues(_values);
-                        }}
-                        disabled={disabled || entry.locked}
-                        type={entry.hidden ? "password" : "text"}
-                        spellCheck={false}
-                        override={isKeyOverriding(entry.key)}
-
-                      />)
-                  ) : (
-                    entry.value?.includes("PORTERSECRET") ? (
-                      <Input
-                        placeholder="ex: value"
-                        width="270px"
-                        value={entry.value}
-                        disabled
-                        type={"password"}
-                        spellCheck={false}
-                        override={isKeyOverriding(entry.key)}
-                      />) : (
-                      <MultiLineInputer
-                        placeholder="ex: value"
-                        width="270px"
-                        value={entry.value}
-                        onChange={(e: any) => {
-                          const _values = [...values];
-                          _values[i].value = e.target.value;
-                          setValues(_values);
-                        }}
-                        rows={entry.value?.split("\n").length}
-                        disabled={disabled || entry.locked}
                         spellCheck={false}
                         override={isKeyOverriding(entry.key)}
                       />
-                    ))
-                  }
-                  {(
+                    </Tooltip>
+                  ) : (
+                    <Input
+                      placeholder="ex: key"
+                      width="270px"
+                      value={entry.key}
+                      onChange={(e) => handleKeyChange(values, i, e)}
+                      spellCheck={false}
+                      override={isKeyOverriding(entry.key)}
+                    />
+                  )}
+                  <Spacer x={0.5} inline />
+                  {entry.hidden ? (
+                    entry.locked ? (
+                      <Tooltip
+                        content={"This value is part of a secret and cannot be edited"}
+                        position={"bottom"}
+                      >
+                        <Input
+                          placeholder="ex: value"
+                          width="270px"
+                          value={entry.value}
+                          onChange={(e) => handleValueChange(values, i, e)}
+                          disabled
+                          type={"password"}
+                          spellCheck={false}
+                          override={isKeyOverriding(entry.key)}
+                        />
+                      </Tooltip>
+                    ) : (
+                      <Input
+                        placeholder="ex: value"
+                        width="270px"
+                        value={entry.value}
+                        onChange={(e) => handleValueChange(values, i, e)}
+                        type={"password"}
+                        spellCheck={false}
+                        override={isKeyOverriding(entry.key)}
+                      />
+                    )
+                  ) : (
+                    <MultiLineInputer
+                      placeholder="ex: value"
+                      width="270px"
+                      value={entry.value}
+                      onChange={(e: any) => {
+                        const _values = [...values];
+                        _values[i].value = e.target.value;
+                        setValues(_values);
+                      }}
+                      rows={entry.value?.split("\n").length}
+                      spellCheck={false}
+                      override={isKeyOverriding(entry.key)}
+                    />
+                  )}
+                  {entry.hidden ? (
                     <HideButton
                       onClick={() => {
                         if (!entry.locked) {
-                          const values1 = [...values];
-                          values1[i].hidden = !values1[i].hidden;
-                          setValues(values1);
+                          const _values = [...values];
+                          _values[i].hidden = !_values[i].hidden;
+                          setValues(_values);
                         }
                       }}
                       disabled={entry.locked}
                     >
-                      {entry.hidden ? (
-                        <i className="material-icons">lock</i>
-                      ) : (
-                        <i className="material-icons">lock_open</i>
-                      )}
+                      <i className="material-icons">lock_open</i>
                     </HideButton>
-                  )}
-
-                  {!disabled && (
-                    <DeleteButton
-                      onClick={() => {
-                        setValues(values.filter((val, index) => index !== i));
-                      }}
+                  ) : (
+                    <Tooltip
+                      content={"Click to turn this variable into a secret"}
+                      position={"bottom"}
                     >
-                      <i className="material-icons">cancel</i>
-                    </DeleteButton>
+                      <HideButton
+                        onClick={() => {
+                          if (!entry.locked) {
+                            const values1 = [...values];
+                            values1[i].hidden = !values1[i].hidden;
+                            setValues(values1);
+                          }
+                        }}
+                        disabled={entry.locked}
+                      >
+                        <i className="material-icons">lock</i>
+                      </HideButton>
+                    </Tooltip>
                   )}
 
-                  {isKeyOverriding(entry.key) && <><Spacer x={1} inline /> <Text color={'#6b74d6'} >Key is overriding value in a environment group</Text></>}
+                  <DeleteButton
+                    onClick={() => {
+                      setValues(values.filter((val, index) => index !== i));
+                    }}
+                  >
+                    <i className="material-icons">cancel</i>
+                  </DeleteButton>
+
+                  {isKeyOverriding(entry.key) && (
+                    <>
+                      <Spacer x={1} inline />
+                      <Text color={'#6b74d6'}>Key is overriding value in an environment group</Text>
+                    </>
+                  )}
                 </InputWrapper>
               );
             }
+            return null; // Add this line to handle the case when entry.deleted is true
           })}
-        {!disabled && (
-          <InputWrapper>
-            <AddRowButton
+        <InputWrapper>
+          <AddRowButton
+            onClick={() => {
+              const _values = [
+                ...values,
+                {
+                  key: "",
+                  value: "",
+                  hidden: false,
+                  locked: false,
+                  deleted: false,
+                },
+              ];
+              setValues(_values);
+            }}
+          >
+            <i className="material-icons">add</i> Add Row
+          </AddRowButton>
+          <Spacer x={0.5} inline />
+          {fileUpload && (
+            <UploadButton
               onClick={() => {
-                const _values = [
-                  ...values,
-                  {
-                    key: "",
-                    value: "",
-                    hidden: false,
-                    locked: false,
-                    deleted: false,
-                  },
-                ];
-                setValues(_values);
+                setShowEditorModal(true);
               }}
             >
-              <i className="material-icons">add</i> Add Row
-            </AddRowButton>
-            <Spacer x={.5} inline />
-            {fileUpload && (
-              <UploadButton
-                onClick={() => {
-                  setShowEditorModal(true);
-                }}
-              >
-                <img src={upload} /> Copy from File
-              </UploadButton>
-            )}
-          </InputWrapper>
-        )}
+              <img src={upload} alt="Upload" /> Copy from File
+            </UploadButton>
+          )}
+        </InputWrapper>
       </StyledInputArray>
       {showEditorModal && (
         <Modal

@@ -13,16 +13,14 @@ const EnvVariables: React.FC = () => {
       name={`app.env`}
       control={control}
       render={({ field: { value, onChange } }) => (
-        <>
-          <EnvGroupArrayV2
-            values={value ? value : []}
-            setValues={(x: KeyValueType[]) => {
-              onChange(x);
-            }}
-            fileUpload={true}
-            syncedEnvGroups={[]}
-          />
-        </>
+        <EnvGroupArrayV2
+          values={value}
+          setValues={(x: KeyValueType[]) => {
+            onChange(x);
+          }}
+          fileUpload={true}
+          syncedEnvGroups={[]}
+        />
       )}
     />
   );

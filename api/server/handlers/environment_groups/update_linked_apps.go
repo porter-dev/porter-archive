@@ -16,11 +16,13 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// UpdateLinkedAppsHandler is the handle for the /environment-group/update-linked-apps endpoint
 type UpdateLinkedAppsHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
+// NewUpdateLinkedAppsHandler creates an instance of UpdateLinkedAppsHandler
 func NewUpdateLinkedAppsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -32,14 +34,15 @@ func NewUpdateLinkedAppsHandler(
 	}
 }
 
-// UpdateLinkedAppsRequest is the request object for the /apps/{porter_app_name}/update-image endpoint
+// UpdateLinkedAppsRequest is the request object for the /environment-group/update-linked-apps endpoint
 type UpdateLinkedAppsRequest struct {
 	Name string `json:"name"`
 }
 
-// UpdateLinkedAppsResponse is the response object for the /apps/{porter_app_name}/update-image endpoint
+// UpdateLinkedAppsResponse is the response object for the /environment-group/update-linked-apps endpoint
 type UpdateLinkedAppsResponse struct{}
 
+// ServeHTTP updates all apps linked to an environment group
 func (c *UpdateLinkedAppsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-update-apps-linked-to-env-group")
 	defer span.End()

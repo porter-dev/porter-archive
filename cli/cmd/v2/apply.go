@@ -52,11 +52,11 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	}
 
 	var prNumber int
-	prNumberEnv := os.Getenv("PORTER_PR_ID")
+	prNumberEnv := os.Getenv("PORTER_PR_NUMBER")
 	if prNumberEnv != "" {
 		prNumber, err = strconv.Atoi(prNumberEnv)
 		if err != nil {
-			return fmt.Errorf("error parsing PORTER_PR_ID to int: %w", err)
+			return fmt.Errorf("error parsing PORTER_PR_NUMBER to int: %w", err)
 		}
 	}
 

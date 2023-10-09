@@ -93,5 +93,5 @@ jobs:
         PORTER_STACK_NAME: ${stackName}
         PORTER_TAG: \${{ steps.vars.outputs.sha_short }}
         PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}
-        PORTER_PR_ID: \${{ github.event.inputs.pr_number }}`;
+        PORTER_PR_NUMBER: \${{ github.event.inputs.pr_number }}`;
 };

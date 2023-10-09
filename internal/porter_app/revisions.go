@@ -3,6 +3,7 @@ package porter_app
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -106,26 +107,9 @@ func EncodedRevisionFromProto(ctx context.Context, appRevision *porterv1.AppRevi
 
 	b64 := base64.StdEncoding.EncodeToString(encoded)
 
-	var status models.AppRevisionStatus
-	switch appRevision.Status {
-	case string(models.AppRevisionStatus_AwaitingBuild):
-		status = models.AppRevisionStatus_AwaitingBuild
-	case string(models.AppRevisionStatus_AwaitingPredeploy):
-		status = models.AppRevisionStatus_AwaitingPredeploy
-	case string(models.AppRevisionStatus_Deployed):
-		status = models.AppRevisionStatus_Deployed
-	case string(models.AppRevisionStatus_BuildCanceled):
-		status = models.AppRevisionStatus_BuildCanceled
-	case string(models.AppRevisionStatus_BuildFailed):
-		status = models.AppRevisionStatus_BuildFailed
-	case string(models.AppRevisionStatus_PredeployFailed):
-		status = models.AppRevisionStatus_PredeployFailed
-	case string(models.AppRevisionStatus_DeployFailed):
-		status = models.AppRevisionStatus_DeployFailed
-	case string(models.AppRevisionStatus_Created):
-		status = models.AppRevisionStatus_Created
-	default:
-		return revision, telemetry.Error(ctx, span, nil, "unknown app revision status")
+	status, err := appRevisionStatusFromProto(appRevision.Status)
+	if err != nil {
+		return revision, telemetry.Error(ctx, span, err, "error getting app revision status from proto")
 	}
 
 	revision = Revision{
@@ -206,4 +190,30 @@ func AttachEnvToRevision(ctx context.Context, inp AttachEnvToRevisionInput) (Rev
 	}
 
 	return revision, nil
+}
+
+func appRevisionStatusFromProto(status string) (models.AppRevisionStatus, error) {
+	var appRevisionStatus models.AppRevisionStatus
+	switch status {
+	case string(models.AppRevisionStatus_AwaitingBuild):
+		appRevisionStatus = models.AppRevisionStatus_AwaitingBuild
+	case string(models.AppRevisionStatus_AwaitingPredeploy):
+		appRevisionStatus = models.AppRevisionStatus_AwaitingPredeploy
+	case string(models.AppRevisionStatus_Deployed):
+		appRevisionStatus = models.AppRevisionStatus_Deployed
+	case string(models.AppRevisionStatus_BuildCanceled):
+		appRevisionStatus = models.AppRevisionStatus_BuildCanceled
+	case string(models.AppRevisionStatus_BuildFailed):
+		appRevisionStatus = models.AppRevisionStatus_BuildFailed
+	case string(models.AppRevisionStatus_PredeployFailed):
+		appRevisionStatus = models.AppRevisionStatus_PredeployFailed
+	case string(models.AppRevisionStatus_DeployFailed):
+		appRevisionStatus = models.AppRevisionStatus_DeployFailed
+	case string(models.AppRevisionStatus_Created):
+		appRevisionStatus = models.AppRevisionStatus_Created
+	default:
+		return appRevisionStatus, fmt.Errorf("unknown app revision status")
+	}
+
+	return appRevisionStatus, nil
 }

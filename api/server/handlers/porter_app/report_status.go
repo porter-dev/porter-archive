@@ -59,7 +59,7 @@ func (c *ReportRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
-		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 		return
 	}
 
@@ -95,7 +95,7 @@ func (c *ReportRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error reading porter app by name")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 	if porterApp.ID == 0 {
@@ -119,7 +119,7 @@ func (c *ReportRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	})
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting app revision")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -131,7 +131,7 @@ func (c *ReportRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	})
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting deployment target details")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTarget.ID})
@@ -153,7 +153,7 @@ func (c *ReportRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	})
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error writing pr comment")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -165,6 +165,7 @@ type writePRCommentInput struct {
 	porterApp *models.PorterApp
 	prNumber  int
 	commitSha string
+	serverURL string
 
 	githubAppSecret []byte
 	githubAppID     string
@@ -219,14 +220,15 @@ func writePRComment(ctx context.Context, inp writePRCommentInput) error {
 	}
 
 	body := "## Porter Preview Environments\n"
+	porterURL := fmt.Sprintf("%s/preview-environments/apps/%s?target=%s", inp.serverURL, inp.porterApp.Name, inp.revision.DeploymentTargetID)
 
 	switch inp.revision.Status {
 	case models.AppRevisionStatus_BuildFailed:
-		body = fmt.Sprintf("%s❌ The latest deploy failed to build. Check the [action logs](https://github.com/%s/actions/runs/) for more information.", body, inp.porterApp.RepoName)
+		body = fmt.Sprintf("%s❌ The latest deploy failed to build. Check the [Porter Dashboard](%s) or [action logs](https://github.com/%s/actions/runs/) for more information.", body, porterURL, inp.porterApp.RepoName)
 	case models.AppRevisionStatus_DeployFailed:
-		body = fmt.Sprintf("%s❌ The latest SHA ([`%s`](https://github.com/%s/%s/commit/%s)) failed to deploy.", body, inp.commitSha, repoDetails[0], repoDetails[1], inp.commitSha)
+		body = fmt.Sprintf("%s❌ The latest SHA ([`%s`](https://github.com/%s/%s/commit/%s)) failed to deploy.\nCheck the [Porter Dashboard](%s) or [action logs](https://github.com/%s/actions/runs/) for more information.\nContact Porter Support if the errors persists", body, inp.commitSha, repoDetails[0], repoDetails[1], inp.commitSha, porterURL, inp.porterApp.RepoName)
 	case models.AppRevisionStatus_Deployed:
-		body = fmt.Sprintf("%s✅ The latest SHA ([`%s`](https://github.com/%s/%s/commit/%s)) has been successfully deployed.", body, inp.commitSha, repoDetails[0], repoDetails[1], inp.commitSha)
+		body = fmt.Sprintf("%s✅ The latest SHA ([`%s`](https://github.com/%s/%s/commit/%s)) has been successfully deployed.\nApp details available in the [Porter Dashboard](%s)", body, inp.commitSha, repoDetails[0], repoDetails[1], inp.commitSha, porterURL)
 	default:
 		return nil
 	}

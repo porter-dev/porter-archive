@@ -373,6 +373,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		return appService, errors.New("Service type unspecified")
 	case porterv1.ServiceType_SERVICE_TYPE_WEB:
 		webConfig := service.GetWebConfig()
+		appService.Type = "web"
 
 		var autoscaling *AutoScaling
 		if webConfig.Autoscaling != nil {
@@ -408,6 +409,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		}
 	case porterv1.ServiceType_SERVICE_TYPE_WORKER:
 		workerConfig := service.GetWorkerConfig()
+		appService.Type = "worker"
 
 		var autoscaling *AutoScaling
 		if workerConfig.Autoscaling != nil {
@@ -422,6 +424,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		appService.Autoscaling = autoscaling
 	case porterv1.ServiceType_SERVICE_TYPE_JOB:
 		jobConfig := service.GetJobConfig()
+		appService.Type = "job"
 
 		appService.AllowConcurrent = jobConfig.AllowConcurrentOptional
 		appService.Cron = jobConfig.Cron

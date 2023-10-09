@@ -3,6 +3,7 @@ import Modal from "components/porter/Modal";
 import Loading from "components/Loading";
 import DiffViewer, { DiffMethod } from "react-diff-viewer";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import api from "shared/api";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
@@ -76,6 +77,14 @@ const RevisionDiffModal: React.FC<Props> = ({
         }
     }, [data]);
 
+    const newStyles = {
+        variables: {
+            dark: {
+                diffViewerTitleColor: 'fff'
+            }
+        },
+    };
+
     return (
         <>
             <Modal closeModal={close} width={"800px"}>
@@ -85,9 +94,12 @@ const RevisionDiffModal: React.FC<Props> = ({
                 ) : (
                     <RevisionDiffContainer>
                         {baseYamlString === changedYamlString && (
-                            <div style={{ textAlign: "center" }}>
-                                <h3>No changes found</h3>
-                            </div>
+                            <>
+                                <NoChangesFound>
+                                    <Text size={16}>No changes found</Text>
+                                </NoChangesFound>
+                                <Spacer y={1} />
+                            </>
                         )}
                         <DiffViewer
                             leftTitle={`Revision No. ${base.revisionNumber}`}
@@ -98,6 +110,7 @@ const RevisionDiffModal: React.FC<Props> = ({
                             hideLineNumbers={false}
                             useDarkTheme={true}
                             compareMethod={DiffMethod.TRIMMED_LINES}
+                            styles={newStyles}
                         />
                     </RevisionDiffContainer>
                 )}
@@ -108,8 +121,15 @@ const RevisionDiffModal: React.FC<Props> = ({
 
 export default RevisionDiffModal;
 
-export const RevisionDiffContainer = styled.div`
+const RevisionDiffContainer = styled.div`
     max-height: 400px;
     overflow-y: auto;
     border-radius: 8px;
+`;
+
+const NoChangesFound = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
 `;

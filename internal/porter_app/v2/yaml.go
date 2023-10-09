@@ -100,7 +100,7 @@ type Service struct {
 	Autoscaling       *AutoScaling `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
 	Domains           []Domains    `yaml:"domains" validate:"excluded_unless=Type web"`
 	HealthCheck       *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
-	AllowConcurrent   bool         `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
+	AllowConcurrent   *bool        `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
 	Cron              string       `yaml:"cron" validate:"excluded_unless=Type job"`
 	Private           *bool        `yaml:"private" validate:"excluded_unless=Type web"`
 }
@@ -222,7 +222,6 @@ func protoEnumFromType(name string, service Service) porterv1.ServiceType {
 func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {
 	serviceProto := &porterv1.Service{
 		RunOptional:       service.Run,
-		Type:              serviceType,
 		Instances:         int32(service.Instances),
 		CpuCores:          service.CpuCores,
 		RamMegabytes:      int32(service.RamMegabytes),
@@ -236,6 +235,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	case porterv1.ServiceType_SERVICE_TYPE_UNSPECIFIED:
 		return nil, errors.New("Service type unspecified")
 	case porterv1.ServiceType_SERVICE_TYPE_WEB:
+		service.Type = "web"
 		webConfig := &porterv1.WebServiceConfig{}
 
 		var autoscaling *porterv1.Autoscaling
@@ -275,6 +275,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			WebConfig: webConfig,
 		}
 	case porterv1.ServiceType_SERVICE_TYPE_WORKER:
+		service.Type = "worker"
 		workerConfig := &porterv1.WorkerServiceConfig{}
 
 		var autoscaling *porterv1.Autoscaling
@@ -293,9 +294,10 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			WorkerConfig: workerConfig,
 		}
 	case porterv1.ServiceType_SERVICE_TYPE_JOB:
+		service.Type = "job"
 		jobConfig := &porterv1.JobServiceConfig{
-			AllowConcurrent: service.AllowConcurrent,
-			Cron:            service.Cron,
+			AllowConcurrentOptional: service.AllowConcurrent,
+			Cron:                    service.Cron,
 		}
 
 		serviceProto.Config = &porterv1.Service_JobConfig{
@@ -304,4 +306,129 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	}
 
 	return serviceProto, nil
+}
+
+// AppFromProto converts a PorterApp proto object into a PorterApp struct
+func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
+	porterApp := PorterApp{
+		Name: appProto.Name,
+	}
+
+	if appProto.Build != nil {
+		porterApp.Build = &Build{
+			Context:    appProto.Build.Context,
+			Method:     appProto.Build.Method,
+			Builder:    appProto.Build.Builder,
+			Buildpacks: appProto.Build.Buildpacks,
+			Dockerfile: appProto.Build.Dockerfile,
+		}
+	}
+
+	if appProto.Image != nil {
+		porterApp.Image = &Image{
+			Repository: appProto.Image.Repository,
+			Tag:        appProto.Image.Tag,
+		}
+	}
+
+	porterApp.Services = make(map[string]Service, 0)
+	for name, service := range appProto.Services {
+		appService, err := appServiceFromProto(service)
+		if err != nil {
+			return porterApp, err
+		}
+
+		porterApp.Services[name] = appService
+	}
+
+	if appProto.Predeploy != nil {
+		appPredeploy, err := appServiceFromProto(appProto.Predeploy)
+		if err != nil {
+			return porterApp, err
+		}
+
+		porterApp.Predeploy = &appPredeploy
+	}
+
+	porterApp.EnvGroups = make([]string, 0)
+	for _, envGroup := range appProto.EnvGroups {
+		porterApp.EnvGroups = append(porterApp.EnvGroups, envGroup.Name)
+	}
+
+	return porterApp, nil
+}
+
+func appServiceFromProto(service *porterv1.Service) (Service, error) {
+	appService := Service{
+		Run:               service.RunOptional,
+		Instances:         int(service.Instances),
+		CpuCores:          service.CpuCores,
+		RamMegabytes:      int(service.RamMegabytes),
+		Port:              int(service.Port),
+		SmartOptimization: service.SmartOptimization,
+		Type:              string(service.Type),
+	}
+
+	switch service.Type {
+	default:
+		return appService, fmt.Errorf("invalid service type '%s'", service.Type)
+	case porterv1.ServiceType_SERVICE_TYPE_UNSPECIFIED:
+		return appService, errors.New("Service type unspecified")
+	case porterv1.ServiceType_SERVICE_TYPE_WEB:
+		webConfig := service.GetWebConfig()
+
+		var autoscaling *AutoScaling
+		if webConfig.Autoscaling != nil {
+			autoscaling = &AutoScaling{
+				Enabled:                webConfig.Autoscaling.Enabled,
+				MinInstances:           int(webConfig.Autoscaling.MinInstances),
+				MaxInstances:           int(webConfig.Autoscaling.MaxInstances),
+				CpuThresholdPercent:    int(webConfig.Autoscaling.CpuThresholdPercent),
+				MemoryThresholdPercent: int(webConfig.Autoscaling.MemoryThresholdPercent),
+			}
+		}
+		appService.Autoscaling = autoscaling
+
+		var healthCheck *HealthCheck
+		if webConfig.HealthCheck != nil {
+			healthCheck = &HealthCheck{
+				Enabled:  webConfig.HealthCheck.Enabled,
+				HttpPath: webConfig.HealthCheck.HttpPath,
+			}
+		}
+		appService.HealthCheck = healthCheck
+
+		domains := make([]Domains, 0)
+		for _, domain := range webConfig.Domains {
+			domains = append(domains, Domains{
+				Name: domain.Name,
+			})
+		}
+		appService.Domains = domains
+
+		if webConfig.Private != nil {
+			appService.Private = webConfig.Private
+		}
+	case porterv1.ServiceType_SERVICE_TYPE_WORKER:
+		workerConfig := service.GetWorkerConfig()
+
+		var autoscaling *AutoScaling
+		if workerConfig.Autoscaling != nil {
+			autoscaling = &AutoScaling{
+				Enabled:                workerConfig.Autoscaling.Enabled,
+				MinInstances:           int(workerConfig.Autoscaling.MinInstances),
+				MaxInstances:           int(workerConfig.Autoscaling.MaxInstances),
+				CpuThresholdPercent:    int(workerConfig.Autoscaling.CpuThresholdPercent),
+				MemoryThresholdPercent: int(workerConfig.Autoscaling.MemoryThresholdPercent),
+			}
+		}
+		appService.Autoscaling = autoscaling
+	case porterv1.ServiceType_SERVICE_TYPE_JOB:
+		jobConfig := service.GetJobConfig()
+
+		appService.AllowConcurrent = jobConfig.AllowConcurrentOptional
+		appService.Cron = jobConfig.Cron
+	}
+
+	return appService, nil
 }

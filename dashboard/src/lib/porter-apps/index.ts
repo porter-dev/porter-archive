@@ -59,7 +59,11 @@ export const deletionValidator = z.object({
 export const clientAppValidator = z.object({
   name: z.object({
     readOnly: z.boolean(),
-    value: z.string(),
+    value: z.string().refine(value => {
+      return /^[a-z0-9-]+$/.test(value);
+    }, {
+      message: 'Invalid input: Only lowercase letters, numbers, and "-" are allowed.',
+    }),
   }),
   envGroups: z
     .object({ name: z.string(), version: z.bigint() })
@@ -377,15 +381,15 @@ export function clientAppFromProto({
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-        deserializeService({
-          service: serializedServiceFromProto({
-            name: "pre-deploy",
-            service: proto.predeploy,
-            isPredeploy: true,
-          }),
-          override: predeployOverrides,
+      deserializeService({
+        service: serializedServiceFromProto({
+          name: "pre-deploy",
+          service: proto.predeploy,
+          isPredeploy: true,
         }),
-      ]
+        override: predeployOverrides,
+      }),
+    ]
     : undefined;
 
   return {

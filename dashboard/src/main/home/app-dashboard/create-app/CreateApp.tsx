@@ -19,6 +19,7 @@ import {
   PorterAppFormData,
   SourceOptions,
   porterAppFormValidator,
+  clientAppValidator,
 } from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
@@ -63,6 +64,14 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     userHasSeenNoPorterYamlFoundModal,
     setUserHasSeenNoPorterYamlFoundModal,
   ] = React.useState(false);
+  const doesNameExist = (value: string): boolean => {
+    return porterApps.includes(value);
+  };
+  const isNameValid = (value: string): boolean => {
+    return /^[a-z0-9-]+$/.test(value)
+  };
+  const [isNameHighlight, setIsNameHighlight] = React.useState(false);
+  const [isNameDuplicate, setIsNameDuplicate] = React.useState(false);
 
   const [
     validatedAppProto,
@@ -193,6 +202,20 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     creating: true,
   });
 
+  const resetAllExceptName = () => {
+    setIsNameHighlight(true);
+
+
+    // Get the current name value before the reset
+    setStep(0);
+    const currentNameValue = porterAppFormMethods.getValues("app.name");
+    setValue("app.services", []);
+    // Reset the form
+    porterAppFormMethods.reset();
+    // Set the name back to its original value
+    porterAppFormMethods.setValue("app.name", currentNameValue);
+
+  };
   const onSubmit = handleSubmit(async (data) => {
     try {
       setDeployError("");
@@ -342,10 +365,13 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   useEffect(() => {
     // set step to 1 if name is filled out
-    if (name.value) {
+    const nameDuplicate = doesNameExist(name.value);
+    setIsNameDuplicate(nameDuplicate);
+    if (isNameValid(name.value) && name.value && !nameDuplicate) {
+      setIsNameHighlight(false);  // Reset highlight when the name is valid
       setStep((prev) => Math.max(prev, 1));
     } else {
-      setStep(0);
+      resetAllExceptName()
     }
 
     // set step to 2 if source is filled out
@@ -505,9 +531,15 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                   <>
                     <Text size={16}>Application name</Text>
                     <Spacer y={0.5} />
-                    <Text color="helper">
+                    <Text color={isNameHighlight ? "#FFCC00" : "helper"}>
                       Lowercase letters, numbers, and "-" only.
                     </Text>
+
+                    {isNameDuplicate && (
+                      <><Spacer y={0.5} /><Text color="red">
+                        App name cannot be a duplicate.
+                      </Text></>
+                    )}
                     <Spacer y={0.5} />
                     <ControlledInput
                       placeholder="ex: academic-sophon"

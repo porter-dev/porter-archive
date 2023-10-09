@@ -1917,6 +1917,18 @@ const getAllEnvGroups = baseApi<
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
 });
 
+const updateAppsLinkedToEnvironmentGroup = baseApi<
+    {
+        name: string;
+    },
+    {
+        id: number;
+        cluster_id: number;
+    }
+>("GET", (pathParams) => {
+    return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups/update-linked-apps`;
+});
+
 const updateEnvironmentGroupV2 = baseApi<
   {
     deployment_target_id: string;
@@ -3260,6 +3272,7 @@ export default {
   listEnvGroups,
   getAllEnvGroups,
   updateEnvironmentGroupV2,
+  updateAppsLinkedToEnvironmentGroup,
   getEnvGroup,
   deleteEnvGroup,
   deleteNewEnvGroup,

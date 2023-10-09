@@ -66,8 +66,9 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                 <Block
                   key={i}
                   disabled={
-                    isUsageExceeded ||
-                    (provider === "gcp" && !currentProject?.azure_enabled)
+                    !currentProject?.multi_cluster && (isUsageExceeded ||
+                      (provider === "gcp" && !currentProject?.azure_enabled))
+
                   }
                   onClick={() => {
                     if (

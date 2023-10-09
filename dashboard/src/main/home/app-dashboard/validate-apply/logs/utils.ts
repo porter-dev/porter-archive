@@ -56,6 +56,7 @@ export const useLogs = ({
   appRevisionId = "",
   timeRange,
   filterPredeploy,
+  appID,
 }: {
   projectID: number,
   clusterID: number,
@@ -75,6 +76,7 @@ export const useLogs = ({
     endTime?: Dayjs,
   },
   filterPredeploy: boolean,
+  appID: number,
 }
 ) => {
   const [isLive, setIsLive] = useState<boolean>(!setDate && (timeRange?.startTime == null && timeRange?.endTime == null));
@@ -180,11 +182,11 @@ export const useLogs = ({
     const websocketBaseURL = `/api/projects/${projectID}/clusters/${clusterID}/apps/${appName}/logs/loki`;
 
     const searchParams = {
-      app_name: appName,
       service_name: serviceName,
       deployment_target_id: deploymentTargetId,
       search_param: searchParam,
       app_revision_id: appRevisionId,
+      app_id: appID.toString(),
     }
 
     const q = new URLSearchParams(searchParams).toString();
@@ -272,7 +274,7 @@ export const useLogs = ({
   }> => {
     try {
       const getLogsReq = {
-        app_name: appName,
+        app_id: appID,
         service_name: serviceName,
         deployment_target_id: deploymentTargetId,
         search_param: searchParam,

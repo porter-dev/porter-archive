@@ -36,7 +36,7 @@ const AppEventCard: React.FC<Props> = ({ event, deploymentTargetId, projectId, c
         {
           start_range: dayjs(event.created_at).subtract(1, 'minute').toISOString(),
           end_range: dayjs(event.updated_at).add(1, 'minute').toISOString(),
-          app_name: event.metadata.app_name,
+          app_id: event.porter_app_id,
           service_name: event.metadata.service_name,
           deployment_target_id: deploymentTargetId,
           limit: 1000,
@@ -45,7 +45,7 @@ const AppEventCard: React.FC<Props> = ({ event, deploymentTargetId, projectId, c
         {
           project_id: projectId,
           cluster_id: clusterId,
-          app_name: appName,
+          porter_app_name: appName,
         }
       )
 

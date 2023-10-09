@@ -280,7 +280,7 @@ const getLogsWithinTimeRange = baseApi<
 
 const appLogs = baseApi<
   {
-    app_name: string;
+    app_id: number;
     service_name: string;
     deployment_target_id: string;
     limit: number;

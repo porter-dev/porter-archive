@@ -8,6 +8,7 @@ import api from "shared/api";
 const clusterDataValidator = z.object({
     labels: z.object({
         "beta.kubernetes.io/instance-type": z.string().nullish(),
+        "porter.run/workload-kind": z.string().nullish(),
     }).optional(),
 }).transform((data) => {
     const defaultResources = {
@@ -15,6 +16,10 @@ const clusterDataValidator = z.object({
         maxRAM: AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"],
     };
     if (!data.labels) {
+        return defaultResources;
+    }
+    const workloadKind = data.labels["porter.run/workload-kind"];
+    if (!workloadKind || workloadKind !== "application") {
         return defaultResources;
     }
     const instanceType = data.labels["beta.kubernetes.io/instance-type"];

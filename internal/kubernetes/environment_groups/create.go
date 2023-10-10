@@ -130,6 +130,7 @@ func createVersionedEnvironmentGroupInNamespace(ctx context.Context, a *kubernet
 			Labels: map[string]string{
 				LabelKey_EnvironmentGroupName:    environmentGroup.Name,
 				LabelKey_EnvironmentGroupVersion: strconv.Itoa(environmentGroup.Version),
+				LabelKey_PorterManaged:           "true",
 			},
 		},
 		Data: environmentGroup.Variables,
@@ -155,6 +156,7 @@ func createVersionedEnvironmentGroupInNamespace(ctx context.Context, a *kubernet
 			Labels: map[string]string{
 				LabelKey_EnvironmentGroupName:    environmentGroup.Name,
 				LabelKey_EnvironmentGroupVersion: strconv.Itoa(environmentGroup.Version),
+				LabelKey_PorterManaged:           "true",
 			},
 		},
 		Data: secretData,

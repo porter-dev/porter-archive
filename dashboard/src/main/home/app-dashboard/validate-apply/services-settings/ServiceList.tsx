@@ -28,6 +28,7 @@ import {
 import { ControlledInput } from "components/porter/ControlledInput";
 import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useClusterResources } from "shared/ClusterResourcesContext";
 
 const addServiceFormValidator = z.object({
   name: z
@@ -64,6 +65,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
+
+  const { currentClusterResources } = useClusterResources();
 
   // add service modal form
   const {
@@ -154,8 +157,16 @@ const ServiceList: React.FC<ServiceListProps> = ({
     }
 
     append(
-      deserializeService({ service: defaultSerialized(data), expanded: true })
+      deserializeService({
+        service: defaultSerialized({
+          ...data,
+          defaultCPU: currentClusterResources.defaultCPU,
+          defaultRAM: currentClusterResources.defaultRAM,
+        }),
+        expanded: true,
+      })
     );
+    
     reset();
     setShowAddServiceModal(false);
   });

@@ -30,9 +30,9 @@ import { useAppValidation } from "lib/hooks/useAppValidation";
 import { PorterApp } from "@porter-dev/api-contracts";
 import axios from "axios";
 import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
-import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 import Error from "components/porter/Error";
 import _ from "lodash";
+import { useClusterResources } from "shared/ClusterResourcesContext";
 
 type Props = {
   existingTemplate: PorterApp | null;
@@ -52,6 +52,7 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
     variables: {},
     secrets: {},
   });
+  const { currentClusterResources } = useClusterResources(); 
 
   const {
     porterApp,
@@ -61,7 +62,6 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
     clusterId,
     projectId,
   } = useLatestRevision();
-  const { maxCPU, maxRAM } = useClusterResourceLimits({ projectId, clusterId });
 
   const { data: baseEnvGroups = [] } = useQuery(
     ["getAllEnvGroups", projectId, clusterId],
@@ -277,8 +277,8 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
               <ServiceList
                 addNewText={"Add a new service"}
                 fieldArrayName={"app.services"}
-                maxCPU={maxCPU}
-                maxRAM={maxRAM}
+                maxCPU={currentClusterResources.maxCPU}
+                maxRAM={currentClusterResources.maxRAM}
               />
             </>,
             <>
@@ -304,6 +304,8 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
                   service: defaultSerialized({
                     name: "pre-deploy",
                     type: "predeploy",
+                    defaultCPU: currentClusterResources.defaultCPU,
+                    defaultRAM: currentClusterResources.defaultRAM,
                   }),
                 })}
                 existingServiceNames={
@@ -311,8 +313,8 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
                 }
                 isPredeploy
                 fieldArrayName={"app.predeploy"}
-                maxCPU={maxCPU}
-                maxRAM={maxRAM}
+                maxCPU={currentClusterResources.maxCPU}
+                maxRAM={currentClusterResources.maxRAM}
               />
             </>,
             <Button

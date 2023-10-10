@@ -231,10 +231,9 @@ export function serializeService(service: ClientService): SerializedService {
             name: domain.name.value,
           })),
           ingressAnnotations: Object.fromEntries(
-            config.ingressAnnotations.map((annotation) => [
-              annotation.key,
-              annotation.value,
-            ])
+            config.ingressAnnotations
+              .filter((a) => a.key.length > 0 && a.value.length > 0)
+              .map((annotation) => [annotation.key, annotation.value])
           ),
           private: config.private?.value,
         },

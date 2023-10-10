@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"reflect"
 	"testing"
 
-	"github.com/kr/pretty"
+	"github.com/google/go-cmp/cmp"
 	"github.com/matryer/is"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/internal/porter_app"
@@ -44,8 +43,8 @@ func TestPorterAppToYAML(t *testing.T) {
 func diffPorterAppWithOriginalYamlTest(t *testing.T, is *is.I, wantYaml []byte, got v2.PorterApp) {
 	t.Helper()
 
-	var want map[string]interface{}
-	err := yaml.Unmarshal(wantYaml, &want)
+	var wantMap map[string]interface{}
+	err := yaml.Unmarshal(wantYaml, &wantMap)
 	is.NoErr(err)
 
 	gotYaml, err := yaml.Marshal(got)
@@ -55,8 +54,7 @@ func diffPorterAppWithOriginalYamlTest(t *testing.T, is *is.I, wantYaml []byte, 
 	err = yaml.Unmarshal(gotYaml, &gotMap)
 	is.NoErr(err)
 
-	// Compare the maps for equality
-	if !reflect.DeepEqual(want, gotMap) {
-		t.Errorf("Maps are not equal. Diff: %v", pretty.Diff(want, gotMap))
+	if diff := cmp.Diff(wantMap, gotMap); diff != "" {
+		t.Errorf("diff between want and got: %s", diff)
 	}
 }

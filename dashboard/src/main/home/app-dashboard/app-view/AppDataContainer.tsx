@@ -89,8 +89,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     deploymentTargetID: deploymentTarget.id,
   });
 
-  const { maxCPU, maxRAM } = useClusterResourceLimits({ projectId, clusterId });
-
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
       return tabParam as ValidTab;
@@ -520,8 +518,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("activity", () => <Activity />)
           .with("overview", () => (
             <Overview
-              maxCPU={maxCPU}
-              maxRAM={maxRAM}
               buttonStatus={buttonStatus}
             />
           ))

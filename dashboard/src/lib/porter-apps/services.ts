@@ -20,6 +20,8 @@ import {
   serviceStringValidator,
 } from "./values";
 import _ from "lodash";
+import { useContext } from "react";
+import ClusterResourcesContext, { useClusterResources } from "shared/ClusterResourcesContext";
 
 export type DetectedServices = {
   services: ClientService[];
@@ -142,17 +144,21 @@ export function prefixSubdomain(subdomain: string) {
 export function defaultSerialized({
   name,
   type,
+  defaultCPU,
+  defaultRAM,
 }: {
   name: string;
   type: ClientServiceType;
+  defaultCPU?: number;
+  defaultRAM?: number;
 }): SerializedService {
   const baseService = {
     name,
     run: "",
     instances: 1,
     port: 3000,
-    cpuCores: 0.1,
-    ramMegabytes: 256,
+    cpuCores: defaultCPU ?? 0.1,
+    ramMegabytes: defaultRAM ?? 256,
     smartOptimization: true,
   };
 

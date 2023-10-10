@@ -37,6 +37,7 @@ const clusterDataValidator = z.object({
     }
     return defaultResources;
 });
+
 export const useClusterResourceLimits = (
     {
         projectId,
@@ -45,24 +46,42 @@ export const useClusterResourceLimits = (
         projectId: number | undefined,
         clusterId: number | undefined,
     }
-) => {
-    const UPPER_BOUND = 0.75;
+): {
+    maxCPU: number,
+    maxRAM: number,
+    // defaults indicate the resources assigned to new services
+    defaultCPU: number,
+    defaultRAM: number,
+} => {
+    const SMALL_INSTANCE_UPPER_BOUND = 0.75;
+    const LARGE_INSTANCE_UPPER_BOUND = 0.9;
+    const DEFAULT_MULTIPLIER = 0.125;
 
     const [maxCPU, setMaxCPU] = useState(
-        AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"] * UPPER_BOUND
+        AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"] * SMALL_INSTANCE_UPPER_BOUND
     ); //default is set to a t3 medium
     const [maxRAM, setMaxRAM] = useState(
         // round to nearest 100
         Math.round(
             convert(AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"], "GiB").to("MB") *
-            UPPER_BOUND / 100
+            SMALL_INSTANCE_UPPER_BOUND / 100
+        ) * 100
+    ); //default is set to a t3 medium
+    const [defaultCPU, setDefaultCPU] = useState(
+        AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"] * DEFAULT_MULTIPLIER
+    ); //default is set to a t3 medium
+    const [defaultRAM, setDefaultRAM] = useState(
+        // round to nearest 100
+        Math.round(
+            convert(AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"], "GiB").to("MB") *
+            DEFAULT_MULTIPLIER / 100
         ) * 100
     ); //default is set to a t3 medium
 
     const { data } = useQuery(
         ["getClusterNodes", projectId, clusterId],
         async () => {
-            if (!projectId || !clusterId) {
+            if (!projectId || !clusterId || clusterId === -1) {
                 return Promise.resolve([]);
             }
 
@@ -80,6 +99,7 @@ export const useClusterResourceLimits = (
         {
             enabled: !!projectId && !!clusterId,
             refetchOnWindowFocus: false,
+            retry: false,
         }
     );
 
@@ -92,31 +112,31 @@ export const useClusterResourceLimits = (
             const maxRAM = data.reduce((acc, curr) => {
                 return Math.max(acc, curr.maxRAM);
             }, 0);
+            let maxMultiplier = SMALL_INSTANCE_UPPER_BOUND;
             // if the instance type has more than 4 GB ram, we use 90% of the ram/cpu
             // otherwise, we use 75%
             if (maxRAM > 4) {
-                // round down to nearest 0.5 cores
-                setMaxCPU(Math.floor(maxCPU * 0.9 * 2) / 2);
-                setMaxRAM(
-                    Math.round(
-                        convert(maxRAM, "GiB").to("MB") * 0.9 / 100
-                    ) * 100
-                );
-            } else {
-                setMaxCPU(Math.floor(maxCPU * UPPER_BOUND * 2) / 2);
-                setMaxRAM(
-                    Math.round(
-                        convert(maxRAM, "GiB").to("MB") * UPPER_BOUND / 100
-                    ) * 100
-                );
-            }
+                maxMultiplier = LARGE_INSTANCE_UPPER_BOUND;
+            } 
+            // round down to nearest 0.5 cores
+            const newMaxCPU = Math.floor(maxCPU * maxMultiplier * 2) / 2;
+            // round down to nearest 100 MB
+            const newMaxRAM = Math.round(
+                convert(maxRAM, "GiB").to("MB") * maxMultiplier / 100
+            ) * 100;
+            setMaxCPU(newMaxCPU);
+            setMaxRAM(newMaxRAM);
+            setDefaultCPU(Number((newMaxCPU * DEFAULT_MULTIPLIER).toFixed(2)));
+            setDefaultRAM(Number((newMaxRAM * DEFAULT_MULTIPLIER).toFixed(0)));
         }
     }, [data])
 
 
     return {
         maxCPU,
-        maxRAM
+        maxRAM,
+        defaultCPU,
+        defaultRAM,
     }
 }
 

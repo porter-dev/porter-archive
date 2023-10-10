@@ -145,17 +145,21 @@ export function prefixSubdomain(subdomain: string) {
 export function defaultSerialized({
   name,
   type,
+  defaultCPU = 0.1,
+  defaultRAM = 256,
 }: {
   name: string;
   type: ClientServiceType;
+  defaultCPU?: number;
+  defaultRAM?: number;
 }): SerializedService {
   const baseService = {
     name,
     run: "",
     instances: 1,
     port: 3000,
-    cpuCores: 0.1,
-    ramMegabytes: 256,
+    cpuCores: defaultCPU,
+    ramMegabytes: defaultRAM,
     smartOptimization: true,
   };
 
@@ -234,10 +238,9 @@ export function serializeService(service: ClientService): SerializedService {
             name: domain.name.value,
           })),
           ingressAnnotations: Object.fromEntries(
-            config.ingressAnnotations.map((annotation) => [
-              annotation.key,
-              annotation.value,
-            ])
+            config.ingressAnnotations
+              .filter((a) => a.key.length > 0 && a.value.length > 0)
+              .map((annotation) => [annotation.key, annotation.value])
           ),
           private: config.private?.value,
         },

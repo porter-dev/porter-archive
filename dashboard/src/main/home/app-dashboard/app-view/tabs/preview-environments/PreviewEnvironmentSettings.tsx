@@ -10,6 +10,8 @@ import { useGithubWorkflow } from "lib/hooks/useGithubWorkflow";
 import styled from "styled-components";
 import healthy from "assets/status-healthy.png";
 import Icon from "components/porter/Icon";
+import { z } from "zod";
+import { PorterApp } from "@porter-dev/api-contracts";
 
 type Props = {};
 
@@ -20,7 +22,7 @@ const PreviewEnvironmentSettings: React.FC<Props> = ({}) => {
     ["getAppTemplate", projectId, clusterId, porterApp.name],
     async () => {
       try {
-        await api.getAppTemplate(
+        const res = await api.getAppTemplate(
           "<token>",
           {},
           {
@@ -30,9 +32,17 @@ const PreviewEnvironmentSettings: React.FC<Props> = ({}) => {
           }
         );
 
-        return true;
+        const data = await z
+          .object({
+            template_b64_app_proto: z.string(),
+          })
+          .parseAsync(res.data);
+
+        return PorterApp.fromJsonString(atob(data.template_b64_app_proto), {
+          ignoreUnknownFields: true,
+        });
       } catch (err) {
-        return false;
+        return null;
       }
     }
   );

@@ -551,3 +551,29 @@ func (c *Client) UpdateImage(
 
 	return resp, err
 }
+
+// ListAppRevisions lists the last ten app revisions for a given app
+func (c *Client) ListAppRevisions(
+	ctx context.Context,
+	projectID, clusterID uint,
+	appName string,
+	deploymentTargetID string,
+) (*porter_app.ListAppRevisionsResponse, error) {
+	resp := &porter_app.ListAppRevisionsResponse{}
+
+	req := &porter_app.ListAppRevisionsRequest{
+		DeploymentTargetID: deploymentTargetID,
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/revisions",
+			projectID, clusterID,
+			appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}

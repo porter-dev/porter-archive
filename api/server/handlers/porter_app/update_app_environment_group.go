@@ -286,10 +286,14 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	for key, value := range request.Variables {
-		variables[key] = value
+		if len(key) > 0 && len(value) > 0 {
+			variables[key] = value
+		}
 	}
 	for key, value := range request.Secrets {
-		secrets[key] = value
+		if len(key) > 0 && len(value) > 0 {
+			secrets[key] = value
+		}
 	}
 
 	envGroup := environment_groups.EnvironmentGroup{

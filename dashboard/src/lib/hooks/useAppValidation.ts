@@ -75,13 +75,16 @@ export const useAppValidation = ({
 
       const { env } = data.app;
       const variables = env
-        .filter((e) => !e.hidden && !e.deleted)
+        .filter(
+          (e) =>
+            !e.hidden && !e.deleted && e.value.length > 0 && e.key.length > 0
+        )
         .reduce((acc: Record<string, string>, item) => {
           acc[item.key] = item.value;
           return acc;
         }, {});
       const secrets = env
-        .filter((e) => !e.deleted)
+        .filter((e) => !e.deleted && e.value.length > 0 && e.key.length > 0)
         .reduce((acc: Record<string, string>, item) => {
           if (item.hidden) {
             acc[item.key] = item.value;

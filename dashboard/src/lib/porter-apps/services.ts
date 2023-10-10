@@ -20,8 +20,6 @@ import {
   serviceStringValidator,
 } from "./values";
 import _ from "lodash";
-import { useContext } from "react";
-import ClusterResourcesContext, { useClusterResources } from "shared/ClusterResourcesContext";
 
 export type DetectedServices = {
   services: ClientService[];

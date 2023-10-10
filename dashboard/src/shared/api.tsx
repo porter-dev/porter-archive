@@ -1004,6 +1004,18 @@ const getRevision = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/revisions/${revision_id}`;
 });
 
+const porterYamlFromRevision = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+    revision_id: string;
+  }
+>("GET", ({ project_id, cluster_id, porter_app_name, revision_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/revisions/${revision_id}/yaml`;
+});
+
 const listAppRevisions = baseApi<
   {
     deployment_target_id: string;
@@ -3112,6 +3124,7 @@ export default {
   appPodStatus,
   getFeedEvents,
   updateStackStep,
+  porterYamlFromRevision,
   // -----------------------------------
   createConfigMap,
   deleteCluster,

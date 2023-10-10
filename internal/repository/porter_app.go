@@ -1,11 +1,14 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/porter-dev/porter/internal/models"
 )
 
 // PorterAppRepository represents the set of queries on the PorterApp model
 type PorterAppRepository interface {
+	ReadPorterApp(ctx context.Context, id uint) (*models.PorterApp, error)
 	ReadPorterAppByName(clusterID uint, name string) (*models.PorterApp, error)
 	ReadPorterAppsByProjectIDAndName(projectID uint, name string) ([]*models.PorterApp, error)
 	CreatePorterApp(app *models.PorterApp) (*models.PorterApp, error)

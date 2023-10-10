@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -41,4 +42,8 @@ func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*mo
 
 func (repo *PorterAppRepository) DeletePorterApp(app *models.PorterApp) (*models.PorterApp, error) {
 	return nil, errors.New("cannot write database")
+}
+
+func (repo *PorterAppRepository) ReadPorterApp(ctx context.Context, id uint) (*models.PorterApp, error) {
+	return nil, errors.New("cannot read database")
 }

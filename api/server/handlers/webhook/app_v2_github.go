@@ -1,10 +1,13 @@
 package webhook
 
 import (
+	"context"
+	"fmt"
 	"net/http"
+	"strings"
 
 	"connectrpc.com/connect"
-	"github.com/google/go-github/v41/github"
+	"github.com/google/go-github/v39/github"
 	"github.com/google/uuid"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -15,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -96,6 +100,23 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		telemetry.AttributeKV{Key: "project-id", Value: webhook.ProjectID},
 	)
 
+	porterApp, err := c.Repo().PorterApp().ReadPorterApp(ctx, uint(webhook.PorterAppID))
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting porter app")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+	if porterApp.ID == 0 {
+		err := telemetry.Error(ctx, span, err, "porter app not found")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+	if porterApp.ProjectID != uint(webhook.ProjectID) {
+		err := telemetry.Error(ctx, span, err, "porter app project id does not match")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
 	switch event := event.(type) {
 	case *github.PullRequestEvent:
 		if event.GetAction() != GithubPRStatus_Closed {
@@ -106,6 +127,20 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 		branch := event.GetPullRequest().GetHead().GetRef()
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "event-branch", Value: branch})
+
+		err = cancelPendingWorkflows(ctx, cancelPendingWorkflowsInput{
+			appName:         porterApp.Name,
+			repoID:          porterApp.GitRepoID,
+			repoName:        porterApp.RepoName,
+			githubAppSecret: c.Config().ServerConf.GithubAppSecret,
+			githubAppID:     c.Config().ServerConf.GithubAppID,
+			event:           event,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error cancelling pending workflows")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
 
 		deploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(
 			uint(webhook.ProjectID),
@@ -148,4 +183,71 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	c.WriteResult(w, r, nil)
+}
+
+type cancelPendingWorkflowsInput struct {
+	appName         string
+	repoID          uint
+	repoName        string
+	githubAppSecret []byte
+	githubAppID     string
+	event           *github.PullRequestEvent
+}
+
+func cancelPendingWorkflows(ctx context.Context, inp cancelPendingWorkflowsInput) error {
+	ctx, span := telemetry.NewSpan(ctx, "cancel-pending-workflows")
+	defer span.End()
+
+	if inp.repoID == 0 {
+		return telemetry.Error(ctx, span, nil, "repo id is 0")
+	}
+	if inp.repoName == "" {
+		return telemetry.Error(ctx, span, nil, "repo name is empty")
+	}
+	if inp.appName == "" {
+		return telemetry.Error(ctx, span, nil, "app name is empty")
+	}
+	if inp.githubAppSecret == nil {
+		return telemetry.Error(ctx, span, nil, "github app secret is nil")
+	}
+	if inp.githubAppID == "" {
+		return telemetry.Error(ctx, span, nil, "github app id is empty")
+	}
+
+	client, err := porter_app.GetGithubClientByRepoID(ctx, inp.repoID, inp.githubAppSecret, inp.githubAppID)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error getting github client")
+	}
+
+	repoDetails := strings.Split(inp.repoName, "/")
+	if len(repoDetails) != 2 {
+		return telemetry.Error(ctx, span, nil, "repo name is invalid")
+	}
+	owner := repoDetails[0]
+	repo := repoDetails[1]
+
+	pendingStatusOptions := []string{"in_progress", "queued", "requested", "waiting"}
+	for _, status := range pendingStatusOptions {
+		runs, _, err := client.Actions.ListWorkflowRunsByFileName(
+			ctx, owner, repo, fmt.Sprintf("porter_preview_%s.yml", inp.appName),
+			&github.ListWorkflowRunsOptions{
+				Branch: inp.event.GetPullRequest().GetHead().GetRef(),
+				Status: status,
+			},
+		)
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "error listing workflow runs")
+		}
+
+		for _, run := range runs.WorkflowRuns {
+			_, err := client.Actions.CancelWorkflowRunByID(
+				ctx, owner, repo, run.GetID(),
+			)
+			if err != nil {
+				return telemetry.Error(ctx, span, err, "error cancelling workflow run")
+			}
+		}
+	}
+
+	return nil
 }

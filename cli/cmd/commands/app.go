@@ -108,6 +108,17 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 	)
 	appCmd.AddCommand(appUpdateTagCmd)
 
+	// appRollback represents the "porter app rollback" subcommand
+	appRollbackCmd := &cobra.Command{
+		Use:   "rollback [application]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Rolls back an application to the last successful revision.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return checkLoginAndRunWithConfig(cmd, cliConf, args, appRollback)
+		},
+	}
+	appCmd.AddCommand(appRollbackCmd)
+
 	return appCmd
 }
 
@@ -158,6 +169,33 @@ func appRunFlags(appRunCmd *cobra.Command) {
 		"",
 		"name of the container inside pod to run the command in",
 	)
+}
+
+func appRollback(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
+	project, err := client.GetProject(ctx, cliConfig.Project)
+	if err != nil {
+		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
+	}
+
+	if !project.ValidateApplyV2 {
+		return fmt.Errorf("rollback command is not enabled for this project")
+	}
+
+	appName := args[0]
+	if appName == "" {
+		return fmt.Errorf("app name must be specified")
+	}
+
+	err = v2.Rollback(ctx, v2.RollbackInput{
+		CLIConfig: cliConfig,
+		Client:    client,
+		AppName:   appName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to rollback app: %w", err)
+	}
+
+	return nil
 }
 
 func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {

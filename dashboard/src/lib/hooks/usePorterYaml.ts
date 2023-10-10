@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SourceOptions, serviceOverrides } from "lib/porter-apps";
 import { DetectedServices } from "lib/porter-apps/services";
 import { useCallback, useContext, useEffect, useState } from "react";
+import { useClusterResources } from "shared/ClusterResourcesContext";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { z } from "zod";
@@ -38,6 +39,7 @@ export const usePorterYaml = ({
   useDefaults?: boolean;
 }): PorterYamlStatus => {
   const { currentProject, currentCluster } = useContext(Context);
+  const { currentClusterResources } = useClusterResources();
   const [
     detectedServices,
     setDetectedServices,
@@ -132,6 +134,8 @@ export const usePorterYaml = ({
         const { services, predeploy, build } = serviceOverrides({
           overrides: proto,
           useDefaults,
+          defaultCPU: currentClusterResources.defaultCPU,
+          defaultRAM: currentClusterResources.defaultRAM,
         });
 
         if (services.length || predeploy || build) {

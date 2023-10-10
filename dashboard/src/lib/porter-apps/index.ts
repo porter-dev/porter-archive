@@ -112,9 +112,13 @@ export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 export function serviceOverrides({
   overrides,
   useDefaults = true,
+  defaultCPU = 0.1,
+  defaultRAM = 256,
 }: {
   overrides: PorterApp;
   useDefaults?: boolean;
+  defaultCPU?: number;
+  defaultRAM?: number;
 }): DetectedServices {
   const services = Object.entries(overrides.services)
     .map(([name, service]) => serializedServiceFromProto({ name, service }))
@@ -124,6 +128,8 @@ export function serviceOverrides({
           service: defaultSerialized({
             name: svc.name,
             type: svc.config.type,
+            defaultCPU,
+            defaultRAM,
           }),
           override: svc,
           expanded: true,
@@ -158,6 +164,8 @@ export function serviceOverrides({
         service: defaultSerialized({
           name: "pre-deploy",
           type: "predeploy",
+          defaultCPU,
+          defaultRAM,
         }),
         override: serializedServiceFromProto({
           name: "pre-deploy",

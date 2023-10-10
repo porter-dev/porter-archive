@@ -57,7 +57,7 @@ const Environment: React.FC<Props> = ({ latestSource, buttonStatus }) => {
     <>
       <Text size={16}>Environment variables</Text>
       <Spacer y={0.5} />
-      <Text color="helper">Shared among all services. All variables are also available at build time, except for secrets.</Text>
+      <Text color="helper">Shared among all services. All non-secret variables are also available at build time.</Text>
       <EnvSettings
         appName={latestProto.name}
         revision={previewRevision ? previewRevision : latestRevision} // get versions of env groups attached to preview revision if set

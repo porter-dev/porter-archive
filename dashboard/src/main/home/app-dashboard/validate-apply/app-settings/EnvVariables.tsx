@@ -20,12 +20,10 @@ export type KeyValueType = {
 };
 
 type PropsType = {
-  fileUpload?: boolean;
   syncedEnvGroups?: NewPopulatedEnvGroup[];
 };
 
 const EnvVariables = ({
-  fileUpload,
   syncedEnvGroups
 }: PropsType) => {
   const [showEditorModal, setShowEditorModal] = useState(false);

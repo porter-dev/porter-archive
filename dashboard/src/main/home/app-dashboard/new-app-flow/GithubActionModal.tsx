@@ -1,6 +1,6 @@
 import { RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
-import React from "react";
+import React, { useMemo } from "react";
 
 import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
@@ -9,7 +9,7 @@ import ExpandableSection from "components/porter/ExpandableSection";
 import Button from "components/porter/Button";
 import Select from "components/porter/Select";
 import api from "shared/api";
-import { getGithubAction } from "./utils";
+import { getGithubAction, getPreviewGithubAction } from "./utils";
 import YamlEditor from "components/YamlEditor";
 import Error from "components/porter/Error";
 import Checkbox from "components/porter/Checkbox";
@@ -26,7 +26,8 @@ type Props = RouteComponentProps & {
   deployPorterApp?: () => Promise<boolean>;
   deploymentError?: string;
   porterYamlPath?: string;
-}
+  type?: "create" | "preview";
+};
 
 type Choice = "open_pr" | "copy";
 
@@ -42,16 +43,47 @@ const GithubActionModal: React.FC<Props> = ({
   deployPorterApp,
   deploymentError,
   porterYamlPath,
+  type = "create",
   ...props
 }) => {
   const [choice, setChoice] = React.useState<Choice>("open_pr");
   const [loading, setLoading] = React.useState<boolean>(false);
   const [isChecked, setIsChecked] = React.useState<boolean>(false);
 
+  const actionYamlContents = useMemo(() => {
+    if (!projectId || !clusterId || !stackName || !branch) {
+      return "";
+    }
+    if (type === "preview") {
+      return getPreviewGithubAction(
+        projectId,
+        clusterId,
+        stackName,
+        porterYamlPath
+      );
+    }
+
+    return getGithubAction(
+      projectId,
+      clusterId,
+      stackName,
+      branch,
+      porterYamlPath
+    );
+  }, [type]);
+
   const submit = async () => {
-    if (githubAppInstallationID && githubRepoOwner && githubRepoName && branch && stackName && projectId && clusterId) {
+    if (
+      githubAppInstallationID &&
+      githubRepoOwner &&
+      githubRepoName &&
+      branch &&
+      stackName &&
+      projectId &&
+      clusterId
+    ) {
       try {
-        setLoading(true)
+        setLoading(true);
         // this creates the dummy chart
         var success = true;
         if (deployPorterApp) {
@@ -67,8 +99,11 @@ const GithubActionModal: React.FC<Props> = ({
               github_repo_owner: githubRepoOwner,
               github_repo_name: githubRepoName,
               branch,
-              open_pr: (choice === "open_pr" || isChecked),
+              open_pr: choice === "open_pr" || isChecked,
               porter_yaml_path: porterYamlPath,
+              ...(type === "preview" && {
+                previews_workflow_filename: `.github/workflows/porter_preview_${stackName}.yml`,
+              }),
             },
             {
               project_id: projectId,
@@ -85,37 +120,34 @@ const GithubActionModal: React.FC<Props> = ({
           props.history.push(`/apps/${stackName}`);
         }
       } catch (error) {
-        console.log(error)
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     } else {
       console.log("missing information");
     }
-  }
+  };
   return (
     <Modal closeModal={closeModal}>
-      <Text size={16}>
-        Continuous Integration (CI) with GitHub Actions
-      </Text>
+      <Text size={16}>Continuous Integration (CI) with GitHub Actions</Text>
       <Spacer height="15px" />
       <Text color="helper">
-        In order to automatically update your services every time new code is pushed to your GitHub branch, the following file must exist in your GitHub repository:
+        In order to automatically update your services every time new code is
+        pushed to your GitHub branch, the following file must exist in your
+        GitHub repository:
       </Text>
       <Spacer y={0.5} />
       <ExpandableSection
         noWrapper
         expandText="[+] Show code"
         collapseText="[-] Hide code"
-        Header={
-          <ModalHeader>.github/workflows/porter.yml</ModalHeader>
-        }
+        Header={<ModalHeader>.github/workflows/porter.yml</ModalHeader>}
         isInitiallyExpanded
         spaced
-        copy={getGithubAction(projectId, clusterId, stackName, branch, porterYamlPath)}
+        copy={actionYamlContents}
         ExpandedSection={
           <YamlEditor
-            value={getGithubAction(projectId, clusterId, stackName, branch, porterYamlPath)}
+            value={actionYamlContents}
             readOnly={true}
             height="300px"
           />
@@ -123,15 +155,25 @@ const GithubActionModal: React.FC<Props> = ({
       />
       <Spacer y={1} />
       <Text color="helper">
-        Porter can open a PR for you to approve and merge this file into your repository, or you can add it yourself. If you allow Porter to open a PR, you will be redirected to the PR in a new tab after submitting below.
+        Porter can open a PR for you to approve and merge this file into your
+        repository, or you can add it yourself. If you allow Porter to open a
+        PR, you will be redirected to the PR in a new tab after submitting
+        below.
       </Text>
       <Spacer y={1} />
       {deployPorterApp ? (
         <>
           <Select
             options={[
-              { label: "I authorize Porter to open a PR on my behalf (recommended)", value: "open_pr" },
-              { label: "I will copy the file into my repository myself", value: "copy" },
+              {
+                label:
+                  "I authorize Porter to open a PR on my behalf (recommended)",
+                value: "open_pr",
+              },
+              {
+                label: "I will copy the file into my repository myself",
+                value: "copy",
+              },
             ]}
             setValue={(x: string) => setChoice(x as Choice)}
             width="100%"
@@ -141,9 +183,13 @@ const GithubActionModal: React.FC<Props> = ({
             onClick={submit}
             width={"110px"}
             loadingText={"Submitting..."}
-            status={loading ? "loading" : deploymentError ? (
-              <Error message={deploymentError} />
-            ) : undefined}
+            status={
+              loading ? (
+                "loading"
+              ) : deploymentError ? (
+                <Error message={deploymentError} />
+              ) : undefined
+            }
           >
             Deploy app
           </Button>
@@ -154,26 +200,28 @@ const GithubActionModal: React.FC<Props> = ({
             checked={isChecked}
             toggleChecked={() => setIsChecked(!isChecked)}
           >
-            <Text>
-              I authorize Porter to open a PR on my behalf
-            </Text>
+            <Text>I authorize Porter to open a PR on my behalf</Text>
           </Checkbox>
           <Spacer y={1} />
           <Button
             disabled={!isChecked}
             onClick={submit}
             loadingText={"Submitting..."}
-            status={loading ? "loading" : deploymentError ? (
-              <Error message={deploymentError} />
-            ) : undefined}
+            status={
+              loading ? (
+                "loading"
+              ) : deploymentError ? (
+                <Error message={deploymentError} />
+              ) : undefined
+            }
           >
             Open a PR for me
           </Button>
         </>
       )}
     </Modal>
-  )
-}
+  );
+};
 
 export default withRouter(GithubActionModal);
 

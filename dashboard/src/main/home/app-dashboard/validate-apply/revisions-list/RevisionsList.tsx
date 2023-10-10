@@ -18,6 +18,7 @@ import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import RevisionTableContents from "./RevisionTableContents";
 import GHStatusBanner from "./GHStatusBanner";
 import Spacer from "components/porter/Spacer";
+import { PorterAppRecord } from "../../app-view/AppView";
 
 type Props = {
   deploymentTargetId: string;
@@ -27,6 +28,7 @@ type Props = {
   latestSource: SourceOptions;
   latestRevisionNumber: number;
   onSubmit: () => Promise<void>;
+  porterAppRecord: PorterAppRecord;
 };
 
 const RevisionsList: React.FC<Props> = ({
@@ -37,6 +39,7 @@ const RevisionsList: React.FC<Props> = ({
   appName,
   latestSource,
   onSubmit,
+  porterAppRecord,
 }) => {
   const { servicesFromYaml } = useLatestRevision();
   const { setValue } = useFormContext<PorterAppFormData>();
@@ -88,6 +91,7 @@ const RevisionsList: React.FC<Props> = ({
       }
     );
 
+    // hydrate revision with env variables only on revert
     const { app_revision } = await z
       .object({
         app_revision: appRevisionValidator.extend({
@@ -105,7 +109,9 @@ const RevisionsList: React.FC<Props> = ({
     setValue(
       "app",
       clientAppFromProto({
-        proto: PorterApp.fromJsonString(atob(app_revision.b64_app_proto)),
+        proto: PorterApp.fromJsonString(atob(app_revision.b64_app_proto), {
+          ignoreUnknownFields: true,
+        }),
         overrides: servicesFromYaml,
         variables: app_revision.env.variables,
         secrets: app_revision.env.secret_variables,
@@ -135,6 +141,7 @@ const RevisionsList: React.FC<Props> = ({
               expandRevisions={expandRevisions}
               setExpandRevisions={setExpandRevisions}
               setRevertData={setRevertData}
+              porterAppRecord={porterAppRecord}
             />
           ))
           .otherwise(() => null)}

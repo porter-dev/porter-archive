@@ -176,29 +176,37 @@ func (c *Client) ParseYAML(
 	return resp, err
 }
 
+// ValidatePorterAppInput is the input struct to ValidatePorterApp
+type ValidatePorterAppInput struct {
+	ProjectID          uint
+	ClusterID          uint
+	AppName            string
+	Base64AppProto     string
+	Base64AppOverrides string
+	DeploymentTarget   string
+	CommitSHA          string
+}
+
 // ValidatePorterApp takes in a base64 encoded app definition that is potentially partial and returns a complete definition
 // using any previous app revisions and defaults
 func (c *Client) ValidatePorterApp(
 	ctx context.Context,
-	projectID, clusterID uint,
-	appName string,
-	base64AppProto string,
-	deploymentTarget string,
-	commitSHA string,
+	inp ValidatePorterAppInput,
 ) (*porter_app.ValidatePorterAppResponse, error) {
 	resp := &porter_app.ValidatePorterAppResponse{}
 
 	req := &porter_app.ValidatePorterAppRequest{
-		AppName:            appName,
-		Base64AppProto:     base64AppProto,
-		DeploymentTargetId: deploymentTarget,
-		CommitSHA:          commitSHA,
+		AppName:            inp.AppName,
+		Base64AppProto:     inp.Base64AppProto,
+		Base64AppOverrides: inp.Base64AppOverrides,
+		DeploymentTargetId: inp.DeploymentTarget,
+		CommitSHA:          inp.CommitSHA,
 	}
 
 	err := c.postRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/validate",
-			projectID, clusterID,
+			inp.ProjectID, inp.ClusterID,
 		),
 		req,
 		resp,
@@ -431,6 +439,40 @@ func (c *Client) GetBuildEnv(
 	return resp, err
 }
 
+// ReportRevisionStatusInput is the input struct to ReportRevisionStatus
+type ReportRevisionStatusInput struct {
+	ProjectID     uint
+	ClusterID     uint
+	AppName       string
+	AppRevisionID string
+	PRNumber      int
+	CommitSHA     string
+}
+
+// ReportRevisionStatus reports the status of an app revision to external services
+func (c *Client) ReportRevisionStatus(
+	ctx context.Context,
+	inp ReportRevisionStatusInput,
+) (*porter_app.ReportRevisionStatusResponse, error) {
+	resp := &porter_app.ReportRevisionStatusResponse{}
+
+	req := &porter_app.ReportRevisionStatusRequest{
+		PRNumber:  inp.PRNumber,
+		CommitSHA: inp.CommitSHA,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/revisions/%s/status",
+			inp.ProjectID, inp.ClusterID, inp.AppName, inp.AppRevisionID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 // CreateOrUpdateAppEnvironment updates the app environment group and creates it if it doesn't exist
 func (c *Client) CreateOrUpdateAppEnvironment(
 	ctx context.Context,
@@ -504,6 +546,32 @@ func (c *Client) UpdateImage(
 			projectID, clusterID, appName,
 		),
 		&req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// ListAppRevisions lists the last ten app revisions for a given app
+func (c *Client) ListAppRevisions(
+	ctx context.Context,
+	projectID, clusterID uint,
+	appName string,
+	deploymentTargetID string,
+) (*porter_app.ListAppRevisionsResponse, error) {
+	resp := &porter_app.ListAppRevisionsResponse{}
+
+	req := &porter_app.ListAppRevisionsRequest{
+		DeploymentTargetID: deploymentTargetID,
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/revisions",
+			projectID, clusterID,
+			appName,
+		),
+		req,
 		resp,
 	)
 

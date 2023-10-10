@@ -24,18 +24,16 @@ import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
 import Button from "components/porter/Button";
 import RepoSettings from "./RepoSettings";
-import ImageSettings from "./ImageSettings";
 import Container from "components/porter/Container";
 import ServiceList from "../validate-apply/services-settings/ServiceList";
 import {
   defaultSerialized,
   deserializeService,
 } from "lib/porter-apps/services";
-import EnvVariables from "../validate-apply/app-settings/EnvVariables";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import { valueExists } from "shared/util";
 import api from "shared/api";
-import { EnvGroup, PorterApp } from "@porter-dev/api-contracts";
+import { PorterApp } from "@porter-dev/api-contracts";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import Error from "components/porter/Error";
@@ -43,13 +41,13 @@ import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import PorterYamlModal from "./PorterYamlModal";
-import EnvGroups from "../validate-apply/app-settings/EnvGroups";
 import {
   PopulatedEnvGroup,
   populatedEnvGroup,
 } from "../validate-apply/app-settings/types";
 import EnvSettings from "../validate-apply/app-settings/EnvSettings";
+import ImageSettings from "../image-settings/ImageSettings";
+import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -78,6 +76,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   }>({
     variables: {},
     secrets: {},
+  });
+  const { maxCPU, maxRAM } = useClusterResourceLimits({
+    projectId: currentProject?.id,
+    clusterId: currentCluster?.id,
   });
 
   const { data: porterApps = [] } = useQuery<string[]>(
@@ -159,6 +161,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       deletions: {
         serviceNames: [],
         envGroupNames: [],
+        predeploy: [],
       },
     },
   });
@@ -179,12 +182,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const image = watch("source.image");
   const services = watch("app.services");
 
-  const {
-    detectedServices: servicesFromYaml,
-    porterYamlFound,
-    detectedName,
-    loading: isLoadingPorterYaml,
-  } = usePorterYaml({
+  const { detectedServices: servicesFromYaml, detectedName } = usePorterYaml({
     source: source?.type === "github" ? source : null,
     appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
   });
@@ -328,7 +326,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         const msg =
           "An error occurred while deploying your application. Please try again.";
-        updateAppStep({ step: "stack-launch-failure", errorMessage: msg, appName: name.value });
+        updateAppStep({
+          step: "stack-launch-failure",
+          errorMessage: msg,
+          appName: name.value,
+        });
         setDeployError(msg);
         return false;
       } finally {
@@ -340,30 +342,40 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   useEffect(() => {
     // set step to 1 if name is filled out
-    if (name) {
+    if (name.value) {
       setStep((prev) => Math.max(prev, 1));
+    } else {
+      setStep(0);
     }
 
     // set step to 2 if source is filled out
     if (source?.type && source.type === "github") {
       if (source.git_repo_name && source.git_branch) {
-        setStep((prev) => Math.max(prev, 5));
+        setStep((prev) => Math.max(prev, 2));
       }
     }
 
-    // set step to 3 if source is filled out
+    // set step to 2 if source is filled out
     if (source?.type && source.type === "docker-registry") {
       if (image && image.tag) {
-        setStep((prev) => Math.max(prev, 5));
+        setStep((prev) => Math.max(prev, 2));
       }
     }
   }, [
-    name,
+    name.value,
     source?.type,
     source?.git_repo_name,
     source?.git_branch,
     image?.tag,
   ]);
+
+  useEffect(() => {
+    if (services?.length > 0) {
+      setStep((prev) => Math.max(prev, 5));
+    } else {
+      setStep((prev) => Math.min(prev, 2));
+    }
+  }, [services]);
 
   // todo(ianedwards): it's a bit odd that the button error can be set to either a string or JSX,
   // need to look into refactoring that where possible and then improve this error handling
@@ -500,7 +512,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ControlledInput
                       placeholder="ex: academic-sophon"
                       type="text"
-                      error={errors.app?.name?.message}
+                      width="300px"
+                      error={errors.app?.name?.value?.message}
                       disabled={name.readOnly}
                       disabledTooltip={
                         "You may only edit this field in your porter.yaml."
@@ -569,7 +582,27 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               )} */}
                           </>
                         ) : (
-                          <ImageSettings />
+                          <ImageSettings
+                            projectId={currentProject.id}
+                            imageUri={image?.repository ?? ""}
+                            setImageUri={(uri: string) =>
+                              setValue("source.image", {
+                                ...image,
+                                repository: uri,
+                              })
+                            }
+                            imageTag={image?.tag ?? ""}
+                            setImageTag={(tag: string) =>
+                              setValue("source.image", { ...image, tag })
+                            }
+                            resetImageInfo={() =>
+                              setValue("source.image", {
+                                ...image,
+                                repository: "",
+                                tag: "",
+                              })
+                            }
+                          />
                         )
                       ) : null}
                     </AnimateHeight>
@@ -594,8 +627,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
-                              } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${
+                                  detectedServices.count > 1 ? "s" : ""
+                                } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>
@@ -605,6 +639,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ServiceList
                       addNewText={"Add a new service"}
                       fieldArrayName={"app.services"}
+                      maxCPU={maxCPU}
+                      maxRAM={maxRAM}
                     />
                   </>,
                   <>
@@ -613,10 +649,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <Text color="helper">
                       Specify environment variables shared among all services.
                     </Text>
-                    <EnvSettings
-                      baseEnvGroups={baseEnvGroups}
-                      servicesFromYaml={null}
-                    />
+                    <EnvSettings baseEnvGroups={baseEnvGroups} />
                   </>,
                   source.type === "github" && (
                     <>
@@ -639,6 +672,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                         })}
                         isPredeploy
                         fieldArrayName={"app.predeploy"}
+                        maxCPU={maxCPU}
+                        maxRAM={maxRAM}
                       />
                     </>
                   ),

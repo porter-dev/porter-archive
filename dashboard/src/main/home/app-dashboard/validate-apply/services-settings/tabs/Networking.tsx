@@ -7,6 +7,7 @@ import { PorterAppFormData } from "lib/porter-apps";
 import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
 import CustomDomains from "./CustomDomains";
+import IngressCustomAnnotations from "./IngressCustomAnnotations";
 
 type NetworkingProps = {
   index: number;
@@ -95,6 +96,7 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
           <Spacer y={0.5} />
           <CustomDomains index={index} />
           <Spacer y={0.5} />
+          <IngressCustomAnnotations index={index} />
         </>
       )}
     </>

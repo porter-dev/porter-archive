@@ -42,6 +42,7 @@ type Props = {
         endTime?: Dayjs;
     };
     filterPredeploy?: boolean;
+    appId: number;
 };
 
 const Logs: React.FC<Props> = ({
@@ -54,6 +55,7 @@ const Logs: React.FC<Props> = ({
     timeRange,
     logFilterNames = ["service_name", "revision", "output_stream"],
     filterPredeploy = false,
+    appId,
 }) => {
     const { search } = useLocation();
     const queryParams = new URLSearchParams(search);
@@ -194,6 +196,7 @@ const Logs: React.FC<Props> = ({
         appRevisionId,
         filterPredeploy,
         timeRange,
+        appID: appId,
     });
 
     useEffect(() => {
@@ -240,6 +243,13 @@ const Logs: React.FC<Props> = ({
                 }
             } as GenericLogFilter,
         ].filter((f: GenericLogFilter) => logFilterNames.includes(f.name)))
+
+        if (latestRevisionNumber && !logQueryParamOpts.revision) {
+            setSelectedFilterValues({
+                ...selectedFilterValues,
+                revision: latestRevisionNumber.toString(),
+            })
+        }
     }, [latestRevisionNumber]);
 
     useEffect(() => {

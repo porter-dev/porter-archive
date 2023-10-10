@@ -922,6 +922,7 @@ type StackBuildOpts struct {
 
 	StackName       string
 	ErrorMessage    string
+	B64BuildLogs    string
 	Email           string
 	FirstName       string
 	LastName        string
@@ -938,6 +939,7 @@ func StackBuildFailureTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
+	additionalProps["b64_build_logs"] = opts.B64BuildLogs
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -972,5 +974,36 @@ func StackBuildProgressingTrack(opts *StackBuildOpts) segmentTrack {
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, StackBuildProgressing),
+	)
+}
+
+// PorterAppUpdateOpts are the options for creating a track when a user updates a porter app
+type PorterAppUpdateOpts struct {
+	*ProjectScopedTrackOpts
+
+	StackName       string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ErrorMessage    string
+	ErrorStackTrace string
+	ValidateApplyV2 bool
+}
+
+// PorterAppUpdateFailureTrack returns a track for when a user attempts to update an app and receives an error
+func PorterAppUpdateFailureTrack(opts *PorterAppUpdateOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["error_stack_trace"] = opts.ErrorStackTrace
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, PorterAppUpdateFailure),
 	)
 }

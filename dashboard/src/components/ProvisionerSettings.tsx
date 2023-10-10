@@ -23,8 +23,9 @@ import {
   EKSLogging,
   EKSPreflightValues,
   PreflightCheckRequest,
-  GKE
+  AWSClusterNetwork,
 } from "@porter-dev/api-contracts";
+
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
 import Error from "./porter/Error";
@@ -90,15 +91,15 @@ const machineTypeOptions = [
   { value: "g4dn.xlarge", label: "g4dn.xlarge" },
 ];
 
-const clusterVersionOptions = [
-  { value: "v1.24.0", label: "1.24.0" },
-];
+const defaultCidrVpc = "10.78.0.0/16"
+const defaultCidrServices = "172.20.0.0/16"
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   provisionerError?: string;
   credentialId: string;
   clusterId?: number;
+  closeModal?: () => void;
 };
 
 const ProvisionerSettings: React.FC<Props> = (props) => {
@@ -134,7 +135,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [additionalNodePolicies, setAdditionalNodePolicies] = useState<
     string[]
   >([]);
-  const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
+  const [cidrRangeVPC, setCidrRangeVPC] = useState(defaultCidrVpc);
+  const [cidrRangeServices, setCidrRangeServices] = useState(defaultCidrServices);
   const [clusterVersion, setClusterVersion] = useState("v1.24.0");
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
@@ -259,6 +261,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setIsLoading(true);
     setIsClicked(true);
 
+
     let loadBalancerObj = new LoadBalancer({});
     loadBalancerObj.loadBalancerType = LoadBalancerType.NLB;
     if (loadBalancerType) {
@@ -295,12 +298,16 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           value: new EKS({
             clusterName,
             clusterVersion: clusterVersion || "v1.24.0",
-            cidrRange: cidrRange || "10.78.0.0/16",
+            cidrRange: cidrRangeVPC || defaultCidrVpc, // deprecated in favour of network.cidrRangeVPC: can be removed after december 2023
             region: awsRegion,
             loadBalancer: loadBalancerObj,
             logging: controlPlaneLogs,
             enableGuardDuty: guardDutyEnabled,
             enableKmsEncryption: kmsEncryptionEnabled,
+            network: new AWSClusterNetwork({
+              vpcCidr: cidrRangeVPC || defaultCidrVpc,
+              serviceCidr: cidrRangeServices || defaultCidrServices,
+            }),
             nodeGroups: [
               new EKSNodeGroup({
                 instanceType: "t3.medium",
@@ -384,6 +391,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           console.error(err);
         });
       // }
+      {
+        props?.closeModal &&
+          props?.closeModal()
+      };
+
       setErrorMessage(undefined);
     } catch (err) {
       const errMessage = err.response.data?.error.replace("unknown: ", "");
@@ -404,11 +416,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         setErrorMessage(DEFAULT_ERROR_MESSAGE);
       }
       markStepStarted("provisioning-failed", errMessage);
-    } finally {
-      setIsReadOnly(false);
-      setIsLoading(false);
 
+      // enable edit again only in the case of an error
       setIsClicked(false);
+      setIsReadOnly(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -427,7 +440,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
-
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
       if (eksValues == null) {
@@ -450,7 +462,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       setClusterName(eksValues.clusterName);
       setAwsRegion(eksValues.region);
       setClusterVersion(eksValues.clusterVersion);
-      setCidrRange(eksValues.cidrRange);
+      setCidrRangeVPC(eksValues.cidrRange);
+      if (eksValues.network != null) {
+        setCidrRangeVPC(eksValues.network?.vpcCidr || defaultCidrVpc);
+        setCidrRangeServices(eksValues.network?.serviceCidr || defaultCidrServices);
+      }
       if (eksValues.loadBalancer != null) {
         setIPAllowList(eksValues.loadBalancer.allowlistIpRanges);
         setWildCardDomain(eksValues.loadBalancer.wildcardDomain);
@@ -564,14 +580,15 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           isExpanded && (
             <>
               {user?.isPorterUser && (
-                <Select
-                  options={clusterVersionOptions}
+                <Input
                   width="350px"
-                  disabled={isReadOnly}
+                  type="string"
                   value={clusterVersion}
-                  setValue={setClusterVersion}
-                  label="Cluster version"
+                  disabled={true}
+                  setValue={(x: string) => setCidrRangeServices(x)}
+                  label="Cluster version (only shown to porter.run emails)"
                 />
+
               )}
               <Spacer y={1} />
               <Select
@@ -618,11 +635,21 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Input
                 width="350px"
                 type="string"
-                value={cidrRange}
-                disabled={!user.isPorterUser}
-                setValue={(x: string) => setCidrRange(x)}
-                label="VPC CIDR range"
+                value={cidrRangeVPC}
+                disabled={props.clusterId}
+                setValue={(x: string) => setCidrRangeVPC(x)}
+                label="CIDR range for AWS VPC"
                 placeholder="ex: 10.78.0.0/16"
+              />
+              <Spacer y={1} />
+              <Input
+                width="350px"
+                type="string"
+                value={cidrRangeServices}
+                disabled={props.clusterId}
+                setValue={(x: string) => setCidrRangeServices(x)}
+                label="CIDR range for Kubernetes internal services"
+                placeholder="ex: 172.20.0.0/16"
               />
               {!currentProject.simplified_view_enabled && (
                 <>
@@ -1010,7 +1037,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 label="📍 AWS region" />
               <>
                 {
-                  user?.isPorterUser && renderAdvancedSettings()
+                  (user?.isPorterUser || currentProject?.multi_cluster) && renderAdvancedSettings()
                 }
               </>
             </>,
@@ -1038,7 +1065,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Spacer y={1} />
               <Button
                 // disabled={isDisabled()}
-                disabled={isDisabled() || preflightFailed || isLoading}
+                // disabled={isDisabled() || preflightFailed || isLoading}
+                disabled={preflightFailed || isLoading}
                 onClick={createCluster}
                 status={getStatus()}
               >

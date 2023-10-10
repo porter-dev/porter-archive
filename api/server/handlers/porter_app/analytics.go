@@ -99,6 +99,20 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		}))
 	}
 
+	if request.Step == "porter-app-update-failure" {
+		v.Config().AnalyticsClient.Track(analytics.PorterAppUpdateFailureTrack(&analytics.PorterAppUpdateOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			StackName:              request.StackName,
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			ErrorMessage:           request.ErrorMessage,
+			ErrorStackTrace:        request.ErrorStackTrace,
+			ValidateApplyV2:        validateApplyV2,
+		}))
+	}
+
 	v.WriteResult(w, r, user.ToUserType())
 }
 
@@ -110,13 +124,18 @@ func TrackStackBuildStatus(
 	stackName string,
 	errorMessage string,
 	status types.PorterAppEventStatus,
+	validateApplyV2 bool,
+	b64BuildLogs string,
 ) error {
 	_, span := telemetry.NewSpan(ctx, "track-build-status")
 	defer span.End()
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-build-status", Value: string(status)})
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-name", Value: stackName})
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-error-message", Value: errorMessage})
+	telemetry.WithAttributes(
+		span,
+		telemetry.AttributeKV{Key: "porter-app-build-status", Value: string(status)},
+		telemetry.AttributeKV{Key: "porter-app-name", Value: stackName},
+		telemetry.AttributeKV{Key: "porter-app-error-message", Value: errorMessage},
+	)
 
 	if status == types.PorterAppEventStatus_Progressing {
 		return config.AnalyticsClient.Track(analytics.StackBuildProgressingTrack(&analytics.StackBuildOpts{
@@ -126,7 +145,7 @@ func TrackStackBuildStatus(
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
-			ValidateApplyV2:        project.ValidateApplyV2,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -138,7 +157,7 @@ func TrackStackBuildStatus(
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
-			ValidateApplyV2:        project.ValidateApplyV2,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -147,11 +166,12 @@ func TrackStackBuildStatus(
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			StackName:              stackName,
 			ErrorMessage:           errorMessage,
+			B64BuildLogs:           b64BuildLogs,
 			Email:                  user.Email,
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
-			ValidateApplyV2:        project.ValidateApplyV2,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 

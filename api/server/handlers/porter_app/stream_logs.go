@@ -16,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -54,12 +55,13 @@ func (c *StreamLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if request.AppName == "" {
-		err := telemetry.Error(ctx, span, nil, "must provide app name")
+	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
+	if reqErr != nil {
+		err := telemetry.Error(ctx, span, reqErr, "porter app name not found in request")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: request.AppName})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
 
 	if request.ServiceName == "" {
 		err := telemetry.Error(ctx, span, nil, "must provide service name")
@@ -126,7 +128,9 @@ func (c *StreamLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	labels := []string{
 		fmt.Sprintf("%s=%s", lokiLabel_Namespace, namespace),
-		fmt.Sprintf("%s=%s", lokiLabel_PorterAppName, request.AppName),
+		fmt.Sprintf("%s=%s", lokiLabel_PorterAppName, appName),
+		fmt.Sprintf("%s=%s", lokiLabel_DeploymentTargetId, request.DeploymentTargetID),
+		fmt.Sprintf("%s=%s", lokiLabel_PorterAppID, fmt.Sprintf("%d", request.AppID)),
 	}
 
 	if request.ServiceName != "all" {

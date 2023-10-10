@@ -16,13 +16,24 @@ const CustomDomains: React.FC<Props> = ({ index }) => {
     control,
     name: `app.services.${index}.config.domains`,
   });
+  const { append: appendDomainDeletion } = useFieldArray({
+    control,
+    name: `app.services.${index}.domainDeletions`,
+  });
+
+  const onRemove = (i: number, name: string) => {
+    remove(i);
+    appendDomainDeletion({
+      name,
+    });
+  };
 
   return (
     <CustomDomainsContainer>
       {fields.length !== 0 && (
         <>
           {fields.map((customDomain, i) => {
-            return !customDomain.name.value.includes("onporter.run") ? (
+            return !customDomain.name.value.includes("onporter.run") && !customDomain.name.value.includes("withporter.run") ? (
               <div key={customDomain.id}>
                 <AnnotationContainer>
                   <ControlledInput
@@ -39,8 +50,9 @@ const CustomDomains: React.FC<Props> = ({ index }) => {
                   />
                   <DeleteButton
                     onClick={() => {
-                      //remove customDomain at the index
-                      remove(i);
+                      if (!customDomain.name.readOnly) {
+                        onRemove(i, customDomain.name.value);
+                      }
                     }}
                   >
                     <i className="material-icons">cancel</i>

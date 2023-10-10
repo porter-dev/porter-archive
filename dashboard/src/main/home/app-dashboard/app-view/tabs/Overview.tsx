@@ -13,10 +13,24 @@ import Error from "components/porter/Error";
 import Button from "components/porter/Button";
 import { useLatestRevision } from "../LatestRevisionContext";
 import { useAppStatus } from "lib/hooks/useAppStatus";
+import { ButtonStatus } from "../AppDataContainer";
 
-const Overview: React.FC = () => {
+type Props = {
+  maxCPU: number;
+  maxRAM: number;
+  buttonStatus: ButtonStatus;
+};
+
+const Overview: React.FC<Props> = ({ maxCPU, maxRAM, buttonStatus }) => {
   const { formState } = useFormContext<PorterAppFormData>();
-  const { porterApp, latestProto, latestRevision, projectId, clusterId, deploymentTarget } = useLatestRevision();
+  const {
+    porterApp,
+    latestProto,
+    latestRevision,
+    projectId,
+    clusterId,
+    deploymentTarget,
+  } = useLatestRevision();
 
   const { serviceVersionStatus } = useAppStatus({
     projectId,
@@ -25,18 +39,6 @@ const Overview: React.FC = () => {
     deploymentTargetId: deploymentTarget.id,
     appName: latestProto.name,
   });
-
-  const buttonStatus = useMemo(() => {
-    if (formState.isSubmitting) {
-      return "loading";
-    }
-
-    if (Object.keys(formState.errors).length > 0) {
-      return <Error message="Unable to update app" />;
-    }
-
-    return "";
-  }, [formState.isSubmitting, formState.errors]);
 
   return (
     <>
@@ -52,9 +54,11 @@ const Overview: React.FC = () => {
                 type: "predeploy",
               }),
             })}
-            existingServiceNames={Object.keys(latestProto.services)}
+            existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
             isPredeploy
             fieldArrayName={"app.predeploy"}
+            maxCPU={maxCPU}
+            maxRAM={maxRAM}
           />
           <Spacer y={0.5} />
         </>
@@ -66,6 +70,8 @@ const Overview: React.FC = () => {
         fieldArrayName={"app.services"}
         existingServiceNames={Object.keys(latestProto.services)}
         serviceVersionStatus={serviceVersionStatus}
+        maxCPU={maxCPU}
+        maxRAM={maxRAM}
       />
       <Spacer y={0.75} />
       <Button
@@ -77,6 +83,7 @@ const Overview: React.FC = () => {
           latestRevision.status === "CREATED" ||
           latestRevision.status === "AWAITING_BUILD_ARTIFACT"
         }
+        disabledTooltipMessage="Please wait for the deploy to complete before updating services"
       >
         Update app
       </Button>

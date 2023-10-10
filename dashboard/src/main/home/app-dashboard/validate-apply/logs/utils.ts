@@ -56,6 +56,7 @@ export const useLogs = ({
   appRevisionId = "",
   timeRange,
   filterPredeploy,
+  appID,
 }: {
   projectID: number,
   clusterID: number,
@@ -75,6 +76,7 @@ export const useLogs = ({
     endTime?: Dayjs,
   },
   filterPredeploy: boolean,
+  appID: number,
 }
 ) => {
   const [isLive, setIsLive] = useState<boolean>(!setDate && (timeRange?.startTime == null && timeRange?.endTime == null));
@@ -180,11 +182,11 @@ export const useLogs = ({
     const websocketBaseURL = `/api/projects/${projectID}/clusters/${clusterID}/apps/${appName}/logs/loki`;
 
     const searchParams = {
-      app_name: appName,
       service_name: serviceName,
       deployment_target_id: deploymentTargetId,
       search_param: searchParam,
       app_revision_id: appRevisionId,
+      app_id: appID.toString(),
     }
 
     const q = new URLSearchParams(searchParams).toString();
@@ -212,6 +214,18 @@ export const useLogs = ({
           }
         });
         const newLogsParsed = parseLogs(newLogs);
+        newLogsParsed.filter((log) => {
+          return log.metadata?.raw_labels?.porter_run_app_revision_id != null
+            && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != null
+            && revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id] != 0
+        }).forEach((log) => {
+          if (log.metadata?.raw_labels?.porter_run_app_revision_id != null) {
+            const revisionNumber = revisionIdToNumber[log.metadata.raw_labels.porter_run_app_revision_id];
+            if (revisionNumber != null && revisionNumber != 0) {
+              log.metadata.revision = revisionNumber.toString();
+            }
+          }
+        })
         const newLogsFiltered = filterLogs(newLogsParsed);
         pushLogs(newLogsFiltered);
       },
@@ -260,7 +274,7 @@ export const useLogs = ({
   }> => {
     try {
       const getLogsReq = {
-        app_name: appName,
+        app_id: appID,
         service_name: serviceName,
         deployment_target_id: deploymentTargetId,
         search_param: searchParam,
@@ -449,10 +463,12 @@ export const useLogs = ({
   }, []);
 
   useEffect(() => {
-    // if a complete time range is not given, then we are live
-    const isLive = !setDate && (timeRange?.startTime == null || timeRange?.endTime == null);
-    refresh({ isLive });
-    setIsLive(isLive);
+    if (Object.keys(revisionIdToNumber).length) {
+      // if a complete time range is not given, then we are live
+      const isLive = !setDate && (timeRange?.startTime == null || timeRange?.endTime == null);
+      refresh({ isLive });
+      setIsLive(isLive);
+    }
   }, [
     appName,
     serviceName,
@@ -462,6 +478,7 @@ export const useLogs = ({
     JSON.stringify(selectedFilterValues),
     JSON.stringify(timeRange?.endTime),
     filterPredeploy,
+    JSON.stringify(revisionIdToNumber),
   ]);
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import { useHistory } from "react-router";
 
@@ -11,8 +11,11 @@ import { useLatestRevision } from "../LatestRevisionContext";
 import api from "shared/api";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useQueryClient } from "@tanstack/react-query";
+import { Context } from "shared/Context";
+import PreviewEnvironmentSettings from "./preview-environments/PreviewEnvironmentSettings";
 
 const Settings: React.FC = () => {
+  const { currentProject } = useContext(Context);
   const queryClient = useQueryClient();
   const history = useHistory();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -20,7 +23,9 @@ const Settings: React.FC = () => {
   const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [githubWorkflowFilename, setGithubWorkflowFilename] = useState(`porter_stack_${porterApp.name}.yml`);
+  const [githubWorkflowFilename, setGithubWorkflowFilename] = useState(
+    `porter_stack_${porterApp.name}.yml`
+  );
 
   const workflowFileExists = useCallback(async () => {
     try {
@@ -109,12 +114,20 @@ const Settings: React.FC = () => {
             window.open(res.data.url, "_blank", "noreferrer");
           }
 
-          updateAppStep({ step: "stack-deletion", deleteWorkflow: true, appName: porterApp.name });
+          updateAppStep({
+            step: "stack-deletion",
+            deleteWorkflow: true,
+            appName: porterApp.name,
+          });
           history.push("/apps");
           return;
         }
 
-        updateAppStep({ step: "stack-deletion", deleteWorkflow: false, appName: porterApp.name });
+        updateAppStep({
+          step: "stack-deletion",
+          deleteWorkflow: false,
+          appName: porterApp.name,
+        });
         history.push("/apps");
       } catch (err) {
       } finally {
@@ -126,12 +139,13 @@ const Settings: React.FC = () => {
 
   return (
     <StyledSettingsTab>
+      {currentProject?.preview_envs_enabled && <PreviewEnvironmentSettings />}
       <Text size={16}>Delete "{porterApp.name}"</Text>
-      <Spacer y={1} />
+      <Spacer y={0.5} />
       <Text color="helper">
         Delete this application and all of its resources.
       </Text>
-      <Spacer y={1} />
+      <Spacer y={0.5} />
       <Button
         type="button"
         onClick={() => {

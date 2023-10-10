@@ -67,7 +67,8 @@ func (p *PorterAppEventListHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	porterAppEvents, paginatedResult, err := p.Repo().PorterAppEvent().ListEventsByPorterAppID(ctx, app.ID, helpers.WithPageSize(20), helpers.WithPage(int(pr.Page)))
+	// legacy app events will have a nil deployment target id
+	porterAppEvents, paginatedResult, err := p.Repo().PorterAppEvent().ListEventsByPorterAppIDAndDeploymentTargetID(ctx, app.ID, uuid.Nil, helpers.WithPageSize(20), helpers.WithPage(int(pr.Page)))
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			e := telemetry.Error(ctx, span, nil, "error listing porter app events by porter app id")
@@ -132,7 +133,8 @@ func (p *PorterAppEventListHandler) updateExistingAppEvent(
 
 	// TODO: get rid of this block and related methods if still here after 08-04-2023
 	if appEvent.Type == string(types.PorterAppEventType_Build) && appEvent.TypeExternalSource == "GITHUB" {
-		err = p.updateBuildEvent_Github(ctx, &event, user, project, stackName)
+		validateApplyV2 := project.GetFeatureFlag(models.ValidateApplyV2, p.Config().LaunchDarklyClient)
+		err = p.updateBuildEvent_Github(ctx, &event, user, project, stackName, validateApplyV2)
 		if err != nil {
 			return appEvent, telemetry.Error(ctx, span, err, "error updating porter app event for github build")
 		}
@@ -158,6 +160,7 @@ func (p *PorterAppEventListHandler) updateBuildEvent_Github(
 	user *models.User,
 	project *models.Project,
 	stackName string,
+	validateApplyV2 bool,
 ) error {
 	ctx, span := telemetry.NewSpan(ctx, "update-porter-app-build-event")
 	defer span.End()
@@ -220,10 +223,10 @@ func (p *PorterAppEventListHandler) updateBuildEvent_Github(
 	if *actionRun.Status == "completed" {
 		if *actionRun.Conclusion == "success" {
 			event.Status = string(types.PorterAppEventStatus_Success)
-			_ = TrackStackBuildStatus(ctx, p.Config(), user, project, stackName, "", types.PorterAppEventStatus_Success)
+			_ = TrackStackBuildStatus(ctx, p.Config(), user, project, stackName, "", types.PorterAppEventStatus_Success, validateApplyV2, "")
 		} else {
 			event.Status = string(types.PorterAppEventStatus_Failed)
-			_ = TrackStackBuildStatus(ctx, p.Config(), user, project, stackName, "", types.PorterAppEventStatus_Failed)
+			_ = TrackStackBuildStatus(ctx, p.Config(), user, project, stackName, "", types.PorterAppEventStatus_Failed, validateApplyV2, "")
 		}
 		event.Metadata["end_time"] = actionRun.GetUpdatedAt().Time
 	}

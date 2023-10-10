@@ -48,7 +48,7 @@ var result_nobuild = &porterv1.PorterApp{
 	Name: "test-app",
 	Services: map[string]*porterv1.Service{
 		"example-job": {
-			Run:          "echo 'hello world'",
+			RunOptional:  pointer.String("echo 'hello world'"),
 			CpuCores:     0.1,
 			RamMegabytes: 256,
 			Config: &porterv1.Service_JobConfig{
@@ -60,7 +60,7 @@ var result_nobuild = &porterv1.PorterApp{
 			Type: 3,
 		},
 		"example-wkr": {
-			Run:          "echo 'work'",
+			RunOptional:  pointer.String("echo 'work'"),
 			Instances:    1,
 			Port:         80,
 			CpuCores:     0.1,
@@ -73,7 +73,7 @@ var result_nobuild = &porterv1.PorterApp{
 			Type: 2,
 		},
 		"example-web": {
-			Run:          "node index.js",
+			RunOptional:  pointer.String("node index.js"),
 			Instances:    0,
 			Port:         8080,
 			CpuCores:     0.1,
@@ -105,7 +105,7 @@ var result_nobuild = &porterv1.PorterApp{
 		},
 	},
 	Predeploy: &porterv1.Service{
-		Run:          "ls",
+		RunOptional:  pointer.String("ls"),
 		Instances:    0,
 		Port:         0,
 		CpuCores:     0,
@@ -123,7 +123,7 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 	Name: "test-app",
 	Services: map[string]*porterv1.Service{
 		"example-job": {
-			Run:          "echo 'hello world'",
+			RunOptional:  pointer.String("echo 'hello world'"),
 			CpuCores:     0.1,
 			RamMegabytes: 256,
 			Config: &porterv1.Service_JobConfig{
@@ -135,7 +135,7 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 			Type: 3,
 		},
 		"example-wkr": {
-			Run:          "echo 'work'",
+			RunOptional:  pointer.String("echo 'work'"),
 			Instances:    1,
 			Port:         80,
 			CpuCores:     0.1,
@@ -148,7 +148,7 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 			Type: 2,
 		},
 		"example-web": {
-			Run:          "node index.js",
+			RunOptional:  pointer.String("node index.js"),
 			Instances:    0,
 			Port:         8080,
 			CpuCores:     0.1,
@@ -181,7 +181,7 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 		},
 	},
 	Predeploy: &porterv1.Service{
-		Run:          "ls",
+		RunOptional:  pointer.String("ls"),
 		Instances:    0,
 		Port:         0,
 		CpuCores:     0,

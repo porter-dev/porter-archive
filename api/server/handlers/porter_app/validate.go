@@ -38,15 +38,18 @@ func NewValidatePorterAppHandler(
 
 // Deletions are the names of services and env variables to delete
 type Deletions struct {
-	ServiceNames     []string `json:"service_names"`
-	EnvVariableNames []string `json:"env_variable_names"`
-	EnvGroupNames    []string `json:"env_group_names"`
+	ServiceNames        []string            `json:"service_names"`
+	Predeploy           []string            `json:"predeploy"`
+	EnvVariableNames    []string            `json:"env_variable_names"`
+	EnvGroupNames       []string            `json:"env_group_names"`
+	DomainNameDeletions map[string][]string `json:"domain_name_deletions"`
 }
 
 // ValidatePorterAppRequest is the request object for the /apps/validate endpoint
 type ValidatePorterAppRequest struct {
 	AppName            string    `json:"app_name"`
 	Base64AppProto     string    `json:"b64_app_proto"`
+	Base64AppOverrides string    `json:"b64_app_overrides"`
 	DeploymentTargetId string    `json:"deployment_target_id"`
 	CommitSHA          string    `json:"commit_sha"`
 	Deletions          Deletions `json:"deletions"`
@@ -96,7 +99,7 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	} else {
 		decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
 		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error decoding base  yaml")
+			err := telemetry.Error(ctx, span, err, "error decoding base yaml")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
 		}
@@ -121,15 +124,48 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		telemetry.AttributeKV{Key: "commit-sha", Value: request.CommitSHA},
 	)
 
+	var overrides *porterv1.PorterApp
+	if request.Base64AppOverrides != "" {
+		decoded, err := base64.StdEncoding.DecodeString(request.Base64AppOverrides)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error decoding base  yaml")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		overrides = &porterv1.PorterApp{}
+		err = helpers.UnmarshalContractObject(decoded, overrides)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error unmarshalling app proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "validated-with-overrides", Value: true})
+	}
+
+	var ServiceDomainsDeletions map[string]*porterv1.DomainNameList
+	if request.Deletions.DomainNameDeletions != nil {
+		ServiceDomainsDeletions = make(map[string]*porterv1.DomainNameList)
+		for k, v := range request.Deletions.DomainNameDeletions {
+			ServiceDomainsDeletions[k] = &porterv1.DomainNameList{
+				DomainNames: v,
+			}
+		}
+	}
+
 	validateReq := connect.NewRequest(&porterv1.ValidatePorterAppRequest{
 		ProjectId:          int64(project.ID),
 		DeploymentTargetId: request.DeploymentTargetId,
 		CommitSha:          request.CommitSHA,
 		App:                appProto,
+		AppOverrides:       overrides,
 		Deletions: &porterv1.Deletions{
 			ServiceNames:     request.Deletions.ServiceNames,
+			PredeployNames:   request.Deletions.Predeploy,
 			EnvVariableNames: request.Deletions.EnvVariableNames,
 			EnvGroupNames:    request.Deletions.EnvGroupNames,
+			ServiceDomains:   ServiceDomainsDeletions,
 		},
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.ValidatePorterApp(ctx, validateReq)

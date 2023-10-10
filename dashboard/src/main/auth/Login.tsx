@@ -186,6 +186,7 @@ const Login: React.FC<Props> = ({
         {hasBasic && (
           <>
             <Input
+              autoFocus={true}
               type="email"
               placeholder="Email"
               label="Email"

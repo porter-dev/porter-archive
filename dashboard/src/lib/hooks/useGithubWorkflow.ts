@@ -6,10 +6,15 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import { z } from "zod";
 
-export const useGithubWorkflow = (
-  porterApp: PorterAppRecord,
-  previouslyBuilt: boolean
-) => {
+export const useGithubWorkflow = ({
+  porterApp,
+  fileNames,
+  previouslyBuilt = false,
+}: {
+  porterApp: PorterAppRecord;
+  fileNames: string[];
+  previouslyBuilt?: boolean;
+}) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [githubWorkflowFilename, setGithubWorkflowName] = useState<string>("");
   const [userHasGithubAccess, setUserHasGithubAccess] = useState<boolean>(true);
@@ -83,71 +88,42 @@ export const useGithubWorkflow = (
     !!currentCluster &&
     githubWorkflowFilename === "";
 
-  const [
-    {
-      data: applicationWorkflowCheck,
-      isLoading: isLoadingApplicationWorkflow,
-    },
-    { data: defaultWorkflowCheck, isLoading: isLoadingDefaultWorkflow },
-  ] = useQueries({
-    queries: [
-      {
-        queryKey: [
-          `checkForApplicationWorkflow_porter_stack_${porterApp.name}`,
-          currentProject?.id,
-          currentCluster?.id,
-          githubWorkflowFilename,
-          previouslyBuilt,
-        ],
-        queryFn: () =>
-          fetchGithubWorkflow(`porter_stack_${porterApp.name}.yml`),
-        enabled,
-        refetchInterval: 5000,
-        retry: (_failureCount: number, error: unknown) => {
-          if (axios.isAxiosError(error) && error.response?.status === 403) {
-            setUserHasGithubAccess(false);
-            return false;
-          }
+  const results = useQueries({
+    queries: fileNames.map((fn) => ({
+      queryKey: [
+        `checkForApplicationWorkflow_${fn}`,
+        currentProject?.id,
+        currentCluster?.id,
+        fn,
+        previouslyBuilt,
+      ],
+      queryFn: () => fetchGithubWorkflow(fn),
+      enabled,
+      refetchInterval: 5000,
+      retry: (_failureCount: number, error: unknown) => {
+        if (axios.isAxiosError(error) && error.response?.status === 403) {
+          setUserHasGithubAccess(false);
+          return false;
+        }
 
-          return true;
-        },
-        refetchOnWindowFocus: false,
+        return true;
       },
-      {
-        queryKey: [
-          `checkForApplicationWorkflow_porter`,
-          currentProject?.id,
-          currentCluster?.id,
-          githubWorkflowFilename,
-          previouslyBuilt,
-        ],
-        queryFn: () => fetchGithubWorkflow("porter.yml"),
-        enabled,
-        refetchInterval: 5000,
-        retry: (_failureCount: number, error: unknown) => {
-          if (axios.isAxiosError(error) && error.response?.status === 403) {
-            setUserHasGithubAccess(false);
-            return false;
-          }
-
-          return true;
-        },
-        refetchOnWindowFocus: false,
-      },
-    ],
+      refetchOnWindowFocus: false,
+    })),
   });
 
   useEffect(() => {
-    if (!!applicationWorkflowCheck) {
+    const applicationWorkflowCheck = results
+      .map(({ data }) => data)
+      .find((d) => !!d);
+    if (applicationWorkflowCheck) {
       setGithubWorkflowName(applicationWorkflowCheck);
-    } else if (!!defaultWorkflowCheck) {
-      setGithubWorkflowName(defaultWorkflowCheck);
     }
-  }, [applicationWorkflowCheck, defaultWorkflowCheck]);
+  }, [results]);
 
   return {
     githubWorkflowFilename,
-    isLoading: isLoadingApplicationWorkflow || isLoadingDefaultWorkflow,
+    isLoading: results.some((r) => r.isLoading),
     userHasGithubAccess,
   };
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from "react";
 import styled from "styled-components";
 import gradient from "assets/gradient.png";
 import api from "shared/api";
-import infra from "assets/infra.png";
+import infra from "assets/cluster.svg";
 
 import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";
@@ -11,10 +11,14 @@ import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import { pushFiltered } from "shared/routing";
 import SidebarLink from "./SidebarLink";
+import { OFState } from "main/home/onboarding/state";
+import ProvisionClusterModal from "./ProvisionClusterModal";
+
 
 const ClusterList: React.FC<PropsType> = (props) => {
-  const { setCurrentCluster, user, currentCluster, currentProject } = useContext(Context);
+  const { setCurrentCluster, user, currentCluster, currentProject, setHasFinishedOnboarding } = useContext(Context);
   const [expanded, setExpanded] = useState<boolean>(false);
+  const [clusterModalVisible, setClusterModalVisible] = useState<boolean>(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [clusters, setClusters] = useState<ClusterType[]>([]);
   const [options, setOptions] = useState<any[]>([]);
@@ -55,14 +59,15 @@ const ClusterList: React.FC<PropsType> = (props) => {
           }
         });
     }
-  }, [currentProject]);
-  const truncate = (input: string) => input.length > 21 ? `${input.substring(0, 21)}...` : input;
+  }, [currentProject, currentCluster]);
+  const truncate = (input: string) => input.length > 27 ? `${input.substring(0, 27)}...` : input;
 
   const renderOptionList = () =>
     options.map((option, i: number) => (
       <Option
         key={i}
         selected={option.value === currentCluster?.name}
+        title={option.label}
         onClick={() => {
           setExpanded(false);
           const cluster = clusters.find(c => c.name === option.value);
@@ -70,17 +75,34 @@ const ClusterList: React.FC<PropsType> = (props) => {
           pushFiltered(props, "/apps", ["project_id"], {});
         }}
       >
-
         <Icon src={infra} height={"14px"} />
         <ClusterLabel>{option.label}</ClusterLabel>
       </Option>
+
     ));
 
   const renderDropdown = () =>
     expanded && (
-      <Dropdown>
-        {renderOptionList()}
-      </Dropdown>
+      <>
+        <Dropdown>
+          {renderOptionList()}
+
+          {/* Connect Cluster Option */}
+          {
+            currentProject?.enable_reprovision && <Option
+              onClick={() => {
+                setClusterModalVisible(true)
+                setExpanded(false);
+
+              }}>
+
+              <Plus>+</Plus>    Deploy new cluster
+            </Option>
+          }
+
+        </Dropdown>
+
+      </>
     );
 
   if (currentCluster) {
@@ -95,10 +117,14 @@ const ClusterList: React.FC<PropsType> = (props) => {
             <Img src={infra} />
             <ClusterName>{truncate(currentCluster.vanity_name ? currentCluster.vanity_name : currentCluster?.name)}</ClusterName>
 
-            {clusters.length > 1 && <i className="material-icons">arrow_drop_down</i>}
+            {(clusters.length > 1 || user.isPorterUser) && <i className="material-icons">arrow_drop_down</i>}
           </NavButton>
         </MainSelector>
-        {clusters.length > 1 && renderDropdown()}
+        {(clusters.length > 1 || user.isPorterUser) && renderDropdown()}
+        {
+          clusterModalVisible && <ProvisionClusterModal
+            closeModal={() => setClusterModalVisible(false)} />
+        }
       </StyledClusterSection >
     );
   }
@@ -122,8 +148,7 @@ const ClusterLabel = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  flex-grow: 1;
-  margin-left: 5px
+  margin-left: 12px
 `;
 
 const Plus = styled.div`
@@ -152,25 +177,22 @@ const InitializeButton = styled.div`
   }
 `;
 
-const Option = styled.div`
+const Option = styled.div<{ selected: boolean }>`
   width: 100%;
-  border-top: 1px solid #00000000;
-  border-bottom: 1px solid
-    ${(props: { selected: boolean; lastItem?: boolean }) =>
-    props.lastItem ? "#ffffff00" : "#ffffff15"};
   height: 45px;
   display: flex;
   align-items: center;
   font-size: 13px;
   align-items: center;
-  padding-left: 10px;
+  padding: 0 15px;
   cursor: pointer;
   padding-right: 10px;
-  background: ${(props: { selected: boolean; lastItem?: boolean }) =>
-    props.selected ? "#ffffff11" : ""};
+  text-decoration: ${props => props.selected ? "underline" : "none"};
+  color: ${props => props.theme.text.primary};
+  opacity: 0.6;
   :hover {
-    background: ${(props: { selected: boolean; lastItem?: boolean }) =>
-    props.selected ? "" : "#ffffff22"};
+    opacity: 1;
+
   }
 
   > i {
@@ -183,16 +205,16 @@ const Option = styled.div`
 
 const Dropdown = styled.div`
   position: absolute;
-  right: 13px;
-  top: calc(100% + 5px);
-  background: #171b20;
-  width: 210px;
+  left: 12px;
+  top: calc(100% + 10px);
+  background: #121212;
+  width: 230px;
   max-height: 500px;
-  border-radius: 3px;
+  border-radius: 5px;
+  border: 1px solid #494B4F;
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
-  box-shadow: 0 5px 15px 5px #00000077;
 `;
 
 const ClusterName = styled.div`
@@ -201,7 +223,7 @@ const ClusterName = styled.div`
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  max-width: 180px; // You can adjust this value according to your needs
+  max-width: 200px; 
 `;
 
 const MainSelector = styled.div`
@@ -235,9 +257,11 @@ const MainSelector = styled.div`
 const StyledClusterSection = styled.div`
   position: relative;
   margin-left: 3px;
-  background: #545ec7;
-  border-right: 1px solid #2c2e31;
+  background: #181B20;
+  border: 1px solid #383a3f;
+  border-left: none;
 `;
+
 const NavButton = styled(SidebarLink)`
   display: flex;
   align-items: center;
@@ -279,7 +303,7 @@ const NavButton = styled(SidebarLink)`
 
 const Img = styled.img<{ enlarge?: boolean }>`
   padding: ${(props) => (props.enlarge ? "0 0 0 1px" : "4px")};
-  height: 22px;
+  height: 25px;
   padding-top: 4px;
   border-radius: 3px;
   margin-right: 8px;

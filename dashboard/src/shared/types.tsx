@@ -268,6 +268,7 @@ export interface ProjectType {
   id: number;
   name: string;
   preview_envs_enabled: boolean;
+  db_enabled: boolean;
   enable_rds_databases: boolean;
   managed_infra_enabled: boolean;
   capi_provisioner_enabled: boolean;

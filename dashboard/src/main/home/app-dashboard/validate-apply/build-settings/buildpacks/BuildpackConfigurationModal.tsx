@@ -24,7 +24,6 @@ type Props = {
   setAvailableBuildpacks: (buildpacks: Buildpack[]) => void;
   isDetectingBuildpacks: boolean;
   detectBuildpacksError: string;
-  detectAndSetBuildPacks: () => void;
 };
 
 const BuildpackConfigurationModal: React.FC<Props> = ({
@@ -35,7 +34,6 @@ const BuildpackConfigurationModal: React.FC<Props> = ({
   setAvailableBuildpacks,
   isDetectingBuildpacks,
   detectBuildpacksError,
-  detectAndSetBuildPacks,
 }) => {
   const { control } = useFormContext<PorterAppFormData>();
   const { append } = useFieldArray({
@@ -49,15 +47,6 @@ const BuildpackConfigurationModal: React.FC<Props> = ({
       <Spacer y={1} />
       <Scrollable>
         <Text>Builder:</Text>
-        {!build.builder && (
-          <>
-            <Spacer y={0.5} />
-            <Text color="helper">
-              No builder detected. Click 'Detect buildpacks' below to scan your
-              repository for available builders and buildpacks.
-            </Text>
-          </>
-        )}
         {!!build.builder && (
           <Controller
             control={control}
@@ -99,21 +88,7 @@ const BuildpackConfigurationModal: React.FC<Props> = ({
             append(bp);
           }}
         />
-        <Spacer y={2} />
       </Scrollable>
-      <Footer>
-        <Shade />
-        <FooterButtons>
-          <Button onClick={() => detectAndSetBuildPacks()}>
-            <Icon src={stars} height="15px" />
-            <Spacer inline x={0.5} />
-            Detect buildpacks
-          </Button>
-          <Button onClick={closeModal} width={"75px"}>
-            Close
-          </Button>
-        </FooterButtons>
-      </Footer>
     </Modal>
   );
 };
@@ -129,7 +104,7 @@ const Scrollable = styled.div`
 
 const FooterButtons = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
 `;
 
 const Footer = styled.div`

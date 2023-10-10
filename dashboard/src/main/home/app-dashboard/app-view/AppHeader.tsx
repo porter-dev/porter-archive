@@ -15,6 +15,7 @@ import styled from "styled-components";
 import { useLatestRevision } from "./LatestRevisionContext";
 import { prefixSubdomain } from "lib/porter-apps/services";
 import { readableDate } from "shared/string_utils";
+import PullRequestIcon from "shared/icons/PullRequest";
 
 // Buildpack icons
 const icons = [
@@ -26,7 +27,12 @@ const icons = [
 ];
 
 const AppHeader: React.FC = () => {
-  const { latestProto, porterApp, latestRevision } = useLatestRevision();
+  const {
+    latestProto,
+    porterApp,
+    latestRevision,
+    deploymentTarget,
+  } = useLatestRevision();
 
   const gitData = useMemo(() => {
     if (
@@ -77,7 +83,20 @@ const AppHeader: React.FC = () => {
       []
     );
 
-    return domains.length === 1 ? domains[0] : "";
+    // we only show the custom domain if 1 exists; if no custom domain exists, we show the porter domain, if one exists
+    const nonPorterDomains = domains.filter((n: string) => !n.endsWith(".onporter.run") && !n.endsWith(".withporter.run"));
+    if (nonPorterDomains.length) {
+      if (nonPorterDomains.length === 1) {
+        return nonPorterDomains[0];
+      }
+    } else {
+      const porterDomains = domains.filter((n: string) => n.endsWith(".onporter.run") || n.endsWith(".withporter.run"));
+      if (porterDomains.length === 1) {
+        return porterDomains[0];
+      }
+    }
+
+    return "";
   }, [latestProto]);
 
   return (
@@ -96,16 +115,25 @@ const AppHeader: React.FC = () => {
               </A>
             </Container>
             <Spacer inline x={1} />
-            <TagWrapper>
-              Branch
-              <BranchTag>
-                <BranchIcon src={pr_icon} />
-                {gitData.branch}
+            <TagWrapper preview={deploymentTarget.preview}>
+              {deploymentTarget.preview ? "Preview" : "Branch"}
+              <BranchTag preview={deploymentTarget.preview}>
+                <PullRequestIcon
+                  styles={{
+                    height: "14px",
+                    opacity: "0.65",
+                    marginRight: "5px",
+                    fill: deploymentTarget.preview ? "" : "#fff",
+                  }}
+                />
+                {deploymentTarget.preview
+                  ? deploymentTarget.namespace
+                  : gitData.branch}
               </BranchTag>
             </TagWrapper>
           </>
         )}
-        {!gitData && porterApp.image_repo_uri && (
+        {!gitData && latestProto.image && (
           <>
             <Spacer inline x={1} />
             <Container row>
@@ -114,7 +142,7 @@ const AppHeader: React.FC = () => {
                 src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
               />
               <Text size={13} color="helper">
-                {porterApp.image_repo_uri}
+                {`${latestProto.image.repository}`}
               </Text>
             </Container>
           </>
@@ -151,27 +179,26 @@ const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
   opacity: ${(props) => props.opacity || 1};
   margin-right: 10px;
 `;
-const BranchIcon = styled.img`
-  height: 14px;
-  opacity: 0.65;
-  margin-right: 5px;
-`;
-const TagWrapper = styled.div`
+
+const TagWrapper = styled.div<{ preview?: boolean }>`
   height: 20px;
   font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff44;
-  border: 1px solid #ffffff44;
+  background: ${(props) => (props.preview ? "#fefce8" : "")};
+  color: ${(props) => (props.preview ? "#ca8a04" : "#ffffff44")};
+  border: 1px solid ${(props) => (props.preview ? "#ca8a04" : "#ffffff44")};
   border-radius: 3px;
   padding-left: 6px;
 `;
-const BranchTag = styled.div`
+
+const BranchTag = styled.div<{ preview?: boolean }>`
   height: 20px;
   margin-left: 6px;
-  color: #aaaabb;
-  background: #ffffff22;
+  color: ${(props) => (props.preview ? "#ca8a04" : "#aaaabb")};
+  background: ${(props) => (props.preview ? "#fefce8" : "#ffffff22")};
+  border: 1px solid ${(props) => (props.preview ? "#ca8a04" : "#ffffff44")};
   border-radius: 3px;
   font-size: 12px;
   display: flex;

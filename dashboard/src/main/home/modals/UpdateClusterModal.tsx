@@ -5,6 +5,9 @@ import close from "assets/close.png";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
+import { OFState } from "main/home/onboarding/state";
+import { Onboarding as OnboardingSaveType } from "../onboarding/types"
+
 
 import SaveButton from "components/SaveButton";
 import InputRow from "components/form-components/InputRow";
@@ -34,7 +37,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
   };
 
   handleDelete = async () => {
-    let { currentProject, currentCluster } = this.context;
+    let { currentProject, currentCluster, setCurrentCluster } = this.context;
     this.setState({ status: "loading" });
 
     await api.updateOnboardingStep(
@@ -79,12 +82,23 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
             .catch(console.log);
 
           if (currentProject.simplified_view_enabled) {
-            await api.saveOnboardingState(
-              "<token>",
-              { current_step: "connect_source" },
-              { project_id: currentProject.id }
-            );
-            window.location.reload();
+            await api
+              .getClusters("<token>", {}, { id: currentProject?.id })
+              .then(async (res) => {
+                if (res.data) {
+                  let clusters = res.data;
+                  if (clusters.length == 0 || !currentProject.multi_cluster) {
+                    setCurrentCluster(null)
+                    await api.saveOnboardingState(
+                      "<token>",
+                      { current_step: "connect_source" },
+                      { project_id: currentProject.id }
+                    );
+                    window.location.reload();
+                  }
+
+                }
+              })
           }
           return;
         }
@@ -97,14 +111,14 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
   };
 
   renderWarning = () => {
-    let { currentCluster } = this.context;
-    if (!currentCluster?.infra_id || !currentCluster.service) {
-      return (
-        <Warning highlight={true}>
-          ⚠️ Deleting the cluster will only detach this cluster from your project. To delete resources you must do so manually.
-        </Warning>
-      );
-    }
+    // let { currentCluster } = this.context;
+    // if (!currentCluster?.infra_id || !currentCluster.service) {
+    //   return (
+    //     <Warning highlight={true}>
+    //       ⚠️ Deleting the cluster will only detach this cluster from your project. To delete resources you must do so manually.
+    //     </Warning>
+    //   );
+    // }
 
     return (
       <Warning highlight={true}>

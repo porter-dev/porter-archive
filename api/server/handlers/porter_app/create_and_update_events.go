@@ -65,7 +65,8 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	)
 
 	if request.Type == types.PorterAppEventType_Build {
-		reportBuildStatus(ctx, request, p.Config(), user, project, appName)
+		validateApplyV2 := project.GetFeatureFlag(models.ValidateApplyV2, p.Config().LaunchDarklyClient)
+		reportBuildStatus(ctx, request, p.Config(), user, project, appName, validateApplyV2)
 	}
 
 	if request.ID == "" {
@@ -88,19 +89,24 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	p.WriteResult(w, r, event)
 }
 
-func reportBuildStatus(ctx context.Context, request *types.CreateOrUpdatePorterAppEventRequest, config *config.Config, user *models.User, project *models.Project, stackName string) {
+func reportBuildStatus(ctx context.Context, request *types.CreateOrUpdatePorterAppEventRequest, config *config.Config, user *models.User, project *models.Project, stackName string, validateApplyV2 bool) {
 	ctx, span := telemetry.NewSpan(ctx, "report-build-status")
 	defer span.End()
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-build-status", Value: string(request.Status)})
 
 	var errStr string
+	var buildLogs string
 	if errors, ok := request.Metadata["errors"]; ok {
 		if errs, ok := errors.(map[string]interface{}); ok {
 			errStringMap := make(map[string]string)
 			for k, v := range errs {
 				if valueStr, ok := v.(string); ok {
-					errStringMap[k] = valueStr
+					if k == "b64-build-logs" {
+						buildLogs = valueStr
+					} else {
+						errStringMap[k] = valueStr
+					}
 				}
 			}
 
@@ -113,7 +119,7 @@ func reportBuildStatus(ctx context.Context, request *types.CreateOrUpdatePorterA
 		}
 	}
 
-	_ = TrackStackBuildStatus(ctx, config, user, project, stackName, errStr, request.Status)
+	_ = TrackStackBuildStatus(ctx, config, user, project, stackName, errStr, request.Status, validateApplyV2, buildLogs)
 }
 
 // createNewAppEvent will create a new app event for the given porter app name. If the app event is an agent event, then it will be created only if there is no existing event which has the agent ID. In the case that an existing event is found, that will be returned instead

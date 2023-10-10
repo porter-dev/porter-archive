@@ -160,8 +160,10 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	namespace := deploymentTargetDetailsResp.Msg.Namespace
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: namespace})
+	isPreview := deploymentTargetDetailsResp.Msg.IsPreview
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "is-preview", Value: isPreview})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: namespace})
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "hard-update", Value: request.HardUpdate})
 
 	appEnvGroupName, err := porter_app.AppEnvGroupName(ctx, appName, request.DeploymentTargetID, cluster.ID, c.Repo().PorterApp())
@@ -186,6 +188,21 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "env-group-exists", Value: latestEnvironmentGroup.Name != ""})
+
+	previewTemplateEnvName, err := porter_app.AppTemplateEnvGroupName(ctx, appName, cluster.ID, c.Repo().PorterApp())
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting preview template env name")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	// filter out preview template and app env groups
+	filteredEnvGroups := []*porterv1.EnvGroup{}
+	for _, envGroup := range appProto.EnvGroups {
+		if envGroup.GetName() != previewTemplateEnvName && envGroup.GetName() != appEnvGroupName {
+			filteredEnvGroups = append(filteredEnvGroups, envGroup)
+		}
+	}
 
 	if latestEnvironmentGroup.Name != "" {
 		sameEnvGroup := true
@@ -217,9 +234,8 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		if sameEnvGroup {
 			// even if the env group is the same, we still need to sync the latest versions of the other env groups
 			syncInp := syncLatestEnvGroupVersionsInput{
-				envGroups:          appProto.EnvGroups,
+				envGroups:          filteredEnvGroups,
 				appName:            appName,
-				appEnvName:         appEnvGroupName,
 				namespace:          namespace,
 				deploymentTargetID: request.DeploymentTargetID,
 				k8sAgent:           agent,
@@ -245,6 +261,18 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		}
 	}
 
+	// if this app does not have a default env group for this deployment target and is a preview
+	// then use the preview template env group as the default
+	// this should only run when the app is first deployed to a given deployment target
+	if latestEnvironmentGroup.Name == "" && isPreview {
+		latestEnvironmentGroup, err = environment_groups.LatestBaseEnvironmentGroup(ctx, agent, previewTemplateEnvName)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "unable to get latest base environment group")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+	}
+
 	variables := make(map[string]string)
 	secrets := make(map[string]string)
 
@@ -258,10 +286,14 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	for key, value := range request.Variables {
-		variables[key] = value
+		if len(key) > 0 && len(value) > 0 {
+			variables[key] = value
+		}
 	}
 	for key, value := range request.Secrets {
-		secrets[key] = value
+		if len(key) > 0 && len(value) > 0 {
+			secrets[key] = value
+		}
 	}
 
 	envGroup := environment_groups.EnvironmentGroup{
@@ -299,9 +331,8 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "env-group-versioned-name", Value: syncedAppEnvironment.EnvironmentGroupVersionedName})
 
 	syncInp := syncLatestEnvGroupVersionsInput{
-		envGroups:          appProto.EnvGroups,
+		envGroups:          filteredEnvGroups,
 		appName:            appName,
-		appEnvName:         appEnvGroupName,
 		namespace:          namespace,
 		deploymentTargetID: request.DeploymentTargetID,
 		k8sAgent:           agent,
@@ -344,8 +375,6 @@ type syncLatestEnvGroupVersionsInput struct {
 	envGroups []*porterv1.EnvGroup
 	// appName is the name of the app
 	appName string
-	// appEnvName is the name of the app env. This is the env group created when the app is created for storing app-specific variables
-	appEnvName string
 	// namespace is the namespace to sync the latest versions to
 	namespace string
 	// deploymentTargetID is the id of the deployment target
@@ -367,9 +396,6 @@ func syncLatestEnvGroupVersions(ctx context.Context, inp syncLatestEnvGroupVersi
 	if inp.appName == "" {
 		return envGroups, telemetry.Error(ctx, span, nil, "app name is empty")
 	}
-	if inp.appEnvName == "" {
-		return envGroups, telemetry.Error(ctx, span, nil, "app env name is empty")
-	}
 	if inp.namespace == "" {
 		return envGroups, telemetry.Error(ctx, span, nil, "namespace is empty")
 	}
@@ -379,9 +405,6 @@ func syncLatestEnvGroupVersions(ctx context.Context, inp syncLatestEnvGroupVersi
 
 	for _, envGroup := range inp.envGroups {
 		if envGroup == nil {
-			continue
-		}
-		if envGroup.GetName() == inp.appEnvName {
 			continue
 		}
 

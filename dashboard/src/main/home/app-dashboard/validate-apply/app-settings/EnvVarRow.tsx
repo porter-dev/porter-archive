@@ -26,7 +26,7 @@ const EnvVarRow: React.FC<Props> = ({
         <InputWrapper>
             {entry.locked ? (
                 <Tooltip
-                    content={"This key is part of a secret and cannot be edited"}
+                    content={"Secrets are immutable. To edit, delete and recreate the key with your new value."}
                     position={"bottom"}
                 >
                     <Input
@@ -58,7 +58,7 @@ const EnvVarRow: React.FC<Props> = ({
             {hidden ? (
                 entry.locked ? (
                     <Tooltip
-                        content={"This value is part of a secret and cannot be edited"}
+                        content={"Secrets are immutable. To edit, delete and recreate the key with your new value."}
                         position={"bottom"}
                     >
                         <Input

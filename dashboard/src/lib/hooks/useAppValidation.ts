@@ -110,15 +110,26 @@ export const useAppValidation = ({
         })
         .exhaustive();
 
-      const domainDeletions = data.app.services.reduce(
-        (acc: Record<string, string[]>, svc) => {
-          if (svc.domainDeletions.length) {
-            acc[svc.name.value] = svc.domainDeletions.map((d) => d.name);
-          }
+      const serviceDeletions = data.app.services.reduce(
+        (
+          acc: Record<
+            string,
+            { domain_names: string[]; ingress_annotation_keys: string[] }
+          >,
+          svc
+        ) => {
+          acc[svc.name.value] = {
+            domain_names: svc.domainDeletions.map((d) => d.name),
+            ingress_annotation_keys: svc.ingressAnnotationDeletions.map(
+              (ia) => ia.key
+            ),
+          };
+
           return acc;
         },
         {}
       );
+
       const res = await api.validatePorterApp(
         "<token>",
         {
@@ -134,7 +145,7 @@ export const useAppValidation = ({
             predeploy: data.deletions.predeploy.map((s) => s.name),
             env_group_names: data.deletions.envGroupNames.map((eg) => eg.name),
             env_variable_names: [],
-            domain_name_deletions: domainDeletions,
+            service_deletions: serviceDeletions,
           },
         },
         {

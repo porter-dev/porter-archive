@@ -144,8 +144,8 @@ export function prefixSubdomain(subdomain: string) {
 export function defaultSerialized({
   name,
   type,
-  defaultCPU,
-  defaultRAM,
+  defaultCPU = 0.1,
+  defaultRAM = 256,
 }: {
   name: string;
   type: ClientServiceType;
@@ -157,8 +157,8 @@ export function defaultSerialized({
     run: "",
     instances: 1,
     port: 3000,
-    cpuCores: defaultCPU ?? 0.1,
-    ramMegabytes: defaultRAM ?? 256,
+    cpuCores: defaultCPU,
+    ramMegabytes: defaultRAM,
     smartOptimization: true,
   };
 

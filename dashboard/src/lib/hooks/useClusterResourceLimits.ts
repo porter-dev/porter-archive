@@ -81,7 +81,7 @@ export const useClusterResourceLimits = (
     const { data } = useQuery(
         ["getClusterNodes", projectId, clusterId],
         async () => {
-            if (!projectId || !clusterId) {
+            if (!projectId || !clusterId || clusterId === -1) {
                 return Promise.resolve([]);
             }
 
@@ -112,37 +112,22 @@ export const useClusterResourceLimits = (
             const maxRAM = data.reduce((acc, curr) => {
                 return Math.max(acc, curr.maxRAM);
             }, 0);
+            let maxMultiplier = SMALL_INSTANCE_UPPER_BOUND;
             // if the instance type has more than 4 GB ram, we use 90% of the ram/cpu
             // otherwise, we use 75%
             if (maxRAM > 4) {
-                // round down to nearest 0.5 cores
-                setMaxCPU(Math.floor(maxCPU * LARGE_INSTANCE_UPPER_BOUND * 2) / 2);
-                // round down to nearest 100 MB
-                setMaxRAM(
-                    Math.round(
-                        convert(maxRAM, "GiB").to("MB") * LARGE_INSTANCE_UPPER_BOUND / 100
-                    ) * 100
-                );
-                setDefaultCPU(Math.floor(maxCPU * LARGE_INSTANCE_UPPER_BOUND * DEFAULT_MULTIPLIER * 2) / 2);
-                setDefaultRAM(
-                    Math.round(
-                        convert(maxRAM, "GiB").to("MB") * LARGE_INSTANCE_UPPER_BOUND * DEFAULT_MULTIPLIER / 100
-                    ) * 100
-                );
-            } else {
-                setMaxCPU(Math.floor(maxCPU * SMALL_INSTANCE_UPPER_BOUND * 2) / 2);
-                setMaxRAM(
-                    Math.round(
-                        convert(maxRAM, "GiB").to("MB") * SMALL_INSTANCE_UPPER_BOUND / 100
-                    ) * 100
-                );
-                setDefaultCPU(Math.floor(maxCPU * SMALL_INSTANCE_UPPER_BOUND * DEFAULT_MULTIPLIER * 2) / 2);
-                setDefaultRAM(
-                    Math.round(
-                        convert(maxRAM, "GiB").to("MB") * SMALL_INSTANCE_UPPER_BOUND * DEFAULT_MULTIPLIER / 100
-                    ) * 100
-                );
-            }
+                maxMultiplier = LARGE_INSTANCE_UPPER_BOUND;
+            } 
+            // round down to nearest 0.5 cores
+            const newMaxCPU = Math.floor(maxCPU * maxMultiplier * 2) / 2;
+            // round down to nearest 100 MB
+            const newMaxRAM = Math.round(
+                convert(maxRAM, "GiB").to("MB") * maxMultiplier / 100
+            ) * 100;
+            setMaxCPU(newMaxCPU);
+            setMaxRAM(newMaxRAM);
+            setDefaultCPU(Number((newMaxCPU * DEFAULT_MULTIPLIER).toFixed(2)));
+            setDefaultRAM(Number((newMaxRAM * DEFAULT_MULTIPLIER).toFixed(0)));
         }
     }, [data])
 

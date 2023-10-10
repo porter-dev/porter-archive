@@ -35,7 +35,7 @@ const RevisionDiffModal: React.FC<Props> = ({
     const [baseYamlString, setBaseYamlString] = useState("");
     const [changedYamlString, setChangedYamlString] = useState("");
 
-    const { data, isLoading } = useQuery(
+    const { data, isLoading, status } = useQuery(
         ["getRevisionYaml", JSON.stringify(base), JSON.stringify(changed)],
         async () => {
             const baseRes = await api.porterYamlFromRevision(
@@ -71,11 +71,11 @@ const RevisionDiffModal: React.FC<Props> = ({
         }
     );
     useEffect(() => {
-        if (data) {
+        if (status === "success") {
             setBaseYamlString(data.base);
             setChangedYamlString(data.changed);
         }
-    }, [data]);
+    }, [status]);
 
     const newStyles = {
         variables: {

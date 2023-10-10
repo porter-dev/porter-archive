@@ -1,4 +1,4 @@
-package porter_app
+package test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"k8s.io/utils/pointer"
 
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
+	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/sergi/go-diff/diffmatchpatch"
 
 	"github.com/matryer/is"
@@ -28,10 +29,10 @@ func TestParseYAML(t *testing.T) {
 		t.Run(tt.porterYamlFileName, func(t *testing.T) {
 			is := is.New(t)
 
-			want, err := os.ReadFile(fmt.Sprintf("testdata/%s.yaml", tt.porterYamlFileName))
+			want, err := os.ReadFile(fmt.Sprintf("../testdata/%s.yaml", tt.porterYamlFileName))
 			is.NoErr(err) // no error expected reading test file
 
-			got, err := ParseYAML(context.Background(), want, "test-app")
+			got, err := porter_app.ParseYAML(context.Background(), want, "test-app")
 			is.NoErr(err) // umbrella chart values should convert to map[string]any without issues
 
 			diffProtoWithFailTest(t, is, tt.want, got.AppProto)
@@ -47,31 +48,6 @@ func TestParseYAML(t *testing.T) {
 var result_nobuild = &porterv1.PorterApp{
 	Name: "test-app",
 	Services: map[string]*porterv1.Service{
-		"example-job": {
-			RunOptional:  pointer.String("echo 'hello world'"),
-			CpuCores:     0.1,
-			RamMegabytes: 256,
-			Config: &porterv1.Service_JobConfig{
-				JobConfig: &porterv1.JobServiceConfig{
-					AllowConcurrentOptional: pointer.Bool(true),
-					Cron:                    "*/10 * * * *",
-				},
-			},
-			Type: 3,
-		},
-		"example-wkr": {
-			RunOptional:  pointer.String("echo 'work'"),
-			Instances:    1,
-			Port:         80,
-			CpuCores:     0.1,
-			RamMegabytes: 256,
-			Config: &porterv1.Service_WorkerConfig{
-				WorkerConfig: &porterv1.WorkerServiceConfig{
-					Autoscaling: nil,
-				},
-			},
-			Type: 2,
-		},
 		"example-web": {
 			RunOptional:  pointer.String("node index.js"),
 			Instances:    0,
@@ -102,6 +78,33 @@ var result_nobuild = &porterv1.PorterApp{
 				},
 			},
 			Type: 1,
+		},
+		"example-wkr": {
+			RunOptional:  pointer.String("echo 'work'"),
+			Instances:    1,
+			Port:         80,
+			CpuCores:     0.1,
+			RamMegabytes: 256,
+			Config: &porterv1.Service_WorkerConfig{
+				WorkerConfig: &porterv1.WorkerServiceConfig{
+					Autoscaling: nil,
+				},
+			},
+			Type: 2,
+		},
+		"example-job": {
+			RunOptional:  pointer.String("echo 'hello world'"),
+			CpuCores:     0.1,
+			RamMegabytes: 256,
+			Config: &porterv1.Service_JobConfig{
+				JobConfig: &porterv1.JobServiceConfig{
+					AllowConcurrentOptional: pointer.Bool(true),
+					Cron:                    "*/10 * * * *",
+					SuspendCron:             pointer.Bool(false),
+					TimeoutSeconds:          60,
+				},
+			},
+			Type: 3,
 		},
 	},
 	Predeploy: &porterv1.Service{

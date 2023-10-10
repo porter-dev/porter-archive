@@ -63,13 +63,14 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 
 // PorterApp represents all the possible fields in a Porter YAML file
 type PorterApp struct {
+	Version  string             `yaml:"version,omitempty"`
 	Name     string             `yaml:"name"`
 	Services map[string]Service `yaml:"services"`
-	Image    *Image             `yaml:"image"`
-	Build    *Build             `yaml:"build"`
-	Env      map[string]string  `yaml:"env"`
+	Image    *Image             `yaml:"image,omitempty"`
+	Build    *Build             `yaml:"build,omitempty"`
+	Env      map[string]string  `yaml:"env,omitempty"`
 
-	Predeploy *Service `yaml:"predeploy"`
+	Predeploy *Service `yaml:"predeploy,omitempty"`
 	EnvGroups []string `yaml:"envGroups,omitempty"`
 }
 
@@ -88,21 +89,29 @@ type Build struct {
 	Dockerfile string   `yaml:"dockerfile" validate:"required_if=Method docker"`
 }
 
+// Image is the repository and tag for an app's build image
+type Image struct {
+	Repository string `yaml:"repository"`
+	Tag        string `yaml:"tag"`
+}
+
 // Service represents a single service in a porter app
 type Service struct {
 	Run               *string      `yaml:"run,omitempty"`
-	Type              string       `yaml:"type" validate:"required, oneof=web worker job"`
-	Instances         int          `yaml:"instances"`
-	CpuCores          float32      `yaml:"cpuCores"`
-	RamMegabytes      int          `yaml:"ramMegabytes"`
-	SmartOptimization *bool        `yaml:"smartOptimization"`
-	Port              int          `yaml:"port"`
+	Type              string       `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
+	Instances         int          `yaml:"instances,omitempty"`
+	CpuCores          float32      `yaml:"cpuCores,omitempty"`
+	RamMegabytes      int          `yaml:"ramMegabytes,omitempty"`
+	SmartOptimization *bool        `yaml:"smartOptimization,omitempty"`
+	Port              int          `yaml:"port,omitempty"`
 	Autoscaling       *AutoScaling `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
-	Domains           []Domains    `yaml:"domains" validate:"excluded_unless=Type web"`
+	Domains           []Domains    `yaml:"domains,omitempty" validate:"excluded_unless=Type web"`
 	HealthCheck       *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
-	AllowConcurrent   *bool        `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
-	Cron              string       `yaml:"cron" validate:"excluded_unless=Type job"`
-	Private           *bool        `yaml:"private" validate:"excluded_unless=Type web"`
+	AllowConcurrent   *bool        `yaml:"allowConcurrent,omitempty" validate:"excluded_unless=Type job"`
+	Cron              string       `yaml:"cron,omitempty" validate:"excluded_unless=Type job"`
+	SuspendCron       *bool        `yaml:"suspendCron,omitempty" validate:"excluded_unless=Type job"`
+	TimeoutSeconds    int          `yaml:"timeoutSeconds,omitempty" validate:"excluded_unless=Type job"`
+	Private           *bool        `yaml:"private,omitempty" validate:"excluded_unless=Type web"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -123,12 +132,6 @@ type Domains struct {
 type HealthCheck struct {
 	Enabled  bool   `yaml:"enabled"`
 	HttpPath string `yaml:"httpPath"`
-}
-
-// Image is the repository and tag for an app's build image
-type Image struct {
-	Repository string `yaml:"repository"`
-	Tag        string `yaml:"tag"`
 }
 
 func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp, map[string]string, error) {
@@ -297,6 +300,12 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			AllowConcurrentOptional: service.AllowConcurrent,
 			Cron:                    service.Cron,
 		}
+		if service.SuspendCron != nil {
+			jobConfig.SuspendCron = service.SuspendCron
+		}
+		if service.TimeoutSeconds != 0 {
+			jobConfig.TimeoutSeconds = int64(service.TimeoutSeconds)
+		}
 
 		serviceProto.Config = &porterv1.Service_JobConfig{
 			JobConfig: jobConfig,
@@ -309,7 +318,8 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 // AppFromProto converts a PorterApp proto object into a PorterApp struct
 func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 	porterApp := PorterApp{
-		Name: appProto.Name,
+		Version: "v2",
+		Name:    appProto.Name,
 	}
 
 	if appProto.Build != nil {
@@ -428,6 +438,8 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 
 		appService.AllowConcurrent = jobConfig.AllowConcurrentOptional
 		appService.Cron = jobConfig.Cron
+		appService.SuspendCron = jobConfig.SuspendCron
+		appService.TimeoutSeconds = int(jobConfig.TimeoutSeconds)
 	}
 
 	return appService, nil

@@ -44,6 +44,7 @@ func (repo *PorterAppRepository) DeletePorterApp(app *models.PorterApp) (*models
 	return nil, errors.New("cannot write database")
 }
 
-func (repo *PorterAppRepository) ReadPorterApp(ctx context.Context, id uint) (*models.PorterApp, error) {
+// ReadPorterAppByID is a test method that is not implemented
+func (repo *PorterAppRepository) ReadPorterAppByID(ctx context.Context, id uint) (*models.PorterApp, error) {
 	return nil, errors.New("cannot read database")
 }

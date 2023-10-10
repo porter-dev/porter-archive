@@ -36,7 +36,8 @@ func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*mo
 	return apps, nil
 }
 
-func (repo *PorterAppRepository) ReadPorterApp(ctx context.Context, id uint) (*models.PorterApp, error) {
+// ReadPorterAppByID returns a PorterApp by its ID
+func (repo *PorterAppRepository) ReadPorterAppByID(ctx context.Context, id uint) (*models.PorterApp, error) {
 	app := &models.PorterApp{}
 
 	if err := repo.db.Where("id = ?", id).Limit(1).Find(&app).Error; err != nil {

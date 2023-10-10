@@ -100,7 +100,7 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		telemetry.AttributeKV{Key: "project-id", Value: webhook.ProjectID},
 	)
 
-	porterApp, err := c.Repo().PorterApp().ReadPorterApp(ctx, uint(webhook.PorterAppID))
+	porterApp, err := c.Repo().PorterApp().ReadPorterAppByID(ctx, uint(webhook.PorterAppID))
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting porter app")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

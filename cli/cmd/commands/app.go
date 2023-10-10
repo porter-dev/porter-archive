@@ -113,11 +113,8 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "rollback [application]",
 		Args:  cobra.MinimumNArgs(1),
 		Short: "Rolls back an application to the last successful revision.",
-		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, appRollback)
-			if err != nil {
-				os.Exit(1)
-			}
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return checkLoginAndRunWithConfig(cmd, cliConf, args, appRollback)
 		},
 	}
 	appCmd.AddCommand(appRollbackCmd)

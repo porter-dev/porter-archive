@@ -47,8 +47,11 @@ func Rollback(ctx context.Context, inp RollbackInput) error {
 			break
 		}
 	}
+	if rollbackTarget.ID == "" {
+		return fmt.Errorf("no previous successful revisions found for app %s", inp.AppName)
+	}
 
-	color.New(color.FgGreen).Printf("Rolling back to revision %d...\n", rollbackTarget.RevisionNumber)
+	color.New(color.FgGreen).Printf("Rolling back to revision %d...\n", rollbackTarget.RevisionNumber) // nolint:errcheck,gosec
 
 	applyResp, err := inp.Client.ApplyPorterApp(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, rollbackTarget.B64AppProto, deploymentTargetID, "", false)
 	if err != nil {
@@ -59,6 +62,6 @@ func Rollback(ctx context.Context, inp RollbackInput) error {
 		return fmt.Errorf("unexpected CLI action: %s", applyResp.CLIAction)
 	}
 
-	color.New(color.FgGreen).Printf("Successfully rolled back to revision %d\n", rollbackTarget.RevisionNumber)
+	color.New(color.FgGreen).Printf("Successfully rolled back to revision %d\n", rollbackTarget.RevisionNumber) // nolint:errcheck,gosec
 	return nil
 }

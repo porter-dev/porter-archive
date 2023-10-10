@@ -19,7 +19,7 @@ const Settings: React.FC = () => {
   const queryClient = useQueryClient();
   const history = useHistory();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const { porterApp, clusterId, projectId } = useLatestRevision();
+  const { porterApp, clusterId, projectId, latestProto } = useLatestRevision();
   const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -139,7 +139,9 @@ const Settings: React.FC = () => {
 
   return (
     <StyledSettingsTab>
-      {currentProject?.preview_envs_enabled && <PreviewEnvironmentSettings />}
+      {currentProject?.preview_envs_enabled && !!latestProto.build ? (
+        <PreviewEnvironmentSettings />
+      ) : null}
       <Text size={16}>Delete "{porterApp.name}"</Text>
       <Spacer y={0.5} />
       <Text color="helper">

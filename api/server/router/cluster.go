@@ -1692,5 +1692,34 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/environment-groups/update-linked-apps
+	updateLinkedAppsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/environment-groups/update-linked-apps",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	updateLinkedAppsHandler := environment_groups.NewUpdateLinkedAppsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateLinkedAppsEndpoint,
+		Handler:  updateLinkedAppsHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

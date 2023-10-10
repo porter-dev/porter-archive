@@ -68,7 +68,7 @@ func latestBaseEnvironmentGroup(ctx context.Context, a *kubernetes.Agent, enviro
 }
 
 // EnvironmentGroupInTargetNamespaceInput contains all information required to check if an environment group exists in a target namespace.
-// If you are looking for envrionment groups in the base namespace, consider using LatestBaseEnvironmentGroup or ListBaseEnvironmentGroups instead
+// If you are looking for environment groups in the base namespace, consider using LatestBaseEnvironmentGroup or ListBaseEnvironmentGroups instead
 type EnvironmentGroupInTargetNamespaceInput struct {
 	// Name is the environment group name which can be found on the configmap label
 	Name                              string

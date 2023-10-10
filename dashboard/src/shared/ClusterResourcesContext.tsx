@@ -16,7 +16,7 @@ export const ClusterResourcesContext = createContext<{
   
 export const useClusterResources = () => {
     const context = useContext(ClusterResourcesContext);
-    if (context === null) {
+    if (context == null) {
         throw new Error(
         "useClusterResources must be used within a ClusterResourcesContext"
         );

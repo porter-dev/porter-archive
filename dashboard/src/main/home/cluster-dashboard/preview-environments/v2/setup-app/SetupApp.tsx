@@ -35,7 +35,13 @@ const SetupApp: React.FC<Props> = ({ location }) => {
   const templateRes = useQuery(
     ["getAppTemplate", currentProject?.id, currentCluster?.id, appName],
     async () => {
-      if (!currentProject || !currentCluster || !appName) {
+      if (
+        !currentProject ||
+        !currentCluster ||
+        currentCluster.id === -1 ||
+        currentProject.id === -1 ||
+        !appName
+      ) {
         return null;
       }
 
@@ -65,6 +71,7 @@ const SetupApp: React.FC<Props> = ({ location }) => {
     },
     {
       enabled: !!currentProject && !!currentCluster && !!appName,
+      refetchOnWindowFocus: false,
     }
   );
 
@@ -89,7 +96,6 @@ const SetupApp: React.FC<Props> = ({ location }) => {
             {match(templateRes)
               .with({ status: "loading" }, () => <Loading />)
               .with({ status: "success" }, ({ data }) => {
-                console.log("data", data);
                 return <AppTemplateForm existingTemplate={data} />;
               })
               .otherwise(() => null)}

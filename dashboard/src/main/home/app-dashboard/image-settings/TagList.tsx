@@ -150,7 +150,7 @@ const TagItem = styled.div`
   cursor: text;
   :hover {
     background: #ffffff22;
-
+    cursor: pointer;
     > i {
       background: #ffffff22;
     }

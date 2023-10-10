@@ -521,6 +521,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
             setActiveValue={setRegion}
             label="📍 Google Cloud Region"
           />
+          <Spacer y={1} />
           <SelectRow
             options={clusterVersionOptions}
             width="350px"

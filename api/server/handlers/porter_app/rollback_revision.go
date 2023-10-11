@@ -2,7 +2,6 @@ package porter_app
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -46,7 +45,7 @@ type RollbackAppRevisionRequest struct {
 
 // RollbackAppRevisionResponse is the response body for the /apps/{porter_app_name}/rollback endpoint
 type RollbackAppRevisionResponse struct {
-	AppRevisionID string `json:"app_revision_id"`
+	TargetRevisionNumber int `json:"target_revision_number"`
 }
 
 // ServeHTTP handles the request and rolls back the app revision
@@ -56,11 +55,6 @@ func (c *RollbackAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
-		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
-	)
 
 	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
@@ -108,8 +102,10 @@ func (c *RollbackAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	var targetProto *porterv1.PorterApp
+	var targetRevisionNumber int
+
 	if request.AppRevisionID != "" {
-		targetProto, err = getRevisionProto(ctx, getRevisionProtoInput{
+		targetProto, targetRevisionNumber, err = getRevisionProto(ctx, getRevisionProtoInput{
 			projectID:     int64(project.ID),
 			appRevisionID: request.AppRevisionID,
 			ccpClient:     c.Config().ClusterControlPlaneClient,
@@ -120,10 +116,10 @@ func (c *RollbackAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			return
 		}
 	} else {
-		targetProto, err = getLastDeployedProto(ctx, getLastDeployedProtoInput{
+		targetProto, targetRevisionNumber, err = getLastDeployedProto(ctx, getLastDeployedProtoInput{
 			appName:            appName,
 			projectID:          int64(project.ID),
-			deploymentTargetID: deploymentTargetID,
+			deploymentTargetID: deploymentTargetID.String(),
 			ccpClient:          c.Config().ClusterControlPlaneClient,
 		})
 		if err != nil {
@@ -178,7 +174,7 @@ func (c *RollbackAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	c.WriteResult(w, r, &RollbackAppRevisionResponse{
-		AppRevisionID: ccpResp.Msg.PorterAppRevisionId,
+		TargetRevisionNumber: targetRevisionNumber,
 	})
 }
 
@@ -188,20 +184,21 @@ type getRevisionProtoInput struct {
 	ccpClient     porterv1connect.ClusterControlPlaneServiceClient
 }
 
-func getRevisionProto(ctx context.Context, inp getRevisionProtoInput) (*porterv1.PorterApp, error) {
+func getRevisionProto(ctx context.Context, inp getRevisionProtoInput) (*porterv1.PorterApp, int, error) {
 	ctx, span := telemetry.NewSpan(ctx, "get-revision-proto")
 	defer span.End()
 
 	var proto *porterv1.PorterApp
+	var revisionNumber int
 
 	if inp.projectID == 0 {
-		return proto, telemetry.Error(ctx, span, nil, "project id is empty")
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "project id is empty")
 	}
 	if inp.appRevisionID == "" {
-		return proto, telemetry.Error(ctx, span, nil, "app revision id is empty")
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "app revision id is empty")
 	}
 	if inp.ccpClient == nil {
-		return proto, telemetry.Error(ctx, span, nil, "cluster control plane client is nil")
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "cluster control plane client is nil")
 	}
 
 	getRevisionReq := connect.NewRequest(&porterv1.GetAppRevisionRequest{
@@ -210,83 +207,89 @@ func getRevisionProto(ctx context.Context, inp getRevisionProtoInput) (*porterv1
 	})
 	ccpResp, err := inp.ccpClient.GetAppRevision(ctx, getRevisionReq)
 	if err != nil {
-		return proto, telemetry.Error(ctx, span, err, "error getting app revision")
+		return proto, revisionNumber, telemetry.Error(ctx, span, err, "error getting app revision")
 	}
 
 	if ccpResp == nil || ccpResp.Msg == nil {
-		return proto, telemetry.Error(ctx, span, nil, "get app revision response is nil")
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "get app revision response is nil")
 	}
 
 	proto = ccpResp.Msg.AppRevision.App
-	if proto == nil {
-		return proto, telemetry.Error(ctx, span, nil, "app revision proto is nil")
+	revisionNumber = int(ccpResp.Msg.AppRevision.RevisionNumber)
+	if proto == nil || revisionNumber == 0 {
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "app revision proto is nil")
 	}
 
-	return proto, nil
+	return proto, revisionNumber, nil
 }
 
 type getLastDeployedProtoInput struct {
 	appName            string
 	projectID          int64
-	deploymentTargetID uuid.UUID
+	deploymentTargetID string
 	ccpClient          porterv1connect.ClusterControlPlaneServiceClient
 }
 
-func getLastDeployedProto(ctx context.Context, inp getLastDeployedProtoInput) (*porterv1.PorterApp, error) {
+func getLastDeployedProto(ctx context.Context, inp getLastDeployedProtoInput) (*porterv1.PorterApp, int, error) {
 	ctx, span := telemetry.NewSpan(ctx, "rollback-to-last-deployed-revision")
 	defer span.End()
 
 	var proto *porterv1.PorterApp
+	var revisionNumber int
 
 	if inp.appName == "" {
-		return proto, telemetry.Error(ctx, span, nil, "app name is empty")
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "app name is empty")
 	}
 	if inp.projectID == 0 {
-		return proto, telemetry.Error(ctx, span, nil, "project id is empty")
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "project id is empty")
 	}
-	if inp.deploymentTargetID == uuid.Nil {
-		return proto, telemetry.Error(ctx, span, nil, "deployment target id is empty")
+	if inp.deploymentTargetID == "" {
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "deployment target id is empty")
 	}
 	if inp.ccpClient == nil {
-		return proto, telemetry.Error(ctx, span, nil, "cluster control plane client is nil")
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "cluster control plane client is nil")
 	}
 
 	listAppRevisionsReq := connect.NewRequest(&porterv1.LatestAppRevisionsRequest{
 		ProjectId:          inp.projectID,
-		DeploymentTargetId: inp.deploymentTargetID.String(),
+		DeploymentTargetId: inp.deploymentTargetID,
 	})
 
 	latestAppRevisionsResp, err := inp.ccpClient.LatestAppRevisions(ctx, listAppRevisionsReq)
 	if err != nil {
-		return proto, telemetry.Error(ctx, span, err, "error getting latest app revisions")
+		return proto, revisionNumber, telemetry.Error(ctx, span, err, "error getting latest app revisions")
 	}
 
 	if latestAppRevisionsResp == nil || latestAppRevisionsResp.Msg == nil {
-		return proto, telemetry.Error(ctx, span, nil, "latest app revisions response is nil")
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "latest app revisions response is nil")
 	}
 
 	revisions := latestAppRevisionsResp.Msg.AppRevisions
 	if len(revisions) == 0 {
-		return proto, telemetry.Error(ctx, span, nil, "no revisions found for app")
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "no revisions found for app")
 	}
 
+	// a failed revision is added to the head of the list of revisions if it is the most recent revision
+	// if the most recent revision is successful, then the failed revision will be ignored in the loop below
+	// if the most recent revision is successful (revision number != 0), then skip it and start looking for the previous successful revision
 	skip := 0
 	if revisions[0].RevisionNumber != 0 {
 		skip = 1
 	}
 	if len(revisions) <= skip {
-		return proto, telemetry.Error(ctx, span, nil, "no previous successful revisions found for app")
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "no previous successful revisions found for app")
 	}
 
 	for _, rev := range revisions[skip:] {
 		if rev.RevisionNumber != 0 {
 			proto = rev.App
+			revisionNumber = int(rev.RevisionNumber)
 			break
 		}
 	}
-	if proto == nil {
-		return proto, fmt.Errorf("no previous successful revisions found for app %s", inp.appName)
+	if proto == nil || revisionNumber == 0 {
+		return proto, revisionNumber, telemetry.Error(ctx, span, nil, "no previous successful revisions found for app")
 	}
 
-	return proto, nil
+	return proto, revisionNumber, nil
 }

@@ -34,6 +34,6 @@ func Rollback(ctx context.Context, inp RollbackInput) error {
 		return fmt.Errorf("error calling rollback revision endpoint: %w", err)
 	}
 
-	color.New(color.FgGreen).Printf("Successfully applied revision %s\n", rollbackResp.AppRevisionID) // nolint:errcheck,gosec
+	color.New(color.FgGreen).Printf("Successfully rolled back to revision %d\n", rollbackResp.TargetRevisionNumber) // nolint:errcheck,gosec
 	return nil
 }

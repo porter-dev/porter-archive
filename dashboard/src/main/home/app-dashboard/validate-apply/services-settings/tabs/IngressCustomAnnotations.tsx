@@ -16,6 +16,17 @@ const IngressCustomAnnotations: React.FC<Props> = ({ index }) => {
     control,
     name: `app.services.${index}.config.ingressAnnotations`,
   });
+  const { append: appendAnnotationDeletion } = useFieldArray({
+    control,
+    name: `app.services.${index}.ingressAnnotationDeletions`,
+  });
+
+  const onRemove = (i: number, key: string) => {
+    remove(i);
+    appendAnnotationDeletion({
+      key,
+    });
+  };
 
   return (
     <div>
@@ -50,7 +61,9 @@ const IngressCustomAnnotations: React.FC<Props> = ({ index }) => {
                   />
                   <DeleteButton
                     onClick={() => {
-                      remove(i);
+                      if (!annotation.readOnly) {
+                        onRemove(i, annotation.key);
+                      }
                     }}
                   >
                     <i className="material-icons">cancel</i>

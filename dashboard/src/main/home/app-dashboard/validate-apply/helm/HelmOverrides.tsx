@@ -1,27 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React from "react";
 import styled from "styled-components";
 
-import api from "shared/api";
-
-import TabSelector from "components/TabSelector";
-import SelectRow from "components/form-components/SelectRow";
-import { MetricNormalizer, resolutions, secondsBeforeNow } from "../../expanded-app/metrics/utils";
-import { Metric, MetricType, NginxStatusMetric } from "../../expanded-app/metrics/types";
-import { match } from "ts-pattern";
-import { AvailableMetrics, NormalizedMetricsData } from "main/home/cluster-dashboard/expanded-chart/metrics/types";
-import MetricsChart from "../../expanded-app/metrics/MetricsChart";
-import { useQuery } from "@tanstack/react-query";
-import Loading from "components/Loading";
-import CheckboxRow from "components/CheckboxRow";
-import { PorterApp } from "@porter-dev/api-contracts";
-import { useLocation } from "react-router";
 import yaml from "js-yaml";
-import YamlEditor from "../../../../../components/YamlEditor";
-import Spacer from "../../../../../components/porter/Spacer";
-import Text from "../../../../../components/porter/Text";
-import Button from "../../../../../components/porter/Button";
+import YamlEditor from "components/YamlEditor";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import {useFormContext} from "react-hook-form";
-import {PorterAppFormData} from "../../../../../lib/porter-apps";
+import {PorterAppFormData} from "lib/porter-apps";
 
 type PropsType = {
   projectId: number;
@@ -44,7 +29,7 @@ const HelmOverrides: React.FunctionComponent<PropsType> = ({
   const setFormValue = (value: string) => {
         setOverrideValues(value);
         try {
-            if (value == "" || value == null || value == undefined) {
+            if (value == "") {
                 setValue("app.helmOverrides", "");
             } else {
                 const jsonValues = yaml.load(value);

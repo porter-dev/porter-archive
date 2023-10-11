@@ -3,26 +3,15 @@ import styled from "styled-components";
 
 import api from "shared/api";
 
-import TabSelector from "components/TabSelector";
-import SelectRow from "components/form-components/SelectRow";
-import { MetricNormalizer, resolutions, secondsBeforeNow } from "../../expanded-app/metrics/utils";
-import { Metric, MetricType, NginxStatusMetric } from "../../expanded-app/metrics/types";
-import { match } from "ts-pattern";
-import { AvailableMetrics, NormalizedMetricsData } from "main/home/cluster-dashboard/expanded-chart/metrics/types";
-import MetricsChart from "../../expanded-app/metrics/MetricsChart";
 import { useQuery } from "@tanstack/react-query";
-import Loading from "components/Loading";
-import CheckboxRow from "components/CheckboxRow";
-import {EKSLogging, PorterApp} from "@porter-dev/api-contracts";
-import { useLocation } from "react-router";
 import yaml from "js-yaml";
-import YamlEditor from "../../../../../components/YamlEditor";
-import Spacer from "../../../../../components/porter/Spacer";
-import Text from "../../../../../components/porter/Text";
-import Button from "../../../../../components/porter/Button";
-import {useFormContext} from "react-hook-form";
-import {PorterAppFormData} from "../../../../../lib/porter-apps";
-import Checkbox from "../../../../../components/porter/Checkbox";
+import YamlEditor from "components/YamlEditor";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import Checkbox from "components/porter/Checkbox";
+import {z} from "zod";
+import {match} from "ts-pattern/dist";
+import loading from "assets/loading.gif";
 
 type PropsType = {
   projectId: number;
@@ -40,12 +29,9 @@ const HelmLatestValues: React.FunctionComponent<PropsType> = ({
   deploymentTargetId,
 }) => {
 
-    const { setValue } = useFormContext<PorterAppFormData>();
-
     const [withDefaults, setWithDefaults] = React.useState<boolean>(false);
 
-
-    const { data: values, isLoading, error } = useQuery(
+    const res = useQuery(
       [
         "getAppHelmValues",
         projectId,
@@ -71,7 +57,9 @@ const HelmLatestValues: React.FunctionComponent<PropsType> = ({
               }
           );
 
-          return yaml.dump(helmValues.data.helm_values);
+          const parsed = await z.object({helm_values: z.string()}).parseAsync(helmValues.data);
+
+          return yaml.dump(JSON.parse(parsed.helm_values));
       },
       {
         enabled: appName !== "",
@@ -90,16 +78,27 @@ const HelmLatestValues: React.FunctionComponent<PropsType> = ({
           </Text>
       </Checkbox>
       <Spacer y={1} />
-      <StyledValuesYaml>
-        <Wrapper>
-          <YamlEditor
-              value={values}
-              height="calc(100vh - 412px)"
-              readOnly={true}
-          />
-        </Wrapper>
-        <Spacer y={0.5} />
-      </StyledValuesYaml>
+          {match(res)
+              .with({ status: "loading" }, () => (
+                  <LoadingPlaceholder>
+                      <StatusWrapper>
+                          <LoadingGif src={loading} revision={false} /> Updating . . .
+                      </StatusWrapper>
+                  </LoadingPlaceholder>
+              ))
+              .with({ status: "success" }, ({ data }) => (
+                  <StyledValuesYaml>
+                      <Wrapper>
+                          <YamlEditor
+                              value={data}
+                              height="calc(100vh - 412px)"
+                              readOnly={true}
+                          />
+                      </Wrapper>
+                      <Spacer y={0.5} />
+                  </StyledValuesYaml>
+              ))
+              .otherwise(() => null)}
       </>
   );
 
@@ -134,4 +133,32 @@ const StyledValuesYaml = styled.div`
       transform: translateY(0px);
     }
   }
+`;
+
+const StatusWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  font-family: "Work Sans", sans-serif;
+  font-size: 13px;
+  color: #ffffff55;
+  margin-right: 25px;
+`;
+
+
+const LoadingPlaceholder = styled.div`
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding-left: 20px;
+`;
+
+const LoadingGif = styled.img`
+  width: 15px;
+  height: 15px;
+  margin-right: ${(props: { revision: boolean }) =>
+    props.revision ? "0px" : "9px"};
+  margin-left: ${(props: { revision: boolean }) =>
+    props.revision ? "10px" : "0px"};
+  margin-bottom: ${(props: { revision: boolean }) =>
+    props.revision ? "-2px" : "0px"};
 `;

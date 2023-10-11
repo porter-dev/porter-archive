@@ -37,17 +37,17 @@ const HelmEditorTab: React.FC<Props> = ({ buttonStatus, featureFlagEnabled }) =>
 
   return (
     <>
-      {!featureFlagEnabled && <Text color="helper">This tab is only visible to Porter operators.</Text>}
+      {!featureFlagEnabled && <Text color="helper">This tab is only visible to Porter operators. Enable the feature flag to allows customers to view this.</Text>}
       <HelmOverrides
         projectId={projectId}
         clusterId={clusterId}
         appName={appName}
         deploymentTargetId={deploymentTarget.id}
         appId={porterApp.id}
-        overrideValues={(overrides == "" || overrides == null) ? "" : yaml.dump(JSON.parse( overrides))}
+        overrideValues={overrides ? yaml.dump(JSON.parse( overrides)) : ""}
         setError={setError}
       />
-      {error != "" && <Text color="helper">{error}</Text>}
+      {error !== "" && <Text color="helper">{error}</Text>}
       <Spacer y={1} />
       <Button
         type="submit"
@@ -56,10 +56,10 @@ const HelmEditorTab: React.FC<Props> = ({ buttonStatus, featureFlagEnabled }) =>
           isSubmitting ||
           latestRevision.status === "CREATED" ||
           latestRevision.status === "AWAITING_BUILD_ARTIFACT" ||
-          error != ""
+          error !== ""
         }
         disabledTooltipMessage={
-          error != ""
+          error !== ""
             ? "Error parsing yaml"
             : "Please wait for the new values to apply to complete before updating helm overrides again"
         }

@@ -555,7 +555,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("metrics", () => <MetricsTab />)
           .with("events", () => <EventFocusView />)
           .with("job-history", () => <JobsTab />)
-          .with("helm-overrides", () => <HelmEditorTab buttonStatus={buttonStatus} featureFlagEnabled={currentProject == undefined ? false : currentProject.helm_values_enabled}/>)
+          .with("helm-overrides", () => <HelmEditorTab buttonStatus={buttonStatus} featureFlagEnabled={currentProject?.helm_values_enabled ?? false}/>)
           .with("helm-values", () => <HelmLatestValuesTab />)
           .otherwise(() => null)}
         <Spacer y={2} />

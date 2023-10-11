@@ -252,8 +252,6 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
     )
     .exhaustive();
 
-  console.log(proto)
-
   return proto;
 }
 
@@ -352,7 +350,7 @@ export function clientAppFromProto({
     })),
   ];
 
-  const helmOverrides = proto.helmOverrides == null ? undefined : atob(proto.helmOverrides.b64Values);
+  const helmOverrides = proto.helmOverrides == null ? "" : atob(proto.helmOverrides.b64Values);
 
   if (proto.predeploy) {
     predeployList.push(

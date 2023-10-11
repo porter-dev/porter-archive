@@ -2,7 +2,6 @@ package porter_app
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -52,7 +51,7 @@ type AppHelmValuesRequest struct {
 // AppHelmValuesResponse is the response object for the /apps/{porter_app_name}/helm-values endpoint
 type AppHelmValuesResponse struct {
 	// AppRevision is the latest revision for the app
-	HelmValues map[string]interface{} `json:"helm_values"`
+	HelmValues string `json:"helm_values"`
 }
 
 // ServeHTTP translates the request into a helmValues grpc request, forwards to the cluster control plane, and returns the response.
@@ -115,7 +114,7 @@ func (c *AppHelmValuesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	if helmValuesResp == nil || helmValuesResp.Msg == nil {
-		err := telemetry.Error(ctx, span, err, "current app revision resp is nil")
+		err := telemetry.Error(ctx, span, err, "app helm values resp is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
@@ -127,17 +126,8 @@ func (c *AppHelmValuesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	helmValues := map[string]interface{}{}
-
-	err = json.Unmarshal(decodedValues, &helmValues)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error unmarshaling helm values")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
 	response := AppHelmValuesResponse{
-		HelmValues: helmValues,
+		HelmValues: string(decodedValues),
 	}
 
 	c.WriteResult(w, r, response)

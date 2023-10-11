@@ -1,14 +1,8 @@
 import React from "react";
 import { useLatestRevision } from "../LatestRevisionContext";
-import HelmOverrides from "../../validate-apply/helm/HelmOverrides";
-import {useFormContext} from "react-hook-form";
-import {PorterAppFormData} from "../../../../../lib/porter-apps";
-import Button from "../../../../../components/porter/Button";
-import {ButtonStatus} from "../AppDataContainer";
-import yaml from "js-yaml";
 import HelmLatestValues from "../../validate-apply/helm/HelmLatestValues";
-import Text from "../../../../../components/porter/Text";
-import Spacer from "../../../../../components/porter/Spacer";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
 
 const HelmLatestValuesTab: React.FC = () => {
     const { projectId, clusterId, latestProto, deploymentTarget, porterApp, latestRevision } = useLatestRevision();

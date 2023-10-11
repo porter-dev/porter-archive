@@ -87,6 +87,9 @@ export const serviceValidator = z.object({
     })
     .array()
     .default([]),
+  ingressAnnotationDeletions: z.object({
+    key: z.string(),
+  }).array().default([])
 });
 
 export type ClientService = z.infer<typeof serviceValidator>;
@@ -325,6 +328,7 @@ export function deserializeService({
       override?.smartOptimization
     ),
     domainDeletions: [],
+    ingressAnnotationDeletions: [],
   };
 
   return match(service.config)

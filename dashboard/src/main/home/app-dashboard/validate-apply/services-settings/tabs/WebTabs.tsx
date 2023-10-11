@@ -19,14 +19,13 @@ interface Props {
   chart?: any;
   maxRAM: number;
   maxCPU: number;
+  namespace: string;
 }
 
-const WebTabs: React.FC<Props> = ({ index, service, maxRAM, maxCPU }) => {
+const WebTabs: React.FC<Props> = ({ index, service, maxRAM, maxCPU, namespace }) => {
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "networking" | "advanced"
   >("main");
-
-  const { deploymentTarget: { namespace } } = useLatestRevision();
 
   return (
     <>

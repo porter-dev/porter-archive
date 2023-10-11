@@ -918,7 +918,10 @@ const validatePorterApp = baseApi<
       predeploy: string[];
       env_variable_names: string[];
       env_group_names: string[];
-      domain_name_deletions: Record<string, string[]>;
+      service_deletions: Record<string, {
+        domain_names: string[];
+        ingress_annotation_keys: string[];
+      }>
     };
   },
   {
@@ -1019,6 +1022,18 @@ const getRevision = baseApi<
   }
 >("GET", ({ project_id, cluster_id, porter_app_name, revision_id }) => {
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/revisions/${revision_id}`;
+});
+
+const porterYamlFromRevision = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+    revision_id: string;
+  }
+>("GET", ({ project_id, cluster_id, porter_app_name, revision_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/revisions/${revision_id}/yaml`;
 });
 
 const listAppRevisions = baseApi<
@@ -3129,6 +3144,7 @@ export default {
   appPodStatus,
   getFeedEvents,
   updateStackStep,
+  porterYamlFromRevision,
   // -----------------------------------
   createConfigMap,
   deleteCluster,

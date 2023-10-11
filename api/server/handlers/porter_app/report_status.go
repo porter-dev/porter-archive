@@ -134,7 +134,14 @@ func (c *ReportRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTarget.ID})
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTarget.ID},
+		telemetry.AttributeKV{Key: "pr-number", Value: request.PRNumber},
+		telemetry.AttributeKV{Key: "commit-sha", Value: request.CommitSHA},
+		telemetry.AttributeKV{Key: "preview", Value: deploymentTarget.Preview},
+		telemetry.AttributeKV{Key: "revision-number", Value: revision.RevisionNumber},
+	)
 
 	resp := &ReportRevisionStatusResponse{}
 
@@ -148,6 +155,7 @@ func (c *ReportRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		porterApp:       porterApp,
 		prNumber:        request.PRNumber,
 		commitSha:       request.CommitSHA,
+		serverURL:       c.Config().ServerConf.ServerURL,
 		githubAppSecret: c.Config().ServerConf.GithubAppSecret,
 		githubAppID:     c.Config().ServerConf.GithubAppID,
 	})
@@ -189,6 +197,9 @@ func writePRComment(ctx context.Context, inp writePRCommentInput) error {
 	}
 	if inp.githubAppID == "" {
 		return telemetry.Error(ctx, span, nil, "github app id is empty")
+	}
+	if inp.serverURL == "" {
+		return telemetry.Error(ctx, span, nil, "server url is empty")
 	}
 
 	client, err := porter_app.GetGithubClientByRepoID(ctx, inp.porterApp.GitRepoID, inp.githubAppSecret, inp.githubAppID)

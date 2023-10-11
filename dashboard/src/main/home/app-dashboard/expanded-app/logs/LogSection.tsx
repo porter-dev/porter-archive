@@ -253,8 +253,8 @@ const LogSection: React.FC<Props> = ({
             {showFilter && (
               <Filter
                 filters={filters}
-                selectedFilterValues={selectedFilterValues}
                 filterString={generateFilterString()}
+                selectedFilterValues={selectedFilterValues}
               />
             )}
             <Spacer inline width="10px" />

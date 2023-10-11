@@ -9,10 +9,18 @@ import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import Spacer from "components/porter/Spacer";
 import AppTemplateForm from "./AppTemplateForm";
 import { LatestRevisionProvider } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import { useQuery } from "@tanstack/react-query";
+import { Context } from "shared/Context";
+import api from "shared/api";
+import { match } from "ts-pattern";
+import { z } from "zod";
+import { PorterApp } from "@porter-dev/api-contracts";
+import Loading from "components/Loading";
 
 type Props = RouteComponentProps & {};
 
 const SetupApp: React.FC<Props> = ({ location }) => {
+  const { currentCluster, currentProject } = useContext(Context);
   const params = useMemo(() => {
     const queryParams = new URLSearchParams(location.search);
     const appName = queryParams.get("app_name");
@@ -23,6 +31,49 @@ const SetupApp: React.FC<Props> = ({ location }) => {
   }, [location.search]);
 
   const appName = params.appName;
+
+  const templateRes = useQuery(
+    ["getAppTemplate", currentProject?.id, currentCluster?.id, appName],
+    async () => {
+      if (
+        !currentProject ||
+        !currentCluster ||
+        currentCluster.id === -1 ||
+        currentProject.id === -1 ||
+        !appName
+      ) {
+        return null;
+      }
+
+      try {
+        const res = await api.getAppTemplate(
+          "<token>",
+          {},
+          {
+            project_id: currentProject?.id,
+            cluster_id: currentCluster?.id,
+            porter_app_name: appName,
+          }
+        );
+
+        const data = await z
+          .object({
+            template_b64_app_proto: z.string(),
+          })
+          .parseAsync(res.data);
+
+        return PorterApp.fromJsonString(atob(data.template_b64_app_proto), {
+          ignoreUnknownFields: true,
+        });
+      } catch (err) {
+        return null;
+      }
+    },
+    {
+      enabled: !!currentProject && !!currentCluster && !!appName,
+      refetchOnWindowFocus: false,
+    }
+  );
 
   if (!appName) {
     return null;
@@ -42,7 +93,12 @@ const SetupApp: React.FC<Props> = ({ location }) => {
               disableLineBreak
             />
             <DarkMatter />
-            <AppTemplateForm />
+            {match(templateRes)
+              .with({ status: "loading" }, () => <Loading />)
+              .with({ status: "success" }, ({ data }) => {
+                return <AppTemplateForm existingTemplate={data} />;
+              })
+              .otherwise(() => null)}
             <Spacer y={3} />
           </StyledConfigureTemplate>
         </Div>

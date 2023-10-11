@@ -1,5 +1,5 @@
 version: v2
-name: 'test-app'
+name: test-app
 image:
   repository: nginx
   tag: latest
@@ -41,6 +41,3 @@ services:
 predeploy:
   type: job
   run: ls
-env:
-  PORT: 8080
-  NODE_ENV: production

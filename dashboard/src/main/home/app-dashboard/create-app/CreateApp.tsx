@@ -47,7 +47,7 @@ import {
 } from "../validate-apply/app-settings/types";
 import EnvSettings from "../validate-apply/app-settings/EnvSettings";
 import ImageSettings from "../image-settings/ImageSettings";
-import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
+import { useClusterResources } from "shared/ClusterResourcesContext";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -76,10 +76,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   }>({
     variables: {},
     secrets: {},
-  });
-  const { maxCPU, maxRAM } = useClusterResourceLimits({
-    projectId: currentProject?.id,
-    clusterId: currentCluster?.id,
   });
 
   const { data: porterApps = [] } = useQuery<string[]>(
@@ -192,6 +188,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     deploymentTargetID: deploymentTarget?.deployment_target_id,
     creating: true,
   });
+  const { currentClusterResources} = useClusterResources();
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -639,8 +636,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ServiceList
                       addNewText={"Add a new service"}
                       fieldArrayName={"app.services"}
-                      maxCPU={maxCPU}
-                      maxRAM={maxRAM}
+                      maxCPU={currentClusterResources.maxCPU}
+                      maxRAM={currentClusterResources.maxRAM}
                     />
                   </>,
                   <>
@@ -667,13 +664,15 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                           service: defaultSerialized({
                             name: "pre-deploy",
                             type: "predeploy",
+                            defaultCPU: currentClusterResources.defaultCPU,
+                            defaultRAM: currentClusterResources.defaultRAM,
                           }),
                           expanded: true,
                         })}
                         isPredeploy
                         fieldArrayName={"app.predeploy"}
-                        maxCPU={maxCPU}
-                        maxRAM={maxRAM}
+                        maxCPU={currentClusterResources.maxCPU}
+                        maxRAM={currentClusterResources.maxRAM}
                       />
                     </>
                   ),

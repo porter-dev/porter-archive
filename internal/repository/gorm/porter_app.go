@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"context"
+
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -32,6 +34,17 @@ func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*mo
 	}
 
 	return apps, nil
+}
+
+// ReadPorterAppByID returns a PorterApp by its ID
+func (repo *PorterAppRepository) ReadPorterAppByID(ctx context.Context, id uint) (*models.PorterApp, error) {
+	app := &models.PorterApp{}
+
+	if err := repo.db.Where("id = ?", id).Limit(1).Find(&app).Error; err != nil {
+		return nil, err
+	}
+
+	return app, nil
 }
 
 func (repo *PorterAppRepository) ReadPorterAppByName(clusterID uint, name string) (*models.PorterApp, error) {

@@ -35,7 +35,6 @@ import JobsTab from "./tabs/JobsTab";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
 import ImageSettingsTab from "./tabs/ImageSettingsTab";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
-import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 import { Error as ErrorComponent } from "components/porter/Error";
 import _ from "lodash";
 import axios from "axios";
@@ -95,8 +94,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget.id,
   });
-
-  const { maxCPU, maxRAM } = useClusterResourceLimits({ projectId, clusterId });
 
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
@@ -533,8 +530,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("activity", () => <Activity />)
           .with("overview", () => (
             <Overview
-              maxCPU={maxCPU}
-              maxRAM={maxRAM}
               buttonStatus={buttonStatus}
             />
           ))

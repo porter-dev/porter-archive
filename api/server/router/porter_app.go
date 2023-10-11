@@ -572,7 +572,7 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/parse -> porter_app.NewParsePorterYAMLToProtoHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/parse -> porter_app.NewParsePorterYAMLToProtoHandler
 	parsePorterYAMLToProtoEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -598,6 +598,35 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: parsePorterYAMLToProtoEndpoint,
 		Handler:  parsePorterYAMLToProtoHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id}/yaml -> porter_app.NewPorterYAMLFromRevisionHandler
+	porterYAMLFromRevision := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/revisions/{%s}/yaml", relPathV2, types.URLParamPorterAppName, types.URLParamAppRevisionID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	porterYAMLFromRevisionHandler := porter_app.NewPorterYAMLFromRevisionHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: porterYAMLFromRevision,
+		Handler:  porterYAMLFromRevisionHandler,
 		Router:   r,
 	})
 

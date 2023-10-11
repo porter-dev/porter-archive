@@ -29,12 +29,8 @@ const HelmOverrides: React.FunctionComponent<PropsType> = ({
   const setFormValue = (value: string) => {
         setOverrideValues(value);
         try {
-            if (value == "") {
-                setValue("app.helmOverrides", "");
-            } else {
-                const jsonValues = yaml.load(value);
-                setValue("app.helmOverrides", JSON.stringify(jsonValues));
-            }
+            const jsonValues = value ? JSON.stringify(yaml.load(value)) : ""
+            setValue("app.helmOverrides", jsonValues);
             setError("");
         } catch (e) {
             setError(e.toString());

@@ -1,20 +1,21 @@
-import React, { useEffect, useState } from "react";
+import React, {  useState } from "react";
 import styled from "styled-components";
 import Select from "./Select";
 import Spacer from "./Spacer";
 
 import filter from "assets/filter.svg";
+import { GenericLogFilter, LogFilterName } from "main/home/app-dashboard/expanded-app/logs/types";
 
 type Props = {
-  filters: any;
-  selectedFilterValues: Record<any, string>;
+  filters: GenericLogFilter[];
   filterString: string;
+  selectedFilterValues: Record<LogFilterName, string>;
 };
 
 const Filter: React.FC<Props> = ({
   filters,
-  selectedFilterValues,
   filterString,
+  selectedFilterValues,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -33,16 +34,17 @@ const Filter: React.FC<Props> = ({
       </StyledFilter>
       <CloseOverlay onClick={() => setIsExpanded(false)} isExpanded={isExpanded} />
       <Dropdown isExpanded={isExpanded}>
-        {filters.map((filter: any, i: number) => {
+        {filters.map((filter: GenericLogFilter, i: number) => {
           return (
             <React.Fragment key={i}>
               <FilterLabel>{filter.displayName}</FilterLabel>
-              <Spacer height="10px" />
+              <Spacer y={0.5} />
               <Select
                 options={[filter.default, ...filter.options]}
                 setValue={filter.setValue}
+                value={selectedFilterValues[filter.name]}
               />
-              {i < filter.length && <Spacer height="15px" />}
+              {i !== filters.length - 1 && <Spacer y={0.5} />}
             </React.Fragment>
           );
         })}

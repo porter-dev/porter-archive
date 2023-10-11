@@ -55,7 +55,6 @@ type AppHelmValuesResponse struct {
 }
 
 // ServeHTTP translates the request into a helmValues grpc request, forwards to the cluster control plane, and returns the response.
-// Multi-cluster projects are not supported, as they may have multiple porter-apps with the same name in the same project.
 func (c *AppHelmValuesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-app-helm-values")
 	defer span.End()

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {useCallback, useContext, useEffect, useMemo, useState} from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import {
   PorterAppFormData,
@@ -38,6 +38,10 @@ import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { Error as ErrorComponent } from "components/porter/Error";
 import _ from "lodash";
 import axios from "axios";
+import HelmEditorTab from "./tabs/HelmEditorTab";
+import HelmLatestValues from "../validate-apply/helm/HelmLatestValues";
+import HelmLatestValuesTab from "./tabs/HelmLatestValuesTab";
+import {Context} from "../../../../shared/Context";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -52,7 +56,8 @@ const validTabs = [
   "build-settings",
   "image-settings",
   "settings",
-  // "helm-values",
+  "helm-overrides",
+  "helm-values",
   "job-history",
 ] as const;
 const DEFAULT_TAB = "activity";
@@ -69,6 +74,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const history = useHistory();
   const queryClient = useQueryClient();
   const [confirmDeployModalOpen, setConfirmDeployModalOpen] = useState(false);
+
+  const { currentProject, user } = useContext(Context);
 
   const { updateAppStep } = useAppAnalytics();
 
@@ -408,6 +415,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       label: "Image Settings",
       value: "image-settings",
     });
+    {(currentProject?.helm_values_enabled || user?.isPorterUser) &&
+      base.push({ label: "Helm Overrides", value: "helm-overrides" });
+    }
+    {user?.isPorterUser &&
+      base.push({ label: "Latest Helm Values", value: "helm-values" });
+    }
     base.push({ label: "Settings", value: "settings" });
     return base;
   }, [deploymentTarget.preview, latestProto.build]);
@@ -537,6 +550,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("metrics", () => <MetricsTab />)
           .with("events", () => <EventFocusView />)
           .with("job-history", () => <JobsTab />)
+          .with("helm-overrides", () => <HelmEditorTab buttonStatus={buttonStatus} featureFlagEnabled={currentProject?.helm_values_enabled ?? false}/>)
+          .with("helm-values", () => <HelmLatestValuesTab />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>

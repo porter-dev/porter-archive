@@ -221,7 +221,7 @@ func addPorterSubdomainsIfNecessary(ctx context.Context, app *porterv1.PorterApp
 
 			if !webConfig.GetPrivate() && len(webConfig.Domains) == 0 {
 				if deploymentTarget.Namespace != DeploymentTargetSelector_Default {
-					createSubdomainInput.AppName = fmt.Sprintf("%s-%s", createSubdomainInput.AppName, deploymentTarget.Namespace)
+					createSubdomainInput.AppName = fmt.Sprintf("%s-%s", createSubdomainInput.AppName, deploymentTarget.ID[:6])
 				}
 
 				subdomain, err := porter_app.CreatePorterSubdomain(ctx, createSubdomainInput)

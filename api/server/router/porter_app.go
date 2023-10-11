@@ -572,7 +572,7 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/parse -> porter_app.NewParsePorterYAMLToProtoHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/parse -> porter_app.NewParsePorterYAMLToProtoHandler
 	parsePorterYAMLToProtoEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -598,6 +598,35 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: parsePorterYAMLToProtoEndpoint,
 		Handler:  parsePorterYAMLToProtoHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id}/yaml -> porter_app.NewPorterYAMLFromRevisionHandler
+	porterYAMLFromRevision := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/revisions/{%s}/yaml", relPathV2, types.URLParamPorterAppName, types.URLParamAppRevisionID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	porterYAMLFromRevisionHandler := porter_app.NewPorterYAMLFromRevisionHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: porterYAMLFromRevision,
+		Handler:  porterYAMLFromRevisionHandler,
 		Router:   r,
 	})
 
@@ -891,7 +920,7 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/logs -> cluster.NewAppLogsHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/logs -> cluster.NewAppLogsHandler
 	appLogsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -920,7 +949,7 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/logs/loki -> namespace.NewStreamLogsLokiHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/logs/loki -> namespace.NewStreamLogsLokiHandler
 	streamLogsLokiEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -1154,6 +1183,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id}/status -> porter_app.NewReportRevisionStatusHandler
+	reportRevisionStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("/apps/{%s}/revisions/{%s}/status", types.URLParamPorterAppName, types.URLParamAppRevisionID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	reportRevisionStatusHandler := porter_app.NewReportRevisionStatusHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: reportRevisionStatusEndpoint,
+		Handler:  reportRevisionStatusHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/update-environment -> porter_app.NewUpdateAppEnvironmentHandler
 	updateAppEnvironmentGroupEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -1241,7 +1299,7 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/app-templates -> porter_app.NewGetAppTemplateHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/templates -> porter_app.NewGetAppTemplateHandler
 	getAppTemplateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
@@ -1270,7 +1328,7 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/app-templates -> porter_app.NewCreateAppTemplateHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/templates -> porter_app.NewCreateAppTemplateHandler
 	createAppTemplateEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,

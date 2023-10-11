@@ -19,8 +19,10 @@ type DeploymentTargetDetailsInput struct {
 
 // DeploymentTarget is a struct representing the unique cluster, namespace pair for a deployment target
 type DeploymentTarget struct {
+	ID        string `json:"id"`
 	ClusterID int64  `json:"cluster_id"`
 	Namespace string `json:"namespace"`
+	Preview   bool   `json:"preview"`
 }
 
 // DeploymentTargetDetails gets the deployment target details from CCP
@@ -62,8 +64,10 @@ func DeploymentTargetDetails(ctx context.Context, inp DeploymentTargetDetailsInp
 	}
 
 	deploymentTarget = DeploymentTarget{
+		ID:        inp.DeploymentTargetID,
 		Namespace: deploymentTargetDetailsResp.Msg.Namespace,
 		ClusterID: deploymentTargetDetailsResp.Msg.ClusterId,
+		Preview:   deploymentTargetDetailsResp.Msg.IsPreview,
 	}
 
 	return deploymentTarget, nil

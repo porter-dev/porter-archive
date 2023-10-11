@@ -7,6 +7,7 @@ import { PorterAppFormData } from "lib/porter-apps";
 import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
 import CustomDomains from "./CustomDomains";
+import IngressCustomAnnotations from "./IngressCustomAnnotations";
 
 type NetworkingProps = {
   index: number;
@@ -95,6 +96,17 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
           <Spacer y={0.5} />
           <CustomDomains index={index} />
           <Spacer y={0.5} />
+          <Text color="helper">
+            Ingress Custom Annotations
+            <a
+              href="https://docs.porter.run/standard/deploying-applications/runtime-configuration-options/web-applications#ingress-custom-annotations"
+              target="_blank"
+            >
+              &nbsp;(?)
+            </a>
+          </Text>
+          <Spacer y={0.5} />
+          <IngressCustomAnnotations index={index} />
         </>
       )}
     </>

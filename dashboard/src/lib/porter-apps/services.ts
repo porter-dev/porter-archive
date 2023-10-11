@@ -1,22 +1,25 @@
+import { Service, ServiceType } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { z } from "zod";
+
+import { BuildOptions } from "./build";
 import {
-  SerializedAutoscaling,
-  SerializedHealthcheck,
   autoscalingValidator,
-  healthcheckValidator,
   deserializeAutoscaling,
   deserializeHealthCheck,
-  serializeAutoscaling,
-  serializeHealth,
   domainsValidator,
-  serviceStringValidator,
-  serviceNumberValidator,
+  healthcheckValidator,
+  ingressAnnotationsValidator,
+  serializeAutoscaling,
+  SerializedAutoscaling,
+  SerializedHealthcheck,
+  serializeHealth,
   serviceBooleanValidator,
   ServiceField,
+  serviceNumberValidator,
+  serviceStringValidator,
 } from "./values";
-import { Service, ServiceType } from "@porter-dev/api-contracts";
-import { BuildOptions } from "./build";
+import _ from "lodash";
 
 export type DetectedServices = {
   services: ClientService[];
@@ -36,6 +39,7 @@ const webConfigValidator = z.object({
   domains: domainsValidator,
   healthCheck: healthcheckValidator.optional(),
   private: serviceBooleanValidator.optional(),
+  ingressAnnotations: ingressAnnotationsValidator.default([]),
 });
 export type ClientWebConfig = z.infer<typeof webConfigValidator>;
 
@@ -83,6 +87,9 @@ export const serviceValidator = z.object({
     })
     .array()
     .default([]),
+  ingressAnnotationDeletions: z.object({
+    key: z.string(),
+  }).array().default([])
 });
 
 export type ClientService = z.infer<typeof serviceValidator>;
@@ -106,6 +113,7 @@ export type SerializedService = {
         autoscaling?: SerializedAutoscaling;
         healthCheck?: SerializedHealthcheck;
         private?: boolean;
+        ingressAnnotations: Record<string, string>;
       }
     | {
         type: "worker";
@@ -137,17 +145,21 @@ export function prefixSubdomain(subdomain: string) {
 export function defaultSerialized({
   name,
   type,
+  defaultCPU = 0.1,
+  defaultRAM = 256,
 }: {
   name: string;
   type: ClientServiceType;
+  defaultCPU?: number;
+  defaultRAM?: number;
 }): SerializedService {
   const baseService = {
     name,
     run: "",
     instances: 1,
     port: 3000,
-    cpuCores: 0.1,
-    ramMegabytes: 256,
+    cpuCores: defaultCPU,
+    ramMegabytes: defaultRAM,
     smartOptimization: true,
   };
 
@@ -173,6 +185,7 @@ export function defaultSerialized({
         healthCheck: defaultHealthCheck,
         domains: [],
         private: false,
+        ingressAnnotations: {},
       },
     }))
     .with("worker", () => ({
@@ -224,6 +237,11 @@ export function serializeService(service: ClientService): SerializedService {
           domains: config.domains.map((domain) => ({
             name: domain.name.value,
           })),
+          ingressAnnotations: Object.fromEntries(
+            config.ingressAnnotations
+              .filter((a) => a.key.length > 0 && a.value.length > 0)
+              .map((annotation) => [annotation.key, annotation.value])
+          ),
           private: config.private?.value,
         },
       })
@@ -310,6 +328,7 @@ export function deserializeService({
       override?.smartOptimization
     ),
     domainDeletions: [],
+    ingressAnnotationDeletions: [],
   };
 
   return match(service.config)
@@ -323,6 +342,28 @@ export function deserializeService({
           ...(overrideWebConfig?.domains ?? []).map((domain) => domain.name),
         ])
       ).map((domain) => ({ name: domain }));
+
+      const uniqueAnnotations = _.uniqBy(
+        [
+          ...Object.entries(overrideWebConfig?.ingressAnnotations ?? {}).map(
+            (annotation) => {
+              return {
+                key: annotation[0],
+                value: annotation[1],
+                readOnly: true,
+              };
+            }
+          ),
+          ...Object.entries(config.ingressAnnotations).map((annotation) => {
+            return {
+              key: annotation[0],
+              value: annotation[1],
+              readOnly: false,
+            };
+          }),
+        ],
+        "key"
+      );
 
       return {
         ...baseService,
@@ -347,6 +388,7 @@ export function deserializeService({
               )?.name
             ),
           })),
+          ingressAnnotations: uniqueAnnotations,
           private:
             typeof config.private === "boolean" ||
             typeof overrideWebConfig?.private === "boolean"
@@ -520,7 +562,7 @@ export function serializedServiceFromProto({
     .with({ case: "webConfig" }, ({ value }) => ({
       ...service,
       name,
-      run: service.runOptional ? service.runOptional : "",
+      run: service.runOptional ?? service.run,
       config: {
         type: "web" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -531,7 +573,7 @@ export function serializedServiceFromProto({
     .with({ case: "workerConfig" }, ({ value }) => ({
       ...service,
       name,
-      run: service.runOptional ? service.runOptional : "",
+      run: service.runOptional ?? service.run,
       config: {
         type: "worker" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -543,7 +585,7 @@ export function serializedServiceFromProto({
         ? {
             ...service,
             name,
-            run: service.runOptional ? service.runOptional : "",
+            run: service.runOptional ?? service.run,
             config: {
               type: "predeploy" as const,
             },
@@ -551,7 +593,7 @@ export function serializedServiceFromProto({
         : {
             ...service,
             name,
-            run: service.runOptional ? service.runOptional : "",
+            run: service.runOptional ?? service.run,
             config: {
               type: "job" as const,
               ...value,

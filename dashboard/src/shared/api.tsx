@@ -287,7 +287,7 @@ const getLogsWithinTimeRange = baseApi<
 
 const appLogs = baseApi<
   {
-    app_name: string;
+    app_id: number;
     service_name: string;
     deployment_target_id: string;
     limit: number;
@@ -908,7 +908,10 @@ const validatePorterApp = baseApi<
       predeploy: string[];
       env_variable_names: string[];
       env_group_names: string[];
-      domain_name_deletions: Record<string, string[]>;
+      service_deletions: Record<string, {
+        domain_names: string[];
+        ingress_annotation_keys: string[];
+      }>
     };
   },
   {
@@ -945,18 +948,19 @@ const createApp = baseApi<
 });
 
 const createAppTemplate = baseApi<
-{
-  b64_app_proto: string;
-  variables: Record<string, string>
-  secrets: Record<string, string>
-},
-{
-  project_id: number;
-  cluster_id: number;
-  porter_app_name: string;
-}>("POST", ({ project_id, cluster_id, porter_app_name}) => {
+  {
+    b64_app_proto: string;
+    variables: Record<string, string>;
+    secrets: Record<string, string>;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }
+>("POST", ({ project_id, cluster_id, porter_app_name }) => {
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/templates`;
-})
+});
 
 const applyApp = baseApi<
   {
@@ -1010,6 +1014,18 @@ const getRevision = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/revisions/${revision_id}`;
 });
 
+const porterYamlFromRevision = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+    revision_id: string;
+  }
+>("GET", ({ project_id, cluster_id, porter_app_name, revision_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/revisions/${revision_id}/yaml`;
+});
+
 const listAppRevisions = baseApi<
   {
     deployment_target_id: string;
@@ -1046,6 +1062,27 @@ const listDeploymentTargets = baseApi<
 >("GET", ({ project_id, cluster_id }) => {
   return `/api/projects/${project_id}/clusters/${cluster_id}/deployment-targets`;
 });
+
+const getDeploymentTarget = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    deployment_target_id: string;
+  }
+>("GET", ({ project_id, cluster_id, deployment_target_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/deployment-targets/${deployment_target_id}`;
+});
+
+const getAppTemplate = baseApi<
+  {},
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }>("GET", ({ project_id, cluster_id, porter_app_name }) => {
+    return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/templates`;
+  })
 
 const getGitlabProcfileContents = baseApi<
   {
@@ -1900,6 +1937,18 @@ const getAllEnvGroups = baseApi<
   }
 >("GET", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
+});
+
+const updateAppsLinkedToEnvironmentGroup = baseApi<
+    {
+        name: string;
+    },
+    {
+        id: number;
+        cluster_id: number;
+    }
+>("POST", (pathParams) => {
+    return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups/update-linked-apps`;
 });
 
 const updateEnvironmentGroupV2 = baseApi<
@@ -3085,6 +3134,7 @@ export default {
   appPodStatus,
   getFeedEvents,
   updateStackStep,
+  porterYamlFromRevision,
   // -----------------------------------
   createConfigMap,
   deleteCluster,
@@ -3174,6 +3224,8 @@ export default {
   listAppRevisions,
   getLatestAppRevisions,
   listDeploymentTargets,
+  getDeploymentTarget,
+  getAppTemplate,
   getGitlabProcfileContents,
   getProjectClusters,
   getProjectRegistries,
@@ -3243,6 +3295,7 @@ export default {
   listEnvGroups,
   getAllEnvGroups,
   updateEnvironmentGroupV2,
+  updateAppsLinkedToEnvironmentGroup,
   getEnvGroup,
   deleteEnvGroup,
   deleteNewEnvGroup,

@@ -35,7 +35,6 @@ import JobsTab from "./tabs/JobsTab";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
 import ImageSettingsTab from "./tabs/ImageSettingsTab";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
-import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
 import { Error as ErrorComponent } from "components/porter/Error";
 import _ from "lodash";
 import axios from "axios";
@@ -88,8 +87,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget.id,
   });
-
-  const { maxCPU, maxRAM } = useClusterResourceLimits({ projectId, clusterId });
 
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
@@ -385,6 +382,36 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     return "";
   }, [isSubmitting, errorMessagesDeep]);
 
+  const tabs = useMemo(() => {
+    const base = [
+      { label: "Activity", value: "activity" },
+      { label: "Overview", value: "overview" },
+      { label: "Logs", value: "logs" },
+      { label: "Metrics", value: "metrics" },
+      { label: "Environment", value: "environment" },
+    ];
+
+    if (deploymentTarget.preview) {
+      return base;
+    }
+
+    if (latestProto.build) {
+      base.push({
+        label: "Build Settings",
+        value: "build-settings",
+      });
+      base.push({ label: "Settings", value: "settings" });
+      return base;
+    }
+
+    base.push({
+      label: "Image Settings",
+      value: "image-settings",
+    });
+    base.push({ label: "Settings", value: "settings" });
+    return base;
+  }, [deploymentTarget.preview, latestProto.build]);
+
   useEffect(() => {
     const newProto = previewRevision
       ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
@@ -473,27 +500,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         </AnimateHeight>
         <TabSelector
           noBuffer
-          options={[
-            { label: "Activity", value: "activity" },
-            { label: "Overview", value: "overview" },
-            { label: "Logs", value: "logs" },
-            { label: "Metrics", value: "metrics" },
-            { label: "Environment", value: "environment" },
-            ...(latestProto.build
-              ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
-              : [
-                  {
-                    label: "Image Settings",
-                    value: "image-settings",
-                  },
-                ]),
-            { label: "Settings", value: "settings" },
-          ]}
+          options={tabs}
           currentTab={currentTab}
           setCurrentTab={(tab) => {
             if (deploymentTarget.preview) {
@@ -510,8 +517,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("activity", () => <Activity />)
           .with("overview", () => (
             <Overview
-              maxCPU={maxCPU}
-              maxRAM={maxRAM}
               buttonStatus={buttonStatus}
             />
           ))

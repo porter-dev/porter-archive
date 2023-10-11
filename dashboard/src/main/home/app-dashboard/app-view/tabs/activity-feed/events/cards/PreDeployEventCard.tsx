@@ -34,6 +34,8 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appName, projectId, cluste
         return <Text color={getStatusColor(event.status)}>Pre-deploy succeeded</Text>;
       case "FAILED":
         return <Text color={getStatusColor(event.status)}>Pre-deploy failed</Text>;
+      case "CANCELED":
+        return <Text color={getStatusColor(event.status)}>Pre-deploy canceled</Text>;
       default:
         return <Text color={getStatusColor(event.status)}>Pre-deploy in progress...</Text>;
     }

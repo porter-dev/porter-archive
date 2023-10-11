@@ -34,6 +34,10 @@ func NewCreateUpdatePorterAppEventHandler(
 	}
 }
 
+const (
+	crashLoopBackoffSubstring string = "stuck in a restart loop"
+)
+
 func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-post-porter-app-event")
 	defer span.End()
@@ -186,7 +190,7 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 		// if the event is a crashloop backoff, then update the service status of the deployment event associated it to FAILED, since the service's deployment will never succeed from crashloop backoff
 		// only applies to v2 apps (where the deployment target id is not empty)
 		if deploymentTargetID != "" {
-			updateMetadata, appEventFormattedCorrectly := appEventMatchesDetail(requestMetadata, "stuck in a restart loop")
+			updateMetadata, appEventFormattedCorrectly := appEventMatchesDetail(requestMetadata, crashLoopBackoffSubstring)
 			if appEventFormattedCorrectly {
 				_ = p.updateDeployEventMatchingAppEventDetails(
 					ctx,
@@ -575,9 +579,13 @@ func (p *CreateUpdatePorterAppEventHandler) updateDeployEventMatchingAppEventDet
 		return telemetry.Error(ctx, span, err, "error marshaling update metadata")
 	}
 	updateMetadataMap := make(map[string]interface{})
-	json.Unmarshal(updateMetadataBytes, &updateMetadataMap)
+	err = json.Unmarshal(updateMetadataBytes, &updateMetadataMap)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error unmarshaling update metadata")
+	}
 
 	updateMetadataMap["deploy_status"] = string(status)
+	// we do not need the returned updated event
 	_ = p.updateDeployEvent(ctx, porterAppName, porterAppId, deploymentTargetID, updateMetadataMap)
 	return nil
 }

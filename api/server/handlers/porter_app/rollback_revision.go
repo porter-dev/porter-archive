@@ -20,11 +20,13 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// RollbackAppRevisionHandler rolls back an app revision to the last deployed revision
 type RollbackAppRevisionHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
+// NewRollbackAppRevisionHandler returns a new RollbackAppRevisionHandler
 func NewRollbackAppRevisionHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -36,15 +38,18 @@ func NewRollbackAppRevisionHandler(
 	}
 }
 
+// RollbackAppRevisionRequest is the request body for the /apps/{porter_app_name}/rollback endpoint
 type RollbackAppRevisionRequest struct {
 	DeploymentTargetID string `json:"deployment_target_id"`
 	AppRevisionID      string `json:"app_revision_id"`
 }
 
+// RollbackAppRevisionResponse is the response body for the /apps/{porter_app_name}/rollback endpoint
 type RollbackAppRevisionResponse struct {
 	AppRevisionID string `json:"app_revision_id"`
 }
 
+// ServeHTTP handles the request and rolls back the app revision
 func (c *RollbackAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-rollback-app-revision")
 	defer span.End()

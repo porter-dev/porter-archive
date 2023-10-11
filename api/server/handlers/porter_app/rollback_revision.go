@@ -105,7 +105,7 @@ func (c *RollbackAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	var targetRevisionNumber int
 
 	if request.AppRevisionID != "" {
-		targetProto, targetRevisionNumber, err = getRevisionProto(ctx, getRevisionProtoInput{
+		targetProto, targetRevisionNumber, err = revisionByID(ctx, revisionByIDInput{
 			projectID:     int64(project.ID),
 			appRevisionID: request.AppRevisionID,
 			ccpClient:     c.Config().ClusterControlPlaneClient,
@@ -115,8 +115,10 @@ func (c *RollbackAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
-	} else {
-		targetProto, targetRevisionNumber, err = getLastDeployedProto(ctx, getLastDeployedProtoInput{
+	}
+
+	if targetProto == nil {
+		targetProto, targetRevisionNumber, err = lastDeployedRevision(ctx, lastDeployedRevisionInput{
 			appName:            appName,
 			projectID:          int64(project.ID),
 			deploymentTargetID: deploymentTargetID.String(),
@@ -178,13 +180,13 @@ func (c *RollbackAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	})
 }
 
-type getRevisionProtoInput struct {
+type revisionByIDInput struct {
 	projectID     int64
 	appRevisionID string
 	ccpClient     porterv1connect.ClusterControlPlaneServiceClient
 }
 
-func getRevisionProto(ctx context.Context, inp getRevisionProtoInput) (*porterv1.PorterApp, int, error) {
+func revisionByID(ctx context.Context, inp revisionByIDInput) (*porterv1.PorterApp, int, error) {
 	ctx, span := telemetry.NewSpan(ctx, "get-revision-proto")
 	defer span.End()
 
@@ -223,14 +225,14 @@ func getRevisionProto(ctx context.Context, inp getRevisionProtoInput) (*porterv1
 	return proto, revisionNumber, nil
 }
 
-type getLastDeployedProtoInput struct {
+type lastDeployedRevisionInput struct {
 	appName            string
 	projectID          int64
 	deploymentTargetID string
 	ccpClient          porterv1connect.ClusterControlPlaneServiceClient
 }
 
-func getLastDeployedProto(ctx context.Context, inp getLastDeployedProtoInput) (*porterv1.PorterApp, int, error) {
+func lastDeployedRevision(ctx context.Context, inp lastDeployedRevisionInput) (*porterv1.PorterApp, int, error) {
 	ctx, span := telemetry.NewSpan(ctx, "rollback-to-last-deployed-revision")
 	defer span.End()
 

@@ -301,6 +301,23 @@ const appLogs = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/logs`
 );
 
+const appHelmValues = baseApi<
+    {
+        app_id: number;
+        deployment_target_id: string;
+        with_defaults: boolean;
+    },
+    {
+        project_id: number;
+        cluster_id: number;
+        porter_app_name: string;
+    }
+>(
+    "GET",
+    ({ project_id, cluster_id, porter_app_name }) =>
+        `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/helm-values`
+);
+
 const appJobs = baseApi<
   {
     deployment_target_id: string;
@@ -3182,6 +3199,7 @@ export default {
   getClusterState,
   getMetrics,
   appMetrics,
+  appHelmValues,
   getNamespaces,
   getNGINXIngresses,
   getOAuthIds,

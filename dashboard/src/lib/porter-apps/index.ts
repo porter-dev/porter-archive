@@ -9,7 +9,7 @@ import {
   serviceProto,
   serviceValidator,
 } from "./services";
-import { Build, PorterApp, Service } from "@porter-dev/api-contracts";
+import {Build, HelmOverrides, PorterApp, Service} from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { BuildOptions, buildValidator } from "./build";
@@ -84,6 +84,7 @@ export const clientAppValidator = z.object({
     .array()
     .default([]),
   build: buildValidator,
+  helmOverrides: z.string().optional(),
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 
@@ -227,7 +228,8 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           })),
           build: clientBuildToProto(app.build),
           ...(predeploy && {
-            predeploy: serviceProto(serializeService(predeploy)),
+          predeploy: serviceProto(serializeService(predeploy)),
+          helmOverrides: app.helmOverrides != null ? new HelmOverrides({ b64Values: btoa(app.helmOverrides)}) : undefined,
           }),
         })
     )
@@ -245,9 +247,12 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
             repository: src.image.repository,
             tag: src.image.tag,
           },
+          helmOverrides: app.helmOverrides != null ? new HelmOverrides({ b64Values: btoa(app.helmOverrides)}) : undefined,
         })
     )
     .exhaustive();
+
+  console.log(proto)
 
   return proto;
 }
@@ -347,6 +352,8 @@ export function clientAppFromProto({
     })),
   ];
 
+  const helmOverrides = proto.helmOverrides == null ? undefined : atob(proto.helmOverrides.b64Values);
+
   if (proto.predeploy) {
     predeployList.push(
       deserializeService({
@@ -377,6 +384,7 @@ export function clientAppFromProto({
         buildpacks: [],
         builder: "",
       },
+      helmOverrides: helmOverrides,
     };
   }
 
@@ -412,6 +420,7 @@ export function clientAppFromProto({
       buildpacks: [],
       builder: "",
     },
+    helmOverrides: helmOverrides,
   };
 }
 

@@ -246,7 +246,6 @@ const Logs: React.FC<Props> = ({
         ].filter((f: GenericLogFilter) => logFilterNames.includes(f.name)))
 
         if (latestRevisionNumber && !logQueryParamOpts.revision) {
-            console.log('hello world')
             setSelectedFilterValues({
                 ...selectedFilterValues,
                 revision: latestRevisionNumber.toString(),

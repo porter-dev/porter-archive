@@ -275,7 +275,13 @@ func QueryPrometheus(
 }
 
 func getNginxStatusQuery(opts *QueryOpts, selectionRegex string) (string, error) {
-	query := fmt.Sprintf(`round(sum by (status_code, ingress)(label_replace(increase(nginx_ingress_controller_requests{exported_namespace=~"%s",ingress="%s",service="%s"}[2m]), "status_code", "${1}xx", "status", "(.)..")), 0.001)`, opts.Namespace, selectionRegex, opts.Name)
+	var queries []string
+
+	namespaceLabels := []string{"exported_namespace", "namespace"}
+	for _, namespaceLabel := range namespaceLabels {
+		queries = append(queries, fmt.Sprintf(`round(sum by (status_code, ingress)(label_replace(increase(nginx_ingress_controller_requests{%s=~"%s",ingress="%s",service="%s"}[2m]), "status_code", "${1}xx", "status", "(.)..")), 0.001)`, namespaceLabel, opts.Namespace, selectionRegex, opts.Name)
+	}
+	query := strings.Join(queries, " or ")
 	return query, nil
 }
 

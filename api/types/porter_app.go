@@ -99,6 +99,13 @@ type PorterAppEvent struct {
 	Metadata           map[string]any `json:"metadata,omitempty"`
 }
 
+// PorterAppAppEventMetadata represents the metadata for a Porter App Event of type APP_EVENT
+type PorterAppAppEventMetadata struct {
+	AppRevisionID string `json:"app_revision_id"`
+	Detail        string `json:"detail"`
+	ServiceName   string `json:"service_name"`
+}
+
 // PorterAppEventType is an alias for a string that represents a Porter Stack Event Type
 type PorterAppEventType string
 

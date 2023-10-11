@@ -407,14 +407,13 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         label: "Build Settings",
         value: "build-settings",
       });
-      base.push({ label: "Settings", value: "settings" });
-      return base;
+    } else {
+      base.push({
+        label: "Image Settings",
+        value: "image-settings",
+      });
     }
 
-    base.push({
-      label: "Image Settings",
-      value: "image-settings",
-    });
     {(currentProject?.helm_values_enabled || user?.isPorterUser) &&
       base.push({ label: "Helm Overrides", value: "helm-overrides" });
     }

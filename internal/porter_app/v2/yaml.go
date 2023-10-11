@@ -63,13 +63,14 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 
 // PorterApp represents all the possible fields in a Porter YAML file
 type PorterApp struct {
+	Version  string             `yaml:"version,omitempty"`
 	Name     string             `yaml:"name"`
 	Services map[string]Service `yaml:"services"`
-	Image    *Image             `yaml:"image"`
-	Build    *Build             `yaml:"build"`
-	Env      map[string]string  `yaml:"env"`
+	Image    *Image             `yaml:"image,omitempty"`
+	Build    *Build             `yaml:"build,omitempty"`
+	Env      map[string]string  `yaml:"env,omitempty"`
 
-	Predeploy *Service `yaml:"predeploy"`
+	Predeploy *Service `yaml:"predeploy,omitempty"`
 	EnvGroups []string `yaml:"envGroups,omitempty"`
 }
 
@@ -88,21 +89,29 @@ type Build struct {
 	Dockerfile string   `yaml:"dockerfile" validate:"required_if=Method docker"`
 }
 
+// Image is the repository and tag for an app's build image
+type Image struct {
+	Repository string `yaml:"repository"`
+	Tag        string `yaml:"tag"`
+}
+
 // Service represents a single service in a porter app
 type Service struct {
-	Run               string       `yaml:"run"`
-	Type              string       `yaml:"type" validate:"required, oneof=web worker job"`
-	Instances         int          `yaml:"instances"`
-	CpuCores          float32      `yaml:"cpuCores"`
-	RamMegabytes      int          `yaml:"ramMegabytes"`
-	SmartOptimization *bool        `yaml:"smartOptimization"`
-	Port              int          `yaml:"port"`
+	Run               *string      `yaml:"run,omitempty"`
+	Type              string       `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
+	Instances         int          `yaml:"instances,omitempty"`
+	CpuCores          float32      `yaml:"cpuCores,omitempty"`
+	RamMegabytes      int          `yaml:"ramMegabytes,omitempty"`
+	SmartOptimization *bool        `yaml:"smartOptimization,omitempty"`
+	Port              int          `yaml:"port,omitempty"`
 	Autoscaling       *AutoScaling `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
-	Domains           []Domains    `yaml:"domains" validate:"excluded_unless=Type web"`
+	Domains           []Domains    `yaml:"domains,omitempty" validate:"excluded_unless=Type web"`
 	HealthCheck       *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
-	AllowConcurrent   bool         `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
-	Cron              string       `yaml:"cron" validate:"excluded_unless=Type job"`
-	Private           *bool        `yaml:"private" validate:"excluded_unless=Type web"`
+	AllowConcurrent   *bool        `yaml:"allowConcurrent,omitempty" validate:"excluded_unless=Type job"`
+	Cron              string       `yaml:"cron,omitempty" validate:"excluded_unless=Type job"`
+	SuspendCron       *bool        `yaml:"suspendCron,omitempty" validate:"excluded_unless=Type job"`
+	TimeoutSeconds    int          `yaml:"timeoutSeconds,omitempty" validate:"excluded_unless=Type job"`
+	Private           *bool        `yaml:"private,omitempty" validate:"excluded_unless=Type web"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -123,12 +132,6 @@ type Domains struct {
 type HealthCheck struct {
 	Enabled  bool   `yaml:"enabled"`
 	HttpPath string `yaml:"httpPath"`
-}
-
-// Image is the repository and tag for an app's build image
-type Image struct {
-	Repository string `yaml:"repository"`
-	Tag        string `yaml:"tag"`
 }
 
 func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp, map[string]string, error) {
@@ -221,13 +224,13 @@ func protoEnumFromType(name string, service Service) porterv1.ServiceType {
 
 func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {
 	serviceProto := &porterv1.Service{
-		Run:               service.Run,
-		Type:              serviceType,
+		RunOptional:       service.Run,
 		Instances:         int32(service.Instances),
 		CpuCores:          service.CpuCores,
 		RamMegabytes:      int32(service.RamMegabytes),
 		Port:              int32(service.Port),
 		SmartOptimization: service.SmartOptimization,
+		Type:              serviceType,
 	}
 
 	switch serviceType {
@@ -294,8 +297,14 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		}
 	case porterv1.ServiceType_SERVICE_TYPE_JOB:
 		jobConfig := &porterv1.JobServiceConfig{
-			AllowConcurrent: service.AllowConcurrent,
-			Cron:            service.Cron,
+			AllowConcurrentOptional: service.AllowConcurrent,
+			Cron:                    service.Cron,
+		}
+		if service.SuspendCron != nil {
+			jobConfig.SuspendCron = service.SuspendCron
+		}
+		if service.TimeoutSeconds != 0 {
+			jobConfig.TimeoutSeconds = int64(service.TimeoutSeconds)
 		}
 
 		serviceProto.Config = &porterv1.Service_JobConfig{
@@ -304,4 +313,134 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	}
 
 	return serviceProto, nil
+}
+
+// AppFromProto converts a PorterApp proto object into a PorterApp struct
+func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
+	porterApp := PorterApp{
+		Version: "v2",
+		Name:    appProto.Name,
+	}
+
+	if appProto.Build != nil {
+		porterApp.Build = &Build{
+			Context:    appProto.Build.Context,
+			Method:     appProto.Build.Method,
+			Builder:    appProto.Build.Builder,
+			Buildpacks: appProto.Build.Buildpacks,
+			Dockerfile: appProto.Build.Dockerfile,
+		}
+	}
+
+	if appProto.Image != nil {
+		porterApp.Image = &Image{
+			Repository: appProto.Image.Repository,
+			Tag:        appProto.Image.Tag,
+		}
+	}
+
+	porterApp.Services = make(map[string]Service, 0)
+	for name, service := range appProto.Services {
+		appService, err := appServiceFromProto(service)
+		if err != nil {
+			return porterApp, err
+		}
+
+		porterApp.Services[name] = appService
+	}
+
+	if appProto.Predeploy != nil {
+		appPredeploy, err := appServiceFromProto(appProto.Predeploy)
+		if err != nil {
+			return porterApp, err
+		}
+
+		porterApp.Predeploy = &appPredeploy
+	}
+
+	porterApp.EnvGroups = make([]string, 0)
+	for _, envGroup := range appProto.EnvGroups {
+		porterApp.EnvGroups = append(porterApp.EnvGroups, envGroup.Name)
+	}
+
+	return porterApp, nil
+}
+
+func appServiceFromProto(service *porterv1.Service) (Service, error) {
+	appService := Service{
+		Run:               service.RunOptional,
+		Instances:         int(service.Instances),
+		CpuCores:          service.CpuCores,
+		RamMegabytes:      int(service.RamMegabytes),
+		Port:              int(service.Port),
+		SmartOptimization: service.SmartOptimization,
+	}
+
+	switch service.Type {
+	default:
+		return appService, fmt.Errorf("invalid service type '%s'", service.Type)
+	case porterv1.ServiceType_SERVICE_TYPE_UNSPECIFIED:
+		return appService, errors.New("Service type unspecified")
+	case porterv1.ServiceType_SERVICE_TYPE_WEB:
+		webConfig := service.GetWebConfig()
+		appService.Type = "web"
+
+		var autoscaling *AutoScaling
+		if webConfig.Autoscaling != nil {
+			autoscaling = &AutoScaling{
+				Enabled:                webConfig.Autoscaling.Enabled,
+				MinInstances:           int(webConfig.Autoscaling.MinInstances),
+				MaxInstances:           int(webConfig.Autoscaling.MaxInstances),
+				CpuThresholdPercent:    int(webConfig.Autoscaling.CpuThresholdPercent),
+				MemoryThresholdPercent: int(webConfig.Autoscaling.MemoryThresholdPercent),
+			}
+		}
+		appService.Autoscaling = autoscaling
+
+		var healthCheck *HealthCheck
+		if webConfig.HealthCheck != nil {
+			healthCheck = &HealthCheck{
+				Enabled:  webConfig.HealthCheck.Enabled,
+				HttpPath: webConfig.HealthCheck.HttpPath,
+			}
+		}
+		appService.HealthCheck = healthCheck
+
+		domains := make([]Domains, 0)
+		for _, domain := range webConfig.Domains {
+			domains = append(domains, Domains{
+				Name: domain.Name,
+			})
+		}
+		appService.Domains = domains
+
+		if webConfig.Private != nil {
+			appService.Private = webConfig.Private
+		}
+	case porterv1.ServiceType_SERVICE_TYPE_WORKER:
+		workerConfig := service.GetWorkerConfig()
+		appService.Type = "worker"
+
+		var autoscaling *AutoScaling
+		if workerConfig.Autoscaling != nil {
+			autoscaling = &AutoScaling{
+				Enabled:                workerConfig.Autoscaling.Enabled,
+				MinInstances:           int(workerConfig.Autoscaling.MinInstances),
+				MaxInstances:           int(workerConfig.Autoscaling.MaxInstances),
+				CpuThresholdPercent:    int(workerConfig.Autoscaling.CpuThresholdPercent),
+				MemoryThresholdPercent: int(workerConfig.Autoscaling.MemoryThresholdPercent),
+			}
+		}
+		appService.Autoscaling = autoscaling
+	case porterv1.ServiceType_SERVICE_TYPE_JOB:
+		jobConfig := service.GetJobConfig()
+		appService.Type = "job"
+
+		appService.AllowConcurrent = jobConfig.AllowConcurrentOptional
+		appService.Cron = jobConfig.Cron
+		appService.SuspendCron = jobConfig.SuspendCron
+		appService.TimeoutSeconds = int(jobConfig.TimeoutSeconds)
+	}
+
+	return appService, nil
 }

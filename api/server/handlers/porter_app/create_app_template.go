@@ -207,6 +207,23 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	err = porter_app.CreateAppWebhook(ctx, porter_app.CreateAppWebhookInput{
+		PorterAppName:           appName,
+		ProjectID:               project.ID,
+		ClusterID:               cluster.ID,
+		GithubAppSecret:         c.Config().ServerConf.GithubAppSecret,
+		GithubAppID:             c.Config().ServerConf.GithubAppID,
+		GithubWebhookSecret:     c.Config().ServerConf.GithubIncomingWebhookSecret,
+		ServerURL:               c.Config().ServerConf.ServerURL,
+		PorterAppRepository:     c.Repo().PorterApp(),
+		GithubWebhookRepository: c.Repo().GithubWebhook(),
+	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "unable to set repo webhook")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	res := &CreateAppTemplateResponse{
 		AppTemplateID: updatedAppTemplate.ID.String(),
 	}

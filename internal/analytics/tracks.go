@@ -922,6 +922,7 @@ type StackBuildOpts struct {
 
 	StackName       string
 	ErrorMessage    string
+	B64BuildLogs    string
 	Email           string
 	FirstName       string
 	LastName        string
@@ -938,6 +939,7 @@ func StackBuildFailureTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
+	additionalProps["b64_build_logs"] = opts.B64BuildLogs
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,

@@ -41,6 +41,7 @@ type Props = {
 };
 
 const namespaceBlacklist = [
+  "ack-system",
   "cert-manager",
   "ingress-nginx",
   "kube-node-lease",

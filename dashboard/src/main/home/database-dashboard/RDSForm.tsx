@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext, useMemo } from "react";
 import styled from "styled-components";
 import _ from "lodash";
+import { v4 as uuidv4 } from 'uuid';
 
 import { hardcodedNames, hardcodedIcons } from "shared/hardcodedNameDict";
 import { Context } from "shared/Context";
@@ -22,6 +23,7 @@ import { RouteComponentProps, withRouter } from "react-router";
 import Error from "components/porter/Error";
 import Fieldset from "components/porter/Fieldset";
 import Container from "components/porter/Container";
+import ClickToCopy from "components/porter/ClickToCopy";
 
 type Props = RouteComponentProps & {
   currentTemplate: any;
@@ -38,6 +40,20 @@ const RDSForm: React.FC<Props> = ({
   const [name, setName] = useState<string>("");
   const [buttonStatus, setButtonStatus] = useState<string>("");
   const [credentialsSaved, setCredentialsSaved] = useState<boolean>(false);
+  const [dbName, setDbName] = useState<string>("postgres");
+  const [dbPassword, setDbPassword] = useState<string>(uuidv4());
+  const [dbUsername, setDbUsername] = useState<string>("postgres");
+  const [cpu, setCpu] = useState<number>(0);
+  const [ram, setRam] = useState<number>(0);
+  const [storage, setStorage] = useState<number>(0);
+  const [tier, setTier] = useState<string>("");
+  const [hidePassword, setHidePassword] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (currentStep === 1) {
+      setCurrentStep(2);
+    }
+  }, [tier]);
 
   const waitForHelmRelease = () => {
     setTimeout(() => {
@@ -169,28 +185,6 @@ const RDSForm: React.FC<Props> = ({
                 />
               </>,
               <>
-                <Text size={16}>Postgres credentials</Text>
-                <Spacer y={0.5} />
-                <Text color="helper">
-                  Postgres credentials for this database. 
-                </Text>
-                <Spacer height="20px" />
-                <Fieldset>
-                  <Text>Database name: placeholder</Text>
-                  <Spacer y={.5} />
-                  <Text>Password: placeholder</Text>
-                  <Spacer y={.5} />
-                  <Text>Username: placeholder</Text>
-                </Fieldset>
-                <Spacer y={1} />
-                <Button onClick={() => {
-                  setCredentialsSaved(true);
-                  setCurrentStep(2);
-                }}>
-                  Continue
-                </Button>
-              </>,
-              <>
                 <Text size={16}>Database resources</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
@@ -201,7 +195,15 @@ const RDSForm: React.FC<Props> = ({
                   Select an instance tier:
                 </Text>
                 <Spacer height="20px" />
-                <ResourceOption>
+                <ResourceOption
+                  selected={tier === "small"}
+                  onClick={() => {
+                    setCpu(2);
+                    setRam(2);
+                    setStorage(30);
+                    setTier("small");
+                  }}
+                >
                   <Container row>
                     <Text>Small</Text>
                     <Spacer inline width="5px" />
@@ -210,7 +212,15 @@ const RDSForm: React.FC<Props> = ({
                   <StorageTag>30 GB Storage</StorageTag>
                 </ResourceOption>
                 <Spacer height="15px" />
-                <ResourceOption>
+                <ResourceOption
+                  selected={tier === "medium"}
+                  onClick={() => {
+                    setCpu(4);
+                    setRam(4);
+                    setStorage(100);
+                    setTier("medium");
+                  }}
+                >
                   <Container row>
                     <Text>Medium</Text>
                     <Spacer inline width="5px" />
@@ -219,7 +229,15 @@ const RDSForm: React.FC<Props> = ({
                   <StorageTag>100 GB Storage</StorageTag>
                 </ResourceOption>
                 <Spacer height="15px" />
-                <ResourceOption>
+                <ResourceOption
+                  selected={tier === "large"}
+                  onClick={() => {
+                    setCpu(8);
+                    setRam(8);
+                    setStorage(256);
+                    setTier("large");
+                  }}
+                >
                   <Container row>
                     <Text>Large</Text>
                     <Spacer inline width="5px" />
@@ -227,6 +245,68 @@ const RDSForm: React.FC<Props> = ({
                   </Container>
                   <StorageTag>256 GB Storage</StorageTag>
                 </ResourceOption>
+              </>,
+              <>
+                <Text size={16}>Database credentials</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  These credentials never leave your own cloud environment. You will be able to automatically import these credentials from any app.
+                </Text>
+                <Spacer height="20px" />
+                <Fieldset>
+                  <Text>Postgres DB name</Text>
+                  <Spacer y={0.5} />
+                  <Text
+                    additionalStyles="font-family: monospace;"
+                    color="helper"
+                  >
+                    {dbName}
+                  </Text>
+                  <Spacer y={1} />
+                  <Text>Postgres username</Text>
+                  <Spacer y={0.5} />
+                  <Text
+                    additionalStyles="font-family: monospace;"
+                    color="helper"
+                  >
+                    {dbUsername}
+                  </Text>
+                  <Spacer y={1} />
+                  <Text>Postgres password</Text>
+                  <Spacer y={0.5} />
+                  <Container row>
+                    {hidePassword ? (
+                      <>
+                        <Blur>{dbPassword}</Blur>
+                        <Spacer inline width="10px" />
+                        <RevealButton
+                          onClick={() => setHidePassword(false)}
+                        >
+                          Reveal
+                        </RevealButton>
+                      </>
+                    ) : (
+                      <>
+                        <ClickToCopy color="helper">
+                          {dbPassword}
+                        </ClickToCopy>
+                        <Spacer inline width="10px" />
+                        <RevealButton
+                          onClick={() => setHidePassword(true)}
+                        >
+                          Hide
+                        </RevealButton>
+                      </>
+                    )}
+                  </Container>
+                </Fieldset>
+                <Spacer y={1} />
+                <Button onClick={() => {
+                  setCredentialsSaved(true);
+                  setCurrentStep(2);
+                }}>
+                  Continue
+                </Button>
               </>,
               <>
                 <Text size={16}>Provision a database</Text>
@@ -246,6 +326,29 @@ const RDSForm: React.FC<Props> = ({
 
 export default withRouter(RDSForm);
 
+const RevealButton = styled.div`
+  background: ${props => props.theme.fg};
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: 1px solid #494b4f;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  :hover {
+    filter: brightness(120%);
+  }
+`;
+
+const Blur = styled.div`
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  position: relative;
+  margin-left: -5px;
+  font-family: monospace;
+`;
+
 const StorageTag = styled.div`
   background: #202227;
   color: #aaaabb;
@@ -255,9 +358,9 @@ const StorageTag = styled.div`
   margin-left: 5px;
 `;
 
-const ResourceOption = styled.div`
+const ResourceOption = styled.div<{ selected?: boolean }>`
   background: ${(props) => props.theme.clickable.bg};
-  border: 1px solid ${props => props.theme.border};
+  border: 1px solid ${props => props.selected ? "#ffffff" : props.theme.border};
   width: 350px;
   padding: 10px 15px;
   border-radius: 5px;

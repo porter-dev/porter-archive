@@ -1,9 +1,5 @@
 package types
 
-import (
-	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
-)
-
 const (
 	URLParamCandidateID URLParam = "candidate_id"
 	URLParamNodeName    URLParam = "node_name"
@@ -262,12 +258,6 @@ type CreateNamespaceRequest struct {
 
 type GetTemporaryKubeconfigResponse struct {
 	Kubeconfig []byte `json:"kubeconfig"`
-}
-
-type ListNGINXIngressesResponse []prometheus.SimpleIngress
-
-type GetPodMetricsRequest struct {
-	prometheus.QueryOpts
 }
 
 type GetPodMetricsResponse *string

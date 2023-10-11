@@ -57,17 +57,21 @@ export const getPreviewGithubAction = (
   projectID: number,
   clusterId: number,
   stackName: string,
+  branchName: string,
   porterYamlPath: string = "porter.yaml"
 ) => {
   return `on:
   pull_request:
+    paths:
+    - *
+    - '!./github/workflows/porter-**'
     branches:
-    - '!porter-**'
+    - ${branchName}
     types:
     - opened
     - synchronize
     
-name: Deploy preview environment
+name: Deploy to Preview Environment
 jobs:
   porter-deploy:
     runs-on: ubuntu-latest
@@ -88,5 +92,6 @@ jobs:
         PORTER_PROJECT: ${projectID}
         PORTER_STACK_NAME: ${stackName}
         PORTER_TAG: \${{ steps.vars.outputs.sha_short }}
-        PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}`;
+        PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}
+        PORTER_PR_NUMBER: \${{ github.event.number }}`;
 };

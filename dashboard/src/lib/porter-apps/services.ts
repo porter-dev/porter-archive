@@ -1,22 +1,25 @@
+import { Service, ServiceType } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { z } from "zod";
+
+import { BuildOptions } from "./build";
 import {
-  SerializedAutoscaling,
-  SerializedHealthcheck,
   autoscalingValidator,
-  healthcheckValidator,
   deserializeAutoscaling,
   deserializeHealthCheck,
-  serializeAutoscaling,
-  serializeHealth,
   domainsValidator,
-  serviceStringValidator,
-  serviceNumberValidator,
+  healthcheckValidator,
+  ingressAnnotationsValidator,
+  serializeAutoscaling,
+  SerializedAutoscaling,
+  SerializedHealthcheck,
+  serializeHealth,
   serviceBooleanValidator,
   ServiceField,
+  serviceNumberValidator,
+  serviceStringValidator,
 } from "./values";
-import { Service, ServiceType } from "@porter-dev/api-contracts";
-import { BuildOptions } from "./build";
+import _ from "lodash";
 
 export type DetectedServices = {
   services: ClientService[];
@@ -36,6 +39,7 @@ const webConfigValidator = z.object({
   domains: domainsValidator,
   healthCheck: healthcheckValidator.optional(),
   private: serviceBooleanValidator.optional(),
+  ingressAnnotations: ingressAnnotationsValidator.default([]),
 });
 export type ClientWebConfig = z.infer<typeof webConfigValidator>;
 
@@ -83,6 +87,9 @@ export const serviceValidator = z.object({
     })
     .array()
     .default([]),
+  ingressAnnotationDeletions: z.object({
+    key: z.string(),
+  }).array().default([])
 });
 
 export type ClientService = z.infer<typeof serviceValidator>;
@@ -98,29 +105,30 @@ export type SerializedService = {
   ramMegabytes: number;
   smartOptimization?: boolean;
   config:
-  | {
-    type: "web";
-    domains: {
-      name: string;
-    }[];
-    autoscaling?: SerializedAutoscaling;
-    healthCheck?: SerializedHealthcheck;
-    private?: boolean;
-  }
-  | {
-    type: "worker";
-    autoscaling?: SerializedAutoscaling;
-  }
-  | {
-    type: "job";
-    allowConcurrent?: boolean;
-    cron: string;
-    suspendCron?: boolean;
-    timeoutSeconds: number;
-  }
-  | {
-    type: "predeploy";
-  };
+    | {
+        type: "web";
+        domains: {
+          name: string;
+        }[];
+        autoscaling?: SerializedAutoscaling;
+        healthCheck?: SerializedHealthcheck;
+        private?: boolean;
+        ingressAnnotations: Record<string, string>;
+      }
+    | {
+        type: "worker";
+        autoscaling?: SerializedAutoscaling;
+      }
+    | {
+        type: "job";
+        allowConcurrent?: boolean;
+        cron: string;
+        suspendCron?: boolean;
+        timeoutSeconds: number;
+      }
+    | {
+        type: "predeploy";
+      };
 };
 
 export function isPredeployService(service: SerializedService | ClientService) {
@@ -137,17 +145,21 @@ export function prefixSubdomain(subdomain: string) {
 export function defaultSerialized({
   name,
   type,
+  defaultCPU = 0.1,
+  defaultRAM = 256,
 }: {
   name: string;
   type: ClientServiceType;
+  defaultCPU?: number;
+  defaultRAM?: number;
 }): SerializedService {
   const baseService = {
     name,
     run: "",
     instances: 1,
     port: 3000,
-    cpuCores: 0.1,
-    ramMegabytes: 256,
+    cpuCores: defaultCPU,
+    ramMegabytes: defaultRAM,
     smartOptimization: true,
   };
 
@@ -173,6 +185,7 @@ export function defaultSerialized({
         healthCheck: defaultHealthCheck,
         domains: [],
         private: false,
+        ingressAnnotations: {},
       },
     }))
     .with("worker", () => ({
@@ -224,6 +237,11 @@ export function serializeService(service: ClientService): SerializedService {
           domains: config.domains.map((domain) => ({
             name: domain.name.value,
           })),
+          ingressAnnotations: Object.fromEntries(
+            config.ingressAnnotations
+              .filter((a) => a.key.length > 0 && a.value.length > 0)
+              .map((annotation) => [annotation.key, annotation.value])
+          ),
           private: config.private?.value,
         },
       })
@@ -286,10 +304,12 @@ export function deserializeService({
   service,
   override,
   expanded,
+  setDefaults = true,
 }: {
   service: SerializedService;
   override?: SerializedService;
   expanded?: boolean;
+  setDefaults?: boolean;
 }): ClientService {
   const baseService = {
     expanded,
@@ -303,8 +323,12 @@ export function deserializeService({
       service.ramMegabytes,
       override?.ramMegabytes
     ),
-    smartOptimization: ServiceField.boolean(service.smartOptimization, override?.smartOptimization),
+    smartOptimization: ServiceField.boolean(
+      service.smartOptimization,
+      override?.smartOptimization
+    ),
     domainDeletions: [],
+    ingressAnnotationDeletions: [],
   };
 
   return match(service.config)
@@ -319,6 +343,28 @@ export function deserializeService({
         ])
       ).map((domain) => ({ name: domain }));
 
+      const uniqueAnnotations = _.uniqBy(
+        [
+          ...Object.entries(overrideWebConfig?.ingressAnnotations ?? {}).map(
+            (annotation) => {
+              return {
+                key: annotation[0],
+                value: annotation[1],
+                readOnly: true,
+              };
+            }
+          ),
+          ...Object.entries(config.ingressAnnotations).map((annotation) => {
+            return {
+              key: annotation[0],
+              value: annotation[1],
+              readOnly: false,
+            };
+          }),
+        ],
+        "key"
+      );
+
       return {
         ...baseService,
         config: {
@@ -326,10 +372,12 @@ export function deserializeService({
           autoscaling: deserializeAutoscaling({
             autoscaling: config.autoscaling,
             override: overrideWebConfig?.autoscaling,
+            setDefaults: setDefaults,
           }),
           healthCheck: deserializeHealthCheck({
             health: config.healthCheck,
             override: overrideWebConfig?.healthCheck,
+            setDefaults: setDefaults,
           }),
 
           domains: uniqueDomains.map((domain) => ({
@@ -340,11 +388,14 @@ export function deserializeService({
               )?.name
             ),
           })),
+          ingressAnnotations: uniqueAnnotations,
           private:
             typeof config.private === "boolean" ||
-              typeof overrideWebConfig?.private === "boolean"
+            typeof overrideWebConfig?.private === "boolean"
               ? ServiceField.boolean(config.private, overrideWebConfig?.private)
-              : ServiceField.boolean(false, undefined),
+              : setDefaults
+              ? ServiceField.boolean(false, undefined)
+              : undefined,
         },
       };
     })
@@ -359,6 +410,7 @@ export function deserializeService({
           autoscaling: deserializeAutoscaling({
             autoscaling: config.autoscaling,
             override: overrideWorkerConfig?.autoscaling,
+            setDefaults: setDefaults,
           }),
         },
       };
@@ -373,28 +425,34 @@ export function deserializeService({
           type: "job" as const,
           allowConcurrent:
             typeof config.allowConcurrent === "boolean" ||
-              typeof overrideJobConfig?.allowConcurrent === "boolean"
+            typeof overrideJobConfig?.allowConcurrent === "boolean"
               ? ServiceField.boolean(
-                config.allowConcurrent,
-                overrideJobConfig?.allowConcurrent
-              )
-              : ServiceField.boolean(false, undefined),
+                  config.allowConcurrent,
+                  overrideJobConfig?.allowConcurrent
+                )
+              : setDefaults
+              ? ServiceField.boolean(false, undefined)
+              : undefined,
           cron: ServiceField.string(config.cron, overrideJobConfig?.cron),
           suspendCron:
             typeof config.suspendCron === "boolean" ||
-              typeof overrideJobConfig?.suspendCron === "boolean"
+            typeof overrideJobConfig?.suspendCron === "boolean"
               ? ServiceField.boolean(
-                config.suspendCron,
-                overrideJobConfig?.suspendCron
-              )
-              : ServiceField.boolean(false, undefined),
+                  config.suspendCron,
+                  overrideJobConfig?.suspendCron
+                )
+              : setDefaults
+              ? ServiceField.boolean(false, undefined)
+              : undefined,
           timeoutSeconds:
-            config.timeoutSeconds == 0
+            config.timeoutSeconds != 0
+              ? ServiceField.number(
+                  config.timeoutSeconds,
+                  overrideJobConfig?.timeoutSeconds
+                )
+              : setDefaults
               ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds)
-              : ServiceField.number(
-                config.timeoutSeconds,
-                overrideJobConfig?.timeoutSeconds
-              ),
+              : ServiceField.number(0, overrideJobConfig?.timeoutSeconds),
         },
       };
     })
@@ -426,6 +484,7 @@ export function serviceProto(service: SerializedService): Service {
       (config) =>
         new Service({
           ...service,
+          runOptional: service.run,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {
@@ -440,6 +499,7 @@ export function serviceProto(service: SerializedService): Service {
       (config) =>
         new Service({
           ...service,
+          runOptional: service.run,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {
@@ -454,6 +514,7 @@ export function serviceProto(service: SerializedService): Service {
       (config) =>
         new Service({
           ...service,
+          runOptional: service.run,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {
@@ -470,6 +531,7 @@ export function serviceProto(service: SerializedService): Service {
       (config) =>
         new Service({
           ...service,
+          runOptional: service.run,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {},
@@ -500,6 +562,7 @@ export function serializedServiceFromProto({
     .with({ case: "webConfig" }, ({ value }) => ({
       ...service,
       name,
+      run: service.runOptional ?? service.run,
       config: {
         type: "web" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -510,6 +573,7 @@ export function serializedServiceFromProto({
     .with({ case: "workerConfig" }, ({ value }) => ({
       ...service,
       name,
+      run: service.runOptional ?? service.run,
       config: {
         type: "worker" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -519,22 +583,24 @@ export function serializedServiceFromProto({
     .with({ case: "jobConfig" }, ({ value }) =>
       isPredeploy
         ? {
-          ...service,
-          name,
-          config: {
-            type: "predeploy" as const,
-          },
-        }
+            ...service,
+            name,
+            run: service.runOptional ?? service.run,
+            config: {
+              type: "predeploy" as const,
+            },
+          }
         : {
-          ...service,
-          name,
-          config: {
-            type: "job" as const,
-            ...value,
-            allowConcurrent: value.allowConcurrentOptional,
-            timeoutSeconds: Number(value.timeoutSeconds),
-          },
-        }
+            ...service,
+            name,
+            run: service.runOptional ?? service.run,
+            config: {
+              type: "job" as const,
+              ...value,
+              allowConcurrent: value.allowConcurrentOptional,
+              timeoutSeconds: Number(value.timeoutSeconds),
+            },
+          }
     )
     .exhaustive();
 }

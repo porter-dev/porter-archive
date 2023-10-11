@@ -34,6 +34,8 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appName, projectId, cluste
         return <Text color={getStatusColor(event.status)}>Pre-deploy succeeded</Text>;
       case "FAILED":
         return <Text color={getStatusColor(event.status)}>Pre-deploy failed</Text>;
+      case "CANCELED":
+        return <Text color={getStatusColor(event.status)}>Pre-deploy canceled</Text>;
       default:
         return <Text color={getStatusColor(event.status)}>Pre-deploy in progress...</Text>;
     }
@@ -59,17 +61,17 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appName, projectId, cluste
           <Icon height="12px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText(event)}
-          {(event.status !== "SUCCESS") &&
-            <>
-              <Spacer inline x={1} />
-              <Wrapper>
-                <Link to={`/apps/${appName}/events?event_id=${event.id}&service=${appName}-predeploy`} hasunderline>
-                  <Container row>
-                    <Icon src={document} height="10px" />
-                    <Spacer inline width="5px" />
-                    View details
-                  </Container>
-                </Link>
+          <Spacer inline x={1} />
+          <Wrapper>
+            <Link to={`/apps/${appName}/events?event_id=${event.id}&service=${appName}-predeploy`} hasunderline>
+              <Container row>
+                <Icon src={document} height="10px" />
+                <Spacer inline width="5px" />
+                View details
+              </Container>
+            </Link>
+            {(event.status !== "SUCCESS") &&
+              <>
                 <Spacer inline x={1} />
                 <Link hasunderline onClick={() => triggerWorkflow({
                   projectId,
@@ -82,9 +84,8 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appName, projectId, cluste
                     Retry
                   </Container>
                 </Link>
-              </Wrapper>
-            </>
-          }
+              </>}
+          </Wrapper>
           <Spacer inline x={1} />
         </Container>
       </Container>

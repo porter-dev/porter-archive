@@ -10,6 +10,7 @@ const jobRunValidator = z.object({
         labels: z.object({
             "porter.run/app-revision-id": z.string(),
             "porter.run/service-name": z.string(),
+            "porter.run/app-id": z.string(),
         }),
         creationTimestamp: z.string(),
         uid: z.string(),

@@ -11,15 +11,15 @@ import { useLatestRevision } from "../LatestRevisionContext";
 import api from "shared/api";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { Context } from "shared/Context";
+import PreviewEnvironmentSettings from "./preview-environments/PreviewEnvironmentSettings";
 
 const Settings: React.FC = () => {
   const { currentProject } = useContext(Context);
   const queryClient = useQueryClient();
   const history = useHistory();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const { porterApp, clusterId, projectId } = useLatestRevision();
+  const { porterApp, clusterId, projectId, latestProto } = useLatestRevision();
   const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -139,32 +139,9 @@ const Settings: React.FC = () => {
 
   return (
     <StyledSettingsTab>
-      {currentProject?.preview_envs_enabled && (
-        <>
-          <Text size={16}>
-            Enable preview environments for "{porterApp.name}"
-          </Text>
-          <Spacer y={0.5} />
-          <Text color="helper">
-            Setup your application to automatically create preview environments
-            for each pull request.
-          </Text>
-          <Spacer y={0.5} />
-          <Link
-            to={`/preview-environments/configure?app_name=${porterApp.name}`}
-          >
-            <Button
-              type="button"
-              onClick={() => {
-                setIsDeleteModalOpen(true);
-              }}
-            >
-              Enable
-            </Button>
-          </Link>
-          <Spacer y={1} />
-        </>
-      )}
+      {currentProject?.preview_envs_enabled && !!latestProto.build ? (
+        <PreviewEnvironmentSettings />
+      ) : null}
       <Text size={16}>Delete "{porterApp.name}"</Text>
       <Spacer y={0.5} />
       <Text color="helper">

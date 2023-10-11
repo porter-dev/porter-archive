@@ -743,6 +743,12 @@ tabs:
       placeholder: "ex: 10.99"
       settings:
         default: "10.99"
+    - type: string-input
+      label: "Add a different CIDR range prefix for cluster services (first two octets: for example 172.20 will configure EKS with CIDR range 172.20.0.0/16)."
+      variable: cluster_service_cidr_octets
+      placeholder: "ex: 172.20"
+      settings:
+        default: "172.20"
     - type: checkbox
       label: "Add additional private subnets to the cluster in each AZ."
       variable: additional_private_subnets

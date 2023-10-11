@@ -74,6 +74,7 @@ const JobRunDetails: React.FC<Props> = ({
                     startTime: dayjs(jobRun.status.startTime ?? jobRun.metadata.creationTimestamp).subtract(30, 'second'),
                     endTime: jobRun.status.completionTime != null ? dayjs(jobRun.status.completionTime).add(30, 'second') : undefined,
                 }}
+                appId={parseInt(jobRun.metadata.labels["porter.run/app-id"])}
             />
         </>
     );

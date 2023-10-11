@@ -13,6 +13,7 @@ import AnimateHeight from "react-animate-height";
 import ServiceStatusDetail from "./ServiceStatusDetail";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { useRevisionList } from "lib/hooks/useRevisionList";
+import RevisionDiffModal from "../modals/RevisionDiffModal";
 
 type Props = {
   event: PorterAppDeployEvent;
@@ -29,7 +30,7 @@ const DeployEventCard: React.FC<Props> = ({ event, appName, deploymentTargetId, 
   const [revertModalVisible, setRevertModalVisible] = useState(false);
   const [serviceStatusVisible, setServiceStatusVisible] = useState(showServiceStatusDetail);
 
-  const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
+  const { revisionIdToNumber, numberToRevisionId } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
 
   const renderStatusText = () => {
     switch (event.status) {
@@ -120,6 +121,36 @@ const DeployEventCard: React.FC<Props> = ({ event, appName, deploymentTargetId, 
     }
   };
 
+  const renderRevisionDiffModal = (event: PorterAppDeployEvent) => {
+    const changedRevisionId = event.metadata.app_revision_id;
+    const changedRevisionNumber = revisionIdToNumber[event.metadata.app_revision_id];
+    if (changedRevisionNumber == null || changedRevisionNumber == 1) {
+      return null;
+    }
+    const baseRevisionNumber = revisionIdToNumber[event.metadata.app_revision_id] - 1;
+    if (numberToRevisionId[baseRevisionNumber] == null) {
+      return null;
+    }
+    const baseRevisionId = numberToRevisionId[baseRevisionNumber];
+    return (
+      <>
+        <Link hasunderline onClick={() => setDiffModalVisible(true)}>
+          View changes
+        </Link>
+        {diffModalVisible && (
+          <RevisionDiffModal
+            base={{ revisionId: baseRevisionId, revisionNumber: baseRevisionNumber }}
+            changed={{ revisionId: changedRevisionId, revisionNumber: changedRevisionNumber }}
+            close={() => setDiffModalVisible(false)}
+            projectId={projectId}
+            clusterId={clusterId}
+            appName={appName}
+          />
+        )}
+      </>
+    )
+  }
+
   const renderServiceDropdownCta = (numServices: number, color?: string) => {
     return (
       <ServiceStatusDropdownCtaContainer >
@@ -146,7 +177,8 @@ const DeployEventCard: React.FC<Props> = ({ event, appName, deploymentTargetId, 
           <Icon height="12px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText()}
-          {revisionIdToNumber[event.metadata.app_revision_id] != null && latestRevision.revision_number !== revisionIdToNumber[event.metadata.app_revision_id] && (
+          {/** uncomment the below once we've implemented revert from here */}
+          {/* {revisionIdToNumber[event.metadata.app_revision_id] != null && latestRevision.revision_number !== revisionIdToNumber[event.metadata.app_revision_id] && (
             <>
               <Spacer inline x={1} />
               <TempWrapper>
@@ -156,32 +188,9 @@ const DeployEventCard: React.FC<Props> = ({ event, appName, deploymentTargetId, 
 
               </TempWrapper>
             </>
-          )}
-          <Spacer inline x={1} />
-          {/* <TempWrapper>
-            {event.metadata.revision != 1 && (<Link hasunderline onClick={() => setDiffModalVisible(true)}>
-              View changes
-            </Link>)}
-            {diffModalVisible && (
-              <ChangeLogModal
-                revision={event.metadata.revision}
-                currentChart={appData.chart}
-                modalVisible={diffModalVisible}
-                setModalVisible={setDiffModalVisible}
-                appData={appData}
-              />
-            )}
-            {revertModalVisible && (
-              <ChangeLogModal
-                revision={event.metadata.revision}
-                currentChart={appData.chart}
-                modalVisible={revertModalVisible}
-                setModalVisible={setRevertModalVisible}
-                revertModal={true}
-                appData={appData}
-              />
-            )}
-          </TempWrapper> */}
+          )} */}
+          <Spacer inline x={0.5} />
+          {renderRevisionDiffModal(event)}
         </Container>
       </Container>
       {event.metadata.service_deployment_metadata != null &&

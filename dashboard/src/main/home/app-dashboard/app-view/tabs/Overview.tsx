@@ -2,27 +2,28 @@ import { PorterApp } from "@porter-dev/api-contracts";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { PorterAppFormData } from "lib/porter-apps";
-import React, { useEffect, useMemo } from "react";
-import { useFormContext, useFormState } from "react-hook-form";
+import React from "react";
+import { useFormContext } from "react-hook-form";
 import ServiceList from "../../validate-apply/services-settings/ServiceList";
 import {
   defaultSerialized,
   deserializeService,
 } from "lib/porter-apps/services";
-import Error from "components/porter/Error";
 import Button from "components/porter/Button";
 import { useLatestRevision } from "../LatestRevisionContext";
 import { useAppStatus } from "lib/hooks/useAppStatus";
 import { ButtonStatus } from "../AppDataContainer";
+import { useClusterResources } from "shared/ClusterResourcesContext";
 
 type Props = {
-  maxCPU: number;
-  maxRAM: number;
   buttonStatus: ButtonStatus;
 };
 
-const Overview: React.FC<Props> = ({ maxCPU, maxRAM, buttonStatus }) => {
+const Overview: React.FC<Props> = ({ buttonStatus }) => {
   const { formState } = useFormContext<PorterAppFormData>();
+
+  const { currentClusterResources } = useClusterResources(); 
+  
   const {
     porterApp,
     latestProto,
@@ -52,13 +53,15 @@ const Overview: React.FC<Props> = ({ maxCPU, maxRAM, buttonStatus }) => {
               service: defaultSerialized({
                 name: "pre-deploy",
                 type: "predeploy",
+                defaultCPU: currentClusterResources.defaultCPU,
+                defaultRAM: currentClusterResources.defaultRAM,
               }),
             })}
             existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
             isPredeploy
             fieldArrayName={"app.predeploy"}
-            maxCPU={maxCPU}
-            maxRAM={maxRAM}
+            maxCPU={currentClusterResources.maxCPU}
+            maxRAM={currentClusterResources.maxRAM}
           />
           <Spacer y={0.5} />
         </>
@@ -70,8 +73,8 @@ const Overview: React.FC<Props> = ({ maxCPU, maxRAM, buttonStatus }) => {
         fieldArrayName={"app.services"}
         existingServiceNames={Object.keys(latestProto.services)}
         serviceVersionStatus={serviceVersionStatus}
-        maxCPU={maxCPU}
-        maxRAM={maxRAM}
+        maxCPU={currentClusterResources.maxCPU}
+        maxRAM={currentClusterResources.maxRAM}
       />
       <Spacer y={0.75} />
       <Button

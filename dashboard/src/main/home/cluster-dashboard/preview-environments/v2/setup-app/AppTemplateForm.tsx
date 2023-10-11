@@ -24,16 +24,22 @@ import api from "shared/api";
 import { z } from "zod";
 import { populatedEnvGroup } from "main/home/app-dashboard/validate-apply/app-settings/types";
 import { useQuery } from "@tanstack/react-query";
-import { Redirect } from "react-router";
+import { Redirect, useHistory } from "react-router";
 import Button from "components/porter/Button";
 import { useAppValidation } from "lib/hooks/useAppValidation";
 import { PorterApp } from "@porter-dev/api-contracts";
 import axios from "axios";
 import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
-import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
+import Error from "components/porter/Error";
+import _ from "lodash";
+import { useClusterResources } from "shared/ClusterResourcesContext";
 
-const AppTemplateForm: React.FC = () => {
-  const [step, setStep] = useState(0);
+type Props = {
+  existingTemplate: PorterApp | null;
+};
+
+const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
+  const history = useHistory();
   const [validatedAppProto, setValidatedAppProto] = useState<PorterApp | null>(
     null
   );
@@ -46,6 +52,7 @@ const AppTemplateForm: React.FC = () => {
     variables: {},
     secrets: {},
   });
+  const { currentClusterResources } = useClusterResources(); 
 
   const {
     porterApp,
@@ -54,9 +61,7 @@ const AppTemplateForm: React.FC = () => {
     servicesFromYaml,
     clusterId,
     projectId,
-    deploymentTarget,
   } = useLatestRevision();
-  const { maxCPU, maxRAM } = useClusterResourceLimits({ projectId, clusterId });
 
   const { data: baseEnvGroups = [] } = useQuery(
     ["getAllEnvGroups", projectId, clusterId],
@@ -104,14 +109,14 @@ const AppTemplateForm: React.FC = () => {
   const withPreviewOverrides = useMemo(() => {
     return applyPreviewOverrides({
       app: clientAppFromProto({
-        proto: latestProto,
+        proto: existingTemplate ? existingTemplate : latestProto,
         overrides: servicesFromYaml,
         variables: appEnv?.variables,
         secrets: appEnv?.secret_variables,
       }),
       overrides: servicesFromYaml?.previews,
     });
-  }, [latestProto, appEnv, servicesFromYaml]);
+  }, [latestProto, existingTemplate, appEnv, servicesFromYaml]);
 
   const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",
@@ -127,7 +132,31 @@ const AppTemplateForm: React.FC = () => {
     },
   });
 
-  const { reset, handleSubmit } = porterAppFormMethods;
+  const {
+    reset,
+    handleSubmit,
+    formState: { errors, isSubmitting, isSubmitSuccessful },
+  } = porterAppFormMethods;
+
+  const errorMessagesDeep = useMemo(() => {
+    return Object.values(_.mapValues(errors, (error) => error?.message));
+  }, [errors]);
+
+  const buttonStatus = useMemo(() => {
+    if (isSubmitting) {
+      return "loading";
+    }
+
+    if (errorMessagesDeep.length > 0) {
+      return <Error message={`App update failed. ${errorMessagesDeep[0]}`} />;
+    }
+
+    if (isSubmitSuccessful) {
+      return "success";
+    }
+
+    return "";
+  }, [isSubmitting, errorMessagesDeep]);
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -153,7 +182,17 @@ const AppTemplateForm: React.FC = () => {
         }, {});
       setFinalizedAppEnv({ variables, secrets });
 
-      setShowGHAModal(true);
+      if (!existingTemplate) {
+        setShowGHAModal(true);
+        return;
+      }
+
+      await createTemplateAndWorkflow({
+        app: proto,
+        variables,
+        secrets,
+      });
+      history.push(`/apps/${proto.name}/settings`);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
         setCreateError(err.response?.data?.error);
@@ -238,8 +277,8 @@ const AppTemplateForm: React.FC = () => {
               <ServiceList
                 addNewText={"Add a new service"}
                 fieldArrayName={"app.services"}
-                maxCPU={maxCPU}
-                maxRAM={maxRAM}
+                maxCPU={currentClusterResources.maxCPU}
+                maxRAM={currentClusterResources.maxRAM}
               />
             </>,
             <>
@@ -265,6 +304,8 @@ const AppTemplateForm: React.FC = () => {
                   service: defaultSerialized({
                     name: "pre-deploy",
                     type: "predeploy",
+                    defaultCPU: currentClusterResources.defaultCPU,
+                    defaultRAM: currentClusterResources.defaultRAM,
                   }),
                 })}
                 existingServiceNames={
@@ -272,12 +313,17 @@ const AppTemplateForm: React.FC = () => {
                 }
                 isPredeploy
                 fieldArrayName={"app.predeploy"}
-                maxCPU={maxCPU}
-                maxRAM={maxRAM}
+                maxCPU={currentClusterResources.maxCPU}
+                maxRAM={currentClusterResources.maxRAM}
               />
             </>,
-            <Button type="submit" loadingText={"Deploying..."} width={"150px"}>
-              Enable Previews
+            <Button
+              type="submit"
+              loadingText={"Saving..."}
+              width={"150px"}
+              status={buttonStatus}
+            >
+              {existingTemplate ? "Update Previews" : "Enable Previews"}
             </Button>,
           ].filter((x) => x)}
         />

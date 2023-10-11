@@ -7,6 +7,7 @@ import styled from "styled-components";
 import { readableDate } from "shared/string_utils";
 import Text from "components/porter/Text";
 import { SourceOptions } from "lib/porter-apps";
+import api from "shared/api";
 
 type RevisionTableContentsProps = {
   latestRevisionNumber: number;

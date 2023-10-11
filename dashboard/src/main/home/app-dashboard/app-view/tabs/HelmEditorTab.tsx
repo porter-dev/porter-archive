@@ -37,7 +37,7 @@ const HelmEditorTab: React.FC<Props> = ({ buttonStatus, featureFlagEnabled }) =>
 
   return (
     <>
-      {!featureFlagEnabled && <Text color="helper">This tab is only visible to Porter operators. Enable the feature flag to allows customers to view this.</Text>}
+      {!featureFlagEnabled && <Text color="helper">This tab is only visible to Porter operators. Enable the feature flag to allow customers to view this.</Text>}
       <HelmOverrides
         projectId={projectId}
         clusterId={clusterId}

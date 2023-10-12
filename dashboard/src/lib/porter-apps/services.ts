@@ -218,7 +218,7 @@ export function defaultSerialized({
 // A SerializedService holds just the values of a ClientService
 // These values can be used to create a protobuf Service
 export function serializeService(service: ClientService): SerializedService {
-  return {
+  return Object.freeze({
     name: service.name.value,
     run: service.run.value,
     instances: service.instances.value,
@@ -268,7 +268,7 @@ export function serializeService(service: ClientService): SerializedService {
         })
       )
       .exhaustive(),
-  }
+  });
 }
 
 // deserializeService converts a SerializedService to a ClientService

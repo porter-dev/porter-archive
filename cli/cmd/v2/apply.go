@@ -181,7 +181,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	if applyResp.CLIAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_BUILD {
 		color.New(color.FgGreen).Printf("Building new image...\n") // nolint:errcheck,gosec
 
-		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID)
+		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, commitSHA)
 
 		reportBuildFailureInput := reportBuildFailureInput{
 			client:             client,

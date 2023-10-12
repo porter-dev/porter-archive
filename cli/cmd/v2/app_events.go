@@ -13,7 +13,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-func createBuildEvent(ctx context.Context, client api.Client, applicationName string, projectId uint, clusterId uint, deploymentTargetID string) (string, error) {
+func createBuildEvent(ctx context.Context, client api.Client, applicationName string, projectId uint, clusterId uint, deploymentTargetID string, commitSHA string) (string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-build-event")
 	defer span.End()
 
@@ -52,6 +52,8 @@ func createBuildEvent(ctx context.Context, client api.Client, applicationName st
 			req.Metadata["github_account_id"] = arid
 		}
 	}
+
+	req.Metadata["commit_sha"] = commitSHA
 
 	event, err := client.CreateOrUpdatePorterAppEvent(ctx, projectId, clusterId, applicationName, req)
 	if err != nil {

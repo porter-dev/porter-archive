@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import styled from "styled-components";
 
 import build from "assets/build.png";
@@ -16,6 +16,8 @@ import { StyledEventCard } from "./EventCard";
 import document from "assets/document.svg";
 import { PorterAppBuildEvent } from "../types";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import { match } from "ts-pattern";
+import pull_request_icon from "assets/pull_request_icon.svg";
 
 type Props = {
   event: PorterAppBuildEvent;
@@ -27,15 +29,51 @@ type Props = {
 const BuildEventCard: React.FC<Props> = ({ event, appName, projectId, clusterId }) => {
   const { porterApp } = useLatestRevision();
   const renderStatusText = (event: PorterAppBuildEvent) => {
-    switch (event.status) {
-      case "SUCCESS":
-        return <Text color={getStatusColor(event.status)}>Build succeeded</Text>;
-      case "FAILED":
-        return <Text color={getStatusColor(event.status)}>Build failed</Text>;
-      default:
-        return <Text color={getStatusColor(event.status)}>Build in progress...</Text>;
+    const color = getStatusColor(event.status);
+
+    if (gitCommitUrl && displayCommitSha) {
+      return (
+        <StatusContainer color={color}>
+          {match(event.status)
+            .with("SUCCESS", () => "Built")
+            .with("FAILED", () => "Failed to build")
+            .otherwise(() => "Building")
+          }
+          <Spacer inline x={0.25} />
+          <CommitContainer>
+            <Link to={gitCommitUrl} color={color} target="_blank">
+              <CommitIcon src={pull_request_icon} color={color}/>
+              <Code>{displayCommitSha}</Code>
+            </Link>
+          </CommitContainer> 
+        </StatusContainer> 
+      );
+    } else {
+      return (
+        <StatusContainer color={color}>
+          {match(event.status)
+            .with("SUCCESS", () => "Build successful")
+            .with("FAILED", () => "Build failed")
+            .otherwise(() => "Build in progress...")
+          }
+        </StatusContainer>
+      );
     }
   };
+
+  const gitCommitUrl = useMemo(() => {
+    if (porterApp.repo_name && event.metadata.commit_sha) {
+      return `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.commit_sha}`
+    }
+    return "";
+  }, [JSON.stringify(event), porterApp])
+
+  const displayCommitSha = useMemo(() => {
+    if (event.metadata.commit_sha) {
+      return event.metadata.commit_sha.slice(0, 7);
+    }
+    return "";
+  }, [JSON.stringify(event)]);
 
   const renderInfoCta = (event: PorterAppBuildEvent) => {
     switch (event.status) {
@@ -113,5 +151,43 @@ const BuildEventCard: React.FC<Props> = ({ event, appName, projectId, clusterId 
 export default BuildEventCard;
 
 const Wrapper = styled.div`
-  margin-top: -3px;
+  display: flex;
+  height: 20px;
+`;
+
+const Code = styled.span`
+  font-family: monospace;
+`;
+
+const CommitIcon = styled.img<{color: string}>`
+  height: 12px;
+  margin-right: 3px;
+  color: ${props => props.color};
+  path {
+    fill: ${props => props.color};
+  }
+`;
+
+const Svg = styled.svg<{ color: string, hoverColor?: string }>`
+  margin-left: px;
+  stroke: ${(props) => props.color};
+  stroke-width: 2;
+`;
+
+const StatusContainer = styled.div<{ color: string }>`
+  display: flex;
+  align-items: center;
+  color: ${props => props.color};
+  font-size: 13px;
+`;
+
+const CommitContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 5px;
+  :hover {
+    background: #ffffff11;
+  }
 `;

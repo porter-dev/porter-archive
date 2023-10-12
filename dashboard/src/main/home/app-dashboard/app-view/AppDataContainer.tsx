@@ -297,7 +297,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       // redirect to the default tab after save
       history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
     } catch (err) {
-      let message = "App update failed: unable to get error message";
+      let message = "App update failed: please try again or contact support@porter.run if the error persists.";
       let stack = "Unable to get error stack";
 
       if (axios.isAxiosError(err)) {

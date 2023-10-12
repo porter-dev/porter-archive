@@ -77,7 +77,7 @@ const Networking: React.FC<NetworkingProps> = ({ index, service, internalNetwork
         {...register(`app.services.${index}.port.value`)}
       />
       <Spacer y={0.5} />
-      {namespace && 
+      {namespace && appName &&
         <>
           <Spacer y={0.5} />
           <Text color="helper">

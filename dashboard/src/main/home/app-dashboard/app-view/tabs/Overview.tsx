@@ -75,8 +75,10 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
         serviceVersionStatus={serviceVersionStatus}
         maxCPU={currentClusterResources.maxCPU}
         maxRAM={currentClusterResources.maxRAM}
-        namespace={deploymentTarget.namespace}
-      />
+        internalNetworkingDetails={{
+          namespace: deploymentTarget.namespace,
+          appName: porterApp.name,
+        }}      />
       <Spacer y={0.75} />
       <Button
         type="submit"

@@ -19,10 +19,13 @@ type NetworkingProps = {
       type: "web";
     };
   };
-  namespace: string;
+  internalNetworkingDetails: {
+    namespace: string;
+    appName: string;
+  };
 };
 
-const Networking: React.FC<NetworkingProps> = ({ index, service, namespace }) => {
+const Networking: React.FC<NetworkingProps> = ({ index, service, internalNetworkingDetails: {namespace, appName} }) => {
   const { register, control, watch } = useFormContext<PorterAppFormData>();
 
   const privateService = watch(`app.services.${index}.config.private.value`);
@@ -31,16 +34,16 @@ const Networking: React.FC<NetworkingProps> = ({ index, service, namespace }) =>
 
   const internalURL = useMemo(() => {
     if (port) {
-      return `http://${service.name.value}.${namespace}.svc.cluster.local:${port}`;
+      return `http://${appName}-${service.name.value}.${namespace}.svc.cluster.local:${port}`;
     } 
-    return `http://${service.name.value}.${namespace}.svc.cluster.local`;
+    return `http://${appName}-${service.name.value}.${namespace}.svc.cluster.local`;
   }, [service.name.value, namespace, port]);
 
   const getApplicationURLText = () => {
     if (service.config.domains.length !== 0) {
       return (
         <Text>
-          {`Application URL${service.config.domains.length === 1 ? "" : "s"}: `}
+          {`External URL${service.config.domains.length === 1 ? "" : "s"}: `}
           {service.config.domains.map((d, i) => {
             return (
               <a href={prefixSubdomain(d.name.value)} target="_blank">
@@ -55,7 +58,7 @@ const Networking: React.FC<NetworkingProps> = ({ index, service, namespace }) =>
 
     return (
       <Text color="helper">
-        Application URL: Not generated yet. Porter will generate a URL for you
+        External URL: Not generated yet. Porter will generate a URL for you
         on next deploy.
       </Text>
     );
@@ -82,13 +85,13 @@ const Networking: React.FC<NetworkingProps> = ({ index, service, namespace }) =>
           </Text>
           <Spacer y={0.5} />
           <IdContainer>
-                    <Code>{internalURL}</Code>
-                    <CopyContainer>
-                        <CopyToClipboard text={internalURL}>
-                            <CopyIcon src={copy} alt="copy" />
-                        </CopyToClipboard>
-                    </CopyContainer>
-                </IdContainer>
+            <Code>{internalURL}</Code>
+            <CopyContainer>
+                <CopyToClipboard text={internalURL}>
+                    <CopyIcon src={copy} alt="copy" />
+                </CopyToClipboard>
+            </CopyContainer>
+          </IdContainer>
           <Spacer y={0.5} />
         </>
       }

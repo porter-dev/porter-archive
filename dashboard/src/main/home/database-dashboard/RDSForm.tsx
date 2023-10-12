@@ -51,7 +51,7 @@ const RDSForm: React.FC<Props> = ({
 
   useEffect(() => {
     if (currentStep === 1) {
-      setCurrentStep(2);
+      setCurrentStep(3);
     }
   }, [tier]);
 
@@ -91,27 +91,27 @@ const RDSForm: React.FC<Props> = ({
     for (let key in wildcard) {
       _.set(values, key, wildcard[key]);
     }
-    /* TODO: Helm installation
+
     api
       .deployAddon(
         "<token>",
         {
-          template_name: currentTemplate.name,
+          template_name: "rds-postgres",
           template_version: "latest",
           values: values,
           name,
         },
         {
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-          namespace: "default",
-          repo_url: currentTemplate?.repo_url || capabilities.default_addon_helm_repo_url,
+          id: currentProject?.id || -1,
+          cluster_id: currentCluster?.id || -1,
+          namespace: "ack-system",
+          repo_url: "https://chart-addons.dev.getporter.dev",
         }
       )
       .then((_) => {
-        window.analytics?.track("Deployed Add-on", {
-          name: currentTemplate.name,
-          namespace: "default",
+        window.analytics?.track("Deployed RDS", {
+          name,
+          namespace: "ack-system",
           values: values,
         });
         waitForHelmRelease();
@@ -120,15 +120,14 @@ const RDSForm: React.FC<Props> = ({
         let parsedErr = err?.response?.data?.error;
         err = parsedErr || err.message || JSON.stringify(err);
         setButtonStatus(err);
-        window.analytics?.track("Failed to Deploy Add-on", {
-          name: currentTemplate.name,
-          namespace: "default",
+        window.analytics?.track("Failed to Deploy RDS", {
+          name,
+          namespace: "ack-system",
           values: values,
           error: err,
         });
         return;
       });
-    */
   };
 
   const getStatus = () => {
@@ -300,13 +299,6 @@ const RDSForm: React.FC<Props> = ({
                     )}
                   </Container>
                 </Fieldset>
-                <Spacer y={1} />
-                <Button onClick={() => {
-                  setCredentialsSaved(true);
-                  setCurrentStep(2);
-                }}>
-                  Continue
-                </Button>
               </>,
               <>
                 <Text size={16}>Provision a database</Text>

@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
-import Container from "./Container";
-
 import copy from "assets/copy.svg";
 import check from "assets/check.svg";
+import Text from "./Text";
 
 type Props = {
   size?: number;
@@ -55,19 +54,19 @@ const ClickToCopy: React.FC<Props> = ({
     >
       {children}
       {showCopyPrompt && (
-        <CopyPrompt>
+        <>
           {copied ? (
-            <Container row>
+            <CopyPrompt width="80px">
               <Img small={true} src={check} />
-              Copied
-            </Container>
+              <Text>Copied</Text>
+            </CopyPrompt>
           ) : (
-            <Container>
+            <CopyPrompt width="120px">
               <Img src={copy} />
-              Click to copy
-            </Container>
+              <Text>Click to copy</Text>
+            </CopyPrompt>
           )}
-        </CopyPrompt>
+        </>
       )}
     </StyledClickToCopy>
   );
@@ -76,15 +75,16 @@ const ClickToCopy: React.FC<Props> = ({
 export default ClickToCopy;
 
 const Img = styled.img<{ small?: boolean }>`
-  > img {
-    height: ${props => props.small ? "10px" : "12px"};
-    margin-right: 5px;
-    opacity: 0.75;
-  }
+  height: ${props => props.small ? "10px" : "12px"};
+  margin-right: 5px;
 `;
 
-const CopyPrompt = styled.div`
+const CopyPrompt = styled.div<{ width: string }>`
   position: absolute;
+  width: ${props => props.width};
+  display: flex;
+  align-items: center;
+  justify-content: center;
   left: calc(100% + 10px);
   top: -4px;
   height: 28px;

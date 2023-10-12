@@ -190,13 +190,13 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 			deploymentTargetID: deploymentTargetID,
 			appRevisionID:      applyResp.AppRevisionId,
 			eventID:            eventID,
-			buildError:         err,
 			commitSHA:          commitSHA,
 			prNumber:           prNumber,
 		}
 
 		if commitSHA == "" {
 			err := errors.New("Build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI.")
+			reportBuildFailureInput.buildError = err
 			_ = reportBuildFailure(ctx, reportBuildFailureInput)
 			return err
 		}
@@ -204,6 +204,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		buildSettings, err := buildSettingsFromBase64AppProto(base64AppProto)
 		if err != nil {
 			err := fmt.Errorf("error getting build settings from base64 app proto: %w", err)
+			reportBuildFailureInput.buildError = err
 			_ = reportBuildFailure(ctx, reportBuildFailureInput)
 			return err
 		}
@@ -211,12 +212,14 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		currentAppRevisionResp, err := client.CurrentAppRevision(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID)
 		if err != nil {
 			err := fmt.Errorf("error getting current app revision: %w", err)
+			reportBuildFailureInput.buildError = err
 			_ = reportBuildFailure(ctx, reportBuildFailureInput)
 			return err
 		}
 
 		if currentAppRevisionResp == nil {
 			err := errors.New("current app revision is nil")
+			reportBuildFailureInput.buildError = err
 			_ = reportBuildFailure(ctx, reportBuildFailureInput)
 			return err
 		}
@@ -224,6 +227,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		appRevision := currentAppRevisionResp.AppRevision
 		if appRevision.B64AppProto == "" {
 			err := errors.New("current app revision b64 app proto is empty")
+			reportBuildFailureInput.buildError = err
 			_ = reportBuildFailure(ctx, reportBuildFailureInput)
 			return err
 		}
@@ -231,6 +235,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		currentImageTag, err := imageTagFromBase64AppProto(appRevision.B64AppProto)
 		if err != nil {
 			err := fmt.Errorf("error getting image tag from current app revision: %w", err)
+			reportBuildFailureInput.buildError = err
 			_ = reportBuildFailure(ctx, reportBuildFailureInput)
 			return err
 		}
@@ -241,6 +246,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		buildEnv, err := client.GetBuildEnv(ctx, cliConf.Project, cliConf.Cluster, appName, appRevision.ID)
 		if err != nil {
 			err := fmt.Errorf("error getting build env: %w", err)
+			reportBuildFailureInput.buildError = err
 			_ = reportBuildFailure(ctx, reportBuildFailureInput)
 			return err
 		}
@@ -250,6 +256,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		if buildOutput.Error != nil {
 			err := fmt.Errorf("error building app: %w", buildOutput.Error)
 			reportBuildFailureInput.buildLogs = buildOutput.Logs
+			reportBuildFailureInput.buildError = buildOutput.Error
 			_ = reportBuildFailure(ctx, reportBuildFailureInput)
 			return err
 		}

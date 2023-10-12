@@ -1,5 +1,5 @@
 import React, {useCallback, useContext, useEffect, useMemo, useState} from "react";
-import { FieldErrors, FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import {
   PorterAppFormData,
   SourceOptions,
@@ -39,9 +39,8 @@ import { Error as ErrorComponent } from "components/porter/Error";
 import _ from "lodash";
 import axios from "axios";
 import HelmEditorTab from "./tabs/HelmEditorTab";
-import HelmLatestValues from "../validate-apply/helm/HelmLatestValues";
 import HelmLatestValuesTab from "./tabs/HelmLatestValuesTab";
-import {Context} from "../../../../shared/Context";
+import { Context } from "shared/Context";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases

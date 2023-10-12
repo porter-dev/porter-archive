@@ -20,6 +20,7 @@ type ResourcesProps = {
   maxRAM: number;
   service: ClientService;
   isPredeploy?: boolean;
+  gpuNodes?: boolean;
 };
 
 const Resources: React.FC<ResourcesProps> = ({
@@ -27,6 +28,7 @@ const Resources: React.FC<ResourcesProps> = ({
   maxCPU,
   maxRAM,
   service,
+  gpuNodes,
   isPredeploy = false,
 }) => {
   const { control, register, watch, setValue } = useFormContext<PorterAppFormData>();
@@ -172,6 +174,40 @@ const Resources: React.FC<ResourcesProps> = ({
           />
         )}
       />
+      {!gpuNodes && (
+        <>
+          <Spacer y={1} />
+          <Controller
+            name={`app.services.${index}.gpuCoresNvidia`}
+            control={control}
+            render={({ field: { value, onChange } }) => (
+              <InputSlider
+                label="GPU Cores: "
+                unit="%"
+                min={0}
+                max={1}
+                step={.1}
+                value={value?.value.toString() ?? ".5"}
+                disabled={value?.readOnly}
+                width="300px"
+                setValue={(e) => {
+                  onChange({
+                    ...value,
+                    value: e,
+                  });
+                }}
+                disabledTooltip={
+                  value?.readOnly
+                    ? "You may only edit this field in your porter.yaml."
+                    : "Enable autoscaling to specify CPU threshold."
+                }
+              />
+            )}
+          />
+        </>
+      )
+
+      }
       {match(service.config)
         .with({ type: "job" }, () => null)
         .with({ type: "predeploy" }, () => null)
@@ -192,6 +228,7 @@ const Resources: React.FC<ResourcesProps> = ({
               {...register(`app.services.${index}.instances.value`)}
             />
             <Spacer y={1} />
+
             <Controller
               name={`app.services.${index}.config.autoscaling.enabled`}
               control={control}
@@ -215,6 +252,7 @@ const Resources: React.FC<ResourcesProps> = ({
                 </Checkbox>
               )}
             />
+
 
             {autoscalingEnabled.value && (
               <>

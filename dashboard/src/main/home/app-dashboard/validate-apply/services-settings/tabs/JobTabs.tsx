@@ -11,7 +11,7 @@ import MainTab from "./Main";
 import Resources from "./Resources";
 import { Controller, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
-import {ControlledInput} from "../../../../../../components/porter/ControlledInput";
+import { ControlledInput } from "../../../../../../components/porter/ControlledInput";
 
 interface Props {
   index: number;
@@ -23,6 +23,7 @@ interface Props {
   chart?: any;
   maxRAM: number;
   maxCPU: number;
+  gpuNodes?: boolean;
   isPredeploy?: boolean;
 }
 
@@ -30,6 +31,7 @@ const JobTabs: React.FC<Props> = ({
   index,
   service,
   maxRAM,
+  gpuNodes,
   maxCPU,
   isPredeploy,
 }) => {
@@ -63,6 +65,7 @@ const JobTabs: React.FC<Props> = ({
             index={index}
             maxCPU={maxCPU}
             maxRAM={maxRAM}
+            gpuNodes={gpuNodes}
             service={service}
             isPredeploy={isPredeploy}
           />
@@ -93,15 +96,15 @@ const JobTabs: React.FC<Props> = ({
             />
             <Spacer y={1} />
             <ControlledInput
-                type="text"
-                label="Timeout (seconds)"
-                placeholder="ex: 3600"
-                width="300px"
-                disabled={service.config.timeoutSeconds.readOnly}
-                disabledTooltip={
-                  "You may only edit this field in your porter.yaml."
-                }
-                {...register(`app.services.${index}.config.timeoutSeconds.value`)}
+              type="text"
+              label="Timeout (seconds)"
+              placeholder="ex: 3600"
+              width="300px"
+              disabled={service.config.timeoutSeconds.readOnly}
+              disabledTooltip={
+                "You may only edit this field in your porter.yaml."
+              }
+              {...register(`app.services.${index}.config.timeoutSeconds.value`)}
             />
           </>
         ))

@@ -52,11 +52,12 @@ export const useClusterResourceLimits = (
     // defaults indicate the resources assigned to new services
     defaultCPU: number,
     defaultRAM: number,
+    gpuNodes?: boolean,
 } => {
     const SMALL_INSTANCE_UPPER_BOUND = 0.75;
     const LARGE_INSTANCE_UPPER_BOUND = 0.9;
     const DEFAULT_MULTIPLIER = 0.125;
-
+    const [gpuNodes, setGpuNodes] = useState(true);
     const [maxCPU, setMaxCPU] = useState(
         AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"] * SMALL_INSTANCE_UPPER_BOUND
     ); //default is set to a t3 medium
@@ -117,7 +118,7 @@ export const useClusterResourceLimits = (
             // otherwise, we use 75%
             if (maxRAM > 4) {
                 maxMultiplier = LARGE_INSTANCE_UPPER_BOUND;
-            } 
+            }
             // round down to nearest 0.5 cores
             const newMaxCPU = Math.floor(maxCPU * maxMultiplier * 2) / 2;
             // round down to nearest 100 MB
@@ -137,6 +138,7 @@ export const useClusterResourceLimits = (
         maxRAM,
         defaultCPU,
         defaultRAM,
+        gpuNodes,
     }
 }
 

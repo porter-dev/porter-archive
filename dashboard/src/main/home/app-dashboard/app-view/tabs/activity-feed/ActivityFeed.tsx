@@ -178,7 +178,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
         );
     }
 
-    if (events != null && events.length === 0) {
+    if (events != null && events.length === 0 && numPages <= 1) {
         return (
             <Fieldset>
                 <Text size={16}>No events found for "{appName}"</Text>

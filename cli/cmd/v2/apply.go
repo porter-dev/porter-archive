@@ -572,6 +572,7 @@ func reportBuildFailure(ctx context.Context, inp reportBuildFailureInput) error 
 	if err != nil {
 		return err
 	}
+
 	buildMetadata := make(map[string]interface{})
 	buildMetadata["end_time"] = time.Now().UTC()
 

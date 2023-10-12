@@ -78,7 +78,8 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
         internalNetworkingDetails={{
           namespace: deploymentTarget.namespace,
           appName: porterApp.name,
-        }}      />
+        }}      
+      />
       <Spacer y={0.75} />
       <Button
         type="submit"

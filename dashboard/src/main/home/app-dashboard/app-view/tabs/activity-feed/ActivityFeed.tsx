@@ -178,7 +178,9 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
         );
     }
 
-    if (events != null && events.length === 0) {
+    // if all the events are hidden and there's only one page, show this no-events-found message
+    // else, users should be able to go to the next page for events
+    if (events != null && events.length === 0 && numPages <= 1) { 
         return (
             <Fieldset>
                 <Text size={16}>No events found for "{appName}"</Text>

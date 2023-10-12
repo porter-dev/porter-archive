@@ -280,7 +280,10 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
                 fieldArrayName={"app.services"}
                 maxCPU={currentClusterResources.maxCPU}
                 maxRAM={currentClusterResources.maxRAM}
-                namespace={deploymentTarget.namespace}
+                internalNetworkingDetails={{
+                  namespace: deploymentTarget.namespace,
+                  appName: porterApp.name,
+                }}
               />
             </>,
             <>

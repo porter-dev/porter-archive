@@ -27,7 +27,10 @@ interface ServiceProps {
   status?: PorterAppVersionStatus[];
   maxCPU: number;
   maxRAM: number;
-  namespace: string;
+  internalNetworkingDetails: {
+    namespace: string;
+    appName: string;
+  };
 }
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -38,7 +41,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   status,
   maxCPU,
   maxRAM,
-  namespace,
+  internalNetworkingDetails,
 }) => {
   const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
 
@@ -65,7 +68,13 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   const renderTabs = (service: ClientService) => {
     return match(service)
       .with({ config: { type: "web" } }, (svc) => (
-        <WebTabs index={index} service={svc} maxCPU={maxCPU} maxRAM={maxRAM} namespace={namespace} />
+        <WebTabs 
+          index={index} 
+          service={svc} 
+          maxCPU={maxCPU} 
+          maxRAM={maxRAM} 
+          internalNetworkingDetails={internalNetworkingDetails} 
+        />
       ))
       .with({ config: { type: "worker" } }, (svc) => (
         <WorkerTabs

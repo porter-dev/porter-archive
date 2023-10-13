@@ -64,7 +64,7 @@ func createBuildEvent(ctx context.Context, client api.Client, applicationName st
 	return event.ID, nil
 }
 
-func createPredeployEvent(ctx context.Context, client api.Client, applicationName string, projectId, clusterId uint, deploymentTargetID string, createdAt time.Time, appRevisionID string) (string, error) {
+func createPredeployEvent(ctx context.Context, client api.Client, applicationName string, projectId, clusterId uint, deploymentTargetID string, createdAt time.Time, appRevisionID string, commitSHA string) (string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-predeploy-event")
 	defer span.End()
 
@@ -76,6 +76,7 @@ func createPredeployEvent(ctx context.Context, client api.Client, applicationNam
 	}
 	req.Metadata["start_time"] = createdAt
 	req.Metadata["app_revision_id"] = appRevisionID
+	req.Metadata["commit_sha"] = commitSHA
 
 	event, err := client.CreateOrUpdatePorterAppEvent(ctx, projectId, clusterId, applicationName, req)
 	if err != nil {

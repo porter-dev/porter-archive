@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import styled from "styled-components";
 
 import build from "assets/build.png";
@@ -12,68 +12,44 @@ import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import Icon from "components/porter/Icon";
 import { getDuration, getStatusColor, getStatusIcon, triggerWorkflow } from '../utils';
-import { StyledEventCard } from "./EventCard";
+import { Code, ImageTagContainer, CommitIcon, StyledEventCard } from "./EventCard";
 import document from "assets/document.svg";
 import { PorterAppBuildEvent } from "../types";
-import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { match } from "ts-pattern";
 import pull_request_icon from "assets/pull_request_icon.svg";
+import { PorterAppRecord } from "main/home/app-dashboard/app-view/AppView";
 
 type Props = {
   event: PorterAppBuildEvent;
   appName: string;
   projectId: number;
   clusterId: number;
+  gitCommitUrl: string;
+  displayCommitSha: string;
+  porterApp: PorterAppRecord;
 };
 
-const BuildEventCard: React.FC<Props> = ({ event, appName, projectId, clusterId }) => {
-  const { porterApp } = useLatestRevision();
+const BuildEventCard: React.FC<Props> = ({ 
+  event, 
+  appName, 
+  projectId, 
+  clusterId,
+  gitCommitUrl,
+  displayCommitSha, 
+  porterApp,
+}) => {
   const renderStatusText = (event: PorterAppBuildEvent) => {
     const color = getStatusColor(event.status);
-
-    if (gitCommitUrl && displayCommitSha) {
-      return (
-        <StatusContainer color={color}>
-          {match(event.status)
-            .with("SUCCESS", () => "Built")
-            .with("FAILED", () => "Failed to build")
-            .otherwise(() => "Building")
-          }
-          <Spacer inline x={0.25} />
-          <CommitContainer>
-            <Link to={gitCommitUrl} color={color} target="_blank">
-              <CommitIcon src={pull_request_icon} color={color}/>
-              <Code>{displayCommitSha}</Code>
-            </Link>
-          </CommitContainer> 
-        </StatusContainer> 
-      );
-    } else {
-      return (
-        <StatusContainer color={color}>
-          {match(event.status)
-            .with("SUCCESS", () => "Build successful")
-            .with("FAILED", () => "Build failed")
-            .otherwise(() => "Build in progress...")
-          }
-        </StatusContainer>
-      );
-    }
+    return (
+      <StatusContainer color={color}>
+        {match(event.status)
+          .with("SUCCESS", () => "Build successful")
+          .with("FAILED", () => "Build failed")
+          .otherwise(() => "Build in progress...")
+        }
+      </StatusContainer>
+    );
   };
-
-  const gitCommitUrl = useMemo(() => {
-    if (porterApp.repo_name && event.metadata.commit_sha) {
-      return `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.commit_sha}`
-    }
-    return "";
-  }, [JSON.stringify(event), porterApp])
-
-  const displayCommitSha = useMemo(() => {
-    if (event.metadata.commit_sha) {
-      return event.metadata.commit_sha.slice(0, 7);
-    }
-    return "";
-  }, [JSON.stringify(event)]);
 
   const renderInfoCta = (event: PorterAppBuildEvent) => {
     switch (event.status) {
@@ -86,7 +62,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appName, projectId, clusterId 
               <Container row>
                 <Icon src={document} height="10px" />
                 <Spacer inline width="5px" />
-                View details
+                View build logs
               </Container>
             </Link>
             <Spacer inline x={1} />
@@ -126,6 +102,17 @@ const BuildEventCard: React.FC<Props> = ({ event, appName, projectId, clusterId 
           <Icon height="16px" src={build} />
           <Spacer inline width="10px" />
           <Text>Application build</Text>
+          {gitCommitUrl && displayCommitSha &&
+            <>
+              <Spacer inline x={0.5} />
+              <ImageTagContainer>
+                <Link to={gitCommitUrl} target="_blank" showTargetBlankIcon={false}>
+                  <CommitIcon src={pull_request_icon} />
+                  <Code>{displayCommitSha}</Code>
+                </Link>
+              </ImageTagContainer> 
+            </>
+          }
         </Container>
         <Container row>
           <Icon height="14px" src={run_for} />
@@ -153,25 +140,7 @@ export default BuildEventCard;
 const Wrapper = styled.div`
   display: flex;
   height: 20px;
-`;
-
-const Code = styled.span`
-  font-family: monospace;
-`;
-
-const CommitIcon = styled.img<{color: string}>`
-  height: 12px;
-  margin-right: 3px;
-  color: ${props => props.color};
-  path {
-    fill: ${props => props.color};
-  }
-`;
-
-const Svg = styled.svg<{ color: string, hoverColor?: string }>`
-  margin-left: px;
-  stroke: ${(props) => props.color};
-  stroke-width: 2;
+  margin-top: -3px;
 `;
 
 const StatusContainer = styled.div<{ color: string }>`
@@ -179,15 +148,4 @@ const StatusContainer = styled.div<{ color: string }>`
   align-items: center;
   color: ${props => props.color};
   font-size: 13px;
-`;
-
-const CommitContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  cursor: pointer;
-  padding: 3px 5px;
-  border-radius: 5px;
-  :hover {
-    background: #ffffff11;
-  }
 `;

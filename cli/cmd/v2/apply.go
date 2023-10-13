@@ -279,7 +279,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec
 
 		now := time.Now().UTC()
-		eventID, _ := createPredeployEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, now, applyResp.AppRevisionId)
+		eventID, _ := createPredeployEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, now, applyResp.AppRevisionId, commitSHA)
 		metadata := make(map[string]interface{})
 		eventStatus := types.PorterAppEventStatus_Success
 		for {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import styled from "styled-components";
 
 import pre_deploy from "assets/pre_deploy.png";
@@ -12,20 +12,30 @@ import Spacer from "components/porter/Spacer";
 import Icon from "components/porter/Icon";
 
 import { getDuration, getStatusColor, getStatusIcon, triggerWorkflow } from '../utils';
-import { StyledEventCard } from "./EventCard";
+import { Code, ImageTagContainer, CommitIcon, StyledEventCard } from "./EventCard";
 import Link from "components/porter/Link";
 import document from "assets/document.svg";
 import { PorterAppPreDeployEvent } from "../types";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import pull_request_icon from "assets/pull_request_icon.svg";
 
 type Props = {
   event: PorterAppPreDeployEvent;
   appName: string;
   projectId: number;
   clusterId: number;
+  gitCommitUrl: string;
+  displayCommitSha: string;
 };
 
-const PreDeployEventCard: React.FC<Props> = ({ event, appName, projectId, clusterId }) => {
+const PreDeployEventCard: React.FC<Props> = ({ 
+  event,
+  appName,
+  projectId, 
+  clusterId,
+  gitCommitUrl,
+  displayCommitSha, 
+}) => {
   const { porterApp } = useLatestRevision();
 
   const renderStatusText = (event: PorterAppPreDeployEvent) => {
@@ -48,6 +58,17 @@ const PreDeployEventCard: React.FC<Props> = ({ event, appName, projectId, cluste
           <Icon height="16px" src={pre_deploy} />
           <Spacer inline width="10px" />
           <Text>Application pre-deploy</Text>
+          {gitCommitUrl && displayCommitSha &&
+            <>
+              <Spacer inline x={0.5} />
+              <ImageTagContainer>
+                <Link to={gitCommitUrl} target="_blank" showTargetBlankIcon={false}>
+                  <CommitIcon src={pull_request_icon} />
+                  <Code>{displayCommitSha}</Code>
+                </Link>
+              </ImageTagContainer> 
+            </>
+          }
         </Container>
         <Container row>
           <Icon height="14px" src={run_for} />

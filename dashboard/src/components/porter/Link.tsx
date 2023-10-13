@@ -10,6 +10,7 @@ type Props = {
   hasunderline?: boolean;
   color?: string;
   hoverColor?: string;
+  showTargetBlankIcon?: boolean;
 };
 
 const Link: React.FC<Props> = ({
@@ -20,13 +21,14 @@ const Link: React.FC<Props> = ({
   hasunderline,
   color = "#ffffff",
   hoverColor,
+  showTargetBlankIcon = true,
 }) => {
   return (
     <LinkWrapper hoverColor={hoverColor} color={color}>
       {to ? (
         <StyledLink to={to} target={target} color={color}>
           {children}
-          {target === "_blank" && (
+          {target === "_blank" && showTargetBlankIcon && (
               <Svg color={color} hoverColor={hoverColor} data-testid="geist-icon" fill="none" height="1em" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" strokeLinejoin="round" stroke-width="2" viewBox="0 0 24 24" width="1em" data-darkreader-inline-stroke="" data-darkreader-inline-color=""><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"></path><path d="M15 3h6v6"></path><path d="M10 14L21 3"></path></Svg>
           )}
         </StyledLink>

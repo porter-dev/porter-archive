@@ -247,7 +247,7 @@ const Table: React.FC<TableProps> = ({
               {"<"}
             </PaginationAction>
             <PageCounter>
-              {currentPageIndex + 1} of {pageCount + 1}
+              {currentPageIndex + 1} of {pageCount ? pageCount : pageCount + 1}
             </PageCounter>
             <PaginationAction disabled={!canNextPage} onClick={() => {
               nextPage();

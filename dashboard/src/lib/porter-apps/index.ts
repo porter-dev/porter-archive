@@ -104,7 +104,7 @@ export const porterAppFormValidator = z
 
       return true;
     },
-    { message: "all services must include a run command", path: ["app", "services"] }
+    { message: "services using buildpacks must include a run command", path: ["app", "services"] }
   ).refine(
     ({ app, source }) => {
       if (source.type === "docker-registry" || app.build.method === "docker") {

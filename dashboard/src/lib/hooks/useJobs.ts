@@ -44,12 +44,15 @@ export const useJobs = (
         deploymentTargetId: string,
         selectedJobName: string,
     }
-) => {
+): {
+    jobRuns: JobRun[],
+    isLoadingJobRuns: boolean,
+} => {
     const [jobRuns, setJobRuns] = useState<JobRun[]>([]);
 
     const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
 
-    const { data } = useQuery(
+    const { data, isLoading: isLoadingJobRuns } = useQuery(
         ["jobRuns", appName, deploymentTargetId, revisionIdToNumber, selectedJobName],
         async () => {
             const res = await api.appJobs(
@@ -90,5 +93,6 @@ export const useJobs = (
 
     return {
         jobRuns,
+        isLoadingJobRuns,
     };
 };

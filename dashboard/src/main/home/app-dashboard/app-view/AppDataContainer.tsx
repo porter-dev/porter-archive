@@ -297,28 +297,26 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       // redirect to the default tab after save
       history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
     } catch (err) {
-      let message = "Unable to get error message";
+      let message = "App update failed: please try again or contact support@porter.run if the error persists.";
       let stack = "Unable to get error stack";
-      if (err instanceof Error) {
-        message = err.message;
+
+      if (axios.isAxiosError(err)) {
+        const parsed = z.object({error: z.string()}).safeParse(err.response?.data);
+        if (parsed.success) {
+          message = `App update failed: ${parsed.data.error}`;
+        }
         stack = err.stack ?? "(No error stack)";
-      }
+      } 
+
       updateAppStep({
         step: "porter-app-update-failure",
         errorMessage: message,
         appName: latestProto.name,
         errorStackTrace: stack,
       });
-
-      if (axios.isAxiosError(err)) {
-        setError("app", {
-          message: `App update failed: ${err.message}`,
-        });
-      } else {
-        setError("app", {
-          message: `App update failed: Please try again or contact support if the error persists.`,
-        });
-      }
+      setError("app", {
+        message,
+      });
     }
   });
 
@@ -366,7 +364,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
   const errorMessagesDeep = useMemo(() => {
     return Object.values(_.mapValues(errors, (error) => error?.message));
-  }, [errors]);
+  }, [JSON.stringify(errors)]);
 
   const buttonStatus = useMemo(() => {
     if (isSubmitting) {
@@ -461,7 +459,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [
     servicesFromYaml,
     currentTab,
-    latestProto,
+    JSON.stringify(latestProto),
     previewRevision,
     latestRevision.revision_number,
     appEnv,

@@ -396,11 +396,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         }
 
         if (appErrors.includes("services")) {
+          const serviceErrorMessage = "Service settings are not properly configured";
           if (errors.app?.services?.root?.message) {
-            return <Error message={errors?.app?.services?.root?.message} />;
+            return <Error message={`${serviceErrorMessage}: ${errors?.app?.services?.root?.message}`} />;
           }
           return (
-            <Error message={"Service settings are not properly configured."} />
+            <Error message={`${serviceErrorMessage}.`} />
           );
         }
       }

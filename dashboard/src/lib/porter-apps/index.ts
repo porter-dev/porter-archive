@@ -104,7 +104,7 @@ export const porterAppFormValidator = z
 
       return true;
     },
-    { message: "All services must include a run command", path: ["app", "services"] }
+    { message: "all services must include a run command", path: ["app", "services"] }
   );
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 

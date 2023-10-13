@@ -385,7 +385,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       return <Error message={deployError} />;
     }
 
-    // TODO: create a more unified way of parsing form/apply errors, unified with the logic in CreateApp
+    // TODO: create a more unified way of parsing form/apply errors, unified with the logic in AppDataContainer
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
       let errorMessage = "App could not be deployed as defined."

@@ -369,7 +369,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
-      let errorMessage = "App update failed. If the error persists, please contact support@porter.run."
+      console.log("errors", errors)
+      let errorMessage = "App update failed. Please try again. If the error persists, please contact support@porter.run."
       if (errorKeys.includes("app")) {
         const appErrors = Object.keys(errors.app ?? {});
         if (appErrors.includes("build")) {
@@ -383,6 +384,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             errorMessage = `${errorMessage} - ${serviceErrorMessage}`;
           }
           errorMessage = `${errorMessage}.`;
+        }
+
+        // this is the high level error message coming from the apply
+        if (appErrors.includes("message")) {
+          errorMessage = errors.app?.message ?? errorMessage;
         }
       }
 
@@ -400,7 +406,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     }
 
     return "";
-  }, [isSubmitting, errors]);
+  }, [isSubmitting, JSON.stringify(errors)]);
 
   const tabs = useMemo(() => {
     const base = [

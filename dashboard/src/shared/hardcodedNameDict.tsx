@@ -28,6 +28,7 @@ const hardcodedNames: { [key: string]: string } = {
   keda: "KEDA",
   "grafana-agent": "Grafana Agent",
   "ecr-secrets-updater": "ECR Secrets Updater",
+  "nri-bundle": "New Relic",
 };
 
 const hardcodedIcons: { [key: string]: string } = {

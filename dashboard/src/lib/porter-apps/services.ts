@@ -218,84 +218,57 @@ export function defaultSerialized({
 // A SerializedService holds just the values of a ClientService
 // These values can be used to create a protobuf Service
 export function serializeService(service: ClientService): SerializedService {
-  return match(service.config)
-    .with({ type: "web" }, (config) =>
-      Object.freeze({
-        name: service.name.value,
-        run: service.run.value,
-        instances: service.instances.value,
-        port: service.port.value,
-        cpuCores: service.cpuCores.value,
-        ramMegabytes: service.ramMegabytes.value,
-        smartOptimization: service.smartOptimization?.value,
-        config: {
-          type: "web" as const,
-          autoscaling: serializeAutoscaling({
-            autoscaling: config.autoscaling,
-          }),
-          healthCheck: serializeHealth({ health: config.healthCheck }),
-          domains: config.domains.map((domain) => ({
-            name: domain.name.value,
-          })),
-          ingressAnnotations: Object.fromEntries(
-            config.ingressAnnotations
-              .filter((a) => a.key.length > 0 && a.value.length > 0)
-              .map((annotation) => [annotation.key, annotation.value])
-          ),
-          private: config.private?.value,
-        },
-      })
-    )
-    .with({ type: "worker" }, (config) =>
-      Object.freeze({
-        name: service.name.value,
-        run: service.run.value,
-        instances: service.instances.value,
-        port: service.port.value,
-        cpuCores: service.cpuCores.value,
-        ramMegabytes: service.ramMegabytes.value,
-        smartOptimization: service.smartOptimization?.value,
-        config: {
-          type: "worker" as const,
-          autoscaling: serializeAutoscaling({
-            autoscaling: config.autoscaling,
-          }),
-        },
-      })
-    )
-    .with({ type: "job" }, (config) =>
-      Object.freeze({
-        name: service.name.value,
-        run: service.run.value,
-        instances: service.instances.value,
-        port: service.port.value,
-        cpuCores: service.cpuCores.value,
-        ramMegabytes: service.ramMegabytes.value,
-        smartOptimization: service.smartOptimization?.value,
-        config: {
-          type: "job" as const,
-          allowConcurrent: config.allowConcurrent?.value,
-          cron: config.cron.value,
-          suspendCron: config.suspendCron?.value,
-          timeoutSeconds: config.timeoutSeconds.value,
-        },
-      })
-    )
-    .with({ type: "predeploy" }, () =>
-      Object.freeze({
-        name: service.name.value,
-        run: service.run.value,
-        instances: service.instances.value,
-        port: service.port.value,
-        cpuCores: service.cpuCores.value,
-        smartOptimization: service.smartOptimization?.value,
-        ramMegabytes: service.ramMegabytes.value,
-        config: {
-          type: "predeploy" as const,
-        },
-      })
-    )
-    .exhaustive();
+  return Object.freeze({
+    name: service.name.value,
+    run: service.run.value,
+    instances: service.instances.value,
+    port: service.port.value,
+    cpuCores: service.cpuCores.value,
+    ramMegabytes: Math.round(service.ramMegabytes.value), // RAM must be an integer
+    smartOptimization: service.smartOptimization?.value,
+    config: match(service.config)
+      .with({ type: "web" }, (config) =>
+        Object.freeze({
+            type: "web" as const,
+            autoscaling: serializeAutoscaling({
+              autoscaling: config.autoscaling,
+            }),
+            healthCheck: serializeHealth({ health: config.healthCheck }),
+            domains: config.domains.map((domain) => ({
+              name: domain.name.value,
+            })),
+            ingressAnnotations: Object.fromEntries(
+              config.ingressAnnotations
+                .filter((a) => a.key.length > 0 && a.value.length > 0)
+                .map((annotation) => [annotation.key, annotation.value])
+            ),
+            private: config.private?.value,
+        })
+      )
+      .with({ type: "worker" }, (config) =>
+        Object.freeze({
+            type: "worker" as const,
+            autoscaling: serializeAutoscaling({
+              autoscaling: config.autoscaling,
+            }),
+        })
+      )
+      .with({ type: "job" }, (config) =>
+        Object.freeze({
+            type: "job" as const,
+            allowConcurrent: config.allowConcurrent?.value,
+            cron: config.cron.value,
+            suspendCron: config.suspendCron?.value,
+            timeoutSeconds: config.timeoutSeconds.value,
+        })
+      )
+      .with({ type: "predeploy" }, () =>
+        Object.freeze({
+            type: "predeploy" as const,
+        })
+      )
+      .exhaustive(),
+  });
 }
 
 // deserializeService converts a SerializedService to a ClientService

@@ -367,6 +367,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       return "loading";
     }
 
+    // TODO: create a more unified way of parsing form/apply errors, unified with the logic in CreateApp
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
       console.log("errors", errors)

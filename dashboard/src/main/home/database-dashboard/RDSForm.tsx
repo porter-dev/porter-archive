@@ -43,8 +43,6 @@ const RDSForm: React.FC<Props> = ({
   const [dbName, setDbName] = useState<string>("postgres");
   const [dbPassword, setDbPassword] = useState<string>(uuidv4());
   const [dbUsername, setDbUsername] = useState<string>("postgres");
-  const [cpu, setCpu] = useState<number>(0);
-  const [ram, setRam] = useState<number>(0);
   const [storage, setStorage] = useState<number>(0);
   const [tier, setTier] = useState<string>("");
   const [hidePassword, setHidePassword] = useState<boolean>(true);
@@ -71,7 +69,7 @@ const RDSForm: React.FC<Props> = ({
         .then((res) => {
           if (res?.data?.version) {
             setButtonStatus("success");
-            pushFiltered(props, "/addons", ["project_id"], {
+            pushFiltered(props, "/databases", ["project_id"], {
               cluster: currentCluster?.name,
             });
           } else {
@@ -86,47 +84,66 @@ const RDSForm: React.FC<Props> = ({
 
   const deploy = async (wildcard?: any) => {
     setButtonStatus("loading");
-    
-    let values: any = {};
-    for (let key in wildcard) {
-      _.set(values, key, wildcard[key]);
-    }
 
-    api
-      .deployAddon(
-        "<token>",
-        {
-          template_name: "rds-postgres",
-          template_version: "latest",
-          values: values,
-          name,
-        },
-        {
-          id: currentProject?.id || -1,
-          cluster_id: currentCluster?.id || -1,
-          namespace: "ack-system",
-          repo_url: "https://chart-addons.dev.getporter.dev",
-        }
-      )
-      .then((_) => {
-        window.analytics?.track("Deployed RDS", {
-          name,
-          namespace: "ack-system",
-          values: values,
+    api.getContracts("<token>", {}, { project_id: currentProject?.id || -1 })
+      .then(({ data }) => {
+        const filtered_data = data.filter((x: any) => {
+          return x.cluster_id === currentCluster?.id || -1;
         });
-        waitForHelmRelease();
+        let contract = filtered_data[0]?.base64_contract && JSON.parse(atob(filtered_data[0]?.base64_contract));
+        let region = contract?.cluster?.eksKind?.region;
+
+        let values = {
+          config: {
+            name,
+            awsRegion: region || "us-west-1",
+            masterUserPassword: dbPassword,
+            allocatedStorage: storage,
+            instanceClass: tier,
+          }
+        }
+    
+        api
+          .deployAddon(
+            "<token>",
+            {
+              template_name: "rds-postgresql",
+              template_version: "latest",
+              values: values,
+              name,
+            },
+            {
+              id: currentProject?.id || -1,
+              cluster_id: currentCluster?.id || -1,
+              namespace: "ack-system",
+              repo_url: "https://chart-addons.getporter.dev",
+            }
+          )
+          .then((_) => {
+            window.analytics?.track("Deployed RDS", {
+              name,
+              namespace: "ack-system",
+              values: values,
+            });
+            waitForHelmRelease();
+          })
+          .catch((err) => {
+            let parsedErr = err?.response?.data?.error;
+            err = parsedErr || err.message || JSON.stringify(err);
+            setButtonStatus(err);
+            window.analytics?.track("Failed to Deploy RDS", {
+              name,
+              namespace: "ack-system",
+              values: values,
+              error: err,
+            });
+            return;
+          });
+
       })
       .catch((err) => {
-        let parsedErr = err?.response?.data?.error;
-        err = parsedErr || err.message || JSON.stringify(err);
-        setButtonStatus(err);
-        window.analytics?.track("Failed to Deploy RDS", {
-          name,
-          namespace: "ack-system",
-          values: values,
-          error: err,
-        });
-        return;
+        alert("f me up");
+        console.error(err);
       });
   };
 
@@ -195,12 +212,10 @@ const RDSForm: React.FC<Props> = ({
                 </Text>
                 <Spacer height="20px" />
                 <ResourceOption
-                  selected={tier === "small"}
+                  selected={tier === "db.t4g.small"}
                   onClick={() => {
-                    setCpu(2);
-                    setRam(2);
                     setStorage(30);
-                    setTier("small");
+                    setTier("db.t4g.small");
                   }}
                 >
                   <Container row>
@@ -212,35 +227,31 @@ const RDSForm: React.FC<Props> = ({
                 </ResourceOption>
                 <Spacer height="15px" />
                 <ResourceOption
-                  selected={tier === "medium"}
+                  selected={tier === "db.t4g.medium"}
                   onClick={() => {
-                    setCpu(4);
-                    setRam(4);
                     setStorage(100);
-                    setTier("medium");
+                    setTier("db.t4g.medium");
                   }}
                 >
                   <Container row>
                     <Text>Medium</Text>
                     <Spacer inline width="5px" />
-                    <Text color="helper">- 4 CPU, 4 GB RAM</Text>
+                    <Text color="helper">- 2 CPU, 4 GB RAM</Text>
                   </Container>
                   <StorageTag>100 GB Storage</StorageTag>
                 </ResourceOption>
                 <Spacer height="15px" />
                 <ResourceOption
-                  selected={tier === "large"}
+                  selected={tier === "db.t4g.large"}
                   onClick={() => {
-                    setCpu(8);
-                    setRam(8);
                     setStorage(256);
-                    setTier("large");
+                    setTier("db.t4g.large");
                   }}
                 >
                   <Container row>
                     <Text>Large</Text>
                     <Spacer inline width="5px" />
-                    <Text color="helper">- 8 CPU, 8 GB RAM</Text>
+                    <Text color="helper">- 2 CPU, 8 GB RAM</Text>
                   </Container>
                   <StorageTag>256 GB Storage</StorageTag>
                 </ResourceOption>
@@ -303,7 +314,11 @@ const RDSForm: React.FC<Props> = ({
               <>
                 <Text size={16}>Provision a database</Text>
                 <Spacer y={0.5} />
-                <Button>
+                <Button
+                  onClick={deploy}
+                  disabled={buttonStatus === "loading"}
+                  status={getStatus()}
+                >
                   Create database
                 </Button>
               </>

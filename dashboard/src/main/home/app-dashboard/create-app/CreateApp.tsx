@@ -388,7 +388,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
       if (errorKeys.includes("app")) {
-        const appErrors = Object.keys(errors?.app ?? {});
+        const appErrors = Object.keys(errors.app ?? {});
         if (appErrors.includes("build")) {
           return (
             <Error message={"Build settings are not properly configured."} />
@@ -396,6 +396,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         }
 
         if (appErrors.includes("services")) {
+          if (errors.app?.services?.root?.message) {
+            return <Error message={errors?.app?.services?.root?.message} />;
+          }
           return (
             <Error message={"Service settings are not properly configured."} />
           );

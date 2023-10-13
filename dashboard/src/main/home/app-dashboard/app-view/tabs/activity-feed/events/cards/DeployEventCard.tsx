@@ -139,8 +139,6 @@ const DeployEventCard: React.FC<Props> = ({
         <Container row>
           <Icon height="16px" src={deploy} />
           <Spacer inline width="10px" />
-          {/* <Text>Application version no. {revisionIdToNumber[event.metadata.app_revision_id]}</Text>
-           */}
           <Text>Application deploy</Text>
           {gitCommitUrl && displayCommitSha ?
             <>

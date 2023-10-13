@@ -387,25 +387,29 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
+      let errorMessage = "App could not be deployed as defined."
       if (errorKeys.includes("app")) {
         const appErrors = Object.keys(errors.app ?? {});
         if (appErrors.includes("build")) {
-          return (
-            <Error message={"Build settings are not properly configured."} />
-          );
+          errorMessage = "Build settings are not properly configured."
         }
 
         if (appErrors.includes("services")) {
-          const serviceErrorMessage = "Service settings are not properly configured";
+          errorMessage = "Service settings are not properly configured";
           if (errors.app?.services?.root?.message) {
-            return <Error message={`${serviceErrorMessage}: ${errors?.app?.services?.root?.message}.`} />;
+            errorMessage = `${errorMessage} - ${errors?.app?.services?.root?.message}`;
           }
-          return (
-            <Error message={`${serviceErrorMessage}.`} />
-          );
+          errorMessage = `${errorMessage}.`;
         }
       }
-      return <Error message={"App could not be deployed as defined."} />;
+
+      updateAppStep({
+        step: "stack-launch-failure",
+        errorMessage: `Form validation error: ${errorMessage}`,
+        appName: name.value,
+      });
+
+      return <Error message={errorMessage} maxWidth="600px" />;
     }
 
     return;

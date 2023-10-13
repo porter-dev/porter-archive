@@ -362,21 +362,37 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     onSubmit();
   }, [onSubmit, setConfirmDeployModalOpen]);
 
-  const errorMessagesDeep = useMemo(() => {
-    return Object.values(_.mapValues(errors, (error) => error?.message));
-  }, [JSON.stringify(errors)]);
-
   const buttonStatus = useMemo(() => {
     if (isSubmitting) {
       return "loading";
     }
 
-    if (errorMessagesDeep.length > 0) {
-      return (
-        <ErrorComponent
-          message={`App update failed. ${errorMessagesDeep[0]}`}
-        />
-      );
+    const errorKeys = Object.keys(errors);
+    if (errorKeys.length > 0) {
+      let errorMessage = "App update failed. If the error persists, please contact support@porter.run."
+      if (errorKeys.includes("app")) {
+        const appErrors = Object.keys(errors.app ?? {});
+        if (appErrors.includes("build")) {
+          errorMessage = "Build settings are not properly configured."
+        }
+
+        if (appErrors.includes("services")) {
+          errorMessage = "Service settings are not properly configured";
+          if (errors.app?.services?.root?.message || errors.app?.services?.message) {
+            const serviceErrorMessage = errors.app?.services?.root?.message ?? errors.app?.services?.message;
+            errorMessage = `${errorMessage} - ${serviceErrorMessage}`;
+          }
+          errorMessage = `${errorMessage}.`;
+        }
+      }
+
+      updateAppStep({
+        step: "porter-app-update-failure",
+        errorMessage: `Form validation error: ${errorMessage}`,
+        appName: latestProto.name,
+      });
+
+      return <ErrorComponent message={errorMessage} maxWidth="600px" />;
     }
 
     if (isSubmitSuccessful) {
@@ -384,7 +400,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     }
 
     return "";
-  }, [isSubmitting, errorMessagesDeep]);
+  }, [isSubmitting, errors]);
 
   const tabs = useMemo(() => {
     const base = [

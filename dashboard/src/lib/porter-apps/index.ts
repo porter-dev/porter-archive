@@ -104,7 +104,7 @@ export const porterAppFormValidator = z
 
       return true;
     },
-    { message: "services using buildpacks must include a run command", path: ["app", "services"] }
+    { message: "if building with buildpacks, all services must include a run command. Make sure all services contain a run command or change your build method to Docker in build settings", path: ["app", "services"] }
   ).refine(
     ({ app, source }) => {
       if (source.type === "docker-registry" || app.build.method === "docker") {
@@ -113,7 +113,7 @@ export const porterAppFormValidator = z
 
       return true;
     },
-    { message: "Docker service must not include `docker run` in its start command; instead, leave the start command empty", path: ["app", "services"] }
+    { message: "if using Docker registry or building via a Dockerfile, service must not include `docker run` in its start command; instead, leave the start command empty", path: ["app", "services"] }
   );
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 

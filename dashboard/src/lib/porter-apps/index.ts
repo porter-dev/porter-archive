@@ -104,7 +104,16 @@ export const porterAppFormValidator = z
 
       return true;
     },
-    { message: "all services must include a run command", path: ["app", "services"] }
+    { message: "all services must include a run command" }
+  ).refine(
+    ({ app, source }) => {
+      if (source.type === "docker-registry" || app.build.method === "docker") {
+        return app.services.every((svc) => !svc.run.value.startsWith("docker run "));
+      }
+
+      return true;
+    },
+    { message: "services deploying from Docker do not need to include `docker run` in start commands; instead, leave the start command empty" }
   );
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 

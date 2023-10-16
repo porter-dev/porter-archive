@@ -3,13 +3,11 @@ import Text from "components/porter/Text";
 import React from "react";
 import BuildpackList from "./BuildpackList";
 import AddCustomBuildpackComponent from "./AddCustomBuildpack";
-import Icon from "components/porter/Icon";
 import Button from "components/porter/Button";
 import Modal from "components/porter/Modal";
 import styled from "styled-components";
-import Select from "components/porter/Select";
 import { Buildpack } from "main/home/app-dashboard/types/buildpack";
-import { Controller, useFieldArray, useFormContext } from "react-hook-form";
+import {  useFieldArray, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import { BuildOptions } from "lib/porter-apps/build";
 

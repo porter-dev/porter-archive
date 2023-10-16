@@ -142,7 +142,7 @@ const Resources: React.FC<ResourcesProps> = ({
                 setValue(
                   `app.services.${index}.ramMegabytes`, {
                   readOnly: false,
-                  value: closestMultiplier(0, maxCPU, value.value) * maxRAM
+                  value: Number((closestMultiplier(0, maxCPU, value.value) * maxRAM).toFixed(0))
                 });
               }
               onChange({

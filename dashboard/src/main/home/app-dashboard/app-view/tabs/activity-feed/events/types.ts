@@ -26,11 +26,13 @@ const porterAppBuildEventMetadataValidator = z.object({
     action_run_id: z.number().optional(),
     github_account_id: z.number().optional(),
     end_time: z.string().optional(),
+    commit_sha: z.string().optional(),
 })
 const porterAppPreDeployEventMetadataValidator = z.object({
     start_time: z.string(),
     end_time: z.string().optional(),
     app_revision_id: z.string(),
+    commit_sha: z.string().optional(),
 });
 export const porterAppEventValidator = z.discriminatedUnion("type", [
     z.object({

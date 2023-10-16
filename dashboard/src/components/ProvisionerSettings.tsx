@@ -98,6 +98,7 @@ const machineTypeOptions = [
 
 const defaultCidrVpc = "10.78.0.0/16"
 const defaultCidrServices = "172.20.0.0/16"
+const defaultClusterVersion = "v1.24.0"
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
@@ -142,7 +143,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   >([]);
   const [cidrRangeVPC, setCidrRangeVPC] = useState(defaultCidrVpc);
   const [cidrRangeServices, setCidrRangeServices] = useState(defaultCidrServices);
-  const [clusterVersion, setClusterVersion] = useState("v1.24.0");
+  const [clusterVersion, setClusterVersion] = useState(defaultClusterVersion);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
@@ -306,7 +307,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           case: "eksKind",
           value: new EKS({
             clusterName,
-            clusterVersion: clusterVersion || "v1.24.0",
+            clusterVersion: clusterVersion || defaultClusterVersion,
             cidrRange: cidrRangeVPC || defaultCidrVpc, // deprecated in favour of network.cidrRangeVPC: can be removed after december 2023
             region: awsRegion,
             loadBalancer: loadBalancerObj,

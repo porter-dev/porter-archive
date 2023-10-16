@@ -717,6 +717,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/rollback -> porter_app.NewRollbackAppRevisionHandler
+	rollbackAppRevisionEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/rollback", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	rollbackAppRevisionHandler := porter_app.NewRollbackAppRevisionHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: rollbackAppRevisionEndpoint,
+		Handler:  rollbackAppRevisionHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/update-image -> porter_app.NewUpdateImageHandler
 	updatePorterAppImageEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -1354,6 +1383,35 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: createAppTemplateEndpoint,
 		Handler:  createAppTemplateHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/helm-values -> porter_app.NewAppHelmValuesHandler
+	appHelmValuesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/helm-values", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appHelmValuesHandler := porter_app.NewAppHelmValuesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appHelmValuesEndpoint,
+		Handler:  appHelmValuesHandler,
 		Router:   r,
 	})
 

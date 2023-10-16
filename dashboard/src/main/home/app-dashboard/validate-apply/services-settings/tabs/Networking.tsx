@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Spacer from "components/porter/Spacer";
 import { ClientService, prefixSubdomain } from "lib/porter-apps/services";
@@ -8,6 +8,9 @@ import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
 import CustomDomains from "./CustomDomains";
 import IngressCustomAnnotations from "./IngressCustomAnnotations";
+import styled from "styled-components";
+import CopyToClipboard from "components/CopyToClipboard";
+import copy from "assets/copy-left.svg";
 
 type NetworkingProps = {
   index: number;
@@ -16,18 +19,31 @@ type NetworkingProps = {
       type: "web";
     };
   };
+  internalNetworkingDetails: {
+    namespace: string;
+    appName: string;
+  };
 };
 
-const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
+const Networking: React.FC<NetworkingProps> = ({ index, service, internalNetworkingDetails: {namespace, appName} }) => {
   const { register, control, watch } = useFormContext<PorterAppFormData>();
 
   const privateService = watch(`app.services.${index}.config.private.value`);
+
+  const port = watch(`app.services.${index}.port.value`);
+
+  const internalURL = useMemo(() => {
+    if (port) {
+      return `http://${appName}-${service.name.value}.${namespace}.svc.cluster.local:${port}`;
+    } 
+    return `http://${appName}-${service.name.value}.${namespace}.svc.cluster.local`;
+  }, [service.name.value, namespace, port]);
 
   const getApplicationURLText = () => {
     if (service.config.domains.length !== 0) {
       return (
         <Text>
-          {`Application URL${service.config.domains.length === 1 ? "" : "s"}: `}
+          {`External URL${service.config.domains.length === 1 ? "" : "s"}: `}
           {service.config.domains.map((d, i) => {
             return (
               <a href={prefixSubdomain(d.name.value)} target="_blank">
@@ -42,7 +58,7 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
 
     return (
       <Text color="helper">
-        Application URL: Not generated yet. Porter will generate a URL for you
+        External URL: Not generated yet. Porter will generate a URL for you
         on next deploy.
       </Text>
     );
@@ -60,7 +76,26 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
         disabledTooltip={"You may only edit this field in your porter.yaml."}
         {...register(`app.services.${index}.port.value`)}
       />
-      <Spacer y={1} />
+      <Spacer y={0.5} />
+      {namespace && appName &&
+        <>
+          <Spacer y={0.5} />
+          <Text color="helper">
+            Internal URL (for networking between services of this application): 
+          </Text>
+          <Spacer y={0.5} />
+          <IdContainer>
+            <Code>{internalURL}</Code>
+            <CopyContainer>
+                <CopyToClipboard text={internalURL}>
+                    <CopyIcon src={copy} alt="copy" />
+                </CopyToClipboard>
+            </CopyContainer>
+          </IdContainer>
+          <Spacer y={0.5} />
+        </>
+      }
+      <Spacer y={0.5} />
       <Controller
         name={`app.services.${index}.config.private.value`}
         control={control}
@@ -114,3 +149,36 @@ const Networking: React.FC<NetworkingProps> = ({ index, service }) => {
 };
 
 export default Networking;
+
+const Code = styled.span`
+  font-family: monospace;
+`;
+
+const IdContainer = styled.div`
+    background: #26292E;  
+    border-radius: 5px;
+    padding: 10px;
+    display: flex;
+    width: 550px;
+    border-radius: 5px;
+    border: 1px solid ${({ theme }) => theme.border};
+    align-items: center;
+    user-select: text;
+`;
+
+const CopyContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+`;
+
+const CopyIcon = styled.img`
+  cursor: pointer;
+  margin-left: 5px;
+  margin-right: 5px;
+  width: 15px;
+  height: 15px;
+  :hover {
+    opacity: 0.8;
+  }
+`;

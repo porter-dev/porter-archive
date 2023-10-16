@@ -12,29 +12,43 @@ import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import Icon from "components/porter/Icon";
 import { getDuration, getStatusColor, getStatusIcon, triggerWorkflow } from '../utils';
-import { StyledEventCard } from "./EventCard";
+import { Code, ImageTagContainer, CommitIcon, StyledEventCard } from "./EventCard";
 import document from "assets/document.svg";
 import { PorterAppBuildEvent } from "../types";
-import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import { match } from "ts-pattern";
+import pull_request_icon from "assets/pull_request_icon.svg";
+import { PorterAppRecord } from "main/home/app-dashboard/app-view/AppView";
 
 type Props = {
   event: PorterAppBuildEvent;
   appName: string;
   projectId: number;
   clusterId: number;
+  gitCommitUrl: string;
+  displayCommitSha: string;
+  porterApp: PorterAppRecord;
 };
 
-const BuildEventCard: React.FC<Props> = ({ event, appName, projectId, clusterId }) => {
-  const { porterApp } = useLatestRevision();
+const BuildEventCard: React.FC<Props> = ({ 
+  event, 
+  appName, 
+  projectId, 
+  clusterId,
+  gitCommitUrl,
+  displayCommitSha, 
+  porterApp,
+}) => {
   const renderStatusText = (event: PorterAppBuildEvent) => {
-    switch (event.status) {
-      case "SUCCESS":
-        return <Text color={getStatusColor(event.status)}>Build succeeded</Text>;
-      case "FAILED":
-        return <Text color={getStatusColor(event.status)}>Build failed</Text>;
-      default:
-        return <Text color={getStatusColor(event.status)}>Build in progress...</Text>;
-    }
+    const color = getStatusColor(event.status);
+    return (
+      <StatusContainer color={color}>
+        {match(event.status)
+          .with("SUCCESS", () => "Build successful")
+          .with("FAILED", () => "Build failed")
+          .otherwise(() => "Build in progress...")
+        }
+      </StatusContainer>
+    );
   };
 
   const renderInfoCta = (event: PorterAppBuildEvent) => {
@@ -48,7 +62,7 @@ const BuildEventCard: React.FC<Props> = ({ event, appName, projectId, clusterId 
               <Container row>
                 <Icon src={document} height="10px" />
                 <Spacer inline width="5px" />
-                View details
+                View build logs
               </Container>
             </Link>
             <Spacer inline x={1} />
@@ -88,6 +102,17 @@ const BuildEventCard: React.FC<Props> = ({ event, appName, projectId, clusterId 
           <Icon height="16px" src={build} />
           <Spacer inline width="10px" />
           <Text>Application build</Text>
+          {gitCommitUrl && displayCommitSha &&
+            <>
+              <Spacer inline x={0.5} />
+              <ImageTagContainer>
+                <Link to={gitCommitUrl} target="_blank" showTargetBlankIcon={false}>
+                  <CommitIcon src={pull_request_icon} />
+                  <Code>{displayCommitSha}</Code>
+                </Link>
+              </ImageTagContainer> 
+            </>
+          }
         </Container>
         <Container row>
           <Icon height="14px" src={run_for} />
@@ -113,5 +138,14 @@ const BuildEventCard: React.FC<Props> = ({ event, appName, projectId, clusterId 
 export default BuildEventCard;
 
 const Wrapper = styled.div`
+  display: flex;
+  height: 20px;
   margin-top: -3px;
+`;
+
+const StatusContainer = styled.div<{ color: string }>`
+  display: flex;
+  align-items: center;
+  color: ${props => props.color};
+  font-size: 13px;
 `;

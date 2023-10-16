@@ -51,6 +51,10 @@ type ServiceListProps = {
   serviceVersionStatus?: Record<string, PorterAppVersionStatus[]>;
   maxCPU: number;
   maxRAM: number;
+  internalNetworkingDetails?: {
+    namespace: string;
+    appName: string;
+  };
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
@@ -62,6 +66,10 @@ const ServiceList: React.FC<ServiceListProps> = ({
   serviceVersionStatus,
   maxCPU,
   maxRAM,
+  internalNetworkingDetails = {
+    namespace: "",
+    appName: "",
+  },
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
@@ -195,6 +203,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 status={serviceVersionStatus?.[svc.name.value]}
                 maxCPU={maxCPU}
                 maxRAM={maxRAM}
+                internalNetworkingDetails={internalNetworkingDetails}
               />
             ) : null;
           })}

@@ -229,8 +229,6 @@ func addPorterSubdomainsIfNecessary(ctx context.Context, app v2.PorterApp, deplo
 	ctx, span := telemetry.NewSpan(ctx, "add-porter-subdomains-if-necessary")
 	defer span.End()
 
-	services := make([]v2.Service, len(app.Services))
-
 	for _, service := range app.Services {
 		if service.Type == v2.ServiceType_Web {
 			if service.Private == nil || !*service.Private {
@@ -256,10 +254,7 @@ func addPorterSubdomainsIfNecessary(ctx context.Context, app v2.PorterApp, deplo
 				}
 			}
 		}
-
-		services = append(services, service)
 	}
-	app.Services = services
 
 	return app, nil
 }

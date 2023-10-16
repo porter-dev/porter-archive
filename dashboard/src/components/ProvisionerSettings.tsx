@@ -93,7 +93,7 @@ const machineTypeOptions = [
 
 const defaultCidrVpc = "10.78.0.0/16"
 const defaultCidrServices = "172.20.0.0/16"
-const defaultClusterVersion = "v1.27.0"
+const defaultClusterVersion = "v1.24.0"
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;

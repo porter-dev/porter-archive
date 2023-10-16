@@ -40,9 +40,6 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 		return out, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
 	}
 
-	fmt.Printf("porter yaml: %+v\n", porterYaml)
-
-	fmt.Printf("call loc: yaml.go #1")
 	appProto, envVariables, err := ProtoFromApp(ctx, porterYaml.PorterApp)
 	if err != nil {
 		return out, telemetry.Error(ctx, span, err, "error converting porter yaml to proto")
@@ -51,8 +48,6 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 	out.EnvVariables = envVariables
 
 	if porterYaml.Previews != nil {
-		fmt.Printf("call loc: yaml.go #2")
-		fmt.Printf("handling previews: %+v\n", *porterYaml.Previews)
 		previewAppProto, previewEnvVariables, err := ProtoFromApp(ctx, *porterYaml.Previews)
 		if err != nil {
 			return out, telemetry.Error(ctx, span, err, "error converting preview porter yaml to proto")
@@ -180,8 +175,6 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 			Tag:        porterApp.Image.Tag,
 		}
 	}
-
-	fmt.Printf("porter app services: %+v\n%+v\n", porterApp.Services, porterApp.Services == nil)
 
 	if porterApp.Services == nil {
 		return appProto, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
@@ -367,7 +360,6 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 	}
 
 	uniqueServices := uniqueServices(appProto.Services, appProto.ServiceList)
-	fmt.Printf("unique services: %+v\n", uniqueServices)
 	for _, service := range uniqueServices {
 		appService, err := appServiceFromProto(service)
 		if err != nil {
@@ -392,8 +384,6 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 			Version: int(envGroup.Version),
 		})
 	}
-
-	fmt.Printf("porter app: %+v\n", porterApp)
 
 	return porterApp, nil
 }

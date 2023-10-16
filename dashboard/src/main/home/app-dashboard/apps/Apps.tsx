@@ -211,9 +211,10 @@ const Apps: React.FC<Props> = ({ }) => {
                 setSort("letter");
               }
             }}
+            inactiveColor={"#ffffff11"}
+            activeColor={"transparent"}          
           />
           <Spacer inline x={1} />
-
           <Toggle
             items={[
               { label: <ToggleIcon src={grid} />, value: "grid" },
@@ -227,8 +228,9 @@ const Apps: React.FC<Props> = ({ }) => {
                 setView("list");
               }
             }}
+            inactiveColor={"#ffffff11"}
+            activeColor={"transparent"}
           />
-
           <Spacer inline x={2} />
           <PorterLink to="/apps/new/app">
             <Button

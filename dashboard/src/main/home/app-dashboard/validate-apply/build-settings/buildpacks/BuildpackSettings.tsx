@@ -32,11 +32,11 @@ type Props = {
 
 export const DEFAULT_BUILDERS = [
   "heroku/buildpacks:20",
-  "paketobuildpacks/builder-jammy-full:latest",
-  "paketobuildpacks/builder:full",
   "heroku/builder:22",
   "heroku/builder-classic:22",
   "heroku/buildpacks:18",
+  "paketobuildpacks/builder-jammy-full:latest",
+  "paketobuildpacks/builder:full",
 ]
 
 const BuildpackSettings: React.FC<Props> = ({

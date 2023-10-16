@@ -238,7 +238,7 @@ const CloudFormationForm: React.FC<Props> = ({
           currentStep={currentStep}
           steps={[
             <>
-              <Text size={16}>Control plane ready</Text>
+              <Text size={16}>Log in to your AWS account</Text>
               <Spacer y={.5} />
               <Text color="helper">
                 Return to Porter after successful login.
@@ -261,7 +261,7 @@ const CloudFormationForm: React.FC<Props> = ({
               </Button>
             </>,
             <>
-              <Text size={16}>Infrastructure ready</Text>
+              <Text size={16}>Enter your AWS account ID</Text>
               <Spacer y={.5} />
               <Text color="helper">
                 Make sure this is the ID of the account you are currently logged into and would like to provision resources in.
@@ -294,7 +294,7 @@ const CloudFormationForm: React.FC<Props> = ({
               </StepChangeButtonsContainer>
             </>,
             <>
-              <Text size={16}> Provisioned</Text>
+              <Text size={16}>Create an AWS CloudFormation stack</Text>
               <Spacer y={.5} />
               <Text color="helper">
                 This grants Porter permissions to create infrastructure in your account.
@@ -356,8 +356,7 @@ const CloudFormationForm: React.FC<Props> = ({
             </>,
           ]}
         />
-        {
-          showNeedHelpModal &&
+        {showNeedHelpModal &&
           <Modal closeModal={() => setShowNeedHelpModal(false)} width={"800px"}>
             <Text size={16}>Granting Porter access to AWS</Text>
             <Spacer y={1} />

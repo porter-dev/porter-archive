@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -468,6 +469,7 @@ func (p *CreateUpdatePorterAppEventHandler) updateDeployEvent(ctx context.Contex
 			}
 		}
 		if allServicesDone {
+			matchEvent.Metadata["end_time"] = time.Now().UTC()
 			if anyServicesFailed {
 				matchEvent.Status = string(types.PorterAppEventStatus_Failed)
 			} else {

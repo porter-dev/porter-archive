@@ -103,7 +103,7 @@ type Service struct {
 	CpuCores          float32      `yaml:"cpuCores,omitempty"`
 	RamMegabytes      int          `yaml:"ramMegabytes,omitempty"`
 	SmartOptimization *bool        `yaml:"smartOptimization,omitempty"`
-	GpuCores          float32      `yaml:"gpuCoresNvidia,omitempty"`
+	GpuCoresNvidia    float32      `yaml:"gpuCoresNvidia,omitempty"`
 	Port              int          `yaml:"port,omitempty"`
 	Autoscaling       *AutoScaling `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
 	Domains           []Domains    `yaml:"domains,omitempty" validate:"excluded_unless=Type web"`
@@ -373,7 +373,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		Instances:         int(service.Instances),
 		CpuCores:          service.CpuCores,
 		RamMegabytes:      int(service.RamMegabytes),
-		GPUCores:          service.GpuCoresNvidia,
+		GpuCoresNvidia:    service.GpuCoresNvidia,
 		Port:              int(service.Port),
 		SmartOptimization: service.SmartOptimization,
 	}

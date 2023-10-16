@@ -48,6 +48,7 @@ import {
 import EnvSettings from "../validate-apply/app-settings/EnvSettings";
 import ImageSettings from "../image-settings/ImageSettings";
 import { useClusterResources } from "shared/ClusterResourcesContext";
+import PorterYamlModal from "./PorterYamlModal";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -178,7 +179,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const image = watch("source.image");
   const services = watch("app.services");
 
-  const { detectedServices: servicesFromYaml, detectedName } = usePorterYaml({
+  const {
+    detectedServices: servicesFromYaml,
+    detectedName,
+    porterYamlFound,
+    loading: isLoadingPorterYaml,
+  } = usePorterYaml({
     source: source?.type === "github" ? source : null,
     appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
   });
@@ -188,7 +194,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     deploymentTargetID: deploymentTarget?.deployment_target_id,
     creating: true,
   });
-  const { currentClusterResources} = useClusterResources();
+  const { currentClusterResources } = useClusterResources();
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -388,11 +394,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     // TODO: create a more unified way of parsing form/apply errors, unified with the logic in AppDataContainer
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
-      let errorMessage = "App could not be deployed as defined."
+      let errorMessage = "App could not be deployed as defined.";
       if (errorKeys.includes("app")) {
         const appErrors = Object.keys(errors.app ?? {});
         if (appErrors.includes("build")) {
-          errorMessage = "Build settings are not properly configured."
+          errorMessage = "Build settings are not properly configured.";
         }
 
         if (appErrors.includes("services")) {
@@ -564,8 +570,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               source={source}
                               projectId={currentProject.id}
                             />
-                            {/* todo(ianedwards): re-enable porter.yaml modal after validate/apply v2 is rolled out and proven to be stable */}
-                            {/* {!userHasSeenNoPorterYamlFoundModal &&
+                            {!userHasSeenNoPorterYamlFoundModal &&
                               !porterYamlFound &&
                               !isLoadingPorterYaml && (
                                 <Controller
@@ -585,7 +590,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                                     />
                                   )}
                                 />
-                              )} */}
+                              )}
                           </>
                         ) : (
                           <ImageSettings

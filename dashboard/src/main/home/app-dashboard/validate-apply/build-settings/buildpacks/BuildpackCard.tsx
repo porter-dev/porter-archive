@@ -10,6 +10,7 @@ interface Props {
   onClickFn: (buildpack: string) => void;
   index: number;
   draggable: boolean;
+  showFullBuildpackName: boolean;
 }
 
 const BuildpackCard: React.FC<Props> = ({
@@ -18,6 +19,7 @@ const BuildpackCard: React.FC<Props> = ({
   onClickFn,
   index,
   draggable,
+  showFullBuildpackName,
 }) => {
   const iconClassName = useMemo(() => {
     if (!buildpack.name) {
@@ -39,6 +41,9 @@ const BuildpackCard: React.FC<Props> = ({
   }, [buildpack.name]);
 
   const renderedBuildpackName = useMemo(() => {
+    if (buildpack.name && buildpack.buildpack && showFullBuildpackName) {
+      return `${buildpack.name} (${buildpack.buildpack})`;
+    }
     return buildpack.name ?? buildpack.buildpack;
   }, [buildpack.name]);
 

@@ -48,6 +48,7 @@ const BuildpackConfigurationModal: React.FC<Props> = ({
           isDetectingBuildpacks={isDetectingBuildpacks}
           detectBuildpacksError={detectBuildpacksError}
           droppableId={"modal"}
+          showFullBuildpackName={true}
         />
         <Spacer y={0.5} />
         <Text>Custom buildpacks</Text>

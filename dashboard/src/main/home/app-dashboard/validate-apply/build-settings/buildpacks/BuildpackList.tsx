@@ -21,6 +21,7 @@ interface Props {
   isDetectingBuildpacks: boolean;
   detectBuildpacksError: string;
   droppableId: string;
+  showFullBuildpackName?: boolean;
 }
 const BuildpackList: React.FC<Props> = ({
   build,
@@ -30,6 +31,7 @@ const BuildpackList: React.FC<Props> = ({
   isDetectingBuildpacks,
   detectBuildpacksError,
   droppableId,
+  showFullBuildpackName = false,
 }) => {
   const { control } = useFormContext<PorterAppFormData>();
   const { remove, append, swap } = useFieldArray({
@@ -100,6 +102,7 @@ const BuildpackList: React.FC<Props> = ({
             index={index}
             draggable={false}
             key={`${buildpack.name}-${index}-available`}
+            showFullBuildpackName={showFullBuildpackName}
           />
         );
       });
@@ -129,6 +132,7 @@ const BuildpackList: React.FC<Props> = ({
                   index={index}
                   draggable={true}
                   key={`${buildpack.name}-${index}-selected`}
+                  showFullBuildpackName={showFullBuildpackName}
                 />
               ))}
               {provided.placeholder}

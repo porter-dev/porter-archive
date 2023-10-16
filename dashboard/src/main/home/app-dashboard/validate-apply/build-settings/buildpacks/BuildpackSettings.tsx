@@ -63,6 +63,7 @@ const BuildpackSettings: React.FC<Props> = ({
       source.git_repo_name,
       source.git_branch,
       build.context,
+      build.builder,
       isModalOpen,
     ],
     async () => {
@@ -121,7 +122,7 @@ const BuildpackSettings: React.FC<Props> = ({
 
     const defaultBuilder =
       data.find(
-        (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
+        (builder) => builder.builders != null && builder.builders.includes(build.builder)
       ) ?? data[0];
 
     const allBuildpacks = defaultBuilder.others.concat(

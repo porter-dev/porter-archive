@@ -29,8 +29,13 @@ export const DEFAULT_HEROKU_STACK = "heroku/buildpacks:20";
 
 export const BUILDPACK_TO_NAME: { [key: string]: string } = {
   "heroku/nodejs": "NodeJS",
+  "gcr.io/paketo-buildpacks/nodejs": "NodeJS",
   "heroku/python": "Python",
+  "gcr.io/paketo-buildpacks/python": "Python",
   "heroku/java": "Java",
+  "gcr.io/paketo-buildpacks/java": "Java",
   "heroku/ruby": "Ruby",
+  "gcr.io/paketo-buildpacks/ruby": "Ruby",
   "heroku/go": "Go",
+  "gcr.io/paketo-buildpacks/go": "Go",
 };

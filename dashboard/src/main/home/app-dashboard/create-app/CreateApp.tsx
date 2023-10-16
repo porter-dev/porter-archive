@@ -204,7 +204,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const resetAllExceptName = () => {
     setIsNameHighlight(true);
 
-
     // Get the current name value before the reset
     setStep(0);
     const currentNameValue = porterAppFormMethods.getValues("app.name");
@@ -213,7 +212,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     porterAppFormMethods.reset();
     // Set the name back to its original value
     porterAppFormMethods.setValue("app.name", currentNameValue);
-
   };
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -221,8 +219,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       const { validatedAppProto, variables, secrets } = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
       setFinalizedAppEnv({ variables, secrets });
-
-      console.log("validatedAppProto", validatedAppProto);
 
       if (source.type === "github") {
         setShowGHAModal(true);
@@ -271,8 +267,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           return false;
         }
 
-        console.log("app", app);
-
         await api.createApp(
           "<token>",
           {
@@ -311,8 +305,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           })
           .parse(res.data);
 
-        console.log("updatedEnvGroups", updatedEnvGroups);
-
         const protoWithUpdatedEnv = new PorterApp({
           ...app,
           envGroups: updatedEnvGroups.env_groups.map((eg) => ({
@@ -320,8 +312,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             version: eg.latest_version,
           })),
         });
-
-        console.log("protoWithUpdatedEnv", protoWithUpdatedEnv);
 
         await api.applyApp(
           "<token>",
@@ -373,10 +363,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   useEffect(() => {
     // set step to 1 if name is filled out
     if (isNameValid(name.value) && name.value) {
-      setIsNameHighlight(false);  // Reset highlight when the name is valid
+      setIsNameHighlight(false); // Reset highlight when the name is valid
       setStep((prev) => Math.max(prev, 1));
     } else {
-      resetAllExceptName()
+      resetAllExceptName();
     }
 
     // set step to 2 if source is filled out
@@ -666,8 +656,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
-                              } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${
+                                  detectedServices.count > 1 ? "s" : ""
+                                } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

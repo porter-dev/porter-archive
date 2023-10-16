@@ -155,9 +155,6 @@ export function uniqueServices(app: PorterApp): Service[] {
     }
   );
 
-  console.log("servicesFromMap", servicesFromMap);
-  console.log("app.serviceList", app.serviceList)
-
   const uniqueServices = _.uniqBy(
     [...app.serviceList, ...servicesFromMap],
     (service) => service.name

@@ -469,19 +469,13 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 }
 
 func uniqueServices(serviceMap map[string]*porterv1.Service, serviceList []*porterv1.Service) []*porterv1.Service {
-	mergedServices := make(map[string]*porterv1.Service)
+	if serviceList != nil {
+		return serviceList
+	}
 
+	mergedServiceList := make([]*porterv1.Service, 0)
 	for name, service := range serviceMap {
 		service.Name = name
-		mergedServices[name] = service
-	}
-
-	for _, service := range serviceList {
-		mergedServices[service.Name] = service
-	}
-
-	mergedServiceList := make([]*porterv1.Service, 0, len(mergedServices))
-	for _, service := range mergedServices {
 		mergedServiceList = append(mergedServiceList, service)
 	}
 

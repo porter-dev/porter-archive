@@ -146,6 +146,10 @@ export function prefixSubdomain(subdomain: string) {
 }
 
 export function uniqueServices(app: PorterApp): Service[] {
+  if (app.serviceList?.length) {
+    return app.serviceList;
+  }
+
   const servicesFromMap = Object.entries(app.services ?? {}).map(
     ([name, service]) => {
       return new Service({
@@ -155,12 +159,7 @@ export function uniqueServices(app: PorterApp): Service[] {
     }
   );
 
-  const uniqueServices = _.uniqBy(
-    [...app.serviceList, ...servicesFromMap],
-    (service) => service.name
-  );
-
-  return uniqueServices;
+  return servicesFromMap;
 }
 
 export function defaultSerialized({

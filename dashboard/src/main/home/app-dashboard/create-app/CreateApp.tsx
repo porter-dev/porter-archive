@@ -64,14 +64,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     userHasSeenNoPorterYamlFoundModal,
     setUserHasSeenNoPorterYamlFoundModal,
   ] = React.useState(false);
-  const doesNameExist = (value: string): boolean => {
-    return porterApps.includes(value);
-  };
   const isNameValid = (value: string): boolean => {
     return /^[a-z0-9-]+$/.test(value)
   };
   const [isNameHighlight, setIsNameHighlight] = React.useState(false);
-  const [isNameDuplicate, setIsNameDuplicate] = React.useState(false);
 
   const [
     validatedAppProto,
@@ -362,9 +358,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   useEffect(() => {
     // set step to 1 if name is filled out
-    const nameDuplicate = doesNameExist(name.value);
-    setIsNameDuplicate(nameDuplicate);
-    if (isNameValid(name.value) && name.value && !nameDuplicate) {
+    if (isNameValid(name.value) && name.value) {
       setIsNameHighlight(false);  // Reset highlight when the name is valid
       setStep((prev) => Math.max(prev, 1));
     } else {
@@ -540,12 +534,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <Text color={isNameHighlight ? "#FFCC00" : "helper"}>
                       Lowercase letters, numbers, and "-" only.
                     </Text>
-
-                    {isNameDuplicate && (
-                      <><Spacer y={0.5} /><Text color="red">
-                        App name cannot be a duplicate.
-                      </Text></>
-                    )}
                     <Spacer y={0.5} />
                     <ControlledInput
                       placeholder="ex: academic-sophon"

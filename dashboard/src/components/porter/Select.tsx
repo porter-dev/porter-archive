@@ -5,6 +5,7 @@ type Props = {
   width?: string;
   options: { label: string; value: string }[];
   label?: string | React.ReactNode;
+  labelColor?: string;
   height?: string;
   error?: string;
   children?: React.ReactNode;
@@ -17,6 +18,7 @@ const Select: React.FC<Props> = ({
   width,
   options,
   label,
+  labelColor,
   height,
   error,
   children,
@@ -26,7 +28,7 @@ const Select: React.FC<Props> = ({
 }) => {
   return (
     <Block width={width}>
-      {label && <Label>{label}</Label>}
+      {label && <Label color={labelColor}>{label}</Label>}
       <SelectWrapper>
         <i className="material-icons">arrow_drop_down</i>
         <StyledSelect
@@ -69,9 +71,9 @@ const Block = styled.div<{
   width: ${(props) => props.width || "200px"};
 `;
 
-const Label = styled.div`
+const Label = styled.div<{color?: string}>`
   font-size: 13px;
-  color: #aaaabb;
+  color: ${({color = "#aaaabb"}) => color};
   margin-bottom: 10px;
 `;
 

@@ -47,7 +47,7 @@ const JobsSection: React.FC<Props> = ({
     })];
   }, [jobNames]);
 
-  const { jobRuns } = useJobs({
+  const { jobRuns, isLoadingJobRuns } = useJobs({
     appName,
     projectId,
     clusterId,
@@ -167,7 +167,7 @@ const JobsSection: React.FC<Props> = ({
                 ? -1
                 : 1;
             })}
-            isLoading={jobRuns.length === 0}
+            isLoading={isLoadingJobRuns}
             enablePagination
           />
         </StyledExpandedApp>

@@ -411,23 +411,32 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       return <Error message={deployError} />;
     }
 
+    // TODO: create a more unified way of parsing form/apply errors, unified with the logic in AppDataContainer
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
+      let errorMessage = "App could not be deployed as defined."
       if (errorKeys.includes("app")) {
-        const appErrors = Object.keys(errors?.app ?? {});
+        const appErrors = Object.keys(errors.app ?? {});
         if (appErrors.includes("build")) {
-          return (
-            <Error message={"Build settings are not properly configured."} />
-          );
+          errorMessage = "Build settings are not properly configured."
         }
 
         if (appErrors.includes("services")) {
-          return (
-            <Error message={"Service settings are not properly configured."} />
-          );
+          errorMessage = "Service settings are not properly configured";
+          if (errors.app?.services?.root?.message) {
+            errorMessage = `${errorMessage} - ${errors?.app?.services?.root?.message}`;
+          }
+          errorMessage = `${errorMessage}.`;
         }
       }
-      return <Error message={"App could not be deployed as defined."} />;
+
+      updateAppStep({
+        step: "stack-launch-failure",
+        errorMessage: `Form validation error: ${errorMessage}`,
+        appName: name.value,
+      });
+
+      return <Error message={errorMessage} maxWidth="600px" />;
     }
 
     return;

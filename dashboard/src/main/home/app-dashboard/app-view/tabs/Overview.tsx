@@ -75,6 +75,10 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
         serviceVersionStatus={serviceVersionStatus}
         maxCPU={currentClusterResources.maxCPU}
         maxRAM={currentClusterResources.maxRAM}
+        internalNetworkingDetails={{
+          namespace: deploymentTarget.namespace,
+          appName: porterApp.name,
+        }}      
       />
       <Spacer y={0.75} />
       <Button

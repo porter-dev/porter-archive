@@ -577,3 +577,29 @@ func (c *Client) ListAppRevisions(
 
 	return resp, err
 }
+
+// RollbackRevision reverts an app to a previous revision
+func (c *Client) RollbackRevision(
+	ctx context.Context,
+	projectID, clusterID uint,
+	appName string,
+	deploymentTargetID string,
+) (*porter_app.RollbackAppRevisionResponse, error) {
+	resp := &porter_app.RollbackAppRevisionResponse{}
+
+	req := &porter_app.RollbackAppRevisionRequest{
+		DeploymentTargetID: deploymentTargetID,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/rollback",
+			projectID, clusterID,
+			appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}

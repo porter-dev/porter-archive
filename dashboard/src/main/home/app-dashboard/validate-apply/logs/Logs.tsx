@@ -2,6 +2,7 @@ import React, {
     useCallback,
     useContext,
     useEffect,
+    useMemo,
     useRef,
     useState,
 } from "react";
@@ -23,11 +24,11 @@ import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
-import LogFilterContainer from "../../expanded-app/logs/LogFilterContainer";
 import StyledLogs from "../../expanded-app/logs/StyledLogs";
 import { useRevisionList } from "lib/hooks/useRevisionList";
 import { useLocation } from "react-router";
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
+import Filter from "components/porter/Filter";
 
 type Props = {
     projectId: number;
@@ -79,7 +80,7 @@ const Logs: React.FC<Props> = ({
 
     const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
         service_name: logQueryParamOpts?.service ?? GenericLogFilter.getDefaultOption("service_name").value,
-        pod_name: "", // not supported
+        pod_name: "", // not supported in v2
         revision: logQueryParamOpts.revision ?? GenericLogFilter.getDefaultOption("revision").value,
         output_stream: logQueryParamOpts.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
     });
@@ -266,7 +267,7 @@ const Logs: React.FC<Props> = ({
     const resetFilters = () => {
         setSelectedFilterValues({
             service_name: logQueryParamOpts?.service ?? GenericLogFilter.getDefaultOption("service_name").value,
-            pod_name: "", // not supported
+            pod_name: "", // not supported in v2
             revision: logQueryParamOpts.revision ?? GenericLogFilter.getDefaultOption("revision").value,
             output_stream: logQueryParamOpts.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
         });
@@ -293,6 +294,20 @@ const Logs: React.FC<Props> = ({
         }
     };
 
+    const filterLabelString = useMemo(() => {
+        let filterString = "";
+        if (selectedFilterValues["service_name"] !== null && selectedFilterValues["service_name"] !== "all") {
+          filterString += selectedFilterValues["service_name"];
+        } 
+        if (selectedFilterValues["revision"] != null && selectedFilterValues["revision"] !== "all") {
+          if (filterString !== "") {
+            filterString += " ";
+          }
+          filterString += "v" + selectedFilterValues["revision"];
+        }
+        return filterString;
+    },[JSON.stringify(selectedFilterValues)]);
+
     const renderContents = () => {
         return (
             <>
@@ -304,6 +319,7 @@ const Logs: React.FC<Props> = ({
                             setEnteredSearchText={setEnteredSearchText}
                             setSelectedDate={setSelectedDateIfUndefined}
                         />
+                        <Spacer inline x={1} />
                         <LogQueryModeSelectionToggle
                             selectedDate={selectedDate ?? timeRange?.endTime?.toDate()}
                             setSelectedDate={setSelectedDate}
@@ -311,13 +327,19 @@ const Logs: React.FC<Props> = ({
                         />
                     </Flex>
                     <Flex>
+                        <Filter
+                            filters={filters}
+                            filterString={filterLabelString} 
+                            selectedFilterValues={selectedFilterValues}
+                        />
+                        <Spacer inline x={1} />
                         <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
                             <Checkbox checked={scrollToBottomEnabled}>
                                 <i className="material-icons">done</i>
                             </Checkbox>
                             Scroll to bottom
                         </ScrollButton>
-                        <Spacer inline width="10px" />
+                        <Spacer inline x={1} />
                         <ScrollButton
                             onClick={() => {
                                 refresh({ isLive: selectedDate == null && timeRange?.endTime == null });
@@ -329,13 +351,6 @@ const Logs: React.FC<Props> = ({
                     </Flex>
                 </FlexRow>
                 <Spacer y={0.5} />
-                <>
-                    <LogFilterContainer
-                        filters={filters}
-                        selectedFilterValues={selectedFilterValues}
-                    />
-                    <Spacer y={0.5} />
-                </>
                 <LogsSectionWrapper>
                     <StyledLogsSection>
                         {isLoading && <Loading message="Waiting for logs..." />}
@@ -520,7 +535,7 @@ const Checkbox = styled.div<{ checked: boolean }>`
 `;
 
 const ScrollButton = styled.div`
-  background: #26292e;
+  background: ${props => props.theme.fg};
   border-radius: 5px;
   height: 30px;
   font-size: 13px;

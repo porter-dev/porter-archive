@@ -9,7 +9,7 @@ import {
   serviceProto,
   serviceValidator,
 } from "./services";
-import { Build, PorterApp, Service } from "@porter-dev/api-contracts";
+import {Build, HelmOverrides, PorterApp, Service} from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { BuildOptions, buildValidator } from "./build";
@@ -84,6 +84,7 @@ export const clientAppValidator = z.object({
     .array()
     .default([]),
   build: buildValidator,
+  helmOverrides: z.string().optional(),
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 
@@ -103,7 +104,16 @@ export const porterAppFormValidator = z
 
       return true;
     },
-    { message: "All services must include a run command" }
+    { message: "if building with buildpacks, all services must include a run command. Make sure all services contain a run command or change your build method to Docker in build settings", path: ["app", "services"] }
+  ).refine(
+    ({ app, source }) => {
+      if (source.type === "docker-registry" || app.build.method === "docker") {
+        return app.services.every((svc) => !svc.run.value.startsWith("docker run"));
+      }
+
+      return true;
+    },
+    { message: "if using Docker registry or building via a Dockerfile, service must not include `docker run` in its start command; instead, leave the start command empty", path: ["app", "services"] }
   );
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
@@ -235,7 +245,8 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           })),
           build: clientBuildToProto(app.build),
           ...(predeploy && {
-            predeploy: serviceProto(serializeService(predeploy)),
+          predeploy: serviceProto(serializeService(predeploy)),
+          helmOverrides: app.helmOverrides != null ? new HelmOverrides({ b64Values: btoa(app.helmOverrides)}) : undefined,
           }),
         })
     )
@@ -253,6 +264,7 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
             repository: src.image.repository,
             tag: src.image.tag,
           },
+          helmOverrides: app.helmOverrides != null ? new HelmOverrides({ b64Values: btoa(app.helmOverrides)}) : undefined,
         })
     )
     .exhaustive();
@@ -355,6 +367,8 @@ export function clientAppFromProto({
     })),
   ];
 
+  const helmOverrides = proto.helmOverrides == null ? "" : atob(proto.helmOverrides.b64Values);
+
   if (proto.predeploy) {
     predeployList.push(
       deserializeService({
@@ -385,6 +399,7 @@ export function clientAppFromProto({
         buildpacks: [],
         builder: "",
       },
+      helmOverrides: helmOverrides,
     };
   }
 
@@ -420,6 +435,7 @@ export function clientAppFromProto({
       buildpacks: [],
       builder: "",
     },
+    helmOverrides: helmOverrides,
   };
 }
 

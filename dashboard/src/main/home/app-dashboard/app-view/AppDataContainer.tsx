@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { FieldErrors, FormProvider, useForm } from "react-hook-form";
+import React, {useCallback, useContext, useEffect, useMemo, useState} from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import {
   PorterAppFormData,
   SourceOptions,
@@ -38,6 +38,9 @@ import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { Error as ErrorComponent } from "components/porter/Error";
 import _ from "lodash";
 import axios from "axios";
+import HelmEditorTab from "./tabs/HelmEditorTab";
+import HelmLatestValuesTab from "./tabs/HelmLatestValuesTab";
+import { Context } from "shared/Context";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -52,7 +55,8 @@ const validTabs = [
   "build-settings",
   "image-settings",
   "settings",
-  // "helm-values",
+  "helm-overrides",
+  "helm-values",
   "job-history",
 ] as const;
 const DEFAULT_TAB = "activity";
@@ -69,6 +73,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const history = useHistory();
   const queryClient = useQueryClient();
   const [confirmDeployModalOpen, setConfirmDeployModalOpen] = useState(false);
+
+  const { currentProject, user } = useContext(Context);
 
   const { updateAppStep } = useAppAnalytics();
 
@@ -291,28 +297,26 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       // redirect to the default tab after save
       history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
     } catch (err) {
-      let message = "Unable to get error message";
+      let message = "App update failed: please try again or contact support@porter.run if the error persists.";
       let stack = "Unable to get error stack";
-      if (err instanceof Error) {
-        message = err.message;
+
+      if (axios.isAxiosError(err)) {
+        const parsed = z.object({error: z.string()}).safeParse(err.response?.data);
+        if (parsed.success) {
+          message = `App update failed: ${parsed.data.error}`;
+        }
         stack = err.stack ?? "(No error stack)";
-      }
+      } 
+
       updateAppStep({
         step: "porter-app-update-failure",
         errorMessage: message,
         appName: latestProto.name,
         errorStackTrace: stack,
       });
-
-      if (axios.isAxiosError(err)) {
-        setError("app", {
-          message: `App update failed: ${err.message}`,
-        });
-      } else {
-        setError("app", {
-          message: `App update failed: Please try again or contact support if the error persists.`,
-        });
-      }
+      setError("app", {
+        message,
+      });
     }
   });
 
@@ -358,21 +362,44 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     onSubmit();
   }, [onSubmit, setConfirmDeployModalOpen]);
 
-  const errorMessagesDeep = useMemo(() => {
-    return Object.values(_.mapValues(errors, (error) => error?.message));
-  }, [errors]);
-
   const buttonStatus = useMemo(() => {
     if (isSubmitting) {
       return "loading";
     }
 
-    if (errorMessagesDeep.length > 0) {
-      return (
-        <ErrorComponent
-          message={`App update failed. ${errorMessagesDeep[0]}`}
-        />
-      );
+    // TODO: create a more unified way of parsing form/apply errors, unified with the logic in CreateApp
+    const errorKeys = Object.keys(errors);
+    if (errorKeys.length > 0) {
+      console.log("errors", errors)
+      let errorMessage = "App update failed. Please try again. If the error persists, please contact support@porter.run."
+      if (errorKeys.includes("app")) {
+        const appErrors = Object.keys(errors.app ?? {});
+        if (appErrors.includes("build")) {
+          errorMessage = "Build settings are not properly configured."
+        }
+
+        if (appErrors.includes("services")) {
+          errorMessage = "Service settings are not properly configured";
+          if (errors.app?.services?.root?.message || errors.app?.services?.message) {
+            const serviceErrorMessage = errors.app?.services?.root?.message ?? errors.app?.services?.message;
+            errorMessage = `${errorMessage} - ${serviceErrorMessage}`;
+          }
+          errorMessage = `${errorMessage}.`;
+        }
+
+        // this is the high level error message coming from the apply
+        if (appErrors.includes("message")) {
+          errorMessage = errors.app?.message ?? errorMessage;
+        }
+      }
+
+      updateAppStep({
+        step: "porter-app-update-failure",
+        errorMessage: `Form validation error: ${errorMessage}`,
+        appName: latestProto.name,
+      });
+
+      return <ErrorComponent message={errorMessage} maxWidth="600px" />;
     }
 
     if (isSubmitSuccessful) {
@@ -380,7 +407,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     }
 
     return "";
-  }, [isSubmitting, errorMessagesDeep]);
+  }, [isSubmitting, JSON.stringify(errors)]);
 
   const tabs = useMemo(() => {
     const base = [
@@ -400,14 +427,19 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         label: "Build Settings",
         value: "build-settings",
       });
-      base.push({ label: "Settings", value: "settings" });
-      return base;
+    } else {
+      base.push({
+        label: "Image Settings",
+        value: "image-settings",
+      });
     }
 
-    base.push({
-      label: "Image Settings",
-      value: "image-settings",
-    });
+    {(currentProject?.helm_values_enabled || user?.isPorterUser) &&
+      base.push({ label: "Helm Overrides", value: "helm-overrides" });
+    }
+    {user?.isPorterUser &&
+      base.push({ label: "Latest Helm Values", value: "helm-values" });
+    }
     base.push({ label: "Settings", value: "settings" });
     return base;
   }, [deploymentTarget.preview, latestProto.build]);
@@ -450,7 +482,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [
     servicesFromYaml,
     currentTab,
-    latestProto,
+    JSON.stringify(latestProto),
     previewRevision,
     latestRevision.revision_number,
     appEnv,
@@ -537,6 +569,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           .with("metrics", () => <MetricsTab />)
           .with("events", () => <EventFocusView />)
           .with("job-history", () => <JobsTab />)
+          .with("helm-overrides", () => <HelmEditorTab buttonStatus={buttonStatus} featureFlagEnabled={currentProject?.helm_values_enabled ?? false}/>)
+          .with("helm-values", () => <HelmLatestValuesTab />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>

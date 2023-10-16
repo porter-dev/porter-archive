@@ -61,6 +61,7 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
     servicesFromYaml,
     clusterId,
     projectId,
+    deploymentTarget,
   } = useLatestRevision();
 
   const { data: baseEnvGroups = [] } = useQuery(
@@ -279,6 +280,10 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
                 fieldArrayName={"app.services"}
                 maxCPU={currentClusterResources.maxCPU}
                 maxRAM={currentClusterResources.maxRAM}
+                internalNetworkingDetails={{
+                  namespace: deploymentTarget.namespace,
+                  appName: porterApp.name,
+                }}
               />
             </>,
             <>

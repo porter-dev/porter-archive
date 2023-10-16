@@ -40,7 +40,10 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 		return out, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
 	}
 
-	appProto, envVariables, err := buildAppProto(ctx, porterYaml.PorterApp)
+	fmt.Printf("porter yaml: %+v\n", porterYaml)
+
+	fmt.Printf("call loc: yaml.go #1")
+	appProto, envVariables, err := ProtoFromApp(ctx, porterYaml.PorterApp)
 	if err != nil {
 		return out, telemetry.Error(ctx, span, err, "error converting porter yaml to proto")
 	}
@@ -48,7 +51,9 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 	out.EnvVariables = envVariables
 
 	if porterYaml.Previews != nil {
-		previewAppProto, previewEnvVariables, err := buildAppProto(ctx, *porterYaml.Previews)
+		fmt.Printf("call loc: yaml.go #2")
+		fmt.Printf("handling previews: %+v\n", *porterYaml.Previews)
+		previewAppProto, previewEnvVariables, err := ProtoFromApp(ctx, *porterYaml.Previews)
 		if err != nil {
 			return out, telemetry.Error(ctx, span, err, "error converting preview porter yaml to proto")
 		}
@@ -61,17 +66,30 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 	return out, nil
 }
 
+type ServiceType string
+
+const (
+	ServiceType_Web    ServiceType = "web"
+	ServiceType_Worker ServiceType = "worker"
+	ServiceType_Job    ServiceType = "job"
+)
+
+type EnvGroup struct {
+	Name    string `yaml:"name"`
+	Version int    `yaml:"version"`
+}
+
 // PorterApp represents all the possible fields in a Porter YAML file
 type PorterApp struct {
-	Version  string             `yaml:"version,omitempty"`
-	Name     string             `yaml:"name"`
-	Services map[string]Service `yaml:"services"`
-	Image    *Image             `yaml:"image,omitempty"`
-	Build    *Build             `yaml:"build,omitempty"`
-	Env      map[string]string  `yaml:"env,omitempty"`
+	Version  string            `yaml:"version,omitempty"`
+	Name     string            `yaml:"name"`
+	Services []Service         `yaml:"services"`
+	Image    *Image            `yaml:"image,omitempty"`
+	Build    *Build            `yaml:"build,omitempty"`
+	Env      map[string]string `yaml:"env,omitempty"`
 
-	Predeploy *Service `yaml:"predeploy,omitempty"`
-	EnvGroups []string `yaml:"envGroups,omitempty"`
+	Predeploy *Service   `yaml:"predeploy,omitempty"`
+	EnvGroups []EnvGroup `yaml:"envGroups,omitempty"`
 }
 
 // PorterYAML represents all the possible fields in a Porter YAML file
@@ -87,6 +105,7 @@ type Build struct {
 	Builder    string   `yaml:"builder" validate:"required_if=Method pack"`
 	Buildpacks []string `yaml:"buildpacks"`
 	Dockerfile string   `yaml:"dockerfile" validate:"required_if=Method docker"`
+	CommitSHA  string   `yaml:"commitSha"`
 }
 
 // Image is the repository and tag for an app's build image
@@ -97,8 +116,9 @@ type Image struct {
 
 // Service represents a single service in a porter app
 type Service struct {
+	Name              string       `yaml:"name"`
 	Run               *string      `yaml:"run,omitempty"`
-	Type              string       `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
+	Type              ServiceType  `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
 	Instances         int          `yaml:"instances,omitempty"`
 	CpuCores          float32      `yaml:"cpuCores,omitempty"`
 	RamMegabytes      int          `yaml:"ramMegabytes,omitempty"`
@@ -134,7 +154,8 @@ type HealthCheck struct {
 	HttpPath string `yaml:"httpPath"`
 }
 
-func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp, map[string]string, error) {
+// ProtoFromApp converts a PorterApp type to a base PorterApp proto type and returns env variables
+func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp, map[string]string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "build-app-proto")
 	defer span.End()
 
@@ -149,6 +170,7 @@ func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterAp
 			Builder:    porterApp.Build.Builder,
 			Buildpacks: porterApp.Build.Buildpacks,
 			Dockerfile: porterApp.Build.Dockerfile,
+			CommitSha:  porterApp.Build.CommitSHA,
 		}
 	}
 
@@ -159,22 +181,24 @@ func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterAp
 		}
 	}
 
+	fmt.Printf("porter app services: %+v\n%+v\n", porterApp.Services, porterApp.Services == nil)
+
 	if porterApp.Services == nil {
 		return appProto, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
 	}
 
-	services := make(map[string]*porterv1.Service, 0)
-	for name, service := range porterApp.Services {
-		serviceType := protoEnumFromType(name, service)
+	services := make([]*porterv1.Service, 0)
+	for _, service := range porterApp.Services {
+		serviceType := protoEnumFromType(service.Name, service)
 
 		serviceProto, err := serviceProtoFromConfig(service, serviceType)
 		if err != nil {
 			return appProto, nil, telemetry.Error(ctx, span, err, "error casting service config")
 		}
 
-		services[name] = serviceProto
+		services = append(services, serviceProto)
 	}
-	appProto.Services = services
+	appProto.ServiceList = services
 
 	if porterApp.Predeploy != nil {
 		predeployProto, err := serviceProtoFromConfig(*porterApp.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
@@ -186,9 +210,10 @@ func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterAp
 
 	envGroups := make([]*porterv1.EnvGroup, 0)
 	if porterApp.EnvGroups != nil {
-		for _, envGroupName := range porterApp.EnvGroups {
+		for _, envGroup := range porterApp.EnvGroups {
 			envGroups = append(envGroups, &porterv1.EnvGroup{
-				Name: envGroupName,
+				Name:    envGroup.Name,
+				Version: int64(envGroup.Version),
 			})
 		}
 	}
@@ -224,6 +249,7 @@ func protoEnumFromType(name string, service Service) porterv1.ServiceType {
 
 func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {
 	serviceProto := &porterv1.Service{
+		Name:              service.Name,
 		RunOptional:       service.Run,
 		Instances:         int32(service.Instances),
 		CpuCores:          service.CpuCores,
@@ -329,6 +355,7 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 			Builder:    appProto.Build.Builder,
 			Buildpacks: appProto.Build.Buildpacks,
 			Dockerfile: appProto.Build.Dockerfile,
+			CommitSHA:  appProto.Build.CommitSha,
 		}
 	}
 
@@ -339,14 +366,14 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 		}
 	}
 
-	porterApp.Services = make(map[string]Service, 0)
-	for name, service := range appProto.Services {
+	uniqueServices := uniqueServices(appProto.Services, appProto.ServiceList)
+	fmt.Printf("unique services: %+v\n", uniqueServices)
+	for _, service := range uniqueServices {
 		appService, err := appServiceFromProto(service)
 		if err != nil {
 			return porterApp, err
 		}
-
-		porterApp.Services[name] = appService
+		porterApp.Services = append(porterApp.Services, appService)
 	}
 
 	if appProto.Predeploy != nil {
@@ -358,16 +385,22 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 		porterApp.Predeploy = &appPredeploy
 	}
 
-	porterApp.EnvGroups = make([]string, 0)
+	porterApp.EnvGroups = make([]EnvGroup, 0)
 	for _, envGroup := range appProto.EnvGroups {
-		porterApp.EnvGroups = append(porterApp.EnvGroups, envGroup.Name)
+		porterApp.EnvGroups = append(porterApp.EnvGroups, EnvGroup{
+			Name:    envGroup.Name,
+			Version: int(envGroup.Version),
+		})
 	}
+
+	fmt.Printf("porter app: %+v\n", porterApp)
 
 	return porterApp, nil
 }
 
 func appServiceFromProto(service *porterv1.Service) (Service, error) {
 	appService := Service{
+		Name:              service.Name,
 		Run:               service.RunOptional,
 		Instances:         int(service.Instances),
 		CpuCores:          service.CpuCores,
@@ -443,4 +476,24 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 	}
 
 	return appService, nil
+}
+
+func uniqueServices(serviceMap map[string]*porterv1.Service, serviceList []*porterv1.Service) []*porterv1.Service {
+	mergedServices := make(map[string]*porterv1.Service)
+
+	for name, service := range serviceMap {
+		service.Name = name
+		mergedServices[name] = service
+	}
+
+	for _, service := range serviceList {
+		mergedServices[service.Name] = service
+	}
+
+	mergedServiceList := make([]*porterv1.Service, 0, len(mergedServices))
+	for _, service := range mergedServices {
+		mergedServiceList = append(mergedServiceList, service)
+	}
+
+	return mergedServiceList
 }

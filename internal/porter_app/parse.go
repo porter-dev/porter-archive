@@ -32,7 +32,7 @@ func ParseYAML(ctx context.Context, porterYaml []byte, appName string) (v2.AppWi
 		return appDefinition, telemetry.Error(ctx, span, nil, "porter yaml input is nil")
 	}
 
-	version := &yamlVersion{}
+	version := &YamlVersion{}
 	err := yaml.Unmarshal(porterYaml, version)
 	if err != nil {
 		return appDefinition, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
@@ -77,6 +77,6 @@ func ParseYAML(ctx context.Context, porterYaml []byte, appName string) (v2.AppWi
 }
 
 // yamlVersion is a struct used to unmarshal the version field of a Porter YAML file
-type yamlVersion struct {
+type YamlVersion struct {
 	Version PorterYamlVersion `yaml:"version"`
 }

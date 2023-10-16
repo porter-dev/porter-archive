@@ -141,7 +141,6 @@ const RevisionsList: React.FC<Props> = ({
               expandRevisions={expandRevisions}
               setExpandRevisions={setExpandRevisions}
               setRevertData={setRevertData}
-              porterAppRecord={porterAppRecord}
             />
           ))
           .otherwise(() => null)}

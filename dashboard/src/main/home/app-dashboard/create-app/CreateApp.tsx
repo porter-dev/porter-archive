@@ -188,7 +188,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     deploymentTargetID: deploymentTarget?.deployment_target_id,
     creating: true,
   });
-  const { currentClusterResources} = useClusterResources();
+  const { currentClusterResources } = useClusterResources();
 
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -196,6 +196,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       const { validatedAppProto, variables, secrets } = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
       setFinalizedAppEnv({ variables, secrets });
+
+      console.log("validatedAppProto", validatedAppProto);
 
       if (source.type === "github") {
         setShowGHAModal(true);
@@ -244,6 +246,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           return false;
         }
 
+        console.log("app", app);
+
         await api.createApp(
           "<token>",
           {
@@ -282,6 +286,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           })
           .parse(res.data);
 
+        console.log("updatedEnvGroups", updatedEnvGroups);
+
         const protoWithUpdatedEnv = new PorterApp({
           ...app,
           envGroups: updatedEnvGroups.env_groups.map((eg) => ({
@@ -289,6 +295,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             version: eg.latest_version,
           })),
         });
+
+        console.log("protoWithUpdatedEnv", protoWithUpdatedEnv);
 
         await api.applyApp(
           "<token>",

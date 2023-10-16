@@ -65,7 +65,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     setUserHasSeenNoPorterYamlFoundModal,
   ] = React.useState(false);
   const isNameValid = (value: string): boolean => {
-    return /^[a-z0-9-]+$/.test(value)
+    return /^[a-z0-9-]{1,63}$/.test(value);
   };
   const [isNameHighlight, setIsNameHighlight] = React.useState(false);
 

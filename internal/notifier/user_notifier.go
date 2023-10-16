@@ -26,13 +26,18 @@ type SendProjectDeleteEmailOpts struct {
 	Project string
 	Email   string
 }
-
+type SendClusterCreationEmailOpts struct {
+	Project string
+	Email   string
+	Name    string
+}
 type UserNotifier interface {
 	SendPasswordResetEmail(opts *SendPasswordResetEmailOpts) error
 	SendGithubRelinkEmail(opts *SendGithubRelinkEmailOpts) error
 	SendEmailVerification(opts *SendEmailVerificationOpts) error
 	SendProjectInviteEmail(opts *SendProjectInviteEmailOpts) error
 	SendProjectDeleteEmail(opts *SendProjectDeleteEmailOpts) error
+	SendClusterCreationEmail(opts *SendClusterCreationEmailOpts) error
 }
 
 type EmptyUserNotifier struct{}
@@ -54,5 +59,9 @@ func (e *EmptyUserNotifier) SendProjectInviteEmail(opts *SendProjectInviteEmailO
 }
 
 func (e *EmptyUserNotifier) SendProjectDeleteEmail(opts *SendProjectDeleteEmailOpts) error {
+	return nil
+}
+
+func (e *EmptyUserNotifier) SendClusterCreationEmail(opts *SendClusterCreationEmailOpts) error {
 	return nil
 }

@@ -17,6 +17,7 @@ type UserNotifierOpts struct {
 	VerifyEmailTemplateID   string
 	ProjectInviteTemplateID string
 	DeleteProjectTemplateID string
+	CreateClusterTemplateID string
 }
 
 func NewUserNotifier(opts *UserNotifierOpts) notifier.UserNotifier {
@@ -175,6 +176,39 @@ func (s *UserNotifier) SendProjectDeleteEmail(opts *notifier.SendProjectDeleteEm
 			Name:    "Porter",
 		},
 		TemplateID: s.opts.DeleteProjectTemplateID,
+	}
+
+	request.Body = mail.GetRequestBody(sgMail)
+
+	_, err := sendgrid.API(request)
+
+	return err
+}
+
+func (s *UserNotifier) SendClusterCreationEmail(opts *notifier.SendClusterCreationEmailOpts) error {
+	request := sendgrid.GetRequest(s.opts.APIKey, "/v3/mail/send", "https://api.sendgrid.com")
+	request.Method = "POST"
+
+	sgMail := &mail.SGMailV3{
+		Personalizations: []*mail.Personalization{
+			{
+				To: []*mail.Email{
+					{
+						Address: opts.Email,
+					},
+				},
+				DynamicTemplateData: map[string]interface{}{
+					"email":   opts.Email,
+					"project": opts.Project,
+					"name":    opts.Name,
+				},
+			},
+		},
+		From: &mail.Email{
+			Address: s.opts.SenderEmail,
+			Name:    "Porter",
+		},
+		TemplateID: s.opts.CreateClusterTemplateID,
 	}
 
 	request.Body = mail.GetRequestBody(sgMail)

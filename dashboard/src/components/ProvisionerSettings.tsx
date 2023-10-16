@@ -597,7 +597,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           errors = errors + check + ", "
         }
       }
-      console.log(quotas)
       setQuotaIncrease(quotas)
       // If none of the checks have a message, set setPreflightFailed to false
       if (hasMessage) {

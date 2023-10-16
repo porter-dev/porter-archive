@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -37,6 +38,7 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	defer span.End()
 
 	user, _ := ctx.Value(types.UserScope).(*models.User)
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	var apiContract porterv1.Contract
 
@@ -56,6 +58,19 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	revision, err := c.Config().ClusterControlPlaneClient.UpdateContract(ctx, updateRequest)
 	if err != nil {
 		e := telemetry.Error(ctx, span, err, "error sending contract for update")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+		return
+	}
+
+	err = c.Config().UserNotifier.SendClusterCreationEmail(
+		&notifier.SendClusterCreationEmailOpts{
+			Email:   user.Email,
+			Project: proj.Name,
+			Name:    user.FirstName,
+		},
+	)
+	if err != nil {
+		e := telemetry.Error(ctx, span, err, "Error Sending Email upon cluster creation")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}

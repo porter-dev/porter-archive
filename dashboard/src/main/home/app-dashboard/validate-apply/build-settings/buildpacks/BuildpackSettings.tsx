@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import Helper from "components/form-components/Helper";
 import Error from "components/porter/Error";
 import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
@@ -16,9 +15,11 @@ import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
 import BuildpackList from "./BuildpackList";
 import BuildpackConfigurationModal from "./BuildpackConfigurationModal";
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
 import { BuildOptions } from "lib/porter-apps/build";
+import Select from "components/porter/Select";
+import Text from "components/porter/Text";
 
 type Props = {
   projectId: number;
@@ -98,7 +99,7 @@ const BuildpackSettings: React.FC<Props> = ({
       status === "error"
         ? `Unable to detect buildpacks at path: ${build.context}. Please make sure your repo, branch, and application root path are all set correctly and attempt to detect again.`
         : "",
-    [build.context]
+    [build.context, status]
   );
 
   const builderOptions = useMemo(() => {
@@ -159,12 +160,40 @@ const BuildpackSettings: React.FC<Props> = ({
 
   return (
     <BuildpackConfigurationContainer>
+      {!!build.builder && (
+        <Controller
+          control={control}
+          name="app.build.builder"
+          render={({ field: { onChange } }) => (
+            <>
+              <Select
+                value={build.builder}
+                width="300px"
+                options={builderOptions}
+                setValue={(val) => {
+                  onChange(val);
+                }}
+                label={"Builder"}
+                labelColor="#DFDFE1"
+              />
+            </>
+          )}
+        />
+      )}
+      <Spacer y={0.5} />
+      <Text>Buildpacks</Text>
       {build.buildpacks.length > 0 && (
         <>
-          <Helper>
-            The following buildpacks were automatically detected. You can also
-            manually add, remove, or re-order buildpacks here.
-          </Helper>
+          <Spacer y={0.5} />
+          {populateBuildValuesOnceAfterDetection && 
+            <>
+              <Text color="helper">
+                The following buildpacks were detected at your application's root path. You can also
+                manually add, remove, or re-order buildpacks here.
+              </Text>
+              <Spacer y={0.5} />
+            </>
+          }
           <BuildpackList
             build={build}
             availableBuildpacks={availableBuildpacks}
@@ -174,6 +203,14 @@ const BuildpackSettings: React.FC<Props> = ({
             detectBuildpacksError={errorMessage}
             droppableId={"non-modal"}
           />
+        </>
+      )}
+      {build.buildpacks.length === 0 && !errorMessage && (
+        <>
+          <Spacer y={0.5} />
+          <Text color="helper">
+            No buildpacks have been specified. Click the button below to add buildpacks detected at your application's root path.
+          </Text>
         </>
       )}
       {errorMessage && (
@@ -198,7 +235,6 @@ const BuildpackSettings: React.FC<Props> = ({
           closeModal={() => {
             setIsModalOpen(false);
           }}
-          sortedStackOptions={builderOptions}
           availableBuildpacks={availableBuildpacks}
           setAvailableBuildpacks={setAvailableBuildpacks}
           isDetectingBuildpacks={status === "loading"}

@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useMemo } from "react";
+import React, { Dispatch, SetStateAction } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { AppRevision } from "lib/revisions/types";
 import { match } from "ts-pattern";
@@ -7,12 +7,10 @@ import styled from "styled-components";
 import { readableDate } from "shared/string_utils";
 import Text from "components/porter/Text";
 import { SourceOptions } from "lib/porter-apps";
-import api from "shared/api";
 
 type RevisionTableContentsProps = {
   latestRevisionNumber: number;
   revisions: AppRevision[];
-  latestSource: SourceOptions;
   expandRevisions: boolean;
   setExpandRevisions: Dispatch<SetStateAction<boolean>>;
   setRevertData: Dispatch<
@@ -30,7 +28,6 @@ const YELLOW = "#FFA500";
 const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
   latestRevisionNumber,
   revisions,
-  latestSource,
   expandRevisions,
   setExpandRevisions,
   setRevertData,
@@ -77,14 +74,14 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
 
   const getTableHeader = (latestRevision?: AppRevision) => {
     if (!latestRevision) {
-      return "Revisions";
+      return "Versions";
     }
 
     if (previewRevision) {
-      return "Previewing revision (not deployed) -";
+      return "Previewing version (not deployed) -";
     }
 
-    return "Current revision - ";
+    return "Current version - ";
   };
 
   const getSelectedRevisionNumber = (args: {
@@ -132,7 +129,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
           <RevisionsTable>
             <tbody>
               <Tr disableHover>
-                <Th>Revision no.</Th>
+                <Th>Version no.</Th>
                 <Th>
                   {revisionsWithProto[0]?.app_proto.build
                     ? "Commit SHA"

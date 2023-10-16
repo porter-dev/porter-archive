@@ -7,7 +7,6 @@ import { match } from "ts-pattern";
 import loading from "assets/loading.gif";
 import {
   PorterAppFormData,
-  SourceOptions,
   clientAppFromProto,
 } from "lib/porter-apps";
 import { z } from "zod";
@@ -18,17 +17,14 @@ import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import RevisionTableContents from "./RevisionTableContents";
 import GHStatusBanner from "./GHStatusBanner";
 import Spacer from "components/porter/Spacer";
-import { PorterAppRecord } from "../../app-view/AppView";
 
 type Props = {
   deploymentTargetId: string;
   projectId: number;
   clusterId: number;
   appName: string;
-  latestSource: SourceOptions;
   latestRevisionNumber: number;
   onSubmit: () => Promise<void>;
-  porterAppRecord: PorterAppRecord;
 };
 
 const RevisionsList: React.FC<Props> = ({
@@ -37,9 +33,7 @@ const RevisionsList: React.FC<Props> = ({
   projectId,
   clusterId,
   appName,
-  latestSource,
   onSubmit,
-  porterAppRecord,
 }) => {
   const { servicesFromYaml } = useLatestRevision();
   const { setValue } = useFormContext<PorterAppFormData>();
@@ -137,7 +131,6 @@ const RevisionsList: React.FC<Props> = ({
             <RevisionTableContents
               latestRevisionNumber={latestRevisionNumber}
               revisions={data.app_revisions}
-              latestSource={latestSource}
               expandRevisions={expandRevisions}
               setExpandRevisions={setExpandRevisions}
               setRevertData={setRevertData}

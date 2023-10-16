@@ -11,7 +11,6 @@ import { SourceOptions } from "lib/porter-apps";
 type RevisionTableContentsProps = {
   latestRevisionNumber: number;
   revisions: AppRevision[];
-  latestSource: SourceOptions;
   expandRevisions: boolean;
   setExpandRevisions: Dispatch<SetStateAction<boolean>>;
   setRevertData: Dispatch<
@@ -29,7 +28,6 @@ const YELLOW = "#FFA500";
 const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
   latestRevisionNumber,
   revisions,
-  latestSource,
   expandRevisions,
   setExpandRevisions,
   setRevertData,

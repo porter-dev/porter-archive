@@ -14,9 +14,9 @@ import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import notFound from "assets/not-found.png";
 import styled from "styled-components";
-import { SourceOptions } from "lib/porter-apps";
+import { SourceOptions, clientAppFromProto } from "lib/porter-apps";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
-import { DetectedServices } from "lib/porter-apps/services";
+import { ClientService, DetectedServices } from "lib/porter-apps/services";
 import {
   DeploymentTarget,
   useDeploymentTarget,
@@ -38,6 +38,7 @@ export const LatestRevisionContext = createContext<{
   attachedEnvGroups: PopulatedEnvGroup[];
   appEnv?: PopulatedEnvGroup;
   setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
+  latestClientServices: ClientService[];
 } | null>(null);
 
 export const useLatestRevision = () => {
@@ -258,6 +259,15 @@ export const LatestRevisionProvider = ({
     });
   }, [latestRevision]);
 
+  const latestClientServices = useMemo(() => {
+    if (!latestProto) {
+      return [];
+    }
+
+    const app = clientAppFromProto({proto: latestProto, overrides: detectedServices});
+    return app.services;
+  }, [latestProto, detectedServices]);
+
   if (
     status === "loading" ||
     porterAppStatus === "loading" ||
@@ -307,6 +317,7 @@ export const LatestRevisionProvider = ({
         appEnv,
         previewRevision,
         setPreviewRevision,
+        latestClientServices,
       }}
     >
       {children}

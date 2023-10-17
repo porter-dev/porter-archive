@@ -12,16 +12,16 @@ import MetricsChart from "../../expanded-app/metrics/MetricsChart";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "components/Loading";
 import CheckboxRow from "components/CheckboxRow";
-import { PorterApp } from "@porter-dev/api-contracts";
 import { useLocation } from "react-router";
 import Filter from "components/porter/Filter";
 import { GenericFilterOption, GenericFilter, FilterName } from "../../expanded-app/logs/types";
+import { ClientService } from "lib/porter-apps/services";
 
 type PropsType = {
   projectId: number;
   clusterId: number;
   appName: string;
-  services: PorterApp["services"];
+  services: ClientService[];
   deploymentTargetId: string;
 };
 
@@ -40,8 +40,8 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
   // filter out jobs until we can display metrics on them
   const serviceOptions: GenericFilterOption[] = useMemo(() => {
-    const nonJobServiceNames = Object.keys(services).filter((name) => services[name].config.case !== "jobConfig");
-    return nonJobServiceNames.map((name) => GenericFilterOption.of(name, name));
+    const nonJobServiceNames = services.filter((s) => s.config.type !== "job").map((s) => s.name);
+    return nonJobServiceNames.map(({ value }) => GenericFilterOption.of(value, value));
   }, [services]);
 
   const filters: GenericFilter[] = useMemo(() => {
@@ -70,37 +70,32 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
   const [serviceName, serviceKind, metricTypes, isHpaEnabled] = useMemo(() => {
     if (!selectedFilterValues.service_name) {
-      return ["", "", [], false]
+      return ["", "", [], false];
     }
 
-    const service = services[selectedFilterValues.service_name]
+    const service = services.find(s => s.name.value === selectedFilterValues.service_name);
     if (!service) {
-      return ["", "", [], false]
+      return ["", "", [], false];
     }
 
-    const serviceName = service.absoluteName === "" ? (appName + "-" + selectedFilterValues.service_name) : service.absoluteName
+    const serviceName = `${appName}-${service.name.value}`;
 
-    let serviceKind = ""
+    let serviceKind = "";
     const metricTypes: MetricType[] = ["cpu", "memory"];
-    let isHpaEnabled = false
+    let isHpaEnabled = false;
 
-    if (service.config.case === "webConfig") {
-      serviceKind = "web"
-      metricTypes.push("network");
-      if (service.config.value.autoscaling != null && service.config.value.autoscaling.enabled) {
-        isHpaEnabled = true
+    if (service.config.type === "web" || service.config.type === "worker") {
+      serviceKind = service.config.type === "web" ? "web" : "worker";
+      if (service.config.autoscaling?.enabled) {
+        isHpaEnabled = true;
       }
-      if (!service.config.value.private) {
-        metricTypes.push("nginx:status")
-      }
-    }
-
-    if (service.config.case === "workerConfig") {
-      serviceKind = "worker"
-      if (service.config.value.autoscaling != null && service.config.value.autoscaling.enabled) {
-        isHpaEnabled = true
-      }
-    }
+      if (service.config.type === "web") {
+        metricTypes.push("network");
+        if (!service.config.private) {
+          metricTypes.push("nginx:status");
+        }
+      } 
+    } 
 
     if (isHpaEnabled) {
       metricTypes.push("hpa_replicas");

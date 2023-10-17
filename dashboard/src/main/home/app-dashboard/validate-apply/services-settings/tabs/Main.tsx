@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import cronstrue from "cronstrue";
 import {Controller, useFormContext} from "react-hook-form";
 
@@ -9,6 +9,8 @@ import { ClientService } from "lib/porter-apps/services";
 import Text from "components/porter/Text";
 import Link from "components/porter/Link";
 import Checkbox from "components/porter/Checkbox";
+import { match } from "ts-pattern";
+import Tooltip from "components/porter/Tooltip";
 
 type MainTabProps = {
   index: number;
@@ -21,6 +23,12 @@ const MainTab: React.FC<MainTabProps> = ({ index, service, isPredeploy = false }
   const cron = watch(`app.services.${index}.config.cron.value`);
   const run = watch(`app.services.${index}.run.value`);
   const predeployRun = watch(`app.predeploy.${index}.run.value`);
+
+  const build = watch("app.build");
+  const source = watch("source");
+  const isRunCommandOptional = useMemo(() => {
+    return build.method === "docker" || source.type === "docker-registry";
+  }, [build.method, source.type]);
 
   const getScheduleDescription = useCallback((cron: string) => {
     try {
@@ -39,36 +47,42 @@ const MainTab: React.FC<MainTabProps> = ({ index, service, isPredeploy = false }
     }
   }, []);
 
-    const getValidStartCommand = useCallback((run: string) => {
-        if (run && (run.includes("&&") || run.includes(";"))) {
-            return (
-                <>
-                <Spacer y={0.5} />
-                <Text color="warner">Multiple commands are not supported at this time. To run multiple commands, move all commands into a script that can be run from a single endpoint.</Text>
-                </>
-            );
-        } else {
-            return (
-                <></>
-            );
-        }
-    }, []);
+  const isStartCommandValid = useMemo(() => {
+    const runCommand = isPredeploy ? predeployRun : run;
+    return runCommand.includes("&&") || runCommand.includes(";");
+  }, [isPredeploy, predeployRun, run]);
 
+  // if your Docker image has a CMD or ENTRYPOINT
   return (
     <>
       <Spacer y={1} />
+      {isRunCommandOptional ?
+        <Tooltip
+          content={"If your Docker image has a CMD or ENTRYPOINT, you may leave this field empty."}
+          position={"right"}
+        >
+          <Text color="helper">Start command (optional)</Text>
+        </Tooltip>
+        :
+        <Text color="helper">Start command (required)</Text>
+      }
+      <Spacer y={0.5} />
       <ControlledInput
         type="text"
-        label="Start command"
-        placeholder="ex: sh start.sh"
+        placeholder="ex: bash ./start.sh"
         width="300px"
         disabled={service.run.readOnly}
         disabledTooltip={"You may only edit this field in your porter.yaml."}
         {...register(isPredeploy ? `app.predeploy.${index}.run.value` : `app.services.${index}.run.value`)}
       />
-
-      {getValidStartCommand(isPredeploy ? predeployRun :run)}
-      {service.config.type === "job" && (
+      {isStartCommandValid &&
+          <>
+            <Spacer y={0.5} />
+            <Text color="warner">Chained commands are not supported at this time. To run multiple commands, move all commands into a script that can be run from a single endpoint (e.g. bash ./run.sh).</Text>
+          </>
+      }
+      {match(service.config)
+      .with({ type: "job" }, (jobConfig) => (
         <>
           <Spacer y={1} />
           <ControlledInput
@@ -76,7 +90,7 @@ const MainTab: React.FC<MainTabProps> = ({ index, service, isPredeploy = false }
             label="Cron schedule"
             placeholder="ex: */5 * * * *"
             width="300px"
-            disabled={service.config.cron.readOnly}
+            disabled={jobConfig.cron.readOnly}
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
@@ -85,27 +99,29 @@ const MainTab: React.FC<MainTabProps> = ({ index, service, isPredeploy = false }
 
           <Spacer y={0.5} />
           {getScheduleDescription(cron)}
-            <Spacer y={0.5} />
-            <Controller
-                name={`app.services.${index}.config.suspendCron.value`}
-                control={control}
-                render={({ field: { value, onChange } }) => (
-                    <Checkbox
-                        checked={value}
-                        disabled={service.config.suspendCron?.readOnly}
-                        toggleChecked={() => {
-                            onChange(!value);
-                        }}
-                        disabledTooltip={
-                            "You may only edit this field in your porter.yaml."
-                        }
-                    >
-                        <Text color="helper">Suspend cron job</Text>
-                    </Checkbox>
-                )}
-            />
+          <Spacer y={0.5} />
+          <Controller
+              name={`app.services.${index}.config.suspendCron.value`}
+              control={control}
+              render={({ field: { value, onChange } }) => (
+                  <Checkbox
+                      checked={value}
+                      disabled={jobConfig.suspendCron?.readOnly}
+                      toggleChecked={() => {
+                          onChange(!value);
+                      }}
+                      disabledTooltip={
+                          "You may only edit this field in your porter.yaml."
+                      }
+                  >
+                      <Text color="helper">Suspend cron job</Text>
+                  </Checkbox>
+              )}
+          />
         </>
-      )}
+      ))
+      .otherwise(() => null)
+      }
     </>
   );
 };

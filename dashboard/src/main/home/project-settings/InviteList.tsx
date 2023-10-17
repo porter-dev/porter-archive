@@ -120,11 +120,10 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
   };
 
   const createInvite = () => {
-    const uriEmail = encodeURIComponent(email.toLowerCase());
     api
       .createInvite(
         "<token>",
-        { email: uriEmail, kind: role },
+        { email: email.toLowerCase(), kind: role },
         { id: currentProject.id }
       )
       .then(() => {

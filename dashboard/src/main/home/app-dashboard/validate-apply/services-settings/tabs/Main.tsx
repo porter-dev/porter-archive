@@ -10,6 +10,7 @@ import Text from "components/porter/Text";
 import Link from "components/porter/Link";
 import Checkbox from "components/porter/Checkbox";
 import { match } from "ts-pattern";
+import Tooltip from "components/porter/Tooltip";
 
 type MainTabProps = {
   index: number;
@@ -51,14 +52,24 @@ const MainTab: React.FC<MainTabProps> = ({ index, service, isPredeploy = false }
     return runCommand.includes("&&") || runCommand.includes(";");
   }, [isPredeploy, predeployRun, run]);
 
+  // if your Docker image has a CMD or ENTRYPOINT
   return (
     <>
       <Spacer y={1} />
-      <Text color="helper">{`Start command${isRunCommandOptional ? " (optional if your Docker image has a CMD or ENTRYPOINT)" : ""}`}</Text>
+      {isRunCommandOptional ?
+        <Tooltip
+          content={"If your Docker image has a CMD or ENTRYPOINT, you may leave this field empty."}
+          position={"right"}
+        >
+          <Text color="helper">Start command (optional)</Text>
+        </Tooltip>
+        :
+        <Text color="helper">Start command</Text>
+      }
       <Spacer y={0.5} />
       <ControlledInput
         type="text"
-        placeholder="ex: sh start.sh"
+        placeholder="ex: bash ./start.sh"
         width="300px"
         disabled={service.run.readOnly}
         disabledTooltip={"You may only edit this field in your porter.yaml."}

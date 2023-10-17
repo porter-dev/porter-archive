@@ -81,6 +81,10 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 		return output
 	}
 
+	// create a temp file which build logs will be written to
+	// temp file gets cleaned up when os exits (i.e. when the GHA completes), so no need to remove it manually
+	logFile, _ := os.CreateTemp("", buildLogFilename)
+
 	switch inp.BuildMethod {
 	case buildMethodDocker:
 		basePath, err := filepath.Abs(".")
@@ -98,10 +102,6 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 			output.Error = fmt.Errorf("error resolving docker paths: %w", err)
 			return output
 		}
-
-		// create a temp file which build logs will be written to
-		// temp file gets cleaned up when os exits (i.e. when the GHA completes), so no need to remove it manually
-		logFile, _ := os.CreateTemp("", buildLogFilename)
 
 		opts := &docker.BuildOpts{
 			ImageRepo:         inp.RepositoryURL,
@@ -140,6 +140,7 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 			Tag:          tag,
 			BuildContext: inp.BuildContext,
 			Env:          inp.Env,
+			LogFile:      logFile,
 		}
 
 		buildConfig := &types.BuildConfig{

@@ -12,7 +12,7 @@ import spinner from "assets/loading.gif";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { getPodSelectorFromServiceName, useLogs } from "./utils";
-import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName, LogFilterQueryParamOpts } from "./types";
+import { Direction, GenericFilterOption, GenericFilter, FilterName, LogFilterQueryParamOpts } from "./types";
 import dayjs, { Dayjs } from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
@@ -62,11 +62,11 @@ const LogSection: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [logsError, setLogsError] = useState<string | undefined>(undefined);
 
-  const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
-    revision: filterOpts?.revision ?? GenericLogFilter.getDefaultOption("revision").value,
-    output_stream: filterOpts?.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
-    pod_name: getPodSelectorFromServiceName(filterOpts?.service, services) ?? GenericLogFilter.getDefaultOption("pod_name").value,
-    service_name: filterOpts?.service ?? GenericLogFilter.getDefaultOption("service_name").value,
+  const [selectedFilterValues, setSelectedFilterValues] = useState<Record<FilterName, string>>({
+    revision: filterOpts?.revision ?? GenericFilter.getDefaultOption("revision").value,
+    output_stream: filterOpts?.output_stream ?? GenericFilter.getDefaultOption("output_stream").value,
+    pod_name: getPodSelectorFromServiceName(filterOpts?.service, services) ?? GenericFilter.getDefaultOption("pod_name").value,
+    service_name: filterOpts?.service ?? GenericFilter.getDefaultOption("service_name").value,
   });
 
   const createVersionOptions = (number: number) => {
@@ -110,11 +110,11 @@ const LogSection: React.FC<Props> = ({
     return patch >= 4;
   }
 
-  const [filters, setFilters] = useState<GenericLogFilter[]>(showFilter ? [
+  const [filters, setFilters] = useState<GenericFilter[]>(showFilter ? [
     {
       name: "pod_name",
       displayName: "Service",
-      default: GenericLogFilter.getDefaultOption("pod_name"),
+      default: GenericFilter.getDefaultOption("pod_name"),
       options: services?.map(s => {
         return GenericFilterOption.of(s.name, `${s.name}-${s.type == "worker" ? "wkr" : s.type}`)
       }) ?? [],
@@ -128,7 +128,7 @@ const LogSection: React.FC<Props> = ({
     {
       name: "revision",
       displayName: "Version",
-      default: GenericLogFilter.getDefaultOption("revision"),
+      default: GenericFilter.getDefaultOption("revision"),
       options: currentChart != null ? createVersionOptions(currentChart.version) : [],
       setValue: (value: string) => {
         setSelectedFilterValues((s) => ({
@@ -140,7 +140,7 @@ const LogSection: React.FC<Props> = ({
     {
       name: "output_stream",
       displayName: "Output Stream",
-      default: GenericLogFilter.getDefaultOption("output_stream"),
+      default: GenericFilter.getDefaultOption("output_stream"),
       options: [
         GenericFilterOption.of('stdout', 'stdout'),
         GenericFilterOption.of("stderr", "stderr"),
@@ -199,22 +199,6 @@ const LogSection: React.FC<Props> = ({
     }
   };
 
-  const generateFilterString = () => {
-    let filterString = "";
-    if (selectedFilterValues["service_name"] !== "all") {
-      filterString += selectedFilterValues["service_name"];
-    } else if (selectedFilterValues["pod_name"] !== "all") {
-      filterString += selectedFilterValues["pod_name"].replace(/-[^-]*$/, '');
-    }
-    if (selectedFilterValues["revision"] !== "all") {
-      if (filterString !== "") {
-        filterString += " ";
-      }
-      filterString += "v" + selectedFilterValues["revision"];
-    }
-    return filterString;
-  };
-
   const renderContents = () => {
     return (
       <>
@@ -236,7 +220,6 @@ const LogSection: React.FC<Props> = ({
             {showFilter && (
               <Filter
                 filters={filters}
-                filterString={generateFilterString()}
                 selectedFilterValues={selectedFilterValues}
               />
             )}
@@ -347,7 +330,7 @@ const LogSection: React.FC<Props> = ({
           {
             name: "pod_name",
             displayName: "Service",
-            default: GenericLogFilter.getDefaultOption("pod_name"),
+            default: GenericFilter.getDefaultOption("pod_name"),
             options: services?.map(s => {
               return GenericFilterOption.of(s.name, `${s.name}-${s.type == "worker" ? "wkr" : s.type}`)
             }) ?? [],

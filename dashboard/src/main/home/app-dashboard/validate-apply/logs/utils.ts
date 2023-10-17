@@ -10,8 +10,8 @@ import {
   Direction,
   PorterLog,
   PaginationInfo,
-  LogFilterName,
-  GenericLogFilter
+  FilterName,
+  GenericFilter
 } from "../../expanded-app/logs/types";
 
 const MAX_LOGS = 5000;
@@ -60,7 +60,7 @@ export const useLogs = ({
 }: {
   projectID: number,
   clusterID: number,
-  selectedFilterValues: Record<LogFilterName, string>,
+  selectedFilterValues: Record<FilterName, string>,
   appName: string,
   serviceName: string,
   deploymentTargetId: string,
@@ -244,7 +244,7 @@ export const useLogs = ({
         return true;
       }
 
-      if (selectedFilterValues.output_stream !== GenericLogFilter.getDefaultOption("output_stream").value &&
+      if (selectedFilterValues.output_stream !== GenericFilter.getDefaultOption("output_stream").value &&
         log.metadata.output_stream !== selectedFilterValues.output_stream) {
         return false;
       }
@@ -253,7 +253,7 @@ export const useLogs = ({
         return false;
       }
 
-      if (selectedFilterValues.revision !== GenericLogFilter.getDefaultOption("revision").value &&
+      if (selectedFilterValues.revision !== GenericFilter.getDefaultOption("revision").value &&
         log.metadata.revision !== selectedFilterValues.revision) {
         return false;
       }

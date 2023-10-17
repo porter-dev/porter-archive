@@ -473,9 +473,14 @@ func uniqueServices(serviceMap map[string]*porterv1.Service, serviceList []*port
 		return serviceList
 	}
 
+	// deduplicate services by name, favoring whatever was defined first
+	uniqueServices := make(map[string]*porterv1.Service)
+	for _, service := range serviceMap {
+		uniqueServices[service.Name] = service
+	}
+
 	mergedServiceList := make([]*porterv1.Service, 0)
-	for name, service := range serviceMap {
-		service.Name = name
+	for _, service := range uniqueServices {
 		mergedServiceList = append(mergedServiceList, service)
 	}
 

@@ -147,7 +147,8 @@ export function prefixSubdomain(subdomain: string) {
 
 export function uniqueServices(app: PorterApp): Service[] {
   if (app.serviceList?.length) {
-    return app.serviceList;
+    // dedupe services by name, favoring the first instance
+    return _.uniqBy(app.serviceList, "name");
   }
 
   const servicesFromMap = Object.entries(app.services ?? {}).map(

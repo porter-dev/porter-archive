@@ -19,6 +19,7 @@ import {
   PorterAppFormData,
   SourceOptions,
   porterAppFormValidator,
+  clientAppValidator,
 } from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
@@ -47,7 +48,8 @@ import {
 } from "../validate-apply/app-settings/types";
 import EnvSettings from "../validate-apply/app-settings/EnvSettings";
 import ImageSettings from "../image-settings/ImageSettings";
-import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
+import { useClusterResources } from "shared/ClusterResourcesContext";
+import PorterYamlModal from "./PorterYamlModal";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -63,6 +65,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     userHasSeenNoPorterYamlFoundModal,
     setUserHasSeenNoPorterYamlFoundModal,
   ] = React.useState(false);
+  const isNameValid = (value: string): boolean => {
+    return /^[a-z0-9-]{1,63}$/.test(value);
+  };
+  const [isNameHighlight, setIsNameHighlight] = React.useState(false);
 
   const [
     validatedAppProto,
@@ -77,10 +83,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     variables: {},
     secrets: {},
   });
-  const { maxCPU, maxRAM } = useClusterResourceLimits({
-    projectId: currentProject?.id,
-    clusterId: currentCluster?.id,
-  })
 
   const { data: porterApps = [] } = useQuery<string[]>(
     ["getPorterApps", currentProject?.id, currentCluster?.id],
@@ -182,7 +184,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const image = watch("source.image");
   const services = watch("app.services");
 
-  const { detectedServices: servicesFromYaml, detectedName } = usePorterYaml({
+  const {
+    detectedServices: servicesFromYaml,
+    detectedName,
+    porterYamlFound,
+    loading: isLoadingPorterYaml,
+  } = usePorterYaml({
     source: source?.type === "github" ? source : null,
     appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
   });
@@ -192,7 +199,22 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     deploymentTargetID: deploymentTarget?.deployment_target_id,
     creating: true,
   });
+  const { currentClusterResources } = useClusterResources();
 
+  const resetAllExceptName = () => {
+    setIsNameHighlight(true);
+
+
+    // Get the current name value before the reset
+    setStep(0);
+    const currentNameValue = porterAppFormMethods.getValues("app.name");
+    setValue("app.services", []);
+    // Reset the form
+    porterAppFormMethods.reset();
+    // Set the name back to its original value
+    porterAppFormMethods.setValue("app.name", currentNameValue);
+
+  };
   const onSubmit = handleSubmit(async (data) => {
     try {
       setDeployError("");
@@ -342,10 +364,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   useEffect(() => {
     // set step to 1 if name is filled out
-    if (name.value) {
+    if (isNameValid(name.value) && name.value) {
+      setIsNameHighlight(false);  // Reset highlight when the name is valid
       setStep((prev) => Math.max(prev, 1));
     } else {
-      setStep(0);
+      resetAllExceptName()
     }
 
     // set step to 2 if source is filled out
@@ -388,23 +411,32 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       return <Error message={deployError} />;
     }
 
+    // TODO: create a more unified way of parsing form/apply errors, unified with the logic in AppDataContainer
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
+      let errorMessage = "App could not be deployed as defined.";
       if (errorKeys.includes("app")) {
-        const appErrors = Object.keys(errors?.app ?? {});
+        const appErrors = Object.keys(errors.app ?? {});
         if (appErrors.includes("build")) {
-          return (
-            <Error message={"Build settings are not properly configured."} />
-          );
+          errorMessage = "Build settings are not properly configured.";
         }
 
         if (appErrors.includes("services")) {
-          return (
-            <Error message={"Service settings are not properly configured."} />
-          );
+          errorMessage = "Service settings are not properly configured";
+          if (errors.app?.services?.root?.message) {
+            errorMessage = `${errorMessage} - ${errors?.app?.services?.root?.message}`;
+          }
+          errorMessage = `${errorMessage}.`;
         }
       }
-      return <Error message={"App could not be deployed as defined."} />;
+
+      updateAppStep({
+        step: "stack-launch-failure",
+        errorMessage: `Form validation error: ${errorMessage}`,
+        appName: name.value,
+      });
+
+      return <Error message={errorMessage} maxWidth="600px" />;
     }
 
     return;
@@ -505,7 +537,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                   <>
                     <Text size={16}>Application name</Text>
                     <Spacer y={0.5} />
-                    <Text color="helper">
+                    <Text color={isNameHighlight ? "#FFCC00" : "helper"}>
                       Lowercase letters, numbers, and "-" only.
                     </Text>
                     <Spacer y={0.5} />
@@ -513,7 +545,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       placeholder="ex: academic-sophon"
                       type="text"
                       width="300px"
-                      error={errors.app?.name?.message}
+                      error={errors.app?.name?.value?.message}
                       disabled={name.readOnly}
                       disabledTooltip={
                         "You may only edit this field in your porter.yaml."
@@ -558,8 +590,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               source={source}
                               projectId={currentProject.id}
                             />
-                            {/* todo(ianedwards): re-enable porter.yaml modal after validate/apply v2 is rolled out and proven to be stable */}
-                            {/* {!userHasSeenNoPorterYamlFoundModal &&
+                            {!userHasSeenNoPorterYamlFoundModal &&
                               !porterYamlFound &&
                               !isLoadingPorterYaml && (
                                 <Controller
@@ -579,16 +610,29 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                                     />
                                   )}
                                 />
-                              )} */}
+                              )}
                           </>
                         ) : (
                           <ImageSettings
                             projectId={currentProject.id}
                             imageUri={image?.repository ?? ""}
-                            setImageUri={(uri: string) => setValue("source.image", { ...image, repository: uri })}
+                            setImageUri={(uri: string) =>
+                              setValue("source.image", {
+                                ...image,
+                                repository: uri,
+                              })
+                            }
                             imageTag={image?.tag ?? ""}
-                            setImageTag={(tag: string) => setValue("source.image", { ...image, tag })}
-                            resetImageInfo={() => setValue("source.image", { ...image, repository: "", tag: "" })}
+                            setImageTag={(tag: string) =>
+                              setValue("source.image", { ...image, tag })
+                            }
+                            resetImageInfo={() =>
+                              setValue("source.image", {
+                                ...image,
+                                repository: "",
+                                tag: "",
+                              })
+                            }
                           />
                         )
                       ) : null}
@@ -625,8 +669,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ServiceList
                       addNewText={"Add a new service"}
                       fieldArrayName={"app.services"}
-                      maxCPU={maxCPU}
-                      maxRAM={maxRAM}
+                      maxCPU={currentClusterResources.maxCPU}
+                      maxRAM={currentClusterResources.maxRAM}
                     />
                   </>,
                   <>
@@ -653,13 +697,15 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                           service: defaultSerialized({
                             name: "pre-deploy",
                             type: "predeploy",
+                            defaultCPU: currentClusterResources.defaultCPU,
+                            defaultRAM: currentClusterResources.defaultRAM,
                           }),
                           expanded: true,
                         })}
                         isPredeploy
                         fieldArrayName={"app.predeploy"}
-                        maxCPU={maxCPU}
-                        maxRAM={maxRAM}
+                        maxCPU={currentClusterResources.maxCPU}
+                        maxRAM={currentClusterResources.maxRAM}
                       />
                     </>
                   ),

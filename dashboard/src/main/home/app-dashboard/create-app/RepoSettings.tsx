@@ -94,9 +94,12 @@ const RepoSettings: React.FC<Props> = ({
     <div>
       <Text size={16}>Build settings</Text>
       <Spacer y={0.5} />
-      <Text color="helper">Specify your GitHub repository.</Text>
-      <Spacer y={0.5} />
-
+      {!appExists && 
+        <>
+          <Text color="helper">Specify your GitHub repository.</Text>
+          <Spacer y={0.5} />
+        </>
+      } 
       {!source.git_repo_name && (
         <Controller
           name="source.git_repo_name"
@@ -117,12 +120,11 @@ const RepoSettings: React.FC<Props> = ({
                 />
               </ExpandedWrapper>
               <DarkMatter antiHeight="-4px" />
-              <Spacer y={0.3} />
+              <Spacer y={0.5} />
             </>
           )}
         />
       )}
-
       {!!source.git_repo_name && (
         <>
           <Input
@@ -156,8 +158,12 @@ const RepoSettings: React.FC<Props> = ({
             </>
           )}
           <Spacer y={0.5} />
-          <Text color="helper">Specify your GitHub branch.</Text>
-          <Spacer y={0.5} />
+          {!appExists && 
+            <>
+              <Text color="helper">Specify your GitHub branch.</Text>
+              <Spacer y={0.5} />
+            </>
+          }
           {!source.git_branch && (
             <Controller
               name="source.git_branch"
@@ -205,13 +211,18 @@ const RepoSettings: React.FC<Props> = ({
                 </>
               }
               <Spacer y={0.5} />
-              <Text color="helper">Specify your application root path.</Text>
-              <Spacer y={0.5} />
+              {!appExists &&
+                <>
+                  <Text color="helper">Specify your application root path.</Text>
+                  <Spacer y={0.5} />
+                </>
+              }
               <ControlledInput
                 placeholder="ex: ./"
                 width="100%"
                 type="text"
                 {...register("app.build.context")}
+                label={"Application root path:"}
               />
               <Spacer y={1} />
               {isLoading && !appExists ?
@@ -263,6 +274,7 @@ const RepoSettings: React.FC<Props> = ({
                           }
                         }}
                         label="Build method"
+                        labelColor="#DFDFE1"
                       />
                     )}
                   />
@@ -284,12 +296,15 @@ const RepoSettings: React.FC<Props> = ({
                       </>
                     ))
                     .with({ method: "pack" }, (b) => (
-                      <BuildpackSettings
-                        projectId={projectId}
-                        build={b}
-                        source={source}
-                        populateBuildValuesOnceAfterDetection={!appExists}
-                      />
+                      <>
+                        <Spacer y={0.5} />
+                        <BuildpackSettings
+                          projectId={projectId}
+                          build={b}
+                          source={source}
+                          populateBuildValuesOnceAfterDetection={!appExists}
+                        />
+                      </>
                     ))
                     .exhaustive()}
                 </StyledSourceBox>
@@ -343,7 +358,7 @@ const BackButton = styled.div`
 `;
 
 const StyledAdvancedBuildSettings = styled.div`
-  color: ${({ showSettings }) => (showSettings ? "white" : "#aaaabb")};
+  color: ${({ showSettings }) => (showSettings ? "#DFDFE1" : "#aaaabb")};
   background: ${({ theme }) => theme.fg};
   border: 1px solid #494b4f;
   :hover {

@@ -39,7 +39,13 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
 
     // remove this filter when https://linear.app/porter/issue/POR-1676/disable-porter-agent-code-for-cpu-alerts is resolved
     const isNotFilteredAppEvent = (event: PorterAppEvent) => {
-        return !(event.type === "APP_EVENT" && event.metadata?.short_summary?.includes("non-zero exit code"));
+        return !(event.type === "APP_EVENT" &&
+            (
+                event.metadata?.short_summary?.includes("requesting more memory than is available")
+                || event.metadata?.short_summary?.includes("requesting more CPU than is available")
+                || event.metadata?.short_summary?.includes("non-zero exit code")
+            )
+        );
     }
 
     const { data: eventFetchData, isLoading: isEventFetchLoading, isRefetching } = useQuery(
@@ -172,7 +178,9 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
         );
     }
 
-    if (events != null && events.length === 0) {
+    // if all the events are hidden and there's only one page, show this no-events-found message
+    // else, users should be able to go to the next page for events
+    if (events != null && events.length === 0 && numPages <= 1) { 
         return (
             <Fieldset>
                 <Text size={16}>No events found for "{appName}"</Text>

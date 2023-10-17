@@ -540,6 +540,31 @@ func GetBaseRoutes(
 			Handler:  githubIncomingWebhookHandler,
 			Router:   r,
 		})
+
+		// POST /api/webhooks/github/{webhook_id} -> webhook.NewGithubWebhookHandler
+		githubWebhookEndpoint := factory.NewAPIEndpoint(
+			&types.APIRequestMetadata{
+				Verb:   types.APIVerbCreate,
+				Method: types.HTTPVerbPost,
+				Path: &types.Path{
+					Parent:       basePath,
+					RelativePath: fmt.Sprintf("/webhooks/github/{%s}", types.URLParamWebhookID),
+				},
+				Scopes: []types.PermissionScope{},
+			},
+		)
+
+		githubWebhookHandler := webhook.NewGithubWebhookHandler(
+			config,
+			factory.GetDecoderValidator(),
+			factory.GetResultWriter(),
+		)
+
+		routes = append(routes, &router.Route{
+			Endpoint: githubWebhookEndpoint,
+			Handler:  githubWebhookHandler,
+			Router:   r,
+		})
 	}
 
 	return routes

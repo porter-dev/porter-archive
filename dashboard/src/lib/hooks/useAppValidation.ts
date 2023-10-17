@@ -75,13 +75,16 @@ export const useAppValidation = ({
 
       const { env } = data.app;
       const variables = env
-        .filter((e) => !e.hidden && !e.deleted)
+        .filter(
+          (e) =>
+            !e.hidden && !e.deleted && e.value.length > 0 && e.key.length > 0
+        )
         .reduce((acc: Record<string, string>, item) => {
           acc[item.key] = item.value;
           return acc;
         }, {});
       const secrets = env
-        .filter((e) => !e.deleted)
+        .filter((e) => !e.deleted && e.value.length > 0 && e.key.length > 0)
         .reduce((acc: Record<string, string>, item) => {
           if (item.hidden) {
             acc[item.key] = item.value;
@@ -107,15 +110,26 @@ export const useAppValidation = ({
         })
         .exhaustive();
 
-      const domainDeletions = data.app.services.reduce(
-        (acc: Record<string, string[]>, svc) => {
-          if (svc.domainDeletions.length) {
-            acc[svc.name.value] = svc.domainDeletions.map((d) => d.name);
-          }
+      const serviceDeletions = data.app.services.reduce(
+        (
+          acc: Record<
+            string,
+            { domain_names: string[]; ingress_annotation_keys: string[] }
+          >,
+          svc
+        ) => {
+          acc[svc.name.value] = {
+            domain_names: svc.domainDeletions.map((d) => d.name),
+            ingress_annotation_keys: svc.ingressAnnotationDeletions.map(
+              (ia) => ia.key
+            ),
+          };
+
           return acc;
         },
         {}
       );
+
       const res = await api.validatePorterApp(
         "<token>",
         {
@@ -131,7 +145,7 @@ export const useAppValidation = ({
             predeploy: data.deletions.predeploy.map((s) => s.name),
             env_group_names: data.deletions.envGroupNames.map((eg) => eg.name),
             env_variable_names: [],
-            domain_name_deletions: domainDeletions,
+            service_deletions: serviceDeletions,
           },
         },
         {

@@ -184,16 +184,6 @@ const LogSection: React.FC<Props> = ({
     }
   }, [isLoading, logs, scrollToBottomRef, scrollToBottomEnabled]);
 
-
-  const resetFilters = () => {
-    setSelectedFilterValues({
-      revision: filterOpts?.revision ?? GenericLogFilter.getDefaultOption("revision").value,
-      output_stream: filterOpts?.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
-      pod_name: getPodSelectorFromServiceName(filterOpts?.service, services) ?? GenericLogFilter.getDefaultOption("pod_name").value,
-      service_name: filterOpts?.service ?? GenericLogFilter.getDefaultOption("service_name").value,
-    });
-  };
-
   const onLoadPrevious = useCallback(() => {
     if (!selectedDate) {
       setSelectedDate(dayjs(logs[0].timestamp).toDate());
@@ -202,12 +192,6 @@ const LogSection: React.FC<Props> = ({
 
     moveCursor(Direction.backward);
   }, [logs, selectedDate]);
-
-  const resetSearch = () => {
-    setSearchText("");
-    setEnteredSearchText("");
-    resetFilters();
-  };
 
   const setSelectedDateIfUndefined = () => {
     if (selectedDate == null) {
@@ -246,15 +230,14 @@ const LogSection: React.FC<Props> = ({
             <LogQueryModeSelectionToggle
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
-              resetSearch={resetSearch}
             />
           </Flex>
           <Flex>
             {showFilter && (
               <Filter
                 filters={filters}
-                selectedFilterValues={selectedFilterValues}
                 filterString={generateFilterString()}
+                selectedFilterValues={selectedFilterValues}
               />
             )}
             <Spacer inline width="10px" />

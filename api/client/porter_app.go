@@ -439,6 +439,40 @@ func (c *Client) GetBuildEnv(
 	return resp, err
 }
 
+// ReportRevisionStatusInput is the input struct to ReportRevisionStatus
+type ReportRevisionStatusInput struct {
+	ProjectID     uint
+	ClusterID     uint
+	AppName       string
+	AppRevisionID string
+	PRNumber      int
+	CommitSHA     string
+}
+
+// ReportRevisionStatus reports the status of an app revision to external services
+func (c *Client) ReportRevisionStatus(
+	ctx context.Context,
+	inp ReportRevisionStatusInput,
+) (*porter_app.ReportRevisionStatusResponse, error) {
+	resp := &porter_app.ReportRevisionStatusResponse{}
+
+	req := &porter_app.ReportRevisionStatusRequest{
+		PRNumber:  inp.PRNumber,
+		CommitSHA: inp.CommitSHA,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/revisions/%s/status",
+			inp.ProjectID, inp.ClusterID, inp.AppName, inp.AppRevisionID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 // CreateOrUpdateAppEnvironment updates the app environment group and creates it if it doesn't exist
 func (c *Client) CreateOrUpdateAppEnvironment(
 	ctx context.Context,
@@ -512,6 +546,58 @@ func (c *Client) UpdateImage(
 			projectID, clusterID, appName,
 		),
 		&req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// ListAppRevisions lists the last ten app revisions for a given app
+func (c *Client) ListAppRevisions(
+	ctx context.Context,
+	projectID, clusterID uint,
+	appName string,
+	deploymentTargetID string,
+) (*porter_app.ListAppRevisionsResponse, error) {
+	resp := &porter_app.ListAppRevisionsResponse{}
+
+	req := &porter_app.ListAppRevisionsRequest{
+		DeploymentTargetID: deploymentTargetID,
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/revisions",
+			projectID, clusterID,
+			appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// RollbackRevision reverts an app to a previous revision
+func (c *Client) RollbackRevision(
+	ctx context.Context,
+	projectID, clusterID uint,
+	appName string,
+	deploymentTargetID string,
+) (*porter_app.RollbackAppRevisionResponse, error) {
+	resp := &porter_app.RollbackAppRevisionResponse{}
+
+	req := &porter_app.RollbackAppRevisionRequest{
+		DeploymentTargetID: deploymentTargetID,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/rollback",
+			projectID, clusterID,
+			appName,
+		),
+		req,
 		resp,
 	)
 

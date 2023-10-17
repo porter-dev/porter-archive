@@ -33,7 +33,8 @@ const CustomDomains: React.FC<Props> = ({ index }) => {
       {fields.length !== 0 && (
         <>
           {fields.map((customDomain, i) => {
-            return !customDomain.name.value.includes("onporter.run") && !customDomain.name.value.includes("withporter.run") ? (
+            return !customDomain.name.value.includes("onporter.run") &&
+              !customDomain.name.value.includes("withporter.run") ? (
               <div key={customDomain.id}>
                 <AnnotationContainer>
                   <ControlledInput
@@ -62,7 +63,6 @@ const CustomDomains: React.FC<Props> = ({ index }) => {
               </div>
             ) : null;
           })}
-          <Spacer y={0.5} />
         </>
       )}
       <Button

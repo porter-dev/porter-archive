@@ -18,6 +18,8 @@ const (
 	LabelKey_LinkedEnvironmentGroup  = "porter.run/linked-environment-group"
 	LabelKey_EnvironmentGroupVersion = "porter.run/environment-group-version"
 	LabelKey_EnvironmentGroupName    = "porter.run/environment-group-name"
+	// LabelKey_PorterManaged is the label key signifying the resource is managed by porter
+	LabelKey_PorterManaged = "porter.run/managed"
 
 	LabelKey_DefaultAppEnvironment = "porter.run/default-app-environment"
 
@@ -151,11 +153,11 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			envGroupSet[cm.Name] = EnvironmentGroup{}
 		}
 		envGroupSet[cm.Name] = EnvironmentGroup{
-			Name:            name,
-			Version:         version,
-			Variables:       cm.Data,
-			SecretVariables: envGroupSet[cm.Name].SecretVariables,
-			CreatedAtUTC:    cm.CreationTimestamp.Time.UTC(),
+			Name:                  name,
+			Version:               version,
+			Variables:             cm.Data,
+			SecretVariables:       envGroupSet[cm.Name].SecretVariables,
+			CreatedAtUTC:          cm.CreationTimestamp.Time.UTC(),
 			DefaultAppEnvironment: cm.Labels[LabelKey_DefaultAppEnvironment] == "true",
 		}
 	}
@@ -190,11 +192,11 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			envGroupSet[secret.Name] = EnvironmentGroup{}
 		}
 		envGroupSet[secret.Name] = EnvironmentGroup{
-			Name:            name,
-			Version:         version,
-			SecretVariables: stringSecret,
-			Variables:       envGroupSet[secret.Name].Variables,
-			CreatedAtUTC:    secret.CreationTimestamp.Time.UTC(),
+			Name:                  name,
+			Version:               version,
+			SecretVariables:       stringSecret,
+			Variables:             envGroupSet[secret.Name].Variables,
+			CreatedAtUTC:          secret.CreationTimestamp.Time.UTC(),
 			DefaultAppEnvironment: secret.Labels[LabelKey_DefaultAppEnvironment] == "true",
 		}
 	}

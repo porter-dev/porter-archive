@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/authz"
@@ -33,6 +34,10 @@ func NewCreateUpdatePorterAppEventHandler(
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
+
+const (
+	crashLoopBackoffSubstring string = "stuck in a restart loop"
+)
 
 func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-post-porter-app-event")
@@ -179,6 +184,23 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 						return existingEvent.ToPorterAppEvent(), nil
 					}
 				}
+			}
+		}
+
+		// before creating a new app_event type event, check the event for crashloop backoff
+		// if the event is a crashloop backoff, then update the service status of the deployment event associated it to FAILED, since the service's deployment will never succeed from crashloop backoff
+		// only applies to v2 apps (where the deployment target id is not empty)
+		if deploymentTargetID != "" {
+			updateMetadata, appEventFormattedCorrectly := appEventMatchesDetail(requestMetadata, crashLoopBackoffSubstring)
+			if appEventFormattedCorrectly {
+				_ = p.updateDeployEventMatchingAppEventDetails(
+					ctx,
+					porterAppName,
+					app.ID,
+					deploymentTargetID,
+					updateMetadata,
+					types.PorterAppEventStatus_Failed,
+				)
 			}
 		}
 	}
@@ -447,6 +469,7 @@ func (p *CreateUpdatePorterAppEventHandler) updateDeployEvent(ctx context.Contex
 			}
 		}
 		if allServicesDone {
+			matchEvent.Metadata["end_time"] = time.Now().UTC()
 			if anyServicesFailed {
 				matchEvent.Status = string(types.PorterAppEventStatus_Failed)
 			} else {
@@ -495,4 +518,76 @@ func getServiceNameFromPodName(podName, porterAppName string) string {
 	}
 
 	return ""
+}
+
+// appEventMatchesDetail checks if the app event metadata matches the detail string, returning true if so
+// also returns the app event metadata as a defined struct, rather than a generic map
+func appEventMatchesDetail(eventMetadata map[string]any, detail string) (*types.PorterAppAppEventMetadata, bool) {
+	appEventMetadata := &types.PorterAppAppEventMetadata{}
+
+	by, err := json.Marshal(eventMetadata)
+	if err != nil {
+		return appEventMetadata, false
+	}
+
+	err = json.Unmarshal(by, appEventMetadata)
+	if err != nil {
+		return appEventMetadata, false
+	}
+
+	if appEventMetadata.AppRevisionID == "" {
+		return appEventMetadata, false
+	}
+	if appEventMetadata.ServiceName == "" {
+		return appEventMetadata, false
+	}
+	if !strings.Contains(appEventMetadata.Detail, detail) {
+		return appEventMetadata, false
+	}
+
+	return appEventMetadata, true
+}
+
+// updateDeployEventMatchingAppEventDetails updates the deploy event and service specified by the app event metadata, if it exists
+func (p *CreateUpdatePorterAppEventHandler) updateDeployEventMatchingAppEventDetails(
+	ctx context.Context,
+	porterAppName string,
+	porterAppId uint,
+	deploymentTargetID string,
+	updateMetadata *types.PorterAppAppEventMetadata,
+	status types.PorterAppEventStatus,
+) error {
+	ctx, span := telemetry.NewSpan(ctx, "update-deploy-event-matching-app-event-details")
+	defer span.End()
+
+	if updateMetadata == nil {
+		return telemetry.Error(ctx, span, nil, "update metadata is nil")
+	}
+
+	telemetry.WithAttributes(
+		span,
+		telemetry.AttributeKV{Key: "porter-app-name", Value: porterAppName},
+		telemetry.AttributeKV{Key: "porter-app-id", Value: porterAppId},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTargetID},
+		telemetry.AttributeKV{Key: "app-revision-id", Value: updateMetadata.AppRevisionID},
+		telemetry.AttributeKV{Key: "service-name", Value: updateMetadata.ServiceName},
+		telemetry.AttributeKV{Key: "detail", Value: updateMetadata.Detail},
+	)
+
+	// convert the metadata to a map[string]interface{} because that is the type updateDeployEvent expects
+	// TODO: refactor updateDeployEvent so we don't have to do this
+	updateMetadataBytes, err := json.Marshal(updateMetadata)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error marshaling update metadata")
+	}
+	updateMetadataMap := make(map[string]interface{})
+	err = json.Unmarshal(updateMetadataBytes, &updateMetadataMap)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error unmarshaling update metadata")
+	}
+
+	updateMetadataMap["deploy_status"] = string(status)
+	// we do not need the returned updated event
+	_ = p.updateDeployEvent(ctx, porterAppName, porterAppId, deploymentTargetID, updateMetadataMap)
+	return nil
 }

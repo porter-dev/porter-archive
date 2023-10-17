@@ -18,9 +18,13 @@ interface Props {
   chart?: any;
   maxRAM: number;
   maxCPU: number;
+  internalNetworkingDetails: {
+    namespace: string;
+    appName: string;
+  };
 }
 
-const WebTabs: React.FC<Props> = ({ index, service, maxRAM, maxCPU }) => {
+const WebTabs: React.FC<Props> = ({ index, service, maxRAM, maxCPU, internalNetworkingDetails }) => {
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "networking" | "advanced"
   >("main");
@@ -40,7 +44,11 @@ const WebTabs: React.FC<Props> = ({ index, service, maxRAM, maxCPU }) => {
       {match(currentTab)
         .with("main", () => <MainTab index={index} service={service} />)
         .with("networking", () => (
-          <Networking index={index} service={service} />
+          <Networking 
+            index={index} 
+            service={service} 
+            internalNetworkingDetails={internalNetworkingDetails} 
+          />
         ))
         .with("resources", () => (
           <Resources

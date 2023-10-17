@@ -5,14 +5,16 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Icon from "components/porter/Icon";
 import { getStatusColor, getStatusIcon } from '../utils';
-import { StyledEventCard } from "./EventCard";
+import { ImageTagContainer, CommitIcon, StyledEventCard } from "./EventCard";
 import styled from "styled-components";
 import Link from "components/porter/Link";
 import { PorterAppDeployEvent } from "../types";
 import AnimateHeight from "react-animate-height";
 import ServiceStatusDetail from "./ServiceStatusDetail";
-import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { useRevisionList } from "lib/hooks/useRevisionList";
+import RevisionDiffModal from "../modals/RevisionDiffModal";
+import pull_request_icon from "assets/pull_request_icon.svg";
+import { match } from "ts-pattern";
 
 type Props = {
   event: PorterAppDeployEvent;
@@ -21,104 +23,104 @@ type Props = {
   deploymentTargetId: string;
   projectId: number;
   clusterId: number;
+  gitCommitUrl: string;
+  displayCommitSha: string;
 };
 
-const DeployEventCard: React.FC<Props> = ({ event, appName, deploymentTargetId, projectId, clusterId, showServiceStatusDetail = false }) => {
-  const { latestRevision } = useLatestRevision();
+const DeployEventCard: React.FC<Props> = ({ 
+  event, 
+  appName, 
+  deploymentTargetId, 
+  projectId, 
+  clusterId, 
+  showServiceStatusDetail = false,
+  gitCommitUrl,
+  displayCommitSha, 
+}) => {
   const [diffModalVisible, setDiffModalVisible] = useState(false);
   const [revertModalVisible, setRevertModalVisible] = useState(false);
   const [serviceStatusVisible, setServiceStatusVisible] = useState(showServiceStatusDetail);
 
-  const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
+  const { revisionIdToNumber, numberToRevisionId } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
 
   const renderStatusText = () => {
-    switch (event.status) {
-      case "SUCCESS":
-        return event.metadata.image_tag != null ?
-          event.metadata.service_deployment_metadata != null ?
-            <StatusTextContainer>
-              <Text color={getStatusColor(event.status)}>
-                Deployed <Code>{event.metadata.image_tag}</Code> to
-              </Text>
-              <Spacer inline x={0.25} />
-              {renderServiceDropdownCta(Object.keys(event.metadata.service_deployment_metadata).length, getStatusColor(event.status))}
-            </StatusTextContainer>
-            :
-            <Text color={getStatusColor(event.status)}>
-              Deployed <Code>{event.metadata.image_tag}</Code>
-            </Text>
-          :
-          <Text color={getStatusColor(event.status)}>
-            Deployment successful
-          </Text>;
-      case "FAILED":
-        if (event.metadata.service_deployment_metadata != null) {
-          let failedServices = 0;
-          for (const key in event.metadata.service_deployment_metadata) {
-            if (event.metadata.service_deployment_metadata[key].status === "FAILED") {
-              failedServices++;
-            }
-          }
-          return (
-            <StatusTextContainer>
-              <Text color={getStatusColor(event.status)}>
-                Failed to deploy <Code>{event.metadata.image_tag}</Code> to
-              </Text>
-              <Spacer inline x={0.25} />
-              {renderServiceDropdownCta(failedServices, getStatusColor(event.status))}
-            </StatusTextContainer>
-          );
-        } else {
-          return (
-            <Text color={getStatusColor(event.status)}>
-              Deployment failed
-            </Text>
-          );
+    const versionNumber = revisionIdToNumber[event.metadata.app_revision_id];
+    const serviceMetadata = event.metadata.service_deployment_metadata;
+  
+    const getStatusText = (status: string, text: string, numServices: number, addEllipsis?: boolean) => {
+      if (versionNumber) {
+        text += ` version ${versionNumber}`;
+      }
+  
+      return serviceMetadata != null ? (
+        <StatusTextContainer>
+          <Text color={getStatusColor(status)}>{text} to</Text>
+          <Spacer inline x={0.25} />
+          {renderServiceDropdownCta(numServices, getStatusColor(status))}
+        </StatusTextContainer>
+      ) : (
+        <Text color={getStatusColor(status)}>{text} {addEllipsis && "..."}</Text>
+      );
+    };
+  
+    let failedServices = 0;
+    let canceledServices = 0;
+    let successfulServices = 0;
+    let progressingServices = 0;
+  
+    if (serviceMetadata != null) {
+      for (const key in serviceMetadata) {
+        if (serviceMetadata[key].status === "FAILED") {
+          failedServices++;
         }
-      case "CANCELED":
-        if (event.metadata.service_deployment_metadata != null) {
-          let canceledServices = 0;
-          for (const key in event.metadata.service_deployment_metadata) {
-            if (event.metadata.service_deployment_metadata[key].status === "CANCELED") {
-              canceledServices++;
-            }
-          }
-          return (
-            <StatusTextContainer>
-              <Text color={getStatusColor(event.status)}>
-                Canceled deploy of <Code>{event.metadata.image_tag}</Code> to
-              </Text>
-              <Spacer inline x={0.25} />
-              {renderServiceDropdownCta(canceledServices, getStatusColor(event.status))}
-            </StatusTextContainer>
-          );
-        } else {
-          return (
-            <Text color={getStatusColor(event.status)}>
-              Deployment canceled
-            </Text>
-          );
+        if (serviceMetadata[key].status === "CANCELED") {
+          canceledServices++;
         }
-      default:
-        if (event.metadata.service_deployment_metadata != null) {
-          return (
-            <StatusTextContainer>
-              <Text color={getStatusColor(event.status)}>
-                Deploying <Code>{event.metadata.image_tag}</Code> to
-              </Text>
-              <Spacer inline x={0.25} />
-              {renderServiceDropdownCta(Object.keys(event.metadata.service_deployment_metadata).length, getStatusColor(event.status))}
-            </StatusTextContainer>
-          );
-        } else {
-          return (
-            <Text color={getStatusColor(event.status)}>
-              Deploying <Code>{event.metadata.image_tag}</Code>...
-            </Text>
-          );
+        if (serviceMetadata[key].status === "SUCCESS") {
+          successfulServices++;
         }
+        if (serviceMetadata[key].status === "PROGRESSING") {
+          progressingServices++;
+        }
+      }
     }
+  
+    return match(event.status)
+      .with("SUCCESS", () => getStatusText(event.status, "Deployed", successfulServices))
+      .with("FAILED", () => getStatusText(event.status, "Failed to deploy", failedServices))
+      .with("CANCELED", () => getStatusText(event.status, "Canceled deployment", canceledServices))
+      .otherwise(() => getStatusText(event.status, "Deploying", progressingServices, true));
   };
+  
+  const renderRevisionDiffModal = (event: PorterAppDeployEvent) => {
+    const changedRevisionId = event.metadata.app_revision_id;
+    const changedRevisionNumber = revisionIdToNumber[event.metadata.app_revision_id];
+    if (changedRevisionNumber == null || changedRevisionNumber == 1) {
+      return null;
+    }
+    const baseRevisionNumber = revisionIdToNumber[event.metadata.app_revision_id] - 1;
+    if (numberToRevisionId[baseRevisionNumber] == null) {
+      return null;
+    }
+    const baseRevisionId = numberToRevisionId[baseRevisionNumber];
+    return (
+      <>
+        <Link hasunderline onClick={() => setDiffModalVisible(true)}>
+          View changes
+        </Link>
+        {diffModalVisible && (
+          <RevisionDiffModal
+            base={{ revisionId: baseRevisionId, revisionNumber: baseRevisionNumber }}
+            changed={{ revisionId: changedRevisionId, revisionNumber: changedRevisionNumber }}
+            close={() => setDiffModalVisible(false)}
+            projectId={projectId}
+            clusterId={clusterId}
+            appName={appName}
+          />
+        )}
+      </>
+    )
+  }
 
   const renderServiceDropdownCta = (numServices: number, color?: string) => {
     return (
@@ -137,7 +139,25 @@ const DeployEventCard: React.FC<Props> = ({ event, appName, deploymentTargetId, 
         <Container row>
           <Icon height="16px" src={deploy} />
           <Spacer inline width="10px" />
-          <Text>Application version no. {revisionIdToNumber[event.metadata.app_revision_id]}</Text>
+          <Text>Application deploy</Text>
+          {gitCommitUrl && displayCommitSha ?
+            <>
+              <Spacer inline x={0.5} />
+              <ImageTagContainer>
+                <Link to={gitCommitUrl} target="_blank" showTargetBlankIcon={false}>
+                  <CommitIcon src={pull_request_icon} />
+                  <Code>{displayCommitSha}</Code>
+                </Link>
+              </ImageTagContainer> 
+            </>
+            :
+            <>
+              <Spacer inline x={0.5} />
+              <ImageTagContainer hoverable={false}>
+                <Code>{event.metadata.image_tag}</Code>
+              </ImageTagContainer> 
+            </>
+          }
         </Container>
       </Container>
       <Spacer y={0.5} />
@@ -146,7 +166,8 @@ const DeployEventCard: React.FC<Props> = ({ event, appName, deploymentTargetId, 
           <Icon height="12px" src={getStatusIcon(event.status)} />
           <Spacer inline width="10px" />
           {renderStatusText()}
-          {revisionIdToNumber[event.metadata.app_revision_id] != null && latestRevision.revision_number !== revisionIdToNumber[event.metadata.app_revision_id] && (
+          {/** uncomment the below once we've implemented revert from here */}
+          {/* {revisionIdToNumber[event.metadata.app_revision_id] != null && latestRevision.revision_number !== revisionIdToNumber[event.metadata.app_revision_id] && (
             <>
               <Spacer inline x={1} />
               <TempWrapper>
@@ -156,32 +177,9 @@ const DeployEventCard: React.FC<Props> = ({ event, appName, deploymentTargetId, 
 
               </TempWrapper>
             </>
-          )}
-          <Spacer inline x={1} />
-          {/* <TempWrapper>
-            {event.metadata.revision != 1 && (<Link hasunderline onClick={() => setDiffModalVisible(true)}>
-              View changes
-            </Link>)}
-            {diffModalVisible && (
-              <ChangeLogModal
-                revision={event.metadata.revision}
-                currentChart={appData.chart}
-                modalVisible={diffModalVisible}
-                setModalVisible={setDiffModalVisible}
-                appData={appData}
-              />
-            )}
-            {revertModalVisible && (
-              <ChangeLogModal
-                revision={event.metadata.revision}
-                currentChart={appData.chart}
-                modalVisible={revertModalVisible}
-                setModalVisible={setRevertModalVisible}
-                revertModal={true}
-                appData={appData}
-              />
-            )}
-          </TempWrapper> */}
+          )} */}
+          <Spacer inline x={0.5} />
+          {renderRevisionDiffModal(event)}
         </Container>
       </Container>
       {event.metadata.service_deployment_metadata != null &&

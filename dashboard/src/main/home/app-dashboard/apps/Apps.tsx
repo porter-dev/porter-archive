@@ -7,6 +7,7 @@ import grid from "assets/grid.png";
 import list from "assets/list.png";
 import letter from "assets/vector.svg";
 import calendar from "assets/calendar-number.svg";
+import pull_request from "assets/pull_request_icon.svg";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -83,12 +84,58 @@ const Apps: React.FC<Props> = ({ }) => {
     }
   );
 
+  const { data, status: deploymentTargetStatus } = useQuery(
+    [
+      "getDeploymentTarget",
+      {
+        cluster_id: currentCluster?.id,
+        project_id: currentProject?.id,
+        deployment_target_id: currentDeploymentTarget?.id,
+      },
+    ],
+    async () => {
+      if (!currentCluster || !currentProject || !currentDeploymentTarget) {
+        return;
+      }
+      const res = await api.getDeploymentTarget(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          deployment_target_id: currentDeploymentTarget.id,
+        }
+      );
+
+      const { deployment_target } = await z
+        .object({
+          deployment_target: z.object({
+            cluster_id: z.number(),
+            namespace: z.string(),
+            preview: z.boolean(),
+          }),
+        })
+        .parseAsync(res.data);
+
+      return deployment_target;
+    },
+    {
+      enabled:
+        !!currentCluster &&
+        !!currentProject &&
+        currentDeploymentTarget?.preview,
+    }
+  );
+
   const renderContents = () => {
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
     }
 
-    if (status === "loading") {
+    if (
+      status === "loading" ||
+      (currentDeploymentTarget?.preview && deploymentTargetStatus === "loading")
+    ) {
       return <Loading offset="-150px" />;
     }
 
@@ -121,6 +168,26 @@ const Apps: React.FC<Props> = ({ }) => {
 
     return (
       <>
+        {currentDeploymentTarget?.preview && (
+          <DashboardHeader
+            image={pull_request}
+            title={
+              <div
+                style={{
+                  display: "flex",
+                  columnGap: "0.75rem",
+                  alignItems: "center",
+                }}
+              >
+                <div>{data?.namespace ?? "Preview Apps"}</div>
+                <Badge>Preview</Badge>
+              </div>
+            }
+            description={"Apps deployed to this preview environment"}
+            disableLineBreak
+            capitalize={false}
+          />
+        )}
         <Container row spaced>
           <SearchBar
             value={searchValue}
@@ -144,9 +211,10 @@ const Apps: React.FC<Props> = ({ }) => {
                 setSort("letter");
               }
             }}
+            inactiveColor={"#ffffff11"}
+            activeColor={"transparent"}          
           />
           <Spacer inline x={1} />
-
           <Toggle
             items={[
               { label: <ToggleIcon src={grid} />, value: "grid" },
@@ -160,8 +228,9 @@ const Apps: React.FC<Props> = ({ }) => {
                 setView("list");
               }
             }}
+            inactiveColor={"#ffffff11"}
+            activeColor={"transparent"}
           />
-
           <Spacer inline x={2} />
           <PorterLink to="/apps/new/app">
             <Button
@@ -188,12 +257,14 @@ const Apps: React.FC<Props> = ({ }) => {
 
   return (
     <StyledAppDashboard>
-      <DashboardHeader
-        image={web}
-        title="Applications"
-        description="Web services, workers, and jobs for this project."
-        disableLineBreak
-      />
+      {!currentDeploymentTarget?.preview && (
+        <DashboardHeader
+          image={web}
+          title="Applications"
+          description="Web services, workers, and jobs for this project."
+          disableLineBreak
+        />
+      )}
       {renderContents()}
       <Spacer y={5} />
     </StyledAppDashboard>
@@ -227,4 +298,14 @@ const CentralContainer = styled.div`
   flex-direction: column;
   justify-content: left;
   align-items: left;
+`;
+
+const Badge = styled.div`
+  border: 1px solid #ca8a04;
+  background-color: #fefce8;
+  color: #ca8a04;
+  padding: 0.15rem 0.3rem;
+  text-align: center;
+  border-radius: 3px;
+  font-size: 12px;
 `;

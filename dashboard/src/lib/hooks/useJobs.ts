@@ -10,6 +10,7 @@ const jobRunValidator = z.object({
         labels: z.object({
             "porter.run/app-revision-id": z.string(),
             "porter.run/service-name": z.string(),
+            "porter.run/app-id": z.string(),
         }),
         creationTimestamp: z.string(),
         uid: z.string(),
@@ -43,12 +44,15 @@ export const useJobs = (
         deploymentTargetId: string,
         selectedJobName: string,
     }
-) => {
+): {
+    jobRuns: JobRun[],
+    isLoadingJobRuns: boolean,
+} => {
     const [jobRuns, setJobRuns] = useState<JobRun[]>([]);
 
     const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
 
-    const { data } = useQuery(
+    const { data, isLoading: isLoadingJobRuns } = useQuery(
         ["jobRuns", appName, deploymentTargetId, revisionIdToNumber, selectedJobName],
         async () => {
             const res = await api.appJobs(
@@ -89,5 +93,6 @@ export const useJobs = (
 
     return {
         jobRuns,
+        isLoadingJobRuns,
     };
 };

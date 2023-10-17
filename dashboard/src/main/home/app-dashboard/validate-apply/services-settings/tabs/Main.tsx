@@ -64,7 +64,7 @@ const MainTab: React.FC<MainTabProps> = ({ index, service, isPredeploy = false }
           <Text color="helper">Start command (optional)</Text>
         </Tooltip>
         :
-        <Text color="helper">Start command</Text>
+        <Text color="helper">Start command (required)</Text>
       }
       <Spacer y={0.5} />
       <ControlledInput

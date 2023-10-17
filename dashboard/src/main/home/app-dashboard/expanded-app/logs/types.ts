@@ -18,7 +18,6 @@ export interface PaginationInfo {
     nextCursor: string | null;
 }
 
-
 const rawLabelsValidator = z.object({
     porter_run_absolute_name: z.string().optional(),
     porter_run_app_id: z.string().optional(),
@@ -54,20 +53,20 @@ export const GenericFilterOption = {
         return { label, value };
     }
 }
-export type LogFilterName = 'revision' | 'output_stream' | 'pod_name' | 'service_name';
-export interface GenericLogFilter {
-    name: LogFilterName;
+export type FilterName = 'revision' | 'output_stream' | 'pod_name' | 'service_name';
+export interface GenericFilter {
+    name: FilterName;
     displayName: string;
     default: GenericFilterOption | undefined;
     options: GenericFilterOption[];
     setValue: (value: string) => void;
 }
-export const GenericLogFilter = {
-    isDefault: (filter: GenericLogFilter, value: string) => {
+export const GenericFilter = {
+    isDefault: (filter: GenericFilter, value: string) => {
         return filter.default && filter.default.value === value;
     },
 
-    getDefaultOption: (filterName: LogFilterName) => {
+    getDefaultOption: (filterName: FilterName) => {
         switch (filterName) {
             case 'service_name':
                 return GenericFilterOption.of('All', 'all');

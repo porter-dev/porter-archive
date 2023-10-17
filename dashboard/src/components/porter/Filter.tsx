@@ -4,11 +4,11 @@ import Select from "./Select";
 import Spacer from "./Spacer";
 
 import filter from "assets/filter.svg";
-import { GenericLogFilter, LogFilterName } from "main/home/app-dashboard/expanded-app/logs/types";
+import { GenericFilter, FilterName } from "main/home/app-dashboard/expanded-app/logs/types";
 
 type Props = {
-  filters: GenericLogFilter[];
-  selectedFilterValues: Partial<Record<LogFilterName, string>>;
+  filters: GenericFilter[];
+  selectedFilterValues: Partial<Record<FilterName, string>>;
 };
 
 const Filter: React.FC<Props> = ({
@@ -52,7 +52,7 @@ const Filter: React.FC<Props> = ({
       </StyledFilter>
       <CloseOverlay onClick={() => setIsExpanded(false)} isExpanded={isExpanded} />
       <Dropdown isExpanded={isExpanded}>
-        {filters.map((filter: GenericLogFilter, i: number) => {
+        {filters.map((filter: GenericFilter, i: number) => {
           return (
             <React.Fragment key={i}>
               <FilterLabel>{filter.displayName}</FilterLabel>

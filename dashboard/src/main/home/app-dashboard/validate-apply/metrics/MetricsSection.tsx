@@ -15,7 +15,7 @@ import CheckboxRow from "components/CheckboxRow";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useLocation } from "react-router";
 import Filter from "components/porter/Filter";
-import { GenericFilterOption, GenericLogFilter, LogFilterName } from "../../expanded-app/logs/types";
+import { GenericFilterOption, GenericFilter, FilterName } from "../../expanded-app/logs/types";
 
 type PropsType = {
   projectId: number;
@@ -38,11 +38,13 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   const [selectedRange, setSelectedRange] = useState("1H");
   const [showAutoscalingThresholds, setShowAutoscalingThresholds] = useState(true);
 
+  // filter out jobs until we can display metrics on them
   const serviceOptions: GenericFilterOption[] = useMemo(() => {
-    return Object.keys(services).map((name) => GenericFilterOption.of(name, name));
+    const nonJobServiceNames = Object.keys(services).filter((name) => services[name].config.case !== "jobConfig");
+    return nonJobServiceNames.map((name) => GenericFilterOption.of(name, name));
   }, [services]);
 
-  const filters: GenericLogFilter[] = useMemo(() => {
+  const filters: GenericFilter[] = useMemo(() => {
     return [
       {
         name: "service_name",
@@ -52,12 +54,12 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         setValue: (value: string) => {
           setSelectedFilterValues((prev) => ({ ...prev, service_name: value }));
         },
-      } as GenericLogFilter,
+      } as GenericFilter,
     ];
   },[serviceOptions]);
 
-  const [selectedFilterValues, setSelectedFilterValues] = useState<Partial<Record<LogFilterName, string>>>({
-    service_name: serviceFromQueryParams ?? "",
+  const [selectedFilterValues, setSelectedFilterValues] = useState<Partial<Record<FilterName, string>>>({
+    service_name: serviceFromQueryParams && Object.keys(services).includes(serviceFromQueryParams) ? serviceFromQueryParams : "",
   }); 
 
   useEffect(() => {
@@ -72,6 +74,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     }
 
     const service = services[selectedFilterValues.service_name]
+    if (!service) {
+      return ["", "", [], false]
+    }
 
     const serviceName = service.absoluteName === "" ? (appName + "-" + selectedFilterValues.service_name) : service.absoluteName
 

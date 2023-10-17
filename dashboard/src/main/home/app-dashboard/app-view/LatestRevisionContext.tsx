@@ -33,6 +33,7 @@ export const LatestRevisionContext = createContext<{
   servicesFromYaml: DetectedServices | null;
   clusterId: number;
   projectId: number;
+  appName: string;
   deploymentTarget: DeploymentTarget & { namespace: string };
   previewRevision: AppRevision | null;
   attachedEnvGroups: PopulatedEnvGroup[];
@@ -318,6 +319,7 @@ export const LatestRevisionProvider = ({
         previewRevision,
         setPreviewRevision,
         latestClientServices,
+        appName,
       }}
     >
       {children}

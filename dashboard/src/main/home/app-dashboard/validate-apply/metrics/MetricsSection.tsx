@@ -4,7 +4,6 @@ import styled from "styled-components";
 import api from "shared/api";
 
 import TabSelector from "components/TabSelector";
-import SelectRow from "components/form-components/SelectRow";
 import { MetricNormalizer, resolutions, secondsBeforeNow } from "../../expanded-app/metrics/utils";
 import { Metric, MetricType, NginxStatusMetric } from "../../expanded-app/metrics/types";
 import { match } from "ts-pattern";
@@ -245,7 +244,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       return metrics;
     },
     {
-      enabled: selectedFilterValues.service_name !== "",
+      enabled: !!selectedFilterValues.service_name,
       refetchOnWindowFocus: false,
       refetchInterval: 10000, // refresh metrics every 10 seconds
     }

@@ -9,7 +9,7 @@ import {
   serviceProto,
   serviceValidator,
 } from "./services";
-import {Build, HelmOverrides, PorterApp, Service} from "@porter-dev/api-contracts";
+import { Build, HelmOverrides, PorterApp, Service } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { BuildOptions, buildValidator } from "./build";
@@ -245,8 +245,8 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           })),
           build: clientBuildToProto(app.build),
           ...(predeploy && {
-          predeploy: serviceProto(serializeService(predeploy)),
-          helmOverrides: app.helmOverrides != null ? new HelmOverrides({ b64Values: btoa(app.helmOverrides)}) : undefined,
+            predeploy: serviceProto(serializeService(predeploy)),
+            helmOverrides: app.helmOverrides != null ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) }) : undefined,
           }),
         })
     )
@@ -264,7 +264,7 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
             repository: src.image.repository,
             tag: src.image.tag,
           },
-          helmOverrides: app.helmOverrides != null ? new HelmOverrides({ b64Values: btoa(app.helmOverrides)}) : undefined,
+          helmOverrides: app.helmOverrides != null ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) }) : undefined,
         })
     )
     .exhaustive();
@@ -406,15 +406,15 @@ export function clientAppFromProto({
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-        deserializeService({
-          service: serializedServiceFromProto({
-            name: "pre-deploy",
-            service: proto.predeploy,
-            isPredeploy: true,
-          }),
-          override: predeployOverrides,
+      deserializeService({
+        service: serializedServiceFromProto({
+          name: "pre-deploy",
+          service: proto.predeploy,
+          isPredeploy: true,
         }),
-      ]
+        override: predeployOverrides,
+      }),
+    ]
     : undefined;
 
   return {

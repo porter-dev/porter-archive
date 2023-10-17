@@ -86,7 +86,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
 
     if (service.config.type === "web" || service.config.type === "worker") {
       serviceKind = service.config.type === "web" ? "web" : "worker";
-      if (service.config.autoscaling?.enabled) {
+      if (service.config.autoscaling?.enabled.value) {
         isHpaEnabled = true;
       }
       if (service.config.type === "web") {

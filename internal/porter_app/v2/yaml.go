@@ -61,14 +61,19 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 	return out, nil
 }
 
+// ServiceType is the type of a service in a Porter YAML file
 type ServiceType string
 
 const (
-	ServiceType_Web    ServiceType = "web"
+	// ServiceType_Web is type for web services specified in Porter YAML
+	ServiceType_Web ServiceType = "web"
+	// ServiceType_Worker is type for worker services specified in Porter YAML
 	ServiceType_Worker ServiceType = "worker"
-	ServiceType_Job    ServiceType = "job"
+	// ServiceType_Job is type for job services specified in Porter YAML
+	ServiceType_Job ServiceType = "job"
 )
 
+// EnvGroup is a struct containing the name and version of an environment group
 type EnvGroup struct {
 	Name    string `yaml:"name"`
 	Version int    `yaml:"version"`

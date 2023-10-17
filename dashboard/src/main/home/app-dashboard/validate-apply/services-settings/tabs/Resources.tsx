@@ -174,7 +174,7 @@ const Resources: React.FC<ResourcesProps> = ({
           />
         )}
       />
-      {!gpuNodes && (
+      {gpuNodes && (
         <>
           <Spacer y={1} />
           <Controller
@@ -229,10 +229,10 @@ const Resources: React.FC<ResourcesProps> = ({
             />
             <Spacer y={1} />
 
-            <Controller
+        {!gpuNodes && (<Controller
               name={`app.services.${index}.config.autoscaling.enabled`}
               control={control}
-              render={({ field: { value, onChange } }) => (
+              render={({ field: { value, onChange } }) => ( 
                 <Checkbox
                   checked={value.value}
                   toggleChecked={() => {
@@ -251,7 +251,7 @@ const Resources: React.FC<ResourcesProps> = ({
                   </Text>
                 </Checkbox>
               )}
-            />
+            />)}
 
 
             {autoscalingEnabled.value && (

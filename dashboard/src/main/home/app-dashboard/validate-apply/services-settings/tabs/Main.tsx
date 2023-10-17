@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import cronstrue from "cronstrue";
 import {Controller, useFormContext} from "react-hook-form";
 
@@ -22,6 +22,12 @@ const MainTab: React.FC<MainTabProps> = ({ index, service, isPredeploy = false }
   const run = watch(`app.services.${index}.run.value`);
   const predeployRun = watch(`app.predeploy.${index}.run.value`);
 
+  const build = watch("app.build");
+  const source = watch("source");
+  const isRunCommandOptional = useMemo(() => {
+    return build.method === "docker" || source.type === "docker-registry";
+  }, [build.method, source.type]);
+
   const getScheduleDescription = useCallback((cron: string) => {
     try {
       return (
@@ -39,27 +45,28 @@ const MainTab: React.FC<MainTabProps> = ({ index, service, isPredeploy = false }
     }
   }, []);
 
-    const getValidStartCommand = useCallback((run: string) => {
-        if (run && (run.includes("&&") || run.includes(";"))) {
-            return (
-                <>
-                <Spacer y={0.5} />
-                <Text color="warner">Multiple commands are not supported at this time. To run multiple commands, move all commands into a script that can be run from a single endpoint.</Text>
-                </>
-            );
-        } else {
-            return (
-                <></>
-            );
-        }
-    }, []);
+  const getValidStartCommand = useCallback((run: string) => {
+      if (run && (run.includes("&&") || run.includes(";"))) {
+          return (
+              <>
+              <Spacer y={0.5} />
+              <Text color="warner">Multiple commands are not supported at this time. To run multiple commands, move all commands into a script that can be run from a single endpoint.</Text>
+              </>
+          );
+      } else {
+          return (
+              <></>
+          );
+      }
+  }, []);
 
   return (
     <>
       <Spacer y={1} />
+      <Text color="helper">{`Start command${isRunCommandOptional ? " (optional if your Docker image has a CMD or ENTRYPOINT)" : ""}`}</Text>
+      <Spacer y={0.5} />
       <ControlledInput
         type="text"
-        label="Start command"
         placeholder="ex: sh start.sh"
         width="300px"
         disabled={service.run.readOnly}

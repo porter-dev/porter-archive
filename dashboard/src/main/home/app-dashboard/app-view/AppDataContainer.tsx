@@ -497,9 +497,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           projectId={projectId}
           clusterId={clusterId}
           appName={porterAppRecord.name}
-          latestSource={latestSource}
           onSubmit={onSubmit}
-          porterAppRecord={porterAppRecord}
         />
         <AnimateHeight height={isDirty && !onlyExpandedChanged ? "auto" : 0}>
           <Banner

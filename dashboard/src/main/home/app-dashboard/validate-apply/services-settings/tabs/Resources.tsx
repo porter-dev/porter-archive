@@ -182,8 +182,8 @@ const Resources: React.FC<ResourcesProps> = ({
             control={control}
             render={({ field: { value, onChange } }) => (
               <InputSlider
-                label="GPU Cores: "
-                unit="%"
+                label="GPUs: "
+                unit="Cores"
                 min={0}
                 max={1}
                 step={.1}

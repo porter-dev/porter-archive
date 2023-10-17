@@ -70,7 +70,10 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
 	}
 
-	serviceList := make([]*porterv1.Service, 0)
+	// service map is only needed for backwards compatibility at this time
+	serviceMap := make(map[string]*porterv1.Service)
+	var serviceList []*porterv1.Service
+
 	for name, service := range services {
 		serviceType := protoEnumFromType(name, service)
 
@@ -82,8 +85,10 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 		serviceProto.Name = name
 
 		serviceList = append(serviceList, serviceProto)
+		serviceMap[name] = serviceProto
 	}
 	appProto.ServiceList = serviceList
+	appProto.Services = serviceMap
 
 	if porterYaml.Release != nil {
 		predeployProto, err := serviceProtoFromConfig(*porterYaml.Release, porterv1.ServiceType_SERVICE_TYPE_JOB)

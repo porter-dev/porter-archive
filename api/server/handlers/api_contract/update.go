@@ -1,6 +1,7 @@
 package api_contract
 
 import (
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -62,6 +63,7 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	fmt.Println("Notifying User")
 	err = c.Config().UserNotifier.SendClusterCreationEmail(
 		&notifier.SendClusterCreationEmailOpts{
 			Email:   user.Email,
@@ -74,6 +76,7 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
+	fmt.Println("Notified User")
 
 	w.WriteHeader(http.StatusCreated)
 	c.WriteResult(w, r, revision.Msg)

@@ -185,7 +185,10 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		return appProto, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
 	}
 
-	services := make([]*porterv1.Service, 0)
+	// service map is only needed for backwards compatibility at this time
+	serviceMap := make(map[string]*porterv1.Service)
+	var services []*porterv1.Service
+
 	for _, service := range porterApp.Services {
 		serviceType := protoEnumFromType(service.Name, service)
 
@@ -195,8 +198,10 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		}
 
 		services = append(services, serviceProto)
+		serviceMap[service.Name] = serviceProto
 	}
 	appProto.ServiceList = services
+	appProto.Services = serviceMap
 
 	if porterApp.Predeploy != nil {
 		predeployProto, err := serviceProtoFromConfig(*porterApp.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
@@ -480,7 +485,8 @@ func uniqueServices(serviceMap map[string]*porterv1.Service, serviceList []*port
 
 	// deduplicate services by name, favoring whatever was defined first
 	uniqueServices := make(map[string]*porterv1.Service)
-	for _, service := range serviceMap {
+	for name, service := range serviceMap {
+		service.Name = name
 		uniqueServices[service.Name] = service
 	}
 

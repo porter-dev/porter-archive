@@ -19,6 +19,7 @@ import {
   PorterAppFormData,
   SourceOptions,
   porterAppFormValidator,
+  clientAppValidator,
 } from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
@@ -64,6 +65,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     userHasSeenNoPorterYamlFoundModal,
     setUserHasSeenNoPorterYamlFoundModal,
   ] = React.useState(false);
+  const isNameValid = (value: string): boolean => {
+    return /^[a-z0-9-]{1,63}$/.test(value);
+  };
+  const [isNameHighlight, setIsNameHighlight] = React.useState(false);
 
   const [
     validatedAppProto,
@@ -196,6 +201,20 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   });
   const { currentClusterResources } = useClusterResources();
 
+  const resetAllExceptName = () => {
+    setIsNameHighlight(true);
+
+
+    // Get the current name value before the reset
+    setStep(0);
+    const currentNameValue = porterAppFormMethods.getValues("app.name");
+    setValue("app.services", []);
+    // Reset the form
+    porterAppFormMethods.reset();
+    // Set the name back to its original value
+    porterAppFormMethods.setValue("app.name", currentNameValue);
+
+  };
   const onSubmit = handleSubmit(async (data) => {
     try {
       setDeployError("");
@@ -345,10 +364,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   useEffect(() => {
     // set step to 1 if name is filled out
-    if (name.value) {
+    if (isNameValid(name.value) && name.value) {
+      setIsNameHighlight(false);  // Reset highlight when the name is valid
       setStep((prev) => Math.max(prev, 1));
     } else {
-      setStep(0);
+      resetAllExceptName()
     }
 
     // set step to 2 if source is filled out
@@ -517,7 +537,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                   <>
                     <Text size={16}>Application name</Text>
                     <Spacer y={0.5} />
-                    <Text color="helper">
+                    <Text color={isNameHighlight ? "#FFCC00" : "helper"}>
                       Lowercase letters, numbers, and "-" only.
                     </Text>
                     <Spacer y={0.5} />
@@ -638,9 +658,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

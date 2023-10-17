@@ -39,5 +39,6 @@ services:
     timeoutSeconds: 60
     suspendCron: false
 predeploy:
+  name: ""
   type: job
   run: ls

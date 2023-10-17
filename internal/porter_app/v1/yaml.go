@@ -70,7 +70,7 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 		return nil, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
 	}
 
-	serviceProtoMap := make(map[string]*porterv1.Service, 0)
+	serviceList := make([]*porterv1.Service, 0)
 	for name, service := range services {
 		serviceType := protoEnumFromType(name, service)
 
@@ -79,10 +79,11 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "failing-service-name", Value: name})
 			return nil, nil, telemetry.Error(ctx, span, err, "error casting service config")
 		}
+		serviceProto.Name = name
 
-		serviceProtoMap[name] = serviceProto
+		serviceList = append(serviceList, serviceProto)
 	}
-	appProto.Services = serviceProtoMap
+	appProto.ServiceList = serviceList
 
 	if porterYaml.Release != nil {
 		predeployProto, err := serviceProtoFromConfig(*porterYaml.Release, porterv1.ServiceType_SERVICE_TYPE_JOB)

@@ -370,7 +370,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     // TODO: create a more unified way of parsing form/apply errors, unified with the logic in CreateApp
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
-      console.log("errors", errors)
+      const stringifiedJson = JSON.stringify(errors);
+
       let errorMessage = "App update failed. Please try again. If the error persists, please contact support@porter.run."
       if (errorKeys.includes("app")) {
         const appErrors = Object.keys(errors.app ?? {});
@@ -391,11 +392,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         if (appErrors.includes("message")) {
           errorMessage = errors.app?.message ?? errorMessage;
         }
-      }
+      } 
 
       updateAppStep({
         step: "porter-app-update-failure",
-        errorMessage: `Form validation error: ${errorMessage}`,
+        errorMessage: `Form validation error (visible to user): ${errorMessage}. Stringified JSON errors (invisible to user): ${stringifiedJson}`,
         appName: latestProto.name,
       });
 

@@ -1,18 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import styled from "styled-components";
 
 type Props = {
   items: any[];
   active: string;
   setActive: (active: string) => void;
-  highlightColor?: string;
+  activeColor?: string;
+  inactiveColor?: string;
 };
 
 const Toggle: React.FC<Props> = ({
   items,
   active,
   setActive,
-  highlightColor,
+  activeColor,
+  inactiveColor,
 }) => {
   return (
     <StyledToggle>
@@ -23,7 +25,8 @@ const Toggle: React.FC<Props> = ({
           onClick={() => {
             setActive(item.value);
           }}
-          highlightColor={highlightColor}
+          activeColor={activeColor}
+          inactiveColor={inactiveColor}
         >
           {item.label}
         </Item>
@@ -43,7 +46,7 @@ const StyledToggle = styled.div`
   align-items: center;
 `;
 
-const Item = styled.div<{ active: boolean; highlightColor?: string }>`
+const Item = styled.div<{ active: boolean; activeColor?: string; inactiveColor?: string }>`
   display: flex;
   align-items: center;
   height: 100%;
@@ -51,5 +54,5 @@ const Item = styled.div<{ active: boolean; highlightColor?: string }>`
   justify-content: center;
   padding: 10px;
   background: ${(props) =>
-    props.active ? props.highlightColor ?? "#ffffff11" : "transparent"};
+    props.active ? props.activeColor ?? "#ffffff11" : props.inactiveColor ?? "transparent"};
 `;

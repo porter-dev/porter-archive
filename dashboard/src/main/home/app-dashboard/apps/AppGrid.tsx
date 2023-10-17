@@ -160,7 +160,8 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
                     <Text size={14}>{proto.name}</Text>
                     <Spacer inline x={2} />
                   </Container>
-                  <StatusIcon src={healthy} />
+                  {/** TODO: make the status icon dynamic */}
+                  {/* <StatusIcon src={healthy} /> */}
                   {renderSource(source)}
                   <Container row>
                     <SmallIcon opacity="0.4" src={time} />
@@ -195,7 +196,8 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
                     <Spacer inline width="12px" />
                     <Text size={14}>{proto.name}</Text>
                     <Spacer inline x={1} />
-                    <Icon height="16px" src={healthy} />
+                    {/** TODO: make the status icon dynamic */}
+                    {/* <Icon height="16px" src={healthy} /> */}
                   </Container>
                   <Spacer height="15px" />
                   <Container row>

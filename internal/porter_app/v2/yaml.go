@@ -364,7 +364,7 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 		}
 	}
 
-	uniqueServices := uniqueServices(appProto.Services, appProto.ServiceList)
+	uniqueServices := uniqueServices(appProto.Services, appProto.ServiceList) // nolint:staticcheck // temporarily using deprecated field for backwards compatibility
 	for _, service := range uniqueServices {
 		appService, err := appServiceFromProto(service)
 		if err != nil {

@@ -1,4 +1,4 @@
-import React, {  useState } from "react";
+import React, {  useMemo, useState } from "react";
 import styled from "styled-components";
 import Select from "./Select";
 import Spacer from "./Spacer";
@@ -8,27 +8,45 @@ import { GenericLogFilter, LogFilterName } from "main/home/app-dashboard/expande
 
 type Props = {
   filters: GenericLogFilter[];
-  filterString: string;
-  selectedFilterValues: Record<LogFilterName, string>;
+  selectedFilterValues: Partial<Record<LogFilterName, string>>;
 };
 
 const Filter: React.FC<Props> = ({
   filters,
-  filterString,
   selectedFilterValues,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const filterLabelString = useMemo(() => {
+    let filterString = "";
+    const serviceName = selectedFilterValues["service_name"];
+    const podName = selectedFilterValues["pod_name"];
+    const revision = selectedFilterValues["revision"];
+
+    if (serviceName && serviceName !== "all") {
+      filterString += serviceName;
+    } else if (podName && podName !== "all") {
+      filterString += podName.replace(/-[^-]*$/, '');
+    }
+    if (revision && revision !== "all") {
+      if (filterString !== "") {
+        filterString += " ";
+      }
+      filterString += "v" + revision;
+    }
+    return filterString;
+},[JSON.stringify(selectedFilterValues)]);
 
   return (
     <Relative>
       <StyledFilter onClick={() => setIsExpanded(!isExpanded)}>
         <img src={filter} />
         Filter
-        {filterString !== "" && (
+        {filterLabelString !== "" && (
           <>
             <Bar />
             <Spacer width="10px" />
-            {filterString}
+            {filterLabelString}
           </>
         )}
       </StyledFilter>
@@ -40,7 +58,7 @@ const Filter: React.FC<Props> = ({
               <FilterLabel>{filter.displayName}</FilterLabel>
               <Spacer y={0.5} />
               <Select
-                options={[filter.default, ...filter.options]}
+                options={filter.default ? [filter.default, ...filter.options] : filter.options}
                 setValue={filter.setValue}
                 value={selectedFilterValues[filter.name]}
               />

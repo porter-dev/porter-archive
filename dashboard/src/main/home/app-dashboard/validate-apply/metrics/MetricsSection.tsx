@@ -15,6 +15,8 @@ import Loading from "components/Loading";
 import CheckboxRow from "components/CheckboxRow";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useLocation } from "react-router";
+import Filter from "components/porter/Filter";
+import { GenericFilterOption, GenericLogFilter, LogFilterName } from "../../expanded-app/logs/types";
 
 type PropsType = {
   projectId: number;
@@ -23,11 +25,6 @@ type PropsType = {
   services: PorterApp["services"];
   deploymentTargetId: string;
 };
-
-type ServiceOption = {
-  label: string;
-  value: string;
-}
 
 const MetricsSection: React.FunctionComponent<PropsType> = ({
   projectId,
@@ -39,34 +36,45 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const serviceFromQueryParams = queryParams.get("service");
-
-  const [selectedServiceName, setSelectedServiceName] = useState<string>(serviceFromQueryParams ?? "");
   const [selectedRange, setSelectedRange] = useState("1H");
   const [showAutoscalingThresholds, setShowAutoscalingThresholds] = useState(true);
 
-  const serviceOptions: ServiceOption[] = useMemo(() => {
-    return Object.keys(services).map((name) => {
-      return {
-        label: name,
-        value: name,
-      };
-    });
+  const serviceOptions: GenericFilterOption[] = useMemo(() => {
+    return Object.keys(services).map((name) => GenericFilterOption.of(name, name));
   }, [services]);
 
+  const filters: GenericLogFilter[] = useMemo(() => {
+    return [
+      {
+        name: "service_name",
+        displayName: "Service",
+        default: undefined,
+        options: serviceOptions,
+        setValue: (value: string) => {
+          setSelectedFilterValues((prev) => ({ ...prev, service_name: value }));
+        },
+      } as GenericLogFilter,
+    ];
+  },[serviceOptions]);
+
+  const [selectedFilterValues, setSelectedFilterValues] = useState<Partial<Record<LogFilterName, string>>>({
+    service_name: serviceFromQueryParams ?? "",
+  }); 
+
   useEffect(() => {
-    if (serviceOptions.length > 0 && selectedServiceName === "") {
-      setSelectedServiceName(serviceOptions[0].value)
+    if (serviceOptions.length > 0 && selectedFilterValues.service_name === "") {
+      setSelectedFilterValues((prev) => ({ ...prev, service_name: serviceOptions[0].value }));
     }
-  }, []);
+  }, [serviceOptions, selectedFilterValues.service_name]);
 
   const [serviceName, serviceKind, metricTypes, isHpaEnabled] = useMemo(() => {
-    if (selectedServiceName === "") {
+    if (!selectedFilterValues.service_name) {
       return ["", "", [], false]
     }
 
-    const service = services[selectedServiceName]
+    const service = services[selectedFilterValues.service_name]
 
-    const serviceName = service.absoluteName === "" ? (appName + "-" + selectedServiceName) : service.absoluteName
+    const serviceName = service.absoluteName === "" ? (appName + "-" + selectedFilterValues.service_name) : service.absoluteName
 
     let serviceKind = ""
     const metricTypes: MetricType[] = ["cpu", "memory"];
@@ -90,14 +98,12 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       }
     }
 
-
-
     if (isHpaEnabled) {
       metricTypes.push("hpa_replicas");
     }
 
     return [serviceName, serviceKind, metricTypes, isHpaEnabled]
-  }, [selectedServiceName])
+  }, [selectedFilterValues.service_name])
 
 
   const { data: metricsData, isLoading: isMetricsDataLoading, refetch } = useQuery(
@@ -110,7 +116,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       deploymentTargetId,
     ],
     async () => {
-
       if (serviceName === "" || serviceKind === "" || metricTypes.length === 0) {
         return;
       }
@@ -240,7 +245,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       return metrics;
     },
     {
-      enabled: selectedServiceName !== "",
+      enabled: selectedFilterValues.service_name !== "",
       refetchOnWindowFocus: false,
       refetchInterval: 10000, // refresh metrics every 10 seconds
     }
@@ -284,13 +289,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     <StyledMetricsSection>
       <MetricsHeader>
         <Flex>
-          <SelectRow
-            displayFlex={true}
-            label="Service"
-            value={selectedServiceName}
-            setActiveValue={(x: any) => setSelectedServiceName(x)}
-            options={serviceOptions}
-            width="200px"
+          <Filter
+            filters={filters}
+            selectedFilterValues={selectedFilterValues}
           />
           <Highlight color={"#7d7d81"} onClick={() => refetch()}>
             <i className="material-icons">autorenew</i>

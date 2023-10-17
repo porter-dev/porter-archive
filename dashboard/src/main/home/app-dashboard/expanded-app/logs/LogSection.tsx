@@ -199,22 +199,6 @@ const LogSection: React.FC<Props> = ({
     }
   };
 
-  const generateFilterString = () => {
-    let filterString = "";
-    if (selectedFilterValues["service_name"] !== "all") {
-      filterString += selectedFilterValues["service_name"];
-    } else if (selectedFilterValues["pod_name"] !== "all") {
-      filterString += selectedFilterValues["pod_name"].replace(/-[^-]*$/, '');
-    }
-    if (selectedFilterValues["revision"] !== "all") {
-      if (filterString !== "") {
-        filterString += " ";
-      }
-      filterString += "v" + selectedFilterValues["revision"];
-    }
-    return filterString;
-  };
-
   const renderContents = () => {
     return (
       <>
@@ -236,7 +220,6 @@ const LogSection: React.FC<Props> = ({
             {showFilter && (
               <Filter
                 filters={filters}
-                filterString={generateFilterString()}
                 selectedFilterValues={selectedFilterValues}
               />
             )}

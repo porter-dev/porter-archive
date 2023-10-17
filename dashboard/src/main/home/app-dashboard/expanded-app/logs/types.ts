@@ -58,13 +58,13 @@ export type LogFilterName = 'revision' | 'output_stream' | 'pod_name' | 'service
 export interface GenericLogFilter {
     name: LogFilterName;
     displayName: string;
-    default: GenericFilterOption;
+    default: GenericFilterOption | undefined;
     options: GenericFilterOption[];
     setValue: (value: string) => void;
 }
 export const GenericLogFilter = {
     isDefault: (filter: GenericLogFilter, value: string) => {
-        return filter.default.value === value;
+        return filter.default && filter.default.value === value;
     },
 
     getDefaultOption: (filterName: LogFilterName) => {

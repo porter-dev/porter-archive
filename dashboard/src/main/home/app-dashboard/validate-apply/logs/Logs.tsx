@@ -1,8 +1,6 @@
 import React, {
     useCallback,
-    useContext,
     useEffect,
-    useMemo,
     useRef,
     useState,
 } from "react";
@@ -278,20 +276,6 @@ const Logs: React.FC<Props> = ({
         }
     };
 
-    const filterLabelString = useMemo(() => {
-        let filterString = "";
-        if (selectedFilterValues["service_name"] !== null && selectedFilterValues["service_name"] !== "all") {
-          filterString += selectedFilterValues["service_name"];
-        } 
-        if (selectedFilterValues["revision"] != null && selectedFilterValues["revision"] !== "all") {
-          if (filterString !== "") {
-            filterString += " ";
-          }
-          filterString += "v" + selectedFilterValues["revision"];
-        }
-        return filterString;
-    },[JSON.stringify(selectedFilterValues)]);
-
     const renderContents = () => {
         return (
             <>
@@ -312,7 +296,6 @@ const Logs: React.FC<Props> = ({
                     <Flex>
                         <Filter
                             filters={filters}
-                            filterString={filterLabelString} 
                             selectedFilterValues={selectedFilterValues}
                         />
                         <Spacer inline x={1} />
@@ -354,7 +337,7 @@ const Logs: React.FC<Props> = ({
                                     appName={appName}
                                 />
                                 <LoadMoreButton
-                                    active={selectedDate && logs.length !== 0}
+                                    active={selectedDate != null && logs.length !== 0}
                                     role="button"
                                     onClick={() => moveCursor(Direction.forward)}
                                 >

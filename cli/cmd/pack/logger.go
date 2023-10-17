@@ -17,11 +17,19 @@ type packLogger struct {
 	safeWriter *safeWriter
 }
 
+type logOpts struct {
+	// LogFile is the file to write logs to in addition to stderr
+	LogFile *os.File
+}
+
 // Replicate the exact behavior of https://github.com/buildpacks/pack/blob/main/pkg/logging/logger_simple.go
-func newPackLogger() logging.Logger {
+func newPackLogger(opts logOpts) logging.Logger {
 	discard := log.New(ioutil.Discard, "", log.LstdFlags|log.Lmicroseconds)
-	logFile, _ := os.CreateTemp("", "feroze-test")
-	var writer io.Writer = io.MultiWriter(os.Stderr, logFile)
+
+	var writer io.Writer = os.Stderr
+	if opts.LogFile != nil {
+		writer = io.MultiWriter(os.Stderr, opts.LogFile)
+	}
 
 	stderr := log.New(writer, "", log.LstdFlags|log.Lmicroseconds)
 

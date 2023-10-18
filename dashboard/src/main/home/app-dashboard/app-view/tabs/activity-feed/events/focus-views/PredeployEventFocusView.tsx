@@ -1,6 +1,5 @@
 import Spacer from "components/porter/Spacer";
 import React from "react";
-import dayjs from "dayjs";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
 import { getDuration, getStatusColor } from "../utils";

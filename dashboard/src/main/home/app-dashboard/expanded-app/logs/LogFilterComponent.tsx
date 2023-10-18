@@ -1,12 +1,12 @@
 import Text from "components/porter/Text";
 import React from "react";
 import styled from "styled-components";
-import { GenericLogFilter } from "./types";
+import { GenericFilter } from "./types";
 import Spacer from "components/porter/Spacer";
 import Select from "components/porter/Select";
 
 type Props = {
-    filter: GenericLogFilter;
+    filter: GenericFilter;
     selectedValue: string;
 };
 

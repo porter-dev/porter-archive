@@ -34,7 +34,7 @@ const CreateDatabase: React.FC<Props> = ({
   const [currentTemplate, setCurrentTemplate] = useState<any>(null);
   const [databaseTemplates, setDatabaseTemplates] = useState<any[]>([
     {
-      id: "rds-postgres",
+      id: "rds-postgresql",
       icon: awsRDS,
       name: "RDS Postgres",
       description: "Amazon Relational Database Service (RDS) is a web service that makes it easier to set up, operate, and scale a relational database in the cloud.",

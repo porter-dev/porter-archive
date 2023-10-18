@@ -115,22 +115,33 @@ export const usePorterYaml = ({
 
         const data = await z
           .object({
-            b64_app_proto: z.string(),
-            env_variables: z.record(z.string()).nullable(),
-            env_secrets: z.record(z.string()).nullable(),
-            preview_app: z
-              .object({
-                b64_app_proto: z.string(),
-                env_variables: z.record(z.string()).nullable(),
-                env_secrets: z.record(z.string()).nullable(),
-              })
-              .optional(),
+            parsed_apps: z
+              .array(
+                z.object({
+                  b64_app_proto: z.string(),
+                  env_variables: z.record(z.string()).nullable(),
+                  env_secrets: z.record(z.string()).nullable(),
+                  preview_app: z
+                    .object({
+                      b64_app_proto: z.string(),
+                      env_variables: z.record(z.string()).nullable(),
+                      env_secrets: z.record(z.string()).nullable(),
+                    })
+                    .optional(),
+                })
+              )
+              .min(1),
           })
           .parseAsync(res.data);
 
-        const proto = PorterApp.fromJsonString(atob(data.b64_app_proto), {
-          ignoreUnknownFields: true,
-        });
+        const appDefinition = data.parsed_apps[0];
+
+        const proto = PorterApp.fromJsonString(
+          atob(appDefinition.b64_app_proto),
+          {
+            ignoreUnknownFields: true,
+          }
+        );
 
         const { services, predeploy, build } = serviceOverrides({
           overrides: proto,
@@ -147,9 +158,9 @@ export const usePorterYaml = ({
           });
         }
 
-        if (data.preview_app) {
+        if (appDefinition.preview_app) {
           const previewProto = PorterApp.fromJsonString(
-            atob(data.preview_app.b64_app_proto),
+            atob(appDefinition.preview_app.b64_app_proto),
             {
               ignoreUnknownFields: true,
             }
@@ -171,7 +182,7 @@ export const usePorterYaml = ({
                 services: previewServices,
                 predeploy: previewPredeploy,
                 build: previewBuild,
-                variables: data.preview_app?.env_variables ?? {},
+                variables: appDefinition.preview_app?.env_variables ?? {},
               },
             }));
           }

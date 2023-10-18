@@ -49,11 +49,16 @@ type EncodedAppWithEnv struct {
 	EnvSecrets   map[string]string `json:"env_secrets"`
 }
 
-// ParsePorterYAMLToProtoResponse is the response object for the /apps/parse endpoint
-type ParsePorterYAMLToProtoResponse struct {
+// EncodedAppDefinition is a full app definition with encoded app proto and env variables
+type EncodedAppDefinition struct {
 	EncodedAppWithEnv
 	// PreviewApp contains preview environment specific overrides, if they exist
 	PreviewApp *EncodedAppWithEnv `json:"preview_app,omitempty"`
+}
+
+// ParsePorterYAMLToProtoResponse is the response object for the /apps/parse endpoint
+type ParsePorterYAMLToProtoResponse struct {
+	ParsedApps []EncodedAppDefinition `json:"parsed_apps"`
 }
 
 // ServeHTTP receives a base64-encoded porter.yaml, parses the version, and then translates it into a base64-encoded app proto object
@@ -94,41 +99,49 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	appDefinition, err := porter_app.ParseYAML(ctx, yaml, request.AppName)
+	appDefinitions, err := porter_app.ParseYAML(ctx, yaml, request.AppName)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error parsing yaml")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	if appDefinition.AppProto == nil {
+	if appDefinitions == nil {
 		err := telemetry.Error(ctx, span, nil, "app proto is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	response := &ParsePorterYAMLToProtoResponse{}
-
-	encodedApp, err := encodeAppProto(ctx, appDefinition.AppProto)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error encoding app proto")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
+	response := &ParsePorterYAMLToProtoResponse{
+		ParsedApps: make([]EncodedAppDefinition, 0),
 	}
-	response.B64AppProto = encodedApp
-	response.EnvVariables = appDefinition.EnvVariables
 
-	if appDefinition.PreviewApp != nil {
-		encodedPreviewApp, err := encodeAppProto(ctx, appDefinition.PreviewApp.AppProto)
+	for _, appDefinition := range appDefinitions {
+		var app EncodedAppDefinition
+
+		encodedApp, err := encodeAppProto(ctx, appDefinition.AppProto)
 		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error encoding preview app proto")
+			err := telemetry.Error(ctx, span, err, "error encoding app proto")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
-		response.PreviewApp = &EncodedAppWithEnv{
-			B64AppProto:  encodedPreviewApp,
-			EnvVariables: appDefinition.PreviewApp.EnvVariables,
+		app.B64AppProto = encodedApp
+		app.EnvVariables = appDefinition.EnvVariables
+
+		if appDefinition.PreviewApp != nil {
+			encodedPreviewApp, err := encodeAppProto(ctx, appDefinition.PreviewApp.AppProto)
+			if err != nil {
+				err := telemetry.Error(ctx, span, err, "error encoding preview app proto")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
+			app.PreviewApp = &EncodedAppWithEnv{
+				B64AppProto:  encodedPreviewApp,
+				EnvVariables: appDefinition.PreviewApp.EnvVariables,
+			}
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "includes-preview-app", Value: true})
 		}
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "includes-preview-app", Value: true})
+
+		response.ParsedApps = append(response.ParsedApps, app)
 	}
 
 	c.WriteResult(w, r, response)

@@ -17,7 +17,7 @@ import (
 func TestPorterAppToYAML(t *testing.T) {
 	tests := []struct {
 		porterYamlFileName string
-		want               *porterv1.PorterApp
+		want               []*porterv1.PorterApp
 	}{
 		{"v2_input_no_build_no_env", result_nobuild},
 	}
@@ -29,10 +29,10 @@ func TestPorterAppToYAML(t *testing.T) {
 			originalYaml, err := os.ReadFile(fmt.Sprintf("../testdata/%s.yaml", tt.porterYamlFileName))
 			is.NoErr(err) // no error expected reading test file
 
-			porterAppProto, err := porter_app.ParseYAML(context.Background(), originalYaml, "test-app")
+			porterAppProtos, err := porter_app.ParseYAML(context.Background(), originalYaml, "test-app")
 			is.NoErr(err) // umbrella chart values should convert to map[string]any without issues
 
-			porterApp, err := v2.AppFromProto(porterAppProto.AppProto)
+			porterApp, err := v2.AppFromProto(porterAppProtos[0].AppProto)
 			is.NoErr(err) // app proto should be converted back to porter app representation (unmarshaled porter yaml) without issues
 
 			diffPorterAppWithOriginalYamlTest(t, is, originalYaml, porterApp)

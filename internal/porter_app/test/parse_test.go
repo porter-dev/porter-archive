@@ -19,9 +19,10 @@ import (
 func TestParseYAML(t *testing.T) {
 	tests := []struct {
 		porterYamlFileName string
-		want               *porterv1.PorterApp
+		want               []*porterv1.PorterApp
 	}{
 		{"v2_input_nobuild", result_nobuild},
+		{"v2_input_multi_app", result_multi_app},
 		{"v1_input_no_build_no_image", v1_result_nobuild_no_image},
 	}
 
@@ -35,17 +36,19 @@ func TestParseYAML(t *testing.T) {
 			got, err := porter_app.ParseYAML(context.Background(), want, "test-app")
 			is.NoErr(err) // umbrella chart values should convert to map[string]any without issues
 
-			diffProtoWithFailTest(t, is, tt.want, got.AppProto)
+			for i, app := range got {
+				diffProtoWithFailTest(t, is, tt.want[i], app.AppProto)
 
-			is.Equal(got.EnvVariables, map[string]string{
-				"PORT":     "8080",
-				"NODE_ENV": "production",
-			})
+				is.Equal(app.EnvVariables, map[string]string{
+					"PORT":     "8080",
+					"NODE_ENV": "production",
+				})
+			}
 		})
 	}
 }
 
-var result_nobuild = &porterv1.PorterApp{
+var result_nobuild = []*porterv1.PorterApp{{
 	Name: "test-app",
 	Services: map[string]*porterv1.Service{
 		"example-web": {
@@ -186,9 +189,89 @@ var result_nobuild = &porterv1.PorterApp{
 		Repository: "nginx",
 		Tag:        "latest",
 	},
+}}
+
+var result_multi_app = []*porterv1.PorterApp{
+	result_nobuild[0],
+	{
+		Name: "next-test",
+		Services: map[string]*porterv1.Service{
+			"example-web": {
+				Name:         "example-web",
+				RunOptional:  pointer.String("node index.js"),
+				Instances:    0,
+				Port:         8080,
+				CpuCores:     0.1,
+				RamMegabytes: 256,
+				Config: &porterv1.Service_WebConfig{
+					WebConfig: &porterv1.WebServiceConfig{
+						Autoscaling: &porterv1.Autoscaling{
+							Enabled:                true,
+							MinInstances:           1,
+							MaxInstances:           3,
+							CpuThresholdPercent:    60,
+							MemoryThresholdPercent: 60,
+						},
+						Domains: []*porterv1.Domain{
+							{
+								Name: "test1.example.com",
+							},
+							{
+								Name: "test2.example.com",
+							},
+						},
+						HealthCheck: &porterv1.HealthCheck{
+							Enabled:  true,
+							HttpPath: "/healthz",
+						},
+					},
+				},
+				Type: 1,
+			},
+		},
+		ServiceList: []*porterv1.Service{
+			{
+				Name:         "example-web",
+				RunOptional:  pointer.String("node index.js"),
+				Instances:    0,
+				Port:         8080,
+				CpuCores:     0.1,
+				RamMegabytes: 256,
+				Config: &porterv1.Service_WebConfig{
+					WebConfig: &porterv1.WebServiceConfig{
+						Autoscaling: &porterv1.Autoscaling{
+							Enabled:                true,
+							MinInstances:           1,
+							MaxInstances:           3,
+							CpuThresholdPercent:    60,
+							MemoryThresholdPercent: 60,
+						},
+						Domains: []*porterv1.Domain{
+							{
+								Name: "test1.example.com",
+							},
+							{
+								Name: "test2.example.com",
+							},
+						},
+						HealthCheck: &porterv1.HealthCheck{
+							Enabled:  true,
+							HttpPath: "/healthz",
+						},
+					},
+				},
+				Type: 1,
+			},
+		},
+		Build: &porterv1.Build{
+			Method:     "docker",
+			Context:    "./",
+			Dockerfile: "Dockerfile",
+		},
+	},
 }
 
-var v1_result_nobuild_no_image = &porterv1.PorterApp{
+var v1_result_nobuild_no_image = []*porterv1.PorterApp{{
 	Name: "test-app",
 	Services: map[string]*porterv1.Service{
 		"example-job": {
@@ -323,7 +406,7 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 		Config:       &porterv1.Service_JobConfig{},
 		Type:         3,
 	},
-}
+}}
 
 func diffProtoWithFailTest(t *testing.T, is *is.I, want, got *porterv1.PorterApp) {
 	t.Helper()

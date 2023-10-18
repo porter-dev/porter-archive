@@ -15,7 +15,7 @@ import (
 )
 
 // AppProtoFromYaml converts an old version Porter YAML file into a PorterApp proto object
-func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.PorterApp, map[string]string, error) {
+func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, providedName string) (*porterv1.PorterApp, map[string]string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "v1-app-proto-from-yaml")
 	defer span.End()
 
@@ -31,6 +31,9 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 
 	appProto := &porterv1.PorterApp{}
 
+	if providedName != "" {
+		appProto.Name = providedName
+	}
 	if porterYaml.Build != nil {
 		appProto.Build = &porterv1.Build{
 			Context:    porterYaml.Build.Context,

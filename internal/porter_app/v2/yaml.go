@@ -24,41 +24,81 @@ type AppWithPreviewOverrides struct {
 }
 
 // AppProtoFromYaml converts a Porter YAML file into a PorterApp proto object
-func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPreviewOverrides, error) {
+func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, providedName string) ([]AppWithPreviewOverrides, error) {
 	ctx, span := telemetry.NewSpan(ctx, "v2-app-proto-from-yaml")
 	defer span.End()
 
-	var out AppWithPreviewOverrides
+	var out []AppWithPreviewOverrides
 
 	if porterYamlBytes == nil {
 		return out, telemetry.Error(ctx, span, nil, "porter yaml is nil")
 	}
 
-	porterYaml := &PorterYAML{}
+	porterYaml := &PorterYAMLMultiApp{}
 	err := yaml.Unmarshal(porterYamlBytes, porterYaml)
-	if err != nil {
-		return out, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
-	}
-
-	appProto, envVariables, err := ProtoFromApp(ctx, porterYaml.PorterApp)
-	if err != nil {
-		return out, telemetry.Error(ctx, span, err, "error converting porter yaml to proto")
-	}
-	out.AppProto = appProto
-	out.EnvVariables = envVariables
-
-	if porterYaml.Previews != nil {
-		previewAppProto, previewEnvVariables, err := ProtoFromApp(ctx, *porterYaml.Previews)
+	if err != nil || len(porterYaml.Apps) == 0 {
+		singleApp := &PorterYAML{}
+		err = yaml.Unmarshal(porterYamlBytes, singleApp)
 		if err != nil {
-			return out, telemetry.Error(ctx, span, err, "error converting preview porter yaml to proto")
+			return out, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
 		}
-		out.PreviewApp = &AppProtoWithEnv{
-			AppProto:     previewAppProto,
-			EnvVariables: previewEnvVariables,
+
+		if singleApp.PorterApp.Name == "" {
+			singleApp.PorterApp.Name = providedName
 		}
+		porterYaml.Apps = []PorterApp{singleApp.PorterApp}
+
+		if singleApp.Previews != nil {
+			porterYaml.Previews = &PorterAppWithAddons{
+				Apps: []PorterApp{*singleApp.Previews},
+			}
+		}
+	}
+
+	for _, app := range porterYaml.Apps {
+		if app.Name == "" {
+			return out, telemetry.Error(ctx, span, nil, "app name is required")
+		}
+
+		appDefinition := AppWithPreviewOverrides{}
+		appProto, envVariables, err := ProtoFromApp(ctx, app)
+		if err != nil {
+			return out, telemetry.Error(ctx, span, err, "error converting porter yaml to proto")
+		}
+		appDefinition.AppProto = appProto
+		appDefinition.EnvVariables = envVariables
+
+		if porterYaml.Previews != nil {
+			correspondingOverrides := findPreviewApp(porterYaml.Previews.Apps, app.Name)
+			if correspondingOverrides != nil {
+				previewAppProto, previewEnvVariables, err := ProtoFromApp(ctx, *correspondingOverrides)
+				if err != nil {
+					return out, telemetry.Error(ctx, span, err, "error converting preview porter yaml to proto")
+				}
+				appDefinition.PreviewApp = &AppProtoWithEnv{
+					AppProto:     previewAppProto,
+					EnvVariables: previewEnvVariables,
+				}
+			}
+		}
+
+		out = append(out, appDefinition)
 	}
 
 	return out, nil
+}
+
+func findPreviewApp(previews []PorterApp, name string) *PorterApp {
+	var previewOverrides *PorterApp
+
+	for _, preview := range previews {
+		if preview.Name == name {
+			previewOverrides = &preview
+			break
+		}
+	}
+
+	return previewOverrides
 }
 
 // ServiceType is the type of a service in a Porter YAML file
@@ -90,6 +130,17 @@ type PorterApp struct {
 
 	Predeploy *Service   `yaml:"predeploy,omitempty"`
 	EnvGroups []EnvGroup `yaml:"envGroups,omitempty"`
+}
+
+// PorterAppWithAddons represents a list of porter app definitions and includes other dependencies, such as add ons or env group definitions
+type PorterAppWithAddons struct {
+	Apps []PorterApp `yaml:"apps"`
+}
+
+// PorterYAMLMultiApp represents a Porter YAML file that contains multiple apps
+type PorterYAMLMultiApp struct {
+	PorterAppWithAddons `yaml:",inline"`
+	Previews            *PorterAppWithAddons `yaml:"previews,omitempty"`
 }
 
 // PorterYAML represents all the possible fields in a Porter YAML file

@@ -93,19 +93,28 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 			return fmt.Errorf("error calling parse yaml endpoint: %w", err)
 		}
 
-		if parseResp.B64AppProto == "" {
+		if len(parseResp.ParsedApps) == 0 {
+			return errors.New("parsed apps is empty")
+		}
+		if len(parseResp.ParsedApps) > 1 {
+			return errors.New("multiple apps are currently not supported in a single porter yaml")
+		}
+
+		parsedApp := parseResp.ParsedApps[0]
+
+		if parsedApp.B64AppProto == "" {
 			return errors.New("b64 app proto is empty")
 		}
-		b64AppProto = parseResp.B64AppProto
+		b64AppProto = parsedApp.B64AppProto
 
 		// override app name if provided
-		appName, err = appNameFromB64AppProto(parseResp.B64AppProto)
+		appName, err = appNameFromB64AppProto(parsedApp.B64AppProto)
 		if err != nil {
 			return fmt.Errorf("error getting app name from porter.yaml: %w", err)
 		}
 
 		// we only need to create the app if a porter yaml is provided (otherwise it must already exist)
-		createPorterAppDBEntryInp, err := createPorterAppDbEntryInputFromProtoAndEnv(parseResp.B64AppProto)
+		createPorterAppDBEntryInp, err := createPorterAppDbEntryInputFromProtoAndEnv(parsedApp.B64AppProto)
 		if err != nil {
 			return fmt.Errorf("unable to form porter app creation input from yaml: %w", err)
 		}
@@ -118,7 +127,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 			return fmt.Errorf("unable to create porter app from yaml: %w", err)
 		}
 
-		envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID, parseResp.EnvVariables, parseResp.EnvSecrets, parseResp.B64AppProto)
+		envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID, parsedApp.EnvVariables, parsedApp.EnvSecrets, parsedApp.B64AppProto)
 		if err != nil {
 			return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
 		}
@@ -128,10 +137,10 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 			return fmt.Errorf("error updating app env group in proto: %w", err)
 		}
 
-		if inp.PreviewApply && parseResp.PreviewApp != nil {
-			b64AppOverrides = parseResp.PreviewApp.B64AppProto
+		if inp.PreviewApply && parsedApp.PreviewApp != nil {
+			b64AppOverrides = parsedApp.PreviewApp.B64AppProto
 
-			envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID, parseResp.PreviewApp.EnvVariables, parseResp.PreviewApp.EnvSecrets, parseResp.PreviewApp.B64AppProto)
+			envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID, parsedApp.PreviewApp.EnvVariables, parsedApp.PreviewApp.EnvSecrets, parsedApp.PreviewApp.B64AppProto)
 			if err != nil {
 				return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
 			}

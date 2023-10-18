@@ -116,7 +116,7 @@ type Image struct {
 
 // Service represents a single service in a porter app
 type Service struct {
-	Name              string       `yaml:"name"`
+	Name              string       `yaml:"name,omitempty"`
 	Run               *string      `yaml:"run,omitempty"`
 	Type              ServiceType  `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
 	Instances         int          `yaml:"instances,omitempty"`

@@ -116,22 +116,23 @@ type Image struct {
 
 // Service represents a single service in a porter app
 type Service struct {
-	Name              string       `yaml:"name,omitempty"`
-	Run               *string      `yaml:"run,omitempty"`
-	Type              ServiceType  `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
-	Instances         int          `yaml:"instances,omitempty"`
-	CpuCores          float32      `yaml:"cpuCores,omitempty"`
-	RamMegabytes      int          `yaml:"ramMegabytes,omitempty"`
-	SmartOptimization *bool        `yaml:"smartOptimization,omitempty"`
-	Port              int          `yaml:"port,omitempty"`
-	Autoscaling       *AutoScaling `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
-	Domains           []Domains    `yaml:"domains,omitempty" validate:"excluded_unless=Type web"`
-	HealthCheck       *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
-	AllowConcurrent   *bool        `yaml:"allowConcurrent,omitempty" validate:"excluded_unless=Type job"`
-	Cron              string       `yaml:"cron,omitempty" validate:"excluded_unless=Type job"`
-	SuspendCron       *bool        `yaml:"suspendCron,omitempty" validate:"excluded_unless=Type job"`
-	TimeoutSeconds    int          `yaml:"timeoutSeconds,omitempty" validate:"excluded_unless=Type job"`
-	Private           *bool        `yaml:"private,omitempty" validate:"excluded_unless=Type web"`
+	Name               string            `yaml:"name,omitempty"`
+	Run                *string           `yaml:"run,omitempty"`
+	Type               ServiceType       `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
+	Instances          int               `yaml:"instances,omitempty"`
+	CpuCores           float32           `yaml:"cpuCores,omitempty"`
+	RamMegabytes       int               `yaml:"ramMegabytes,omitempty"`
+	SmartOptimization  *bool             `yaml:"smartOptimization,omitempty"`
+	Port               int               `yaml:"port,omitempty"`
+	Autoscaling        *AutoScaling      `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
+	Domains            []Domains         `yaml:"domains,omitempty" validate:"excluded_unless=Type web"`
+	HealthCheck        *HealthCheck      `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
+	AllowConcurrent    *bool             `yaml:"allowConcurrent,omitempty" validate:"excluded_unless=Type job"`
+	Cron               string            `yaml:"cron,omitempty" validate:"excluded_unless=Type job"`
+	SuspendCron        *bool             `yaml:"suspendCron,omitempty" validate:"excluded_unless=Type job"`
+	TimeoutSeconds     int               `yaml:"timeoutSeconds,omitempty" validate:"excluded_unless=Type job"`
+	Private            *bool             `yaml:"private,omitempty" validate:"excluded_unless=Type web"`
+	IngressAnnotations map[string]string `yaml:"ingressAnnotations,omitempty" validate:"excluded_unless=Type web"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -302,6 +303,8 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		}
 		webConfig.Domains = domains
 
+		webConfig.IngressAnnotations = service.IngressAnnotations
+
 		if service.Private != nil {
 			webConfig.Private = service.Private
 		}
@@ -449,6 +452,8 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 			})
 		}
 		appService.Domains = domains
+
+		appService.IngressAnnotations = webConfig.IngressAnnotations
 
 		if webConfig.Private != nil {
 			appService.Private = webConfig.Private

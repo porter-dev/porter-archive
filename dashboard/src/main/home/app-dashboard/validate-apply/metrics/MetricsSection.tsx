@@ -4,7 +4,6 @@ import styled from "styled-components";
 import api from "shared/api";
 
 import TabSelector from "components/TabSelector";
-import SelectRow from "components/form-components/SelectRow";
 import { MetricNormalizer, resolutions, secondsBeforeNow } from "../../expanded-app/metrics/utils";
 import { Metric, MetricType, NginxStatusMetric } from "../../expanded-app/metrics/types";
 import { match } from "ts-pattern";
@@ -13,21 +12,18 @@ import MetricsChart from "../../expanded-app/metrics/MetricsChart";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "components/Loading";
 import CheckboxRow from "components/CheckboxRow";
-import { PorterApp } from "@porter-dev/api-contracts";
 import { useLocation } from "react-router";
+import Filter from "components/porter/Filter";
+import { GenericFilterOption, GenericFilter, FilterName } from "../../expanded-app/logs/types";
+import { ClientService } from "lib/porter-apps/services";
 
 type PropsType = {
   projectId: number;
   clusterId: number;
   appName: string;
-  services: PorterApp["services"];
+  services: ClientService[];
   deploymentTargetId: string;
 };
-
-type ServiceOption = {
-  label: string;
-  value: string;
-}
 
 const MetricsSection: React.FunctionComponent<PropsType> = ({
   projectId,
@@ -39,65 +35,74 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const serviceFromQueryParams = queryParams.get("service");
-
-  const [selectedServiceName, setSelectedServiceName] = useState<string>(serviceFromQueryParams ?? "");
   const [selectedRange, setSelectedRange] = useState("1H");
   const [showAutoscalingThresholds, setShowAutoscalingThresholds] = useState(true);
 
-  const serviceOptions: ServiceOption[] = useMemo(() => {
-    return Object.keys(services).map((name) => {
-      return {
-        label: name,
-        value: name,
-      };
-    });
+  // filter out jobs until we can display metrics on them
+  const serviceOptions: GenericFilterOption[] = useMemo(() => {
+    const nonJobServiceNames = services.filter((s) => s.config.type !== "job").map((s) => s.name);
+    return nonJobServiceNames.map(({ value }) => GenericFilterOption.of(value, value));
   }, [services]);
 
+  const filters: GenericFilter[] = useMemo(() => {
+    return [
+      {
+        name: "service_name",
+        displayName: "Service",
+        default: undefined,
+        options: serviceOptions,
+        setValue: (value: string) => {
+          setSelectedFilterValues((prev) => ({ ...prev, service_name: value }));
+        },
+      } as GenericFilter,
+    ];
+  },[serviceOptions]);
+
+  const [selectedFilterValues, setSelectedFilterValues] = useState<Partial<Record<FilterName, string>>>({
+    service_name: serviceFromQueryParams && Object.keys(services).includes(serviceFromQueryParams) ? serviceFromQueryParams : "",
+  }); 
+
   useEffect(() => {
-    if (serviceOptions.length > 0 && selectedServiceName === "") {
-      setSelectedServiceName(serviceOptions[0].value)
+    if (serviceOptions.length > 0 && selectedFilterValues.service_name === "") {
+      setSelectedFilterValues((prev) => ({ ...prev, service_name: serviceOptions[0].value }));
     }
-  }, []);
+  }, [serviceOptions, selectedFilterValues.service_name]);
 
   const [serviceName, serviceKind, metricTypes, isHpaEnabled] = useMemo(() => {
-    if (selectedServiceName === "") {
-      return ["", "", [], false]
+    if (!selectedFilterValues.service_name) {
+      return ["", "", [], false];
     }
 
-    const service = services[selectedServiceName]
+    const service = services.find(s => s.name.value === selectedFilterValues.service_name);
+    if (!service) {
+      return ["", "", [], false];
+    }
 
-    const serviceName = service.absoluteName === "" ? (appName + "-" + selectedServiceName) : service.absoluteName
+    const serviceName = `${appName}-${service.name.value}`;
 
-    let serviceKind = ""
+    let serviceKind = "";
     const metricTypes: MetricType[] = ["cpu", "memory"];
-    let isHpaEnabled = false
+    let isHpaEnabled = false;
 
-    if (service.config.case === "webConfig") {
-      serviceKind = "web"
-      metricTypes.push("network");
-      if (service.config.value.autoscaling != null && service.config.value.autoscaling.enabled) {
-        isHpaEnabled = true
+    if (service.config.type === "web" || service.config.type === "worker") {
+      serviceKind = service.config.type === "web" ? "web" : "worker";
+      if (service.config.autoscaling?.enabled.value) {
+        isHpaEnabled = true;
       }
-      if (!service.config.value.private) {
-        metricTypes.push("nginx:status")
-      }
-    }
-
-    if (service.config.case === "workerConfig") {
-      serviceKind = "worker"
-      if (service.config.value.autoscaling != null && service.config.value.autoscaling.enabled) {
-        isHpaEnabled = true
-      }
-    }
-
-
+      if (service.config.type === "web") {
+        metricTypes.push("network");
+        if (!service.config.private) {
+          metricTypes.push("nginx:status");
+        }
+      } 
+    } 
 
     if (isHpaEnabled) {
       metricTypes.push("hpa_replicas");
     }
 
     return [serviceName, serviceKind, metricTypes, isHpaEnabled]
-  }, [selectedServiceName])
+  }, [selectedFilterValues.service_name])
 
 
   const { data: metricsData, isLoading: isMetricsDataLoading, refetch } = useQuery(
@@ -110,7 +115,6 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       deploymentTargetId,
     ],
     async () => {
-
       if (serviceName === "" || serviceKind === "" || metricTypes.length === 0) {
         return;
       }
@@ -240,7 +244,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       return metrics;
     },
     {
-      enabled: selectedServiceName !== "",
+      enabled: !!selectedFilterValues.service_name,
       refetchOnWindowFocus: false,
       refetchInterval: 10000, // refresh metrics every 10 seconds
     }
@@ -284,13 +288,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     <StyledMetricsSection>
       <MetricsHeader>
         <Flex>
-          <SelectRow
-            displayFlex={true}
-            label="Service"
-            value={selectedServiceName}
-            setActiveValue={(x: any) => setSelectedServiceName(x)}
-            options={serviceOptions}
-            width="200px"
+          <Filter
+            filters={filters}
+            selectedFilterValues={selectedFilterValues}
           />
           <Highlight color={"#7d7d81"} onClick={() => refetch()}>
             <i className="material-icons">autorenew</i>

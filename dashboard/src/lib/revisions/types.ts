@@ -10,6 +10,7 @@ export const appRevisionValidator = z.object({
     "BUILD_FAILED",
     "BUILD_CANCELED",
     "DEPLOY_FAILED",
+    "PREDEPLOY_FAILED"
   ]),
   b64_app_proto: z.string(),
   revision_number: z.number(),

@@ -357,20 +357,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       setIsReadOnly(true);
       setErrorMessage(undefined);
 
-      // if (!props.clusterId) {
-      //   markStepStarted("pre-provisioning-check-started");
-
-      //   await api.preflightCheckAWSUsage(
-      //     "<token>",
-      //     {
-      //       target_arn: props.credentialId,
-      //       region: awsRegion,
-      //     },
-      //     {
-      //       id: currentProject.id,
-      //     }
-      //   );
-      // }
+      if (!props.clusterId) {
+        markStepStarted("pre-provisioning-check-started");
+      }
 
       const res = await api.createContract("<token>", data, {
         project_id: currentProject.id,

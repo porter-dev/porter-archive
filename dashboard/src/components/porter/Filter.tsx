@@ -1,46 +1,64 @@
-import React, {  useState } from "react";
+import React, {  useMemo, useState } from "react";
 import styled from "styled-components";
 import Select from "./Select";
 import Spacer from "./Spacer";
 
 import filter from "assets/filter.svg";
-import { GenericLogFilter, LogFilterName } from "main/home/app-dashboard/expanded-app/logs/types";
+import { GenericFilter, FilterName } from "main/home/app-dashboard/expanded-app/logs/types";
 
 type Props = {
-  filters: GenericLogFilter[];
-  filterString: string;
-  selectedFilterValues: Record<LogFilterName, string>;
+  filters: GenericFilter[];
+  selectedFilterValues: Partial<Record<FilterName, string>>;
 };
 
 const Filter: React.FC<Props> = ({
   filters,
-  filterString,
   selectedFilterValues,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const filterLabelString = useMemo(() => {
+    let filterString = "";
+    const serviceName = selectedFilterValues["service_name"];
+    const podName = selectedFilterValues["pod_name"];
+    const revision = selectedFilterValues["revision"];
+
+    if (serviceName && serviceName !== "all") {
+      filterString += serviceName;
+    } else if (podName && podName !== "all") {
+      filterString += podName.replace(/-[^-]*$/, '');
+    }
+    if (revision && revision !== "all") {
+      if (filterString !== "") {
+        filterString += " ";
+      }
+      filterString += "v" + revision;
+    }
+    return filterString;
+},[JSON.stringify(selectedFilterValues)]);
 
   return (
     <Relative>
       <StyledFilter onClick={() => setIsExpanded(!isExpanded)}>
         <img src={filter} />
         Filter
-        {filterString !== "" && (
+        {filterLabelString !== "" && (
           <>
             <Bar />
             <Spacer width="10px" />
-            {filterString}
+            {filterLabelString}
           </>
         )}
       </StyledFilter>
       <CloseOverlay onClick={() => setIsExpanded(false)} isExpanded={isExpanded} />
       <Dropdown isExpanded={isExpanded}>
-        {filters.map((filter: GenericLogFilter, i: number) => {
+        {filters.map((filter: GenericFilter, i: number) => {
           return (
             <React.Fragment key={i}>
               <FilterLabel>{filter.displayName}</FilterLabel>
               <Spacer y={0.5} />
               <Select
-                options={[filter.default, ...filter.options]}
+                options={filter.default ? [filter.default, ...filter.options] : filter.options}
                 setValue={filter.setValue}
                 value={selectedFilterValues[filter.name]}
               />

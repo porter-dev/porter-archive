@@ -23,7 +23,7 @@ var sharedPackClient *packclient.Client
 func init() {
 	var err error
 	// initialize a pack client
-	logger := newPackLogger()
+	logger := newPackLogger(logOpts{})
 
 	sharedPackClient, err = packclient.NewClient(packclient.WithLogger(logger))
 
@@ -86,6 +86,16 @@ func (a *Agent) Build(ctx context.Context, opts *docker.BuildOpts, buildConfig *
 
 	if len(buildOpts.Buildpacks) > 0 && strings.HasPrefix(buildOpts.Builder, "heroku") {
 		buildOpts.Buildpacks = append(buildOpts.Buildpacks, "heroku/procfile@2.0.1")
+	}
+
+	if opts.LogFile != nil {
+		loggerWithLogFile := newPackLogger(logOpts{LogFile: opts.LogFile})
+
+		packClientWithLogFile, err := packclient.NewClient(packclient.WithLogger(loggerWithLogFile))
+		if err != nil {
+			return err
+		}
+		return packClientWithLogFile.Build(ctx, buildOpts)
 	}
 
 	return sharedPackClient.Build(ctx, buildOpts)

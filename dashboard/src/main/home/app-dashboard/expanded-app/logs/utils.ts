@@ -6,7 +6,7 @@ import Anser from "anser";
 import { Context } from "shared/Context";
 import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
 import { ChartType } from "shared/types";
-import { AgentLog, agentLogValidator, Direction, PorterLog, PaginationInfo, GenericLogFilter, LogFilterName } from "./types";
+import { AgentLog, agentLogValidator, Direction, PorterLog, PaginationInfo, GenericFilter, FilterName } from "./types";
 import { Service } from "../../new-app-flow/serviceTypes";
 
 const MAX_LOGS = 5000;
@@ -47,7 +47,7 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
 };
 
 export const useLogs = (
-  selectedFilterValues: Record<LogFilterName, string>,
+  selectedFilterValues: Record<FilterName, string>,
   appName: string,
   namespace: string,
   searchParam: string,
@@ -73,7 +73,7 @@ export const useLogs = (
   });
 
   // if currentPodName is default value we are looking at all chart pod logs
-  const currentPodSelector = selectedFilterValues.pod_name === GenericLogFilter.getDefaultOption("pod_name").value
+  const currentPodSelector = selectedFilterValues.pod_name === GenericFilter.getDefaultOption("pod_name").value
     ? `${currentChart?.name ?? ''}-.*` : `${currentChart?.name}-${selectedFilterValues.pod_name}-.*`;
 
   // if we are live:
@@ -229,12 +229,12 @@ export const useLogs = (
         return false;
       }
 
-      if (selectedFilterValues.output_stream !== GenericLogFilter.getDefaultOption("output_stream").value &&
+      if (selectedFilterValues.output_stream !== GenericFilter.getDefaultOption("output_stream").value &&
         log.metadata.output_stream !== selectedFilterValues.output_stream) {
         return false;
       }
 
-      if (selectedFilterValues.revision !== GenericLogFilter.getDefaultOption("revision").value &&
+      if (selectedFilterValues.revision !== GenericFilter.getDefaultOption("revision").value &&
         log.metadata.revision !== selectedFilterValues.revision) {
         return false;
       }

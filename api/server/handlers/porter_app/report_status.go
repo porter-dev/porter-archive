@@ -20,6 +20,7 @@ import (
 	"github.com/porter-dev/porter/internal/deployment_target"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/porter_app"
+	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 	"github.com/porter-dev/porter/internal/telemetry"
 	"k8s.io/utils/pointer"
 )
@@ -230,6 +231,11 @@ func writePRComment(ctx context.Context, inp writePRCommentInput) error {
 		return telemetry.Error(ctx, span, err, "error unmarshalling app proto")
 	}
 
+	app, err := v2.AppFromProto(appProto)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error converting app proto to app")
+	}
+
 	body := "## Porter Preview Environments\n"
 	porterURL := fmt.Sprintf("%s/preview-environments/apps/%s?target=%s", inp.serverURL, inp.porterApp.Name, inp.revision.DeploymentTargetID)
 
@@ -244,14 +250,9 @@ func writePRComment(ctx context.Context, inp writePRCommentInput) error {
 		return nil
 	}
 
-	for _, service := range appProto.Services {
-		webConfig := service.GetWebConfig()
-		if webConfig != nil {
-			domains := webConfig.GetDomains()
-
-			if len(domains) > 0 {
-				body = fmt.Sprintf("%s\n\n**Preview URL**: https://%s", body, domains[0].Name)
-			}
+	for _, service := range app.Services {
+		if service.Domains != nil && len(service.Domains) > 0 {
+			body = fmt.Sprintf("%s\n\n**Preview URL**: https://%s", body, service.Domains[0].Name)
 		}
 	}
 

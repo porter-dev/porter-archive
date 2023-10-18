@@ -207,7 +207,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const resetAllExceptName = () => {
     setIsNameHighlight(true);
 
-
     // Get the current name value before the reset
     setStep(0);
     const currentNameValue = porterAppFormMethods.getValues("app.name");
@@ -216,7 +215,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     porterAppFormMethods.reset();
     // Set the name back to its original value
     porterAppFormMethods.setValue("app.name", currentNameValue);
-
   };
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -370,10 +368,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   useEffect(() => {
     // set step to 1 if name is filled out
     if (isNameValid(name.value) && name.value) {
-      setIsNameHighlight(false);  // Reset highlight when the name is valid
+      setIsNameHighlight(false); // Reset highlight when the name is valid
       setStep((prev) => Math.max(prev, 1));
     } else {
-      resetAllExceptName()
+      resetAllExceptName();
     }
 
     // set step to 2 if source is filled out
@@ -665,8 +663,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
-                              } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${
+                                  detectedServices.count > 1 ? "s" : ""
+                                } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

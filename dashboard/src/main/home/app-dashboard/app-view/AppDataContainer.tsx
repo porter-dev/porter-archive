@@ -41,6 +41,7 @@ import axios from "axios";
 import HelmEditorTab from "./tabs/HelmEditorTab";
 import HelmLatestValuesTab from "./tabs/HelmLatestValuesTab";
 import { Context } from "shared/Context";
+import { useIntercom } from "lib/hooks/useIntercom";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -77,6 +78,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const { currentProject, user } = useContext(Context);
 
   const { updateAppStep } = useAppAnalytics();
+  const { showIntercomMessenger } = useIntercom();
 
   const {
     porterApp: porterAppRecord,
@@ -297,6 +299,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       // redirect to the default tab after save
       history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
     } catch (err) {
+      showIntercomMessenger();
+      
       let message = "App update failed: please try again or contact support@porter.run if the error persists.";
       let stack = "Unable to get error stack";
 

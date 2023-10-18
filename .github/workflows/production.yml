@@ -19,7 +19,7 @@ jobs:
       with:
         payload: |
           {
-            "text": "porter prod deploy started (In Progress)\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+            "text": "porter prod deploy started (In Progress)\n<${{ github.event.pull_request.html_url || github.event.head_commit.url }}|Link to commit>",
             "attachments": [
               {
                 "pretext": "Deployment started",
@@ -133,7 +133,7 @@ jobs:
         update-ts: ${{ steps.deploy-start.outputs.deploy-ts }}
         payload: |
           {
-            "text": "porter prod deploy completed\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+            "text": "porter prod deploy completed\n<${{ github.event.pull_request.html_url || github.event.head_commit.url }}|Link to commit>",
             "attachments": [
               {
                 "pretext": "Deployment completed",

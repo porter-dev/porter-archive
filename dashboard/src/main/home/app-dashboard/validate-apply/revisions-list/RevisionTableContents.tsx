@@ -59,6 +59,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
       .with("BUILD_FAILED", () => "Build Failed")
       .with("DEPLOY_FAILED", () => "Deploy Failed")
       .with("DEPLOYED", () => "Deployed")
+      .with("PREDEPLOY_FAILED", () => "Pre-Deploy Failed")
       .exhaustive();
 
   const getDotColor = (status: AppRevision["status"]) =>
@@ -171,7 +172,7 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
                     selected={
                       previewRevision
                         ? revision.revision_number ===
-                        previewRevision.revision_number
+                          previewRevision.revision_number
                         : isLatestDeployedRevision
                     }
                     onClick={() => {
@@ -252,7 +253,7 @@ const RevisionHeader = styled.div`
     cursor: pointer;
     border-radius: 20px;
     transform: ${(props: { showRevisions: boolean; isCurrent: boolean }) =>
-    props.showRevisions ? "" : "rotate(-90deg)"};
+      props.showRevisions ? "" : "rotate(-90deg)"};
     transition: transform 0.1s ease;
   }
 `;
@@ -293,7 +294,7 @@ const Tr = styled.tr`
     props.selected ? "#ffffff11" : ""};
   :hover {
     background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-    props.disableHover ? "" : "#ffffff22"};
+      props.disableHover ? "" : "#ffffff22"};
   }
 `;
 
@@ -325,7 +326,7 @@ const RollbackButton = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled: boolean }) =>
-    props.disabled ? "" : "#405eddbb"};
+      props.disabled ? "" : "#405eddbb"};
   }
 `;
 

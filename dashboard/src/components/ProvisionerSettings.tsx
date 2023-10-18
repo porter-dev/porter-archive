@@ -350,17 +350,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
       if (!props.clusterId) {
         markStepStarted("pre-provisioning-check-started");
-
-        await api.preflightCheckAWSUsage(
-          "<token>",
-          {
-            target_arn: props.credentialId,
-            region: awsRegion,
-          },
-          {
-            id: currentProject.id,
-          }
-        );
       }
 
       const res = await api.createContract("<token>", data, {

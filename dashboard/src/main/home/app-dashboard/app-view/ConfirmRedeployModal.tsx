@@ -30,6 +30,9 @@ const ConfirmRedeployModal: React.FC<Props> = ({
     if (latestRevision.status === "BUILD_FAILED") {
       return "Your application's build previously failed. Confirming this change will trigger a rerun of your application's CI pipeline.";
     }
+    if (latestRevision.status === "PREDEPLOY_FAILED") {
+      return "Your application's predeploy previously failed. Confirming this change will trigger a rerun of your application's CI pipeline.";
+    }
   }, [latestRevision, buildIsDirty]);
 
   return (

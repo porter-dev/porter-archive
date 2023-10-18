@@ -3,18 +3,23 @@ import failure from "assets/failure.svg";
 import loading from "assets/loading.gif";
 import canceled from "assets/canceled.svg"
 import api from "shared/api";
-import { PorterAppBuildEvent, PorterAppPreDeployEvent } from "./types";
+import { PorterAppBuildEvent, PorterAppDeployEvent, PorterAppPreDeployEvent } from "./types";
 import { PorterAppRecord } from "../../../AppView";
 import { match } from "ts-pattern";
 import { differenceInSeconds, intervalToDuration } from 'date-fns';
 
-export const getDuration = (event: PorterAppPreDeployEvent | PorterAppBuildEvent): string => {
+const ZERO_TIME = "0001-01-01T00:00:00Z";
+
+export const getDuration = (event: PorterAppPreDeployEvent | PorterAppBuildEvent | PorterAppDeployEvent): string => {
     const startTimeStamp = match(event)
         .with({ type: "BUILD" }, (ev) => new Date(ev.created_at).getTime())
+        .with({ type: "DEPLOY" }, (ev) => new Date(ev.created_at).getTime())
         .with({ type: "PRE_DEPLOY" }, (ev) => new Date(ev.metadata.start_time).getTime())
         .exhaustive();
 
-    const endTimeStamp = event.metadata.end_time ? new Date(event.metadata.end_time).getTime() : Date.now()
+    const endTimeStamp = event.metadata.end_time && event.metadata.end_time !== ZERO_TIME
+        ? new Date(event.metadata.end_time).getTime() 
+        : Date.now();
 
     const timeDifferenceInSeconds = differenceInSeconds(endTimeStamp, startTimeStamp);
     const duration = intervalToDuration({ start: 0, end: timeDifferenceInSeconds * 1000 });

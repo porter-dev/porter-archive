@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gorilla/sessions"
@@ -131,7 +132,7 @@ func (authn *AuthN) handleForbiddenForSession(
 				return
 			}
 
-			http.Redirect(w, r, "/register?email="+invite.Email, http.StatusTemporaryRedirect)
+			http.Redirect(w, r, "/register?email="+url.QueryEscape(invite.Email), http.StatusTemporaryRedirect)
 			return
 		}
 

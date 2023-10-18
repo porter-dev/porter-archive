@@ -38,6 +38,7 @@ import Fieldset from "./porter/Fieldset";
 import ExpandableSection from "./porter/ExpandableSection";
 import PreflightChecks from "./PreflightChecks";
 import VerticalSteps from "./porter/VerticalSteps";
+import { useIntercom } from "lib/hooks/useIntercom";
 
 
 const locationOptions = [
@@ -91,6 +92,8 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [preflightError, setPreflightError] = useState<string>("")
+
+  const { showIntercomWithMessage } = useIntercom();
 
   const markStepStarted = async (step: string, region?: string) => {
     try {
@@ -429,10 +432,11 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           errors = errors + check + ", "
         }
       }
-      // If none of the checks have a message, set setPreflightFailed to false
       if (hasMessage) {
+        showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
         markStepStarted("provisioning-failed", errors);
       }
+      // If none of the checks have a message, set setPreflightFailed to false
       if (!hasMessage) {
         setPreflightFailed(false);
         setStep(2);

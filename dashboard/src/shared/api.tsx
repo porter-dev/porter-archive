@@ -82,15 +82,6 @@ const preflightCheck = baseApi<PreflightCheckRequest, { id: number }>(
   }
 );
 
-const preflightCheckAWSUsage = baseApi<
-  {
-    target_arn: string;
-    region: string;
-  },
-  { id: number }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.id}/integrations/aws/preflight/usage`;
-});
 
 const createAWSIntegration = baseApi<
   {
@@ -302,20 +293,20 @@ const appLogs = baseApi<
 );
 
 const appHelmValues = baseApi<
-    {
-        app_id: number;
-        deployment_target_id: string;
-        with_defaults: boolean;
-    },
-    {
-        project_id: number;
-        cluster_id: number;
-        porter_app_name: string;
-    }
+  {
+    app_id: number;
+    deployment_target_id: string;
+    with_defaults: boolean;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }
 >(
-    "GET",
-    ({ project_id, cluster_id, porter_app_name }) =>
-        `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/helm-values`
+  "GET",
+  ({ project_id, cluster_id, porter_app_name }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/helm-values`
 );
 
 const appJobs = baseApi<
@@ -1950,15 +1941,15 @@ const getAllEnvGroups = baseApi<
 });
 
 const updateAppsLinkedToEnvironmentGroup = baseApi<
-    {
-        name: string;
-    },
-    {
-        id: number;
-        cluster_id: number;
-    }
+  {
+    name: string;
+  },
+  {
+    id: number;
+    cluster_id: number;
+  }
 >("POST", (pathParams) => {
-    return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups/update-linked-apps`;
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups/update-linked-apps`;
 });
 
 const updateEnvironmentGroupV2 = baseApi<
@@ -3314,7 +3305,6 @@ export default {
   removeApplicationFromEnvGroup,
   provisionDatabase,
   preflightCheck,
-  preflightCheckAWSUsage,
   getDatabases,
   getPreviousLogsForContainer,
   upgradePorterAgent,

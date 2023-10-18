@@ -50,6 +50,7 @@ import EnvSettings from "../validate-apply/app-settings/EnvSettings";
 import ImageSettings from "../image-settings/ImageSettings";
 import { useClusterResources } from "shared/ClusterResourcesContext";
 import PorterYamlModal from "./PorterYamlModal";
+import { useIntercom } from "lib/hooks/useIntercom";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -69,6 +70,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     return /^[a-z0-9-]{1,63}$/.test(value);
   };
   const [isNameHighlight, setIsNameHighlight] = React.useState(false);
+
+  const { showIntercomWithMessage } = useIntercom();
 
   const [
     validatedAppProto,
@@ -334,6 +337,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         return true;
       } catch (err) {
+        showIntercomWithMessage({ message: "I am running into an issue launching an application." });
+
         if (axios.isAxiosError(err) && err.response?.data?.error) {
           updateAppStep({
             step: "stack-launch-failure",
@@ -427,6 +432,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           errorMessage = `${errorMessage}.`;
         }
       }
+
+      showIntercomWithMessage({ message: "I am running into an issue launching an application." });
 
       updateAppStep({
         step: "stack-launch-failure",

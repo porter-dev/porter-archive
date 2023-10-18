@@ -44,6 +44,9 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
   }, [selectedEnvGroup]);
 
   const remainingEnvGroupOptions = useMemo(() => {
+    if (!envGroups) {
+      return baseEnvGroups;
+    }
     return baseEnvGroups.filter((eg) => {
       return !envGroups.some((eg2) => eg2.name === eg.name);
     });

@@ -1,8 +1,6 @@
 import React, {
     useCallback,
-    useContext,
     useEffect,
-    useMemo,
     useRef,
     useState,
 } from "react";
@@ -12,7 +10,7 @@ import styled from "styled-components";
 import spinner from "assets/loading.gif";
 import api from "shared/api";
 import { useLogs } from "./utils";
-import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName } from "../../expanded-app/logs/types";
+import { Direction, GenericFilterOption, GenericFilter, FilterName } from "../../expanded-app/logs/types";
 import dayjs, { Dayjs } from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
@@ -37,7 +35,7 @@ type Props = {
     serviceNames: string[];
     deploymentTargetId: string;
     appRevisionId?: string;
-    logFilterNames?: LogFilterName[];
+    logFilterNames?: FilterName[];
     timeRange?: {
         startTime?: Dayjs;
         endTime?: Dayjs;
@@ -78,11 +76,11 @@ const Logs: React.FC<Props> = ({
     const [isLoading, setIsLoading] = useState(true);
     const [logsError, setLogsError] = useState<string | undefined>(undefined);
 
-    const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
-        service_name: logQueryParamOpts?.service ?? GenericLogFilter.getDefaultOption("service_name").value,
+    const [selectedFilterValues, setSelectedFilterValues] = useState<Record<FilterName, string>>({
+        service_name: logQueryParamOpts?.service ?? GenericFilter.getDefaultOption("service_name").value,
         pod_name: "", // not supported in v2
-        revision: logQueryParamOpts.revision ?? GenericLogFilter.getDefaultOption("revision").value,
-        output_stream: logQueryParamOpts.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
+        revision: logQueryParamOpts.revision ?? GenericFilter.getDefaultOption("revision").value,
+        output_stream: logQueryParamOpts.output_stream ?? GenericFilter.getDefaultOption("output_stream").value,
     });
 
     const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
@@ -129,11 +127,11 @@ const Logs: React.FC<Props> = ({
         }).reverse().slice(0, 3);
     }
 
-    const [filters, setFilters] = useState<GenericLogFilter[]>([
+    const [filters, setFilters] = useState<GenericFilter[]>([
         {
             name: "service_name",
             displayName: "Service",
-            default: GenericLogFilter.getDefaultOption("service_name"),
+            default: GenericFilter.getDefaultOption("service_name"),
             options: serviceNames.map(s => {
                 return GenericFilterOption.of(s, s)
             }) ?? [],
@@ -143,11 +141,11 @@ const Logs: React.FC<Props> = ({
                     service_name: value,
                 }));
             }
-        } as GenericLogFilter,
+        } as GenericFilter,
         {
             name: "revision",
             displayName: "Version",
-            default: GenericLogFilter.getDefaultOption("revision"),
+            default: GenericFilter.getDefaultOption("revision"),
             options: createVersionOptions(latestRevisionNumber),
             setValue: (value: string) => {
                 setSelectedFilterValues((s) => ({
@@ -155,11 +153,11 @@ const Logs: React.FC<Props> = ({
                     revision: value,
                 }));
             }
-        } as GenericLogFilter,
+        } as GenericFilter,
         {
             name: "output_stream",
             displayName: "Output Stream",
-            default: GenericLogFilter.getDefaultOption("output_stream"),
+            default: GenericFilter.getDefaultOption("output_stream"),
             options: [
                 GenericFilterOption.of('stdout', 'stdout'),
                 GenericFilterOption.of("stderr", "stderr"),
@@ -170,8 +168,8 @@ const Logs: React.FC<Props> = ({
                     output_stream: value,
                 }));
             }
-        } as GenericLogFilter,
-    ].filter((f: GenericLogFilter) => logFilterNames.includes(f.name)));
+        } as GenericFilter,
+    ].filter((f: GenericFilter) => logFilterNames.includes(f.name)));
 
 
     const notify = (message: string) => {
@@ -205,7 +203,7 @@ const Logs: React.FC<Props> = ({
             {
                 name: "service_name",
                 displayName: "Service",
-                default: GenericLogFilter.getDefaultOption("service_name"),
+                default: GenericFilter.getDefaultOption("service_name"),
                 options: serviceNames.map(s => {
                     return GenericFilterOption.of(s, s)
                 }) ?? [],
@@ -215,11 +213,11 @@ const Logs: React.FC<Props> = ({
                         service_name: value,
                     }));
                 }
-            } as GenericLogFilter,
+            } as GenericFilter,
             {
                 name: "revision",
                 displayName: "Version",
-                default: GenericLogFilter.getDefaultOption("revision"),
+                default: GenericFilter.getDefaultOption("revision"),
                 options: createVersionOptions(latestRevisionNumber),
                 setValue: (value: string) => {
                     setSelectedFilterValues((s) => ({
@@ -227,11 +225,11 @@ const Logs: React.FC<Props> = ({
                         revision: value,
                     }));
                 }
-            } as GenericLogFilter,
+            } as GenericFilter,
             {
                 name: "output_stream",
                 displayName: "Output Stream",
-                default: GenericLogFilter.getDefaultOption("output_stream"),
+                default: GenericFilter.getDefaultOption("output_stream"),
                 options: [
                     GenericFilterOption.of('stdout', 'stdout'),
                     GenericFilterOption.of("stderr", "stderr"),
@@ -242,8 +240,8 @@ const Logs: React.FC<Props> = ({
                         output_stream: value,
                     }));
                 }
-            } as GenericLogFilter,
-        ].filter((f: GenericLogFilter) => logFilterNames.includes(f.name)))
+            } as GenericFilter,
+        ].filter((f: GenericFilter) => logFilterNames.includes(f.name)))
 
         if (latestRevisionNumber && !logQueryParamOpts.revision) {
             setSelectedFilterValues({
@@ -263,16 +261,6 @@ const Logs: React.FC<Props> = ({
         }
     }, [isLoading, logs, scrollToBottomRef, scrollToBottomEnabled]);
 
-
-    const resetFilters = () => {
-        setSelectedFilterValues({
-            service_name: logQueryParamOpts?.service ?? GenericLogFilter.getDefaultOption("service_name").value,
-            pod_name: "", // not supported in v2
-            revision: logQueryParamOpts.revision ?? GenericLogFilter.getDefaultOption("revision").value,
-            output_stream: logQueryParamOpts.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
-        });
-    };
-
     const onLoadPrevious = useCallback(() => {
         if (!selectedDate) {
             setSelectedDate(dayjs(logs[0].timestamp).toDate());
@@ -282,31 +270,11 @@ const Logs: React.FC<Props> = ({
         moveCursor(Direction.backward);
     }, [logs, selectedDate]);
 
-    const resetSearch = () => {
-        setSearchText("");
-        setEnteredSearchText("");
-        resetFilters();
-    };
-
     const setSelectedDateIfUndefined = () => {
         if (selectedDate == null) {
             setSelectedDate(dayjs().toDate());
         }
     };
-
-    const filterLabelString = useMemo(() => {
-        let filterString = "";
-        if (selectedFilterValues["service_name"] !== null && selectedFilterValues["service_name"] !== "all") {
-          filterString += selectedFilterValues["service_name"];
-        } 
-        if (selectedFilterValues["revision"] != null && selectedFilterValues["revision"] !== "all") {
-          if (filterString !== "") {
-            filterString += " ";
-          }
-          filterString += "v" + selectedFilterValues["revision"];
-        }
-        return filterString;
-    },[JSON.stringify(selectedFilterValues)]);
 
     const renderContents = () => {
         return (
@@ -323,13 +291,11 @@ const Logs: React.FC<Props> = ({
                         <LogQueryModeSelectionToggle
                             selectedDate={selectedDate ?? timeRange?.endTime?.toDate()}
                             setSelectedDate={setSelectedDate}
-                            resetSearch={resetSearch}
                         />
                     </Flex>
                     <Flex>
                         <Filter
                             filters={filters}
-                            filterString={filterLabelString} 
                             selectedFilterValues={selectedFilterValues}
                         />
                         <Spacer inline x={1} />
@@ -371,7 +337,7 @@ const Logs: React.FC<Props> = ({
                                     appName={appName}
                                 />
                                 <LoadMoreButton
-                                    active={selectedDate && logs.length !== 0}
+                                    active={selectedDate != null && logs.length !== 0}
                                     role="button"
                                     onClick={() => moveCursor(Direction.forward)}
                                 >

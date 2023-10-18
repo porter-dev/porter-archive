@@ -81,6 +81,10 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 		return output
 	}
 
+	// create a temp file which build logs will be written to
+	// temp file gets cleaned up when os exits (i.e. when the GHA completes), so no need to remove it manually
+	logFile, _ := os.CreateTemp("", buildLogFilename)
+
 	switch inp.BuildMethod {
 	case buildMethodDocker:
 		basePath, err := filepath.Abs(".")
@@ -98,10 +102,6 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 			output.Error = fmt.Errorf("error resolving docker paths: %w", err)
 			return output
 		}
-
-		// create a temp file which build logs will be written to
-		// temp file gets cleaned up when os exits (i.e. when the GHA completes), so no need to remove it manually
-		logFile, _ := os.CreateTemp("", buildLogFilename)
 
 		opts := &docker.BuildOpts{
 			ImageRepo:         inp.RepositoryURL,
@@ -140,6 +140,7 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 			Tag:          tag,
 			BuildContext: inp.BuildContext,
 			Env:          inp.Env,
+			LogFile:      logFile,
 		}
 
 		buildConfig := &types.BuildConfig{
@@ -150,6 +151,16 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 		err := packAgent.Build(ctx, opts, buildConfig, "")
 		if err != nil {
 			output.Error = fmt.Errorf("error building image with pack: %w", err)
+			logString := "Error reading contents of build log file"
+
+			if logFile != nil {
+				content, err := os.ReadFile(logFile.Name())
+				// only continue if we can read the file. if we cannot, logString will be the default
+				if err == nil {
+					logString = string(content)
+				}
+			}
+			output.Logs = logString
 			return output
 		}
 	default:

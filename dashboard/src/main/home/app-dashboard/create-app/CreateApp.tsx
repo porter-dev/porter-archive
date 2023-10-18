@@ -19,6 +19,7 @@ import {
   PorterAppFormData,
   SourceOptions,
   porterAppFormValidator,
+  clientAppValidator,
 } from "lib/porter-apps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import SourceSelector from "../new-app-flow/SourceSelector";
@@ -48,6 +49,8 @@ import {
 import EnvSettings from "../validate-apply/app-settings/EnvSettings";
 import ImageSettings from "../image-settings/ImageSettings";
 import { useClusterResources } from "shared/ClusterResourcesContext";
+import PorterYamlModal from "./PorterYamlModal";
+import { useIntercom } from "lib/hooks/useIntercom";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -63,6 +66,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     userHasSeenNoPorterYamlFoundModal,
     setUserHasSeenNoPorterYamlFoundModal,
   ] = React.useState(false);
+  const isNameValid = (value: string): boolean => {
+    return /^[a-z0-9-]{1,63}$/.test(value);
+  };
+  const [isNameHighlight, setIsNameHighlight] = React.useState(false);
+
+  const { showIntercomWithMessage } = useIntercom();
 
   const [
     validatedAppProto,
@@ -178,7 +187,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const image = watch("source.image");
   const services = watch("app.services");
 
-  const { detectedServices: servicesFromYaml, detectedName } = usePorterYaml({
+  const {
+    detectedServices: servicesFromYaml,
+    detectedName,
+    porterYamlFound,
+    loading: isLoadingPorterYaml,
+  } = usePorterYaml({
     source: source?.type === "github" ? source : null,
     appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
   });
@@ -188,8 +202,22 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     deploymentTargetID: deploymentTarget?.deployment_target_id,
     creating: true,
   });
-  const { currentClusterResources} = useClusterResources();
+  const { currentClusterResources } = useClusterResources();
 
+  const resetAllExceptName = () => {
+    setIsNameHighlight(true);
+
+
+    // Get the current name value before the reset
+    setStep(0);
+    const currentNameValue = porterAppFormMethods.getValues("app.name");
+    setValue("app.services", []);
+    // Reset the form
+    porterAppFormMethods.reset();
+    // Set the name back to its original value
+    porterAppFormMethods.setValue("app.name", currentNameValue);
+
+  };
   const onSubmit = handleSubmit(async (data) => {
     try {
       setDeployError("");
@@ -311,6 +339,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         return true;
       } catch (err) {
+        showIntercomWithMessage({ message: "I am running into an issue launching an application." });
+
         if (axios.isAxiosError(err) && err.response?.data?.error) {
           updateAppStep({
             step: "stack-launch-failure",
@@ -339,10 +369,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   useEffect(() => {
     // set step to 1 if name is filled out
-    if (name.value) {
+    if (isNameValid(name.value) && name.value) {
+      setIsNameHighlight(false);  // Reset highlight when the name is valid
       setStep((prev) => Math.max(prev, 1));
     } else {
-      setStep(0);
+      resetAllExceptName()
     }
 
     // set step to 2 if source is filled out
@@ -388,11 +419,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     // TODO: create a more unified way of parsing form/apply errors, unified with the logic in AppDataContainer
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
-      let errorMessage = "App could not be deployed as defined."
+      let errorMessage = "App could not be deployed as defined.";
       if (errorKeys.includes("app")) {
         const appErrors = Object.keys(errors.app ?? {});
         if (appErrors.includes("build")) {
-          errorMessage = "Build settings are not properly configured."
+          errorMessage = "Build settings are not properly configured.";
         }
 
         if (appErrors.includes("services")) {
@@ -403,6 +434,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           errorMessage = `${errorMessage}.`;
         }
       }
+
+      showIntercomWithMessage({ message: "I am running into an issue launching an application." });
 
       updateAppStep({
         step: "stack-launch-failure",
@@ -511,7 +544,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                   <>
                     <Text size={16}>Application name</Text>
                     <Spacer y={0.5} />
-                    <Text color="helper">
+                    <Text color={isNameHighlight ? "#FFCC00" : "helper"}>
                       Lowercase letters, numbers, and "-" only.
                     </Text>
                     <Spacer y={0.5} />
@@ -564,8 +597,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               source={source}
                               projectId={currentProject.id}
                             />
-                            {/* todo(ianedwards): re-enable porter.yaml modal after validate/apply v2 is rolled out and proven to be stable */}
-                            {/* {!userHasSeenNoPorterYamlFoundModal &&
+                            {!userHasSeenNoPorterYamlFoundModal &&
                               !porterYamlFound &&
                               !isLoadingPorterYaml && (
                                 <Controller
@@ -585,7 +617,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                                     />
                                   )}
                                 />
-                              )} */}
+                              )}
                           </>
                         ) : (
                           <ImageSettings
@@ -633,9 +665,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

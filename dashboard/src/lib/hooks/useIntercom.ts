@@ -1,3 +1,4 @@
+// useIntercom contains all the utility methods related to the Intercom chat widget
 export const useIntercom = () => {
     const showIntercomWithMessageAfterDelay = (message: string, delaySeconds: number) => {
         const func = () => {

@@ -74,6 +74,7 @@ const CreateDatabase: React.FC<Props> = ({
           <RDSForm
             currentTemplate={currentTemplate}
             goBack={() => setCurrentTemplate(null)}
+            repoURL={capabilities?.default_addon_helm_repo_url}
           />
         ) : (
           <>

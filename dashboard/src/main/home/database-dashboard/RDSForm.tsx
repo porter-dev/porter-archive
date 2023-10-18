@@ -1,24 +1,20 @@
-import React, { useEffect, useState, useContext, useMemo } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
 import _ from "lodash";
 import { v4 as uuidv4 } from 'uuid';
 
-import { hardcodedNames, hardcodedIcons } from "shared/hardcodedNameDict";
+import { hardcodedIcons } from "shared/hardcodedNameDict";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { pushFiltered } from "shared/routing";
 
 import Back from "components/porter/Back";
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import Link from "components/porter/Link";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
 import VerticalSteps from "components/porter/VerticalSteps";
-import PorterFormWrapper from "components/porter-form/PorterFormWrapper";
-import Placeholder from "components/Placeholder";
 import Button from "components/porter/Button";
-import { generateSlug } from "random-word-slugs";
 import { RouteComponentProps, withRouter } from "react-router";
 import Error from "components/porter/Error";
 import Fieldset from "components/porter/Fieldset";
@@ -28,14 +24,16 @@ import ClickToCopy from "components/porter/ClickToCopy";
 type Props = RouteComponentProps & {
   currentTemplate: any;
   goBack: () => void;
+  repoURL: string | undefined;
 };
 
 const RDSForm: React.FC<Props> = ({
   currentTemplate,
   goBack,
+  repoURL,
   ...props
 }) => {
-  const { currentCluster, currentProject, capabilities } = useContext(Context);
+  const { currentCluster, currentProject } = useContext(Context);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [name, setName] = useState<string>("");
   const [buttonStatus, setButtonStatus] = useState<string>("");
@@ -85,65 +83,50 @@ const RDSForm: React.FC<Props> = ({
   const deploy = async (wildcard?: any) => {
     setButtonStatus("loading");
 
-    api.getContracts("<token>", {}, { project_id: currentProject?.id || -1 })
-      .then(({ data }) => {
-        const filtered_data = data.filter((x: any) => {
-          return x.cluster_id === currentCluster?.id || -1;
-        });
-        let contract = filtered_data[0]?.base64_contract && JSON.parse(atob(filtered_data[0]?.base64_contract));
-        let region = contract?.cluster?.eksKind?.region;
+    let values = {
+      config: {
+        name,
+        masterUserPassword: dbPassword,
+        allocatedStorage: storage,
+        instanceClass: tier,
+      }
+    }
 
-        let values = {
-          config: {
-            name,
-            awsRegion: region || "us-west-1",
-            masterUserPassword: dbPassword,
-            allocatedStorage: storage,
-            instanceClass: tier,
-          }
+    api
+      .deployAddon(
+        "<token>",
+        {
+          template_name: "rds-postgresql",
+          template_version: "latest",
+          values: values,
+          name,
+        },
+        {
+          id: currentProject?.id || -1,
+          cluster_id: currentCluster?.id || -1,
+          namespace: "ack-system",
+          repo_url: repoURL,
         }
-    
-        api
-          .deployAddon(
-            "<token>",
-            {
-              template_name: "rds-postgresql",
-              template_version: "latest",
-              values: values,
-              name,
-            },
-            {
-              id: currentProject?.id || -1,
-              cluster_id: currentCluster?.id || -1,
-              namespace: "ack-system",
-              repo_url: "https://chart-addons.getporter.dev",
-            }
-          )
-          .then((_) => {
-            window.analytics?.track("Deployed RDS", {
-              name,
-              namespace: "ack-system",
-              values: values,
-            });
-            waitForHelmRelease();
-          })
-          .catch((err) => {
-            let parsedErr = err?.response?.data?.error;
-            err = parsedErr || err.message || JSON.stringify(err);
-            setButtonStatus(err);
-            window.analytics?.track("Failed to Deploy RDS", {
-              name,
-              namespace: "ack-system",
-              values: values,
-              error: err,
-            });
-            return;
-          });
-
+      )
+      .then((_) => {
+        window.analytics?.track("Deployed RDS", {
+          name,
+          namespace: "ack-system",
+          values: values,
+        });
+        waitForHelmRelease();
       })
       .catch((err) => {
-        alert("f me up");
-        console.error(err);
+        let parsedErr = err?.response?.data?.error;
+        err = parsedErr || err.message || JSON.stringify(err);
+        setButtonStatus(err);
+        window.analytics?.track("Failed to Deploy RDS", {
+          name,
+          namespace: "ack-system",
+          values: values,
+          error: err,
+        });
+        return;
       });
   };
 

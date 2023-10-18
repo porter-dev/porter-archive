@@ -196,6 +196,9 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		if err != nil {
 			return appProto, nil, telemetry.Error(ctx, span, err, "error casting service config")
 		}
+		if service.Name == "" {
+			return appProto, nil, telemetry.Error(ctx, span, nil, "service found with no name")
+		}
 
 		services = append(services, serviceProto)
 		serviceMap[service.Name] = serviceProto

@@ -1,12 +1,11 @@
 export const useIntercom = () => {
-    const showIntercomMessenger = () => {
+    const showIntercomWithMessage = (message: string) => {
         if (typeof window.Intercom === 'function') {
-            // You can use the 'show' method to open the messenger
-            window.Intercom('showNewMessage', 'I am having issues updating my application.');
+            window.Intercom('showNewMessage', message);
         }
     }
 
     return {
-        showIntercomMessenger,
+        showIntercomWithMessage,
     }
 }

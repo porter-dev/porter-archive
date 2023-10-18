@@ -84,7 +84,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const { currentProject, user } = useContext(Context);
 
   const { updateAppStep } = useAppAnalytics();
-  const { showIntercomMessenger } = useIntercom();
+  const { showIntercomWithMessage } = useIntercom();
 
   const {
     porterApp: porterAppRecord,
@@ -307,7 +307,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       // redirect to the default tab after save
       history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
     } catch (err) {
-      showIntercomMessenger();
+      showIntercomWithMessage("I am running into an issue updating my application.");
       
       let message =
         "App update failed: please try again or contact support@porter.run if the error persists.";

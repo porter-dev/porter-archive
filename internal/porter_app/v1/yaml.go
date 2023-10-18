@@ -88,7 +88,7 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 		serviceMap[name] = serviceProto
 	}
 	appProto.ServiceList = serviceList
-	appProto.Services = serviceMap
+	appProto.Services = serviceMap // nolint:staticcheck // temporarily using deprecated field for backwards compatibility
 
 	if porterYaml.Release != nil {
 		predeployProto, err := serviceProtoFromConfig(*porterYaml.Release, porterv1.ServiceType_SERVICE_TYPE_JOB)

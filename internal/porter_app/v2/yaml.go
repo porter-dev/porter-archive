@@ -201,7 +201,7 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		serviceMap[service.Name] = serviceProto
 	}
 	appProto.ServiceList = services
-	appProto.Services = serviceMap
+	appProto.Services = serviceMap // nolint:staticcheck // temporarily using deprecated field for backwards compatibility
 
 	if porterApp.Predeploy != nil {
 		predeployProto, err := serviceProtoFromConfig(*porterApp.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)

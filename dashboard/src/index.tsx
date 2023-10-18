@@ -10,6 +10,7 @@ import { EnableErrorHandling } from "shared/error_handling/window_error_handling
 declare global {
   interface Window {
     analytics: any;
+    Intercom: any;
   }
 }
 

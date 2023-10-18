@@ -540,7 +540,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       }
       // If none of the checks have a message, set setPreflightFailed to false
       if (hasMessage) {
-        showIntercomWithMessage("I am running into an issue provisioning a cluster.");
+        showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
         markStepStarted("provisioning-failed", errors);
       }
       if (!hasMessage) {

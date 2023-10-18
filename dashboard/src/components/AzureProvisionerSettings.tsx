@@ -27,6 +27,7 @@ import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
 import Link from "./porter/Link";
 import Text from "./porter/Text";
+import { useIntercom } from "lib/hooks/useIntercom";
 
 const locationOptions = [
   { value: "eastus", label: "East US" },
@@ -89,9 +90,11 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
 
-  const markStepStarted = async (step: string, region: string) => {
+  const { showIntercomWithMessage } = useIntercom();
+
+  const markStepStarted = async (step: string, {region, error_message}: {region?: string; error_message?: string}) => {
     try {
-      await api.updateOnboardingStep("<token>", { step, region, provider: "azure" }, {
+      await api.updateOnboardingStep("<token>", { step, region, error_message, provider: "azure" }, {
         project_id: currentProject.id,
       });
     } catch (err) {
@@ -224,7 +227,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       setErrorDetails("")
 
       if (!props.clusterId) {
-        markStepStarted("provisioning-started", azureLocation);
+        markStepStarted("provisioning-started", { region: azureLocation });
       }
 
       const res = await api.createContract("<token>", data, {
@@ -255,19 +258,22 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       setErrorMessage("");
       setErrorDetails("")
     } catch (err) {
-      const errMessage = err.response.data.error.replace("unknown: ", "");
+      showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
+      let errorMessage = DEFAULT_ERROR_MESSAGE;
+      let errorDetails = err.response?.data?.error?.replace("unknown: ", "") ?? "";
       // hacky, need to standardize error contract with backend
       setIsClicked(false);
-      if (errMessage.includes("resource provider")) {
-        setErrorMessage(AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE);
-        setErrorDetails(errMessage)
-      } else if (errMessage.includes("quota")) {
-        setErrorMessage(AZURE_CORE_QUOTA_ERROR_MESSAGE)
-        setErrorDetails(errMessage)
+      if (errorDetails.includes("resource provider")) {
+        setErrorDetails(errorDetails);
+        errorMessage = AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE;
+      } else if (errorDetails.includes("quota")) {
+        setErrorDetails(errorDetails);
+        errorMessage = AZURE_CORE_QUOTA_ERROR_MESSAGE;
       } else {
-        setErrorMessage(DEFAULT_ERROR_MESSAGE);
-        setErrorDetails("")
+        setErrorDetails("");
       }
+      setErrorMessage(errorMessage);
+      markStepStarted("provisioning-failed", { error_message: `Error message: ${errorMessage}; Error details: ${errorDetails}` });
     } finally {
       setIsReadOnly(false);
       setIsClicked(false);

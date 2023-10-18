@@ -307,7 +307,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       // redirect to the default tab after save
       history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
     } catch (err) {
-      showIntercomWithMessage("I am running into an issue updating my application.");
+      showIntercomWithMessage({ message: "I am running into an issue updating my application." });
       
       let message =
         "App update failed: please try again or contact support@porter.run if the error persists.";
@@ -386,7 +386,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
       const stringifiedJson = JSON.stringify(errors);
-
       let errorMessage =
         "App update failed. Please try again. If the error persists, please contact support@porter.run.";
       if (errorKeys.includes("app")) {
@@ -415,6 +414,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         }
       }
 
+      showIntercomWithMessage({ message: "I am running into an issue updating my application." });
       updateAppStep({
         step: "porter-app-update-failure",
         errorMessage: `Form validation error (visible to user): ${errorMessage}. Stringified JSON errors (invisible to user): ${stringifiedJson}`,

@@ -151,6 +151,16 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 		err := packAgent.Build(ctx, opts, buildConfig, "")
 		if err != nil {
 			output.Error = fmt.Errorf("error building image with pack: %w", err)
+			logString := "Error reading contents of build log file"
+
+			if logFile != nil {
+				content, err := os.ReadFile(logFile.Name())
+				// only continue if we can read the file. if we cannot, logString will be the default
+				if err == nil {
+					logString = string(content)
+				}
+			}
+			output.Logs = logString
 			return output
 		}
 	default:

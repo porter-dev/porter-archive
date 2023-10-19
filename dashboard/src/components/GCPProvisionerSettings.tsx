@@ -327,7 +327,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       const errMessage = err.response.data.error.replace("unknown: ", "");
       setIsClicked(false);
       setIsLoading(true);
-
+      showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
       // TODO: handle different error conditions here from preflights
       setErrorMessage(DEFAULT_ERROR_MESSAGE);
       setErrorDetails(errMessage)

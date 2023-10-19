@@ -278,70 +278,63 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       }),
     });
 
-    if (preflightData) {
-      if (props.clusterId) {
-        data["cluster"]["clusterId"] = props.clusterId;
+
+    if (props.clusterId) {
+      data["cluster"]["clusterId"] = props.clusterId;
+    }
+
+    try {
+      setIsReadOnly(true);
+      setErrorMessage("");
+      setErrorDetails("")
+
+      if (!props.clusterId) {
+        markStepStarted("provisioning-started", region);
       }
 
-      try {
-        setIsReadOnly(true);
-        setErrorMessage("");
-        setErrorDetails("")
+      const res = await api.createContract("<token>", data, {
+        project_id: currentProject.id,
+      });
 
-        if (!props.clusterId) {
-          markStepStarted("provisioning-started", region);
-        }
+      setErrorMessage("");
+      setErrorDetails("");
 
-        const res = await api.createContract("<token>", data, {
-          project_id: currentProject.id,
+      // Only refresh and set clusters on initial create
+      setShouldRefreshClusters(true);
+      api
+        .getClusters("<token>", {}, { id: currentProject.id })
+        .then(({ data }) => {
+          data.forEach((cluster: ClusterType) => {
+            if (cluster.id === res.data.contract_revision?.cluster_id) {
+              // setHasFinishedOnboarding(true);
+              setCurrentCluster(cluster);
+              OFState.actions.goTo("clean_up");
+              pushFiltered(props, "/cluster-dashboard", ["project_id"], {
+                cluster: cluster.name,
+              });
+            }
+          });
+        })
+        .catch((err) => {
+          setErrorMessage("Error fetching clusters");
+          setErrorDetails(err)
         });
 
-        setErrorMessage("");
-        setErrorDetails("");
-
-        // Only refresh and set clusters on initial create
-        setShouldRefreshClusters(true);
-        api
-          .getClusters("<token>", {}, { id: currentProject.id })
-          .then(({ data }) => {
-            data.forEach((cluster: ClusterType) => {
-              if (cluster.id === res.data.contract_revision?.cluster_id) {
-                // setHasFinishedOnboarding(true);
-                setCurrentCluster(cluster);
-                OFState.actions.goTo("clean_up");
-                pushFiltered(props, "/cluster-dashboard", ["project_id"], {
-                  cluster: cluster.name,
-                });
-              }
-            });
-          })
-          .catch((err) => {
-            setErrorMessage("Error fetching clusters");
-            setErrorDetails(err)
-          });
-
-      } catch (err) {
-        const errMessage = err.response.data.error.replace("unknown: ", "");
-        setIsClicked(false);
-        setIsLoading(true);
-
-        // TODO: handle different error conditions here from preflights
-        setErrorMessage(DEFAULT_ERROR_MESSAGE);
-        setErrorDetails(errMessage)
-      } finally {
-        setIsReadOnly(false);
-        setIsClicked(false);
-        setIsLoading(true);
-
-      }
-    } else {
+    } catch (err) {
+      const errMessage = err.response.data.error.replace("unknown: ", "");
       setIsClicked(false);
       setIsLoading(true);
 
       // TODO: handle different error conditions here from preflights
       setErrorMessage(DEFAULT_ERROR_MESSAGE);
-      setErrorDetails("Could not perform Preflight Checks ")
+      setErrorDetails(errMessage)
+    } finally {
+      setIsReadOnly(false);
+      setIsClicked(false);
+      setIsLoading(true);
+
     }
+
   };
 
   useEffect(() => {
@@ -535,7 +528,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         </StyledForm>
 
         <Button
-          disabled={isDisabled() || isLoading || preflightFailed || statusPreflight() != ""}
+          disabled={isDisabled() || isLoading}
           onClick={createCluster}
           status={getStatus()}
         >

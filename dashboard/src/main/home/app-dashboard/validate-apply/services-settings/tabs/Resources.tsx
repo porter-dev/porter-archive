@@ -199,8 +199,8 @@ const Resources: React.FC<ResourcesProps> = ({
                 min={0}
                 max={1}
                 step={.1}
-                value={value?.value.toString() ?? ".5"}
-                disabled={value?.readOnly}
+                value={value.value.toString()}
+                disabled={value.readOnly}
                 width="300px"
                 setValue={(e) => {
                   onChange({

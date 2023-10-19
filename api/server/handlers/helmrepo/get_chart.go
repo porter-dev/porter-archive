@@ -45,6 +45,13 @@ func (t *ChartGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		version = ""
 	}
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "helm-repo-url", Value: helmRepo.RepoURL},
+		telemetry.AttributeKV{Key: "template-name", Value: name},
+		telemetry.AttributeKV{Key: "template-version", Value: version},
+	)
+
+
 	chart, err := release.LoadChart(ctx, t.Config(), &release.LoadAddonChartOpts{
 		ProjectID:       proj.ID,
 		RepoURL:         helmRepo.RepoURL,

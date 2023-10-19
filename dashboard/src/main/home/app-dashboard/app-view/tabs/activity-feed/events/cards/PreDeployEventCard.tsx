@@ -18,6 +18,7 @@ import document from "assets/document.svg";
 import { PorterAppPreDeployEvent } from "../types";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import pull_request_icon from "assets/pull_request_icon.svg";
+import { match } from "ts-pattern";
 
 type Props = {
   event: PorterAppPreDeployEvent;
@@ -39,16 +40,13 @@ const PreDeployEventCard: React.FC<Props> = ({
   const { porterApp } = useLatestRevision();
 
   const renderStatusText = (event: PorterAppPreDeployEvent) => {
-    switch (event.status) {
-      case "SUCCESS":
-        return <Text color={getStatusColor(event.status)}>Pre-deploy succeeded</Text>;
-      case "FAILED":
-        return <Text color={getStatusColor(event.status)}>Pre-deploy failed</Text>;
-      case "CANCELED":
-        return <Text color={getStatusColor(event.status)}>Pre-deploy canceled</Text>;
-      default:
-        return <Text color={getStatusColor(event.status)}>Pre-deploy in progress...</Text>;
-    }
+    const color = getStatusColor(event.status);
+    const text = match(event.status)
+      .with("SUCCESS", () => "Pre-deploy successful")
+      .with("FAILED", () => "Pre-deploy failed")
+      .with("CANCELED", () => "Pre-deploy canceled")
+      .otherwise(() => "Pre-deploy  in progress...")
+    return <Text color={color}>{text}</Text>;
   };
 
   return (
@@ -88,7 +86,7 @@ const PreDeployEventCard: React.FC<Props> = ({
               <Container row>
                 <Icon src={document} height="10px" />
                 <Spacer inline width="5px" />
-                View details
+                View pre-deploy logs
               </Container>
             </Link>
             {(event.status !== "SUCCESS") &&

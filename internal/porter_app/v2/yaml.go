@@ -40,7 +40,7 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 		return out, telemetry.Error(ctx, span, err, "error unmarshaling porter yaml")
 	}
 
-	appProto, envVariables, err := buildAppProto(ctx, porterYaml.PorterApp)
+	appProto, envVariables, err := ProtoFromApp(ctx, porterYaml.PorterApp)
 	if err != nil {
 		return out, telemetry.Error(ctx, span, err, "error converting porter yaml to proto")
 	}
@@ -48,7 +48,7 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 	out.EnvVariables = envVariables
 
 	if porterYaml.Previews != nil {
-		previewAppProto, previewEnvVariables, err := buildAppProto(ctx, *porterYaml.Previews)
+		previewAppProto, previewEnvVariables, err := ProtoFromApp(ctx, *porterYaml.Previews)
 		if err != nil {
 			return out, telemetry.Error(ctx, span, err, "error converting preview porter yaml to proto")
 		}
@@ -61,17 +61,35 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 	return out, nil
 }
 
+// ServiceType is the type of a service in a Porter YAML file
+type ServiceType string
+
+const (
+	// ServiceType_Web is type for web services specified in Porter YAML
+	ServiceType_Web ServiceType = "web"
+	// ServiceType_Worker is type for worker services specified in Porter YAML
+	ServiceType_Worker ServiceType = "worker"
+	// ServiceType_Job is type for job services specified in Porter YAML
+	ServiceType_Job ServiceType = "job"
+)
+
+// EnvGroup is a struct containing the name and version of an environment group
+type EnvGroup struct {
+	Name    string `yaml:"name"`
+	Version int    `yaml:"version"`
+}
+
 // PorterApp represents all the possible fields in a Porter YAML file
 type PorterApp struct {
-	Version  string             `yaml:"version,omitempty"`
-	Name     string             `yaml:"name"`
-	Services map[string]Service `yaml:"services"`
-	Image    *Image             `yaml:"image,omitempty"`
-	Build    *Build             `yaml:"build,omitempty"`
-	Env      map[string]string  `yaml:"env,omitempty"`
+	Version  string            `yaml:"version,omitempty"`
+	Name     string            `yaml:"name"`
+	Services []Service         `yaml:"services"`
+	Image    *Image            `yaml:"image,omitempty"`
+	Build    *Build            `yaml:"build,omitempty"`
+	Env      map[string]string `yaml:"env,omitempty"`
 
-	Predeploy *Service `yaml:"predeploy,omitempty"`
-	EnvGroups []string `yaml:"envGroups,omitempty"`
+	Predeploy *Service   `yaml:"predeploy,omitempty"`
+	EnvGroups []EnvGroup `yaml:"envGroups,omitempty"`
 }
 
 // PorterYAML represents all the possible fields in a Porter YAML file
@@ -87,6 +105,7 @@ type Build struct {
 	Builder    string   `yaml:"builder" validate:"required_if=Method pack"`
 	Buildpacks []string `yaml:"buildpacks"`
 	Dockerfile string   `yaml:"dockerfile" validate:"required_if=Method docker"`
+	CommitSHA  string   `yaml:"commitSha"`
 }
 
 // Image is the repository and tag for an app's build image
@@ -97,22 +116,24 @@ type Image struct {
 
 // Service represents a single service in a porter app
 type Service struct {
-	Run               *string      `yaml:"run,omitempty"`
-	Type              string       `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
-	Instances         int          `yaml:"instances,omitempty"`
-	CpuCores          float32      `yaml:"cpuCores,omitempty"`
-	RamMegabytes      int          `yaml:"ramMegabytes,omitempty"`
-	SmartOptimization *bool        `yaml:"smartOptimization,omitempty"`
-	GpuCoresNvidia    float32      `yaml:"gpuCoresNvidia,omitempty"`
-	Port              int          `yaml:"port,omitempty"`
-	Autoscaling       *AutoScaling `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
-	Domains           []Domains    `yaml:"domains,omitempty" validate:"excluded_unless=Type web"`
-	HealthCheck       *HealthCheck `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
-	AllowConcurrent   *bool        `yaml:"allowConcurrent,omitempty" validate:"excluded_unless=Type job"`
-	Cron              string       `yaml:"cron,omitempty" validate:"excluded_unless=Type job"`
-	SuspendCron       *bool        `yaml:"suspendCron,omitempty" validate:"excluded_unless=Type job"`
-	TimeoutSeconds    int          `yaml:"timeoutSeconds,omitempty" validate:"excluded_unless=Type job"`
-	Private           *bool        `yaml:"private,omitempty" validate:"excluded_unless=Type web"`
+	Name               string            `yaml:"name,omitempty"`
+	Run                *string           `yaml:"run,omitempty"`
+	Type               ServiceType       `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
+	Instances          int               `yaml:"instances,omitempty"`
+	CpuCores           float32           `yaml:"cpuCores,omitempty"`
+	RamMegabytes       int               `yaml:"ramMegabytes,omitempty"`
+  GpuCoresNvidia    float32      `yaml:"gpuCoresNvidia,omitempty"`
+	SmartOptimization  *bool             `yaml:"smartOptimization,omitempty"`
+	Port               int               `yaml:"port,omitempty"`
+	Autoscaling        *AutoScaling      `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
+	Domains            []Domains         `yaml:"domains,omitempty" validate:"excluded_unless=Type web"`
+	HealthCheck        *HealthCheck      `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
+	AllowConcurrent    *bool             `yaml:"allowConcurrent,omitempty" validate:"excluded_unless=Type job"`
+	Cron               string            `yaml:"cron,omitempty" validate:"excluded_unless=Type job"`
+	SuspendCron        *bool             `yaml:"suspendCron,omitempty" validate:"excluded_unless=Type job"`
+	TimeoutSeconds     int               `yaml:"timeoutSeconds,omitempty" validate:"excluded_unless=Type job"`
+	Private            *bool             `yaml:"private,omitempty" validate:"excluded_unless=Type web"`
+	IngressAnnotations map[string]string `yaml:"ingressAnnotations,omitempty" validate:"excluded_unless=Type web"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -135,7 +156,8 @@ type HealthCheck struct {
 	HttpPath string `yaml:"httpPath"`
 }
 
-func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp, map[string]string, error) {
+// ProtoFromApp converts a PorterApp type to a base PorterApp proto type and returns env variables
+func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp, map[string]string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "build-app-proto")
 	defer span.End()
 
@@ -150,6 +172,7 @@ func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterAp
 			Builder:    porterApp.Build.Builder,
 			Buildpacks: porterApp.Build.Buildpacks,
 			Dockerfile: porterApp.Build.Dockerfile,
+			CommitSha:  porterApp.Build.CommitSHA,
 		}
 	}
 
@@ -164,18 +187,26 @@ func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterAp
 		return appProto, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
 	}
 
-	services := make(map[string]*porterv1.Service, 0)
-	for name, service := range porterApp.Services {
-		serviceType := protoEnumFromType(name, service)
+	// service map is only needed for backwards compatibility at this time
+	serviceMap := make(map[string]*porterv1.Service)
+	var services []*porterv1.Service
+
+	for _, service := range porterApp.Services {
+		serviceType := protoEnumFromType(service.Name, service)
 
 		serviceProto, err := serviceProtoFromConfig(service, serviceType)
 		if err != nil {
 			return appProto, nil, telemetry.Error(ctx, span, err, "error casting service config")
 		}
+		if service.Name == "" {
+			return appProto, nil, telemetry.Error(ctx, span, nil, "service found with no name")
+		}
 
-		services[name] = serviceProto
+		services = append(services, serviceProto)
+		serviceMap[service.Name] = serviceProto
 	}
-	appProto.Services = services
+	appProto.ServiceList = services
+	appProto.Services = serviceMap // nolint:staticcheck // temporarily using deprecated field for backwards compatibility
 
 	if porterApp.Predeploy != nil {
 		predeployProto, err := serviceProtoFromConfig(*porterApp.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
@@ -187,9 +218,10 @@ func buildAppProto(ctx context.Context, porterApp PorterApp) (*porterv1.PorterAp
 
 	envGroups := make([]*porterv1.EnvGroup, 0)
 	if porterApp.EnvGroups != nil {
-		for _, envGroupName := range porterApp.EnvGroups {
+		for _, envGroup := range porterApp.EnvGroups {
 			envGroups = append(envGroups, &porterv1.EnvGroup{
-				Name: envGroupName,
+				Name:    envGroup.Name,
+				Version: int64(envGroup.Version),
 			})
 		}
 	}
@@ -225,6 +257,7 @@ func protoEnumFromType(name string, service Service) porterv1.ServiceType {
 
 func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {
 	serviceProto := &porterv1.Service{
+		Name:              service.Name,
 		RunOptional:       service.Run,
 		Instances:         int32(service.Instances),
 		CpuCores:          service.CpuCores,
@@ -270,6 +303,8 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			})
 		}
 		webConfig.Domains = domains
+
+		webConfig.IngressAnnotations = service.IngressAnnotations
 
 		if service.Private != nil {
 			webConfig.Private = service.Private
@@ -330,6 +365,7 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 			Builder:    appProto.Build.Builder,
 			Buildpacks: appProto.Build.Buildpacks,
 			Dockerfile: appProto.Build.Dockerfile,
+			CommitSHA:  appProto.Build.CommitSha,
 		}
 	}
 
@@ -340,14 +376,13 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 		}
 	}
 
-	porterApp.Services = make(map[string]Service, 0)
-	for name, service := range appProto.Services {
+	uniqueServices := uniqueServices(appProto.Services, appProto.ServiceList) // nolint:staticcheck // temporarily using deprecated field for backwards compatibility
+	for _, service := range uniqueServices {
 		appService, err := appServiceFromProto(service)
 		if err != nil {
 			return porterApp, err
 		}
-
-		porterApp.Services[name] = appService
+		porterApp.Services = append(porterApp.Services, appService)
 	}
 
 	if appProto.Predeploy != nil {
@@ -359,9 +394,12 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 		porterApp.Predeploy = &appPredeploy
 	}
 
-	porterApp.EnvGroups = make([]string, 0)
+	porterApp.EnvGroups = make([]EnvGroup, 0)
 	for _, envGroup := range appProto.EnvGroups {
-		porterApp.EnvGroups = append(porterApp.EnvGroups, envGroup.Name)
+		porterApp.EnvGroups = append(porterApp.EnvGroups, EnvGroup{
+			Name:    envGroup.Name,
+			Version: int(envGroup.Version),
+		})
 	}
 
 	return porterApp, nil
@@ -369,6 +407,7 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 
 func appServiceFromProto(service *porterv1.Service) (Service, error) {
 	appService := Service{
+		Name:              service.Name,
 		Run:               service.RunOptional,
 		Instances:         int(service.Instances),
 		CpuCores:          service.CpuCores,
@@ -416,6 +455,8 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		}
 		appService.Domains = domains
 
+		appService.IngressAnnotations = webConfig.IngressAnnotations
+
 		if webConfig.Private != nil {
 			appService.Private = webConfig.Private
 		}
@@ -445,4 +486,24 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 	}
 
 	return appService, nil
+}
+
+func uniqueServices(serviceMap map[string]*porterv1.Service, serviceList []*porterv1.Service) []*porterv1.Service {
+	if serviceList != nil {
+		return serviceList
+	}
+
+	// deduplicate services by name, favoring whatever was defined first
+	uniqueServices := make(map[string]*porterv1.Service)
+	for name, service := range serviceMap {
+		service.Name = name
+		uniqueServices[service.Name] = service
+	}
+
+	mergedServiceList := make([]*porterv1.Service, 0)
+	for _, service := range uniqueServices {
+		mergedServiceList = append(mergedServiceList, service)
+	}
+
+	return mergedServiceList
 }

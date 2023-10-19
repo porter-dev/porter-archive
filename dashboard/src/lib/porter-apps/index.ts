@@ -8,8 +8,14 @@ import {
   serializedServiceFromProto,
   serviceProto,
   serviceValidator,
+  uniqueServices,
 } from "./services";
-import { Build, HelmOverrides, PorterApp, Service } from "@porter-dev/api-contracts";
+import {
+  Build,
+  HelmOverrides,
+  PorterApp,
+  Service,
+} from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import { BuildOptions, buildValidator } from "./build";
@@ -104,16 +110,36 @@ export const porterAppFormValidator = z
 
       return true;
     },
-    { message: "if building with buildpacks, all services must include a run command. Make sure all services contain a run command or change your build method to Docker in build settings", path: ["app", "services"] }
-  ).refine(
+    {
+      message:
+        "if building with buildpacks, all services must include a run command. Make sure all services contain a run command or change your build method to Docker in build settings",
+      path: ["app", "services"],
+    }
+  )
+  .refine(
     ({ app, source }) => {
       if (source.type === "docker-registry" || app.build.method === "docker") {
-        return app.services.every((svc) => !svc.run.value.startsWith("docker run"));
+        return app.services.every(
+          (svc) => !svc.run.value.startsWith("docker run")
+        );
       }
 
       return true;
     },
-    { message: "if using Docker registry or building via a Dockerfile, service must not include `docker run` in its start command; instead, leave the start command empty", path: ["app", "services"] }
+    {
+      message:
+        "if using Docker registry or building via a Dockerfile, service must not include `docker run` in its start command; instead, leave the start command empty",
+      path: ["app", "services"],
+    }
+  )
+  .refine(
+    ({ app }) => {
+      return app.services.length !== 0;
+    },
+    {
+      message: "app must have at least one service",
+      path: ["app", "services"],
+    }
   );
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 
@@ -130,8 +156,8 @@ export function serviceOverrides({
   defaultCPU?: number;
   defaultRAM?: number;
 }): DetectedServices {
-  const services = Object.entries(overrides.services)
-    .map(([name, service]) => serializedServiceFromProto({ name, service }))
+  const services = uniqueServices(overrides)
+    .map((service) => serializedServiceFromProto({ service }))
     .map((svc) => {
       if (useDefaults) {
         return deserializeService({
@@ -178,8 +204,10 @@ export function serviceOverrides({
           defaultRAM,
         }),
         override: serializedServiceFromProto({
-          name: "pre-deploy",
-          service: overrides.predeploy,
+          service: new Service({
+            ...overrides.predeploy,
+            name: "pre-deploy",
+          }),
           isPredeploy: true,
         }),
         expanded: true,
@@ -192,8 +220,10 @@ export function serviceOverrides({
     services,
     predeploy: deserializeService({
       service: serializedServiceFromProto({
-        name: "pre-deploy",
-        service: overrides.predeploy,
+        service: new Service({
+          ...overrides.predeploy,
+          name: "pre-deploy",
+        }),
         isPredeploy: true,
       }),
     }),
@@ -246,7 +276,10 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           build: clientBuildToProto(app.build),
           ...(predeploy && {
             predeploy: serviceProto(serializeService(predeploy)),
-            helmOverrides: app.helmOverrides != null ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) }) : undefined,
+            helmOverrides:
+              app.helmOverrides != null
+                ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
+                : undefined,
           }),
         })
     )
@@ -264,7 +297,10 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
             repository: src.image.repository,
             tag: src.image.tag,
           },
-          helmOverrides: app.helmOverrides != null ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) }) : undefined,
+          helmOverrides:
+            app.helmOverrides != null
+              ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
+              : undefined,
         })
     )
     .exhaustive();
@@ -332,8 +368,8 @@ export function clientAppFromProto({
   variables?: Record<string, string>;
   secrets?: Record<string, string>;
 }): ClientPorterApp {
-  const services = Object.entries(proto.services)
-    .map(([name, service]) => serializedServiceFromProto({ name, service }))
+  const services = uniqueServices(proto)
+    .map((service) => serializedServiceFromProto({ service }))
     .map((svc) => {
       const override = overrides?.services.find(
         (s) => s.name.value === svc.name
@@ -367,14 +403,17 @@ export function clientAppFromProto({
     })),
   ];
 
-  const helmOverrides = proto.helmOverrides == null ? "" : atob(proto.helmOverrides.b64Values);
+  const helmOverrides =
+    proto.helmOverrides == null ? "" : atob(proto.helmOverrides.b64Values);
 
   if (proto.predeploy) {
     predeployList.push(
       deserializeService({
         service: serializedServiceFromProto({
-          name: "pre-deploy",
-          service: proto.predeploy,
+          service: new Service({
+            ...proto.predeploy,
+            name: "pre-deploy",
+          }),
           isPredeploy: true,
         }),
       })
@@ -406,15 +445,17 @@ export function clientAppFromProto({
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-      deserializeService({
-        service: serializedServiceFromProto({
-          name: "pre-deploy",
-          service: proto.predeploy,
-          isPredeploy: true,
+        deserializeService({
+          service: serializedServiceFromProto({
+            service: new Service({
+              ...proto.predeploy,
+              name: "pre-deploy",
+            }),
+            isPredeploy: true,
+          }),
+          override: predeployOverrides,
         }),
-        override: predeployOverrides,
-      }),
-    ]
+      ]
     : undefined;
 
   return {

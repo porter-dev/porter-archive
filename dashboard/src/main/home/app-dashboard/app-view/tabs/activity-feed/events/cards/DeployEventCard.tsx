@@ -4,7 +4,7 @@ import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Icon from "components/porter/Icon";
-import { getStatusColor, getStatusIcon } from '../utils';
+import { getDuration, getStatusColor, getStatusIcon } from '../utils';
 import { ImageTagContainer, CommitIcon, StyledEventCard } from "./EventCard";
 import styled from "styled-components";
 import Link from "components/porter/Link";
@@ -14,6 +14,7 @@ import ServiceStatusDetail from "./ServiceStatusDetail";
 import { useRevisionList } from "lib/hooks/useRevisionList";
 import RevisionDiffModal from "../modals/RevisionDiffModal";
 import pull_request_icon from "assets/pull_request_icon.svg";
+import run_for from "assets/run_for.png";
 import { match } from "ts-pattern";
 
 type Props = {
@@ -158,6 +159,11 @@ const DeployEventCard: React.FC<Props> = ({
               </ImageTagContainer> 
             </>
           }
+        </Container>
+        <Container row>
+          <Icon height="14px" src={run_for} />
+          <Spacer inline width="6px" />
+          <Text color="helper">{getDuration(event)}</Text>
         </Container>
       </Container>
       <Spacer y={0.5} />

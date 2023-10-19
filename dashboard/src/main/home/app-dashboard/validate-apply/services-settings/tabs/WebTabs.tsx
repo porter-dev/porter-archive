@@ -7,7 +7,6 @@ import Networking from "./Networking";
 import MainTab from "./Main";
 import Resources from "./Resources";
 import Health from "./Health";
-import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 
 interface Props {
   index: number;

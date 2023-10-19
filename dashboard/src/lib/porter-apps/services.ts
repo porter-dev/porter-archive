@@ -1,4 +1,4 @@
-import { Service, ServiceType } from "@porter-dev/api-contracts";
+import { PorterApp, Service, ServiceType } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
@@ -87,9 +87,12 @@ export const serviceValidator = z.object({
     })
     .array()
     .default([]),
-  ingressAnnotationDeletions: z.object({
-    key: z.string(),
-  }).array().default([])
+  ingressAnnotationDeletions: z
+    .object({
+      key: z.string(),
+    })
+    .array()
+    .default([]),
 });
 
 export type ClientService = z.infer<typeof serviceValidator>;
@@ -140,6 +143,24 @@ export function prefixSubdomain(subdomain: string) {
     return subdomain;
   }
   return "https://" + subdomain;
+}
+
+export function uniqueServices(app: PorterApp): Service[] {
+  if (app.serviceList?.length) {
+    // dedupe services by name, favoring the first instance
+    return _.uniqBy(app.serviceList, "name");
+  }
+
+  const servicesFromMap = Object.entries(app.services ?? {}).map(
+    ([name, service]) => {
+      return new Service({
+        ...service,
+        name,
+      });
+    }
+  );
+
+  return servicesFromMap;
 }
 
 export function defaultSerialized({
@@ -229,42 +250,42 @@ export function serializeService(service: ClientService): SerializedService {
     config: match(service.config)
       .with({ type: "web" }, (config) =>
         Object.freeze({
-            type: "web" as const,
-            autoscaling: serializeAutoscaling({
-              autoscaling: config.autoscaling,
-            }),
-            healthCheck: serializeHealth({ health: config.healthCheck }),
-            domains: config.domains.map((domain) => ({
-              name: domain.name.value,
-            })),
-            ingressAnnotations: Object.fromEntries(
-              config.ingressAnnotations
-                .filter((a) => a.key.length > 0 && a.value.length > 0)
-                .map((annotation) => [annotation.key, annotation.value])
-            ),
-            private: config.private?.value,
+          type: "web" as const,
+          autoscaling: serializeAutoscaling({
+            autoscaling: config.autoscaling,
+          }),
+          healthCheck: serializeHealth({ health: config.healthCheck }),
+          domains: config.domains.map((domain) => ({
+            name: domain.name.value,
+          })),
+          ingressAnnotations: Object.fromEntries(
+            config.ingressAnnotations
+              .filter((a) => a.key.length > 0 && a.value.length > 0)
+              .map((annotation) => [annotation.key, annotation.value])
+          ),
+          private: config.private?.value,
         })
       )
       .with({ type: "worker" }, (config) =>
         Object.freeze({
-            type: "worker" as const,
-            autoscaling: serializeAutoscaling({
-              autoscaling: config.autoscaling,
-            }),
+          type: "worker" as const,
+          autoscaling: serializeAutoscaling({
+            autoscaling: config.autoscaling,
+          }),
         })
       )
       .with({ type: "job" }, (config) =>
         Object.freeze({
-            type: "job" as const,
-            allowConcurrent: config.allowConcurrent?.value,
-            cron: config.cron.value,
-            suspendCron: config.suspendCron?.value,
-            timeoutSeconds: config.timeoutSeconds.value,
+          type: "job" as const,
+          allowConcurrent: config.allowConcurrent?.value,
+          cron: config.cron.value,
+          suspendCron: config.suspendCron?.value,
+          timeoutSeconds: config.timeoutSeconds.value,
         })
       )
       .with({ type: "predeploy" }, () =>
         Object.freeze({
-            type: "predeploy" as const,
+          type: "predeploy" as const,
         })
       )
       .exhaustive(),
@@ -519,11 +540,9 @@ export function serviceProto(service: SerializedService): Service {
 // This is used as an intermediate step to convert a protobuf Service to a ClientService
 export function serializedServiceFromProto({
   service,
-  name,
   isPredeploy,
 }: {
   service: Service;
-  name: string;
   isPredeploy?: boolean;
 }): SerializedService {
   const config = service.config;
@@ -534,7 +553,6 @@ export function serializedServiceFromProto({
   return match(config)
     .with({ case: "webConfig" }, ({ value }) => ({
       ...service,
-      name,
       run: service.runOptional ?? service.run,
       config: {
         type: "web" as const,
@@ -545,7 +563,6 @@ export function serializedServiceFromProto({
     }))
     .with({ case: "workerConfig" }, ({ value }) => ({
       ...service,
-      name,
       run: service.runOptional ?? service.run,
       config: {
         type: "worker" as const,
@@ -557,7 +574,6 @@ export function serializedServiceFromProto({
       isPredeploy
         ? {
             ...service,
-            name,
             run: service.runOptional ?? service.run,
             config: {
               type: "predeploy" as const,
@@ -565,7 +581,6 @@ export function serializedServiceFromProto({
           }
         : {
             ...service,
-            name,
             run: service.runOptional ?? service.run,
             config: {
               type: "job" as const,

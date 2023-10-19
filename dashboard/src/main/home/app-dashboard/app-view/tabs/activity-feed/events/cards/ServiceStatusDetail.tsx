@@ -5,13 +5,15 @@ import React from 'react'
 import styled from 'styled-components';
 import { getStatusColor, getStatusIcon } from '../utils';
 import Link from 'components/porter/Link';
-import { PorterAppDeployEvent } from "../types";
 import { Service } from 'main/home/app-dashboard/new-app-flow/serviceTypes';
 import { useLatestRevision } from 'main/home/app-dashboard/app-view/LatestRevisionContext';
 import { deserializeService, serializedServiceFromProto } from 'lib/porter-apps/services';
 
 type Props = {
-    serviceDeploymentMetadata: PorterAppDeployEvent["metadata"]["service_deployment_metadata"];
+    serviceDeploymentMetadata: Record<string, {
+        status: string;
+        type: string;
+    }>;
     appName: string;
     revision: number;
 }

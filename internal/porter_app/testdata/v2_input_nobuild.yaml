@@ -4,7 +4,7 @@ image:
   repository: nginx
   tag: latest
 services:
-  example-web:
+  - name: example-web
     type: web
     run: node index.js
     port: 8080
@@ -22,14 +22,14 @@ services:
     healthCheck:
       enabled: true
       httpPath: /healthz
-  example-wkr:
+  - name: example-wkr
     type: worker
     run: echo 'work'
     port: 80
     cpuCores: 0.1
     ramMegabytes: 256
     instances: 1
-  example-job:
+  - name: example-job
     type: job
     run: echo 'hello world'
     allowConcurrent: true

@@ -127,6 +127,7 @@ export const usePorterYaml = ({
               .optional(),
           })
           .parseAsync(res.data);
+
         const proto = PorterApp.fromJsonString(atob(data.b64_app_proto), {
           ignoreUnknownFields: true,
         });

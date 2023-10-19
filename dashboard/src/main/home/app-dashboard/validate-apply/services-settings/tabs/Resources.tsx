@@ -35,18 +35,30 @@ const Resources: React.FC<ResourcesProps> = ({
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
 
   const autoscalingEnabled = watch(
-    `app.services.${index}.config.autoscaling.enabled`
+    `app.services.${index}.config.autoscaling.enabled`, {
+      readOnly: false,
+      value: false
+    }
   );
 
   const smartOpt = watch(
-    `app.services.${index}.smartOptimization`
+    `app.services.${index}.smartOptimization`, {
+      readOnly: false,
+      value: false
+    }
   );
 
   const memory = watch(
-    `app.services.${index}.ramMegabytes`
+    `app.services.${index}.ramMegabytes`, {
+      readOnly: false,
+      value: 0
+    }
   );
   const cpu = watch(
-    `app.services.${index}.cpuCores`
+    `app.services.${index}.cpuCores`, {
+      readOnly: false,
+      value: 0
+    }
   );
 
   return (

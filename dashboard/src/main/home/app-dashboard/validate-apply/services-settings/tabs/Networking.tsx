@@ -40,15 +40,18 @@ const Networking: React.FC<NetworkingProps> = ({ index, service, internalNetwork
   }, [service.name.value, namespace, port]);
 
   const getApplicationURLText = () => {
-    if (service.config.domains.length !== 0) {
+    const numNonEmptyDomains = service.config.domains.filter(
+      (d) => d.name.value !== ""
+    );
+    if (numNonEmptyDomains.length !== 0) {
       return (
         <Text>
-          {`External URL${service.config.domains.length === 1 ? "" : "s"}: `}
-          {service.config.domains.map((d, i) => {
+          {`External URL${numNonEmptyDomains.length === 1 ? "" : "s"}: `}
+          {numNonEmptyDomains.map((d, i) => {
             return (
               <a href={prefixSubdomain(d.name.value)} target="_blank">
                 {d.name.value}
-                {i !== service.config.domains.length - 1 && ", "}
+                {i !== numNonEmptyDomains.length - 1 && ", "}
               </a>
             );
           })}

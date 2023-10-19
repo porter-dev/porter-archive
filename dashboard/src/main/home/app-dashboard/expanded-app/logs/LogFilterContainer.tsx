@@ -3,19 +3,19 @@ import React from "react";
 import styled from "styled-components";
 import filterOutline from "assets/filter-outline-icon.svg";
 import filterOutlineWhite from "assets/filter-outline-white.svg";
-import { GenericLogFilter, LogFilterName } from "./types";
+import { GenericFilter, FilterName } from "./types";
 import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import LogFilterComponent from "./LogFilterComponent";
 
 type Props = {
-    filters: GenericLogFilter[];
-    selectedFilterValues: Record<LogFilterName, string>;
+    filters: GenericFilter[];
+    selectedFilterValues: Record<FilterName, string>;
 };
 
 const LogFilterContainer: React.FC<Props> = (props) => {
     const getIcon = () => {
-        if (props.filters.every((filter) => GenericLogFilter.isDefault(filter, props.selectedFilterValues[filter.name]))) {
+        if (props.filters.every((filter) => GenericFilter.isDefault(filter, props.selectedFilterValues[filter.name]))) {
             return filterOutline;
         }
         return filterOutlineWhite;

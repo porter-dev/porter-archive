@@ -92,7 +92,7 @@ func (c *UpgradeReleaseHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			}
 		}
 
-		chart, err := LoadChart(c.Config(), &LoadAddonChartOpts{
+		chart, err := LoadChart(r.Context(), c.Config(), &LoadAddonChartOpts{
 			ProjectID:       cluster.ProjectID,
 			RepoURL:         chartRepoURL,
 			TemplateName:    helmRelease.Chart.Metadata.Name,

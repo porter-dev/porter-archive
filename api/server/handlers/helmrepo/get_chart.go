@@ -41,7 +41,7 @@ func (t *ChartGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		version = ""
 	}
 
-	chart, err := release.LoadChart(t.Config(), &release.LoadAddonChartOpts{
+	chart, err := release.LoadChart(r.Context(), t.Config(), &release.LoadAddonChartOpts{
 		ProjectID:       proj.ID,
 		RepoURL:         helmRepo.RepoURL,
 		TemplateName:    name,

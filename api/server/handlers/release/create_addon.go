@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"connectrpc.com/connect"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -16,8 +19,16 @@ import (
 	"github.com/porter-dev/porter/internal/helm/loader"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/stefanmcshane/helm/pkg/chart"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// Namespace_EnvironmentGroups is the base namespace for storing all environment groups.
+const Namespace_EnvironmentGroups = "porter-env-group"
+
+// Namespace_ACKSystem is the base namespace for interacting with ack chart controllers
+const Namespace_ACKSystem = "ack-system"
 
 type CreateAddonHandler struct {
 	handlers.PorterHandlerReadWriter
@@ -36,10 +47,13 @@ func NewCreateAddonHandler(
 }
 
 func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
-	namespace := r.Context().Value(types.NamespaceScope).(string)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-addon")
+	defer span.End()
+
+	user, _ := ctx.Value(types.UserScope).(*models.User)
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	namespace := ctx.Value(types.NamespaceScope).(string)
 	operationID := oauth.CreateRandomState()
 
 	c.Config().AnalyticsClient.Track(analytics.ApplicationLaunchStartTrack(
@@ -49,15 +63,17 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		},
 	))
 
-	helmAgent, err := c.GetHelmAgent(r.Context(), r, cluster, "")
+	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error creating helm agent")))
 		return
 	}
 
 	request := &types.CreateAddonRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -65,40 +81,59 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		request.TemplateVersion = ""
 	}
 
-	chart, err := LoadChart(c.Config(), &LoadAddonChartOpts{
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "repo-url", Value: request.RepoURL},
+		telemetry.AttributeKV{Key: "template-name", Value: request.TemplateName},
+		telemetry.AttributeKV{Key: "template-version", Value: request.TemplateVersion},
+	)
+
+	chart, err := LoadChart(ctx, c.Config(), &LoadAddonChartOpts{
 		ProjectID:       proj.ID,
 		RepoURL:         request.RepoURL,
 		TemplateName:    request.TemplateName,
 		TemplateVersion: request.TemplateVersion,
 	})
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error loading chart")))
 		return
 	}
 
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error retrieving project registry")))
 		return
 	}
+
+	vpcConfig, err := c.getVPCConfig(ctx, request, proj, cluster)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error retrieving vpc config")))
+		return
+	}
+
+	if err := c.performAddonPreinstall(ctx, r, request.TemplateName, cluster); err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error performing addon preinstall")))
+		return
+	}
+
+	values := request.Values
+	values["vpcConfig"] = vpcConfig
 
 	conf := &helm.InstallChartConfig{
 		Chart:      chart,
 		Name:       request.Name,
 		Namespace:  namespace,
-		Values:     request.Values,
+		Values:     values,
 		Cluster:    cluster,
 		Repo:       c.Repo(),
 		Registries: registries,
 	}
 
-	helmRelease, err := helmAgent.InstallChart(context.Background(), conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
+	helmRelease, err := helmAgent.InstallChart(ctx, conf, c.Config().DOConf, c.Config().ServerConf.DisablePullSecretsInjection)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
-			fmt.Errorf("error installing a new chart: %s", err.Error()),
+			telemetry.Error(ctx, span, nil, fmt.Sprintf("error installing a new chart: %s", err.Error())),
 			http.StatusBadRequest,
 		))
-
 		return
 	}
 
@@ -122,10 +157,10 @@ type LoadAddonChartOpts struct {
 	RepoURL, TemplateName, TemplateVersion string
 }
 
-func LoadChart(config *config.Config, opts *LoadAddonChartOpts) (*chart.Chart, error) {
+func LoadChart(ctx context.Context, config *config.Config, opts *LoadAddonChartOpts) (*chart.Chart, error) {
 	// if the chart repo url is one of the specified application/addon charts, just load public
 	if opts.RepoURL == config.ServerConf.DefaultAddonHelmRepoURL || opts.RepoURL == config.ServerConf.DefaultApplicationHelmRepoURL {
-		return loader.LoadChartPublic(context.Background(), opts.RepoURL, opts.TemplateName, opts.TemplateVersion)
+		return loader.LoadChartPublic(ctx, opts.RepoURL, opts.TemplateName, opts.TemplateVersion)
 	} else {
 		// load the helm repos in the project
 		hrs, err := config.Repo.HelmRepo().ListHelmReposByProjectID(opts.ProjectID)
@@ -142,17 +177,109 @@ func LoadChart(config *config.Config, opts *LoadAddonChartOpts) (*chart.Chart, e
 						return nil, err
 					}
 
-					return loader.LoadChart(context.Background(),
+					return loader.LoadChart(ctx,
 						&loader.BasicAuthClient{
 							Username: string(basic.Username),
 							Password: string(basic.Password),
 						}, hr.RepoURL, opts.TemplateName, opts.TemplateVersion)
 				} else {
-					return loader.LoadChartPublic(context.Background(), hr.RepoURL, opts.TemplateName, opts.TemplateVersion)
+					return loader.LoadChartPublic(ctx, hr.RepoURL, opts.TemplateName, opts.TemplateVersion)
 				}
 			}
 		}
 	}
 
 	return nil, fmt.Errorf("chart repo not found")
+}
+
+func (c *CreateAddonHandler) performAddonPreinstall(ctx context.Context, r *http.Request, templateName string, cluster *models.Cluster) error {
+	awsTemplates := map[string][]string{
+		"rds-postgresql": []string{"ec2-chart", "rds-chart"},
+	}
+
+	if cluster.CloudProvider != "AWS" {
+		return nil
+	}
+
+	if _, ok := awsTemplates[templateName]; !ok {
+		return nil
+	}
+
+	agent, err := c.GetAgent(r, cluster, "")
+	if err != nil {
+		return err
+	}
+
+	if _, err = agent.GetNamespace(Namespace_EnvironmentGroups); err != nil {
+		if _, err := agent.CreateNamespace(Namespace_EnvironmentGroups, map[string]string{}); err != nil {
+			return err
+		}
+	}
+
+	for _, chart := range awsTemplates[templateName] {
+		scale, err := agent.Clientset.AppsV1().Deployments(Namespace_ACKSystem).GetScale(context.TODO(), chart, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		if scale.Spec.Replicas > 0 {
+			continue
+		}
+
+		// scale the charts specific to the ack controller
+		scale.Spec.Replicas = 1
+		if _, err := agent.Clientset.AppsV1().Deployments(Namespace_ACKSystem).UpdateScale(ctx, chart, scale, metav1.UpdateOptions{}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *CreateAddonHandler) getVPCConfig(ctx context.Context, request *types.CreateAddonRequest, project *models.Project, cluster *models.Cluster) (map[string]any, error) {
+	ctx, span := telemetry.NewSpan(ctx, "get-vpc-config")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "cloud-provider", Value: cluster.CloudProvider},
+		telemetry.AttributeKV{Key: "template-name", Value: request.TemplateName},
+	)
+
+	vpcConfig := map[string]any{}
+	if cluster.CloudProvider != "AWS" {
+		return vpcConfig, nil
+	}
+
+	awsTemplates := map[string]bool{
+		"rds-postgresql": true,
+	}
+
+	if !awsTemplates[request.TemplateName] {
+		return vpcConfig, nil
+	}
+
+	req := connect.NewRequest(&porterv1.ClusterNetworkSettingsRequest{
+		ProjectId:     int64(project.ID),
+		ClusterId:     int64(cluster.ID),
+		CloudProvider: porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS,
+	})
+
+	resp, err := c.Config().ClusterControlPlaneClient.ClusterNetworkSettings(ctx, req)
+	if err != nil {
+		return vpcConfig, telemetry.Error(ctx, span, err, "error fetching cluster network settings from ccp")
+	}
+
+	vpcConfig["awsRegion"] = resp.Msg.Region
+	vpcConfig["subnetIDs"] = resp.Msg.SubnetIds
+	switch op := resp.Msg.CloudProviderNetwork.(type) {
+	case *porterv1.ClusterNetworkSettingsResponse_EksCloudProviderNetwork:
+		vpcConfig["vpcID"] = op.EksCloudProviderNetwork.AwsVpcId
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "vpc-id", Value: op.EksCloudProviderNetwork.AwsVpcId})
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "aws-region", Value: resp.Msg.Region},
+		telemetry.AttributeKV{Key: "subnet-ids", Value: strings.Join(resp.Msg.SubnetIds, ",")},
+	)
+
+	return vpcConfig, nil
 }

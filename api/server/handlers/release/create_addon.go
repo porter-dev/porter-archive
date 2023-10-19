@@ -65,7 +65,8 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error creating helm agent")))
+		err = telemetry.Error(ctx, span, nil, "error creating helm agent")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -94,24 +95,28 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		TemplateVersion: request.TemplateVersion,
 	})
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error loading chart")))
+		err = telemetry.Error(ctx, span, nil, "error loading chart")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error retrieving project registry")))
+		err = telemetry.Error(ctx, span, err, "error retrieving project registry")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	vpcConfig, err := c.getVPCConfig(ctx, request, proj, cluster)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error retrieving vpc config")))
+		err = telemetry.Error(ctx, span, err, "error retrieving vpc config")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	if err := c.performAddonPreinstall(ctx, r, request.TemplateName, cluster); err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(telemetry.Error(ctx, span, err, "error performing addon preinstall")))
+		err = telemetry.Error(ctx, span, err, "error performing addon preinstall")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
@@ -258,8 +263,8 @@ func (c *CreateAddonHandler) getVPCConfig(ctx context.Context, request *types.Cr
 	}
 
 	req := connect.NewRequest(&porterv1.ClusterNetworkSettingsRequest{
-		ProjectId:     int64(project.ID),
-		ClusterId:     int64(cluster.ID),
+		ProjectId: int64(project.ID),
+		ClusterId: int64(cluster.ID),
 	})
 
 	resp, err := c.Config().ClusterControlPlaneClient.ClusterNetworkSettings(ctx, req)

@@ -10,6 +10,7 @@ services:
     port: 8080
     cpuCores: 0.1
     ramMegabytes: 256
+    gpuCoresNvidia: 0.4
     autoscaling:
       enabled: true
       minInstances: 1

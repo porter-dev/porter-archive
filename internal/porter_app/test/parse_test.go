@@ -121,7 +121,7 @@ var result_nobuild = &porterv1.PorterApp{
 			Port:           8080,
 			CpuCores:       0.1,
 			RamMegabytes:   256,
-			GpuCoresNvidia: 0,
+			GpuCoresNvidia: 0.4,
 			Config: &porterv1.Service_WebConfig{
 				WebConfig: &porterv1.WebServiceConfig{
 					Autoscaling: &porterv1.Autoscaling{

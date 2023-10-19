@@ -51,7 +51,6 @@ func (t *ChartGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		telemetry.AttributeKV{Key: "template-version", Value: version},
 	)
 
-
 	chart, err := release.LoadChart(ctx, t.Config(), &release.LoadAddonChartOpts{
 		ProjectID:       proj.ID,
 		RepoURL:         helmRepo.RepoURL,
@@ -59,7 +58,8 @@ func (t *ChartGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		TemplateVersion: version,
 	})
 	if err != nil {
-		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err := telemetry.Error(ctx, span, nil, "error loading chart from helm")
+		t.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

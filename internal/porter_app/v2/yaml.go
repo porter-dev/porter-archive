@@ -262,6 +262,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		Instances:         int32(service.Instances),
 		CpuCores:          service.CpuCores,
 		RamMegabytes:      int32(service.RamMegabytes),
+		GpuCoresNvidia:    service.GpuCoresNvidia,
 		Port:              int32(service.Port),
 		SmartOptimization: service.SmartOptimization,
 		Type:              serviceType,

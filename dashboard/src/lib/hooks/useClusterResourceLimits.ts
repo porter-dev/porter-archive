@@ -34,7 +34,7 @@ const clusterDataValidator = z.object({
         return {
             maxCPU: vCPU,
             maxRAM: RAM,
-            instanceType: instanceType,
+            instanceType: "g4dn.xlarge",
         };
     }
     return defaultResources;

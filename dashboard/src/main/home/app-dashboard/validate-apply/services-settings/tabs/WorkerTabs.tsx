@@ -16,7 +16,7 @@ interface Props {
   chart?: any;
   maxRAM: number;
   maxCPU: number;
-  gpuNodes?: boolean;
+  gpuNodes: boolean;
 }
 
 const WorkerTabs: React.FC<Props> = ({ index, service, maxCPU, maxRAM, gpuNodes }) => {

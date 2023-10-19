@@ -8,7 +8,7 @@ export type ClusterResources = {
   maxRAM: number;
   defaultCPU: number;
   defaultRAM: number;
-  gpuNodes?: boolean;
+  gpuNodes: boolean;
 };
 
 export const ClusterResourcesContext = createContext<{

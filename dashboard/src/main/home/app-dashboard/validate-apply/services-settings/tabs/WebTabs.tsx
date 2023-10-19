@@ -18,7 +18,7 @@ interface Props {
   chart?: any;
   maxRAM: number;
   maxCPU: number;
-  gpuNodes?: boolean;
+  gpuNodes: boolean;
   internalNetworkingDetails: {
     namespace: string;
     appName: string;

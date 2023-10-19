@@ -51,7 +51,7 @@ type ServiceListProps = {
   serviceVersionStatus?: Record<string, PorterAppVersionStatus[]>;
   maxCPU: number;
   maxRAM: number;
-  gpuNodes?: boolean;
+  gpuNodes: boolean;
   internalNetworkingDetails?: {
     namespace: string;
     appName: string;

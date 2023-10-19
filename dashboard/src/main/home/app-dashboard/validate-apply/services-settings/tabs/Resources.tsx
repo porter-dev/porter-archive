@@ -20,7 +20,7 @@ type ResourcesProps = {
   maxRAM: number;
   service: ClientService;
   isPredeploy?: boolean;
-  gpuNodes?: boolean;
+  gpuNodes: boolean;
 };
 
 const Resources: React.FC<ResourcesProps> = ({
@@ -36,29 +36,29 @@ const Resources: React.FC<ResourcesProps> = ({
 
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`, {
-      readOnly: false,
-      value: false
-    }
+    readOnly: false,
+    value: false
+  }
   );
 
   const smartOpt = watch(
     `app.services.${index}.smartOptimization`, {
-      readOnly: false,
-      value: false
-    }
+    readOnly: false,
+    value: false
+  }
   );
 
   const memory = watch(
     `app.services.${index}.ramMegabytes`, {
-      readOnly: false,
-      value: 0
-    }
+    readOnly: false,
+    value: 0
+  }
   );
   const cpu = watch(
     `app.services.${index}.cpuCores`, {
-      readOnly: false,
-      value: 0
-    }
+    readOnly: false,
+    value: 0
+  }
   );
 
   return (
@@ -241,10 +241,10 @@ const Resources: React.FC<ResourcesProps> = ({
             />
             <Spacer y={1} />
 
-        {!gpuNodes && (<Controller
+            {!gpuNodes && (<Controller
               name={`app.services.${index}.config.autoscaling.enabled`}
               control={control}
-              render={({ field: { value, onChange } }) => ( 
+              render={({ field: { value, onChange } }) => (
                 <Checkbox
                   checked={value.value}
                   toggleChecked={() => {

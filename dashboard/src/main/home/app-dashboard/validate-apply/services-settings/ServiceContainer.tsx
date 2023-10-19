@@ -27,7 +27,7 @@ interface ServiceProps {
   status?: PorterAppVersionStatus[];
   maxCPU: number;
   maxRAM: number;
-  gpuNodes?: boolean;
+  gpuNodes: boolean;
   internalNetworkingDetails: {
     namespace: string;
     appName: string;
@@ -75,6 +75,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           service={svc}
           maxCPU={maxCPU}
           maxRAM={maxRAM}
+          gpuNodes={gpuNodes}
           internalNetworkingDetails={internalNetworkingDetails}
         />
       ))
@@ -84,10 +85,11 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           service={svc}
           maxCPU={maxCPU}
           maxRAM={maxRAM}
+          gpuNodes={gpuNodes}
         />
       ))
       .with({ config: { type: "job" } }, (svc) => (
-        <JobTabs index={index} service={svc} maxCPU={maxCPU} maxRAM={maxRAM} />
+        <JobTabs index={index} service={svc} maxCPU={maxCPU} maxRAM={maxRAM} gpuNodes={gpuNodes} />
       ))
       .with({ config: { type: "predeploy" } }, (svc) => (
         <JobTabs
@@ -95,6 +97,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           service={svc}
           maxCPU={maxCPU}
           maxRAM={maxRAM}
+          gpuNodes={gpuNodes}
           isPredeploy
         />
       ))

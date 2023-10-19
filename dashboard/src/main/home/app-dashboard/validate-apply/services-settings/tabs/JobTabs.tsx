@@ -23,7 +23,7 @@ interface Props {
   chart?: any;
   maxRAM: number;
   maxCPU: number;
-  gpuNodes?: boolean;
+  gpuNodes: boolean;
   isPredeploy?: boolean;
 }
 

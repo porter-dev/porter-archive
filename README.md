@@ -9,7 +9,7 @@
 
 ## Community and Updates
 
-To keep updated on our progress, please watch the repo for new releases (**Watch > Custom > Releases**) and [follow us on Twitter](https://twitter.com/getporterdev)!
+To keep updated on our progress, please watch the repo for new releases (**Watch > Custom > Releases**) and [follow us on Twitter](https://twitter.com/porterdotrun)!
 
 ## Why Porter?
 
@@ -28,6 +28,7 @@ Porter brings the simplicity of a traditional PaaS to your own cloud provider wh
 - One-click provisioning of a Kubernetes cluster in your own cloud console
   - ✅ AWS
   - ✅ GCP
+  - ✅ Azure
 - Simple deploy of any public or private Docker image
 - Auto CI/CD with [buildpacks](https://buildpacks.io) for non-Dockerized apps
 - Heroku-like GUI to monitor application status, logs, and history

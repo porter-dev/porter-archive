@@ -115,13 +115,12 @@ var result_nobuild = &porterv1.PorterApp{
 	},
 	ServiceList: []*porterv1.Service{
 		{
-			Name:           "example-web",
-			RunOptional:    pointer.String("node index.js"),
-			Instances:      0,
-			Port:           8080,
-			CpuCores:       0.1,
-			RamMegabytes:   256,
-			GpuCoresNvidia: 0.4,
+			Name:         "example-web",
+			RunOptional:  pointer.String("node index.js"),
+			Instances:    0,
+			Port:         8080,
+			CpuCores:     0.1,
+			RamMegabytes: 256,
 			Config: &porterv1.Service_WebConfig{
 				WebConfig: &porterv1.WebServiceConfig{
 					Autoscaling: &porterv1.Autoscaling{
@@ -226,13 +225,12 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 			Type: 2,
 		},
 		"example-web": {
-			Name:           "example-web",
-			RunOptional:    pointer.String("node index.js"),
-			Instances:      0,
-			Port:           8080,
-			CpuCores:       0.1,
-			RamMegabytes:   256,
-			GpuCoresNvidia: 0.4,
+			Name:         "example-web",
+			RunOptional:  pointer.String("node index.js"),
+			Instances:    0,
+			Port:         8080,
+			CpuCores:     0.1,
+			RamMegabytes: 256,
 			Config: &porterv1.Service_WebConfig{
 				WebConfig: &porterv1.WebServiceConfig{
 					Autoscaling: &porterv1.Autoscaling{
@@ -289,13 +287,12 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 			Type: 2,
 		},
 		{
-			Name:           "example-web",
-			RunOptional:    pointer.String("node index.js"),
-			Instances:      0,
-			Port:           8080,
-			CpuCores:       0.1,
-			RamMegabytes:   256,
-			GpuCoresNvidia: 0.4,
+			Name:         "example-web",
+			RunOptional:  pointer.String("node index.js"),
+			Instances:    0,
+			Port:         8080,
+			CpuCores:     0.1,
+			RamMegabytes: 256,
 			Config: &porterv1.Service_WebConfig{
 				WebConfig: &porterv1.WebServiceConfig{
 					Autoscaling: &porterv1.Autoscaling{

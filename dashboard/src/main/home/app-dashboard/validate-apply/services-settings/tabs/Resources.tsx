@@ -209,9 +209,9 @@ const Resources: React.FC<ResourcesProps> = ({
                   });
                 }}
                 disabledTooltip={
-                  value?.readOnly
+                  value.readOnly
                     ? "You may only edit this field in your porter.yaml."
-                    : "Enable autoscaling to specify CPU threshold."
+                    : "Enable GPU nodes to specify GPU cores."
                 }
               />
             )}

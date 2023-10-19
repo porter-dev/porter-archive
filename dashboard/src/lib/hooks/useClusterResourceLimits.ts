@@ -14,7 +14,7 @@ const clusterDataValidator = z.object({
     const defaultResources = {
         maxCPU: AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"],
         maxRAM: AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"],
-        instanceType: "",
+        instanceType: "t3.medium",
     };
     if (!data.labels) {
         return defaultResources;
@@ -59,7 +59,7 @@ export const useClusterResourceLimits = (
     const SMALL_INSTANCE_UPPER_BOUND = 0.75;
     const LARGE_INSTANCE_UPPER_BOUND = 0.9;
     const DEFAULT_MULTIPLIER = 0.125;
-    const [gpuNodes, setGpuNodes] = useState(true);
+    const [gpuNodes, setGpuNodes] = useState(false);
     const [maxCPU, setMaxCPU] = useState(
         AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"] * SMALL_INSTANCE_UPPER_BOUND
     ); //default is set to a t3 medium
@@ -134,10 +134,9 @@ export const useClusterResourceLimits = (
 
             // Check if any instance type has "gd4n" and update gpuNodes accordingly
             const hasGd4nInstance = data.some(item => {
-                if (item.instanceType?.includes("g4dn"))
+                if (item.instanceType.includes("g4dn"))
                     return true;
             });
-            console.log("hasGd4nInstance", hasGd4nInstance)
             setGpuNodes(hasGd4nInstance);
         }
     }, [data])

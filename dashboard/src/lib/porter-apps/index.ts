@@ -131,6 +131,15 @@ export const porterAppFormValidator = z
         "if using Docker registry or building via a Dockerfile, service must not include `docker run` in its start command; instead, leave the start command empty",
       path: ["app", "services"],
     }
+  )
+  .refine(
+    ({ app }) => {
+      return app.services.length !== 0;
+    },
+    {
+      message: "app must have at least one service",
+      path: ["app", "services"],
+    }
   );
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
 

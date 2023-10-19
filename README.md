@@ -1,6 +1,6 @@
 # Porter
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Go Report Card](https://goreportcard.com/badge/gojp/goreportcard)](https://goreportcard.com/report/github.com/porter-dev/porter) [![Discord](https://img.shields.io/discord/542888846271184896?color=7389D8&label=community&logo=discord&logoColor=ffffff)](https://discord.gg/mmGAw5nNjr)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Go Report Card](https://goreportcard.com/badge/gojp/goreportcard)](https://goreportcard.com/report/github.com/porter-dev/porter)
 [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/cloudposse.svg?style=social&label=Follow)](https://twitter.com/porterdotrun)
 
 **Porter is a Kubernetes-powered PaaS that runs in your own cloud provider.** Porter brings the Heroku experience to your own AWS/GCP account, while upgrading your infrastructure to Kubernetes. Get started on Porter without the overhead of DevOps and customize your infrastructure later when you need to.
@@ -8,8 +8,6 @@
 <img width="1440" alt="image" src="https://user-images.githubusercontent.com/93286801/227250589-1ebe0f79-c352-4eb4-adfd-7cb10957be3d.png">
 
 ## Community and Updates
-
-For help, questions, or if you just want a place to hang out, [join our Discord community.](https://discord.gg/mmGAw5nNjr)
 
 To keep updated on our progress, please watch the repo for new releases (**Watch > Custom > Releases**) and [follow us on Twitter](https://twitter.com/getporterdev)!
 
@@ -61,7 +59,3 @@ Below are instructions for a quickstart. For full documentation, please visit ou
 2. Create a Project and [put in your cloud provider credentials](https://docs.getporter.dev/docs/getting-started-with-porter-on-aws). Porter will automatically provision a Kubernetes cluster in your own cloud. It is also possible to [link up an existing Kubernetes cluster.](https://docs.getporter.dev/docs/cli-documentation#connecting-to-an-existing-cluster)
 
 3. 🚀 Deploy your applications from a [git repository](https://docs.getporter.dev/docs/applications) or [Docker image registry](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure).
-
-## Want to Help?
-
-We welcome all contributions. If you're interested in contributing, please read our [contributing guide](https://github.com/porter-dev/porter/blob/master/CONTRIBUTING.md) and [join our Discord community](https://discord.gg/GJynMR3KXK).

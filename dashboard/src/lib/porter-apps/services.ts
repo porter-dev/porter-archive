@@ -183,7 +183,7 @@ export function defaultSerialized({
     port: 3000,
     cpuCores: defaultCPU,
     ramMegabytes: defaultRAM,
-    gpuCoresNvidia: .5,
+    gpuCoresNvidia: 0,
     smartOptimization: true,
   };
 

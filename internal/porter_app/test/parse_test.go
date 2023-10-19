@@ -49,12 +49,13 @@ var result_nobuild = &porterv1.PorterApp{
 	Name: "test-app",
 	Services: map[string]*porterv1.Service{
 		"example-web": {
-			Name:         "example-web",
-			RunOptional:  pointer.String("node index.js"),
-			Instances:    0,
-			Port:         8080,
-			CpuCores:     0.1,
-			RamMegabytes: 256,
+			Name:           "example-web",
+			RunOptional:    pointer.String("node index.js"),
+			Instances:      0,
+			Port:           8080,
+			CpuCores:       0.1,
+			RamMegabytes:   256,
+			GpuCoresNvidia: 0,
 			Config: &porterv1.Service_WebConfig{
 				WebConfig: &porterv1.WebServiceConfig{
 					Autoscaling: &porterv1.Autoscaling{
@@ -81,12 +82,13 @@ var result_nobuild = &porterv1.PorterApp{
 			Type: 1,
 		},
 		"example-wkr": {
-			Name:         "example-wkr",
-			RunOptional:  pointer.String("echo 'work'"),
-			Instances:    1,
-			Port:         80,
-			CpuCores:     0.1,
-			RamMegabytes: 256,
+			Name:           "example-wkr",
+			RunOptional:    pointer.String("echo 'work'"),
+			Instances:      1,
+			Port:           80,
+			CpuCores:       0.1,
+			RamMegabytes:   256,
+			GpuCoresNvidia: 0,
 			Config: &porterv1.Service_WorkerConfig{
 				WorkerConfig: &porterv1.WorkerServiceConfig{
 					Autoscaling: nil,
@@ -95,10 +97,11 @@ var result_nobuild = &porterv1.PorterApp{
 			Type: 2,
 		},
 		"example-job": {
-			Name:         "example-job",
-			RunOptional:  pointer.String("echo 'hello world'"),
-			CpuCores:     0.1,
-			RamMegabytes: 256,
+			Name:           "example-job",
+			RunOptional:    pointer.String("echo 'hello world'"),
+			CpuCores:       0.1,
+			RamMegabytes:   256,
+			GpuCoresNvidia: 0,
 			Config: &porterv1.Service_JobConfig{
 				JobConfig: &porterv1.JobServiceConfig{
 					AllowConcurrentOptional: pointer.Bool(true),
@@ -112,12 +115,13 @@ var result_nobuild = &porterv1.PorterApp{
 	},
 	ServiceList: []*porterv1.Service{
 		{
-			Name:         "example-web",
-			RunOptional:  pointer.String("node index.js"),
-			Instances:    0,
-			Port:         8080,
-			CpuCores:     0.1,
-			RamMegabytes: 256,
+			Name:           "example-web",
+			RunOptional:    pointer.String("node index.js"),
+			Instances:      0,
+			Port:           8080,
+			CpuCores:       0.1,
+			RamMegabytes:   256,
+			GpuCoresNvidia: 0,
 			Config: &porterv1.Service_WebConfig{
 				WebConfig: &porterv1.WebServiceConfig{
 					Autoscaling: &porterv1.Autoscaling{
@@ -144,12 +148,13 @@ var result_nobuild = &porterv1.PorterApp{
 			Type: 1,
 		},
 		{
-			Name:         "example-wkr",
-			RunOptional:  pointer.String("echo 'work'"),
-			Instances:    1,
-			Port:         80,
-			CpuCores:     0.1,
-			RamMegabytes: 256,
+			Name:           "example-wkr",
+			RunOptional:    pointer.String("echo 'work'"),
+			Instances:      1,
+			Port:           80,
+			CpuCores:       0.1,
+			RamMegabytes:   256,
+			GpuCoresNvidia: 0,
 			Config: &porterv1.Service_WorkerConfig{
 				WorkerConfig: &porterv1.WorkerServiceConfig{
 					Autoscaling: nil,
@@ -158,10 +163,11 @@ var result_nobuild = &porterv1.PorterApp{
 			Type: 2,
 		},
 		{
-			Name:         "example-job",
-			RunOptional:  pointer.String("echo 'hello world'"),
-			CpuCores:     0.1,
-			RamMegabytes: 256,
+			Name:           "example-job",
+			RunOptional:    pointer.String("echo 'hello world'"),
+			CpuCores:       0.1,
+			RamMegabytes:   256,
+			GpuCoresNvidia: 0,
 			Config: &porterv1.Service_JobConfig{
 				JobConfig: &porterv1.JobServiceConfig{
 					AllowConcurrentOptional: pointer.Bool(true),
@@ -174,13 +180,14 @@ var result_nobuild = &porterv1.PorterApp{
 		},
 	},
 	Predeploy: &porterv1.Service{
-		RunOptional:  pointer.String("ls"),
-		Instances:    0,
-		Port:         0,
-		CpuCores:     0,
-		RamMegabytes: 0,
-		Config:       &porterv1.Service_JobConfig{},
-		Type:         3,
+		RunOptional:    pointer.String("ls"),
+		Instances:      0,
+		Port:           0,
+		CpuCores:       0,
+		RamMegabytes:   0,
+		GpuCoresNvidia: 0,
+		Config:         &porterv1.Service_JobConfig{},
+		Type:           3,
 	},
 	Image: &porterv1.AppImage{
 		Repository: "nginx",

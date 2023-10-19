@@ -55,7 +55,21 @@ const defaultClusterNetworking = new GKENetwork({
   serviceCidr: "10.75.0.0/16",
 });
 
-const clusterVersionOptions = [{ value: "1.25", label: "v1.25" }, { value: "1.26", label: "v1.26" }, { value: "1.27", label: "v1.27" }];
+const instanceTypes = [
+  { value: "e2-standard-2", label: "e2-standard-2" },
+  { value: "e2-standard-2", label: "e2-standard-4" },
+  { value: "e2-standard-8", label: "e2-standard-8" },
+  { value: "e2-standard-16", label: "e2-standard-16" },
+  { value: "e2-standard-32", label: "e2-standard-32" },
+  { value: "e2-standard-32", label: "e2-standard-32" },
+  { value: "g2-standard-4", label: "g2-standard-4" },
+  { value: "g2-standard-8", label: "g2-standard-8" },
+  { value: "g2-standard-12", label: "g2-standard-12" },
+  { value: "g2-standard-16", label: "g2-standard-16" },
+  { value: "g2-standard-24", label: "g2-standard-24" },
+];
+
+const clusterVersionOptions = [{ value: "1.27", label: "v1.27" }];
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
@@ -83,6 +97,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [maxInstances, setMaxInstances] = useState(10);
   const [clusterNetworking, setClusterNetworking] = useState(defaultClusterNetworking);
   const [clusterVersion, setClusterVersion] = useState(clusterVersionOptions[0].value);
+  const [instanceType, setInstanceType] = useState(instanceTypes[0].value);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
@@ -180,6 +195,20 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
                 setActiveValue={setClusterVersion}
                 label="Cluster version"
               />
+              <Spacer y={0.25} />
+
+              <SelectRow
+                options={instanceTypes}
+                width="350px"
+                disabled={isReadOnly}
+                value={instanceType}
+                scrollBuffer={true}
+                dropdownMaxHeight="240px"
+                setActiveValue={setInstanceType}
+                label="Instance Type"
+              />
+              <Spacer y={0.25} />
+
               <InputRow
                 width="350px"
                 type="string"
@@ -261,7 +290,6 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
                 maxInstances: 1,
                 nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_MONITORING
               }),
-
               new GKENodePool({
                 instanceType: "custom-2-4096",
                 minInstances: 1,
@@ -269,7 +297,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
                 nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_SYSTEM
               }),
               new GKENodePool({
-                instanceType: "custom-2-4096",
+                instanceType: instanceType,
                 minInstances: 1, // TODO: make these customizable before merging
                 maxInstances: 10, // TODO: make these customizable before merging
                 nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION
@@ -361,6 +389,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           if (nodePool.nodePoolType === "NODE_POOL_TYPE_APPLICATION") {
             setMinInstances(nodePool.minInstances);
             setMaxInstances(nodePool.maxInstances);
+            setInstanceType(nodePool.instanceType);
           }
         });
       }
@@ -528,6 +557,17 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
             dropdownMaxHeight="240px"
             setActiveValue={setClusterVersion}
             label="Cluster version"
+          />
+          <Spacer y={1} />
+          <SelectRow
+            options={instanceTypes}
+            width="350px"
+            disabled={isReadOnly}
+            value={instanceType}
+            scrollBuffer={true}
+            dropdownMaxHeight="240px"
+            setActiveValue={setInstanceType}
+            label="Instance Type"
           />
         </StyledForm>
 

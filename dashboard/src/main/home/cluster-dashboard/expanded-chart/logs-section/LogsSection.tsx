@@ -209,7 +209,7 @@ const LogsSection: React.FC<Props> = ({
                   }}
                   onKeyPress={(event) => {
                     if (event.key === "Enter") {
-                      setEnteredSearchText(escapeRegExp(searchText));
+                      setEnteredSearchText(searchText);
                       if (selectedDate == null) {
                         setSelectedDate(dayjs().toDate());
                       }

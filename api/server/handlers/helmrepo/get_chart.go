@@ -30,8 +30,11 @@ func NewChartGetHandler(
 }
 
 func (t *ChartGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	helmRepo, _ := r.Context().Value(types.HelmRepoScope).(*models.HelmRepo)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-chart")
+	defer span.End()
+
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	helmRepo, _ := ctx.Value(types.HelmRepoScope).(*models.HelmRepo)
 
 	name, _ := requestutils.GetURLParamString(r, types.URLParamTemplateName)
 	version, _ := requestutils.GetURLParamString(r, types.URLParamTemplateVersion)
@@ -41,7 +44,7 @@ func (t *ChartGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		version = ""
 	}
 
-	chart, err := release.LoadChart(r.Context(), t.Config(), &release.LoadAddonChartOpts{
+	chart, err := release.LoadChart(ctx, t.Config(), &release.LoadAddonChartOpts{
 		ProjectID:       proj.ID,
 		RepoURL:         helmRepo.RepoURL,
 		TemplateName:    name,

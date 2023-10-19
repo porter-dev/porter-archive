@@ -76,7 +76,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	}
 
 	// overrides incorporated into the app contract baed on the deployment target
-	var b64AppOverrides string
+	var overrides *porter_app.EncodedAppWithEnv
 
 	appName := inp.AppName
 	if porterYamlExists {
@@ -106,6 +106,8 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 			return errors.New("b64 app proto is empty")
 		}
 		b64AppProto = parsedApp.B64AppProto
+
+		overrides = parsedApp.PreviewApp
 
 		// override app name if provided
 		appName, err = appNameFromB64AppProto(parsedApp.B64AppProto)
@@ -137,21 +139,32 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 			return fmt.Errorf("error updating app env group in proto: %w", err)
 		}
 
-		if inp.PreviewApply && parsedApp.PreviewApp != nil {
-			b64AppOverrides = parsedApp.PreviewApp.B64AppProto
+		color.New(color.FgGreen).Printf("Successfully parsed Porter YAML: applying app \"%s\"\n", appName) // nolint:errcheck,gosec
+	}
 
-			envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID, parsedApp.PreviewApp.EnvVariables, parsedApp.PreviewApp.EnvSecrets, parsedApp.PreviewApp.B64AppProto)
-			if err != nil {
-				return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
-			}
+	// b64AppOverrides is the base64-encoded app proto with preview environment specific overrides and env groups
+	var b64AppOverrides string
 
-			b64AppOverrides, err = updateEnvGroupsInProto(ctx, b64AppOverrides, envGroupResp.EnvGroups)
-			if err != nil {
-				return fmt.Errorf("error updating app env group in proto: %w", err)
-			}
+	if inp.PreviewApply {
+		var previewEnvVariables map[string]string
+		var previewEnvSecrets map[string]string
+
+		if overrides != nil {
+			b64AppOverrides = overrides.B64AppProto
+			previewEnvVariables = overrides.EnvVariables
+			previewEnvSecrets = overrides.EnvSecrets
 		}
 
-		color.New(color.FgGreen).Printf("Successfully parsed Porter YAML: applying app \"%s\"\n", appName) // nolint:errcheck,gosec
+		envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID, previewEnvVariables, previewEnvSecrets, b64AppOverrides)
+		if err != nil {
+			return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
+		}
+		b64AppOverrides = envGroupResp.Base64AppProto
+
+		b64AppOverrides, err = updateEnvGroupsInProto(ctx, b64AppOverrides, envGroupResp.EnvGroups)
+		if err != nil {
+			return fmt.Errorf("error updating app env group in proto: %w", err)
+		}
 	}
 
 	if appName == "" {

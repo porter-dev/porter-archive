@@ -59,6 +59,7 @@ const GithubActionModal: React.FC<Props> = ({
         projectId,
         clusterId,
         stackName,
+        branch,
         porterYamlPath
       );
     }
@@ -71,6 +72,14 @@ const GithubActionModal: React.FC<Props> = ({
       porterYamlPath
     );
   }, [type]);
+
+  const headingText = useMemo(() => {
+    if (type === "preview") {
+      return `./github/workflows/porter_preview_${stackName}.yml`;
+    }
+
+    return `./github/workflows/porter_stack_${stackName}.yml`;
+  }, [type, stackName]);
 
   const submit = async () => {
     if (
@@ -141,7 +150,7 @@ const GithubActionModal: React.FC<Props> = ({
         noWrapper
         expandText="[+] Show code"
         collapseText="[-] Hide code"
-        Header={<ModalHeader>.github/workflows/porter.yml</ModalHeader>}
+        Header={<ModalHeader>{headingText}</ModalHeader>}
         isInitiallyExpanded
         spaced
         copy={actionYamlContents}
@@ -226,8 +235,8 @@ const GithubActionModal: React.FC<Props> = ({
 export default withRouter(GithubActionModal);
 
 const ModalHeader = styled.div`
-  font-weight: 600;
-  font-size: 16px;
+  font-weight: 500;
+  font-size: 14px;
   font-family: monospace;
   height: 40px;
   display: flex;

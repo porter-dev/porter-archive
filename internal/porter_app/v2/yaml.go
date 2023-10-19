@@ -122,7 +122,7 @@ type Service struct {
 	Instances          int               `yaml:"instances,omitempty"`
 	CpuCores           float32           `yaml:"cpuCores,omitempty"`
 	RamMegabytes       int               `yaml:"ramMegabytes,omitempty"`
-  GpuCoresNvidia    float32      `yaml:"gpuCoresNvidia,omitempty"`
+  	GpuCoresNvidia     float32 	     `yaml:"gpuCoresNvidia,omitempty"`
 	SmartOptimization  *bool             `yaml:"smartOptimization,omitempty"`
 	Port               int               `yaml:"port,omitempty"`
 	Autoscaling        *AutoScaling      `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`

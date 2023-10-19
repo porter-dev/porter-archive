@@ -233,11 +233,7 @@ func addPorterSubdomainsIfNecessary(ctx context.Context, app v2.PorterApp, deplo
 
 	for _, service := range app.Services {
 		if service.Type == v2.ServiceType_Web {
-			if service.Private == nil || *service.Private {
-				continue
-			}
-
-			if service.Domains != nil && len(service.Domains) == 0 {
+			if service.Private != nil && !*service.Private && service.Domains != nil && len(service.Domains) == 0 {
 				if deploymentTarget.Namespace != DeploymentTargetSelector_Default {
 					createSubdomainInput.AppName = fmt.Sprintf("%s-%s", createSubdomainInput.AppName, deploymentTarget.ID[:6])
 				}

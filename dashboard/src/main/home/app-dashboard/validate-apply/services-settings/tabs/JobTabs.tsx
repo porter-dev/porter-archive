@@ -11,7 +11,7 @@ import MainTab from "./Main";
 import Resources from "./Resources";
 import { Controller, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
-import { ControlledInput } from "../../../../../../components/porter/ControlledInput";
+import { ControlledInput } from "components/porter/ControlledInput";
 
 interface Props {
   index: number;

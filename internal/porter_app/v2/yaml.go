@@ -70,8 +70,8 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, providedName 
 
 		if porterYaml.Previews != nil {
 			correspondingOverrides := findPreviewApp(porterYaml.Previews.Apps, app.Name)
-			if correspondingOverrides != nil {
-				previewAppProto, previewEnvVariables, err := ProtoFromApp(ctx, *correspondingOverrides)
+			if correspondingOverrides.Name != "" {
+				previewAppProto, previewEnvVariables, err := ProtoFromApp(ctx, correspondingOverrides)
 				if err != nil {
 					return out, telemetry.Error(ctx, span, err, "error converting preview porter yaml to proto")
 				}
@@ -88,12 +88,12 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte, providedName 
 	return out, nil
 }
 
-func findPreviewApp(previews []PorterApp, name string) *PorterApp {
-	var previewOverrides *PorterApp
+func findPreviewApp(previews []PorterApp, name string) PorterApp {
+	var previewOverrides PorterApp
 
 	for _, preview := range previews {
 		if preview.Name == name {
-			previewOverrides = &preview
+			previewOverrides = preview
 			break
 		}
 	}

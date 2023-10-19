@@ -260,7 +260,6 @@ func (c *CreateAddonHandler) getVPCConfig(ctx context.Context, request *types.Cr
 	req := connect.NewRequest(&porterv1.ClusterNetworkSettingsRequest{
 		ProjectId:     int64(project.ID),
 		ClusterId:     int64(cluster.ID),
-		CloudProvider: porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS,
 	})
 
 	resp, err := c.Config().ClusterControlPlaneClient.ClusterNetworkSettings(ctx, req)

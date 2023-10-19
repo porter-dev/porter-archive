@@ -42,6 +42,7 @@ import Loading from "./Loading";
 import PreflightChecks from "./PreflightChecks";
 import Placeholder from "./Placeholder";
 import VerticalSteps from "./porter/VerticalSteps";
+import { useIntercom } from "lib/hooks/useIntercom";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -146,6 +147,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [preflightData, setPreflightData] = useState(null)
   const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
   const [preflightError, setPreflightError] = useState<string>("")
+  
+  const { showIntercomWithMessage } = useIntercom();
 
   const markStepStarted = async (step: string, errMessage?: string) => {
     try {
@@ -537,6 +540,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       }
       // If none of the checks have a message, set setPreflightFailed to false
       if (hasMessage) {
+        showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
         markStepStarted("provisioning-failed", errors);
       }
       if (!hasMessage) {

@@ -1,4 +1,3 @@
-import { PorterApp } from "@porter-dev/api-contracts";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { PorterAppFormData } from "lib/porter-apps";

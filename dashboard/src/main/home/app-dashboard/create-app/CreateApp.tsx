@@ -50,6 +50,7 @@ import EnvSettings from "../validate-apply/app-settings/EnvSettings";
 import ImageSettings from "../image-settings/ImageSettings";
 import { useClusterResources } from "shared/ClusterResourcesContext";
 import PorterYamlModal from "./PorterYamlModal";
+import { useIntercom } from "lib/hooks/useIntercom";
 
 type CreateAppProps = {} & RouteComponentProps;
 
@@ -69,6 +70,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     return /^[a-z0-9-]{1,63}$/.test(value);
   };
   const [isNameHighlight, setIsNameHighlight] = React.useState(false);
+
+  const { showIntercomWithMessage } = useIntercom();
 
   const [
     validatedAppProto,
@@ -204,7 +207,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const resetAllExceptName = () => {
     setIsNameHighlight(true);
 
-
     // Get the current name value before the reset
     setStep(0);
     const currentNameValue = porterAppFormMethods.getValues("app.name");
@@ -213,7 +215,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     porterAppFormMethods.reset();
     // Set the name back to its original value
     porterAppFormMethods.setValue("app.name", currentNameValue);
-
   };
   const onSubmit = handleSubmit(async (data) => {
     try {
@@ -336,6 +337,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         return true;
       } catch (err) {
+        showIntercomWithMessage({ message: "I am running into an issue launching an application." });
+
         if (axios.isAxiosError(err) && err.response?.data?.error) {
           updateAppStep({
             step: "stack-launch-failure",
@@ -365,10 +368,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   useEffect(() => {
     // set step to 1 if name is filled out
     if (isNameValid(name.value) && name.value) {
-      setIsNameHighlight(false);  // Reset highlight when the name is valid
+      setIsNameHighlight(false); // Reset highlight when the name is valid
       setStep((prev) => Math.max(prev, 1));
     } else {
-      resetAllExceptName()
+      resetAllExceptName();
     }
 
     // set step to 2 if source is filled out
@@ -429,6 +432,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           errorMessage = `${errorMessage}.`;
         }
       }
+
+      showIntercomWithMessage({ message: "I am running into an issue launching an application." });
 
       updateAppStep({
         step: "stack-launch-failure",
@@ -658,8 +663,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
-                              } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${
+                                  detectedServices.count > 1 ? "s" : ""
+                                } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

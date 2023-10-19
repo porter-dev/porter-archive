@@ -162,6 +162,7 @@ type LoadAddonChartOpts struct {
 	RepoURL, TemplateName, TemplateVersion string
 }
 
+// LoadChart fetches a chart from a remote repo
 func LoadChart(ctx context.Context, config *config.Config, opts *LoadAddonChartOpts) (*chart.Chart, error) {
 	// if the chart repo url is one of the specified application/addon charts, just load public
 	if opts.RepoURL == config.ServerConf.DefaultAddonHelmRepoURL || opts.RepoURL == config.ServerConf.DefaultApplicationHelmRepoURL {
@@ -199,7 +200,7 @@ func LoadChart(ctx context.Context, config *config.Config, opts *LoadAddonChartO
 
 func (c *CreateAddonHandler) performAddonPreinstall(ctx context.Context, r *http.Request, templateName string, cluster *models.Cluster) error {
 	awsTemplates := map[string][]string{
-		"rds-postgresql": []string{"ec2-chart", "rds-chart"},
+		"rds-postgresql": {"ec2-chart", "rds-chart"},
 	}
 
 	if cluster.CloudProvider != "AWS" {

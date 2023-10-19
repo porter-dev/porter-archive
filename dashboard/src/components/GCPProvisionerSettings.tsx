@@ -39,6 +39,7 @@ import ExpandableSection from "./porter/ExpandableSection";
 import PreflightChecks from "./PreflightChecks";
 import VerticalSteps from "./porter/VerticalSteps";
 import { useIntercom } from "lib/hooks/useIntercom";
+import { log } from "console";
 
 
 const locationOptions = [
@@ -62,11 +63,11 @@ const instanceTypes = [
   { value: "e2-standard-16", label: "e2-standard-16" },
   { value: "e2-standard-32", label: "e2-standard-32" },
   { value: "e2-standard-32", label: "e2-standard-32" },
-  { value: "g2-standard-4", label: "g2-standard-4" },
-  { value: "g2-standard-8", label: "g2-standard-8" },
-  { value: "g2-standard-12", label: "g2-standard-12" },
-  { value: "g2-standard-16", label: "g2-standard-16" },
-  { value: "g2-standard-24", label: "g2-standard-24" },
+  // { value: "n1-standard-1", label: "n1-standard-1" }, // start of GPU nodes. 
+  // { value: "n1-standard-2", label: "n1-standard-2" },
+  // { value: "n1-standard-4", label: "n1-standard-4" },
+  // { value: "n1-standard-8", label: "n1-standard-8" },
+  // { value: "n1-standard-16", label: "n1-standard-16" }, // Maximum of 1 GPU per node until further notice
 ];
 
 const clusterVersionOptions = [{ value: "1.27", label: "v1.27" }];
@@ -386,7 +387,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     if (contract?.cluster) {
       if (contract.cluster?.gkeKind?.nodePools) {
         contract.cluster?.gkeKind?.nodePools.map((nodePool: any) => {
-          if (nodePool.nodePoolType === "NODE_POOL_TYPE_APPLICATION") {
+          if (nodePool.nodePoolType === "GKE_NODE_POOL_TYPE_APPLICATION") {
             setMinInstances(nodePool.minInstances);
             setMaxInstances(nodePool.maxInstances);
             setInstanceType(nodePool.instanceType);

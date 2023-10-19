@@ -392,9 +392,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         const appErrors = Object.keys(errors.app ?? {});
         if (appErrors.includes("build")) {
           errorMessage = "Build settings are not properly configured.";
-        }
-
-        if (appErrors.includes("services")) {
+        } else if (appErrors.includes("services")) {
           errorMessage = "Service settings are not properly configured";
           if (
             errors.app?.services?.root?.message ||
@@ -405,11 +403,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
               errors.app?.services?.message;
             errorMessage = `${errorMessage} - ${serviceErrorMessage}`;
           }
-          errorMessage = `${errorMessage}.`;
-        }
-
-        // this is the high level error message coming from the apply
-        if (appErrors.includes("message")) {
+          errorMessage = `${errorMessage}. To undo all changes, refresh the page.`;
+        } else if (appErrors.includes("message")) {  // this is the high level error message coming from the apply
           errorMessage = errors.app?.message ?? errorMessage;
         }
       }

@@ -54,7 +54,7 @@ export const useClusterResourceLimits = (
     // defaults indicate the resources assigned to new services
     defaultCPU: number,
     defaultRAM: number,
-    gpuNodes?: boolean,
+    gpuNodes: boolean,
 } => {
     const SMALL_INSTANCE_UPPER_BOUND = 0.75;
     const LARGE_INSTANCE_UPPER_BOUND = 0.9;

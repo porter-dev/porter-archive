@@ -75,6 +75,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
         serviceVersionStatus={serviceVersionStatus}
         maxCPU={currentClusterResources.maxCPU}
         maxRAM={currentClusterResources.maxRAM}
+        gpuNodes={currentClusterResources.gpuNodes}
         internalNetworkingDetails={{
           namespace: deploymentTarget.namespace,
           appName: porterApp.name,

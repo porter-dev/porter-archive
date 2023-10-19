@@ -60,16 +60,16 @@ export const getPreviewGithubAction = (
   branchName: string,
   porterYamlPath: string = "porter.yaml"
 ) => {
-  return `on:
+  return `"on":
   pull_request:
-    paths:
-    - *
-    - '!./github/workflows/porter-**'
     branches:
     - ${branchName}
     types:
     - opened
     - synchronize
+    paths:
+    - '**'
+    - '!./github/workflows/porter-**'
     
 name: Deploy to Preview Environment
 jobs:

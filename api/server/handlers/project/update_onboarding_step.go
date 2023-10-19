@@ -191,6 +191,21 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		}
 	}
 
+	if request.Step == "requested-quota-increase" {
+		err := v.Config().AnalyticsClient.Track(analytics.ProvisioningAttemptTrack(&analytics.ProvisioningAttemptTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			Region:                 request.Region,
+			Provider:               request.Provider,
+		}))
+		if err != nil {
+			_ = telemetry.Error(ctx, span, err, "error tracking quota increase")
+		}
+	}
+
 	if request.Step == "provisioning-started" {
 		err := v.Config().AnalyticsClient.Track(analytics.ProvisioningAttemptTrack(&analytics.ProvisioningAttemptTrackOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),

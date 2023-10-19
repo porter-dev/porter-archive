@@ -274,10 +274,10 @@ func (c *CreateAddonHandler) getVPCConfig(ctx context.Context, request *types.Cr
 
 	vpcConfig["awsRegion"] = resp.Msg.Region
 	vpcConfig["subnetIDs"] = resp.Msg.SubnetIds
-	switch op := resp.Msg.CloudProviderNetwork.(type) {
-	case *porterv1.ClusterNetworkSettingsResponse_EksCloudProviderNetwork:
-		vpcConfig["vpcID"] = op.EksCloudProviderNetwork.AwsVpcId
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "vpc-id", Value: op.EksCloudProviderNetwork.AwsVpcId})
+	switch resp.Msg.CloudProvider {
+	case *porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS.Enum():
+		vpcConfig["vpcID"] = resp.Msg.GetEksCloudProviderNetwork().AwsVpcId
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "vpc-id", Value: resp.Msg.GetEksCloudProviderNetwork().AwsVpcId})
 	}
 
 	telemetry.WithAttributes(span,

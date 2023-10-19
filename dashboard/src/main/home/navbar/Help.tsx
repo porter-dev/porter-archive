@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import community from "assets/community.png";
+import community from "assets/chat.svg";
 import { useIntercom } from "lib/hooks/useIntercom";
 
 type HelpProps = {};

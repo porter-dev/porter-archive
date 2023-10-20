@@ -828,6 +828,10 @@ github.com/porter-dev/api-contracts v0.2.3/go.mod h1:fX6JmP5QuzxDLvqP3evFOTXjI4d
 github.com/porter-dev/api-contracts v0.2.11/go.mod h1:fX6JmP5QuzxDLvqP3evFOTXjI4dHxsG0+VKNTjImZU8=
 github.com/porter-dev/api-contracts v0.2.22 h1:eJt1RrntnyKQvFL2fDu2zQcuW3nU7ezLonCkSogBnuE=
 github.com/porter-dev/api-contracts v0.2.22/go.mod h1:fX6JmP5QuzxDLvqP3evFOTXjI4dHxsG0+VKNTjImZU8=
+github.com/porter-dev/api-contracts v0.2.23 h1:AGyidwLoZedNB/iUIg/wgXXi/00BsMN4P8B4wTgv+f8=
+github.com/porter-dev/api-contracts v0.2.23/go.mod h1:fX6JmP5QuzxDLvqP3evFOTXjI4dHxsG0+VKNTjImZU8=
+github.com/porter-dev/switchboard v0.0.3 h1:dBuYkiVLa5Ce7059d6qTe9a1C2XEORFEanhbtV92R+M=
+github.com/porter-dev/switchboard v0.0.3/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
 github.com/posener/complete v1.2.3 h1:NP0eAhjcjImqslEwo/1hq7gpajME0fTLTezBKDqfXqo=
 github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c/go.mod h1:OmDBASR4679mdNQnz2pUhc2G8CO2JrUAVFDRBDP/hJE=
 github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b/go.mod h1:OmDBASR4679mdNQnz2pUhc2G8CO2JrUAVFDRBDP/hJE=

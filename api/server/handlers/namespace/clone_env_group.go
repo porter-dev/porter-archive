@@ -34,6 +34,7 @@ func NewCloneEnvGroupHandler(
 }
 
 func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Errorf("wtffff")
 	request := &types.CloneEnvGroupRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {

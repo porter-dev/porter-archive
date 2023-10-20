@@ -973,8 +973,11 @@ const EnvGroupSettings = ({
     setCurrentError,
   } = useContext(Context);
   const [isAuthorized] = useAuth();
+
+  // When cloning an env group, append "-2" for the default name
+  // (i.e. my-env-group-2)
   const [name, setName] = useState<string>(
-    envGroup?.name + "-2"
+    envGroup.name + "-2"
   );
   const [cloneNamespace, setCloneNamespace] = useState<string>("default");
   const [cloneSuccess, setCloneSuccess] = useState(false);
@@ -1015,7 +1018,7 @@ const EnvGroupSettings = ({
       );
       setCloneSuccess(true);
     } catch (error) {
-      setCurrentError && setCurrentError(error as any);
+      console.log(error);
     }
   };
 
@@ -1102,7 +1105,7 @@ const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
         />
       </HeadingWrapper>
       {currentProject?.simplified_view_enabled ? (
-        envGroup?.linked_applications?.map((appName) => {
+        envGroup.linked_applications.map((appName) => {
           return (
             <StyledCard>
               <Flex>

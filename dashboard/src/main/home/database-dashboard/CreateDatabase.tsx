@@ -12,6 +12,7 @@ import awsElastiCache from "assets/aws-elasticache.png";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { search } from "shared/search";
+import { AddonCard } from "shared/types";
 
 import TemplateList from "../launch/TemplateList";
 import SearchBar from "components/porter/SearchBar";
@@ -33,7 +34,7 @@ const CreateDatabase: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchValue, setSearchValue] = useState("");
   const [currentTemplate, setCurrentTemplate] = useState<any>(null);
-  const [databaseTemplates, setDatabaseTemplates] = useState<any[]>([
+  const [databaseTemplates, setDatabaseTemplates] = useState<AddonCard[]>([
     {
       id: "rds-postgresql",
       icon: awsRDS,

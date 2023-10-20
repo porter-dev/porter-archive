@@ -17,6 +17,13 @@ export interface ClusterType {
   cloud_provider: string;
 }
 
+export interface AddonCard {
+  id: string;
+  icon: string;
+  name: string;
+  description: string;
+}
+
 export interface DetailedClusterType extends ClusterType {
   ingress_ip?: string;
   ingress_error?: DetailedIngressError;

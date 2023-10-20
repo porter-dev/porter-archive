@@ -80,10 +80,10 @@ const AuroraPostgresForm: React.FC<Props> = ({
     }, 500);
   };
 
-  const deploy = async (wildcard?: any) => {
+  const deploy = async () => {
     setButtonStatus("loading");
 
-    let values = {
+    const values = {
       config: {
         name,
         masterUserPassword: dbPassword,
@@ -98,7 +98,7 @@ const AuroraPostgresForm: React.FC<Props> = ({
         {
           template_name: "rds-postgresql-aurora",
           template_version: "latest",
-          values: values,
+          values,
           name,
         },
         {
@@ -109,23 +109,12 @@ const AuroraPostgresForm: React.FC<Props> = ({
         }
       )
       .then((_) => {
-        window.analytics?.track("Deployed RDS", {
-          name,
-          namespace: "ack-system",
-          values: values,
-        });
         waitForHelmRelease();
       })
       .catch((err) => {
         let parsedErr = err?.response?.data?.error;
         err = parsedErr || err.message || JSON.stringify(err);
         setButtonStatus(err);
-        window.analytics?.track("Failed to Deploy RDS", {
-          name,
-          namespace: "ack-system",
-          values: values,
-          error: err,
-        });
         return;
       });
   };
@@ -170,7 +159,7 @@ const AuroraPostgresForm: React.FC<Props> = ({
                 </Text>
                 <Spacer height="20px" />
                 <Input
-                  placeholder="ex: academic-sophon"
+                  placeholder="ex: my-database"
                   value={name}
                   width="300px"
                   setValue={(e) => {

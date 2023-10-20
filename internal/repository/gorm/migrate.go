@@ -63,6 +63,7 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.PorterApp{},
 		&models.PorterAppEvent{},
 		&models.AppRevision{},
+		&models.AppInstance{},
 		&models.DeploymentTarget{},
 		&models.AppTemplate{},
 		&models.GithubWebhook{},

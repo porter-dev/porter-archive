@@ -94,6 +94,8 @@ func (c *CreateDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http
 		Selector:     request.Selector,
 		SelectorType: models.DeploymentTargetSelectorType_Namespace,
 		Preview:      request.Preview,
+		VanityName:   request.Selector,
+		Metadata:     make(map[string]interface{}),
 	}
 	deploymentTarget, err = c.Repo().DeploymentTarget().CreateDeploymentTarget(deploymentTarget)
 	if err != nil {

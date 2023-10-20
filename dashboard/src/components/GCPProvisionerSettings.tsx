@@ -46,6 +46,11 @@ const locationOptions = [
   { value: "us-east1", label: "us-east1 (South Carolina, USA)" },
   { value: "us-east4", label: "us-east4 (Virginia, USA)" },
   { value: "us-central1", label: "us-central1 (Iowa, USA)" },
+  { value: "europe-north1", label: "europe-north1 (Hamina, Finland)" },
+  { value: "europe-central2", label: "europe-central2 (Warsaw, Poland)" },
+  { value: "europe-west1", label: "europe-west1 (St. Ghislain, Belgium)" },
+  { value: "europe-west2", label: "europe-west2 (London, England)" },
+  { value: "europe-west6", label: "europe-west6 (Zurich, Switzerland)" },
   { value: "asia-south1", label: "asia-south1 (Mumbia, India)" },
 ];
 

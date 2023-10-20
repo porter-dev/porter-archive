@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useCallback } from "react";
 import styled from "styled-components";
 import _ from "lodash";
 
@@ -29,17 +29,22 @@ import AppGrid from "./AppGrid";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { z } from "zod";
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
+import DeleteEnvModal from "main/home/cluster-dashboard/preview-environments/v2/DeleteEnvModal";
+import { useHistory } from "react-router";
 
 type Props = {};
 
-const Apps: React.FC<Props> = ({ }) => {
+const Apps: React.FC<Props> = ({}) => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
   const { currentDeploymentTarget } = useDeploymentTarget();
+  const history = useHistory();
 
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [sort, setSort] = useState<"calendar" | "letter">("calendar");
+  const [showDeleteEnvModal, setShowDeleteEnvModal] = useState(false);
+  const [envDeleting, setEnvDeleting] = useState(false);
 
   const { data: apps = [], status } = useQuery(
     [
@@ -127,6 +132,38 @@ const Apps: React.FC<Props> = ({ }) => {
     }
   );
 
+  const deletePreviewEnv = useCallback(async () => {
+    try {
+      if (!currentCluster || !currentProject || !currentDeploymentTarget) {
+        return;
+      }
+      setEnvDeleting(true);
+
+      await api.deleteDeploymentTarget(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          deployment_target_id: currentDeploymentTarget.id,
+        }
+      );
+
+      history.push("/preview-environments");
+    } catch (err) {
+    } finally {
+      setShowDeleteEnvModal(false);
+      setEnvDeleting(false);
+    }
+  }, [
+    currentCluster,
+    currentProject,
+    currentDeploymentTarget,
+    history,
+    setShowDeleteEnvModal,
+    setEnvDeleting,
+  ]);
+
   const renderContents = () => {
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
@@ -212,7 +249,7 @@ const Apps: React.FC<Props> = ({ }) => {
               }
             }}
             inactiveColor={"#ffffff11"}
-            activeColor={"transparent"}          
+            activeColor={"transparent"}
           />
           <Spacer inline x={1} />
           <Toggle
@@ -232,17 +269,30 @@ const Apps: React.FC<Props> = ({ }) => {
             activeColor={"transparent"}
           />
           <Spacer inline x={2} />
-          <PorterLink to="/apps/new/app">
+          {currentDeploymentTarget?.preview ? (
             <Button
-              onClick={async () =>
-                updateAppStep({ step: "stack-launch-start" })
-              }
+              onClick={async () => {
+                setShowDeleteEnvModal(true);
+              }}
               height="30px"
               width="160px"
+              color="#b91133"
             >
-              <I className="material-icons">add</I> New application
+              Delete Environment
             </Button>
-          </PorterLink>
+          ) : (
+            <PorterLink to="/apps/new/app">
+              <Button
+                onClick={async () =>
+                  updateAppStep({ step: "stack-launch-start" })
+                }
+                height="30px"
+                width="160px"
+              >
+                <I className="material-icons">add</I> New application
+              </Button>
+            </PorterLink>
+          )}
         </Container>
         <Spacer y={1} />
         <AppGrid
@@ -267,6 +317,13 @@ const Apps: React.FC<Props> = ({ }) => {
       )}
       {renderContents()}
       <Spacer y={5} />
+      {showDeleteEnvModal && (
+        <DeleteEnvModal
+          closeModal={() => setShowDeleteEnvModal(false)}
+          deleteEnv={deletePreviewEnv}
+          loading={envDeleting}
+        />
+      )}
     </StyledAppDashboard>
   );
 };

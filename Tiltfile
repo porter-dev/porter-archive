@@ -2,15 +2,17 @@ load('ext://restart_process', 'docker_build_with_restart')
 
 secret_settings(disable_scrub=True)
 
-if not os.path.exists("vendor"):
-    local(command="go mod vendor")
-
 if config.tilt_subcommand == "up":
+    if not os.path.exists("vendor"):
+        local(command="go mod vendor")
+
     local(command="cd dashboard; npm i --legacy-peer-deps")
 
 if config.tilt_subcommand == "down":
-    local(command="rm -rf vendor")
-    local(command="rm -rf dashboard/node_modules")
+    if os.path.exists("vendor"):
+        local(command="rm -rf vendor")
+    if os.path.exists("dashboard/node_modules"):
+        local(command="rm -rf dashboard/node_modules")
 
 build_args = "GOOS=linux GOARCH=arm64"
 if os.getenv("PLATFORM") == "amd64":

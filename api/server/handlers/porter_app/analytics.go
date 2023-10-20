@@ -138,7 +138,7 @@ func TrackStackBuildStatus(
 	)
 
 	if status == types.PorterAppEventStatus_Progressing {
-		return config.AnalyticsClient.Track(analytics.StackBuildProgressingTrack(&analytics.StackBuildOpts{
+		err := config.AnalyticsClient.Track(analytics.StackBuildProgressingTrack(&analytics.StackBuildOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			StackName:              stackName,
 			Email:                  user.Email,
@@ -147,10 +147,13 @@ func TrackStackBuildStatus(
 			CompanyName:            user.CompanyName,
 			ValidateApplyV2:        validateApplyV2,
 		}))
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "Failed to track stack build progressing")
+		}
 	}
 
 	if status == types.PorterAppEventStatus_Success {
-		return config.AnalyticsClient.Track(analytics.StackBuildSuccessTrack(&analytics.StackBuildOpts{
+		err := config.AnalyticsClient.Track(analytics.StackBuildSuccessTrack(&analytics.StackBuildOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			StackName:              stackName,
 			Email:                  user.Email,
@@ -159,10 +162,13 @@ func TrackStackBuildStatus(
 			CompanyName:            user.CompanyName,
 			ValidateApplyV2:        validateApplyV2,
 		}))
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "Failed to track stack build success")
+		}
 	}
 
 	if status == types.PorterAppEventStatus_Failed {
-		return config.AnalyticsClient.Track(analytics.StackBuildFailureTrack(&analytics.StackBuildOpts{
+		er := config.AnalyticsClient.Track(analytics.StackBuildFailureTrack(&analytics.StackBuildOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			StackName:              stackName,
 			ErrorMessage:           errorMessage,
@@ -173,6 +179,9 @@ func TrackStackBuildStatus(
 			CompanyName:            user.CompanyName,
 			ValidateApplyV2:        validateApplyV2,
 		}))
+		if er != nil {
+			return telemetry.Error(ctx, span, er, "Failed to track stack build failure")
+		}
 	}
 
 	return nil

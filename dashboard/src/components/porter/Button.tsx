@@ -189,7 +189,7 @@ const StyledButton = styled.button<{
     if (props.alt || props.color === "fg") {
       return props.theme.fg;
     }
-    return props.disabled && !props.color
+    return props.disabled
       ? "#aaaabb"
       : props.color || props.theme.button;
   }};

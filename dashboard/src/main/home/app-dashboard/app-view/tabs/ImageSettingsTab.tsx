@@ -30,7 +30,7 @@ const ImageSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
 
     return match(source)
         .with({ type: "docker-registry" }, (source) => (
-            <>
+            <ImageSettingsTabContainer>
                 <ImageSettings
                     projectId={projectId}
                     imageUri={source.image?.repository ?? ""}
@@ -66,7 +66,7 @@ const ImageSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
                         </CopyToClipboard>
                     </CopyContainer>
                 </IdContainer>
-            </>
+            </ImageSettingsTabContainer>
         ))
         .otherwise(() => null);
 };
@@ -75,6 +75,10 @@ export default ImageSettingsTab;
 
 const Code = styled.span`
   font-family: monospace;
+`;
+
+const ImageSettingsTabContainer = styled.div`
+  width: 500px;
 `;
 
 const IdContainer = styled.div`
@@ -92,6 +96,7 @@ const CopyContainer = styled.div`
   display: flex;
   align-items: center;
   margin-left: auto;
+  user-select: text;
 `;
 
 const CopyIcon = styled.img`

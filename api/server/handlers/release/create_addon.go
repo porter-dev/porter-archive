@@ -200,7 +200,8 @@ func LoadChart(ctx context.Context, config *config.Config, opts *LoadAddonChartO
 
 func (c *CreateAddonHandler) performAddonPreinstall(ctx context.Context, r *http.Request, templateName string, cluster *models.Cluster) error {
 	awsTemplates := map[string][]string{
-		"rds-postgresql": {"ec2-chart", "rds-chart"},
+		"rds-postgresql":        {"ec2-chart", "rds-chart"},
+		"rds-postgresql-aurora": {"ec2-chart", "rds-chart"},
 	}
 
 	if cluster.CloudProvider != "AWS" {
@@ -256,7 +257,8 @@ func (c *CreateAddonHandler) getVPCConfig(ctx context.Context, request *types.Cr
 	}
 
 	awsTemplates := map[string]bool{
-		"rds-postgresql": true,
+		"rds-postgresql":        true,
+		"rds-postgresql-aurora": true,
 	}
 
 	if !awsTemplates[request.TemplateName] {

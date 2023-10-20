@@ -1,7 +1,6 @@
 package api_contract
 
 import (
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -14,7 +13,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/notifier"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -39,7 +37,6 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	defer span.End()
 
 	user, _ := ctx.Value(types.UserScope).(*models.User)
-	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	var apiContract porterv1.Contract
 
@@ -62,21 +59,6 @@ func (c *APIContractUpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
-
-	fmt.Println("Notifying User")
-	err = c.Config().UserNotifier.SendClusterCreationEmail(
-		&notifier.SendClusterCreationEmailOpts{
-			Email:   user.Email,
-			Project: proj.Name,
-			Name:    user.FirstName,
-		},
-	)
-	if err != nil {
-		e := telemetry.Error(ctx, span, err, "Error Sending Email upon cluster creation")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
-		return
-	}
-	fmt.Println("Notified User")
 
 	w.WriteHeader(http.StatusCreated)
 	c.WriteResult(w, r, revision.Msg)

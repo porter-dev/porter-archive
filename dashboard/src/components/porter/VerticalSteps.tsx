@@ -25,7 +25,7 @@ const VerticalSteps: React.FC<Props> = ({
       <Line />
       {steps.map((step, i) => {
         return (
-          <Relative>
+          <Relative key={i}>
             {i === steps.length - 1 && (
               <LineCover />
             )}
@@ -143,4 +143,5 @@ const StepWrapper = styled(AnimateHeight)<{
 const StyledVerticalSteps = styled.div<{
 }>`
   position: relative;
+  margin-left: 8px;
 `;

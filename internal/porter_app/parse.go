@@ -71,6 +71,14 @@ func ParseYAML(ctx context.Context, porterYaml []byte, appName string) (v2.AppWi
 		}
 
 		appDefinition.AppProto.Name = appName
+
+		if appDefinition.PreviewApp != nil && appDefinition.PreviewApp.AppProto != nil {
+			if appDefinition.PreviewApp.AppProto.Name != "" && appDefinition.PreviewApp.AppProto.Name != appName {
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "parsed-preview-name", Value: appDefinition.PreviewApp.AppProto.Name})
+				return appDefinition, telemetry.Error(ctx, span, nil, "name specified in porter.yaml does not match preview app name")
+			}
+			appDefinition.PreviewApp.AppProto.Name = appName
+		}
 	}
 
 	return appDefinition, nil

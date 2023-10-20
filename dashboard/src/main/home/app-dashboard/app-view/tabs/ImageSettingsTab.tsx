@@ -4,7 +4,6 @@ import { PorterAppFormData } from "lib/porter-apps";
 import { useLatestRevision } from "../LatestRevisionContext";
 import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
-import Error from "components/porter/Error";
 import styled from "styled-components";
 import copy from "assets/copy-left.svg"
 import CopyToClipboard from "components/CopyToClipboard";
@@ -30,7 +29,7 @@ const ImageSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
 
     return match(source)
         .with({ type: "docker-registry" }, (source) => (
-            <>
+            <ImageSettingsTabContainer>
                 <ImageSettings
                     projectId={projectId}
                     imageUri={source.image?.repository ?? ""}
@@ -66,7 +65,7 @@ const ImageSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
                         </CopyToClipboard>
                     </CopyContainer>
                 </IdContainer>
-            </>
+            </ImageSettingsTabContainer>
         ))
         .otherwise(() => null);
 };
@@ -75,6 +74,10 @@ export default ImageSettingsTab;
 
 const Code = styled.span`
   font-family: monospace;
+`;
+
+const ImageSettingsTabContainer = styled.div`
+  width: 500px;
 `;
 
 const IdContainer = styled.div`

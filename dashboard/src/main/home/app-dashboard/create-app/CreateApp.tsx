@@ -612,6 +612,15 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                                         onChange(porterYamlPath);
                                       }}
                                       porterYamlPath={value}
+                                      projectId={currentProject.id}
+                                      repoId={source.git_repo_id}
+                                      repoOwner={source.git_repo_name.split(
+                                        "/"
+                                      )[0]}
+                                      repoName={source.git_repo_name.split(
+                                        "/"
+                                      )[1]}
+                                      branch={source.git_branch}
                                     />
                                   )}
                                 />

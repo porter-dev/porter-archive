@@ -19,6 +19,7 @@ const (
 	AWSLoginRedirect            SegmentEvent = "AWS Login Redirect"
 	AWSCreateIntegrationSuccess SegmentEvent = "AWS Create Integration Success"
 	AWSCreateIntegrationFailure SegmentEvent = "AWS Create Integration Failure"
+	QuotaIncreaseRequested      SegmentEvent = "AWS Quota Increase Requested"
 	ProvisioningAttempted       SegmentEvent = "Provisioning Attempted"
 	ProvisioningFailure         SegmentEvent = "Provisioning Failure"
 

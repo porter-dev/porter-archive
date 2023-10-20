@@ -7,16 +7,32 @@ import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
 import Input from "components/porter/Input";
 import Button from "components/porter/Button";
+import FileSelector from "../validate-apply/build-settings/FileSelector";
 
 type Props = {
     close: () => void;
     setPorterYamlPath: (path: string) => void;
     porterYamlPath: string;
+    projectId: number;
+    repoId: number;
+    repoOwner: string;
+    repoName: string;
+    branch: string;
 }
 
-const PorterYamlModal: React.FC<Props> = ({ close, setPorterYamlPath, porterYamlPath }) => {
+const PorterYamlModal: React.FC<Props> = ({ 
+    close, 
+    setPorterYamlPath, 
+    porterYamlPath,
+    projectId,
+    repoId,
+    repoOwner,
+    repoName,
+    branch, 
+}) => {
     const [possiblePorterYamlPath, setPossiblePorterYamlPath] = useState<string>("");
     const [showModal, setShowModal] = useState<boolean>(true);
+    const [showFileSelector, setShowFileSelector] = useState<boolean>(false);
 
     return showModal ? (
         <Modal closeModal={() => setShowModal(false)}>
@@ -44,15 +60,39 @@ const PorterYamlModal: React.FC<Props> = ({ close, setPorterYamlPath, porterYaml
                 </span>
             </div>
             <Spacer y={0.5} />
-            <Text color="helper">Path to <Code>porter.yaml</Code> from repository root (i.e. starting with ./):</Text>
+            <Text color="helper">Path to <Code>porter.yaml</Code> from repository root:</Text>
             <Spacer y={0.5} />
-            <Input
-                disabled={false}
-                placeholder="ex: ./subdirectory/porter.yaml"
-                value={possiblePorterYamlPath}
-                width="100%"
-                setValue={setPossiblePorterYamlPath}
-            />
+            <InputWrapper
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (!showFileSelector) {
+                        setShowFileSelector(true);
+                        setPossiblePorterYamlPath("");
+                    }
+                }}
+            >
+                <Input
+                    placeholder="ex: ./subdirectory/porter.yaml"
+                    value={possiblePorterYamlPath}
+                    width="100%"
+                    setValue={setPossiblePorterYamlPath}
+                    hideCursor={true}
+                />
+            </InputWrapper>
+            {showFileSelector && 
+                <div>
+                    <FileSelector 
+                        projectId={projectId} 
+                        repoId={repoId} 
+                        repoOwner={repoOwner} 
+                        repoName={repoName} 
+                        branch={branch}
+                        onFileSelect={(path: string) => setPossiblePorterYamlPath(`./${path}`)} 
+                        isFileSelectable={(path: string) => path.endsWith(".yaml")}
+                        headerText={"Select your porter.yaml:"}
+                    />
+                </div>
+            }
             <Spacer y={1} />
             <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <Button
@@ -66,9 +106,9 @@ const PorterYamlModal: React.FC<Props> = ({ close, setPorterYamlPath, porterYaml
                         setPorterYamlPath(possiblePorterYamlPath);
                         setShowModal(false);
                     }}
-                    color="#616fee"
+                    disabled={possiblePorterYamlPath === ""}
                 >
-                    Update path
+                    Confirm path
                 </Button>
             </div>
         </Modal>
@@ -79,4 +119,10 @@ export default PorterYamlModal;
 
 const Code = styled.span`
   font-family: monospace;
+`;
+
+const InputWrapper = styled.div`
+    width: 500px;
+    display: flex;
+    justify-content: space-between;
 `;

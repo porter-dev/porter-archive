@@ -77,11 +77,10 @@ const ImageSettings: React.FC<Props> = ({
         <div>
             <Text size={16}>Image settings</Text>
             <Spacer y={0.5} />
-            <Text color="helper">Specify your image URL.</Text>
-            <Spacer y={0.5} />
-
             {!imageUri && (
                 <>
+                    <Text color="helper">Specify your image URL.</Text>
+                    <Spacer y={0.5} />
                     <ExpandedWrapper>
                         <ImageList
                             setSelectedImage={(image: ImageType) => {
@@ -115,10 +114,10 @@ const ImageSettings: React.FC<Props> = ({
                         Select image URL
                     </BackButton>
                     <Spacer y={1} />
-                    <Text color="helper">Specify your image tag.</Text>
-                    <Spacer y={0.5} />
                     {!imageTag && (
                         <>
+                            <Text color="helper">Specify your image tag.</Text>
+                            <Spacer y={0.5} />
                             <ExpandedWrapper>
                                 <TagList
                                     selectedImage={selectedImage}

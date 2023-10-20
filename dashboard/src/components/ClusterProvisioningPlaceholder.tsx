@@ -10,6 +10,9 @@ import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
 import Text from "./porter/Text";
 import Spacer from "./porter/Spacer";
+import DashboardPlaceholder from "./porter/DashboardPlaceholder";
+import PorterLink from "components/porter/Link";
+import Button from "./porter/Button";
 
 type Props = {};
 
@@ -17,41 +20,29 @@ const ClusterProvisioningPlaceholder: React.FC<RouteComponentProps> = (props) =>
   const { currentCluster } = useContext(Context);
 
   return (
-    <ClusterPlaceholder>
+    <DashboardPlaceholder>
       <Text size={16}>
         <Img src={loading} /> Your cluster is being created
       </Text>
-      <Spacer height="15px" />
+      <Spacer y={.5} />
       <Text color="helper">
-        You can view the status of your cluster creation
-        <Spacer inline width="5px" />
-        <Link onClick={() => {
-          pushFiltered(props, "/cluster-dashboard", ["project_id"], {
-            cluster: currentCluster.name,
-          });
-        }}>
-          here
-          <i className="material-icons">arrow_forward</i> 
-        </Link>
+        You can proceed as soon as your cluster is ready.
       </Text>
-    </ClusterPlaceholder>
+      <Spacer y={1} />
+      <PorterLink onClick={() => {
+        pushFiltered(props, "/cluster-dashboard", ["project_id"], {
+          cluster: currentCluster?.name,
+        });
+      }}>
+        <Button alt height="35px">
+          View status <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
+        </Button>
+      </PorterLink>
+    </DashboardPlaceholder>
   );
 };
 
 export default withRouter(ClusterProvisioningPlaceholder);
-
-const Link = styled.a`
-  text-decoration: underline;
-  position: relative;
-  cursor: pointer;
-  > i {
-    color: #aaaabb;
-    font-size: 15px;
-    position: absolute;
-    right: -17px;
-    top: 1px;
-  }
-`;
 
 const Img = styled.img`
   height: 15px;

@@ -192,7 +192,6 @@ const Option = styled.div<{ selected: boolean }>`
   opacity: 0.6;
   :hover {
     opacity: 1;
-
   }
 
   > i {

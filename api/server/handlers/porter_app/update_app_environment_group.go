@@ -69,7 +69,8 @@ type UpdateAppEnvironmentRequest struct {
 
 // UpdateAppEnvironmentResponse represents the fields on the response object from the /apps/{porter_app_name}/environment-group endpoint
 type UpdateAppEnvironmentResponse struct {
-	EnvGroups []environment_groups.EnvironmentGroup `json:"env_groups"`
+	Base64AppProto string                                `json:"b64_app_proto"`
+	EnvGroups      []environment_groups.EnvironmentGroup `json:"env_groups"`
 }
 
 // ServeHTTP updates or creates the environment group for an app
@@ -114,24 +115,35 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
 
-	if request.Base64AppProto == "" {
-		err := telemetry.Error(ctx, span, nil, "b64 yaml is empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error decoding base yaml")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
 	appProto := &porterv1.PorterApp{}
-	err = helpers.UnmarshalContractObject(decoded, appProto)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error unmarshalling app proto")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+
+	if request.Base64AppProto == "" {
+		if appName == "" {
+			err := telemetry.Error(ctx, span, nil, "app name is empty and no base64 proto provided")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		appProto.Name = appName
+	} else {
+		decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error decoding base yaml")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		err = helpers.UnmarshalContractObject(decoded, appProto)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error unmarshalling app proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+	}
+
+	if appProto.Name == "" {
+		err := telemetry.Error(ctx, span, nil, "app proto name is empty")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -252,8 +264,25 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 				Version: latestEnvironmentGroup.Version,
 			})
 
+			var protoEnvGroups []*porterv1.EnvGroup
+			for _, envGroup := range latestEnvGroups {
+				protoEnvGroups = append(protoEnvGroups, &porterv1.EnvGroup{
+					Name:    envGroup.Name,
+					Version: int64(envGroup.Version),
+				})
+			}
+			appProto.EnvGroups = protoEnvGroups
+
+			encodedApp, err := encodeAppProto(ctx, appProto)
+			if err != nil {
+				err := telemetry.Error(ctx, span, err, "error encoding app proto")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
+
 			res := &UpdateAppEnvironmentResponse{
-				EnvGroups: latestEnvGroups,
+				EnvGroups:      latestEnvGroups,
+				Base64AppProto: encodedApp,
 			}
 
 			c.WriteResult(w, r, res)
@@ -363,8 +392,25 @@ func (c *UpdateAppEnvironmentHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		Version: version,
 	})
 
+	var protoEnvGroups []*porterv1.EnvGroup
+	for _, envGroup := range latestEnvGroups {
+		protoEnvGroups = append(protoEnvGroups, &porterv1.EnvGroup{
+			Name:    envGroup.Name,
+			Version: int64(envGroup.Version),
+		})
+	}
+	appProto.EnvGroups = protoEnvGroups
+
+	encodedApp, err := encodeAppProto(ctx, appProto)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error encoding app proto")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	res := &UpdateAppEnvironmentResponse{
-		EnvGroups: latestEnvGroups,
+		EnvGroups:      latestEnvGroups,
+		Base64AppProto: encodedApp,
 	}
 
 	c.WriteResult(w, r, res)

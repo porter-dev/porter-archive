@@ -47,9 +47,12 @@ type AppRevision struct {
 	// ProjectID is the ID of the project that the revision belongs to.
 	ProjectID int `json:"project_id"`
 
-	// PorterAppID is the ID of the PorterApp that the revision belongs to.
+	// PorterAppID is the ID of the PorterApp that the revision belongs to. This will be deprecated in favor of AppInstanceID (tracking: POR-1992)
 	PorterAppID int `json:"porter_app_id"`
 
 	// RevisionNumber is the number of the revision respective to that porter_app_id and deployment_target_id
 	RevisionNumber int `json:"revision_number"`
+
+	// AppInstanceID is the ID of the AppInstance that the revision belongs to. This will be null while the app instance table is being seeded (tracking: POR-1991)
+	AppInstanceID uuid.UUID `json:"app_instance_id" gorm:"type:uuid;default:00000000-0000-0000-0000-000000000000"`
 }

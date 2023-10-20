@@ -27,6 +27,9 @@ type DeploymentTarget struct {
 	// ProjectID is the ID of the project that the target belongs to.
 	ProjectID int `json:"project_id"`
 
+	// VanityName is a human-readable name for the deployment target.  It will be unique within a project once all existing deployment targets have been backfilled (tracking: POR-1991)
+	VanityName string `json:"vanity_name" gorm:"default:''"`
+
 	// Selector is the identifier to target.
 	Selector string `json:"selector"`
 
@@ -35,6 +38,9 @@ type DeploymentTarget struct {
 
 	// Preview is a boolean indicating whether this target is a preview target.
 	Preview bool `gorm:"default:false" json:"preview"`
+
+	// Metadata is a JSONB column that stores arbitrary metadata about the deployment target
+	Metadata JSONB `json:"metadata" sql:"type:jsonb" gorm:"type:jsonb;default:'{}'"`
 }
 
 // ToDeploymentTargetType generates an external types.PorterApp to be shared over REST

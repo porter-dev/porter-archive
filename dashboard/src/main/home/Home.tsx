@@ -22,6 +22,8 @@ import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
 import AppDashboard from "./app-dashboard/AppDashboard";
 import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
+import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
+import CreateDatabase from "./database-dashboard/CreateDatabase";
 
 import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -453,6 +455,13 @@ const Home: React.FC<Props> = (props) => {
                   ) : (
                     <AppDashboard />
                   )}
+                </Route>
+
+                <Route path="/databases/new">
+                  <CreateDatabase />
+                </Route>
+                <Route path="/databases">
+                  <DatabaseDashboard />
                 </Route>
 
                 <Route path="/addons/new">

@@ -37,7 +37,7 @@ const PreflightChecks: React.FC<Props> = (props) => {
     const checkData = props.preflightData?.preflight_checks?.[checkKey];
     const hasMessage = checkData?.message;
 
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(true);
 
     const handleToggle = () => {
       if (hasMessage) {

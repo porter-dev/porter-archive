@@ -41,7 +41,7 @@ const CreateDatabase: React.FC<Props> = ({
       description: "Amazon Relational Database Service (RDS) is a web service that makes it easier to set up, operate, and scale a relational database in the cloud.",
     },
     {
-      id: "aurora-postgresql",
+      id: "rds-postgresql-aurora",
       icon: awsRDS,
       name: "Aurora PostgreSQL",
       description: "Amazon Aurora PostgreSQL is a fully managed, PostgreSQL–compatible, and ACID–compliant relational database engine that combines the speed, reliability, and manageability of Amazon Aurora with the simplicity and cost-effectiveness of open-source databases.",
@@ -86,7 +86,7 @@ const CreateDatabase: React.FC<Props> = ({
                 repoURL={capabilities?.default_addon_helm_repo_url}
               />
             )}
-            {currentTemplate.id === "aurora-postgresql" && (
+            {currentTemplate.id === "rds-postgresql-aurora" && (
               <AuroraPostgresForm
                 currentTemplate={currentTemplate}
                 goBack={() => setCurrentTemplate(null)}

@@ -33,47 +33,35 @@ const Resources: React.FC<ResourcesProps> = ({
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
 
   const autoscalingEnabled = watch(
-    `app.services.${index}.config.autoscaling.enabled`
+    `app.services.${index}.config.autoscaling.enabled`, {
+      readOnly: false,
+      value: false
+    }
   );
 
   const smartOpt = watch(
-    `app.services.${index}.smartOptimization`
+    `app.services.${index}.smartOptimization`, {
+      readOnly: false,
+      value: false
+    }
   );
 
   const memory = watch(
-    `app.services.${index}.ramMegabytes`
+    `app.services.${index}.ramMegabytes`, {
+      readOnly: false,
+      value: 0
+    }
   );
   const cpu = watch(
-    `app.services.${index}.cpuCores`
+    `app.services.${index}.cpuCores`, {
+      readOnly: false,
+      value: 0
+    }
   );
 
   return (
     <>
       <Spacer y={1} />
-      <Spacer y={1} />
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-        <StyledIcon
-          className="material-icons"
-          onClick={() => {
-            setShowNeedHelpModal(true)
-          }}
-        >
-          help_outline
-        </StyledIcon>
-        <Text style={{ marginRight: '10px' }}>Smart Optimization</Text>
-        <Switch
-          size="small"
-          color="primary"
-          checked={true}
-          onChange={console.log('hi')}
-          inputProps={{ 'aria-label': 'controlled' }}
-        />
-      </div>
-      {showNeedHelpModal &&
-        <SmartOptModal
-          setModalVisible={setShowNeedHelpModal}
-        />}
-
       <Controller
         name={isPredeploy ? `app.predeploy.${index}.smartOptimization` : `app.services.${index}.smartOptimization`}
         control={control}
@@ -132,7 +120,6 @@ const Resources: React.FC<ResourcesProps> = ({
           <IntelligentSlider
             label="CPUs: "
             unit="Cores"
-            override={false}
             min={0}
             max={maxCPU}
             color={"#3f51b5"}
@@ -188,7 +175,7 @@ const Resources: React.FC<ResourcesProps> = ({
                 value: e,
               });
             }}
-            step={.1}
+            step={10}
             disabled={value.readOnly}
             disabledTooltip={
               "You may only edit this field in your porter.yaml."

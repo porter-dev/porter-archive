@@ -145,7 +145,6 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			VerifyEmailTemplateID:   envConf.ServerConf.SendgridVerifyEmailTemplateID,
 			ProjectInviteTemplateID: envConf.ServerConf.SendgridProjectInviteTemplateID,
 			DeleteProjectTemplateID: envConf.ServerConf.SendgridDeleteProjectTemplateID,
-			CreateClusterTemplateID: envConf.ServerConf.SendgridCreateClusterProjectTemplateID,
 		})
 		res.Logger.Info().Msg("Created new user notifier")
 	}

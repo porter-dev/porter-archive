@@ -12,7 +12,6 @@ type FakeUserNotifier struct {
 	lastEmailVerOpts      *notifier.SendEmailVerificationOpts
 	lastProjInvOpts       *notifier.SendProjectInviteEmailOpts
 	lastDeleteProjectOpts *notifier.SendProjectDeleteEmailOpts
-	lastClusterCreateOpts *notifier.SendClusterCreationEmailOpts
 }
 
 func NewFakeUserNotifier() notifier.UserNotifier {
@@ -57,10 +56,5 @@ func (f *FakeUserNotifier) GetSendProjectInviteEmailLastOpts() *notifier.SendPro
 
 func (f *FakeUserNotifier) SendProjectDeleteEmail(opts *notifier.SendProjectDeleteEmailOpts) error {
 	f.lastDeleteProjectOpts = opts
-	return nil
-}
-
-func (f *FakeUserNotifier) SendClusterCreationEmail(opts *notifier.SendClusterCreationEmailOpts) error {
-	f.lastClusterCreateOpts = opts
 	return nil
 }

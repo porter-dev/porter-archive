@@ -72,8 +72,6 @@ func (c *ClusterStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		IsControlPlaneReady:   statusResp.ControlPlaneStatus,
 	}
 
-	fmt.Println("PHASE: ", resp.Phase)
-
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "cluster-phase", Value: statusResp.Phase},
 		telemetry.AttributeKV{Key: "cluster-infra-status", Value: statusResp.InfrastructureStatus},

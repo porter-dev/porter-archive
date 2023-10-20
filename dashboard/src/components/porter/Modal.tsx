@@ -105,7 +105,7 @@ const StyledModal = styled.div<{
   font-size: 13px;
   width: ${props => props.width || "600px"};
   background: #42444933;
-  backdrop-filter: saturate(150%) blur(8px);
+  backdrop-filter: saturate(100%) blur(10px);
 
   animation: floatInModal 0.5s 0s;
   @keyframes floatInModal {

@@ -132,7 +132,8 @@ const StyledInput = styled.input<{
   font-size: 13px;
   outline: none;
   border-radius: 5px;
-  background: #26292e;
+  background: #42444933;
+  backdrop-filter: saturate(100%) blur(10px);
   cursor: ${(props) => (props.disabled ? "not-allowed" : "")};
 
   border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#494b4f")};

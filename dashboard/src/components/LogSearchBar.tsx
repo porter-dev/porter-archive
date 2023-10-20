@@ -29,7 +29,7 @@ const LogSearchBar: React.FC<Props> = ({
         setSearchText(x);
       }}
       onEnter={() => {
-        setEnteredSearchText(escapeRegExp(searchText));
+        setEnteredSearchText(searchText);
         setSelectedDate();
       }}
       placeholder="Search logs . . ."

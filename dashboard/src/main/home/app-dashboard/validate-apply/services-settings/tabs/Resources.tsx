@@ -20,7 +20,7 @@ type ResourcesProps = {
   maxRAM: number;
   service: ClientService;
   isPredeploy?: boolean;
-  gpuNodes: boolean;
+  clusterContainsGPUNodes: boolean;
 };
 
 const Resources: React.FC<ResourcesProps> = ({
@@ -28,7 +28,7 @@ const Resources: React.FC<ResourcesProps> = ({
   maxCPU,
   maxRAM,
   service,
-  gpuNodes,
+  clusterContainsGPUNodes,
   isPredeploy = false,
 }) => {
   const { control, register, watch, setValue } = useFormContext<PorterAppFormData>();
@@ -186,7 +186,7 @@ const Resources: React.FC<ResourcesProps> = ({
           />
         )}
       />
-      {gpuNodes && (
+      {clusterContainsGPUNodes && (
         <>
           <Spacer y={1} />
           <Controller
@@ -208,10 +208,7 @@ const Resources: React.FC<ResourcesProps> = ({
                     value: e,
                   });
                 }}
-                disabledTooltip={
-                  value.readOnly
-                    ? "You may only edit this field in your porter.yaml."
-                    : "Enable GPU nodes to specify GPU cores."
+                disabledTooltip={"You may only edit this field in your porter.yaml."
                 }
               />
             )}
@@ -241,7 +238,7 @@ const Resources: React.FC<ResourcesProps> = ({
             />
             <Spacer y={1} />
 
-            {!gpuNodes && (<Controller
+            {!clusterContainsGPUNodes && (<Controller
               name={`app.services.${index}.config.autoscaling.enabled`}
               control={control}
               render={({ field: { value, onChange } }) => (

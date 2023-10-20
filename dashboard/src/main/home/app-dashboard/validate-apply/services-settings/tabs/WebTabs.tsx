@@ -18,14 +18,14 @@ interface Props {
   chart?: any;
   maxRAM: number;
   maxCPU: number;
-  gpuNodes: boolean;
+  clusterContainsGPUNodes: boolean;
   internalNetworkingDetails: {
     namespace: string;
     appName: string;
   };
 }
 
-const WebTabs: React.FC<Props> = ({ index, service, maxRAM, maxCPU, gpuNodes, internalNetworkingDetails }) => {
+const WebTabs: React.FC<Props> = ({ index, service, maxRAM, maxCPU, clusterContainsGPUNodes, internalNetworkingDetails }) => {
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "networking" | "advanced"
   >("main");
@@ -56,7 +56,7 @@ const WebTabs: React.FC<Props> = ({ index, service, maxRAM, maxCPU, gpuNodes, in
             index={index}
             maxCPU={maxCPU}
             maxRAM={maxRAM}
-            gpuNodes={gpuNodes}
+            clusterContainsGPUNodes={clusterContainsGPUNodes}
             service={service}
           />
         ))

@@ -51,7 +51,7 @@ type ServiceListProps = {
   serviceVersionStatus?: Record<string, PorterAppVersionStatus[]>;
   maxCPU: number;
   maxRAM: number;
-  gpuNodes: boolean;
+  clusterContainsGPUNodes: boolean;
   internalNetworkingDetails?: {
     namespace: string;
     appName: string;
@@ -67,7 +67,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   serviceVersionStatus,
   maxCPU,
   maxRAM,
-  gpuNodes,
+  clusterContainsGPUNodes,
   internalNetworkingDetails = {
     namespace: "",
     appName: "",
@@ -205,7 +205,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 status={serviceVersionStatus?.[svc.name.value]}
                 maxCPU={maxCPU}
                 maxRAM={maxRAM}
-                gpuNodes={gpuNodes}
+                clusterContainsGPUNodes={clusterContainsGPUNodes}
                 internalNetworkingDetails={internalNetworkingDetails}
               />
             ) : null;

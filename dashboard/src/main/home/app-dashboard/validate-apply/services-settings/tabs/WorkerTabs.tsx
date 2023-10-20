@@ -16,10 +16,10 @@ interface Props {
   chart?: any;
   maxRAM: number;
   maxCPU: number;
-  gpuNodes: boolean;
+  clusterContainsGPUNodes: boolean;
 }
 
-const WorkerTabs: React.FC<Props> = ({ index, service, maxCPU, maxRAM, gpuNodes }) => {
+const WorkerTabs: React.FC<Props> = ({ index, service, maxCPU, maxRAM, clusterContainsGPUNodes }) => {
   const [currentTab, setCurrentTab] = React.useState<"main" | "resources">(
     "main"
   );
@@ -42,7 +42,7 @@ const WorkerTabs: React.FC<Props> = ({ index, service, maxCPU, maxRAM, gpuNodes 
             maxCPU={maxCPU}
             maxRAM={maxRAM}
             service={service}
-            gpuNodes={gpuNodes}
+            clusterContainsGPUNodes={clusterContainsGPUNodes}
           />
         ))
         .exhaustive()}

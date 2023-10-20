@@ -61,7 +61,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
             fieldArrayName={"app.predeploy"}
             maxCPU={currentClusterResources.maxCPU}
             maxRAM={currentClusterResources.maxRAM}
-            gpuNodes={currentClusterResources.gpuNodes}
+            clusterContainsGPUNodes={currentClusterResources.clusterContainsGPUNodes}
           />
           <Spacer y={0.5} />
         </>
@@ -75,7 +75,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
         serviceVersionStatus={serviceVersionStatus}
         maxCPU={currentClusterResources.maxCPU}
         maxRAM={currentClusterResources.maxRAM}
-        gpuNodes={currentClusterResources.gpuNodes}
+        clusterContainsGPUNodes={currentClusterResources.clusterContainsGPUNodes}
         internalNetworkingDetails={{
           namespace: deploymentTarget.namespace,
           appName: porterApp.name,

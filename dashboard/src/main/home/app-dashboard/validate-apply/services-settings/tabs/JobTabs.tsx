@@ -23,7 +23,7 @@ interface Props {
   chart?: any;
   maxRAM: number;
   maxCPU: number;
-  gpuNodes: boolean;
+  clusterContainsGPUNodes: boolean;
   isPredeploy?: boolean;
 }
 
@@ -31,7 +31,7 @@ const JobTabs: React.FC<Props> = ({
   index,
   service,
   maxRAM,
-  gpuNodes,
+  clusterContainsGPUNodes,
   maxCPU,
   isPredeploy,
 }) => {
@@ -65,7 +65,7 @@ const JobTabs: React.FC<Props> = ({
             index={index}
             maxCPU={maxCPU}
             maxRAM={maxRAM}
-            gpuNodes={gpuNodes}
+            clusterContainsGPUNodes={clusterContainsGPUNodes}
             service={service}
             isPredeploy={isPredeploy}
           />

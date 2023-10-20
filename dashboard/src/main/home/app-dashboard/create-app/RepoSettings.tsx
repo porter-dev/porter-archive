@@ -19,6 +19,7 @@ import { BuildOptions } from "lib/porter-apps/build";
 import Loading from "components/Loading";
 import DockerfileSettings from "../validate-apply/build-settings/docker/DockerfileSettings";
 import useResizeObserver from "lib/hooks/useResizeObserver";
+import CollapsibleContainer from "components/porter/CollapsibleContainer";
 
 type Props = {
   projectId: number;
@@ -44,28 +45,6 @@ const RepoSettings: React.FC<Props> = ({
 }) => {
   const { control, register, setValue } = useFormContext<PorterAppFormData>();
   const [showSettings, setShowSettings] = useState<boolean>(false);
-
-  const [height, setHeight] = useState<Height>(showSettings ? "auto" : 0);
-
-  // onResize is called when the height of the service container changes
-  // used to set the height of the AnimateHeight component on tab swtich
-  const onResize = useCallback(
-    (elt: HTMLDivElement) => {
-      if (elt.clientHeight === 0) {
-        return;
-      }
-
-      setHeight(elt.clientHeight ?? "auto");
-    },
-    [setHeight]
-  );
-  const ref = useResizeObserver(onResize);
-
-  useEffect(() => {
-    if (!showSettings) {
-      setHeight(0);
-    }
-  }, [showSettings]);
 
   const repoIsSet = useMemo(() => source.git_repo_name !== "", [
     source.git_repo_name,
@@ -273,16 +252,11 @@ const RepoSettings: React.FC<Props> = ({
                   )}
                 </StyledAdvancedBuildSettings>
               }
-
-              <AnimateHeight 
-                // height={showSettings ? "auto" : 0} 
-                // duration={1000}
-                height={height}
-                contentRef={ref}
-                contentClassName="auto-content"
-                duration={300}
+              <AnimateHeight
+                duration={500}
+                height={showSettings ? "auto" : 0}
               >
-                {height !== 0 && <StyledSourceBox>
+                <StyledSourceBox>
                   <Controller
                     name="app.build.method"
                     control={control}
@@ -334,7 +308,7 @@ const RepoSettings: React.FC<Props> = ({
                       </>
                     ))
                     .exhaustive()}
-                </StyledSourceBox>}
+                </StyledSourceBox>
               </AnimateHeight>
             </>
           )}

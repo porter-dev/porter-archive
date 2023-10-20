@@ -612,6 +612,15 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                                         onChange(porterYamlPath);
                                       }}
                                       porterYamlPath={value}
+                                      projectId={currentProject.id}
+                                      repoId={source.git_repo_id}
+                                      repoOwner={source.git_repo_name.split(
+                                        "/"
+                                      )[0]}
+                                      repoName={source.git_repo_name.split(
+                                        "/"
+                                      )[1]}
+                                      branch={source.git_branch}
                                     />
                                   )}
                                 />
@@ -663,9 +672,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>
@@ -677,6 +685,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       fieldArrayName={"app.services"}
                       maxCPU={currentClusterResources.maxCPU}
                       maxRAM={currentClusterResources.maxRAM}
+                      clusterContainsGPUNodes={currentClusterResources.clusterContainsGPUNodes}
                     />
                   </>,
                   <>

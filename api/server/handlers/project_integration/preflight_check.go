@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/porter-dev/api-contracts/generated/go/helpers"
-
 	"connectrpc.com/connect"
+	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"

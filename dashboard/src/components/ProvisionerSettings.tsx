@@ -508,6 +508,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   const proceedToProvision = async () => {
     setShowEmailMessage(true)
+    markStepStarted("requested-quota-increase")
     setStep(2)
   }
   const requestQuotasAndProvision = async () => {
@@ -518,7 +519,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const requestQuotaIncrease = async () => {
 
     try {
-      markStepStarted("requested-quota-increase")
       setIsLoading(true);
       var data = new QuotaIncreaseRequest({
         projectId: BigInt(currentProject.id),

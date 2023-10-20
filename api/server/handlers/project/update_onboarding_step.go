@@ -192,7 +192,7 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 
 	if request.Step == "requested-quota-increase" {
-		err := v.Config().AnalyticsClient.Track(analytics.ProvisioningAttemptTrack(&analytics.ProvisioningAttemptTrackOpts{
+		err := v.Config().AnalyticsClient.Track(analytics.QuotaIncreaseAttemptTrack(&analytics.ProvisioningAttemptTrackOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			Email:                  user.Email,
 			FirstName:              user.FirstName,

@@ -11,7 +11,11 @@ import {
   CreateStackBody,
   SourceConfig,
 } from "main/home/cluster-dashboard/stacks/types";
-import { Contract, PreflightCheckRequest } from "@porter-dev/api-contracts";
+import {
+  Contract,
+  PreflightCheckRequest,
+  QuotaIncreaseRequest,
+} from "@porter-dev/api-contracts";
 
 /**
  * Generic api call format
@@ -79,6 +83,13 @@ const preflightCheck = baseApi<PreflightCheckRequest, { id: number }>(
   "POST",
   (pathParams) => {
     return `/api/projects/${pathParams.id}/integrations/preflightcheck`;
+  }
+);
+
+const requestQuotaIncrease = baseApi<QuotaIncreaseRequest, { id: number }>(
+  "POST",
+  (pathParams) => {
+    return `/api/projects/${pathParams.id}/integrations/quotaincrease`;
   }
 );
 
@@ -3333,6 +3344,7 @@ export default {
   removeApplicationFromEnvGroup,
   provisionDatabase,
   preflightCheck,
+  requestQuotaIncrease,
   getDatabases,
   getPreviousLogsForContainer,
   upgradePorterAgent,

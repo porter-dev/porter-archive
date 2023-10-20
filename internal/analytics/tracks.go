@@ -404,6 +404,21 @@ func ProvisioningAttemptTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
 	)
 }
 
+// QuotaIncreaseAttemptTrack returns a track for when a user attempts provisioning
+func QuotaIncreaseAttemptTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["region"] = opts.Region
+	additionalProps["provider"] = opts.Provider
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, QuotaIncreaseRequested),
+	)
+}
+
 // PreProvisionCheckTrack returns a track for when a user attempts provisioning
 func ProvisionFailureTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})

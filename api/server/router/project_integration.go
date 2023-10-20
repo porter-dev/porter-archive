@@ -248,6 +248,34 @@ func getProjectIntegrationRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/integrations/quotaincrease -> project_integration.NewCreatePreflightCheckHandler
+	requestQuotaIncreaseEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/quotaincrease",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	requestQuotaIncreaseHandler := project_integration.NewRequestQuotaIncreaseHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: requestQuotaIncreaseEndpoint,
+		Handler:  requestQuotaIncreaseHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/integrations/azure -> project_integration.NewListAzureHandler
 	listAzureEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

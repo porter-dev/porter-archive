@@ -23,12 +23,16 @@ import {
   EKSLogging,
   EKSPreflightValues,
   PreflightCheckRequest,
+  QuotaIncreaseRequest,
+  EnumQuotaIncrease,
   AWSClusterNetwork,
 } from "@porter-dev/api-contracts";
 
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
 import Error from "./porter/Error";
+import healthy from "assets/status-healthy.png";
+
 import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
 import Link from "./porter/Link";
@@ -42,6 +46,8 @@ import Loading from "./Loading";
 import PreflightChecks from "./PreflightChecks";
 import Placeholder from "./Placeholder";
 import VerticalSteps from "./porter/VerticalSteps";
+import Modal from "components/porter/Modal";
+import { PREFLIGHT_TO_ENUM } from "shared/util";
 import { useIntercom } from "lib/hooks/useIntercom";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -151,8 +157,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [preflightData, setPreflightData] = useState(null)
   const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
   const [preflightError, setPreflightError] = useState<string>("")
-  
+  const [showPreflightModal, setShowPreflightModal] = useState(false);
+  const [showHelpMessage, setShowHelpMessage] = useState(true);
+  const [quotaIncrease, setQuotaIncrease] = useState<EnumQuotaIncrease[]>([]);
+  const [showEmailMessage, setShowEmailMessage] = useState(false);
   const { showIntercomWithMessage } = useIntercom();
+
 
   const markStepStarted = async (step: string, errMessage?: string) => {
     try {
@@ -179,18 +189,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
     if (isReadOnly && props.provisionerError == "") {
       return "Provisioning is still in progress...";
-    } else if (errorMessage) {
-      return (
-        <Error
-          message={errorMessage}
-          ctaText={
-            errorMessage !== DEFAULT_ERROR_MESSAGE
-              ? "Troubleshooting steps"
-              : null
-          }
-          errorModalContents={errorMessageToModal(errorMessage)}
-        />
-      );
+
     }
     return undefined;
   };
@@ -507,6 +506,49 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
   }, [props.selectedClusterVersion, awsRegion]);
 
+  const proceedToProvision = async () => {
+    setShowEmailMessage(true)
+    markStepStarted("requested-quota-increase")
+    setStep(2)
+  }
+  const requestQuotasAndProvision = async () => {
+    await requestQuotaIncrease()
+    await createCluster()
+  }
+
+  const requestQuotaIncrease = async () => {
+
+    try {
+      setIsLoading(true);
+      var data = new QuotaIncreaseRequest({
+        projectId: BigInt(currentProject.id),
+        cloudProvider: EnumCloudProvider.AWS,
+        cloudProviderCredentialsId: props.credentialId,
+        preflightValues: {
+          case: "eksPreflightValues",
+          value: new EKSPreflightValues({
+            region: awsRegion,
+          })
+        },
+        quotaIncreases: quotaIncrease
+      });
+      await api.requestQuotaIncrease(
+        "<token>", data,
+        {
+          id: currentProject.id,
+        }
+      )
+
+
+      setIsLoading(false)
+    } catch (err) {
+      console.log(err)
+      setIsLoading(false)
+    }
+
+  }
+
+
 
   const preflightChecks = async () => {
 
@@ -515,6 +557,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       setPreflightData(null);
       setPreflightFailed(true)
       setPreflightError("");
+      setShowEmailMessage(false)
 
       var data = new PreflightCheckRequest({
         projectId: BigInt(currentProject.id),
@@ -536,14 +579,19 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       // Check if any of the preflight checks has a message
       let hasMessage = false;
       let errors = "Preflight Checks Failed : ";
+      let quotas: EnumQuotaIncrease[] = [];
       for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
+
         if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
+          quotas.push(PREFLIGHT_TO_ENUM[check])
           hasMessage = true;
           errors = errors + check + ", "
         }
       }
+      setQuotaIncrease(quotas)
       // If none of the checks have a message, set setPreflightFailed to false
       if (hasMessage) {
+        setShowPreflightModal(true)
         showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
         markStepStarted("provisioning-failed", errors);
       }
@@ -1013,6 +1061,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     );
   };
 
+  const dismissPreflight = () => {
+    setShowHelpMessage(false);
+    preflightChecks();
+  }
+
   const renderForm = () => {
     // Render simplified form if initial create
     if (!props.clusterId) {
@@ -1040,32 +1093,78 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               </>
             </>,
             <>
-              <PreflightChecks provider='AWS' preflightData={preflightData} error={preflightError} />
-              <Spacer y={.5} />
-              {(preflightFailed && preflightData) &&
+              {showEmailMessage ?
                 <>
-                  <Text color="helper">
-                    Preflight checks for the account didn't pass. Please fix the issues and retry.
-                  </Text>
+                  <CheckItemContainer >
+                    <CheckItemTop >
+                      <StatusIcon src={healthy} />
+                      <Spacer inline x={1} />
+                      <Text style={{ marginLeft: '10px', flex: 1 }}>{"Porter will request to increase quotas when you provision"}</Text>
+                    </CheckItemTop>
+                  </CheckItemContainer>
+
+                </> :
+                <>
+                  <PreflightChecks provider='AWS' preflightData={preflightData} error={preflightError} />
                   <Spacer y={.5} />
-                  < Button
-                    // disabled={isDisabled()}
-                    disabled={isLoading}
-                    onClick={preflightChecks}
-                  >
-                    Retry Checks
-                  </Button>
+                  {(preflightFailed && preflightData) &&
+                    <>
+                      {(showHelpMessage) ? <>
+                        <Text color="helper">
+                          Your account currently is blocked from provisioning in {awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
+                        </Text>
+                        <Spacer y={.5} />
+                        <Text color="helper">
+                          Porter can automatically request quota increases on your behalf and email you once the cluster is provisioned.
+                        </Text>
+                        <Spacer y={.5} />
+                        <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '15px' }}>
+                          <Button
+                            disabled={isLoading}
+                            onClick={proceedToProvision}
+
+                          >
+                            Auto request increase
+                          </Button>
+                          <Button
+                            disabled={isLoading}
+                            onClick={dismissPreflight}
+                            color="#313539"
+                          >
+                            I'll do it myself
+                          </Button>
+                        </div>
+
+                      </> : (
+                        <><Text color="helper">
+                          Your account currently is blocked from provisioning in {awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
+                        </Text><Spacer y={.5} /><Button
+                          disabled={isLoading}
+                          onClick={preflightChecks}
+
+                        >
+                            Retry checks
+                          </Button></>)}
+                    </>
+                  }
                 </>
               }
             </>,
             <>
               <Text size={16}>Provision your cluster</Text>
               <Spacer y={1} />
+              {showEmailMessage && <>
+                <Text color="helper">
+                  After your quota requests have been approved by AWS, Porter will email you when your cluster has been provisioned.
+                </Text>
+                <Spacer y={1} />
+              </>
+              }
               <Button
                 // disabled={isDisabled()}
                 // disabled={isDisabled() || preflightFailed || isLoading}
-                disabled={preflightFailed || isLoading}
-                onClick={createCluster}
+                disabled={(preflightFailed && !showEmailMessage) || isLoading}
+                onClick={showEmailMessage ? requestQuotasAndProvision : createCluster}
                 status={getStatus()}
               >
                 Provision
@@ -1127,334 +1226,71 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 export default withRouter(ProvisionerSettings);
 
 const ExpandHeader = styled.div<{ isExpanded: boolean }>`
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+              display: flex;
+              align-items: center;
+              cursor: pointer;
   > i {
-    margin-right: 7px;
-    margin-left: -7px;
-    transform: ${(props) =>
+                margin - right: 7px;
+              margin-left: -7px;
+              transform: ${(props) =>
     props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
-    transition: transform 0.1s ease;
+              transition: transform 0.1s ease;
   }
-`;
+              `;
 
 const StyledForm = styled.div`
-  position: relative;
-  padding: 30px 30px 25px;
-  border-radius: 5px;
-  background: ${({ theme }) => theme.fg};
-  border: 1px solid #494b4f;
-  font-size: 13px;
-  margin-bottom: 30px;
-`;
+              position: relative;
+              padding: 30px 30px 25px;
+              border-radius: 5px;
+              background: ${({ theme }) => theme.fg};
+              border: 1px solid #494b4f;
+              font-size: 13px;
+              margin-bottom: 30px;
+              `;
 
 const FlexCenter = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 3px;
-`;
+              display: flex;
+              align-items: center;
+              gap: 3px;
+              `;
 const Wrapper = styled.div`
-  transform: translateY(+13px);
-`;
+              transform: translateY(+13px);
+              `;
 
 const ErrorInLine = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  color: #ff3b62;
-  margin-top: 10px;
+              display: flex;
+              align-items: center;
+              font-size: 13px;
+              color: #ff3b62;
+              margin-top: 10px;
 
   > i {
-    font-size: 18px;
-    margin-right: 5px;
+                font - size: 18px;
+              margin-right: 5px;
   }
+              `;
+
+const CheckItemContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  border: 1px solid ${props => props.theme.border};
+  border-radius: 5px;
+  font-size: 13px;
+  width: 100%;
+  margin-bottom: 10px;
+  padding-left: 10px;
+  cursor: ${props => (props.hasMessage ? 'pointer' : 'default')};
+  background: ${props => props.theme.clickable.bg};
+
 `;
 
-const AWS_LOGIN_ERROR_MESSAGE =
-  "Porter could not access your AWS account. Please make sure you have granted permissions and try again.";
-const AWS_EIP_QUOTA_ERROR_MESSAGE =
-  "Your AWS account has reached the limit of elastic IPs allowed in the region. Additional addresses must be requested in order to provision.";
-const AWS_VPC_QUOTA_ERROR_MESSAGE =
-  "Your AWS account has reached the limit of VPCs allowed in the region. Additional VPCs must be requested in order to provision.";
-const AWS_NAT_GATEWAY_QUOTA_ERROR_MESSAGE =
-  "Your AWS account has reached the limit of NAT Gateways allowed in the region. Additional NAT Gateways must be requested in order to provision.";
-const AWS_VCPU_QUOTA_ERROR_MESSAGE =
-  "Your AWS account has reached the limit of vCPUs allowed in the region. Additional vCPUs must be requested in order to provision.";
-const DEFAULT_ERROR_MESSAGE =
-  "An error occurred while provisioning your infrastructure. Please try again.";
+const CheckItemTop = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: ${props => props.theme.clickable.bg};
+`;
 
-const errorMessageToModal = (errorMessage: string) => {
-  switch (errorMessage) {
-    case AWS_LOGIN_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>
-            Granting Porter access to AWS
-          </Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            Porter needs access to your AWS account in order to create
-            infrastructure. You can grant Porter access to AWS by following
-            these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            <Link
-              to="https://aws.amazon.com/resources/create-account/"
-              target="_blank"
-            >
-              Create an AWS account
-            </Link>
-            <Spacer inline width="5px" />
-            if you don't already have one.
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Once you are logged in to your AWS account,
-            <Spacer inline width="5px" />
-            <Link
-              to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account"
-              target="_blank"
-            >
-              copy your account ID
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>
-            Fill in your account ID on Porter and select "Grant permissions".
-          </Step>
-          <Spacer y={1} />
-          <Step number={4}>
-            After being redirected to AWS, select "Create stack" on the AWS
-            console.
-          </Step>
-          <Spacer y={1} />
-          <Step number={5}>Return to Porter and select "Continue".</Step>
-        </>
-      );
-    case AWS_EIP_QUOTA_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>
-            Requesting more EIP Adresses
-          </Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            You will need to either request more EIP addresses or delete
-            existing ones in order to provision in the region specified. You can
-            request more addresses by following these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            Log into
-            <Spacer inline width="5px" />
-            <Link
-              to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account"
-              target="_blank"
-            >
-              your AWS account
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Navigate to
-            <Spacer inline width="5px" />
-            <Link
-              to="https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas"
-              target="_blank"
-            >
-              the Amazon Elastic Compute Cloud (Amazon EC2) Service Quotas
-              portal
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>
-            Search for "EC2-VPC Elastic IPs" in the search box and click on the
-            search result.
-          </Step>
-          <Spacer y={1} />
-          <Step number={4}>
-            Click on "Request quota increase". In order to provision with
-            Porter, you will need to request at least 3 addresses above your
-            current quota limit.
-          </Step>
-          <Spacer y={1} />
-          <Step number={5}>
-            Once that request is approved, return to Porter and retry the
-            provision.
-          </Step>
-        </>
-      );
-    case AWS_VPC_QUOTA_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>
-            Requesting more VPCs
-          </Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            You will need to either request more VPCs or delete existing ones in
-            order to provision in the region specified. You can request more
-            VPCs by following these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            Log into
-            <Spacer inline width="5px" />
-            <Link
-              to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account"
-              target="_blank"
-            >
-              your AWS account
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Navigate to
-            <Spacer inline width="5px" />
-            <Link
-              to="https://us-east-1.console.aws.amazon.com/servicequotas/home/services/vpc/quotas"
-              target="_blank"
-            >
-              the Amazon Virtual Private Cloud (Amazon VPC) Service Quotas
-              portal
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>
-            Search for "VPCs per Region" in the search box and click on the
-            search result.
-          </Step>
-          <Spacer y={1} />
-          <Step number={4}>
-            Click on "Request quota increase". In order to provision with
-            Porter, you will need to request at least 1 VPCs above your current
-            quota limit.
-          </Step>
-          <Spacer y={1} />
-          <Step number={5}>
-            Once that request is approved, return to Porter and retry the
-            provision.
-          </Step>
-        </>
-      );
-    case AWS_NAT_GATEWAY_QUOTA_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>
-            Requesting more NAT Gateways
-          </Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            You will need to either request more NAT Gateways or delete existing
-            ones in order to provision in the region specified. You can request
-            more NAT Gateways by following these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            Log into
-            <Spacer inline width="5px" />
-            <Link
-              to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account"
-              target="_blank"
-            >
-              your AWS account
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Navigate to
-            <Spacer inline width="5px" />
-            <Link
-              to="https://us-east-1.console.aws.amazon.com/servicequotas/home/services/vpc/quotas"
-              target="_blank"
-            >
-              the Amazon Virtual Private Cloud (Amazon VPC) Service Quotas
-              portal
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>
-            Search for "NAT gateways per Availability Zone" in the search box
-            and click on the search result.
-          </Step>
-          <Spacer y={1} />
-          <Step number={4}>
-            Click on "Request quota increase". In order to provision with
-            Porter, you will need to request at least 3 NAT Gateways above your
-            current quota limit.
-          </Step>
-          <Spacer y={1} />
-          <Step number={5}>
-            Once that request is approved, return to Porter and retry the
-            provision.
-          </Step>
-        </>
-      );
-    case AWS_VCPU_QUOTA_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>
-            Requesting more vCPUs
-          </Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            You will need to either request more vCPUs or delete existing
-            instances in order to provision in the region specified. You can
-            request more vCPUs by following these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            Log into
-            <Spacer inline width="5px" />
-            <Link
-              to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account"
-              target="_blank"
-            >
-              your AWS account
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Navigate to
-            <Spacer inline width="5px" />
-            <Link
-              to="https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas"
-              target="_blank"
-            >
-              the Amazon Elastic Compute Cloud (Amazon EC2) Service Quotas
-              portal
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>
-            Search for "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z)
-            instances" in the search box and click on the search result.
-          </Step>
-          <Spacer y={1} />
-          <Step number={4}>
-            Click on "Request quota increase". In order to provision with
-            Porter, you will need to request at least 10 vCPUs above your
-            current quota limit.
-          </Step>
-          <Spacer y={1} />
-          <Step number={5}>
-            Once that request is approved, return to Porter and retry the
-            provision.
-          </Step>
-        </>
-      );
-    default:
-      return null;
-  }
-};
+const StatusIcon = styled.img`
+height: 14px;
+`;

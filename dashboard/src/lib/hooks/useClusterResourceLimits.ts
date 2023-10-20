@@ -133,11 +133,9 @@ export const useClusterResourceLimits = (
             setDefaultRAM(Number((newMaxRAM * DEFAULT_MULTIPLIER).toFixed(0)));
 
             // Check if any instance type has "gd4n" and update gpuNodes accordingly
-            const hasGd4nInstance = data.some(item => {
-                if (item.instanceType.includes("g4dn"))
-                    return true;
-            });
-            setGpuNodes(hasGd4nInstance);
+            setGpuNodes(data.some(item => 
+                item.instanceType.includes("g4dn")
+            ));
         }
     }, [data])
 

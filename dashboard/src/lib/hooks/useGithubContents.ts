@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import _ from "lodash";
 import { useEffect, useState } from "react";
 import api from "shared/api";
 import { z } from "zod";
@@ -63,7 +64,7 @@ export const useGithubContents = ({
             const files = result.data.filter((c) => c.type === "file").sort((a, b) => a.path.localeCompare(b.path));
             const updatedContents = [...folders, ...files];
     
-            if (JSON.stringify(updatedContents) !== JSON.stringify(contents)) {
+            if (!_.isEqual(updatedContents, contents)) {
                 setContents(updatedContents);
             }
         }

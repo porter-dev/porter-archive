@@ -4,7 +4,6 @@ import { PorterAppFormData } from "lib/porter-apps";
 import { useLatestRevision } from "../LatestRevisionContext";
 import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
-import Error from "components/porter/Error";
 import styled from "styled-components";
 import copy from "assets/copy-left.svg"
 import CopyToClipboard from "components/CopyToClipboard";

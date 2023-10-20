@@ -60,7 +60,7 @@ const PorterYamlModal: React.FC<Props> = ({
                 </span>
             </div>
             <Spacer y={0.5} />
-            <Text color="helper">Path to <Code>porter.yaml</Code> from repository root (i.e. starting with ./):</Text>
+            <Text color="helper">Path to <Code>porter.yaml</Code> from repository root:</Text>
             <Spacer y={0.5} />
             <InputWrapper
                 onClick={(e) => {
@@ -88,7 +88,7 @@ const PorterYamlModal: React.FC<Props> = ({
                         repoName={repoName} 
                         branch={branch}
                         onFileSelect={(path: string) => setPossiblePorterYamlPath(`./${path}`)} 
-                        isFileSelectable={(path: string) => path.endsWith("porter.yaml")}
+                        isFileSelectable={(path: string) => path.endsWith(".yaml")}
                         headerText={"Select your porter.yaml:"}
                     />
                 </div>

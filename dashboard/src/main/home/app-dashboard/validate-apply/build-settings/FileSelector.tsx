@@ -146,6 +146,21 @@ const Item = styled.div`
     margin-left: 12px;
     margin-right: 12px;
   }
+
+  animation: slideIn 0.5s 0s;
+  animation-fill-mode: forwards;
+  @keyframes slideIn {
+    from {
+      margin-left: -10px;
+      opacity: 0;
+      margin-right: 10px;
+    }
+    to {
+      margin-left: 0;
+      opacity: 1;
+      margin-right: 0;
+    }
+  }
 `;
 
 const FileItem = styled(Item)`

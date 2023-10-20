@@ -21,8 +21,8 @@ type Props = {
 const Overview: React.FC<Props> = ({ buttonStatus }) => {
   const { formState } = useFormContext<PorterAppFormData>();
 
-  const { currentClusterResources } = useClusterResources(); 
-  
+  const { currentClusterResources } = useClusterResources();
+
   const {
     porterApp,
     latestProto,
@@ -61,6 +61,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
             fieldArrayName={"app.predeploy"}
             maxCPU={currentClusterResources.maxCPU}
             maxRAM={currentClusterResources.maxRAM}
+            clusterContainsGPUNodes={currentClusterResources.clusterContainsGPUNodes}
           />
           <Spacer y={0.5} />
         </>
@@ -74,10 +75,11 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
         serviceVersionStatus={serviceVersionStatus}
         maxCPU={currentClusterResources.maxCPU}
         maxRAM={currentClusterResources.maxRAM}
+        clusterContainsGPUNodes={currentClusterResources.clusterContainsGPUNodes}
         internalNetworkingDetails={{
           namespace: deploymentTarget.namespace,
           appName: porterApp.name,
-        }}      
+        }}
       />
       <Spacer y={0.75} />
       <Button

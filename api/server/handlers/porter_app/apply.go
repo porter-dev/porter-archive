@@ -15,6 +15,7 @@ import (
 
 	"github.com/porter-dev/porter/internal/deployment_target"
 	"github.com/porter-dev/porter/internal/porter_app"
+	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -113,6 +114,13 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 
+		app, err := v2.AppFromProto(appProto)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error converting app proto to app")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
 		if request.DeploymentTargetId == "" {
 			err := telemetry.Error(ctx, span, err, "deployment target id is empty")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -145,17 +153,24 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 
 		subdomainCreateInput := porter_app.CreatePorterSubdomainInput{
-			AppName:             appProto.Name,
+			AppName:             app.Name,
 			RootDomain:          c.Config().ServerConf.AppRootDomain,
 			DNSClient:           c.Config().DNSClient,
 			DNSRecordRepository: c.Repo().DNSRecord(),
 			KubernetesAgent:     agent,
 		}
 
-		appProto, err = addPorterSubdomainsIfNecessary(ctx, appProto, deploymentTargetDetails, subdomainCreateInput)
+		appWithDomains, err := addPorterSubdomainsIfNecessary(ctx, app, deploymentTargetDetails, subdomainCreateInput)
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error adding porter subdomains")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		appProto, _, err = v2.ProtoFromApp(ctx, appWithDomains)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error converting app to proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 	}
@@ -210,16 +225,15 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 }
 
 // addPorterSubdomainsIfNecessary adds porter subdomains to the app proto if a web service is changed to private and has no domains
-func addPorterSubdomainsIfNecessary(ctx context.Context, app *porterv1.PorterApp, deploymentTarget deployment_target.DeploymentTarget, createSubdomainInput porter_app.CreatePorterSubdomainInput) (*porterv1.PorterApp, error) {
-	for serviceName, service := range app.Services {
-		if service.Type == porterv1.ServiceType_SERVICE_TYPE_WEB {
-			if service.GetWebConfig() == nil {
-				return app, fmt.Errorf("web service %s does not contain web config", serviceName)
-			}
+func addPorterSubdomainsIfNecessary(ctx context.Context, app v2.PorterApp, deploymentTarget deployment_target.DeploymentTarget, createSubdomainInput porter_app.CreatePorterSubdomainInput) (v2.PorterApp, error) {
+	ctx, span := telemetry.NewSpan(ctx, "add-porter-subdomains-if-necessary")
+	defer span.End()
 
-			webConfig := service.GetWebConfig()
+	services := make([]v2.Service, 0)
 
-			if !webConfig.GetPrivate() && len(webConfig.Domains) == 0 {
+	for _, service := range app.Services {
+		if service.Type == v2.ServiceType_Web {
+			if service.Private != nil && !*service.Private && service.Domains != nil && len(service.Domains) == 0 {
 				if deploymentTarget.Namespace != DeploymentTargetSelector_Default {
 					createSubdomainInput.AppName = fmt.Sprintf("%s-%s", createSubdomainInput.AppName, deploymentTarget.ID[:6])
 				}
@@ -233,14 +247,16 @@ func addPorterSubdomainsIfNecessary(ctx context.Context, app *porterv1.PorterApp
 					return app, errors.New("response subdomain is empty")
 				}
 
-				webConfig.Domains = []*porterv1.Domain{
+				service.Domains = []v2.Domains{
 					{Name: subdomain},
 				}
-
-				service.Config = &porterv1.Service_WebConfig{WebConfig: webConfig}
 			}
 		}
+
+		services = append(services, service)
 	}
+
+	app.Services = services
 
 	return app, nil
 }

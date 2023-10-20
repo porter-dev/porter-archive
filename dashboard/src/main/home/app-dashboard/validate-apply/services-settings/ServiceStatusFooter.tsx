@@ -60,8 +60,8 @@ const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
         <>
             {status.map((versionStatus, i) => {
                 return (
-                    <>
-                        <StyledStatusFooterTop key={i} expanded={expanded}>
+                    <div key={i}>
+                        <StyledStatusFooterTop expanded={expanded}>
                             <StyledContainer row spaced>
                                 {match(versionStatus)
                                     .with({ status: "failing" }, (vs) => {
@@ -127,7 +127,7 @@ const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
                                 </StyledStatusFooter>
                             </AnimateHeight>
                         )}
-                    </>
+                    </div>
                 );
             })}
         </>

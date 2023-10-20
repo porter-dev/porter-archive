@@ -48,7 +48,7 @@ import Placeholder from "./Placeholder";
 import VerticalSteps from "./porter/VerticalSteps";
 import Modal from "components/porter/Modal";
 import { PREFLIGHT_TO_ENUM } from "shared/util";
-
+import { useIntercom } from "lib/hooks/useIntercom";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -86,6 +86,10 @@ const machineTypeOptions = [
   { value: "c6i.2xlarge", label: "c6i.2xlarge" },
   { value: "c6i.4xlarge", label: "c6i.4xlarge" },
   { value: "c6i.8xlarge", label: "c6i.8xlarge" },
+  { value: "c6a.large", label: "c6a.large" },
+  { value: "c6a.2xlarge", label: "c6a.2xlarge" },
+  { value: "c6a.4xlarge", label: "c6a.4xlarge" },
+  { value: "c6a.8xlarge", label: "c6a.8xlarge" },
   { value: "r6i.large", label: "r6i.large" },
   { value: "r6i.xlarge", label: "r6i.xlarge" },
   { value: "r6i.2xlarge", label: "r6i.2xlarge" },
@@ -157,6 +161,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [showHelpMessage, setShowHelpMessage] = useState(true);
   const [quotaIncrease, setQuotaIncrease] = useState<EnumQuotaIncrease[]>([]);
   const [showEmailMessage, setShowEmailMessage] = useState(false);
+  const { showIntercomWithMessage } = useIntercom();
+
 
   const markStepStarted = async (step: string, errMessage?: string) => {
     try {
@@ -586,6 +592,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       // If none of the checks have a message, set setPreflightFailed to false
       if (hasMessage) {
         setShowPreflightModal(true)
+        showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
         markStepStarted("provisioning-failed", errors);
       }
       if (!hasMessage) {

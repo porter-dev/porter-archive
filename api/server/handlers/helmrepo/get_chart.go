@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 	"github.com/porter-dev/porter/internal/templater/parser"
 )
 
@@ -30,8 +31,11 @@ func NewChartGetHandler(
 }
 
 func (t *ChartGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-	helmRepo, _ := r.Context().Value(types.HelmRepoScope).(*models.HelmRepo)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-chart")
+	defer span.End()
+
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	helmRepo, _ := ctx.Value(types.HelmRepoScope).(*models.HelmRepo)
 
 	name, _ := requestutils.GetURLParamString(r, types.URLParamTemplateName)
 	version, _ := requestutils.GetURLParamString(r, types.URLParamTemplateVersion)
@@ -41,14 +45,21 @@ func (t *ChartGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		version = ""
 	}
 
-	chart, err := release.LoadChart(t.Config(), &release.LoadAddonChartOpts{
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "helm-repo-url", Value: helmRepo.RepoURL},
+		telemetry.AttributeKV{Key: "template-name", Value: name},
+		telemetry.AttributeKV{Key: "template-version", Value: version},
+	)
+
+	chart, err := release.LoadChart(ctx, t.Config(), &release.LoadAddonChartOpts{
 		ProjectID:       proj.ID,
 		RepoURL:         helmRepo.RepoURL,
 		TemplateName:    name,
 		TemplateVersion: version,
 	})
 	if err != nil {
-		t.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err := telemetry.Error(ctx, span, nil, "error loading chart from helm")
+		t.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

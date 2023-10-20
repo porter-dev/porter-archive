@@ -46,11 +46,15 @@ const PreviewEnvGrid: React.FC<PreviewEnvGridProps> = ({
   }, [deploymentTargets, searchValue, sort]);
 
   if (filteredEnvs.length === 0) {
+    let copy = "No preview environments exist. To get started with preview environments, enable them in the Settings tab of an existing application."
+    if (searchValue !== "") {
+      copy = "No matching environments were found."
+    }
     return (
       <Fieldset>
         <Container row>
           <PlaceholderIcon src={notFound} />
-          <Text color="helper">No matching environments were found.</Text>
+          <Text color="helper">{copy}</Text>
         </Container>
       </Fieldset>
     );

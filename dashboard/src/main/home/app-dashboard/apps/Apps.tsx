@@ -137,6 +137,7 @@ const Apps: React.FC<Props> = ({}) => {
       if (!currentCluster || !currentProject || !currentDeploymentTarget) {
         return;
       }
+      setEnvDeleting(true);
 
       await api.deleteDeploymentTarget(
         "<token>",

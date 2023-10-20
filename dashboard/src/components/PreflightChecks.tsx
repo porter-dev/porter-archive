@@ -8,18 +8,20 @@ import Text from "./porter/Text";
 import Error from "./porter/Error";
 import healthy from "assets/status-healthy.png";
 import failure from "assets/failure.svg";
-import { PREFLIGHT_MESSAGE_CONST, PREFLIGHT_MESSAGE_CONST_AWS, PREFLIGHT_MESSAGE_CONST_GCP } from "shared/util";
+import { PREFLIGHT_MESSAGE_CONST, PREFLIGHT_MESSAGE_CONST_AWS, PREFLIGHT_MESSAGE_CONST_GCP, PROVISIONING_STATUS } from "shared/util";
 import Loading from "./Loading";
 type Props = RouteComponentProps & {
   preflightData: any
-  provider: 'AWS' | 'GCP' | 'DEFAULT';
+  provider: 'AWS' | 'GCP' | 'DEFAULT | PROVISIONING_STATUS';
   error?: string;
 
 };
 
 const PreflightChecks: React.FC<Props> = (props) => {
-  const getMessageConstByProvider = (provider: 'AWS' | 'GCP' | 'DEFAULT') => {
+  const getMessageConstByProvider = (provider: 'AWS' | 'GCP' | 'DEFAULT' | 'PROVISIONING_STATUS') => {
     switch (provider) {
+      case 'PROVISIONING_STATUS':
+        return PROVISIONING_STATUS;
       case 'AWS':
         return PREFLIGHT_MESSAGE_CONST_AWS;
       case 'GCP':
@@ -35,7 +37,7 @@ const PreflightChecks: React.FC<Props> = (props) => {
     const checkData = props.preflightData?.preflight_checks?.[checkKey];
     const hasMessage = checkData?.message;
 
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(true);
 
     const handleToggle = () => {
       if (hasMessage) {

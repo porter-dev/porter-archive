@@ -122,6 +122,7 @@ type Service struct {
 	Instances          int               `yaml:"instances,omitempty"`
 	CpuCores           float32           `yaml:"cpuCores,omitempty"`
 	RamMegabytes       int               `yaml:"ramMegabytes,omitempty"`
+	GpuCoresNvidia     float32           `yaml:"gpuCoresNvidia,omitempty"`
 	SmartOptimization  *bool             `yaml:"smartOptimization,omitempty"`
 	Port               int               `yaml:"port,omitempty"`
 	Autoscaling        *AutoScaling      `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
@@ -261,6 +262,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		Instances:         int32(service.Instances),
 		CpuCores:          service.CpuCores,
 		RamMegabytes:      int32(service.RamMegabytes),
+		GpuCoresNvidia:    service.GpuCoresNvidia,
 		Port:              int32(service.Port),
 		SmartOptimization: service.SmartOptimization,
 		Type:              serviceType,
@@ -411,6 +413,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		Instances:         int(service.Instances),
 		CpuCores:          service.CpuCores,
 		RamMegabytes:      int(service.RamMegabytes),
+		GpuCoresNvidia:    service.GpuCoresNvidia,
 		Port:              int(service.Port),
 		SmartOptimization: service.SmartOptimization,
 	}

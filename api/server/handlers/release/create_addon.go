@@ -17,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/helm"
 	"github.com/porter-dev/porter/internal/helm/loader"
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/oauth"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -66,7 +67,7 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	helmAgent, err := c.GetHelmAgent(ctx, r, cluster, "")
 	if err != nil {
 		err = telemetry.Error(ctx, span, nil, "error creating helm agent")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -96,27 +97,27 @@ func (c *CreateAddonHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		err = telemetry.Error(ctx, span, nil, "error loading chart")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	registries, err := c.Repo().Registry().ListRegistriesByProjectID(cluster.ProjectID)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error retrieving project registry")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	vpcConfig, err := c.getVPCConfig(ctx, request, proj, cluster)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error retrieving vpc config")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	if err := c.performAddonPreinstall(ctx, r, request.TemplateName, cluster); err != nil {
 		err = telemetry.Error(ctx, span, err, "error performing addon preinstall")
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -199,10 +200,18 @@ func LoadChart(ctx context.Context, config *config.Config, opts *LoadAddonChartO
 }
 
 func (c *CreateAddonHandler) performAddonPreinstall(ctx context.Context, r *http.Request, templateName string, cluster *models.Cluster) error {
+	ctx, span := telemetry.NewSpan(ctx, "addon-preinstall")
+	defer span.End()
+
 	awsTemplates := map[string][]string{
-		"rds-postgresql":        {"ec2-chart", "rds-chart"},
-		"rds-postgresql-aurora": {"ec2-chart", "rds-chart"},
+		"rds-postgresql":        {"ack-chart-ec2", "ack-chart-rds"},
+		"rds-postgresql-aurora": {"ack-chart-ec2", "ack-chart-rds"},
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "template-name", Value: templateName},
+		telemetry.AttributeKV{Key: "cloud-provider", Value: cluster.CloudProvider},
+	)
 
 	if cluster.CloudProvider != "AWS" {
 		return nil
@@ -214,29 +223,44 @@ func (c *CreateAddonHandler) performAddonPreinstall(ctx context.Context, r *http
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
-		return err
+		return telemetry.Error(ctx, span, err, "failed to get k8s agent")
 	}
 
 	if _, err = agent.GetNamespace(Namespace_EnvironmentGroups); err != nil {
 		if _, err := agent.CreateNamespace(Namespace_EnvironmentGroups, map[string]string{}); err != nil {
-			return err
+			return telemetry.Error(ctx, span, err, "failed creating porter-env-group namespace")
 		}
 	}
 
 	for _, chart := range awsTemplates[templateName] {
-		scale, err := agent.Clientset.AppsV1().Deployments(Namespace_ACKSystem).GetScale(context.TODO(), chart, metav1.GetOptions{})
-		if err != nil {
-			return err
+		if err := c.scaleAckChartDeployment(ctx, chart, agent); err != nil {
+			return telemetry.Error(ctx, span, err, "failed scaling ack chart deployment")
 		}
-		if scale.Spec.Replicas > 0 {
-			continue
-		}
+	}
 
-		// scale the charts specific to the ack controller
-		scale.Spec.Replicas = 1
-		if _, err := agent.Clientset.AppsV1().Deployments(Namespace_ACKSystem).UpdateScale(ctx, chart, scale, metav1.UpdateOptions{}); err != nil {
-			return err
-		}
+	return nil
+}
+
+func (c *CreateAddonHandler) scaleAckChartDeployment(ctx context.Context, chart string, agent *kubernetes.Agent) error {
+	ctx, span := telemetry.NewSpan(ctx, "scale-ack-chart")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "namespace", Value: Namespace_ACKSystem},
+		telemetry.AttributeKV{Key: "chart-name", Value: chart},
+	)
+
+	scale, err := agent.Clientset.AppsV1().Deployments(Namespace_ACKSystem).GetScale(ctx, chart, metav1.GetOptions{})
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "failed getting deployment")
+	}
+	if scale.Spec.Replicas > 0 {
+		return nil
+	}
+
+	scale.Spec.Replicas = 1
+	if _, err := agent.Clientset.AppsV1().Deployments(Namespace_ACKSystem).UpdateScale(ctx, chart, scale, metav1.UpdateOptions{}); err != nil {
+		return telemetry.Error(ctx, span, err, "failed scaling deployment up")
 	}
 
 	return nil

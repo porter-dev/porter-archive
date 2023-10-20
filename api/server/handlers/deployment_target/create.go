@@ -3,7 +3,8 @@ package deployment_target
 import (
 	"net/http"
 
-	"github.com/google/uuid"
+	"connectrpc.com/connect"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -66,51 +67,33 @@ func (c *CreateDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	var res *CreateDeploymentTargetResponse
+	createReq := connect.NewRequest(&porterv1.CreateDeploymentTargetRequest{
+		ProjectId: int64(project.ID),
+		ClusterId: int64(cluster.ID),
+		Name:      request.Selector,
+		Namespace: request.Selector,
+		IsPreview: request.Preview,
+	})
 
-	existingDeploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(
-		project.ID,
-		cluster.ID,
-		request.Selector,
-		string(models.DeploymentTargetSelectorType_Namespace),
-	)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error checking for existing deployment target")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	if existingDeploymentTarget.ID != uuid.Nil {
-		res = &CreateDeploymentTargetResponse{
-			DeploymentTargetID: existingDeploymentTarget.ID.String(),
-		}
-		c.WriteResult(w, r, res)
-		return
-	}
-
-	deploymentTarget := &models.DeploymentTarget{
-		ProjectID:    int(project.ID),
-		ClusterID:    int(cluster.ID),
-		Selector:     request.Selector,
-		SelectorType: models.DeploymentTargetSelectorType_Namespace,
-		Preview:      request.Preview,
-		VanityName:   request.Selector,
-		Metadata:     make(map[string]interface{}),
-	}
-	deploymentTarget, err = c.Repo().DeploymentTarget().CreateDeploymentTarget(deploymentTarget)
+	ccpResp, err := c.Config().ClusterControlPlaneClient.CreateDeploymentTarget(ctx, createReq)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error creating deployment target")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-	if deploymentTarget.ID == uuid.Nil {
-		err := telemetry.Error(ctx, span, nil, "deployment target id is nil")
+	if ccpResp == nil || ccpResp.Msg == nil {
+		err := telemetry.Error(ctx, span, err, "ccp resp msg is nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+	if ccpResp.Msg.DeploymentTargetId == "" {
+		err := telemetry.Error(ctx, span, err, "deployment target id is empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	res = &CreateDeploymentTargetResponse{
-		DeploymentTargetID: deploymentTarget.ID.String(),
+	res := &CreateDeploymentTargetResponse{
+		DeploymentTargetID: ccpResp.Msg.DeploymentTargetId,
 	}
 
 	c.WriteResult(w, r, res)

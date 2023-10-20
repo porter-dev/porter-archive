@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
 import { Controller, useFormContext } from "react-hook-form";
@@ -8,7 +8,7 @@ import styled from "styled-components";
 import Input from "components/porter/Input";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Select from "components/porter/Select";
-import AnimateHeight from "react-animate-height";
+import AnimateHeight, { Height } from "react-animate-height";
 import { z } from "zod";
 import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
 import RepositorySelector from "../build-settings/RepositorySelector";
@@ -17,6 +17,9 @@ import BuildpackSettings, { DEFAULT_BUILDERS } from "../validate-apply/build-set
 import { match } from "ts-pattern";
 import { BuildOptions } from "lib/porter-apps/build";
 import Loading from "components/Loading";
+import DockerfileSettings from "../validate-apply/build-settings/docker/DockerfileSettings";
+import useResizeObserver from "lib/hooks/useResizeObserver";
+import CollapsibleContainer from "components/porter/CollapsibleContainer";
 
 type Props = {
   projectId: number;
@@ -249,8 +252,10 @@ const RepoSettings: React.FC<Props> = ({
                   )}
                 </StyledAdvancedBuildSettings>
               }
-
-              <AnimateHeight height={showSettings ? "auto" : 0} duration={1000}>
+              <AnimateHeight
+                duration={500}
+                height={showSettings ? "auto" : 0}
+              >
                 <StyledSourceBox>
                   <Controller
                     name="app.build.method"
@@ -282,17 +287,13 @@ const RepoSettings: React.FC<Props> = ({
                     .with({ method: "docker" }, () => (
                       <>
                         <Spacer y={0.5} />
-                        <Text color="helper">
-                          Dockerfile path (absolute path)
-                        </Text>
-                        <Spacer y={0.5} />
-                        <ControlledInput
-                          width="300px"
-                          placeholder="ex: ./Dockerfile"
-                          type="text"
-                          {...register("app.build.dockerfile")}
+                        <DockerfileSettings
+                          projectId={projectId}
+                          repoId={source.git_repo_id}
+                          repoOwner={source.git_repo_name.split("/")[0]}
+                          repoName={source.git_repo_name.split("/")[1]}
+                          branch={source.git_branch}
                         />
-                        <Spacer y={0.5} />
                       </>
                     ))
                     .with({ method: "pack" }, (b) => (

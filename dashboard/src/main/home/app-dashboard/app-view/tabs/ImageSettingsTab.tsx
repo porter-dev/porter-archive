@@ -96,7 +96,6 @@ const CopyContainer = styled.div`
   display: flex;
   align-items: center;
   margin-left: auto;
-  user-select: text;
 `;
 
 const CopyIcon = styled.img`

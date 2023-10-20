@@ -9,7 +9,7 @@ import api from "shared/api";
 import { pushFiltered } from "shared/routing";
 
 import Back from "components/porter/Back";
-import DashboardHeader from "../cluster-dashboard/DashboardHeader";
+import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
@@ -27,7 +27,7 @@ type Props = RouteComponentProps & {
   repoURL: string | undefined;
 };
 
-const RDSForm: React.FC<Props> = ({
+const AuroraPostgresForm: React.FC<Props> = ({
   currentTemplate,
   goBack,
   repoURL,
@@ -96,7 +96,7 @@ const RDSForm: React.FC<Props> = ({
       .deployAddon(
         "<token>",
         {
-          template_name: "rds-postgresql",
+          template_name: "rds-postgresql-aurora",
           template_version: "latest",
           values: values,
           name,
@@ -154,7 +154,7 @@ const RDSForm: React.FC<Props> = ({
                 src={hardcodedIcons[currentTemplate.name] || currentTemplate.icon}
               />
             }
-            title="Create an RDS Postgres instance"
+            title="Create an Aurora PostgreSQL instance"
             capitalize={false}
             disableLineBreak
           />
@@ -194,21 +194,6 @@ const RDSForm: React.FC<Props> = ({
                   Select an instance tier:
                 </Text>
                 <Spacer height="20px" />
-                <ResourceOption
-                  selected={tier === "db.t4g.small"}
-                  onClick={() => {
-                    setStorage(30);
-                    setTier("db.t4g.small");
-                  }}
-                >
-                  <Container row>
-                    <Text>Small</Text>
-                    <Spacer inline width="5px" />
-                    <Text color="helper">- 2 CPU, 2 GB RAM</Text>
-                  </Container>
-                  <StorageTag>30 GB Storage</StorageTag>
-                </ResourceOption>
-                <Spacer height="15px" />
                 <ResourceOption
                   selected={tier === "db.t4g.medium"}
                   onClick={() => {
@@ -314,7 +299,7 @@ const RDSForm: React.FC<Props> = ({
   );
 };
 
-export default withRouter(RDSForm);
+export default withRouter(AuroraPostgresForm);
 
 const RevealButton = styled.div`
   background: ${props => props.theme.fg};

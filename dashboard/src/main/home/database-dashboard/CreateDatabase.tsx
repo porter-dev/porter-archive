@@ -21,7 +21,8 @@ import Back from "components/porter/Back";
 import Fieldset from "components/porter/Fieldset";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
-import RDSForm from "./RDSForm";
+import RDSForm from "./forms/RDSForm";
+import AuroraPostgresForm from "./forms/AuroraPostgresForm";
 
 type Props = {
 };
@@ -36,8 +37,14 @@ const CreateDatabase: React.FC<Props> = ({
     {
       id: "rds-postgresql",
       icon: awsRDS,
-      name: "RDS Postgres",
+      name: "RDS PostgreSQL",
       description: "Amazon Relational Database Service (RDS) is a web service that makes it easier to set up, operate, and scale a relational database in the cloud.",
+    },
+    {
+      id: "aurora-postgresql",
+      icon: awsRDS,
+      name: "Aurora PostgreSQL",
+      description: "Amazon Aurora PostgreSQL is a fully managed, PostgreSQL–compatible, and ACID–compliant relational database engine that combines the speed, reliability, and manageability of Amazon Aurora with the simplicity and cost-effectiveness of open-source databases.",
     },
     {
       id: "elasticache-redis",
@@ -71,11 +78,22 @@ const CreateDatabase: React.FC<Props> = ({
     <StyledTemplateComponent>
       {
         (currentTemplate) ? (
-          <RDSForm
-            currentTemplate={currentTemplate}
-            goBack={() => setCurrentTemplate(null)}
-            repoURL={capabilities?.default_addon_helm_repo_url}
-          />
+          <>
+            {currentTemplate.id === "rds-postgresql" && (
+              <RDSForm
+                currentTemplate={currentTemplate}
+                goBack={() => setCurrentTemplate(null)}
+                repoURL={capabilities?.default_addon_helm_repo_url}
+              />
+            )}
+            {currentTemplate.id === "aurora-postgresql" && (
+              <AuroraPostgresForm
+                currentTemplate={currentTemplate}
+                goBack={() => setCurrentTemplate(null)}
+                repoURL={capabilities?.default_addon_helm_repo_url}
+              />
+            )}
+          </>
         ) : (
           <>
             <Back to="/databases" />

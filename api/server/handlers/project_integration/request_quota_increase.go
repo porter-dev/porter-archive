@@ -17,7 +17,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// RequestQuotaIncreaseHandler requests quota increase for given a list of quotas
+// CreateRequestQuotaIncreaseHandler requests quota increase for given a list of quotas
 type CreateRequestQuotaIncreaseHandler struct {
 	handlers.PorterHandlerReadWriter
 }

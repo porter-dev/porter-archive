@@ -1,6 +1,6 @@
 import React, { useState, useContext, useCallback } from "react";
 import styled from "styled-components";
-import _, { set } from "lodash";
+import _ from "lodash";
 
 import web from "assets/web.png";
 import grid from "assets/grid.png";

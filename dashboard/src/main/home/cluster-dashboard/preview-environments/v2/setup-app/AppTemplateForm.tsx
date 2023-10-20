@@ -52,7 +52,7 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
     variables: {},
     secrets: {},
   });
-  const { currentClusterResources } = useClusterResources(); 
+  const { currentClusterResources } = useClusterResources();
 
   const {
     porterApp,
@@ -280,6 +280,7 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
                 fieldArrayName={"app.services"}
                 maxCPU={currentClusterResources.maxCPU}
                 maxRAM={currentClusterResources.maxRAM}
+                clusterContainsGPUNodes={currentClusterResources.clusterContainsGPUNodes}
                 internalNetworkingDetails={{
                   namespace: deploymentTarget.namespace,
                   appName: porterApp.name,

@@ -20,6 +20,7 @@ type ResourcesProps = {
   maxRAM: number;
   service: ClientService;
   isPredeploy?: boolean;
+  clusterContainsGPUNodes: boolean;
 };
 
 const Resources: React.FC<ResourcesProps> = ({
@@ -27,6 +28,7 @@ const Resources: React.FC<ResourcesProps> = ({
   maxCPU,
   maxRAM,
   service,
+  clusterContainsGPUNodes,
   isPredeploy = false,
 }) => {
   const { control, register, watch, setValue } = useFormContext<PorterAppFormData>();
@@ -34,29 +36,29 @@ const Resources: React.FC<ResourcesProps> = ({
 
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`, {
-      readOnly: false,
-      value: false
-    }
+    readOnly: false,
+    value: false
+  }
   );
 
   const smartOpt = watch(
     `app.services.${index}.smartOptimization`, {
-      readOnly: false,
-      value: false
-    }
+    readOnly: false,
+    value: false
+  }
   );
 
   const memory = watch(
     `app.services.${index}.ramMegabytes`, {
-      readOnly: false,
-      value: 0
-    }
+    readOnly: false,
+    value: 0
+  }
   );
   const cpu = watch(
     `app.services.${index}.cpuCores`, {
-      readOnly: false,
-      value: 0
-    }
+    readOnly: false,
+    value: 0
+  }
   );
 
   return (
@@ -184,6 +186,37 @@ const Resources: React.FC<ResourcesProps> = ({
           />
         )}
       />
+      {clusterContainsGPUNodes && (
+        <>
+          <Spacer y={1} />
+          <Controller
+            name={`app.services.${index}.gpuCoresNvidia`}
+            control={control}
+            render={({ field: { value, onChange } }) => (
+              <InputSlider
+                label="GPUs: "
+                unit="Cores"
+                min={0}
+                max={1}
+                step={.1}
+                value={(value.value).toString()}
+                disabled={value.readOnly}
+                width="300px"
+                setValue={(e) => {
+                  onChange({
+                    ...value,
+                    value: e,
+                  });
+                }}
+                disabledTooltip={"You may only edit this field in your porter.yaml."
+                }
+              />
+            )}
+          />
+        </>
+      )
+
+      }
       {match(service.config)
         .with({ type: "job" }, () => null)
         .with({ type: "predeploy" }, () => null)
@@ -204,7 +237,8 @@ const Resources: React.FC<ResourcesProps> = ({
               {...register(`app.services.${index}.instances.value`)}
             />
             <Spacer y={1} />
-            <Controller
+
+            {!clusterContainsGPUNodes && (<Controller
               name={`app.services.${index}.config.autoscaling.enabled`}
               control={control}
               render={({ field: { value, onChange } }) => (
@@ -226,7 +260,8 @@ const Resources: React.FC<ResourcesProps> = ({
                   </Text>
                 </Checkbox>
               )}
-            />
+            />)}
+
 
             {autoscalingEnabled.value && (
               <>

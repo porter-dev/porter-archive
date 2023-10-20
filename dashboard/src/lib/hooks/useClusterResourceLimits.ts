@@ -14,6 +14,7 @@ const clusterDataValidator = z.object({
     const defaultResources = {
         maxCPU: AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"],
         maxRAM: AWS_INSTANCE_LIMITS["t3"]["medium"]["RAM"],
+        instanceType: "t3.medium",
     };
     if (!data.labels) {
         return defaultResources;
@@ -33,6 +34,7 @@ const clusterDataValidator = z.object({
         return {
             maxCPU: vCPU,
             maxRAM: RAM,
+            instanceType: instanceType,
         };
     }
     return defaultResources;
@@ -52,11 +54,12 @@ export const useClusterResourceLimits = (
     // defaults indicate the resources assigned to new services
     defaultCPU: number,
     defaultRAM: number,
+    clusterContainsGPUNodes: boolean,
 } => {
     const SMALL_INSTANCE_UPPER_BOUND = 0.75;
     const LARGE_INSTANCE_UPPER_BOUND = 0.9;
     const DEFAULT_MULTIPLIER = 0.125;
-
+    const [clusterContainsGPUNodes, setGpuNodes] = useState(false);
     const [maxCPU, setMaxCPU] = useState(
         AWS_INSTANCE_LIMITS["t3"]["medium"]["vCPU"] * SMALL_INSTANCE_UPPER_BOUND
     ); //default is set to a t3 medium
@@ -117,7 +120,7 @@ export const useClusterResourceLimits = (
             // otherwise, we use 75%
             if (maxRAM > 4) {
                 maxMultiplier = LARGE_INSTANCE_UPPER_BOUND;
-            } 
+            }
             // round down to nearest 0.5 cores
             const newMaxCPU = Math.floor(maxCPU * maxMultiplier * 2) / 2;
             // round down to nearest 100 MB
@@ -128,6 +131,11 @@ export const useClusterResourceLimits = (
             setMaxRAM(newMaxRAM);
             setDefaultCPU(Number((newMaxCPU * DEFAULT_MULTIPLIER).toFixed(2)));
             setDefaultRAM(Number((newMaxRAM * DEFAULT_MULTIPLIER).toFixed(0)));
+
+            // Check if any instance type has "gd4n" and update clusterContainsGPUNodes accordingly
+            setGpuNodes(data.some(item =>
+                item.instanceType.includes("g4dn")
+            ));
         }
     }, [data])
 
@@ -137,6 +145,7 @@ export const useClusterResourceLimits = (
         maxRAM,
         defaultCPU,
         defaultRAM,
+        clusterContainsGPUNodes,
     }
 }
 

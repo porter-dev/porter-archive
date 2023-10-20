@@ -27,6 +27,7 @@ interface ServiceProps {
   status?: PorterAppVersionStatus[];
   maxCPU: number;
   maxRAM: number;
+  clusterContainsGPUNodes: boolean;
   internalNetworkingDetails: {
     namespace: string;
     appName: string;
@@ -41,6 +42,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   status,
   maxCPU,
   maxRAM,
+  clusterContainsGPUNodes,
   internalNetworkingDetails,
 }) => {
   const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
@@ -68,12 +70,13 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   const renderTabs = (service: ClientService) => {
     return match(service)
       .with({ config: { type: "web" } }, (svc) => (
-        <WebTabs 
-          index={index} 
-          service={svc} 
-          maxCPU={maxCPU} 
-          maxRAM={maxRAM} 
-          internalNetworkingDetails={internalNetworkingDetails} 
+        <WebTabs
+          index={index}
+          service={svc}
+          maxCPU={maxCPU}
+          maxRAM={maxRAM}
+          clusterContainsGPUNodes={clusterContainsGPUNodes}
+          internalNetworkingDetails={internalNetworkingDetails}
         />
       ))
       .with({ config: { type: "worker" } }, (svc) => (
@@ -82,10 +85,11 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           service={svc}
           maxCPU={maxCPU}
           maxRAM={maxRAM}
+          clusterContainsGPUNodes={clusterContainsGPUNodes}
         />
       ))
       .with({ config: { type: "job" } }, (svc) => (
-        <JobTabs index={index} service={svc} maxCPU={maxCPU} maxRAM={maxRAM} />
+        <JobTabs index={index} service={svc} maxCPU={maxCPU} maxRAM={maxRAM} clusterContainsGPUNodes={clusterContainsGPUNodes} />
       ))
       .with({ config: { type: "predeploy" } }, (svc) => (
         <JobTabs
@@ -93,6 +97,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           service={svc}
           maxCPU={maxCPU}
           maxRAM={maxRAM}
+          clusterContainsGPUNodes={clusterContainsGPUNodes}
           isPredeploy
         />
       ))

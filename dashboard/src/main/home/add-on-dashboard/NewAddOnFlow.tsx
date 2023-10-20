@@ -4,7 +4,7 @@ import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import semver from "semver";
 import _ from "lodash";
 
-import addOn from "assets/add-ons.png";
+import addOn from "assets/add-ons.svg";
 import notFound from "assets/not-found.png";
 
 import { Context } from "shared/Context";
@@ -112,7 +112,6 @@ const NewAddOnFlow: React.FC<Props> = ({
 
       sortedVersionData = sortedVersionData.map((template: any) => {
         let testTemplate: string[] = template?.tags || []
-        console.log(testTemplate)
         // Assign tags based on TAG_MAPPING
         for (let tag in TAG_MAPPING) {
           if (TAG_MAPPING[tag].includes(template.name)) {

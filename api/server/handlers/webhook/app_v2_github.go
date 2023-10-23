@@ -128,7 +128,7 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		branch := event.GetPullRequest().GetHead().GetRef()
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "event-branch", Value: branch})
 
-		err = cancelPendingWorkflows(ctx, cancelPendingWorkflowsInput{
+		_ = cancelPendingWorkflows(ctx, cancelPendingWorkflowsInput{
 			appName:         porterApp.Name,
 			repoID:          porterApp.GitRepoID,
 			repoName:        porterApp.RepoName,
@@ -136,11 +136,6 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			githubAppID:     c.Config().ServerConf.GithubAppID,
 			event:           event,
 		})
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error cancelling pending workflows")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
 
 		deploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(
 			uint(webhook.ProjectID),

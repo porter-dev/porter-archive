@@ -86,6 +86,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
     reset,
     handleSubmit,
     formState: { errors },
+    setError,
+    clearErrors,
   } = useForm<AddServiceFormValues>({
     reValidateMode: "onChange",
     resolver: zodResolver(addServiceFormValidator),
@@ -126,6 +128,20 @@ const ServiceList: React.FC<ServiceListProps> = ({
       };
     });
   }, [fields]);
+
+  useEffect(() => {
+    if (isServiceNameDuplicate(serviceName)) {
+      setError("name", {
+        message: "A service with this name already exists",
+      });
+    } else if (!isPredeploy && serviceName === "predeploy") {
+      setError("name", {
+        message: "predeploy is a reserved service name",
+      });
+    } else {
+      clearErrors("name");
+    }
+  }, [serviceName, isPredeploy])
 
   const isServiceNameDuplicate = (name: string) => {
     return services.some(({ svc: s }) => s.name.value === name);
@@ -256,9 +272,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
           <Button
             type="button"
             onClick={onSubmit}
-            disabled={
-              isServiceNameDuplicate(serviceName) || serviceName?.length > 61
-            }
+            disabled={!!errors.name?.message}
           >
             <I className="material-icons">add</I> Add service
           </Button>

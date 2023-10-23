@@ -21,7 +21,7 @@ const PreDeployEventFocusView: React.FC<Props> = ({
   const { projectId, clusterId, latestProto, deploymentTarget, porterApp } = useLatestRevision();
 
   const appName = latestProto.name
-  const serviceNames = [`${latestProto.name}-predeploy`]
+  const serviceNames = ["predeploy"]
 
   const renderHeaderText = () => {
     switch (event.status) {

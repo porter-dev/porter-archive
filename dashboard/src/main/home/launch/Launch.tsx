@@ -34,7 +34,34 @@ type TabOption = {
   value: string;
 };
 
-const HIDDEN_CHARTS = ["porter-agent", "loki"];
+const HIDDEN_CHARTS = [
+  "ack-chart",
+  "apigatewayv2-chart",
+  "applicationautoscaling-chart",
+  "aws-cloudwatch-metrics",
+  "cloudtrail-chart",
+  "dynamodb-chart",
+  "ec2-chart",
+  "ecr-chart",
+  "eks-chart",
+  "elasticache-chart",
+  "emrcontainers-chart",
+  "eventbridge-chart",
+  "iam-chart",
+  "kms-chart",
+  "lambda-chart",
+  "loki",
+  "memorydb-chart",
+  "pipes-chart",
+  "porter-agent",
+  "prometheusservice-chart",
+  "rds-chart",
+  "s3-chart",
+  "sagemaker-chart",
+  "sfn-chart",
+  "sns-chart",
+  "sqs-chart",
+];
 
 type PropsType = RouteComponentProps & {};
 

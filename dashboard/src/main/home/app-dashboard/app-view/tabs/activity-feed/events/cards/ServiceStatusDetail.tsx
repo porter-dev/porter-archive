@@ -51,7 +51,29 @@ const ServiceStatusDetail: React.FC<Props> = ({
                     const externalUri = service != null && service.config.type === "web" && service.config.domains.length ? service.config.domains[0].name.value : "";
                     return (
                         <ServiceStatusTableRow key={key}>
-                            <ServiceStatusTableData width={"100px"}>
+                            <ServiceStatusTableData width={"200px"}>
+                                {match(serviceType)
+                                    .with("web", () => (
+                                            <Icon
+                                                src={web}
+                                                height="14px"
+                                            />
+                                    ))
+                                    .with("worker", () => (
+                                            <Icon
+                                                src={worker}
+                                                height="14px"
+                                            />
+                                    ))
+                                    .with("job", () => (
+                                            <Icon
+                                                src={job}
+                                                height="14px"
+                                            />
+                                    ))
+                                    .otherwise(() => null)
+                                }
+                                <Spacer inline x={0.5} />
                                 <Text>{key}</Text>
                             </ServiceStatusTableData>
                             <ServiceStatusTableData width={"120px"}>

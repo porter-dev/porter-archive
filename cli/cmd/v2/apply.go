@@ -46,6 +46,16 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	cliConf := inp.CLIConfig
 	client := inp.Client
 
+	useNewApplyResp, err := client.UseNewApplyLogic(ctx, cliConf.Project, cliConf.Cluster)
+	if err != nil {
+		return fmt.Errorf("error checking if project uses new apply logic: %w", err)
+	}
+	if useNewApplyResp.UseNewApplyLogic {
+		return fmt.Errorf("new apply logic not implemented yet: contact support@porter.run for assistance")
+	} else {
+		fmt.Println("Using old apply logic")
+	}
+
 	deploymentTargetID, err := deploymentTargetFromConfig(ctx, client, cliConf.Project, cliConf.Cluster, inp.PreviewApply)
 	if err != nil {
 		return fmt.Errorf("error getting deployment target from config: %w", err)

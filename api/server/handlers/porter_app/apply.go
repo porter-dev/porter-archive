@@ -47,15 +47,10 @@ func NewApplyPorterAppHandler(
 
 // ApplyPorterAppRequest is the request object for the /apps/apply endpoint
 type ApplyPorterAppRequest struct {
-	Base64AppProto     string            `json:"b64_app_proto"`
-	DeploymentTargetId string            `json:"deployment_target_id"`
-	AppRevisionID      string            `json:"app_revision_id"`
-	ForceBuild         bool              `json:"force_build"`
-	Variables          map[string]string `json:"variables"`
-	Secrets            map[string]string `json:"secrets"`
-	// HardEnvUpdate is used to remove any variables that are not specified in the request.  If false, the request will only update the variables specified in the request,
-	// and leave all other variables untouched.
-	HardEnvUpdate bool `json:"hard_env_update"`
+	Base64AppProto     string `json:"b64_app_proto"`
+	DeploymentTargetId string `json:"deployment_target_id"`
+	AppRevisionID      string `json:"app_revision_id"`
+	ForceBuild         bool   `json:"force_build"`
 }
 
 // ApplyPorterAppResponse is the response object for the /apps/apply endpoint
@@ -186,11 +181,6 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		App:                 appProto,
 		PorterAppRevisionId: appRevisionID,
 		ForceBuild:          request.ForceBuild,
-		AppEnv: &porterv1.EnvGroupVariables{
-			Normal: request.Variables,
-			Secret: request.Secrets,
-		},
-		IsHardEnvUpdate: request.HardEnvUpdate,
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.ApplyPorterApp(ctx, applyReq)
 	if err != nil {

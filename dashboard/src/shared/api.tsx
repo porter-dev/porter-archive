@@ -1004,6 +1004,9 @@ const applyApp = baseApi<
     b64_app_proto?: string;
     app_revision_id?: string;
     force_build?: boolean;
+    variables?: Record<string, string>;
+    secrets?: Record<string, string>;
+    hard_env_update?: boolean;
   },
   {
     project_id: number;

@@ -50,10 +50,9 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	if err != nil {
 		return fmt.Errorf("error checking if project uses new apply logic: %w", err)
 	}
+
 	if useNewApplyResp.UseNewApplyLogic {
 		return fmt.Errorf("new apply logic not implemented yet: contact support@porter.run for assistance")
-	} else {
-		fmt.Println("Using old apply logic")
 	}
 
 	deploymentTargetID, err := deploymentTargetFromConfig(ctx, client, cliConf.Project, cliConf.Cluster, inp.PreviewApply)

@@ -7,7 +7,10 @@ import { getStatusColor, getStatusIcon } from '../utils';
 import Link from 'components/porter/Link';
 import { Service } from 'main/home/app-dashboard/new-app-flow/serviceTypes';
 import { useLatestRevision } from 'main/home/app-dashboard/app-view/LatestRevisionContext';
-import { deserializeService, serializedServiceFromProto } from 'lib/porter-apps/services';
+import { match } from 'ts-pattern';
+import web from "assets/web.png";
+import worker from "assets/worker.png";
+import job from "assets/job.png";
 
 type Props = {
     serviceDeploymentMetadata: Record<string, {
@@ -23,7 +26,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
     appName,
     revision,
 }) => {
-    const { latestProto } = useLatestRevision();
+    const { latestClientServices } = useLatestRevision();
     const convertEventStatusToCopy = (status: string) => {
         switch (status) {
             case "PROGRESSING":
@@ -43,27 +46,21 @@ const ServiceStatusDetail: React.FC<Props> = ({
         <ServiceStatusTable>
             <tbody>
                 {Object.keys(serviceDeploymentMetadata).map((key) => {
-                    const deploymentMetadata = serviceDeploymentMetadata[key];
-                    const service = latestProto.services[key];
-                    let externalUri = "";
-                    if (service != null) {
-                        const deserializedService = deserializeService({ service: serializedServiceFromProto({ service, name: key }) });
-                        if (deserializedService.config.type === "web" && deserializedService.config.domains.length > 0) {
-                            externalUri = deserializedService.config.domains[0].name.value;
-                        }
-                    }
+                    const { status: serviceStatus, type: serviceType } = serviceDeploymentMetadata[key];
+                    const service = latestClientServices.find((s) => s.name.value === key);
+                    const externalUri = service != null && service.config.type === "web" && service.config.domains.length ? service.config.domains[0].name.value : "";
                     return (
                         <ServiceStatusTableRow key={key}>
                             <ServiceStatusTableData width={"100px"}>
                                 <Text>{key}</Text>
                             </ServiceStatusTableData>
                             <ServiceStatusTableData width={"120px"}>
-                                <Icon height="12px" src={getStatusIcon(deploymentMetadata.status)} />
+                                <Icon height="12px" src={getStatusIcon(serviceStatus)} />
                                 <Spacer inline x={0.5} />
-                                <Text color={getStatusColor(deploymentMetadata.status)}>{convertEventStatusToCopy(serviceDeploymentMetadata[key].status)}</Text>
+                                <Text color={getStatusColor(serviceStatus)}>{convertEventStatusToCopy(serviceStatus)}</Text>
                             </ServiceStatusTableData>
-                            <ServiceStatusTableData>
-                                {deploymentMetadata.type !== "job" &&
+                            <ServiceStatusTableData showBorderRight={false}>
+                                {serviceType !== "job" &&
                                     <>
                                         <Link
                                             to={`/apps/${appName}/logs?version=${revision}&service=${key}`}
@@ -82,7 +79,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                                         </Link>
                                     </>
                                 }
-                                {deploymentMetadata.type === "job" &&
+                                {serviceType === "job" &&
                                     <>
                                         <Link
                                             to={`/apps/${appName}/job-history?service=${key}`}
@@ -127,13 +124,10 @@ const ServiceStatusTableRow = styled.tr`
   align-items: center;  
 `;
 
-const ServiceStatusTableData = styled.td`
-  padding: 8px;
+const ServiceStatusTableData = styled.td<{ width?: string; showBorderRight?: boolean }>`
+  padding: 8px 10px;
   display: flex;
   align-items: center;
   ${(props) => props.width && `width: ${props.width};`}
-
-  &:not(:last-child) {
-    border-right: 2px solid #ffffff11;
-  }
+  ${({ showBorderRight = true }) => showBorderRight && `border-right: 2px solid #ffffff11;`}
 `;

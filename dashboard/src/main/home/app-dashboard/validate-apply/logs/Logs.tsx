@@ -52,7 +52,7 @@ const Logs: React.FC<Props> = ({
     deploymentTargetId,
     appRevisionId,
     timeRange,
-    logFilterNames = ["service_name", "revision", "output_stream"],
+    logFilterNames = ["service_name", "revision", "output_stream"], // these are the names of filters that will be displayed in the UI
     filterPredeploy = false,
     appId,
 }) => {
@@ -62,6 +62,7 @@ const Logs: React.FC<Props> = ({
         revision: queryParams.get('version'),
         output_stream: queryParams.get('output_stream'),
         service: queryParams.get('service'),
+        revision_id: queryParams.get('revision_id'),
     }
 
     const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
@@ -81,6 +82,7 @@ const Logs: React.FC<Props> = ({
         pod_name: "", // not supported in v2
         revision: logQueryParamOpts.revision ?? GenericFilter.getDefaultOption("revision").value,
         output_stream: logQueryParamOpts.output_stream ?? GenericFilter.getDefaultOption("output_stream").value,
+        revision_id: logQueryParamOpts.revision_id ?? GenericFilter.getDefaultOption("revision_id").value,
     });
 
     const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
@@ -185,7 +187,6 @@ const Logs: React.FC<Props> = ({
         clusterID: clusterId,
         selectedFilterValues,
         appName,
-        serviceName: selectedFilterValues.service_name,
         deploymentTargetId,
         searchParam: enteredSearchText,
         notify,
@@ -243,7 +244,7 @@ const Logs: React.FC<Props> = ({
             } as GenericFilter,
         ].filter((f: GenericFilter) => logFilterNames.includes(f.name)))
 
-        if (latestRevisionNumber && !logQueryParamOpts.revision) {
+        if (latestRevisionNumber && !logQueryParamOpts.revision && !logQueryParamOpts.revision_id) { // default to filter by latest revision number if no query params supplied
             setSelectedFilterValues({
                 ...selectedFilterValues,
                 revision: latestRevisionNumber.toString(),

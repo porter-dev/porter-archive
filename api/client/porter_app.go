@@ -215,6 +215,7 @@ func (c *Client) ValidatePorterApp(
 	return resp, err
 }
 
+// ApplyPorterAppInput is the input struct to ApplyPorterApp
 type ApplyPorterAppInput struct {
 	ProjectID        uint
 	ClusterID        uint

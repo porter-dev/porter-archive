@@ -17,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/api/utils"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -137,10 +138,12 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			event:           event,
 		})
 
+		namespace := utils.ValidDNSLabel(branch)
+
 		deploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(
 			uint(webhook.ProjectID),
 			uint(webhook.ClusterID),
-			branch,
+			namespace,
 			string(models.DeploymentTargetSelectorType_Namespace),
 		)
 		if err != nil {

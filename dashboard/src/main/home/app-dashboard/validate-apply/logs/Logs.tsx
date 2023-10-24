@@ -80,7 +80,7 @@ const Logs: React.FC<Props> = ({
     const [selectedFilterValues, setSelectedFilterValues] = useState<Record<FilterName, string>>({
         service_name: logQueryParamOpts?.service ?? GenericFilter.getDefaultOption("service_name").value,
         pod_name: "", // not supported in v2
-        revision: logQueryParamOpts.revision ?? GenericFilter.getDefaultOption("revision").value,
+        revision: logQueryParamOpts.revision ?? GenericFilter.getDefaultOption("revision").value, // refers to revision number
         output_stream: logQueryParamOpts.output_stream ?? GenericFilter.getDefaultOption("output_stream").value,
         revision_id: logQueryParamOpts.revision_id ?? GenericFilter.getDefaultOption("revision_id").value,
     });
@@ -244,7 +244,7 @@ const Logs: React.FC<Props> = ({
             } as GenericFilter,
         ].filter((f: GenericFilter) => logFilterNames.includes(f.name)))
 
-        if (latestRevisionNumber && !logQueryParamOpts.revision && !logQueryParamOpts.revision_id) { // default to filter by latest revision number if no query params supplied
+        if (latestRevisionNumber && !logQueryParamOpts.revision && !logQueryParamOpts.revision_id) { // default to filter by latest revision number if no revision-related query params supplied
             setSelectedFilterValues({
                 ...selectedFilterValues,
                 revision: latestRevisionNumber.toString(),

@@ -215,40 +215,28 @@ func (c *Client) ValidatePorterApp(
 	return resp, err
 }
 
-// ApplyPorterAppInput is the input struct to ApplyPorterApp
-type ApplyPorterAppInput struct {
-	ProjectID        uint
-	ClusterID        uint
-	Base64AppProto   string
-	DeploymentTarget string
-	AppRevisionID    string
-	ForceBuild       bool
-	Variables        map[string]string
-	Secrets          map[string]string
-	HardEnvUpdate    bool
-}
-
 // ApplyPorterApp takes in a base64 encoded app definition and applies it to the cluster
 func (c *Client) ApplyPorterApp(
 	ctx context.Context,
-	inp ApplyPorterAppInput,
+	projectID, clusterID uint,
+	base64AppProto string,
+	deploymentTarget string,
+	appRevisionID string,
+	forceBuild bool,
 ) (*porter_app.ApplyPorterAppResponse, error) {
 	resp := &porter_app.ApplyPorterAppResponse{}
 
 	req := &porter_app.ApplyPorterAppRequest{
-		Base64AppProto:     inp.Base64AppProto,
-		DeploymentTargetId: inp.DeploymentTarget,
-		AppRevisionID:      inp.AppRevisionID,
-		ForceBuild:         inp.ForceBuild,
-		Variables:          inp.Variables,
-		Secrets:            inp.Secrets,
-		HardEnvUpdate:      inp.HardEnvUpdate,
+		Base64AppProto:     base64AppProto,
+		DeploymentTargetId: deploymentTarget,
+		AppRevisionID:      appRevisionID,
+		ForceBuild:         forceBuild,
 	}
 
 	err := c.postRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/apply",
-			inp.ProjectID, inp.ClusterID,
+			projectID, clusterID,
 		),
 		req,
 		resp,

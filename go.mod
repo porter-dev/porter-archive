@@ -76,6 +76,7 @@ require (
 	github.com/cloudflare/cloudflare-go v0.76.0
 	github.com/glebarez/sqlite v1.6.0
 	github.com/go-chi/chi/v5 v5.0.8
+	github.com/gosimple/slug v1.13.1
 	github.com/honeycombio/otel-config-go v1.11.0
 	github.com/launchdarkly/go-sdk-common/v3 v3.0.1
 	github.com/launchdarkly/go-server-sdk/v6 v6.1.0
@@ -136,6 +137,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.1+incompatible // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
+	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect

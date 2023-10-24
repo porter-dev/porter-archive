@@ -21,6 +21,8 @@ import {
 } from "./values";
 import _ from "lodash";
 
+const LAUNCHER_PREFIX = "/cnb/lifecycle/launcher ";
+
 export type DetectedServices = {
   services: ClientService[];
   predeploy?: ClientService;
@@ -329,6 +331,14 @@ export function deserializeService({
     domainDeletions: [],
     ingressAnnotationDeletions: [],
   };
+
+  if (!baseService.run.readOnly && baseService.run.value.startsWith(LAUNCHER_PREFIX)) {
+    // trim launcher prefix from run command
+    baseService.run = ServiceField.string(
+      baseService.run.value.substring(LAUNCHER_PREFIX.length),
+      override?.run
+    );
+  }
 
   return match(service.config)
     .with({ type: "web" }, (config) => {

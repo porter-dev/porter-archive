@@ -53,7 +53,7 @@ export const GenericFilterOption = {
         return { label, value };
     }
 }
-export type FilterName = 'revision' | 'output_stream' | 'pod_name' | 'service_name';
+export type FilterName = 'revision' | 'output_stream' | 'pod_name' | 'service_name' | 'revision_id';
 export interface GenericFilter {
     name: FilterName;
     displayName: string;
@@ -70,7 +70,9 @@ export const GenericFilter = {
         switch (filterName) {
             case 'service_name':
                 return GenericFilterOption.of('All', 'all');
-            case 'revision':
+            case 'revision': // refers to number
+                return GenericFilterOption.of('All', 'all');
+            case 'revision_id':
                 return GenericFilterOption.of('All', 'all');
             case 'output_stream':
                 return GenericFilterOption.of('All', 'all');

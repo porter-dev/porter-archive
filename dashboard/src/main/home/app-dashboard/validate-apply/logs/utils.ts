@@ -46,7 +46,6 @@ export const useLogs = ({
   clusterID,
   selectedFilterValues,
   appName,
-  serviceName,
   deploymentTargetId,
   searchParam,
   notify,
@@ -62,7 +61,6 @@ export const useLogs = ({
   clusterID: number,
   selectedFilterValues: Record<FilterName, string>,
   appName: string,
-  serviceName: string,
   deploymentTargetId: string,
   searchParam: string,
   notify: (message: string) => void,
@@ -182,7 +180,7 @@ export const useLogs = ({
     const websocketBaseURL = `/api/projects/${projectID}/clusters/${clusterID}/apps/${appName}/logs/loki`;
 
     const searchParams = {
-      service_name: serviceName,
+      service_name: selectedFilterValues.service_name,
       deployment_target_id: deploymentTargetId,
       search_param: searchParam,
       app_revision_id: appRevisionId,
@@ -258,6 +256,11 @@ export const useLogs = ({
         return false;
       }
 
+      if (selectedFilterValues.revision_id !== GenericFilter.getDefaultOption("revision_id").value &&
+        log.metadata.raw_labels?.porter_run_app_revision_id !== selectedFilterValues.revision_id) {
+        return false;
+      }
+
       return true;
     });
   };
@@ -275,7 +278,7 @@ export const useLogs = ({
     try {
       const getLogsReq = {
         app_id: appID,
-        service_name: serviceName,
+        service_name: selectedFilterValues.service_name,
         deployment_target_id: deploymentTargetId,
         search_param: searchParam,
         start_range: startDate,
@@ -367,7 +370,7 @@ export const useLogs = ({
 
     closeAllWebsockets();
     const suffix = Math.random().toString(36).substring(2, 15);
-    const websocketKey = `${appName}-${serviceName}-websocket-${suffix}`;
+    const websocketKey = `${appName}-${selectedFilterValues.service_name}-websocket-${suffix}`;
 
     setLoading(false);
 
@@ -471,7 +474,6 @@ export const useLogs = ({
     }
   }, [
     appName,
-    serviceName,
     deploymentTargetId,
     searchParam,
     setDate,

@@ -119,7 +119,7 @@ type Service struct {
 	Name               string            `yaml:"name,omitempty"`
 	Run                *string           `yaml:"run,omitempty"`
 	Type               ServiceType       `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
-	Instances          int               `yaml:"instances,omitempty"`
+	Instances          *int32            `yaml:"instances,omitempty"`
 	CpuCores           float32           `yaml:"cpuCores,omitempty"`
 	RamMegabytes       int               `yaml:"ramMegabytes,omitempty"`
 	GpuCoresNvidia     float32           `yaml:"gpuCoresNvidia,omitempty"`
@@ -259,7 +259,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	serviceProto := &porterv1.Service{
 		Name:              service.Name,
 		RunOptional:       service.Run,
-		Instances:         int32(service.Instances),
+		InstancesOptional: service.Instances,
 		CpuCores:          service.CpuCores,
 		RamMegabytes:      int32(service.RamMegabytes),
 		GpuCoresNvidia:    service.GpuCoresNvidia,
@@ -410,7 +410,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 	appService := Service{
 		Name:              service.Name,
 		Run:               service.RunOptional,
-		Instances:         int(service.Instances),
+		Instances:         service.InstancesOptional,
 		CpuCores:          service.CpuCores,
 		RamMegabytes:      int(service.RamMegabytes),
 		GpuCoresNvidia:    service.GpuCoresNvidia,

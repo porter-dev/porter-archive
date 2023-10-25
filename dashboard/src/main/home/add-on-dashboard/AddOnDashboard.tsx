@@ -207,7 +207,7 @@ const AddOnDashboard: React.FC<Props> = ({
               <Fieldset>
                 <Container row>
                   <PlaceholderIcon src={notFound} />
-                  <Text color="helper">No matching add-ons were found.</Text>
+                  <Text color="helper">{searchValue === "" ? "No add-ons have been deployed yet." : "No matching add-ons were found."}</Text>
                 </Container>
               </Fieldset>
             ) : (isLoading ? <Loading offset="-150px" /> : view === "grid" ? (

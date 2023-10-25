@@ -304,7 +304,7 @@ func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string
 }
 
 func touchFilepath(filepath string) error {
-	mode := os.FileMode(0600)
+	mode := os.FileMode(0o600)
 	file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, mode)
 	if err != nil {
 		return err

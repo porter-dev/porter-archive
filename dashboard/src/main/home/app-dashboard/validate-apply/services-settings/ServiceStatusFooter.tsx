@@ -5,7 +5,6 @@ import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 
-import { RouteComponentProps } from "react-router";
 import AnimateHeight, { Height } from "react-animate-height";
 import _ from "lodash";
 import Link from "components/porter/Link";

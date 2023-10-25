@@ -100,6 +100,9 @@ const machineTypeOptions = [
   { value: "r6i.24xlarge", label: "r6i.24xlarge" },
   { value: "r6i.32xlarge", label: "r6i.32xlarge" },
   { value: "g4dn.xlarge", label: "g4dn.xlarge" },
+  { value: "m5n.large", label: "m5n.large" },
+  { value: "m5n.xlarge", label: "m5n.xlarge" },
+  { value: "m5n.2xlarge", label: "m5n.2xlarge" },
 ];
 
 const defaultCidrVpc = "10.78.0.0/16"

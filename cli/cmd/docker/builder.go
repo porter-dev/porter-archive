@@ -39,9 +39,11 @@ type BuildOpts struct {
 
 // BuildLocal
 func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
+	println("Running with buildkit config", os.Getenv("DOCKER_BUILDKIT"))
 	if os.Getenv("DOCKER_BUILDKIT") == "1" {
 		return buildLocalWithBuildkit(ctx, opts)
 	}
+
 	dockerfilePath := opts.DockerfilePath
 
 	// attempt to read dockerignore file and paths

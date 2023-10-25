@@ -212,6 +212,8 @@ func buildLocalWithBuildkit(ctx context.Context, opts *BuildOpts) error {
 	}
 
 	commandArgs = append(commandArgs, extraDockerArgs...)
+	// note: the path _must_ be the last argument
+	commandArgs = append(commandArgs, opts.BuildContext)
 
 	stdoutWriters := []io.Writer{os.Stdout}
 	stderrWriters := []io.Writer{os.Stderr}

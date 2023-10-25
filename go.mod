@@ -12,10 +12,10 @@ require (
 	github.com/cli/cli v1.11.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/digitalocean/godo v1.75.0
-	github.com/docker/cli v20.10.17+incompatible
-	github.com/docker/distribution v2.8.1+incompatible
-	github.com/docker/docker v20.10.17+incompatible
-	github.com/docker/docker-credential-helpers v0.6.4
+	github.com/docker/cli v20.10.26+incompatible
+	github.com/docker/distribution v2.8.3+incompatible
+	github.com/docker/docker v20.10.26+incompatible
+	github.com/docker/docker-credential-helpers v0.8.0
 	github.com/docker/go-connections v0.4.0
 	github.com/fatih/color v1.13.0
 	github.com/getsentry/sentry-go v0.11.0
@@ -35,8 +35,8 @@ require (
 	github.com/joeshaw/envdecode v0.0.0-20200121155833-099f1fc765bd
 	github.com/kris-nova/logger v0.0.0-20181127235838-fd0d87064b06
 	github.com/mitchellh/mapstructure v1.4.3
-	github.com/moby/moby v20.10.6+incompatible
-	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6
+	github.com/moby/moby v24.0.6+incompatible
+	github.com/moby/term v0.5.0
 	github.com/opencontainers/image-spec v1.0.3-0.20220114050600-8b9d41f48198
 	github.com/pkg/errors v0.9.1
 	github.com/porter-dev/switchboard v0.0.3
@@ -107,6 +107,7 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11 // indirect
 	github.com/Azure/go-autorest/autorest/azure/cli v0.4.5 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v0.4.0 // indirect
+	github.com/Microsoft/hcsshim v0.9.4 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.16.4 // indirect
@@ -125,7 +126,9 @@ require (
 	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.0.0-20220517224237-e6f29200ae04 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/chrismellard/docker-credential-acr-env v0.0.0-20220327082430-c57b701bfc08 // indirect
+	github.com/containerd/cgroups v1.0.3 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
+	github.com/distribution/reference v0.5.0 // indirect
 	github.com/elazarl/goproxy v0.0.0-20190421051319-9d40249d3c2f // indirect
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
@@ -149,6 +152,8 @@ require (
 	github.com/launchdarkly/go-semver v1.0.2 // indirect
 	github.com/launchdarkly/go-server-sdk-evaluation/v2 v2.0.2 // indirect
 	github.com/lufia/plan9stats v0.0.0-20230326075908-cb1d2100619a // indirect
+	github.com/moby/sys/mount v0.3.2 // indirect
+	github.com/moby/sys/mountinfo v0.6.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/nats-io/nats-server/v2 v2.9.15 // indirect
 	github.com/nats-io/nkeys v0.3.0 // indirect
@@ -208,7 +213,6 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/Microsoft/hcsshim v0.9.4 // indirect
 	github.com/apex/log v1.9.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -217,7 +221,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/cli/safeexec v1.0.0 // indirect
-	github.com/containerd/cgroups v1.0.3 // indirect
 	github.com/containerd/containerd v1.6.8 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.11.4 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
@@ -303,8 +306,6 @@ require (
 	github.com/moby/buildkit v0.10.3
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
-	github.com/moby/sys/mount v0.3.2 // indirect
-	github.com/moby/sys/mountinfo v0.6.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect

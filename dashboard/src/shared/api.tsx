@@ -988,6 +988,7 @@ const createAppTemplate = baseApi<
     b64_app_proto: string;
     variables: Record<string, string>;
     secrets: Record<string, string>;
+    base_deployment_target_id: string;
   },
   {
     project_id: number;

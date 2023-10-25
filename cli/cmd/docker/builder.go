@@ -257,6 +257,7 @@ func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string
 	randomName := ".dockerfile." + stringid.GenerateRandomID()[:20]
 	data := map[string]func() ([]byte, error){
 		randomName: func() ([]byte, error) {
+			dockerfilePath = filepath.Clean(dockerfilePath)
 			dockerfileCtx, err := os.Open(dockerfilePath)
 			if err != nil {
 				return []byte{}, err
@@ -271,6 +272,7 @@ func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string
 		},
 		".dockerignore": func() ([]byte, error) {
 			dockerignorePath := filepath.Join(buildContext, ".dockerignore")
+			dockerignorePath = filepath.Clean(dockerignorePath)
 			if _, err := os.Stat(dockerignorePath); errors.Is(err, os.ErrNotExist) {
 				if err := touchFilepath(dockerignorePath); err != nil {
 					return []byte{}, err
@@ -303,9 +305,10 @@ func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string
 	return nil
 }
 
-func touchFilepath(filepath string) error {
+func touchFilepath(filename string) error {
 	mode := os.FileMode(0o600)
-	file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, mode)
+	filename = filepath.Clean(filename)
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, mode)
 	if err != nil {
 		return err
 	}
@@ -313,8 +316,9 @@ func touchFilepath(filepath string) error {
 	return file.Chmod(mode)
 }
 
-func writeBytesToFilepath(filepath string, contents []byte) error {
-	file, err := os.Create(filepath)
+func writeBytesToFilepath(filename string, contents []byte) error {
+	filename = filepath.Clean(filename)
+	file, err := os.Create(filename)
 	if err != nil {
 		return err
 	}

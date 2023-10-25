@@ -6,7 +6,6 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/google/uuid"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
@@ -132,7 +131,6 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	)
 
 	var overrides *porterv1.PorterApp
-	var baseDeploymentTargetID string
 
 	if request.Base64AppOverrides != "" {
 		decoded, err := base64.StdEncoding.DecodeString(request.Base64AppOverrides)
@@ -151,21 +149,6 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "validated-with-overrides", Value: true})
-
-		// once we support many deployment targets, this will need to be updated to use whatever deployment target has been selected as the base
-		defaultDeploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(project.ID, cluster.ID, DeploymentTargetSelector_Default, DeploymentTargetSelectorType_Default)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error getting default deployment target from repo")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
-		if defaultDeploymentTarget.ID == uuid.Nil {
-			err := telemetry.Error(ctx, span, err, "default deployment target not found")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		baseDeploymentTargetID = defaultDeploymentTarget.ID.String()
 	}
 
 	var serviceDeletions map[string]*porterv1.ServiceDeletions
@@ -192,7 +175,6 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			EnvGroupNames:    request.Deletions.EnvGroupNames,
 			ServiceDeletions: serviceDeletions,
 		},
-		BaseDeploymentTargetId: baseDeploymentTargetID,
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.ValidatePorterApp(ctx, validateReq)
 	if err != nil {

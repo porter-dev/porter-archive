@@ -157,18 +157,18 @@ export const useAppStatus = (
 
             if (replicaSet.some((r) => r.crashLoopReason !== "") || replicaSet.some((r) => r.isFailing)) {
                 status = "failing";
-                message = `${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
+                message = `${replicaSet.length} instance${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
                     } failing to run Version ${version}`;
             } else if (
                 // last check ensures that we don't say 'spinning down' unless there exists a version status above it
                 i > 0 && replicaSetArray[i - 1].every(p => !p.isFailing) && revisionIdToNumber[replicaSetArray[i - 1][0].revisionId] != null
             ) {
                 status = "spinningDown";
-                message = `${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
+                message = `${replicaSet.length} instance${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
                     } still running at Version ${version}. Attempting to spin down...`;
             } else {
                 status = "running";
-                message = `${replicaSet.length} replica${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
+                message = `${replicaSet.length} instance${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
                     } running at Version ${version}`;
             }
 

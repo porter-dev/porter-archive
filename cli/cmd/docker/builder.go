@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -221,6 +222,7 @@ func buildLocalWithBuildkit(ctx context.Context, opts *BuildOpts) error {
 		stderrWriters = append(stderrWriters, opts.LogFile)
 	}
 
+	// #nosec G204 - The command is meant to be variable
 	cmd := exec.CommandContext(ctx, "docker", commandArgs...)
 	cmd.Dir = opts.BuildContext
 	cmd.Stdout = io.MultiWriter(stdoutWriters...)
@@ -261,7 +263,11 @@ func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string
 			if err != nil {
 				return []byte{}, err
 			}
-			defer dockerfileCtx.Close()
+			defer func() {
+				if err := dockerfileCtx.Close(); err != nil {
+					log.Fatalln(err)
+				}
+			}()
 			dockerfileBytes, err := io.ReadAll(dockerfileCtx)
 			if err != nil {
 				return []byte{}, err
@@ -306,12 +312,15 @@ func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string
 
 func touchFilepath(filename string) error {
 	mode := os.FileMode(0o600)
-	filename = filepath.Clean(filename)
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, mode)
+	file, err := os.OpenFile(filepath.Clean(filename), os.O_RDWR|os.O_CREATE|os.O_TRUNC, mode)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Fatalln(err)
+		}
+	}()
 	return file.Chmod(mode)
 }
 
@@ -322,7 +331,12 @@ func writeBytesToFilepath(filename string, contents []byte) error {
 		return err
 	}
 
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Fatalln(err)
+		}
+	}()
+
 	if _, err := file.Write(contents); err != nil {
 		return err
 	}

@@ -103,6 +103,8 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		b64AppProto = parseResp.B64AppProto
 
 		overrides = parseResp.PreviewApp
+		envVariables = parseResp.EnvVariables
+		envSecrets = parseResp.EnvSecrets
 
 		// override app name if provided
 		appName, err = appNameFromB64AppProto(parseResp.B64AppProto)

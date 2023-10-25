@@ -218,50 +218,17 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         return;
       }
 
-      // updates the default env group associated with this app to store app specific env vars
-      const res = await api.updateEnvironmentGroupV2(
-        "<token>",
-        {
-          deployment_target_id: deploymentTarget.id,
-          variables,
-          secrets,
-          b64_app_proto: btoa(validatedAppProto.toJsonString()),
-          remove_missing: true,
-        },
-        {
-          id: projectId,
-          cluster_id: clusterId,
-          app_name: porterAppRecord.name,
-        }
-      );
-
-      const updatedEnvGroups = z
-        .object({
-          env_groups: z
-            .object({
-              name: z.string(),
-              latest_version: z.coerce.bigint(),
-            })
-            .array(),
-        })
-        .parse(res.data);
-
-      const protoWithUpdatedEnv = new PorterApp({
-        ...validatedAppProto,
-        envGroups: updatedEnvGroups.env_groups.map((eg) => ({
-          name: eg.name,
-          version: eg.latest_version,
-        })),
-      });
-
       // force_build will create a new 0 revision that will not be deployed
       // but will be used to hydrate values when the workflow is run
       await api.applyApp(
         "<token>",
         {
-          b64_app_proto: btoa(protoWithUpdatedEnv.toJsonString()),
+          b64_app_proto: btoa(validatedAppProto.toJsonString()),
           deployment_target_id: deploymentTarget.id,
           force_build: needsRebuild,
+          variables,
+          secrets,
+          hard_env_update: true,
         },
         {
           project_id: projectId,
@@ -307,8 +274,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       // redirect to the default tab after save
       history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
     } catch (err) {
-      showIntercomWithMessage({ message: "I am running into an issue updating my application." });
-      
+      showIntercomWithMessage({
+        message: "I am running into an issue updating my application.",
+      });
+
       let message =
         "App update failed: please try again or contact support@porter.run if the error persists.";
       let stack = "Unable to get error stack";
@@ -404,12 +373,15 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             errorMessage = `${errorMessage} - ${serviceErrorMessage}`;
           }
           errorMessage = `${errorMessage}. To undo all changes, refresh the page.`;
-        } else if (appErrors.includes("message")) {  // this is the high level error message coming from the apply
+        } else if (appErrors.includes("message")) {
+          // this is the high level error message coming from the apply
           errorMessage = errors.app?.message ?? errorMessage;
         }
       }
 
-      showIntercomWithMessage({ message: "I am running into an issue updating my application." });
+      showIntercomWithMessage({
+        message: "I am running into an issue updating my application.",
+      });
       updateAppStep({
         step: "porter-app-update-failure",
         errorMessage: `Form validation error (visible to user): ${errorMessage}. Stringified JSON errors (invisible to user): ${stringifiedJson}`,

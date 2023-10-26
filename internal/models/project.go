@@ -285,7 +285,6 @@ func (p *Project) ToProjectListType() *types.ProjectList {
 		EnableReprovision:      p.EnableReprovision,
 		ValidateApplyV2:        p.ValidateApplyV2,
 		FullAddOns:             p.FullAddOns,
-		QuotaIncrease:          false,
 	}
 }
 

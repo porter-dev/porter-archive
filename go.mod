@@ -96,6 +96,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.4.5
 	istio.io/client-go v1.16.0
+	mvdan.cc/sh/v3 v3.7.0
 )
 
 require (
@@ -344,7 +345,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.starlark.net v0.0.0-20220328144851-d1966c6b9fcd // indirect
 	golang.org/x/mod v0.8.0 // indirect
-	golang.org/x/sync v0.1.0
+	golang.org/x/sync v0.2.0
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/term v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect

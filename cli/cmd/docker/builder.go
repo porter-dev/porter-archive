@@ -238,7 +238,7 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 		}
 	}
 
-	if ctx.Err() == context.Canceled {
+	if err := ctx.Err(); err != nil && err == context.Canceled {
 		return fmt.Errorf("build command canceled: %w", ctx.Err())
 	}
 
@@ -248,6 +248,10 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 
 	if exitCode != 0 {
 		return fmt.Errorf("build exited with non-zero exit code %d", exitCode)
+	}
+
+	if execErr != nil {
+		return fmt.Errorf("error while running build: %w", execErr)
 	}
 
 	return nil

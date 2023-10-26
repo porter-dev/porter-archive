@@ -157,6 +157,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           buildpacks: [],
         },
         env: [],
+        efsStorage: {
+          value: true,
+        }
       },
       source: {
         git_repo_name: "",

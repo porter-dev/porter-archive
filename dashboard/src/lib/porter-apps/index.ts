@@ -15,6 +15,7 @@ import {
   HelmOverrides,
   PorterApp,
   Service,
+  EFS,
 } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
@@ -91,6 +92,10 @@ export const clientAppValidator = z.object({
     .default([]),
   build: buildValidator,
   helmOverrides: z.string().optional(),
+  efsStorage: z.object({
+    value: z.boolean(),
+    readOnly: z.boolean().optional(),
+  }),
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 
@@ -280,7 +285,12 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
               app.helmOverrides != null
                 ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
                 : undefined,
+
           }),
+          efsStorage:
+            new EFS({
+              enabled: app.efsStorage.value,
+            })
         })
     )
     .with(
@@ -301,6 +311,11 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
             app.helmOverrides != null
               ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
               : undefined,
+          efsStorage:
+            new EFS({
+              enabled: app.efsStorage.value,
+            })
+
         })
     )
     .exhaustive();
@@ -439,6 +454,7 @@ export function clientAppFromProto({
         builder: "",
       },
       helmOverrides: helmOverrides,
+      efsStorage: { value: proto.efsStorage?.enabled ?? false }
     };
   }
 
@@ -477,6 +493,8 @@ export function clientAppFromProto({
       builder: "",
     },
     helmOverrides: helmOverrides,
+    efsStorage: { value: proto.efsStorage?.enabled ?? false }
+    ,
   };
 }
 

@@ -287,6 +287,7 @@ export interface ProjectType {
   multi_cluster: boolean;
   full_add_ons: boolean;
   enable_reprovision: boolean;
+  quota_increase: boolean
   validate_apply_v2: boolean;
   roles: {
     id: number;

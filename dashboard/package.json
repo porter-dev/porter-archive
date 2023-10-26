@@ -94,7 +94,7 @@
     "@babel/preset-react": "^7.14.5",
     "@babel/preset-typescript": "^7.15.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.4.3",
-    "@porter-dev/api-contracts": "^0.2.27",
+    "@porter-dev/api-contracts": "^0.2.28",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",

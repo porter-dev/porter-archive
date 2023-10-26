@@ -42,6 +42,7 @@ type Project struct {
 	FullAddOns             bool    `json:"full_add_ons"`
 	EnableReprovision      bool    `json:"enable_reprovision"`
 	ValidateApplyV2        bool    `json:"validate_apply_v2"`
+	QuotaIncrease          bool    `json:"quota_increase"`
 }
 
 type FeatureFlags struct {

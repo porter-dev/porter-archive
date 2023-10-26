@@ -59,7 +59,7 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	cm, _, err := agent.GetLatestVersionedConfigMap(request.SourceName, namespace)
 	if err != nil {
 		if errors.Is(err, kubernetes.IsNotFoundError) {
-			err = telemetry.Error(ctx, span, err, "error finding latest config map")
+			_ = telemetry.Error(ctx, span, err, "error finding latest config map")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", request.SourceName, namespace), http.StatusNotFound,
 				"no config map found for envgroup",
@@ -75,7 +75,7 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	secret, _, err := agent.GetLatestVersionedSecret(request.SourceName, namespace)
 	if err != nil {
 		if errors.Is(err, kubernetes.IsNotFoundError) {
-			err = telemetry.Error(ctx, span, err, "error finding latest secret")
+			_ = telemetry.Error(ctx, span, err, "error finding latest secret")
 
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", request.SourceName, namespace), http.StatusNotFound,

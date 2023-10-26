@@ -518,7 +518,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     await requestQuotaIncrease()
     await createCluster()
   }
-
   const requestQuotaIncrease = async () => {
 
     try {
@@ -550,8 +549,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
 
   }
-
-
 
   const preflightChecks = async () => {
 
@@ -1112,7 +1109,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                   <Spacer y={.5} />
                   {(preflightFailed && preflightData) &&
                     <>
-                      {(showHelpMessage) ? <>
+                      {(showHelpMessage && currentProject?.quota_increase) ? <>
                         <Text color="helper">
                           Your account currently is blocked from provisioning in {awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
                         </Text>

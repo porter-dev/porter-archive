@@ -49,6 +49,9 @@ const (
 	// RDSDatabasesEnabled allows for users to provision RDS instances within their cluster vpc
 	RDSDatabasesEnabled FeatureFlagLabel = "rds_databases_enabled"
 
+	// QuotaIncrease enables whether we allow for auto increase of quota_increase
+	QuotaIncrease FeatureFlagLabel = "quota_increase"
+
 	// SimplifiedViewEnabled shows the new UI dashboard or not
 	SimplifiedViewEnabled FeatureFlagLabel = "simplified_view_enabled"
 
@@ -72,6 +75,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	MultiCluster:           false,
 	PreviewEnvsEnabled:     false,
 	RDSDatabasesEnabled:    false,
+	QuotaIncrease:          false,
 	SimplifiedViewEnabled:  true,
 	StacksEnabled:          false,
 	ValidateApplyV2:        true,
@@ -195,6 +199,8 @@ func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *
 			return p.MultiCluster
 		case "preview_envs_enabled":
 			return p.PreviewEnvsEnabled
+		case "quota_increase":
+			return false
 		case "rds_databases_enabled":
 			return p.RDSDatabasesEnabled
 		case "simplified_view_enabled":
@@ -225,7 +231,6 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 
 	projectID := p.ID
 	projectName := p.Name
-
 	return types.Project{
 		ID:    projectID,
 		Name:  projectName,
@@ -245,6 +250,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		EnableReprovision:      p.GetFeatureFlag(EnableReprovision, launchDarklyClient),
 		ValidateApplyV2:        p.GetFeatureFlag(ValidateApplyV2, launchDarklyClient),
 		FullAddOns:             p.GetFeatureFlag(FullAddOns, launchDarklyClient),
+		QuotaIncrease:          p.GetFeatureFlag(QuotaIncrease, launchDarklyClient),
 	}
 }
 
@@ -279,6 +285,7 @@ func (p *Project) ToProjectListType() *types.ProjectList {
 		EnableReprovision:      p.EnableReprovision,
 		ValidateApplyV2:        p.ValidateApplyV2,
 		FullAddOns:             p.FullAddOns,
+		QuotaIncrease:          false,
 	}
 }
 

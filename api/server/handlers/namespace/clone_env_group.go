@@ -15,6 +15,9 @@ import (
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/kubernetes/envgroup"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type CloneEnvGroupHandler struct {
@@ -34,6 +37,9 @@ func NewCloneEnvGroupHandler(
 }
 
 func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(ctx, "clone-env-group-legacy")
+	defer span.End()
+
 	request := &types.CloneEnvGroupRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -45,13 +51,15 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error getting kubernetes agent")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	cm, _, err := agent.GetLatestVersionedConfigMap(request.SourceName, namespace)
 	if err != nil {
 		if errors.Is(err, kubernetes.IsNotFoundError) {
+			err = telemetry.Error(ctx, span, err, "error finding latest config map")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", request.SourceName, namespace), http.StatusNotFound,
 				"no config map found for envgroup",
@@ -59,13 +67,16 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error getting latest config map")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	secret, _, err := agent.GetLatestVersionedSecret(request.SourceName, namespace)
 	if err != nil {
 		if errors.Is(err, kubernetes.IsNotFoundError) {
+			err = telemetry.Error(ctx, span, err, "error finding latest secret")
+
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 				fmt.Errorf("error cloning env group: envgroup %s in namespace %s not found", request.SourceName, namespace), http.StatusNotFound,
 				"no k8s secret found for envgroup",
@@ -73,7 +84,8 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error getting secret")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -94,6 +106,30 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		secretVars[key] = string(val)
 	}
 
+	_, err = agent.Clientset.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+	if err != nil {
+		if !errors.Is(err, kubernetes.IsNotFoundError) {
+			err = telemetry.Error(ctx, span, err, "error getting namespace")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		_, err = agent.Clientset.CoreV1().Namespaces().Create(ctx, &v1.Namespace{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Namespace",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespace,
+			},
+		}, metav1.CreateOptions{})
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error creating namespace")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+	}
+
 	configMap, err := envgroup.CreateEnvGroup(agent, types.ConfigMapInput{
 		Name:            request.TargetName,
 		Namespace:       request.TargetNamespace,
@@ -101,13 +137,16 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		SecretVariables: secretVars,
 	})
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error getting kubernetes agent")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	envGroup, err := envgroup.ToEnvGroup(configMap)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+
+		err = telemetry.Error(ctx, span, err, "error getting kubernetes agent")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

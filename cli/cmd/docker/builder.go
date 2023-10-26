@@ -40,7 +40,7 @@ type BuildOpts struct {
 // BuildLocal
 func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 	if os.Getenv("DOCKER_BUILDKIT") == "1" {
-		return buildLocalWithBuildkit(ctx, opts)
+		return buildLocalWithBuildkit(ctx, *opts)
 	}
 
 	dockerfilePath := opts.DockerfilePath
@@ -177,7 +177,7 @@ func AddDockerfileToBuildContext(dockerfileCtx io.ReadCloser, buildCtx io.ReadCl
 	return buildCtx, randomName, nil
 }
 
-func buildLocalWithBuildkit(ctx context.Context, opts *BuildOpts) error {
+func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 	if _, err := exec.LookPath("docker"); err != nil {
 		return fmt.Errorf("unable to find docker binary in PATH for buildkit build: %w", err)
 	}

@@ -226,6 +226,7 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
             b64_app_proto: btoa(app.toJsonString()),
             variables,
             secrets,
+            base_deployment_target_id: deploymentTarget.id,
           },
           {
             project_id: projectId,
@@ -280,7 +281,9 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
                 fieldArrayName={"app.services"}
                 maxCPU={currentClusterResources.maxCPU}
                 maxRAM={currentClusterResources.maxRAM}
-                clusterContainsGPUNodes={currentClusterResources.clusterContainsGPUNodes}
+                clusterContainsGPUNodes={
+                  currentClusterResources.clusterContainsGPUNodes
+                }
                 internalNetworkingDetails={{
                   namespace: deploymentTarget.namespace,
                   appName: porterApp.name,
@@ -321,6 +324,9 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
                 fieldArrayName={"app.predeploy"}
                 maxCPU={currentClusterResources.maxCPU}
                 maxRAM={currentClusterResources.maxRAM}
+                clusterContainsGPUNodes={
+                  currentClusterResources.clusterContainsGPUNodes
+                }
               />
             </>,
             <Button

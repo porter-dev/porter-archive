@@ -501,5 +501,6 @@ export const useLogs = ({
     refresh,
     moveCursor,
     paginationInfo,
+    stopLogStream: closeAllWebsockets,
   };
 };

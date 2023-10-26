@@ -43,9 +43,10 @@ func NewCreateAppTemplateHandler(
 
 // CreateAppTemplateRequest is the request object for the /app-template POST endpoint
 type CreateAppTemplateRequest struct {
-	B64AppProto string            `json:"b64_app_proto"`
-	Variables   map[string]string `json:"variables"`
-	Secrets     map[string]string `json:"secrets"`
+	B64AppProto            string            `json:"b64_app_proto"`
+	Variables              map[string]string `json:"variables"`
+	Secrets                map[string]string `json:"secrets"`
+	BaseDeploymentTargetID string            `json:"base_deployment_target_id"`
 }
 
 // CreateAppTemplateResponse is the response object for the /app-template POST endpoint
@@ -84,6 +85,18 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 	if request.B64AppProto == "" {
 		err := telemetry.Error(ctx, span, nil, "b64 app proto is empty")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	baseDeploymentTarget, err := uuid.Parse(request.BaseDeploymentTargetID)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error parsing base deployment target id")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+	if baseDeploymentTarget == uuid.Nil {
+		err := telemetry.Error(ctx, span, err, "base deployment target id is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
@@ -152,6 +165,7 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	appTemplate.Base64App = protoWithoutDefaultAppEnvGroups
+	appTemplate.BaseDeploymentTargetID = baseDeploymentTarget
 
 	updatedAppTemplate, err := c.Repo().AppTemplate().CreateAppTemplate(appTemplate)
 	if err != nil {

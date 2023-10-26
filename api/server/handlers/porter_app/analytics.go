@@ -127,7 +127,7 @@ func TrackStackBuildStatus(
 	validateApplyV2 bool,
 	b64BuildLogs string,
 ) error {
-	_, span := telemetry.NewSpan(ctx, "track-build-status")
+	ctx, span := telemetry.NewSpan(ctx, "track-build-status")
 	defer span.End()
 
 	telemetry.WithAttributes(

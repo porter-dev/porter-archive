@@ -78,6 +78,10 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	// overrides incorporated into the app contract baed on the deployment target
 	var overrides *porter_app.EncodedAppWithEnv
 
+	// env variables and secrets to be passed to the apply endpoint
+	var envVariables map[string]string
+	var envSecrets map[string]string
+
 	appName := inp.AppName
 	if porterYamlExists {
 		porterYaml, err := os.ReadFile(filepath.Clean(inp.PorterYamlPath))
@@ -99,6 +103,8 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		b64AppProto = parseResp.B64AppProto
 
 		overrides = parseResp.PreviewApp
+		envVariables = parseResp.EnvVariables
+		envSecrets = parseResp.EnvSecrets
 
 		// override app name if provided
 		appName, err = appNameFromB64AppProto(parseResp.B64AppProto)
@@ -118,16 +124,6 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 				return fmt.Errorf("cannot find existing Porter app with name %s and no build or image settings were specified in porter.yaml", appName)
 			}
 			return fmt.Errorf("unable to create porter app from yaml: %w", err)
-		}
-
-		envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID, parseResp.EnvVariables, parseResp.EnvSecrets, parseResp.B64AppProto)
-		if err != nil {
-			return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
-		}
-
-		b64AppProto, err = updateEnvGroupsInProto(ctx, b64AppProto, envGroupResp.EnvGroups)
-		if err != nil {
-			return fmt.Errorf("error updating app env group in proto: %w", err)
 		}
 
 		color.New(color.FgGreen).Printf("Successfully parsed Porter YAML: applying app \"%s\"\n", appName) // nolint:errcheck,gosec
@@ -182,7 +178,17 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	}
 	base64AppProto := validateResp.ValidatedBase64AppProto
 
-	applyResp, err := client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, base64AppProto, deploymentTargetID, "", forceBuild)
+	applyInput := api.ApplyPorterAppInput{
+		ProjectID:        cliConf.Project,
+		ClusterID:        cliConf.Cluster,
+		Base64AppProto:   base64AppProto,
+		DeploymentTarget: deploymentTargetID,
+		ForceBuild:       forceBuild,
+		Variables:        envVariables,
+		Secrets:          envSecrets,
+	}
+
+	applyResp, err := client.ApplyPorterApp(ctx, applyInput)
 	if err != nil {
 		return fmt.Errorf("error calling apply endpoint: %w", err)
 	}
@@ -280,7 +286,14 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		buildMetadata["end_time"] = time.Now().UTC()
 		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_Build, eventID, types.PorterAppEventStatus_Success, buildMetadata)
 
-		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId, !forceBuild)
+		applyInput = api.ApplyPorterAppInput{
+			ProjectID:     cliConf.Project,
+			ClusterID:     cliConf.Cluster,
+			AppRevisionID: applyResp.AppRevisionId,
+			ForceBuild:    !forceBuild,
+		}
+
+		applyResp, err = client.ApplyPorterApp(ctx, applyInput)
 		if err != nil {
 			return fmt.Errorf("apply error post-build: %w", err)
 		}
@@ -327,7 +340,14 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		metadata["end_time"] = time.Now().UTC()
 		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
 
-		applyResp, err = client.ApplyPorterApp(ctx, cliConf.Project, cliConf.Cluster, "", "", applyResp.AppRevisionId, !forceBuild)
+		applyInput = api.ApplyPorterAppInput{
+			ProjectID:     cliConf.Project,
+			ClusterID:     cliConf.Cluster,
+			AppRevisionID: applyResp.AppRevisionId,
+			ForceBuild:    !forceBuild,
+		}
+
+		applyResp, err = client.ApplyPorterApp(ctx, applyInput)
 		if err != nil {
 			return fmt.Errorf("apply error post-predeploy: %w", err)
 		}

@@ -132,26 +132,11 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	// b64AppOverrides is the base64-encoded app proto with preview environment specific overrides and env groups
 	var b64AppOverrides string
 
-	if inp.PreviewApply {
-		var previewEnvVariables map[string]string
-		var previewEnvSecrets map[string]string
+	if inp.PreviewApply && overrides != nil {
+		b64AppOverrides = overrides.B64AppProto
 
-		if overrides != nil {
-			b64AppOverrides = overrides.B64AppProto
-			previewEnvVariables = overrides.EnvVariables
-			previewEnvSecrets = overrides.EnvSecrets
-		}
-
-		envGroupResp, err := client.CreateOrUpdateAppEnvironment(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID, previewEnvVariables, previewEnvSecrets, b64AppOverrides)
-		if err != nil {
-			return fmt.Errorf("error calling create or update app environment group endpoint: %w", err)
-		}
-		b64AppOverrides = envGroupResp.Base64AppProto
-
-		b64AppOverrides, err = updateEnvGroupsInProto(ctx, b64AppOverrides, envGroupResp.EnvGroups)
-		if err != nil {
-			return fmt.Errorf("error updating app env group in proto: %w", err)
-		}
+		previewEnvVariables := overrides.EnvVariables
+		envVariables = mergeEnvVariables(envVariables, previewEnvVariables)
 	}
 
 	if appName == "" {
@@ -552,6 +537,20 @@ func imageTagFromBase64AppProto(base64AppProto string) (string, error) {
 	}
 
 	return app.Image.Tag, nil
+}
+
+func mergeEnvVariables(currentEnv, previousEnv map[string]string) map[string]string {
+	env := make(map[string]string)
+
+	for k, v := range previousEnv {
+		env[k] = v
+	}
+
+	for k, v := range currentEnv {
+		env[k] = v
+	}
+
+	return env
 }
 
 func updateEnvGroupsInProto(ctx context.Context, base64AppProto string, envGroups []environment_groups.EnvironmentGroup) (string, error) {

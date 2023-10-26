@@ -291,7 +291,7 @@ func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string
 	for filename, fn := range data {
 		bytes, err := fn()
 		if err != nil {
-			return randomName, err
+			return randomName, fmt.Errorf("failed to get file contents: %w", err)
 		}
 
 		return randomName, os.WriteFile(filepath.Join(buildContext, filename), bytes, os.FileMode(0o600))

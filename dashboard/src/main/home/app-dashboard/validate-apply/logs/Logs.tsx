@@ -27,6 +27,7 @@ import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import Filter from "components/porter/Filter";
 import { useTimer } from 'react-timer-hook';
 import { useIntercom } from "lib/hooks/useIntercom";
+import axios from "axios";
 
 type Props = {
     projectId: number;
@@ -43,6 +44,8 @@ type Props = {
     filterPredeploy?: boolean;
     appId: number;
 };
+
+const DEFAULT_LOG_TIMEOUT_SECONDS = 60;
 
 const Logs: React.FC<Props> = ({
     projectId,
@@ -65,7 +68,7 @@ const Logs: React.FC<Props> = ({
         revision_id: queryParams.get('revision_id'),
     }
 
-    const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
+    const scrollToBottomRef = useRef<HTMLDivElement | null>(null);
     const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
     const [enteredSearchText, setEnteredSearchText] = useState("");
     const [searchText, setSearchText] = useState("");
@@ -201,9 +204,8 @@ const Logs: React.FC<Props> = ({
         appID: appId,
     });
 
-    const { totalSeconds, isRunning, pause, restart: restartLogTimeout } = useTimer({
-        // get the timestamp 60 seconds from now
-        expiryTimestamp: dayjs().add(60, 'seconds').toDate(),
+    const { totalSeconds, isRunning, pause: pauseLogTimeout, restart: restartLogTimeout } = useTimer({
+        expiryTimestamp: dayjs().add(DEFAULT_LOG_TIMEOUT_SECONDS, 'seconds').toDate(),
         onExpire: () => {
             stopLogStream();
             showIntercomWithMessage({ message: "I am having trouble receiving logs from my application." });
@@ -212,13 +214,9 @@ const Logs: React.FC<Props> = ({
 
     useEffect(() => {
         if (logs.length) {
-            pause();
+            pauseLogTimeout();
         }
     },[logs.length]);
-
-    useEffect(() => {
-        console.log("totalSeconds", totalSeconds)
-    },[totalSeconds]);
 
     useEffect(() => {
         setFilters([
@@ -330,7 +328,7 @@ const Logs: React.FC<Props> = ({
                         <Spacer inline x={1} />
                         <ScrollButton
                             onClick={() => {
-                                restartLogTimeout(dayjs().add(60, 'seconds').toDate());
+                                restartLogTimeout(dayjs().add(DEFAULT_LOG_TIMEOUT_SECONDS, 'seconds').toDate());
                                 refresh({ isLive: selectedDate == null && timeRange?.endTime == null });
                             }}
                         >
@@ -384,7 +382,7 @@ const Logs: React.FC<Props> = ({
                             <Message>
                                 Timed out waiting for logs.
                                 <Highlight onClick={() => {
-                                    restartLogTimeout(dayjs().add(60, 'seconds').toDate());
+                                    restartLogTimeout(dayjs().add(DEFAULT_LOG_TIMEOUT_SECONDS, 'seconds').toDate());
                                     refresh({ isLive: selectedDate == null && timeRange?.endTime == null });
                                 }}>
                                     <i className="material-icons">autorenew</i>
@@ -434,7 +432,7 @@ const Logs: React.FC<Props> = ({
                 notify("Porter agent is outdated. Please upgrade to see logs.");
             }
         } catch (err) {
-            if (err.response?.status === 404) {
+            if (axios.isAxiosError(err) && err.response?.status === 404) {
                 setHasPorterAgent(false);
             }
         }

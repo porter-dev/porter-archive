@@ -494,6 +494,7 @@ export function serviceProto(service: SerializedService): Service {
         new Service({
           ...service,
           runOptional: service.run,
+          instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {
@@ -509,6 +510,7 @@ export function serviceProto(service: SerializedService): Service {
         new Service({
           ...service,
           runOptional: service.run,
+          instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {
@@ -524,6 +526,7 @@ export function serviceProto(service: SerializedService): Service {
         new Service({
           ...service,
           runOptional: service.run,
+          instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {
@@ -541,6 +544,7 @@ export function serviceProto(service: SerializedService): Service {
         new Service({
           ...service,
           runOptional: service.run,
+          instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
           config: {
             value: {},
@@ -569,6 +573,7 @@ export function serializedServiceFromProto({
     .with({ case: "webConfig" }, ({ value }) => ({
       ...service,
       run: service.runOptional ?? service.run,
+      instances: service.instancesOptional ?? service.instances,
       config: {
         type: "web" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -579,6 +584,7 @@ export function serializedServiceFromProto({
     .with({ case: "workerConfig" }, ({ value }) => ({
       ...service,
       run: service.runOptional ?? service.run,
+      instances: service.instancesOptional ?? service.instances,
       config: {
         type: "worker" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -590,6 +596,7 @@ export function serializedServiceFromProto({
         ? {
           ...service,
           run: service.runOptional ?? service.run,
+          instances: service.instancesOptional ?? service.instances,
           config: {
             type: "predeploy" as const,
           },
@@ -597,6 +604,7 @@ export function serializedServiceFromProto({
         : {
           ...service,
           run: service.runOptional ?? service.run,
+          instances: service.instancesOptional ?? service.instances,
           config: {
             type: "job" as const,
             ...value,

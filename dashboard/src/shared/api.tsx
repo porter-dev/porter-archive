@@ -988,6 +988,7 @@ const createAppTemplate = baseApi<
     b64_app_proto: string;
     variables: Record<string, string>;
     secrets: Record<string, string>;
+    base_deployment_target_id: string;
   },
   {
     project_id: number;
@@ -1004,6 +1005,9 @@ const applyApp = baseApi<
     b64_app_proto?: string;
     app_revision_id?: string;
     force_build?: boolean;
+    variables?: Record<string, string>;
+    secrets?: Record<string, string>;
+    hard_env_update?: boolean;
   },
   {
     project_id: number;

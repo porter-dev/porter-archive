@@ -100,6 +100,9 @@ const machineTypeOptions = [
   { value: "r6i.24xlarge", label: "r6i.24xlarge" },
   { value: "r6i.32xlarge", label: "r6i.32xlarge" },
   { value: "g4dn.xlarge", label: "g4dn.xlarge" },
+  { value: "m5n.large", label: "m5n.large" },
+  { value: "m5n.xlarge", label: "m5n.xlarge" },
+  { value: "m5n.2xlarge", label: "m5n.2xlarge" },
 ];
 
 const defaultCidrVpc = "10.78.0.0/16"
@@ -515,7 +518,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     await requestQuotaIncrease()
     await createCluster()
   }
-
   const requestQuotaIncrease = async () => {
 
     try {
@@ -547,8 +549,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
 
   }
-
-
 
   const preflightChecks = async () => {
 
@@ -1109,7 +1109,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                   <Spacer y={.5} />
                   {(preflightFailed && preflightData) &&
                     <>
-                      {(showHelpMessage) ? <>
+                      {(showHelpMessage && currentProject?.quota_increase) ? <>
                         <Text color="helper">
                           Your account currently is blocked from provisioning in {awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
                         </Text>

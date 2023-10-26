@@ -17,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/porter_app/notifications"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -72,6 +73,22 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	if request.Type == types.PorterAppEventType_Build {
 		validateApplyV2 := project.GetFeatureFlag(models.ValidateApplyV2, p.Config().LaunchDarklyClient)
 		reportBuildStatus(ctx, request, p.Config(), user, project, appName, validateApplyV2)
+	}
+
+	// This branch will only be hit for v2 app_event type events
+	if request.ID == "" && request.DeploymentTargetID != "" && request.Type == types.PorterAppEventType_AppEvent {
+		inp := notifications.HandleNotificationInput{
+			Context:             ctx,
+			RawAppEventMetadata: request.Metadata,
+			EventRepo:           p.Repo().PorterAppEvent(),
+			DeploymentTargetID:  request.DeploymentTargetID,
+		}
+		err := notifications.HandleNotification(inp)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error handling notification")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		}
+		return
 	}
 
 	if request.ID == "" {

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -258,28 +257,13 @@ func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string
 	randomName := ".dockerfile." + stringid.GenerateRandomID()[:20]
 	data := map[string]func() ([]byte, error){
 		randomName: func() ([]byte, error) {
-			dockerfilePath = filepath.Clean(dockerfilePath)
-			dockerfileCtx, err := os.Open(dockerfilePath)
-			if err != nil {
-				return []byte{}, err
-			}
-			defer func() {
-				if err := dockerfileCtx.Close(); err != nil {
-					log.Fatalln(err)
-				}
-			}()
-			dockerfileBytes, err := io.ReadAll(dockerfileCtx)
-			if err != nil {
-				return []byte{}, err
-			}
-
-			return dockerfileBytes, nil
+			return os.ReadFile(filepath.Clean(dockerfilePath))
 		},
 		".dockerignore": func() ([]byte, error) {
 			dockerignorePath := filepath.Join(buildContext, ".dockerignore")
 			dockerignorePath = filepath.Clean(dockerignorePath)
 			if _, err := os.Stat(dockerignorePath); errors.Is(err, os.ErrNotExist) {
-				if err := touchFilepath(dockerignorePath); err != nil {
+				if err := os.WriteFile(dockerignorePath, []byte{}, os.FileMode(0o600)); err != nil {
 					return []byte{}, err
 				}
 			}
@@ -302,43 +286,7 @@ func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string
 			return err
 		}
 
-		if err := writeBytesToFilepath(filepath.Join(buildContext, filename), bytes); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func touchFilepath(filename string) error {
-	mode := os.FileMode(0o600)
-	file, err := os.OpenFile(filepath.Clean(filename), os.O_RDWR|os.O_CREATE|os.O_TRUNC, mode)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Fatalln(err)
-		}
-	}()
-	return file.Chmod(mode)
-}
-
-func writeBytesToFilepath(filename string, contents []byte) error {
-	filename = filepath.Clean(filename)
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err := file.Close(); err != nil {
-			log.Fatalln(err)
-		}
-	}()
-
-	if _, err := file.Write(contents); err != nil {
-		return err
+		return os.WriteFile(filepath.Join(buildContext, filename), bytes, os.FileMode(0o600))
 	}
 
 	return nil

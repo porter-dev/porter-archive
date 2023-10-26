@@ -183,8 +183,11 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 	}
 
 	// prepare Dockerfile if the location isn't inside the build context
+	dockerfileName := "Dockerfile"
 	if !opts.IsDockerfileInCtx {
-		if err := injectDockerfileIntoBuildContext(opts.BuildContext, opts.DockerfilePath); err != nil {
+		var err error
+		dockerfileName, err = injectDockerfileIntoBuildContext(opts.BuildContext, opts.DockerfilePath)
+		if err != nil {
 			return fmt.Errorf("unable to inject Dockerfile into build context: %w", err)
 		}
 	}
@@ -202,6 +205,7 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 
 	commandArgs := []string{
 		"build",
+		"-f", dockerfileName,
 		"--platform", "linux/amd64",
 		"--tag", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
 		"--cache-from", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag),
@@ -257,7 +261,7 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 	return nil
 }
 
-func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string) error {
+func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string) (string, error) {
 	randomName := ".dockerfile." + stringid.GenerateRandomID()[:20]
 	data := map[string]func() ([]byte, error){
 		randomName: func() ([]byte, error) {
@@ -287,11 +291,11 @@ func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string
 	for filename, fn := range data {
 		bytes, err := fn()
 		if err != nil {
-			return err
+			return randomName, fmt.Errorf("failed to get file contents: %w", err)
 		}
 
-		return os.WriteFile(filepath.Join(buildContext, filename), bytes, os.FileMode(0o600))
+		return randomName, os.WriteFile(filepath.Join(buildContext, filename), bytes, os.FileMode(0o600))
 	}
 
-	return nil
+	return randomName, nil
 }

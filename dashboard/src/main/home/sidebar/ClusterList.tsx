@@ -120,7 +120,7 @@ const ClusterList: React.FC<PropsType> = (props) => {
             {(clusters.length > 1 || user.isPorterUser) && <i className="material-icons">arrow_drop_down</i>}
           </NavButton>
         </MainSelector>
-        {(clusters.length > 1 || user.isPorterUser) && renderDropdown()}
+        {(clusters.length > 1) && renderDropdown()}
         {
           clusterModalVisible && <ProvisionClusterModal
             closeModal={() => setClusterModalVisible(false)} />

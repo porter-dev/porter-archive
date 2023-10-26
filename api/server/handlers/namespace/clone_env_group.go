@@ -37,7 +37,7 @@ func NewCloneEnvGroupHandler(
 }
 
 func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(ctx, "clone-env-group-legacy")
+	ctx, span := telemetry.NewSpan(r.Context(), "clone-env-group-legacy")
 	defer span.End()
 
 	request := &types.CloneEnvGroupRequest{}

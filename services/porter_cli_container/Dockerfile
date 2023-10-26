@@ -4,8 +4,8 @@ COPY get-porter-cli.sh /scratch/
 
 RUN apt-get update && apt-get install -y curl unzip git
 
-ARG DOCKER_VERSION 24.0.6
-ARG DOCKER_BUILDX_VERSION 0.11.2
+ARG DOCKER_VERSION=24.0.6
+ARG DOCKER_BUILDX_VERSION=0.11.2
 
 RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}.tgz && \
     tar --strip-components=1 -xvzf docker-${DOCKER_VERSION}.tgz -C /usr/local/bin && \

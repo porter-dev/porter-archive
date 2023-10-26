@@ -137,7 +137,7 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		SecretVariables: secretVars,
 	})
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error getting kubernetes agent")
+		err = telemetry.Error(ctx, span, err, "error creating env group")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
@@ -145,7 +145,7 @@ func (c *CloneEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	envGroup, err := envgroup.ToEnvGroup(configMap)
 	if err != nil {
 
-		err = telemetry.Error(ctx, span, err, "error getting kubernetes agent")
+		err = telemetry.Error(ctx, span, err, "error converting env group")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

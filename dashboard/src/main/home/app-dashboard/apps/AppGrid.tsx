@@ -64,9 +64,19 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
 
     return match(sort)
       .with("calendar", () =>
-        _.sortBy(filteredBySearch, ["last_deployed"]).reverse()
+        _.sortBy(filteredBySearch, [
+          (a) => {
+            return a.app_revision.updated_at;
+          },
+        ]).reverse()
       )
-      .with("letter", () => _.sortBy(filteredBySearch, ["name"]))
+      .with("letter", () =>
+        _.sortBy(filteredBySearch, [
+          (a) => {
+            return a.source.name;
+          },
+        ])
+      )
       .exhaustive();
   }, [appsWithProto, searchValue, sort]);
 

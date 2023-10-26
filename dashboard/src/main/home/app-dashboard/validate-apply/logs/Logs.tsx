@@ -4,9 +4,7 @@ import React, {
     useRef,
     useState,
 } from "react";
-
 import styled from "styled-components";
-
 import spinner from "assets/loading.gif";
 import api from "shared/api";
 import { useLogs } from "./utils";
@@ -27,6 +25,8 @@ import { useRevisionList } from "lib/hooks/useRevisionList";
 import { useLocation } from "react-router";
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import Filter from "components/porter/Filter";
+import { useTimer } from 'react-timer-hook';
+import { useIntercom } from "lib/hooks/useIntercom";
 
 type Props = {
     projectId: number;
@@ -87,6 +87,8 @@ const Logs: React.FC<Props> = ({
 
     const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
     const { latestRevision: { revision_number: latestRevisionNumber } } = useLatestRevision();
+
+    const { showIntercomWithMessage } = useIntercom();
 
     const isAgentVersionUpdated = (agentImage: string | undefined) => {
         if (agentImage == null) {
@@ -182,7 +184,7 @@ const Logs: React.FC<Props> = ({
         }, 5000);
     };
 
-    const { logs, refresh, moveCursor, paginationInfo } = useLogs({
+    const { logs, refresh, moveCursor, paginationInfo, stopLogStream } = useLogs({
         projectID: projectId,
         clusterID: clusterId,
         selectedFilterValues,
@@ -198,6 +200,25 @@ const Logs: React.FC<Props> = ({
         timeRange,
         appID: appId,
     });
+
+    const { totalSeconds, isRunning, pause, restart: restartLogTimeout } = useTimer({
+        // get the timestamp 60 seconds from now
+        expiryTimestamp: dayjs().add(60, 'seconds').toDate(),
+        onExpire: () => {
+            stopLogStream();
+            showIntercomWithMessage({ message: "I am having trouble receiving logs from my application." });
+        }
+    });
+
+    useEffect(() => {
+        if (logs.length) {
+            pause();
+        }
+    },[logs.length]);
+
+    useEffect(() => {
+        console.log("totalSeconds", totalSeconds)
+    },[totalSeconds]);
 
     useEffect(() => {
         setFilters([
@@ -309,6 +330,7 @@ const Logs: React.FC<Props> = ({
                         <Spacer inline x={1} />
                         <ScrollButton
                             onClick={() => {
+                                restartLogTimeout(dayjs().add(60, 'seconds').toDate());
                                 refresh({ isLive: selectedDate == null && timeRange?.endTime == null });
                             }}
                         >
@@ -320,7 +342,7 @@ const Logs: React.FC<Props> = ({
                 <Spacer y={0.5} />
                 <LogsSectionWrapper>
                     <StyledLogsSection>
-                        {isLoading && <Loading message="Waiting for logs..." />}
+                        {isLoading && <Loading message={"Initializing..."} />}
                         {!isLoading && logs.length !== 0 && (
                             <>
                                 <LoadMoreButton
@@ -355,8 +377,20 @@ const Logs: React.FC<Props> = ({
                                 </Highlight>
                             </Message>
                         )}
-                        {!isLoading && logs.length === 0 && selectedDate == null && (
-                            <Loading message="Waiting for logs..." />
+                        {!isLoading && logs.length === 0 && selectedDate == null && isRunning && (
+                            <Loading message={`Waiting ${totalSeconds} seconds for logs...`} />
+                        )}
+                        {!isLoading && logs.length === 0 && selectedDate == null && !isRunning && (
+                            <Message>
+                                Timed out waiting for logs.
+                                <Highlight onClick={() => {
+                                    restartLogTimeout(dayjs().add(60, 'seconds').toDate());
+                                    refresh({ isLive: selectedDate == null && timeRange?.endTime == null });
+                                }}>
+                                    <i className="material-icons">autorenew</i>
+                                    Refresh
+                                </Highlight>
+                            </Message>
                         )}
                         <div ref={scrollToBottomRef} />
                     </StyledLogsSection>
@@ -534,8 +568,8 @@ const Message = styled.div`
   justify-content: center;
   margin-left: 75px;
   text-align: center;
-  color: #ffffff44;
   font-size: 13px;
+  color: #aaaabb;
 `;
 
 const Highlight = styled.div`

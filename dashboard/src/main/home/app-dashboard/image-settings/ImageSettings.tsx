@@ -8,7 +8,7 @@ import Input from "components/porter/Input";
 import { z } from "zod";
 import ImageList from "./ImageList";
 import TagList from "./TagList";
-import { ImageType } from "./types";
+import { ImageType, imageValidator } from "./types";
 
 type Props = {
     projectId: number;
@@ -29,49 +29,26 @@ const ImageSettings: React.FC<Props> = ({
 }) => {
     const [images, setImages] = useState<ImageType[]>([]);
     const [selectedImage, setSelectedImage] = useState<ImageType | undefined>(undefined);
-    const { data: registries, isLoading: isLoadingRegistries } = useQuery(
-        ["getProjectRegistries", projectId],
+    const resp = useQuery(
+        ["getImages", projectId],
         async () => {
-            const res = await api.getProjectRegistries("<token>", {}, { id: projectId });
-            return await z.array(z.object({ id: z.number() })).parseAsync(res.data);
+            const res = await api.images("<token>", {}, { project_id: projectId });
+            return await z.object({ images: z.array(imageValidator) }).parseAsync(res.data);
         },
         {
-            refetchOnWindowFocus: false,
-        }
-    )
-
-    const { data: imageResp, isLoading: isLoadingImages } = useQuery(
-        ["getImages", projectId, imageTag, imageUri],
-        async () => {
-            if (registries == null) {
-                return [];
-            }
-            return (await Promise.all(registries.map(async ({ id: registry_id }: { id: number }) => {
-                const res = await api.getImageRepos("<token>", {}, {
-                    project_id: projectId,
-                    registry_id,
-                });
-                const parsed = await z.array(z.object({
-                    uri: z.string(),
-                    name: z.string(),
-                })).parseAsync(res.data);
-                return parsed.map(p => ({ ...p, registry_id }))
-            }))).flat();
-        },
-        {
-            enabled: !!registries,
             refetchOnWindowFocus: false,
         }
     );
-
+    
     useEffect(() => {
-        if (imageResp) {
-            setImages(imageResp);
+        if (resp.isSuccess) {
+            const images = resp.data.images;
+            setImages(images);
             if (imageUri) {
-                setSelectedImage(imageResp.find((image) => image.uri === imageUri));
+                setSelectedImage(images.find((image) => image.uri === imageUri));
             }
         }
-    }, [imageResp]);
+    }, [resp]);
 
     return (
         <div>
@@ -88,14 +65,13 @@ const ImageSettings: React.FC<Props> = ({
                                 setImageUri(image.uri);
                             }}
                             images={images}
-                            loading={isLoadingImages || isLoadingRegistries}
+                            loading={resp.isLoading}
                         />
                     </ExpandedWrapper>
                     <DarkMatter antiHeight="-4px" />
                     <Spacer y={0.3} />
                 </>
             )}
-
             {imageUri && (
                 <>
                     <Input
@@ -103,7 +79,6 @@ const ImageSettings: React.FC<Props> = ({
                         label="Image URL:"
                         width="100%"
                         value={selectedImage?.uri ?? imageUri}
-                        setValue={() => { }}
                         placeholder=""
                     />
                     <BackButton
@@ -114,24 +89,7 @@ const ImageSettings: React.FC<Props> = ({
                         Select image URL
                     </BackButton>
                     <Spacer y={1} />
-                    {!imageTag && (
-                        <>
-                            <Text color="helper">Specify your image tag.</Text>
-                            <Spacer y={0.5} />
-                            <ExpandedWrapper>
-                                <TagList
-                                    selectedImage={selectedImage}
-                                    projectId={projectId}
-                                    setSelectedTag={
-                                        (tag: string) => {
-                                            setImageTag(tag);
-                                        }
-                                    }
-                                />
-                            </ExpandedWrapper>
-                        </>
-                    )}
-                    {imageTag && (
+                    {imageTag ? (
                         <>
                             <Input
                                 disabled={true}
@@ -151,6 +109,17 @@ const ImageSettings: React.FC<Props> = ({
                                 <i className="material-icons">keyboard_backspace</i>
                                 Select image tag
                             </BackButton>
+                        </>
+                    ) : (
+                        <>
+                            <Text color="helper">Specify your image tag.</Text>
+                            <Spacer y={0.5} />
+                            <ExpandedWrapper>
+                                <TagList
+                                    selectedImage={selectedImage}
+                                    setSelectedTag={setImageTag}
+                                />
+                            </ExpandedWrapper>
                         </>
                     )}
                 </>
@@ -197,52 +166,4 @@ const BackButton = styled.div`
     font-size: 16px;
     margin-right: 6px;
   }
-`;
-
-const StyledAdvancedBuildSettings = styled.div`
-  color: ${({ showSettings }) => (showSettings ? "white" : "#aaaabb")};
-  background: ${({ theme }) => theme.fg};
-  border: 1px solid #494b4f;
-  :hover {
-    border: 1px solid #7a7b80;
-    color: white;
-  }
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-radius: 5px;
-  height: 40px;
-  font-size: 13px;
-  width: 100%;
-  padding-left: 10px;
-  cursor: pointer;
-  border-bottom-left-radius: ${({ showSettings }) => showSettings && "0px"};
-  border-bottom-right-radius: ${({ showSettings }) => showSettings && "0px"};
-  .dropdown {
-    margin-right: 8px;
-    font-size: 20px;
-    cursor: pointer;
-    border-radius: 20px;
-    transform: ${(props: { showSettings: boolean; isCurrent: boolean }) =>
-        props.showSettings ? "" : "rotate(-90deg)"};
-  }
-`;
-
-const AdvancedBuildTitle = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const StyledSourceBox = styled.div`
-  width: 100%;
-  color: #ffffff;
-  padding: 25px 35px 25px;
-  position: relative;
-  font-size: 13px;
-  border-radius: 5px;
-  background: ${(props) => props.theme.fg};
-  border: 1px solid #494b4f;
-  border-top: 0px;
-  border-top-left-radius: 0px;
-  border-top-right-radius: 0px;
 `;

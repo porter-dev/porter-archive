@@ -72,6 +72,7 @@ const regionOptions = [
   { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" },
 ];
 
+// IMPORTANT: when adding more machineTypeOptions here, please make sure that you also enter their resources in useClusterResourceLimits.ts
 const machineTypeOptions = [
   { value: "t3.medium", label: "t3.medium" },
   { value: "t3.large", label: "t3.large" },

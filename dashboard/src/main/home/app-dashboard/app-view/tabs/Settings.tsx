@@ -18,7 +18,7 @@ import { PorterAppFormData } from "lib/porter-apps";
 import Checkbox from "components/porter/Checkbox";
 
 const Settings: React.FC = () => {
-  const { currentProject } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const queryClient = useQueryClient();
   const history = useHistory();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -150,7 +150,7 @@ const Settings: React.FC = () => {
         <PreviewEnvironmentSettings />
       ) : null}
 
-      <>
+      {currentCluster?.cloud_provider == "AWS" && <>
         <Text size={16}>Enable shared storage across services for "{porterApp.name}"</Text>
         <Spacer y={0.5} />
         <Spacer y={.5} />
@@ -178,7 +178,7 @@ const Settings: React.FC = () => {
             </Checkbox>
           )} />
         <Spacer y={1} />
-      </>
+      </>}
       <Text size={16}>Delete "{porterApp.name}"</Text>
       <Spacer y={.5} />
       <Text color="helper">

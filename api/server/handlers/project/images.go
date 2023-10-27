@@ -15,10 +15,12 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// ImagesHandler serves the /images endpoint
 type ImagesHandler struct {
 	handlers.PorterHandlerWriter
 }
 
+// NewImagesHandler returns a new ImagesHandler
 func NewImagesHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
@@ -28,20 +30,25 @@ func NewImagesHandler(
 	}
 }
 
+// ImageArtifact is an instance of an image in an image repository
 type ImageArtifact struct {
 	Tag       string    `json:"tag"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// Image is a representation of a docker image
+// To pull one of the image instances, you must use a string of format <image.uri>:<image.artifact.tag>
 type Image struct {
 	Uri       string          `json:"uri"`
 	Artifacts []ImageArtifact `json:"artifacts"`
 }
 
+// ImagesReponse is the response payload for the /images endpoint
 type ImagesReponse struct {
 	Images []Image `json:"images"`
 }
 
+// ServeHTTP handles the GET request to retrieve a list of images for a given project
 func (p *ImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-images")
 	defer span.End()

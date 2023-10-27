@@ -1429,7 +1429,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/images -> gitinstallation.ImagesHandler
+	// GET /api/projects/{project_id}/images -> project.ImagesHandler
 	imagesEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,

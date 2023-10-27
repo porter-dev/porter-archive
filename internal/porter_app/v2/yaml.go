@@ -99,6 +99,7 @@ type PorterYAML struct {
 	Previews  *PorterApp `yaml:"previews,omitempty"`
 }
 
+// EfsStorage represents the EFS storage settings for a Porter app
 type EfsStorage struct {
 	Enabled bool `yaml:"enabled"`
 }

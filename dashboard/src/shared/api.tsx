@@ -1317,6 +1317,15 @@ const getImageTags = baseApi<
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories/${pathParams.repo_name}`;
 });
 
+const images = baseApi<
+  {},
+  {
+    project_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/images`;
+});
+
 const getInfra = baseApi<
   {
     version?: string;
@@ -3220,6 +3229,7 @@ export default {
   getGitRepos,
   getImageRepos,
   getImageTags,
+  images,
   listInfraTemplates,
   getInfraTemplate,
   getInfra,

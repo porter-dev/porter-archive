@@ -183,7 +183,7 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 	}
 
 	// prepare Dockerfile if the location isn't inside the build context
-	dockerfileName := "Dockerfile"
+	dockerfileName := opts.DockerfilePath
 	if !opts.IsDockerfileInCtx {
 		var err error
 		dockerfileName, err = injectDockerfileIntoBuildContext(opts.BuildContext, opts.DockerfilePath)

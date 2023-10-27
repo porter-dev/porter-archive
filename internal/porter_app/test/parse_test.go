@@ -189,9 +189,6 @@ var result_nobuild = &porterv1.PorterApp{
 		Repository: "nginx",
 		Tag:        "latest",
 	},
-	EfsStorage: &porterv1.EFS{
-		Enabled: false,
-	},
 }
 
 var v1_result_nobuild_no_image = &porterv1.PorterApp{

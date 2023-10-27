@@ -140,5 +140,4 @@ const LoadingWrapper = styled.div`
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  color: #ffffff44;
 `;

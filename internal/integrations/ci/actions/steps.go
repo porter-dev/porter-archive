@@ -104,7 +104,7 @@ func getDeployStackStep(
 		Name: name,
 		Run:  command,
 		Env: map[string]string{
-			"PORTER_CLUSTER2":   fmt.Sprintf("%d", clusterID),
+			"PORTER_CLUSTER":   fmt.Sprintf("%d", clusterID),
 			"PORTER_HOST":       serverURL,
 			"PORTER_PROJECT":    fmt.Sprintf("%d", projectID),
 			"PORTER_TOKEN":      fmt.Sprintf("${{ secrets.%s }}", porterTokenSecretName),

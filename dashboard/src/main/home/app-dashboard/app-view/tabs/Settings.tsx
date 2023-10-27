@@ -150,7 +150,7 @@ const Settings: React.FC = () => {
         <PreviewEnvironmentSettings />
       ) : null}
 
-      {currentCluster?.cloud_provider == "AWS" && <>
+      {(currentCluster?.cloud_provider == "AWS" && currentProject?.efs_enabled) && <>
         <Text size={16}>Enable shared storage across services for "{porterApp.name}"</Text>
         <Spacer y={0.5} />
         <Spacer y={.5} />

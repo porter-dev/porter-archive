@@ -496,9 +496,9 @@ export function clientAppFromProto({
       builder: "",
     },
     helmOverrides: helmOverrides,
-    efsStorage: new EFS({
-      enabled: proto.efsStorage?.enabled ?? false,
-    })
+    efsStorage:
+      { enabled: proto.efsStorage?.enabled ?? false }
+
     ,
   };
 }

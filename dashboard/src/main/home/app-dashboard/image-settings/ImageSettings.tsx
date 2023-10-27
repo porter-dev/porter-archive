@@ -38,7 +38,8 @@ const ImageSettings: React.FC<Props> = ({
         {
             refetchOnWindowFocus: false,
         }
-    )
+    );
+    
     useEffect(() => {
         if (resp.isSuccess) {
             const images = resp.data.images;
@@ -71,7 +72,6 @@ const ImageSettings: React.FC<Props> = ({
                     <Spacer y={0.3} />
                 </>
             )}
-
             {imageUri && (
                 <>
                     <Input
@@ -79,7 +79,6 @@ const ImageSettings: React.FC<Props> = ({
                         label="Image URL:"
                         width="100%"
                         value={selectedImage?.uri ?? imageUri}
-                        setValue={() => { }}
                         placeholder=""
                     />
                     <BackButton
@@ -90,23 +89,7 @@ const ImageSettings: React.FC<Props> = ({
                         Select image URL
                     </BackButton>
                     <Spacer y={1} />
-                    {!imageTag && (
-                        <>
-                            <Text color="helper">Specify your image tag.</Text>
-                            <Spacer y={0.5} />
-                            <ExpandedWrapper>
-                                <TagList
-                                    selectedImage={selectedImage}
-                                    setSelectedTag={
-                                        (tag: string) => {
-                                            setImageTag(tag);
-                                        }
-                                    }
-                                />
-                            </ExpandedWrapper>
-                        </>
-                    )}
-                    {imageTag && (
+                    {imageTag ? (
                         <>
                             <Input
                                 disabled={true}
@@ -126,6 +109,17 @@ const ImageSettings: React.FC<Props> = ({
                                 <i className="material-icons">keyboard_backspace</i>
                                 Select image tag
                             </BackButton>
+                        </>
+                    ) : (
+                        <>
+                            <Text color="helper">Specify your image tag.</Text>
+                            <Spacer y={0.5} />
+                            <ExpandedWrapper>
+                                <TagList
+                                    selectedImage={selectedImage}
+                                    setSelectedTag={setImageTag}
+                                />
+                            </ExpandedWrapper>
                         </>
                     )}
                 </>

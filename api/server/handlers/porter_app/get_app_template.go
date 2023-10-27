@@ -1,15 +1,19 @@
 package porter_app
 
 import (
+	"encoding/base64"
 	"net/http"
 
-	"github.com/google/uuid"
+	"connectrpc.com/connect"
+	"github.com/porter-dev/api-contracts/generated/go/helpers"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
@@ -32,7 +36,10 @@ func NewGetAppTemplateHandler(
 
 // GetAppTemplateResponse is the response object for the /apps/{porter_app_name}/templates GET endpoint
 type GetAppTemplateResponse struct {
+	// Template is the set of app overrides explicitly set by the user to be used in subsequent preview deploys
 	TemplateB64AppProto string `json:"template_b64_app_proto"`
+	// AppEnv is the base set of environment variables that will be used in subsequent preview deploys
+	AppEnv environment_groups.EnvironmentGroup `json:"app_env"`
 }
 
 // ServeHTTP creates or updates an app template for a given porter app
@@ -80,28 +87,45 @@ func (c *GetAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	appTemplate, err := c.Repo().AppTemplate().AppTemplateByPorterAppID(
-		project.ID,
-		porterApps[0].ID,
-	)
+	app := porterApps[0]
+
+	templateReq := connect.NewRequest(&porterv1.GetAppTemplateRequest{
+		ProjectId: int64(project.ID),
+		AppId:     int64(app.ID),
+	})
+
+	ccpResp, err := c.Config().ClusterControlPlaneClient.GetAppTemplate(ctx, templateReq)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error checking for existing app template")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-	if appTemplate == nil {
-		err := telemetry.Error(ctx, span, err, "no app template found")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
-		return
-	}
-	if appTemplate.ID == uuid.Nil {
-		err := telemetry.Error(ctx, span, err, "app template id is missing")
+		err := telemetry.Error(ctx, span, err, "error getting app template")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
+	if ccpResp == nil || ccpResp.Msg == nil {
+		err := telemetry.Error(ctx, span, err, "app template resp is nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	appTemplate := ccpResp.Msg.AppTemplate
+
+	by, err := helpers.MarshalContractObject(ctx, appTemplate)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error marshaling app template")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	encoded := base64.StdEncoding.EncodeToString(by)
+
+	appEnv := environment_groups.EnvironmentGroup{
+		Variables:       ccpResp.Msg.AppEnv.Normal,
+		SecretVariables: ccpResp.Msg.AppEnv.Secret,
+	}
+
 	res := &GetAppTemplateResponse{
-		TemplateB64AppProto: appTemplate.Base64App,
+		TemplateB64AppProto: encoded,
+		AppEnv:              appEnv,
 	}
 
 	c.WriteResult(w, r, res)

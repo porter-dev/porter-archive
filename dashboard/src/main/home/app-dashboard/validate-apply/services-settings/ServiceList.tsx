@@ -56,6 +56,7 @@ type ServiceListProps = {
     namespace: string;
     appName: string;
   };
+  noAdd?: boolean;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
@@ -72,6 +73,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
     namespace: "",
     appName: "",
   },
+  noAdd,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
@@ -106,7 +108,10 @@ const ServiceList: React.FC<ServiceListProps> = ({
     fields: deletedServices,
   } = useFieldArray({
     control: appControl,
-    name: fieldArrayName === "app.services" ? "deletions.serviceNames" : "deletions.predeploy",
+    name:
+      fieldArrayName === "app.services"
+        ? "deletions.serviceNames"
+        : "deletions.predeploy",
   });
 
   const serviceType = watch("type");
@@ -141,14 +146,17 @@ const ServiceList: React.FC<ServiceListProps> = ({
     } else {
       clearErrors("name");
     }
-  }, [serviceName, isPredeploy])
+  }, [serviceName, isPredeploy]);
 
   const isServiceNameDuplicate = (name: string) => {
     return services.some(({ svc: s }) => s.name.value === name);
   };
 
   const maybeRenderAddServicesButton = () => {
-    if (isPredeploy && services.find((s) => isPredeployService(s.svc))) {
+    if (
+      (isPredeploy && services.find((s) => isPredeployService(s.svc))) ||
+      noAdd
+    ) {
       return null;
     }
     return (

@@ -26,10 +26,9 @@ const Settings: React.FC = () => {
   const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
   const {
-    watch,
     control,
-    formState: { isSubmitting, errors },
     setValue,
+    watch
   } = useFormContext<PorterAppFormData>();
   const [githubWorkflowFilename, setGithubWorkflowFilename] = useState(
     `porter_stack_${porterApp.name}.yml`
@@ -154,10 +153,6 @@ const Settings: React.FC = () => {
       <>
         <Text size={16}>Enable shared storage across services for "{porterApp.name}"</Text>
         <Spacer y={0.5} />
-        <Text color="helper">
-          Enable EFS storage for this application
-        </Text>
-
         <Spacer y={.5} />
         <Controller
           name={`app.efsStorage`}
@@ -168,8 +163,9 @@ const Settings: React.FC = () => {
               toggleChecked={() => {
                 onChange({
                   ...value,
-                  value: !value.enabled,
-                });
+                  enabled: !value.enabled,
+                },
+                );
               }}
               disabled={value.readOnly}
               disabledTooltip={
@@ -177,11 +173,10 @@ const Settings: React.FC = () => {
               }
             >
               <Text color="helper">
-                Enable storage sharing across services
+                Enable EFS Storage
               </Text>
             </Checkbox>
           )} />
-
         <Spacer y={1} />
       </>
       <Text size={16}>Delete "{porterApp.name}"</Text>

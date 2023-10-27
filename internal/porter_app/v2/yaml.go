@@ -88,14 +88,19 @@ type PorterApp struct {
 	Build    *Build            `yaml:"build,omitempty"`
 	Env      map[string]string `yaml:"env,omitempty"`
 
-	Predeploy *Service   `yaml:"predeploy,omitempty"`
-	EnvGroups []EnvGroup `yaml:"envGroups,omitempty"`
+	Predeploy  *Service    `yaml:"predeploy,omitempty"`
+	EnvGroups  []EnvGroup  `yaml:"envGroups,omitempty"`
+	EfsStorage *EfsStorage `yaml:"efsStorage,omitempty"`
 }
 
 // PorterYAML represents all the possible fields in a Porter YAML file
 type PorterYAML struct {
 	PorterApp `yaml:",inline"`
 	Previews  *PorterApp `yaml:"previews,omitempty"`
+}
+
+type EfsStorage struct {
+	Enabled bool `yaml:"enabled"`
 }
 
 // Build represents the build settings for a Porter app
@@ -227,6 +232,11 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 	}
 	appProto.EnvGroups = envGroups
 
+	if porterApp.EfsStorage != nil {
+		appProto.EfsStorage = &porterv1.EFS{
+			Enabled: porterApp.EfsStorage.Enabled,
+		}
+	}
 	return appProto, porterApp.Env, nil
 }
 
@@ -401,6 +411,12 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 			Name:    envGroup.Name,
 			Version: int(envGroup.Version),
 		})
+	}
+
+	if appProto.EfsStorage != nil {
+		porterApp.EfsStorage = &EfsStorage{
+			Enabled: appProto.EfsStorage.Enabled,
+		}
 	}
 
 	return porterApp, nil

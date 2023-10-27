@@ -158,7 +158,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         },
         env: [],
         efsStorage: {
-          value: true,
+          enabled: false,
         }
       },
       source: {
@@ -292,7 +292,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             deployment_target_id: deploymentTarget.deployment_target_id,
             variables,
             secrets,
-            hard_env_update: true
+            hard_env_update: true,
           },
           {
             project_id: currentProject.id,
@@ -648,9 +648,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           >
                             {detectedServices.count > 0
-                              ? `Detected ${detectedServices.count} service${
-                                  detectedServices.count > 1 ? "s" : ""
-                                } from porter.yaml.`
+                              ? `Detected ${detectedServices.count} service${detectedServices.count > 1 ? "s" : ""
+                              } from porter.yaml.`
                               : `Could not detect any services from porter.yaml. Make sure it exists in the root of your repo.`}
                           </Text>
                         </AppearingDiv>

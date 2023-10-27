@@ -74,6 +74,10 @@ export const clientAppValidator = z.object({
         message: 'Lowercase letters, numbers, and "-" only.',
       }),
   }),
+  efsStorage: z.object({
+    enabled: z.boolean(),
+    readOnly: z.boolean().optional(),
+  }),
   envGroups: z
     .object({ name: z.string(), version: z.bigint() })
     .array()
@@ -92,10 +96,6 @@ export const clientAppValidator = z.object({
     .default([]),
   build: buildValidator,
   helmOverrides: z.string().optional(),
-  efsStorage: z.object({
-    value: z.boolean(),
-    readOnly: z.boolean().optional(),
-  }),
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 
@@ -289,7 +289,7 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           }),
           efsStorage:
             new EFS({
-              enabled: app.efsStorage.value,
+              enabled: app.efsStorage.enabled,
             })
         })
     )
@@ -313,7 +313,7 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
               : undefined,
           efsStorage:
             new EFS({
-              enabled: app.efsStorage.value,
+              enabled: app.efsStorage.enabled,
             })
 
         })
@@ -454,7 +454,10 @@ export function clientAppFromProto({
         builder: "",
       },
       helmOverrides: helmOverrides,
-      efsStorage: { value: proto.efsStorage?.enabled ?? false }
+      efsStorage: new EFS({
+        enabled: proto.efsStorage?.enabled ?? false,
+      })
+
     };
   }
 
@@ -493,7 +496,9 @@ export function clientAppFromProto({
       builder: "",
     },
     helmOverrides: helmOverrides,
-    efsStorage: { value: proto.efsStorage?.enabled ?? false }
+    efsStorage: new EFS({
+      enabled: proto.efsStorage?.enabled ?? false,
+    })
     ,
   };
 }
@@ -587,6 +592,5 @@ export function applyPreviewOverrides({
     }));
 
   app.env = [...env, ...additionalEnv];
-
   return app;
 }

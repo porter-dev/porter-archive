@@ -15,20 +15,24 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// StatusRequest describes an inbound datastore status request
 type StatusRequest struct {
 	Type string `json:"type"`
 	Name string `json:"name"`
 }
 
+// StatusRequest describes an outbound datastore status response
 type StatusResponse struct {
 	Status string `json:"status"`
 }
 
+// StatusHandler is a struct for handling datastore status requests
 type StatusHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
+// NewStatusHandler constructs a datastore StatusHandler
 func NewStatusHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

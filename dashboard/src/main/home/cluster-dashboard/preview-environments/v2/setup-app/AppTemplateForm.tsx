@@ -304,7 +304,7 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
                   namespace: deploymentTarget.namespace,
                   appName: porterApp.name,
                 }}
-                noAdd
+                allowAddServices={false}
               />
             </>,
             <>

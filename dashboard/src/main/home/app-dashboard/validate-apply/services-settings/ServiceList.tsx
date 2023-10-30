@@ -56,7 +56,7 @@ type ServiceListProps = {
     namespace: string;
     appName: string;
   };
-  noAdd?: boolean;
+  allowAddServices?: boolean;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
@@ -73,7 +73,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
     namespace: "",
     appName: "",
   },
-  noAdd,
+  allowAddServices = true,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
@@ -155,7 +155,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   const maybeRenderAddServicesButton = () => {
     if (
       (isPredeploy && services.find((s) => isPredeployService(s.svc))) ||
-      noAdd
+      !allowAddServices
     ) {
       return null;
     }

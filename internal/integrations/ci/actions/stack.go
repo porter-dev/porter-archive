@@ -177,6 +177,7 @@ func getStackApplyActionYAML(opts *GetStackApplyActionYAMLOpts) ([]byte, error) 
 	gaSteps := []GithubActionYAMLStep{
 		getCheckoutCodeStep(),
 		getSetTagStep(),
+		getSetupPorterStep(),
 		getDeployStackStep(
 			opts.ServerURL,
 			opts.SecretName,

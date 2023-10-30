@@ -40,6 +40,13 @@ export const AWS_INSTANCE_LIMITS: InstanceTypes = Object.freeze({
     xlarge: { vCPU: 4, RAM: 16 },
     "2xlarge": { vCPU: 8, RAM: 32 },
   },
+  c6a: {
+    large: { vCPU: 2, RAM: 4 },
+    xlarge: { vCPU: 4, RAM: 8 },
+    "2xlarge": { vCPU: 8, RAM: 16 },
+    "4xlarge": { vCPU: 16, RAM: 32 },
+    "8xlarge": { vCPU: 32, RAM: 64 },
+  },
   c6i: {
     large: { vCPU: 2, RAM: 4 },
     xlarge: { vCPU: 4, RAM: 8 },

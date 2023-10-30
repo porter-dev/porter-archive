@@ -262,7 +262,7 @@ export function serializeService(service: ClientService): SerializedService {
           }),
           healthCheck: serializeHealth({ health: config.healthCheck }),
           domains: config.domains.map((domain) => ({
-            name: domain.name.value,
+            name: domain.name.value.replace("https://", "").replace("http://", ""),
           })),
           ingressAnnotations: Object.fromEntries(
             config.ingressAnnotations

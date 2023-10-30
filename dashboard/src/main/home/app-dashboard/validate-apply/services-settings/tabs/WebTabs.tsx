@@ -6,7 +6,7 @@ import { match } from "ts-pattern";
 import Networking from "./Networking";
 import MainTab from "./Main";
 import Resources from "./Resources";
-import Health from "./Health";
+import Advanced from "./Advanced";
 
 interface Props {
   index: number;
@@ -60,7 +60,7 @@ const WebTabs: React.FC<Props> = ({ index, service, maxRAM, maxCPU, clusterConta
             service={service}
           />
         ))
-        .with("advanced", () => <Health index={index} service={service} />)
+        .with("advanced", () => <Advanced index={index} service={service} />)
         .exhaustive()}
     </>
   );

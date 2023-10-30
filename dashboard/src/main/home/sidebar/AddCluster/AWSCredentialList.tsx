@@ -14,6 +14,7 @@ import ProvisionerFlow from "components/ProvisionerFlow";
 type Props = {
   selectCredential: (aws_integration_id: number) => void;
   setTargetARN: (target_arn: string) => void;
+  gpuModal?: boolean;
 };
 
 type AWSCredential = {
@@ -27,6 +28,7 @@ type AWSCredential = {
 const AWSCredentialsList: React.FunctionComponent<Props> = ({
   selectCredential,
   setTargetARN,
+  gpuModal,
 }) => {
   const { currentProject, setCurrentError } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
@@ -96,6 +98,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           setTargetARN={setTargetARN}
           shouldCreateCred={() => setShouldCreateCred(true)}
           addNewText="Create new CloudFormation stack"
+          gpuModal={gpuModal}
         />
       </>
     );

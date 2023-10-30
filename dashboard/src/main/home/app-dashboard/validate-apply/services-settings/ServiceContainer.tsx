@@ -4,9 +4,10 @@ import styled from "styled-components";
 import _ from "lodash";
 
 import web from "assets/web.png";
+import gpu from "assets/lightning.svg";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
-
+import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import WebTabs from "./tabs/WebTabs";
 import WorkerTabs from "./tabs/WorkerTabs";
@@ -138,6 +139,12 @@ const ServiceContainer: React.FC<ServiceProps> = ({
             ? service.name.value
             : "New Service"}
         </ServiceTitle>
+        <ServiceTitle>
+          <Icon src={gpu} />
+          <Text>  GPU workload</Text>
+
+        </ServiceTitle>
+
         {service.canDelete && (
           <ActionButton
             onClick={(e) => {

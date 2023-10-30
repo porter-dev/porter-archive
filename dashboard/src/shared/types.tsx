@@ -15,6 +15,7 @@ export interface ClusterType {
   cloud_provider_credential_identifier?: string;
   status?: string;
   cloud_provider: string;
+  gpuCluster?: boolean;
 }
 
 export interface AddonCard {
@@ -368,6 +369,7 @@ export interface CapabilityType {
 }
 
 export interface ContextProps {
+  gpuClusterStatus?: string;
   currentModal?: string;
   currentModalData: any;
   setCurrentModal: (currentModal: any, currentModalData?: any) => void;

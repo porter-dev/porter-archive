@@ -333,6 +333,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       }),
       source: resetSource,
       deletions: {
+        predeploy: [],
         envGroupNames: [],
         serviceNames: [],
       },

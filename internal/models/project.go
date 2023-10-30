@@ -28,6 +28,9 @@ const (
 	// DBEnabled enables the "Databases" tab
 	DBEnabled FeatureFlagLabel = "db_enabled"
 
+	// EFSEnabled enables the "EFS" checkbox in App Settings
+	EFSEnabled FeatureFlagLabel = "efs_enabled"
+
 	// EnableReprovision enables the provisioning button after initial creation of the cluster
 	EnableReprovision FeatureFlagLabel = "enable_reprovision"
 
@@ -49,6 +52,9 @@ const (
 	// RDSDatabasesEnabled allows for users to provision RDS instances within their cluster vpc
 	RDSDatabasesEnabled FeatureFlagLabel = "rds_databases_enabled"
 
+	// QuotaIncrease enables whether we allow for auto increase of quota_increase
+	QuotaIncrease FeatureFlagLabel = "quota_increase"
+
 	// SimplifiedViewEnabled shows the new UI dashboard or not
 	SimplifiedViewEnabled FeatureFlagLabel = "simplified_view_enabled"
 
@@ -65,6 +71,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	AzureEnabled:           false,
 	CapiProvisionerEnabled: true,
 	DBEnabled:              false,
+	EFSEnabled:             false,
 	EnableReprovision:      false,
 	FullAddOns:             false,
 	HelmValuesEnabled:      false,
@@ -72,6 +79,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	MultiCluster:           false,
 	PreviewEnvsEnabled:     false,
 	RDSDatabasesEnabled:    false,
+	QuotaIncrease:          false,
 	SimplifiedViewEnabled:  true,
 	StacksEnabled:          false,
 	ValidateApplyV2:        true,
@@ -195,6 +203,8 @@ func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *
 			return p.MultiCluster
 		case "preview_envs_enabled":
 			return p.PreviewEnvsEnabled
+		case "quota_increase":
+			return false
 		case "rds_databases_enabled":
 			return p.RDSDatabasesEnabled
 		case "simplified_view_enabled":
@@ -203,6 +213,8 @@ func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *
 			return p.StacksEnabled
 		case "validate_apply_v2":
 			return p.ValidateApplyV2
+		case "efs_enabled":
+			return false
 		}
 	}
 
@@ -225,7 +237,6 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 
 	projectID := p.ID
 	projectName := p.Name
-
 	return types.Project{
 		ID:    projectID,
 		Name:  projectName,
@@ -245,6 +256,8 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		EnableReprovision:      p.GetFeatureFlag(EnableReprovision, launchDarklyClient),
 		ValidateApplyV2:        p.GetFeatureFlag(ValidateApplyV2, launchDarklyClient),
 		FullAddOns:             p.GetFeatureFlag(FullAddOns, launchDarklyClient),
+		QuotaIncrease:          p.GetFeatureFlag(QuotaIncrease, launchDarklyClient),
+		EFSEnabled:             p.GetFeatureFlag(EFSEnabled, launchDarklyClient),
 	}
 }
 

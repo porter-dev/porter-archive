@@ -279,11 +279,6 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
               <ServiceList
                 addNewText={"Add a new service"}
                 fieldArrayName={"app.services"}
-                maxCPU={currentClusterResources.maxCPU}
-                maxRAM={currentClusterResources.maxRAM}
-                clusterContainsGPUNodes={
-                  currentClusterResources.clusterContainsGPUNodes
-                }
                 internalNetworkingDetails={{
                   namespace: deploymentTarget.namespace,
                   appName: porterApp.name,
@@ -322,11 +317,6 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
                 }
                 isPredeploy
                 fieldArrayName={"app.predeploy"}
-                maxCPU={currentClusterResources.maxCPU}
-                maxRAM={currentClusterResources.maxRAM}
-                clusterContainsGPUNodes={
-                  currentClusterResources.clusterContainsGPUNodes
-                }
               />
             </>,
             <Button

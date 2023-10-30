@@ -72,6 +72,7 @@ const regionOptions = [
   { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" },
 ];
 
+// IMPORTANT: when adding more machineTypeOptions here, please make sure that you also enter their resources in useClusterResourceLimits.ts
 const machineTypeOptions = [
   { value: "t3.medium", label: "t3.medium" },
   { value: "t3.large", label: "t3.large" },
@@ -518,7 +519,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     await requestQuotaIncrease()
     await createCluster()
   }
-
   const requestQuotaIncrease = async () => {
 
     try {
@@ -550,8 +550,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
 
   }
-
-
 
   const preflightChecks = async () => {
 
@@ -1112,7 +1110,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                   <Spacer y={.5} />
                   {(preflightFailed && preflightData) &&
                     <>
-                      {(showHelpMessage) ? <>
+                      {(showHelpMessage && currentProject?.quota_increase) ? <>
                         <Text color="helper">
                           Your account currently is blocked from provisioning in {awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
                         </Text>

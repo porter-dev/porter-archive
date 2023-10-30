@@ -208,7 +208,6 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	b64 := base64.StdEncoding.EncodeToString(encoded)
-
 	response := &ValidatePorterAppResponse{
 		ValidatedBase64AppProto: b64,
 	}

@@ -118,6 +118,8 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 			return fmt.Errorf("unable to form porter app creation input from yaml: %w", err)
 		}
 
+		createPorterAppDBEntryInp.DeploymentTargetID = deploymentTargetID
+
 		err = client.CreatePorterAppDBEntry(ctx, cliConf.Project, cliConf.Cluster, createPorterAppDBEntryInp)
 		if err != nil {
 			if err.Error() == porter_app.ErrMissingSourceType.Error() {
@@ -477,11 +479,17 @@ func buildSettingsFromBase64AppProto(base64AppProto string) (buildInput, error) 
 func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectID, clusterID uint, previewApply bool) (string, error) {
 	var deploymentTargetID string
 
-	targetResp, err := client.DefaultDeploymentTarget(ctx, projectID, clusterID)
-	if err != nil {
-		return deploymentTargetID, fmt.Errorf("error calling default deployment target endpoint: %w", err)
+	if os.Getenv("PORTER_DEPLOYMENT_TARGET_ID") != "" {
+		deploymentTargetID = os.Getenv("PORTER_DEPLOYMENT_TARGET_ID")
 	}
-	deploymentTargetID = targetResp.DeploymentTargetID
+
+	if deploymentTargetID == "" {
+		targetResp, err := client.DefaultDeploymentTarget(ctx, projectID, clusterID)
+		if err != nil {
+			return deploymentTargetID, fmt.Errorf("error calling default deployment target endpoint: %w", err)
+		}
+		deploymentTargetID = targetResp.DeploymentTargetID
+	}
 
 	if previewApply {
 		var branchName string

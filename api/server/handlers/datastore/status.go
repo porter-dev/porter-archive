@@ -15,6 +15,15 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+type StatusRequest struct {
+	Type string `json:"type"`
+	Name string `json:"name"`
+}
+
+type StatusResponse struct {
+	Status string `json:"status"`
+}
+
 type StatusHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
@@ -38,7 +47,7 @@ func (h *StatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
-	request := &types.DatastoreStatusRequest{}
+	request := &StatusRequest{}
 	if ok := h.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding request")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -83,7 +92,7 @@ func (h *StatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "datastore-status", Value: resp.Msg.Status})
-	h.WriteResult(w, r, types.DatastoreStatusResponse{
+	h.WriteResult(w, r, StatusResponse{
 		Status: resp.Msg.Status,
 	})
 }

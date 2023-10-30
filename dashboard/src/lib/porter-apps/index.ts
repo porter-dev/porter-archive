@@ -15,6 +15,7 @@ import {
   HelmOverrides,
   PorterApp,
   Service,
+  EFS,
 } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
@@ -72,6 +73,10 @@ export const clientAppValidator = z.object({
       .regex(/^[a-z0-9-]{1,61}$/, {
         message: 'Lowercase letters, numbers, and "-" only.',
       }),
+  }),
+  efsStorage: z.object({
+    enabled: z.boolean(),
+    readOnly: z.boolean().optional(),
   }),
   envGroups: z
     .object({ name: z.string(), version: z.bigint() })
@@ -280,7 +285,12 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
               app.helmOverrides != null
                 ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
                 : undefined,
+
           }),
+          efsStorage:
+            new EFS({
+              enabled: app.efsStorage.enabled,
+            })
         })
     )
     .with(
@@ -301,6 +311,11 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
             app.helmOverrides != null
               ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
               : undefined,
+          efsStorage:
+            new EFS({
+              enabled: app.efsStorage.enabled,
+            })
+
         })
     )
     .exhaustive();
@@ -439,6 +454,10 @@ export function clientAppFromProto({
         builder: "",
       },
       helmOverrides: helmOverrides,
+      efsStorage: new EFS({
+        enabled: proto.efsStorage?.enabled ?? false,
+      })
+
     };
   }
 
@@ -477,6 +496,10 @@ export function clientAppFromProto({
       builder: "",
     },
     helmOverrides: helmOverrides,
+    efsStorage:
+      { enabled: proto.efsStorage?.enabled ?? false }
+
+    ,
   };
 }
 
@@ -569,6 +592,5 @@ export function applyPreviewOverrides({
     }));
 
   app.env = [...env, ...additionalEnv];
-
   return app;
 }

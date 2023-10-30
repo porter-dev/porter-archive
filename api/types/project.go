@@ -35,6 +35,7 @@ type Project struct {
 	StacksEnabled          bool    `json:"stacks_enabled"`
 	CapiProvisionerEnabled bool    `json:"capi_provisioner_enabled"`
 	DBEnabled              bool    `json:"db_enabled"`
+	EFSEnabled             bool    `json:"efs_enabled"`
 	SimplifiedViewEnabled  bool    `json:"simplified_view_enabled"`
 	AzureEnabled           bool    `json:"azure_enabled"`
 	HelmValuesEnabled      bool    `json:"helm_values_enabled"`

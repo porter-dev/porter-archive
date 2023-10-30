@@ -2,25 +2,28 @@ package notifications
 
 import (
 	"context"
+	"strings"
 
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type HandleNotificationInput struct {
-	Context             context.Context
 	RawAppEventMetadata map[string]any
 	EventRepo           repository.PorterAppEventRepository
 	DeploymentTargetID  string
+	Namespace           string
+	K8sAgent            *kubernetes.Agent
 }
 
 // HandleNotification handles the logic for processing app events (which are currently sent by the porter agent)
-func HandleNotification(inp HandleNotificationInput) error {
-	ctx, span := telemetry.NewSpan(inp.Context, "handle-notification")
+func HandleNotification(ctx context.Context, inp HandleNotificationInput) error {
+	ctx, span := telemetry.NewSpan(ctx, "handle-notification")
 	defer span.End()
 
-	// 1. unmarshal app event
-	appEventMetadata, err := convertMetadata(inp.RawAppEventMetadata)
+	// 1. parse app event
+	appEventMetadata, err := parseAppEventMetadata(inp.RawAppEventMetadata)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to unmarshal app event metadata")
 	}
@@ -28,8 +31,14 @@ func HandleNotification(inp HandleNotificationInput) error {
 		return telemetry.Error(ctx, span, nil, "app event metadata is nil")
 	}
 
-	// 2. dedupe app event
-	isDuplicate, err := checkIsAppEventDuplicate(ctx, *appEventMetadata, inp.EventRepo, inp.DeploymentTargetID)
+	// 2. convert app event to notification
+	notification, err := appEventToNotification(*appEventMetadata)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "failed to convert app event to notification")
+	}
+
+	// 3. dedupe notification
+	isDuplicate, err := isNotificationDuplicate(ctx, notification, inp.EventRepo, inp.DeploymentTargetID)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to check if app event is duplicate")
 	}
@@ -38,20 +47,70 @@ func HandleNotification(inp HandleNotificationInput) error {
 		return nil
 	}
 
-	// 3. convert app event to notification
-	_, err = appEventToNotification(*appEventMetadata)
+	// 4. hydrate notification with k8s deployment info
+	hydratedNotification, err := hydrateNotification(ctx, hydrateNotificationInput{
+		Notification:       notification,
+		DeploymentTargetId: inp.DeploymentTargetID,
+		Namespace:          inp.Namespace,
+		K8sAgent:           inp.K8sAgent,
+	})
 	if err != nil {
-		return telemetry.Error(ctx, span, err, "failed to convert app event to notification")
+		return telemetry.Error(ctx, span, err, "failed to hydrate notification")
 	}
 
-	// 4. based on notification, change the status of the deploy event
-	// 5. send notification
+	// 5. based on notification + k8s deployment, update the status of the matching deploy event
+	if hydratedNotification.Deployment.Status == DeploymentStatus_Failure ||
+		(hydratedNotification.Deployment.Status == DeploymentStatus_Pending &&
+			detailIndicatesDeploymentFailure(hydratedNotification.AgentDetail)) {
+		err = updateDeployEvent(ctx, updateDeployEventInput{
+			Notification: hydratedNotification,
+			EventRepo:    inp.EventRepo,
+			Status:       PorterAppEventStatus_Failed,
+		})
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "failed to update deploy event matching notification")
+		}
+	}
+
+	// 6. save notification to db
+	// TODO: save the notification in its own table rather than co-opting the porter app events table
+	err = saveNotification(ctx, hydratedNotification, inp.EventRepo, inp.DeploymentTargetID)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "failed to save notification")
+	}
+
 	return nil
 }
 
-type Notification struct{}
+type Notification struct {
+	AppID                string     `json:"app_id"`
+	AppName              string     `json:"app_name"`
+	ServiceName          string     `json:"service_name"`
+	AppRevisionID        string     `json:"app_revision_id"`
+	AgentEventID         int        `json:"agent_event_id"`
+	AgentDetail          string     `json:"agent_detail"`
+	AgentShortSummary    string     `json:"agent_short_summary"`
+	AgentSummary         string     `json:"agent_summary"`
+	HumanReadableDetail  string     `json:"human_readable_detail"`
+	HumanReadableSummary string     `json:"human_readable_summary"`
+	Deployment           Deployment `json:"deployment"`
+}
 
 // appEventToNotification converts an app event to a notification
-func appEventToNotification(appEventMetadata AppEventMetadata) (*Notification, error) {
-	return nil, nil
+func appEventToNotification(appEventMetadata AppEventMetadata) (Notification, error) {
+	humanReadableDetail := appEventMetadata.Detail
+	humanReadableDetail = strings.ReplaceAll(humanReadableDetail, "application", "service")
+
+	notification := Notification{
+		AppID:               appEventMetadata.AppID,
+		AppName:             appEventMetadata.AppName,
+		ServiceName:         appEventMetadata.ServiceName,
+		AgentEventID:        appEventMetadata.AgentEventID,
+		AgentDetail:         appEventMetadata.Detail,
+		AgentSummary:        appEventMetadata.Summary,
+		AppRevisionID:       appEventMetadata.AppRevisionID,
+		Deployment:          Deployment{Status: DeploymentStatus_Unknown},
+		HumanReadableDetail: humanReadableDetail,
+	}
+	return notification, nil
 }

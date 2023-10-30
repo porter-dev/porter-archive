@@ -76,6 +76,12 @@ func (h *StatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if resp.Msg == nil {
+		err := telemetry.Error(ctx, span, err, "missing response message from ccp")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "datastore-status", Value: resp.Msg.Status})
 	h.WriteResult(w, r, types.DatastoreStatusResponse{
 		Status: resp.Msg.Status,

@@ -32,6 +32,7 @@ interface ServiceProps {
     namespace: string;
     appName: string;
   };
+  clusterIngressIp: string;
 }
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -44,6 +45,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   maxRAM,
   clusterContainsGPUNodes,
   internalNetworkingDetails,
+  clusterIngressIp, 
 }) => {
   const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
 
@@ -77,6 +79,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           maxRAM={maxRAM}
           clusterContainsGPUNodes={clusterContainsGPUNodes}
           internalNetworkingDetails={internalNetworkingDetails}
+          clusterIngressIp={clusterIngressIp}
         />
       ))
       .with({ config: { type: "worker" } }, (svc) => (

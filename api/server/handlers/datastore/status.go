@@ -21,7 +21,7 @@ type StatusRequest struct {
 	Name string `json:"name"`
 }
 
-// StatusRequest describes an outbound datastore status response
+// StatusResponse describes an outbound datastore status response
 type StatusResponse struct {
 	Status string `json:"status"`
 }

@@ -195,7 +195,7 @@ func getStackApplyActionYAML(opts *GetStackApplyActionYAMLOpts) ([]byte, error) 
 				PullRequest: GithubActionYAMLOnPullRequestTypes{
 					Paths: []string{
 						"**",
-						"!./github/workflows/porter-**",
+						"!./github/workflows/porter_**",
 					},
 					Branches: []string{
 						opts.DefaultBranch,

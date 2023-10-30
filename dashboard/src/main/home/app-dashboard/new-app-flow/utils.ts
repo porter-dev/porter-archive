@@ -69,7 +69,7 @@ export const getPreviewGithubAction = (
     - synchronize
     paths:
     - '**'
-    - '!./github/workflows/porter-**'
+    - '!./github/workflows/porter_**'
     
 name: Deploy to Preview Environment
 jobs:

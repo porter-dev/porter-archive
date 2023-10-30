@@ -14,7 +14,7 @@ interface Props {
   clusterIngressIp: string;
 }
 
-export const isCustomDomain = (domain: string) => {
+const isCustomDomain = (domain: string) => {
   return !domain.includes("onporter.run") && !domain.includes("withporter.run");
 }
 
@@ -87,20 +87,24 @@ const CustomDomains: React.FC<Props> = ({
       >
         + Add Custom Domain
       </Button>
-      <Spacer y={0.5} />
-      <div style={{width: "550px"}}>
-        <Text color="helper">To configure a custom domain, you must add a CNAME record pointing to the following Ingress IP for your cluster: </Text>
-      </div>
-      <Spacer y={0.5} />
-      <IdContainer>
-        <Code>{clusterIngressIp}</Code>
-        <CopyContainer>
-            <CopyToClipboard text={clusterIngressIp}>
-                <CopyIcon src={copy} alt="copy" />
-            </CopyToClipboard>
-        </CopyContainer>
-      </IdContainer>
-      <Spacer y={0.5} />
+      {clusterIngressIp !== "" && (
+        <>
+          <Spacer y={0.5} />
+          <div style={{width: "550px"}}>
+            <Text color="helper">To configure a custom domain, you must add a CNAME record pointing to the following Ingress IP for your cluster: </Text>
+          </div>
+          <Spacer y={0.5} />
+          <IdContainer>
+            <Code>{clusterIngressIp}</Code>
+            <CopyContainer>
+                <CopyToClipboard text={clusterIngressIp}>
+                    <CopyIcon src={copy} alt="copy" />
+                </CopyToClipboard>
+            </CopyContainer>
+          </IdContainer>
+          <Spacer y={0.5} />
+        </>
+      )}
     </CustomDomainsContainer>
   );
 };

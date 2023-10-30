@@ -13,7 +13,6 @@ import { useLatestRevision } from "../LatestRevisionContext";
 import { useAppStatus } from "lib/hooks/useAppStatus";
 import { ButtonStatus } from "../AppDataContainer";
 import { useClusterResources } from "shared/ClusterResourcesContext";
-import { isCustomDomain } from "../../validate-apply/services-settings/tabs/CustomDomains";
 
 type Props = {
   buttonStatus: ButtonStatus;

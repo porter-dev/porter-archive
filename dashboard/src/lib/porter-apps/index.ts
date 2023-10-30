@@ -377,11 +377,13 @@ export function clientAppFromProto({
   overrides,
   variables = {},
   secrets = {},
+  lockServiceDeletions = false,
 }: {
   proto: PorterApp;
   overrides: DetectedServices | null;
   variables?: Record<string, string>;
   secrets?: Record<string, string>;
+  lockServiceDeletions?: boolean;
 }): ClientPorterApp {
   const services = uniqueServices(proto)
     .map((service) => serializedServiceFromProto({ service }))
@@ -397,7 +399,10 @@ export function clientAppFromProto({
         });
         return ds;
       }
-      return deserializeService({ service: svc });
+      return deserializeService({
+        service: svc,
+        lockDeletions: lockServiceDeletions,
+      });
     });
 
   const predeployList = [];
@@ -431,6 +436,7 @@ export function clientAppFromProto({
           }),
           isPredeploy: true,
         }),
+        lockDeletions: lockServiceDeletions,
       })
     );
   }
@@ -464,17 +470,17 @@ export function clientAppFromProto({
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-      deserializeService({
-        service: serializedServiceFromProto({
-          service: new Service({
-            ...proto.predeploy,
-            name: "pre-deploy",
+        deserializeService({
+          service: serializedServiceFromProto({
+            service: new Service({
+              ...proto.predeploy,
+              name: "pre-deploy",
+            }),
+            isPredeploy: true,
           }),
-          isPredeploy: true,
+          override: predeployOverrides,
         }),
-        override: predeployOverrides,
-      }),
-    ]
+      ]
     : undefined;
 
   return {

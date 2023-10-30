@@ -59,12 +59,24 @@ const SetupApp: React.FC<Props> = ({ location }) => {
         const data = await z
           .object({
             template_b64_app_proto: z.string(),
+            app_env: z.object({
+              variables: z.record(z.string()).default({}),
+              secret_variables: z.record(z.string()).default({}),
+            }),
           })
           .parseAsync(res.data);
 
-        return PorterApp.fromJsonString(atob(data.template_b64_app_proto), {
-          ignoreUnknownFields: true,
-        });
+        const template = PorterApp.fromJsonString(
+          atob(data.template_b64_app_proto),
+          {
+            ignoreUnknownFields: true,
+          }
+        );
+
+        return {
+          template,
+          env: data.app_env,
+        };
       } catch (err) {
         return null;
       }

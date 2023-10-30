@@ -57,7 +57,9 @@ func (h *StatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "rds-postgresql-aurora":
 		datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_RDS_AURORA_POSTGRESQL
 	default:
-		datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_UNSPECIFIED
+		err := telemetry.Error(ctx, span, nil, "invalid datastore specified")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
 	}
 
 	req := connect.NewRequest(&porterv1.DatastoreStatusRequest{

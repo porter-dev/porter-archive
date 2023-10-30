@@ -89,12 +89,12 @@ func (c *GetAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	app := porterApps[0]
 
-	templateReq := connect.NewRequest(&porterv1.GetAppTemplateRequest{
+	templateReq := connect.NewRequest(&porterv1.AppTemplateRequest{
 		ProjectId: int64(project.ID),
 		AppId:     int64(app.ID),
 	})
 
-	ccpResp, err := c.Config().ClusterControlPlaneClient.GetAppTemplate(ctx, templateReq)
+	ccpResp, err := c.Config().ClusterControlPlaneClient.AppTemplate(ctx, templateReq)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting app template")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

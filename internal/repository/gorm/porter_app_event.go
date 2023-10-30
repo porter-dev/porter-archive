@@ -136,6 +136,26 @@ func (repo *PorterAppEventRepository) ReadEvent(ctx context.Context, id uuid.UUI
 	return appEvent, nil
 }
 
+func (repo *PorterAppEventRepository) ReadNotificationsByAppRevisionID(ctx context.Context, porterAppID uint, appRevisionId string) ([]*models.PorterAppEvent, error) {
+	notifications := []*models.PorterAppEvent{}
+
+	if appRevisionId == "" {
+		return notifications, errors.New("invalid app revision ID supplied")
+	}
+
+	if porterAppID == 0 {
+		return notifications, errors.New("invalid porter app ID supplied")
+	}
+
+	strAppID := strconv.Itoa(int(porterAppID))
+
+	if err := repo.db.Where("porter_app_id = ? AND type = 'NOTIFICATION' AND metadata->>'app_revision_id' = ?", strAppID, appRevisionId).Find(&notifications).Error; err != nil {
+		return notifications, err
+	}
+
+	return notifications, nil
+}
+
 func (repo *PorterAppEventRepository) ReadDeployEventByRevision(ctx context.Context, porterAppID uint, revision float64) (models.PorterAppEvent, error) {
 	appEvent := models.PorterAppEvent{}
 

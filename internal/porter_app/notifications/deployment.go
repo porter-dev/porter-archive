@@ -103,7 +103,7 @@ func deploymentStatus(depl v1.Deployment) DeploymentStatus {
 
 	for _, condition := range depl.Status.Conditions {
 		if condition.Type == "Progressing" {
-			if condition.Status == "True" && condition.Reason == "NewReplicaSetAvailable" {
+			if condition.Status == "True" && condition.Reason == "NewReplicaSetAvailable" && depl.Status.ReadyReplicas == depl.Status.Replicas {
 				deploymentStatus = DeploymentStatus_Success
 				break
 			} else if condition.Status == "False" && condition.Reason == "ProgressDeadlineExceeded" {
@@ -134,7 +134,7 @@ func detailIndicatesDeploymentFailure(detail string) bool {
 
 func translateAgentSummary(notification Notification, status DeploymentStatus) string {
 	humanReadableSummary := notification.AgentSummary
-	pattern := `application \w+ in namespace \w+`
+	pattern := `application (\S+) in namespace (\S+)`
 	regex := regexp.MustCompile(pattern)
 	if regex.MatchString(humanReadableSummary) {
 		fmt.Printf("matched regex\n")

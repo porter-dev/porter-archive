@@ -89,7 +89,6 @@ type Notification struct {
 	AppRevisionID        string     `json:"app_revision_id"`
 	AgentEventID         int        `json:"agent_event_id"`
 	AgentDetail          string     `json:"agent_detail"`
-	AgentShortSummary    string     `json:"agent_short_summary"`
 	AgentSummary         string     `json:"agent_summary"`
 	HumanReadableDetail  string     `json:"human_readable_detail"`
 	HumanReadableSummary string     `json:"human_readable_summary"`

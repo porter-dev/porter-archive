@@ -107,13 +107,8 @@ func isNotificationDuplicate(
 
 	for _, existingEvent := range existingEvents {
 		if existingEvent != nil && existingEvent.Type == PorterAppEventType_Notification {
-			existingNotification := &Notification{}
-			bytes, err := json.Marshal(existingEvent.Metadata)
+			existingNotification, err := NotificationFromPorterAppEvent(existingEvent)
 			if err != nil {
-				continue
-			}
-			err = json.Unmarshal(bytes, existingNotification)
-			if err != nil || existingNotification == nil {
 				continue
 			}
 			if existingNotification.AgentEventID == 0 {
@@ -270,4 +265,18 @@ func saveNotification(ctx context.Context, notification Notification, eventRepo 
 	}
 
 	return nil
+}
+
+func NotificationFromPorterAppEvent(appEvent *models.PorterAppEvent) (*Notification, error) {
+	notification := &Notification{}
+	bytes, err := json.Marshal(appEvent.Metadata)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(bytes, notification)
+	if err != nil {
+		return nil, err
+	}
+
+	return notification, nil
 }

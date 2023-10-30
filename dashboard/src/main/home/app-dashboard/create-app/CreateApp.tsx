@@ -278,6 +278,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           {
             ...source,
             name: app.name,
+            deployment_target_id: deploymentTarget.deployment_target_id
           },
           {
             project_id: currentProject.id,

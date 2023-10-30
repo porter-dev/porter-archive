@@ -2,15 +2,26 @@ import React from "react";
 import Button from "components/porter/Button";
 import styled from "styled-components";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
 import { ControlledInput } from "components/porter/ControlledInput";
+import CopyToClipboard from "components/CopyToClipboard";
+import copy from "assets/copy-left.svg";
 
 interface Props {
   index: number;
+  clusterIngressIp: string;
 }
 
-const CustomDomains: React.FC<Props> = ({ index }) => {
+export const isCustomDomain = (domain: string) => {
+  return !domain.includes("onporter.run") && !domain.includes("withporter.run");
+}
+
+const CustomDomains: React.FC<Props> = ({ 
+  index, 
+  clusterIngressIp,
+ }) => {
   const { control, register } = useFormContext<PorterAppFormData>();
   const { remove, append, fields } = useFieldArray({
     control,
@@ -33,8 +44,7 @@ const CustomDomains: React.FC<Props> = ({ index }) => {
       {fields.length !== 0 && (
         <>
           {fields.map((customDomain, i) => {
-            return !customDomain.name.value.includes("onporter.run") &&
-              !customDomain.name.value.includes("withporter.run") ? (
+            return isCustomDomain(customDomain.name.value) && (
               <div key={customDomain.id}>
                 <AnnotationContainer>
                   <ControlledInput
@@ -61,7 +71,7 @@ const CustomDomains: React.FC<Props> = ({ index }) => {
                 </AnnotationContainer>
                 <Spacer y={0.25} />
               </div>
-            ) : null;
+            );
           })}
         </>
       )}
@@ -77,6 +87,20 @@ const CustomDomains: React.FC<Props> = ({ index }) => {
       >
         + Add Custom Domain
       </Button>
+      <Spacer y={0.5} />
+      <div style={{width: "550px"}}>
+        <Text color="helper">To configure a custom domain, you must add a CNAME record pointing to the following Ingress IP for your cluster: </Text>
+      </div>
+      <Spacer y={0.5} />
+      <IdContainer>
+        <Code>{clusterIngressIp}</Code>
+        <CopyContainer>
+            <CopyToClipboard text={clusterIngressIp}>
+                <CopyIcon src={copy} alt="copy" />
+            </CopyToClipboard>
+        </CopyContainer>
+      </IdContainer>
+      <Spacer y={0.5} />
     </CustomDomainsContainer>
   );
 };
@@ -110,5 +134,38 @@ const DeleteButton = styled.div`
     :hover {
       color: #ffffff88;
     }
+  }
+`;
+
+const Code = styled.span`
+  font-family: monospace;
+`;
+
+const IdContainer = styled.div`
+    background: #26292E;  
+    border-radius: 5px;
+    padding: 10px;
+    display: flex;
+    width: 550px;
+    border-radius: 5px;
+    border: 1px solid ${({ theme }) => theme.border};
+    align-items: center;
+    user-select: text;
+`;
+
+const CopyContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+`;
+
+const CopyIcon = styled.img`
+  cursor: pointer;
+  margin-left: 5px;
+  margin-right: 5px;
+  width: 15px;
+  height: 15px;
+  :hover {
+    opacity: 0.8;
   }
 `;

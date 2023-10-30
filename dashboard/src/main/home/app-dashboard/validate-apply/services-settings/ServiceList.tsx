@@ -49,9 +49,6 @@ type ServiceListProps = {
   existingServiceNames?: string[];
   fieldArrayName: "app.services" | "app.predeploy";
   serviceVersionStatus?: Record<string, PorterAppVersionStatus[]>;
-  maxCPU: number;
-  maxRAM: number;
-  clusterContainsGPUNodes: boolean;
   internalNetworkingDetails?: {
     namespace: string;
     appName: string;
@@ -61,13 +58,10 @@ type ServiceListProps = {
 const ServiceList: React.FC<ServiceListProps> = ({
   addNewText,
   prePopulateService,
+  fieldArrayName,
   isPredeploy = false,
   existingServiceNames = [],
-  fieldArrayName,
   serviceVersionStatus,
-  maxCPU,
-  maxRAM,
-  clusterContainsGPUNodes,
   internalNetworkingDetails = {
     namespace: "",
     appName: "",
@@ -76,7 +70,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
 
-  const { currentClusterResources } = useClusterResources();
+  const { currentClusterResources: {maxCPU, maxRAM, clusterContainsGPUNodes, clusterIngressIp, defaultCPU, defaultRAM} } = useClusterResources();
 
   // add service modal form
   const {
@@ -186,8 +180,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
       deserializeService({
         service: defaultSerialized({
           ...data,
-          defaultCPU: currentClusterResources.defaultCPU,
-          defaultRAM: currentClusterResources.defaultRAM,
+          defaultCPU,
+          defaultRAM,
         }),
         expanded: true,
       })
@@ -223,6 +217,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 maxRAM={maxRAM}
                 clusterContainsGPUNodes={clusterContainsGPUNodes}
                 internalNetworkingDetails={internalNetworkingDetails}
+                clusterIngressIp={clusterIngressIp}
               />
             ) : null;
           })}

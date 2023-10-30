@@ -23,9 +23,15 @@ type NetworkingProps = {
     namespace: string;
     appName: string;
   };
+  clusterIngressIp: string;
 };
 
-const Networking: React.FC<NetworkingProps> = ({ index, service, internalNetworkingDetails: {namespace, appName} }) => {
+const Networking: React.FC<NetworkingProps> = ({ 
+  index, 
+  service, 
+  internalNetworkingDetails: { namespace, appName }, 
+  clusterIngressIp,
+}) => {
   const { register, control, watch } = useFormContext<PorterAppFormData>();
 
   const privateService = watch(`app.services.${index}.config.private.value`);
@@ -132,7 +138,10 @@ const Networking: React.FC<NetworkingProps> = ({ index, service, internalNetwork
             </a>
           </Text>
           <Spacer y={0.5} />
-          <CustomDomains index={index} />
+          <CustomDomains 
+            index={index} 
+            clusterIngressIp={clusterIngressIp} 
+          />
           <Spacer y={0.5} />
           <Text color="helper">
             Ingress Custom Annotations

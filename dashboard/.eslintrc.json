@@ -30,6 +30,8 @@
         "argsIgnorePattern": "^_",
         "caughtErrorsIgnorePattern": "^_"
       }
-    ]
+    ],
+    "@typesecript-eslint/consistent-type-imports": "off",
+    "@typescript-eslint/strict-boolean-expressions": "off"
   }
 }

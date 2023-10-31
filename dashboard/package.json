@@ -149,7 +149,7 @@
     "html-webpack-plugin": "^4.5.0",
     "husky": "^8.0.3",
     "lint-staged": "^15.0.2",
-    "prettier": "^2.2.1",
+    "prettier": "^3.0.3",
     "qs": "^6.9.4",
     "react-beautiful-dnd": "^13.1.1",
     "react-collapse": "^5.1.1",

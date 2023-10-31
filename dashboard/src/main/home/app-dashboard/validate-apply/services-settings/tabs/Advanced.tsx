@@ -98,7 +98,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
             () => {
               if (!clusterContainsGPUNodes && !gpuEnabledForService) {
                 setClusterModalVisible(true)
-                setGpuENabledForService(!gpuEnabledForService)
+
               } else {
                 setGpuENabledForService(!gpuEnabledForService)
               }
@@ -106,6 +106,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
           }
           inputProps={{ 'aria-label': 'controlled' }}
         />
+        <Spacer inline x={.5} />
         <Text color="helper">
           <>
             <span>Enable GPU</span>
@@ -120,7 +121,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
         <Spacer y={.5} />
         {gpuEnabledForService &&
           <>
-            {(currentCluster.status == "READY") ?
+            {(currentCluster.status == "UPDATING" && currentCluster?.gpuCluster) ?
               (< CheckItemContainer >
                 <CheckItemTop >
                   <Loading
@@ -149,6 +150,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
         clusterModalVisible && <ProvisionClusterModal
           closeModal={() => setClusterModalVisible(false)}
           gpuModal={true}
+
         />
       }
 
@@ -183,3 +185,12 @@ const CheckItemTop = styled.div`
 const StatusIcon = styled.img`
 height: 14px;
 `;
+
+const Tag = styled.div<{ size?: string, right?: string, bottom?: string, left?: string }>`
+          margin-left: 15px;
+          font-size: 10px;
+          background: #480ca8;
+          padding: 5px;
+          border-radius: 4px;
+          opacity: 0.85;
+          `;

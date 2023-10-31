@@ -138,11 +138,10 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {service.name.value.trim().length > 0
             ? service.name.value
             : "New Service"}
-        </ServiceTitle>
-        <ServiceTitle>
-          <Icon src={gpu} />
-          <Text>  GPU workload</Text>
+          <Tag>
 
+            GPU workload
+          </Tag>
         </ServiceTitle>
 
         {service.canDelete && (
@@ -263,4 +262,28 @@ const ServiceHeader = styled.div<{
 const Icon = styled.img`
   height: 18px;
   margin-right: 15px;
+`;
+
+const shimmerAnimation = `
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+`;
+
+const Tag = styled.div<{ size?: string, right?: string, bottom?: string, left?: string }>`
+  margin-left: 15px;
+  font-size: 10px;
+  background: linear-gradient(45deg, #7669c8 60%, rgba(255, 255, 255, 0.7) 70%, #7669c8 80%); // Adjusted gradient stops for a more diffused look
+  background-size: 200% 100%; 
+  animation: shimmer 3.5s infinite; 
+  padding: 5px;
+  border-radius: 4px;
+  opacity: 0.9;
+
+  ${shimmerAnimation}
 `;

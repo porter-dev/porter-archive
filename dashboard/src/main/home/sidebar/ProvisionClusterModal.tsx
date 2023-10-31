@@ -39,7 +39,7 @@ const ProvisionClusterModal: React.FC<Props> = ({
 
 
             <ScrollableContent>
-                {currentStep == "cloud" ? (
+                {currentStep == "cloud" && gpuModal ? (
                     <GPUCostConsent
                         setCurrentStep={setCurrentStep}
                         markCostConsentComplete={() => {

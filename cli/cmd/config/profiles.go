@@ -200,6 +200,8 @@ func ensurePorterConfigFileExists() error {
 
 // overlayProfiles will add all values from the profileToOverlay to the baseProfile,
 // returning the new profile with both values
+//
+//nolint:unparam
 func overlayProfiles(baseProfile CLIConfig, profileToOverlay CLIConfig) (CLIConfig, error) {
 	if profileToOverlay.Cluster != 0 {
 		baseProfile.Cluster = profileToOverlay.Cluster

@@ -25,7 +25,7 @@ func NewPorterHelper(debug bool) (*PorterHelper, error) {
 	ctx := context.Background()
 
 	// get the current project ID
-	cliConfig, err := config.InitAndLoadConfig()
+	cliConfig, err := config.InitAndLoadConfig(ctx, "", config.CLIConfig{})
 	if err != nil {
 		return nil, fmt.Errorf("error loading porter config: %w", err)
 	}

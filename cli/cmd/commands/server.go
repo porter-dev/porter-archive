@@ -162,7 +162,10 @@ func startLocal(ctx context.Context, cliConf config.CLIConfig, db string, port i
 		return fmt.Errorf("postgres not available for local driver, run \"porter server start --db postgres --driver docker\"")
 	}
 
-	cliConf.SetHost(fmt.Sprintf("http://localhost:%d", port), currentProfile)
+	err := cliConf.SetHost(fmt.Sprintf("http://localhost:%d", port), currentProfile)
+	if err != nil {
+		return fmt.Errorf("failed to set host: %s", err.Error())
+	}
 
 	porterDir := filepath.Join(home, ".porter")
 	cmdPath := filepath.Join(home, ".porter", "portersvr")

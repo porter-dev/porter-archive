@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// SetDriver sets the driver used when building images. This can either be locla or github
 func (c *CLIConfig) SetDriver(driver string, currentProfile string) error {
 	v := CLIConfig{
 		Driver: driver,
@@ -28,14 +29,14 @@ func (c *CLIConfig) SetHost(host string, currentProfile string) error {
 	v := defaultCLIConfig()
 	v.Host = host
 
-	color.New(color.FgGreen).Printf("Set the current host as %s\n", host)
+	color.New(color.FgGreen).Printf("Set the current host as %s\n", host) //nolint:errcheck,gosec
 
 	return updateValuesForSelectedProfile(currentProfile, v, porterConfigFilePath)
 }
 
 // SetProject sets a project for all API commands
 func (c *CLIConfig) SetProject(ctx context.Context, apiClient api.Client, projectID uint, selectedProfile string) error {
-	color.New(color.FgGreen).Printf("Set the current project as %d\n", projectID)
+	color.New(color.FgGreen).Printf("Set the current project as %d\n", projectID) //nolint:errcheck,gosec
 	v := CLIConfig{
 		Project: projectID,
 	}
@@ -49,11 +50,12 @@ func (c *CLIConfig) SetProject(ctx context.Context, apiClient api.Client, projec
 	return updateValuesForSelectedProfile(currentProfile, v, porterConfigFilePath)
 }
 
+// SetCluster sets the cluster in the current profile. All further actions will be targeted at this cluster
 func (c *CLIConfig) SetCluster(clusterID uint) error {
-	color.New(color.FgGreen).Printf("Set the current cluster as %d\n", clusterID)
+	color.New(color.FgGreen).Printf("Set the current cluster as %d\n", clusterID) //nolint:errcheck,gosec
 
 	if c.Kubeconfig != "" || viper.IsSet("kubeconfig") {
-		color.New(color.FgYellow).Println("Please change local kubeconfig if needed")
+		color.New(color.FgYellow).Println("Please change local kubeconfig if needed") //nolint:errcheck,gosec
 	}
 
 	err := viper.WriteConfig()
@@ -66,6 +68,7 @@ func (c *CLIConfig) SetCluster(clusterID uint) error {
 	return nil
 }
 
+// SetToken sets the token in the current profile. All further actions will be authenticated with this token
 func (c *CLIConfig) SetToken(token string) error {
 	viper.Set("token", token)
 	err := viper.WriteConfig()
@@ -78,9 +81,10 @@ func (c *CLIConfig) SetToken(token string) error {
 	return nil
 }
 
+// SetRegistry sets the docker registry in the current profile. All further actions will be targeted at this registry
 func (c *CLIConfig) SetRegistry(registryID uint) error {
 	viper.Set("registry", registryID)
-	color.New(color.FgGreen).Printf("Set the current registry as %d\n", registryID)
+	color.New(color.FgGreen).Printf("Set the current registry as %d\n", registryID) //nolint:errcheck,gosec
 	err := viper.WriteConfig()
 	if err != nil {
 		return err
@@ -91,9 +95,10 @@ func (c *CLIConfig) SetRegistry(registryID uint) error {
 	return nil
 }
 
+// SetHelmRepo sets the helm repo in the current profile. All further actions will be targeted at this helm repo
 func (c *CLIConfig) SetHelmRepo(helmRepoID uint) error {
 	viper.Set("helm_repo", helmRepoID)
-	color.New(color.FgGreen).Printf("Set the current Helm repo as %d\n", helmRepoID)
+	color.New(color.FgGreen).Printf("Set the current Helm repo as %d\n", helmRepoID) //nolint:errcheck,gosec
 	err := viper.WriteConfig()
 	if err != nil {
 		return err
@@ -104,6 +109,7 @@ func (c *CLIConfig) SetHelmRepo(helmRepoID uint) error {
 	return nil
 }
 
+// SetKubeconfig sets the kubeconfig in the current profile. All further actions which require kubernetes will be targeted at this kubeconfig
 func (c *CLIConfig) SetKubeconfig(kubeconfig string) error {
 	path, err := filepath.Abs(kubeconfig)
 	if err != nil {
@@ -115,7 +121,7 @@ func (c *CLIConfig) SetKubeconfig(kubeconfig string) error {
 	}
 
 	viper.Set("kubeconfig", path)
-	color.New(color.FgGreen).Printf("Set the path to kubeconfig as %s\n", path)
+	color.New(color.FgGreen).Printf("Set the path to kubeconfig as %s\n", path) //nolint:errcheck,gosec
 	err = viper.WriteConfig()
 
 	if err != nil {

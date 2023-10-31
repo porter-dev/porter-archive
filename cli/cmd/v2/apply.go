@@ -75,21 +75,16 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		}
 	}
 
-	// overrides incorporated into the app contract baed on the deployment target
-	var overrides *porter_app.EncodedAppWithEnv
+	var b64YAML string
 
-	// env variables and secrets to be passed to the apply endpoint
-	var envVariables map[string]string
-	var envSecrets map[string]string
-
-	appName := inp.AppName
 	if porterYamlExists {
 		porterYaml, err := os.ReadFile(filepath.Clean(inp.PorterYamlPath))
 		if err != nil {
 			return fmt.Errorf("could not read porter yaml file: %w", err)
 		}
 
-		b64YAML := base64.StdEncoding.EncodeToString(porterYaml)
+		b64YAML = base64.StdEncoding.EncodeToString(porterYaml)
+		color.New(color.FgGreen).Printf("Successfully parsed Porter YAML\n") // nolint:errcheck,gosec
 
 		// last argument is passed to accommodate users with v1 porter yamls
 		parseResp, err := client.ParseYAML(ctx, cliConf.Project, cliConf.Cluster, b64YAML, appName)

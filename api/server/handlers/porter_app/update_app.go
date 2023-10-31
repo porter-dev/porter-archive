@@ -41,15 +41,23 @@ func NewUpdateAppHandler(
 
 // UpdateAppRequest is the request object for the POST /apps/{porter_app_name} endpoint
 type UpdateAppRequest struct {
-	DeploymentTargetId string            `json:"deployment_target_id"`
-	AppRevisionID      string            `json:"app_revision_id"`
-	Base64AppOverrides string            `json:"b64_app_overrides"`
-	Base64AppProto     string            `json:"b64_app_proto"`
-	Variables          map[string]string `json:"variables"`
-	Secrets            map[string]string `json:"secrets"`
-	CommitSHA          string            `json:"commit_sha"`
-	Deletions          Deletions         `json:"deletions"`
-	ForceBuild         bool              `json:"force_build"`
+	// DeploymentTargetId is the ID of the deployment target to apply the update to
+	DeploymentTargetId string `json:"deployment_target_id"`
+	// Variables is a map of environment variable names to values
+	Variables map[string]string `json:"variables"`
+	// Secrets is a map of secret names to values
+	Secrets map[string]string `json:"secrets"`
+	// Deletions is the set of fields to delete before applying the update
+	Deletions Deletions `json:"deletions"`
+	// CommitSHA is the commit sha of the git commit that triggered this update, indicating a source change and triggering a build
+	CommitSHA string `json:"commit_sha"`
+	// AppRevisionID is the ID of the revision to perform follow up actions on after the initial apply
+	AppRevisionID string `json:"app_revision_id"`
+	// Only one of Base64AppProto or Base64PorterYAML should be specified
+	// Base64AppProto is a ful base64 encoded porter app contract to apply
+	Base64AppProto string `json:"b64_app_proto"`
+	// Base64PorterYAML is a base64 encoded porter yaml to apply representing a potentially partial porter app contract
+	Base64PorterYAML string `json:"b64_porter_yaml"`
 	// IsEnvOverride is used to remove any variables that are not specified in the request.  If false, the request will only update the variables specified in the request,
 	// and leave all other variables untouched.
 	IsEnvOverride bool `json:"is_env_override"`
@@ -86,6 +94,11 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if request.Base64AppProto != "" && request.Base64PorterYAML != "" {
+		err := telemetry.Error(ctx, span, nil, "both b64 yaml and b64 porter yaml are specified")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
 	if request.DeploymentTargetId == "" {
 		err := telemetry.Error(ctx, span, nil, "deployment target id is empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -93,19 +106,12 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	deploymentTargetID := request.DeploymentTargetId
 
+	var overrides *porterv1.PorterApp
 	appProto := &porterv1.PorterApp{}
 
-	var appRevisionID string
-	if request.AppRevisionID != "" {
-		appRevisionID = request.AppRevisionID
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-revision-id", Value: request.AppRevisionID})
-	} else {
-		if request.Base64AppProto == "" {
-			err := telemetry.Error(ctx, span, nil, "b64 yaml is empty")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
+	envVariables := request.Variables
 
+	if request.Base64AppProto != "" {
 		decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error decoding base yaml")
@@ -113,14 +119,44 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		appProto = &porterv1.PorterApp{}
 		err = helpers.UnmarshalContractObject(decoded, appProto)
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error unmarshalling app proto")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
 		}
+	}
 
+	if request.Base64PorterYAML != "" {
+		decoded, err := base64.StdEncoding.DecodeString(request.Base64PorterYAML)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error decoding base yaml")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		appFromYaml, err := porter_app.ParseYAML(ctx, decoded, appName)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error parsing yaml")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+		appProto = appFromYaml.AppProto
+
+		// only public variables can be defined in porter.yaml
+		envVariables = mergeEnvVariables(request.Variables, appFromYaml.EnvVariables)
+
+		if appFromYaml.PreviewApp != nil {
+			overrides = appFromYaml.PreviewApp.AppProto
+			envVariables = mergeEnvVariables(envVariables, appFromYaml.PreviewApp.EnvVariables)
+		}
+	}
+
+	var appRevisionID string
+	if request.AppRevisionID != "" {
+		appRevisionID = request.AppRevisionID
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-revision-id", Value: request.AppRevisionID})
+	} else {
 		app, err := v2.AppFromProto(appProto)
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error converting app proto to app")
@@ -182,26 +218,6 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	appProto.Name = appName
 
-	var overrides *porterv1.PorterApp
-	if request.Base64AppOverrides != "" {
-		decoded, err := base64.StdEncoding.DecodeString(request.Base64AppOverrides)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error decoding base  yaml")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
-
-		overrides = &porterv1.PorterApp{}
-		err = helpers.UnmarshalContractObject(decoded, overrides)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error unmarshalling app proto")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
-
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "validated-with-overrides", Value: true})
-	}
-
 	var serviceDeletions map[string]*porterv1.ServiceDeletions
 	if request.Deletions.ServiceDeletions != nil {
 		serviceDeletions = make(map[string]*porterv1.ServiceDeletions)
@@ -221,7 +237,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		App:           appProto,
 		AppRevisionId: appRevisionID,
 		AppEnv: &porterv1.EnvGroupVariables{
-			Normal: request.Variables,
+			Normal: envVariables,
 			Secret: request.Secrets,
 		},
 		Deletions: &porterv1.Deletions{
@@ -276,4 +292,17 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.WriteResult(w, r, response)
+}
+
+func mergeEnvVariables(currentEnv, previousEnv map[string]string) map[string]string {
+	env := make(map[string]string)
+
+	for k, v := range previousEnv {
+		env[k] = v
+	}
+	for k, v := range currentEnv {
+		env[k] = v
+	}
+
+	return env
 }

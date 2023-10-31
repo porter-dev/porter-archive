@@ -22,6 +22,10 @@ const githubContentsValidator = z.discriminatedUnion("type", [
         path: z.string(),
         type: z.literal("dir"),
     }),
+    z.object({
+        path: z.string(),
+        type: z.literal("symlink"),
+    }),
 ]);
 type GithubContents = z.infer<typeof githubContentsValidator>;
 

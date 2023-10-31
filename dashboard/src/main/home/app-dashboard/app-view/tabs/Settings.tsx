@@ -13,16 +13,23 @@ import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useQueryClient } from "@tanstack/react-query";
 import { Context } from "shared/Context";
 import PreviewEnvironmentSettings from "./preview-environments/PreviewEnvironmentSettings";
+import { Controller, useFormContext } from "react-hook-form";
+import { PorterAppFormData } from "lib/porter-apps";
+import Checkbox from "components/porter/Checkbox";
 
 const Settings: React.FC = () => {
-  const { currentProject } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const queryClient = useQueryClient();
   const history = useHistory();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { porterApp, clusterId, projectId, latestProto } = useLatestRevision();
   const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
-
+  const {
+    control,
+    setValue,
+    watch
+  } = useFormContext<PorterAppFormData>();
   const [githubWorkflowFilename, setGithubWorkflowFilename] = useState(
     `porter_stack_${porterApp.name}.yml`
   );
@@ -142,8 +149,38 @@ const Settings: React.FC = () => {
       {currentProject?.preview_envs_enabled && !!latestProto.build ? (
         <PreviewEnvironmentSettings />
       ) : null}
+
+      {(currentCluster?.cloud_provider == "AWS" && currentProject?.efs_enabled) && <>
+        <Text size={16}>Enable shared storage across services for "{porterApp.name}"</Text>
+        <Spacer y={0.5} />
+        <Spacer y={.5} />
+        <Controller
+          name={`app.efsStorage`}
+          control={control}
+          render={({ field: { value, onChange } }) => (
+            <Checkbox
+              checked={value.enabled}
+              toggleChecked={() => {
+                onChange({
+                  ...value,
+                  enabled: !value.enabled,
+                },
+                );
+              }}
+              disabled={value.readOnly}
+              disabledTooltip={
+                "You may only edit this field in your porter.yaml."
+              }
+            >
+              <Text color="helper">
+                Enable EFS Storage
+              </Text>
+            </Checkbox>
+          )} />
+        <Spacer y={1} />
+      </>}
       <Text size={16}>Delete "{porterApp.name}"</Text>
-      <Spacer y={0.5} />
+      <Spacer y={.5} />
       <Text color="helper">
         Delete this application and all of its resources.
       </Text>

@@ -9,6 +9,7 @@ export type ClusterResources = {
   defaultCPU: number;
   defaultRAM: number;
   clusterContainsGPUNodes: boolean;
+  clusterIngressIp: string;
 };
 
 export const ClusterResourcesContext = createContext<{
@@ -28,7 +29,7 @@ export const useClusterResources = () => {
 const ClusterResourcesProvider = ({ children }: { children: JSX.Element }) => {
   const { currentCluster, currentProject } = useContext(Context);
 
-  const { maxCPU, maxRAM, defaultCPU, defaultRAM, clusterContainsGPUNodes } = useClusterResourceLimits({
+  const { maxCPU, maxRAM, defaultCPU, defaultRAM, clusterContainsGPUNodes, clusterIngressIp } = useClusterResourceLimits({
     projectId: currentProject?.id,
     clusterId: currentCluster?.id,
   });
@@ -42,6 +43,7 @@ const ClusterResourcesProvider = ({ children }: { children: JSX.Element }) => {
           defaultCPU,
           defaultRAM,
           clusterContainsGPUNodes,
+          clusterIngressIp,
         },
       }}
     >

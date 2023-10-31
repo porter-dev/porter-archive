@@ -28,6 +28,9 @@ const (
 	// DBEnabled enables the "Databases" tab
 	DBEnabled FeatureFlagLabel = "db_enabled"
 
+	// EFSEnabled enables the "EFS" checkbox in App Settings
+	EFSEnabled FeatureFlagLabel = "efs_enabled"
+
 	// EnableReprovision enables the provisioning button after initial creation of the cluster
 	EnableReprovision FeatureFlagLabel = "enable_reprovision"
 
@@ -68,6 +71,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	AzureEnabled:           false,
 	CapiProvisionerEnabled: true,
 	DBEnabled:              false,
+	EFSEnabled:             false,
 	EnableReprovision:      false,
 	FullAddOns:             false,
 	HelmValuesEnabled:      false,
@@ -209,6 +213,8 @@ func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *
 			return p.StacksEnabled
 		case "validate_apply_v2":
 			return p.ValidateApplyV2
+		case "efs_enabled":
+			return false
 		}
 	}
 
@@ -251,6 +257,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		ValidateApplyV2:        p.GetFeatureFlag(ValidateApplyV2, launchDarklyClient),
 		FullAddOns:             p.GetFeatureFlag(FullAddOns, launchDarklyClient),
 		QuotaIncrease:          p.GetFeatureFlag(QuotaIncrease, launchDarklyClient),
+		EFSEnabled:             p.GetFeatureFlag(EFSEnabled, launchDarklyClient),
 	}
 }
 

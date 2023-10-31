@@ -31,14 +31,11 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 		return telemetry.Error(ctx, span, nil, "app event metadata is nil")
 	}
 
-	// 2. convert app event to notification
-	notification, err := appEventToNotification(*appEventMetadata)
-	if err != nil {
-		return telemetry.Error(ctx, span, err, "failed to convert app event to notification")
-	}
+	// 2. convert app event to baseNotification
+	baseNotification := appEventToNotification(*appEventMetadata)
 
 	// 3. dedupe notification
-	isDuplicate, err := isNotificationDuplicate(ctx, notification, inp.EventRepo, inp.DeploymentTargetID)
+	isDuplicate, err := isNotificationDuplicate(ctx, baseNotification, inp.EventRepo, inp.DeploymentTargetID)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to check if app event is duplicate")
 	}
@@ -49,7 +46,7 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 
 	// 4. hydrate notification with k8s deployment info
 	hydratedNotification, err := hydrateNotification(ctx, hydrateNotificationInput{
-		Notification:       notification,
+		Notification:       baseNotification,
 		DeploymentTargetId: inp.DeploymentTargetID,
 		Namespace:          inp.Namespace,
 		K8sAgent:           inp.K8sAgent,
@@ -96,7 +93,7 @@ type Notification struct {
 }
 
 // appEventToNotification converts an app event to a notification
-func appEventToNotification(appEventMetadata AppEventMetadata) (Notification, error) {
+func appEventToNotification(appEventMetadata AppEventMetadata) Notification {
 	humanReadableDetail := appEventMetadata.Detail
 	humanReadableDetail = strings.ReplaceAll(humanReadableDetail, "application", "service")
 
@@ -111,5 +108,5 @@ func appEventToNotification(appEventMetadata AppEventMetadata) (Notification, er
 		Deployment:          Deployment{Status: DeploymentStatus_Unknown},
 		HumanReadableDetail: humanReadableDetail,
 	}
-	return notification, nil
+	return notification
 }

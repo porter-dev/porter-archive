@@ -1,8 +1,9 @@
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { SourceOptions, serviceOverrides } from "lib/porter-apps";
-import { ClientService, DetectedServices } from "lib/porter-apps/services";
+import { DetectedServices } from "lib/porter-apps/services";
 import { useCallback, useContext, useEffect, useState } from "react";
+import { useClusterResources } from "shared/ClusterResourcesContext";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { z } from "zod";
@@ -10,11 +11,15 @@ import { z } from "zod";
 type PorterYamlStatus =
   | {
       loading: true;
+      detectedName: null;
       detectedServices: null;
+      porterYamlFound: false;
     }
   | {
       detectedServices: DetectedServices | null;
+      detectedName: string | null;
       loading: false;
+      porterYamlFound: boolean;
     };
 
 /*
@@ -26,16 +31,21 @@ type PorterYamlStatus =
  */
 export const usePorterYaml = ({
   source,
+  appName = "",
   useDefaults = true,
 }: {
-  source: SourceOptions | null;
+  source: (SourceOptions & { type: "github" }) | null;
+  appName?: string;
   useDefaults?: boolean;
 }): PorterYamlStatus => {
   const { currentProject, currentCluster } = useContext(Context);
+  const { currentClusterResources } = useClusterResources();
   const [
     detectedServices,
     setDetectedServices,
   ] = useState<DetectedServices | null>(null);
+  const [detectedName, setDetectedName] = useState<string | null>(null);
+  const [porterYamlFound, setPorterYamlFound] = useState(false);
 
   const { data, status } = useQuery(
     [
@@ -43,14 +53,13 @@ export const usePorterYaml = ({
       currentProject?.id,
       source?.git_branch,
       source?.git_repo_name,
+      source?.porter_yaml_path,
     ],
     async () => {
-      if (!currentProject) {
+      if (!currentProject || !source) {
         return;
       }
-      if (source?.type !== "github") {
-        return;
-      }
+
       const res = await api.getPorterYamlContents(
         "<token>",
         {
@@ -66,6 +75,7 @@ export const usePorterYaml = ({
         }
       );
 
+      setPorterYamlFound(true);
       return z.string().parseAsync(res.data);
     },
     {
@@ -73,24 +83,30 @@ export const usePorterYaml = ({
         source?.type === "github" &&
         Boolean(source.git_repo_name) &&
         Boolean(source.git_branch),
-      retry: false,
+      onError: () => {
+        setPorterYamlFound(false);
+      },
+      refetchOnWindowFocus: false,
+      retry: 0,
     }
   );
 
   const detectServices = useCallback(
     async ({
       b64Yaml,
+      appName,
       projectId,
       clusterId,
     }: {
       b64Yaml: string;
+      appName: string;
       projectId: number;
       clusterId: number;
     }) => {
       try {
         const res = await api.parsePorterYaml(
           "<token>",
-          { b64_yaml: b64Yaml },
+          { b64_yaml: b64Yaml, app_name: appName },
           {
             project_id: projectId,
             cluster_id: clusterId,
@@ -100,20 +116,69 @@ export const usePorterYaml = ({
         const data = await z
           .object({
             b64_app_proto: z.string(),
+            env_variables: z.record(z.string()).nullable(),
+            env_secrets: z.record(z.string()).nullable(),
+            preview_app: z
+              .object({
+                b64_app_proto: z.string(),
+                env_variables: z.record(z.string()).nullable(),
+                env_secrets: z.record(z.string()).nullable(),
+              })
+              .optional(),
           })
           .parseAsync(res.data);
-        const proto = PorterApp.fromJsonString(atob(data.b64_app_proto));
 
-        const { services, predeploy } = serviceOverrides({
-          overrides: proto,
-          useDefaults,
+        const proto = PorterApp.fromJsonString(atob(data.b64_app_proto), {
+          ignoreUnknownFields: true,
         });
 
-        if (services.length || predeploy) {
+        const { services, predeploy, build } = serviceOverrides({
+          overrides: proto,
+          useDefaults,
+          defaultCPU: currentClusterResources.defaultCPU,
+          defaultRAM: currentClusterResources.defaultRAM,
+        });
+
+        if (services.length || predeploy || build) {
           setDetectedServices({
+            build,
             services,
             predeploy,
           });
+        }
+
+        if (data.preview_app) {
+          const previewProto = PorterApp.fromJsonString(
+            atob(data.preview_app.b64_app_proto),
+            {
+              ignoreUnknownFields: true,
+            }
+          );
+          const {
+            services: previewServices,
+            predeploy: previewPredeploy,
+            build: previewBuild,
+          } = serviceOverrides({
+            overrides: previewProto,
+            useDefaults,
+          });
+
+          if (previewServices.length || previewPredeploy || previewBuild) {
+            setDetectedServices((prev) => ({
+              ...prev,
+              services: prev?.services ? prev.services : [],
+              previews: {
+                services: previewServices,
+                predeploy: previewPredeploy,
+                build: previewBuild,
+                variables: data.preview_app?.env_variables ?? {},
+              },
+            }));
+          }
+        }
+
+        if (proto.name) {
+          setDetectedName(proto.name);
         }
       } catch (err) {
         // silent failure for now
@@ -130,6 +195,7 @@ export const usePorterYaml = ({
     if (data) {
       detectServices({
         b64Yaml: data,
+        appName: appName,
         projectId: currentProject.id,
         clusterId: currentCluster.id,
       });
@@ -143,19 +209,25 @@ export const usePorterYaml = ({
   if (source?.type !== "github") {
     return {
       loading: false,
+      detectedName: null,
       detectedServices: null,
+      porterYamlFound: false,
     };
   }
 
   if (status === "loading") {
     return {
       loading: true,
+      detectedName: null,
       detectedServices: null,
+      porterYamlFound: false,
     };
   }
 
   return {
     detectedServices,
+    detectedName,
     loading: false,
+    porterYamlFound,
   };
 };

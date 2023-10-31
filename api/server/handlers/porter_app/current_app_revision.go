@@ -3,6 +3,7 @@ package porter_app
 import (
 	"net/http"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 
 	"connectrpc.com/connect"
@@ -25,6 +26,7 @@ import (
 // LatestAppRevisionHandler handles requests to the /apps/{porter_app_name}/latest endpoint
 type LatestAppRevisionHandler struct {
 	handlers.PorterHandlerReadWriter
+	authz.KubernetesAgentGetter
 }
 
 // NewLatestAppRevisionHandler returns a new LatestAppRevisionHandler
@@ -35,6 +37,7 @@ func NewLatestAppRevisionHandler(
 ) *LatestAppRevisionHandler {
 	return &LatestAppRevisionHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
@@ -105,7 +108,7 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	if porterApps[0].ID == 0 {
-		err := telemetry.Error(ctx, span, err, "porter app id is missiong")
+		err := telemetry.Error(ctx, span, err, "porter app id is missing")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

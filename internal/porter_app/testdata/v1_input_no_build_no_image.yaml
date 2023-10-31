@@ -1,0 +1,95 @@
+version: v1stack
+apps:
+  example-job:
+    type: job
+    run: echo 'hello world'
+    config:
+      allowConcurrent: true
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      schedule:
+        enabled: true
+        value: '*/10 * * * *'
+      paused: true
+      cloudsql:
+        enabled: false
+        connectionName: ''
+        dbPort: '5432'
+        serviceAccountJSON: ''
+  example-wkr:
+    type: worker
+    run: "echo 'work'"
+    config:
+      replicaCount: '1'
+      container:
+        port: '80'
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      autoscaling:
+        enabled: false
+        minReplicas: '1'
+        maxReplicas: '10'
+        targetCPUUtilizationPercentage: '50'
+        targetMemoryUtilizationPercentage: '50'
+      cloudsql:
+        enabled: false
+        connectionName: ''
+        dbPort: '5432'
+        serviceAccountJSON: ''
+  example-web:
+    type: web
+    run: node index.js
+    config:
+      replicaCount: '0'
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      container:
+        port: '8080'
+      autoscaling:
+        enabled: true
+        minReplicas: '1'
+        maxReplicas: '3'
+        targetCPUUtilizationPercentage: '60'
+        targetMemoryUtilizationPercentage: '60'
+      ingress:
+        enabled: true
+        custom_domain: true
+        hosts:
+          - test1.example.com
+          - test2.example.com
+        porter_hosts: []
+        annotations:
+      service:
+        port: '8080'
+      health:
+        startupProbe:
+          enabled: false
+          failureThreshold: '3'
+          path: /startupz
+          periodSeconds: '5'
+        readinessProbe:
+          enabled: true
+          failureThreshold: '3'
+          path: /healthz
+          initialDelaySeconds: '0'
+        livenessProbe:
+          enabled: true
+          failureThreshold: '3'
+          path: /healthz
+          periodSeconds: '5'
+      cloudsql:
+        enabled: false
+        connectionName: ''
+        dbPort: '5432'
+        serviceAccountJSON: ''
+release:
+  run: ls
+env:
+  PORT: '8080'
+  NODE_ENV: 'production'

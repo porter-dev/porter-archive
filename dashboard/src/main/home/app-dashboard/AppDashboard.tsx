@@ -3,7 +3,7 @@ import styled from "styled-components";
 import _ from "lodash";
 import { Link, LinkProps } from "react-router-dom";
 
-import web from "assets/web.png";
+import applications from "assets/applications.svg";
 import box from "assets/box.png";
 import github from "assets/github.png";
 import time from "assets/time.png";
@@ -31,6 +31,7 @@ import Loading from "components/Loading";
 import Fieldset from "components/porter/Fieldset";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Icon from "components/porter/Icon";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 
 type Props = {};
 
@@ -39,7 +40,7 @@ const icons = [
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg",
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-plain.svg",
   "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg",
-  web,
+  applications,
 ];
 
 const namespaceBlacklist = [
@@ -153,7 +154,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
               height="18px"
               src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
             />
-            <Text size={13} color="#ffffff44">{app.image_repo_uri}</Text>
+            <Text truncate={true} size={13} color="#ffffff44">{app.image_repo_uri}</Text>
           </Container>
         )}
       </>
@@ -207,7 +208,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
   return (
     <StyledAppDashboard>
       <DashboardHeader
-        image={web}
+        image={applications}
         title="Applications"
         description="Web services, workers, and jobs for this project."
         disableLineBreak
@@ -215,30 +216,24 @@ const AppDashboard: React.FC<Props> = ({ }) => {
       {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (
-        filteredApps.length === 0 ? (
+        apps.length === 0 ? (
           isLoading ?
             (<Loading offset="-150px" />) : (
-              <Fieldset>
-
-                <CentralContainer>
-                  <Text size={16}>
-                    No apps have been deployed yet.
-                  </Text>
-                  <Spacer y={1} />
-
-                  <Text color={"helper"}>
-                    Get started by deploying your app.
-                  </Text>
-                  <Spacer y={.5} />
-                  <PorterLink to="/apps/new/app">
-                    <Button onClick={async () => updateStackStartedStep()} height="35px">
-                      Deploy app <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
-                    </Button>
-                  </PorterLink>
-                </CentralContainer>
-
-
-              </Fieldset >
+              <DashboardPlaceholder>
+                <Text size={16}>
+                  No apps have been deployed yet
+                </Text>
+                <Spacer y={0.5} />
+                <Text color={"helper"}>
+                  Get started by deploying your app.
+                </Text>
+                <Spacer y={1} />
+                <PorterLink to="/apps/new/app">
+                  <Button alt onClick={async () => updateStackStartedStep()} height="35px">
+                    Deploy app <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
+                  </Button>
+                </PorterLink>
+              </DashboardPlaceholder>
             )
         ) : (
           <>
@@ -283,7 +278,14 @@ const AppDashboard: React.FC<Props> = ({ }) => {
             </Container>
             <Spacer y={1} />
 
-            {isLoading ? (
+            {filteredApps.length === 0 ? (
+              <Fieldset>
+                <Container row>
+                  <PlaceholderIcon src={notFound} />
+                  <Text color="helper">No matching apps were found.</Text>
+                </Container>
+              </Fieldset>
+            ) : (isLoading ? (
               <Loading offset="-150px" />
             ) : view === "grid" ? (
               <GridList>
@@ -342,7 +344,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                   }
                 })}
               </List>
-            )}
+            ))}
           </>
         )
       )
@@ -413,7 +415,6 @@ const Block = styled.div`
   :hover {
     border: 1px solid #7a7b80;
   }
-
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {
     from {

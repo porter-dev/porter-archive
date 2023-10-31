@@ -12,19 +12,19 @@ var ecrRepoRegex = /(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr(\-fips)?\.([a-zA-Z0-9
 
 type PropsType =
   | {
-      setSelectedTag: (x: string) => void;
-      selectedTag: string;
-      selectedImageUrl: string;
-      registryId: number;
-      readOnly?: boolean;
-    }
+    setSelectedTag: (x: string) => void;
+    selectedTag: string;
+    selectedImageUrl: string;
+    registryId: number;
+    readOnly?: boolean;
+  }
   | {
-      setSelectedTag?: (x: string) => void;
-      selectedTag: string;
-      selectedImageUrl: string;
-      registryId: number;
-      readOnly: true;
-    };
+    setSelectedTag?: (x: string) => void;
+    selectedTag: string;
+    selectedImageUrl: string;
+    registryId: number;
+    readOnly: true;
+  };
 
 type StateType = {
   loading: boolean;
@@ -86,7 +86,7 @@ export default class TagList extends Component<PropsType, StateType> {
           const [latestImage] = tags.splice(latestImageIndex, 1);
           tags.unshift(latestImage);
         }
-        this.setState({ tags: tags.map((tag) => tag.tag), loading: false });
+        this.setState({ tags: tags.map((tag) => tag.tag), loading: false, error: false });
       })
       .catch((err) => {
         console.log(err);
@@ -196,7 +196,6 @@ const TagName = styled.div<{ lastItem?: boolean; isSelected?: boolean }>`
   border-bottom: 1px solid
     ${(props) => (props.lastItem ? "#00000000" : "#606166")};
   color: #ffffff;
-  user-select: none;
   align-items: center;
   padding: 10px 0px;
   cursor: pointer;

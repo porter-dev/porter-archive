@@ -1,48 +1,38 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
+import community from "assets/chat.svg";
+import { useIntercom } from "lib/hooks/useIntercom";
 
-import { Context } from "shared/Context";
-import discordLogo from "../../../assets/discord.svg";
+type HelpProps = {};
 
-type PropsType = {};
+const Help: React.FC<HelpProps> = () => {
+  const [showHelpDropdown, setShowHelpDropdown] = useState(false);
 
-type StateType = {
-  showHelpDropdown: boolean;
-};
+  const { showIntercomWithMessage } = useIntercom();
 
-export default class Help extends Component<PropsType, StateType> {
-  state = {
-    showHelpDropdown: false,
-  };
-
-  renderHelpDropdown = () => {
-    if (this.state.showHelpDropdown) {
+  const renderHelpDropdown = () => {
+    if (showHelpDropdown) {
       return (
         <>
           <CloseOverlay
-            onClick={() =>
-              this.setState({
-                showHelpDropdown: false,
-              })
-            }
+            onClick={() => setShowHelpDropdown(false)}
           />
           <Dropdown dropdownWidth="155px" dropdownMaxHeight="300px">
             <Option
               onClick={() => {
-                window.open("https://docs.porter.run", "_blank").focus();
+                window.open("https://docs.porter.run", "_blank")?.focus();
               }}
             >
               <i className="material-icons-outlined">book</i>
               Documentation
             </Option>
-            <Line />
             <Option
               onClick={() => {
-                window.open("https://discord.gg/Vbse9vJtPU", "_blank").focus();
+                showIntercomWithMessage({ message: "I need help with...", delaySeconds: 0 });
               }}
             >
-              <Icon src={discordLogo} />
-              Community
+              <Icon src={community} />
+              Talk to us
             </Option>
           </Dropdown>
         </>
@@ -50,26 +40,18 @@ export default class Help extends Component<PropsType, StateType> {
     }
   };
 
-  render() {
-    return (
-      <FeedbackButton selected={this.state.showHelpDropdown === true}>
-        <Flex
-          onClick={() =>
-            this.setState({
-              showHelpDropdown: !this.state.showHelpDropdown,
-            })
-          }
-        >
-          <i className="material-icons-outlined">help_outline</i>
-          Help
-        </Flex>
-        {this.renderHelpDropdown()}
-      </FeedbackButton>
-    );
-  }
-}
+  return (
+    <FeedbackButton selected={showHelpDropdown === true}>
+      <Flex onClick={() => setShowHelpDropdown(!showHelpDropdown)}>
+        <i className="material-icons-outlined">help_outline</i>
+        Help
+      </Flex>
+      {renderHelpDropdown()}
+    </FeedbackButton>
+  );
+};
 
-Help.contextType = Context;
+export default Help;
 
 const Option = styled.div`
   margin-left: 12px;
@@ -102,14 +84,6 @@ const Option = styled.div`
   }
 `;
 
-const Line = styled.div`
-  height: 1px;
-  z-index: 0;
-  left: 0;
-  background: #aaaabb55;
-  width: 100%;
-`;
-
 const CloseOverlay = styled.div`
   position: fixed;
   width: 100vw;
@@ -129,8 +103,8 @@ const Flex = styled.div`
 const Dropdown = styled.div`
   position: absolute;
   right: 0;
-  top: calc(100% + 5px);
-  background: #26282f;
+  top: calc(100% + 15px);
+  background: #121212;
   width: ${(props: {
     dropdownWidth: string;
     dropdownMaxHeight: string;
@@ -141,11 +115,11 @@ const Dropdown = styled.div`
     dropdownMaxHeight: string;
     feedbackSent?: boolean;
   }) => (props.dropdownMaxHeight ? props.dropdownMaxHeight : "300px")};
-  border-radius: 10px;
+  border-radius: 5px;
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
-  box-shadow: 0 8px 20px 0px #00000088;
+  border: 1px solid #494B4F;
   animation: ${(props: {
     dropdownWidth: string;
     dropdownMaxHeight: string;

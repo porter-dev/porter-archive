@@ -1,7 +1,7 @@
 export const DATABASE_HEIGHT_ENABLED = 374;
 export const DATABASE_HEIGHT_DISABLED = 119;
-export const RESOURCE_HEIGHT_WITHOUT_AUTOSCALING = 422;
-export const RESOURCE_HEIGHT_WITH_AUTOSCALING = 809;
+export const RESOURCE_HEIGHT_WITHOUT_AUTOSCALING = 446;
+export const RESOURCE_HEIGHT_WITH_AUTOSCALING = 833;
 export const MIB_TO_GIB = 1024;
 export const MILI_TO_CORE = 1000;
 interface InstanceDetails {
@@ -82,3 +82,7 @@ export const AWS_INSTANCE_LIMITS: InstanceTypes = {
         "xlarge": { "vCPU": 4, "RAM": 64 },
     }
 }
+
+
+export const UPPER_BOUND_SMART = .5;
+export const RESOURCE_ALLOCATION_RAM = 1;

@@ -4,8 +4,6 @@ import styled from "styled-components";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
-import refresh from "assets/refresh.png";
-
 import Text from "components/porter/Text";
 
 import EventCard from "./events/cards/EventCard";
@@ -17,8 +15,6 @@ import { feedDate } from "shared/string_utils";
 import Pagination from "components/porter/Pagination";
 import _ from "lodash";
 import Button from "components/porter/Button";
-import Icon from "components/porter/Icon";
-import Container from "components/porter/Container";
 import { PorterAppEvent, PorterAppEventType } from "./events/types";
 
 type Props = {
@@ -41,6 +37,17 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
   const [shouldAnimate, setShouldAnimate] = useState(true);
 
+  // remove this filter when https://linear.app/porter/issue/POR-1676/disable-porter-agent-code-for-cpu-alerts is resolved
+  const isNotFilteredAppEvent = (event: PorterAppEvent) => {
+    return !(event.type === PorterAppEventType.APP_EVENT &&
+      (
+        event.metadata?.short_summary?.includes("requesting more memory than is available")
+        || event.metadata?.short_summary?.includes("requesting more CPU than is available")
+        || event.metadata?.short_summary?.includes("non-zero exit code")
+      )
+    );
+  }
+
   const getEvents = async () => {
     setLoading(true)
     if (!currentProject || !currentCluster) {
@@ -61,7 +68,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
       );
 
       setNumPages(res.data.num_pages);
-      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)) ?? []);
+      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)).filter(isNotFilteredAppEvent) ?? []);
     } catch (err) {
       setError(err);
     } finally {
@@ -95,7 +102,7 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
       );
       setError(undefined)
       setNumPages(res.data.num_pages);
-      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)) ?? []);
+      setEvents(res.data.events?.map((event: any) => PorterAppEvent.toPorterAppEvent(event)).filter(isNotFilteredAppEvent) ?? []);
     } catch (err) {
       setError(err);
     }
@@ -227,20 +234,6 @@ const ActivityFeed: React.FC<Props> = ({ chart, stackName, appData }) => {
           <Pagination page={page} setPage={setPage} totalPages={numPages} />
         </>
       )}
-      <Spacer y={1} />
-      <Container row spaced>
-        <Spacer inline x={1} />
-        <Button
-          onClick={getEvents}
-          height="20px"
-          color="fg"
-          withBorder
-        >
-          <Icon src={refresh} height="10px"></Icon>
-          <Spacer inline x={0.5} />
-          Refresh feed
-        </Button>
-      </Container>
     </StyledActivityFeed>
   );
 };

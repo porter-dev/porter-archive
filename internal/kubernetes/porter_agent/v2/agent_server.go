@@ -309,6 +309,75 @@ func GetHistoricalLogs(
 	return logsResp, nil
 }
 
+// Logs returns logs from the porter agent matching the provided labels and other query parameters
+func Logs(
+	clientset kubernetes.Interface,
+	service *v1.Service,
+	req *types.LogRequest,
+) (*types.GetLogResponse, error) {
+	vals := make(map[string]string)
+
+	if req.Limit != 0 {
+		vals["limit"] = fmt.Sprintf("%d", req.Limit)
+	}
+
+	if req.StartRange != nil {
+		startVal, err := req.StartRange.MarshalText()
+		if err != nil {
+			return nil, err
+		}
+
+		vals["start_range"] = string(startVal)
+	}
+
+	if req.EndRange != nil {
+		endVal, err := req.EndRange.MarshalText()
+		if err != nil {
+			return nil, err
+		}
+
+		vals["end_range"] = string(endVal)
+	}
+
+	if req.SearchParam != "" {
+		vals["search_param"] = req.SearchParam
+	}
+
+	if req.Direction != "" {
+		vals["direction"] = req.Direction
+	}
+
+	if req.MatchLabels != nil {
+		json, err := json.Marshal(req.MatchLabels)
+		if err != nil {
+			return nil, fmt.Errorf("error marshalling match labels map to json: %w", err)
+		}
+		vals["match_labels_json"] = string(json)
+	}
+
+	resp := clientset.CoreV1().Services(service.Namespace).ProxyGet(
+		"http",
+		service.Name,
+		fmt.Sprintf("%d", service.Spec.Ports[0].Port),
+		"/logs",
+		vals,
+	)
+
+	rawQuery, err := resp.DoRaw(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	logsResp := &types.GetLogResponse{}
+
+	err = json.Unmarshal(rawQuery, logsResp)
+	if err != nil {
+		return nil, err
+	}
+
+	return logsResp, nil
+}
+
 func GetPodValues(
 	clientset kubernetes.Interface,
 	service *v1.Service,

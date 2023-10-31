@@ -181,7 +181,7 @@ func initData(conf *config.Config) error {
 				AuthMechanism:       models.InCluster,
 				ProjectID:           1,
 				MonitorHelmReleases: true,
-			})
+			}, conf.LaunchDarklyClient)
 
 			if err != nil {
 				return err

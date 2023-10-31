@@ -53,23 +53,23 @@ const AzureCostConsent: React.FC<Props> = ({
           noWrapper
           expandText="[+] Show details"
           collapseText="[-] Hide details"
-          Header={<Cost>$314.92 / mo</Cost>}
+          Header={<Cost>$210.24 / mo</Cost>}
           ExpandedSection={
             <>
               <Spacer height="15px" />
               <Fieldset background="#1b1d2688">
                 • Azure Kubernetes Service (AKS) = $73/mo
                 <Spacer height="15px" />
-                • Amazon EC2:
+                • Azure virtual machines:
                 <Spacer height="15px" />
-                <Tab />+ System workloads: Standard_D2ps_v5 instance (2) =
-                $110.88/mo
+                <Tab />+ System workloads: Standard_B2als_v2 instance (3) =
+                $82.34/mo
                 <Spacer height="15px" />
-                <Tab />+ Monitoring workloads: Standard_A2_v2 instance (1) =
-                $65.52/mo
+                <Tab />+ Monitoring workloads: Standard_B2als_v2 instance (1) =
+                $27.45/mo
                 <Spacer height="15px" />
-                <Tab />+ Application workloads: Standard_A2_v2 instance (1) =
-                $65.52/mo
+                <Tab />+ Application workloads: Standard_B2als_v2 instance (1) =
+                $27.45/mo
               </Fieldset>
             </>
           }
@@ -103,12 +103,12 @@ const AzureCostConsent: React.FC<Props> = ({
         <Spacer y={0.5} />
         <Text color="helper">
           All Azure resources will be automatically deleted when you delete your
-          Porter project. Please enter the Azure base cost ("314.92") below to
+          Porter project. Please enter the Azure base cost ("210.24") below to
           proceed:
         </Text>
         <Spacer y={1} />
         <Input
-          placeholder="314.92"
+          placeholder="210.24"
           value={confirmCost}
           setValue={setConfirmCost}
           width="100%"
@@ -116,7 +116,7 @@ const AzureCostConsent: React.FC<Props> = ({
         />
         <Spacer y={1} />
         <Button
-          disabled={confirmCost !== "314.92"}
+          disabled={confirmCost !== "210.24"}
           onClick={() => {
             setShowCostConfirmModal(false);
             setConfirmCost("");

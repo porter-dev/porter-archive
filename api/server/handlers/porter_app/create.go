@@ -54,6 +54,12 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-porter-app")
 	defer span.End()
 
+	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
+		err := telemetry.Error(ctx, span, nil, "unable to update app: please upgrade the CLI and try again")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
+		return
+	}
+
 	request := &types.CreatePorterAppRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding request")
@@ -106,30 +112,29 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	var releaseValues map[string]interface{}
 	var releaseDependencies []*chart.Dependency
-	if shouldCreate || request.OverrideRelease {
+	// unless it is explicitly provided in the request, we avoid overwriting the image info
+	// by attempting to get it from the release or the provided helm values
+	if helmRelease != nil && (imageInfo.Repository == "" || imageInfo.Tag == "") {
+		if request.FullHelmValues != "" {
+			imageInfo, err = attemptToGetImageInfoFromFullHelmValues(request.FullHelmValues)
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "error getting image info from full helm values")
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+				return
+			}
+		} else {
+			imageInfo = attemptToGetImageInfoFromRelease(helmRelease.Config)
+		}
+	}
+	if shouldCreate {
 		releaseValues = nil
 		releaseDependencies = nil
-
-		// this is required because when the front-end sends an update request with overrideRelease=true, it is unable to
-		// get the image info from the release. unless it is explicitly provided in the request, we avoid overwriting it
-		// by attempting to get the image info from the release or the provided helm values
-		if helmRelease != nil && (imageInfo.Repository == "" || imageInfo.Tag == "") {
-			if request.FullHelmValues != "" {
-				imageInfo, err = attemptToGetImageInfoFromFullHelmValues(request.FullHelmValues)
-				if err != nil {
-					err = telemetry.Error(ctx, span, err, "error getting image info from full helm values")
-					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-yaml-base64", Value: porterYamlBase64})
-					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-					return
-				}
-			} else {
-				imageInfo = attemptToGetImageInfoFromRelease(helmRelease.Config)
-			}
-		}
 	} else {
 		releaseValues = helmRelease.Config
 		releaseDependencies = helmRelease.Chart.Metadata.Dependencies
 	}
+
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "image-repo", Value: imageInfo.Repository}, telemetry.AttributeKV{Key: "image-tag", Value: imageInfo.Tag})
 
 	if request.Builder == "" {
@@ -182,16 +187,17 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			ExistingHelmValues:        releaseValues,
 			ExistingChartDependencies: releaseDependencies,
 			SubdomainCreateOpts: SubdomainCreateOpts{
-				k8sAgent:       k8sAgent,
-				dnsRepo:        c.Repo().DNSRecord(),
-				powerDnsClient: c.Config().PowerDNSClient,
-				appRootDomain:  c.Config().ServerConf.AppRootDomain,
-				stackName:      appName,
+				k8sAgent:      k8sAgent,
+				dnsRepo:       c.Repo().DNSRecord(),
+				dnsClient:     c.Config().DNSClient,
+				appRootDomain: c.Config().ServerConf.AppRootDomain,
+				stackName:     appName,
 			},
 			InjectLauncherToStartCommand: injectLauncher,
 			ShouldValidateHelmValues:     shouldCreate,
 			FullHelmValues:               request.FullHelmValues,
 			AddCustomNodeSelector:        addCustomNodeSelector,
+			RemoveDeletedServices:        request.OverrideRelease,
 		},
 	)
 	if err != nil {
@@ -303,7 +309,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		if features.AreAgentDeployEventsEnabled(k8sAgent) {
 			serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, types.PorterAppEventStatus_Progressing)
-			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, types.PorterAppEventStatus_Progressing, porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
+			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		} else {
 			_, err = createOldPorterAppDeployEvent(ctx, types.PorterAppEventStatus_Success, porterApp.ID, 1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		}
@@ -492,7 +498,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 		if features.AreAgentDeployEventsEnabled(k8sAgent) {
 			serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, types.PorterAppEventStatus_Progressing)
-			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, types.PorterAppEventStatus_Progressing, updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+			_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		} else {
 			_, err = createOldPorterAppDeployEvent(ctx, types.PorterAppEventStatus_Success, updatedPorterApp.ID, helmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 		}
@@ -542,7 +548,6 @@ func createOldPorterAppDeployEvent(ctx context.Context, status types.PorterAppEv
 func createNewPorterAppDeployEvent(
 	ctx context.Context,
 	serviceStatusMap map[string]types.ServiceDeploymentMetadata,
-	status types.PorterAppEventStatus,
 	appID uint,
 	revision int,
 	tag string,
@@ -554,9 +559,17 @@ func createNewPorterAppDeployEvent(
 	// mark all pending deployments from the deploy event of the previous revision as canceled
 	updatePreviousPorterAppDeployEvent(ctx, appID, revision, repo)
 
+	deployEventStatus := types.PorterAppEventStatus_Success
+	for _, metadata := range serviceStatusMap {
+		if metadata.Status != types.PorterAppEventStatus_Success {
+			deployEventStatus = types.PorterAppEventStatus_Progressing
+			break
+		}
+	}
+
 	event := models.PorterAppEvent{
 		ID:                 uuid.New(),
-		Status:             string(status),
+		Status:             string(deployEventStatus),
 		Type:               "DEPLOY",
 		TypeExternalSource: "KUBERNETES",
 		PorterAppID:        appID,

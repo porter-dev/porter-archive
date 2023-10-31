@@ -9,31 +9,33 @@ type Props = {
   ctaText?: string;
   ctaOnClick?: () => void;
   errorModalContents?: React.ReactNode;
+  maxWidth?: string;
 };
 
-const Error: React.FC<Props> = ({
+export const Error: React.FC<Props> = ({
   message,
   ctaText,
   ctaOnClick,
   errorModalContents,
+  maxWidth,
 }) => {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
 
   return (
     <>
-      <StyledError>
+      <StyledError maxWidth={maxWidth}>
         <i className="material-icons">error_outline</i>
         <Block>
-        <Bold>Error:</Bold>
-        <Text>{message}</Text>
-        {ctaText && (errorModalContents != null || ctaOnClick != null) && (
-          <Cta onClick={() => {
-            errorModalContents ? setErrorModalOpen(true) : ctaOnClick();
-          }}>
-            <Underline>{ctaText}</Underline>
-            <i className="material-icons">open_in_new</i>
-          </Cta>
-        )}
+          <Bold>Error:</Bold>
+          <Text>{message}</Text>
+          {ctaText && (errorModalContents != null || ctaOnClick != null) && (
+            <Cta onClick={() => {
+              errorModalContents ? setErrorModalOpen(true) : ctaOnClick();
+            }}>
+              <Underline>{ctaText}</Underline>
+              <i className="material-icons">open_in_new</i>
+            </Cta>
+          )}
         </Block>
       </StyledError>
       {errorModalOpen &&
@@ -77,7 +79,7 @@ const Bold = styled.span`
   margin-right: 5px;
 `;
 
-const StyledError = styled.div`
+const StyledError = styled.div<{ maxWidth?: string }>`
   line-height: 1.5;
   color: #ff385d;
   font-size: 13px;
@@ -95,4 +97,5 @@ const StyledError = styled.div`
     top: 1px;
     left: 0;
   }
+  max-width: ${(props) => props.maxWidth || "100%"};
 `;

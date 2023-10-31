@@ -27,7 +27,7 @@ func registerCommand_Helm(cliConf config.CLIConfig) *cobra.Command {
 	return helmCmd
 }
 
-func runHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func runHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	_, err := exec.LookPath("helm")
 	if err != nil {
 		return fmt.Errorf("error finding helm: %w", err)
@@ -44,12 +44,12 @@ func runHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client 
 
 	os.Setenv("KUBECONFIG", tmpFile)
 
-	cmd := exec.Command("helm", args...)
+	execCommand := exec.Command("helm", args...)
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	execCommand.Stdout = os.Stdout
+	execCommand.Stderr = os.Stderr
 
-	err = cmd.Run()
+	err = execCommand.Run()
 
 	if err != nil {
 		return fmt.Errorf("error running helm: %w", err)

@@ -4,10 +4,13 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -17,7 +20,7 @@ import (
 	"github.com/moby/moby/pkg/jsonmessage"
 	"github.com/moby/moby/pkg/stringid"
 	"github.com/moby/term"
-	"github.com/pkg/errors"
+	"mvdan.cc/sh/v3/shell"
 )
 
 type BuildOpts struct {
@@ -30,14 +33,20 @@ type BuildOpts struct {
 	UseCache          bool
 
 	Env map[string]string
+
+	LogFile *os.File
 }
 
 // BuildLocal
 func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
+	if os.Getenv("DOCKER_BUILDKIT") == "1" {
+		return buildLocalWithBuildkit(ctx, *opts)
+	}
+
 	dockerfilePath := opts.DockerfilePath
 
 	// attempt to read dockerignore file and paths
-	dockerIgnoreBytes, _ := ioutil.ReadFile(".dockerignore")
+	dockerIgnoreBytes, _ := os.ReadFile(".dockerignore")
 	var excludes []string
 
 	if len(dockerIgnoreBytes) != 0 {
@@ -57,10 +66,15 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 		return err
 	}
 
+	var writer io.Writer = os.Stderr
+	if opts.LogFile != nil {
+		writer = io.MultiWriter(os.Stderr, opts.LogFile)
+	}
+
 	if !opts.IsDockerfileInCtx {
 		dockerfileCtx, err := os.Open(dockerfilePath)
 		if err != nil {
-			return errors.Errorf("unable to open Dockerfile: %v", err)
+			return fmt.Errorf("unable to open Dockerfile: %v", err)
 		}
 
 		defer dockerfileCtx.Close()
@@ -104,7 +118,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 
 	termFd, isTerm := term.GetFdInfo(os.Stderr)
 
-	return jsonmessage.DisplayJSONMessagesStream(out.Body, os.Stderr, termFd, isTerm, nil)
+	return jsonmessage.DisplayJSONMessagesStream(out.Body, writer, termFd, isTerm, nil)
 }
 
 func trimBuildFilesFromExcludes(excludes []string, dockerfile string) []string {
@@ -161,4 +175,127 @@ func AddDockerfileToBuildContext(dockerfileCtx io.ReadCloser, buildCtx io.ReadCl
 		},
 	})
 	return buildCtx, randomName, nil
+}
+
+func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
+	if _, err := exec.LookPath("docker"); err != nil {
+		return fmt.Errorf("unable to find docker binary in PATH for buildkit build: %w", err)
+	}
+
+	// prepare Dockerfile if the location isn't inside the build context
+	dockerfileName := opts.DockerfilePath
+	if !opts.IsDockerfileInCtx {
+		var err error
+		dockerfileName, err = injectDockerfileIntoBuildContext(opts.BuildContext, opts.DockerfilePath)
+		if err != nil {
+			return fmt.Errorf("unable to inject Dockerfile into build context: %w", err)
+		}
+	}
+	// parse any arguments
+	var extraDockerArgs []string
+	if buildkitArgs := os.Getenv("PORTER_BUILDKIT_ARGS"); buildkitArgs != "" {
+		parsedFields, err := shell.Fields(buildkitArgs, func(name string) string {
+			return os.Getenv(name)
+		})
+		if err != nil {
+			return fmt.Errorf("error while parsing buildkit args: %w", err)
+		}
+		extraDockerArgs = parsedFields
+	}
+
+	commandArgs := []string{
+		"build",
+		"-f", dockerfileName,
+		"--platform", "linux/amd64",
+		"--tag", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
+		"--cache-from", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag),
+	}
+	for key, val := range opts.Env {
+		commandArgs = append(commandArgs, "--build-arg", fmt.Sprintf("%s=%s", key, val))
+	}
+
+	commandArgs = append(commandArgs, extraDockerArgs...)
+	// note: the path _must_ be the last argument
+	commandArgs = append(commandArgs, opts.BuildContext)
+
+	stdoutWriters := []io.Writer{os.Stdout}
+	stderrWriters := []io.Writer{os.Stderr}
+	if opts.LogFile != nil {
+		stdoutWriters = append(stdoutWriters, opts.LogFile)
+		stderrWriters = append(stderrWriters, opts.LogFile)
+	}
+
+	// #nosec G204 - The command is meant to be variable
+	cmd := exec.CommandContext(ctx, "docker", commandArgs...)
+	cmd.Dir = opts.BuildContext
+	cmd.Stdout = io.MultiWriter(stdoutWriters...)
+	cmd.Stderr = io.MultiWriter(stderrWriters...)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("unable to start the build command: %w", err)
+	}
+
+	exitCode := 0
+	execErr := cmd.Wait()
+	if execErr != nil {
+		if exitError, ok := execErr.(*exec.ExitError); ok {
+			exitCode = exitError.ExitCode()
+		}
+	}
+
+	if err := ctx.Err(); err != nil && err == context.Canceled {
+		return fmt.Errorf("build command canceled: %w", ctx.Err())
+	}
+
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("error while running build: %w", err)
+	}
+
+	if exitCode != 0 {
+		return fmt.Errorf("build exited with non-zero exit code %d", exitCode)
+	}
+
+	if execErr != nil {
+		return fmt.Errorf("error while running build: %w", execErr)
+	}
+
+	return nil
+}
+
+func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string) (string, error) {
+	randomName := ".dockerfile." + stringid.GenerateRandomID()[:20]
+	data := map[string]func() ([]byte, error){
+		randomName: func() ([]byte, error) {
+			return os.ReadFile(filepath.Clean(dockerfilePath))
+		},
+		".dockerignore": func() ([]byte, error) {
+			dockerignorePath := filepath.Join(buildContext, ".dockerignore")
+			dockerignorePath = filepath.Clean(dockerignorePath)
+			if _, err := os.Stat(dockerignorePath); errors.Is(err, os.ErrNotExist) {
+				if err := os.WriteFile(dockerignorePath, []byte{}, os.FileMode(0o600)); err != nil {
+					return []byte{}, err
+				}
+			}
+
+			data, err := os.ReadFile(dockerignorePath)
+			if err != nil {
+				return data, err
+			}
+
+			b := bytes.NewBuffer(data)
+			b.WriteString(".dockerignore")
+			b.WriteString("\n" + randomName + "\n")
+			return b.Bytes(), nil
+		},
+	}
+
+	for filename, fn := range data {
+		bytes, err := fn()
+		if err != nil {
+			return randomName, fmt.Errorf("failed to get file contents: %w", err)
+		}
+
+		return randomName, os.WriteFile(filepath.Join(buildContext, filename), bytes, os.FileMode(0o600))
+	}
+
+	return randomName, nil
 }

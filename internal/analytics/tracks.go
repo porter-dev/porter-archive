@@ -386,6 +386,7 @@ type ProvisioningAttemptTrackOpts struct {
 	CompanyName  string
 	ErrorMessage string
 	Region       string
+	Provider     string
 }
 
 // ProvisioningAttemptTrack returns a track for when a user attempts provisioning
@@ -395,10 +396,26 @@ func ProvisioningAttemptTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["region"] = opts.Region
+	additionalProps["provider"] = opts.Provider
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, ProvisioningAttempted),
+	)
+}
+
+// QuotaIncreaseAttemptTrack returns a track for when a user attempts provisioning
+func QuotaIncreaseAttemptTrack(opts *ProvisioningAttemptTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["region"] = opts.Region
+	additionalProps["provider"] = opts.Provider
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, QuotaIncreaseRequested),
 	)
 }
 
@@ -781,10 +798,11 @@ func ClusterDestroyingSuccessTrack(opts *ClusterDestroyingSuccessTrackOpts) segm
 type StackLaunchStartOpts struct {
 	*ProjectScopedTrackOpts
 
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ValidateApplyV2 bool
 }
 
 // StackLaunchStartTrack returns a track for when a user starts creating a stack
@@ -793,6 +811,7 @@ func StackLaunchStartTrack(opts *StackLaunchStartOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -804,11 +823,12 @@ func StackLaunchStartTrack(opts *StackLaunchStartOpts) segmentTrack {
 type StackLaunchCompleteOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName   string
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	StackName       string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ValidateApplyV2 bool
 }
 
 // StackLaunchCompleteTrack returns a track for when a user completes creating a stack
@@ -818,6 +838,7 @@ func StackLaunchCompleteTrack(opts *StackLaunchCompleteOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -829,11 +850,12 @@ func StackLaunchCompleteTrack(opts *StackLaunchCompleteOpts) segmentTrack {
 type StackLaunchSuccessOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName   string
-	Email       string
-	FirstName   string
-	LastName    string
-	CompanyName string
+	StackName       string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ValidateApplyV2 bool
 }
 
 // StackLaunchCompleteTrack returns a track for when a user completes creating a stack
@@ -843,6 +865,7 @@ func StackLaunchSuccessTrack(opts *StackLaunchSuccessOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -854,12 +877,13 @@ func StackLaunchSuccessTrack(opts *StackLaunchSuccessOpts) segmentTrack {
 type StackLaunchFailureOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName    string
-	Email        string
-	FirstName    string
-	LastName     string
-	CompanyName  string
-	ErrorMessage string
+	StackName       string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ErrorMessage    string
+	ValidateApplyV2 bool
 }
 
 // StackLaunchFailureTrack returns a track for when a user fails creating a stack
@@ -870,6 +894,7 @@ func StackLaunchFailureTrack(opts *StackLaunchFailureOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -887,6 +912,7 @@ type StackDeletionOpts struct {
 	LastName           string
 	CompanyName        string
 	DeleteWorkflowFile bool
+	ValidateApplyV2    bool
 }
 
 // StackDeletionTrack returns a track for when a user deletes a stack
@@ -897,6 +923,7 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["delete_workflow_file"] = opts.DeleteWorkflowFile
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -908,12 +935,14 @@ func StackDeletionTrack(opts *StackDeletionOpts) segmentTrack {
 type StackBuildOpts struct {
 	*ProjectScopedTrackOpts
 
-	StackName    string
-	ErrorMessage string
-	Email        string
-	FirstName    string
-	LastName     string
-	CompanyName  string
+	StackName       string
+	ErrorMessage    string
+	B64BuildLogs    string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ValidateApplyV2 bool
 }
 
 // StackBuildFailureTrack returns a track for when a stack fails to build
@@ -924,6 +953,8 @@ func StackBuildFailureTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
+	additionalProps["b64_build_logs"] = opts.B64BuildLogs
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -938,6 +969,7 @@ func StackBuildSuccessTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -952,9 +984,41 @@ func StackBuildProgressingTrack(opts *StackBuildOpts) segmentTrack {
 	additionalProps["email"] = opts.Email
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
 		getDefaultSegmentTrack(additionalProps, StackBuildProgressing),
+	)
+}
+
+// PorterAppUpdateOpts are the options for creating a track when a user updates a porter app
+type PorterAppUpdateOpts struct {
+	*ProjectScopedTrackOpts
+
+	StackName       string
+	Email           string
+	FirstName       string
+	LastName        string
+	CompanyName     string
+	ErrorMessage    string
+	ErrorStackTrace string
+	ValidateApplyV2 bool
+}
+
+// PorterAppUpdateFailureTrack returns a track for when a user attempts to update an app and receives an error
+func PorterAppUpdateFailureTrack(opts *PorterAppUpdateOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["stack_name"] = opts.StackName
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["error_stack_trace"] = opts.ErrorStackTrace
+	additionalProps["validate_apply_v2"] = opts.ValidateApplyV2
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, PorterAppUpdateFailure),
 	)
 }

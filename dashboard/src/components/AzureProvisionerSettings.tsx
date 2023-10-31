@@ -27,17 +27,36 @@ import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
 import Link from "./porter/Link";
 import Text from "./porter/Text";
+import { useIntercom } from "lib/hooks/useIntercom";
 
 const locationOptions = [
   { value: "eastus", label: "East US" },
+  { value: "eastus2", label: "East US 2" },
+    { value: "westus2", label: "West US 2" },
+    { value: "westus3", label: "West US 3" },
+    { value: "centralus", label: "Central US" },
+    { value: "southcentralus", label: "South Central US" },
+    { value: "australiaeast", label: "Australia East" },
+    { value: "brazilsouth", label: "Brazil South" },
+    { value: "centralindia", label: "Central India" },
+    { value: "southcentralus", label: "South Central US" },
+    { value: "eastasia", label: "East Asia" },
+    { value: "francecentral", label: "France Central" },
+    { value: "northeurope", label: "North Europe" },
+    { value: "norwayeast", label: "Norway East" },
+    { value: "swedencentral", label: "Sweden Central" },
+    { value: "switzerlandnorth", label: "Switzerland North" },
+    { value: "uksouth", label: "UK South" },
+    { value: "westeurope", label: "West Europe" },
 ];
 
 const machineTypeOptions = [
+  { value: "Standard_B2als_v2", label: "Standard_B2als_v2"},
   { value: "Standard_A2_v2", label: "Standard_A2_v2" },
   { value: "Standard_A4_v2", label: "Standard_A4_v2" },
 ];
 
-const clusterVersionOptions = [{ value: "v1.26.6", label: "v1.26.6" },{ value: "v1.24.9", label: "v1.24.9" }];
+const clusterVersionOptions = [{ value: "v1.27.3", label: "v1.27" }, { value: "v1.24.9", label: "v1.24" }];
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
@@ -60,20 +79,22 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [azureLocation, setAzureLocation] = useState("eastus");
-  const [machineType, setMachineType] = useState("Standard_A2_v2");
+  const [machineType, setMachineType] = useState("Standard_B2als_v2");
   const [isExpanded, setIsExpanded] = useState(false);
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
   const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
-  const [clusterVersion, setClusterVersion] = useState("v1.26.6");
+  const [clusterVersion, setClusterVersion] = useState("v1.27.3");
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
 
-  const markStepStarted = async (step: string) => {
+  const { showIntercomWithMessage } = useIntercom();
+
+  const markStepStarted = async (step: string, {region, error_message}: {region?: string; error_message?: string}) => {
     try {
-      await api.updateOnboardingStep("<token>", { step }, {
+      await api.updateOnboardingStep("<token>", { step, region, error_message, provider: "azure" }, {
         project_id: currentProject.id,
       });
     } catch (err) {
@@ -102,14 +123,14 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
 
   const isDisabled = () => {
     return (
-      !user.email.endsWith("porter.run") &&
-      ((!clusterName && true) ||
-        (isReadOnly && props.provisionerError === "") ||
-        props.provisionerError === "" ||
-        currentCluster?.status === "UPDATING" ||
-        isClicked)
-    );
+      (!clusterName && true)
+      || (isReadOnly && props.provisionerError === "")
+      || currentCluster?.status === "UPDATING"
+      || isClicked
+      || (!currentProject?.enable_reprovision && props.clusterId)
+    )
   };
+
 
   const validateInputs = (): string => {
     if (!clusterName) {
@@ -128,7 +149,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       return "VPC CIDR range must be in the format of [0-255].[0-255].0.0/16";
     }
     if (clusterVersion == "v1.24.9") {
-        return "Cluster version v1.24.9 is no longer supported";
+      return "Cluster version v1.24.9 is no longer supported";
     }
 
     return "";
@@ -142,6 +163,19 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
     }
 
     setIsClicked(true);
+    
+    try {
+      window.dataLayer?.push({
+        event: 'provision-attempt',
+        data: {
+          cloud: 'azure',
+          email: user?.email
+        }
+      });
+    } catch (err) {
+      console.log(err);
+    }
+    
     var data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -152,19 +186,19 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
           case: "aksKind",
           value: new AKS({
             clusterName: clusterName,
-            clusterVersion: clusterVersion || "v1.26.6",
+            clusterVersion: clusterVersion || "v1.27.3",
             cidrRange: cidrRange || "10.78.0.0/16",
             location: azureLocation,
             nodePools: [
               new AKSNodePool({
-                instanceType: "Standard_D2ps_v5",
+                instanceType: "Standard_B2als_v2",
                 minInstances: 1,
                 maxInstances: 3,
                 nodePoolType: NodePoolType.SYSTEM,
                 mode: "User",
               }),
               new AKSNodePool({
-                instanceType: "Standard_A2_v2",
+                instanceType: "Standard_B2als_v2",
                 minInstances: 1,
                 maxInstances: 3,
                 nodePoolType: NodePoolType.MONITORING,
@@ -193,7 +227,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       setErrorDetails("")
 
       if (!props.clusterId) {
-        markStepStarted("provisioning-started");
+        markStepStarted("provisioning-started", { region: azureLocation });
       }
 
       const res = await api.createContract("<token>", data, {
@@ -224,19 +258,22 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       setErrorMessage("");
       setErrorDetails("")
     } catch (err) {
-      const errMessage = err.response.data.error.replace("unknown: ", "");
+      showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
+      let errorMessage = DEFAULT_ERROR_MESSAGE;
+      let errorDetails = err.response?.data?.error?.replace("unknown: ", "") ?? "";
       // hacky, need to standardize error contract with backend
       setIsClicked(false);
-      if (errMessage.includes("resource provider")) {
-        setErrorMessage(AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE);
-        setErrorDetails(errMessage)
-      } else if (errMessage.includes("quota")) {
-        setErrorMessage(AZURE_CORE_QUOTA_ERROR_MESSAGE)
-        setErrorDetails(errMessage)
+      if (errorDetails.includes("resource provider")) {
+        setErrorDetails(errorDetails);
+        errorMessage = AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE;
+      } else if (errorDetails.includes("quota")) {
+        setErrorDetails(errorDetails);
+        errorMessage = AZURE_CORE_QUOTA_ERROR_MESSAGE;
       } else {
-        setErrorMessage(DEFAULT_ERROR_MESSAGE);
-        setErrorDetails("")
+        setErrorDetails("");
       }
+      setErrorMessage(errorMessage);
+      markStepStarted("provisioning-failed", { error_message: `Error message: ${errorMessage}; Error details: ${errorDetails}` });
     } finally {
       setIsReadOnly(false);
       setIsClicked(false);
@@ -337,6 +374,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
               setActiveValue={setClusterVersion}
               label="Cluster version"
             />
+            <Spacer y={.75} />
             <SelectRow
               options={machineTypeOptions}
               width="350px"
@@ -381,6 +419,27 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       >
         Provision
       </Button>
+      {
+        (!currentProject?.enable_reprovision && currentCluster) &&
+        <>
+          <Spacer y={1} />
+          <Text>Updates to the cluster are disabled on this project. Enable re-provisioning by contacting <a href="mailto:support@porter.run">Porter Support</a>.</Text>
+        </>
+      }
+      {user.isPorterUser &&
+        <>
+
+          <Spacer y={1} />
+          <Text color="yellow">Visible to Admin Only</Text>
+          <Button
+            color="red"
+            onClick={createCluster}
+            status={getStatus()}
+          >
+            Override Provision
+          </Button>
+        </>
+      }
     </>
   );
 };
@@ -411,7 +470,7 @@ const StyledForm = styled.div`
 `;
 
 const DEFAULT_ERROR_MESSAGE =
-  "An error occurred while provisioning your infrastructure. Please try again.";
+  "An error occurred while provisioning your infrastructure. Please confirm you have completed all required setup as described in our docs, and try again.  If issues persist, contact support@porter.run.";
 const AZURE_CORE_QUOTA_ERROR_MESSAGE =
   "Your Azure subscription has reached a vCPU core quota in the location";
 const AZURE_MISSING_RESOURCE_PROVIDER_MESSAGE =
@@ -464,7 +523,7 @@ const errorMessageToModal = (errorMessage: string) => {
           </Step>
           <Spacer y={1} />
           <Text color="helper">
-            We recommend an initial quota of 30 vCPUs for both Total Regional Cores and Standard Av2 Family.
+            We recommend an initial quota of 20 vCPUs for both Total Regional Cores and Standard Basv2 Family.
           </Text>
           <Spacer y={1} />
           <Step number={5}>

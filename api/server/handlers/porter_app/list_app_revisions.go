@@ -6,6 +6,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -20,6 +21,7 @@ import (
 // ListAppRevisionsHandler handles requests to the /apps/{porter_app_name}/revisions endpoint
 type ListAppRevisionsHandler struct {
 	handlers.PorterHandlerReadWriter
+	authz.KubernetesAgentGetter
 }
 
 // NewListAppRevisionsHandler returns a new ListAppRevisionsHandler
@@ -30,6 +32,7 @@ func NewListAppRevisionsHandler(
 ) *ListAppRevisionsHandler {
 	return &ListAppRevisionsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 

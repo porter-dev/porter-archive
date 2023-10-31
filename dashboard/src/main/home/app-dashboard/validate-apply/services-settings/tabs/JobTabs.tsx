@@ -11,6 +11,7 @@ import MainTab from "./Main";
 import Resources from "./Resources";
 import { Controller, useFormContext } from "react-hook-form";
 import { PorterAppFormData } from "lib/porter-apps";
+import { ControlledInput } from "components/porter/ControlledInput";
 
 interface Props {
   index: number;
@@ -22,6 +23,7 @@ interface Props {
   chart?: any;
   maxRAM: number;
   maxCPU: number;
+  clusterContainsGPUNodes: boolean;
   isPredeploy?: boolean;
 }
 
@@ -29,24 +31,25 @@ const JobTabs: React.FC<Props> = ({
   index,
   service,
   maxRAM,
+  clusterContainsGPUNodes,
   maxCPU,
   isPredeploy,
 }) => {
-  const { control } = useFormContext<PorterAppFormData>();
+  const { control, register } = useFormContext<PorterAppFormData>();
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "advanced"
   >("main");
 
   const tabs = isPredeploy
     ? [
-        { label: "Main", value: "main" as const },
-        { label: "Resources", value: "resources" as const },
-      ]
+      { label: "Main", value: "main" as const },
+      { label: "Resources", value: "resources" as const },
+    ]
     : [
-        { label: "Main", value: "main" as const },
-        { label: "Resources", value: "resources" as const },
-        { label: "Advanced", value: "advanced" as const },
-      ];
+      { label: "Main", value: "main" as const },
+      { label: "Resources", value: "resources" as const },
+      { label: "Advanced", value: "advanced" as const },
+    ];
 
   return (
     <>
@@ -56,13 +59,15 @@ const JobTabs: React.FC<Props> = ({
         setCurrentTab={setCurrentTab}
       />
       {match(currentTab)
-        .with("main", () => <MainTab index={index} service={service} />)
+        .with("main", () => <MainTab index={index} service={service} isPredeploy={isPredeploy} />)
         .with("resources", () => (
           <Resources
             index={index}
             maxCPU={maxCPU}
             maxRAM={maxRAM}
+            clusterContainsGPUNodes={clusterContainsGPUNodes}
             service={service}
+            isPredeploy={isPredeploy}
           />
         ))
         .with("advanced", () => (
@@ -88,6 +93,18 @@ const JobTabs: React.FC<Props> = ({
                   <Text color="helper">Allow jobs to execute concurrently</Text>
                 </Checkbox>
               )}
+            />
+            <Spacer y={1} />
+            <ControlledInput
+              type="text"
+              label="Timeout (seconds)"
+              placeholder="ex: 3600"
+              width="300px"
+              disabled={service.config.timeoutSeconds.readOnly}
+              disabledTooltip={
+                "You may only edit this field in your porter.yaml."
+              }
+              {...register(`app.services.${index}.config.timeoutSeconds.value`)}
             />
           </>
         ))

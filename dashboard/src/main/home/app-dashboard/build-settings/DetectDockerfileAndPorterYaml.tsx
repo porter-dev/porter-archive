@@ -19,6 +19,7 @@ type PropsType = {
   porterApp: PorterApp;
   updatePorterApp: (attrs: Partial<PorterApp>) => void;
   updateDockerfileFound: () => void;
+  setBuildpackView: () => void;
 };
 
 const DetectDockerfileAndPorterYaml: React.FC<PropsType> = ({
@@ -26,6 +27,7 @@ const DetectDockerfileAndPorterYaml: React.FC<PropsType> = ({
   porterApp,
   updatePorterApp,
   updateDockerfileFound,
+  setBuildpackView,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -69,8 +71,11 @@ const DetectDockerfileAndPorterYaml: React.FC<PropsType> = ({
     );
 
     if (dockerFileItem) {
-      updatePorterApp({ dockerfile: dockerFileItem.path });
+      const path = dockerFileItem.path.startsWith("./") || dockerFileItem.path.startsWith("/") ? dockerFileItem.path : `./${dockerFileItem.path}`;
+      updatePorterApp({ dockerfile: path });
       updateDockerfileFound();
+    } else {
+      setBuildpackView();
     }
   }, [contents]);
 

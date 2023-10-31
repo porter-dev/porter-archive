@@ -4,7 +4,7 @@ import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import semver from "semver";
 import _ from "lodash";
 
-import addOn from "assets/add-ons.png";
+import addOn from "assets/add-ons.svg";
 import notFound from "assets/not-found.png";
 
 import { Context } from "shared/Context";
@@ -26,7 +26,16 @@ import Select from "components/porter/Select";
 type Props = {
 };
 
-const HIDDEN_CHARTS = ["porter-agent", "loki", "agent"];
+const HIDDEN_CHARTS = [
+  "agent",
+  "elasticache-chart",
+  "elasticache-memcached",
+  "elasticache-redis",
+  "loki",
+  "porter-agent",
+  "rds-chart",
+  "rds-postgresql"
+];
 
 //For Charts that don't exist locally we need to add them in manually
 const TAG_MAPPING = {
@@ -103,7 +112,6 @@ const NewAddOnFlow: React.FC<Props> = ({
 
       sortedVersionData = sortedVersionData.map((template: any) => {
         let testTemplate: string[] = template?.tags || []
-        console.log(testTemplate)
         // Assign tags based on TAG_MAPPING
         for (let tag in TAG_MAPPING) {
           if (TAG_MAPPING[tag].includes(template.name)) {
@@ -192,11 +200,12 @@ const NewAddOnFlow: React.FC<Props> = ({
                           <div>
                             <Text color="helper">For developer productivity.</Text>
                           </div>
+                          <TemplateList
+                            templates={appTemplates} // This is where you provide only APP templates
+                            setCurrentTemplate={(x) => setCurrentTemplate(x)}
+                          />
                         </>}
-                      <TemplateList
-                        templates={appTemplates} // This is where you provide only APP templates
-                        setCurrentTemplate={(x) => setCurrentTemplate(x)}
-                      />
+
                       {dataStoreTemplates?.length > 0 &&
                         <>
                           <div>
@@ -205,11 +214,12 @@ const NewAddOnFlow: React.FC<Props> = ({
                           <div>
                             <Text color="helper">Pre-production datastores are not highly available and use ephemeral storage.</Text>
                           </div>
+                          <TemplateList
+                            templates={dataStoreTemplates} // This is where you provide only DATA_STORE templates
+                            setCurrentTemplate={(x) => setCurrentTemplate(x)}
+                          />
                         </>}
-                      <TemplateList
-                        templates={dataStoreTemplates} // This is where you provide only DATA_STORE templates
-                        setCurrentTemplate={(x) => setCurrentTemplate(x)}
-                      />
+
 
                       {filteredTemplates?.length > 0 && (currentProject?.full_add_ons || user.isPorterUser) &&
                         <>

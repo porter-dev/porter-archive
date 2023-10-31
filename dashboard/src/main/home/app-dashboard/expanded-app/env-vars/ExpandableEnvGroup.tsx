@@ -3,11 +3,7 @@ import Spacer from "components/porter/Spacer";
 import EnvGroupArray from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import Text from "components/porter/Text";
-import Error from "components/porter/Error";
-import sliders from "assets/sliders.svg";
-import EnvGroupModal from "./env-vars/EnvGroupModal";
-import { PopulatedEnvGroup } from "../../../../components/porter-form/types";
+import { PopulatedEnvGroup } from "components/porter-form/types";
 import _, { isObject, differenceBy, omit } from "lodash";
 
 
@@ -38,7 +34,7 @@ const ExpandableEnvGroup: React.FC<{
         </Flex>
         {isExpanded && (
           <>
-            {isObject(envGroup.variables) ? (
+            {isObject(envGroup.variables) || isObject(envGroup.secret_variables) ? (
               <>
                 {[
                   ...Object.entries(envGroup?.variables || {}).map(([key, value]) => ({
@@ -46,7 +42,7 @@ const ExpandableEnvGroup: React.FC<{
                     value,
                     source: 'variables',
                   })),
-                  ...Object.entries(envGroup.secret_variables || {}).map(([key, value]) => ({
+                  ...Object.entries(envGroup?.secret_variables || {}).map(([key, value]) => ({
                     key,
                     value,
                     source: 'secret_variables',

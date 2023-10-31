@@ -17,6 +17,13 @@ export interface ClusterType {
   cloud_provider: string;
 }
 
+export interface AddonCard {
+  id: string;
+  icon: string;
+  name: string;
+  description: string;
+}
+
 export interface DetailedClusterType extends ClusterType {
   ingress_ip?: string;
   ingress_error?: DetailedIngressError;
@@ -259,11 +266,16 @@ export interface FileType {
   path: string;
   type: string;
 }
+export interface ProjectListType {
+  id: number;
+  name: string;
+}
 
 export interface ProjectType {
   id: number;
   name: string;
   preview_envs_enabled: boolean;
+  db_enabled: boolean;
   enable_rds_databases: boolean;
   managed_infra_enabled: boolean;
   capi_provisioner_enabled: boolean;
@@ -275,6 +287,8 @@ export interface ProjectType {
   multi_cluster: boolean;
   full_add_ons: boolean;
   enable_reprovision: boolean;
+  quota_increase: boolean;
+  efs_enabled: boolean;
   validate_apply_v2: boolean;
   roles: {
     id: number;
@@ -369,8 +383,8 @@ export interface ContextProps {
   setCurrentCluster: (currentCluster: ClusterType, callback?: any) => void;
   currentProject?: ProjectType;
   setCurrentProject: (currentProject: ProjectType, callback?: any) => void;
-  projects: ProjectType[];
-  setProjects: (projects: ProjectType[]) => void;
+  projects: ProjectListType[];
+  setProjects: (projects: ProjectListType[]) => void;
   user: any;
   setUser: (userId: number, email: string) => void;
   devOpsMode: boolean;

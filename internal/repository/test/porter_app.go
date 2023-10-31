@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -34,10 +35,16 @@ func (repo *PorterAppRepository) UpdatePorterApp(app *models.PorterApp) (*models
 	return nil, errors.New("cannot write database")
 }
 
+// ListPorterAppByClusterID is a test method that is not implemented
 func (repo *PorterAppRepository) ListPorterAppByClusterID(clusterID uint) ([]*models.PorterApp, error) {
 	return nil, errors.New("cannot write database")
 }
 
 func (repo *PorterAppRepository) DeletePorterApp(app *models.PorterApp) (*models.PorterApp, error) {
 	return nil, errors.New("cannot write database")
+}
+
+// ReadPorterAppByID is a test method that is not implemented
+func (repo *PorterAppRepository) ReadPorterAppByID(ctx context.Context, id uint) (*models.PorterApp, error) {
+	return nil, errors.New("cannot read database")
 }

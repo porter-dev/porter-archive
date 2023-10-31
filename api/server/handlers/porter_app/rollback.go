@@ -121,11 +121,11 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			ProjectID:     cluster.ProjectID,
 			Namespace:     namespace,
 			SubdomainCreateOpts: SubdomainCreateOpts{
-				k8sAgent:       k8sAgent,
-				dnsRepo:        c.Repo().DNSRecord(),
-				powerDnsClient: c.Config().PowerDNSClient,
-				appRootDomain:  c.Config().ServerConf.AppRootDomain,
-				stackName:      appName,
+				k8sAgent:      k8sAgent,
+				dnsRepo:       c.Repo().DNSRecord(),
+				dnsClient:     c.Config().DNSClient,
+				appRootDomain: c.Config().ServerConf.AppRootDomain,
+				stackName:     appName,
 			},
 			InjectLauncherToStartCommand: injectLauncher,
 			FullHelmValues:               string(valuesYaml),
@@ -155,7 +155,7 @@ func (c *RollbackPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	if features.AreAgentDeployEventsEnabled(k8sAgent) {
 		serviceDeploymentStatusMap := getServiceDeploymentMetadataFromValues(values, types.PorterAppEventStatus_Progressing)
-		_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, types.PorterAppEventStatus_Progressing, porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
+		_, err = createNewPorterAppDeployEvent(ctx, serviceDeploymentStatusMap, porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 	} else {
 		_, err = createOldPorterAppDeployEvent(ctx, types.PorterAppEventStatus_Success, porterApp.ID, latestHelmRelease.Version+1, imageInfo.Tag, c.Repo().PorterAppEvent())
 	}

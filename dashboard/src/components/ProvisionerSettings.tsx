@@ -10,8 +10,6 @@ import info from "assets/info-outlined.svg";
 
 import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import InputRow from "./form-components/InputRow";
 import {
   Contract,
   EnumKubernetesKind,
@@ -23,10 +21,18 @@ import {
   LoadBalancer,
   LoadBalancerType,
   EKSLogging,
+  EKSPreflightValues,
+  PreflightCheckRequest,
+  QuotaIncreaseRequest,
+  EnumQuotaIncrease,
+  AWSClusterNetwork,
 } from "@porter-dev/api-contracts";
+
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
 import Error from "./porter/Error";
+import healthy from "assets/status-healthy.png";
+
 import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
 import Link from "./porter/Link";
@@ -34,11 +40,15 @@ import Text from "./porter/Text";
 import Select from "./porter/Select";
 import Input from "./porter/Input";
 import Checkbox from "./porter/Checkbox";
-import { Certificate } from "crypto";
 import Tooltip from "./porter/Tooltip";
 import Icon from "./porter/Icon";
-import { set } from "traverse";
-import { load } from "js-yaml";
+import Loading from "./Loading";
+import PreflightChecks from "./PreflightChecks";
+import Placeholder from "./Placeholder";
+import VerticalSteps from "./porter/VerticalSteps";
+import Modal from "components/porter/Modal";
+import { PREFLIGHT_TO_ENUM } from "shared/util";
+import { useIntercom } from "lib/hooks/useIntercom";
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -62,6 +72,7 @@ const regionOptions = [
   { value: "sa-east-1", label: "South America (São Paulo) sa-east-1" },
 ];
 
+// IMPORTANT: when adding more machineTypeOptions here, please make sure that you also enter their resources in useClusterResourceLimits.ts
 const machineTypeOptions = [
   { value: "t3.medium", label: "t3.medium" },
   { value: "t3.large", label: "t3.large" },
@@ -76,19 +87,35 @@ const machineTypeOptions = [
   { value: "c6i.2xlarge", label: "c6i.2xlarge" },
   { value: "c6i.4xlarge", label: "c6i.4xlarge" },
   { value: "c6i.8xlarge", label: "c6i.8xlarge" },
+  { value: "c6a.large", label: "c6a.large" },
+  { value: "c6a.2xlarge", label: "c6a.2xlarge" },
+  { value: "c6a.4xlarge", label: "c6a.4xlarge" },
+  { value: "c6a.8xlarge", label: "c6a.8xlarge" },
+  { value: "r6i.large", label: "r6i.large" },
+  { value: "r6i.xlarge", label: "r6i.xlarge" },
+  { value: "r6i.2xlarge", label: "r6i.2xlarge" },
+  { value: "r6i.4xlarge", label: "r6i.4xlarge" },
+  { value: "r6i.8xlarge", label: "r6i.8xlarge" },
+  { value: "r6i.12xlarge", label: "r6i.12xlarge" },
+  { value: "r6i.16xlarge", label: "r6i.16xlarge" },
+  { value: "r6i.24xlarge", label: "r6i.24xlarge" },
+  { value: "r6i.32xlarge", label: "r6i.32xlarge" },
   { value: "g4dn.xlarge", label: "g4dn.xlarge" },
+  { value: "m5n.large", label: "m5n.large" },
+  { value: "m5n.xlarge", label: "m5n.xlarge" },
+  { value: "m5n.2xlarge", label: "m5n.2xlarge" },
 ];
 
-const clusterVersionOptions = [
-  { value: "v1.24.0", label: "1.24.0" },
-  { value: "v1.25.0", label: "1.25.0" },
-];
+const defaultCidrVpc = "10.78.0.0/16"
+const defaultCidrServices = "172.20.0.0/16"
+const defaultClusterVersion = "v1.24.0"
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   provisionerError?: string;
   credentialId: string;
   clusterId?: number;
+  closeModal?: () => void;
 };
 
 const ProvisionerSettings: React.FC<Props> = (props) => {
@@ -98,9 +125,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     currentCluster,
     setCurrentCluster,
     setShouldRefreshClusters,
-    setHasFinishedOnboarding,
   } = useContext(Context);
-  const [createStatus, setCreateStatus] = useState("");
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
   const [machineType, setMachineType] = useState("t3.medium");
@@ -108,6 +133,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [kmsEncryptionEnabled, setKmsEncryptionEnabled] = useState<boolean>(
     false
   );
+  const [step, setStep] = useState(0);
   const [loadBalancerType, setLoadBalancerType] = useState(false);
   const [wildCardDomain, setWildCardDomain] = useState("");
   const [IPAllowList, setIPAllowList] = useState<string>("");
@@ -125,11 +151,23 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [additionalNodePolicies, setAdditionalNodePolicies] = useState<
     string[]
   >([]);
-  const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
-  const [clusterVersion, setClusterVersion] = useState("v1.24.0");
+  const [cidrRangeVPC, setCidrRangeVPC] = useState(defaultCidrVpc);
+  const [cidrRangeServices, setCidrRangeServices] = useState(defaultCidrServices);
+  const [clusterVersion, setClusterVersion] = useState(defaultClusterVersion);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [preflightData, setPreflightData] = useState(null)
+  const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
+  const [preflightError, setPreflightError] = useState<string>("")
+  const [showPreflightModal, setShowPreflightModal] = useState(false);
+  const [showHelpMessage, setShowHelpMessage] = useState(true);
+  const [quotaIncrease, setQuotaIncrease] = useState<EnumQuotaIncrease[]>([]);
+  const [showEmailMessage, setShowEmailMessage] = useState(false);
+  const { showIntercomWithMessage } = useIntercom();
+
+
   const markStepStarted = async (step: string, errMessage?: string) => {
     try {
       await api.updateOnboardingStep(
@@ -138,6 +176,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           step,
           error_message: errMessage,
           region: awsRegion,
+          provider: "aws",
         },
         {
           project_id: currentProject.id,
@@ -149,20 +188,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   };
 
   const getStatus = () => {
+    if (isLoading) {
+      return <Loading />
+    }
     if (isReadOnly && props.provisionerError == "") {
       return "Provisioning is still in progress...";
-    } else if (errorMessage) {
-      return (
-        <Error
-          message={errorMessage}
-          ctaText={
-            errorMessage !== DEFAULT_ERROR_MESSAGE
-              ? "Troubleshooting steps"
-              : null
-          }
-          errorModalContents={errorMessageToModal(errorMessage)}
-        />
-      );
+
     }
     return undefined;
   };
@@ -218,9 +249,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   const isDisabled = () => {
     return (
-      !user?.isPorterUser &&
-      (clusterNameDoesNotExist() || userProvisioning() || isClicked)
-    );
+      (clusterNameDoesNotExist() || userProvisioning() || isClicked || (currentCluster && !currentProject?.enable_reprovision)
+      ))
   };
   function convertStringToTags(tagString) {
     if (typeof tagString !== "string" || tagString.trim() === "") {
@@ -239,7 +269,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return tags;
   }
   const createCluster = async () => {
+    setIsLoading(true);
     setIsClicked(true);
+
 
     let loadBalancerObj = new LoadBalancer({});
     loadBalancerObj.loadBalancerType = LoadBalancerType.NLB;
@@ -276,13 +308,17 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           case: "eksKind",
           value: new EKS({
             clusterName,
-            clusterVersion: clusterVersion || "v1.24.0",
-            cidrRange: cidrRange || "10.78.0.0/16",
+            clusterVersion: clusterVersion || defaultClusterVersion,
+            cidrRange: cidrRangeVPC || defaultCidrVpc, // deprecated in favour of network.cidrRangeVPC: can be removed after december 2023
             region: awsRegion,
             loadBalancer: loadBalancerObj,
             logging: controlPlaneLogs,
             enableGuardDuty: guardDutyEnabled,
             enableKmsEncryption: kmsEncryptionEnabled,
+            network: new AWSClusterNetwork({
+              vpcCidr: cidrRangeVPC || defaultCidrVpc,
+              serviceCidr: cidrRangeServices || defaultCidrServices,
+            }),
             nodeGroups: [
               new EKSNodeGroup({
                 instanceType: "t3.medium",
@@ -324,17 +360,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
       if (!props.clusterId) {
         markStepStarted("pre-provisioning-check-started");
-
-        await api.preflightCheckAWSUsage(
-          "<token>",
-          {
-            target_arn: props.credentialId,
-            region: awsRegion,
-          },
-          {
-            id: currentProject.id,
-          }
-        );
       }
 
       const res = await api.createContract("<token>", data, {
@@ -366,11 +391,17 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           console.error(err);
         });
       // }
+      {
+        props?.closeModal &&
+          props?.closeModal()
+      };
+
       setErrorMessage(undefined);
     } catch (err) {
       const errMessage = err.response.data?.error.replace("unknown: ", "");
       // hacky, need to standardize error contract with backend
       setIsClicked(false);
+      setIsLoading(false)
       if (errMessage.includes("elastic IP")) {
         setErrorMessage(AWS_EIP_QUOTA_ERROR_MESSAGE);
       } else if (errMessage.includes("VPC")) {
@@ -385,9 +416,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         setErrorMessage(DEFAULT_ERROR_MESSAGE);
       }
       markStepStarted("provisioning-failed", errMessage);
-    } finally {
-      setIsReadOnly(false);
+
+      // enable edit again only in the case of an error
       setIsClicked(false);
+      setIsReadOnly(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -406,7 +440,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
-
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
       if (eksValues == null) {
@@ -426,11 +459,14 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           setAdditionalNodePolicies(nodeGroup.additionalPolicies);
         }
       });
-      setCreateStatus("");
       setClusterName(eksValues.clusterName);
       setAwsRegion(eksValues.region);
       setClusterVersion(eksValues.clusterVersion);
-      setCidrRange(eksValues.cidrRange);
+      setCidrRangeVPC(eksValues.cidrRange);
+      if (eksValues.network != null) {
+        setCidrRangeVPC(eksValues.network?.vpcCidr || defaultCidrVpc);
+        setCidrRangeServices(eksValues.network?.serviceCidr || defaultCidrServices);
+      }
       if (eksValues.loadBalancer != null) {
         setIPAllowList(eksValues.loadBalancer.allowlistIpRanges);
         setWildCardDomain(eksValues.loadBalancer.wildcardDomain);
@@ -467,7 +503,112 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
   }, [isExpanded, props.selectedClusterVersion]);
 
+  useEffect(() => {
+    if (!props.clusterId) {
+      setStep(1)
+      preflightChecks()
+    }
+  }, [props.selectedClusterVersion, awsRegion]);
 
+  const proceedToProvision = async () => {
+    setShowEmailMessage(true)
+    markStepStarted("requested-quota-increase")
+    setStep(2)
+  }
+  const requestQuotasAndProvision = async () => {
+    await requestQuotaIncrease()
+    await createCluster()
+  }
+  const requestQuotaIncrease = async () => {
+
+    try {
+      setIsLoading(true);
+      var data = new QuotaIncreaseRequest({
+        projectId: BigInt(currentProject.id),
+        cloudProvider: EnumCloudProvider.AWS,
+        cloudProviderCredentialsId: props.credentialId,
+        preflightValues: {
+          case: "eksPreflightValues",
+          value: new EKSPreflightValues({
+            region: awsRegion,
+          })
+        },
+        quotaIncreases: quotaIncrease
+      });
+      await api.requestQuotaIncrease(
+        "<token>", data,
+        {
+          id: currentProject.id,
+        }
+      )
+
+
+      setIsLoading(false)
+    } catch (err) {
+      console.log(err)
+      setIsLoading(false)
+    }
+
+  }
+
+  const preflightChecks = async () => {
+
+    try {
+      setIsLoading(true);
+      setPreflightData(null);
+      setPreflightFailed(true)
+      setPreflightError("");
+      setShowEmailMessage(false)
+
+      var data = new PreflightCheckRequest({
+        projectId: BigInt(currentProject.id),
+        cloudProvider: EnumCloudProvider.AWS,
+        cloudProviderCredentialsId: props.credentialId,
+        preflightValues: {
+          case: "eksPreflightValues",
+          value: new EKSPreflightValues({
+            region: awsRegion,
+          })
+        }
+      });
+      const preflightDataResp = await api.preflightCheck(
+        "<token>", data,
+        {
+          id: currentProject.id,
+        }
+      )
+      // Check if any of the preflight checks has a message
+      let hasMessage = false;
+      let errors = "Preflight Checks Failed : ";
+      let quotas: EnumQuotaIncrease[] = [];
+      for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
+
+        if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
+          quotas.push(PREFLIGHT_TO_ENUM[check])
+          hasMessage = true;
+          errors = errors + check + ", "
+        }
+      }
+      setQuotaIncrease(quotas)
+      // If none of the checks have a message, set setPreflightFailed to false
+      if (hasMessage) {
+        setShowPreflightModal(true)
+        showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
+        markStepStarted("provisioning-failed", errors);
+      }
+      if (!hasMessage) {
+        setPreflightFailed(false);
+        setStep(2);
+      }
+      setPreflightData(preflightDataResp?.data?.Msg);
+      setIsLoading(false)
+    } catch (err) {
+      setPreflightError(err)
+      setIsLoading(false)
+      setPreflightFailed(true);
+    }
+
+  }
   const renderAdvancedSettings = () => {
     return (
       <>
@@ -486,14 +627,15 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           isExpanded && (
             <>
               {user?.isPorterUser && (
-                <Select
-                  options={clusterVersionOptions}
+                <Input
                   width="350px"
-                  disabled={isReadOnly}
+                  type="string"
                   value={clusterVersion}
-                  setValue={setClusterVersion}
-                  label="Cluster version"
+                  disabled={true}
+                  setValue={(x: string) => setCidrRangeServices(x)}
+                  label="Cluster version (only shown to porter.run emails)"
                 />
+
               )}
               <Spacer y={1} />
               <Select
@@ -540,11 +682,21 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Input
                 width="350px"
                 type="string"
-                value={cidrRange}
-                disabled={!user.isPorterUser}
-                setValue={(x: string) => setCidrRange(x)}
-                label="VPC CIDR range"
+                value={cidrRangeVPC}
+                disabled={props.clusterId}
+                setValue={(x: string) => setCidrRangeVPC(x)}
+                label="CIDR range for AWS VPC"
                 placeholder="ex: 10.78.0.0/16"
+              />
+              <Spacer y={1} />
+              <Input
+                width="350px"
+                type="string"
+                value={cidrRangeServices}
+                disabled={props.clusterId}
+                setValue={(x: string) => setCidrRangeServices(x)}
+                label="CIDR range for Kubernetes internal services"
+                placeholder="ex: 172.20.0.0/16"
               />
               {!currentProject.simplified_view_enabled && (
                 <>
@@ -910,37 +1062,123 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     );
   };
 
+  const dismissPreflight = () => {
+    setShowHelpMessage(false);
+    preflightChecks();
+  }
+
   const renderForm = () => {
     // Render simplified form if initial create
     if (!props.clusterId) {
       return (
-        <>
-          <Text size={16}>Select an AWS region</Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            Porter will automatically provision your infrastructure in the
-            specified region.
-          </Text>
-          <Spacer height="10px" />
-          <SelectRow
-            options={regionOptions}
-            width="350px"
-            disabled={isReadOnly}
-            value={awsRegion}
-            scrollBuffer={true}
-            dropdownMaxHeight="240px"
-            setActiveValue={setAwsRegion}
-            label="📍 AWS region"
-          />
-          {(user?.isPorterUser || !currentProject?.simplified_view_enabled) &&
-            renderAdvancedSettings()}
-        </>
+        <VerticalSteps
+          currentStep={step}
+          steps={[
+            <>
+              <Text size={16}>Select an AWS region</Text><Spacer y={.5} /><Text color="helper">
+                Porter will automatically provision your infrastructure in the
+                specified region.
+              </Text><Spacer height="10px" /><SelectRow
+                options={regionOptions}
+                width="350px"
+                disabled={isReadOnly || isLoading}
+                value={awsRegion}
+                scrollBuffer={true}
+                dropdownMaxHeight="240px"
+                setActiveValue={setAwsRegion}
+                label="📍 AWS region" />
+              <>
+                {
+                  (user?.isPorterUser || currentProject?.multi_cluster) && renderAdvancedSettings()
+                }
+              </>
+            </>,
+            <>
+              {showEmailMessage ?
+                <>
+                  <CheckItemContainer >
+                    <CheckItemTop >
+                      <StatusIcon src={healthy} />
+                      <Spacer inline x={1} />
+                      <Text style={{ marginLeft: '10px', flex: 1 }}>{"Porter will request to increase quotas when you provision"}</Text>
+                    </CheckItemTop>
+                  </CheckItemContainer>
+
+                </> :
+                <>
+                  <PreflightChecks provider='AWS' preflightData={preflightData} error={preflightError} />
+                  <Spacer y={.5} />
+                  {(preflightFailed && preflightData) &&
+                    <>
+                      {(showHelpMessage && currentProject?.quota_increase) ? <>
+                        <Text color="helper">
+                          Your account currently is blocked from provisioning in {awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
+                        </Text>
+                        <Spacer y={.5} />
+                        <Text color="helper">
+                          Porter can automatically request quota increases on your behalf and email you once the cluster is provisioned.
+                        </Text>
+                        <Spacer y={.5} />
+                        <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '15px' }}>
+                          <Button
+                            disabled={isLoading}
+                            onClick={proceedToProvision}
+
+                          >
+                            Auto request increase
+                          </Button>
+                          <Button
+                            disabled={isLoading}
+                            onClick={dismissPreflight}
+                            color="#313539"
+                          >
+                            I'll do it myself
+                          </Button>
+                        </div>
+
+                      </> : (
+                        <><Text color="helper">
+                          Your account currently is blocked from provisioning in {awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
+                        </Text><Spacer y={.5} /><Button
+                          disabled={isLoading}
+                          onClick={preflightChecks}
+
+                        >
+                            Retry checks
+                          </Button></>)}
+                    </>
+                  }
+                </>
+              }
+            </>,
+            <>
+              <Text size={16}>Provision your cluster</Text>
+              <Spacer y={1} />
+              {showEmailMessage && <>
+                <Text color="helper">
+                  After your quota requests have been approved by AWS, Porter will email you when your cluster has been provisioned.
+                </Text>
+                <Spacer y={1} />
+              </>
+              }
+              <Button
+                // disabled={isDisabled()}
+                // disabled={isDisabled() || preflightFailed || isLoading}
+                disabled={(preflightFailed && !showEmailMessage) || isLoading}
+                onClick={showEmailMessage ? requestQuotasAndProvision : createCluster}
+                status={getStatus()}
+              >
+                Provision
+              </Button>
+              <Spacer y={1} /></>
+          ].filter((x) => x)}
+        />
       );
     }
 
     // If settings, update full form
     return (
-      <>
+      <><StyledForm>
         <Heading isAtTop>EKS configuration</Heading>
         <SelectRow
           options={regionOptions}
@@ -950,31 +1188,38 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           scrollBuffer={true}
           dropdownMaxHeight="240px"
           setActiveValue={setAwsRegion}
-          label="📍 AWS region"
-        />
+          label="📍 AWS region" />
         {renderAdvancedSettings()}
-      </>
+      </StyledForm>
+        <Button
+          // disabled={isDisabled()}
+          disabled={isDisabled() || isLoading}
+          onClick={createCluster}
+          status={getStatus()}
+        >
+          Provision
+        </Button></>
     );
   };
 
   return (
     <>
-      <StyledForm>{renderForm()}</StyledForm>
-      <Button
-        // disabled={isDisabled()}
-        disabled={
-          user?.email === "admin@porter.run" ||
-            currentProject?.enable_reprovision
-            ? false
-            : currentCluster
-              ? true
-              : isDisabled()
-        }
-        onClick={createCluster}
-        status={getStatus()}
-      >
-        Provision
-      </Button>
+      {renderForm()}
+      {
+        user.isPorterUser &&
+        <>
+
+          <Spacer y={1} />
+          <Text color="yellow">Visible to Admin Only</Text>
+          <Button
+            color="red"
+            onClick={createCluster}
+            status={getStatus()}
+          >
+            Override Provision
+          </Button>
+        </>
+      }
     </>
   );
 };
@@ -982,334 +1227,71 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 export default withRouter(ProvisionerSettings);
 
 const ExpandHeader = styled.div<{ isExpanded: boolean }>`
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+              display: flex;
+              align-items: center;
+              cursor: pointer;
   > i {
-    margin-right: 7px;
-    margin-left: -7px;
-    transform: ${(props) =>
+                margin - right: 7px;
+              margin-left: -7px;
+              transform: ${(props) =>
     props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
-    transition: transform 0.1s ease;
+              transition: transform 0.1s ease;
   }
-`;
+              `;
 
 const StyledForm = styled.div`
-  position: relative;
-  padding: 30px 30px 25px;
-  border-radius: 5px;
-  background: ${({ theme }) => theme.fg};
-  border: 1px solid #494b4f;
-  font-size: 13px;
-  margin-bottom: 30px;
-`;
+              position: relative;
+              padding: 30px 30px 25px;
+              border-radius: 5px;
+              background: ${({ theme }) => theme.fg};
+              border: 1px solid #494b4f;
+              font-size: 13px;
+              margin-bottom: 30px;
+              `;
 
 const FlexCenter = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 3px;
-`;
+              display: flex;
+              align-items: center;
+              gap: 3px;
+              `;
 const Wrapper = styled.div`
-  transform: translateY(+13px);
-`;
+              transform: translateY(+13px);
+              `;
 
 const ErrorInLine = styled.div`
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  color: #ff3b62;
-  margin-top: 10px;
+              display: flex;
+              align-items: center;
+              font-size: 13px;
+              color: #ff3b62;
+              margin-top: 10px;
 
   > i {
-    font-size: 18px;
-    margin-right: 5px;
+                font - size: 18px;
+              margin-right: 5px;
   }
+              `;
+
+const CheckItemContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  border: 1px solid ${props => props.theme.border};
+  border-radius: 5px;
+  font-size: 13px;
+  width: 100%;
+  margin-bottom: 10px;
+  padding-left: 10px;
+  cursor: ${props => (props.hasMessage ? 'pointer' : 'default')};
+  background: ${props => props.theme.clickable.bg};
+
 `;
 
-const AWS_LOGIN_ERROR_MESSAGE =
-  "Porter could not access your AWS account. Please make sure you have granted permissions and try again.";
-const AWS_EIP_QUOTA_ERROR_MESSAGE =
-  "Your AWS account has reached the limit of elastic IPs allowed in the region. Additional addresses must be requested in order to provision.";
-const AWS_VPC_QUOTA_ERROR_MESSAGE =
-  "Your AWS account has reached the limit of VPCs allowed in the region. Additional VPCs must be requested in order to provision.";
-const AWS_NAT_GATEWAY_QUOTA_ERROR_MESSAGE =
-  "Your AWS account has reached the limit of NAT Gateways allowed in the region. Additional NAT Gateways must be requested in order to provision.";
-const AWS_VCPU_QUOTA_ERROR_MESSAGE =
-  "Your AWS account has reached the limit of vCPUs allowed in the region. Additional vCPUs must be requested in order to provision.";
-const DEFAULT_ERROR_MESSAGE =
-  "An error occurred while provisioning your infrastructure. Please try again.";
+const CheckItemTop = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: ${props => props.theme.clickable.bg};
+`;
 
-const errorMessageToModal = (errorMessage: string) => {
-  switch (errorMessage) {
-    case AWS_LOGIN_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>
-            Granting Porter access to AWS
-          </Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            Porter needs access to your AWS account in order to create
-            infrastructure. You can grant Porter access to AWS by following
-            these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            <Link
-              to="https://aws.amazon.com/resources/create-account/"
-              target="_blank"
-            >
-              Create an AWS account
-            </Link>
-            <Spacer inline width="5px" />
-            if you don't already have one.
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Once you are logged in to your AWS account,
-            <Spacer inline width="5px" />
-            <Link
-              to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account"
-              target="_blank"
-            >
-              copy your account ID
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>
-            Fill in your account ID on Porter and select "Grant permissions".
-          </Step>
-          <Spacer y={1} />
-          <Step number={4}>
-            After being redirected to AWS, select "Create stack" on the AWS
-            console.
-          </Step>
-          <Spacer y={1} />
-          <Step number={5}>Return to Porter and select "Continue".</Step>
-        </>
-      );
-    case AWS_EIP_QUOTA_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>
-            Requesting more EIP Adresses
-          </Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            You will need to either request more EIP addresses or delete
-            existing ones in order to provision in the region specified. You can
-            request more addresses by following these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            Log into
-            <Spacer inline width="5px" />
-            <Link
-              to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account"
-              target="_blank"
-            >
-              your AWS account
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Navigate to
-            <Spacer inline width="5px" />
-            <Link
-              to="https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas"
-              target="_blank"
-            >
-              the Amazon Elastic Compute Cloud (Amazon EC2) Service Quotas
-              portal
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>
-            Search for "EC2-VPC Elastic IPs" in the search box and click on the
-            search result.
-          </Step>
-          <Spacer y={1} />
-          <Step number={4}>
-            Click on "Request quota increase". In order to provision with
-            Porter, you will need to request at least 3 addresses above your
-            current quota limit.
-          </Step>
-          <Spacer y={1} />
-          <Step number={5}>
-            Once that request is approved, return to Porter and retry the
-            provision.
-          </Step>
-        </>
-      );
-    case AWS_VPC_QUOTA_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>
-            Requesting more VPCs
-          </Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            You will need to either request more VPCs or delete existing ones in
-            order to provision in the region specified. You can request more
-            VPCs by following these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            Log into
-            <Spacer inline width="5px" />
-            <Link
-              to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account"
-              target="_blank"
-            >
-              your AWS account
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Navigate to
-            <Spacer inline width="5px" />
-            <Link
-              to="https://us-east-1.console.aws.amazon.com/servicequotas/home/services/vpc/quotas"
-              target="_blank"
-            >
-              the Amazon Virtual Private Cloud (Amazon VPC) Service Quotas
-              portal
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>
-            Search for "VPCs per Region" in the search box and click on the
-            search result.
-          </Step>
-          <Spacer y={1} />
-          <Step number={4}>
-            Click on "Request quota increase". In order to provision with
-            Porter, you will need to request at least 1 VPCs above your current
-            quota limit.
-          </Step>
-          <Spacer y={1} />
-          <Step number={5}>
-            Once that request is approved, return to Porter and retry the
-            provision.
-          </Step>
-        </>
-      );
-    case AWS_NAT_GATEWAY_QUOTA_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>
-            Requesting more NAT Gateways
-          </Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            You will need to either request more NAT Gateways or delete existing
-            ones in order to provision in the region specified. You can request
-            more NAT Gateways by following these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            Log into
-            <Spacer inline width="5px" />
-            <Link
-              to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account"
-              target="_blank"
-            >
-              your AWS account
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Navigate to
-            <Spacer inline width="5px" />
-            <Link
-              to="https://us-east-1.console.aws.amazon.com/servicequotas/home/services/vpc/quotas"
-              target="_blank"
-            >
-              the Amazon Virtual Private Cloud (Amazon VPC) Service Quotas
-              portal
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>
-            Search for "NAT gateways per Availability Zone" in the search box
-            and click on the search result.
-          </Step>
-          <Spacer y={1} />
-          <Step number={4}>
-            Click on "Request quota increase". In order to provision with
-            Porter, you will need to request at least 3 NAT Gateways above your
-            current quota limit.
-          </Step>
-          <Spacer y={1} />
-          <Step number={5}>
-            Once that request is approved, return to Porter and retry the
-            provision.
-          </Step>
-        </>
-      );
-    case AWS_VCPU_QUOTA_ERROR_MESSAGE:
-      return (
-        <>
-          <Text size={16} weight={500}>
-            Requesting more vCPUs
-          </Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            You will need to either request more vCPUs or delete existing
-            instances in order to provision in the region specified. You can
-            request more vCPUs by following these steps:
-          </Text>
-          <Spacer y={1} />
-          <Step number={1}>
-            Log into
-            <Spacer inline width="5px" />
-            <Link
-              to="https://console.aws.amazon.com/billing/home?region=us-east-1#/account"
-              target="_blank"
-            >
-              your AWS account
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={2}>
-            Navigate to
-            <Spacer inline width="5px" />
-            <Link
-              to="https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas"
-              target="_blank"
-            >
-              the Amazon Elastic Compute Cloud (Amazon EC2) Service Quotas
-              portal
-            </Link>
-            .
-          </Step>
-          <Spacer y={1} />
-          <Step number={3}>
-            Search for "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z)
-            instances" in the search box and click on the search result.
-          </Step>
-          <Spacer y={1} />
-          <Step number={4}>
-            Click on "Request quota increase". In order to provision with
-            Porter, you will need to request at least 10 vCPUs above your
-            current quota limit.
-          </Step>
-          <Spacer y={1} />
-          <Step number={5}>
-            Once that request is approved, return to Porter and retry the
-            provision.
-          </Step>
-        </>
-      );
-    default:
-      return null;
-  }
-};
+const StatusIcon = styled.img`
+height: 14px;
+`;

@@ -95,7 +95,7 @@ func registerCommand_Registry(cliConf config.CLIConfig) *cobra.Command {
 	return registryCmd
 }
 
-func listRegistries(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func listRegistries(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	pID := cliConf.Project
 
 	// get the list of namespaces
@@ -129,7 +129,7 @@ func listRegistries(ctx context.Context, user *types.GetAuthenticatedUserRespons
 	return nil
 }
 
-func deleteRegistry(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func deleteRegistry(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Are you sure you'd like to delete the registry with id %s? %s `,
@@ -159,7 +159,7 @@ func deleteRegistry(ctx context.Context, user *types.GetAuthenticatedUserRespons
 	return nil
 }
 
-func listRepos(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func listRepos(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	pID := cliConf.Project
 	rID := cliConf.Registry
 
@@ -189,7 +189,7 @@ func listRepos(ctx context.Context, user *types.GetAuthenticatedUserResponse, cl
 	return nil
 }
 
-func listImages(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func listImages(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	pID := cliConf.Project
 	rID := cliConf.Registry
 	repoName := args[0]

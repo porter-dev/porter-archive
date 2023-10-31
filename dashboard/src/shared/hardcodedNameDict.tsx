@@ -1,4 +1,5 @@
 import lightning from "../assets/lightning.png";
+import awsRDS from "assets/amazon-rds.png";
 
 const hardcodedNames: { [key: string]: string } = {
   agones: "Agones System",
@@ -27,6 +28,7 @@ const hardcodedNames: { [key: string]: string } = {
   keda: "KEDA",
   "grafana-agent": "Grafana Agent",
   "ecr-secrets-updater": "ECR Secrets Updater",
+  "nri-bundle": "New Relic",
 };
 
 const hardcodedIcons: { [key: string]: string } = {
@@ -43,6 +45,7 @@ const hardcodedIcons: { [key: string]: string } = {
   mysql: "https://www.mysql.com/common/logos/logo-mysql-170x115.png",
   postgresql:
     "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg",
+  "rds-postgresql": awsRDS,
   redis:
     "https://cdn4.iconfinder.com/data/icons/redis-2/1451/Untitled-2-512.png",
   ubuntu: "Ubuntu",

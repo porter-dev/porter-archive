@@ -10,10 +10,18 @@ import api from "shared/api";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
+export type AppValidationResult = {
+  validatedAppProto: PorterApp;
+  variables: Record<string, string>;
+  secrets: Record<string, string>;
+};
+
 export const useAppValidation = ({
   deploymentTargetID,
+  creating = false,
 }: {
   deploymentTargetID?: string;
+  creating?: boolean;
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
 
@@ -53,7 +61,10 @@ export const useAppValidation = ({
   };
 
   const validateApp = useCallback(
-    async (data: PorterAppFormData) => {
+    async (
+      data: PorterAppFormData,
+      prevRevision?: PorterApp
+    ): Promise<AppValidationResult> => {
       if (!currentProject || !currentCluster) {
         throw new Error("No project or cluster selected");
       }
@@ -62,9 +73,32 @@ export const useAppValidation = ({
         throw new Error("No deployment target selected");
       }
 
+      const { env } = data.app;
+      const variables = env
+        .filter(
+          (e) =>
+            !e.hidden && !e.deleted && e.value.length > 0 && e.key.length > 0
+        )
+        .reduce((acc: Record<string, string>, item) => {
+          acc[item.key] = item.value;
+          return acc;
+        }, {});
+      const secrets = env
+        .filter((e) => !e.deleted && e.value.length > 0 && e.key.length > 0)
+        .reduce((acc: Record<string, string>, item) => {
+          if (item.hidden) {
+            acc[item.key] = item.value;
+          }
+          return acc;
+        }, {});
+
       const proto = clientAppToProto(data);
       const commit_sha = await match(data.source)
         .with({ type: "github" }, async (src) => {
+          if (!creating) {
+            return "";
+          }
+
           const { commit_sha } = await getBranchHead({
             projectID: currentProject.id,
             source: src,
@@ -76,6 +110,26 @@ export const useAppValidation = ({
         })
         .exhaustive();
 
+      const serviceDeletions = data.app.services.reduce(
+        (
+          acc: Record<
+            string,
+            { domain_names: string[]; ingress_annotation_keys: string[] }
+          >,
+          svc
+        ) => {
+          acc[svc.name.value] = {
+            domain_names: svc.domainDeletions.map((d) => d.name),
+            ingress_annotation_keys: svc.ingressAnnotationDeletions.map(
+              (ia) => ia.key
+            ),
+          };
+
+          return acc;
+        },
+        {}
+      );
+
       const res = await api.validatePorterApp(
         "<token>",
         {
@@ -86,6 +140,13 @@ export const useAppValidation = ({
           ),
           deployment_target_id: deploymentTargetID,
           commit_sha,
+          deletions: {
+            service_names: data.deletions.serviceNames.map((s) => s.name),
+            predeploy: data.deletions.predeploy.map((s) => s.name),
+            env_group_names: data.deletions.envGroupNames.map((eg) => eg.name),
+            env_variable_names: [],
+            service_deletions: serviceDeletions,
+          },
         },
         {
           project_id: currentProject.id,
@@ -100,10 +161,13 @@ export const useAppValidation = ({
         .parseAsync(res.data);
 
       const validatedAppProto = PorterApp.fromJsonString(
-        atob(validAppData.validate_b64_app_proto)
+        atob(validAppData.validate_b64_app_proto),
+        {
+          ignoreUnknownFields: true,
+        }
       );
 
-      return validatedAppProto;
+      return { validatedAppProto: validatedAppProto, variables, secrets };
     },
     [deploymentTargetID, currentProject, currentCluster]
   );

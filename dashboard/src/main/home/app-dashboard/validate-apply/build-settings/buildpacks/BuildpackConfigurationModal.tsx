@@ -3,38 +3,32 @@ import Text from "components/porter/Text";
 import React from "react";
 import BuildpackList from "./BuildpackList";
 import AddCustomBuildpackComponent from "./AddCustomBuildpack";
-import Icon from "components/porter/Icon";
 import Button from "components/porter/Button";
 import Modal from "components/porter/Modal";
 import styled from "styled-components";
-import Select from "components/porter/Select";
-import stars from "assets/stars-white.svg";
 import { Buildpack } from "main/home/app-dashboard/types/buildpack";
-import { Controller, useFieldArray, useFormContext } from "react-hook-form";
-import { BuildOptions, PorterAppFormData } from "lib/porter-apps";
+import {  useFieldArray, useFormContext } from "react-hook-form";
+import { PorterAppFormData } from "lib/porter-apps";
+import { BuildOptions } from "lib/porter-apps/build";
 
 type Props = {
   build: BuildOptions & {
     method: "pack";
   };
   closeModal: () => void;
-  sortedStackOptions: { value: string; label: string }[];
   availableBuildpacks: Buildpack[];
   setAvailableBuildpacks: (buildpacks: Buildpack[]) => void;
   isDetectingBuildpacks: boolean;
   detectBuildpacksError: string;
-  detectAndSetBuildPacks: () => void;
 };
 
 const BuildpackConfigurationModal: React.FC<Props> = ({
   build,
   closeModal,
-  sortedStackOptions,
   availableBuildpacks,
   setAvailableBuildpacks,
   isDetectingBuildpacks,
   detectBuildpacksError,
-  detectAndSetBuildPacks,
 }) => {
   const { control } = useFormContext<PorterAppFormData>();
   const { append } = useFieldArray({
@@ -45,37 +39,7 @@ const BuildpackConfigurationModal: React.FC<Props> = ({
   return (
     <Modal closeModal={closeModal}>
       <Text size={16}>Buildpack Configuration</Text>
-      <Spacer y={1} />
       <Scrollable>
-        <Text>Builder:</Text>
-        {!build.builder && (
-          <>
-            <Spacer y={0.5} />
-            <Text color="helper">
-              No builder detected. Click 'Detect buildpacks' below to scan your
-              repository for available builders and buildpacks.
-            </Text>
-          </>
-        )}
-        {!!build.builder && (
-          <Controller
-            control={control}
-            name="app.build.builder"
-            render={({ field: { onChange } }) => (
-              <>
-                <Spacer y={0.5} />
-                <Select
-                  value={build.builder}
-                  width="300px"
-                  options={sortedStackOptions}
-                  setValue={(val) => {
-                    onChange(val);
-                  }}
-                />
-              </>
-            )}
-          />
-        )}
         <BuildpackList
           build={build}
           availableBuildpacks={availableBuildpacks}
@@ -97,17 +61,12 @@ const BuildpackConfigurationModal: React.FC<Props> = ({
           onAdd={(bp) => {
             append(bp);
           }}
-        />
+        />        
         <Spacer y={2} />
       </Scrollable>
       <Footer>
         <Shade />
         <FooterButtons>
-          <Button onClick={() => detectAndSetBuildPacks()}>
-            <Icon src={stars} height="15px" />
-            <Spacer inline x={0.5} />
-            Detect buildpacks
-          </Button>
           <Button onClick={closeModal} width={"75px"}>
             Close
           </Button>
@@ -128,7 +87,7 @@ const Scrollable = styled.div`
 
 const FooterButtons = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
 `;
 
 const Footer = styled.div`

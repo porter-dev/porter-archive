@@ -7,7 +7,6 @@ import styled from "styled-components";
 interface LogQueryModeSelectionToggleProps {
   selectedDate?: Date;
   setSelectedDate: (date?: Date) => void;
-  resetSearch: () => void;
 }
 
 const LogQueryModeSelectionToggle = (
@@ -25,11 +24,10 @@ const LogQueryModeSelectionToggle = (
         <ToggleOption
           onClick={() => {
             props.setSelectedDate(undefined);
-            props.resetSearch();
           }}
           selected={!props.selectedDate}
         >
-          <Dot selected={!props.selectedDate} />
+          <StatusDot selected={!props.selectedDate} />
           Live
         </ToggleOption>
         <ToggleOption
@@ -65,11 +63,11 @@ const ToggleOption = styled.div<{ selected: boolean; nudgeLeft?: boolean }>`
   :hover {
     border: 1px solid #7a7b80;
     z-index: 2;
-  }
+  };
 `;
 
 const ToggleButton = styled.div`
-  background: #26292e;
+  background: #181B20;
   border-radius: 5px;
   font-size: 13px;
   height: 30px;
@@ -85,14 +83,30 @@ const TimeIcon = styled.img<{ selected?: boolean }>`
   opacity: ${(props) => (props.selected ? "" : "50%")};
 `;
 
-const Dot = styled.div<{ selected?: boolean }>`
-  display: inline-black;
+const StatusDot = styled.div<{ selected?: boolean }>`
   width: 8px;
   height: 8px;
   margin-right: 9px;
   border-radius: 20px;
   background: ${(props) => (props.selected ? "#ed5f85" : "#ffffff22")};
-  border: 0px;
-  outline: none;
-  box-shadow: ${(props) => (props.selected ? "0px 0px 5px 1px #ed5f85" : "")};
+
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
+  transform: scale(1);
+  animation: pulse 2s infinite;
+  @keyframes pulse {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.9);
+    }
+
+    70% {
+      transform: scale(1);
+      box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    }
+
+    100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
+  }
 `;

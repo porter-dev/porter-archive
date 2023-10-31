@@ -18,9 +18,10 @@ type Props = {
 
 const PROVISIONING_STATUS_POLL_INTERVAL = 60 * 1000; // poll every minute
 
-const ProvisionerStatus: React.FC<Props> = ({ provisionFailureReason }) => {
+const ProvisionerStatus: React.FC<Props> = ( props ) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [progress, setProgress] = useState<number>(1);
+  const [provisionType, setProvisionType] = useState("CREATE");
 
   // Continuously poll provisioning status and cluster status
   const pollProvisioningAndClusterStatus = async () => {
@@ -79,6 +80,25 @@ const ProvisionerStatus: React.FC<Props> = ({ provisionFailureReason }) => {
     return () => clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    // check if this is create or update operation
+    // TODO: CCP should distinguish between create vs update.
+    api
+    .getContracts("<token>", {}, { project_id: currentProject.id })
+    .then(({ data }) => {
+      const filtered_data = data.filter((x: any) => {
+        return x.cluster_id === currentCluster.id;
+      });
+
+      if (filtered_data.length > 1) {
+        setProvisionType("UPDATE");
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+  })
+
   return (
     <StyledProvisionerStatus>
       <HeaderSection>
@@ -99,18 +119,20 @@ const ProvisionerStatus: React.FC<Props> = ({ provisionFailureReason }) => {
         </Flex>
         <Spacer height="18px" />
         <LoadingBar
-          color={provisionFailureReason ? "failed" : undefined}
+          color={props?.provisionFailureReason ? "failed" : undefined}
           completed={progress}
           total={5}
         />
         <Spacer height="18px" />
         <Text color="#aaaabb">
-          Setup can take up to 20 minutes. You can close this window and come
-          back later.
+          {
+            provisionType == "UPDATE" ? "Updating your infrastructure may take up to 30 minutes and will not incur any downtime for your applications. You can still deploy and manage your applications while the update is in effect.":
+            "Setup can take up to 20 minutes. You can close this window and come back later."
+          }
         </Text>
       </HeaderSection>
-      {provisionFailureReason && (
-        <DummyLogs>Error: {provisionFailureReason}</DummyLogs>
+      {props?.provisionFailureReason && (
+        <DummyLogs>Error: {props?.provisionFailureReason}</DummyLogs>
       )}
     </StyledProvisionerStatus>
   );

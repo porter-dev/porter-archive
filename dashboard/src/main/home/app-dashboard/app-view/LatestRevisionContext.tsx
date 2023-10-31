@@ -1,7 +1,6 @@
-import React, { useMemo } from "react";
+import React, { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
-import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import { createContext, useContext } from "react";
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -15,9 +14,17 @@ import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
 import notFound from "assets/not-found.png";
 import styled from "styled-components";
-import { SourceOptions } from "lib/porter-apps";
+import { SourceOptions, clientAppFromProto } from "lib/porter-apps";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
-import { DetectedServices } from "lib/porter-apps/services";
+import { ClientService, DetectedServices } from "lib/porter-apps/services";
+import {
+  DeploymentTarget,
+  useDeploymentTarget,
+} from "shared/DeploymentTargetContext";
+import {
+  PopulatedEnvGroup,
+  populatedEnvGroup,
+} from "../validate-apply/app-settings/types";
 
 export const LatestRevisionContext = createContext<{
   porterApp: PorterAppRecord;
@@ -26,7 +33,13 @@ export const LatestRevisionContext = createContext<{
   servicesFromYaml: DetectedServices | null;
   clusterId: number;
   projectId: number;
-  deploymentTargetId: string;
+  appName: string;
+  deploymentTarget: DeploymentTarget & { namespace: string };
+  previewRevision: AppRevision | null;
+  attachedEnvGroups: PopulatedEnvGroup[];
+  appEnv?: PopulatedEnvGroup;
+  setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
+  latestClientServices: ClientService[];
 } | null>(null);
 
 export const useLatestRevision = () => {
@@ -46,11 +59,17 @@ export const LatestRevisionProvider = ({
   appName?: string;
   children: JSX.Element;
 }) => {
+  const [previewRevision, setPreviewRevision] = useState<AppRevision | null>(
+    null
+  );
   const { currentCluster, currentProject } = useContext(Context);
-  const deploymentTarget = useDefaultDeploymentTarget();
+  const { currentDeploymentTarget } = useDeploymentTarget();
 
   const appParamsExist =
-    !!appName && !!currentCluster && !!currentProject && !!deploymentTarget;
+    !!appName &&
+    !!currentCluster &&
+    !!currentProject &&
+    !!currentDeploymentTarget;
 
   const { data: porterApp, status: porterAppStatus } = useQuery(
     ["getPorterApp", currentCluster?.id, currentProject?.id, appName],
@@ -82,7 +101,7 @@ export const LatestRevisionProvider = ({
       "getLatestRevision",
       currentProject?.id,
       currentCluster?.id,
-      deploymentTarget?.deployment_target_id,
+      currentDeploymentTarget,
       appName,
     ],
     async () => {
@@ -92,7 +111,7 @@ export const LatestRevisionProvider = ({
       const res = await api.getLatestRevision(
         "<token>",
         {
-          deployment_target_id: deploymentTarget.deployment_target_id,
+          deployment_target_id: currentDeploymentTarget.id,
         },
         {
           project_id: currentProject.id,
@@ -106,12 +125,97 @@ export const LatestRevisionProvider = ({
           app_revision: appRevisionValidator,
         })
         .parseAsync(res.data);
-
       return revisionData.app_revision;
     },
     {
       enabled: appParamsExist,
       refetchInterval: 5000,
+      refetchOnWindowFocus: false,
+    }
+  );
+
+  const { data, status: deploymentTargetStatus } = useQuery(
+    [
+      "getDeploymentTarget",
+      {
+        cluster_id: currentCluster?.id,
+        project_id: currentProject?.id,
+        deployment_target_id: currentDeploymentTarget?.id,
+      },
+    ],
+    async () => {
+      if (!currentCluster || !currentProject || !currentDeploymentTarget) {
+        return;
+      }
+      const res = await api.getDeploymentTarget(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          deployment_target_id: currentDeploymentTarget.id,
+        }
+      );
+
+      const { deployment_target } = await z
+        .object({
+          deployment_target: z.object({
+            cluster_id: z.number(),
+            namespace: z.string(),
+            preview: z.boolean(),
+          }),
+        })
+        .parseAsync(res.data);
+
+      return deployment_target;
+    },
+    {
+      enabled: !!currentCluster && !!currentProject,
+    }
+  );
+
+  const revisionId = previewRevision?.id ?? latestRevision?.id;
+  const { data: { attachedEnvGroups = [], appEnv } = {} } = useQuery(
+    ["getAttachedEnvGroups", appName, revisionId],
+    async () => {
+      if (
+        !appName ||
+        !revisionId ||
+        !currentCluster?.id ||
+        !currentProject?.id
+      ) {
+        return {
+          attachedEnvGroups: [],
+          appEnv: undefined,
+        };
+      }
+
+      const res = await api.getAttachedEnvGroups(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          app_name: appName,
+          revision_id: revisionId,
+        }
+      );
+
+      const { env_groups: attachedEnvGroups, app_env: appEnv } = await z
+        .object({
+          env_groups: z.array(populatedEnvGroup),
+          app_env: populatedEnvGroup,
+        })
+        .parseAsync(res.data);
+
+      return {
+        attachedEnvGroups,
+        appEnv,
+      };
+    },
+    {
+      enabled:
+        !!appName && !!revisionId && !!currentCluster && !!currentProject,
     }
   );
 
@@ -141,7 +245,8 @@ export const LatestRevisionProvider = ({
   }, [porterApp]);
 
   const { loading: porterYamlLoading, detectedServices } = usePorterYaml({
-    source: latestSource,
+    source: latestSource?.type === "github" ? latestSource : null,
+    appName: appName,
     useDefaults: false,
   });
 
@@ -150,12 +255,24 @@ export const LatestRevisionProvider = ({
       return;
     }
 
-    return PorterApp.fromJsonString(atob(latestRevision.b64_app_proto));
+    return PorterApp.fromJsonString(atob(latestRevision.b64_app_proto), {
+      ignoreUnknownFields: true,
+    });
   }, [latestRevision]);
+
+  const latestClientServices = useMemo(() => {
+    if (!latestProto) {
+      return [];
+    }
+
+    const app = clientAppFromProto({proto: latestProto, overrides: detectedServices});
+    return app.services;
+  }, [latestProto, detectedServices]);
 
   if (
     status === "loading" ||
     porterAppStatus === "loading" ||
+    deploymentTargetStatus === "loading" ||
     !appParamsExist ||
     porterYamlLoading
   ) {
@@ -165,6 +282,7 @@ export const LatestRevisionProvider = ({
   if (
     status === "error" ||
     porterAppStatus === "error" ||
+    deploymentTargetStatus === "error" ||
     !latestRevision ||
     !latestProto ||
     !porterApp
@@ -191,8 +309,17 @@ export const LatestRevisionProvider = ({
         porterApp,
         clusterId: currentCluster.id,
         projectId: currentProject.id,
-        deploymentTargetId: deploymentTarget.deployment_target_id,
+        deploymentTarget: {
+          ...currentDeploymentTarget,
+          namespace: data?.namespace ?? "",
+        },
         servicesFromYaml: detectedServices,
+        attachedEnvGroups,
+        appEnv,
+        previewRevision,
+        setPreviewRevision,
+        latestClientServices,
+        appName,
       }}
     >
       {children}

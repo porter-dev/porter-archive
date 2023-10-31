@@ -154,7 +154,7 @@ func (r *Registry) ListRepositories(
 		return nil, telemetry.Error(ctx, span, err, "error getting project for repository")
 	}
 
-	if project.CapiProvisionerEnabled {
+	if project.GetFeatureFlag(models.CapiProvisionerEnabled, conf.LaunchDarklyClient) {
 		// TODO: Remove this conditional when AWS list repos is supported in CCP
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "registry-uri", Value: r.URL})
 
@@ -899,7 +899,7 @@ func (r *Registry) CreateRepository(
 		return telemetry.Error(ctx, span, err, "error getting project for repository")
 	}
 
-	if project.CapiProvisionerEnabled {
+	if project.GetFeatureFlag(models.CapiProvisionerEnabled, conf.LaunchDarklyClient) {
 		// no need to create repository if pushing to ACR or GAR
 		if strings.Contains(r.URL, ".azurecr.") || strings.Contains(r.URL, "-docker.pkg.dev") {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "skipping-create-repo", Value: true})
@@ -1026,6 +1026,17 @@ func (r *Registry) ListImages(
 	repo repository.Repository,
 	conf *config.Config,
 ) ([]*ptypes.Image, error) {
+	ctx, span := telemetry.NewSpan(ctx, "list-repositories")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "registry-name", Value: r.Name},
+		telemetry.AttributeKV{Key: "registry-id", Value: r.ID},
+		telemetry.AttributeKV{Key: "registry-url", Value: r.URL},
+		telemetry.AttributeKV{Key: "project-id", Value: r.ProjectID},
+		telemetry.AttributeKV{Key: "repo-name", Value: repoName},
+	)
+
 	// switch on the auth mechanism to get a token
 	if r.AWSIntegrationID != 0 {
 		aws, err := repo.AWSIntegration().ReadAWSIntegration(
@@ -1063,7 +1074,40 @@ func (r *Registry) ListImages(
 		return nil, fmt.Errorf("error getting project for repository: %w", err)
 	}
 
-	if project.CapiProvisionerEnabled {
+	if project.GetFeatureFlag(models.CapiProvisionerEnabled, conf.LaunchDarklyClient) {
+
+		if strings.Contains(r.URL, ".azurecr.") || strings.Contains(r.URL, "-docker.pkg.dev") {
+			req := connect.NewRequest(&porterv1.ListImagesForRepositoryRequest{
+				ProjectId:   int64(r.ProjectID),
+				RegistryUri: r.URL,
+				RepoName:    repoName,
+			})
+
+			resp, err := conf.ClusterControlPlaneClient.ListImagesForRepository(ctx, req)
+			if err != nil {
+				return nil, telemetry.Error(ctx, span, err, "error calling ccp list images")
+			}
+
+			res := make([]*ptypes.Image, 0)
+
+			for _, image := range resp.Msg.Images {
+				if image.UpdatedAt == nil {
+					continue
+				}
+				lastUpdateTime := image.UpdatedAt.AsTime()
+
+				res = append(res, &ptypes.Image{
+					Digest:         image.Digest,
+					Tag:            image.Tag,
+					Manifest:       "",
+					RepositoryName: image.RepositoryName,
+					PushedAt:       &lastUpdateTime,
+				})
+			}
+
+			return res, nil
+		}
+
 		uri := strings.TrimPrefix(r.URL, "https://")
 		splits := strings.Split(uri, ".")
 		accountID := splits[0]

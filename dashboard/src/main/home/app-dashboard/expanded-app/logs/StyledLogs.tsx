@@ -1,5 +1,5 @@
 import React from "react";
-import { GenericLogFilter, PorterLog } from "./types";
+import { GenericFilter, PorterLog } from "./types";
 import styled from "styled-components";
 import Anser from "anser";
 import dayjs from "dayjs";
@@ -10,7 +10,7 @@ import { Service } from "../../new-app-flow/serviceTypes";
 type Props = {
     logs: PorterLog[];
     appName: string;
-    filters: GenericLogFilter[];
+    filters: GenericFilter[];
     services?: Service[];
 };
 
@@ -20,7 +20,7 @@ const StyledLogs: React.FC<Props> = ({
     filters,
     services,
 }) => {
-    const renderFilterTagForLog = (filter: GenericLogFilter, log: PorterLog, index: number) => {
+    const renderFilterTagForLog = (filter: GenericFilter, log: PorterLog, index: number) => {
         if (log.metadata == null) {
             return null;
         }
@@ -30,7 +30,7 @@ const StyledLogs: React.FC<Props> = ({
                     return null;
                 }
                 return (
-                    <StyledLogsTableData width={"100px"}>
+                    <StyledLogsTableData width={"100px"} key={index}>
                         <LogInnerPill
                             color={getVersionTagColor(log.metadata.revision)}
                             key={index}
@@ -45,13 +45,28 @@ const StyledLogs: React.FC<Props> = ({
                     return null;
                 }
                 return (
-                    <StyledLogsTableData width={"100px"}>
+                    <StyledLogsTableData width={"100px"} key={index}>
                         <LogInnerPill
                             color={"white"}
                             key={index}
-                            onClick={() => filter.setValue(getPodSelectorFromServiceName(getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName), services) ?? GenericLogFilter.getDefaultOption("pod_name").value)}
+                            onClick={() => filter.setValue(getPodSelectorFromServiceName(getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName), services) ?? GenericFilter.getDefaultOption("pod_name").value)}
                         >
                             {getServiceNameFromPodNameAndAppName(log.metadata.pod_name, appName)}
+                        </LogInnerPill>
+                    </StyledLogsTableData>
+                )
+            case "service_name":
+                if (log.metadata?.raw_labels?.porter_run_service_name == null || log.metadata?.raw_labels?.porter_run_service_name === "") {
+                    return null;
+                }
+                return (
+                    <StyledLogsTableData width={"100px"} key={index}>
+                        <LogInnerPill
+                            color={"white"}
+                            key={index}
+                            onClick={() => filter.setValue(log.metadata?.raw_labels?.porter_run_service_name ?? GenericFilter.getDefaultOption("service_name").value)}
+                        >
+                            {log.metadata.raw_labels?.porter_run_service_name}
                         </LogInnerPill>
                     </StyledLogsTableData>
                 )

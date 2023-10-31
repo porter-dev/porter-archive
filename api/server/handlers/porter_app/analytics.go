@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -9,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type PorterAppAnalyticsHandler struct {
@@ -35,6 +37,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	validateApplyV2 := project.GetFeatureFlag(models.ValidateApplyV2, v.Config().LaunchDarklyClient)
 	if request.Step == "stack-launch-start" {
 		v.Config().AnalyticsClient.Track(analytics.StackLaunchStartTrack(&analytics.StackLaunchStartOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
@@ -42,6 +45,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -53,6 +57,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -64,6 +69,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -76,6 +82,7 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
 			ErrorMessage:           request.ErrorMessage,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -88,6 +95,21 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
 			DeleteWorkflowFile:     request.DeleteWorkflowFile,
+			ValidateApplyV2:        validateApplyV2,
+		}))
+	}
+
+	if request.Step == "porter-app-update-failure" {
+		v.Config().AnalyticsClient.Track(analytics.PorterAppUpdateFailureTrack(&analytics.PorterAppUpdateOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			StackName:              request.StackName,
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			ErrorMessage:           request.ErrorMessage,
+			ErrorStackTrace:        request.ErrorStackTrace,
+			ValidateApplyV2:        validateApplyV2,
 		}))
 	}
 
@@ -95,45 +117,71 @@ func (v *PorterAppAnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 }
 
 func TrackStackBuildStatus(
+	ctx context.Context,
 	config *config.Config,
 	user *models.User,
 	project *models.Project,
 	stackName string,
 	errorMessage string,
 	status types.PorterAppEventStatus,
+	validateApplyV2 bool,
+	b64BuildLogs string,
 ) error {
+	ctx, span := telemetry.NewSpan(ctx, "track-build-status")
+	defer span.End()
+
+	telemetry.WithAttributes(
+		span,
+		telemetry.AttributeKV{Key: "porter-app-build-status", Value: string(status)},
+		telemetry.AttributeKV{Key: "porter-app-name", Value: stackName},
+		telemetry.AttributeKV{Key: "porter-app-error-message", Value: errorMessage},
+	)
+
 	if status == types.PorterAppEventStatus_Progressing {
-		return config.AnalyticsClient.Track(analytics.StackBuildProgressingTrack(&analytics.StackBuildOpts{
+		err := config.AnalyticsClient.Track(analytics.StackBuildProgressingTrack(&analytics.StackBuildOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			StackName:              stackName,
 			Email:                  user.Email,
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			ValidateApplyV2:        validateApplyV2,
 		}))
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "Failed to track stack build progressing")
+		}
 	}
 
 	if status == types.PorterAppEventStatus_Success {
-		return config.AnalyticsClient.Track(analytics.StackBuildSuccessTrack(&analytics.StackBuildOpts{
+		err := config.AnalyticsClient.Track(analytics.StackBuildSuccessTrack(&analytics.StackBuildOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			StackName:              stackName,
 			Email:                  user.Email,
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			ValidateApplyV2:        validateApplyV2,
 		}))
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "Failed to track stack build success")
+		}
 	}
 
 	if status == types.PorterAppEventStatus_Failed {
-		return config.AnalyticsClient.Track(analytics.StackBuildFailureTrack(&analytics.StackBuildOpts{
+		er := config.AnalyticsClient.Track(analytics.StackBuildFailureTrack(&analytics.StackBuildOpts{
 			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
 			StackName:              stackName,
 			ErrorMessage:           errorMessage,
+			B64BuildLogs:           b64BuildLogs,
 			Email:                  user.Email,
 			FirstName:              user.FirstName,
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
+			ValidateApplyV2:        validateApplyV2,
 		}))
+		if er != nil {
+			return telemetry.Error(ctx, span, er, "Failed to track stack build failure")
+		}
 	}
 
 	return nil

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ServiceContainer from "./ServiceContainer";
 import styled from "styled-components";
 import Spacer from "components/porter/Spacer";
@@ -26,11 +26,14 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { ControlledInput } from "components/porter/ControlledInput";
+import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useClusterResources } from "shared/ClusterResourcesContext";
 
 const addServiceFormValidator = z.object({
   name: z
     .string()
-    .min(1)
+    .min(1, { message: "A service name is required" })
     .max(30)
     .regex(/^[a-z0-9-]+$/, {
       message: 'Lowercase letters, numbers, and " - " only.',
@@ -41,19 +44,35 @@ type AddServiceFormValues = z.infer<typeof addServiceFormValidator>;
 
 type ServiceListProps = {
   addNewText: string;
-  limitOne?: boolean;
   prePopulateService?: ClientService;
   isPredeploy?: boolean;
+  existingServiceNames?: string[];
+  fieldArrayName: "app.services" | "app.predeploy";
+  serviceVersionStatus?: Record<string, PorterAppVersionStatus[]>;
+  internalNetworkingDetails?: {
+    namespace: string;
+    appName: string;
+  };
+  allowAddServices?: boolean;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
   addNewText,
-  limitOne = false,
   prePopulateService,
+  fieldArrayName,
   isPredeploy = false,
+  existingServiceNames = [],
+  serviceVersionStatus,
+  internalNetworkingDetails = {
+    namespace: "",
+    appName: "",
+  },
+  allowAddServices = true,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
+
+  const { currentClusterResources: {maxCPU, maxRAM, clusterContainsGPUNodes, clusterIngressIp, defaultCPU, defaultRAM} } = useClusterResources();
 
   // add service modal form
   const {
@@ -63,8 +82,11 @@ const ServiceList: React.FC<ServiceListProps> = ({
     reset,
     handleSubmit,
     formState: { errors },
+    setError,
+    clearErrors,
   } = useForm<AddServiceFormValues>({
-    reValidateMode: "onSubmit",
+    reValidateMode: "onChange",
+    resolver: zodResolver(addServiceFormValidator),
     defaultValues: {
       name: "",
       type: "web",
@@ -72,7 +94,18 @@ const ServiceList: React.FC<ServiceListProps> = ({
   });
   const { append, remove, update, fields } = useFieldArray({
     control: appControl,
-    name: "app.services",
+    name: fieldArrayName,
+  });
+  const {
+    append: appendDeletion,
+    remove: removeDeletion,
+    fields: deletedServices,
+  } = useFieldArray({
+    control: appControl,
+    name:
+      fieldArrayName === "app.services"
+        ? "deletions.serviceNames"
+        : "deletions.predeploy",
   });
 
   const serviceType = watch("type");
@@ -95,12 +128,29 @@ const ServiceList: React.FC<ServiceListProps> = ({
     });
   }, [fields]);
 
+  useEffect(() => {
+    if (isServiceNameDuplicate(serviceName)) {
+      setError("name", {
+        message: "A service with this name already exists",
+      });
+    } else if (!isPredeploy && serviceName === "predeploy") {
+      setError("name", {
+        message: "predeploy is a reserved service name",
+      });
+    } else {
+      clearErrors("name");
+    }
+  }, [serviceName, isPredeploy]);
+
   const isServiceNameDuplicate = (name: string) => {
     return services.some(({ svc: s }) => s.name.value === name);
   };
 
   const maybeRenderAddServicesButton = () => {
-    if (limitOne && services.length > 0) {
+    if (
+      (isPredeploy && services.find((s) => isPredeployService(s.svc))) ||
+      !allowAddServices
+    ) {
       return null;
     }
     return (
@@ -124,12 +174,39 @@ const ServiceList: React.FC<ServiceListProps> = ({
   };
 
   const onSubmit = handleSubmit(async (data) => {
-    append(
-      deserializeService({ service: defaultSerialized(data), expanded: true })
+    // if service was previously deleted, remove from deletions
+    // handle case such as pre-deploy (which always has the same name)
+    // being deleted and then re-added
+    const previouslyDeleted = deletedServices.findIndex(
+      (s) => s.name === data.name
     );
+    if (previouslyDeleted !== -1) {
+      removeDeletion(previouslyDeleted);
+    }
+
+    append(
+      deserializeService({
+        service: defaultSerialized({
+          ...data,
+          defaultCPU,
+          defaultRAM,
+        }),
+        expanded: true,
+      })
+    );
+
     reset();
     setShowAddServiceModal(false);
   });
+
+  const onRemove = (index: number) => {
+    const name = services[index].svc.name.value;
+    remove(index);
+
+    if (existingServiceNames.includes(name)) {
+      appendDeletion({ name });
+    }
+  };
 
   return (
     <>
@@ -142,7 +219,13 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 key={svc.id}
                 service={svc}
                 update={update}
-                remove={remove}
+                remove={onRemove}
+                status={serviceVersionStatus?.[svc.name.value]}
+                maxCPU={maxCPU}
+                maxRAM={maxRAM}
+                clusterContainsGPUNodes={clusterContainsGPUNodes}
+                internalNetworkingDetails={internalNetworkingDetails}
+                clusterIngressIp={clusterIngressIp}
               />
             ) : null;
           })}
@@ -192,9 +275,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
           <Button
             type="button"
             onClick={onSubmit}
-            disabled={
-              isServiceNameDuplicate(serviceName) || serviceName?.length > 61
-            }
+            disabled={!!errors.name?.message}
           >
             <I className="material-icons">add</I> Add service
           </Button>

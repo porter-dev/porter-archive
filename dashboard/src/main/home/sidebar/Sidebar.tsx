@@ -2,13 +2,16 @@ import React, { Component } from "react";
 import styled from "styled-components";
 
 import category from "assets/category.svg";
-import integrations from "assets/integrations-bold.png";
+import integrations from "assets/integrations.svg";
 import rocket from "assets/rocket.png";
-import settings from "assets/settings-bold.png";
-import web from "assets/web-bold.png";
-import addOns from "assets/add-ons-bold.png";
-import infra from "assets/infra.png";
-import sliders from "assets/sliders.svg";
+import settings from "assets/settings.svg";
+import applications from "assets/applications.svg";
+import infra from "assets/cluster.svg";
+import sliders from "assets/env-groups.svg";
+import addOns from "assets/add-ons.svg";
+import database from "assets/database.svg";
+import collapseSidebar from "assets/collapse-sidebar.svg";
+import pr_icon from "assets/pull_request_icon.svg";
 
 import { Context } from "shared/Context";
 
@@ -23,8 +26,6 @@ import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import SidebarLink from "./SidebarLink";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
 import ClusterListContainer from "./ClusterListContainer";
-import ProjectButtonContainer from "./ProjectButtonContainer";
-import ProjectButtonContianer from "./ProjectButtonContainer";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -99,7 +100,7 @@ class Sidebar extends Component<PropsType, StateType> {
     if (!this.state.showSidebar) {
       return (
         <PullTab onClick={this.toggleSidebar}>
-          <i className="material-icons">double_arrow</i>
+          <img src={collapseSidebar} />
         </PullTab>
       );
     }
@@ -113,10 +114,16 @@ class Sidebar extends Component<PropsType, StateType> {
 
   renderProjectContents = () => {
     let { currentView } = this.props;
-    let { currentProject, user, currentCluster, hasFinishedOnboarding } = this.context;
+    let {
+      currentProject,
+      user,
+      currentCluster,
+      hasFinishedOnboarding,
+    } = this.context;
     if (!currentProject?.simplified_view_enabled) {
       return (
         <ScrollWrapper>
+          <Spacer y={0.5} />
           <SidebarLabel>Home</SidebarLabel>
           <NavButton path={"/dashboard"}>
             <Img src={category} />
@@ -141,30 +148,28 @@ class Sidebar extends Component<PropsType, StateType> {
             "update",
             "delete",
           ]) && (
-              <NavButton path={"/integrations"}>
-                <Img src={integrations} />
-                Integrations
-              </NavButton>
-            )}
+            <NavButton path={"/integrations"}>
+              <Img src={integrations} />
+              Integrations
+            </NavButton>
+          )}
           {this.props.isAuthorized("settings", "", [
             "get",
             "update",
             "delete",
           ]) && (
-              <NavButton path={"/project-settings"}>
-                <Img src={settings} />
-                Project settings
-              </NavButton>
-            )}
+            <NavButton path={"/project-settings"}>
+              <Img src={settings} />
+              Project settings
+            </NavButton>
+          )}
 
           <br />
 
           <SidebarLabel>
-            {currentProject?.capi_provisioner_enabled ? (
-              "Your team"
-            ) : (
-              "Clusters"
-            )}
+            {currentProject?.capi_provisioner_enabled
+              ? "Your team"
+              : "Clusters"}
           </SidebarLabel>
           <Clusters
             setWelcome={this.props.setWelcome}
@@ -176,7 +181,6 @@ class Sidebar extends Component<PropsType, StateType> {
         </ScrollWrapper>
       );
     } else if (currentProject.simplified_view_enabled) {
-
       if (currentProject.multi_cluster) {
         return (
           <ScrollWrapper>
@@ -185,35 +189,33 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-                <NavButton path={"/project-settings"}
-                >
-                  <Img src={settings} />
-                  Project settings
-                </NavButton>
-              )}
+              <NavButton path={"/project-settings"}>
+                <Img src={settings} />
+                Project settings
+              </NavButton>
+            )}
             {this.props.isAuthorized("integrations", "", [
               "get",
               "create",
               "update",
               "delete",
             ]) && (
-                <NavButton path={"/integrations"}
-                >
-                  <Img src={integrations} />
-                  Integrations
-                </NavButton>
-              )}
-            {currentCluster &&
+              <NavButton path={"/integrations"}>
+                <Img src={integrations} />
+                Integrations
+              </NavButton>
+            )}
+            {currentCluster && (
               <>
-                <Spacer y={.5} />
+                <Spacer y={0.5} />
                 <ClusterListContainer />
               </>
-            }
+            )}
             <NavButton
               path="/apps"
               active={window.location.pathname.startsWith("/apps")}
             >
-              <Img src={web} />
+              <Img src={applications} />
               Applications
             </NavButton>
             <NavButton
@@ -225,9 +227,7 @@ class Sidebar extends Component<PropsType, StateType> {
             </NavButton>
             <NavButton
               path="/env-groups"
-              active={
-                window.location.pathname.startsWith("/env-groups")
-              }
+              active={window.location.pathname.startsWith("/env-groups")}
             >
               <Img src={sliders} />
               Env groups
@@ -237,16 +237,23 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-                <NavButton
-                  path={"/cluster-dashboard"}
-                  active={
-                    window.location.pathname.startsWith("/cluster-dashboard")
-                  }
-                >
-                  <Img src={infra} />
-                  Infrastructure
-                </NavButton>
-              )}
+              <NavButton
+                path={"/cluster-dashboard"}
+                active={window.location.pathname.startsWith(
+                  "/cluster-dashboard"
+                )}
+              >
+                <Img src={settings} />
+                Infrastructure
+              </NavButton>
+            )}
+
+            {currentProject.preview_envs_enabled && (
+              <NavButton path="/preview-environments">
+                <Img src={pr_icon} />
+                Preview environments
+              </NavButton>
+            )}
 
             {/* Hacky workaround for setting currentCluster with legacy method */}
             <Clusters
@@ -259,17 +266,25 @@ class Sidebar extends Component<PropsType, StateType> {
           </ScrollWrapper>
         );
       } else {
-
         return (
           <ScrollWrapper>
-            <Spacer y={.5} />
+            <Spacer y={0.4} />
             <NavButton
               path="/apps"
               active={window.location.pathname.startsWith("/apps")}
             >
-              <Img src={web} />
+              <Img src={applications} />
               Applications
             </NavButton>
+            {currentProject.db_enabled && (
+              <NavButton
+                path="/databases"
+                active={window.location.pathname.startsWith("/apps")}
+              >
+                <Img src={database} />
+                Databases
+              </NavButton>
+            )}
             <NavButton
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}
@@ -279,9 +294,7 @@ class Sidebar extends Component<PropsType, StateType> {
             </NavButton>
             <NavButton
               path="/env-groups"
-              active={
-                window.location.pathname.startsWith("/env-groups")
-              }
+              active={window.location.pathname.startsWith("/env-groups")}
             >
               <Img src={sliders} />
               Env groups
@@ -291,17 +304,23 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
+              <NavButton
+                path={"/cluster-dashboard"}
+                active={window.location.pathname.startsWith(
+                  "/cluster-dashboard"
+                )}
+              >
+                <Img src={infra} />
+                Infrastructure
+              </NavButton>
+            )}
 
-                <NavButton
-                  path={"/cluster-dashboard"}
-                  active={
-                    window.location.pathname.startsWith("/cluster-dashboard")
-                  }
-                >
-                  <Img src={infra} />
-                  Infrastructure
-                </NavButton>
-              )}
+            {currentProject.preview_envs_enabled && (
+              <NavButton path="/preview-environments">
+                <Img src={pr_icon} />
+                Preview environments
+              </NavButton>
+            )}
 
             {this.props.isAuthorized("integrations", "", [
               "get",
@@ -309,25 +328,22 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-                <NavButton path={"/integrations"}
-                >
-                  <Img src={integrations} />
-                  Integrations
-                </NavButton>
-              )}
+              <NavButton path={"/integrations"}>
+                <Img src={integrations} />
+                Integrations
+              </NavButton>
+            )}
 
             {this.props.isAuthorized("settings", "", [
               "get",
               "update",
               "delete",
             ]) && (
-                <NavButton path={"/project-settings"}
-                >
-                  <Img src={settings} />
-                  Project settings
-                </NavButton>
-
-              )}
+              <NavButton path={"/project-settings"}>
+                <Img src={settings} />
+                Project settings
+              </NavButton>
+            )}
 
             {/* Hacky workaround for setting currentCluster with legacy method */}
             <Clusters
@@ -339,14 +355,11 @@ class Sidebar extends Component<PropsType, StateType> {
             />
           </ScrollWrapper>
         );
-
       }
     }
 
     // Render placeholder if no project exists
     return <ProjectPlaceholder>No projects found.</ProjectPlaceholder>;
-
-
   };
 
   // SidebarBg is separate to cover retracted drawer
@@ -356,20 +369,8 @@ class Sidebar extends Component<PropsType, StateType> {
         {this.renderPullTab()}
         <StyledSidebar showSidebar={this.state.showSidebar}>
           <SidebarBg />
-          <CollapseButton
-            onClick={this.toggleSidebar}
-            onMouseOver={() => {
-              this.setState({ showTooltip: true });
-            }}
-            onMouseOut={() => {
-              this.setState({ showTooltip: false });
-            }}
-          >
-            {this.renderTooltip()}
-            <i className="material-icons">double_arrow</i>
-          </CollapseButton>
-
-          <ProjectSectionContainer />
+          <Spacer y={0.5} />
+          <ProjectSectionContainer collapseSidebar={this.toggleSidebar} />
           {this.renderProjectContents()}
           {this.context.featurePreview && (
             <Container row>
@@ -417,30 +418,23 @@ const NavButton = styled(SidebarLink)`
   border-radius: 5px;
   position: relative;
   text-decoration: none;
-  height: 34px;
-  margin: 5px 15px;
-  padding: 0 30px 2px 6px;
+  height: 45px;
+  margin: 7px 22px;
+  padding: 0 30px 2px 7px;
   font-size: 13px;
-  color: ${props => props.theme.text.primary};
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 
-  background: ${(props: any) => (props.active ? "#ffffff11" : "")};
-
-  :hover {
-    background: ${(props: any) => (props.active ? "#ffffff11" : "#ffffff08")};
-  }
-
   &.active {
-    background: #ffffff11;
+    background: #202126;
 
     :hover {
-      background: #ffffff11;
+      background: #202126;
     }
   }
 
   :hover {
-    background: #ffffff08;
+    background: #ffffff09;
   }
 
   > i {
@@ -453,7 +447,7 @@ const NavButton = styled(SidebarLink)`
 
 const Img = styled.img<{ enlarge?: boolean }>`
   padding: ${(props) => (props.enlarge ? "0 0 0 1px" : "4px")};
-  height: 22px;
+  height: 25px;
   padding-top: 4px;
   border-radius: 3px;
   margin-right: 8px;
@@ -465,14 +459,14 @@ const SidebarBg = styled.div`
   top: 0;
   left: 0;
   width: 100%;
-  background-color: ${props => props.theme.bg};
+  background-color: ${(props) => props.theme.bg};
   height: 100%;
   z-index: -1;
   border-right: 1px solid #383a3f;
 `;
 
 const SidebarLabel = styled.div`
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   padding: 5px 23px;
   margin-bottom: 5px;
   font-size: 13px;
@@ -482,25 +476,31 @@ const SidebarLabel = styled.div`
 const PullTab = styled.div`
   position: fixed;
   width: 30px;
-  height: 50px;
-  background: #7a838f77;
+  height: 30px;
+  border: 1px solid #383a3f;
+  border-left: none;
   top: calc(50vh - 60px);
   left: 0;
   z-index: 1;
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  :hover {
-    background: #99a5af77;
+  > img {
+    height: 14px;
+    width: 14px;
+    opacity: 0.5;
   }
 
-  > i {
-    color: #ffffff77;
-    font-size: 18px;
-    position: absolute;
-    top: 15px;
-    left: 4px;
+  :hover {
+    border: 1px solid ${(props) => props.theme.text.primary};
+    border-left: none;
+    > img {
+      opacity: 0.9;
+    }
   }
 `;
 
@@ -558,7 +558,7 @@ const CollapseButton = styled.div`
 `;
 
 const StyledSidebar = styled.section`
-  width: 240px;
+  width: 260px;
   position: relative;
   padding-top: 20px;
   height: 100vh;
@@ -568,7 +568,7 @@ const StyledSidebar = styled.section`
   animation-fill-mode: forwards;
   @keyframes showSidebar {
     from {
-      margin-left: -240px;
+      margin-left: -260px;
     }
     to {
       margin-left: 0px;
@@ -579,7 +579,7 @@ const StyledSidebar = styled.section`
       margin-left: 0px;
     }
     to {
-      margin-left: -240px;
+      margin-left: -260px;
     }
   }
 `;

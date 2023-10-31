@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 
 import loading from "assets/loading.gif";
+import Tooltip from "./Tooltip";
 
 type Props = {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ type Props = {
   rounded?: boolean;
   alt?: boolean;
   type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
+  disabledTooltipMessage?: string;
 };
 
 const Button: React.FC<Props> = ({
@@ -36,7 +38,8 @@ const Button: React.FC<Props> = ({
   withBorder,
   rounded,
   alt,
-  type,
+  type = "button",
+  disabledTooltipMessage,
 }) => {
   const renderStatus = () => {
     switch (status) {
@@ -65,7 +68,30 @@ const Button: React.FC<Props> = ({
     }
   };
 
-  return (
+  return disabled && disabledTooltipMessage ? (
+    <Tooltip content={disabledTooltipMessage} position="right">
+      <Wrapper>
+        <StyledButton
+          disabled={disabled}
+          onClick={() => {
+            if (!disabled && onClick) {
+              onClick();
+            }
+          }}
+          width={width}
+          height={height}
+          color={color}
+          withBorder={withBorder || alt}
+          rounded={rounded || alt}
+          alt={alt}
+          type={type}
+        >
+          <Text>{children}</Text>
+        </StyledButton>
+        {(helperText || status) && renderStatus()}
+      </Wrapper>
+    </Tooltip>
+  ) : (
     <Wrapper>
       <StyledButton
         disabled={disabled}
@@ -163,12 +189,12 @@ const StyledButton = styled.button<{
     if (props.alt || props.color === "fg") {
       return props.theme.fg;
     }
-    return props.disabled && !props.color
+    return props.disabled
       ? "#aaaabb"
       : props.color || props.theme.button;
   }};
   display: flex;
-  ailgn-items: center;
+  align-items: center;
   justify-content: center;
   border-radius: ${(props) => (props.rounded ? "50px" : "5px")};
   border: ${(props) => (props.withBorder ? "1px solid #494b4f" : "none")};

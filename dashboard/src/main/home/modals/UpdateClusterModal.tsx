@@ -5,6 +5,9 @@ import close from "assets/close.png";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
+import { OFState } from "main/home/onboarding/state";
+import { Onboarding as OnboardingSaveType } from "../onboarding/types"
+
 
 import SaveButton from "components/SaveButton";
 import InputRow from "components/form-components/InputRow";
@@ -34,7 +37,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
   };
 
   handleDelete = async () => {
-    let { currentProject, currentCluster } = this.context;
+    let { currentProject, currentCluster, setCurrentCluster } = this.context;
     this.setState({ status: "loading" });
 
     await api.updateOnboardingStep(
@@ -52,7 +55,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
           cluster_id: currentCluster.id,
         }
       )
-      .then((_) => {
+      .then(async (_) => {
         if (!currentCluster?.infra_id) {
           // TODO: make this more declarative from the Home component
           this.props.setRefreshClusters(true);
@@ -61,23 +64,44 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
           pushFiltered(this.props, "/dashboard", ["project_id"], {
             tab: "overview",
           });
+
+
+          // Handle destroying infra we've provisioned
+          api
+            .destroyInfra(
+              "<token>",
+              {},
+              {
+                project_id: currentProject.id,
+                infra_id: currentCluster.infra_id,
+              }
+            )
+            .then(() =>
+              console.log("destroyed provisioned infra:", currentCluster.infra_id)
+            )
+            .catch(console.log);
+
+          if (currentProject.simplified_view_enabled) {
+            await api
+              .getClusters("<token>", {}, { id: currentProject?.id })
+              .then(async (res) => {
+                if (res.data) {
+                  let clusters = res.data;
+                  if (clusters.length == 0 || !currentProject.multi_cluster) {
+                    setCurrentCluster(null)
+                    await api.saveOnboardingState(
+                      "<token>",
+                      { current_step: "connect_source" },
+                      { project_id: currentProject.id }
+                    );
+                    window.location.reload();
+                  }
+
+                }
+              })
+          }
           return;
         }
-
-        // Handle destroying infra we've provisioned
-        api
-          .destroyInfra(
-            "<token>",
-            {},
-            {
-              project_id: currentProject.id,
-              infra_id: currentCluster.infra_id,
-            }
-          )
-          .then(() =>
-            console.log("destroyed provisioned infra:", currentCluster.infra_id)
-          )
-          .catch(console.log);
 
         this.props.setRefreshClusters(true);
         this.setState({ status: "successful", showDeleteOverlay: false });
@@ -87,14 +111,14 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
   };
 
   renderWarning = () => {
-    let { currentCluster } = this.context;
-    if (!currentCluster?.infra_id || !currentCluster.service) {
-      return (
-        <Warning highlight={true}>
-          ⚠️ Deleting the cluster will only detach this cluster from your project. To delete resources you must do so manually.
-        </Warning>
-      );
-    }
+    // let { currentCluster } = this.context;
+    // if (!currentCluster?.infra_id || !currentCluster.service) {
+    //   return (
+    //     <Warning highlight={true}>
+    //       ⚠️ Deleting the cluster will only detach this cluster from your project. To delete resources you must do so manually.
+    //     </Warning>
+    //   );
+    // }
 
     return (
       <Warning highlight={true}>

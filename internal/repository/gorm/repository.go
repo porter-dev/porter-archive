@@ -54,6 +54,8 @@ type GormRepository struct {
 	porterApp                 repository.PorterAppRepository
 	porterAppEvent            repository.PorterAppEventRepository
 	deploymentTarget          repository.DeploymentTargetRepository
+	appTemplate               repository.AppTemplateRepository
+	githubWebhook             repository.GithubWebhookRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -245,6 +247,16 @@ func (t *GormRepository) DeploymentTarget() repository.DeploymentTargetRepositor
 	return t.deploymentTarget
 }
 
+// AppTemplate returns the AppTemplateRepository interface implemented by gorm
+func (t *GormRepository) AppTemplate() repository.AppTemplateRepository {
+	return t.appTemplate
+}
+
+// GithubWebhook returns the GithubWebhookRepository interface implemented by gorm
+func (t *GormRepository) GithubWebhook() repository.GithubWebhookRepository {
+	return t.githubWebhook
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -296,5 +308,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		porterApp:                 NewPorterAppRepository(db),
 		porterAppEvent:            NewPorterAppEventRepository(db),
 		deploymentTarget:          NewDeploymentTargetRepository(db),
+		appTemplate:               NewAppTemplateRepository(db),
+		githubWebhook:             NewGithubWebhookRepository(db),
 	}
 }

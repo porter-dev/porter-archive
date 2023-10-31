@@ -4,6 +4,7 @@ import { boolean } from "zod";
 import Tooltip from "./Tooltip";
 
 type Props = {
+  autoFocus?: boolean;
   placeholder: string;
   width?: string;
   value: string;
@@ -16,9 +17,11 @@ type Props = {
   disabled?: boolean;
   disabledTooltip?: string;
   onValueChange?: (value: string) => void;
+  hideCursor?: boolean;
 };
 
 const Input: React.FC<Props> = ({
+  autoFocus,
   placeholder,
   width,
   value,
@@ -31,6 +34,7 @@ const Input: React.FC<Props> = ({
   disabled,
   disabledTooltip,
   onValueChange,
+  hideCursor = false,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
@@ -53,6 +57,7 @@ const Input: React.FC<Props> = ({
           type={type || "text"}
           hasError={(error && true) || error === ""}
           disabled={disabled ? disabled : false}
+          hideCursor={hideCursor}
         />
         {error && (
           <Error>
@@ -67,6 +72,7 @@ const Input: React.FC<Props> = ({
     <Block width={width}>
       {label && <Label>{label}</Label>}
       <StyledInput
+        autoFocus={autoFocus}
         value={value}
         onChange={handleChange}
         placeholder={placeholder}
@@ -75,6 +81,7 @@ const Input: React.FC<Props> = ({
         type={type || "text"}
         hasError={(error && true) || error === ""}
         disabled={disabled ? disabled : false}
+        hideCursor={hideCursor}
       />
       {error && (
         <Error>
@@ -121,6 +128,7 @@ const StyledInput = styled.input<{
   height: string;
   hasError: boolean;
   disabled: boolean;
+  hideCursor: boolean;
 }>`
   height: ${(props) => props.height || "35px"};
   padding: 5px 10px;
@@ -140,4 +148,5 @@ const StyledInput = styled.input<{
       border: 1px solid ${props.hasError ? "#ff3b62" : "#7a7b80"};
     }
   `}
+  ${(props) => props.hideCursor && "caret-color: transparent;"}
 `;

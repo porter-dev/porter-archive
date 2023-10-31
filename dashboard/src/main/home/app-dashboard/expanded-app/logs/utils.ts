@@ -6,7 +6,7 @@ import Anser from "anser";
 import { Context } from "shared/Context";
 import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
 import { ChartType } from "shared/types";
-import { AgentLog, AgentLogSchema, Direction, PorterLog, PaginationInfo, GenericLogFilter, LogFilterName } from "./types";
+import { AgentLog, agentLogValidator, Direction, PorterLog, PaginationInfo, GenericFilter, FilterName } from "./types";
 import { Service } from "../../new-app-flow/serviceTypes";
 
 const MAX_LOGS = 5000;
@@ -16,7 +16,7 @@ const QUERY_LIMIT = 1000;
 export const parseLogs = (logs: any[] = []): PorterLog[] => {
   return logs.map((log: any, idx) => {
     try {
-      const parsed: AgentLog = AgentLogSchema.parse(log);
+      const parsed: AgentLog = agentLogValidator.parse(log);
 
       // TODO Move log parsing to the render method
       const ansiLog = Anser.ansiToJson(parsed.line);
@@ -27,17 +27,27 @@ export const parseLogs = (logs: any[] = []): PorterLog[] => {
         metadata: parsed.metadata,
       };
     } catch (err) {
-      return {
-        line: Anser.ansiToJson(log.toString()),
-        lineNumber: idx + 1,
-        timestamp: undefined,
+      console.log(err);
+      try {
+        return {
+          line: Anser.ansiToJson(log.toString()),
+          lineNumber: idx + 1,
+          timestamp: undefined,
+        }
+      } catch (error) {
+        console.log(error);
+        return {
+          line: [],
+          lineNumber: idx + 1,
+          timestamp: undefined,
+        }
       }
     }
   });
 };
 
 export const useLogs = (
-  selectedFilterValues: Record<LogFilterName, string>,
+  selectedFilterValues: Record<FilterName, string>,
   appName: string,
   namespace: string,
   searchParam: string,
@@ -63,7 +73,7 @@ export const useLogs = (
   });
 
   // if currentPodName is default value we are looking at all chart pod logs
-  const currentPodSelector = selectedFilterValues.pod_name === GenericLogFilter.getDefaultOption("pod_name").value
+  const currentPodSelector = selectedFilterValues.pod_name === GenericFilter.getDefaultOption("pod_name").value
     ? `${currentChart?.name ?? ''}-.*` : `${currentChart?.name}-${selectedFilterValues.pod_name}-.*`;
 
   // if we are live:
@@ -192,7 +202,7 @@ export const useLogs = (
             newLogs.push(jsonLog)
           } catch (err) {
             // TODO: better error handling
-            // console.log(err)
+            console.log(err)
           }
         });
         const newLogsParsed = parseLogs(newLogs);
@@ -215,16 +225,16 @@ export const useLogs = (
       }
 
       // TODO: refactor this extremely hacky way to filter out pre-deploy logs
-      if (!currentChart?.name.endsWith("-r") && log.metadata.pod_name.startsWith(`${appName}-r`)) {
+      if (!currentChart?.name.endsWith("-r") && log.metadata.pod_name.startsWith(`${appName}-r-`)) {
         return false;
       }
 
-      if (selectedFilterValues.output_stream !== GenericLogFilter.getDefaultOption("output_stream").value &&
+      if (selectedFilterValues.output_stream !== GenericFilter.getDefaultOption("output_stream").value &&
         log.metadata.output_stream !== selectedFilterValues.output_stream) {
         return false;
       }
 
-      if (selectedFilterValues.revision !== GenericLogFilter.getDefaultOption("revision").value &&
+      if (selectedFilterValues.revision !== GenericFilter.getDefaultOption("revision").value &&
         log.metadata.revision !== selectedFilterValues.revision) {
         return false;
       }

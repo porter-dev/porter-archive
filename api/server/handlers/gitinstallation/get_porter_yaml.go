@@ -5,8 +5,6 @@ import (
 	b64 "encoding/base64"
 	"net/http"
 
-	"github.com/porter-dev/porter/api/server/handlers/porter_app"
-
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -16,6 +14,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
 	"gopkg.in/yaml.v2"
 )
@@ -94,22 +93,16 @@ func (c *GithubGetPorterYamlHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	parsed := &porter_app.PorterStackYAML{}
-	err = yaml.Unmarshal([]byte(fileData), parsed)
+	version := &porter_app.YamlVersion{}
+	err = yaml.Unmarshal([]byte(fileData), version)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "invalid porter yaml format")
+		err = telemetry.Error(ctx, span, err, "invalid porter yaml version")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
-	if project.ValidateApplyV2 {
-		if parsed.Version == nil {
-			err = telemetry.Error(ctx, span, nil, "v2 porter yaml is required")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
-
-		if *parsed.Version != "v2" {
+	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
+		if version.Version != "" && version.Version != "v2" {
 			err = telemetry.Error(ctx, span, nil, "porter YAML version is not supported")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
@@ -117,9 +110,8 @@ func (c *GithubGetPorterYamlHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	// backwards compatibility so that old porter yamls are no longer valid
-	if !project.ValidateApplyV2 && parsed.Version != nil {
-		version := *parsed.Version
-		if version != "v1stack" {
+	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
+		if version.Version != "" && version.Version != "v1stack" {
 			err = telemetry.Error(ctx, span, nil, "porter YAML version is not supported")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return

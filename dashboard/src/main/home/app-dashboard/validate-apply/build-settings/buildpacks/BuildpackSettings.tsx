@@ -1,11 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import Helper from "components/form-components/Helper";
 import Error from "components/porter/Error";
 import { useQuery } from "@tanstack/react-query";
 import api from "shared/api";
 import {
-  BUILDPACK_TO_NAME,
   Buildpack,
   DEFAULT_BUILDER_NAME,
   DEFAULT_HEROKU_STACK,
@@ -17,12 +15,11 @@ import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
 import BuildpackList from "./BuildpackList";
 import BuildpackConfigurationModal from "./BuildpackConfigurationModal";
-import { useFieldArray, useFormContext } from "react-hook-form";
-import {
-  BuildOptions,
-  PorterAppFormData,
-  SourceOptions,
-} from "lib/porter-apps";
+import { Controller, useFieldArray, useFormContext } from "react-hook-form";
+import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
+import { BuildOptions } from "lib/porter-apps/build";
+import Select from "components/porter/Select";
+import Text from "components/porter/Text";
 
 type Props = {
   projectId: number;
@@ -30,18 +27,25 @@ type Props = {
     method: "pack";
   };
   source: SourceOptions & { type: "github" };
-  autoDetectionDisabled?: boolean;
+  populateBuildValuesOnceAfterDetection?: boolean;
 };
+
+export const DEFAULT_BUILDERS = [
+  "heroku/buildpacks:20",
+  "paketobuildpacks/builder-jammy-full:latest",
+  "paketobuildpacks/builder:full",
+  "heroku/builder:22",
+  "heroku/builder-classic:22",
+  "heroku/buildpacks:18",
+]
 
 const BuildpackSettings: React.FC<Props> = ({
   projectId,
   build,
   source,
-  autoDetectionDisabled,
+  populateBuildValuesOnceAfterDetection,
 }) => {
-  const [stackOptions, setStackOptions] = useState<
-    { label: string; value: string }[]
-  >([]);
+  const [populateBuild, setPopulateBuild] = useState<boolean>(populateBuildValuesOnceAfterDetection ?? false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [availableBuildpacks, setAvailableBuildpacks] = useState<Buildpack[]>(
     []
@@ -52,13 +56,14 @@ const BuildpackSettings: React.FC<Props> = ({
     name: "app.build.buildpacks",
   });
 
-  const { data, status, refetch } = useQuery(
+  const { data, status } = useQuery(
     [
       "detectBuildpacks",
       projectId,
       source.git_repo_name,
       source.git_branch,
       build.context,
+      isModalOpen,
     ],
     async () => {
       const detectBuildPackRes = await api.detectBuildpack<DetectedBuildpack[]>(
@@ -83,7 +88,9 @@ const BuildpackSettings: React.FC<Props> = ({
       return detectedBuildpacks;
     },
     {
-      enabled: !autoDetectionDisabled,
+      enabled: populateBuild || isModalOpen,
+      retry: 0,
+      refetchOnWindowFocus: false,
     }
   );
 
@@ -92,94 +99,101 @@ const BuildpackSettings: React.FC<Props> = ({
       status === "error"
         ? `Unable to detect buildpacks at path: ${build.context}. Please make sure your repo, branch, and application root path are all set correctly and attempt to detect again.`
         : "",
-    [build.context]
+    [build.context, status]
   );
 
+  const builderOptions = useMemo(() => {
+    const allBuilderOptions = [
+      build.builder,
+      ...DEFAULT_BUILDERS
+    ].sort();
+
+    return Array.from(new Set(allBuilderOptions)).map((builder) => ({
+      label: builder,
+      value: builder,
+    }));
+  }, [build.builder])
+
   useEffect(() => {
-    if (autoDetectionDisabled) {
-      // in this case, we are not detecting buildpacks, so we just populate based on the DB
-      if (build.builder) {
-        setValue("app.build.builder", build.builder);
-        setStackOptions([{ label: build.builder, value: build.builder }]);
-      }
-      if (build.buildpacks.length) {
-        const bps = build.buildpacks.map((bp) => ({
-          ...bp,
-          name: BUILDPACK_TO_NAME[bp.buildpack] ?? bp,
-        }));
-        replace(bps);
-      }
-    } else {
-      if (!data) {
-        return;
-      }
+    if (!data || data.length === 0) {
+      return;
+    }
 
-      if (data.length === 0) {
-        return;
-      }
-      setStackOptions(
-        data
-          .flatMap((builder) => {
-            return builder.builders.map((stack) => ({
-              label: `${builder.name} - ${stack}`,
-              value: stack.toLowerCase(),
-            }));
-          })
-          .sort((a, b) => {
-            if (a.label < b.label) {
-              return -1;
-            }
-            if (a.label > b.label) {
-              return 1;
-            }
-            return 0;
-          })
-      );
+    const defaultBuilder =
+      data.find(
+        (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
+      ) ?? data[0];
 
-      const defaultBuilder =
-        data.find(
-          (builder) => builder.name.toLowerCase() === DEFAULT_BUILDER_NAME
-        ) ?? data[0];
+    const allBuildpacks = defaultBuilder.others.concat(
+      defaultBuilder.detected
+    );
 
-      const allBuildpacks = defaultBuilder.others.concat(
-        defaultBuilder.detected
-      );
+    setAvailableBuildpacks(
+      allBuildpacks.filter(
+        (bp) => !build.buildpacks.some((b) => b.buildpack === bp.buildpack)
+      )
+    );
 
+    if (populateBuild) {
       let detectedBuilder: string;
       if (
         defaultBuilder.builders.length &&
         defaultBuilder.builders.includes(DEFAULT_HEROKU_STACK)
       ) {
-        setValue("app.build.builder", DEFAULT_HEROKU_STACK);
         detectedBuilder = DEFAULT_HEROKU_STACK;
       } else {
-        setValue("app.build.builder", defaultBuilder.builders[0]);
         detectedBuilder = defaultBuilder.builders[0];
       }
 
-      if (!autoDetectionDisabled) {
-        setValue("app.build.builder", detectedBuilder);
-        replace(defaultBuilder.detected);
-        setAvailableBuildpacks(defaultBuilder.others);
-      } else {
-        setValue("app.build.builder", detectedBuilder);
-        setAvailableBuildpacks(
-          allBuildpacks.filter(
-            (bp) => !build.buildpacks.some((b) => b.buildpack === bp.buildpack)
-          )
-        );
-      }
+      setValue("app.build.builder", detectedBuilder);
+      // set buildpacks as well
+      replace(
+        defaultBuilder.detected.map((bp) => ({
+          name: bp.name,
+          buildpack: bp.buildpack,
+        }))
+      );
+      // we only want to change the form values once
+      setPopulateBuild(false);
     }
   }, [data]);
 
   return (
     <BuildpackConfigurationContainer>
+      {!!build.builder && (
+        <Controller
+          control={control}
+          name="app.build.builder"
+          render={({ field: { onChange } }) => (
+            <>
+              <Select
+                value={build.builder}
+                width="300px"
+                options={builderOptions}
+                setValue={(val) => {
+                  onChange(val);
+                }}
+                label={"Builder"}
+                labelColor="#DFDFE1"
+              />
+            </>
+          )}
+        />
+      )}
+      <Spacer y={0.5} />
+      <Text>Buildpacks</Text>
       {build.buildpacks.length > 0 && (
         <>
-          <Helper>
-            The following buildpacks were automatically detected. You can also
-            manually add, remove, or re-order buildpacks here.
-          </Helper>
+          <Spacer y={0.5} />
+          {populateBuildValuesOnceAfterDetection && 
+            <>
+              <Text color="helper">
+                The following buildpacks were detected at your application's root path. You can also
+                manually add, remove, or re-order buildpacks here.
+              </Text>
+              <Spacer y={0.5} />
+            </>
+          }
           <BuildpackList
             build={build}
             availableBuildpacks={availableBuildpacks}
@@ -191,11 +205,19 @@ const BuildpackSettings: React.FC<Props> = ({
           />
         </>
       )}
-      {!autoDetectionDisabled && status === "error" && (
+      {build.buildpacks.length === 0 && !errorMessage && (
+        <>
+          <Spacer y={0.5} />
+          <Text color="helper">
+            No buildpacks have been specified. Click the button below to add buildpacks detected at your application's root path.
+          </Text>
+        </>
+      )}
+      {errorMessage && (
         <>
           <Spacer y={1} />
           <Error
-            message={`Unable to detect buildpacks at path: ${build.context}. Please make sure your repo, branch, and application root path are all set correctly and attempt to detect again.`}
+            message={errorMessage}
           />
         </>
       )}
@@ -205,18 +227,18 @@ const BuildpackSettings: React.FC<Props> = ({
           setIsModalOpen(true);
         }}
       >
-        <I className="material-icons">add</I> Add / detect buildpacks
+        <I className="material-icons">add</I> Add buildpacks
       </Button>
       {isModalOpen && (
         <BuildpackConfigurationModal
           build={build}
-          closeModal={() => setIsModalOpen(false)}
-          sortedStackOptions={stackOptions}
+          closeModal={() => {
+            setIsModalOpen(false);
+          }}
           availableBuildpacks={availableBuildpacks}
           setAvailableBuildpacks={setAvailableBuildpacks}
           isDetectingBuildpacks={status === "loading"}
           detectBuildpacksError={errorMessage}
-          detectAndSetBuildPacks={refetch}
         />
       )}
     </BuildpackConfigurationContainer>

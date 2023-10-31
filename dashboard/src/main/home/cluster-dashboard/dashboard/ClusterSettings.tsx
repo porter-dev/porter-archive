@@ -151,7 +151,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
     </Helper>
   );
 
-  if (!currentCluster?.infra_id || !currentCluster?.service) {
+  if (!currentCluster?.infra_id && !currentProject?.capi_provisioner_enabled || !currentCluster?.service) {
     helperText = (
       <Helper>
         Remove this cluster from Porter. Since this cluster was not provisioned
@@ -357,7 +357,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
         {/* Disabled this field due to https://discord.com/channels/542888846271184896/856554532972134420/1042497537912864788 */}
         {/* {renameClusterSection}
         <DarkMatter /> */}
-        <Heading>Delete cluster</Heading>
+        <Heading>Delete Infrastructure</Heading>
         {helperText}
         <Button
           disabled={

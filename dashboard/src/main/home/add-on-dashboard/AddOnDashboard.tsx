@@ -8,8 +8,7 @@ import React, {
 import styled from "styled-components";
 import _ from "lodash";
 
-import addOn from "assets/add-ons.png";
-import github from "assets/github.png";
+import addOn from "assets/add-ons.svg";
 import time from "assets/time.png";
 import healthy from "assets/status-healthy.png";
 import grid from "assets/grid.png";
@@ -35,11 +34,13 @@ import { Link } from "react-router-dom";
 import Fieldset from "components/porter/Fieldset";
 import Select from "components/porter/Select";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 
 type Props = {
 };
 
 const namespaceBlacklist = [
+  "ack-system",
   "cert-manager",
   "ingress-nginx",
   "kube-node-lease",
@@ -155,32 +156,25 @@ const AddOnDashboard: React.FC<Props> = ({
         <ClusterProvisioningPlaceholder />
       ) : (
 
-
-        (filteredAddOns.length === 0) ? (
+        (addOns.length === 0) ? (
 
           isLoading ?
             (<Loading offset="-150px" />) : (
-              <Fieldset>
-
-                <CentralContainer>
-                  <Text size={16}>
-                    No add-ons have been deployed yet.
-                  </Text>
-                  <Spacer y={1} />
-
-                  <Text color={"helper"}>
-                    Deploy from our suite of curated add-ons.
-                  </Text>
-                  <Spacer y={.5} />
-                  <Link to="/addons/new">
-                    <Button onClick={() => { }} height="35px" >
-                      Deploy add-ons <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
-                    </Button>
-                  </Link>
-                </CentralContainer>
-
-
-              </Fieldset >
+              <DashboardPlaceholder>
+                <Text size={16}>
+                  No add-ons have been deployed yet
+                </Text>
+                <Spacer y={0.5} />
+                <Text color={"helper"}>
+                  Deploy from our suite of curated add-ons.
+                </Text>
+                <Spacer y={1} />
+                <Link to="/addons/new">
+                  <Button alt onClick={() => { }} height="35px" >
+                    Deploy add-ons <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
+                  </Button>
+                </Link>
+              </DashboardPlaceholder>
             )
         ) : (
           <>
@@ -209,7 +203,14 @@ const AddOnDashboard: React.FC<Props> = ({
             </Container>
             <Spacer y={1} />
 
-            {isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
+            {filteredAddOns.length === 0 ? (
+              <Fieldset>
+                <Container row>
+                  <PlaceholderIcon src={notFound} />
+                  <Text color="helper">{searchValue === "" ? "No add-ons have been deployed yet." : "No matching add-ons were found."}</Text>
+                </Container>
+              </Fieldset>
+            ) : (isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
               <GridList>
                 {(filteredAddOns ?? []).map((app: any, i: number) => {
                   return (
@@ -222,6 +223,7 @@ const AddOnDashboard: React.FC<Props> = ({
                           }
                         />
                         <Text size={14}>{app.name}</Text>
+                        <Spacer inline x={2} />
                       </Container>
                       <StatusIcon src={healthy} />
                       <Container row>
@@ -261,6 +263,7 @@ const AddOnDashboard: React.FC<Props> = ({
                   );
                 })}
               </List>
+            )
             )}
           </>
         ))}

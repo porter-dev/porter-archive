@@ -12,7 +12,7 @@ import spinner from "assets/loading.gif";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { getPodSelectorFromServiceName, useLogs } from "./utils";
-import { Direction, GenericFilterOption, GenericLogFilter, LogFilterName, LogFilterQueryParamOpts } from "./types";
+import { Direction, GenericFilterOption, GenericFilter, FilterName, LogFilterQueryParamOpts } from "./types";
 import dayjs, { Dayjs } from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
@@ -26,8 +26,8 @@ import Spacer from "components/porter/Spacer";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 import { Service } from "../../new-app-flow/serviceTypes";
-import LogFilterContainer from "./LogFilterContainer";
 import StyledLogs from "./StyledLogs";
+import Filter from "components/porter/Filter";
 
 type Props = {
   appName: string;
@@ -62,10 +62,11 @@ const LogSection: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [logsError, setLogsError] = useState<string | undefined>(undefined);
 
-  const [selectedFilterValues, setSelectedFilterValues] = useState<Record<LogFilterName, string>>({
-    revision: filterOpts?.revision ?? GenericLogFilter.getDefaultOption("revision").value,
-    output_stream: filterOpts?.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
-    pod_name: getPodSelectorFromServiceName(filterOpts?.service, services) ?? GenericLogFilter.getDefaultOption("pod_name").value,
+  const [selectedFilterValues, setSelectedFilterValues] = useState<Record<FilterName, string>>({
+    revision: filterOpts?.revision ?? GenericFilter.getDefaultOption("revision").value,
+    output_stream: filterOpts?.output_stream ?? GenericFilter.getDefaultOption("output_stream").value,
+    pod_name: getPodSelectorFromServiceName(filterOpts?.service, services) ?? GenericFilter.getDefaultOption("pod_name").value,
+    service_name: filterOpts?.service ?? GenericFilter.getDefaultOption("service_name").value,
   });
 
   const createVersionOptions = (number: number) => {
@@ -109,11 +110,11 @@ const LogSection: React.FC<Props> = ({
     return patch >= 4;
   }
 
-  const [filters, setFilters] = useState<GenericLogFilter[]>(showFilter ? [
+  const [filters, setFilters] = useState<GenericFilter[]>(showFilter ? [
     {
       name: "pod_name",
       displayName: "Service",
-      default: GenericLogFilter.getDefaultOption("pod_name"),
+      default: GenericFilter.getDefaultOption("pod_name"),
       options: services?.map(s => {
         return GenericFilterOption.of(s.name, `${s.name}-${s.type == "worker" ? "wkr" : s.type}`)
       }) ?? [],
@@ -127,7 +128,7 @@ const LogSection: React.FC<Props> = ({
     {
       name: "revision",
       displayName: "Version",
-      default: GenericLogFilter.getDefaultOption("revision"),
+      default: GenericFilter.getDefaultOption("revision"),
       options: currentChart != null ? createVersionOptions(currentChart.version) : [],
       setValue: (value: string) => {
         setSelectedFilterValues((s) => ({
@@ -139,7 +140,7 @@ const LogSection: React.FC<Props> = ({
     {
       name: "output_stream",
       displayName: "Output Stream",
-      default: GenericLogFilter.getDefaultOption("output_stream"),
+      default: GenericFilter.getDefaultOption("output_stream"),
       options: [
         GenericFilterOption.of('stdout', 'stdout'),
         GenericFilterOption.of("stderr", "stderr"),
@@ -183,15 +184,6 @@ const LogSection: React.FC<Props> = ({
     }
   }, [isLoading, logs, scrollToBottomRef, scrollToBottomEnabled]);
 
-
-  const resetFilters = () => {
-    setSelectedFilterValues({
-      revision: filterOpts?.revision ?? GenericLogFilter.getDefaultOption("revision").value,
-      output_stream: filterOpts?.output_stream ?? GenericLogFilter.getDefaultOption("output_stream").value,
-      pod_name: getPodSelectorFromServiceName(filterOpts?.service, services) ?? GenericLogFilter.getDefaultOption("pod_name").value,
-    });
-  };
-
   const onLoadPrevious = useCallback(() => {
     if (!selectedDate) {
       setSelectedDate(dayjs(logs[0].timestamp).toDate());
@@ -200,12 +192,6 @@ const LogSection: React.FC<Props> = ({
 
     moveCursor(Direction.backward);
   }, [logs, selectedDate]);
-
-  const resetSearch = () => {
-    setSearchText("");
-    setEnteredSearchText("");
-    resetFilters();
-  };
 
   const setSelectedDateIfUndefined = () => {
     if (selectedDate == null) {
@@ -224,13 +210,20 @@ const LogSection: React.FC<Props> = ({
               setEnteredSearchText={setEnteredSearchText}
               setSelectedDate={setSelectedDateIfUndefined}
             />
+            <Spacer inline width="10px" />
             <LogQueryModeSelectionToggle
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
-              resetSearch={resetSearch}
             />
           </Flex>
           <Flex>
+            {showFilter && (
+              <Filter
+                filters={filters}
+                selectedFilterValues={selectedFilterValues}
+              />
+            )}
+            <Spacer inline width="10px" />
             <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
               <Checkbox checked={scrollToBottomEnabled}>
                 <i className="material-icons">done</i>
@@ -249,15 +242,6 @@ const LogSection: React.FC<Props> = ({
           </Flex>
         </FlexRow>
         <Spacer y={0.5} />
-        {showFilter &&
-          <>
-            <LogFilterContainer
-              filters={filters}
-              selectedFilterValues={selectedFilterValues}
-            />
-            <Spacer y={0.5} />
-          </>
-        }
         <LogsSectionWrapper>
           <StyledLogsSection>
             {isLoading && <Loading message="Waiting for logs..." />}
@@ -346,7 +330,7 @@ const LogSection: React.FC<Props> = ({
           {
             name: "pod_name",
             displayName: "Service",
-            default: GenericLogFilter.getDefaultOption("pod_name"),
+            default: GenericFilter.getDefaultOption("pod_name"),
             options: services?.map(s => {
               return GenericFilterOption.of(s.name, `${s.name}-${s.type == "worker" ? "wkr" : s.type}`)
             }) ?? [],
@@ -462,7 +446,7 @@ const Checkbox = styled.div<{ checked: boolean }>`
 `;
 
 const ScrollButton = styled.div`
-  background: #26292e;
+  background: #181B20;
   border-radius: 5px;
   height: 30px;
   font-size: 13px;
@@ -584,4 +568,5 @@ const NotificationWrapper = styled.div<{ active?: boolean }>`
 
 const LogsSectionWrapper = styled.div`
   position: relative;
+  margin-top: 10px;
 `;

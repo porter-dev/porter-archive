@@ -1,7 +1,10 @@
 package porter_app
 
 import (
+	"context"
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -10,8 +13,12 @@ import (
 
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
 
+	"github.com/porter-dev/porter/internal/deployment_target"
+	"github.com/porter-dev/porter/internal/porter_app"
+	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 	"github.com/porter-dev/porter/internal/telemetry"
 
+	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -23,6 +30,7 @@ import (
 // ApplyPorterAppHandler is the handler for the /apps/parse endpoint
 type ApplyPorterAppHandler struct {
 	handlers.PorterHandlerReadWriter
+	authz.KubernetesAgentGetter
 }
 
 // NewApplyPorterAppHandler handles POST requests to the endpoint /apps/apply
@@ -33,14 +41,21 @@ func NewApplyPorterAppHandler(
 ) *ApplyPorterAppHandler {
 	return &ApplyPorterAppHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
 // ApplyPorterAppRequest is the request object for the /apps/apply endpoint
 type ApplyPorterAppRequest struct {
-	Base64AppProto     string `json:"b64_app_proto"`
-	DeploymentTargetId string `json:"deployment_target_id"`
-	AppRevisionID      string `json:"app_revision_id"`
+	Base64AppProto     string            `json:"b64_app_proto"`
+	DeploymentTargetId string            `json:"deployment_target_id"`
+	AppRevisionID      string            `json:"app_revision_id"`
+	ForceBuild         bool              `json:"force_build"`
+	Variables          map[string]string `json:"variables"`
+	Secrets            map[string]string `json:"secrets"`
+	// HardEnvUpdate is used to remove any variables that are not specified in the request.  If false, the request will only update the variables specified in the request,
+	// and leave all other variables untouched.
+	HardEnvUpdate bool `json:"hard_env_update"`
 }
 
 // ApplyPorterAppResponse is the response object for the /apps/apply endpoint
@@ -62,7 +77,7 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
 	)
 
-	if !project.ValidateApplyV2 {
+	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
@@ -104,6 +119,13 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 
+		app, err := v2.AppFromProto(appProto)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error converting app proto to app")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
 		if request.DeploymentTargetId == "" {
 			err := telemetry.Error(ctx, span, err, "deployment target id is empty")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -115,6 +137,47 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			telemetry.AttributeKV{Key: "app-name", Value: appProto.Name},
 			telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetId},
 		)
+
+		deploymentTargetDetails, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
+			ProjectID:          int64(project.ID),
+			ClusterID:          int64(cluster.ID),
+			DeploymentTargetID: deploymentTargetID,
+			CCPClient:          c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting deployment target details")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		agent, err := c.GetAgent(r, cluster, "")
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting kubernetes agent")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		subdomainCreateInput := porter_app.CreatePorterSubdomainInput{
+			AppName:             app.Name,
+			RootDomain:          c.Config().ServerConf.AppRootDomain,
+			DNSClient:           c.Config().DNSClient,
+			DNSRecordRepository: c.Repo().DNSRecord(),
+			KubernetesAgent:     agent,
+		}
+
+		appWithDomains, err := addPorterSubdomainsIfNecessary(ctx, app, deploymentTargetDetails, subdomainCreateInput)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error adding porter subdomains")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		appProto, _, err = v2.ProtoFromApp(ctx, appWithDomains)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error converting app to proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
 	}
 
 	applyReq := connect.NewRequest(&porterv1.ApplyPorterAppRequest{
@@ -122,6 +185,12 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		DeploymentTargetId:  deploymentTargetID,
 		App:                 appProto,
 		PorterAppRevisionId: appRevisionID,
+		ForceBuild:          request.ForceBuild,
+		AppEnv: &porterv1.EnvGroupVariables{
+			Normal: request.Variables,
+			Secret: request.Secrets,
+		},
+		IsHardEnvUpdate: request.HardEnvUpdate,
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.ApplyPorterApp(ctx, applyReq)
 	if err != nil {
@@ -163,4 +232,41 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	c.WriteResult(w, r, response)
+}
+
+// addPorterSubdomainsIfNecessary adds porter subdomains to the app proto if a web service is changed to private and has no domains
+func addPorterSubdomainsIfNecessary(ctx context.Context, app v2.PorterApp, deploymentTarget deployment_target.DeploymentTarget, createSubdomainInput porter_app.CreatePorterSubdomainInput) (v2.PorterApp, error) {
+	ctx, span := telemetry.NewSpan(ctx, "add-porter-subdomains-if-necessary")
+	defer span.End()
+
+	services := make([]v2.Service, 0)
+
+	for _, service := range app.Services {
+		if service.Type == v2.ServiceType_Web {
+			if service.Private != nil && !*service.Private && service.Domains != nil && len(service.Domains) == 0 {
+				if deploymentTarget.Namespace != DeploymentTargetSelector_Default {
+					createSubdomainInput.AppName = fmt.Sprintf("%s-%s", createSubdomainInput.AppName, deploymentTarget.ID[:6])
+				}
+
+				subdomain, err := porter_app.CreatePorterSubdomain(ctx, createSubdomainInput)
+				if err != nil {
+					return app, fmt.Errorf("error creating subdomain: %w", err)
+				}
+
+				if subdomain == "" {
+					return app, errors.New("response subdomain is empty")
+				}
+
+				service.Domains = []v2.Domains{
+					{Name: subdomain},
+				}
+			}
+		}
+
+		services = append(services, service)
+	}
+
+	app.Services = services
+
+	return app, nil
 }

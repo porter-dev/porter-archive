@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import {
   PorterAppFormData,
@@ -7,7 +13,6 @@ import {
   porterAppFormValidator,
 } from "lib/porter-apps";
 import { zodResolver } from "@hookform/resolvers/zod";
-import RevisionsList from "./RevisionsList";
 import { useLatestRevision } from "./LatestRevisionContext";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
@@ -18,52 +23,83 @@ import { useAppValidation } from "lib/hooks/useAppValidation";
 import api from "shared/api";
 import { useQueryClient } from "@tanstack/react-query";
 import Settings from "./tabs/Settings";
-import BuildSettings from "./tabs/BuildSettings";
+import BuildSettingsTab from "./tabs/BuildSettingsTab";
 import Environment from "./tabs/Environment";
 import AnimateHeight from "react-animate-height";
 import Banner from "components/porter/Banner";
 import Button from "components/porter/Button";
 import Icon from "components/porter/Icon";
 import save from "assets/save-01.svg";
+import LogsTab from "./tabs/LogsTab";
+import MetricsTab from "./tabs/MetricsTab";
+import RevisionsList from "../validate-apply/revisions-list/RevisionsList";
+import Activity from "./tabs/Activity";
+import EventFocusView from "./tabs/activity-feed/events/focus-views/EventFocusView";
+import { z } from "zod";
+import { PorterApp } from "@porter-dev/api-contracts";
+import JobsTab from "./tabs/JobsTab";
+import ConfirmRedeployModal from "./ConfirmRedeployModal";
+import ImageSettingsTab from "./tabs/ImageSettingsTab";
+import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { Error as ErrorComponent } from "components/porter/Error";
+import _ from "lodash";
+import axios from "axios";
+import HelmEditorTab from "./tabs/HelmEditorTab";
+import HelmLatestValuesTab from "./tabs/HelmLatestValuesTab";
+import { Context } from "shared/Context";
+import { useIntercom } from "lib/hooks/useIntercom";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
 const validTabs = [
-  // "activity",
-  // "events",
+  "activity",
+  "events",
   "overview",
-  // "logs",
-  // "metrics",
+  "logs",
+  "metrics",
   // "debug",
   "environment",
   "build-settings",
+  "image-settings",
   "settings",
-  // "helm-values",
-  // "job-history",
+  "helm-overrides",
+  "helm-values",
+  "job-history",
 ] as const;
-const DEFAULT_TAB = "overview";
+const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
 
 type AppDataContainerProps = {
   tabParam?: string;
 };
 
+// todo(ianedwards): refactor button to use more predictable state
+export type ButtonStatus = "" | "loading" | JSX.Element | "success";
+
 const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const history = useHistory();
   const queryClient = useQueryClient();
-  const [redeployOnSave, setRedeployOnSave] = useState(false);
+  const [confirmDeployModalOpen, setConfirmDeployModalOpen] = useState(false);
+
+  const { currentProject, user } = useContext(Context);
+
+  const { updateAppStep } = useAppAnalytics();
+  const { showIntercomWithMessage } = useIntercom();
 
   const {
-    porterApp,
+    porterApp: porterAppRecord,
     latestProto,
+    previewRevision,
     latestRevision,
     projectId,
     clusterId,
-    deploymentTargetId,
+    deploymentTarget,
     servicesFromYaml,
+    appEnv,
+    setPreviewRevision,
   } = useLatestRevision();
   const { validateApp } = useAppValidation({
-    deploymentTargetID: deploymentTargetId,
+    deploymentTargetID: deploymentTarget.id,
   });
 
   const currentTab = useMemo(() => {
@@ -75,38 +111,55 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [tabParam]);
 
   const latestSource: SourceOptions = useMemo(() => {
-    if (porterApp.image_repo_uri) {
-      const [repository, tag] = porterApp.image_repo_uri.split(":");
+    // because we store the image info in the app proto, we can refer to that for repository/tag instead of the app record
+    if (porterAppRecord.image_repo_uri && latestProto.image) {
       return {
         type: "docker-registry",
         image: {
-          repository,
-          tag,
+          repository: latestProto.image.repository,
+          tag: latestProto.image.tag,
         },
       };
     }
 
+    // the app proto does not contain the fields below, so we must pull them from the app record
     return {
       type: "github",
-      git_repo_id: porterApp.git_repo_id ?? 0,
-      git_repo_name: porterApp.repo_name ?? "",
-      git_branch: porterApp.git_branch ?? "",
-      porter_yaml_path: porterApp.porter_yaml_path ?? "./porter.yaml",
+      git_repo_id: porterAppRecord.git_repo_id ?? 0,
+      git_repo_name: porterAppRecord.repo_name ?? "",
+      git_branch: porterAppRecord.git_branch ?? "",
+      porter_yaml_path: porterAppRecord.porter_yaml_path ?? "./porter.yaml",
     };
-  }, [porterApp]);
+  }, [porterAppRecord, latestProto]);
 
   const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",
     resolver: zodResolver(porterAppFormValidator),
     defaultValues: {
-      app: clientAppFromProto(latestProto, servicesFromYaml),
+      app: clientAppFromProto({
+        proto: latestProto,
+        overrides: servicesFromYaml,
+      }),
       source: latestSource,
+      deletions: {
+        serviceNames: [],
+        envGroupNames: [],
+        predeploy: [],
+      },
     },
   });
+
   const {
     reset,
     handleSubmit,
-    formState: { isDirty, dirtyFields, isSubmitting },
+    setError,
+    formState: {
+      isDirty,
+      dirtyFields,
+      isSubmitting,
+      errors,
+      isSubmitSuccessful,
+    },
   } = porterAppFormMethods;
 
   // getAllDirtyFields recursively gets all dirty fields from the dirtyFields object
@@ -140,14 +193,42 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     return dirty.every((f) => f === "expanded" || f === "id");
   }, [isDirty, JSON.stringify(dirtyFields)]);
 
+  const buildIsDirty = useMemo(() => {
+    if (!isDirty) return false;
+
+    // get all entries in entire dirtyFields object that are true
+    const dirty = getAllDirtyFields(dirtyFields.app?.build ?? {});
+    return dirty.some((f) => f);
+  }, [isDirty, JSON.stringify(dirtyFields)]);
+
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const validatedAppProto = await validateApp(data);
+      const { variables, secrets, validatedAppProto } = await validateApp(
+        data,
+        latestProto
+      );
+
+      const needsRebuild =
+        buildIsDirty ||
+        latestRevision.status === "BUILD_FAILED" ||
+        latestRevision.status === "PREDEPLOY_FAILED";
+
+      if (needsRebuild && !data.redeployOnSave) {
+        setConfirmDeployModalOpen(true);
+        return;
+      }
+
+      // force_build will create a new 0 revision that will not be deployed
+      // but will be used to hydrate values when the workflow is run
       await api.applyApp(
         "<token>",
         {
           b64_app_proto: btoa(validatedAppProto.toJsonString()),
-          deployment_target_id: deploymentTargetId,
+          deployment_target_id: deploymentTarget.id,
+          force_build: needsRebuild,
+          variables,
+          secrets,
+          hard_env_update: true,
         },
         {
           project_id: projectId,
@@ -155,12 +236,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         }
       );
 
-      if (
-        redeployOnSave &&
-        latestSource.type === "github" &&
-        dirtyFields.app?.build
-      ) {
-        await api.reRunGHWorkflow(
+      if (latestSource.type === "github" && needsRebuild) {
+        const res = await api.reRunGHWorkflow(
           "<token>",
           {},
           {
@@ -169,50 +246,251 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             git_installation_id: latestSource.git_repo_id,
             owner: latestSource.git_repo_name.split("/")[0],
             name: latestSource.git_repo_name.split("/")[1],
-            branch: porterApp.git_branch,
-            filename: "porter_stack_" + porterApp.name + ".yml",
+            branch: porterAppRecord.git_branch,
+            filename: "porter_stack_" + porterAppRecord.name + ".yml",
           }
         );
 
-        setRedeployOnSave(false);
+        if (res.data != null) {
+          window.open(res.data, "_blank", "noreferrer");
+        }
       }
-
       await queryClient.invalidateQueries([
         "getLatestRevision",
         projectId,
         clusterId,
-        deploymentTargetId,
-        porterApp.name,
+        deploymentTarget.id,
+        porterAppRecord.name,
       ]);
+      setPreviewRevision(null);
 
-      reset({
-        app: clientAppFromProto(latestProto, servicesFromYaml),
-        source: latestSource,
+      if (deploymentTarget.preview) {
+        history.push(
+          `/preview-environments/apps/${porterAppRecord.name}/${DEFAULT_TAB}?target=${deploymentTarget.id}`
+        );
+        return;
+      }
+
+      // redirect to the default tab after save
+      history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
+    } catch (err) {
+      showIntercomWithMessage({
+        message: "I am running into an issue updating my application.",
       });
-    } catch (err) {}
-  });
 
-  useEffect(() => {
-    if (servicesFromYaml) {
-      reset({
-        app: clientAppFromProto(latestProto, servicesFromYaml),
-        source: latestSource,
+      let message =
+        "App update failed: please try again or contact support@porter.run if the error persists.";
+      let stack = "Unable to get error stack";
+
+      if (axios.isAxiosError(err)) {
+        const parsed = z
+          .object({ error: z.string() })
+          .safeParse(err.response?.data);
+        if (parsed.success) {
+          message = `App update failed: ${parsed.data.error}`;
+        }
+        stack = err.stack ?? "(No error stack)";
+      }
+
+      updateAppStep({
+        step: "porter-app-update-failure",
+        errorMessage: message,
+        appName: latestProto.name,
+        errorStackTrace: stack,
+      });
+      setError("app", {
+        message,
       });
     }
-  }, [servicesFromYaml, currentTab]);
+  });
+
+  const cancelRedeploy = useCallback(() => {
+    const resetProto = previewRevision
+      ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
+          ignoreUnknownFields: true,
+        })
+      : latestProto;
+
+    // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
+    // however, for image settings, we can pull image repo and tag from the proto
+    const resetSource =
+      porterAppRecord.image_repo_uri && resetProto.image
+        ? {
+            type: "docker-registry" as const,
+            image: {
+              repository: resetProto.image.repository,
+              tag: resetProto.image.tag,
+            },
+          }
+        : latestSource;
+
+    reset({
+      app: clientAppFromProto({
+        proto: resetProto,
+        overrides: servicesFromYaml,
+        variables: appEnv?.variables,
+        secrets: appEnv?.secret_variables,
+      }),
+      source: resetSource,
+      deletions: {
+        predeploy: [],
+        envGroupNames: [],
+        serviceNames: [],
+      },
+      redeployOnSave: false,
+    });
+    setConfirmDeployModalOpen(false);
+  }, [previewRevision, latestProto, servicesFromYaml, appEnv, latestSource]);
+
+  const finalizeDeploy = useCallback(() => {
+    setConfirmDeployModalOpen(false);
+    onSubmit();
+  }, [onSubmit, setConfirmDeployModalOpen]);
+
+  const buttonStatus = useMemo(() => {
+    if (isSubmitting) {
+      return "loading";
+    }
+
+    // TODO: create a more unified way of parsing form/apply errors, unified with the logic in CreateApp
+    const errorKeys = Object.keys(errors);
+    if (errorKeys.length > 0) {
+      const stringifiedJson = JSON.stringify(errors);
+      let errorMessage =
+        "App update failed. Please try again. If the error persists, please contact support@porter.run.";
+      if (errorKeys.includes("app")) {
+        const appErrors = Object.keys(errors.app ?? {});
+        if (appErrors.includes("build")) {
+          errorMessage = "Build settings are not properly configured.";
+        } else if (appErrors.includes("services")) {
+          errorMessage = "Service settings are not properly configured";
+          if (
+            errors.app?.services?.root?.message ||
+            errors.app?.services?.message
+          ) {
+            const serviceErrorMessage =
+              errors.app?.services?.root?.message ??
+              errors.app?.services?.message;
+            errorMessage = `${errorMessage} - ${serviceErrorMessage}`;
+          }
+          errorMessage = `${errorMessage}. To undo all changes, refresh the page.`;
+        } else if (appErrors.includes("message")) {
+          // this is the high level error message coming from the apply
+          errorMessage = errors.app?.message ?? errorMessage;
+        }
+      }
+
+      showIntercomWithMessage({
+        message: "I am running into an issue updating my application.",
+      });
+      updateAppStep({
+        step: "porter-app-update-failure",
+        errorMessage: `Form validation error (visible to user): ${errorMessage}. Stringified JSON errors (invisible to user): ${stringifiedJson}`,
+        appName: latestProto.name,
+      });
+
+      return <ErrorComponent message={errorMessage} maxWidth="600px" />;
+    }
+
+    if (isSubmitSuccessful) {
+      return "success";
+    }
+
+    return "";
+  }, [isSubmitting, JSON.stringify(errors)]);
+
+  const tabs = useMemo(() => {
+    const base = [
+      { label: "Activity", value: "activity" },
+      { label: "Overview", value: "overview" },
+      { label: "Logs", value: "logs" },
+      { label: "Metrics", value: "metrics" },
+      { label: "Environment", value: "environment" },
+    ];
+
+    if (deploymentTarget.preview) {
+      return base;
+    }
+
+    if (latestProto.build) {
+      base.push({
+        label: "Build Settings",
+        value: "build-settings",
+      });
+    } else {
+      base.push({
+        label: "Image Settings",
+        value: "image-settings",
+      });
+    }
+
+    {
+      (currentProject?.helm_values_enabled || user?.isPorterUser) &&
+        base.push({ label: "Helm Overrides", value: "helm-overrides" });
+    }
+    {
+      user?.isPorterUser &&
+        base.push({ label: "Latest Helm Values", value: "helm-values" });
+    }
+    base.push({ label: "Settings", value: "settings" });
+    return base;
+  }, [deploymentTarget.preview, latestProto.build]);
+
+  useEffect(() => {
+    const newProto = previewRevision
+      ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
+          ignoreUnknownFields: true,
+        })
+      : latestProto;
+
+    // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
+    // however, for image settings, we can pull image repo and tag from the proto
+    const newSource =
+      porterAppRecord.image_repo_uri && newProto.image
+        ? {
+            type: "docker-registry" as const,
+            image: {
+              repository: newProto.image.repository,
+              tag: newProto.image.tag,
+            },
+          }
+        : latestSource;
+
+    reset({
+      app: clientAppFromProto({
+        proto: newProto,
+        overrides: servicesFromYaml,
+        variables: appEnv?.variables,
+        secrets: appEnv?.secret_variables,
+      }),
+      source: newSource,
+      deletions: {
+        envGroupNames: [],
+        serviceNames: [],
+        predeploy: [],
+      },
+      redeployOnSave: false,
+    });
+  }, [
+    servicesFromYaml,
+    currentTab,
+    JSON.stringify(latestProto),
+    previewRevision,
+    latestRevision.revision_number,
+    appEnv,
+  ]);
 
   return (
     <FormProvider {...porterAppFormMethods}>
       <form onSubmit={onSubmit}>
         <RevisionsList
           latestRevisionNumber={latestRevision.revision_number}
-          deploymentTargetId={deploymentTargetId}
+          deploymentTargetId={deploymentTarget.id}
           projectId={projectId}
           clusterId={clusterId}
-          appName={porterApp.name}
-          sourceType={latestSource.type}
+          appName={porterAppRecord.name}
+          onSubmit={onSubmit}
         />
-        <Spacer y={1} />
         <AnimateHeight height={isDirty && !onlyExpandedChanged ? "auto" : 0}>
           <Banner
             type="warning"
@@ -223,7 +501,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                   loadingText={"Updating..."}
                   height={"10px"}
                   status={isSubmitting ? "loading" : ""}
-                  disabled={isSubmitting}
+                  disabled={
+                    isSubmitting ||
+                    latestRevision.status === "CREATED" ||
+                    latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+                  }
+                  disabledTooltipMessage="Please wait for the deploy to complete before updating the app"
                 >
                   <Icon src={save} height={"13px"} />
                   <Spacer inline x={0.5} />
@@ -239,38 +522,57 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         </AnimateHeight>
         <TabSelector
           noBuffer
-          options={[
-            { label: "Overview", value: "overview" },
-            { label: "Environment", value: "environment" },
-            ...(latestProto.build
-              ? [
-                  {
-                    label: "Build Settings",
-                    value: "build-settings",
-                  },
-                ]
-              : []),
-            { label: "Settings", value: "settings" },
-          ]}
+          options={tabs}
           currentTab={currentTab}
           setCurrentTab={(tab) => {
-            history.push(`/apps/${porterApp.name}/${tab}`);
+            if (deploymentTarget.preview) {
+              history.push(
+                `/preview-environments/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`
+              );
+              return;
+            }
+            history.push(`/apps/${porterAppRecord.name}/${tab}`);
           }}
         />
         <Spacer y={1} />
         {match(currentTab)
-          .with("overview", () => <Overview />)
+          .with("activity", () => <Activity />)
+          .with("overview", () => <Overview buttonStatus={buttonStatus} />)
           .with("build-settings", () => (
-            <BuildSettings
-              redeployOnSave={redeployOnSave}
-              setRedeployOnSave={setRedeployOnSave}
+            <BuildSettingsTab buttonStatus={buttonStatus} />
+          ))
+          .with("image-settings", () => (
+            <ImageSettingsTab buttonStatus={buttonStatus} />
+          ))
+          .with("environment", () => (
+            <Environment
+              latestSource={latestSource}
+              buttonStatus={buttonStatus}
             />
           ))
-          .with("environment", () => <Environment />)
           .with("settings", () => <Settings />)
+          .with("logs", () => <LogsTab />)
+          .with("metrics", () => <MetricsTab />)
+          .with("events", () => <EventFocusView />)
+          .with("job-history", () => <JobsTab />)
+          .with("helm-overrides", () => (
+            <HelmEditorTab
+              buttonStatus={buttonStatus}
+              featureFlagEnabled={currentProject?.helm_values_enabled ?? false}
+            />
+          ))
+          .with("helm-values", () => <HelmLatestValuesTab />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>
+      {confirmDeployModalOpen ? (
+        <ConfirmRedeployModal
+          setOpen={setConfirmDeployModalOpen}
+          cancelRedeploy={cancelRedeploy}
+          finalizeDeploy={finalizeDeploy}
+          buildIsDirty={buildIsDirty}
+        />
+      ) : null}
     </FormProvider>
   );
 };

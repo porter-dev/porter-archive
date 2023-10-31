@@ -1,0 +1,43 @@
+version: v2
+name: test-app
+image:
+  repository: nginx
+  tag: latest
+services:
+  - name: example-web
+    type: web
+    run: node index.js
+    port: 8080
+    cpuCores: 0.1
+    ramMegabytes: 256
+    autoscaling:
+      enabled: true
+      minInstances: 1
+      maxInstances: 3
+      memoryThresholdPercent: 60
+      cpuThresholdPercent: 60
+    domains:
+      - name: test1.example.com
+      - name: test2.example.com
+    healthCheck:
+      enabled: true
+      httpPath: /healthz
+  - name: example-wkr
+    type: worker
+    run: echo 'work'
+    port: 80
+    cpuCores: 0.1
+    ramMegabytes: 256
+    instances: 1
+  - name: example-job
+    type: job
+    run: echo 'hello world'
+    allowConcurrent: true
+    cpuCores: 0.1
+    ramMegabytes: 256
+    cron: '*/10 * * * *'
+    timeoutSeconds: 60
+    suspendCron: false
+predeploy:
+  type: job
+  run: ls

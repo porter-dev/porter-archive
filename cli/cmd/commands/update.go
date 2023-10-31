@@ -443,9 +443,9 @@ the image that the application uses if no --values file is specified:
 	return updateCmd
 }
 
-func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
-		err := v2.UpdateFull(ctx)
+		err := v2.UpdateFull(ctx, cliConf, client, app)
 		if err != nil {
 			return err
 		}
@@ -503,7 +503,7 @@ func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 	return nil
 }
 
-func updateGetEnv(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func updateGetEnv(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	updateAgent, err := updateGetAgent(ctx, client, cliConf)
 	if err != nil {
 		return err
@@ -526,7 +526,7 @@ func updateGetEnv(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 	return updateAgent.WriteBuildEnv(getEnvFileDest)
 }
 
-func updateBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func updateBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.UpdateBuild(ctx)
 		if err != nil {
@@ -543,7 +543,7 @@ func updateBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cli
 	return updateBuildWithAgent(ctx, updateAgent)
 }
 
-func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if app == "" {
 		if len(args) == 0 {
 			return fmt.Errorf("please provide the docker image name")
@@ -602,7 +602,7 @@ func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 	return updatePushWithAgent(ctx, updateAgent)
 }
 
-func updateUpgrade(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func updateUpgrade(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.UpdateUpgrade(ctx)
 		if err != nil {
@@ -635,7 +635,7 @@ func updateUpgrade(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 	return nil
 }
 
-func updateSetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func updateSetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if len(normalEnvGroupVars) == 0 && len(secretEnvGroupVars) == 0 && len(args) == 0 {
 		return fmt.Errorf("please provide one or more variables to update")
 	}
@@ -743,7 +743,7 @@ func validateVarValue(in string) (string, string, error) {
 	return key, value, nil
 }
 
-func updateUnsetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, args []string) error {
+func updateUnsetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("required variable name")
 	}

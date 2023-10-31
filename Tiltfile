@@ -2,15 +2,17 @@ load('ext://restart_process', 'docker_build_with_restart')
 
 secret_settings(disable_scrub=True)
 
-if not os.path.exists("vendor"):
-    local(command="go mod vendor")
-
 if config.tilt_subcommand == "up":
+    if not os.path.exists("vendor"):
+        local(command="go mod vendor")
+
     local(command="cd dashboard; npm i --legacy-peer-deps")
 
 if config.tilt_subcommand == "down":
-    local(command="rm -rf vendor")
-    local(command="rm -rf dashboard/node_modules")
+    if os.path.exists("vendor"):
+        local(command="rm -rf vendor")
+    if os.path.exists("dashboard/node_modules"):
+        local(command="rm -rf dashboard/node_modules")
 
 build_args = "GOOS=linux GOARCH=arm64"
 if os.getenv("PLATFORM") == "amd64":
@@ -34,6 +36,11 @@ if (cluster.startswith("kind-")):
     k8s_yaml(updated_install)
 else:
     local("echo 'Be careful that you aren't connected to a staging or prod cluster' && exit 1")
+    exit()
+
+ngrok_url = os.getenv("NGROK_URL")
+if ngrok_url == "":
+    local("echo 'NGROK_URL env variable is required but not set' && exit 1")
     exit()
 
 k8s_resource(
@@ -142,5 +149,7 @@ local_resource(
     resource_deps=["postgresql"],
     labels=["porter"]
 )
-# local_resource('public-url', serve_cmd='lt --subdomain "$(whoami)" --port 8080', resource_deps=["porter-dashboard"], labels=["porter"])
-# local_resource('public-url', serve_cmd='ngrok http 8081 --log=stdout', resource_deps=["porter-dashboard"], labels=["porter"])
+local_resource('public-url', 
+serve_cmd='''
+echo " \n\n****** NGROK URL ****** \n\n" && echo https://%s && echo "\n\n********\n\n" && ngrok http 8081 --log=stdout --domain=%s''' 
+% (ngrok_url, ngrok_url), resource_deps=["porter-dashboard"], labels=["porter"])

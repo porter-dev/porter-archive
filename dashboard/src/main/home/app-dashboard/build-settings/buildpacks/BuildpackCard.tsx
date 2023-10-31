@@ -1,12 +1,12 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { DeviconsNameList } from "assets/devicons-name-list";
 import styled, { keyframes } from "styled-components";
 import { Draggable } from "react-beautiful-dnd";
-import { Buildpack } from "../../types/buildpack";
+import { Buildpack } from "main/home/app-dashboard/types/buildpack";
 
 interface Props {
   buildpack: Buildpack;
-  action: 'add' | 'remove';
+  action: "add" | "remove";
   onClickFn: (buildpack: string) => void;
   index: number;
   draggable: boolean;
@@ -19,65 +19,73 @@ const BuildpackCard: React.FC<Props> = ({
   index,
   draggable,
 }) => {
-  const [languageName] = buildpack.name?.split("/").reverse();
+  const iconClassName = useMemo(() => {
+    if (!buildpack.name) {
+      return "";
+    }
 
-  const devicon = DeviconsNameList.find(
-    (devicon) => languageName.toLowerCase() === devicon.name
+    const splits = buildpack.name.split("/");
+    if (splits.length !== 1) {
+      return "";
+    }
+
+    const devicon = DeviconsNameList.find(
+      (devicon) => splits[0].toLowerCase() === devicon.name
+    );
+    if (!devicon) {
+      return "";
+    }
+    return `devicon-${devicon.name}-plain colored`
+  }, [buildpack.name]);
+
+  const renderedBuildpackName = useMemo(() => {
+    return buildpack.name ?? buildpack.buildpack;
+  }, [buildpack.name]);
+
+  return draggable ? (
+    <Draggable draggableId={renderedBuildpackName} index={index} key={renderedBuildpackName}>
+      {(provided) => (
+        <StyledCard
+          marginBottom="5px"
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          ref={provided.innerRef}
+          key={renderedBuildpackName}
+        >
+          <ContentContainer>
+            {iconClassName && <Icon className={iconClassName} />}
+            <EventInformation>
+              <EventName>{renderedBuildpackName}</EventName>
+            </EventInformation>
+          </ContentContainer>
+          <ActionContainer>
+            <ActionButton onClick={() => onClickFn(buildpack.buildpack)}>
+              <span className="material-icons">
+                {action === "remove" ? "delete" : "add"}
+              </span>
+            </ActionButton>
+          </ActionContainer>
+        </StyledCard>
+      )}
+    </Draggable>
+  ) : (
+    <StyledCard marginBottom="5px" key={renderedBuildpackName}>
+      <ContentContainer>
+        {iconClassName && <Icon className={iconClassName} />}
+        <EventInformation>
+          <EventName>{renderedBuildpackName}</EventName>
+        </EventInformation>
+      </ContentContainer>
+      <ActionContainer>
+        <ActionButton onClick={() => onClickFn(buildpack.buildpack)}>
+          <span className="material-icons">
+            {action === "remove" ? "delete" : "add"}
+          </span>
+        </ActionButton>
+      </ActionContainer>
+    </StyledCard>
   );
-
-  const icon = `devicon-${devicon?.name}-plain colored`;
-
-  return (
-    draggable ?
-      <Draggable
-        draggableId={buildpack.name}
-        index={index}
-        key={buildpack.name}
-      >
-        {(provided) => (
-          <StyledCard
-            marginBottom="5px"
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-            ref={provided.innerRef}
-            key={buildpack.name}
-          >
-            <ContentContainer>
-              <Icon disableMarginRight={devicon == null} className={icon} />
-              <EventInformation>
-                <EventName>{buildpack?.name}</EventName>
-              </EventInformation>
-            </ContentContainer>
-            <ActionContainer>
-              <ActionButton
-                onClick={() => onClickFn(buildpack.buildpack)}
-              >
-                <span className="material-icons">{action === "remove" ? "delete" : "add"}</span>
-              </ActionButton>
-
-            </ActionContainer>
-          </StyledCard>
-        )}
-      </Draggable>
-      :
-      <StyledCard marginBottom="5px" key={buildpack.name}>
-        <ContentContainer>
-          <Icon disableMarginRight={devicon == null} className={icon} />
-          <EventInformation>
-            <EventName>{buildpack?.name}</EventName>
-          </EventInformation>
-        </ContentContainer>
-        <ActionContainer>
-          <ActionButton
-            onClick={() => onClickFn(buildpack.buildpack)}
-          >
-            <span className="material-icons">{action === "remove" ? "delete" : "add"}</span>
-          </ActionButton>
-
-        </ActionContainer>
-      </StyledCard>
-  );
-}
+};
 
 export default BuildpackCard;
 
@@ -112,14 +120,10 @@ const ContentContainer = styled.div`
   align-items: center;
 `;
 
-const Icon = styled.span<{ disableMarginRight: boolean }>`
+const Icon = styled.span`
   font-size: 20px;
   margin-left: 10px;
-  ${(props) => {
-    if (!props.disableMarginRight) {
-      return "margin-right: 20px";
-    }
-  }}
+  margin-right: 20px
 `;
 
 const EventInformation = styled.div`
@@ -154,12 +158,10 @@ const ActionButton = styled.button`
   border-radius: 50%;
   cursor: pointer;
   color: #aaaabb;
-
   :hover {
     background: #ffffff11;
     border: 1px solid #ffffff44;
   }
-
   > span {
     font-size: 20px;
   }

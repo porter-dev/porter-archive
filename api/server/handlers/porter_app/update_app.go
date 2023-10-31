@@ -86,10 +86,16 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var appRevisionID string
-	var appProto *porterv1.PorterApp
-	var deploymentTargetID string
+	if request.DeploymentTargetId == "" {
+		err := telemetry.Error(ctx, span, nil, "deployment target id is empty")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+	deploymentTargetID := request.DeploymentTargetId
 
+	appProto := &porterv1.PorterApp{}
+
+	var appRevisionID string
 	if request.AppRevisionID != "" {
 		appRevisionID = request.AppRevisionID
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-revision-id", Value: request.AppRevisionID})
@@ -121,13 +127,6 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
-
-		if request.DeploymentTargetId == "" {
-			err := telemetry.Error(ctx, span, err, "deployment target id is empty")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
-		deploymentTargetID = request.DeploymentTargetId
 
 		telemetry.WithAttributes(span,
 			telemetry.AttributeKV{Key: "app-name", Value: appProto.Name},
@@ -215,10 +214,12 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updateReq := connect.NewRequest(&porterv1.UpdateAppRequest{
-		ProjectId:          int64(project.ID),
-		DeploymentTargetId: deploymentTargetID,
-		App:                appProto,
-		AppRevisionId:      appRevisionID,
+		ProjectId: int64(project.ID),
+		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+			Id: deploymentTargetID,
+		},
+		App:           appProto,
+		AppRevisionId: appRevisionID,
 		AppEnv: &porterv1.EnvGroupVariables{
 			Normal: request.Variables,
 			Secret: request.Secrets,
@@ -230,10 +231,9 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			EnvGroupNames:    request.Deletions.EnvGroupNames,
 			ServiceDeletions: serviceDeletions,
 		},
-		AppOverrides:        overrides,
-		CommitSha:           request.CommitSHA,
-		IsEnvOverride:       request.IsEnvOverride,
-		IsAwaitingPredeploy: request.IsAwaitingPredeploy,
+		AppOverrides:  overrides,
+		CommitSha:     request.CommitSHA,
+		IsEnvOverride: request.IsEnvOverride,
 	})
 
 	ccpResp, err := c.Config().ClusterControlPlaneClient.UpdateApp(ctx, updateReq)

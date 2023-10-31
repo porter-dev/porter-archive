@@ -49,11 +49,7 @@ import EventFocusView from "./activity-feed/events/focus-views/EventFocusView";
 import HelmValuesTab from "./HelmValuesTab";
 import SettingsTab from "./SettingsTab";
 import PorterAppRevisionSection from "./PorterAppRevisionSection";
-<<<<<<< HEAD
-import NotificationFeed from "./notifications/NotificationFeed";
-=======
 import ImageSettingsTab from "./ImageSettingsTab";
->>>>>>> acd1491a9b9e34b2723bb3f6158c5aa68df9f6f2
 
 type Props = RouteComponentProps & {};
 

@@ -3,7 +3,9 @@ package notifications
 import (
 	"context"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -90,6 +92,8 @@ type Notification struct {
 	HumanReadableDetail  string     `json:"human_readable_detail"`
 	HumanReadableSummary string     `json:"human_readable_summary"`
 	Deployment           Deployment `json:"deployment"`
+	Timestamp            time.Time  `json:"timestamp"`
+	ID                   uuid.UUID  `json:"id"`
 }
 
 // agentEventToNotification converts an app event to a notification
@@ -107,6 +111,8 @@ func agentEventToNotification(appEventMetadata AppEventMetadata) Notification {
 		AppRevisionID:       appEventMetadata.AppRevisionID,
 		Deployment:          Deployment{Status: DeploymentStatus_Unknown},
 		HumanReadableDetail: humanReadableDetail,
+		Timestamp:           time.Now().UTC(),
+		ID:                  uuid.New(),
 	}
 	return notification
 }

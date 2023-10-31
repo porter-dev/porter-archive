@@ -1,13 +1,13 @@
 import React from "react";
 import styled from "styled-components";
-import { PorterAppNotificationEvent } from "../activity-feed/events/types";
+import { PorterAppNotification } from "../activity-feed/events/types";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import document from "assets/document.svg";
 import Button from "components/porter/Button";
 
 type Props = {
-  notification: PorterAppNotificationEvent;
+  notification: PorterAppNotification;
 }
 
 const NotificationExpandedView: React.FC<Props> = ({
@@ -18,11 +18,11 @@ const NotificationExpandedView: React.FC<Props> = ({
       <ExpandedViewContent>
         <Text color="helper">Event ID: {notification.id}</Text>
         <Spacer y={0.5} />
-        <Text size={16}>{notification.metadata.human_readable_summary}</Text>
+        <Text size={16}>{notification.human_readable_summary}</Text>
         <Spacer y={0.5} />
         <Message>
           <img src={document} />
-          {notification.metadata.human_readable_detail}
+          {notification.human_readable_detail}
         </Message>
         <Spacer y={0.5} />
       </ExpandedViewContent>

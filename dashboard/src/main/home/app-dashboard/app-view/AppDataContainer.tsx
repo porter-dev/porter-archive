@@ -48,6 +48,7 @@ import HelmEditorTab from "./tabs/HelmEditorTab";
 import HelmLatestValuesTab from "./tabs/HelmLatestValuesTab";
 import { Context } from "shared/Context";
 import { useIntercom } from "lib/hooks/useIntercom";
+import Notifications from "./tabs/Notifications";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -65,6 +66,7 @@ const validTabs = [
   "helm-overrides",
   "helm-values",
   "job-history",
+  "notifications",
 ] as const;
 const DEFAULT_TAB = "activity";
 type ValidTab = typeof validTabs[number];
@@ -97,6 +99,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     servicesFromYaml,
     appEnv,
     setPreviewRevision,
+    latestNotifications,
   } = useLatestRevision();
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget.id,
@@ -400,7 +403,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [isSubmitting, JSON.stringify(errors)]);
 
   const tabs = useMemo(() => {
+    const numNotifications = latestNotifications.length;
+
     const base = [
+      { label: `Notifications (${numNotifications})`, value: "notifications"},
       { label: "Activity", value: "activity" },
       { label: "Overview", value: "overview" },
       { label: "Logs", value: "logs" },
@@ -434,7 +440,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     }
     base.push({ label: "Settings", value: "settings" });
     return base;
-  }, [deploymentTarget.preview, latestProto.build]);
+  }, [deploymentTarget.preview, latestProto.build, latestNotifications.length]);
 
   useEffect(() => {
     const newProto = previewRevision
@@ -562,6 +568,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             />
           ))
           .with("helm-values", () => <HelmLatestValuesTab />)
+          .with("notifications", () => <Notifications />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>

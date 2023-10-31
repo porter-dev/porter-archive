@@ -36,12 +36,14 @@ const porterAppPreDeployEventMetadataValidator = z.object({
     commit_sha: z.string().optional(),
 });
 export const porterAppNotificationEventMetadataValidator = z.object({
+    id: z.string(),
     app_id: z.string(),
     app_name: z.string(),
     service_name: z.string(),
     app_revision_id: z.string(),
     human_readable_detail: z.string(),
     human_readable_summary: z.string(),
+    timestamp: z.string(),
 });
 export type PorterAppNotification = z.infer<typeof porterAppNotificationEventMetadataValidator>;
 export const porterAppEventValidator = z.discriminatedUnion("type", [

@@ -2,18 +2,18 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import NotificationList from "./NotificationList";
 import NotificationExpandedView from "./NotificationExpandedView";
-import { PorterAppNotificationEvent } from "../activity-feed/events/types";
+import { PorterAppNotification } from "../activity-feed/events/types";
 
 type Props = {
-    notifications: PorterAppNotificationEvent[];
+    notifications: PorterAppNotification[];
 };
 
 const NotificationFeed: React.FC<Props> = ({
     notifications,
 }) => {
-    const [selectedNotification, setSelectedNotification] = useState<PorterAppNotificationEvent | null>(null);
+    const [selectedNotification, setSelectedNotification] = useState<PorterAppNotification | undefined>(notifications.length ? notifications[0] : undefined);
 
-    const handleTileClick = (notification: PorterAppNotificationEvent) => {
+    const handleTileClick = (notification: PorterAppNotification) => {
         setSelectedNotification(notification);
     };
 

@@ -1,22 +1,16 @@
 import React from "react";
 import { useLatestRevision } from "../LatestRevisionContext";
-import ActivityFeed from "./activity-feed/ActivityFeed";
+import NotificationFeed from "./notifications/NotificationFeed";
 
 const Notifications: React.FC = () => {
   const {
-    projectId,
-    clusterId,
-    latestProto,
-    deploymentTarget,
+    latestNotifications,
   } = useLatestRevision();
 
   return (
     <>
-      <ActivityFeed
-        currentProject={projectId}
-        currentCluster={clusterId}
-        appName={latestProto.name}
-        deploymentTargetId={deploymentTarget.id}
+      <NotificationFeed
+        notifications={latestNotifications}
       />
     </>
   );

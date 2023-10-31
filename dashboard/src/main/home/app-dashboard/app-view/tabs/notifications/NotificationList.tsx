@@ -1,12 +1,12 @@
 import React from "react";
 import styled from "styled-components";
-import { PorterAppNotificationEvent } from "../activity-feed/events/types";
+import { PorterAppNotification } from "../activity-feed/events/types";
 import NotificationTile from "./NotificationTile";
 
 type Props = {
-    onTileClick: (event: PorterAppNotificationEvent) => void;
-    notifications: PorterAppNotificationEvent[];
-    selectedNotification: PorterAppNotificationEvent;
+    onTileClick: (event: PorterAppNotification) => void;
+    notifications: PorterAppNotification[];
+    selectedNotification: PorterAppNotification;
 };
 
 const NotificationList: React.FC<Props> = ({

@@ -45,7 +45,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
                 || event.metadata?.short_summary?.includes("requesting more CPU than is available")
                 || event.metadata?.short_summary?.includes("non-zero exit code")
             )
-        );
+        ) && !(event.type === "NOTIFICATION");
     }
 
     const { data: eventFetchData, isLoading: isEventFetchLoading, isRefetching } = useQuery(

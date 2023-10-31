@@ -1,12 +1,12 @@
 import React from "react";
 import styled from "styled-components";
-import { PorterAppNotificationEvent } from "../activity-feed/events/types";
+import { PorterAppNotification } from "../activity-feed/events/types";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { feedDate } from "shared/string_utils";
 
 type Props = {
-  notification: PorterAppNotificationEvent;
+  notification: PorterAppNotification;
   selected: boolean;
   onClick: () => void;
 };
@@ -19,11 +19,11 @@ const NotificationTile: React.FC<Props> = ({
   return (
     <StyledNotificationTile onClick={onClick} selected={selected}>
       <NotificationContent>
-        <Text color="helper">{feedDate(notification.created_at)}</Text>
+        <Text color="helper">{feedDate(notification.timestamp)}</Text>
         <Spacer y={0.5} />
-        <NotificationSummary>{notification.metadata.human_readable_summary}</NotificationSummary>
+        <NotificationSummary>{notification.human_readable_summary}</NotificationSummary>
         <Spacer y={0.5} />
-        <Text color="helper">Service: <ServiceName>{notification.metadata.service_name}</ServiceName></Text>
+        <Text color="helper">Service: <ServiceName>{notification.service_name}</ServiceName></Text>
       </NotificationContent>
     </StyledNotificationTile>
   );

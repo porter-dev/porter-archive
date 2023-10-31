@@ -44,7 +44,7 @@ var (
 	previewApply bool
 )
 
-func registerCommand_Apply(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Apply(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
 	applyCmd := &cobra.Command{
 		Use:   "apply",
 		Short: "Applies a configuration to an application",
@@ -76,7 +76,7 @@ applying a configuration:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter apply -f porter.yaml"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, apply)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, apply)
 			if err != nil {
 				if strings.Contains(err.Error(), "Forbidden") {
 					_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "You may have to update your GitHub secret token")
@@ -122,7 +122,7 @@ func appNameFromEnvironmentVariable() string {
 	return ""
 }
 
-func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, _ []string) (err error) {
+func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, _ []string) (err error) {
 	project, err := client.GetProject(ctx, cliConfig.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")

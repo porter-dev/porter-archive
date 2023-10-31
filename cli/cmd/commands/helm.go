@@ -12,12 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Helm(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Helm(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
 	helmCmd := &cobra.Command{
 		Use:   "helm",
 		Short: "Use helm to interact with a Porter cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, runHelm)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, runHelm)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -27,7 +27,7 @@ func registerCommand_Helm(cliConf config.CLIConfig) *cobra.Command {
 	return helmCmd
 }
 
-func runHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func runHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	_, err := exec.LookPath("helm")
 	if err != nil {
 		return fmt.Errorf("error finding helm: %w", err)

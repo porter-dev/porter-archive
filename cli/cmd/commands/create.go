@@ -31,7 +31,7 @@ var (
 	forceBuild  bool
 )
 
-func registerCommand_Create(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Create(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
 	createCmd := &cobra.Command{
 		Use:   "create [kind]",
 		Args:  cobra.ExactArgs(1),
@@ -78,7 +78,7 @@ To deploy an application from a Docker registry, use "--source registry" and pas
 			color.New(color.FgGreen, color.Bold).Sprintf("porter create web --app example-app --source registry --image gcr.io/snowflake-12345/example-app:latest"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, createFull)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, createFull)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -180,7 +180,7 @@ To deploy an application from a Docker registry, use "--source registry" and pas
 
 var supportedKinds = map[string]string{"web": "", "job": "", "worker": ""}
 
-func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func createFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.CreateFull(ctx)
 		if err != nil {

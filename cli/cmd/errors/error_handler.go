@@ -49,7 +49,7 @@ func (h *sentryErrorHandler) HandleError(err error) {
 }
 
 // GetErrorHandler returns an errorhandler.
-func GetErrorHandler(cliConf config.CLIConfig) errorHandler {
+func GetErrorHandler(cliConf config.CLIConfig, currentProfile string) errorHandler {
 	if SentryDSN != "" {
 		return &sentryErrorHandler{
 			cliConfig: cliConf,

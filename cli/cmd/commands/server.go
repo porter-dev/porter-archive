@@ -25,7 +25,7 @@ type startOps struct {
 
 var opts = &startOps{}
 
-func registerCommand_Server(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Server(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
 	serverCmd := &cobra.Command{
 		Use:     "server",
 		Aliases: []string{"svr"},
@@ -40,7 +40,7 @@ func registerCommand_Server(cliConf config.CLIConfig) *cobra.Command {
 			ctx := cmd.Context()
 
 			if cliConf.Driver == "docker" {
-				_ = cliConf.SetDriver("docker")
+				_ = cliConf.SetDriver("docker", currentProfile)
 
 				err := startDocker(
 					ctx,
@@ -48,6 +48,7 @@ func registerCommand_Server(cliConf config.CLIConfig) *cobra.Command {
 					opts.imageTag,
 					opts.db,
 					*opts.port,
+					currentProfile,
 				)
 				if err != nil {
 					red := color.New(color.FgRed)
@@ -63,12 +64,13 @@ func registerCommand_Server(cliConf config.CLIConfig) *cobra.Command {
 					os.Exit(1)
 				}
 			} else {
-				_ = cliConf.SetDriver("local")
+				_ = cliConf.SetDriver("local", currentProfile)
 				err := startLocal(
 					ctx,
 					cliConf,
 					opts.db,
 					*opts.port,
+					currentProfile,
 				)
 				if err != nil {
 					red := color.New(color.FgRed)
@@ -120,13 +122,7 @@ func registerCommand_Server(cliConf config.CLIConfig) *cobra.Command {
 	return serverCmd
 }
 
-func startDocker(
-	ctx context.Context,
-	cliConf config.CLIConfig,
-	imageTag string,
-	db string,
-	port int,
-) error {
+func startDocker(ctx context.Context, cliConf config.CLIConfig, imageTag string, db string, port int, currentProfile string) error {
 	env := []string{
 		"NODE_ENV=production",
 		"FULLSTORY_ORG_ID=VXNSS",
@@ -158,20 +154,15 @@ func startDocker(
 
 	green.Printf("Server ready: listening on localhost:%d\n", port)
 
-	return cliConf.SetHost(fmt.Sprintf("http://localhost:%d", port))
+	return cliConf.SetHost(fmt.Sprintf("http://localhost:%d", port), currentProfile)
 }
 
-func startLocal(
-	ctx context.Context,
-	cliConf config.CLIConfig,
-	db string,
-	port int,
-) error {
+func startLocal(ctx context.Context, cliConf config.CLIConfig, db string, port int, currentProfile string) error {
 	if db == "postgres" {
 		return fmt.Errorf("postgres not available for local driver, run \"porter server start --db postgres --driver docker\"")
 	}
 
-	cliConf.SetHost(fmt.Sprintf("http://localhost:%d", port))
+	cliConf.SetHost(fmt.Sprintf("http://localhost:%d", port), currentProfile)
 
 	porterDir := filepath.Join(home, ".porter")
 	cmdPath := filepath.Join(home, ".porter", "portersvr")

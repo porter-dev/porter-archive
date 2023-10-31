@@ -16,7 +16,7 @@ import (
 
 var linkedApps []string
 
-func registerCommand_Stack(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Stack(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
 	stackCmd := &cobra.Command{
 		Use:     "stack",
 		Aliases: []string{"stacks"},
@@ -37,7 +37,7 @@ func registerCommand_Stack(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Add an env group to a stack",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, stackAddEnvGroup)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, stackAddEnvGroup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -49,7 +49,7 @@ func registerCommand_Stack(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Remove an existing env group from a stack",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, stackRemoveEnvGroup)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, stackRemoveEnvGroup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -101,7 +101,7 @@ func registerCommand_Stack(cliConf config.CLIConfig) *cobra.Command {
 	return stackCmd
 }
 
-func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.StackAddEnvGroup(ctx)
 		if err != nil {
@@ -179,7 +179,7 @@ func stackAddEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	return nil
 }
 
-func stackRemoveEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func stackRemoveEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.StackRemoveEnvGroup(ctx)
 		if err != nil {

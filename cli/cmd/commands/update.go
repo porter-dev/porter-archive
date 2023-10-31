@@ -43,7 +43,7 @@ var (
 	waitForSuccessfulDeploy bool
 )
 
-func registerCommand_Update(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Update(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
 	buildFlagsEnv = []string{}
 
 	// updateCmd represents the "porter update" base command when called
@@ -92,7 +92,7 @@ specify it as follows:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --method docker --dockerfile ./docker/prod.Dockerfile"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, updateFull)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updateFull)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -120,7 +120,7 @@ destination path for a .env file. For example:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter update get-env --app example-app --file .env"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, updateGetEnv)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updateGetEnv)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -162,7 +162,7 @@ for the application:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter update build --app example-app --method docker --dockerfile ./prod.Dockerfile"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, updateBuild)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updateBuild)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -202,7 +202,7 @@ linked it via "porter connect".
 			color.New(color.FgGreen, color.Bold).Sprintf("porter update push --app nginx --tag new-tag"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, updatePush)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updatePush)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -232,7 +232,7 @@ the image that the application uses if no --values file is specified:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter update config --app example-app --tag custom-tag"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, updateUpgrade)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updateUpgrade)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -253,7 +253,7 @@ the image that the application uses if no --values file is specified:
 		Short: "Sets the desired value of an environment variable in an env group in the form VAR=VALUE.",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, updateSetEnvGroup)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updateSetEnvGroup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -265,7 +265,7 @@ the image that the application uses if no --values file is specified:
 		Short: "Removes an environment variable from an env group.",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, updateUnsetEnvGroup)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updateUnsetEnvGroup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -443,7 +443,7 @@ the image that the application uses if no --values file is specified:
 	return updateCmd
 }
 
-func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.UpdateFull(ctx, cliConf, client, app)
 		if err != nil {
@@ -503,7 +503,7 @@ func updateFull(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 	return nil
 }
 
-func updateGetEnv(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func updateGetEnv(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	updateAgent, err := updateGetAgent(ctx, client, cliConf)
 	if err != nil {
 		return err
@@ -526,7 +526,7 @@ func updateGetEnv(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 	return updateAgent.WriteBuildEnv(getEnvFileDest)
 }
 
-func updateBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func updateBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.UpdateBuild(ctx)
 		if err != nil {
@@ -543,7 +543,7 @@ func updateBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cli
 	return updateBuildWithAgent(ctx, updateAgent)
 }
 
-func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if app == "" {
 		if len(args) == 0 {
 			return fmt.Errorf("please provide the docker image name")
@@ -602,7 +602,7 @@ func updatePush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 	return updatePushWithAgent(ctx, updateAgent)
 }
 
-func updateUpgrade(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func updateUpgrade(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.UpdateUpgrade(ctx)
 		if err != nil {
@@ -635,7 +635,7 @@ func updateUpgrade(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 	return nil
 }
 
-func updateSetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func updateSetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if len(normalEnvGroupVars) == 0 && len(secretEnvGroupVars) == 0 && len(args) == 0 {
 		return fmt.Errorf("please provide one or more variables to update")
 	}
@@ -743,7 +743,7 @@ func validateVarValue(in string) (string, string, error) {
 	return key, value, nil
 }
 
-func updateUnsetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func updateUnsetEnvGroup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("required variable name")
 	}

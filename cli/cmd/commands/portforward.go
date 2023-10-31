@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_PortForward(_ config.CLIConfig) *cobra.Command {
+func registerCommand_PortForward(_ config.CLIConfig, _ string) *cobra.Command {
 	portForwardCmd := &cobra.Command{
 		Use: "port-forward [release] [LOCAL_PORT:]REMOTE_PORT [...[LOCAL_PORT_N:]REMOTE_PORT_N]",
 		Deprecated: fmt.Sprintf("please use the %s command instead.",

@@ -18,7 +18,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Config(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
 	configCmd := &cobra.Command{
 		Use:   "config",
 		Short: "Commands that control local configuration settings",
@@ -46,7 +46,7 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 			}
 
 			if len(args) == 0 {
-				err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAndSetProject)
+				err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, listAndSetProject)
 				if err != nil {
 					os.Exit(1)
 				}
@@ -57,7 +57,7 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 					os.Exit(1)
 				}
 
-				err = cliConf.SetProject(cmd.Context(), client, uint(projID))
+				err = cliConf.SetProject(cmd.Context(), client, uint(projID), currentProfile)
 				if err != nil {
 					_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %s\n", err.Error())
 					os.Exit(1)
@@ -72,7 +72,7 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 		Short: "Saves the cluster id in the default configuration",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
-				err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAndSetCluster)
+				err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, listAndSetCluster)
 				if err != nil {
 					os.Exit(1)
 				}
@@ -99,7 +99,7 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 		Short: "Saves the registry id in the default configuration",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
-				err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAndSetRegistry)
+				err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, listAndSetRegistry)
 				if err != nil {
 					os.Exit(1)
 				}
@@ -145,7 +145,7 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Saves the host in the default configuration",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cliConf.SetHost(args[0])
+			err := cliConf.SetHost(args[0], currentProfile)
 			if err != nil {
 				_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %s\n", err.Error())
 				os.Exit(1)
@@ -186,7 +186,7 @@ func printConfig() error {
 	return nil
 }
 
-func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	_ = s.Color("cyan")
 	s.Suffix = " Loading list of projects"
@@ -222,7 +222,7 @@ func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 		projID = uint64((*resp)[0].ID)
 	}
 
-	err = cliConf.SetProject(ctx, client, uint(projID))
+	err = cliConf.SetProject(ctx, client, uint(projID), currentProfile)
 	if err != nil {
 		return err
 	}
@@ -230,7 +230,7 @@ func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 	return nil
 }
 
-func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	_ = s.Color("cyan")
 	s.Suffix = " Loading list of clusters"
@@ -273,7 +273,7 @@ func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 	return nil
 }
 
-func listAndSetRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func listAndSetRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	_ = s.Color("cyan")
 	s.Suffix = " Loading list of registries"

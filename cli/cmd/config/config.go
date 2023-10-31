@@ -2,20 +2,23 @@ package config
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/fatih/color"
-	api "github.com/porter-dev/porter/api/client"
-	"github.com/porter-dev/porter/cli/cmd/utils"
-	"github.com/spf13/viper"
 	"k8s.io/client-go/util/homedir"
 )
 
-var home = homedir.HomeDir()
+var (
+	// These values are globals to reduce the size of the refactor.
+	// These should be passed around
+	home                               = homedir.HomeDir()
+	defaultPorterConfigFileName string = "porter.yaml"
+	defaultPorterConfigDir      string = filepath.Join(home, ".porter")
+	porterConfigFilePath        string = filepath.Clean(filepath.Join(defaultPorterConfigDir, defaultPorterConfigFileName))
+	// currentProfile is used to set the profile for which any applied setting should be read or set
+	currentProfile string = "default"
+)
 
 // CLIConfig is the set of shared configuration options for the CLI commands.
 // This config is used by viper: calling Set() function for any parameter will
@@ -23,17 +26,14 @@ var home = homedir.HomeDir()
 type CLIConfig struct {
 	// Driver can be either "docker" or "local", and represents which driver is
 	// used to run an instance of the server.
-	Driver string `yaml:"driver"`
-
-	Host    string `yaml:"host"`
-	Project uint   `yaml:"project"`
-	Cluster uint   `yaml:"cluster"`
-
-	Token string `yaml:"token"`
-
-	Registry   uint   `yaml:"registry"`
-	HelmRepo   uint   `yaml:"helm_repo"`
-	Kubeconfig string `yaml:"kubeconfig"`
+	Driver     string `yaml:"driver" env:"PORTER_DRIVER"`
+	Host       string `yaml:"host" env:"PORTER_HOST"`
+	Project    uint   `yaml:"project" env:"PORTER_PROJECT"`
+	Cluster    uint   `yaml:"cluster" env:"PORTER_CLUSTER"`
+	Token      string `yaml:"token" env:"PORTER_TOKEN"`
+	Registry   uint   `yaml:"registry" env:"PORTER_REGISTRY"`
+	HelmRepo   uint   `yaml:"helm_repo" env:"PORTER_HELM_REPO"`
+	Kubeconfig string `yaml:"kubeconfig" env:"PORTER_KUBECONFIG"`
 }
 
 // FeatureFlags are any flags that are relevant to the feature set of the CLI. This should not include all feature flags, only those relevant to client-side CLI operations
@@ -47,295 +47,57 @@ type FeatureFlags struct {
 // 2. env
 // 3. config
 // 4. default
-// Make sure to call overrideConfigWithFlags during runtime, to ensure that the flag values are considered
-func InitAndLoadConfig() (CLIConfig, error) {
+// If flagsConfig and envConfig are empty, then the default values or config file values will be preferred.
+// This returns the config which should be applied to all subsequent requests, as well as the current profile that the command was run with
+func InitAndLoadConfig(ctx context.Context, flagsProfile string, flagsConfig CLIConfig) (CLIConfig, string, error) {
 	var config CLIConfig
+	currentProfile := defaultProfileName
 
-	porterDir, err := getOrCreatePorterDirectoryAndConfig()
+	err := ensurePorterConfigDirectoryExists()
 	if err != nil {
-		return config, fmt.Errorf("unable to get or create porter directory: %w", err)
+		return config, currentProfile, fmt.Errorf("unable to get or create porter directory: %w", err)
 	}
-	viper.SetConfigName("porter")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(porterDir)
-
-	err = createAndLoadPorterYaml(porterDir)
+	err = ensurePorterConfigFileExists()
 	if err != nil {
-		return config, fmt.Errorf("unable to load porter config: %w", err)
+		return config, currentProfile, fmt.Errorf("unable to get or create porter config file: %w", err)
 	}
 
-	utils.DriverFlagSet.StringVar(
-		&config.Driver,
-		"driver",
-		"local",
-		"driver to use (local or docker)",
-	)
-	err = viper.BindPFlags(utils.DriverFlagSet)
+	defaultConfig := defaultCLIConfig()
+
+	envProfile := os.Getenv("PORTER_PROFILE")
+	if envProfile != "" {
+		currentProfile = envProfile
+	}
+	if flagsProfile != "" {
+		currentProfile = flagsProfile
+	}
+
+	currentProfileConfig, err := configForProfileFromConfigFile(currentProfile, porterConfigFilePath)
 	if err != nil {
-		return config, err
+		return config, currentProfile, fmt.Errorf("unable to read profile variables from config file")
 	}
 
-	utils.DefaultFlagSet.StringVar(
-		&config.Host,
-		"host",
-		"https://dashboard.getporter.dev",
-		"host URL of Porter instance",
-	)
-
-	utils.DefaultFlagSet.UintVar(
-		&config.Project,
-		"project",
-		0,
-		"project ID of Porter project",
-	)
-
-	utils.DefaultFlagSet.UintVar(
-		&config.Cluster,
-		"cluster",
-		0,
-		"cluster ID of Porter cluster",
-	)
-
-	utils.DefaultFlagSet.StringVar(
-		&config.Token,
-		"token",
-		"",
-		"token for Porter authentication",
-	)
-
-	err = viper.BindPFlags(utils.DefaultFlagSet)
+	overlayedCurrentProfileConfig, err := overlayProfiles(defaultConfig, currentProfileConfig)
 	if err != nil {
-		return config, err
+		return config, currentProfile, fmt.Errorf("unable to overlay profile onto default values")
 	}
 
-	utils.RegistryFlagSet.UintVar(
-		&config.Registry,
-		"registry",
-		0,
-		"registry ID of connected Porter registry",
-	)
-
-	err = viper.BindPFlags(utils.RegistryFlagSet)
+	envVarsConfig, err := profileConfigFromEnvVars(ctx)
 	if err != nil {
-		return config, err
+		return config, currentProfile, fmt.Errorf("unable to read profile variables from env vars")
 	}
 
-	utils.HelmRepoFlagSet.UintVar(
-		&config.HelmRepo,
-		"helmrepo",
-		0,
-		"helm repo ID of connected Porter Helm repository",
-	)
-	err = viper.BindPFlags(utils.HelmRepoFlagSet)
+	overlayedEnvVarsConfig, err := overlayProfiles(overlayedCurrentProfileConfig, envVarsConfig)
 	if err != nil {
-		return config, err
+		return config, currentProfile, fmt.Errorf("unable to overlay env vars profile onto values in porter config file")
 	}
 
-	viper.SetEnvPrefix("PORTER")
-	err = viper.BindEnv("host")
+	configWithAllOverlays, err := overlayProfiles(overlayedEnvVarsConfig, flagsConfig)
 	if err != nil {
-		return config, err
-	}
-	err = viper.BindEnv("project")
-	if err != nil {
-		return config, err
-	}
-	err = viper.BindEnv("cluster")
-	if err != nil {
-		return config, err
-	}
-	err = viper.BindEnv("token")
-	if err != nil {
-		return config, err
+		return config, currentProfile, fmt.Errorf("unable to overlay onto env vars config values onto flag values values")
 	}
 
-	err = viper.Unmarshal(&config)
-	if err != nil {
-		return config, fmt.Errorf("unable to unmarshal porter config: %w", err)
-	}
-
-	return config, nil
-}
-
-// getOrCreatePorterDirectoryAndConfig checks that the .porter folder exists; create if not
-func getOrCreatePorterDirectoryAndConfig() (string, error) {
-	porterDir := filepath.Join(home, ".porter")
-
-	_, err := os.Stat(porterDir)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return "", fmt.Errorf("error reading porter directory: %w", err)
-		}
-		err = os.Mkdir(porterDir, 0o700)
-		if err != nil {
-			return "", fmt.Errorf("error creating porter directory: %w", err)
-		}
-	}
-	return porterDir, nil
-}
-
-// createAndLoadPorterYaml loads a porter.yaml config into Viper if it exists, or creates the file if it does not
-func createAndLoadPorterYaml(porterDir string) error {
-	err := viper.ReadInConfig()
-	if err != nil {
-		_, ok := err.(viper.ConfigFileNotFoundError)
-		if !ok {
-			return fmt.Errorf("unknown error reading ~/.porter/porter.yaml config: %w", err)
-		}
-
-		err := os.WriteFile(filepath.Join(porterDir, "porter.yaml"), []byte{}, 0o644) //nolint:gosec // do not want to change program logic. Should be addressed later
-		if err != nil {
-			return fmt.Errorf("unable to create ~/.porter/porter.yaml config: %w", err)
-		}
-	}
-	return nil
-}
-
-func (c *CLIConfig) SetDriver(driver string) error {
-	viper.Set("driver", driver)
-	color.New(color.FgGreen).Printf("Set the current driver as %s\n", driver)
-	err := viper.WriteConfig()
-	if err != nil {
-		return err
-	}
-
-	c.Driver = driver
-
-	return nil
-}
-
-func (c *CLIConfig) SetHost(host string) error {
-	// a trailing / can lead to errors with the api server
-	host = strings.TrimRight(host, "/")
-
-	viper.Set("host", host)
-
-	// let us clear the project ID, cluster ID, and token when we reset a host
-	viper.Set("project", 0)
-	viper.Set("cluster", 0)
-	viper.Set("token", "")
-
-	err := viper.WriteConfig()
-	if err != nil {
-		return err
-	}
-
-	color.New(color.FgGreen).Printf("Set the current host as %s\n", host)
-
-	c.Host = host
-	c.Project = 0
-	c.Cluster = 0
-	c.Token = ""
-
-	return nil
-}
-
-// SetProject sets a project for all API commands
-func (c *CLIConfig) SetProject(ctx context.Context, apiClient api.Client, projectID uint) error {
-	viper.Set("project", projectID)
-
-	color.New(color.FgGreen).Printf("Set the current project as %d\n", projectID)
-
-	if c.Kubeconfig != "" || viper.IsSet("kubeconfig") {
-		color.New(color.FgYellow).Println("Please change local kubeconfig if needed")
-	}
-
-	err := viper.WriteConfig()
-	if err != nil {
-		return err
-	}
-
-	c.Project = projectID
-
-	resp, err := apiClient.ListProjectClusters(ctx, projectID)
-	if err == nil {
-		clusters := *resp
-		if len(clusters) == 1 {
-			_ = c.SetCluster(clusters[0].ID)
-		}
-	}
-
-	return nil
-}
-
-func (c *CLIConfig) SetCluster(clusterID uint) error {
-	viper.Set("cluster", clusterID)
-
-	color.New(color.FgGreen).Printf("Set the current cluster as %d\n", clusterID)
-
-	if c.Kubeconfig != "" || viper.IsSet("kubeconfig") {
-		color.New(color.FgYellow).Println("Please change local kubeconfig if needed")
-	}
-
-	err := viper.WriteConfig()
-	if err != nil {
-		return err
-	}
-
-	c.Cluster = clusterID
-
-	return nil
-}
-
-func (c *CLIConfig) SetToken(token string) error {
-	viper.Set("token", token)
-	err := viper.WriteConfig()
-	if err != nil {
-		return err
-	}
-
-	c.Token = token
-
-	return nil
-}
-
-func (c *CLIConfig) SetRegistry(registryID uint) error {
-	viper.Set("registry", registryID)
-	color.New(color.FgGreen).Printf("Set the current registry as %d\n", registryID)
-	err := viper.WriteConfig()
-	if err != nil {
-		return err
-	}
-
-	c.Registry = registryID
-
-	return nil
-}
-
-func (c *CLIConfig) SetHelmRepo(helmRepoID uint) error {
-	viper.Set("helm_repo", helmRepoID)
-	color.New(color.FgGreen).Printf("Set the current Helm repo as %d\n", helmRepoID)
-	err := viper.WriteConfig()
-	if err != nil {
-		return err
-	}
-
-	c.HelmRepo = helmRepoID
-
-	return nil
-}
-
-func (c *CLIConfig) SetKubeconfig(kubeconfig string) error {
-	path, err := filepath.Abs(kubeconfig)
-	if err != nil {
-		return err
-	}
-
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("%s does not exist", path)
-	}
-
-	viper.Set("kubeconfig", path)
-	color.New(color.FgGreen).Printf("Set the path to kubeconfig as %s\n", path)
-	err = viper.WriteConfig()
-
-	if err != nil {
-		return err
-	}
-
-	c.Kubeconfig = kubeconfig
-
-	return nil
+	return configWithAllOverlays, currentProfile, nil
 }
 
 // ValidateCLIEnvironment checks that all required variables are present for running the CLI

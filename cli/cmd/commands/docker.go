@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Docker(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Docker(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
 	dockerCmd := &cobra.Command{
 		Use:   "docker",
 		Short: "Commands to configure Docker for a project",
@@ -20,7 +20,7 @@ func registerCommand_Docker(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "configure",
 		Short: "Configures the host's Docker instance",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, dockerConfig)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, dockerConfig)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -31,6 +31,6 @@ func registerCommand_Docker(cliConf config.CLIConfig) *cobra.Command {
 	return dockerCmd
 }
 
-func dockerConfig(ctx context.Context, user *ptypes.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func dockerConfig(ctx context.Context, user *ptypes.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	return config.SetDockerConfig(ctx, client, cliConf.Project)
 }

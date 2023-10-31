@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Project(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Project(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
 	projectCmd := &cobra.Command{
 		Use:     "project",
 		Aliases: []string{"projects"},
@@ -28,7 +28,7 @@ func registerCommand_Project(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Creates a project with the authorized user as admin",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, createProject)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, createProject)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -41,7 +41,7 @@ func registerCommand_Project(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Deletes the project with the given id",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteProject)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, deleteProject)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -53,7 +53,7 @@ func registerCommand_Project(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "list",
 		Short: "Lists the projects for the logged in user",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listProjects)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, listProjects)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -64,7 +64,7 @@ func registerCommand_Project(cliConf config.CLIConfig) *cobra.Command {
 	return projectCmd
 }
 
-func createProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func createProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	resp, err := client.CreateProject(ctx, &types.CreateProjectRequest{
 		Name: args[0],
 	})
@@ -74,10 +74,10 @@ func createProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 
 	color.New(color.FgGreen).Printf("Created project with name %s and id %d\n", args[0], resp.ID)
 
-	return cliConf.SetProject(ctx, client, resp.ID)
+	return cliConf.SetProject(ctx, client, resp.ID, currentProfile)
 }
 
-func listProjects(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func listProjects(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	resp, err := client.ListUserProjects(ctx)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func listProjects(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 	return nil
 }
 
-func deleteProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
+func deleteProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
 	userResp, err := utils.PromptPlaintext(
 		fmt.Sprintf(
 			`Are you sure you'd like to delete the project with id %s? %s `,

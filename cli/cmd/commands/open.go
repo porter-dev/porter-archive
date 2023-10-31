@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Open(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Open(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
 	openCmd := &cobra.Command{
 		Use:   "open",
 		Short: "Opens the browser at the currently set Porter instance",

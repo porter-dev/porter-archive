@@ -18,13 +18,13 @@ import (
 
 var output string
 
-func registerCommand_Get(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Get(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
 	getCmd := &cobra.Command{
 		Use:   "get [release]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Fetches a release.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, get)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, get)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -37,7 +37,7 @@ func registerCommand_Get(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Fetches the Helm values for a release.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, getValues)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, getValues)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -71,7 +71,7 @@ type getReleaseInfo struct {
 	RevisionID   int       `json:"revision_id" yaml:"revision_id"`
 }
 
-func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.Get(ctx)
 		if err != nil {
@@ -118,7 +118,7 @@ func get(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.
 	return nil
 }
 
-func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func getValues(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.GetValues(ctx)
 		if err != nil {

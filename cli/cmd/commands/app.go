@@ -51,7 +51,7 @@ const (
 	CommandPrefix_LAUNCHER = "launcher"
 )
 
-func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_App(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
 	appCmd := &cobra.Command{
 		Use:   "app",
 		Short: "Runs a command for your application.",
@@ -63,7 +63,7 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.MinimumNArgs(2),
 		Short: "Runs a command inside a connected cluster container.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, appRun)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, appRun)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -78,7 +78,7 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.NoArgs,
 		Short: "Delete any lingering ephemeral pods that were created with \"porter app run\".",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, appCleanup)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, appCleanup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -92,7 +92,7 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Short: "Updates the image tag for an application.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, appUpdateTag)
+			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, appUpdateTag)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -114,7 +114,7 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.MinimumNArgs(1),
 		Short: "Rolls back an application to the last successful revision.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return checkLoginAndRunWithConfig(cmd, cliConf, args, appRollback)
+			return checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, appRollback)
 		},
 	}
 	appCmd.AddCommand(appRollbackCmd)
@@ -171,7 +171,7 @@ func appRunFlags(appRunCmd *cobra.Command) {
 	)
 }
 
-func appRollback(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
+func appRollback(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
 	project, err := client.GetProject(ctx, cliConfig.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -198,7 +198,7 @@ func appRollback(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cli
 	return nil
 }
 
-func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
+func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
 	execArgs := args[1:]
 
 	color.New(color.FgGreen).Println("Attempting to run", strings.Join(execArgs, " "), "for application", args[0])
@@ -333,7 +333,7 @@ func getImageNameFromPod(ctx context.Context, clientset *kubernetes.Clientset, n
 	return "", fmt.Errorf("could not find container %s in pod %s", containerName, podName)
 }
 
-func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, _ []string) error {
+func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, _ []string) error {
 	config := &AppPorterRunSharedConfig{
 		Client:    client,
 		CLIConfig: cliConfig,
@@ -1183,7 +1183,7 @@ func appCreateEphemeralPodFromExisting(
 	)
 }
 
-func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	project, err := client.GetProject(ctx, cliConf.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")

@@ -66,6 +66,7 @@ func (c *GithubGetContentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		telemetry.AttributeKV{Key: "repo-owner", Value: owner},
 		telemetry.AttributeKV{Key: "repo-name", Value: name},
 		telemetry.AttributeKV{Key: "repo-branch", Value: branch},
+		telemetry.AttributeKV{Key: "repo-path", Value: request.Dir},
 	)
 
 	repoContentOptions := github.RepositoryContentGetOptions{}

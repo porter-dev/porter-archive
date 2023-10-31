@@ -10,29 +10,29 @@ import (
 )
 
 type HandleNotificationInput struct {
-	RawAppEventMetadata map[string]any
-	EventRepo           repository.PorterAppEventRepository
-	DeploymentTargetID  string
-	Namespace           string
-	K8sAgent            *kubernetes.Agent
+	RawAgentEventMetadata map[string]any
+	EventRepo             repository.PorterAppEventRepository
+	DeploymentTargetID    string
+	Namespace             string
+	K8sAgent              *kubernetes.Agent
 }
 
-// HandleNotification handles the logic for processing app events (which are currently sent by the porter agent)
+// HandleNotification handles the logic for processing agent events
 func HandleNotification(ctx context.Context, inp HandleNotificationInput) error {
 	ctx, span := telemetry.NewSpan(ctx, "handle-notification")
 	defer span.End()
 
-	// 1. parse app event
-	appEventMetadata, err := parseAppEventMetadata(inp.RawAppEventMetadata)
+	// 1. parse agent event
+	agentEventMetadata, err := parseAgentEventMetadata(inp.RawAgentEventMetadata)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to unmarshal app event metadata")
 	}
-	if appEventMetadata == nil {
+	if agentEventMetadata == nil {
 		return telemetry.Error(ctx, span, nil, "app event metadata is nil")
 	}
 
-	// 2. convert app event to baseNotification
-	baseNotification := appEventToNotification(*appEventMetadata)
+	// 2. convert agent event to baseNotification
+	baseNotification := agentEventToNotification(*agentEventMetadata)
 
 	// 3. dedupe notification
 	isDuplicate, err := isNotificationDuplicate(ctx, baseNotification, inp.EventRepo, inp.DeploymentTargetID)
@@ -92,8 +92,8 @@ type Notification struct {
 	Deployment           Deployment `json:"deployment"`
 }
 
-// appEventToNotification converts an app event to a notification
-func appEventToNotification(appEventMetadata AppEventMetadata) Notification {
+// agentEventToNotification converts an app event to a notification
+func agentEventToNotification(appEventMetadata AppEventMetadata) Notification {
 	humanReadableDetail := appEventMetadata.Detail
 	humanReadableDetail = strings.ReplaceAll(humanReadableDetail, "application", "service")
 

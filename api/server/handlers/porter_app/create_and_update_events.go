@@ -634,11 +634,11 @@ func (p *CreateUpdatePorterAppEventHandler) handleNotification(ctx context.Conte
 	}
 
 	inp := notifications.HandleNotificationInput{
-		RawAppEventMetadata: request.Metadata,
-		EventRepo:           p.Repo().PorterAppEvent(),
-		DeploymentTargetID:  request.DeploymentTargetID,
-		Namespace:           deploymentTarget.Namespace,
-		K8sAgent:            agent,
+		RawAgentEventMetadata: request.Metadata,
+		EventRepo:             p.Repo().PorterAppEvent(),
+		DeploymentTargetID:    request.DeploymentTargetID,
+		Namespace:             deploymentTarget.Namespace,
+		K8sAgent:              agent,
 	}
 
 	err = notifications.HandleNotification(ctx, inp)

@@ -120,6 +120,7 @@ func deploymentStatus(depl v1.Deployment) DeploymentStatus {
 
 var fatalDeploymentDetailSubstrings = []string{
 	"stuck in a restart loop",
+	"restarted with exit code",
 }
 
 func detailIndicatesDeploymentFailure(detail string) bool {
@@ -142,9 +143,9 @@ func translateAgentSummary(notification Notification, status DeploymentStatus) s
 	}
 	humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "application", "service")
 	if status == DeploymentStatus_Pending {
-		humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "has crashed", "is failing to deploy")
-		humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "crashed", "is failing to deploy")
-		humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "is currently experiencing downtime", "is failing to deploy")
+		humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "has crashed", "failed to deploy")
+		humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "crashed", "failed to deploy")
+		humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "is currently experiencing downtime", "failed to deploy")
 	}
 	return humanReadableSummary
 }

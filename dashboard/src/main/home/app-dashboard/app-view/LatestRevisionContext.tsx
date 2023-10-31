@@ -25,11 +25,13 @@ import {
   PopulatedEnvGroup,
   populatedEnvGroup,
 } from "../validate-apply/app-settings/types";
+import { PorterAppNotification, porterAppNotificationEventMetadataValidator } from "./tabs/activity-feed/events/types";
 
 export const LatestRevisionContext = createContext<{
   porterApp: PorterAppRecord;
   latestRevision: AppRevision;
   latestProto: PorterApp;
+  latestNotifications: PorterAppNotification[];
   servicesFromYaml: DetectedServices | null;
   clusterId: number;
   projectId: number;
@@ -96,7 +98,7 @@ export const LatestRevisionProvider = ({
     }
   );
 
-  const { data: latestRevision, status } = useQuery(
+  const { data: {app_revision: latestRevision, notifications: latestNotifications = []} = {}, status } = useQuery(
     [
       "getLatestRevision",
       currentProject?.id,
@@ -106,7 +108,7 @@ export const LatestRevisionProvider = ({
     ],
     async () => {
       if (!appParamsExist) {
-        return;
+        return { app_revision: undefined, notifications: [] };
       }
       const res = await api.getLatestRevision(
         "<token>",
@@ -120,12 +122,16 @@ export const LatestRevisionProvider = ({
         }
       );
 
-      const revisionData = await z
+      const { app_revision, notifications } = await z
         .object({
           app_revision: appRevisionValidator,
+          notifications: z.array(porterAppNotificationEventMetadataValidator)
         })
         .parseAsync(res.data);
-      return revisionData.app_revision;
+      return {
+        app_revision,
+        notifications,
+      };
     },
     {
       enabled: appParamsExist,
@@ -306,6 +312,7 @@ export const LatestRevisionProvider = ({
       value={{
         latestRevision,
         latestProto,
+        latestNotifications,
         porterApp,
         clusterId: currentCluster.id,
         projectId: currentProject.id,

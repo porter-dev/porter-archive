@@ -42,13 +42,13 @@ var (
 	memoryMi       int
 )
 
-func registerCommand_Run(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Run() *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run [release] -- COMMAND [args...]",
 		Args:  cobra.MinimumNArgs(2),
 		Short: "Runs a command inside a connected cluster container.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, run)
+			err := checkLoginAndRunWithConfig(cmd, args, run)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -61,7 +61,7 @@ func registerCommand_Run(cliConf config.CLIConfig, currentProfile string) *cobra
 		Args:  cobra.NoArgs,
 		Short: "Delete any lingering ephemeral pods that were created with \"porter run\".",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, cleanup)
+			err := checkLoginAndRunWithConfig(cmd, args, cleanup)
 			if err != nil {
 				os.Exit(1)
 			}

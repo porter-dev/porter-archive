@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Cluster(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Cluster() *cobra.Command {
 	clusterCmd := &cobra.Command{
 		Use:     "cluster",
 		Aliases: []string{"clusters"},
@@ -27,7 +27,7 @@ func registerCommand_Cluster(cliConf config.CLIConfig, currentProfile string) *c
 		Use:   "list",
 		Short: "Lists the linked clusters in the current project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, listClusters)
+			err := checkLoginAndRunWithConfig(cmd, args, listClusters)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -40,7 +40,7 @@ func registerCommand_Cluster(cliConf config.CLIConfig, currentProfile string) *c
 		Args:  cobra.ExactArgs(1),
 		Short: "Deletes the cluster with the given id",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, deleteCluster)
+			err := checkLoginAndRunWithConfig(cmd, args, deleteCluster)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -59,7 +59,7 @@ func registerCommand_Cluster(cliConf config.CLIConfig, currentProfile string) *c
 		Use:   "list",
 		Short: "Lists the namespaces in a cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, listNamespaces)
+			err := checkLoginAndRunWithConfig(cmd, args, listNamespaces)
 			if err != nil {
 				os.Exit(1)
 			}

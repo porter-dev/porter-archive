@@ -25,7 +25,7 @@ type startOps struct {
 
 var opts = &startOps{}
 
-func registerCommand_Server(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Server() *cobra.Command {
 	serverCmd := &cobra.Command{
 		Use:     "server",
 		Aliases: []string{"svr"},
@@ -36,11 +36,16 @@ func registerCommand_Server(cliConf config.CLIConfig, currentProfile string) *co
 	startCmd := &cobra.Command{
 		Use:   "start",
 		Short: "Starts a Porter server instance on the host",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
+			cliConf, currentProfile, err := currentProfileIncludingFlags(cmd)
+			if err != nil {
+				return fmt.Errorf("error getting current profile config: %w", err)
+			}
+
 			if cliConf.Driver == "docker" {
-				_ = cliConf.SetDriver("docker", currentProfile)
+				_ = config.SetDriver("docker", currentProfile)
 
 				err := startDocker(
 					ctx,
@@ -56,15 +61,15 @@ func registerCommand_Server(cliConf config.CLIConfig, currentProfile string) *co
 					_, _ = red.Println("Shutting down...")
 
 					err = stopDocker(ctx)
-
 					if err != nil {
 						_, _ = red.Println("Shutdown unsuccessful:", err.Error())
+						return err
 					}
 
-					os.Exit(1)
+					return err
 				}
 			} else {
-				_ = cliConf.SetDriver("local", currentProfile)
+				_ = config.SetDriver("local", currentProfile)
 				err := startLocal(
 					ctx,
 					cliConf,
@@ -75,22 +80,29 @@ func registerCommand_Server(cliConf config.CLIConfig, currentProfile string) *co
 				if err != nil {
 					red := color.New(color.FgRed)
 					_, _ = red.Println("Error running start:", err.Error())
-					os.Exit(1)
+					return err
 				}
 			}
+			return nil
 		},
 	}
 
 	stopCmd := &cobra.Command{
 		Use:   "stop",
 		Short: "Stops a Porter instance running on the Docker engine",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliConf, _, err := currentProfileIncludingFlags(cmd)
+			if err != nil {
+				return fmt.Errorf("error getting current profile config: %w", err)
+			}
+
 			if cliConf.Driver == "docker" {
 				if err := stopDocker(cmd.Context()); err != nil {
 					_, _ = color.New(color.FgRed).Println("Shutdown unsuccessful:", err.Error())
-					os.Exit(1)
+					return err
 				}
 			}
+			return nil
 		},
 	}
 
@@ -154,7 +166,7 @@ func startDocker(ctx context.Context, cliConf config.CLIConfig, imageTag string,
 
 	green.Printf("Server ready: listening on localhost:%d\n", port)
 
-	return cliConf.SetHost(fmt.Sprintf("http://localhost:%d", port), currentProfile)
+	return config.SetHost(fmt.Sprintf("http://localhost:%d", port), currentProfile)
 }
 
 func startLocal(ctx context.Context, cliConf config.CLIConfig, db string, port int, currentProfile string) error {
@@ -162,7 +174,7 @@ func startLocal(ctx context.Context, cliConf config.CLIConfig, db string, port i
 		return fmt.Errorf("postgres not available for local driver, run \"porter server start --db postgres --driver docker\"")
 	}
 
-	err := cliConf.SetHost(fmt.Sprintf("http://localhost:%d", port), currentProfile)
+	err := config.SetHost(fmt.Sprintf("http://localhost:%d", port), currentProfile)
 	if err != nil {
 		return fmt.Errorf("failed to set host: %s", err.Error())
 	}
@@ -185,7 +197,7 @@ func startLocal(ctx context.Context, cliConf config.CLIConfig, db string, port i
 	writer := &config.VersionWriter{}
 	cmdVersionPorter.Stdout = writer
 
-	err := cmdVersionPorter.Run()
+	err = cmdVersionPorter.Run()
 
 	if err != nil || writer.Version != config.Version {
 		err := downloadMatchingRelease(ctx, porterDir)

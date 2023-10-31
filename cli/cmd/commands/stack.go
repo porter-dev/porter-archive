@@ -16,7 +16,7 @@ import (
 
 var linkedApps []string
 
-func registerCommand_Stack(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Stack() *cobra.Command {
 	stackCmd := &cobra.Command{
 		Use:     "stack",
 		Aliases: []string{"stacks"},
@@ -37,7 +37,7 @@ func registerCommand_Stack(cliConf config.CLIConfig, currentProfile string) *cob
 		Args:  cobra.ExactArgs(1),
 		Short: "Add an env group to a stack",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, stackAddEnvGroup)
+			err := checkLoginAndRunWithConfig(cmd, args, stackAddEnvGroup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -49,7 +49,7 @@ func registerCommand_Stack(cliConf config.CLIConfig, currentProfile string) *cob
 		Args:  cobra.ExactArgs(1),
 		Short: "Remove an existing env group from a stack",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, stackRemoveEnvGroup)
+			err := checkLoginAndRunWithConfig(cmd, args, stackRemoveEnvGroup)
 			if err != nil {
 				os.Exit(1)
 			}

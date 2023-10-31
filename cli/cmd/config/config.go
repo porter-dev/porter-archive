@@ -101,7 +101,12 @@ func InitAndLoadConfig(ctx context.Context, flagsProfile string, flagsConfig CLI
 }
 
 // ValidateCLIEnvironment checks that all required variables are present for running the CLI
-func (c *CLIConfig) ValidateCLIEnvironment() error {
+func ValidateCLIEnvironment() error {
+	c, err := configForProfileFromConfigFile("", porterConfigFilePath)
+	if err != nil {
+		return fmt.Errorf("error reading config for profile: %w", err)
+	}
+
 	if c.Token == "" {
 		return fmt.Errorf("no auth token present, please run 'porter auth login' to authenticate")
 	}

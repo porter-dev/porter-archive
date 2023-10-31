@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/fatih/color"
 	"github.com/sethvargo/go-envconfig"
 	"gopkg.in/yaml.v2"
 )
@@ -71,7 +72,8 @@ func migrateExistingConfigYaml(configPath string) error {
 }
 
 // writeProfileToProfilesConfigFile will write the given profile config to file, overwriting the entire existing file.
-// Ensure to call readProfilesConfigFromFile before running this function if you with to preserve current settings
+// Ensure to call readProfilesConfigFromFile before running this function if you with to preserve current settings,
+// or call updateValuesForSelectedProfile to set specific values for a given profile
 func writeProfileToProfilesConfigFile(profilesConfig ProfilesConfig, configPath string) error {
 	by, err := yaml.Marshal(profilesConfig)
 	if err != nil {
@@ -255,11 +257,14 @@ func configForProfileFromConfigFile(selectedProfile string, configPath string) (
 	}
 
 	configFile, ok := profilesConfig.Profiles[selectedProfile]
-	if ok {
-		return configFile, nil
+	if !ok {
+		_, _ = color.New(color.FgGreen).Printf("Porter profile '%s' does not exist. Creating one now...\n", currentProfile)
+		err = updateValuesForSelectedProfile(selectedProfile, defaultCLIConfig(), configPath)
+		if err != nil {
+			return CLIConfig{}, fmt.Errorf("error creating new profile: %w", err)
+		}
 	}
-
-	return CLIConfig{}, nil
+	return configFile, nil
 }
 
 // profileConfigFromEnvVars parses any environment variables that may be setting

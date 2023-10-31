@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Delete(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Delete() *cobra.Command {
 	deleteCmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Deletes a deployment",
@@ -35,7 +35,7 @@ deleting a configuration:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter delete"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, deleteDeployment)
+			err := checkLoginAndRunWithConfig(cmd, args, deleteDeployment)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -49,7 +49,7 @@ deleting a configuration:
 		Short:   "Deletes an existing app",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, deleteApp)
+			err := checkLoginAndRunWithConfig(cmd, args, deleteApp)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -63,7 +63,7 @@ deleting a configuration:
 		Short:   "Deletes an existing job",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, deleteJob)
+			err := checkLoginAndRunWithConfig(cmd, args, deleteJob)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -77,7 +77,7 @@ deleting a configuration:
 		Short:   "Deletes an existing addon",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, deleteAddon)
+			err := checkLoginAndRunWithConfig(cmd, args, deleteAddon)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -91,7 +91,7 @@ deleting a configuration:
 		Short:   "Deletes an existing helm repo",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, deleteHelm)
+			err := checkLoginAndRunWithConfig(cmd, args, deleteHelm)
 			if err != nil {
 				os.Exit(1)
 			}

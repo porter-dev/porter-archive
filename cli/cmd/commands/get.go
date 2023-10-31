@@ -18,13 +18,13 @@ import (
 
 var output string
 
-func registerCommand_Get(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Get() *cobra.Command {
 	getCmd := &cobra.Command{
 		Use:   "get [release]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Fetches a release.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, get)
+			err := checkLoginAndRunWithConfig(cmd, args, get)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -37,7 +37,7 @@ func registerCommand_Get(cliConf config.CLIConfig, currentProfile string) *cobra
 		Args:  cobra.ExactArgs(1),
 		Short: "Fetches the Helm values for a release.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, getValues)
+			err := checkLoginAndRunWithConfig(cmd, args, getValues)
 			if err != nil {
 				os.Exit(1)
 			}

@@ -12,12 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Kubectl(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Kubectl() *cobra.Command {
 	kubectlCmd := &cobra.Command{
 		Use:   "kubectl",
 		Short: "Use kubectl to interact with a Porter cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, runKubectl)
+			err := checkLoginAndRunWithConfig(cmd, args, runKubectl)
 			if err != nil {
 				os.Exit(1)
 			}

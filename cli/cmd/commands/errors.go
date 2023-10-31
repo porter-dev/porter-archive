@@ -22,9 +22,15 @@ var (
 
 type authenticatedRunnerFunc func(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error
 
-func checkLoginAndRunWithConfig(cmd *cobra.Command, cliConf config.CLIConfig, currentProfile string, args []string, runner authenticatedRunnerFunc) error {
+var errCreatingPorterAPIClient = errors.New("unable to authenticate against server")
+
+func checkLoginAndRunWithConfig(cmd *cobra.Command, args []string, runner authenticatedRunnerFunc) error {
 	ctx := cmd.Context()
-	// cliConf = overrideConfigWithFlags(cmd, cliConf)
+
+	cliConf, currentProfile, err := currentProfileIncludingFlags(cmd)
+	if err != nil {
+		return fmt.Errorf("error whilst initialising config: %w", err)
+	}
 
 	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
 		BaseURL:        fmt.Sprintf("%s/api", cliConf.Host),
@@ -32,7 +38,7 @@ func checkLoginAndRunWithConfig(cmd *cobra.Command, cliConf config.CLIConfig, cu
 		CookieFileName: "cookie.json",
 	})
 	if err != nil {
-		return fmt.Errorf("error creating porter API client: %w", err)
+		return errCreatingPorterAPIClient
 	}
 
 	user, err := client.AuthCheck(ctx)
@@ -85,4 +91,22 @@ func checkLoginAndRunWithConfig(cmd *cobra.Command, cliConf config.CLIConfig, cu
 	}
 
 	return nil
+}
+
+// currentProfileIncludingFlags returns the current profile, and initialises the config.
+// This ensures the the current profile is set to the one specified in the flags, env vars, or config in the correct order or precedence
+func currentProfileIncludingFlags(cmd *cobra.Command) (config.CLIConfig, string, error) {
+	ctx := cmd.Context()
+	flagsConfig := parseRootConfigFlags(cmd)
+
+	profile, err := cmd.Flags().GetString("profile")
+	if err != nil {
+		return config.CLIConfig{}, "", fmt.Errorf("error getting profile flag: %w", err)
+	}
+
+	cliConfig, currentProfile, err := config.InitAndLoadConfig(ctx, profile, flagsConfig)
+	if err != nil {
+		return config.CLIConfig{}, "", fmt.Errorf("error whilst initialising config: %w", err)
+	}
+	return cliConfig, currentProfile, nil
 }

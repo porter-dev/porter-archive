@@ -51,7 +51,14 @@ func Execute(ctx context.Context) error {
 		Use:   "porter",
 		Short: "Porter is a dashboard for managing Kubernetes clusters.",
 		Long:  `Porter is a tool for creating, versioning, and updating Kubernetes deployments using a visual dashboard. For more information, visit github.com/porter-dev/porter`,
-		RunE:  rootFunc,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+	}
+
+	err := registerRootCommands(rootCmd, nil)
+	if err != nil {
+		return fmt.Errorf("error registering root commands: %w", err)
 	}
 
 	// we shouldnt set default values in flags or they will overwrite all other values.
@@ -69,5 +76,34 @@ func Execute(ctx context.Context) error {
 		color.New(color.FgRed).Println(err)
 		os.Exit(1)
 	}
+	return nil
+}
+
+func registerRootCommands(cmd *cobra.Command, args []string) error {
+	cmd.AddCommand(registerCommand_App())
+	cmd.AddCommand(registerCommand_Apply())
+	cmd.AddCommand(registerCommand_Auth())
+	cmd.AddCommand(registerCommand_Cluster())
+	cmd.AddCommand(registerCommand_Config())
+	cmd.AddCommand(registerCommand_Connect())
+	cmd.AddCommand(registerCommand_Create())
+	cmd.AddCommand(registerCommand_Delete())
+	cmd.AddCommand(registerCommand_Deploy())
+	cmd.AddCommand(registerCommand_Docker())
+	cmd.AddCommand(registerCommand_Get())
+	cmd.AddCommand(registerCommand_Helm())
+	cmd.AddCommand(registerCommand_Job())
+	cmd.AddCommand(registerCommand_Kubectl())
+	cmd.AddCommand(registerCommand_List())
+	cmd.AddCommand(registerCommand_Logs())
+	cmd.AddCommand(registerCommand_Open())
+	cmd.AddCommand(registerCommand_PortForward())
+	cmd.AddCommand(registerCommand_Project())
+	cmd.AddCommand(registerCommand_Registry())
+	cmd.AddCommand(registerCommand_Run())
+	cmd.AddCommand(registerCommand_Server())
+	cmd.AddCommand(registerCommand_Stack())
+	cmd.AddCommand(registerCommand_Update())
+	cmd.AddCommand(registerCommand_Version())
 	return nil
 }

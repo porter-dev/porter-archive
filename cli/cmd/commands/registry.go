@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Registry(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Registry() *cobra.Command {
 	registryCmd := &cobra.Command{
 		Use:     "registry",
 		Aliases: []string{"registries"},
@@ -27,7 +27,7 @@ func registerCommand_Registry(cliConf config.CLIConfig, currentProfile string) *
 		Use:   "list",
 		Short: "Lists the registries linked to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, listRegistries)
+			err := checkLoginAndRunWithConfig(cmd, args, listRegistries)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -39,7 +39,7 @@ func registerCommand_Registry(cliConf config.CLIConfig, currentProfile string) *
 		Args:  cobra.ExactArgs(1),
 		Short: "Deletes the registry with the given id",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, deleteRegistry)
+			err := checkLoginAndRunWithConfig(cmd, args, deleteRegistry)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -56,7 +56,7 @@ func registerCommand_Registry(cliConf config.CLIConfig, currentProfile string) *
 		Use:   "list",
 		Short: "Lists the repositories in an image registry",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, listRepos)
+			err := checkLoginAndRunWithConfig(cmd, args, listRepos)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -74,7 +74,7 @@ func registerCommand_Registry(cliConf config.CLIConfig, currentProfile string) *
 		Args:  cobra.ExactArgs(1),
 		Short: "Lists the images the specified image repository",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, listImages)
+			err := checkLoginAndRunWithConfig(cmd, args, listImages)
 			if err != nil {
 				os.Exit(1)
 			}

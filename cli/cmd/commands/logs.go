@@ -14,13 +14,13 @@ import (
 
 var follow bool
 
-func registerCommand_Logs(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Logs() *cobra.Command {
 	logsCmd := &cobra.Command{
 		Use:   "logs [release]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Logs the output from a given application.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, logs)
+			err := checkLoginAndRunWithConfig(cmd, args, logs)
 			if err != nil {
 				os.Exit(1)
 			}

@@ -17,7 +17,7 @@ var (
 	contexts       *[]string
 )
 
-func registerCommand_Connect(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Connect() *cobra.Command {
 	connectCmd := &cobra.Command{
 		Use:   "connect",
 		Short: "Commands that connect to external clusters and providers",
@@ -27,7 +27,7 @@ func registerCommand_Connect(cliConf config.CLIConfig, currentProfile string) *c
 		Use:   "kubeconfig",
 		Short: "Uses the local kubeconfig to add a cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, runConnectKubeconfig)
+			err := checkLoginAndRunWithConfig(cmd, args, runConnectKubeconfig)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -38,7 +38,7 @@ func registerCommand_Connect(cliConf config.CLIConfig, currentProfile string) *c
 		Use:   "ecr",
 		Short: "Adds an ECR instance to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, runConnectECR)
+			err := checkLoginAndRunWithConfig(cmd, args, runConnectECR)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -49,7 +49,7 @@ func registerCommand_Connect(cliConf config.CLIConfig, currentProfile string) *c
 		Use:   "dockerhub",
 		Short: "Adds a Docker Hub registry integration to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, runConnectDockerhub)
+			err := checkLoginAndRunWithConfig(cmd, args, runConnectDockerhub)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -60,7 +60,7 @@ func registerCommand_Connect(cliConf config.CLIConfig, currentProfile string) *c
 		Use:   "registry",
 		Short: "Adds a custom image registry to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, runConnectRegistry)
+			err := checkLoginAndRunWithConfig(cmd, args, runConnectRegistry)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -71,7 +71,7 @@ func registerCommand_Connect(cliConf config.CLIConfig, currentProfile string) *c
 		Use:   "helm",
 		Short: "Adds a custom Helm registry to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, runConnectHelmRepo)
+			err := checkLoginAndRunWithConfig(cmd, args, runConnectHelmRepo)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -82,7 +82,7 @@ func registerCommand_Connect(cliConf config.CLIConfig, currentProfile string) *c
 		Use:   "gcr",
 		Short: "Adds a GCR instance to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, runConnectGCR)
+			err := checkLoginAndRunWithConfig(cmd, args, runConnectGCR)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -93,7 +93,7 @@ func registerCommand_Connect(cliConf config.CLIConfig, currentProfile string) *c
 		Use:   "gar",
 		Short: "Adds a GAR instance to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, runConnectGAR)
+			err := checkLoginAndRunWithConfig(cmd, args, runConnectGAR)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -105,7 +105,7 @@ func registerCommand_Connect(cliConf config.CLIConfig, currentProfile string) *c
 		Use:   "docr",
 		Short: "Adds a DOCR instance to a project",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, runConnectDOCR)
+			err := checkLoginAndRunWithConfig(cmd, args, runConnectDOCR)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -157,7 +157,7 @@ func runConnectKubeconfig(ctx context.Context, _ *types.GetAuthenticatedUserResp
 		return err
 	}
 
-	return cliConf.SetCluster(id)
+	return config.SetCluster(id, currentProfile)
 }
 
 func runConnectECR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, _ []string) error {
@@ -170,7 +170,7 @@ func runConnectECR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 		return err
 	}
 
-	return cliConf.SetRegistry(regID)
+	return config.SetRegistry(regID)
 }
 
 func runConnectGCR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, _ []string) error {
@@ -183,7 +183,7 @@ func runConnectGCR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 		return err
 	}
 
-	return cliConf.SetRegistry(regID)
+	return config.SetRegistry(regID)
 }
 
 func runConnectGAR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, _ []string) error {
@@ -196,7 +196,7 @@ func runConnectGAR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 		return err
 	}
 
-	return cliConf.SetRegistry(regID)
+	return config.SetRegistry(regID)
 }
 
 func runConnectDOCR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, _ []string) error {
@@ -209,7 +209,7 @@ func runConnectDOCR(ctx context.Context, _ *types.GetAuthenticatedUserResponse, 
 		return err
 	}
 
-	return cliConf.SetRegistry(regID)
+	return config.SetRegistry(regID)
 }
 
 func runConnectDockerhub(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, _ []string) error {
@@ -222,7 +222,7 @@ func runConnectDockerhub(ctx context.Context, _ *types.GetAuthenticatedUserRespo
 		return err
 	}
 
-	return cliConf.SetRegistry(regID)
+	return config.SetRegistry(regID)
 }
 
 func runConnectRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, _ []string) error {
@@ -235,7 +235,7 @@ func runConnectRegistry(ctx context.Context, _ *types.GetAuthenticatedUserRespon
 		return err
 	}
 
-	return cliConf.SetRegistry(regID)
+	return config.SetRegistry(regID)
 }
 
 func runConnectHelmRepo(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, _ []string) error {
@@ -248,5 +248,5 @@ func runConnectHelmRepo(ctx context.Context, _ *types.GetAuthenticatedUserRespon
 		return err
 	}
 
-	return cliConf.SetHelmRepo(hrID)
+	return config.SetHelmRepo(hrID)
 }

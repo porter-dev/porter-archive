@@ -19,7 +19,8 @@ import (
 
 var manual bool = false
 
-func registerCommand_Auth(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+// func registerCommand_Auth() *cobra.Command {
+func registerCommand_Auth() *cobra.Command {
 	authCmd := &cobra.Command{
 		Use:   "auth",
 		Short: "Commands for authenticating to a Porter server",
@@ -28,43 +29,59 @@ func registerCommand_Auth(cliConf config.CLIConfig, currentProfile string) *cobr
 	loginCmd := &cobra.Command{
 		Use:   "login",
 		Short: "Authorizes a user for a given Porter server",
-		Run: func(cmd *cobra.Command, args []string) {
-			// cliConf = overrideConfigWithFlags(cmd, cliConf)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliConf, currentProfile, err := currentProfileIncludingFlags(cmd)
+			if err != nil {
+				return fmt.Errorf("error getting current profile config: %w", err)
+			}
 
-			err := login(cmd.Context(), cliConf, currentProfile)
+			err = login(cmd.Context(), cliConf, currentProfile)
 			if err != nil {
 				color.Red("Error logging in: %s\n", err.Error())
 				if strings.Contains(err.Error(), "Forbidden") {
-					_ = cliConf.SetToken("")
+					_ = config.SetToken("", currentProfile)
 				}
 				os.Exit(1)
 			}
+			return nil
 		},
 	}
 
 	registerCmd := &cobra.Command{
 		Use:   "register",
 		Short: "Creates a user for a given Porter server",
-		Run: func(cmd *cobra.Command, args []string) {
-			// cliConf = overrideConfigWithFlags(cmd, cliConf)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliConf, _, err := currentProfileIncludingFlags(cmd)
+			if err != nil {
+				return fmt.Errorf("error getting current profile config: %w", err)
+			}
 
-			err := register(cmd.Context(), cliConf)
+			err = register(cmd.Context(), cliConf)
 			if err != nil {
 				color.Red("Error registering: %s\n", err.Error())
 				os.Exit(1)
 			}
+			return nil
 		},
 	}
 
 	logoutCmd := &cobra.Command{
 		Use:   "logout",
 		Short: "Logs a user out of a given Porter server",
-		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, logout)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, currentProfile, err := currentProfileIncludingFlags(cmd)
 			if err != nil {
-				_ = cliConf.SetToken("")
-				os.Exit(1)
+				return fmt.Errorf("error getting current profile config: %w", err)
 			}
+
+			err = checkLoginAndRunWithConfig(cmd, args, logout)
+			if err != nil {
+				config.SetToken("", currentProfile)
+				config.SetCluster(0, currentProfile)
+				config.SetProject(0, currentProfile)
+				color.Green("Successfully logged out")
+			}
+			return nil
 		},
 	}
 
@@ -113,7 +130,7 @@ func login(ctx context.Context, cliConf config.CLIConfig, currentProfile string)
 		}
 
 		// set the token in config
-		err = cliConf.SetToken(token)
+		err = config.SetToken(token, currentProfile)
 		if err != nil {
 			return err
 		}
@@ -137,7 +154,12 @@ func login(ctx context.Context, cliConf config.CLIConfig, currentProfile string)
 
 	}
 
-	err = cliConf.SetToken(cliConf.Token)
+	err = config.SetToken(cliConf.Token, currentProfile)
+	if err != nil {
+		return err
+	}
+
+	err = config.SetHost(cliConf.Host, currentProfile)
 	if err != nil {
 		return err
 	}
@@ -157,14 +179,12 @@ func login(ctx context.Context, cliConf config.CLIConfig, currentProfile string)
 	} else {
 		// if the project ID does exist for the token, this is a project-issued token, and
 		// the project should be set automatically
-		err = cliConf.SetProject(ctx, client, projID, currentProfile)
-
+		err = config.SetProject(projID, currentProfile)
 		if err != nil {
 			return err
 		}
 
-		err = setProjectCluster(ctx, client, cliConf, projID)
-
+		err = setProjectCluster(ctx, client, cliConf, currentProfile, projID)
 		if err != nil {
 			return err
 		}
@@ -174,7 +194,7 @@ func login(ctx context.Context, cliConf config.CLIConfig, currentProfile string)
 	return nil
 }
 
-func setProjectForUser(ctx context.Context, client api.Client, config config.CLIConfig, currentProfile string) error {
+func setProjectForUser(ctx context.Context, client api.Client, cliConfig config.CLIConfig, currentProfile string) error {
 	// get a list of projects, and set the current project
 	resp, err := client.ListUserProjects(ctx)
 	if err != nil {
@@ -184,9 +204,9 @@ func setProjectForUser(ctx context.Context, client api.Client, config config.CLI
 	projects := *resp
 
 	if len(projects) > 0 {
-		config.SetProject(ctx, client, projects[0].ID, currentProfile) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
+		config.SetProject(projects[0].ID, currentProfile) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
-		err = setProjectCluster(ctx, client, config, projects[0].ID)
+		err = setProjectCluster(ctx, client, cliConfig, currentProfile, projects[0].ID)
 		if err != nil {
 			return err
 		}
@@ -219,7 +239,7 @@ func loginManual(ctx context.Context, cliConf config.CLIConfig, client api.Clien
 	}
 
 	// set the token to empty since this is manual (cookie-based) login
-	cliConf.SetToken("")
+	config.SetToken("", currentProfile)
 
 	color.New(color.FgGreen).Println("Successfully logged in!")
 
@@ -232,10 +252,9 @@ func loginManual(ctx context.Context, cliConf config.CLIConfig, client api.Clien
 	projects := *resp
 
 	if len(projects) > 0 {
-		cliConf.SetProject(ctx, client, projects[0].ID, currentProfile) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
+		config.SetProject(projects[0].ID, currentProfile) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
-		err = setProjectCluster(ctx, client, cliConf, projects[0].ID)
-
+		err = setProjectCluster(ctx, client, cliConf, currentProfile, projects[0].ID)
 		if err != nil {
 			return err
 		}
@@ -283,12 +302,15 @@ func register(ctx context.Context, cliConf config.CLIConfig) error {
 func logout(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	err := client.Logout(ctx)
 	if err != nil {
-		if !strings.Contains(err.Error(), "You are not logged in.") {
+		if !strings.Contains(err.Error(), "You are not logged in.") &&
+			!strings.Contains(err.Error(), "does not have a role in project") {
 			return err
 		}
 	}
 
-	cliConf.SetToken("")
+	config.SetToken("", currentProfile)
+	config.SetCluster(0, currentProfile)
+	config.SetProject(0, currentProfile)
 
 	color.Green("Successfully logged out")
 

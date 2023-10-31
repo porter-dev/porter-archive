@@ -19,7 +19,7 @@ import (
 	intstrutil "k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func registerCommand_Deploy(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Deploy() *cobra.Command {
 	deployCmd := &cobra.Command{
 		Use: "deploy",
 	}
@@ -28,7 +28,7 @@ func registerCommand_Deploy(cliConf config.CLIConfig, currentProfile string) *co
 		Use:   "blue-green-switch",
 		Short: "Automatically switches the traffic of a blue-green deployment once the new application is ready.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, bluegreenSwitch)
+			err := checkLoginAndRunWithConfig(cmd, args, bluegreenSwitch)
 			if err != nil {
 				os.Exit(1)
 			}

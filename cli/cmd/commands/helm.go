@@ -12,12 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Helm(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Helm() *cobra.Command {
 	helmCmd := &cobra.Command{
 		Use:   "helm",
 		Short: "Use helm to interact with a Porter cluster",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, runHelm)
+			err := checkLoginAndRunWithConfig(cmd, args, runHelm)
 			if err != nil {
 				os.Exit(1)
 			}

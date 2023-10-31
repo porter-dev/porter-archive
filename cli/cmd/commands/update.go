@@ -43,7 +43,7 @@ var (
 	waitForSuccessfulDeploy bool
 )
 
-func registerCommand_Update(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Update() *cobra.Command {
 	buildFlagsEnv = []string{}
 
 	// updateCmd represents the "porter update" base command when called
@@ -92,7 +92,7 @@ specify it as follows:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter update --app example-app --method docker --dockerfile ./docker/prod.Dockerfile"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updateFull)
+			err := checkLoginAndRunWithConfig(cmd, args, updateFull)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -120,7 +120,7 @@ destination path for a .env file. For example:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter update get-env --app example-app --file .env"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updateGetEnv)
+			err := checkLoginAndRunWithConfig(cmd, args, updateGetEnv)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -162,7 +162,7 @@ for the application:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter update build --app example-app --method docker --dockerfile ./prod.Dockerfile"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updateBuild)
+			err := checkLoginAndRunWithConfig(cmd, args, updateBuild)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -202,7 +202,7 @@ linked it via "porter connect".
 			color.New(color.FgGreen, color.Bold).Sprintf("porter update push --app nginx --tag new-tag"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updatePush)
+			err := checkLoginAndRunWithConfig(cmd, args, updatePush)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -232,7 +232,7 @@ the image that the application uses if no --values file is specified:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter update config --app example-app --tag custom-tag"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updateUpgrade)
+			err := checkLoginAndRunWithConfig(cmd, args, updateUpgrade)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -253,7 +253,7 @@ the image that the application uses if no --values file is specified:
 		Short: "Sets the desired value of an environment variable in an env group in the form VAR=VALUE.",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updateSetEnvGroup)
+			err := checkLoginAndRunWithConfig(cmd, args, updateSetEnvGroup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -265,7 +265,7 @@ the image that the application uses if no --values file is specified:
 		Short: "Removes an environment variable from an env group.",
 		Args:  cobra.MinimumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, updateUnsetEnvGroup)
+			err := checkLoginAndRunWithConfig(cmd, args, updateUnsetEnvGroup)
 			if err != nil {
 				os.Exit(1)
 			}

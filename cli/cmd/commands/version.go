@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Version(_ config.CLIConfig, _ string) *cobra.Command {
+func registerCommand_Version() *cobra.Command {
 	versionCmd := &cobra.Command{
 		Use:     "version",
 		Aliases: []string{"v", "--version"},

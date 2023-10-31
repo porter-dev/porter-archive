@@ -26,7 +26,7 @@ type StackConf struct {
 
 // CreateApplicationDeploy creates everything needed to deploy a porter app
 func CreateApplicationDeploy(ctx context.Context, client api.Client, worker *switchboardWorker.Worker, app *Application, applicationName string, cliConf config.CLIConfig) ([]*switchboardTypes.Resource, error) {
-	err := cliConf.ValidateCLIEnvironment()
+	err := config.ValidateCLIEnvironment()
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
 		return nil, fmt.Errorf("%s: %w", errMsg, err)

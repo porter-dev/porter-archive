@@ -51,7 +51,7 @@ const (
 	CommandPrefix_LAUNCHER = "launcher"
 )
 
-func registerCommand_App(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_App() *cobra.Command {
 	appCmd := &cobra.Command{
 		Use:   "app",
 		Short: "Runs a command for your application.",
@@ -63,7 +63,7 @@ func registerCommand_App(cliConf config.CLIConfig, currentProfile string) *cobra
 		Args:  cobra.MinimumNArgs(2),
 		Short: "Runs a command inside a connected cluster container.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, appRun)
+			err := checkLoginAndRunWithConfig(cmd, args, appRun)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -78,7 +78,7 @@ func registerCommand_App(cliConf config.CLIConfig, currentProfile string) *cobra
 		Args:  cobra.NoArgs,
 		Short: "Delete any lingering ephemeral pods that were created with \"porter app run\".",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, appCleanup)
+			err := checkLoginAndRunWithConfig(cmd, args, appCleanup)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -92,7 +92,7 @@ func registerCommand_App(cliConf config.CLIConfig, currentProfile string) *cobra
 		Args:  cobra.MinimumNArgs(1),
 		Short: "Updates the image tag for an application.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, appUpdateTag)
+			err := checkLoginAndRunWithConfig(cmd, args, appUpdateTag)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -114,7 +114,7 @@ func registerCommand_App(cliConf config.CLIConfig, currentProfile string) *cobra
 		Args:  cobra.MinimumNArgs(1),
 		Short: "Rolls back an application to the last successful revision.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, appRollback)
+			return checkLoginAndRunWithConfig(cmd, args, appRollback)
 		},
 	}
 	appCmd.AddCommand(appRollbackCmd)

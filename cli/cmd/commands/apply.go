@@ -44,7 +44,7 @@ var (
 	previewApply bool
 )
 
-func registerCommand_Apply(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Apply() *cobra.Command {
 	applyCmd := &cobra.Command{
 		Use:   "apply",
 		Short: "Applies a configuration to an application",
@@ -76,7 +76,7 @@ applying a configuration:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter apply -f porter.yaml"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, apply)
+			err := checkLoginAndRunWithConfig(cmd, args, apply)
 			if err != nil {
 				if strings.Contains(err.Error(), "Forbidden") {
 					_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "You may have to update your GitHub secret token")

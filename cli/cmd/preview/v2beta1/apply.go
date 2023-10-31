@@ -33,8 +33,7 @@ func NewApplier(client api.Client, cliConfig config.CLIConfig, raw []byte, names
 		return nil, fmt.Errorf("%s: %w", errMsg, err)
 	}
 
-	err = cliConfig.ValidateCLIEnvironment()
-
+	err = config.ValidateCLIEnvironment()
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
 		return nil, fmt.Errorf("%s: %w", errMsg, err)

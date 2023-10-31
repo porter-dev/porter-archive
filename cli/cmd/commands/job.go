@@ -18,7 +18,7 @@ import (
 
 var imageRepoURI string
 
-func registerCommand_Job(cliConf config.CLIConfig, currentProfile string) *cobra.Command {
+func registerCommand_Job() *cobra.Command {
 	jobCmd := &cobra.Command{
 		Use: "job",
 	}
@@ -47,7 +47,7 @@ use the --namespace flag:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter job update-images --namespace custom-namespace --image-repo-uri my-image.registry.io --tag newtag"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, batchImageUpdate)
+			err := checkLoginAndRunWithConfig(cmd, args, batchImageUpdate)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -77,7 +77,7 @@ use the --namespace flag:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter job wait --name job-example --namespace custom-namespace"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, waitForJob)
+			err := checkLoginAndRunWithConfig(cmd, args, waitForJob)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -107,7 +107,7 @@ use the --namespace flag:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter job run --name job-example --namespace custom-namespace"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, currentProfile, args, runJob)
+			err := checkLoginAndRunWithConfig(cmd, args, runJob)
 			if err != nil {
 				os.Exit(1)
 			}

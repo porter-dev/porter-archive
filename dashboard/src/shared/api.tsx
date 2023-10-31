@@ -961,6 +961,7 @@ const validatePorterApp = baseApi<
 const createApp = baseApi<
   | {
       name: string;
+      deployment_target_id: string;
       type: "github";
       git_repo_id: number;
       git_branch: string;
@@ -969,6 +970,7 @@ const createApp = baseApi<
     }
   | {
       name: string;
+      deployment_target_id: string;
       type: "docker-registry";
       image: {
         repository: string;

@@ -278,6 +278,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           {
             ...source,
             name: app.name,
+            deployment_target_id: deploymentTarget.deployment_target_id
           },
           {
             project_id: currentProject.id,
@@ -659,11 +660,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ServiceList
                       addNewText={"Add a new service"}
                       fieldArrayName={"app.services"}
-                      maxCPU={currentClusterResources.maxCPU}
-                      maxRAM={currentClusterResources.maxRAM}
-                      clusterContainsGPUNodes={
-                        currentClusterResources.clusterContainsGPUNodes
-                      }
                     />
                   </>,
                   <>
@@ -697,11 +693,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                         })}
                         isPredeploy
                         fieldArrayName={"app.predeploy"}
-                        maxCPU={currentClusterResources.maxCPU}
-                        maxRAM={currentClusterResources.maxRAM}
-                        clusterContainsGPUNodes={
-                          currentClusterResources.clusterContainsGPUNodes
-                        }
                       />
                     </>
                   ),

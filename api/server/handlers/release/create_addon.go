@@ -233,7 +233,7 @@ func (c *CreateAddonHandler) performAddonPreinstall(ctx context.Context, r *http
 	}
 
 	for _, chart := range awsTemplates[templateName] {
-		if c.scaleAckChartDeployment(ctx, chart, agent); err != nil {
+		if err := c.scaleAckChartDeployment(ctx, chart, agent); err != nil {
 			return telemetry.Error(ctx, span, err, "failed scaling ack chart deployment")
 		}
 	}

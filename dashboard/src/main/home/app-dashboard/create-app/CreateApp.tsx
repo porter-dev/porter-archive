@@ -157,6 +157,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           buildpacks: [],
         },
         env: [],
+        efsStorage: {
+          enabled: false,
+        }
       },
       source: {
         git_repo_name: "",
@@ -275,6 +278,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           {
             ...source,
             name: app.name,
+            deployment_target_id: deploymentTarget.deployment_target_id
           },
           {
             project_id: currentProject.id,
@@ -282,45 +286,14 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
         );
 
-        const res = await api.updateEnvironmentGroupV2(
-          "<token>",
-          {
-            deployment_target_id: deploymentTarget.deployment_target_id,
-            variables: variables,
-            b64_app_proto: btoa(app.toJsonString()),
-            secrets: secrets,
-          },
-          {
-            id: currentProject.id,
-            cluster_id: currentCluster.id,
-            app_name: app.name,
-          }
-        );
-
-        const updatedEnvGroups = z
-          .object({
-            env_groups: z
-              .object({
-                name: z.string(),
-                latest_version: z.coerce.bigint(),
-              })
-              .array(),
-          })
-          .parse(res.data);
-
-        const protoWithUpdatedEnv = new PorterApp({
-          ...app,
-          envGroups: updatedEnvGroups.env_groups.map((eg) => ({
-            name: eg.name,
-            version: eg.latest_version,
-          })),
-        });
-
         await api.applyApp(
           "<token>",
           {
-            b64_app_proto: btoa(protoWithUpdatedEnv.toJsonString()),
+            b64_app_proto: btoa(app.toJsonString()),
             deployment_target_id: deploymentTarget.deployment_target_id,
+            variables,
+            secrets,
+            hard_env_update: true,
           },
           {
             project_id: currentProject.id,
@@ -337,7 +310,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         return true;
       } catch (err) {
-        showIntercomWithMessage({ message: "I am running into an issue launching an application." });
+        showIntercomWithMessage({
+          message: "I am running into an issue launching an application.",
+        });
 
         if (axios.isAxiosError(err) && err.response?.data?.error) {
           updateAppStep({
@@ -433,7 +408,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         }
       }
 
-      showIntercomWithMessage({ message: "I am running into an issue launching an application." });
+      showIntercomWithMessage({
+        message: "I am running into an issue launching an application.",
+      });
 
       updateAppStep({
         step: "stack-launch-failure",
@@ -614,12 +591,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                                       porterYamlPath={value}
                                       projectId={currentProject.id}
                                       repoId={source.git_repo_id}
-                                      repoOwner={source.git_repo_name.split(
-                                        "/"
-                                      )[0]}
-                                      repoName={source.git_repo_name.split(
-                                        "/"
-                                      )[1]}
+                                      repoOwner={
+                                        source.git_repo_name.split("/")[0]
+                                      }
+                                      repoName={
+                                        source.git_repo_name.split("/")[1]
+                                      }
                                       branch={source.git_branch}
                                     />
                                   )}
@@ -683,9 +660,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ServiceList
                       addNewText={"Add a new service"}
                       fieldArrayName={"app.services"}
-                      maxCPU={currentClusterResources.maxCPU}
-                      maxRAM={currentClusterResources.maxRAM}
-                      clusterContainsGPUNodes={currentClusterResources.clusterContainsGPUNodes}
                     />
                   </>,
                   <>
@@ -719,8 +693,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                         })}
                         isPredeploy
                         fieldArrayName={"app.predeploy"}
-                        maxCPU={currentClusterResources.maxCPU}
-                        maxRAM={currentClusterResources.maxRAM}
                       />
                     </>
                   ),

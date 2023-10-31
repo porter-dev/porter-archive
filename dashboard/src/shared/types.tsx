@@ -17,6 +17,13 @@ export interface ClusterType {
   cloud_provider: string;
 }
 
+export interface AddonCard {
+  id: string;
+  icon: string;
+  name: string;
+  description: string;
+}
+
 export interface DetailedClusterType extends ClusterType {
   ingress_ip?: string;
   ingress_error?: DetailedIngressError;
@@ -280,6 +287,8 @@ export interface ProjectType {
   multi_cluster: boolean;
   full_add_ons: boolean;
   enable_reprovision: boolean;
+  quota_increase: boolean;
+  efs_enabled: boolean;
   validate_apply_v2: boolean;
   roles: {
     id: number;

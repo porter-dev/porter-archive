@@ -17,6 +17,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/api/utils"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -119,6 +120,8 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	switch event := event.(type) {
 	case *github.PullRequestEvent:
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "pr-action-type", Value: event.GetAction()})
+
 		if event.GetAction() != GithubPRStatus_Closed {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "event-processed", Value: false})
 			c.WriteResult(w, r, nil)
@@ -128,7 +131,7 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		branch := event.GetPullRequest().GetHead().GetRef()
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "event-branch", Value: branch})
 
-		err = cancelPendingWorkflows(ctx, cancelPendingWorkflowsInput{
+		_ = cancelPendingWorkflows(ctx, cancelPendingWorkflowsInput{
 			appName:         porterApp.Name,
 			repoID:          porterApp.GitRepoID,
 			repoName:        porterApp.RepoName,
@@ -136,16 +139,13 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 			githubAppID:     c.Config().ServerConf.GithubAppID,
 			event:           event,
 		})
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error cancelling pending workflows")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
+
+		namespace := utils.ValidDNSLabel(branch)
 
 		deploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(
 			uint(webhook.ProjectID),
 			uint(webhook.ClusterID),
-			branch,
+			namespace,
 			string(models.DeploymentTargetSelectorType_Namespace),
 		)
 		if err != nil {

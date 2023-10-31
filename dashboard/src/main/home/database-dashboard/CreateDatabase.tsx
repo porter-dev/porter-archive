@@ -12,6 +12,7 @@ import awsElastiCache from "assets/aws-elasticache.png";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { search } from "shared/search";
+import { AddonCard } from "shared/types";
 
 import TemplateList from "../launch/TemplateList";
 import SearchBar from "components/porter/SearchBar";
@@ -21,7 +22,8 @@ import Back from "components/porter/Back";
 import Fieldset from "components/porter/Fieldset";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
-import RDSForm from "./RDSForm";
+import RDSForm from "./forms/RDSForm";
+import AuroraPostgresForm from "./forms/AuroraPostgresForm";
 
 type Props = {
 };
@@ -32,12 +34,18 @@ const CreateDatabase: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchValue, setSearchValue] = useState("");
   const [currentTemplate, setCurrentTemplate] = useState<any>(null);
-  const [databaseTemplates, setDatabaseTemplates] = useState<any[]>([
+  const [databaseTemplates, setDatabaseTemplates] = useState<AddonCard[]>([
     {
       id: "rds-postgresql",
       icon: awsRDS,
-      name: "RDS Postgres",
+      name: "RDS PostgreSQL",
       description: "Amazon Relational Database Service (RDS) is a web service that makes it easier to set up, operate, and scale a relational database in the cloud.",
+    },
+    {
+      id: "rds-postgresql-aurora",
+      icon: awsRDS,
+      name: "Aurora PostgreSQL",
+      description: "Amazon Aurora PostgreSQL is a fully managed, PostgreSQL–compatible, and ACID–compliant relational database engine that combines the speed, reliability, and manageability of Amazon Aurora with the simplicity and cost-effectiveness of open-source databases.",
     },
     {
       id: "elasticache-redis",
@@ -71,11 +79,22 @@ const CreateDatabase: React.FC<Props> = ({
     <StyledTemplateComponent>
       {
         (currentTemplate) ? (
-          <RDSForm
-            currentTemplate={currentTemplate}
-            goBack={() => setCurrentTemplate(null)}
-            repoURL={capabilities?.default_addon_helm_repo_url}
-          />
+          <>
+            {currentTemplate.id === "rds-postgresql" && (
+              <RDSForm
+                currentTemplate={currentTemplate}
+                goBack={() => setCurrentTemplate(null)}
+                repoURL={capabilities?.default_addon_helm_repo_url}
+              />
+            )}
+            {currentTemplate.id === "rds-postgresql-aurora" && (
+              <AuroraPostgresForm
+                currentTemplate={currentTemplate}
+                goBack={() => setCurrentTemplate(null)}
+                repoURL={capabilities?.default_addon_helm_repo_url}
+              />
+            )}
+          </>
         ) : (
           <>
             <Back to="/databases" />

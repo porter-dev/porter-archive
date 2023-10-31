@@ -215,28 +215,40 @@ func (c *Client) ValidatePorterApp(
 	return resp, err
 }
 
+// ApplyPorterAppInput is the input struct to ApplyPorterApp
+type ApplyPorterAppInput struct {
+	ProjectID        uint
+	ClusterID        uint
+	Base64AppProto   string
+	DeploymentTarget string
+	AppRevisionID    string
+	ForceBuild       bool
+	Variables        map[string]string
+	Secrets          map[string]string
+	HardEnvUpdate    bool
+}
+
 // ApplyPorterApp takes in a base64 encoded app definition and applies it to the cluster
 func (c *Client) ApplyPorterApp(
 	ctx context.Context,
-	projectID, clusterID uint,
-	base64AppProto string,
-	deploymentTarget string,
-	appRevisionID string,
-	forceBuild bool,
+	inp ApplyPorterAppInput,
 ) (*porter_app.ApplyPorterAppResponse, error) {
 	resp := &porter_app.ApplyPorterAppResponse{}
 
 	req := &porter_app.ApplyPorterAppRequest{
-		Base64AppProto:     base64AppProto,
-		DeploymentTargetId: deploymentTarget,
-		AppRevisionID:      appRevisionID,
-		ForceBuild:         forceBuild,
+		Base64AppProto:     inp.Base64AppProto,
+		DeploymentTargetId: inp.DeploymentTarget,
+		AppRevisionID:      inp.AppRevisionID,
+		ForceBuild:         inp.ForceBuild,
+		Variables:          inp.Variables,
+		Secrets:            inp.Secrets,
+		HardEnvUpdate:      inp.HardEnvUpdate,
 	}
 
 	err := c.postRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/apply",
-			projectID, clusterID,
+			inp.ProjectID, inp.ClusterID,
 		),
 		req,
 		resp,
@@ -292,14 +304,15 @@ func (c *Client) CurrentAppRevision(
 
 // CreatePorterAppDBEntryInput is the input struct to CreatePorterAppDBEntry
 type CreatePorterAppDBEntryInput struct {
-	AppName         string
-	GitRepoName     string
-	GitRepoID       uint
-	GitBranch       string
-	ImageRepository string
-	PorterYamlPath  string
-	ImageTag        string
-	Local           bool
+	AppName            string
+	GitRepoName        string
+	GitRepoID          uint
+	GitBranch          string
+	ImageRepository    string
+	PorterYamlPath     string
+	ImageTag           string
+	Local              bool
+	DeploymentTargetID string
 }
 
 // CreatePorterAppDBEntry creates an entry in the porter app
@@ -325,13 +338,14 @@ func (c *Client) CreatePorterAppDBEntry(
 	}
 
 	req := &porter_app.CreateAppRequest{
-		Name:           inp.AppName,
-		SourceType:     sourceType,
-		GitBranch:      inp.GitBranch,
-		GitRepoName:    inp.GitRepoName,
-		GitRepoID:      inp.GitRepoID,
-		PorterYamlPath: inp.PorterYamlPath,
-		Image:          image,
+		Name:               inp.AppName,
+		SourceType:         sourceType,
+		GitBranch:          inp.GitBranch,
+		GitRepoName:        inp.GitRepoName,
+		GitRepoID:          inp.GitRepoID,
+		PorterYamlPath:     inp.PorterYamlPath,
+		Image:              image,
+		DeploymentTargetID: inp.DeploymentTargetID,
 	}
 
 	err := c.postRequest(

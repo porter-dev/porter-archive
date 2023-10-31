@@ -62,7 +62,7 @@ const BuildEventCard: React.FC<Props> = ({
               <Container row>
                 <Icon src={document} height="10px" />
                 <Spacer inline width="5px" />
-                View build logs
+                View logs
               </Container>
             </Link>
             <Spacer inline x={1} />

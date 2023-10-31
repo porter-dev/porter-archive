@@ -42,6 +42,7 @@ type Props = {};
 
 const templateWhitelist = [
   "rds-postgresql",
+  "rds-postgresql-aurora",
 ];
 
 const Apps: React.FC<Props> = ({ 

@@ -82,11 +82,11 @@ const PreDeployEventCard: React.FC<Props> = ({
           {renderStatusText(event)}
           <Spacer inline x={1} />
           <Wrapper>
-            <Link to={`/apps/${appName}/events?event_id=${event.id}&service=${appName}-predeploy`} hasunderline>
+            <Link to={`/apps/${appName}/events?event_id=${event.id}&service=predeploy&revision_id=${event.metadata.app_revision_id}`} hasunderline>
               <Container row>
                 <Icon src={document} height="10px" />
                 <Spacer inline width="5px" />
-                View pre-deploy logs
+                View logs
               </Container>
             </Link>
             {(event.status !== "SUCCESS") &&

@@ -4,9 +4,7 @@ import React, {
     useRef,
     useState,
 } from "react";
-
 import styled from "styled-components";
-
 import spinner from "assets/loading.gif";
 import api from "shared/api";
 import { useLogs } from "./utils";
@@ -27,6 +25,9 @@ import { useRevisionList } from "lib/hooks/useRevisionList";
 import { useLocation } from "react-router";
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import Filter from "components/porter/Filter";
+import { useTimer } from 'react-timer-hook';
+import { useIntercom } from "lib/hooks/useIntercom";
+import axios from "axios";
 
 type Props = {
     projectId: number;
@@ -44,6 +45,8 @@ type Props = {
     appId: number;
 };
 
+const DEFAULT_LOG_TIMEOUT_SECONDS = 60;
+
 const Logs: React.FC<Props> = ({
     projectId,
     clusterId,
@@ -52,7 +55,7 @@ const Logs: React.FC<Props> = ({
     deploymentTargetId,
     appRevisionId,
     timeRange,
-    logFilterNames = ["service_name", "revision", "output_stream"],
+    logFilterNames = ["service_name", "revision", "output_stream"], // these are the names of filters that will be displayed in the UI
     filterPredeploy = false,
     appId,
 }) => {
@@ -62,9 +65,10 @@ const Logs: React.FC<Props> = ({
         revision: queryParams.get('version'),
         output_stream: queryParams.get('output_stream'),
         service: queryParams.get('service'),
+        revision_id: queryParams.get('revision_id'),
     }
 
-    const scrollToBottomRef = useRef<HTMLDivElement | undefined>(undefined);
+    const scrollToBottomRef = useRef<HTMLDivElement | null>(null);
     const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
     const [enteredSearchText, setEnteredSearchText] = useState("");
     const [searchText, setSearchText] = useState("");
@@ -79,12 +83,15 @@ const Logs: React.FC<Props> = ({
     const [selectedFilterValues, setSelectedFilterValues] = useState<Record<FilterName, string>>({
         service_name: logQueryParamOpts?.service ?? GenericFilter.getDefaultOption("service_name").value,
         pod_name: "", // not supported in v2
-        revision: logQueryParamOpts.revision ?? GenericFilter.getDefaultOption("revision").value,
+        revision: logQueryParamOpts.revision ?? GenericFilter.getDefaultOption("revision").value, // refers to revision number
         output_stream: logQueryParamOpts.output_stream ?? GenericFilter.getDefaultOption("output_stream").value,
+        revision_id: logQueryParamOpts.revision_id ?? GenericFilter.getDefaultOption("revision_id").value,
     });
 
     const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
     const { latestRevision: { revision_number: latestRevisionNumber } } = useLatestRevision();
+
+    const { showIntercomWithMessage } = useIntercom();
 
     const isAgentVersionUpdated = (agentImage: string | undefined) => {
         if (agentImage == null) {
@@ -180,12 +187,11 @@ const Logs: React.FC<Props> = ({
         }, 5000);
     };
 
-    const { logs, refresh, moveCursor, paginationInfo } = useLogs({
+    const { logs, refresh, moveCursor, paginationInfo, stopLogStream } = useLogs({
         projectID: projectId,
         clusterID: clusterId,
         selectedFilterValues,
         appName,
-        serviceName: selectedFilterValues.service_name,
         deploymentTargetId,
         searchParam: enteredSearchText,
         notify,
@@ -197,6 +203,20 @@ const Logs: React.FC<Props> = ({
         timeRange,
         appID: appId,
     });
+
+    const { totalSeconds, isRunning, pause: pauseLogTimeout, restart: restartLogTimeout } = useTimer({
+        expiryTimestamp: dayjs().add(DEFAULT_LOG_TIMEOUT_SECONDS, 'seconds').toDate(),
+        onExpire: () => {
+            stopLogStream();
+            showIntercomWithMessage({ message: "I am having trouble receiving logs from my application." });
+        }
+    });
+
+    useEffect(() => {
+        if (logs.length) {
+            pauseLogTimeout();
+        }
+    },[logs.length]);
 
     useEffect(() => {
         setFilters([
@@ -243,7 +263,7 @@ const Logs: React.FC<Props> = ({
             } as GenericFilter,
         ].filter((f: GenericFilter) => logFilterNames.includes(f.name)))
 
-        if (latestRevisionNumber && !logQueryParamOpts.revision) {
+        if (latestRevisionNumber && !logQueryParamOpts.revision && !logQueryParamOpts.revision_id) { // default to filter by latest revision number if no revision-related query params supplied
             setSelectedFilterValues({
                 ...selectedFilterValues,
                 revision: latestRevisionNumber.toString(),
@@ -308,6 +328,7 @@ const Logs: React.FC<Props> = ({
                         <Spacer inline x={1} />
                         <ScrollButton
                             onClick={() => {
+                                restartLogTimeout(dayjs().add(DEFAULT_LOG_TIMEOUT_SECONDS, 'seconds').toDate());
                                 refresh({ isLive: selectedDate == null && timeRange?.endTime == null });
                             }}
                         >
@@ -319,7 +340,7 @@ const Logs: React.FC<Props> = ({
                 <Spacer y={0.5} />
                 <LogsSectionWrapper>
                     <StyledLogsSection>
-                        {isLoading && <Loading message="Waiting for logs..." />}
+                        {isLoading && <Loading message={"Initializing..."} />}
                         {!isLoading && logs.length !== 0 && (
                             <>
                                 <LoadMoreButton
@@ -354,8 +375,20 @@ const Logs: React.FC<Props> = ({
                                 </Highlight>
                             </Message>
                         )}
-                        {!isLoading && logs.length === 0 && selectedDate == null && (
-                            <Loading message="Waiting for logs..." />
+                        {!isLoading && logs.length === 0 && selectedDate == null && isRunning && (
+                            <Loading message={`Waiting ${totalSeconds} seconds for logs...`} />
+                        )}
+                        {!isLoading && logs.length === 0 && selectedDate == null && !isRunning && (
+                            <Message>
+                                Timed out waiting for logs.
+                                <Highlight onClick={() => {
+                                    restartLogTimeout(dayjs().add(DEFAULT_LOG_TIMEOUT_SECONDS, 'seconds').toDate());
+                                    refresh({ isLive: selectedDate == null && timeRange?.endTime == null });
+                                }}>
+                                    <i className="material-icons">autorenew</i>
+                                    Refresh
+                                </Highlight>
+                            </Message>
                         )}
                         <div ref={scrollToBottomRef} />
                     </StyledLogsSection>
@@ -399,7 +432,7 @@ const Logs: React.FC<Props> = ({
                 notify("Porter agent is outdated. Please upgrade to see logs.");
             }
         } catch (err) {
-            if (err.response?.status === 404) {
+            if (axios.isAxiosError(err) && err.response?.status === 404) {
                 setHasPorterAgent(false);
             }
         }
@@ -533,8 +566,8 @@ const Message = styled.div`
   justify-content: center;
   margin-left: 75px;
   text-align: center;
-  color: #ffffff44;
   font-size: 13px;
+  color: #aaaabb;
 `;
 
 const Highlight = styled.div`

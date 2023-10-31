@@ -958,10 +958,10 @@ const EnvGroupVariablesEditor = ({
 };
 
 const EnvGroupSettings = ({
-                            envGroup,
-                            handleDeleteEnvGroup,
-                            namespace,
-                          }: {
+  envGroup,
+  handleDeleteEnvGroup,
+  namespace,
+} : {
   envGroup: EditableEnvGroup;
   handleDeleteEnvGroup: () => void;
   namespace?: string;
@@ -973,8 +973,13 @@ const EnvGroupSettings = ({
     setCurrentError,
   } = useContext(Context);
   const [isAuthorized] = useAuth();
-  const [name, setName] = useState(null);
-  const [cloneNamespace, setCloneNamespace] = useState(null);
+
+  // When cloning an env group, append "-2" for the default name
+  // (i.e. my-env-group-2)
+  const [name, setName] = useState<string>(
+    envGroup.name + "-2"
+  );
+  const [cloneNamespace, setCloneNamespace] = useState<string>("default");
   const [cloneSuccess, setCloneSuccess] = useState(false);
 
   const canDelete = useMemo(() => {
@@ -1013,72 +1018,75 @@ const EnvGroupSettings = ({
       );
       setCloneSuccess(true);
     } catch (error) {
-      setCurrentError(error);
+      console.log(error);
     }
   };
 
   return (
-      <TabWrapper>
-        {isAuthorized("env_group", "", ["get", "delete"]) && (
-            <InnerWrapper full={true}>
-              <Heading isAtTop>Manage environment group</Heading>
-              <Helper>
-                Permanently delete this set of environment variables. This action
-                cannot be undone.
-              </Helper>
-              {!canDelete && (
-                  <Helper color="#f5cb42">
-                    Applications are still synced to this env group. Navigate to
-                    "Linked applications" and remove this env group from all
-                    applications to delete.
-                  </Helper>
-              )}
-              <Button
-                  color="#b91133"
-                  onClick={() => {
-                    setCurrentOverlay({
-                      message: `Are you sure you want to delete ${envGroup.name}?`,
-                      onYes: handleDeleteEnvGroup,
-                      onNo: () => setCurrentOverlay(null),
-                    });
-                  }}
-                  disabled={!canDelete}
-              >
-                Delete {envGroup.name}
-              </Button>
+    <TabWrapper>
+      {isAuthorized("env_group", "", ["get", "delete"]) && (
+        <InnerWrapper full={true}>
+          <Heading isAtTop>Manage environment group</Heading>
+          <Helper>
+            Permanently delete this set of environment variables. This action
+            cannot be undone.
+          </Helper>
+          {!canDelete && (
+            <Helper color="#f5cb42">
+              Applications are still synced to this env group. Navigate to
+              "Linked applications" and remove this env group from all
+              applications to delete.
+            </Helper>
+          )}
+          <Button
+            color="#b91133"
+            onClick={() => {
+              setCurrentOverlay({
+                message: `Are you sure you want to delete ${envGroup.name}?`,
+                onYes: handleDeleteEnvGroup,
+                onNo: () => setCurrentOverlay(null),
+              });
+            }}
+            disabled={!canDelete}
+          >
+            Delete {envGroup.name}
+          </Button>
+          {!currentProject?.simplified_view_enabled && (
+            <>
               <DarkMatter />
-              {!currentProject?.simplified_view_enabled && (<>
-                <Heading>Clone environment group</Heading>
-                <Helper>
-                  Clone this set of environment variables into a new env group.
-                </Helper>
+              <Heading>Clone environment group</Heading>
+              <Helper>
+                Clone this set of environment variables into a new env group.
+              </Helper>
+              <InputRow
+                type="string"
+                value={name}
+                setValue={(x: string) => setName(x)}
+                label="New env group name"
+                placeholder="ex: my-cloned-env-group"
+              />
                 <InputRow
-                    type="string"
-                    value={name}
-                    setValue={(x: string) => setName(x)}
-                    label="New env group name"
-                    placeholder="ex: my-cloned-env-group"
+                  type="string"
+                  value={cloneNamespace}
+                  setValue={(x: string) => setCloneNamespace(x)}
+                  label="New env group namespace"
+                  placeholder="ex: default"
                 />
-                <InputRow
-                    type="string"
-                    value={cloneNamespace}
-                    setValue={(x: string) => setCloneNamespace(x)}
-                    label="New env group namespace"
-                    placeholder="ex: default"
-                />
-                <FlexAlt>
-                  <Button onClick={cloneEnvGroup}>Clone {envGroup.name}</Button>
-                  {cloneSuccess && (
-                      <StatusWrapper position="right" successful={true}>
-                        <i className="material-icons">done</i>
-                        <StatusTextWrapper>Successfully cloned</StatusTextWrapper>
-                      </StatusWrapper>
-                  )}
-                </FlexAlt>
-              </>)}
-            </InnerWrapper>
-        )}
-      </TabWrapper>
+              )}
+              <FlexAlt>
+                <Button onClick={cloneEnvGroup}>Clone {envGroup.name}</Button>
+                {cloneSuccess && (
+                  <StatusWrapper position="right" successful={true}>
+                    <i className="material-icons">done</i>
+                    <StatusTextWrapper>Successfully cloned</StatusTextWrapper>
+                  </StatusWrapper>
+                )}
+              </FlexAlt>
+            </>
+          )}
+        </InnerWrapper>
+      )}
+    </TabWrapper>
   );
 };
 
@@ -1086,78 +1094,80 @@ const ApplicationsList = ({ envGroup }: { envGroup: EditableEnvGroup }) => {
   const { currentCluster, currentProject } = useContext(Context);
 
   return (
-      <>
-        <HeadingWrapper>
-          <Heading isAtTop>Linked applications:</Heading>
-          <DocsHelper
-              link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
-              tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
-              placement="top-start"
-              disableMargin
-          />
-        </HeadingWrapper>
-        {currentProject?.simplified_view_enabled ? (
-                envGroup.linked_applications.map((appName) => {
-                  return (
-                      <StyledCard>
-                        <Flex>
-                          <ContentContainer>
-                            <EventInformation>
-                              <EventName>{appName}</EventName>
-                            </EventInformation>
-                          </ContentContainer>
-                          <ActionContainer>
-                            {currentProject?.simplified_view_enabled ? (<ActionButton
-                                    to={`/apps/${appName}`}
-                                    target="_blank"
-                                >
-                                  <span className="material-icons-outlined">open_in_new</span>
-                                </ActionButton>)
-                                :
-                                (<ActionButton
-                                    to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
-                                    target="_blank"
-                                >
-                                  <span className="material-icons-outlined">open_in_new</span>
-                                </ActionButton>)}
-                          </ActionContainer>
-                        </Flex>
-                      </StyledCard>
-                  );
-                })
-            )
-            :
-            (envGroup.applications.map((appName) => {
-              return (
-                  <StyledCard>
-                    <Flex>
-                      <ContentContainer>
-                        <EventInformation>
-                          <EventName>{appName}</EventName>
-                        </EventInformation>
-                      </ContentContainer>
-                      <ActionContainer>
-                        {currentProject?.simplified_view_enabled ? (<ActionButton
-                                to={`/apps/${appName}`}
-                                target="_blank"
-                            >
-                              <span className="material-icons-outlined">open_in_new</span>
-                            </ActionButton>)
-                            :
-                            (<ActionButton
-                                to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
-                                target="_blank"
-                            >
-                              <span className="material-icons-outlined">open_in_new</span>
-                            </ActionButton>)}
-                      </ActionContainer>
-                    </Flex>
-                  </StyledCard>
-              );
-            }))
-        }
-
-      </>
+    <>
+      <HeadingWrapper>
+        <Heading isAtTop>Linked applications:</Heading>
+        <DocsHelper
+          link="https://docs.porter.run/deploying-applications/environment-groups#syncing-environment-groups-to-applications"
+          tooltipText="When env group sync is enabled, the applications are automatically restarted when the env groups are updated."
+          placement="top-start"
+          disableMargin
+        />
+      </HeadingWrapper>
+      {currentProject?.simplified_view_enabled ? (
+        envGroup.linked_applications.map((appName) => {
+          return (
+            <StyledCard>
+              <Flex>
+                <ContentContainer>
+                  <EventInformation>
+                    <EventName>{appName}</EventName>
+                  </EventInformation>
+                </ContentContainer>
+                <ActionContainer>
+                  {currentProject?.simplified_view_enabled ? (
+                    <ActionButton
+                      to={`/apps/${appName}`}
+                      target="_blank"
+                    >
+                      <span className="material-icons-outlined">open_in_new</span>
+                    </ActionButton>
+                    ) : (
+                    <ActionButton
+                      to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
+                      target="_blank"
+                    >
+                      <span className="material-icons-outlined">open_in_new</span>
+                    </ActionButton>
+                  )}
+                </ActionContainer>
+              </Flex>
+            </StyledCard>
+          );
+        })
+      ) : (
+        envGroup.applications.map((appName) => {
+          return (
+            <StyledCard>
+              <Flex>
+                <ContentContainer>
+                  <EventInformation>
+                    <EventName>{appName}</EventName>
+                  </EventInformation>
+                </ContentContainer>
+                <ActionContainer>
+                  {currentProject?.simplified_view_enabled ? (
+                    <ActionButton
+                      to={`/apps/${appName}`}
+                      target="_blank"
+                    >
+                      <span className="material-icons-outlined">open_in_new</span>
+                    </ActionButton>
+                  ) : (
+                    <ActionButton
+                      to={`/applications/${currentCluster.name}/${envGroup.namespace}/${appName}`}
+                      target="_blank"
+                    >
+                      <span className="material-icons-outlined">open_in_new</span>
+                    </ActionButton>
+                  )}
+                </ActionContainer>
+              </Flex>
+            </StyledCard>
+          );
+        })
+      )}
+    </>
   );
 };
 

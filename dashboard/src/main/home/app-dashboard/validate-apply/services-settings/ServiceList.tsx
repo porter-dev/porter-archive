@@ -49,34 +49,30 @@ type ServiceListProps = {
   existingServiceNames?: string[];
   fieldArrayName: "app.services" | "app.predeploy";
   serviceVersionStatus?: Record<string, PorterAppVersionStatus[]>;
-  maxCPU: number;
-  maxRAM: number;
-  clusterContainsGPUNodes: boolean;
   internalNetworkingDetails?: {
     namespace: string;
     appName: string;
   };
+  allowAddServices?: boolean;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
   addNewText,
   prePopulateService,
+  fieldArrayName,
   isPredeploy = false,
   existingServiceNames = [],
-  fieldArrayName,
   serviceVersionStatus,
-  maxCPU,
-  maxRAM,
-  clusterContainsGPUNodes,
   internalNetworkingDetails = {
     namespace: "",
     appName: "",
   },
+  allowAddServices = true,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
 
-  const { currentClusterResources } = useClusterResources();
+  const { currentClusterResources: {maxCPU, maxRAM, clusterContainsGPUNodes, clusterIngressIp, defaultCPU, defaultRAM} } = useClusterResources();
 
   // add service modal form
   const {
@@ -86,6 +82,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
     reset,
     handleSubmit,
     formState: { errors },
+    setError,
+    clearErrors,
   } = useForm<AddServiceFormValues>({
     reValidateMode: "onChange",
     resolver: zodResolver(addServiceFormValidator),
@@ -104,7 +102,10 @@ const ServiceList: React.FC<ServiceListProps> = ({
     fields: deletedServices,
   } = useFieldArray({
     control: appControl,
-    name: fieldArrayName === "app.services" ? "deletions.serviceNames" : "deletions.predeploy",
+    name:
+      fieldArrayName === "app.services"
+        ? "deletions.serviceNames"
+        : "deletions.predeploy",
   });
 
   const serviceType = watch("type");
@@ -127,12 +128,29 @@ const ServiceList: React.FC<ServiceListProps> = ({
     });
   }, [fields]);
 
+  useEffect(() => {
+    if (isServiceNameDuplicate(serviceName)) {
+      setError("name", {
+        message: "A service with this name already exists",
+      });
+    } else if (!isPredeploy && serviceName === "predeploy") {
+      setError("name", {
+        message: "predeploy is a reserved service name",
+      });
+    } else {
+      clearErrors("name");
+    }
+  }, [serviceName, isPredeploy]);
+
   const isServiceNameDuplicate = (name: string) => {
     return services.some(({ svc: s }) => s.name.value === name);
   };
 
   const maybeRenderAddServicesButton = () => {
-    if (isPredeploy && services.find((s) => isPredeployService(s.svc))) {
+    if (
+      (isPredeploy && services.find((s) => isPredeployService(s.svc))) ||
+      !allowAddServices
+    ) {
       return null;
     }
     return (
@@ -170,8 +188,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
       deserializeService({
         service: defaultSerialized({
           ...data,
-          defaultCPU: currentClusterResources.defaultCPU,
-          defaultRAM: currentClusterResources.defaultRAM,
+          defaultCPU,
+          defaultRAM,
         }),
         expanded: true,
       })
@@ -207,6 +225,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 maxRAM={maxRAM}
                 clusterContainsGPUNodes={clusterContainsGPUNodes}
                 internalNetworkingDetails={internalNetworkingDetails}
+                clusterIngressIp={clusterIngressIp}
               />
             ) : null;
           })}
@@ -256,9 +275,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
           <Button
             type="button"
             onClick={onSubmit}
-            disabled={
-              isServiceNameDuplicate(serviceName) || serviceName?.length > 61
-            }
+            disabled={!!errors.name?.message}
           >
             <I className="material-icons">add</I> Add service
           </Button>

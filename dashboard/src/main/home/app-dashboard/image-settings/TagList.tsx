@@ -1,102 +1,72 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import tag_icon from "assets/tag.png";
 import addCircle from "assets/add-circle.png";
-
-import api from "shared/api";
-import Loading from "components/Loading";
-import { ImageType, TagType, tagValidator } from "./types";
-import { useQuery } from "@tanstack/react-query";
+import { ArtifactType, ImageType } from "./types";
 import SearchBar from "components/SearchBar";
-import { z } from "zod";
 
 type Props = {
   selectedImage?: ImageType;
-  projectId: number;
   setSelectedTag: (x: string) => void;
 };
 
 const TagList: React.FC<Props> = ({
   selectedImage,
-  projectId,
   setSelectedTag,
 }) => {
-  const [tags, setTags] = useState<TagType[]>([]);
   const [searchFilter, setSearchFilter] = useState<string>("");
 
-  const { data: tagResp, isLoading, error } = useQuery(
-    ["getImageTags", selectedImage],
-    async () => {
-      if (!selectedImage) {
-        return;
-      }
-
-      const res = await api.getImageTags(
-        "<token>",
-        {},
-        {
-          project_id: projectId,
-          registry_id: selectedImage.registry_id,
-          repo_name: selectedImage.name,
-        }
-      );
-      return z.array(tagValidator).parseAsync(res.data);
-    },
-    {
-      enabled: !!selectedImage && selectedImage.registry_id !== 0,
-      refetchOnWindowFocus: false,
-    }
-  )
-
-  useEffect(() => {
-    if (tagResp) {
-      setTags(tagResp);
-    }
-  }, [tagResp])
-
   const renderTagList = () => {
-    if (isLoading && selectedImage && selectedImage.registry_id !== 0) {
-      return (
-        <LoadingWrapper>
-          <Loading />
-        </LoadingWrapper>
-      );
-    } else if (error) {
-      return <LoadingWrapper>Error loading tags.</LoadingWrapper>;
-    } else if (tags.length === 0 && !searchFilter) {
-      return <LoadingWrapper>Please specify a tag.</LoadingWrapper>;
+    if (selectedImage == null) {
+      if (searchFilter) {
+        return (
+          <TagItem
+            onClick={() => {
+              setSelectedTag(searchFilter);
+            }}
+          >
+            <img src={addCircle} />
+            {`Use tag \"${searchFilter}\"`}
+          </TagItem>
+        );
+      }
+      return <LoadingWrapper>Please specify an tag.</LoadingWrapper>;
+    }
+    
+    if (selectedImage.artifacts.length === 0 && !searchFilter) {
+      return <LoadingWrapper>Image has no tags; please specify a different image.</LoadingWrapper>;
     }
 
-    const sortedTags = searchFilter
-      ? tags
-        .filter((tag) => tag.tag.toLowerCase().includes(searchFilter.toLowerCase()))
+    const sortedArtifacts = searchFilter
+      ? selectedImage.artifacts
+        .filter(({ tag }) => tag.toLowerCase().includes(searchFilter.toLowerCase()))
         .sort((a, b) => {
           const aIndex = a.tag.toLowerCase().indexOf(searchFilter.toLowerCase());
           const bIndex = b.tag.toLowerCase().indexOf(searchFilter.toLowerCase());
           return aIndex - bIndex;
         })
-      : tags.sort((a, b) => {
+      : selectedImage.artifacts.sort((a, b) => {
         return (
-          new Date(b.pushed_at ?? "").getTime() -
-          new Date(a.pushed_at ?? "").getTime()
+          new Date(b.updated_at ?? "").getTime() -
+          new Date(a.updated_at ?? "").getTime()
         );
       })
 
-    const tagCards = sortedTags.map((tag: TagType, i: number) => {
+    const tagCards = sortedArtifacts.map((artifact: ArtifactType, i: number) => {
       return (
         <TagItem
           key={i}
           onClick={() => {
-            setSelectedTag(tag.tag);
+            setSelectedTag(artifact.tag);
           }}
         >
           <img src={tag_icon} />
-          {tag.tag}
+          {artifact.tag}
         </TagItem>
       );
     });
 
-    if (searchFilter !== "" && !tags.some((tag) => tag.tag === searchFilter)) {
+    if (searchFilter !== "" && !sortedArtifacts.some(({ tag }) => tag === searchFilter)) {
       tagCards.push(
         <TagItem
           onClick={() => {
@@ -116,7 +86,7 @@ const TagList: React.FC<Props> = ({
     <>
       <SearchBar
         setSearchFilter={setSearchFilter}
-        disabled={error != null || isLoading}
+        disabled={false}
         prompt={"Search tags..."}
       />
       <ExpandedWrapper>
@@ -170,5 +140,4 @@ const LoadingWrapper = styled.div`
   align-items: center;
   justify-content: center;
   font-size: 13px;
-  color: #ffffff44;
 `;

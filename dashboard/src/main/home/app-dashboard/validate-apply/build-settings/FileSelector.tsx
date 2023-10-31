@@ -100,6 +100,17 @@ const FileSelector: React.FC<Props> = ({
                                     {relativePath}
                                 </Item>
                             ))
+                            .with({ type: "symlink" }, (content) => (
+                                <FileItem 
+                                    key={i} 
+                                    onClick={() => ({})}
+                                    isHeaderItem={false}
+                                    isFileSelectable={false}
+                                >
+                                    <img src={folder} />
+                                    {relativePath}
+                                </FileItem>
+                            ))
                         .exhaustive();
                     }
                 )}

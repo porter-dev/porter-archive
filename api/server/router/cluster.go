@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
 	"github.com/porter-dev/porter/api/server/handlers/database"
+	"github.com/porter-dev/porter/api/server/handlers/datastore"
 	"github.com/porter-dev/porter/api/server/handlers/environment"
 	"github.com/porter-dev/porter/api/server/handlers/environment_groups"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -286,6 +287,35 @@ func getClusterRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: listDatabaseEndpoint,
 		Handler:  listDatabaseHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/datastore/status -> datastore.NewStatusHandler
+	datastoreStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/datastore/status",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	datastoreStatusHandler := datastore.NewStatusHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: datastoreStatusEndpoint,
+		Handler:  datastoreStatusHandler,
 		Router:   r,
 	})
 

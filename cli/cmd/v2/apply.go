@@ -77,7 +77,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		}
 
 		b64YAML = base64.StdEncoding.EncodeToString(porterYaml)
-		color.New(color.FgGreen).Printf("Successfully parsed Porter YAML\n") // nolint:errcheck,gosec
+		color.New(color.FgGreen).Printf("Using Porter YAML at path: %s\n", inp.PorterYamlPath) // nolint:errcheck,gosec
 	}
 
 	commitSHA := commitSHAFromEnv()

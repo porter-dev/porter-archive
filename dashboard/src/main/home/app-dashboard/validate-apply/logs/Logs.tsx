@@ -43,6 +43,9 @@ type Props = {
     };
     filterPredeploy?: boolean;
     appId: number;
+    selectedService?: string;
+    selectedRevisionId?: string;
+    defaultScrollToBottomEnabled?: boolean;
 };
 
 const DEFAULT_LOG_TIMEOUT_SECONDS = 60;
@@ -58,6 +61,9 @@ const Logs: React.FC<Props> = ({
     logFilterNames = ["service_name", "revision", "output_stream"], // these are the names of filters that will be displayed in the UI
     filterPredeploy = false,
     appId,
+    selectedService,
+    selectedRevisionId,
+    defaultScrollToBottomEnabled = true,
 }) => {
     const { search } = useLocation();
     const queryParams = new URLSearchParams(search);
@@ -69,7 +75,7 @@ const Logs: React.FC<Props> = ({
     }
 
     const scrollToBottomRef = useRef<HTMLDivElement | null>(null);
-    const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
+    const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(defaultScrollToBottomEnabled);
     const [enteredSearchText, setEnteredSearchText] = useState("");
     const [searchText, setSearchText] = useState("");
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -78,15 +84,22 @@ const Logs: React.FC<Props> = ({
     const [hasPorterAgent, setHasPorterAgent] = useState(true);
     const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [logsError, setLogsError] = useState<string | undefined>(undefined);
 
     const [selectedFilterValues, setSelectedFilterValues] = useState<Record<FilterName, string>>({
-        service_name: logQueryParamOpts?.service ?? GenericFilter.getDefaultOption("service_name").value,
+        service_name: logQueryParamOpts.service ?? selectedService ?? GenericFilter.getDefaultOption("service_name").value,
         pod_name: "", // not supported in v2
         revision: logQueryParamOpts.revision ?? GenericFilter.getDefaultOption("revision").value, // refers to revision number
         output_stream: logQueryParamOpts.output_stream ?? GenericFilter.getDefaultOption("output_stream").value,
-        revision_id: logQueryParamOpts.revision_id ?? GenericFilter.getDefaultOption("revision_id").value,
+        revision_id: logQueryParamOpts.revision_id ?? selectedRevisionId ?? GenericFilter.getDefaultOption("revision_id").value,
     });
+    // for some reason the filters were not being updated when the service name or revision number changed in the notification feed, so this ensures it
+    useEffect(() => {
+        setSelectedFilterValues({
+            ...selectedFilterValues,
+            service_name: logQueryParamOpts.service ?? selectedService ?? GenericFilter.getDefaultOption("service_name").value,
+            revision_id: logQueryParamOpts.revision_id ?? selectedRevisionId ?? GenericFilter.getDefaultOption("revision_id").value,
+        })
+    }, [selectedService, selectedRevisionId]);
 
     const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
     const { latestRevision: { revision_number: latestRevisionNumber } } = useLatestRevision();
@@ -263,7 +276,11 @@ const Logs: React.FC<Props> = ({
             } as GenericFilter,
         ].filter((f: GenericFilter) => logFilterNames.includes(f.name)))
 
-        if (latestRevisionNumber && !logQueryParamOpts.revision && !logQueryParamOpts.revision_id) { // default to filter by latest revision number if no revision-related query params supplied
+        // default to filter by latest revision number if no revision-related filter options are selected
+        if (latestRevisionNumber && 
+            selectedFilterValues.revision === GenericFilter.getDefaultOption("revision").value && 
+            selectedFilterValues.revision_id === GenericFilter.getDefaultOption("revision_id").value
+        ) { 
             setSelectedFilterValues({
                 ...selectedFilterValues,
                 revision: latestRevisionNumber.toString(),
@@ -477,18 +494,7 @@ const Logs: React.FC<Props> = ({
                 <I className="material-icons">add</I> Install Porter agent
             </Button>
         </Fieldset>
-    ) : logsError ? (
-        <Fieldset>
-            <Container row>
-                <WarnI className="material-icons">warning</WarnI>
-                <Text color="helper">
-                    Porter encountered an error retrieving logs for this application.
-                </Text>
-            </Container>
-        </Fieldset>
-    ) : (
-        renderContents()
-    );
+    ) : renderContents();
 };
 
 export default Logs;
@@ -499,15 +505,6 @@ const I = styled.i`
   align-items: center;
   margin-right: 5px;
   justify-content: center;
-`;
-
-const WarnI = styled.i`
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  margin-right: 10px;
-  justify-content: center;
-  opacity: 0.6;
 `;
 
 const Spinner = styled.img`

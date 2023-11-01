@@ -25,13 +25,14 @@ import {
   PopulatedEnvGroup,
   populatedEnvGroup,
 } from "../validate-apply/app-settings/types";
-import { PorterAppNotification, porterAppNotificationEventMetadataValidator } from "./tabs/activity-feed/events/types";
+import { porterAppNotificationEventMetadataValidator } from "./tabs/activity-feed/events/types";
+import { ClientNotification, deserializeNotifications } from "lib/porter-apps/notification";
 
 export const LatestRevisionContext = createContext<{
   porterApp: PorterAppRecord;
   latestRevision: AppRevision;
   latestProto: PorterApp;
-  latestNotifications: PorterAppNotification[];
+  latestNotifications: ClientNotification[];
   servicesFromYaml: DetectedServices | null;
   clusterId: number;
   projectId: number;
@@ -122,7 +123,7 @@ export const LatestRevisionProvider = ({
         }
       );
 
-      const { app_revision, notifications } = await z
+      const { app_revision, notifications: porterAppNotifications } = await z
         .object({
           app_revision: appRevisionValidator,
           notifications: z.array(porterAppNotificationEventMetadataValidator)
@@ -130,7 +131,7 @@ export const LatestRevisionProvider = ({
         .parseAsync(res.data);
       return {
         app_revision,
-        notifications,
+        notifications: deserializeNotifications(porterAppNotifications),
       };
     },
     {

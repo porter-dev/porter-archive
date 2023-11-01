@@ -2,18 +2,28 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import NotificationList from "./NotificationList";
 import NotificationExpandedView from "./NotificationExpandedView";
-import { PorterAppNotification } from "../activity-feed/events/types";
+import { ClientNotification } from "lib/porter-apps/notification";
 
 type Props = {
-    notifications: PorterAppNotification[];
+    notifications: ClientNotification[];
+    projectId: number;
+    clusterId: number;
+    appName: string;
+    deploymentTargetId: string;
+    appId: number;
 };
 
 const NotificationFeed: React.FC<Props> = ({
     notifications,
+    projectId,
+    clusterId,
+    appName,
+    deploymentTargetId,
+    appId,
 }) => {
-    const [selectedNotification, setSelectedNotification] = useState<PorterAppNotification | undefined>(notifications.length ? notifications[0] : undefined);
+    const [selectedNotification, setSelectedNotification] = useState<ClientNotification | undefined>(notifications.length ? notifications[0] : undefined);
 
-    const handleTileClick = (notification: PorterAppNotification) => {
+    const handleTileClick = (notification: ClientNotification) => {
         setSelectedNotification(notification);
     };
 
@@ -28,6 +38,11 @@ const NotificationFeed: React.FC<Props> = ({
                     />
                     <NotificationExpandedView 
                         notification={selectedNotification} 
+                        projectId={projectId}
+                        clusterId={clusterId}
+                        appName={appName}
+                        deploymentTargetId={deploymentTargetId}
+                        appId={appId}
                     />
                 </>
             )}
@@ -39,7 +54,8 @@ export default NotificationFeed;
 
 const StyledNotificationFeed = styled.div`
     display: flex;
-    height: 600px;
+    margin-bottom: -50px;
+    height: 800px;
     width: 100%;
     animation: fadeIn 0.3s 0s;
     @keyframes fadeIn {

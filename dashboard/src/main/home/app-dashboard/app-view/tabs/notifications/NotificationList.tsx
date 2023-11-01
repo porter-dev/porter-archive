@@ -1,12 +1,12 @@
 import React from "react";
 import styled from "styled-components";
-import { PorterAppNotification } from "../activity-feed/events/types";
 import NotificationTile from "./NotificationTile";
+import { ClientNotification } from "lib/porter-apps/notification";
 
 type Props = {
-    onTileClick: (event: PorterAppNotification) => void;
-    notifications: PorterAppNotification[];
-    selectedNotification: PorterAppNotification;
+    onTileClick: (event: ClientNotification) => void;
+    notifications: ClientNotification[];
+    selectedNotification: ClientNotification;
 };
 
 const NotificationList: React.FC<Props> = ({
@@ -31,12 +31,12 @@ const NotificationList: React.FC<Props> = ({
 export default NotificationList;
 
 const StyledNotificationList = styled.div`
-    width: 300px;
+    width: 200px;
     display: flex;
     flex-direction: column;
-    height: 600px;
+    height: 100%;
     overflow: auto;
-    border-bottom: 1px solid #494b4f;
+    border-right: 1px solid #ffffff44;
     ::-webkit-scrollbar {
         width: 3px;
         :horizontal {

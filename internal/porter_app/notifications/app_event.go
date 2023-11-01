@@ -85,7 +85,7 @@ func isNotificationDuplicate(
 	eventRepo repository.PorterAppEventRepository,
 	deploymentTargetID string,
 ) (bool, error) {
-	ctx, span := telemetry.NewSpan(ctx, "is-app-event-duplicate")
+	ctx, span := telemetry.NewSpan(ctx, "is-notification-duplicate")
 	defer span.End()
 
 	deploymentTargetUUID, err := uuid.Parse(deploymentTargetID)
@@ -100,6 +100,15 @@ func isNotificationDuplicate(
 	if err != nil {
 		return false, telemetry.Error(ctx, span, err, "error converting app id to int")
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "app-id", Value: notification.AppID},
+		telemetry.AttributeKV{Key: "app-name", Value: notification.AppName},
+		telemetry.AttributeKV{Key: "app-revision-id", Value: notification.AppRevisionID},
+		telemetry.AttributeKV{Key: "agent-event-id", Value: notification.AgentEventID},
+		telemetry.AttributeKV{Key: "service-name", Value: notification.ServiceName},
+	)
+
 	existingEvents, _, err := eventRepo.ListEventsByPorterAppIDAndDeploymentTargetID(ctx, uint(appIdInt), deploymentTargetUUID)
 	if err != nil {
 		return false, telemetry.Error(ctx, span, err, "error listing porter app events for event type with deployment target id")

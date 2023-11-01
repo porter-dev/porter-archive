@@ -44,6 +44,17 @@ export const porterAppNotificationEventMetadataValidator = z.object({
     human_readable_detail: z.string(),
     human_readable_summary: z.string(),
     timestamp: z.string(),
+    deployment: z.discriminatedUnion("status", [
+        z.object({
+            status: z.literal("PENDING")
+        }),
+        z.object({
+            status: z.literal("SUCCESS")
+        }),
+        z.object({
+            status: z.literal("FAILURE")
+        }),
+    ])
 });
 export type PorterAppNotification = z.infer<typeof porterAppNotificationEventMetadataValidator>;
 export const porterAppEventValidator = z.discriminatedUnion("type", [

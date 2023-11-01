@@ -1,12 +1,12 @@
 import React from "react";
 import styled from "styled-components";
-import { PorterAppNotification } from "../activity-feed/events/types";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { feedDate } from "shared/string_utils";
+import { ClientNotification } from "lib/porter-apps/notification";
 
 type Props = {
-  notification: PorterAppNotification;
+  notification: ClientNotification;
   selected: boolean;
   onClick: () => void;
 };
@@ -21,9 +21,9 @@ const NotificationTile: React.FC<Props> = ({
       <NotificationContent>
         <Text color="helper">{feedDate(notification.timestamp)}</Text>
         <Spacer y={0.5} />
-        <NotificationSummary>{notification.human_readable_summary}</NotificationSummary>
+        <Text color="helper">Service: <ServiceName>{notification.serviceName}</ServiceName></Text>
         <Spacer y={0.5} />
-        <Text color="helper">Service: <ServiceName>{notification.service_name}</ServiceName></Text>
+        <NotificationSummary>{notification.isDeployRelated ? "Your service failed to deploy" : "Your service is unhealthy"}</NotificationSummary>
       </NotificationContent>
     </StyledNotificationTile>
   );

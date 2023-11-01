@@ -21,7 +21,7 @@ type HandleNotificationInput struct {
 
 // HandleNotification handles the logic for processing agent events
 func HandleNotification(ctx context.Context, inp HandleNotificationInput) error {
-	ctx, span := telemetry.NewSpan(ctx, "handle-notification")
+	ctx, span := telemetry.NewSpan(ctx, "internal-handle-notification")
 	defer span.End()
 
 	// 1. parse agent event
@@ -36,6 +36,15 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 	// 2. convert agent event to baseNotification
 	baseNotification := agentEventToNotification(*agentEventMetadata)
 
+	// telemetry.WithAttributes(span,
+	// 	telemetry.AttributeKV{Key: "app-id", Value: baseNotification.AppID},
+	// 	telemetry.AttributeKV{Key: "app-name", Value: baseNotification.AppName},
+	// 	telemetry.AttributeKV{Key: "service-name", Value: baseNotification.ServiceName},
+	// 	telemetry.AttributeKV{Key: "app-revision-id", Value: baseNotification.AppRevisionID},
+	// 	telemetry.AttributeKV{Key: "agent-event-id", Value: baseNotification.AgentEventID},
+	// 	telemetry.AttributeKV{Key: "agent-detail", Value: baseNotification.AgentDetail},
+	// )
+
 	// 3. dedupe notification
 	isDuplicate, err := isNotificationDuplicate(ctx, baseNotification, inp.EventRepo, inp.DeploymentTargetID)
 	if err != nil {
@@ -45,6 +54,15 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "is-duplicate", Value: true})
 		return nil
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "app-id", Value: baseNotification.AppID},
+		telemetry.AttributeKV{Key: "app-name", Value: baseNotification.AppName},
+		telemetry.AttributeKV{Key: "service-name", Value: baseNotification.ServiceName},
+		telemetry.AttributeKV{Key: "app-revision-id", Value: baseNotification.AppRevisionID},
+		telemetry.AttributeKV{Key: "agent-event-id", Value: baseNotification.AgentEventID},
+		telemetry.AttributeKV{Key: "agent-detail", Value: baseNotification.AgentDetail},
+	)
 
 	// 4. hydrate notification with k8s deployment info
 	hydratedNotification, err := hydrateNotification(ctx, hydrateNotificationInput{

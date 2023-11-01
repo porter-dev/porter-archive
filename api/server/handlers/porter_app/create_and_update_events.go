@@ -619,7 +619,7 @@ func (p *CreateUpdatePorterAppEventHandler) handleNotification(ctx context.Conte
 	projectId, clusterId uint,
 	agent *kubernetes.Agent,
 ) error {
-	ctx, span := telemetry.NewSpan(ctx, "handle-notification")
+	ctx, span := telemetry.NewSpan(ctx, "serve-handle-notification")
 	defer span.End()
 
 	// get the namespace associated with the deployment target id

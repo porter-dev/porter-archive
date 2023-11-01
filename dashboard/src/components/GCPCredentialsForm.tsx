@@ -197,7 +197,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
             )}
             <Spacer y={0.5} />
             <Button
-              disabled={!isContinueEnabled || isLoading}
+              disabled={!isContinueEnabled}
               onClick={saveCredentials}
             >Continue</Button>
           </>

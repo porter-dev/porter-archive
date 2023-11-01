@@ -20,6 +20,7 @@ import Error from "components/porter/Error";
 import Fieldset from "components/porter/Fieldset";
 import Container from "components/porter/Container";
 import ClickToCopy from "components/porter/ClickToCopy";
+import { RdsFormValues } from "./types";
 
 type Props = RouteComponentProps & {
   currentTemplate: any;
@@ -83,7 +84,7 @@ const RDSForm: React.FC<Props> = ({
   const deploy = async (wildcard?: any) => {
     setButtonStatus("loading");
 
-    let values = {
+    let values: { config: RdsFormValues } = {
       config: {
         name,
         masterUsername: dbUsername,

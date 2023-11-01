@@ -20,6 +20,7 @@ import Error from "components/porter/Error";
 import Fieldset from "components/porter/Fieldset";
 import Container from "components/porter/Container";
 import ClickToCopy from "components/porter/ClickToCopy";
+import { AuroraPostgresFormValues } from "./types";
 
 type Props = RouteComponentProps & {
   currentTemplate: any;
@@ -83,7 +84,7 @@ const AuroraPostgresForm: React.FC<Props> = ({
   const deploy = async () => {
     setButtonStatus("loading");
 
-    const values = {
+    const values: { config: AuroraPostgresFormValues } = {
       config: {
         name,
         masterUsername: dbUsername,

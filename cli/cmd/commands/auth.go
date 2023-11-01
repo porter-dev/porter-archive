@@ -19,7 +19,6 @@ import (
 
 var manual bool = false
 
-// func registerCommand_Auth() *cobra.Command {
 func registerCommand_Auth() *cobra.Command {
 	authCmd := &cobra.Command{
 		Use:   "auth",

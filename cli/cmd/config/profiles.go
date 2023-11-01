@@ -59,7 +59,7 @@ func migrateExistingConfigYaml(configPath string) error {
 		return fmt.Errorf("config file is invalid yaml: %w", err)
 	}
 
-	err = updateValuesForSelectedProfile(defaultProfileName, c, configPath)
+	err = updateValuesForSelectedProfile(defaultProfileName, configPath, withCLIConfig(c))
 	if err != nil {
 		return fmt.Errorf("unable to write migrated default config to file: %w", err)
 	}
@@ -108,7 +108,7 @@ func updateCurrentProfileInFile(newProfile string, configPath string) error {
 
 // updateValuesForSelectedProfile updates config for a given profile. This can be used with the --profile flag or the PORTER_PROFILE env var,
 // and will not necessarily update the current_profile in the config file.
-func updateValuesForSelectedProfile(selectedProfile string, updatedProfile CLIConfig, configPath string) error {
+func updateValuesForSelectedProfile(selectedProfile string, configPath string, updatedCLIValues ...cliConfigValue) error {
 	if selectedProfile == "" {
 		return errors.New("must specify a profile to update")
 	}
@@ -128,12 +128,11 @@ func updateValuesForSelectedProfile(selectedProfile string, updatedProfile CLICo
 	}
 
 	baseProfile := profilesConfig.Profiles[selectedProfile]
-	overlayedProfile, err := overlayProfiles(baseProfile, updatedProfile)
-	if err != nil {
-		return fmt.Errorf("unable to add new profile values to existing values")
+	for _, v := range updatedCLIValues {
+		v(&baseProfile)
 	}
 
-	profilesConfig.Profiles[selectedProfile] = overlayedProfile
+	profilesConfig.Profiles[selectedProfile] = baseProfile
 
 	err = writeProfileToProfilesConfigFile(profilesConfig, configPath)
 	if err != nil {
@@ -233,38 +232,44 @@ func overlayProfiles(baseProfile CLIConfig, profileToOverlay CLIConfig) (CLIConf
 }
 
 // configForProfileFromConfigFile gets the profile for the current_profile specified in the porter config file
-func configForProfileFromConfigFile(selectedProfile string, configPath string) (CLIConfig, error) {
-	profilesConfig, err := readProfilesConfigFromFile(configPath)
-	if err != nil {
-		return CLIConfig{}, fmt.Errorf("error reading profiles config file: %w", err)
-	}
-
+func configForProfileFromConfigFile(selectedProfile string, configPath string) (CLIConfig, string, error) {
 	if selectedProfile == "" {
 		selectedProfile = defaultProfileName
+	}
+
+	profilesConfig, err := readProfilesConfigFromFile(configPath)
+	if err != nil {
+		return CLIConfig{}, selectedProfile, fmt.Errorf("error reading profiles config file: %w", err)
+	}
+
+	if selectedProfile == defaultProfileName {
+		if profilesConfig.CurrentProfile != "" {
+			selectedProfile = profilesConfig.CurrentProfile
+		}
 	}
 
 	if profilesConfig.CurrentProfile == "" && len(profilesConfig.Profiles) == 0 {
 		err := migrateExistingConfigYaml(configPath)
 		if err != nil {
-			return CLIConfig{}, fmt.Errorf("error migrating porter.yaml config file. Please delete file at %s. %w", configPath, err)
+			return CLIConfig{}, selectedProfile, fmt.Errorf("error migrating porter.yaml config file. Please delete file at %s. %w", configPath, err)
 		}
 
-		migrated, err := configForProfileFromConfigFile(selectedProfile, configPath)
+		migrated, selectedProfile, err := configForProfileFromConfigFile(selectedProfile, configPath)
 		if err != nil {
-			return CLIConfig{}, fmt.Errorf("error migrating existing porter.yaml to support profiles: %w", err)
+			return CLIConfig{}, selectedProfile, fmt.Errorf("error migrating existing porter.yaml to support profiles: %w", err)
 		}
-		return migrated, nil
+		return migrated, selectedProfile, nil
 	}
 
 	configFile, ok := profilesConfig.Profiles[selectedProfile]
 	if !ok {
 		_, _ = color.New(color.FgGreen).Printf("Porter profile '%s' does not exist. Creating one now...\n", currentProfile)
-		err = updateValuesForSelectedProfile(selectedProfile, defaultCLIConfig(), configPath)
+		err = updateValuesForSelectedProfile(selectedProfile, configPath, withCLIConfig(defaultCLIConfig()))
 		if err != nil {
-			return CLIConfig{}, fmt.Errorf("error creating new profile: %w", err)
+			return CLIConfig{}, selectedProfile, fmt.Errorf("error creating new profile: %w", err)
 		}
 	}
-	return configFile, nil
+	return configFile, selectedProfile, nil
 }
 
 // profileConfigFromEnvVars parses any environment variables that may be setting

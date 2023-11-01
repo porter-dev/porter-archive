@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/fatih/color"
@@ -55,8 +54,7 @@ func checkLoginAndRunWithConfig(cmd *cobra.Command, args []string, runner authen
 			return ErrCannotConnect
 		}
 
-		red.Fprintf(os.Stderr, "Error: %v\n", err.Error())
-		return err
+		return fmt.Errorf("error checking login: %w", err)
 	}
 
 	project, err := client.GetProject(ctx, cliConf.Project)
@@ -87,7 +85,7 @@ func checkLoginAndRunWithConfig(cmd *cobra.Command, args []string, runner authen
 
 		cliErrors.GetErrorHandler(cliConf, currentProfile).HandleError(err)
 
-		return err
+		return fmt.Errorf("error running command: %w", err)
 	}
 
 	return nil

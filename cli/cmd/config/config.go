@@ -51,30 +51,33 @@ type FeatureFlags struct {
 // This returns the config which should be applied to all subsequent requests, as well as the current profile that the command was run with
 func InitAndLoadConfig(ctx context.Context, flagsProfile string, flagsConfig CLIConfig) (CLIConfig, string, error) {
 	var config CLIConfig
-	currentProfile := defaultProfileName
 
 	err := ensurePorterConfigDirectoryExists()
 	if err != nil {
-		return config, currentProfile, fmt.Errorf("unable to get or create porter directory: %w", err)
+		return config, "", fmt.Errorf("unable to get or create porter directory: %w", err)
 	}
 	err = ensurePorterConfigFileExists()
 	if err != nil {
-		return config, currentProfile, fmt.Errorf("unable to get or create porter config file: %w", err)
+		return config, "", fmt.Errorf("unable to get or create porter config file: %w", err)
 	}
 
 	defaultConfig := defaultCLIConfig()
+	currentProfile := defaultProfileName
 
+	currentProfileConfig, configFileProfile, err := configForProfileFromConfigFile(currentProfile, porterConfigFilePath)
+	if err != nil {
+		return config, currentProfile, fmt.Errorf("unable to read profile variables from config file")
+	}
+
+	if configFileProfile != "" {
+		currentProfile = configFileProfile
+	}
 	envProfile := os.Getenv("PORTER_PROFILE")
 	if envProfile != "" {
 		currentProfile = envProfile
 	}
 	if flagsProfile != "" {
 		currentProfile = flagsProfile
-	}
-
-	currentProfileConfig, err := configForProfileFromConfigFile(currentProfile, porterConfigFilePath)
-	if err != nil {
-		return config, currentProfile, fmt.Errorf("unable to read profile variables from config file")
 	}
 
 	overlayedCurrentProfileConfig, err := overlayProfiles(defaultConfig, currentProfileConfig)
@@ -98,26 +101,4 @@ func InitAndLoadConfig(ctx context.Context, flagsProfile string, flagsConfig CLI
 	}
 
 	return configWithAllOverlays, currentProfile, nil
-}
-
-// ValidateCLIEnvironment checks that all required variables are present for running the CLI
-func ValidateCLIEnvironment() error {
-	c, err := configForProfileFromConfigFile("", porterConfigFilePath)
-	if err != nil {
-		return fmt.Errorf("error reading config for profile: %w", err)
-	}
-
-	if c.Token == "" {
-		return fmt.Errorf("no auth token present, please run 'porter auth login' to authenticate")
-	}
-
-	if c.Project == 0 {
-		return fmt.Errorf("no project selected, please run 'porter config set-project' to select a project")
-	}
-
-	if c.Cluster == 0 {
-		return fmt.Errorf("no cluster selected, please run 'porter config set-cluster' to select a cluster")
-	}
-
-	return nil
 }

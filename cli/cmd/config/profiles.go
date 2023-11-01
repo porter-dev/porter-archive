@@ -191,9 +191,12 @@ func ensurePorterConfigFileExists() error {
 		if !os.IsNotExist(err) {
 			return fmt.Errorf("error reading porter config file: %w", err)
 		}
-		err = os.Mkdir(defaultPorterConfigDir, 0o700)
+		by, _ := yaml.Marshal(defaultCLIConfig())
+		err = os.WriteFile(porterConfigFilePath, by, 0o664)
 		if err != nil {
-			return fmt.Errorf("error creating porter config file: %w", err)
+			if !errors.Is(err, os.ErrExist) {
+				return fmt.Errorf("error creating porter config file: %w", err)
+			}
 		}
 	}
 	return nil

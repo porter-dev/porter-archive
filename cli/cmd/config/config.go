@@ -64,15 +64,19 @@ func InitAndLoadConfig(ctx context.Context, flagsProfile string, flagsConfig CLI
 
 	defaultConfig := defaultCLIConfig()
 	currentProfile := defaultProfileName
+	if currentProfile != "" {
+		currentProfile = flagsProfile
+	}
 
 	currentProfileConfig, configFileProfile, err := configForProfileFromConfigFile(currentProfile, porterConfigFilePath)
 	if err != nil {
 		return config, currentProfile, fmt.Errorf("unable to read profile variables from config file")
 	}
 
-	if configFileProfile != "" {
-		currentProfile = configFileProfile
+	if currentProfile != "" {
+		currentProfile = flagsProfile
 	}
+
 	envProfile := os.Getenv("PORTER_PROFILE")
 	if envProfile != "" {
 		currentProfile = envProfile
@@ -85,6 +89,7 @@ func InitAndLoadConfig(ctx context.Context, flagsProfile string, flagsConfig CLI
 	if err != nil {
 		return config, currentProfile, fmt.Errorf("unable to overlay profile onto default values")
 	}
+	fmt.Println(currentProfile, configFileProfile, flagsProfile, overlayedCurrentProfileConfig.Host, currentProfileConfig.Host)
 
 	envVarsConfig, err := profileConfigFromEnvVars(ctx)
 	if err != nil {

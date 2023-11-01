@@ -33,13 +33,6 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
   const [useCloudFormationForm, setUseCloudFormationForm] = useState(true);
   const [selectedProvider, setSelectedProvider] = useState("");
 
-  const isUsageExceeded = useMemo(() => {
-    if (!hasBillingEnabled) {
-      return false;
-    }
-    return usage?.current.clusters >= usage?.limit.clusters;
-  }, [usage]);
-
   const markStepCostConsent = async (step: string, provider: string) => {
     try {
       await api.updateOnboardingStep("<token>", { step, provider }, { project_id: currentProject.id });
@@ -66,14 +59,13 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                 <Block
                   key={i}
                   disabled={
-                    !currentProject?.multi_cluster && (isUsageExceeded ||
+                    !currentProject?.multi_cluster && (
                       (provider === "gcp" && !currentProject?.azure_enabled))
 
                   }
                   onClick={() => {
                     if (
                       !(
-                        isUsageExceeded ||
                         (provider === "gcp" && !currentProject?.azure_enabled)
                       )
                     ) {

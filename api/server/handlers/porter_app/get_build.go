@@ -20,32 +20,50 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// GetBuildEnvHandler is the handler for the /apps/{porter_app_name}/revisions/{app_revision_id}/build-env endpoint
-type GetBuildEnvHandler struct {
+// GetBuildFromRevisionHandler is the handler for the /apps/{porter_app_name}/revisions/{app_revision_id}/build endpoint
+type GetBuildFromRevisionHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewGetBuildEnvHandler handles GET requests to the /apps/{porter_app_name}/revisions/{app_revision_id}/build-env endpoint
-func NewGetBuildEnvHandler(
+// NewGetBuildFromRevisionHandler handles GET requests to the /apps/{porter_app_name}/revisions/{app_revision_id}/build endpoint
+func NewGetBuildFromRevisionHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetBuildEnvHandler {
-	return &GetBuildEnvHandler{
+) *GetBuildFromRevisionHandler {
+	return &GetBuildFromRevisionHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-// GetBuildEnvResponse is the response object for the /apps/{porter_app_name}/revisions/{app_revision_id}/build-env endpoint
-type GetBuildEnvResponse struct {
-	BuildEnvVariables map[string]string `json:"build_env_variables"`
+// Image is the image used by an app with a docker registry source
+type Image struct {
+	Repository string `json:"repository"`
+	Tag        string `json:"tag"`
 }
 
-// ServeHTTP translates the request into a GetBuildEnvRequest request, uses the proto to query the cluster for the build env, and returns the response
-func (c *GetBuildEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-build-env")
+// BuildSettings is the set of fields for a revision's build
+type BuildSettings struct {
+	Method     string   `json:"method"`
+	Context    string   `json:"context"`
+	Builder    string   `json:"builder"`
+	Buildpacks []string `json:"buildpacks"`
+	Dockerfile string   `json:"dockerfile"`
+	CommitSHA  string   `json:"commit_sha"`
+}
+
+// GetBuildFromRevisionResponse is the response object for the /apps/{porter_app_name}/revisions/{app_revision_id}/build endpoint
+type GetBuildFromRevisionResponse struct {
+	BuildEnvVariables map[string]string `json:"build_env_variables"`
+	Build             BuildSettings     `json:"build"`
+	Image             Image             `json:"image"`
+}
+
+// ServeHTTP translates the request into a GetBuildFromRevisionRequest request, uses the proto to query the revision for the build settings, and returns the response
+func (c *GetBuildFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-build")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
@@ -100,12 +118,40 @@ func (c *GetBuildEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	resp := &GetBuildFromRevisionResponse{}
+
 	appProto := &porterv1.PorterApp{}
 	err = helpers.UnmarshalContractObject(decoded, appProto)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error unmarshalling app proto")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
+	}
+
+	if appProto.Build == nil {
+		err := telemetry.Error(ctx, span, nil, "app proto does not have build settings")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	resp.Build = BuildSettings{
+		Method:     appProto.Build.Method,
+		Context:    appProto.Build.Context,
+		Builder:    appProto.Build.Builder,
+		Buildpacks: appProto.Build.Buildpacks,
+		Dockerfile: appProto.Build.Dockerfile,
+		CommitSHA:  appProto.Build.CommitSha,
+	}
+
+	if appProto.Image == nil {
+		err := telemetry.Error(ctx, span, nil, "app proto does not have image settings. Tag is unknown")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	resp.Image = Image{
+		Repository: appProto.Image.Repository,
+		Tag:        appProto.Image.Tag,
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")
@@ -147,10 +193,7 @@ func (c *GetBuildEnvHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			buildEnvVariables[key] = val
 		}
 	}
+	resp.BuildEnvVariables = buildEnvVariables
 
-	res := &GetBuildEnvResponse{
-		BuildEnvVariables: buildEnvVariables,
-	}
-
-	c.WriteResult(w, r, res)
+	c.WriteResult(w, r, resp)
 }

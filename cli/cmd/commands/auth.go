@@ -149,9 +149,6 @@ func login(ctx context.Context, cliConf config.CLIConfig, currentProfile string)
 		}
 
 		cliConf.Token = token
-		// _, _ = color.New(color.FgGreen).Println("Successfully logged in!")
-		// return setProjectForUser(ctx, client, currentProfile)
-
 	}
 
 	err = config.SetToken(cliConf.Token, currentProfile)

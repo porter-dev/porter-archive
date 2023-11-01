@@ -62,8 +62,8 @@ type CreateLocalAppInput struct {
 	PorterAppRepository repository.PorterAppRepository
 }
 
-// 
-type CreatePorterAppInput struct {
+// CreateOrGetAppInput is the input to the CreateOrGetApp function
+type CreateOrGetAppInput struct {
 	ClusterID      uint
 	ProjectID      uint
 	Name           string
@@ -77,7 +77,8 @@ type CreatePorterAppInput struct {
 	PorterAppRepository repository.PorterAppRepository
 }
 
-func CreatePorterApp(ctx context.Context, input CreatePorterAppInput) (*types.PorterApp, error) {
+// CreateOrGetApp creates an app based on the input or gets an existing app if one is found with the provided name
+func CreateOrGetApp(ctx context.Context, input CreateOrGetAppInput) (*types.PorterApp, error) {
 	ctx, span := telemetry.NewSpan(ctx, "porter-app-create")
 	defer span.End()
 

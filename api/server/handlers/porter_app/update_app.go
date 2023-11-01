@@ -155,7 +155,9 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sourceType, image := sourceFromAppAndGitSource(appProto, request.GitSource)
-	_, err := porter_app.CreatePorterApp(ctx, porter_app.CreatePorterAppInput{
+
+	// create porter app if it doesn't exist for the given name
+	_, err := porter_app.CreateOrGetApp(ctx, porter_app.CreateOrGetAppInput{
 		ClusterID:           cluster.ID,
 		ProjectID:           project.ID,
 		Name:                appProto.Name,

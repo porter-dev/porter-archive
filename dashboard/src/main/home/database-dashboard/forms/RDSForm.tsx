@@ -86,6 +86,7 @@ const RDSForm: React.FC<Props> = ({
     let values = {
       config: {
         name,
+        masterUsername: dbUsername,
         masterUserPassword: dbPassword,
         allocatedStorage: storage,
         instanceClass: tier,

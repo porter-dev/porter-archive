@@ -86,6 +86,7 @@ const AuroraPostgresForm: React.FC<Props> = ({
     const values = {
       config: {
         name,
+        masterUsername: dbUsername,
         masterUserPassword: dbPassword,
         allocatedStorage: storage,
         instanceClass: tier,

@@ -38,6 +38,7 @@ func NewCreateAppHandler(
 	}
 }
 
+// GitSource is the github metadata for an app
 type GitSource struct {
 	GitBranch   string `json:"git_branch"`
 	GitRepoName string `json:"git_repo_name"`

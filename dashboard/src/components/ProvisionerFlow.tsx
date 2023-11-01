@@ -61,7 +61,6 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                   disabled={
                     !currentProject?.multi_cluster &&
                     (provider === "gcp" && !currentProject?.azure_enabled)
-
                   }
                   onClick={() => {
                     if ((provider != "gcp" || currentProject?.azure_enabled)) {

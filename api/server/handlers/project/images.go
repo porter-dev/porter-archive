@@ -62,6 +62,7 @@ func (p *ImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var resp ImagesReponse
+	resp.Images = make([]Image, 0)
 
 	imagesReq := connect.NewRequest(&porterv1.ImagesRequest{
 		ProjectId: int64(project.ID),
@@ -83,9 +84,8 @@ func (p *ImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-	if ccpResp.Msg.Images == nil {
-		err := telemetry.Error(ctx, span, err, "ccp resp msg images is nil")
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+	if ccpResp.Msg.Images == nil { // this means that no images were returned
+		p.WriteResult(w, r, resp)
 		return
 	}
 

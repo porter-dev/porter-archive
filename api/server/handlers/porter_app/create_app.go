@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"connectrpc.com/connect"
+
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
+
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -55,13 +59,15 @@ type Image struct {
 
 // CreateAppRequest is the request object for the /apps/create endpoint
 type CreateAppRequest struct {
-	Name           string     `json:"name"`
-	SourceType     SourceType `json:"type"`
-	GitBranch      string     `json:"git_branch"`
-	GitRepoName    string     `json:"git_repo_name"`
-	GitRepoID      uint       `json:"git_repo_id"`
-	PorterYamlPath string     `json:"porter_yaml_path"`
-	Image          *Image     `json:"image,omitempty"`
+	Name                 string     `json:"name"`
+	SourceType           SourceType `json:"type"`
+	GitBranch            string     `json:"git_branch"`
+	GitRepoName          string     `json:"git_repo_name"`
+	GitRepoID            uint       `json:"git_repo_id"`
+	PorterYamlPath       string     `json:"porter_yaml_path"`
+	Image                *Image     `json:"image,omitempty"`
+	DeploymentTargetName string     `json:"deployment_target_name,omitempty"`
+	DeploymentTargetID   string     `json:"deployment_target_id,omitempty"`
 }
 
 // CreateGithubAppInput is the input for creating an app with a github source
@@ -239,6 +245,36 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-id", Value: porterApp.ID})
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: request.DeploymentTargetName},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+	)
+
+	if request.DeploymentTargetName != "" || request.DeploymentTargetID != "" {
+		createAppInstanceReq := connect.NewRequest(&porterv1.CreateAppInstanceRequest{
+			ProjectId: int64(project.ID),
+			AppName:   request.Name,
+			DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+				Id:   request.DeploymentTargetID,
+				Name: request.DeploymentTargetName,
+			},
+			PorterAppId: int64(porterApp.ID),
+		})
+
+		createAppInstanceResp, err := c.Config().ClusterControlPlaneClient.CreateAppInstance(ctx, createAppInstanceReq)
+		if err != nil {
+			// ignore error until app instances are fully supported: POR-2056
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "create-app-instance-error", Value: err.Error()})
+		}
+
+		if createAppInstanceResp == nil || createAppInstanceResp.Msg == nil {
+			// ignore error until app instances are fully supported: POR-2056
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "create-app-instance-nil", Value: true})
+		} else {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: createAppInstanceResp.Msg.AppInstanceId})
+		}
+	}
 
 	c.WriteResult(w, r, porterApp)
 }

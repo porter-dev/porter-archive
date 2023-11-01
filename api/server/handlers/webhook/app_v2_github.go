@@ -120,6 +120,8 @@ func (c *GithubWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	switch event := event.(type) {
 	case *github.PullRequestEvent:
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "pr-action-type", Value: event.GetAction()})
+
 		if event.GetAction() != GithubPRStatus_Closed {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "event-processed", Value: false})
 			c.WriteResult(w, r, nil)

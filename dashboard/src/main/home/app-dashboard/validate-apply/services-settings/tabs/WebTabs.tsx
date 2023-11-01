@@ -23,9 +23,18 @@ interface Props {
     namespace: string;
     appName: string;
   };
+  clusterIngressIp: string;
 }
 
-const WebTabs: React.FC<Props> = ({ index, service, maxRAM, maxCPU, clusterContainsGPUNodes, internalNetworkingDetails }) => {
+const WebTabs: React.FC<Props> = ({ 
+  index, 
+  service, 
+  maxRAM, 
+  maxCPU, 
+  clusterContainsGPUNodes, 
+  internalNetworkingDetails, 
+  clusterIngressIp,
+}) => {
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "networking" | "advanced"
   >("main");
@@ -49,6 +58,7 @@ const WebTabs: React.FC<Props> = ({ index, service, maxRAM, maxCPU, clusterConta
             index={index}
             service={service}
             internalNetworkingDetails={internalNetworkingDetails}
+            clusterIngressIp={clusterIngressIp}
           />
         ))
         .with("resources", () => (

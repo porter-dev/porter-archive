@@ -64,11 +64,7 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
 
                   }
                   onClick={() => {
-                    if (
-                      !(
-                        (provider === "gcp" && !currentProject?.azure_enabled)
-                      )
-                    ) {
+                    if ((provider != "gcp" || currentProject?.azure_enabled)) {
                       openCostConsentModal(provider);
                       // setSelectedProvider(provider);
                       // setCurrentStep("credentials");

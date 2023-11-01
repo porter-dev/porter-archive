@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"errors"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -17,6 +18,9 @@ import (
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
+
+// ErrMissingSourceType is returned when the source type is not specified
+var ErrMissingSourceType = errors.New("missing source type")
 
 // CreateAppHandler is the handler for the /apps/create endpoint
 type CreateAppHandler struct {
@@ -108,7 +112,7 @@ func (c *CreateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: request.Name})
 
-	porterApp, err := porter_app.CreateOrGetApp(ctx, porter_app.CreateOrGetAppInput{
+	porterApp, err := porter_app.CreateOrGetAppRecord(ctx, porter_app.CreateOrGetAppRecordInput{
 		ClusterID:           cluster.ID,
 		ProjectID:           project.ID,
 		Name:                request.Name,

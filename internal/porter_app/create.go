@@ -62,8 +62,8 @@ type CreateLocalAppInput struct {
 	PorterAppRepository repository.PorterAppRepository
 }
 
-// CreateOrGetAppInput is the input to the CreateOrGetApp function
-type CreateOrGetAppInput struct {
+// CreateOrGetAppRecordInput is the input to the CreateOrGetAppRecord function
+type CreateOrGetAppRecordInput struct {
 	ClusterID      uint
 	ProjectID      uint
 	Name           string
@@ -77,8 +77,8 @@ type CreateOrGetAppInput struct {
 	PorterAppRepository repository.PorterAppRepository
 }
 
-// CreateOrGetApp creates an app based on the input or gets an existing app if one is found with the provided name
-func CreateOrGetApp(ctx context.Context, input CreateOrGetAppInput) (*types.PorterApp, error) {
+// CreateOrGetAppRecord creates an app based on the input or gets an existing app if one is found with the provided name
+func CreateOrGetAppRecord(ctx context.Context, input CreateOrGetAppRecordInput) (*types.PorterApp, error) {
 	ctx, span := telemetry.NewSpan(ctx, "porter-app-create")
 	defer span.End()
 
@@ -234,6 +234,8 @@ func createDockerRegistryApp(ctx context.Context, input CreateDockerRegistryAppI
 	return porterApp, nil
 }
 
+// createLocalApp creates an app that is built locally via the cli, usually frmo a git repo
+// a local app will not have the same repo metadata as a github app
 func createLocalApp(ctx context.Context, input CreateLocalAppInput) (*models.PorterApp, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-local-app")
 	defer span.End()

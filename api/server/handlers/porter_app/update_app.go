@@ -38,6 +38,21 @@ func NewUpdateAppHandler(
 	}
 }
 
+// CLIAction is an enum for actions the CLI should take after calling applyWithRevisionID
+type CLIAction int
+
+// Actions for the CLI to take after applying the porter yaml
+const (
+	// CLIAction_Missing is the zero value that indicates an action was not assigned. This should never be returned.
+	CLIAction_Missing CLIAction = iota
+	// CLIAction_NoAction indicates that no action should be taken by the CLI.
+	CLIAction_NoAction
+	// CLIAction_Build indicates that the CLI should build the app.
+	CLIAction_Build
+	// CLIAction_TrackPredeploy indicates that the CLI should track the predeploy job.
+	CLIAction_TrackPredeploy
+)
+
 // UpdateAppRequest is the request object for the POST /apps/update endpoint
 type UpdateAppRequest struct {
 	// Name is the name of the app to update. If not specified, the name will be inferred from the porter yaml
@@ -70,9 +85,9 @@ type UpdateAppRequest struct {
 
 // UpdateAppResponse is the response object for the POST /apps/update endpoint
 type UpdateAppResponse struct {
-	AppName       string                 `json:"app_name"`
-	AppRevisionId string                 `json:"app_revision_id"`
-	CLIAction     porterv1.EnumCLIAction `json:"cli_action"`
+	AppName       string    `json:"app_name"`
+	AppRevisionId string    `json:"app_revision_id"`
+	CLIAction     CLIAction `json:"cli_action"`
 }
 
 // ServeHTTP translates the request into an UpdateApp request, forwards to the cluster control plane, and returns the response
@@ -107,6 +122,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	envVariables := request.Variables
 
+	// get app definition from either base64 yaml or base64 porter app proto
 	if request.Base64AppProto != "" {
 		decoded, err := base64.StdEncoding.DecodeString(request.Base64AppProto)
 		if err != nil {
@@ -157,7 +173,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sourceType, image := sourceFromAppAndGitSource(appProto, request.GitSource)
 
 	// create porter app if it doesn't exist for the given name
-	_, err := porter_app.CreateOrGetApp(ctx, porter_app.CreateOrGetAppInput{
+	_, err := porter_app.CreateOrGetAppRecord(ctx, porter_app.CreateOrGetAppRecordInput{
 		ClusterID:           cluster.ID,
 		ProjectID:           project.ID,
 		Name:                appProto.Name,
@@ -170,7 +186,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		PorterAppRepository: c.Repo().PorterApp(),
 	})
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error creating porter app")
+		err := telemetry.Error(ctx, span, err, "error creating or getting porter app")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
@@ -180,6 +196,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		appRevisionID = request.AppRevisionID
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-revision-id", Value: request.AppRevisionID})
 	} else {
+		// set the internal porter domain if needed and this is the first update on a revision
 		app, err := v2.AppFromProto(appProto)
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error converting app proto to app")
@@ -302,9 +319,25 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cli-action", Value: ccpResp.Msg.CliAction.String()})
 
+	var cliAction CLIAction
+	switch ccpResp.Msg.CliAction {
+	case porterv1.EnumCLIAction_ENUM_CLI_ACTION_UNSPECIFIED:
+		cliAction = CLIAction_Missing
+	case porterv1.EnumCLIAction_ENUM_CLI_ACTION_NONE:
+		cliAction = CLIAction_NoAction
+	case porterv1.EnumCLIAction_ENUM_CLI_ACTION_BUILD:
+		cliAction = CLIAction_Build
+	case porterv1.EnumCLIAction_ENUM_CLI_ACTION_TRACK_PREDEPLOY:
+		cliAction = CLIAction_TrackPredeploy
+	default:
+		err := telemetry.Error(ctx, span, err, "ccp resp cli action is invalid")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	response := &UpdateAppResponse{
 		AppRevisionId: ccpResp.Msg.AppRevisionId,
-		CLIAction:     ccpResp.Msg.CliAction,
+		CLIAction:     cliAction,
 		AppName:       appProto.Name,
 	}
 

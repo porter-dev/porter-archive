@@ -480,17 +480,17 @@ func (c *Client) UpdateRevisionStatus(
 	return resp, err
 }
 
-// GetBuildFromRevision returns the build environment for a given app proto
-func (c *Client) GetBuildFromRevision(
+// GetBuildEnv returns the build environment for a given app proto
+func (c *Client) GetBuildEnv(
 	ctx context.Context,
 	projectID uint, clusterID uint,
 	appName string, appRevisionId string,
-) (*porter_app.GetBuildFromRevisionResponse, error) {
-	resp := &porter_app.GetBuildFromRevisionResponse{}
+) (*porter_app.GetBuildEnvResponse, error) {
+	resp := &porter_app.GetBuildEnvResponse{}
 
 	err := c.getRequest(
 		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/%s/revisions/%s/build",
+			"/projects/%d/clusters/%d/apps/%s/revisions/%s/build-env",
 			projectID, clusterID, appName, appRevisionId,
 		),
 		nil,

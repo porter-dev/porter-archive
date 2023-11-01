@@ -1212,14 +1212,14 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id}/build-env -> porter_app.NewGetBuildFromRevisionHandler
-	getBuildFromRevisionEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id}/build-env -> porter_app.NewGetBuildEnvHandler
+	getBuildEnvEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("/apps/{%s}/revisions/{%s}/build", types.URLParamPorterAppName, types.URLParamAppRevisionID),
+				RelativePath: fmt.Sprintf("/apps/{%s}/revisions/{%s}/build-env", types.URLParamPorterAppName, types.URLParamAppRevisionID),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -1229,15 +1229,15 @@ func getPorterAppRoutes(
 		},
 	)
 
-	getBuildFromRevisionHandler := porter_app.NewGetBuildFromRevisionHandler(
+	getBuildEnvHandler := porter_app.NewGetBuildEnvHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: getBuildFromRevisionEndpoint,
-		Handler:  getBuildFromRevisionHandler,
+		Endpoint: getBuildEnvEndpoint,
+		Handler:  getBuildEnvHandler,
 		Router:   r,
 	})
 

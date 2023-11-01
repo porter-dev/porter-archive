@@ -48,7 +48,8 @@ type FeatureFlags struct {
 // 3. config
 // 4. default
 // If flagsConfig and envConfig are empty, then the default values or config file values will be preferred.
-// This returns the config which should be applied to all subsequent requests, as well as the current profile that the command was run with
+// This returns the config which should be applied to all subsequent requests, as well as the current profile that the command was run with.
+// If no flagsProfile and flagsConfig are provided, this will follow the above precendence order to find values.
 func InitAndLoadConfig(ctx context.Context, flagsProfile string, flagsConfig CLIConfig) (CLIConfig, string, error) {
 	var config CLIConfig
 

@@ -12,7 +12,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/deployment_target"
 	"github.com/porter-dev/porter/internal/models"
@@ -21,13 +20,13 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// UpdateAppHandler is the handler for the POST /apps/{porter_app_name} endpoint
+// UpdateAppHandler is the handler for the POST /apps/update endpoint
 type UpdateAppHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewUpdateAppHandler handles POST requests to the endpoint POST /apps/{porter_app_name}
+// NewUpdateAppHandler handles POST requests to the endpoint POST /apps/update
 func NewUpdateAppHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -39,8 +38,12 @@ func NewUpdateAppHandler(
 	}
 }
 
-// UpdateAppRequest is the request object for the POST /apps/{porter_app_name} endpoint
+// UpdateAppRequest is the request object for the POST /apps/update endpoint
 type UpdateAppRequest struct {
+	// Name is the name of the app to update. If not specified, the name will be inferred from the porter yaml
+	Name string `json:"name"`
+	// GitSource is the git source configuration for the app, if applicable
+	GitSource GitSource `json:"git_source,omitempty"`
 	// DeploymentTargetId is the ID of the deployment target to apply the update to
 	DeploymentTargetId string `json:"deployment_target_id"`
 	// Variables is a map of environment variable names to values
@@ -51,6 +54,8 @@ type UpdateAppRequest struct {
 	Deletions Deletions `json:"deletions"`
 	// CommitSHA is the commit sha of the git commit that triggered this update, indicating a source change and triggering a build
 	CommitSHA string `json:"commit_sha"`
+	// PorterYAMLPath is the path to the porter yaml file in the git repo
+	PorterYAMLPath string `json:"porter_yaml_path"`
 	// AppRevisionID is the ID of the revision to perform follow up actions on after the initial apply
 	AppRevisionID string `json:"app_revision_id"`
 	// Only one of Base64AppProto or Base64PorterYAML should be specified
@@ -61,12 +66,11 @@ type UpdateAppRequest struct {
 	// IsEnvOverride is used to remove any variables that are not specified in the request.  If false, the request will only update the variables specified in the request,
 	// and leave all other variables untouched.
 	IsEnvOverride bool `json:"is_env_override"`
-	// IsAwaitingPredeploy indicates that a successful build has completed and predeploy should be run, if applicable.
-	IsAwaitingPredeploy bool `json:"is_awaiting_predeploy"`
 }
 
-// UpdateAppResponse is the response object for the POST /apps/{porter_app_name} endpoint
+// UpdateAppResponse is the response object for the POST /apps/update endpoint
 type UpdateAppResponse struct {
+	AppName       string                 `json:"app_name"`
 	AppRevisionId string                 `json:"app_revision_id"`
 	CLIAction     porterv1.EnumCLIAction `json:"cli_action"`
 }
@@ -78,14 +82,6 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-
-	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
-	if reqErr != nil {
-		err := telemetry.Error(ctx, span, nil, "error parsing porter app name")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "application-name", Value: appName})
 
 	request := &UpdateAppRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -135,7 +131,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		appFromYaml, err := porter_app.ParseYAML(ctx, decoded, appName)
+		appFromYaml, err := porter_app.ParseYAML(ctx, decoded, request.Name)
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error parsing yaml")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -150,6 +146,31 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			overrides = appFromYaml.PreviewApp.AppProto
 			envVariables = mergeEnvVariables(envVariables, appFromYaml.PreviewApp.EnvVariables)
 		}
+	}
+
+	if appProto.Name == "" {
+		err := telemetry.Error(ctx, span, nil, "app name is empty")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	sourceType, image := sourceFromAppAndGitSource(appProto, request.GitSource)
+	_, err := porter_app.CreatePorterApp(ctx, porter_app.CreatePorterAppInput{
+		ClusterID:           cluster.ID,
+		ProjectID:           project.ID,
+		Name:                appProto.Name,
+		SourceType:          sourceType,
+		GitBranch:           request.GitSource.GitBranch,
+		GitRepoName:         request.GitSource.GitRepoName,
+		GitRepoID:           request.GitSource.GitRepoID,
+		PorterYamlPath:      request.PorterYAMLPath,
+		Image:               image,
+		PorterAppRepository: c.Repo().PorterApp(),
+	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error creating porter app")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
 	}
 
 	var appRevisionID string
@@ -210,13 +231,6 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
-	if appProto.Name != "" && appProto.Name != appName {
-		err := telemetry.Error(ctx, span, nil, "app proto name is empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	appProto.Name = appName
 
 	var serviceDeletions map[string]*porterv1.ServiceDeletions
 	if request.Deletions.ServiceDeletions != nil {
@@ -289,9 +303,33 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	response := &UpdateAppResponse{
 		AppRevisionId: ccpResp.Msg.AppRevisionId,
 		CLIAction:     ccpResp.Msg.CliAction,
+		AppName:       appProto.Name,
 	}
 
 	c.WriteResult(w, r, response)
+}
+
+func sourceFromAppAndGitSource(appProto *porterv1.PorterApp, gitSource GitSource) (porter_app.SourceType, *porter_app.Image) {
+	var sourceType porter_app.SourceType
+	var image *porter_app.Image
+
+	if appProto.Build != nil {
+		if gitSource.GitRepoID == 0 {
+			return porter_app.SourceType_Local, nil
+		}
+
+		sourceType = porter_app.SourceType_Github
+	}
+
+	if appProto.Image != nil {
+		sourceType = porter_app.SourceType_DockerRegistry
+		image = &porter_app.Image{
+			Repository: appProto.Image.Repository,
+			Tag:        appProto.Image.Tag,
+		}
+	}
+
+	return sourceType, image
 }
 
 func mergeEnvVariables(currentEnv, previousEnv map[string]string) map[string]string {

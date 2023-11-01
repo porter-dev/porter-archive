@@ -862,14 +862,14 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name} -> porter_app.UpdateAppHandler
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/update -> porter_app.UpdateAppHandler
 	updateAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}", relPathV2, types.URLParamPorterAppName),
+				RelativePath: fmt.Sprintf("%s/update", relPathV2),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

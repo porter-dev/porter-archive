@@ -837,8 +837,8 @@ github.com/porter-dev/api-contracts v0.2.23 h1:AGyidwLoZedNB/iUIg/wgXXi/00BsMN4P
 github.com/porter-dev/api-contracts v0.2.23/go.mod h1:fX6JmP5QuzxDLvqP3evFOTXjI4dHxsG0+VKNTjImZU8=
 github.com/porter-dev/api-contracts v0.2.27 h1:NZTWmbiqQF082Kl0vUtXev5gcI8lTY6bofjS4Sjwej4=
 github.com/porter-dev/api-contracts v0.2.27/go.mod h1:fX6JmP5QuzxDLvqP3evFOTXjI4dHxsG0+VKNTjImZU8=
-github.com/porter-dev/api-contracts v0.2.34 h1:UeQ+1c5NggYPUsof5Q1jy+l0hL5Z+/Q/PK532kAlF+w=
-github.com/porter-dev/api-contracts v0.2.34/go.mod h1:fX6JmP5QuzxDLvqP3evFOTXjI4dHxsG0+VKNTjImZU8=
+github.com/porter-dev/api-contracts v0.2.35 h1:BDxOMKQrYvh/3qsSiUYWM+btBx4+oVjA2mH4+0C/sHY=
+github.com/porter-dev/api-contracts v0.2.35/go.mod h1:fX6JmP5QuzxDLvqP3evFOTXjI4dHxsG0+VKNTjImZU8=
 github.com/porter-dev/switchboard v0.0.3 h1:dBuYkiVLa5Ce7059d6qTe9a1C2XEORFEanhbtV92R+M=
 github.com/porter-dev/switchboard v0.0.3/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
 github.com/posener/complete v1.2.3 h1:NP0eAhjcjImqslEwo/1hq7gpajME0fTLTezBKDqfXqo=

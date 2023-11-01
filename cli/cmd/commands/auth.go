@@ -149,7 +149,7 @@ func login(ctx context.Context, cliConf config.CLIConfig, currentProfile string)
 		}
 
 		_, _ = color.New(color.FgGreen).Println("Successfully logged in!")
-		return setProjectForUser(ctx, client, cliConf, currentProfile)
+		return setProjectForUser(ctx, client, currentProfile)
 
 	}
 
@@ -171,10 +171,11 @@ func login(ctx context.Context, cliConf config.CLIConfig, currentProfile string)
 	// if project ID does not exist for the token, this is a user-issued CLI token, so the project
 	// ID should be queried
 	if !exists {
-		err = setProjectForUser(ctx, client, cliConf, currentProfile)
+		err = setProjectForUser(ctx, client, currentProfile)
 		if err != nil {
 			return err
 		}
+
 	} else {
 		// if the project ID does exist for the token, this is a project-issued token, and
 		// the project should be set automatically
@@ -183,7 +184,7 @@ func login(ctx context.Context, cliConf config.CLIConfig, currentProfile string)
 			return err
 		}
 
-		err = setProjectCluster(ctx, client, cliConf, currentProfile, projID)
+		err = setProjectCluster(ctx, client, currentProfile, projID)
 		if err != nil {
 			return err
 		}
@@ -193,7 +194,7 @@ func login(ctx context.Context, cliConf config.CLIConfig, currentProfile string)
 	return nil
 }
 
-func setProjectForUser(ctx context.Context, client api.Client, cliConfig config.CLIConfig, currentProfile string) error {
+func setProjectForUser(ctx context.Context, client api.Client, currentProfile string) error {
 	// get a list of projects, and set the current project
 	resp, err := client.ListUserProjects(ctx)
 	if err != nil {
@@ -205,7 +206,7 @@ func setProjectForUser(ctx context.Context, client api.Client, cliConfig config.
 	if len(projects) > 0 {
 		config.SetProject(projects[0].ID, currentProfile) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
-		err = setProjectCluster(ctx, client, cliConfig, currentProfile, projects[0].ID)
+		err = setProjectCluster(ctx, client, currentProfile, projects[0].ID)
 		if err != nil {
 			return err
 		}
@@ -253,7 +254,7 @@ func loginManual(ctx context.Context, cliConf config.CLIConfig, client api.Clien
 	if len(projects) > 0 {
 		config.SetProject(projects[0].ID, currentProfile) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
-		err = setProjectCluster(ctx, client, cliConf, currentProfile, projects[0].ID)
+		err = setProjectCluster(ctx, client, currentProfile, projects[0].ID)
 		if err != nil {
 			return err
 		}

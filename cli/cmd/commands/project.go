@@ -135,7 +135,7 @@ func deleteProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, c
 	return nil
 }
 
-func setProjectCluster(ctx context.Context, client api.Client, cliConf config.CLIConfig, currentProfile string, projectID uint) error {
+func setProjectCluster(ctx context.Context, client api.Client, currentProfile string, projectID uint) error {
 	resp, err := client.ListProjectClusters(ctx, projectID)
 	if err != nil {
 		return err

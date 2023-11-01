@@ -32,20 +32,20 @@ func SetHost(host string, currentProfile string) error {
 
 	color.New(color.FgGreen).Printf("Set the current host as %s\n", host) //nolint:errcheck,gosec
 
-	return updateValuesForSelectedProfile(currentProfile, porterConfigFilePath, withHost(host), withClusterID(0), withProjectID(0))
+	return updateValuesForSelectedProfile(currentProfile, porterConfigFilePath, withHost(host))
 }
 
 // SetProject sets a project for all API commands
 func SetProject(projectID uint, currentProfile string) error {
 	color.New(color.FgGreen).Printf("Set the current project as %d\n", projectID) //nolint:errcheck,gosec
 
-	return updateValuesForSelectedProfile(currentProfile, porterConfigFilePath, withProjectID(0))
+	return updateValuesForSelectedProfile(currentProfile, porterConfigFilePath, withProjectID(projectID))
 }
 
 // SetCluster sets the cluster in the current profile. All further actions will be targeted at this cluster
 func SetCluster(clusterID uint, currentProfile string) error {
 	color.New(color.FgGreen).Printf("Set the current cluster as %d\n", clusterID) //nolint:errcheck,gosec
-	return updateValuesForSelectedProfile(currentProfile, porterConfigFilePath, withClusterID(0), withKubeconfig(""))
+	return updateValuesForSelectedProfile(currentProfile, porterConfigFilePath, withClusterID(clusterID), withKubeconfig(""))
 }
 
 // SetToken sets the token in the current profile. All further actions will be authenticated with this token

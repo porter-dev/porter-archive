@@ -259,13 +259,9 @@ func setProjectAndCluster(ctx context.Context, _ *types.GetAuthenticatedUserResp
 		return fmt.Errorf("error setting project: %w", err)
 	}
 
-	err = listAndSetProject(ctx, nil, client, cliConf, currentProfile, featureFlags, cmd, args)
-	if err != nil {
-		return err
-	}
 	err = listAndSetCluster(ctx, nil, client, cliConf, currentProfile, featureFlags, cmd, args)
 	if err != nil {
-		return err
+		return fmt.Errorf("error listing and setting cluster: %w", err)
 	}
 	return nil
 }

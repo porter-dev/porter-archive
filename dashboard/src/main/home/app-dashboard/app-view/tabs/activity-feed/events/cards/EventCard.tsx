@@ -1,13 +1,13 @@
 import React, { useMemo } from "react";
 import styled from "styled-components";
-
-import BuildEventCard from "./BuildEventCard";
-import PreDeployEventCard from "./PreDeployEventCard";
-import AppEventCard from "./AppEventCard";
-import DeployEventCard from "./DeployEventCard";
-import { PorterAppEvent } from "../types";
 import { match } from "ts-pattern";
+
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+
+import { type PorterAppEvent } from "../types";
+import BuildEventCard from "./BuildEventCard";
+import DeployEventCard from "./DeployEventCard";
+import PreDeployEventCard from "./PreDeployEventCard";
 
 type Props = {
   event: PorterAppEvent;
@@ -18,7 +18,14 @@ type Props = {
   isLatestDeployEvent?: boolean;
 };
 
-const EventCard: React.FC<Props> = ({ event, deploymentTargetId, isLatestDeployEvent, projectId, clusterId, appName }) => {
+const EventCard: React.FC<Props> = ({
+  event,
+  deploymentTargetId,
+  isLatestDeployEvent,
+  projectId,
+  clusterId,
+  appName,
+}) => {
   const { porterApp } = useLatestRevision();
 
   const gitCommitUrl = useMemo(() => {
@@ -45,7 +52,7 @@ const EventCard: React.FC<Props> = ({ event, deploymentTargetId, isLatestDeployE
           : ""
       )
       .exhaustive();
-  }, [JSON.stringify(event), porterApp])
+  }, [JSON.stringify(event), porterApp]);
 
   const displayCommitSha = useMemo(() => {
     if (!porterApp.repo_name) {
@@ -68,15 +75,8 @@ const EventCard: React.FC<Props> = ({ event, deploymentTargetId, isLatestDeployE
   }, [JSON.stringify(event), porterApp]);
 
   return match(event)
-    .with({ type: "APP_EVENT" }, (ev) => (
-      <AppEventCard
-        event={ev}
-        deploymentTargetId={deploymentTargetId}
-        projectId={projectId}
-        clusterId={clusterId}
-        appName={appName}
-      />
-    ))
+    .with({ type: "APP_EVENT" }, () => null) // we do not show app events in the activity feed, we convert them to notifications
+    .with({ type: "NOTIFICATION" }, () => null) // we do not show notifications in the activity feed, rather in the notifications tab
     .with({ type: "BUILD" }, (ev) => (
       <BuildEventCard
         event={ev}
@@ -110,11 +110,6 @@ const EventCard: React.FC<Props> = ({ event, deploymentTargetId, isLatestDeployE
         displayCommitSha={displayCommitSha}
       />
     ))
-    .with({ type: "NOTIFICATION" }, (ev) => (
-      <StyledEventCard>
-        <div>{ev.metadata?.human_readable_summary}</div>
-      </StyledEventCard>
-    ))
     .exhaustive();
 };
 
@@ -124,7 +119,7 @@ export const StyledEventCard = styled.div<{ row?: boolean }>`
   width: 100%;
   padding: 15px;
   display: flex;
-  flex-direction: ${({ row }) => row ? "row" : "column"};
+  flex-direction: ${({ row }) => (row ? "row" : "column")};
   justify-content: space-between;
   border-radius: 5px;
   background: ${({ theme }) => theme.fg};
@@ -162,7 +157,9 @@ export const ImageTagContainer = styled.div<{ hoverable?: boolean }>`
   border-radius: 5px;
   background: #ffffff22;
   user-select: text;
-  ${({hoverable = true}) => hoverable && `:hover {
+  ${({ hoverable = true }) =>
+    hoverable &&
+    `:hover {
     background: #ffffff44;
     cursor: pointer;
   }`}

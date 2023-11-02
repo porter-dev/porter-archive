@@ -614,6 +614,7 @@ func (p *CreateUpdatePorterAppEventHandler) updateDeployEventMatchingAppEventDet
 	return nil
 }
 
+// handleNotification handles all logic for notifications in app v2
 func (p *CreateUpdatePorterAppEventHandler) handleNotification(ctx context.Context,
 	request *types.CreateOrUpdatePorterAppEventRequest,
 	projectId, clusterId uint,

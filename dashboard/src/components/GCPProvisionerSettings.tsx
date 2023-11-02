@@ -52,6 +52,10 @@ const locationOptions = [
   { value: "europe-west2", label: "europe-west2 (London, England)" },
   { value: "europe-west6", label: "europe-west6 (Zurich, Switzerland)" },
   { value: "asia-south1", label: "asia-south1 (Mumbia, India)" },
+  { value: "us-west1", label: "us-west1 (Oregon, USA)" },
+  { value: "us-west2", label: "us-west2 (Los Angeles, USA)" },
+  { value: "us-west3", label: "us-west3 (Salt Lake City, USA)" },
+  { value: "us-west4", label: "us-west4 (Las Vegas, USA)" },
 ];
 
 const defaultClusterNetworking = new GKENetwork({

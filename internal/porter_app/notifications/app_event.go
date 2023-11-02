@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// PorterAppEventType_Notification is the type of a Porter App Event that is a notification
 const PorterAppEventType_Notification = "NOTIFICATION"
 
 // PorterAppEventStatus is an alias for a string that represents a Porter App Event Status

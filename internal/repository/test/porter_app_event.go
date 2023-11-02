@@ -27,6 +27,7 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppIDAndDeploymentTarget
 	return nil, helpers.PaginatedResult{}, errors.New("cannot write database")
 }
 
+// ListBuildDeployEventsByPorterAppIDAndDeploymentTargetID is a test method
 func (repo *PorterAppEventRepository) ListBuildDeployEventsByPorterAppIDAndDeploymentTargetID(ctx context.Context, porterAppID uint, deploymentTargetID uuid.UUID, opts ...helpers.QueryOption) ([]*models.PorterAppEvent, helpers.PaginatedResult, error) {
 	return nil, helpers.PaginatedResult{}, errors.New("cannot write database")
 }
@@ -52,6 +53,7 @@ func (repo *PorterAppEventRepository) ReadDeployEventByAppRevisionID(ctx context
 	return models.PorterAppEvent{}, errors.New("cannot read database")
 }
 
+// ReadNotificationsByAppRevisionID is a test method
 func (repo *PorterAppEventRepository) ReadNotificationsByAppRevisionID(ctx context.Context, porterAppID uint, appRevisionID string) ([]*models.PorterAppEvent, error) {
 	return nil, errors.New("cannot read database")
 }

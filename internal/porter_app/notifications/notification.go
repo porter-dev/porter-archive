@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// HandleNotificationInput is the input to HandleNotification
 type HandleNotificationInput struct {
 	RawAgentEventMetadata map[string]any
 	EventRepo             repository.PorterAppEventRepository

@@ -112,12 +112,11 @@ const ClusterList: React.FC<PropsType> = (props) => {
           onClick={() => setExpanded(!expanded)}
           expanded={expanded}
         >
-
           <NavButton>
             <Img src={infra} />
             <ClusterName>{truncate(currentCluster.vanity_name ? currentCluster.vanity_name : currentCluster?.name)}</ClusterName>
 
-            {<i className="material-icons">arrow_drop_down</i>}
+            <i className="material-icons">arrow_drop_down</i>
           </NavButton>
         </MainSelector>
         {renderDropdown()}

@@ -46,7 +46,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   maxRAM,
   clusterContainsGPUNodes,
   internalNetworkingDetails,
-  clusterIngressIp, 
+  clusterIngressIp,
 }) => {
   const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
 
@@ -141,10 +141,9 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {service.name.value.trim().length > 0
             ? service.name.value
             : "New Service"}
-          <Tag>
-
+          {service.gpuCoresNvidia.value != 0 && <Tag>
             GPU workload
-          </Tag>
+          </Tag>}
         </ServiceTitle>
 
         {service.canDelete && (

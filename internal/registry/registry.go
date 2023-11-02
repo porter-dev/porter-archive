@@ -503,19 +503,28 @@ func (r *Registry) listECRRepositories(aws *ints.AWSIntegration) ([]*ptypes.Regi
 
 	svc := ecr.New(sess)
 
-	resp, err := svc.DescribeRepositories(&ecr.DescribeRepositoriesInput{})
-	if err != nil {
-		return nil, err
-	}
-
 	res := make([]*ptypes.RegistryRepository, 0)
+	input := &ecr.DescribeRepositoriesInput{}
 
-	for _, repo := range resp.Repositories {
-		res = append(res, &ptypes.RegistryRepository{
-			Name:      *repo.RepositoryName,
-			CreatedAt: *repo.CreatedAt,
-			URI:       *repo.RepositoryUri,
-		})
+	for {
+		resp, err := svc.DescribeRepositories(input)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, repo := range resp.Repositories {
+			res = append(res, &ptypes.RegistryRepository{
+				Name:      *repo.RepositoryName,
+				CreatedAt: *repo.CreatedAt,
+				URI:       *repo.RepositoryUri,
+			})
+		}
+
+		if resp.NextToken == nil {
+			break
+		}
+
+		input.NextToken = resp.NextToken
 	}
 
 	return res, nil

@@ -29,9 +29,15 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
   const { currentCluster } = useContext(Context);
   const { register, control, watch } = useFormContext<PorterAppFormData>();
   const [clusterModalVisible, setClusterModalVisible] = useState<boolean>(false);
-  const [gpuEnabledForService, setGpuENabledForService] = useState<boolean>(false);
   const healthCheckEnabled = watch(
     `app.services.${index}.config.healthCheck.enabled`
+  );
+
+  const gpuEnabledValue = watch(
+    `app.services.${index}.gpuCoresNvidia`, {
+    readOnly: false,
+    value: 0
+  }
   );
 
   return (
@@ -87,39 +93,38 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
 
       <>
         <Spacer y={1} />
+        <Controller
+          name={`app.services.${index}.gpuCoresNvidia`}
+          control={control}
+          render={({ field: { value, onChange } }) => (
+            <><Switch
+              size="small"
+              color="primary"
+              checked={value.value > 0}
+              onChange={() => {
+                if (clusterContainsGPUNodes && !(value.value > 0)) {
+                  setClusterModalVisible(true);
 
-        <Spacer y={0.5} />
-
-        <Switch
-          size="small"
-          color="primary"
-          checked={gpuEnabledForService}
-          onChange={
-            () => {
-              if (!clusterContainsGPUNodes && !gpuEnabledForService) {
-                setClusterModalVisible(true)
-
-              } else {
-                setGpuENabledForService(!gpuEnabledForService)
-              }
-            }
-          }
-          inputProps={{ 'aria-label': 'controlled' }}
-        />
-        <Spacer inline x={.5} />
-        <Text color="helper">
-          <>
-            <span>Enable GPU</span>
-            <a
-              href="https://docs.porter.run/enterprise/deploying-applications/zero-downtime-deployments#health-checks"
-              target="_blank"
-            >
-              &nbsp;(?)
-            </a>
-          </>
-        </Text>
-        <Spacer y={.5} />
-        {gpuEnabledForService &&
+                } else {
+                  onChange({
+                    ...value,
+                    value: .5
+                  });
+                }
+              }}
+              inputProps={{ 'aria-label': 'controlled' }} /><Spacer inline x={.5} /><Text color="helper">
+                <>
+                  <span>Enable GPU</span>
+                  <a
+                    href="https://docs.porter.run/enterprise/deploying-applications/zero-downtime-deployments#health-checks"
+                    target="_blank"
+                  >
+                    &nbsp;(?)
+                  </a>
+                </>
+              </Text><Spacer y={.5} /></>
+          )} />
+        {gpuEnabledValue.value > 0 &&
           <>
             {(currentCluster.status == "UPDATING" && currentCluster?.gpuCluster) ?
               (< CheckItemContainer >
@@ -150,7 +155,6 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
         clusterModalVisible && <ProvisionClusterModal
           closeModal={() => setClusterModalVisible(false)}
           gpuModal={true}
-
         />
       }
 
@@ -186,11 +190,3 @@ const StatusIcon = styled.img`
 height: 14px;
 `;
 
-const Tag = styled.div<{ size?: string, right?: string, bottom?: string, left?: string }>`
-          margin-left: 15px;
-          font-size: 10px;
-          background: #480ca8;
-          padding: 5px;
-          border-radius: 4px;
-          opacity: 0.85;
-          `;

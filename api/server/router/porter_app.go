@@ -862,6 +862,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/update -> porter_app.UpdateAppHandler
+	updateAppEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/update", relPathV2),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	updateAppHandler := porter_app.NewUpdateAppHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateAppEndpoint,
+		Handler:  updateAppHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/revisions -> porter_app.NewCurrentAppRevisionHandler
 	latestAppRevisionsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -1209,6 +1238,35 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: getBuildEnvEndpoint,
 		Handler:  getBuildEnvHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id}/build-env -> porter_app.NewGetBuildFromRevisionHandler
+	getBuildFromRevisionEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("/apps/{%s}/revisions/{%s}/build", types.URLParamPorterAppName, types.URLParamAppRevisionID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getBuildFromRevisionHandler := porter_app.NewGetBuildFromRevisionHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getBuildFromRevisionEndpoint,
+		Handler:  getBuildFromRevisionHandler,
 		Router:   r,
 	})
 

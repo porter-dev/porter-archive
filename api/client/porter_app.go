@@ -6,6 +6,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/internal/models"
+	appInternal "github.com/porter-dev/porter/internal/porter_app"
 
 	"github.com/porter-dev/porter/api/types"
 )
@@ -257,6 +258,50 @@ func (c *Client) ApplyPorterApp(
 	return resp, err
 }
 
+// UpdateAppInput is the input struct to UpdateApp
+type UpdateAppInput struct {
+	ProjectID          uint
+	ClusterID          uint
+	Name               string
+	GitSource          porter_app.GitSource
+	DeploymentTargetId string
+	CommitSHA          string
+	AppRevisionID      string
+	Base64AppProto     string
+	Base64PorterYAML   string
+	IsEnvOverride      bool
+}
+
+// UpdateApp updates a porter app
+func (c *Client) UpdateApp(
+	ctx context.Context,
+	inp UpdateAppInput,
+) (*porter_app.UpdateAppResponse, error) {
+	resp := &porter_app.UpdateAppResponse{}
+
+	req := &porter_app.UpdateAppRequest{
+		Name:               inp.Name,
+		GitSource:          inp.GitSource,
+		DeploymentTargetId: inp.DeploymentTargetId,
+		CommitSHA:          inp.CommitSHA,
+		AppRevisionID:      inp.AppRevisionID,
+		Base64AppProto:     inp.Base64AppProto,
+		Base64PorterYAML:   inp.Base64PorterYAML,
+		IsEnvOverride:      inp.IsEnvOverride,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/update",
+			inp.ProjectID, inp.ClusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 // DefaultDeploymentTarget returns the default deployment target for a given project and cluster
 func (c *Client) DefaultDeploymentTarget(
 	ctx context.Context,
@@ -321,30 +366,32 @@ func (c *Client) CreatePorterAppDBEntry(
 	projectID uint, clusterID uint,
 	inp CreatePorterAppDBEntryInput,
 ) error {
-	var sourceType porter_app.SourceType
-	var image *porter_app.Image
+	var sourceType appInternal.SourceType
+	var image *appInternal.Image
 	if inp.Local {
-		sourceType = porter_app.SourceType_Local
+		sourceType = appInternal.SourceType_Local
 	}
 	if inp.GitRepoName != "" {
-		sourceType = porter_app.SourceType_Github
+		sourceType = appInternal.SourceType_Github
 	}
 	if inp.ImageRepository != "" {
-		sourceType = porter_app.SourceType_DockerRegistry
-		image = &porter_app.Image{
+		sourceType = appInternal.SourceType_DockerRegistry
+		image = &appInternal.Image{
 			Repository: inp.ImageRepository,
 			Tag:        inp.ImageTag,
 		}
 	}
 
 	req := &porter_app.CreateAppRequest{
-		Name:               inp.AppName,
-		SourceType:         sourceType,
-		GitBranch:          inp.GitBranch,
-		GitRepoName:        inp.GitRepoName,
-		GitRepoID:          inp.GitRepoID,
-		PorterYamlPath:     inp.PorterYamlPath,
+		Name:       inp.AppName,
+		SourceType: sourceType,
+		GitSource: porter_app.GitSource{
+			GitBranch:   inp.GitBranch,
+			GitRepoName: inp.GitRepoName,
+			GitRepoID:   inp.GitRepoID,
+		},
 		Image:              image,
+		PorterYamlPath:     inp.PorterYamlPath,
 		DeploymentTargetID: inp.DeploymentTargetID,
 	}
 
@@ -444,6 +491,25 @@ func (c *Client) GetBuildEnv(
 	err := c.getRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/%s/revisions/%s/build-env",
+			projectID, clusterID, appName, appRevisionId,
+		),
+		nil,
+		resp,
+	)
+	return resp, err
+}
+
+// GetBuildFromRevision returns the build environment for a given app proto
+func (c *Client) GetBuildFromRevision(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string, appRevisionId string,
+) (*porter_app.GetBuildFromRevisionResponse, error) {
+	resp := &porter_app.GetBuildFromRevisionResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/revisions/%s/build",
 			projectID, clusterID, appName, appRevisionId,
 		),
 		nil,

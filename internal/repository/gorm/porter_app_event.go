@@ -80,9 +80,11 @@ func (repo *PorterAppEventRepository) ListEventsByPorterAppIDAndDeploymentTarget
 	return apps, paginatedResult, nil
 }
 
-// ListEventsByPorterAppIDAndDeploymentTargetID returns a list of events for a given porter app id and deployment target id
+// ListEventsByPorterAppIDAndDeploymentTargetID returns a list of events for a given porter app id and deployment target id, withholding notification and app_event type events
+// This is used to display on build, pre-deploy and deploy events in the activity feed
+// TODO: remove this once notifications are stored in a separate table
 func (repo *PorterAppEventRepository) ListBuildDeployEventsByPorterAppIDAndDeploymentTargetID(ctx context.Context, porterAppID uint, deploymentTargetID uuid.UUID, opts ...helpers.QueryOption) ([]*models.PorterAppEvent, helpers.PaginatedResult, error) {
-	ctx, span := telemetry.NewSpan(ctx, "list-events-by-porter-app-id-and-deployment-target-id")
+	ctx, span := telemetry.NewSpan(ctx, "list-build-deploy-events-by-porter-app-id-and-deployment-target-id")
 	defer span.End()
 
 	telemetry.WithAttributes(span,

@@ -132,12 +132,14 @@ func isNotificationDuplicate(
 	return false, nil
 }
 
+// updateDeployEventInput is the input to updateDeployEvent
 type updateDeployEventInput struct {
 	Notification
 	EventRepo repository.PorterAppEventRepository
 	Status    PorterAppEventStatus
 }
 
+// updateDeployEvent updates the service status of a deploy event and possibly the event status itself with the input status
 func updateDeployEvent(ctx context.Context, inp updateDeployEventInput) error {
 	ctx, span := telemetry.NewSpan(ctx, "update-matching-deploy-event")
 	defer span.End()
@@ -226,6 +228,8 @@ func updateDeployEvent(ctx context.Context, inp updateDeployEventInput) error {
 	return nil
 }
 
+// saveNotification saves a notification to the db
+// TODO: save the notification in its own table rather than co-opting the porter app events table
 func saveNotification(ctx context.Context, notification Notification, eventRepo repository.PorterAppEventRepository, deploymentTargetID string) error {
 	ctx, span := telemetry.NewSpan(ctx, "save-notification")
 	defer span.End()
@@ -276,6 +280,7 @@ func saveNotification(ctx context.Context, notification Notification, eventRepo 
 	return nil
 }
 
+// NotificationFromPorterAppEvent converts a PorterAppEvent to a Notification
 func NotificationFromPorterAppEvent(appEvent *models.PorterAppEvent) (*Notification, error) {
 	notification := &Notification{}
 	bytes, err := json.Marshal(appEvent.Metadata)

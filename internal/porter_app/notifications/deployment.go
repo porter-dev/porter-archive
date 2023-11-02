@@ -11,19 +11,26 @@ import (
 	v1 "k8s.io/api/apps/v1"
 )
 
+// Deployment represents metadata about a k8s deployment
 type Deployment struct {
 	Status DeploymentStatus `json:"status"`
 }
 
+// DeploymentStatus represents the status of a k8s deployment
 type DeploymentStatus string
 
 const (
+	// DeploymentStatus_Unknown indicates that the status of the deployment is unknown because we have not queried for it yet
 	DeploymentStatus_Unknown DeploymentStatus = "UNKNOWN"
+	// DeploymentStatus_Pending indicates that the deployment is still in progress
 	DeploymentStatus_Pending DeploymentStatus = "PENDING"
+	// DeploymentStatus_Success indicates that the deployment was successful
 	DeploymentStatus_Success DeploymentStatus = "SUCCESS"
+	// DeploymentStatus_Failure indicates that the deployment failed
 	DeploymentStatus_Failure DeploymentStatus = "FAILURE"
 )
 
+// hydrateNotificationInput is the input struct for hydrateNotification
 type hydrateNotificationInput struct {
 	Notification
 	DeploymentTargetId string
@@ -31,6 +38,7 @@ type hydrateNotificationInput struct {
 	K8sAgent           *kubernetes.Agent
 }
 
+// hydrateNotification hydrates a notification with k8s deployment info
 func hydrateNotification(ctx context.Context, inp hydrateNotificationInput) (Notification, error) {
 	ctx, span := telemetry.NewSpan(ctx, "hydrate-notification")
 	defer span.End()
@@ -98,19 +106,23 @@ func hydrateNotification(ctx context.Context, inp hydrateNotificationInput) (Not
 	return hydratedNotification, nil
 }
 
+// deploymentStatus returns the status of a k8s deployment
 func deploymentStatus(depl v1.Deployment) DeploymentStatus {
 	deploymentStatus := DeploymentStatus_Unknown
 
-	for _, condition := range depl.Status.Conditions {
-		if condition.Type == "Progressing" {
-			if condition.Status == "True" && condition.Reason == "NewReplicaSetAvailable" && depl.Status.ReadyReplicas == depl.Status.Replicas {
-				deploymentStatus = DeploymentStatus_Success
-				break
-			} else if condition.Status == "False" && condition.Reason == "ProgressDeadlineExceeded" {
-				deploymentStatus = DeploymentStatus_Failure
-				break
-			} else {
-				deploymentStatus = DeploymentStatus_Pending
+	if depl.Status.Replicas == depl.Status.ReadyReplicas &&
+		depl.Status.Replicas == depl.Status.AvailableReplicas &&
+		depl.Status.Replicas == depl.Status.UpdatedReplicas {
+		deploymentStatus = DeploymentStatus_Success
+	} else {
+		for _, condition := range depl.Status.Conditions {
+			if condition.Type == "Progressing" {
+				if condition.Status == "False" && condition.Reason == "ProgressDeadlineExceeded" {
+					deploymentStatus = DeploymentStatus_Failure
+					break
+				} else {
+					deploymentStatus = DeploymentStatus_Pending
+				}
 			}
 		}
 	}
@@ -123,6 +135,7 @@ var fatalDeploymentDetailSubstrings = []string{
 	"restarted with exit code",
 }
 
+// detailIndicatesDeploymentFailure returns true if the detail indicates that the deployment failed
 func detailIndicatesDeploymentFailure(detail string) bool {
 	// if any of the fatal deployment detail substrings are found in the detail, then the deployment will fail
 	for _, fatalSubstring := range fatalDeploymentDetailSubstrings {
@@ -133,6 +146,8 @@ func detailIndicatesDeploymentFailure(detail string) bool {
 	return false
 }
 
+// translateAgentSummary translates the agent summary to a human readable summary
+// this is necessary until we make updates to the agent
 func translateAgentSummary(notification Notification, status DeploymentStatus) string {
 	humanReadableSummary := notification.AgentSummary
 	pattern := `application (\S+) in namespace (\S+)`

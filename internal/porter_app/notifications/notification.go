@@ -36,15 +36,6 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 	// 2. convert agent event to baseNotification
 	baseNotification := agentEventToNotification(*agentEventMetadata)
 
-	// telemetry.WithAttributes(span,
-	// 	telemetry.AttributeKV{Key: "app-id", Value: baseNotification.AppID},
-	// 	telemetry.AttributeKV{Key: "app-name", Value: baseNotification.AppName},
-	// 	telemetry.AttributeKV{Key: "service-name", Value: baseNotification.ServiceName},
-	// 	telemetry.AttributeKV{Key: "app-revision-id", Value: baseNotification.AppRevisionID},
-	// 	telemetry.AttributeKV{Key: "agent-event-id", Value: baseNotification.AgentEventID},
-	// 	telemetry.AttributeKV{Key: "agent-detail", Value: baseNotification.AgentDetail},
-	// )
-
 	// 3. dedupe notification
 	isDuplicate, err := isNotificationDuplicate(ctx, baseNotification, inp.EventRepo, inp.DeploymentTargetID)
 	if err != nil {
@@ -90,7 +81,6 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 	}
 
 	// 6. save notification to db
-	// TODO: save the notification in its own table rather than co-opting the porter app events table
 	err = saveNotification(ctx, hydratedNotification, inp.EventRepo, inp.DeploymentTargetID)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to save notification")
@@ -99,6 +89,7 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 	return nil
 }
 
+// Notification is a struct that contains all actionable information from an app event
 type Notification struct {
 	AppID                string     `json:"app_id"`
 	AppName              string     `json:"app_name"`

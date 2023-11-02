@@ -1,12 +1,14 @@
-import React, { Dispatch, SetStateAction } from "react";
+import React, { type Dispatch, type SetStateAction } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
-import { AppRevision } from "lib/revisions/types";
-import { match } from "ts-pattern";
-import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import styled from "styled-components";
-import { readableDate } from "shared/string_utils";
+import { match } from "ts-pattern";
+
 import Text from "components/porter/Text";
 import { SourceOptions } from "lib/porter-apps";
+import { type AppRevision } from "lib/revisions/types";
+
+import { readableDate } from "shared/string_utils";
+import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 
 type RevisionTableContentsProps = {
   latestRevisionNumber: number;
@@ -53,21 +55,19 @@ const RevisionTableContents: React.FC<RevisionTableContentsProps> = ({
     match(status)
       .with("CREATED", () => "Created")
       .with("AWAITING_BUILD_ARTIFACT", () => "Awaiting Build")
-      .with("READY_TO_APPLY", () => "Deploying")
       .with("AWAITING_PREDEPLOY", () => "Awaiting Pre-Deploy")
       .with("BUILD_CANCELED", () => "Build Canceled")
       .with("BUILD_FAILED", () => "Build Failed")
       .with("DEPLOY_FAILED", () => "Deploy Failed")
       .with("DEPLOYED", () => "Deployed")
       .with("PREDEPLOY_FAILED", () => "Pre-Deploy Failed")
-      .exhaustive();
+      .otherwise(() => "Deploying"); // fine to do this for now because this component is about to be deprecated
 
   const getDotColor = (status: AppRevision["status"]) =>
     match(status)
       .with(
         "CREATED",
         "AWAITING_BUILD_ARTIFACT",
-        "READY_TO_APPLY",
         "AWAITING_PREDEPLOY",
         () => YELLOW
       )

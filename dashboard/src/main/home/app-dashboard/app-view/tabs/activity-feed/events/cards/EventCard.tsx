@@ -28,6 +28,7 @@ const EventCard: React.FC<Props> = ({ event, deploymentTargetId, isLatestDeployE
 
     return match(event)
       .with({ type: "APP_EVENT" }, () => "")
+      .with({ type: "NOTIFICATION" }, () => "")
       .with({ type: "BUILD" }, (event) =>
         event.metadata.commit_sha
           ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.commit_sha}`
@@ -53,6 +54,7 @@ const EventCard: React.FC<Props> = ({ event, deploymentTargetId, isLatestDeployE
 
     return match(event)
       .with({ type: "APP_EVENT" }, () => "")
+      .with({ type: "NOTIFICATION" }, () => "")
       .with({ type: "BUILD" }, (event) =>
         event.metadata.commit_sha ? event.metadata.commit_sha.slice(0, 7) : ""
       )
@@ -107,6 +109,11 @@ const EventCard: React.FC<Props> = ({ event, deploymentTargetId, isLatestDeployE
         gitCommitUrl={gitCommitUrl}
         displayCommitSha={displayCommitSha}
       />
+    ))
+    .with({ type: "NOTIFICATION" }, (ev) => (
+      <StyledEventCard>
+        <div>{ev.metadata?.human_readable_summary}</div>
+      </StyledEventCard>
     ))
     .exhaustive();
 };

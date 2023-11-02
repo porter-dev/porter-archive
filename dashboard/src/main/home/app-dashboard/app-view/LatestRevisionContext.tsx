@@ -1,35 +1,52 @@
-import React, { Dispatch, SetStateAction, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
-import { createContext, useContext } from "react";
-import { Context } from "shared/Context";
-import api from "shared/api";
-import { PorterAppRecord, porterAppValidator } from "./AppView";
+import styled from "styled-components";
 import { z } from "zod";
-import { AppRevision, appRevisionValidator } from "lib/revisions/types";
+
 import Loading from "components/Loading";
 import Container from "components/porter/Container";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
-import notFound from "assets/not-found.png";
-import styled from "styled-components";
-import { SourceOptions, clientAppFromProto } from "lib/porter-apps";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
-import { ClientService, DetectedServices } from "lib/porter-apps/services";
+import { clientAppFromProto, type SourceOptions } from "lib/porter-apps";
 import {
-  DeploymentTarget,
-  useDeploymentTarget,
-} from "shared/DeploymentTargetContext";
+  deserializeNotifications,
+  type ClientNotification,
+} from "lib/porter-apps/notification";
 import {
-  PopulatedEnvGroup,
-  populatedEnvGroup,
-} from "../validate-apply/app-settings/types";
+  type ClientService,
+  type DetectedServices,
+} from "lib/porter-apps/services";
+import { appRevisionValidator, type AppRevision } from "lib/revisions/types";
 
-export const LatestRevisionContext = createContext<{
+import api from "shared/api";
+import { Context } from "shared/Context";
+import {
+  useDeploymentTarget,
+  type DeploymentTarget,
+} from "shared/DeploymentTargetContext";
+import notFound from "assets/not-found.png";
+import {
+  populatedEnvGroup,
+  type PopulatedEnvGroup,
+} from "../validate-apply/app-settings/types";
+import { porterAppValidator, type PorterAppRecord } from "./AppView";
+import { porterAppNotificationEventMetadataValidator } from "./tabs/activity-feed/events/types";
+
+type LatestRevisionContextType = {
   porterApp: PorterAppRecord;
   latestRevision: AppRevision;
   latestProto: PorterApp;
+  latestNotifications: ClientNotification[];
   servicesFromYaml: DetectedServices | null;
   clusterId: number;
   projectId: number;
@@ -40,11 +57,15 @@ export const LatestRevisionContext = createContext<{
   appEnv?: PopulatedEnvGroup;
   setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
   latestClientServices: ClientService[];
-} | null>(null);
+};
 
-export const useLatestRevision = () => {
+const LatestRevisionContext = createContext<LatestRevisionContextType | null>(
+  null
+);
+
+export const useLatestRevision = (): LatestRevisionContextType => {
   const context = useContext(LatestRevisionContext);
-  if (context === null) {
+  if (context == null) {
     throw new Error(
       "useLatestRevision must be used within a LatestRevisionContext"
     );
@@ -58,7 +79,7 @@ export const LatestRevisionProvider = ({
 }: {
   appName?: string;
   children: JSX.Element;
-}) => {
+}): JSX.Element => {
   const [previewRevision, setPreviewRevision] = useState<AppRevision | null>(
     null
   );
@@ -96,7 +117,13 @@ export const LatestRevisionProvider = ({
     }
   );
 
-  const { data: latestRevision, status } = useQuery(
+  const {
+    data: {
+      app_revision: latestRevision,
+      notifications: latestNotifications = [],
+    } = {},
+    status,
+  } = useQuery(
     [
       "getLatestRevision",
       currentProject?.id,
@@ -106,7 +133,7 @@ export const LatestRevisionProvider = ({
     ],
     async () => {
       if (!appParamsExist) {
-        return;
+        return { app_revision: undefined, notifications: [] };
       }
       const res = await api.getLatestRevision(
         "<token>",
@@ -120,12 +147,19 @@ export const LatestRevisionProvider = ({
         }
       );
 
-      const revisionData = await z
+      const {
+        app_revision: appRevision,
+        notifications: porterAppNotifications,
+      } = await z
         .object({
           app_revision: appRevisionValidator,
+          notifications: z.array(porterAppNotificationEventMetadataValidator),
         })
         .parseAsync(res.data);
-      return revisionData.app_revision;
+      return {
+        app_revision: appRevision,
+        notifications: deserializeNotifications(porterAppNotifications),
+      };
     },
     {
       enabled: appParamsExist,
@@ -157,7 +191,7 @@ export const LatestRevisionProvider = ({
         }
       );
 
-      const { deployment_target } = await z
+      const { deployment_target: deploymentTarget } = await z
         .object({
           deployment_target: z.object({
             cluster_id: z.number(),
@@ -167,7 +201,7 @@ export const LatestRevisionProvider = ({
         })
         .parseAsync(res.data);
 
-      return deployment_target;
+      return deploymentTarget;
     },
     {
       enabled: !!currentCluster && !!currentProject,
@@ -246,7 +280,7 @@ export const LatestRevisionProvider = ({
 
   const { loading: porterYamlLoading, detectedServices } = usePorterYaml({
     source: latestSource?.type === "github" ? latestSource : null,
-    appName: appName,
+    appName,
     useDefaults: false,
   });
 
@@ -265,7 +299,10 @@ export const LatestRevisionProvider = ({
       return [];
     }
 
-    const app = clientAppFromProto({proto: latestProto, overrides: detectedServices});
+    const app = clientAppFromProto({
+      proto: latestProto,
+      overrides: detectedServices,
+    });
     return app.services;
   }, [latestProto, detectedServices]);
 
@@ -292,7 +329,7 @@ export const LatestRevisionProvider = ({
         <Container row>
           <PlaceholderIcon src={notFound} />
           <Text color="helper">
-            No application matching "{appName}" was found.
+            No application matching &ldquo;{appName}&rdquo; was found.
           </Text>
         </Container>
         <Spacer y={1} />
@@ -306,6 +343,7 @@ export const LatestRevisionProvider = ({
       value={{
         latestRevision,
         latestProto,
+        latestNotifications,
         porterApp,
         clusterId: currentCluster.id,
         projectId: currentProject.id,

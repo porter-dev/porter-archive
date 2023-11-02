@@ -1,494 +1,592 @@
-import React, {
-    useCallback,
-    useEffect,
-    useRef,
-    useState,
-} from "react";
-import styled from "styled-components";
-import spinner from "assets/loading.gif";
-import api from "shared/api";
-import { useLogs } from "./utils";
-import { Direction, GenericFilterOption, GenericFilter, FilterName } from "../../expanded-app/logs/types";
-import dayjs, { Dayjs } from "dayjs";
-import Loading from "components/Loading";
-import _ from "lodash";
-import Banner from "components/porter/Banner";
-import LogSearchBar from "components/LogSearchBar";
-import LogQueryModeSelectionToggle from "components/LogQueryModeSelectionToggle";
-import Fieldset from "components/porter/Fieldset";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import Container from "components/porter/Container";
-import Button from "components/porter/Button";
-import StyledLogs from "../../expanded-app/logs/StyledLogs";
-import { useRevisionList } from "lib/hooks/useRevisionList";
-import { useLocation } from "react-router";
-import { useLatestRevision } from "../../app-view/LatestRevisionContext";
-import Filter from "components/porter/Filter";
-import { useTimer } from 'react-timer-hook';
-import { useIntercom } from "lib/hooks/useIntercom";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
+import dayjs, { type Dayjs } from "dayjs";
+import _ from "lodash";
+import { useLocation } from "react-router";
+import { useTimer } from "react-timer-hook";
+import styled from "styled-components";
+
+import Loading from "components/Loading";
+import LogQueryModeSelectionToggle from "components/LogQueryModeSelectionToggle";
+import LogSearchBar from "components/LogSearchBar";
+import Banner from "components/porter/Banner";
+import Button from "components/porter/Button";
+import Container from "components/porter/Container";
+import Fieldset from "components/porter/Fieldset";
+import Filter from "components/porter/Filter";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import { useIntercom } from "lib/hooks/useIntercom";
+import { useRevisionList } from "lib/hooks/useRevisionList";
+
+import api from "shared/api";
+import spinner from "assets/loading.gif";
+import { useLatestRevision } from "../../app-view/LatestRevisionContext";
+import StyledLogs from "../../expanded-app/logs/StyledLogs";
+import {
+  Direction,
+  GenericFilter,
+  GenericFilterOption,
+  type FilterName,
+} from "../../expanded-app/logs/types";
+import { useLogs } from "./utils";
 
 type Props = {
-    projectId: number;
-    clusterId: number;
-    appName: string;
-    serviceNames: string[];
-    deploymentTargetId: string;
-    appRevisionId?: string;
-    logFilterNames?: FilterName[];
-    timeRange?: {
-        startTime?: Dayjs;
-        endTime?: Dayjs;
-    };
-    filterPredeploy?: boolean;
-    appId: number;
+  projectId: number;
+  clusterId: number;
+  appName: string;
+  serviceNames: string[];
+  deploymentTargetId: string;
+  appRevisionId?: string;
+  logFilterNames?: FilterName[];
+  timeRange?: {
+    startTime?: Dayjs;
+    endTime?: Dayjs;
+  };
+  filterPredeploy?: boolean;
+  appId: number;
+  selectedService?: string;
+  selectedRevisionId?: string;
+  defaultScrollToBottomEnabled?: boolean;
 };
 
 const DEFAULT_LOG_TIMEOUT_SECONDS = 60;
 
 const Logs: React.FC<Props> = ({
+  projectId,
+  clusterId,
+  appName,
+  serviceNames,
+  deploymentTargetId,
+  appRevisionId,
+  timeRange,
+  logFilterNames = ["service_name", "revision", "output_stream"], // these are the names of filters that will be displayed in the UI
+  filterPredeploy = false,
+  appId,
+  selectedService,
+  selectedRevisionId,
+  defaultScrollToBottomEnabled = true,
+}) => {
+  const { search } = useLocation();
+  const queryParams = new URLSearchParams(search);
+  const logQueryParamOpts = {
+    revision: queryParams.get("version"),
+    output_stream: queryParams.get("output_stream"),
+    service: queryParams.get("service"),
+    revision_id: queryParams.get("revision_id"),
+  };
+
+  const scrollToBottomRef = useRef<HTMLDivElement | null>(null);
+  const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(
+    defaultScrollToBottomEnabled
+  );
+  const [enteredSearchText, setEnteredSearchText] = useState("");
+  const [searchText, setSearchText] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [notification, setNotification] = useState<string>();
+
+  const [hasPorterAgent, setHasPorterAgent] = useState(true);
+  const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [selectedFilterValues, setSelectedFilterValues] = useState<
+    Record<FilterName, string>
+  >({
+    service_name:
+      logQueryParamOpts.service ??
+      selectedService ??
+      GenericFilter.getDefaultOption("service_name").value,
+    pod_name: "", // not supported in v2
+    revision:
+      logQueryParamOpts.revision ??
+      GenericFilter.getDefaultOption("revision").value, // refers to revision number
+    output_stream:
+      logQueryParamOpts.output_stream ??
+      GenericFilter.getDefaultOption("output_stream").value,
+    revision_id:
+      logQueryParamOpts.revision_id ??
+      selectedRevisionId ??
+      GenericFilter.getDefaultOption("revision_id").value,
+  });
+  // for some reason the filters were not being updated when the service name or revision number changed in the notification feed, so this ensures it
+  useEffect(() => {
+    setSelectedFilterValues({
+      ...selectedFilterValues,
+      service_name:
+        logQueryParamOpts.service ??
+        selectedService ??
+        GenericFilter.getDefaultOption("service_name").value,
+      revision_id:
+        logQueryParamOpts.revision_id ??
+        selectedRevisionId ??
+        GenericFilter.getDefaultOption("revision_id").value,
+    });
+  }, [selectedService, selectedRevisionId]);
+
+  const { revisionIdToNumber } = useRevisionList({
+    appName,
+    deploymentTargetId,
     projectId,
     clusterId,
+  });
+  const {
+    latestRevision: { revision_number: latestRevisionNumber },
+  } = useLatestRevision();
+
+  const { showIntercomWithMessage } = useIntercom();
+
+  const isAgentVersionUpdated = (agentImage: string | undefined): boolean => {
+    if (agentImage == null) {
+      return false;
+    }
+    const version = agentImage.split(":").pop();
+    if (version === "dev") {
+      return true;
+    }
+    // make sure version is above v3.1.3
+    if (version == null) {
+      return false;
+    }
+    const versionParts = version.split(".");
+    if (versionParts.length < 3) {
+      return false;
+    }
+    const major = parseInt(versionParts[0]);
+    const minor = parseInt(versionParts[1]);
+    const patch = parseInt(versionParts[2]);
+    if (major < 3) {
+      return false;
+    } else if (major > 3) {
+      return true;
+    }
+    if (minor < 1) {
+      return false;
+    } else if (minor > 1) {
+      return true;
+    }
+    return patch >= 7;
+  };
+
+  const createVersionOptions = (number: number): GenericFilterOption[] => {
+    return Array.from({ length: number }, (_, index) => {
+      const version = index + 1;
+      const label =
+        version === number
+          ? `Version ${version} (latest)`
+          : `Version ${version}`;
+      const value = version.toString();
+      return GenericFilterOption.of(label, value);
+    })
+      .reverse()
+      .slice(0, 3);
+  };
+
+  const [filters, setFilters] = useState<GenericFilter[]>(
+    [
+      {
+        name: "service_name",
+        displayName: "Service",
+        default: GenericFilter.getDefaultOption("service_name"),
+        options:
+          serviceNames.map((s) => {
+            return GenericFilterOption.of(s, s);
+          }) ?? [],
+        setValue: (value: string) => {
+          setSelectedFilterValues((s) => ({
+            ...s,
+            service_name: value,
+          }));
+        },
+      } satisfies GenericFilter,
+      {
+        name: "revision",
+        displayName: "Version",
+        default: GenericFilter.getDefaultOption("revision"),
+        options: createVersionOptions(latestRevisionNumber),
+        setValue: (value: string) => {
+          setSelectedFilterValues((s) => ({
+            ...s,
+            revision: value,
+          }));
+        },
+      } satisfies GenericFilter,
+      {
+        name: "output_stream",
+        displayName: "Output Stream",
+        default: GenericFilter.getDefaultOption("output_stream"),
+        options: [
+          GenericFilterOption.of("stdout", "stdout"),
+          GenericFilterOption.of("stderr", "stderr"),
+        ],
+        setValue: (value: string) => {
+          setSelectedFilterValues((s) => ({
+            ...s,
+            output_stream: value,
+          }));
+        },
+      } satisfies GenericFilter,
+    ].filter((f: GenericFilter) => logFilterNames.includes(f.name))
+  );
+
+  const notify = (message: string): void => {
+    setNotification(message);
+
+    setTimeout(() => {
+      setNotification(undefined);
+    }, 5000);
+  };
+
+  const { logs, refresh, moveCursor, paginationInfo, stopLogStream } = useLogs({
+    projectID: projectId,
+    clusterID: clusterId,
+    selectedFilterValues,
     appName,
-    serviceNames,
     deploymentTargetId,
+    searchParam: enteredSearchText,
+    notify,
+    setLoading: setIsLoading,
+    revisionIdToNumber,
+    setDate: selectedDate,
     appRevisionId,
+    filterPredeploy,
     timeRange,
-    logFilterNames = ["service_name", "revision", "output_stream"], // these are the names of filters that will be displayed in the UI
-    filterPredeploy = false,
-    appId,
-}) => {
-    const { search } = useLocation();
-    const queryParams = new URLSearchParams(search);
-    const logQueryParamOpts = {
-        revision: queryParams.get('version'),
-        output_stream: queryParams.get('output_stream'),
-        service: queryParams.get('service'),
-        revision_id: queryParams.get('revision_id'),
+    appID: appId,
+  });
+
+  const {
+    totalSeconds,
+    isRunning,
+    pause: pauseLogTimeout,
+    restart: restartLogTimeout,
+  } = useTimer({
+    expiryTimestamp: dayjs()
+      .add(DEFAULT_LOG_TIMEOUT_SECONDS, "seconds")
+      .toDate(),
+    onExpire: () => {
+      stopLogStream();
+      showIntercomWithMessage({
+        message: "I am having trouble receiving logs from my application.",
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (logs.length) {
+      pauseLogTimeout();
     }
+  }, [logs.length]);
 
-    const scrollToBottomRef = useRef<HTMLDivElement | null>(null);
-    const [scrollToBottomEnabled, setScrollToBottomEnabled] = useState(true);
-    const [enteredSearchText, setEnteredSearchText] = useState("");
-    const [searchText, setSearchText] = useState("");
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-    const [notification, setNotification] = useState<string>();
-
-    const [hasPorterAgent, setHasPorterAgent] = useState(true);
-    const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [logsError, setLogsError] = useState<string | undefined>(undefined);
-
-    const [selectedFilterValues, setSelectedFilterValues] = useState<Record<FilterName, string>>({
-        service_name: logQueryParamOpts?.service ?? GenericFilter.getDefaultOption("service_name").value,
-        pod_name: "", // not supported in v2
-        revision: logQueryParamOpts.revision ?? GenericFilter.getDefaultOption("revision").value, // refers to revision number
-        output_stream: logQueryParamOpts.output_stream ?? GenericFilter.getDefaultOption("output_stream").value,
-        revision_id: logQueryParamOpts.revision_id ?? GenericFilter.getDefaultOption("revision_id").value,
-    });
-
-    const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
-    const { latestRevision: { revision_number: latestRevisionNumber } } = useLatestRevision();
-
-    const { showIntercomWithMessage } = useIntercom();
-
-    const isAgentVersionUpdated = (agentImage: string | undefined) => {
-        if (agentImage == null) {
-            return false;
-        }
-        const version = agentImage.split(":").pop();
-        if (version === "dev") {
-            return true;
-        }
-        //make sure version is above v3.1.3
-        if (version == null) {
-            return false;
-        }
-        const versionParts = version.split(".");
-        if (versionParts.length < 3) {
-            return false;
-        }
-        const major = parseInt(versionParts[0]);
-        const minor = parseInt(versionParts[1]);
-        const patch = parseInt(versionParts[2]);
-        if (major < 3) {
-            return false;
-        } else if (major > 3) {
-            return true;
-        }
-        if (minor < 1) {
-            return false;
-        } else if (minor > 1) {
-            return true;
-        }
-        return patch >= 7;
-    }
-
-    const createVersionOptions = (number: number) => {
-        return Array.from({ length: number }, (_, index) => {
-            const version = index + 1;
-            const label = version === number ? `Version ${version} (latest)` : `Version ${version}`;
-            const value = version.toString();
-            return GenericFilterOption.of(label, value);
-        }).reverse().slice(0, 3);
-    }
-
-    const [filters, setFilters] = useState<GenericFilter[]>([
+  useEffect(() => {
+    setFilters(
+      [
         {
-            name: "service_name",
-            displayName: "Service",
-            default: GenericFilter.getDefaultOption("service_name"),
-            options: serviceNames.map(s => {
-                return GenericFilterOption.of(s, s)
+          name: "service_name",
+          displayName: "Service",
+          default: GenericFilter.getDefaultOption("service_name"),
+          options:
+            serviceNames.map((s) => {
+              return GenericFilterOption.of(s, s);
             }) ?? [],
-            setValue: (value: string) => {
-                setSelectedFilterValues((s) => ({
-                    ...s,
-                    service_name: value,
-                }));
-            }
-        } as GenericFilter,
+          setValue: (value: string) => {
+            setSelectedFilterValues((s) => ({
+              ...s,
+              service_name: value,
+            }));
+          },
+        } satisfies GenericFilter,
         {
-            name: "revision",
-            displayName: "Version",
-            default: GenericFilter.getDefaultOption("revision"),
-            options: createVersionOptions(latestRevisionNumber),
-            setValue: (value: string) => {
-                setSelectedFilterValues((s) => ({
-                    ...s,
-                    revision: value,
-                }));
-            }
-        } as GenericFilter,
+          name: "revision",
+          displayName: "Version",
+          default: GenericFilter.getDefaultOption("revision"),
+          options: createVersionOptions(latestRevisionNumber),
+          setValue: (value: string) => {
+            setSelectedFilterValues((s) => ({
+              ...s,
+              revision: value,
+            }));
+          },
+        } satisfies GenericFilter,
         {
-            name: "output_stream",
-            displayName: "Output Stream",
-            default: GenericFilter.getDefaultOption("output_stream"),
-            options: [
-                GenericFilterOption.of('stdout', 'stdout'),
-                GenericFilterOption.of("stderr", "stderr"),
-            ],
-            setValue: (value: string) => {
-                setSelectedFilterValues((s) => ({
-                    ...s,
-                    output_stream: value,
-                }));
-            }
-        } as GenericFilter,
-    ].filter((f: GenericFilter) => logFilterNames.includes(f.name)));
-
-
-    const notify = (message: string) => {
-        setNotification(message);
-
-        setTimeout(() => {
-            setNotification(undefined);
-        }, 5000);
-    };
-
-    const { logs, refresh, moveCursor, paginationInfo, stopLogStream } = useLogs({
-        projectID: projectId,
-        clusterID: clusterId,
-        selectedFilterValues,
-        appName,
-        deploymentTargetId,
-        searchParam: enteredSearchText,
-        notify,
-        setLoading: setIsLoading,
-        revisionIdToNumber,
-        setDate: selectedDate,
-        appRevisionId,
-        filterPredeploy,
-        timeRange,
-        appID: appId,
-    });
-
-    const { totalSeconds, isRunning, pause: pauseLogTimeout, restart: restartLogTimeout } = useTimer({
-        expiryTimestamp: dayjs().add(DEFAULT_LOG_TIMEOUT_SECONDS, 'seconds').toDate(),
-        onExpire: () => {
-            stopLogStream();
-            showIntercomWithMessage({ message: "I am having trouble receiving logs from my application." });
-        }
-    });
-
-    useEffect(() => {
-        if (logs.length) {
-            pauseLogTimeout();
-        }
-    },[logs.length]);
-
-    useEffect(() => {
-        setFilters([
-            {
-                name: "service_name",
-                displayName: "Service",
-                default: GenericFilter.getDefaultOption("service_name"),
-                options: serviceNames.map(s => {
-                    return GenericFilterOption.of(s, s)
-                }) ?? [],
-                setValue: (value: string) => {
-                    setSelectedFilterValues((s) => ({
-                        ...s,
-                        service_name: value,
-                    }));
-                }
-            } as GenericFilter,
-            {
-                name: "revision",
-                displayName: "Version",
-                default: GenericFilter.getDefaultOption("revision"),
-                options: createVersionOptions(latestRevisionNumber),
-                setValue: (value: string) => {
-                    setSelectedFilterValues((s) => ({
-                        ...s,
-                        revision: value,
-                    }));
-                }
-            } as GenericFilter,
-            {
-                name: "output_stream",
-                displayName: "Output Stream",
-                default: GenericFilter.getDefaultOption("output_stream"),
-                options: [
-                    GenericFilterOption.of('stdout', 'stdout'),
-                    GenericFilterOption.of("stderr", "stderr"),
-                ],
-                setValue: (value: string) => {
-                    setSelectedFilterValues((s) => ({
-                        ...s,
-                        output_stream: value,
-                    }));
-                }
-            } as GenericFilter,
-        ].filter((f: GenericFilter) => logFilterNames.includes(f.name)))
-
-        if (latestRevisionNumber && !logQueryParamOpts.revision && !logQueryParamOpts.revision_id) { // default to filter by latest revision number if no revision-related query params supplied
-            setSelectedFilterValues({
-                ...selectedFilterValues,
-                revision: latestRevisionNumber.toString(),
-            })
-        }
-    }, [latestRevisionNumber]);
-
-    useEffect(() => {
-        if (!isLoading && scrollToBottomRef.current && scrollToBottomEnabled) {
-            const scrollPosition = scrollToBottomRef.current.offsetTop + scrollToBottomRef.current.offsetHeight - window.innerHeight;
-            scrollToBottomRef.current.scrollIntoView({
-                behavior: "smooth",
-                top: scrollPosition,
-            });
-        }
-    }, [isLoading, logs, scrollToBottomRef, scrollToBottomEnabled]);
-
-    const onLoadPrevious = useCallback(() => {
-        if (!selectedDate) {
-            setSelectedDate(dayjs(logs[0].timestamp).toDate());
-            return;
-        }
-
-        moveCursor(Direction.backward);
-    }, [logs, selectedDate]);
-
-    const setSelectedDateIfUndefined = () => {
-        if (selectedDate == null) {
-            setSelectedDate(dayjs().toDate());
-        }
-    };
-
-    const renderContents = () => {
-        return (
-            <>
-                <FlexRow>
-                    <Flex>
-                        <LogSearchBar
-                            searchText={searchText}
-                            setSearchText={setSearchText}
-                            setEnteredSearchText={setEnteredSearchText}
-                            setSelectedDate={setSelectedDateIfUndefined}
-                        />
-                        <Spacer inline x={1} />
-                        <LogQueryModeSelectionToggle
-                            selectedDate={selectedDate ?? timeRange?.endTime?.toDate()}
-                            setSelectedDate={setSelectedDate}
-                        />
-                    </Flex>
-                    <Flex>
-                        <Filter
-                            filters={filters}
-                            selectedFilterValues={selectedFilterValues}
-                        />
-                        <Spacer inline x={1} />
-                        <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
-                            <Checkbox checked={scrollToBottomEnabled}>
-                                <i className="material-icons">done</i>
-                            </Checkbox>
-                            Scroll to bottom
-                        </ScrollButton>
-                        <Spacer inline x={1} />
-                        <ScrollButton
-                            onClick={() => {
-                                restartLogTimeout(dayjs().add(DEFAULT_LOG_TIMEOUT_SECONDS, 'seconds').toDate());
-                                refresh({ isLive: selectedDate == null && timeRange?.endTime == null });
-                            }}
-                        >
-                            <i className="material-icons">autorenew</i>
-                            Refresh
-                        </ScrollButton>
-                    </Flex>
-                </FlexRow>
-                <Spacer y={0.5} />
-                <LogsSectionWrapper>
-                    <StyledLogsSection>
-                        {isLoading && <Loading message={"Initializing..."} />}
-                        {!isLoading && logs.length !== 0 && (
-                            <>
-                                <LoadMoreButton
-                                    active={
-                                        logs.length !== 0 && paginationInfo.previousCursor !== null
-                                    }
-                                    role="button"
-                                    onClick={onLoadPrevious}
-                                >
-                                    Load Previous
-                                </LoadMoreButton>
-                                <StyledLogs
-                                    logs={logs}
-                                    filters={filters}
-                                    appName={appName}
-                                />
-                                <LoadMoreButton
-                                    active={selectedDate != null && logs.length !== 0}
-                                    role="button"
-                                    onClick={() => moveCursor(Direction.forward)}
-                                >
-                                    Load more
-                                </LoadMoreButton>
-                            </>
-                        )}
-                        {!isLoading && logs.length === 0 && selectedDate != null && (
-                            <Message>
-                                No logs found for this time range.
-                                <Highlight onClick={() => setSelectedDate(undefined)}>
-                                    <i className="material-icons">autorenew</i>
-                                    Reset
-                                </Highlight>
-                            </Message>
-                        )}
-                        {!isLoading && logs.length === 0 && selectedDate == null && isRunning && (
-                            <Loading message={`Waiting ${totalSeconds} seconds for logs...`} />
-                        )}
-                        {!isLoading && logs.length === 0 && selectedDate == null && !isRunning && (
-                            <Message>
-                                Timed out waiting for logs.
-                                <Highlight onClick={() => {
-                                    restartLogTimeout(dayjs().add(DEFAULT_LOG_TIMEOUT_SECONDS, 'seconds').toDate());
-                                    refresh({ isLive: selectedDate == null && timeRange?.endTime == null });
-                                }}>
-                                    <i className="material-icons">autorenew</i>
-                                    Refresh
-                                </Highlight>
-                            </Message>
-                        )}
-                        <div ref={scrollToBottomRef} />
-                    </StyledLogsSection>
-                    <NotificationWrapper
-                        key={JSON.stringify(logs)}
-                        active={!!notification}
-                    >
-                        <Banner>{notification}</Banner>
-                    </NotificationWrapper>
-                </LogsSectionWrapper>
-            </>
-        );
-    };
-
-    useEffect(() => {
-        // determine if the agent is installed properly - if not, start by render upgrade screen
-        checkForAgent();
-    }, []);
-
-    useEffect(() => {
-        if (!isPorterAgentInstalling) {
-            return;
-        }
-
-        const checkForAgentInterval = setInterval(checkForAgent, 3000);
-
-        return () => clearInterval(checkForAgentInterval);
-    }, [isPorterAgentInstalling]);
-
-    const checkForAgent = async () => {
-        const project_id = projectId
-        const cluster_id = clusterId
-
-        try {
-            const res = await api.detectPorterAgent("<token>", {}, { project_id, cluster_id });
-
-            setHasPorterAgent(true);
-
-            const agentImage = res.data?.image;
-            if (!isAgentVersionUpdated(agentImage)) {
-                notify("Porter agent is outdated. Please upgrade to see logs.");
-            }
-        } catch (err) {
-            if (axios.isAxiosError(err) && err.response?.status === 404) {
-                setHasPorterAgent(false);
-            }
-        }
-    };
-
-    const installAgent = async () => {
-        const project_id = projectId;
-        const cluster_id = clusterId;
-
-        setIsPorterAgentInstalling(true);
-
-        api
-            .installPorterAgent("<token>", {}, { project_id, cluster_id })
-            .then()
-            .catch((err) => {
-                setIsPorterAgentInstalling(false);
-                console.log(err);
-            });
-    };
-
-    const triggerInstall = () => {
-        installAgent();
-    };
-
-    return isPorterAgentInstalling ? (
-        <Fieldset>
-            <Container row>
-                <Spinner src={spinner} />
-                <Spacer inline x={1} />
-                <Text color="helper">The Porter agent is being installed . . .</Text>
-            </Container>
-        </Fieldset>
-    ) : !hasPorterAgent ? (
-        <Fieldset>
-            <Text size={16}>We couldn't detect the Porter agent on your cluster</Text>
-            <Spacer y={0.5} />
-            <Text color="helper">
-                In order to use the Logs tab, you need to install the Porter agent.
-            </Text>
-            <Spacer y={1} />
-            <Button onClick={() => triggerInstall()}>
-                <I className="material-icons">add</I> Install Porter agent
-            </Button>
-        </Fieldset>
-    ) : logsError ? (
-        <Fieldset>
-            <Container row>
-                <WarnI className="material-icons">warning</WarnI>
-                <Text color="helper">
-                    Porter encountered an error retrieving logs for this application.
-                </Text>
-            </Container>
-        </Fieldset>
-    ) : (
-        renderContents()
+          name: "output_stream",
+          displayName: "Output Stream",
+          default: GenericFilter.getDefaultOption("output_stream"),
+          options: [
+            GenericFilterOption.of("stdout", "stdout"),
+            GenericFilterOption.of("stderr", "stderr"),
+          ],
+          setValue: (value: string) => {
+            setSelectedFilterValues((s) => ({
+              ...s,
+              output_stream: value,
+            }));
+          },
+        } satisfies GenericFilter,
+      ].filter((f: GenericFilter) => logFilterNames.includes(f.name))
     );
+
+    // default to filter by latest revision number if no revision-related filter options are selected
+    if (
+      latestRevisionNumber &&
+      selectedFilterValues.revision ===
+        GenericFilter.getDefaultOption("revision").value &&
+      selectedFilterValues.revision_id ===
+        GenericFilter.getDefaultOption("revision_id").value
+    ) {
+      setSelectedFilterValues({
+        ...selectedFilterValues,
+        revision: latestRevisionNumber.toString(),
+      });
+    }
+  }, [latestRevisionNumber]);
+
+  useEffect(() => {
+    if (!isLoading && scrollToBottomRef.current && scrollToBottomEnabled) {
+      const scrollPosition =
+        scrollToBottomRef.current.offsetTop +
+        scrollToBottomRef.current.offsetHeight -
+        window.innerHeight;
+      scrollToBottomRef.current.scrollIntoView({
+        behavior: "smooth",
+        top: scrollPosition,
+      });
+    }
+  }, [isLoading, logs, scrollToBottomRef, scrollToBottomEnabled]);
+
+  const onLoadPrevious = useCallback(() => {
+    if (!selectedDate) {
+      setSelectedDate(dayjs(logs[0].timestamp).toDate());
+      return;
+    }
+
+    void moveCursor(Direction.backward);
+  }, [logs, selectedDate]);
+
+  const setSelectedDateIfUndefined = (): void => {
+    if (selectedDate == null) {
+      setSelectedDate(dayjs().toDate());
+    }
+  };
+
+  const renderContents = (): JSX.Element => {
+    return (
+      <>
+        <FlexRow>
+          <Flex>
+            <LogSearchBar
+              searchText={searchText}
+              setSearchText={setSearchText}
+              setEnteredSearchText={setEnteredSearchText}
+              setSelectedDate={setSelectedDateIfUndefined}
+            />
+            <Spacer inline x={1} />
+            <LogQueryModeSelectionToggle
+              selectedDate={selectedDate ?? timeRange?.endTime?.toDate()}
+              setSelectedDate={setSelectedDate}
+            />
+          </Flex>
+          <Flex>
+            <Filter
+              filters={filters}
+              selectedFilterValues={selectedFilterValues}
+            />
+            <Spacer inline x={1} />
+            <ScrollButton
+              onClick={() => {
+                setScrollToBottomEnabled((s) => !s);
+              }}
+            >
+              <Checkbox checked={scrollToBottomEnabled}>
+                <i className="material-icons">done</i>
+              </Checkbox>
+              Scroll to bottom
+            </ScrollButton>
+            <Spacer inline x={1} />
+            <ScrollButton
+              onClick={async () => {
+                restartLogTimeout(
+                  dayjs().add(DEFAULT_LOG_TIMEOUT_SECONDS, "seconds").toDate()
+                );
+                await refresh({
+                  isLive: selectedDate == null && timeRange?.endTime == null,
+                });
+              }}
+            >
+              <i className="material-icons">autorenew</i>
+              Refresh
+            </ScrollButton>
+          </Flex>
+        </FlexRow>
+        <Spacer y={0.5} />
+        <LogsSectionWrapper>
+          <StyledLogsSection>
+            {isLoading && <Loading message={"Initializing..."} />}
+            {!isLoading && logs.length !== 0 && (
+              <>
+                <LoadMoreButton
+                  active={
+                    logs.length !== 0 && paginationInfo.previousCursor !== null
+                  }
+                  role="button"
+                  onClick={onLoadPrevious}
+                >
+                  Load Previous
+                </LoadMoreButton>
+                <StyledLogs logs={logs} filters={filters} appName={appName} />
+                <LoadMoreButton
+                  active={selectedDate != null && logs.length !== 0}
+                  role="button"
+                  onClick={async () => {
+                    await moveCursor(Direction.forward);
+                  }}
+                >
+                  Load more
+                </LoadMoreButton>
+              </>
+            )}
+            {!isLoading && logs.length === 0 && selectedDate != null && (
+              <Message>
+                No logs found for this time range.
+                <Highlight
+                  onClick={() => {
+                    setSelectedDate(undefined);
+                  }}
+                >
+                  <i className="material-icons">autorenew</i>
+                  Reset
+                </Highlight>
+              </Message>
+            )}
+            {!isLoading &&
+              logs.length === 0 &&
+              selectedDate == null &&
+              isRunning && (
+                <Loading
+                  message={`Waiting ${totalSeconds} seconds for logs...`}
+                />
+              )}
+            {!isLoading &&
+              logs.length === 0 &&
+              selectedDate == null &&
+              !isRunning && (
+                <Message>
+                  Timed out waiting for logs.
+                  <Highlight
+                    onClick={async () => {
+                      restartLogTimeout(
+                        dayjs()
+                          .add(DEFAULT_LOG_TIMEOUT_SECONDS, "seconds")
+                          .toDate()
+                      );
+                      await refresh({
+                        isLive:
+                          selectedDate == null && timeRange?.endTime == null,
+                      });
+                    }}
+                  >
+                    <i className="material-icons">autorenew</i>
+                    Refresh
+                  </Highlight>
+                </Message>
+              )}
+            <div ref={scrollToBottomRef} />
+          </StyledLogsSection>
+          <NotificationWrapper
+            key={JSON.stringify(logs)}
+            active={!!notification}
+          >
+            <Banner>{notification}</Banner>
+          </NotificationWrapper>
+        </LogsSectionWrapper>
+      </>
+    );
+  };
+
+  useEffect(() => {
+    // determine if the agent is installed properly - if not, start by render upgrade screen
+    void checkForAgent();
+  }, []);
+
+  useEffect(() => {
+    if (!isPorterAgentInstalling) {
+      return;
+    }
+
+    const checkForAgentInterval = setInterval(checkForAgent, 3000);
+
+    return () => {
+      clearInterval(checkForAgentInterval);
+    };
+  }, [isPorterAgentInstalling]);
+
+  const checkForAgent = async (): Promise<void> => {
+    try {
+      const res = await api.detectPorterAgent(
+        "<token>",
+        {},
+        { project_id: projectId, cluster_id: clusterId }
+      );
+
+      setHasPorterAgent(true);
+
+      const agentImage = res.data?.image;
+      if (!isAgentVersionUpdated(agentImage)) {
+        notify("Porter agent is outdated. Please upgrade to see logs.");
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 404) {
+        setHasPorterAgent(false);
+      }
+    }
+  };
+
+  const installAgent = async (): Promise<void> => {
+    setIsPorterAgentInstalling(true);
+
+    api
+      .installPorterAgent(
+        "<token>",
+        {},
+        { project_id: projectId, cluster_id: clusterId }
+      )
+      .then()
+      .catch(() => {
+        setIsPorterAgentInstalling(false);
+      });
+  };
+
+  const triggerInstall = (): void => {
+    void installAgent();
+  };
+
+  return isPorterAgentInstalling ? (
+    <Fieldset>
+      <Container row>
+        <Spinner src={spinner} />
+        <Spacer inline x={1} />
+        <Text color="helper">The Porter agent is being installed . . .</Text>
+      </Container>
+    </Fieldset>
+  ) : !hasPorterAgent ? (
+    <Fieldset>
+      <Text size={16}>
+        {"We couldn't detect the Porter agent on your cluster"}
+      </Text>
+      <Spacer y={0.5} />
+      <Text color="helper">
+        In order to use the Logs tab, you need to install the Porter agent.
+      </Text>
+      <Spacer y={1} />
+      <Button
+        onClick={() => {
+          triggerInstall();
+        }}
+      >
+        <I className="material-icons">add</I> Install Porter agent
+      </Button>
+    </Fieldset>
+  ) : (
+    renderContents()
+  );
 };
 
 export default Logs;
@@ -499,15 +597,6 @@ const I = styled.i`
   align-items: center;
   margin-right: 5px;
   justify-content: center;
-`;
-
-const WarnI = styled.i`
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  margin-right: 10px;
-  justify-content: center;
-  opacity: 0.6;
 `;
 
 const Spinner = styled.img`
@@ -534,7 +623,7 @@ const Checkbox = styled.div<{ checked: boolean }>`
 `;
 
 const ScrollButton = styled.div`
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   border-radius: 5px;
   height: 30px;
   font-size: 13px;

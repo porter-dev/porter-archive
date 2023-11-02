@@ -35,6 +35,28 @@ const porterAppPreDeployEventMetadataValidator = z.object({
     app_revision_id: z.string(),
     commit_sha: z.string().optional(),
 });
+export const porterAppNotificationEventMetadataValidator = z.object({
+    id: z.string(),
+    app_id: z.string(),
+    app_name: z.string(),
+    service_name: z.string(),
+    app_revision_id: z.string(),
+    human_readable_detail: z.string(),
+    human_readable_summary: z.string(),
+    timestamp: z.string(),
+    deployment: z.discriminatedUnion("status", [
+        z.object({
+            status: z.literal("PENDING")
+        }),
+        z.object({
+            status: z.literal("SUCCESS")
+        }),
+        z.object({
+            status: z.literal("FAILURE")
+        }),
+    ])
+});
+export type PorterAppNotification = z.infer<typeof porterAppNotificationEventMetadataValidator>;
 export const porterAppEventValidator = z.discriminatedUnion("type", [
     z.object({
         id: z.string(),
@@ -76,6 +98,14 @@ export const porterAppEventValidator = z.discriminatedUnion("type", [
         porter_app_id: z.number(),
         metadata: porterAppAppEventMetadataValidator
     }),
+    z.object({
+        id: z.string(),
+        created_at: z.string(),
+        updated_at: z.string(),
+        type: z.literal("NOTIFICATION"),
+        porter_app_id: z.number(),
+        metadata: porterAppNotificationEventMetadataValidator,
+    }),
 ]);
 
 export const getPorterAppEventsValidator = z.array(porterAppEventValidator).optional().default([]);
@@ -85,3 +115,4 @@ export type PorterAppBuildEvent = PorterAppEvent & { type: 'BUILD' };
 export type PorterAppDeployEvent = PorterAppEvent & { type: 'DEPLOY' };
 export type PorterAppPreDeployEvent = PorterAppEvent & { type: 'PRE_DEPLOY' };
 export type PorterAppAppEvent = PorterAppEvent & { type: 'APP_EVENT' };
+export type PorterAppNotificationEvent = PorterAppEvent & { type: 'NOTIFICATION' };

@@ -128,9 +128,19 @@ func (c *GetBuildFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if appProto.Build == nil {
-		err := telemetry.Error(ctx, span, nil, "app proto does not have build settings")
+	if appProto.Image == nil {
+		err := telemetry.Error(ctx, span, nil, "app proto does not have image settings. Tag is unknown")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	resp.Image = Image{
+		Repository: appProto.Image.Repository,
+		Tag:        appProto.Image.Tag,
+	}
+
+	if appProto.Build == nil {
+		c.WriteResult(w, r, resp)
 		return
 	}
 
@@ -141,17 +151,6 @@ func (c *GetBuildFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		Buildpacks: appProto.Build.Buildpacks,
 		Dockerfile: appProto.Build.Dockerfile,
 		CommitSHA:  appProto.Build.CommitSha,
-	}
-
-	if appProto.Image == nil {
-		err := telemetry.Error(ctx, span, nil, "app proto does not have image settings. Tag is unknown")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	resp.Image = Image{
-		Repository: appProto.Image.Repository,
-		Tag:        appProto.Image.Tag,
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")

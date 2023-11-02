@@ -107,9 +107,12 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 
 	appName := updateResp.AppName
 
-	if updateResp.CLIAction == porter_app.CLIAction_Build {
-		color.New(color.FgGreen).Printf("Building new image...\n") // nolint:errcheck,gosec
+	buildSettings, err := client.GetBuildFromRevision(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
+	if err != nil {
+		return fmt.Errorf("error getting build from revision: %w", err)
+	}
 
+	if buildSettings != nil && buildSettings.Build.Method != "" {
 		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, commitSHA)
 
 		reportBuildFailureInput := reportBuildFailureInput{
@@ -124,21 +127,12 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		}
 
 		if commitSHA == "" {
-			err := errors.New("build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI")
-			reportBuildFailureInput.buildError = err
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
+			return errors.New("build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI")
 		}
 
-		buildSettings, err := client.GetBuildFromRevision(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
-		if err != nil {
-			err := fmt.Errorf("error getting build from revision: %w", err)
-			reportBuildFailureInput.buildError = err
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
-		}
+		color.New(color.FgGreen).Printf("Building new image with tag %s...\n", commitSHA) // nolint:errcheck,gosec
 
-		buildInput, err := buildInputFromBuildSettings(cliConf.Project, appName, buildSettings.Image, buildSettings.Build)
+		buildInput, err := buildInputFromBuildSettings(cliConf.Project, appName, commitSHA, buildSettings.Image, buildSettings.Build)
 		if err != nil {
 			err := fmt.Errorf("error creating build input from build settings: %w", err)
 			reportBuildFailureInput.buildError = err
@@ -155,76 +149,46 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 			return err
 		}
 
+		_, err = client.UpdateRevisionStatus(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId, models.AppRevisionStatus_BuildSuccessful)
+		if err != nil {
+			err := fmt.Errorf("error updating revision status post build: %w", err)
+			reportBuildFailureInput.buildError = err
+			_ = reportBuildFailure(ctx, reportBuildFailureInput)
+			return err
+		}
+
 		color.New(color.FgGreen).Printf("Successfully built image (tag: %s)\n", buildSettings.Image.Tag) // nolint:errcheck,gosec
 
 		buildMetadata := make(map[string]interface{})
 		buildMetadata["end_time"] = time.Now().UTC()
 		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_Build, eventID, types.PorterAppEventStatus_Success, buildMetadata)
-
-		updateInput = api.UpdateAppInput{
-			ProjectID:          cliConf.Project,
-			ClusterID:          cliConf.Cluster,
-			Name:               appName,
-			AppRevisionID:      updateResp.AppRevisionId,
-			Base64PorterYAML:   b64YAML,
-			DeploymentTargetId: deploymentTargetID,
-		}
-
-		updateResp, err = client.UpdateApp(ctx, updateInput)
-		if err != nil {
-			return fmt.Errorf("apply error post-build: %w", err)
-		}
 	}
 
-	color.New(color.FgGreen).Printf("Image tag exists in repository\n") // nolint:errcheck,gosec
+	color.New(color.FgGreen).Printf("Deploying new revision %s for app %s...\n", updateResp.AppRevisionId, appName) // nolint:errcheck,gosec
 
-	if updateResp.CLIAction == porter_app.CLIAction_TrackPredeploy {
-		color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec
+	now := time.Now().UTC()
 
-		now := time.Now().UTC()
-		eventID, _ := createPredeployEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, now, updateResp.AppRevisionId, commitSHA)
-		metadata := make(map[string]interface{})
-		eventStatus := types.PorterAppEventStatus_Success
-		for {
-			if time.Since(now) > checkPredeployTimeout {
-				eventStatus = types.PorterAppEventStatus_Failed
-				metadata["end_time"] = time.Now().UTC()
-				_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
+	var status models.AppRevisionStatus
 
-				return errors.New("timed out waiting for predeploy to complete")
-			}
-
-			predeployStatusResp, err := client.PredeployStatus(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
-			if err != nil {
-				eventStatus = types.PorterAppEventStatus_Failed
-				metadata["end_time"] = time.Now().UTC()
-				_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
-
-				return fmt.Errorf("error calling predeploy status endpoint: %w", err)
-			}
-
-			if predeployStatusResp.Status == porter_app.PredeployStatus_Failed {
-				eventStatus = types.PorterAppEventStatus_Failed
-				break
-			}
-			if predeployStatusResp.Status == porter_app.PredeployStatus_Successful {
-				break
-			}
-
-			time.Sleep(checkPredeployFrequency)
+	for {
+		if time.Since(now) > checkDeployTimeout {
+			return errors.New("timed out waiting for app to deploy")
 		}
 
-		metadata["end_time"] = time.Now().UTC()
-		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
-
-		updateResp, err = client.UpdateApp(ctx, updateInput)
+		revision, err := client.GetRevision(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
 		if err != nil {
-			return fmt.Errorf("apply error post-predeploy: %w", err)
+			return fmt.Errorf("error getting app revision status: %w", err)
 		}
-	}
+		status = revision.AppRevision.Status
 
-	if updateResp.CLIAction != porter_app.CLIAction_NoAction {
-		return fmt.Errorf("unexpected CLI action: %d", updateResp.CLIAction)
+		if status == models.AppRevisionStatus_DeployFailed || status == models.AppRevisionStatus_PredeployFailed || status == models.AppRevisionStatus_Deployed {
+			break
+		}
+		if status == models.AppRevisionStatus_AwaitingPredeploy {
+			color.New(color.FgGreen).Printf("Waiting for predeploy to complete..\n") // nolint:errcheck,gosec
+		}
+
+		time.Sleep(checkDeployFrequency)
 	}
 
 	_, _ = client.ReportRevisionStatus(ctx, api.ReportRevisionStatusInput{
@@ -236,9 +200,22 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		CommitSHA:     commitSHA,
 	})
 
-	color.New(color.FgGreen).Printf("Successfully applied new revision %s for app %s\n", updateResp.AppRevisionId, appName) // nolint:errcheck,gosec
+	if status == models.AppRevisionStatus_DeployFailed {
+		return errors.New("app failed to deploy")
+	}
+	if status == models.AppRevisionStatus_PredeployFailed {
+		return errors.New("predeploy failed for new revision")
+	}
+
+	color.New(color.FgGreen).Printf("Successfully applied new revision %s\n", updateResp.AppRevisionId) // nolint:errcheck,gosec
 	return nil
 }
+
+// checkDeployTimeout is the timeout for checking if an app has been deployed
+const checkDeployTimeout = 15 * time.Minute
+
+// checkDeployFrequency is the frequency for checking if an app has been deployed
+const checkDeployFrequency = 10 * time.Second
 
 func commitSHAFromEnv() string {
 	var commitSHA string
@@ -252,12 +229,6 @@ func commitSHAFromEnv() string {
 
 	return commitSHA
 }
-
-// checkPredeployTimeout is the maximum amount of time the CLI will wait for a predeploy to complete before calling apply again
-const checkPredeployTimeout = 60 * time.Minute
-
-// checkPredeployFrequency is the frequency at which the CLI will check the status of a predeploy
-const checkPredeployFrequency = 10 * time.Second
 
 func gitSourceFromEnv() (porter_app.GitSource, error) {
 	var source porter_app.GitSource
@@ -278,17 +249,20 @@ func gitSourceFromEnv() (porter_app.GitSource, error) {
 	}, nil
 }
 
-func buildInputFromBuildSettings(projectID uint, appName string, image porter_app.Image, build porter_app.BuildSettings) (buildInput, error) {
+func buildInputFromBuildSettings(projectID uint, appName string, commitSHA string, image porter_app.Image, build porter_app.BuildSettings) (buildInput, error) {
 	var buildSettings buildInput
 
 	if appName == "" {
 		return buildSettings, errors.New("app name is empty")
 	}
-	if image.Tag == "" {
-		return buildSettings, errors.New("image tag is empty")
+	if image.Repository == "" {
+		return buildSettings, errors.New("image repository is empty")
 	}
 	if build.Method == "" {
 		return buildSettings, errors.New("build method is empty")
+	}
+	if commitSHA == "" {
+		return buildSettings, errors.New("commit SHA is empty")
 	}
 
 	return buildInput{
@@ -299,7 +273,7 @@ func buildInputFromBuildSettings(projectID uint, appName string, image porter_ap
 		BuildMethod:   build.Method,
 		Builder:       build.Builder,
 		BuildPacks:    build.Buildpacks,
-		ImageTag:      image.Tag,
+		ImageTag:      commitSHA,
 		RepositoryURL: image.Repository,
 	}, nil
 }

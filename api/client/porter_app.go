@@ -455,6 +455,26 @@ func (c *Client) PredeployStatus(
 	return resp, err
 }
 
+// GetRevision returns an app revision
+func (c *Client) GetRevision(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string, appRevisionId string,
+) (*porter_app.GetAppRevisionResponse, error) {
+	resp := &porter_app.GetAppRevisionResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/revisions/%s",
+			projectID, clusterID, appName, appRevisionId,
+		),
+		nil,
+		resp,
+	)
+
+	return resp, err
+}
+
 // UpdateRevisionStatus updates the status of an app revision
 func (c *Client) UpdateRevisionStatus(
 	ctx context.Context,

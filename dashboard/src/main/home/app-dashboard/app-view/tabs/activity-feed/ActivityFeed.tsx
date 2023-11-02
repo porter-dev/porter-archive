@@ -37,17 +37,6 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
     const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
     const [shouldAnimate, setShouldAnimate] = useState(true);
 
-    // remove this filter when https://linear.app/porter/issue/POR-1676/disable-porter-agent-code-for-cpu-alerts is resolved
-    const isNotFilteredAppEvent = (event: PorterAppEvent) => {
-        return !(event.type === "APP_EVENT" &&
-            (
-                event.metadata?.short_summary?.includes("requesting more memory than is available")
-                || event.metadata?.short_summary?.includes("requesting more CPU than is available")
-                || event.metadata?.short_summary?.includes("non-zero exit code")
-            )
-        ) && !(event.type === "NOTIFICATION");
-    }
-
     const { data: eventFetchData, isLoading: isEventFetchLoading, isRefetching } = useQuery(
         ["appEvents", deploymentTargetId, page],
         async () => {
@@ -65,7 +54,7 @@ const ActivityFeed: React.FC<Props> = ({ appName, deploymentTargetId, currentClu
             );
 
             const parsed = await z.object({ events: z.array(porterAppEventValidator).optional().default([]), num_pages: z.number() }).parseAsync(res.data);
-            return { events: parsed.events.filter(isNotFilteredAppEvent), pages: parsed.num_pages };
+            return { events: parsed.events, pages: parsed.num_pages };
         },
         {
             enabled: hasPorterAgent,

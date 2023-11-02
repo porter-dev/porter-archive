@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import styled from "styled-components";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
@@ -16,6 +16,7 @@ type Props = {
   appName: string;
   deploymentTargetId: string;
   appId: number;
+  scrollToTopRef: React.MutableRefObject<HTMLDivElement | null>;
 }
 
 const NotificationExpandedView: React.FC<Props> = ({
@@ -25,10 +26,12 @@ const NotificationExpandedView: React.FC<Props> = ({
     appName,
     deploymentTargetId,
     appId,
+    scrollToTopRef,
 }) => {
   return (
     <StyledNotificationExpandedView>
       <ExpandedViewContent>
+        <div ref={scrollToTopRef} style={{marginTop: "-40px", marginBottom: "40px"}}/>
         <Text color="helper">Event ID: {notification.id}</Text>
         <Spacer y={0.5} />
         <StyledActivityFeed>
@@ -138,6 +141,22 @@ const Message = styled.div`
   font-size: 13px;
   display: flex;
   flex-direction: column;
+  opacity: 0;
+  animation: slideIn 0.5s 0s;
+  animation-fill-mode: forwards;
+  user-select: text;
+  @keyframes slideIn {
+    from {
+      margin-left: -10px;
+      opacity: 0;
+      margin-right: 10px;
+    }
+    to {
+      margin-left: 0;
+      opacity: 1;
+      margin-right: 0;
+    }
+  }
 `;
 
 const ExpandedViewFooter = styled.div`

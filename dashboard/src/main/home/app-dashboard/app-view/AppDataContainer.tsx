@@ -49,6 +49,7 @@ import HelmLatestValuesTab from "./tabs/HelmLatestValuesTab";
 import { Context } from "shared/Context";
 import { useIntercom } from "lib/hooks/useIntercom";
 import Notifications from "./tabs/Notifications";
+import Text from "components/porter/Text";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -406,7 +407,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     const numNotifications = latestNotifications.length;
 
     const base = [
-      { label: `Notifications (${numNotifications})`, value: "notifications"},
+      { label: `Notifications`, value: "notifications", sibling: numNotifications > 0 ? <Text color={"#FF6060"}>({numNotifications})</Text> : undefined},
       { label: "Activity", value: "activity" },
       { label: "Overview", value: "overview" },
       { label: "Logs", value: "logs" },

@@ -79,7 +79,7 @@ func (p *PorterAppV2EventListHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	porterAppEvents, paginatedResult, err := p.Repo().PorterAppEvent().ListEventsByPorterAppIDAndDeploymentTargetID(ctx, app.ID, uid, helpers.WithPageSize(20), helpers.WithPage(int(request.Page)))
+	porterAppEvents, paginatedResult, err := p.Repo().PorterAppEvent().ListBuildDeployEventsByPorterAppIDAndDeploymentTargetID(ctx, app.ID, uid, helpers.WithPageSize(20), helpers.WithPage(int(request.Page)))
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			e := telemetry.Error(ctx, span, nil, "error listing porter app events by porter app id")

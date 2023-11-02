@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import NotificationList from "./NotificationList";
 import NotificationExpandedView from "./NotificationExpandedView";
@@ -22,10 +22,21 @@ const NotificationFeed: React.FC<Props> = ({
     appId,
 }) => {
     const [selectedNotification, setSelectedNotification] = useState<ClientNotification | undefined>(notifications.length ? notifications[0] : undefined);
+    const scrollToTopRef = useRef<HTMLDivElement | null>(null);
 
     const handleTileClick = (notification: ClientNotification) => {
         setSelectedNotification(notification);
+        scrollToTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     };
+
+    useEffect(() => {
+        // if new notifications come in, select the first one if none are selected; otherwise, keep the current selection
+        if (notifications.length && !selectedNotification) {
+            setSelectedNotification(notifications[0]);
+        } else if (selectedNotification && notifications.find((n) => n.id === selectedNotification.id)) {
+            setSelectedNotification(notifications.find((n) => n.id === selectedNotification.id));
+        }
+    }, [JSON.stringify(notifications)])
 
     return (
         <StyledNotificationFeed>
@@ -43,6 +54,7 @@ const NotificationFeed: React.FC<Props> = ({
                         appName={appName}
                         deploymentTargetId={deploymentTargetId}
                         appId={appId}
+                        scrollToTopRef={scrollToTopRef}
                     />
                 </>
             )}

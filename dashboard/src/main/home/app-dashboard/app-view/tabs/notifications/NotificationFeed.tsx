@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
+import Fieldset from "components/porter/Fieldset";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import { type ClientNotification } from "lib/porter-apps/notification";
 
 import NotificationExpandedView from "./NotificationExpandedView";
@@ -49,6 +52,20 @@ const NotificationFeed: React.FC<Props> = ({
       );
     }
   }, [JSON.stringify(notifications)]);
+
+  if (notifications.length === 0) {
+    return (
+      <Fieldset>
+        <Text size={16}>
+          No notifications found for &ldquo;{appName}&rdquo;
+        </Text>
+        <Spacer height="15px" />
+        <Text color="helper">
+          This application currently has no notifications.
+        </Text>
+      </Fieldset>
+    );
+  }
 
   return (
     <StyledNotificationFeed>

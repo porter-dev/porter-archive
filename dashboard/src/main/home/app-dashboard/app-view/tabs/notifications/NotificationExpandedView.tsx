@@ -1,7 +1,6 @@
 import React from "react";
 import styled from "styled-components";
 
-import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -84,9 +83,10 @@ const NotificationExpandedView: React.FC<Props> = ({
           />
         </LogsContainer>
       </ExpandedViewContent>
-      <ExpandedViewFooter>
+      {/* uncomment below once we implement recommended actions */}
+      {/* <ExpandedViewFooter>
         <Button>Take recommended action</Button>
-      </ExpandedViewFooter>
+      </ExpandedViewFooter> */}
     </StyledNotificationExpandedView>
   );
 };
@@ -169,10 +169,10 @@ const Message = styled.div`
   }
 `;
 
-const ExpandedViewFooter = styled.div`
-  display: flex;
-  justify-content: flex-end;
-`;
+// const ExpandedViewFooter = styled.div`
+//   display: flex;
+//   justify-content: flex-end;
+// `;
 
 const Time = styled.div`
   opacity: 0;

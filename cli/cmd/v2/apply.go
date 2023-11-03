@@ -51,13 +51,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	}
 
 	if useNewApplyResp.UseNewApplyLogic {
-		return Update(ctx, UpdateInput{
-			CLIConfig:      inp.CLIConfig,
-			Client:         inp.Client,
-			PorterYamlPath: inp.PorterYamlPath,
-			AppName:        inp.AppName,
-			PreviewApply:   inp.PreviewApply,
-		})
+		return Update(ctx, UpdateInput(inp))
 	}
 
 	deploymentTargetID, err := deploymentTargetFromConfig(ctx, client, cliConf.Project, cliConf.Cluster, inp.PreviewApply)

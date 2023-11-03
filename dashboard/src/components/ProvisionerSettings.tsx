@@ -128,7 +128,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   } = useContext(Context);
   const [clusterName, setClusterName] = useState("");
   const [awsRegion, setAwsRegion] = useState("us-east-1");
-  const [machineType, setMachineType] = useState("t3.medium");
+  const [machineType, setMachineType] = useState(props?.gpuModal ? "g4dn.xlarge" : "t3.medium");
   const [guardDutyEnabled, setGuardDutyEnabled] = useState<boolean>(false);
   const [kmsEncryptionEnabled, setKmsEncryptionEnabled] = useState<boolean>(
     false
@@ -166,7 +166,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const [quotaIncrease, setQuotaIncrease] = useState<EnumQuotaIncrease[]>([]);
   const [showEmailMessage, setShowEmailMessage] = useState(false);
   const { showIntercomWithMessage } = useIntercom();
-
 
   const markStepStarted = async (step: string, errMessage?: string) => {
     try {
@@ -268,11 +267,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
     return tags;
   }
-  const createCluster = async () => {
-    setIsLoading(true);
-    setIsClicked(true);
 
-
+  const createClusterObj = () => {
     let loadBalancerObj = new LoadBalancer({});
     loadBalancerObj.loadBalancerType = LoadBalancerType.NLB;
     if (loadBalancerType) {
@@ -349,6 +345,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         },
       }),
     });
+    return data;
+  }
+
+  const createCluster = async () => {
+    setIsLoading(true);
+    setIsClicked(true);
+    const data = createClusterObj();
 
     if (props.clusterId) {
       data["cluster"]["clusterId"] = props.clusterId;
@@ -508,7 +511,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       setStep(1)
       preflightChecks()
     }
-  }, [props.selectedClusterVersion, awsRegion]);
+  }, [props.selectedClusterVersion, awsRegion, machineType]);
 
   const proceedToProvision = async () => {
     setShowEmailMessage(true)
@@ -560,16 +563,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       setPreflightError("");
       setShowEmailMessage(false)
 
+      const contract = createClusterObj();
       var data = new PreflightCheckRequest({
-        projectId: BigInt(currentProject.id),
-        cloudProvider: EnumCloudProvider.AWS,
-        cloudProviderCredentialsId: props.credentialId,
-        preflightValues: {
-          case: "eksPreflightValues",
-          value: new EKSPreflightValues({
-            region: awsRegion,
-          })
-        }
+        contract: contract,
       });
       const preflightDataResp = await api.preflightCheck(
         "<token>", data,

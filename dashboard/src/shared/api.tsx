@@ -1002,6 +1002,47 @@ const createAppTemplate = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/templates`;
 });
 
+const updateApp = baseApi<
+  {
+    deployment_target_id: string;
+    b64_app_proto?: string;
+    git_source?: {
+      git_repo_id: number;
+      git_branch: string;
+      git_repo_name: string;
+    };
+    porter_yaml_path?: string;
+    variables?: Record<string, string>;
+    secrets?: Record<string, string>;
+    is_env_override?: boolean;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/update`;
+});
+
+const updateBuildSettings = baseApi<
+  {
+    build_settings: {
+      method: string;
+      context: string;
+      dockerfile: string;
+      builder: string;
+      buildpacks: string[];
+    };
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.porter_app_name}/build`;
+});
+
 const applyApp = baseApi<
   {
     deployment_target_id: string;
@@ -3289,6 +3330,8 @@ export default {
   validatePorterApp,
   createApp,
   createAppTemplate,
+  updateApp,
+  updateBuildSettings,
   applyApp,
   revertApp,
   getAttachedEnvGroups,

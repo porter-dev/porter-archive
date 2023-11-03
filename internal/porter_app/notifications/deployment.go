@@ -107,6 +107,10 @@ func hydrateNotification(ctx context.Context, inp hydrateNotificationInput) (Not
 	hydratedNotification.HumanReadableSummary = translateAgentSummary(hydratedNotification, status)
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "human-readable-summary", Value: hydratedNotification.HumanReadableSummary})
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "agent-detail", Value: hydratedNotification.AgentDetail})
+	hydratedNotification.HumanReadableDetail = translateAgentDetail(hydratedNotification)
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "human-readable-detail", Value: hydratedNotification.HumanReadableDetail})
+
 	return hydratedNotification, nil
 }
 
@@ -168,4 +172,10 @@ func translateAgentSummary(notification Notification, status DeploymentStatus) s
 		humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "is currently experiencing downtime", "failed to deploy")
 	}
 	return humanReadableSummary
+}
+
+func translateAgentDetail(notification Notification) string {
+	humanReadableDetail := notification.AgentDetail
+	humanReadableDetail = strings.ReplaceAll(humanReadableDetail, "application", "service")
+	return humanReadableDetail
 }

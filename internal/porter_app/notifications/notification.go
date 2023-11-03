@@ -2,7 +2,6 @@ package notifications
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -127,21 +126,17 @@ type Notification struct {
 
 // agentEventToNotification converts an app event to a notification
 func agentEventToNotification(appEventMetadata AppEventMetadata) Notification {
-	humanReadableDetail := appEventMetadata.Detail
-	humanReadableDetail = strings.ReplaceAll(humanReadableDetail, "application", "service")
-
 	notification := Notification{
-		AppID:               appEventMetadata.AppID,
-		AppName:             appEventMetadata.AppName,
-		ServiceName:         appEventMetadata.ServiceName,
-		AgentEventID:        appEventMetadata.AgentEventID,
-		AgentDetail:         appEventMetadata.Detail,
-		AgentSummary:        appEventMetadata.Summary,
-		AppRevisionID:       appEventMetadata.AppRevisionID,
-		Deployment:          Deployment{Status: DeploymentStatus_Unknown},
-		HumanReadableDetail: humanReadableDetail,
-		Timestamp:           time.Now().UTC(),
-		ID:                  uuid.New(),
+		AppID:         appEventMetadata.AppID,
+		AppName:       appEventMetadata.AppName,
+		ServiceName:   appEventMetadata.ServiceName,
+		AgentEventID:  appEventMetadata.AgentEventID,
+		AgentDetail:   appEventMetadata.Detail,
+		AgentSummary:  appEventMetadata.Summary,
+		AppRevisionID: appEventMetadata.AppRevisionID,
+		Deployment:    Deployment{Status: DeploymentStatus_Unknown},
+		Timestamp:     time.Now().UTC(),
+		ID:            uuid.New(),
 	}
 	return notification
 }

@@ -133,6 +133,7 @@ var fatalDeploymentDetailSubstrings = []string{
 	"stuck in a restart loop",
 	"restarted with exit code",
 	"failed its health check",
+	"cannot pull from the image registry",
 }
 
 // detailIndicatesDeploymentFailure returns true if the detail indicates that the deployment will eventually time out and fail

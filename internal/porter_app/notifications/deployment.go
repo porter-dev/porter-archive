@@ -32,13 +32,17 @@ const (
 
 // hydrateNotificationInput is the input struct for hydrateNotification
 type hydrateNotificationInput struct {
+	// Notification is the notification to hydrate
 	Notification
+	// DeploymentTargetId is the ID of the deployment target
 	DeploymentTargetId string
-	Namespace          string
-	K8sAgent           *kubernetes.Agent
+	// Namespace is the namespace of the deployment target
+	Namespace string
+	// K8sAgent is the k8s agent, used to query for deployment info
+	K8sAgent *kubernetes.Agent
 }
 
-// hydrateNotification hydrates a notification with k8s deployment info
+// hydrateNotification hydrates a notification with k8s deployment info, and translates information from the agent into a user-facing form
 func hydrateNotification(ctx context.Context, inp hydrateNotificationInput) (Notification, error) {
 	ctx, span := telemetry.NewSpan(ctx, "hydrate-notification")
 	defer span.End()
@@ -133,6 +137,7 @@ func deploymentStatus(depl v1.Deployment) DeploymentStatus {
 var fatalDeploymentDetailSubstrings = []string{
 	"stuck in a restart loop",
 	"restarted with exit code",
+	"failed its health check",
 }
 
 // detailIndicatesDeploymentFailure returns true if the detail indicates that the deployment failed

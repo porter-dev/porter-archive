@@ -1,4 +1,5 @@
 import React from "react";
+
 import { useLatestRevision } from "../LatestRevisionContext";
 import NotificationFeed from "./notifications/NotificationFeed";
 
@@ -13,16 +14,14 @@ const Notifications: React.FC = () => {
   } = useLatestRevision();
 
   return (
-    <>
-      <NotificationFeed
-        notifications={latestNotifications}
-        projectId={projectId}
-        clusterId={clusterId}
-        appName={appName}
-        deploymentTargetId={deploymentTargetId}
-        appId={appId}
-      />
-    </>
+    <NotificationFeed
+      notifications={latestNotifications}
+      projectId={projectId}
+      clusterId={clusterId}
+      appName={appName}
+      deploymentTargetId={deploymentTargetId}
+      appId={appId}
+    />
   );
 };
 

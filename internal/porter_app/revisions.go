@@ -195,22 +195,37 @@ func AttachEnvToRevision(ctx context.Context, inp AttachEnvToRevisionInput) (Rev
 func appRevisionStatusFromProto(status string) (models.AppRevisionStatus, error) {
 	var appRevisionStatus models.AppRevisionStatus
 	switch status {
+	case string(models.AppRevisionStatus_ImageAvailable):
+		appRevisionStatus = models.AppRevisionStatus_ImageAvailable
 	case string(models.AppRevisionStatus_AwaitingBuild):
 		appRevisionStatus = models.AppRevisionStatus_AwaitingBuild
 	case string(models.AppRevisionStatus_AwaitingPredeploy):
 		appRevisionStatus = models.AppRevisionStatus_AwaitingPredeploy
 	case string(models.AppRevisionStatus_Deployed):
 		appRevisionStatus = models.AppRevisionStatus_Deployed
+	case string(models.AppRevisionStatus_Deploying):
+		appRevisionStatus = models.AppRevisionStatus_Deploying
+	case string(models.AppRevisionStatus_AwaitingDeploy):
+		appRevisionStatus = models.AppRevisionStatus_AwaitingDeploy
 	case string(models.AppRevisionStatus_BuildCanceled):
 		appRevisionStatus = models.AppRevisionStatus_BuildCanceled
 	case string(models.AppRevisionStatus_BuildFailed):
 		appRevisionStatus = models.AppRevisionStatus_BuildFailed
 	case string(models.AppRevisionStatus_PredeployFailed):
 		appRevisionStatus = models.AppRevisionStatus_PredeployFailed
+	case string(models.AppRevisionStatus_PredeploySuccessful):
+		appRevisionStatus = models.AppRevisionStatus_PredeploySuccessful
+	case string(models.AppRevisionStatus_PredeployProgressing):
+		appRevisionStatus = models.AppRevisionStatus_PredeployProgressing
 	case string(models.AppRevisionStatus_DeployFailed):
 		appRevisionStatus = models.AppRevisionStatus_DeployFailed
 	case string(models.AppRevisionStatus_Created):
 		appRevisionStatus = models.AppRevisionStatus_Created
+	case string(models.AppRevisionStatus_BuildSuccessful):
+		appRevisionStatus = models.AppRevisionStatus_BuildSuccessful
+	case string(models.AppRevisionStatus_ApplyFailed):
+		appRevisionStatus = models.AppRevisionStatus_ApplyFailed
+
 	default:
 		return appRevisionStatus, fmt.Errorf("unknown app revision status")
 	}

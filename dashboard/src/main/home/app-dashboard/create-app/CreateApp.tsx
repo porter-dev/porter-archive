@@ -39,6 +39,7 @@ import { useClusterResources } from "shared/ClusterResourcesContext";
 import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 import web from "assets/web.png";
+
 import ImageSettings from "../image-settings/ImageSettings";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import SourceSelector from "../new-app-flow/SourceSelector";
@@ -245,6 +246,46 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     }
   });
 
+  const createWithValidateApply = async ({
+    app,
+    projectID,
+    clusterID,
+    deploymentTargetID,
+  }: {
+    app: PorterApp;
+    projectID: number;
+    clusterID: number;
+    deploymentTargetID: string;
+  }): Promise<void> => {
+    await api.createApp(
+      "<token>",
+      {
+        ...source,
+        name: app.name,
+        deployment_target_id: deploymentTargetID,
+      },
+      {
+        project_id: projectID,
+        cluster_id: clusterID,
+      }
+    );
+
+    await api.applyApp(
+      "<token>",
+      {
+        b64_app_proto: btoa(app.toJsonString()),
+        deployment_target_id: deploymentTargetID,
+        variables,
+        secrets,
+        hard_env_update: true,
+      },
+      {
+        project_id: projectID,
+        cluster_id: clusterID,
+      }
+    );
+  };
+
   const createAndApply = useCallback(
     async ({
       app,
@@ -273,33 +314,37 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           return false;
         }
 
-        await api.createApp(
-          "<token>",
-          {
-            ...source,
-            name: app.name,
-            deployment_target_id: deploymentTarget.deployment_target_id,
-          },
-          {
-            project_id: currentProject.id,
-            cluster_id: currentCluster.id,
-          }
-        );
-
-        await api.applyApp(
-          "<token>",
-          {
-            b64_app_proto: btoa(app.toJsonString()),
-            deployment_target_id: deploymentTarget.deployment_target_id,
-            variables,
-            secrets,
-            hard_env_update: true,
-          },
-          {
-            project_id: currentProject.id,
-            cluster_id: currentCluster.id,
-          }
-        );
+        if (currentProject.beta_features_enabled) {
+          await api.updateApp(
+            "<token>",
+            {
+              deployment_target_id: deploymentTarget.deployment_target_id,
+              b64_app_proto: btoa(app.toJsonString()),
+              secrets,
+              variables,
+              is_env_override: true,
+              ...(source.type === "github" && {
+                git_source: {
+                  git_branch: source.git_branch,
+                  git_repo_id: source.git_repo_id,
+                  git_repo_name: source.git_repo_name,
+                },
+                porter_yaml_path: source.porter_yaml_path,
+              }),
+            },
+            {
+              project_id: currentProject.id,
+              cluster_id: currentCluster.id,
+            }
+          );
+        } else {
+          await createWithValidateApply({
+            app,
+            projectID: currentProject.id,
+            clusterID: currentCluster.id,
+            deploymentTargetID: deploymentTarget.deployment_target_id,
+          });
+        }
 
         // log analytics event that we successfully deployed
         void updateAppStep({
@@ -340,7 +385,13 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         setIsDeploying(false);
       }
     },
-    [currentProject?.id, currentCluster?.id, deploymentTarget, name.value]
+    [
+      currentProject?.id,
+      currentCluster?.id,
+      deploymentTarget,
+      name.value,
+      createWithValidateApply,
+    ]
   );
 
   useEffect(() => {

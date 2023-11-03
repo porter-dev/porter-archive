@@ -1,6 +1,4 @@
-import ValuesYaml from "main/home/cluster-dashboard/expanded-chart/ValuesYaml";
-
-export interface ClusterType {
+export type ClusterType = {
   id: number;
   name: string;
   vanity_name?: string;
@@ -15,26 +13,26 @@ export interface ClusterType {
   cloud_provider_credential_identifier?: string;
   status?: string;
   cloud_provider: string;
-}
+};
 
-export interface AddonCard {
+export type AddonCard = {
   id: string;
   icon: string;
   name: string;
   description: string;
-}
+};
 
-export interface DetailedClusterType extends ClusterType {
+export type DetailedClusterType = {
   ingress_ip?: string;
   ingress_error?: DetailedIngressError;
-}
+} & ClusterType;
 
-export interface DetailedIngressError {
+export type DetailedIngressError = {
   message: string;
   error: string;
-}
+};
 
-export interface ChartType {
+export type ChartType = {
   stack_id: string;
   image_repo_uri: string;
   git_action_config: any;
@@ -56,10 +54,10 @@ export interface ChartType {
       icon: string;
       apiVersion: string;
     };
-    files?: {
+    files?: Array<{
       data: string;
       name: string;
-    }[];
+    }>;
   };
   form?: FormYAML;
   config: any;
@@ -68,9 +66,9 @@ export interface ChartType {
   latest_version: string;
   tags: any;
   canonical_name: string;
-}
+};
 
-export interface ChartTypeWithExtendedConfig extends ChartType {
+export type ChartTypeWithExtendedConfig = {
   config: {
     auto_deploy: boolean;
     autoscaling: {
@@ -89,12 +87,8 @@ export interface ChartTypeWithExtendedConfig extends ChartType {
     container: {
       command: string;
       env: {
-        normal: {
-          [key: string]: string;
-        };
-        build: {
-          [key: string]: string;
-        };
+        normal: Record<string, string>;
+        build: Record<string, string>;
         synced: any;
       };
       lifecycle: { postStart: string; preStop: string };
@@ -137,17 +131,17 @@ export interface ChartTypeWithExtendedConfig extends ChartType {
       value: string;
     };
   };
-}
+} & ChartType;
 
-export interface ResourceType {
+export type ResourceType = {
   ID: number;
   Kind: string;
   Name: string;
   RawYAML: any;
   Relations: any;
-}
+};
 
-export interface NodeType {
+export type NodeType = {
   id: number;
   name: string;
   kind: string;
@@ -158,13 +152,13 @@ export interface NodeType {
   h: number;
   toCursorX?: number;
   toCursorY?: number;
-}
+};
 
-export interface EdgeType {
+export type EdgeType = {
   type: string;
   source: number;
   target: number;
-}
+};
 
 export enum StorageType {
   Secret = "secret",
@@ -173,64 +167,64 @@ export enum StorageType {
 }
 
 // PorterTemplate represents a bundled Porter template
-export interface PorterTemplate {
+export type PorterTemplate = {
   name: string;
   versions: string[];
   currentVersion: string;
   description: string;
   icon: string;
   repo_url?: string;
-  tags?: string[]
-}
+  tags?: string[];
+};
 
-export interface ExpandedPorterTemplate {
+export type ExpandedPorterTemplate = {
   form: FormYAML;
   markdown: string;
   metadata: ChartType["chart"]["metadata"];
   values: ChartTypeWithExtendedConfig["config"];
-}
+};
 
 // FormYAML represents a chart's values.yaml form abstraction
-export interface FormYAML {
+export type FormYAML = {
   name?: string;
   icon?: string;
   description?: string;
   hasSource?: string;
   tags?: string[];
-  tabs?: {
+  tabs?: Array<{
     name: string;
     label: string;
     sections?: Section[];
-  }[];
-}
+  }>;
+};
 
-export interface ShowIfAnd {
+export type ShowIfAnd = {
   and: ShowIf[];
-}
+};
 
-export interface ShowIfOr {
+export type ShowIfOr = {
   or: ShowIf[];
-}
+};
 
-export interface ShowIfNot {
+export type ShowIfNot = {
   not: ShowIf;
-}
+};
 
-export interface ShowIfIs {
+export type ShowIfIs = {
   variable: string;
   is: string;
-}
+};
 
 export type ShowIf = string | ShowIfIs | ShowIfAnd | ShowIfOr | ShowIfNot;
 
-export interface Section {
+export type Section = {
   name?: string;
   show_if?: ShowIf;
   contents: FormElement[];
-}
+};
 
 // FormElement represents a form element
-export interface FormElement {
+export type FormElement = {
   type: string;
   info?: string;
   label: string;
@@ -247,31 +241,31 @@ export interface FormElement {
     disableAfterLaunch?: boolean;
     unit?: string;
   };
-}
+};
 
 export type RepoType = {
   FullName: string;
 } & (
-    | {
+  | {
       Kind: "github";
       GHRepoID: number;
     }
-    | {
+  | {
       Kind: "gitlab";
       GitIntegrationId: number;
     }
-  );
+);
 
-export interface FileType {
+export type FileType = {
   path: string;
   type: string;
-}
-export interface ProjectListType {
+};
+export type ProjectListType = {
   id: number;
   name: string;
-}
+};
 
-export interface ProjectType {
+export type ProjectType = {
   id: number;
   name: string;
   preview_envs_enabled: boolean;
@@ -290,40 +284,41 @@ export interface ProjectType {
   quota_increase: boolean;
   efs_enabled: boolean;
   validate_apply_v2: boolean;
-  roles: {
+  beta_features_enabled: boolean;
+  roles: Array<{
     id: number;
     kind: string;
     user_id: number;
     project_id: number;
-  }[];
-}
+  }>;
+};
 
-export interface ChoiceType {
+export type ChoiceType = {
   value: string;
   label: string;
-}
+};
 
-export interface ImageType {
+export type ImageType = {
   kind: string;
   source: string;
   registryId: number;
   name: string;
-}
+};
 
-export interface InfraType {
+export type InfraType = {
   id: number;
   project_id: number;
   kind: string;
   status: string;
-}
+};
 
-export interface InviteType {
+export type InviteType = {
   token: string;
   expired: boolean;
   email: string;
   accepted: boolean;
   id: number;
-}
+};
 
 export type ActionConfigType = {
   git_repo: string;
@@ -331,15 +326,15 @@ export type ActionConfigType = {
   image_repo_uri: string;
   dockerfile_path?: string;
 } & (
-    | {
+  | {
       kind: "gitlab";
       gitlab_integration_id: number;
     }
-    | {
+  | {
       kind: "github";
       git_repo_id: number;
     }
-  );
+);
 
 export type GithubActionConfigType = ActionConfigType & {
   kind: "github";
@@ -359,15 +354,15 @@ export type FullGithubActionConfigType = GithubActionConfigType & {
   should_create_workflow: boolean;
 };
 
-export interface CapabilityType {
+export type CapabilityType = {
   github: boolean;
   provisioner: boolean;
   version?: string;
   default_app_helm_repo_url?: string;
   default_addon_helm_repo_url?: string;
-}
+};
 
-export interface ContextProps {
+export type ContextProps = {
   currentModal?: string;
   currentModalData: any;
   setCurrentModal: (currentModal: any, currentModalData?: any) => void;
@@ -407,7 +402,7 @@ export interface ContextProps {
   setEnableGitlab: (enableGitlab: boolean) => void;
   shouldRefreshClusters: boolean;
   setShouldRefreshClusters: (shouldRefreshClusters: boolean) => void;
-}
+};
 
 export enum JobStatusType {
   Succeeded = "succeeded",
@@ -415,24 +410,24 @@ export enum JobStatusType {
   Failed = "failed",
 }
 
-export interface JobStatusWithTimeType {
+export type JobStatusWithTimeType = {
   status: JobStatusType;
   start_time: string;
-}
+};
 
-export interface Usage {
+export type Usage = {
   resource_cpu: number;
   resource_memory: number;
   clusters: number;
   users: number;
-}
+};
 
-export interface UsageData {
-  current: Usage & { [key: string]: number };
-  limit: Usage & { [key: string]: number };
+export type UsageData = {
+  current: Usage & Record<string, number>;
+  limit: Usage & Record<string, number>;
   exceeds: boolean;
   exceeded_since?: string;
-}
+};
 
 export type KubeEvent = {
   cluster_id: number;
@@ -535,9 +530,7 @@ export type TFState = {
   last_updated: string;
   operation_id: string;
   status: TFResourceStatus;
-  resources: {
-    [key: string]: TFResourceState;
-  };
+  resources: Record<string, TFResourceState>;
 };
 
 export const KindMap: ProviderInfoMap = {
@@ -660,12 +653,10 @@ export type InfraCredentials = {
 export type BuildConfig = {
   builder: string;
   buildpacks: string[];
-  config: null | {
-    [key: string]: string;
-  };
+  config: null | Record<string, string>;
 };
 
-export interface CreateUpdatePorterAppOptions {
+export type CreateUpdatePorterAppOptions = {
   porter_yaml: string;
   porter_yaml_path?: string;
   repo_name?: string;
@@ -682,4 +673,4 @@ export interface CreateUpdatePorterAppOptions {
   };
   override_release?: boolean;
   full_helm_values?: string;
-}
+};

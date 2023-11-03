@@ -15,6 +15,7 @@
     "^shared/(.*)$",
     "^utils/(.*)$",
     "^assets/(.*)$",
+    "",
     "^[./]"
   ],
   "importOrderSeparation": false,

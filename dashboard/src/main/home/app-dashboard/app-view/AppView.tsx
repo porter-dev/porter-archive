@@ -1,13 +1,12 @@
 import React, { useMemo } from "react";
-import { RouteComponentProps, withRouter } from "react-router";
-import { z } from "zod";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
+import { z } from "zod";
 
 import Back from "components/porter/Back";
 import Spacer from "components/porter/Spacer";
 
 import AppDataContainer from "./AppDataContainer";
-
 import AppHeader from "./AppHeader";
 import { LatestRevisionProvider } from "./LatestRevisionContext";
 
@@ -30,25 +29,7 @@ export const porterAppValidator = z.object({
 });
 export type PorterAppRecord = z.infer<typeof porterAppValidator>;
 
-// commented out tabs are not yet implemented
-// will be included as support is available based on data from app revisions rather than helm releases
-const validTabs = [
-  // "activity",
-  // "events",
-  "overview",
-  // "logs",
-  // "metrics",
-  // "debug",
-  "environment",
-  "build-settings",
-  "settings",
-  // "helm-values",
-  // "job-history",
-] as const;
-const DEFAULT_TAB = "activity";
-type ValidTab = typeof validTabs[number];
-
-type Props = RouteComponentProps & {};
+type Props = RouteComponentProps;
 
 const AppView: React.FC<Props> = ({ match }) => {
   const params = useMemo(() => {

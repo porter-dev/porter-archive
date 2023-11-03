@@ -220,7 +220,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setDeployError("");
-      const { validatedAppProto, variables, secrets } = await validateApp(data);
+      const { validatedAppProto, variables, secrets } = await validateApp(
+        data,
+        !currentProject?.beta_features_enabled
+      );
       setValidatedAppProto(validatedAppProto);
       setFinalizedAppEnv({ variables, secrets });
 

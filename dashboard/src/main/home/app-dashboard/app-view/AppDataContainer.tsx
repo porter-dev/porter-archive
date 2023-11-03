@@ -207,7 +207,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     try {
       const { variables, secrets, validatedAppProto } = await validateApp(
         data,
-        latestProto
+        !currentProject?.beta_features_enabled
       );
 
       const needsRebuild =

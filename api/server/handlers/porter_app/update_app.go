@@ -38,21 +38,6 @@ func NewUpdateAppHandler(
 	}
 }
 
-// CLIAction is an enum for actions the CLI should take after calling applyWithRevisionID
-type CLIAction int
-
-// Actions for the CLI to take after applying the porter yaml
-const (
-	// CLIAction_Missing is the zero value that indicates an action was not assigned. This should never be returned.
-	CLIAction_Missing CLIAction = iota
-	// CLIAction_NoAction indicates that no action should be taken by the CLI.
-	CLIAction_NoAction
-	// CLIAction_Build indicates that the CLI should build the app.
-	CLIAction_Build
-	// CLIAction_TrackPredeploy indicates that the CLI should track the predeploy job.
-	CLIAction_TrackPredeploy
-)
-
 // UpdateAppRequest is the request object for the POST /apps/update endpoint
 type UpdateAppRequest struct {
 	// Name is the name of the app to update. If not specified, the name will be inferred from the porter yaml
@@ -85,9 +70,8 @@ type UpdateAppRequest struct {
 
 // UpdateAppResponse is the response object for the POST /apps/update endpoint
 type UpdateAppResponse struct {
-	AppName       string    `json:"app_name"`
-	AppRevisionId string    `json:"app_revision_id"`
-	CLIAction     CLIAction `json:"cli_action"`
+	AppName       string `json:"app_name"`
+	AppRevisionId string `json:"app_revision_id"`
 }
 
 // ServeHTTP translates the request into an UpdateApp request, forwards to the cluster control plane, and returns the response
@@ -165,9 +149,12 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if appProto.Name == "" {
-		err := telemetry.Error(ctx, span, nil, "app name is empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
+		if request.Name == "" {
+			err := telemetry.Error(ctx, span, nil, "app name is empty")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+		appProto.Name = request.Name
 	}
 
 	sourceType, image := sourceFromAppAndGitSource(appProto, request.GitSource)
@@ -311,33 +298,8 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "resp-app-revision-id", Value: ccpResp.Msg.AppRevisionId})
 
-	if ccpResp.Msg.CliAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_UNSPECIFIED {
-		err := telemetry.Error(ctx, span, err, "ccp resp cli action is nil")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cli-action", Value: ccpResp.Msg.CliAction.String()})
-
-	var cliAction CLIAction
-	switch ccpResp.Msg.CliAction {
-	case porterv1.EnumCLIAction_ENUM_CLI_ACTION_UNSPECIFIED:
-		cliAction = CLIAction_Missing
-	case porterv1.EnumCLIAction_ENUM_CLI_ACTION_NONE:
-		cliAction = CLIAction_NoAction
-	case porterv1.EnumCLIAction_ENUM_CLI_ACTION_BUILD:
-		cliAction = CLIAction_Build
-	case porterv1.EnumCLIAction_ENUM_CLI_ACTION_TRACK_PREDEPLOY:
-		cliAction = CLIAction_TrackPredeploy
-	default:
-		err := telemetry.Error(ctx, span, err, "ccp resp cli action is invalid")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
 	response := &UpdateAppResponse{
 		AppRevisionId: ccpResp.Msg.AppRevisionId,
-		CLIAction:     cliAction,
 		AppName:       appProto.Name,
 	}
 

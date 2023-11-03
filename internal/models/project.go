@@ -63,6 +63,9 @@ const (
 
 	// ValidateApplyV2 controls whether apps deploys use a porter app revision contract vs helm
 	ValidateApplyV2 FeatureFlagLabel = "validate_apply_v2"
+
+	// BetaFeaturesEnabled controls whether a project uses beta features
+	BetaFeaturesEnabled FeatureFlagLabel = "beta_features_enabled"
 )
 
 // ProjectFeatureFlags keeps track of all project-related feature flags
@@ -83,6 +86,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	SimplifiedViewEnabled:  true,
 	StacksEnabled:          false,
 	ValidateApplyV2:        true,
+	BetaFeaturesEnabled:    false,
 }
 
 type ProjectPlan string
@@ -258,6 +262,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		FullAddOns:             p.GetFeatureFlag(FullAddOns, launchDarklyClient),
 		QuotaIncrease:          p.GetFeatureFlag(QuotaIncrease, launchDarklyClient),
 		EFSEnabled:             p.GetFeatureFlag(EFSEnabled, launchDarklyClient),
+		BetaFeaturesEnabled:    p.GetFeatureFlag(BetaFeaturesEnabled, launchDarklyClient),
 	}
 }
 

@@ -117,6 +117,8 @@ type Notification struct {
 	HumanReadableDetail string `json:"human_readable_detail"`
 	// HumanReadableSummary is the agent event summary translated to user-facing form
 	HumanReadableSummary string `json:"human_readable_summary"`
+	// ErrorCode is the Porter-defined error code of the notification
+	ErrorCode PorterErrorCode `json:"error_code"`
 	// MitigationSteps is string containing steps to resolve the issue (if applicable)
 	MitigationSteps string `json:"mitigation_steps"`
 	// Deployment is the deployment metadata, used to determine if the notification occurred during deployment or after

@@ -286,11 +286,11 @@ func NotificationFromPorterAppEvent(appEvent *models.PorterAppEvent) (*Notificat
 	notification := &Notification{}
 	bytes, err := json.Marshal(appEvent.Metadata)
 	if err != nil {
-		return nil, err
+		return notification, err
 	}
 	err = json.Unmarshal(bytes, notification)
 	if err != nil {
-		return nil, err
+		return notification, err
 	}
 
 	return notification, nil

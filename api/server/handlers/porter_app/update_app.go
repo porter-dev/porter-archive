@@ -13,10 +13,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/deployment_target"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/porter_app"
-	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -101,6 +99,15 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	deploymentTargetID := request.DeploymentTargetId
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "name", Value: request.Name},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTargetID},
+		telemetry.AttributeKV{Key: "app-revision-id", Value: request.AppRevisionID},
+		telemetry.AttributeKV{Key: "commit-sha", Value: request.CommitSHA},
+		telemetry.AttributeKV{Key: "porter-yaml-path", Value: request.PorterYAMLPath},
+		telemetry.AttributeKV{Key: "is-env-override", Value: request.IsEnvOverride},
+	)
+
 	var overrides *porterv1.PorterApp
 	appProto := &porterv1.PorterApp{}
 
@@ -178,66 +185,6 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var appRevisionID string
-	if request.AppRevisionID != "" {
-		appRevisionID = request.AppRevisionID
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-revision-id", Value: request.AppRevisionID})
-	} else {
-		// set the internal porter domain if needed and this is the first update on a revision
-		app, err := v2.AppFromProto(appProto)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error converting app proto to app")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		telemetry.WithAttributes(span,
-			telemetry.AttributeKV{Key: "app-name", Value: appProto.Name},
-			telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetId},
-		)
-
-		deploymentTargetDetails, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
-			ProjectID:          int64(project.ID),
-			ClusterID:          int64(cluster.ID),
-			DeploymentTargetID: deploymentTargetID,
-			CCPClient:          c.Config().ClusterControlPlaneClient,
-		})
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error getting deployment target details")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		agent, err := c.GetAgent(r, cluster, "")
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error getting kubernetes agent")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		subdomainCreateInput := porter_app.CreatePorterSubdomainInput{
-			AppName:             app.Name,
-			RootDomain:          c.Config().ServerConf.AppRootDomain,
-			DNSClient:           c.Config().DNSClient,
-			DNSRecordRepository: c.Repo().DNSRecord(),
-			KubernetesAgent:     agent,
-		}
-
-		appWithDomains, err := addPorterSubdomainsIfNecessary(ctx, app, deploymentTargetDetails, subdomainCreateInput)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error adding porter subdomains")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
-
-		appProto, _, err = v2.ProtoFromApp(ctx, appWithDomains)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error converting app to proto")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-	}
-
 	var serviceDeletions map[string]*porterv1.ServiceDeletions
 	if request.Deletions.ServiceDeletions != nil {
 		serviceDeletions = make(map[string]*porterv1.ServiceDeletions)
@@ -255,7 +202,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Id: deploymentTargetID,
 		},
 		App:           appProto,
-		AppRevisionId: appRevisionID,
+		AppRevisionId: request.AppRevisionID,
 		AppEnv: &porterv1.EnvGroupVariables{
 			Normal: envVariables,
 			Secret: request.Secrets,

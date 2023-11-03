@@ -102,7 +102,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
               color="primary"
               checked={value.value > 0}
               onChange={() => {
-                if (clusterContainsGPUNodes && !(value.value > 0)) {
+                if (!clusterContainsGPUNodes && !(value.value > 0)) {
                   setClusterModalVisible(true);
 
                 } else {

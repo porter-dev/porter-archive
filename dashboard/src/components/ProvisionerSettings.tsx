@@ -500,7 +500,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           enableControllerManagerLogs: eksValues.logging.enableControllerManagerLogs,
           enableSchedulerLogs: eksValues.logging.enableSchedulerLogs,
         };
-        handleClusterStateChange('controlPlaneLogs', logging);
+        setControlPlaneLogs(logging);
       }
 
       handleClusterStateChange('guardDutyEnabled', eksValues.enableGuardDuty);
@@ -811,7 +811,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                         handleClusterStateChange("wafV2ARN", "");
                         handleClusterStateChange("awsTags", "");
                         handleClusterStateChange("certificateARN", "");
-                        handleClusterStateChange("waf2Enabled", false);
+                        handleClusterStateChange("wafV2Enabled", false);
                       }
 
                       handleClusterStateChange("loadBalancerType", !clusterState.loadBalancerType);
@@ -830,7 +830,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                           width="350px"
                           disabled={isReadOnly}
                           value={clusterState.wildCardDomain}
-                          setValue={(x: string) => handleClusterStateChange("wildcardDomain", x)}
+                          setValue={(x: string) => handleClusterStateChange("wildCardDomain", x)}
                           label="Wildcard domain"
                           placeholder="user-2.porter.run"
                         />

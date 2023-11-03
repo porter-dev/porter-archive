@@ -44,6 +44,7 @@ type Project struct {
 	EnableReprovision      bool    `json:"enable_reprovision"`
 	ValidateApplyV2        bool    `json:"validate_apply_v2"`
 	QuotaIncrease          bool    `json:"quota_increase"`
+	BetaFeaturesEnabled    bool    `json:"beta_features_enabled"`
 }
 
 type FeatureFlags struct {

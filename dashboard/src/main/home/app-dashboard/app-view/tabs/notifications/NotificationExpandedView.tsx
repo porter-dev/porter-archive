@@ -9,6 +9,7 @@ import { type ClientNotification } from "lib/porter-apps/notification";
 
 import { feedDate } from "shared/string_utils";
 import document from "assets/document.svg";
+import web from "assets/web.png";
 
 type Props = {
   notification: ClientNotification;
@@ -27,8 +28,24 @@ const NotificationExpandedView: React.FC<Props> = ({
   deploymentTargetId,
   appId,
 }) => {
+  const capitalizeFirstLetter = (str: string): string => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
   return (
     <StyledNotificationExpandedView>
+      <Container row>
+        <ServiceNameTag>
+          <ServiceTypeIcon src={web} />
+          <Spacer inline x={0.5} />
+          {notification.serviceName}
+        </ServiceNameTag>
+        <Spacer inline x={0.5} />
+        <Text size={16} color={"#ff6060"}>
+          {notification.isDeployRelated ? "failed to deploy" : "is unhealthy"}
+        </Text>
+      </Container>
+      <Spacer y={0.5} />
       <ExpandedViewContent>
         <StyledActivityFeed>
           {notification.messages.map((message, i) => {
@@ -49,7 +66,7 @@ const NotificationExpandedView: React.FC<Props> = ({
                       src={document}
                       style={{ width: "15px", marginRight: "15px" }}
                     />
-                    {message.human_readable_summary}
+                    {capitalizeFirstLetter(message.human_readable_summary)}
                   </Container>
                   <Spacer y={0.5} />
                   <Container row style={{ color: "#aaaabb" }}>
@@ -143,6 +160,21 @@ const Message = styled.div`
 //   display: flex;
 //   justify-content: flex-end;
 // `;
+
+const ServiceNameTag = styled.div`
+  display: flex;
+  justify-content: center;
+  padding: 3px 5px;
+  border-radius: 5px;
+  background: #ffffff22;
+  user-select: text;
+  font-size: 16px;
+`;
+
+const ServiceTypeIcon = styled.img`
+  height: 16px;
+  margin-top: 2px;
+`;
 
 const Time = styled.div`
   opacity: 0;

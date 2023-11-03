@@ -94,7 +94,6 @@ export default NotificationFeed;
 const StyledNotificationFeed = styled.div`
   display: flex;
   margin-bottom: -50px;
-  height: 800px;
   width: 100%;
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {

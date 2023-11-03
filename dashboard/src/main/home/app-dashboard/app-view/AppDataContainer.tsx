@@ -5,49 +5,52 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import {
-  PorterAppFormData,
-  SourceOptions,
-  clientAppFromProto,
-  porterAppFormValidator,
-} from "lib/porter-apps";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLatestRevision } from "./LatestRevisionContext";
-import Spacer from "components/porter/Spacer";
-import TabSelector from "components/TabSelector";
+import { PorterApp } from "@porter-dev/api-contracts";
+import { useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import _ from "lodash";
+import AnimateHeight from "react-animate-height";
+import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
 import { match } from "ts-pattern";
-import Overview from "./tabs/Overview";
-import { useAppValidation } from "lib/hooks/useAppValidation";
-import api from "shared/api";
-import { useQueryClient } from "@tanstack/react-query";
-import Settings from "./tabs/Settings";
-import BuildSettingsTab from "./tabs/BuildSettingsTab";
-import Environment from "./tabs/Environment";
-import AnimateHeight from "react-animate-height";
+import { z } from "zod";
+
 import Banner from "components/porter/Banner";
 import Button from "components/porter/Button";
+import { Error as ErrorComponent } from "components/porter/Error";
 import Icon from "components/porter/Icon";
+import Spacer from "components/porter/Spacer";
+import TabSelector from "components/TabSelector";
+import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { useAppValidation } from "lib/hooks/useAppValidation";
+import { useIntercom } from "lib/hooks/useIntercom";
+import {
+  clientAppFromProto,
+  porterAppFormValidator,
+  type PorterAppFormData,
+  type SourceOptions,
+} from "lib/porter-apps";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
 import save from "assets/save-01.svg";
-import LogsTab from "./tabs/LogsTab";
-import MetricsTab from "./tabs/MetricsTab";
-import RevisionsList from "../validate-apply/revisions-list/RevisionsList";
+
+import GHStatusBanner from "../validate-apply/revisions-list/GHStatusBanner";
+import ConfirmRedeployModal from "./ConfirmRedeployModal";
+import { useLatestRevision } from "./LatestRevisionContext";
 import Activity from "./tabs/Activity";
 import EventFocusView from "./tabs/activity-feed/events/focus-views/EventFocusView";
-import { z } from "zod";
-import { PorterApp } from "@porter-dev/api-contracts";
-import JobsTab from "./tabs/JobsTab";
-import ConfirmRedeployModal from "./ConfirmRedeployModal";
-import ImageSettingsTab from "./tabs/ImageSettingsTab";
-import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
-import { Error as ErrorComponent } from "components/porter/Error";
-import _ from "lodash";
-import axios from "axios";
+import BuildSettingsTab from "./tabs/BuildSettingsTab";
+import Environment from "./tabs/Environment";
 import HelmEditorTab from "./tabs/HelmEditorTab";
 import HelmLatestValuesTab from "./tabs/HelmLatestValuesTab";
-import { Context } from "shared/Context";
-import { useIntercom } from "lib/hooks/useIntercom";
+import ImageSettingsTab from "./tabs/ImageSettingsTab";
+import JobsTab from "./tabs/JobsTab";
+import LogsTab from "./tabs/LogsTab";
+import MetricsTab from "./tabs/MetricsTab";
+import Overview from "./tabs/Overview";
+import Settings from "./tabs/Settings";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -67,7 +70,7 @@ const validTabs = [
   "job-history",
 ] as const;
 const DEFAULT_TAB = "activity";
-type ValidTab = typeof validTabs[number];
+type ValidTab = (typeof validTabs)[number];
 
 type AppDataContainerProps = {
   tabParam?: string;
@@ -164,12 +167,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
   // getAllDirtyFields recursively gets all dirty fields from the dirtyFields object
   // all fields in the form are set to a boolean indicating if the current value is different from the default value
-  const getAllDirtyFields = (dirtyFields: object) => {
+  const getAllDirtyFields = (dirtyFields: object): string[] => {
     const dirty: string[] = [];
 
     Object.entries(dirtyFields).forEach(([key, value]) => {
       if (value) {
-        if (typeof value === "boolean" && value === true) {
+        if (typeof value === "boolean" && value) {
           dirty.push(key);
         }
 
@@ -292,7 +295,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         stack = err.stack ?? "(No error stack)";
       }
 
-      updateAppStep({
+      void updateAppStep({
         step: "porter-app-update-failure",
         errorMessage: message,
         appName: latestProto.name,
@@ -344,7 +347,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
   const finalizeDeploy = useCallback(() => {
     setConfirmDeployModalOpen(false);
-    onSubmit();
+    void onSubmit();
   }, [onSubmit, setConfirmDeployModalOpen]);
 
   const buttonStatus = useMemo(() => {
@@ -383,7 +386,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       showIntercomWithMessage({
         message: "I am running into an issue updating my application.",
       });
-      updateAppStep({
+      void updateAppStep({
         step: "porter-app-update-failure",
         errorMessage: `Form validation error (visible to user): ${errorMessage}. Stringified JSON errors (invisible to user): ${stringifiedJson}`,
         appName: latestProto.name,
@@ -424,14 +427,13 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       });
     }
 
-    {
-      (currentProject?.helm_values_enabled || user?.isPorterUser) &&
-        base.push({ label: "Helm Overrides", value: "helm-overrides" });
+    if ((currentProject?.helm_values_enabled ?? false) || user?.isPorterUser) {
+      base.push({ label: "Helm Overrides", value: "helm-overrides" });
     }
-    {
-      user?.isPorterUser &&
-        base.push({ label: "Latest Helm Values", value: "helm-values" });
+    if (user?.isPorterUser) {
+      base.push({ label: "Latest Helm Values", value: "helm-values" });
     }
+
     base.push({ label: "Settings", value: "settings" });
     return base;
   }, [deploymentTarget.preview, latestProto.build]);
@@ -483,14 +485,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   return (
     <FormProvider {...porterAppFormMethods}>
       <form onSubmit={onSubmit}>
-        <RevisionsList
-          latestRevisionNumber={latestRevision.revision_number}
-          deploymentTargetId={deploymentTarget.id}
-          projectId={projectId}
-          clusterId={clusterId}
-          appName={porterAppRecord.name}
-          onSubmit={onSubmit}
-        />
         <AnimateHeight height={isDirty && !onlyExpandedChanged ? "auto" : 0}>
           <Banner
             type="warning"
@@ -573,6 +567,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           buildIsDirty={buildIsDirty}
         />
       ) : null}
+      <Spacer y={0.5} />
+      <GHStatusBanner />
     </FormProvider>
   );
 };

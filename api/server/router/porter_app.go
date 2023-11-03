@@ -1473,5 +1473,34 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/use-new-apply-logic -> porter_app.NewUseNewApplyLogicHandler
+	useNewApplyLogicEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/use-new-apply-logic", relPathV2),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	useNewApplyLogicHandler := porter_app.NewUseNewApplyLogicHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: useNewApplyLogicEndpoint,
+		Handler:  useNewApplyLogicHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

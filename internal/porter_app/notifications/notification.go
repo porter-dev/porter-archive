@@ -2,7 +2,6 @@ package notifications
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,11 +12,16 @@ import (
 
 // HandleNotificationInput is the input to HandleNotification
 type HandleNotificationInput struct {
+	// RawAgentEventMetadata is the raw metadata from the agent event
 	RawAgentEventMetadata map[string]any
-	EventRepo             repository.PorterAppEventRepository
-	DeploymentTargetID    string
-	Namespace             string
-	K8sAgent              *kubernetes.Agent
+	// EventRepo is the repository for app events
+	EventRepo repository.PorterAppEventRepository
+	// DeploymentTargetID is the ID of the deployment target
+	DeploymentTargetID string
+	// Namespace is the namespace of the deployment target
+	Namespace string
+	// K8sAgent is the k8s agent, used to query for deployment info
+	K8sAgent *kubernetes.Agent
 }
 
 // HandleNotification handles the logic for processing agent events
@@ -92,37 +96,47 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 
 // Notification is a struct that contains all actionable information from an app event
 type Notification struct {
-	AppID                string     `json:"app_id"`
-	AppName              string     `json:"app_name"`
-	ServiceName          string     `json:"service_name"`
-	AppRevisionID        string     `json:"app_revision_id"`
-	AgentEventID         int        `json:"agent_event_id"`
-	AgentDetail          string     `json:"agent_detail"`
-	AgentSummary         string     `json:"agent_summary"`
-	HumanReadableDetail  string     `json:"human_readable_detail"`
-	HumanReadableSummary string     `json:"human_readable_summary"`
-	Deployment           Deployment `json:"deployment"`
-	Timestamp            time.Time  `json:"timestamp"`
-	ID                   uuid.UUID  `json:"id"`
+	// AppID is the ID of the app
+	AppID string `json:"app_id"`
+	// AppName is the name of the app
+	AppName string `json:"app_name"`
+	// ServiceName is the name of the service
+	ServiceName string `json:"service_name"`
+	// AppRevisionID is the ID of the app revision that the notification belongs to
+	AppRevisionID string `json:"app_revision_id"`
+	// AgentEventID is the ID of the agent event, used for deduping
+	AgentEventID int `json:"agent_event_id"`
+	// AgentDetail is the raw detail of the agent event
+	AgentDetail string `json:"agent_detail"`
+	// AgentSummary is the raw summary of the agent event
+	AgentSummary string `json:"agent_summary"`
+	// HumanReadableDetail is the agent event detail translated to user-facing form
+	HumanReadableDetail string `json:"human_readable_detail"`
+	// HumanReadableSummary is the agent event summary translated to user-facing form
+	HumanReadableSummary string `json:"human_readable_summary"`
+	// MitigationSteps is string containing steps to resolve the issue (if applicable)
+	MitigationSteps string `json:"mitigation_steps"`
+	// Deployment is the deployment metadata, used to determine if the notification occurred during deployment or after
+	Deployment Deployment `json:"deployment"`
+	// Timestamp is the time that the notification was created
+	Timestamp time.Time `json:"timestamp"`
+	// ID is the ID of the notification
+	ID uuid.UUID `json:"id"`
 }
 
 // agentEventToNotification converts an app event to a notification
 func agentEventToNotification(appEventMetadata AppEventMetadata) Notification {
-	humanReadableDetail := appEventMetadata.Detail
-	humanReadableDetail = strings.ReplaceAll(humanReadableDetail, "application", "service")
-
 	notification := Notification{
-		AppID:               appEventMetadata.AppID,
-		AppName:             appEventMetadata.AppName,
-		ServiceName:         appEventMetadata.ServiceName,
-		AgentEventID:        appEventMetadata.AgentEventID,
-		AgentDetail:         appEventMetadata.Detail,
-		AgentSummary:        appEventMetadata.Summary,
-		AppRevisionID:       appEventMetadata.AppRevisionID,
-		Deployment:          Deployment{Status: DeploymentStatus_Unknown},
-		HumanReadableDetail: humanReadableDetail,
-		Timestamp:           time.Now().UTC(),
-		ID:                  uuid.New(),
+		AppID:         appEventMetadata.AppID,
+		AppName:       appEventMetadata.AppName,
+		ServiceName:   appEventMetadata.ServiceName,
+		AgentEventID:  appEventMetadata.AgentEventID,
+		AgentDetail:   appEventMetadata.Detail,
+		AgentSummary:  appEventMetadata.Summary,
+		AppRevisionID: appEventMetadata.AppRevisionID,
+		Deployment:    Deployment{Status: DeploymentStatus_Unknown},
+		Timestamp:     time.Now().UTC(),
+		ID:            uuid.New(),
 	}
 	return notification
 }

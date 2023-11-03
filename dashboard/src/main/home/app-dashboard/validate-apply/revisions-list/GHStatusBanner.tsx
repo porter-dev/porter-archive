@@ -65,6 +65,7 @@ const GHStatusBanner: React.FC = () => {
           "DEPLOYED",
           "DEPLOY_FAILED",
           "BUILD_FAILED",
+          "IMAGE_AVAILABLE",
           () => true
         )
         .otherwise(() => false)
@@ -78,7 +79,12 @@ const GHStatusBanner: React.FC = () => {
       fileNames: ["porter.yml", `porter_stack_${porterApp.name}.yml`],
     });
 
-  if (previouslyBuilt || status === "loading" || status === "error") {
+  if (
+    previouslyBuilt ||
+    !!porterApp.image_repo_uri ||
+    status === "loading" ||
+    status === "error"
+  ) {
     return null;
   }
 

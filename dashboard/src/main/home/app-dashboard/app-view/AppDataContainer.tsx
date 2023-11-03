@@ -36,7 +36,6 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import save from "assets/save-01.svg";
 
-import GHStatusBanner from "../validate-apply/revisions-list/GHStatusBanner";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
 import { useLatestRevision } from "./LatestRevisionContext";
 import Activity from "./tabs/Activity";
@@ -567,8 +566,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           buildIsDirty={buildIsDirty}
         />
       ) : null}
-      <Spacer y={0.5} />
-      <GHStatusBanner />
     </FormProvider>
   );
 };

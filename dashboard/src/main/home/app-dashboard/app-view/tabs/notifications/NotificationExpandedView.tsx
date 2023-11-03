@@ -34,19 +34,19 @@ const NotificationExpandedView: React.FC<Props> = ({
 
   return (
     <StyledNotificationExpandedView>
-      <Container row>
-        <ServiceNameTag>
-          <ServiceTypeIcon src={web} />
-          <Spacer inline x={0.5} />
-          {notification.serviceName}
-        </ServiceNameTag>
-        <Spacer inline x={0.5} />
-        <Text size={16} color={"#ff6060"}>
-          {notification.isDeployRelated ? "failed to deploy" : "is unhealthy"}
-        </Text>
-      </Container>
-      <Spacer y={0.5} />
       <ExpandedViewContent>
+        <Container row>
+          <ServiceNameTag>
+            <ServiceTypeIcon src={web} />
+            <Spacer inline x={0.5} />
+            {notification.serviceName}
+          </ServiceNameTag>
+          <Spacer inline x={0.5} />
+          <Text size={16} color={"#ff6060"}>
+            {notification.isDeployRelated ? "failed to deploy" : "is unhealthy"}
+          </Text>
+        </Container>
+        <Spacer y={0.5} />
         <StyledActivityFeed>
           {notification.messages.map((message, i) => {
             return (

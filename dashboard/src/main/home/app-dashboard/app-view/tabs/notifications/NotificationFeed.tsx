@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import styled from "styled-components";
 
+import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
+import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type ClientNotification } from "lib/porter-apps/notification";
@@ -67,14 +69,23 @@ const NotificationFeed: React.FC<Props> = ({
   return (
     <StyledNotificationFeed>
       {selectedNotification ? (
-        <NotificationExpandedView
-          notification={selectedNotification}
-          projectId={projectId}
-          clusterId={clusterId}
-          appName={appName}
-          deploymentTargetId={deploymentTargetId}
-          appId={appId}
-        />
+        <Container>
+          <Link to={`/apps/${appName}/notifications`}>
+            <BackButton>
+              <i className="material-icons">keyboard_backspace</i>
+              Notifications
+            </BackButton>
+          </Link>
+          <Spacer y={0.25} />
+          <NotificationExpandedView
+            notification={selectedNotification}
+            projectId={projectId}
+            clusterId={clusterId}
+            appName={appName}
+            deploymentTargetId={deploymentTargetId}
+            appId={appId}
+          />
+        </Container>
       ) : (
         <NotificationList
           notifications={notifications}
@@ -103,5 +114,29 @@ const StyledNotificationFeed = styled.div`
     to {
       opacity: 1;
     }
+  }
+`;
+
+const BackButton = styled.div`
+  display: flex;
+  align-items: center;
+  max-width: fit-content;
+  cursor: pointer;
+  font-size: 11px;
+  max-height: fit-content;
+  padding: 5px 13px;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  color: white;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+  }
+
+  > i {
+    color: white;
+    font-size: 16px;
+    margin-right: 6px;
   }
 `;

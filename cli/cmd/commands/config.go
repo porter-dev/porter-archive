@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,7 +19,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
+// func registerCommand_Config() *cobra.Command {
+func registerCommand_Config() *cobra.Command {
 	configCmd := &cobra.Command{
 		Use:   "config",
 		Short: "Commands that control local configuration settings",
@@ -34,35 +36,26 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "set-project [id]",
 		Args:  cobra.MaximumNArgs(1),
 		Short: "Saves the project id in the default configuration",
-		Run: func(cmd *cobra.Command, args []string) {
-			client, err := api.NewClientWithConfig(cmd.Context(), api.NewClientInput{
-				BaseURL:        fmt.Sprintf("%s/api", cliConf.Host),
-				BearerToken:    cliConf.Token,
-				CookieFileName: "cookie.json",
-			})
-			if err != nil {
-				_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "error creating porter API client: %s\n", err.Error())
-				os.Exit(1)
-			}
-
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAndSetProject)
+				err := checkLoginAndRunWithConfig(cmd, args, listAndSetProject)
 				if err != nil {
-					os.Exit(1)
+					if errors.Is(err, errCreatingPorterAPIClient) {
+						return errors.New("error creating porter API client. Please ensure you are logged in")
+					}
+					return fmt.Errorf("error checking login and setting project: %w", err)
 				}
-			} else {
-				projID, err := strconv.ParseUint(args[0], 10, 64)
-				if err != nil {
-					_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %s\n", err.Error())
-					os.Exit(1)
-				}
-
-				err = cliConf.SetProject(cmd.Context(), client, uint(projID))
-				if err != nil {
-					_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %s\n", err.Error())
-					os.Exit(1)
-				}
+				return nil
 			}
+			err := checkLoginAndRunWithConfig(cmd, args, setProjectAndCluster)
+			if err != nil {
+				if errors.Is(err, errCreatingPorterAPIClient) {
+					return errors.New("error creating porter API client. Please ensure you are logged in")
+				}
+				return fmt.Errorf("error checking login and setting project with cluster: %w", err)
+			}
+
+			return nil
 		},
 	}
 
@@ -70,26 +63,36 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "set-cluster [id]",
 		Args:  cobra.MaximumNArgs(1),
 		Short: "Saves the cluster id in the default configuration",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAndSetCluster)
+				err := checkLoginAndRunWithConfig(cmd, args, listAndSetCluster)
 				if err != nil {
-					os.Exit(1)
+					if errors.Is(err, errCreatingPorterAPIClient) {
+						return errors.New("error creating porter API client. Please ensure you are logged in")
+					}
+					return fmt.Errorf("error checking login and setting project: %w", err)
 				}
-			} else {
-				clusterID, err := strconv.ParseUint(args[0], 10, 64)
-				if err != nil {
-					_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
-					os.Exit(1)
-				}
-
-				err = cliConf.SetCluster(uint(clusterID))
-
-				if err != nil {
-					_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
-					os.Exit(1)
-				}
+				return nil
 			}
+
+			_, currentProfile, err := currentProfileIncludingFlags(cmd)
+			if err != nil {
+				return fmt.Errorf("error whilst initialising config: %w", err)
+			}
+
+			clusterID, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
+				os.Exit(1)
+			}
+
+			err = config.SetCluster(uint(clusterID), currentProfile)
+
+			if err != nil {
+				_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
+				os.Exit(1)
+			}
+			return nil
 		},
 	}
 
@@ -99,7 +102,7 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 		Short: "Saves the registry id in the default configuration",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
-				err := checkLoginAndRunWithConfig(cmd, cliConf, args, listAndSetRegistry)
+				err := checkLoginAndRunWithConfig(cmd, args, listAndSetRegistry)
 				if err != nil {
 					os.Exit(1)
 				}
@@ -110,7 +113,7 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 					os.Exit(1)
 				}
 
-				err = cliConf.SetRegistry(uint(registryID))
+				err = config.SetRegistry(uint(registryID))
 
 				if err != nil {
 					_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
@@ -131,7 +134,7 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = cliConf.SetHelmRepo(uint(hrID))
+			err = config.SetHelmRepo(uint(hrID))
 
 			if err != nil {
 				_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %v\n", err)
@@ -144,12 +147,18 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "set-host [host]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Saves the host in the default configuration",
-		Run: func(cmd *cobra.Command, args []string) {
-			err := cliConf.SetHost(args[0])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, currentProfile, err := currentProfileIncludingFlags(cmd)
+			if err != nil {
+				return fmt.Errorf("error whilst initialising config: %w", err)
+			}
+
+			err = config.SetHost(args[0], currentProfile)
 			if err != nil {
 				_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %s\n", err.Error())
-				os.Exit(1)
+				return err
 			}
+			return nil
 		},
 	}
 
@@ -158,11 +167,20 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Short: "Saves the path to kubeconfig in the default configuration",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := cliConf.SetKubeconfig(args[0])
+			err := config.SetKubeconfig(args[0])
 			if err != nil {
 				_, _ = color.New(color.FgRed).Fprintf(os.Stderr, "An error occurred: %s\n", err.Error())
 				os.Exit(1)
 			}
+		},
+	}
+
+	configSetProfileCmd := &cobra.Command{
+		Use:   "set-profile [profile-name]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Saves the path to kubeconfig in the default configuration",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return config.SetProfile(args[0])
 		},
 	}
 
@@ -172,6 +190,7 @@ func registerCommand_Config(cliConf config.CLIConfig) *cobra.Command {
 	configCmd.AddCommand(configSetRegistryCmd)
 	configCmd.AddCommand(configSetHelmRepoCmd)
 	configCmd.AddCommand(configSetKubeconfigCmd)
+	configCmd.AddCommand(configSetProfileCmd)
 	return configCmd
 }
 
@@ -186,19 +205,18 @@ func printConfig() error {
 	return nil
 }
 
-func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	_ = s.Color("cyan")
 	s.Suffix = " Loading list of projects"
 	s.Start()
 
 	resp, err := client.ListUserProjects(ctx)
+	if err != nil {
+		return fmt.Errorf("error listing projects to set config: %w", err)
+	}
 
 	s.Stop()
-
-	if err != nil {
-		return err
-	}
 
 	var projID uint64
 
@@ -222,7 +240,7 @@ func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 		projID = uint64((*resp)[0].ID)
 	}
 
-	err = cliConf.SetProject(ctx, client, uint(projID))
+	err = config.SetProject(uint(projID), currentProfile)
 	if err != nil {
 		return err
 	}
@@ -230,19 +248,36 @@ func listAndSetProject(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 	return nil
 }
 
-func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func setProjectAndCluster(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+	projID, err := strconv.ParseUint(args[0], 10, 64)
+	if err != nil {
+		return fmt.Errorf("error parsing project id: %w", err)
+	}
+
+	err = config.SetProject(uint(projID), currentProfile)
+	if err != nil {
+		return fmt.Errorf("error setting project: %w", err)
+	}
+
+	err = listAndSetCluster(ctx, nil, client, cliConf, currentProfile, featureFlags, cmd, args)
+	if err != nil {
+		return fmt.Errorf("error listing and setting cluster: %w", err)
+	}
+	return nil
+}
+
+func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	_ = s.Color("cyan")
 	s.Suffix = " Loading list of clusters"
 	s.Start()
 
 	resp, err := client.ListProjectClusters(ctx, cliConf.Project)
-
-	s.Stop()
-
 	if err != nil {
 		return err
 	}
+
+	s.Stop()
 
 	var clusterID uint64
 
@@ -265,7 +300,7 @@ func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 		clusterID = uint64((*resp)[0].ID)
 	}
 
-	err = cliConf.SetCluster(uint(clusterID))
+	err = config.SetCluster(uint(clusterID), currentProfile)
 	if err != nil {
 		return fmt.Errorf("unable to set cluster: %w", err)
 	}
@@ -273,7 +308,7 @@ func listAndSetCluster(ctx context.Context, _ *types.GetAuthenticatedUserRespons
 	return nil
 }
 
-func listAndSetRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func listAndSetRegistry(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	_ = s.Color("cyan")
 	s.Suffix = " Loading list of registries"
@@ -308,7 +343,7 @@ func listAndSetRegistry(ctx context.Context, _ *types.GetAuthenticatedUserRespon
 		regID = uint64((*resp)[0].ID)
 	}
 
-	err = cliConf.SetRegistry(uint(regID))
+	err = config.SetRegistry(uint(regID))
 	if err != nil {
 		return fmt.Errorf("error setting registry: %w", err)
 	}

@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func registerCommand_Delete(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Delete() *cobra.Command {
 	deleteCmd := &cobra.Command{
 		Use:   "delete",
 		Short: "Deletes a deployment",
@@ -35,7 +35,7 @@ deleting a configuration:
 			color.New(color.FgGreen, color.Bold).Sprintf("porter delete"),
 		),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteDeployment)
+			err := checkLoginAndRunWithConfig(cmd, args, deleteDeployment)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -49,7 +49,7 @@ deleting a configuration:
 		Short:   "Deletes an existing app",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteApp)
+			err := checkLoginAndRunWithConfig(cmd, args, deleteApp)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -63,7 +63,7 @@ deleting a configuration:
 		Short:   "Deletes an existing job",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteJob)
+			err := checkLoginAndRunWithConfig(cmd, args, deleteJob)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -77,7 +77,7 @@ deleting a configuration:
 		Short:   "Deletes an existing addon",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteAddon)
+			err := checkLoginAndRunWithConfig(cmd, args, deleteAddon)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -91,7 +91,7 @@ deleting a configuration:
 		Short:   "Deletes an existing helm repo",
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, deleteHelm)
+			err := checkLoginAndRunWithConfig(cmd, args, deleteHelm)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -113,7 +113,7 @@ deleting a configuration:
 	return deleteCmd
 }
 
-func deleteDeployment(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func deleteDeployment(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.DeleteDeployment(ctx)
 		if err != nil {
@@ -152,7 +152,7 @@ func deleteDeployment(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	)
 }
 
-func deleteApp(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func deleteApp(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.DeleteApp(ctx)
 		if err != nil {
@@ -189,7 +189,7 @@ func deleteApp(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clien
 	return nil
 }
 
-func deleteJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func deleteJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	if featureFlags.ValidateApplyV2Enabled {
 		err := v2.DeleteJob(ctx)
 		if err != nil {
@@ -226,7 +226,7 @@ func deleteJob(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clien
 	return nil
 }
 
-func deleteAddon(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func deleteAddon(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	name := args[0]
 
 	resp, err := client.GetRelease(
@@ -255,7 +255,7 @@ func deleteAddon(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cli
 	return nil
 }
 
-func deleteHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
+func deleteHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, currentProfile string, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
 	name := args[0]
 
 	resp, err := client.ListHelmRepos(ctx, cliConf.Project)

@@ -67,7 +67,7 @@ func NewClientWithConfig(ctx context.Context, input NewClientInput) (Client, err
 		client.CookieFilePath = input.CookieFileName
 		cookie, err := client.getCookie()
 		if err != nil {
-			return client, fmt.Errorf("error getting cooking from path: %w", err)
+			return client, fmt.Errorf("error getting cookie from path: %w", err)
 		}
 		if cookie == nil {
 			return client, errors.New("no cookie found at location")

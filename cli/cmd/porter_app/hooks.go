@@ -24,7 +24,7 @@ type DeployAppHook struct {
 }
 
 func (t *DeployAppHook) PreApply() error {
-	err := t.CLIConfig.ValidateCLIEnvironment()
+	err := validateCLIConfig(t.CLIConfig)
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
 		return fmt.Errorf("%s: %w", errMsg, err)

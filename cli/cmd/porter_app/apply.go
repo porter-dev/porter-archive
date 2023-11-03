@@ -24,9 +24,25 @@ type StackConf struct {
 	projectID, clusterID uint
 }
 
+// validateCLIConfig checks that all required variables are present for running the CLI in this package
+func validateCLIConfig(c config.CLIConfig) error {
+	if c.Token == "" {
+		return fmt.Errorf("no auth token present, please run 'porter auth login' to authenticate")
+	}
+
+	if c.Project == 0 {
+		return fmt.Errorf("no project selected, please run 'porter config set-project' to select a project")
+	}
+
+	if c.Cluster == 0 {
+		return fmt.Errorf("no cluster selected, please run 'porter config set-cluster' to select a cluster")
+	}
+	return nil
+}
+
 // CreateApplicationDeploy creates everything needed to deploy a porter app
 func CreateApplicationDeploy(ctx context.Context, client api.Client, worker *switchboardWorker.Worker, app *Application, applicationName string, cliConf config.CLIConfig) ([]*switchboardTypes.Resource, error) {
-	err := cliConf.ValidateCLIEnvironment()
+	err := validateCLIConfig(cliConf)
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
 		return nil, fmt.Errorf("%s: %w", errMsg, err)

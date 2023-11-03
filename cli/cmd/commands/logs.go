@@ -14,13 +14,13 @@ import (
 
 var follow bool
 
-func registerCommand_Logs(cliConf config.CLIConfig) *cobra.Command {
+func registerCommand_Logs() *cobra.Command {
 	logsCmd := &cobra.Command{
 		Use:   "logs [release]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Logs the output from a given application.",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := checkLoginAndRunWithConfig(cmd, cliConf, args, logs)
+			err := checkLoginAndRunWithConfig(cmd, args, logs)
 			if err != nil {
 				os.Exit(1)
 			}
@@ -44,7 +44,7 @@ func registerCommand_Logs(cliConf config.CLIConfig) *cobra.Command {
 	return logsCmd
 }
 
-func logs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
+func logs(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, currentProfile string, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
 	podsSimple, err := getPods(ctx, client, cliConfig, namespace, args[0])
 	if err != nil {
 		return fmt.Errorf("Could not retrieve list of pods: %s", err.Error())

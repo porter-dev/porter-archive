@@ -19,6 +19,22 @@ type PreviewApplier struct {
 	parsed    *PorterYAML
 }
 
+// validateCLIConfig checks that all required variables are present for running the CLI in this package
+func validateCLIConfig(c config.CLIConfig) error {
+	if c.Token == "" {
+		return fmt.Errorf("no auth token present, please run 'porter auth login' to authenticate")
+	}
+
+	if c.Project == 0 {
+		return fmt.Errorf("no project selected, please run 'porter config set-project' to select a project")
+	}
+
+	if c.Cluster == 0 {
+		return fmt.Errorf("no cluster selected, please run 'porter config set-cluster' to select a cluster")
+	}
+	return nil
+}
+
 // NewApplier returns an applier for preview environments
 func NewApplier(client api.Client, cliConfig config.CLIConfig, raw []byte, namespace string) (*PreviewApplier, error) {
 	// replace all instances of ${{ porter.env.FOO }} with { .get-env.FOO }
@@ -33,8 +49,7 @@ func NewApplier(client api.Client, cliConfig config.CLIConfig, raw []byte, names
 		return nil, fmt.Errorf("%s: %w", errMsg, err)
 	}
 
-	err = cliConfig.ValidateCLIEnvironment()
-
+	err = validateCLIConfig(cliConfig)
 	if err != nil {
 		errMsg := composePreviewMessage("porter CLI is not configured correctly", Error)
 		return nil, fmt.Errorf("%s: %w", errMsg, err)

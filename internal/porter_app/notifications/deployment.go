@@ -3,7 +3,6 @@ package notifications
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -30,8 +29,8 @@ const (
 	DeploymentStatus_Failure DeploymentStatus = "FAILURE"
 )
 
-// hydrateNotificationInput is the input struct for hydrateNotification
-type hydrateNotificationInput struct {
+// hydrateNotificationWithDeploymentInput is the input struct for hydrateNotificationWithDeployment
+type hydrateNotificationWithDeploymentInput struct {
 	// Notification is the notification to hydrate
 	Notification
 	// DeploymentTargetId is the ID of the deployment target
@@ -42,9 +41,9 @@ type hydrateNotificationInput struct {
 	K8sAgent *kubernetes.Agent
 }
 
-// hydrateNotification hydrates a notification with k8s deployment info, and translates information from the agent into a user-facing form
-func hydrateNotification(ctx context.Context, inp hydrateNotificationInput) (Notification, error) {
-	ctx, span := telemetry.NewSpan(ctx, "hydrate-notification")
+// hydrateNotificationWithDeployment hydrates a notification with k8s deployment info
+func hydrateNotificationWithDeployment(ctx context.Context, inp hydrateNotificationWithDeploymentInput) (Notification, error) {
+	ctx, span := telemetry.NewSpan(ctx, "hydrate-notification-with-deployment")
 	defer span.End()
 
 	hydratedNotification := inp.Notification
@@ -103,14 +102,6 @@ func hydrateNotification(ctx context.Context, inp hydrateNotificationInput) (Not
 		Status: status,
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "agent-summary", Value: hydratedNotification.AgentSummary})
-	hydratedNotification.HumanReadableSummary = translateAgentSummary(hydratedNotification, status)
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "human-readable-summary", Value: hydratedNotification.HumanReadableSummary})
-
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "agent-detail", Value: hydratedNotification.AgentDetail})
-	hydratedNotification.HumanReadableDetail = translateAgentDetail(hydratedNotification)
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "human-readable-detail", Value: hydratedNotification.HumanReadableDetail})
-
 	return hydratedNotification, nil
 }
 
@@ -144,7 +135,8 @@ var fatalDeploymentDetailSubstrings = []string{
 	"failed its health check",
 }
 
-// detailIndicatesDeploymentFailure returns true if the detail indicates that the deployment failed
+// detailIndicatesDeploymentFailure returns true if the detail indicates that the deployment will eventually time out and fail
+// we use this to report deployment failure to the user early, rather than waiting for the deployment to time out
 func detailIndicatesDeploymentFailure(detail string) bool {
 	// if any of the fatal deployment detail substrings are found in the detail, then the deployment will fail
 	for _, fatalSubstring := range fatalDeploymentDetailSubstrings {
@@ -153,29 +145,4 @@ func detailIndicatesDeploymentFailure(detail string) bool {
 		}
 	}
 	return false
-}
-
-// translateAgentSummary translates the agent summary to a human readable summary
-// this is necessary until we make updates to the agent
-func translateAgentSummary(notification Notification, status DeploymentStatus) string {
-	humanReadableSummary := notification.AgentSummary
-	pattern := `application (\S+) in namespace (\S+)`
-	regex := regexp.MustCompile(pattern)
-	if regex.MatchString(humanReadableSummary) {
-		fmt.Printf("matched regex\n")
-		humanReadableSummary = regex.ReplaceAllString(humanReadableSummary, fmt.Sprintf("service %s", notification.ServiceName))
-	}
-	humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "application", "service")
-	if status == DeploymentStatus_Pending {
-		humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "has crashed", "failed to deploy")
-		humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "crashed", "failed to deploy")
-		humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "is currently experiencing downtime", "failed to deploy")
-	}
-	return humanReadableSummary
-}
-
-func translateAgentDetail(notification Notification) string {
-	humanReadableDetail := notification.AgentDetail
-	humanReadableDetail = strings.ReplaceAll(humanReadableDetail, "application", "service")
-	return humanReadableDetail
 }

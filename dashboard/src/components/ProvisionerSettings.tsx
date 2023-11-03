@@ -452,12 +452,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
-      let eksValues: EKS = contract.cluster as EKS;
+      let eksValues: EKS = contract.cluster?.eksKind as EKS;
       if (eksValues === null) {
         return;
       }
 
-      eksValues?.nodeGroups?.forEach((nodeGroup: EKSNodeGroup) => {
+      eksValues.nodeGroups.forEach((nodeGroup: EKSNodeGroup) => {
         if (nodeGroup.nodeGroupType.toString() === "NODE_GROUP_TYPE_APPLICATION") {
           handleClusterStateChange('machineType', nodeGroup.instanceType);
           handleClusterStateChange('minInstances', nodeGroup.minInstances);

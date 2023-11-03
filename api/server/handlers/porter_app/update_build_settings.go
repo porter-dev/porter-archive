@@ -38,6 +38,7 @@ type UpdateAppBuildSettingsRequest struct {
 // UpdateAppBuildSettingsResponse is the response object for the POST /apps/{porter_app_name}/build endpoint
 type UpdateAppBuildSettingsResponse struct{}
 
+// ServeHTTP sends an update build settings request to CCP and processes the response
 func (c *UpdateAppBuildSettingsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-update-app-build-settings")
 	defer span.End()

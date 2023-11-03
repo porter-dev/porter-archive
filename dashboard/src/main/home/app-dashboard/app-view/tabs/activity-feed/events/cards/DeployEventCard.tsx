@@ -304,6 +304,7 @@ const DeployEventCard: React.FC<Props> = ({
                       id: event.metadata.app_revision_id,
                     });
                   }}
+                  color="#6e9df5"
                 >
                   Revert to version{" "}
                   {revisionIdToNumber[event.metadata.app_revision_id]}

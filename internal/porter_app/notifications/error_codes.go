@@ -41,8 +41,9 @@ func translateAgentSummary(notification Notification) string {
 		humanReadableSummary = regex.ReplaceAllString(humanReadableSummary, fmt.Sprintf("service %s", notification.ServiceName))
 	}
 	humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "application", "service")
+	humanReadableSummary = strings.ReplaceAll(humanReadableSummary, "cpu", "CPU")
 	// We just want the reason, so we only take the part after "because "
-	// If we can't parse the summary, we just return the original summary (with "application" replaced with "service")
+	// If we can't parse the summary, we just return the original summary with the replacement done above
 	parts := strings.SplitAfter(humanReadableSummary, "because ")
 	if len(parts) == 2 {
 		humanReadableSummary = parts[1]
@@ -55,5 +56,85 @@ func translateAgentSummary(notification Notification) string {
 func translateAgentDetail(notification Notification) string {
 	humanReadableDetail := notification.AgentDetail
 	humanReadableDetail = strings.ReplaceAll(humanReadableDetail, "application", "service")
+
+	if strings.Contains(notification.AgentSummary, "non-zero exit code") {
+		return nonZeroExitCodeDetail(humanReadableDetail)
+	}
+
+	if strings.Contains(notification.AgentSummary, "liveness health check") {
+		return livenessHealthCheckDetail(humanReadableDetail)
+	}
+
+	if strings.Contains(notification.AgentSummary, "readiness health check") {
+		return readinessHealthCheckDetail(humanReadableDetail)
+	}
+
+	if strings.Contains(notification.AgentSummary, "restarted due to an error") {
+		return restartedDueToErrorDetail(humanReadableDetail)
+	}
+
 	return humanReadableDetail
+}
+
+// nonZeroExitCodeDetail translates the agent detail to a human readable detail for non-zero exit code errors
+func nonZeroExitCodeDetail(agentDetail string) string {
+	humanReadableDetail := agentDetail
+	// Example detail from the agent: "restarted with exit code 137"
+	// We want to get the exit code
+	pattern := `restarted with exit code (\S+)`
+	regex := regexp.MustCompile(pattern)
+	matches := regex.FindStringSubmatch(humanReadableDetail)
+	if len(matches) != 2 {
+		return humanReadableDetail
+	}
+
+	exitCode := matches[1]
+	prefix := fmt.Sprintf("The service restarted with exit code %s.", exitCode)
+	switch exitCode {
+	case "137":
+		return fmt.Sprintf("%s This indicates that the service was killed by SIGKILL. The most common reason for this is that your service does not handle graceful shutdown when it receives a SIGTERM signal. After receiving SIGTERM, your service should close existing connections and terminate with exit code 0.", prefix)
+	case "1":
+		return fmt.Sprintf("%s This indicates common issues.", prefix)
+	case "127":
+		return fmt.Sprintf("%s This indicates that the service has a misconfigured start command.", prefix)
+	default:
+		return prefix
+	}
+}
+
+// livenessHealthCheckDetail translates the agent detail to a human readable detail for liveness health check errors
+func livenessHealthCheckDetail(agentDetail string) string {
+	humanReadableDetail := agentDetail
+	// Example detail from the agent: "...Your liveness health check is set to the path /healthz..."
+	// We want to strip out the path
+	pattern := `Your liveness health check is set to the path (\S+)\.`
+	regex := regexp.MustCompile(pattern)
+	matches := regex.FindStringSubmatch(humanReadableDetail)
+	if len(matches) > 1 {
+		pathValue := matches[1]
+		return fmt.Sprintf("The liveness health check for this service is set to the path %s. The service is not responding with a 200-level response code on this endpoint, so it is continuously restarting.", pathValue)
+	}
+
+	return humanReadableDetail
+}
+
+// readinessHealthCheckDetail translates the agent detail to a human readable detail for readiness health check errors
+func readinessHealthCheckDetail(agentDetail string) string {
+	humanReadableDetail := agentDetail
+	// Example detail from the agent: "...Your readiness health check is set to the path /healthz..."
+	// We want to strip out the path
+	pattern := `Your readiness health check is set to the path (\S+)\.`
+	regex := regexp.MustCompile(pattern)
+	matches := regex.FindStringSubmatch(humanReadableDetail)
+	if len(matches) > 1 {
+		pathValue := matches[1]
+		return fmt.Sprintf("The readiness health check for this service is set to the path %s. The service is not responding with a 200-level response code on this endpoint, so it is continuously restarting.", pathValue)
+	}
+
+	return humanReadableDetail
+}
+
+// restartedDueToErrorDetail translates the agent detail to a human readable detail for restarted due to error errors
+func restartedDueToErrorDetail(agentDetail string) string {
+	return "The service is stuck in a restart loop. This is likely due to another error."
 }

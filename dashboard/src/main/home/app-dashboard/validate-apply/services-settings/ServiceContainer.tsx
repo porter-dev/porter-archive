@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
 import AnimateHeight, { Height } from "react-animate-height";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import _ from "lodash";
 
 import web from "assets/web.png";
-import computerp-chip from "assets/computer-chip.svg";
+import chip from "assets/computer-chip.svg";
 import gpu from "assets/lightning.svg";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
@@ -142,9 +142,12 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {service.name.value.trim().length > 0
             ? service.name.value
             : "New Service"}
-          {service.gpuCoresNvidia.value == 0 && <Tag>
-            GPU workload
-          </Tag>}
+          {service.gpuCoresNvidia.value == 0 &&
+            <><Spacer inline x={1.5} /><TagContainer>
+              <ChipIcon src={chip} alt="Chip Icon" />
+              <TagText>GPU Workload</TagText>
+            </TagContainer></>
+          }
         </ServiceTitle>
 
         {service.canDelete && (
@@ -265,4 +268,47 @@ const ServiceHeader = styled.div<{
 const Icon = styled.img`
   height: 18px;
   margin-right: 15px;
+`;
+
+
+const shimmer = keyframes`
+  0% {
+    box-shadow: 0 0 0 1.5px rgba(204, 204, 204, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 1.5px rgba(204, 204, 204, 1);
+  }
+  100% {
+    box-shadow: 0 0 0 1.5px rgba(204, 204, 204, 0.3);
+  }
+`;
+
+const TagContainer = styled.div`
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 4px 8px;
+  position: relative;
+  width: auto;
+  height: 30px;
+  background: props.theme.clickable.bg; 
+  border-radius: 10px;
+  animation: ${shimmer} 3s infinite linear;
+`;
+
+
+const ChipIcon = styled.img`
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+`;
+
+const TagText = styled.span`
+  font-family: 'General Sans';
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 100%;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
 `;

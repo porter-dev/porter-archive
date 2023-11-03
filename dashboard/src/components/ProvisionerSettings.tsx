@@ -30,12 +30,9 @@ import {
 
 import { ClusterType } from "shared/types";
 import Button from "./porter/Button";
-import Error from "./porter/Error";
 import healthy from "assets/status-healthy.png";
 
 import Spacer from "./porter/Spacer";
-import Step from "./porter/Step";
-import Link from "./porter/Link";
 import Text from "./porter/Text";
 import Select from "./porter/Select";
 import Input from "./porter/Input";
@@ -44,11 +41,33 @@ import Tooltip from "./porter/Tooltip";
 import Icon from "./porter/Icon";
 import Loading from "./Loading";
 import PreflightChecks from "./PreflightChecks";
-import Placeholder from "./Placeholder";
 import VerticalSteps from "./porter/VerticalSteps";
-import Modal from "components/porter/Modal";
 import { PREFLIGHT_TO_ENUM } from "shared/util";
 import { useIntercom } from "lib/hooks/useIntercom";
+
+
+type ClusterState = {
+  clusterName: string;
+  awsRegion: string;
+  machineType: string;
+  guardDutyEnabled: boolean;
+  kmsEncryptionEnabled: boolean;
+  loadBalancerType: boolean;
+  wildCardDomain: string;
+  IPAllowList: string;
+  wafV2Enabled: boolean;
+  awsTags: string;
+  wafV2ARN: string;
+  certificateARN: string;
+  minInstances: number;
+  maxInstances: number;
+  additionalNodePolicies: string[];
+  cidrRangeVPC: string;
+  cidrRangeServices: string;
+  clusterVersion: string;
+};
+
+
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -110,6 +129,29 @@ const defaultCidrVpc = "10.78.0.0/16"
 const defaultCidrServices = "172.20.0.0/16"
 const defaultClusterVersion = "v1.24.0"
 
+
+const initialClusterState: ClusterState = {
+  clusterName: "",
+  awsRegion: "us-east-1",
+  machineType: "t3.medium",
+  guardDutyEnabled: false,
+  kmsEncryptionEnabled: false,
+  loadBalancerType: false,
+  wildCardDomain: "",
+  IPAllowList: "",
+  wafV2Enabled: false,
+  awsTags: "",
+  wafV2ARN: "",
+  certificateARN: "",
+  minInstances: 1,
+  maxInstances: 10,
+  additionalNodePolicies: [],
+  cidrRangeVPC: defaultCidrVpc,
+  cidrRangeServices: defaultCidrServices,
+  clusterVersion: defaultClusterVersion,
+};
+
+
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   provisionerError?: string;
@@ -127,86 +169,63 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setCurrentCluster,
     setShouldRefreshClusters,
   } = useContext(Context);
-  const [clusterName, setClusterName] = useState("");
-  const [awsRegion, setAwsRegion] = useState("us-east-1");
-  const [machineType, setMachineType] = useState(props?.gpuModal ? "g4dn.xlarge" : "t3.medium");
-  const [guardDutyEnabled, setGuardDutyEnabled] = useState<boolean>(false);
-  const [kmsEncryptionEnabled, setKmsEncryptionEnabled] = useState<boolean>(
-    false
-  );
   const [step, setStep] = useState(0);
-  const [loadBalancerType, setLoadBalancerType] = useState(false);
-  const [wildCardDomain, setWildCardDomain] = useState("");
-  const [IPAllowList, setIPAllowList] = useState<string>("");
-  const [controlPlaneLogs, setControlPlaneLogs] = useState<EKSLogging>(
-    new EKSLogging()
-  );
-  //const [accessS3Logs, setAccessS3Logs] = useState<boolean>(false)
-  const [wafV2Enabled, setWaf2Enabled] = useState<boolean>(false);
-  const [awsTags, setAwsTags] = useState<string>("");
-  const [wafV2ARN, setwafV2ARN] = useState("");
-  const [certificateARN, seCertificateARN] = useState("");
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [minInstances, setMinInstances] = useState(1);
-  const [maxInstances, setMaxInstances] = useState(10);
-  const [additionalNodePolicies, setAdditionalNodePolicies] = useState<
-    string[]
-  >([]);
-  const [cidrRangeVPC, setCidrRangeVPC] = useState(defaultCidrVpc);
-  const [cidrRangeServices, setCidrRangeServices] = useState(defaultCidrServices);
-  const [clusterVersion, setClusterVersion] = useState(defaultClusterVersion);
+
   const [isReadOnly, setIsReadOnly] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>(undefined);
   const [isClicked, setIsClicked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [preflightData, setPreflightData] = useState(null)
   const [preflightFailed, setPreflightFailed] = useState<boolean>(true)
   const [preflightError, setPreflightError] = useState<string>("")
-  const [showPreflightModal, setShowPreflightModal] = useState(false);
   const [showHelpMessage, setShowHelpMessage] = useState(true);
   const [quotaIncrease, setQuotaIncrease] = useState<EnumQuotaIncrease[]>([]);
   const [showEmailMessage, setShowEmailMessage] = useState(false);
   const { showIntercomWithMessage } = useIntercom();
+  const [clusterState, setClusterState] = useState(initialClusterState);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [controlPlaneLogs, setControlPlaneLogs] = useState<EKSLogging>(
+    new EKSLogging()
+  );
 
-  const markStepStarted = async (step: string, errMessage?: string) => {
+
+  const markStepStarted = async (step: string, errMessage?: string): Promise<void> => {
     try {
       await api.updateOnboardingStep(
         "<token>",
         {
           step,
           error_message: errMessage,
-          region: awsRegion,
+          region: clusterState.awsRegion,
           provider: "aws",
         },
         {
-          project_id: currentProject.id,
+          project_id: currentProject ? currentProject.id : 0,
         }
       );
     } catch (err) {
-      // console.log(err);
     }
   };
 
-  const getStatus = () => {
+  const getStatus = (): JSX.Element | "Provisioning is still in progress..." | undefined => {
     if (isLoading) {
       return <Loading />
     }
-    if (isReadOnly && props.provisionerError == "") {
+    if (isReadOnly && props.provisionerError === "") {
       return "Provisioning is still in progress...";
 
     }
     return undefined;
   };
-  const validateInput = (wildCardDomainer) => {
+  const validateInput = (wildCardDomainer: string): false | string => {
     if (!wildCardDomainer) {
       return "Required for ALB Load Balancer";
     }
-    if (wildCardDomainer?.charAt(0) == "*") {
+    if (wildCardDomainer?.charAt(0) === "*") {
       return "Wildcard domain cannot start with *";
     }
     return false;
   };
-  function validateIPInput(IPAllowList) {
+  function validateIPInput(IPAllowList: string): boolean {
     // This regular expression checks for an IP address with a subnet mask.
     const regex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/([0-9]|[1-2][0-9]|3[0-2])$/;
     if (!IPAllowList) {
@@ -224,7 +243,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     // If all IPs are valid, return false (no error)
     return false;
   }
-  function validateTags(awsTags) {
+  function validateTags(awsTags: string): boolean {
     // Regular expression t o check for a key-value pair format "key=value"
     const regex = /^[a-zA-Z0-9]+=[a-zA-Z0-9]+$/;
     // Split the input string by comma and remove any empty elements
@@ -239,59 +258,68 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     // If all tags are valid, return false (no error)
     return false;
   }
-  const clusterNameDoesNotExist = () => {
-    return !clusterName;
+  const clusterNameDoesNotExist = (): boolean => {
+    return !clusterState.clusterName;
   };
-  const userProvisioning = () => {
+  const userProvisioning = (): boolean => {
     //If the cluster is updating or updating unavailabe but there are no errors do not allow re-provisioning
     return isReadOnly && props.provisionerError === "";
   };
 
-  const isDisabled = () => {
+  const isDisabled = (): boolean | undefined => {
     return (
       (clusterNameDoesNotExist() || userProvisioning() || isClicked || (currentCluster && !currentProject?.enable_reprovision)
       ))
   };
-  function convertStringToTags(tagString) {
+  function convertStringToTags(tagString: string): { [key: string]: string } {
     if (typeof tagString !== "string" || tagString.trim() === "") {
-      return [];
+      return {};
     }
 
     // Split the input string by comma, then reduce the resulting array to an object
-    const tags = tagString.split(",").reduce((obj, item) => {
-      // Split each item by "=",
-      const [key, value] = item.split("=");
-      // Add the key-value pair to the object
-      obj[key] = value;
+    const tags = tagString.split(",").reduce<{ [key: string]: string }>((obj, item) => {
+      // Split each item by "=", and trim whitespace from both key and value
+      const [key, value] = item.split("=").map(part => part.trim());
+
+      // Only add the key-value pair to the object if both key and value are present
+      if (key && value) {
+        obj[key] = value;
+      }
+
       return obj;
     }, {});
 
     return tags;
   }
-
-  const createClusterObj = () => {
+  const handleClusterStateChange = <K extends keyof ClusterState>(
+    key: K,
+    value: ClusterState[K]
+  ): void => {
+    setClusterState((prevState: ClusterState) => ({ ...prevState, [key]: value }));
+  };
+  const createClusterObj = (): Contract => {
     let loadBalancerObj = new LoadBalancer({});
     loadBalancerObj.loadBalancerType = LoadBalancerType.NLB;
-    if (loadBalancerType) {
+    if (clusterState.loadBalancerType) {
       loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
-      loadBalancerObj.wildcardDomain = wildCardDomain;
+      loadBalancerObj.wildcardDomain = clusterState.wildCardDomain;
 
-      if (awsTags) {
-        loadBalancerObj.tags = convertStringToTags(awsTags);
+      if (clusterState.awsTags) {
+        loadBalancerObj.tags = convertStringToTags(clusterState.awsTags);
       }
-      if (IPAllowList) {
-        loadBalancerObj.allowlistIpRanges = IPAllowList;
+      if (clusterState.IPAllowList) {
+        loadBalancerObj.allowlistIpRanges = clusterState.IPAllowList;
       }
-      if (wafV2Enabled) {
-        loadBalancerObj.enableWafv2 = wafV2Enabled;
+      if (clusterState.wafV2Enabled) {
+        loadBalancerObj.enableWafv2 = clusterState.wafV2Enabled;
       } else {
         loadBalancerObj.enableWafv2 = false;
       }
-      if (wafV2ARN) {
-        loadBalancerObj.wafv2Arn = wafV2ARN;
+      if (clusterState.wafV2ARN) {
+        loadBalancerObj.wafv2Arn = clusterState.wafV2ARN;
       }
-      if (certificateARN) {
-        loadBalancerObj.additionalCertificateArns = certificateARN.split(",");
+      if (clusterState.certificateARN) {
+        loadBalancerObj.additionalCertificateArns = clusterState.certificateARN.split(",");
       }
     }
 
@@ -304,17 +332,17 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         kindValues: {
           case: "eksKind",
           value: new EKS({
-            clusterName,
-            clusterVersion: clusterVersion || defaultClusterVersion,
-            cidrRange: cidrRangeVPC || defaultCidrVpc, // deprecated in favour of network.cidrRangeVPC: can be removed after december 2023
-            region: awsRegion,
+            clusterName: clusterState.clusterName,
+            clusterVersion: clusterState.clusterVersion || defaultClusterVersion,
+            cidrRange: clusterState.cidrRangeVPC || defaultCidrVpc, // deprecated in favour of network.cidrRangeVPC: can be removed after december 2023
+            region: clusterState.awsRegion,
             loadBalancer: loadBalancerObj,
             logging: controlPlaneLogs,
-            enableGuardDuty: guardDutyEnabled,
-            enableKmsEncryption: kmsEncryptionEnabled,
+            enableGuardDuty: clusterState.guardDutyEnabled,
+            enableKmsEncryption: clusterState.kmsEncryptionEnabled,
             network: new AWSClusterNetwork({
-              vpcCidr: cidrRangeVPC || defaultCidrVpc,
-              serviceCidr: cidrRangeServices || defaultCidrServices,
+              vpcCidr: clusterState.cidrRangeVPC || defaultCidrVpc,
+              serviceCidr: clusterState.cidrRangeServices || defaultCidrServices,
             }),
             nodeGroups: [
               new EKSNodeGroup({
@@ -323,7 +351,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 maxInstances: 5,
                 nodeGroupType: NodeGroupType.SYSTEM,
                 isStateful: false,
-                additionalPolicies: additionalNodePolicies,
+                additionalPolicies: clusterState.additionalNodePolicies,
               }),
               new EKSNodeGroup({
                 instanceType: "t3.large",
@@ -331,15 +359,15 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 maxInstances: 1,
                 nodeGroupType: NodeGroupType.MONITORING,
                 isStateful: true,
-                additionalPolicies: additionalNodePolicies,
+                additionalPolicies: clusterState.additionalNodePolicies,
               }),
               new EKSNodeGroup({
-                instanceType: machineType,
-                minInstances: minInstances || 1,
-                maxInstances: maxInstances || 10,
+                instanceType: clusterState.machineType,
+                minInstances: clusterState.minInstances || 1,
+                maxInstances: clusterState.maxInstances || 10,
                 nodeGroupType: NodeGroupType.APPLICATION,
                 isStateful: false,
-                additionalPolicies: additionalNodePolicies,
+                additionalPolicies: clusterState.additionalNodePolicies,
               }),
             ],
           }),
@@ -349,23 +377,18 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return data;
   }
 
-  const createCluster = async () => {
+  const createCluster = async (): Promise<void> => {
     setIsLoading(true);
     setIsClicked(true);
-
-
     const data = createClusterObj();
-
     if (props.clusterId) {
       data["cluster"]["clusterId"] = props.clusterId;
     }
 
     try {
       setIsReadOnly(true);
-      setErrorMessage(undefined);
-
       if (!props.clusterId) {
-        markStepStarted("pre-provisioning-check-started");
+        await markStepStarted("pre-provisioning-check-started");
       }
 
       const res = await api.createContract("<token>", data, {
@@ -373,7 +396,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       });
 
       if (!props.clusterId) {
-        markStepStarted("provisioning-started");
+        await markStepStarted("provisioning-started");
       }
 
       // Only refresh and set clusters on initial create
@@ -385,9 +408,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           data.forEach((cluster: ClusterType) => {
             if (cluster.id === res.data.contract_revision?.cluster_id) {
               // setHasFinishedOnboarding(true);
-              if (machineType == "g4dn.xlarge") {
-                cluster.gpuCluster = true;
-              }
               setCurrentCluster(cluster);
               OFState.actions.goTo("clean_up");
               pushFiltered(props, "/cluster-dashboard", ["project_id"], {
@@ -397,33 +417,17 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           });
         })
         .catch((err) => {
-          console.error(err);
         });
       // }
-      {
-        props?.closeModal &&
-          props?.closeModal()
-      };
+      if (props?.closeModal) {
+        props?.closeModal()
+      }
 
-      setErrorMessage(undefined);
     } catch (err) {
       const errMessage = err.response.data?.error.replace("unknown: ", "");
       // hacky, need to standardize error contract with backend
       setIsClicked(false);
       setIsLoading(false)
-      if (errMessage.includes("elastic IP")) {
-        setErrorMessage(AWS_EIP_QUOTA_ERROR_MESSAGE);
-      } else if (errMessage.includes("VPC")) {
-        setErrorMessage(AWS_VPC_QUOTA_ERROR_MESSAGE);
-      } else if (errMessage.includes("NAT Gateway")) {
-        setErrorMessage(AWS_NAT_GATEWAY_QUOTA_ERROR_MESSAGE);
-      } else if (errMessage.includes("vCPU")) {
-        setErrorMessage(AWS_VCPU_QUOTA_ERROR_MESSAGE);
-      } else if (errMessage.includes("AWS account")) {
-        setErrorMessage(AWS_LOGIN_ERROR_MESSAGE);
-      } else {
-        setErrorMessage(DEFAULT_ERROR_MESSAGE);
-      }
       markStepStarted("provisioning-failed", errMessage);
 
       // enable edit again only in the case of an error
@@ -440,7 +444,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       (currentCluster.status === "UPDATING" ||
         currentCluster.status === "UPDATING_UNAVAILABLE")
     );
-    setClusterName(
+    handleClusterStateChange("clusterName",
       `${currentProject.name}-cluster-${Math.random()
         .toString(36)
         .substring(2, 8)}`
@@ -451,64 +455,58 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
-      if (eksValues == null) {
+      if (eksValues === null) {
         return;
       }
-      eksValues.nodeGroups.map((nodeGroup: EKSNodeGroup) => {
-        if (
-          nodeGroup.nodeGroupType.toString() === "NODE_GROUP_TYPE_APPLICATION"
-        ) {
-          setMachineType(nodeGroup.instanceType);
-          setMinInstances(nodeGroup.minInstances);
-          setMaxInstances(nodeGroup.maxInstances);
+
+      eksValues.nodeGroups.forEach((nodeGroup: EKSNodeGroup) => {
+        if (nodeGroup.nodeGroupType.toString() === "NODE_GROUP_TYPE_APPLICATION") {
+          handleClusterStateChange('machineType', nodeGroup.instanceType);
+          handleClusterStateChange('minInstances', nodeGroup.minInstances);
+          handleClusterStateChange('maxInstances', nodeGroup.maxInstances);
         }
 
         if (nodeGroup.additionalPolicies?.length > 0) {
-          // this shares policies across all node groups, but there is no reason that this can be specific policies per node group
-          setAdditionalNodePolicies(nodeGroup.additionalPolicies);
+          handleClusterStateChange('additionalNodePolicies', nodeGroup.additionalPolicies);
         }
       });
-      setClusterName(eksValues.clusterName);
-      setAwsRegion(eksValues.region);
-      setClusterVersion(eksValues.clusterVersion);
-      setCidrRangeVPC(eksValues.cidrRange);
-      if (eksValues.network != null) {
-        setCidrRangeVPC(eksValues.network?.vpcCidr || defaultCidrVpc);
-        setCidrRangeServices(eksValues.network?.serviceCidr || defaultCidrServices);
-      }
-      if (eksValues.loadBalancer != null) {
-        setIPAllowList(eksValues.loadBalancer.allowlistIpRanges);
-        setWildCardDomain(eksValues.loadBalancer.wildcardDomain);
-        //setAccessS3Logs(eksValues.loadBalancer.enableS3AccessLogs)
 
-        if (eksValues.loadBalancer.tags) {
-          setAwsTags(
-            Object.entries(eksValues.loadBalancer.tags)
-              .map(([key, value]) => `${key}=${value}`)
-              .join(",")
-          );
-        }
+      handleClusterStateChange('clusterName', eksValues.clusterName);
+      handleClusterStateChange('awsRegion', eksValues.region);
+      handleClusterStateChange('clusterVersion', eksValues.clusterVersion);
+      handleClusterStateChange('cidrRangeVPC', eksValues.cidrRange ?? eksValues.network?.vpcCidr ?? defaultCidrVpc);
+      handleClusterStateChange('cidrRangeServices', eksValues.network?.serviceCidr || defaultCidrServices);
 
-        setLoadBalancerType(
-          eksValues.loadBalancer.loadBalancerType?.toString() ===
-          "LOAD_BALANCER_TYPE_ALB"
-        );
-        setwafV2ARN(eksValues.loadBalancer.wafv2Arn);
-        setWaf2Enabled(eksValues.loadBalancer.enableWafv2);
+      if (eksValues.loadBalancer !== null) {
+        handleClusterStateChange('IPAllowList', eksValues.loadBalancer.allowlistIpRanges);
+        handleClusterStateChange('wildCardDomain', eksValues.loadBalancer.wildcardDomain);
+
+        const awsTags = eksValues.loadBalancer.tags
+          ? Object.entries(eksValues.loadBalancer.tags)
+            .map(([key, value]) => `${key}=${value}`)
+            .join(",")
+          : '';
+        handleClusterStateChange('awsTags', awsTags);
+
+        const loadBalancerType = eksValues.loadBalancer.loadBalancerType?.toString() === "LOAD_BALANCER_TYPE_ALB";
+        handleClusterStateChange('loadBalancerType', loadBalancerType);
+        handleClusterStateChange('wafV2ARN', eksValues.loadBalancer.wafv2Arn);
+        handleClusterStateChange('wafV2Enabled', eksValues.loadBalancer.enableWafv2);
       }
 
       if (eksValues.logging != null) {
-        const l = new EKSLogging();
-        l.enableApiServerLogs = eksValues.logging.enableApiServerLogs;
-        l.enableAuditLogs = eksValues.logging.enableAuditLogs;
-        l.enableAuthenticatorLogs = eksValues.logging.enableAuthenticatorLogs;
-        l.enableControllerManagerLogs =
-          eksValues.logging.enableControllerManagerLogs;
-        l.enableSchedulerLogs = eksValues.logging.enableSchedulerLogs;
-        setControlPlaneLogs(l);
+        const logging = {
+          enableApiServerLogs: eksValues.logging.enableApiServerLogs,
+          enableAuditLogs: eksValues.logging.enableAuditLogs,
+          enableAuthenticatorLogs: eksValues.logging.enableAuthenticatorLogs,
+          enableControllerManagerLogs: eksValues.logging.enableControllerManagerLogs,
+          enableSchedulerLogs: eksValues.logging.enableSchedulerLogs,
+        };
+        handleClusterStateChange('controlPlaneLogs', logging);
       }
-      setGuardDutyEnabled(eksValues.enableGuardDuty);
-      setKmsEncryptionEnabled(eksValues.enableKmsEncryption);
+
+      handleClusterStateChange('guardDutyEnabled', eksValues.enableGuardDuty);
+      handleClusterStateChange('kmsEncryptionEnabled', eksValues.enableKmsEncryption);
     }
   }, [isExpanded, props.selectedClusterVersion]);
 
@@ -517,18 +515,18 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       setStep(1)
       preflightChecks()
     }
-  }, [props.selectedClusterVersion, awsRegion, machineType]);
+  }, [props.selectedClusterVersion, clusterState]);
 
-  const proceedToProvision = async () => {
+  const proceedToProvision = async (): Promise<void> => {
     setShowEmailMessage(true)
     markStepStarted("requested-quota-increase")
     setStep(2)
   }
-  const requestQuotasAndProvision = async () => {
+  const requestQuotasAndProvision = async (): Promise<void> => {
     await requestQuotaIncrease()
     await createCluster()
   }
-  const requestQuotaIncrease = async () => {
+  const requestQuotaIncrease = async (): Promise<void> => {
 
     try {
       setIsLoading(true);
@@ -554,13 +552,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
       setIsLoading(false)
     } catch (err) {
-      console.log(err)
       setIsLoading(false)
     }
 
   }
-
-  const preflightChecks = async () => {
+  const preflightChecks = async (): Promise<void> => {
 
     try {
       setIsLoading(true);
@@ -594,7 +590,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       setQuotaIncrease(quotas)
       // If none of the checks have a message, set setPreflightFailed to false
       if (hasMessage) {
-        setShowPreflightModal(true)
         showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
         markStepStarted("provisioning-failed", errors);
       }
@@ -611,7 +606,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
 
   }
-  const renderAdvancedSettings = () => {
+  const renderAdvancedSettings = (): JSX.Element => {
     return (
       <>
         {
@@ -632,9 +627,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 <Input
                   width="350px"
                   type="string"
-                  value={clusterVersion}
+                  value={clusterState.clusterVersion}
                   disabled={true}
-                  setValue={(x: string) => setCidrRangeServices(x)}
+                  setValue={(x: string) => handleClusterStateChange("clusterVersion", x)}
                   label="Cluster version (only shown to porter.run emails)"
                 />
 
@@ -644,22 +639,21 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 options={machineTypeOptions}
                 width="350px"
                 disabled={isReadOnly}
-                value={machineType}
-                setValue={setMachineType}
+                value={clusterState.machineType}
+                setValue={(x: string) => handleClusterStateChange("machineType", x)}
                 label="Machine type"
               />
               <Spacer y={1} />
               <Input
                 width="350px"
                 type="number"
-                disabled={isReadOnly}
-                value={maxInstances.toString()}
+                disabled={isReadOnly || isLoading}
+                value={clusterState.maxInstances.toString()}
                 setValue={(x: string) => {
-                  const num = parseInt(x, 10)
-                  if (num == undefined) {
-                    return
+                  const num = parseInt(x, 10);
+                  if (!isNaN(num)) {
+                    handleClusterStateChange('maxInstances', num);
                   }
-                  setMaxInstances(num)
                 }}
                 label="Maximum number of application nodes"
                 placeholder="ex: 1"
@@ -668,14 +662,14 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Input
                 width="350px"
                 type="number"
-                disabled={isReadOnly}
-                value={minInstances.toString()}
+                disabled={isReadOnly || isLoading}
+                value={clusterState.minInstances.toString()}
                 setValue={(x: string) => {
                   const num = parseInt(x, 10)
-                  if (num == undefined) {
+                  if (num === undefined) {
                     return
                   }
-                  setMinInstances(num)
+                  handleClusterStateChange('minInstances', num);
                 }}
                 label="Minimum number of application nodes. If set to 0, no applications will be deployed."
                 placeholder="ex: 1"
@@ -684,9 +678,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Input
                 width="350px"
                 type="string"
-                value={cidrRangeVPC}
-                disabled={props.clusterId}
-                setValue={(x: string) => setCidrRangeVPC(x)}
+                value={clusterState.cidrRangeVPC}
+                disabled={props.clusterId !== undefined || isLoading}
+                setValue={(x: string) => handleClusterStateChange('cidrRangeVPC', x)}
                 label="CIDR range for AWS VPC"
                 placeholder="ex: 10.78.0.0/16"
               />
@@ -694,13 +688,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Input
                 width="350px"
                 type="string"
-                value={cidrRangeServices}
-                disabled={props.clusterId}
-                setValue={(x: string) => setCidrRangeServices(x)}
+                value={clusterState.cidrRangeServices}
+                disabled={props.clusterId !== undefined || isLoading}
+                setValue={(x: string) => handleClusterStateChange('cidrRangeServices', x)}
                 label="CIDR range for Kubernetes internal services"
                 placeholder="ex: 172.20.0.0/16"
               />
-              {!currentProject.simplified_view_enabled && (
+              {(currentProject && !currentProject.simplified_view_enabled) && (
                 <>
                   <Spacer y={1} />
                   <Checkbox
@@ -810,20 +804,19 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
                   <Spacer y={1} />
                   <Checkbox
-                    checked={loadBalancerType}
+                    checked={clusterState.loadBalancerType}
                     disabled={isReadOnly}
                     toggleChecked={() => {
-                      if (loadBalancerType) {
-                        setWildCardDomain("");
-                        setIPAllowList("");
-                        setwafV2ARN("");
-                        setAwsTags("");
-                        seCertificateARN("");
-                        setWaf2Enabled(false);
-                        //setAccessS3Logs(false);
+                      if (clusterState.loadBalancerType) {
+                        handleClusterStateChange("wildCardDomain", "");
+                        handleClusterStateChange("IPAllowList", "");
+                        handleClusterStateChange("wafV2ARN", "");
+                        handleClusterStateChange("awsTags", "");
+                        handleClusterStateChange("certificateARN", "");
+                        handleClusterStateChange("wafV2Enabled", false);
                       }
 
-                      setLoadBalancerType(!loadBalancerType);
+                      handleClusterStateChange("loadBalancerType", !clusterState.loadBalancerType);
                     }}
                     disabledTooltip={
                       "Wait for provisioning to complete before editing this field."
@@ -832,14 +825,14 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                     <Text color="helper">Set Load Balancer Type to ALB</Text>
                   </Checkbox>
                   <Spacer y={1} />
-                  {loadBalancerType && (
+                  {clusterState.loadBalancerType && (
                     <>
                       <FlexCenter>
                         <Input
                           width="350px"
                           disabled={isReadOnly}
-                          value={wildCardDomain}
-                          setValue={(x: string) => setWildCardDomain(x)}
+                          value={clusterState.wildCardDomain}
+                          setValue={(x: string) => handleClusterStateChange("wildCardDomain", x)}
                           label="Wildcard domain"
                           placeholder="user-2.porter.run"
                         />
@@ -854,10 +847,10 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                         </Wrapper>
                       </FlexCenter>
 
-                      {validateInput(wildCardDomain) && (
+                      {validateInput(clusterState.wildCardDomain) && (
                         <ErrorInLine>
                           <i className="material-icons">error</i>
-                          {validateInput(wildCardDomain)}
+                          {validateInput(clusterState.wildCardDomain)}
                         </ErrorInLine>
                       )}
                       <Spacer y={1} />
@@ -867,8 +860,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                           <Input
                             width="350px"
                             disabled={isReadOnly}
-                            value={IPAllowList}
-                            setValue={(x: string) => setIPAllowList(x)}
+                            value={clusterState.IPAllowList}
+                            setValue={(x: string) => handleClusterStateChange("IPAllowList", x)}
                             label="IP Allow List"
                             placeholder="160.72.72.58/32,160.72.72.59/32"
                           />
@@ -883,7 +876,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                           </Wrapper>
                         </>
                       </FlexCenter>
-                      {validateIPInput(IPAllowList) && (
+                      {validateIPInput(clusterState.IPAllowList) && (
                         <ErrorInLine>
                           <i className="material-icons">error</i>
                           {"Needs to be Comma Separated Valid IP addresses"}
@@ -894,8 +887,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                       <Input
                         width="350px"
                         disabled={isReadOnly}
-                        value={certificateARN}
-                        setValue={(x: string) => seCertificateARN(x)}
+                        value={clusterState.certificateARN}
+                        setValue={(x: string) => handleClusterStateChange("certificateARN", x)}
                         label="Certificate ARN"
                         placeholder="arn:aws:acm:REGION:ACCOUNT_ID:certificate/ACM_ID"
                       />
@@ -906,8 +899,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                           <Input
                             width="350px"
                             disabled={isReadOnly}
-                            value={awsTags}
-                            setValue={(x: string) => setAwsTags(x)}
+                            value={clusterState.awsTags}
+                            setValue={(x: string) => handleClusterStateChange("awsTags", x)}
                             label="AWS Tags"
                             placeholder="costcenter=1,environment=10,project=32"
                           />
@@ -922,7 +915,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                           </Wrapper>
                         </>
                       </FlexCenter>
-                      {validateTags(awsTags) && (
+                      {validateTags(clusterState.awsTags) && (
                         <ErrorInLine>
                           <i className="material-icons">error</i>
                           {"Needs to be Comma Separated Valid Tags"}
@@ -945,13 +938,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             </Checkbox> */}
                       {/*<Spacer y={1} />*/}
                       <Checkbox
-                        checked={wafV2Enabled}
+                        checked={clusterState.wafV2Enabled}
                         disabled={isReadOnly}
                         toggleChecked={() => {
-                          if (wafV2Enabled) {
-                            setwafV2ARN("");
+                          if (clusterState.wafV2Enabled) {
+                            handleClusterStateChange("wafV2ARN", "")
                           }
-                          setWaf2Enabled(!wafV2Enabled);
+                          handleClusterStateChange("wafV2Enabled", !clusterState.wafV2Enabled);
                         }}
                         disabledTooltip={
                           "Wait for provisioning to complete before editing this field."
@@ -959,7 +952,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                       >
                         <Text color="helper">WAFv2 Enabled</Text>
                       </Checkbox>
-                      {wafV2Enabled && (
+                      {clusterState.wafV2Enabled && (
                         <>
                           <Spacer y={1} />
 
@@ -970,8 +963,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                                 type="string"
                                 label="WAFv2 ARN"
                                 disabled={isReadOnly}
-                                value={wafV2ARN}
-                                setValue={(x: string) => setwafV2ARN(x)}
+                                value={clusterState.wafV2ARN}
+                                setValue={(x: string) => handleClusterStateChange("wafV2ARN", x)}
                                 placeholder="arn:aws:wafv2:REGION:ACCOUNT_ID:regional/webacl/ACL_NAME/RULE_ID"
                               />
                               <Wrapper>
@@ -986,7 +979,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                             </>
                           </FlexCenter>
 
-                          {(wafV2ARN == undefined || wafV2ARN?.length == 0) && (
+                          {(clusterState.wafV2ARN === undefined || clusterState.wafV2ARN?.length === 0) && (
                             <ErrorInLine>
                               <i className="material-icons">error</i>
                               {"Required if WafV2 is enabled"}
@@ -999,10 +992,10 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                   )}
                   <FlexCenter>
                     <Checkbox
-                      checked={guardDutyEnabled}
+                      checked={clusterState.guardDutyEnabled}
                       disabled={isReadOnly}
                       toggleChecked={() => {
-                        setGuardDutyEnabled(!guardDutyEnabled);
+                        handleClusterStateChange("guardDutyEnabled", !clusterState.guardDutyEnabled);
                       }}
                       disabledTooltip={
                         "Wait for provisioning to complete before editing this field."
@@ -1024,12 +1017,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                   <Spacer y={1} />
                   <FlexCenter>
                     <Checkbox
-                      checked={kmsEncryptionEnabled}
+                      checked={clusterState.kmsEncryptionEnabled}
                       disabled={isReadOnly || currentCluster != null}
                       toggleChecked={() => {
-                        setKmsEncryptionEnabled(!kmsEncryptionEnabled);
+                        handleClusterStateChange("kmsEncryptionEnabled", !clusterState.kmsEncryptionEnabled);
                       }}
-                      disabledTooltip={kmsEncryptionEnabled ? "KMS encryption can never be disabled." :
+                      disabledTooltip={clusterState.kmsEncryptionEnabled ? "KMS encryption can never be disabled." :
                         "Encryption is only supported at cluster creation."
                       }
                     >
@@ -1046,7 +1039,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                       />
                     </Checkbox>
                   </FlexCenter>
-                  {kmsEncryptionEnabled && (
+                  {clusterState.kmsEncryptionEnabled && (
                     <ErrorInLine>
                       <i className="material-icons">error</i>
                       {
@@ -1072,8 +1065,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           options={machineTypeOptions}
           width="350px"
           disabled={true}
-          value={machineType}
-          setValue={setMachineType}
+          value={"g4dn.xlarge"}
+          setValue={(x: string) => handleClusterStateChange("machineType", x)}
           label="Machine type"
         />
 
@@ -1081,12 +1074,16 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     );
   };
 
-  const dismissPreflight = () => {
+  const dismissPreflight = async (): Promise<void> => {
     setShowHelpMessage(false);
-    preflightChecks();
+    try {
+      await preflightChecks();
+    } catch (err) {
+
+    }
   }
 
-  const renderForm = () => {
+  const renderForm = (): JSX.Element => {
     // Render simplified form if initial create
     if (!props.clusterId) {
       return (
@@ -1101,10 +1098,10 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 options={regionOptions}
                 width="350px"
                 disabled={isReadOnly || isLoading}
-                value={awsRegion}
+                value={clusterState.awsRegion}
                 scrollBuffer={true}
                 dropdownMaxHeight="240px"
-                setActiveValue={setAwsRegion}
+                setActiveValue={(x: string) => handleClusterStateChange("awsRegion", x)}
                 label="📍 AWS region" />
               <>
                 {props?.gpuModal && renderGPUSettings()}
@@ -1132,7 +1129,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                     <>
                       {(showHelpMessage && currentProject?.quota_increase) ? <>
                         <Text color="helper">
-                          Your account currently is blocked from provisioning in {awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
+                          Your account currently is blocked from provisioning in {clusterState.awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
                         </Text>
                         <Spacer y={.5} />
                         <Text color="helper">
@@ -1158,7 +1155,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
                       </> : (
                         <><Text color="helper">
-                          Your account currently is blocked from provisioning in {awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
+                          Your account currently is blocked from provisioning in {clusterState.awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
                         </Text><Spacer y={.5} /><Button
                           disabled={isLoading}
                           onClick={preflightChecks}
@@ -1204,10 +1201,10 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           options={regionOptions}
           width="350px"
           disabled={isReadOnly || true}
-          value={awsRegion}
+          value={clusterState.awsRegion}
           scrollBuffer={true}
           dropdownMaxHeight="240px"
-          setActiveValue={setAwsRegion}
+          setActiveValue={(x: string) => handleClusterStateChange("awsRegion", x)}
           label="📍 AWS region" />
         {renderAdvancedSettings()}
       </StyledForm>
@@ -1247,71 +1244,71 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 export default withRouter(ProvisionerSettings);
 
 const ExpandHeader = styled.div<{ isExpanded: boolean }>`
-              display: flex;
-              align-items: center;
-              cursor: pointer;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
   > i {
-                margin - right: 7px;
-              margin-left: -7px;
-              transform: ${(props) =>
+        margin - right: 7px;
+      margin-left: -7px;
+      transform: ${(props) =>
     props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
-              transition: transform 0.1s ease;
+      transition: transform 0.1s ease;
   }
-              `;
+      `;
 
 const StyledForm = styled.div`
-              position: relative;
-              padding: 30px 30px 25px;
-              border-radius: 5px;
-              background: ${({ theme }) => theme.fg};
-              border: 1px solid #494b4f;
-              font-size: 13px;
-              margin-bottom: 30px;
-              `;
+      position: relative;
+      padding: 30px 30px 25px;
+      border-radius: 5px;
+      background: ${({ theme }) => theme.fg};
+      border: 1px solid #494b4f;
+      font-size: 13px;
+      margin-bottom: 30px;
+      `;
 
 const FlexCenter = styled.div`
-              display: flex;
-              align-items: center;
-              gap: 3px;
-              `;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      `;
 const Wrapper = styled.div`
-              transform: translateY(+13px);
-              `;
+      transform: translateY(+13px);
+      `;
 
 const ErrorInLine = styled.div`
-              display: flex;
-              align-items: center;
-              font-size: 13px;
-              color: #ff3b62;
-              margin-top: 10px;
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      color: #ff3b62;
+      margin-top: 10px;
 
   > i {
-                font - size: 18px;
-              margin-right: 5px;
+        font - size: 18px;
+      margin-right: 5px;
   }
-              `;
+      `;
 
 const CheckItemContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  border: 1px solid ${props => props.theme.border};
-  border-radius: 5px;
-  font-size: 13px;
-  width: 100%;
-  margin-bottom: 10px;
-  padding-left: 10px;
-  cursor: ${props => (props.hasMessage ? 'pointer' : 'default')};
-  background: ${props => props.theme.clickable.bg};
+      display: flex;
+      flex-direction: column;
+      border: 1px solid ${props => props.theme.border};
+      border-radius: 5px;
+      font-size: 13px;
+      width: 100%;
+      margin-bottom: 10px;
+      padding-left: 10px;
+      cursor: ${props => (props.hasMessage ? 'pointer' : 'default')};
+      background: ${props => props.theme.clickable.bg};
 
-`;
+      `;
 
 const CheckItemTop = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  background: ${props => props.theme.clickable.bg};
-`;
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: ${props => props.theme.clickable.bg};
+      `;
 
 const StatusIcon = styled.img`
-height: 14px;
-`;
+      height: 14px;
+      `;

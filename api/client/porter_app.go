@@ -703,3 +703,24 @@ func (c *Client) RollbackRevision(
 
 	return resp, err
 }
+
+// UseNewApplyLogic checks whether the CLI should use the new apply logic
+func (c *Client) UseNewApplyLogic(
+	ctx context.Context,
+	projectID, clusterID uint,
+) (*porter_app.UseNewApplyLogicResponse, error) {
+	resp := &porter_app.UseNewApplyLogicResponse{}
+
+	req := &porter_app.UseNewApplyLogicRequest{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/use-new-apply-logic",
+			projectID, clusterID,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}

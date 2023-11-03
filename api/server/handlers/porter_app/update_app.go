@@ -149,9 +149,12 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if appProto.Name == "" {
-		err := telemetry.Error(ctx, span, nil, "app name is empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
+		if request.Name == "" {
+			err := telemetry.Error(ctx, span, nil, "app name is empty")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+		appProto.Name = request.Name
 	}
 
 	sourceType, image := sourceFromAppAndGitSource(appProto, request.GitSource)

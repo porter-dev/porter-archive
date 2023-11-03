@@ -550,7 +550,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           <SelectRow
             options={locationOptions}
             width="350px"
-            disabled={isReadOnly || isLoading}
+            disabled={true}
             value={region}
             scrollBuffer={true}
             dropdownMaxHeight="240px"
@@ -561,7 +561,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           <SelectRow
             options={clusterVersionOptions}
             width="350px"
-            disabled={isReadOnly}
+            disabled={true}
             value={clusterVersion}
             scrollBuffer={true}
             dropdownMaxHeight="240px"
@@ -572,7 +572,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           <SelectRow
             options={instanceTypes}
             width="350px"
-            disabled={isReadOnly}
+            disabled={true}
             value={instanceType}
             scrollBuffer={true}
             dropdownMaxHeight="240px"

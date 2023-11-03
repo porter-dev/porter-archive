@@ -26,8 +26,10 @@ type PorterAppEvent struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	// PorterAppID is the ID that the given event relates to
 	PorterAppID uint `json:"porter_app_id" gorm:"index:idx_app_deployment_target"`
+	// AppInstanceID is the ID of the app instance that the given event relates to
+	AppInstanceID uuid.UUID `json:"app_instance_id" gorm:"type:uuid;index:idx_app_instance_deployment_target;default:00000000-0000-0000-0000-000000000000"`
 	// DeploymentTargetID is the ID of the deployment target that the event relates to
-	DeploymentTargetID uuid.UUID `json:"deployment_target_id" gorm:"type:uuid;index:idx_app_deployment_target;default:00000000-0000-0000-0000-000000000000"`
+	DeploymentTargetID uuid.UUID `json:"deployment_target_id" gorm:"type:uuid;index:idx_app_deployment_target;index:idx_app_instance_deployment_target;default:00000000-0000-0000-0000-000000000000"`
 	Metadata           JSONB     `json:"metadata" sql:"type:jsonb" gorm:"type:jsonb"`
 }
 

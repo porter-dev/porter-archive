@@ -61,17 +61,20 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 	)
 
 	// 4. hydrate notification with k8s deployment info
-	hydratedNotification, err := hydrateNotification(ctx, hydrateNotificationInput{
+	hydratedNotification, err := hydrateNotificationWithDeployment(ctx, hydrateNotificationWithDeploymentInput{
 		Notification:       baseNotification,
 		DeploymentTargetId: inp.DeploymentTargetID,
 		Namespace:          inp.Namespace,
 		K8sAgent:           inp.K8sAgent,
 	})
 	if err != nil {
-		return telemetry.Error(ctx, span, err, "failed to hydrate notification")
+		return telemetry.Error(ctx, span, err, "failed to hydrate notification with deployment")
 	}
 
-	// 5. based on notification + k8s deployment, update the status of the matching deploy event
+	// 5. hydrate notification with user-facing details
+	hydratedNotification = hydrateNotificationWithUserFacingDetails(ctx, hydratedNotification)
+
+	// 6. based on notification + k8s deployment, update the status of the matching deploy event
 	if hydratedNotification.Deployment.Status == DeploymentStatus_Failure ||
 		(hydratedNotification.Deployment.Status == DeploymentStatus_Pending &&
 			detailIndicatesDeploymentFailure(hydratedNotification.AgentDetail)) {
@@ -85,7 +88,7 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 		}
 	}
 
-	// 6. save notification to db
+	// 7. save notification to db
 	err = saveNotification(ctx, hydratedNotification, inp.EventRepo, inp.DeploymentTargetID)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to save notification")

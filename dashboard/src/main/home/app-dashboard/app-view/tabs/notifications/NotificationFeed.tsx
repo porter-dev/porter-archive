@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useHistory, useLocation } from "react-router";
 import styled from "styled-components";
 
 import Fieldset from "components/porter/Fieldset";
@@ -26,32 +27,28 @@ const NotificationFeed: React.FC<Props> = ({
   deploymentTargetId,
   appId,
 }) => {
+  const { search } = useLocation();
+  const history = useHistory();
+  const queryParams = new URLSearchParams(search);
+  const notificationId = queryParams.get("notification_id");
+
   const [selectedNotification, setSelectedNotification] = useState<
     ClientNotification | undefined
-  >(notifications.length ? notifications[0] : undefined);
-  const scrollToTopRef = useRef<HTMLDivElement | null>(null);
-
-  const handleTileClick = (notification: ClientNotification): void => {
-    setSelectedNotification(notification);
-    scrollToTopRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
+  >(undefined);
 
   useEffect(() => {
-    // if new notifications come in, select the first one if none are selected; otherwise, keep the current selection
-    if (notifications.length && !selectedNotification) {
-      setSelectedNotification(notifications[0]);
-    } else if (
-      selectedNotification &&
-      notifications.find((n) => n.id === selectedNotification.id)
+    if (
+      notificationId &&
+      notifications.length &&
+      notifications.find((n) => n.id === notificationId)
     ) {
       setSelectedNotification(
-        notifications.find((n) => n.id === selectedNotification.id)
+        notifications.find((n) => n.id === notificationId)
       );
+    } else {
+      setSelectedNotification(undefined);
     }
-  }, [JSON.stringify(notifications)]);
+  }, [notificationId, JSON.stringify(notifications)]);
 
   if (notifications.length === 0) {
     return (
@@ -69,23 +66,24 @@ const NotificationFeed: React.FC<Props> = ({
 
   return (
     <StyledNotificationFeed>
-      {selectedNotification && (
-        <>
-          <NotificationList
-            onTileClick={handleTileClick}
-            notifications={notifications}
-            selectedNotification={selectedNotification}
-          />
-          <NotificationExpandedView
-            notification={selectedNotification}
-            projectId={projectId}
-            clusterId={clusterId}
-            appName={appName}
-            deploymentTargetId={deploymentTargetId}
-            appId={appId}
-            scrollToTopRef={scrollToTopRef}
-          />
-        </>
+      {selectedNotification ? (
+        <NotificationExpandedView
+          notification={selectedNotification}
+          projectId={projectId}
+          clusterId={clusterId}
+          appName={appName}
+          deploymentTargetId={deploymentTargetId}
+          appId={appId}
+        />
+      ) : (
+        <NotificationList
+          notifications={notifications}
+          onNotificationClick={(notification: ClientNotification) => {
+            history.push(
+              `/apps/${appName}/notifications?notification_id=${notification.id}`
+            );
+          }}
+        />
       )}
     </StyledNotificationFeed>
   );

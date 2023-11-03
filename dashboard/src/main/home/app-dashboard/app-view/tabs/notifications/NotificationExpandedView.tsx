@@ -17,7 +17,6 @@ type Props = {
   appName: string;
   deploymentTargetId: string;
   appId: number;
-  scrollToTopRef: React.MutableRefObject<HTMLDivElement | null>;
 };
 
 const NotificationExpandedView: React.FC<Props> = ({
@@ -27,17 +26,10 @@ const NotificationExpandedView: React.FC<Props> = ({
   appName,
   deploymentTargetId,
   appId,
-  scrollToTopRef,
 }) => {
   return (
     <StyledNotificationExpandedView>
       <ExpandedViewContent>
-        <div
-          ref={scrollToTopRef}
-          style={{ marginTop: "-40px", marginBottom: "40px" }}
-        />
-        <Text color="helper">Event ID: {notification.id}</Text>
-        <Spacer y={0.5} />
         <StyledActivityFeed>
           {notification.messages.map((message, i) => {
             return (
@@ -60,7 +52,9 @@ const NotificationExpandedView: React.FC<Props> = ({
                     {message.human_readable_summary}
                   </Container>
                   <Spacer y={0.5} />
-                  <Container row>{message.human_readable_detail}</Container>
+                  <Container row style={{ color: "#aaaabb" }}>
+                    {message.human_readable_detail}
+                  </Container>
                 </Message>
               </NotificationWrapper>
             );
@@ -94,9 +88,9 @@ const NotificationExpandedView: React.FC<Props> = ({
 export default NotificationExpandedView;
 
 const StyledNotificationExpandedView = styled.div`
-  width: 100%;
-  overflow-y: scroll;
+  height: 100%;
   display: flex;
+  justify-content: space-between;
   flex-direction: column;
   animation: fadeIn 0.3s 0s;
   padding: 70px;
@@ -108,30 +102,6 @@ const StyledNotificationExpandedView = styled.div`
     to {
       opacity: 1;
     }
-  }
-  justify-content: space-between;
-  ::-webkit-scrollbar {
-    width: 3px;
-    :horizontal {
-      height: 3px;
-    }
-  }
-
-  ::-webkit-scrollbar-corner {
-    width: 3px;
-    background: #ffffff11;
-    color: white;
-  }
-
-  ::-webkit-scrollbar-track {
-    width: 3px;
-    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background-color: darkgrey;
-    outline: 1px solid slategrey;
   }
 `;
 

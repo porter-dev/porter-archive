@@ -1,63 +1,61 @@
 import React from "react";
 import styled from "styled-components";
 
+import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type ClientNotification } from "lib/porter-apps/notification";
 
 import { feedDate } from "shared/string_utils";
+import web from "assets/web.png";
 
 type Props = {
   notification: ClientNotification;
-  selected: boolean;
   onClick: () => void;
 };
 
-const NotificationTile: React.FC<Props> = ({
-  notification,
-  selected,
-  onClick,
-}) => {
+const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
   return (
-    <StyledNotificationTile onClick={onClick} selected={selected}>
-      <NotificationContent>
-        <Text color="helper">{feedDate(notification.timestamp)}</Text>
-        <Spacer y={0.5} />
-        <Text color="helper">
-          Service: <ServiceName>{notification.serviceName}</ServiceName>
-        </Text>
-        <Spacer y={0.5} />
-        <NotificationSummary>
-          {notification.isDeployRelated
-            ? "Your service failed to deploy"
-            : "Your service is unhealthy"}
-        </NotificationSummary>
-      </NotificationContent>
+    <StyledNotificationTile onClick={onClick}>
+      <Container row>
+        <Container row style={{ width: "200px" }}>
+          <NotificationSummary>
+            {notification.isDeployRelated
+              ? "Your service failed to deploy"
+              : "Your service is unhealthy"}
+          </NotificationSummary>
+        </Container>
+        <Spacer inline x={0.5} />
+        <Container row style={{ width: "120px" }}>
+          <Text color="helper">{feedDate(notification.timestamp)}</Text>
+        </Container>
+        <Spacer inline x={0.5} />
+        <Container row style={{ width: "200px" }}>
+          <ServiceNameTag>
+            <ServiceTypeIcon src={web} />
+            <Spacer inline x={0.5} />
+            {notification.serviceName}
+          </ServiceNameTag>
+        </Container>
+      </Container>
+      <Container row style={{ paddingRight: "10px" }}>
+        <StatusDot color={"#ff6060"} />
+      </Container>
     </StyledNotificationTile>
   );
 };
 
 export default NotificationTile;
 
-const StyledNotificationTile = styled.div<{ selected?: boolean }>`
-  align-items: center;
+const StyledNotificationTile = styled.div`
   user-select: none;
-  display: flex;
   padding: 15px 10px;
-  flex-direction: column;
-  align-item: center;
-  justify-content: space-between;
   cursor: pointer;
-  position: relative;
   border-radius: 5px;
-  background: ${(props) =>
-    props.selected
-      ? props.theme.clickable.clickedBg
-      : props.theme.clickable.bg};
-  border: ${(props) =>
-    props.selected ? "1px solid #fff" : "1px solid #494b4f"};
+  background: ${(props) => props.theme.clickable.bg};
+  border: 1px solid #494b4f;
   :hover {
-    border: ${({ selected }) => !selected && "1px solid #7a7b80"};
+    border: 1px solid #7a7b80;
   }
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {
@@ -68,13 +66,8 @@ const StyledNotificationTile = styled.div<{ selected?: boolean }>`
       opacity: 1;
     }
   }
-`;
-
-const NotificationContent = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  width: 100%;
+  justify-content: space-between;
 `;
 
 const NotificationSummary = styled.div`
@@ -83,6 +76,46 @@ const NotificationSummary = styled.div`
   font-weight: 500;
 `;
 
-const ServiceName = styled.span`
-  color: #ffffff;
+const ServiceNameTag = styled.div`
+  display: flex;
+  justify-content: center;
+  padding: 3px 5px;
+  border-radius: 5px;
+  background: #ffffff22;
+  user-select: text;
+  font-size: 13px;
+`;
+
+const ServiceTypeIcon = styled.img`
+  height: 12px;
+  margin-top: 2px;
+`;
+
+const StatusDot = styled.div<{ color: string }>`
+  min-width: 7px;
+  max-width: 7px;
+  height: 7px;
+  margin-left: 10px;
+  border-radius: 50%;
+  background: ${({ color }) => color};
+
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
+  transform: scale(1);
+  animation: pulse 2s infinite;
+  @keyframes pulse {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.9);
+    }
+
+    70% {
+      transform: scale(1);
+      box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    }
+
+    100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
+  }
 `;

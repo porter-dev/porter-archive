@@ -418,8 +418,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         .catch((err) => {
         });
       // }
-      props?.closeModal &&
+      if (props?.closeModal) {
         props?.closeModal()
+      }
 
     } catch (err) {
       const errMessage = err.response.data?.error.replace("unknown: ", "");

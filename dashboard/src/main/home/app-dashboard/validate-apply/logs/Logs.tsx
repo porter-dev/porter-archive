@@ -21,6 +21,7 @@ import { useRevisionList } from "lib/hooks/useRevisionList";
 
 import api from "shared/api";
 import spinner from "assets/loading.gif";
+
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import StyledLogs from "../../expanded-app/logs/StyledLogs";
 import {
@@ -48,6 +49,8 @@ type Props = {
   selectedService?: string;
   selectedRevisionId?: string;
   defaultScrollToBottomEnabled?: boolean;
+  defaultLatestRevision?: boolean;
+  jobRunID?: string;
 };
 
 const DEFAULT_LOG_TIMEOUT_SECONDS = 60;
@@ -66,6 +69,8 @@ const Logs: React.FC<Props> = ({
   selectedService,
   selectedRevisionId,
   defaultScrollToBottomEnabled = true,
+  defaultLatestRevision = true,
+  jobRunID = "",
 }) => {
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
@@ -251,6 +256,7 @@ const Logs: React.FC<Props> = ({
     filterPredeploy,
     timeRange,
     appID: appId,
+    jobRunID,
   });
 
   const {
@@ -330,7 +336,8 @@ const Logs: React.FC<Props> = ({
       selectedFilterValues.revision ===
         GenericFilter.getDefaultOption("revision").value &&
       selectedFilterValues.revision_id ===
-        GenericFilter.getDefaultOption("revision_id").value
+        GenericFilter.getDefaultOption("revision_id").value &&
+      defaultLatestRevision
     ) {
       setSelectedFilterValues({
         ...selectedFilterValues,

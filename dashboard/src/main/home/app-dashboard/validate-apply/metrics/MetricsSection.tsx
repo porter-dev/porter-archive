@@ -10,6 +10,7 @@ import Filter from "components/porter/Filter";
 import TabSelector from "components/TabSelector";
 import {
   type AvailableMetrics,
+  type GenericMetricResponseResults,
   type NormalizedMetricsData,
 } from "main/home/cluster-dashboard/expanded-chart/metrics/types";
 import { type ClientService } from "lib/porter-apps/services";
@@ -123,7 +124,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       }
       if (service.config.type === "web") {
         metricTypes.push("network");
-        if (!service.config.private) {
+        if (!service.config.private?.value) {
           metricTypes.push("nginx:status");
         }
       }
@@ -200,7 +201,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           [
             {
               results: (aggregatedMetricsResponse.data ?? []).flatMap(
-                (d: any) => d.results
+                (d: { results: GenericMetricResponseResults }) => d.results
               ),
             },
           ],
@@ -303,7 +304,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     if (metricsData == null || isMetricsDataLoading) {
       return <Loading />;
     }
-    return metricsData.map((metric: Metric) => {
+    return metricsData.map((metric: Metric, _: number) => {
       return (
         <MetricsChart
           key={metric.type}

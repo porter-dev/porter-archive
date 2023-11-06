@@ -1,9 +1,17 @@
-package notifications
+package porter_error
 
 import (
 	"regexp"
 	"strings"
 )
+
+type PorterError struct {
+	Code            PorterErrorCode `json:"code"`
+	Summary         string          `json:"summary"`
+	Detail          string          `json:"detail"`
+	MitigationSteps string          `json:"mitigation_steps"`
+	Documentation   []string        `json:"documentation"`
+}
 
 type PorterErrorCode int
 
@@ -17,10 +25,11 @@ const (
 	PorterErrorCode_ReadinessHealthCheck                PorterErrorCode = 30
 	PorterErrorCode_RestartedDueToError                 PorterErrorCode = 40
 	PorterErrorCode_InvalidImageError                   PorterErrorCode = 50
+	PorterErrorCode_MemoryLimitExceeded                 PorterErrorCode = 60
 )
 
 // errorCode parses the agent summary and possibly the detail (if it needs supplemental info) to return a standard Porter error code
-func errorCode(agentSummary, agentDetail string) PorterErrorCode {
+func ErrorCode(agentSummary, agentDetail string) PorterErrorCode {
 	errorCode := PorterErrorCode_Unknown
 
 	if strings.Contains(agentSummary, "non-zero exit code") {
@@ -41,6 +50,10 @@ func errorCode(agentSummary, agentDetail string) PorterErrorCode {
 
 	if strings.Contains(agentSummary, "invalid image") {
 		return PorterErrorCode_InvalidImageError
+	}
+
+	if strings.Contains(agentSummary, "exceeded its memory limit") {
+		return PorterErrorCode_MemoryLimitExceeded
 	}
 
 	return errorCode

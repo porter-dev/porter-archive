@@ -55,12 +55,6 @@ func (c *AppRunHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
-	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
-		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
-	)
 
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {

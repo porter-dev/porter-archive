@@ -1,58 +1,58 @@
 import React, { useCallback, useContext, useEffect, useMemo } from "react";
-import { RouteComponentProps, withRouter } from "react-router";
-import web from "assets/web.png";
-import AnimateHeight from "react-animate-height";
-import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
-
+import { type PorterApp } from "@porter-dev/api-contracts";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import AnimateHeight from "react-animate-height";
+import { Controller, FormProvider, useForm } from "react-hook-form";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
-import { useForm, Controller, FormProvider } from "react-hook-form";
-import Back from "components/porter/Back";
-import VerticalSteps from "components/porter/VerticalSteps";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import { ControlledInput } from "components/porter/ControlledInput";
-import Link from "components/porter/Link";
+import { z } from "zod";
 
-import { Context } from "shared/Context";
-import {
-  PorterAppFormData,
-  SourceOptions,
-  porterAppFormValidator,
-  clientAppValidator,
-} from "lib/porter-apps";
-import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import SourceSelector from "../new-app-flow/SourceSelector";
+import Back from "components/porter/Back";
 import Button from "components/porter/Button";
-import RepoSettings from "./RepoSettings";
 import Container from "components/porter/Container";
-import ServiceList from "../validate-apply/services-settings/ServiceList";
+import { ControlledInput } from "components/porter/ControlledInput";
+import Error from "components/porter/Error";
+import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import VerticalSteps from "components/porter/VerticalSteps";
+import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { useAppValidation } from "lib/hooks/useAppValidation";
+import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
+import { useIntercom } from "lib/hooks/useIntercom";
+import { usePorterYaml } from "lib/hooks/usePorterYaml";
+import {
+  porterAppFormValidator,
+  type PorterAppFormData,
+  type SourceOptions,
+} from "lib/porter-apps";
 import {
   defaultSerialized,
   deserializeService,
 } from "lib/porter-apps/services";
-import { usePorterYaml } from "lib/hooks/usePorterYaml";
-import { valueExists } from "shared/util";
-import api from "shared/api";
-import { PorterApp } from "@porter-dev/api-contracts";
-import GithubActionModal from "../new-app-flow/GithubActionModal";
-import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
-import Error from "components/porter/Error";
-import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
-import { useAppValidation } from "lib/hooks/useAppValidation";
-import { useQuery } from "@tanstack/react-query";
-import { z } from "zod";
-import {
-  PopulatedEnvGroup,
-  populatedEnvGroup,
-} from "../validate-apply/app-settings/types";
-import EnvSettings from "../validate-apply/app-settings/EnvSettings";
-import ImageSettings from "../image-settings/ImageSettings";
-import { useClusterResources } from "shared/ClusterResourcesContext";
-import PorterYamlModal from "./PorterYamlModal";
-import { useIntercom } from "lib/hooks/useIntercom";
 
-type CreateAppProps = {} & RouteComponentProps;
+import api from "shared/api";
+import { useClusterResources } from "shared/ClusterResourcesContext";
+import { Context } from "shared/Context";
+import { valueExists } from "shared/util";
+import web from "assets/web.png";
+
+import ImageSettings from "../image-settings/ImageSettings";
+import GithubActionModal from "../new-app-flow/GithubActionModal";
+import SourceSelector from "../new-app-flow/SourceSelector";
+import EnvSettings from "../validate-apply/app-settings/EnvSettings";
+import {
+  populatedEnvGroup,
+  type PopulatedEnvGroup,
+} from "../validate-apply/app-settings/types";
+import ServiceList from "../validate-apply/services-settings/ServiceList";
+import PorterYamlModal from "./PorterYamlModal";
+import RepoSettings from "./RepoSettings";
+
+type CreateAppProps = RouteComponentProps;
 
 const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -73,10 +73,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
   const { showIntercomWithMessage } = useIntercom();
 
-  const [
-    validatedAppProto,
-    setValidatedAppProto,
-  ] = React.useState<PorterApp | null>(null);
+  const [validatedAppProto, setValidatedAppProto] =
+    React.useState<PorterApp | null>(null);
   const [isDeploying, setIsDeploying] = React.useState(false);
   const [deployError, setDeployError] = React.useState("");
   const [{ variables, secrets }, setFinalizedAppEnv] = React.useState<{
@@ -91,7 +89,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     ["getPorterApps", currentProject?.id, currentCluster?.id],
     async () => {
       if (!currentProject?.id || !currentCluster?.id) {
-        return Promise.resolve([]);
+        return await Promise.resolve([]);
       }
 
       const res = await api.getPorterApps(
@@ -131,13 +129,13 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         }
       );
 
-      const { environment_groups } = await z
+      const { environment_groups: environmentGroups } = await z
         .object({
           environment_groups: z.array(populatedEnvGroup).default([]),
         })
         .parseAsync(res.data);
 
-      return environment_groups;
+      return environmentGroups;
     }
   );
 
@@ -157,6 +155,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           buildpacks: [],
         },
         env: [],
+        efsStorage: {
+          enabled: false,
+        },
       },
       source: {
         git_repo_name: "",
@@ -204,7 +205,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   });
   const { currentClusterResources } = useClusterResources();
 
-  const resetAllExceptName = () => {
+  const resetAllExceptName = (): void => {
     setIsNameHighlight(true);
 
     // Get the current name value before the reset
@@ -245,6 +246,46 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     }
   });
 
+  const createWithValidateApply = async ({
+    app,
+    projectID,
+    clusterID,
+    deploymentTargetID,
+  }: {
+    app: PorterApp;
+    projectID: number;
+    clusterID: number;
+    deploymentTargetID: string;
+  }): Promise<void> => {
+    await api.createApp(
+      "<token>",
+      {
+        ...source,
+        name: app.name,
+        deployment_target_id: deploymentTargetID,
+      },
+      {
+        project_id: projectID,
+        cluster_id: clusterID,
+      }
+    );
+
+    await api.applyApp(
+      "<token>",
+      {
+        b64_app_proto: btoa(app.toJsonString()),
+        deployment_target_id: deploymentTargetID,
+        variables,
+        secrets,
+        hard_env_update: true,
+      },
+      {
+        project_id: projectID,
+        cluster_id: clusterID,
+      }
+    );
+  };
+
   const createAndApply = useCallback(
     async ({
       app,
@@ -259,7 +300,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     }) => {
       setIsDeploying(true);
       // log analytics event that we started form submission
-      updateAppStep({ step: "stack-launch-complete", appName: name.value });
+      void updateAppStep({
+        step: "stack-launch-complete",
+        appName: name.value,
+      });
 
       try {
         if (!currentProject?.id || !currentCluster?.id) {
@@ -270,35 +314,43 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           return false;
         }
 
-        await api.createApp(
-          "<token>",
-          {
-            ...source,
-            name: app.name,
-          },
-          {
-            project_id: currentProject.id,
-            cluster_id: currentCluster.id,
-          }
-        );
-
-        await api.applyApp(
-          "<token>",
-          {
-            b64_app_proto: btoa(app.toJsonString()),
-            deployment_target_id: deploymentTarget.deployment_target_id,
-            variables,
-            secrets,
-            hard_env_update: true
-          },
-          {
-            project_id: currentProject.id,
-            cluster_id: currentCluster.id,
-          }
-        );
+        if (currentProject.beta_features_enabled) {
+          await api.updateApp(
+            "<token>",
+            {
+              deployment_target_id: deploymentTarget.deployment_target_id,
+              b64_app_proto: btoa(app.toJsonString()),
+              secrets,
+              variables,
+              is_env_override: true,
+              ...(source.type === "github" && {
+                git_source: {
+                  git_branch: source.git_branch,
+                  git_repo_id: source.git_repo_id,
+                  git_repo_name: source.git_repo_name,
+                },
+                porter_yaml_path: source.porter_yaml_path,
+              }),
+            },
+            {
+              project_id: currentProject.id,
+              cluster_id: currentCluster.id,
+            }
+          );
+        } else {
+          await createWithValidateApply({
+            app,
+            projectID: currentProject.id,
+            clusterID: currentCluster.id,
+            deploymentTargetID: deploymentTarget.deployment_target_id,
+          });
+        }
 
         // log analytics event that we successfully deployed
-        updateAppStep({ step: "stack-launch-success", appName: name.value });
+        void updateAppStep({
+          step: "stack-launch-success",
+          appName: name.value,
+        });
 
         if (source.type === "docker-registry") {
           history.push(`/apps/${app.name}`);
@@ -311,7 +363,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         });
 
         if (axios.isAxiosError(err) && err.response?.data?.error) {
-          updateAppStep({
+          void updateAppStep({
             step: "stack-launch-failure",
             errorMessage: err.response?.data?.error,
             appName: name.value,
@@ -322,7 +374,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
         const msg =
           "An error occurred while deploying your application. Please try again.";
-        updateAppStep({
+        void updateAppStep({
           step: "stack-launch-failure",
           errorMessage: msg,
           appName: name.value,
@@ -333,7 +385,13 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         setIsDeploying(false);
       }
     },
-    [currentProject?.id, currentCluster?.id, deploymentTarget]
+    [
+      currentProject?.id,
+      currentCluster?.id,
+      deploymentTarget,
+      name.value,
+      createWithValidateApply,
+    ]
   );
 
   useEffect(() => {
@@ -354,7 +412,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
     // set step to 2 if source is filled out
     if (source?.type && source.type === "docker-registry") {
-      if (image && image.tag) {
+      if (image?.tag) {
         setStep((prev) => Math.max(prev, 2));
       }
     }
@@ -408,7 +466,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         message: "I am running into an issue launching an application.",
       });
 
-      updateAppStep({
+      void updateAppStep({
         step: "stack-launch-failure",
         errorMessage: `Form validation error: ${errorMessage}`,
         appName: name.value,
@@ -416,8 +474,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
       return <Error message={errorMessage} maxWidth="600px" />;
     }
-
-    return;
   }, [isValidating, isDeploying, deployError, errors]);
 
   const submitDisabled = useMemo(() => {
@@ -516,7 +572,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <Text size={16}>Application name</Text>
                     <Spacer y={0.5} />
                     <Text color={isNameHighlight ? "#FFCC00" : "helper"}>
-                      Lowercase letters, numbers, and "-" only.
+                      Lowercase letters, numbers, and &quot;-&quot; only.
                     </Text>
                     <Spacer y={0.5} />
                     <ControlledInput
@@ -576,11 +632,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                                   control={control}
                                   render={({ field: { onChange, value } }) => (
                                     <PorterYamlModal
-                                      close={() =>
+                                      close={() => {
                                         setUserHasSeenNoPorterYamlFoundModal(
                                           true
-                                        )
-                                      }
+                                        );
+                                      }}
                                       setPorterYamlPath={(porterYamlPath) => {
                                         onChange(porterYamlPath);
                                       }}
@@ -603,23 +659,23 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                           <ImageSettings
                             projectId={currentProject.id}
                             imageUri={image?.repository ?? ""}
-                            setImageUri={(uri: string) =>
+                            setImageUri={(uri: string) => {
                               setValue("source.image", {
                                 ...image,
                                 repository: uri,
-                              })
-                            }
+                              });
+                            }}
                             imageTag={image?.tag ?? ""}
-                            setImageTag={(tag: string) =>
-                              setValue("source.image", { ...image, tag })
-                            }
-                            resetImageInfo={() =>
+                            setImageTag={(tag: string) => {
+                              setValue("source.image", { ...image, tag });
+                            }}
+                            resetImageInfo={() => {
                               setValue("source.image", {
                                 ...image,
                                 repository: "",
                                 tag: "",
-                              })
-                            }
+                              });
+                            }}
                           />
                         )
                       ) : null}
@@ -657,11 +713,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ServiceList
                       addNewText={"Add a new service"}
                       fieldArrayName={"app.services"}
-                      maxCPU={currentClusterResources.maxCPU}
-                      maxRAM={currentClusterResources.maxRAM}
-                      clusterContainsGPUNodes={
-                        currentClusterResources.clusterContainsGPUNodes
-                      }
                     />
                   </>,
                   <>
@@ -695,23 +746,20 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                         })}
                         isPredeploy
                         fieldArrayName={"app.predeploy"}
-                        maxCPU={currentClusterResources.maxCPU}
-                        maxRAM={currentClusterResources.maxRAM}
-                        clusterContainsGPUNodes={
-                          currentClusterResources.clusterContainsGPUNodes
-                        }
                       />
                     </>
                   ),
-                  <Button
-                    type="submit"
-                    status={submitBtnStatus}
-                    loadingText={"Deploying..."}
-                    width={"120px"}
-                    disabled={submitDisabled}
-                  >
-                    Deploy app
-                  </Button>,
+                  <>
+                    <Button
+                      type="submit"
+                      status={submitBtnStatus}
+                      loadingText={"Deploying..."}
+                      width={"120px"}
+                      disabled={submitDisabled}
+                    >
+                      Deploy app
+                    </Button>
+                  </>,
                 ].filter((x) => x)}
               />
             </form>
@@ -721,7 +769,9 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       </Div>
       {showGHAModal && source?.type === "github" && (
         <GithubActionModal
-          closeModal={() => setShowGHAModal(false)}
+          closeModal={() => {
+            setShowGHAModal(false);
+          }}
           githubAppInstallationID={source.git_repo_id}
           githubRepoOwner={source.git_repo_name.split("/")[0]}
           githubRepoName={source.git_repo_name.split("/")[1]}
@@ -729,8 +779,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           stackName={name.value}
           projectId={currentProject.id}
           clusterId={currentCluster.id}
-          deployPorterApp={() =>
-            createAndApply({
+          deployPorterApp={async () =>
+            await createAndApply({
               app: validatedAppProto,
               source,
               variables,
@@ -790,7 +840,7 @@ const AppearingDiv = styled.div<{ color?: string }>`
   animation-fill-mode: forwards;
   display: flex;
   align-items: center;
-  color: ${(props) => props.color || "#ffffff44"};
+  color: ${(props) => props.color ?? "#ffffff44"};
   margin-left: 10px;
   @keyframes floatIn {
     from {

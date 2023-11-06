@@ -35,7 +35,13 @@ import _ from "lodash";
 import { useClusterResources } from "shared/ClusterResourcesContext";
 
 type Props = {
-  existingTemplate: PorterApp | null;
+  existingTemplate: {
+    template: PorterApp;
+    env: {
+      variables: Record<string, string>;
+      secret_variables: Record<string, string>;
+    };
+  } | null;
 };
 
 const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
@@ -110,14 +116,24 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
   const withPreviewOverrides = useMemo(() => {
     return applyPreviewOverrides({
       app: clientAppFromProto({
-        proto: existingTemplate ? existingTemplate : latestProto,
+        proto: existingTemplate?.template
+          ? existingTemplate.template
+          : new PorterApp({
+              ...latestProto,
+              envGroups: [],
+            }), // clear out env groups, they won't get added to the template anyways
         overrides: servicesFromYaml,
-        variables: appEnv?.variables,
-        secrets: appEnv?.secret_variables,
+        variables: existingTemplate
+          ? existingTemplate.env.variables
+          : appEnv?.variables,
+        secrets: existingTemplate
+          ? existingTemplate.env.secret_variables
+          : appEnv?.secret_variables,
+        lockServiceDeletions: true,
       }),
       overrides: servicesFromYaml?.previews,
     });
-  }, [latestProto, existingTemplate, appEnv, servicesFromYaml]);
+  }, [latestProto, existingTemplate?.template, appEnv, servicesFromYaml]);
 
   const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",
@@ -279,15 +295,11 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
               <ServiceList
                 addNewText={"Add a new service"}
                 fieldArrayName={"app.services"}
-                maxCPU={currentClusterResources.maxCPU}
-                maxRAM={currentClusterResources.maxRAM}
-                clusterContainsGPUNodes={
-                  currentClusterResources.clusterContainsGPUNodes
-                }
                 internalNetworkingDetails={{
                   namespace: deploymentTarget.namespace,
                   appName: porterApp.name,
                 }}
+                allowAddServices={false}
               />
             </>,
             <>
@@ -322,11 +334,6 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
                 }
                 isPredeploy
                 fieldArrayName={"app.predeploy"}
-                maxCPU={currentClusterResources.maxCPU}
-                maxRAM={currentClusterResources.maxRAM}
-                clusterContainsGPUNodes={
-                  currentClusterResources.clusterContainsGPUNodes
-                }
               />
             </>,
             <Button

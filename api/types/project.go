@@ -35,6 +35,7 @@ type Project struct {
 	StacksEnabled          bool    `json:"stacks_enabled"`
 	CapiProvisionerEnabled bool    `json:"capi_provisioner_enabled"`
 	DBEnabled              bool    `json:"db_enabled"`
+	EFSEnabled             bool    `json:"efs_enabled"`
 	SimplifiedViewEnabled  bool    `json:"simplified_view_enabled"`
 	AzureEnabled           bool    `json:"azure_enabled"`
 	HelmValuesEnabled      bool    `json:"helm_values_enabled"`
@@ -43,6 +44,7 @@ type Project struct {
 	EnableReprovision      bool    `json:"enable_reprovision"`
 	ValidateApplyV2        bool    `json:"validate_apply_v2"`
 	QuotaIncrease          bool    `json:"quota_increase"`
+	BetaFeaturesEnabled    bool    `json:"beta_features_enabled"`
 }
 
 type FeatureFlags struct {

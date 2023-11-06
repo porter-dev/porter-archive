@@ -15,6 +15,7 @@ import {
   HelmOverrides,
   PorterApp,
   Service,
+  EFS,
 } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
@@ -68,10 +69,14 @@ export const clientAppValidator = z.object({
     value: z
       .string()
       .min(1, { message: "Name must be at least 1 character" })
-      .max(30, { message: "Name must be 30 characters or less" })
+      .max(31, { message: "Name must be 31 characters or less" })
       .regex(/^[a-z0-9-]{1,61}$/, {
         message: 'Lowercase letters, numbers, and "-" only.',
       }),
+  }),
+  efsStorage: z.object({
+    enabled: z.boolean(),
+    readOnly: z.boolean().optional(),
   }),
   envGroups: z
     .object({ name: z.string(), version: z.bigint() })
@@ -280,7 +285,12 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
               app.helmOverrides != null
                 ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
                 : undefined,
+
           }),
+          efsStorage:
+            new EFS({
+              enabled: app.efsStorage.enabled,
+            })
         })
     )
     .with(
@@ -301,6 +311,11 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
             app.helmOverrides != null
               ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
               : undefined,
+          efsStorage:
+            new EFS({
+              enabled: app.efsStorage.enabled,
+            })
+
         })
     )
     .exhaustive();
@@ -362,11 +377,13 @@ export function clientAppFromProto({
   overrides,
   variables = {},
   secrets = {},
+  lockServiceDeletions = false,
 }: {
   proto: PorterApp;
   overrides: DetectedServices | null;
   variables?: Record<string, string>;
   secrets?: Record<string, string>;
+  lockServiceDeletions?: boolean;
 }): ClientPorterApp {
   const services = uniqueServices(proto)
     .map((service) => serializedServiceFromProto({ service }))
@@ -382,7 +399,10 @@ export function clientAppFromProto({
         });
         return ds;
       }
-      return deserializeService({ service: svc });
+      return deserializeService({
+        service: svc,
+        lockDeletions: lockServiceDeletions,
+      });
     });
 
   const predeployList = [];
@@ -416,6 +436,7 @@ export function clientAppFromProto({
           }),
           isPredeploy: true,
         }),
+        lockDeletions: lockServiceDeletions,
       })
     );
   }
@@ -439,23 +460,27 @@ export function clientAppFromProto({
         builder: "",
       },
       helmOverrides: helmOverrides,
+      efsStorage: new EFS({
+        enabled: proto.efsStorage?.enabled ?? false,
+      })
+
     };
   }
 
   const predeployOverrides = serializeService(overrides.predeploy);
   const predeploy = proto.predeploy
     ? [
-      deserializeService({
-        service: serializedServiceFromProto({
-          service: new Service({
-            ...proto.predeploy,
-            name: "pre-deploy",
+        deserializeService({
+          service: serializedServiceFromProto({
+            service: new Service({
+              ...proto.predeploy,
+              name: "pre-deploy",
+            }),
+            isPredeploy: true,
           }),
-          isPredeploy: true,
+          override: predeployOverrides,
         }),
-        override: predeployOverrides,
-      }),
-    ]
+      ]
     : undefined;
 
   return {
@@ -477,6 +502,10 @@ export function clientAppFromProto({
       builder: "",
     },
     helmOverrides: helmOverrides,
+    efsStorage:
+      { enabled: proto.efsStorage?.enabled ?? false }
+
+    ,
   };
 }
 
@@ -569,6 +598,5 @@ export function applyPreviewOverrides({
     }));
 
   app.env = [...env, ...additionalEnv];
-
   return app;
 }

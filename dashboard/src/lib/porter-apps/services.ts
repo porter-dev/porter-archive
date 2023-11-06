@@ -112,30 +112,30 @@ export type SerializedService = {
   smartOptimization?: boolean;
   gpuCoresNvidia: number;
   config:
-  | {
-    type: "web";
-    domains: {
-      name: string;
-    }[];
-    autoscaling?: SerializedAutoscaling;
-    healthCheck?: SerializedHealthcheck;
-    private?: boolean;
-    ingressAnnotations: Record<string, string>;
-  }
-  | {
-    type: "worker";
-    autoscaling?: SerializedAutoscaling;
-  }
-  | {
-    type: "job";
-    allowConcurrent?: boolean;
-    cron: string;
-    suspendCron?: boolean;
-    timeoutSeconds: number;
-  }
-  | {
-    type: "predeploy";
-  };
+    | {
+        type: "web";
+        domains: {
+          name: string;
+        }[];
+        autoscaling?: SerializedAutoscaling;
+        healthCheck?: SerializedHealthcheck;
+        private?: boolean;
+        ingressAnnotations: Record<string, string>;
+      }
+    | {
+        type: "worker";
+        autoscaling?: SerializedAutoscaling;
+      }
+    | {
+        type: "job";
+        allowConcurrent?: boolean;
+        cron: string;
+        suspendCron?: boolean;
+        timeoutSeconds: number;
+      }
+    | {
+        type: "predeploy";
+      };
 };
 
 export function isPredeployService(service: SerializedService | ClientService) {
@@ -262,7 +262,7 @@ export function serializeService(service: ClientService): SerializedService {
           }),
           healthCheck: serializeHealth({ health: config.healthCheck }),
           domains: config.domains.map((domain) => ({
-            name: domain.name.value,
+            name: domain.name.value.replace("https://", "").replace("http://", ""),
           })),
           ingressAnnotations: Object.fromEntries(
             config.ingressAnnotations
@@ -305,21 +305,26 @@ export function deserializeService({
   override,
   expanded,
   setDefaults = true,
+  lockDeletions = false,
 }: {
   service: SerializedService;
   override?: SerializedService;
   expanded?: boolean;
   setDefaults?: boolean;
+  lockDeletions?: boolean;
 }): ClientService {
   const baseService = {
     expanded,
-    canDelete: !override,
+    canDelete: !override && !lockDeletions,
     name: ServiceField.string(service.name, override?.name),
     run: ServiceField.string(service.run, override?.run),
     instances: ServiceField.number(service.instances, override?.instances),
     port: ServiceField.number(service.port, override?.port),
     cpuCores: ServiceField.number(service.cpuCores, override?.cpuCores),
-    gpuCoresNvidia: ServiceField.number(service.gpuCoresNvidia, override?.gpuCoresNvidia),
+    gpuCoresNvidia: ServiceField.number(
+      service.gpuCoresNvidia,
+      override?.gpuCoresNvidia
+    ),
     ramMegabytes: ServiceField.number(
       service.ramMegabytes,
       override?.ramMegabytes
@@ -332,7 +337,10 @@ export function deserializeService({
     ingressAnnotationDeletions: [],
   };
 
-  if (!baseService.run.readOnly && baseService.run.value.startsWith(LAUNCHER_PREFIX)) {
+  if (
+    !baseService.run.readOnly &&
+    baseService.run.value.startsWith(LAUNCHER_PREFIX)
+  ) {
     // trim launcher prefix from run command
     baseService.run = ServiceField.string(
       baseService.run.value.substring(LAUNCHER_PREFIX.length),
@@ -400,11 +408,11 @@ export function deserializeService({
           ingressAnnotations: uniqueAnnotations,
           private:
             typeof config.private === "boolean" ||
-              typeof overrideWebConfig?.private === "boolean"
+            typeof overrideWebConfig?.private === "boolean"
               ? ServiceField.boolean(config.private, overrideWebConfig?.private)
               : setDefaults
-                ? ServiceField.boolean(false, undefined)
-                : undefined,
+              ? ServiceField.boolean(false, undefined)
+              : undefined,
         },
       };
     })
@@ -434,34 +442,34 @@ export function deserializeService({
           type: "job" as const,
           allowConcurrent:
             typeof config.allowConcurrent === "boolean" ||
-              typeof overrideJobConfig?.allowConcurrent === "boolean"
+            typeof overrideJobConfig?.allowConcurrent === "boolean"
               ? ServiceField.boolean(
-                config.allowConcurrent,
-                overrideJobConfig?.allowConcurrent
-              )
+                  config.allowConcurrent,
+                  overrideJobConfig?.allowConcurrent
+                )
               : setDefaults
-                ? ServiceField.boolean(false, undefined)
-                : undefined,
+              ? ServiceField.boolean(false, undefined)
+              : undefined,
           cron: ServiceField.string(config.cron, overrideJobConfig?.cron),
           suspendCron:
             typeof config.suspendCron === "boolean" ||
-              typeof overrideJobConfig?.suspendCron === "boolean"
+            typeof overrideJobConfig?.suspendCron === "boolean"
               ? ServiceField.boolean(
-                config.suspendCron,
-                overrideJobConfig?.suspendCron
-              )
+                  config.suspendCron,
+                  overrideJobConfig?.suspendCron
+                )
               : setDefaults
-                ? ServiceField.boolean(false, undefined)
-                : undefined,
+              ? ServiceField.boolean(false, undefined)
+              : undefined,
           timeoutSeconds:
             config.timeoutSeconds != 0
               ? ServiceField.number(
-                config.timeoutSeconds,
-                overrideJobConfig?.timeoutSeconds
-              )
+                  config.timeoutSeconds,
+                  overrideJobConfig?.timeoutSeconds
+                )
               : setDefaults
-                ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds)
-                : ServiceField.number(0, overrideJobConfig?.timeoutSeconds),
+              ? ServiceField.number(3600, overrideJobConfig?.timeoutSeconds)
+              : ServiceField.number(0, overrideJobConfig?.timeoutSeconds),
         },
       };
     })
@@ -594,24 +602,24 @@ export function serializedServiceFromProto({
     .with({ case: "jobConfig" }, ({ value }) =>
       isPredeploy
         ? {
-          ...service,
-          run: service.runOptional ?? service.run,
-          instances: service.instancesOptional ?? service.instances,
-          config: {
-            type: "predeploy" as const,
-          },
-        }
+            ...service,
+            run: service.runOptional ?? service.run,
+            instances: service.instancesOptional ?? service.instances,
+            config: {
+              type: "predeploy" as const,
+            },
+          }
         : {
-          ...service,
-          run: service.runOptional ?? service.run,
-          instances: service.instancesOptional ?? service.instances,
-          config: {
-            type: "job" as const,
-            ...value,
-            allowConcurrent: value.allowConcurrentOptional,
-            timeoutSeconds: Number(value.timeoutSeconds),
-          },
-        }
+            ...service,
+            run: service.runOptional ?? service.run,
+            instances: service.instancesOptional ?? service.instances,
+            config: {
+              type: "job" as const,
+              ...value,
+              allowConcurrent: value.allowConcurrentOptional,
+              timeoutSeconds: Number(value.timeoutSeconds),
+            },
+          }
     )
     .exhaustive();
 }

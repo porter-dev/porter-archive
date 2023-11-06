@@ -1,21 +1,29 @@
 import React, { useMemo } from "react";
+import { type PorterApp } from "@porter-dev/api-contracts";
+import styled from "styled-components";
 
 import Container from "components/porter/Container";
 import Icon from "components/porter/Icon";
-
-import web from "assets/web.png";
-import box from "assets/box.png";
-import github from "assets/github-white.png";
-import pr_icon from "assets/pull_request_icon.svg";
-
-import { PorterApp } from "@porter-dev/api-contracts";
+import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import styled from "styled-components";
-import { useLatestRevision } from "./LatestRevisionContext";
 import { prefixSubdomain } from "lib/porter-apps/services";
-import { readableDate } from "shared/string_utils";
+
 import PullRequestIcon from "shared/icons/PullRequest";
+import { readableDate } from "shared/string_utils";
+import box from "assets/box.png";
+import github from "assets/github-white.png";
+import pull_request_icon from "assets/pull_request_icon.svg";
+import tag_icon from "assets/tag.png";
+import web from "assets/web.png";
+
+import GHStatusBanner from "../validate-apply/revisions-list/GHStatusBanner";
+import { useLatestRevision } from "./LatestRevisionContext";
+import {
+  Code,
+  CommitIcon,
+  ImageTagContainer,
+} from "./tabs/activity-feed/events/cards/EventCard";
 
 // Buildpack icons
 const icons = [
@@ -27,12 +35,33 @@ const icons = [
 ];
 
 const AppHeader: React.FC = () => {
-  const {
-    latestProto,
-    porterApp,
-    latestRevision,
-    deploymentTarget,
-  } = useLatestRevision();
+  const { latestProto, porterApp, latestRevision, deploymentTarget } =
+    useLatestRevision();
+
+  const gitCommitUrl = useMemo(() => {
+    if (!porterApp.repo_name) {
+      return "";
+    }
+    if (!latestProto.build?.commitSha) {
+      return "";
+    }
+
+    return `https://www.github.com/${porterApp.repo_name}/commit/${latestProto.build.commitSha}`;
+  }, [JSON.stringify(latestProto), porterApp]);
+
+  const displayCommitSha = useMemo(() => {
+    if (!porterApp.repo_name) {
+      return "";
+    }
+    if (
+      !latestProto.build?.commitSha ||
+      latestProto.build.commitSha.length < 7
+    ) {
+      return "";
+    }
+
+    return latestProto.build.commitSha.slice(0, 7);
+  }, [JSON.stringify(latestProto), porterApp]);
 
   const gitData = useMemo(() => {
     if (
@@ -50,7 +79,7 @@ const AppHeader: React.FC = () => {
     };
   }, [porterApp]);
 
-  const getIconSvg = (build: PorterApp["build"]) => {
+  const getIconSvg = (build: PorterApp["build"]): JSX.Element => {
     if (!build) {
       return box;
     }
@@ -84,13 +113,19 @@ const AppHeader: React.FC = () => {
     );
 
     // we only show the custom domain if 1 exists; if no custom domain exists, we show the porter domain, if one exists
-    const nonPorterDomains = domains.filter((n: string) => !n.endsWith(".onporter.run") && !n.endsWith(".withporter.run"));
+    const nonPorterDomains = domains.filter(
+      (n: string) =>
+        !n.endsWith(".onporter.run") && !n.endsWith(".withporter.run")
+    );
     if (nonPorterDomains.length) {
       if (nonPorterDomains.length === 1) {
         return nonPorterDomains[0];
       }
     } else {
-      const porterDomains = domains.filter((n: string) => n.endsWith(".onporter.run") || n.endsWith(".withporter.run"));
+      const porterDomains = domains.filter(
+        (n: string) =>
+          n.endsWith(".onporter.run") || n.endsWith(".withporter.run")
+      );
       if (porterDomains.length === 1) {
         return porterDomains[0];
       }
@@ -153,7 +188,11 @@ const AppHeader: React.FC = () => {
         <>
           <Container>
             <Text>
-              <a href={prefixSubdomain(displayDomain)} target="_blank">
+              <a
+                href={prefixSubdomain(displayDomain)}
+                target="_blank"
+                rel="noreferrer"
+              >
                 {displayDomain}
               </a>
             </Text>
@@ -161,9 +200,38 @@ const AppHeader: React.FC = () => {
           <Spacer y={0.5} />
         </>
       )}
-      <Text color="#aaaabb66">
-        Last deployed {readableDate(latestRevision.created_at)}
-      </Text>
+      <LatestDeployContainer>
+        <div style={{ flexShrink: 0 }}>
+          <Text color="#aaaabb66">
+            Last deployed {readableDate(latestRevision.created_at)}
+          </Text>
+        </div>
+        <Spacer y={0.5} />
+        <NoShrink>
+          {gitCommitUrl && displayCommitSha ? (
+            <ImageTagContainer>
+              <Link
+                to={gitCommitUrl}
+                target="_blank"
+                showTargetBlankIcon={false}
+              >
+                <CommitIcon src={pull_request_icon} />
+                <Code>{displayCommitSha}</Code>
+              </Link>
+            </ImageTagContainer>
+          ) : latestProto.image?.tag ? (
+            <ImageTagContainer hoverable={false}>
+              <TagContainer>
+                <CommitIcon src={tag_icon} />
+                <Code>{latestProto.image.tag}</Code>
+              </TagContainer>
+            </ImageTagContainer>
+          ) : null}
+        </NoShrink>
+        <Spacer y={0.5} />
+      </LatestDeployContainer>
+      <Spacer y={0.5} />
+      <GHStatusBanner />
     </>
   );
 };
@@ -175,9 +243,27 @@ const A = styled.a`
   align-items: center;
 `;
 const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
-  height: ${(props) => props.height || "15px"};
-  opacity: ${(props) => props.opacity || 1};
+  height: ${(props) => props.height ?? "15px"};
+  opacity: ${(props) => props.opacity ?? 1};
   margin-right: 10px;
+`;
+
+const LatestDeployContainer = styled.div`
+  display: inline-flex;
+  column-gap: 6px;
+`;
+
+const TagContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 1px;
+  padding: 0px 2px;
+`;
+
+const NoShrink = styled.div`
+  display: inline-flex;
+  flex-shrink: 0;
 `;
 
 const TagWrapper = styled.div<{ preview?: boolean }>`

@@ -39,11 +39,11 @@ jobs:
     - name: Set Github tag
       id: vars
       run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    - name: Setup porter
+      uses: porter-dev/setup-porter@v0.1.0
     - name: Deploy stack
       timeout-minutes: 30
-      uses: porter-dev/porter-cli-action@v0.1.0
-      with:
-        command: apply -f ${porterYamlPath}
+      run: porter apply -f ${porterYamlPath}
       env:
         PORTER_CLUSTER: ${clusterId}
         PORTER_HOST: https://dashboard.getporter.dev
@@ -69,7 +69,7 @@ export const getPreviewGithubAction = (
     - synchronize
     paths:
     - '**'
-    - '!./github/workflows/porter-**'
+    - '!./github/workflows/porter_**'
     
 name: Deploy to Preview Environment
 jobs:
@@ -81,11 +81,11 @@ jobs:
     - name: Set Github tag
       id: vars
       run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    - name: Setup porter
+      uses: porter-dev/setup-porter@v0.1.0
     - name: Build and deploy preview environment
       timeout-minutes: 30
-      uses: porter-dev/porter-cli-action@v0.1.0
-      with:
-        command: apply -f ${porterYamlPath} --preview
+      run: porter apply -f ${porterYamlPath} --preview
       env:
         PORTER_CLUSTER: ${clusterId}
         PORTER_HOST: https://dashboard.getporter.dev

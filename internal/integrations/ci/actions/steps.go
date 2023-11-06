@@ -26,6 +26,13 @@ func getSetTagStep() GithubActionYAMLStep {
 	}
 }
 
+func getSetupPorterStep() GithubActionYAMLStep {
+	return GithubActionYAMLStep{
+		Name: "Setup porter",
+		Uses: "porter-dev/setup-porter@v0.1.0",
+	}
+}
+
 func getUpdateAppStep(serverURL, porterTokenSecretName string, projectID uint, clusterID uint, appName string, appNamespace, actionVersion string) GithubActionYAMLStep {
 	return GithubActionYAMLStep{
 		Name: "Update Porter App",
@@ -83,7 +90,7 @@ func getDeployStackStep(
 		path = "porter.yaml"
 	}
 
-	command := fmt.Sprintf("apply -f %s", path)
+	command := fmt.Sprintf("porter apply -f %s", path)
 	if preview {
 		command = fmt.Sprintf("%s --preview", command)
 	}
@@ -95,10 +102,7 @@ func getDeployStackStep(
 
 	return GithubActionYAMLStep{
 		Name: name,
-		Uses: fmt.Sprintf("%s@%s", cliActionName, actionVersion),
-		With: map[string]string{
-			"command": command,
-		},
+		Run:  command,
 		Env: map[string]string{
 			"PORTER_CLUSTER":    fmt.Sprintf("%d", clusterID),
 			"PORTER_HOST":       serverURL,

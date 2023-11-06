@@ -3,14 +3,20 @@ import { z } from "zod";
 export const appRevisionValidator = z.object({
   status: z.enum([
     "CREATED",
+    "IMAGE_AVAILABLE",
     "AWAITING_BUILD_ARTIFACT",
     "AWAITING_PREDEPLOY",
-    "READY_TO_APPLY",
+    "AWAITING_DEPLOY",
+    "PREDEPLOY_PROGRESSING",
     "DEPLOYED",
-    "BUILD_FAILED",
+    "DEPLOYING",
     "BUILD_CANCELED",
+    "BUILD_FAILED",
+    "BUILD_SUCCESSFUL",
+    "PREDEPLOY_FAILED",
+    "PREDEPLOY_SUCCESSFUL",
     "DEPLOY_FAILED",
-    "PREDEPLOY_FAILED"
+    "APPLY_FAILED",
   ]),
   b64_app_proto: z.string(),
   revision_number: z.number(),

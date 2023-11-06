@@ -862,6 +862,64 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/update -> porter_app.UpdateAppHandler
+	updateAppEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/update", relPathV2),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	updateAppHandler := porter_app.NewUpdateAppHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateAppEndpoint,
+		Handler:  updateAppHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/build -> porter_app.NewUpdateAppBuildSettingsHandler
+	updateAppBuildSettingsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/build", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	updateAppBuildSettingsHandler := porter_app.NewUpdateAppBuildSettingsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateAppBuildSettingsEndpoint,
+		Handler:  updateAppBuildSettingsHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/revisions -> porter_app.NewCurrentAppRevisionHandler
 	latestAppRevisionsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -1212,6 +1270,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id}/build-env -> porter_app.NewGetBuildFromRevisionHandler
+	getBuildFromRevisionEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("/apps/{%s}/revisions/{%s}/build", types.URLParamPorterAppName, types.URLParamAppRevisionID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getBuildFromRevisionHandler := porter_app.NewGetBuildFromRevisionHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getBuildFromRevisionEndpoint,
+		Handler:  getBuildFromRevisionHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id}/status -> porter_app.NewReportRevisionStatusHandler
 	reportRevisionStatusEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -1412,6 +1499,35 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: appHelmValuesEndpoint,
 		Handler:  appHelmValuesHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/use-new-apply-logic -> porter_app.NewUseNewApplyLogicHandler
+	useNewApplyLogicEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/use-new-apply-logic", relPathV2),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	useNewApplyLogicHandler := porter_app.NewUseNewApplyLogicHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: useNewApplyLogicEndpoint,
+		Handler:  useNewApplyLogicHandler,
 		Router:   r,
 	})
 

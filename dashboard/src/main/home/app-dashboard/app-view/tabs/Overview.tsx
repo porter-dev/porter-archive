@@ -59,9 +59,6 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
             existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
             isPredeploy
             fieldArrayName={"app.predeploy"}
-            maxCPU={currentClusterResources.maxCPU}
-            maxRAM={currentClusterResources.maxRAM}
-            clusterContainsGPUNodes={currentClusterResources.clusterContainsGPUNodes}
           />
           <Spacer y={0.5} />
         </>
@@ -73,9 +70,6 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
         fieldArrayName={"app.services"}
         existingServiceNames={Object.keys(latestProto.services)}
         serviceVersionStatus={serviceVersionStatus}
-        maxCPU={currentClusterResources.maxCPU}
-        maxRAM={currentClusterResources.maxRAM}
-        clusterContainsGPUNodes={currentClusterResources.clusterContainsGPUNodes}
         internalNetworkingDetails={{
           namespace: deploymentTarget.namespace,
           appName: porterApp.name,

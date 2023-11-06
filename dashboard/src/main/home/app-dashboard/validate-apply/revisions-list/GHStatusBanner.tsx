@@ -1,48 +1,90 @@
 import React, { useContext, useMemo } from "react";
-import { useLatestRevision } from "../../app-view/LatestRevisionContext";
-import { Context } from "shared/Context";
-import { useGithubWorkflow } from "lib/hooks/useGithubWorkflow";
-import Banner from "components/porter/Banner";
-import Spacer from "components/porter/Spacer";
-import Link from "components/porter/Link";
-import GHABanner from "../../expanded-app/GHABanner";
+import { useQuery } from "@tanstack/react-query";
 import { match } from "ts-pattern";
-import { AppRevision } from "lib/revisions/types";
+import { z } from "zod";
 
-type GHStatusBannerProps = {
-  revisions: AppRevision[];
-};
+import Banner from "components/porter/Banner";
+import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
+import { useGithubWorkflow } from "lib/hooks/useGithubWorkflow";
+import { appRevisionValidator } from "lib/revisions/types";
 
-const GHStatusBanner: React.FC<GHStatusBannerProps> = ({ revisions }) => {
+import api from "shared/api";
+import { Context } from "shared/Context";
+
+import { useLatestRevision } from "../../app-view/LatestRevisionContext";
+import GHABanner from "../../expanded-app/GHABanner";
+
+const GHStatusBanner: React.FC = () => {
   const { setCurrentModal } = useContext(Context);
-  const { porterApp } = useLatestRevision();
+  const {
+    porterApp,
+    projectId,
+    clusterId,
+    latestRevision,
+    appName,
+    deploymentTarget,
+  } = useLatestRevision();
+
+  const { data: revisions = [], status } = useQuery(
+    [
+      "listAppRevisions",
+      projectId,
+      clusterId,
+      latestRevision.revision_number,
+      appName,
+    ],
+    async () => {
+      const res = await api.listAppRevisions(
+        "<token>",
+        {
+          deployment_target_id: deploymentTarget.id,
+        },
+        {
+          project_id: projectId,
+          cluster_id: clusterId,
+          porter_app_name: appName,
+        }
+      );
+
+      const { app_revisions: appRevisions } = await z
+        .object({
+          app_revisions: z.array(appRevisionValidator),
+        })
+        .parseAsync(res.data);
+
+      return appRevisions;
+    }
+  );
 
   const previouslyBuilt = useMemo(() => {
     return revisions.some((r) =>
       match(r.status)
         .with(
           "AWAITING_PREDEPLOY",
-          "READY_TO_APPLY",
           "DEPLOYED",
           "DEPLOY_FAILED",
           "BUILD_FAILED",
+          "IMAGE_AVAILABLE",
           () => true
         )
         .otherwise(() => false)
     );
   }, [revisions]);
 
-  const {
-    githubWorkflowFilename,
-    userHasGithubAccess,
-    isLoading,
-  } = useGithubWorkflow({
-    porterApp,
-    previouslyBuilt,
-    fileNames: ["porter.yml", `porter_stack_${porterApp.name}.yml`],
-  });
+  const { githubWorkflowFilename, userHasGithubAccess, isLoading } =
+    useGithubWorkflow({
+      porterApp,
+      previouslyBuilt,
+      fileNames: ["porter.yml", `porter_stack_${porterApp.name}.yml`],
+    });
 
-  if (previouslyBuilt) {
+  if (
+    previouslyBuilt ||
+    !!porterApp.image_repo_uri ||
+    status === "loading" ||
+    status === "error"
+  ) {
     return null;
   }
 

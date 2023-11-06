@@ -1,21 +1,22 @@
-import { PolicyDocType } from "./auth/types";
-import { PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
-import { baseApi } from "./baseApi";
-
 import {
-  BuildConfig,
-  FullActionConfigType,
-  CreateUpdatePorterAppOptions,
-} from "./types";
-import {
-  CreateStackBody,
-  SourceConfig,
-} from "main/home/cluster-dashboard/stacks/types";
-import {
-  Contract,
-  PreflightCheckRequest,
-  QuotaIncreaseRequest,
+  type Contract,
+  type PreflightCheckRequest,
+  type QuotaIncreaseRequest,
 } from "@porter-dev/api-contracts";
+
+import { type PullRequest } from "main/home/cluster-dashboard/preview-environments/types";
+import {
+  type CreateStackBody,
+  type SourceConfig,
+} from "main/home/cluster-dashboard/stacks/types";
+
+import { type PolicyDocType } from "./auth/types";
+import { baseApi } from "./baseApi";
+import {
+  type BuildConfig,
+  type CreateUpdatePorterAppOptions,
+  type FullActionConfigType,
+} from "./types";
 
 /**
  * Generic api call format
@@ -192,7 +193,7 @@ const getPorterApps = baseApi<
     cluster_id: number;
   }
 >("GET", (pathParams) => {
-  let { project_id, cluster_id } = pathParams;
+  const { project_id, cluster_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/applications`;
 });
 
@@ -204,7 +205,7 @@ const getPorterApp = baseApi<
     name: string;
   }
 >("GET", (pathParams) => {
-  let { project_id, cluster_id, name } = pathParams;
+  const { project_id, cluster_id, name } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${name}`;
 });
 
@@ -216,7 +217,7 @@ const getPorterAppEvent = baseApi<
     event_id: string;
   }
 >("GET", (pathParams) => {
-  let { project_id, cluster_id, event_id } = pathParams;
+  const { project_id, cluster_id, event_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/events/${event_id}`;
 });
 
@@ -228,7 +229,7 @@ const createPorterApp = baseApi<
     stack_name: string;
   }
 >("POST", (pathParams) => {
-  let { project_id, cluster_id, stack_name } = pathParams;
+  const { project_id, cluster_id, stack_name } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}`;
 });
 
@@ -240,7 +241,7 @@ const deletePorterApp = baseApi<
     name: string;
   }
 >("DELETE", (pathParams) => {
-  let { project_id, cluster_id, name } = pathParams;
+  const { project_id, cluster_id, name } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${name}`;
 });
 
@@ -254,7 +255,7 @@ const rollbackPorterApp = baseApi<
     stack_name: string;
   }
 >("POST", (pathParams) => {
-  let { project_id, cluster_id, stack_name } = pathParams;
+  const { project_id, cluster_id, stack_name } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/rollback`;
 });
 
@@ -356,7 +357,7 @@ const appEvents = baseApi<
     porter_app_name: string;
   }
 >("GET", (pathParams) => {
-  let { project_id, cluster_id, porter_app_name } = pathParams;
+  const { project_id, cluster_id, porter_app_name } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/events`;
 });
 
@@ -369,7 +370,7 @@ const getFeedEvents = baseApi<
     page?: number;
   }
 >("GET", (pathParams) => {
-  let { project_id, cluster_id, stack_name, page } = pathParams;
+  const { project_id, cluster_id, stack_name, page } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/events?page=${
     page || 1
   }`;
@@ -392,7 +393,7 @@ const createEnvironment = baseApi<
     git_repo_name: string;
   }
 >("POST", (pathParams) => {
-  let {
+  const {
     project_id,
     cluster_id,
     git_installation_id,
@@ -433,7 +434,7 @@ const deleteEnvironment = baseApi<
     git_repo_name: string;
   }
 >("DELETE", (pathParams) => {
-  let {
+  const {
     project_id,
     cluster_id,
     git_installation_id,
@@ -472,7 +473,7 @@ const listEnvironments = baseApi<
     cluster_id: number;
   }
 >("GET", (pathParams) => {
-  let { project_id, cluster_id } = pathParams;
+  const { project_id, cluster_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments`;
 });
 
@@ -484,7 +485,7 @@ const getEnvironment = baseApi<
     environment_id: number;
   }
 >("GET", (pathParams) => {
-  let { project_id, cluster_id, environment_id } = pathParams;
+  const { project_id, cluster_id, environment_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}`;
 });
 
@@ -498,7 +499,7 @@ const toggleNewCommentForEnvironment = baseApi<
     environment_id: number;
   }
 >("PATCH", (pathParams) => {
-  let { project_id, cluster_id, environment_id } = pathParams;
+  const { project_id, cluster_id, environment_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/environments/${environment_id}/toggle_new_comment`;
 });
 
@@ -592,7 +593,7 @@ const createSubdomain = baseApi<
     cluster_id: number;
   }
 >("POST", (pathParams) => {
-  let { cluster_id, id, namespace, release_name } = pathParams;
+  const { cluster_id, id, namespace, release_name } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/subdomain`;
 });
@@ -618,7 +619,7 @@ const deletePod = baseApi<
   {},
   { name: string; namespace: string; id: number; cluster_id: number }
 >("DELETE", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams;
+  const { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/pods/${name}`;
 });
 
@@ -626,7 +627,7 @@ const getPodEvents = baseApi<
   {},
   { name: string; namespace: string; id: number; cluster_id: number }
 >("GET", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams;
+  const { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/pods/${name}/events`;
 });
 
@@ -665,7 +666,7 @@ const updateNotificationConfig = baseApi<
     name: string;
   }
 >("POST", (pathParams) => {
-  let { project_id, cluster_id, namespace, name } = pathParams;
+  const { project_id, cluster_id, namespace, name } = pathParams;
 
   return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/notifications`;
 });
@@ -720,7 +721,7 @@ const getNotificationConfig = baseApi<
     name: string;
   }
 >("GET", (pathParams) => {
-  let { project_id, cluster_id, namespace, name } = pathParams;
+  const { project_id, cluster_id, namespace, name } = pathParams;
 
   return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/notifications`;
 });
@@ -759,7 +760,7 @@ const deployTemplate = baseApi<
     repo_url?: string;
   }
 >("POST", (pathParams) => {
-  let { cluster_id, id, namespace, repo_url } = pathParams;
+  const { cluster_id, id, namespace, repo_url } = pathParams;
 
   if (repo_url) {
     return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases?repo_url=${repo_url}`;
@@ -781,7 +782,7 @@ const deployAddon = baseApi<
     repo_url?: string;
   }
 >("POST", (pathParams) => {
-  let { cluster_id, id, namespace, repo_url } = pathParams;
+  const { cluster_id, id, namespace, repo_url } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/addons?repo_url=${repo_url}`;
 });
@@ -961,6 +962,7 @@ const validatePorterApp = baseApi<
 const createApp = baseApi<
   | {
       name: string;
+      deployment_target_id: string;
       type: "github";
       git_repo_id: number;
       git_branch: string;
@@ -969,6 +971,7 @@ const createApp = baseApi<
     }
   | {
       name: string;
+      deployment_target_id: string;
       type: "docker-registry";
       image: {
         repository: string;
@@ -999,6 +1002,47 @@ const createAppTemplate = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/templates`;
 });
 
+const updateApp = baseApi<
+  {
+    deployment_target_id: string;
+    b64_app_proto?: string;
+    git_source?: {
+      git_repo_id: number;
+      git_branch: string;
+      git_repo_name: string;
+    };
+    porter_yaml_path?: string;
+    variables?: Record<string, string>;
+    secrets?: Record<string, string>;
+    is_env_override?: boolean;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/update`;
+});
+
+const updateBuildSettings = baseApi<
+  {
+    build_settings: {
+      method: string;
+      context: string;
+      dockerfile: string;
+      builder: string;
+      buildpacks: string[];
+    };
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.porter_app_name}/build`;
+});
+
 const applyApp = baseApi<
   {
     deployment_target_id: string;
@@ -1015,6 +1059,20 @@ const applyApp = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/apply`;
+});
+
+const revertApp = baseApi<
+  {
+    deployment_target_id: string;
+    app_revision_id: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.porter_app_name}/rollback`;
 });
 
 const getAttachedEnvGroups = baseApi<
@@ -1167,7 +1225,7 @@ const getChart = baseApi<
     revision: number;
   }
 >("GET", (pathParams) => {
-  let { id, cluster_id, namespace, name, revision } = pathParams;
+  const { id, cluster_id, namespace, name, revision } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}`;
 });
@@ -1198,7 +1256,7 @@ const getChartComponents = baseApi<
     revision: number;
   }
 >("GET", (pathParams) => {
-  let { id, cluster_id, namespace, name, revision } = pathParams;
+  const { id, cluster_id, namespace, name, revision } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}/components`;
 });
@@ -1213,7 +1271,7 @@ const getChartControllers = baseApi<
     revision: number;
   }
 >("GET", (pathParams) => {
-  let { id, cluster_id, namespace, name, revision } = pathParams;
+  const { id, cluster_id, namespace, name, revision } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/${revision}/controllers`;
 });
@@ -1317,6 +1375,15 @@ const getImageTags = baseApi<
   return `/api/projects/${pathParams.project_id}/registries/${pathParams.registry_id}/repositories/${pathParams.repo_name}`;
 });
 
+const images = baseApi<
+  {},
+  {
+    project_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.project_id}/images`;
+});
+
 const getInfra = baseApi<
   {
     version?: string;
@@ -1345,7 +1412,7 @@ const getInfraTemplate = baseApi<
     version: string;
   }
 >("GET", (pathParams) => {
-  let { project_id, name, version } = pathParams;
+  const { project_id, name, version } = pathParams;
 
   return `/api/projects/${project_id}/infras/templates/${name}/${version}`;
 });
@@ -1373,7 +1440,7 @@ const provisionCluster = baseApi<
           min_instances: number;
           max_instances: number;
           node_group_type: number;
-        }
+        },
       ];
     };
   },
@@ -1436,7 +1503,7 @@ const updateInfra = baseApi<
     infra_id: number;
   }
 >("POST", (pathParams) => {
-  let { project_id, infra_id } = pathParams;
+  const { project_id, infra_id } = pathParams;
   return `/api/projects/${project_id}/infras/${infra_id}/update`;
 });
 
@@ -1452,7 +1519,7 @@ const retryCreateInfra = baseApi<
     infra_id: number;
   }
 >("POST", (pathParams) => {
-  let { project_id, infra_id } = pathParams;
+  const { project_id, infra_id } = pathParams;
   return `/api/projects/${project_id}/infras/${infra_id}/retry_create`;
 });
 
@@ -1463,7 +1530,7 @@ const retryDeleteInfra = baseApi<
     infra_id: number;
   }
 >("POST", (pathParams) => {
-  let { project_id, infra_id } = pathParams;
+  const { project_id, infra_id } = pathParams;
   return `/api/projects/${project_id}/infras/${infra_id}/retry_delete`;
 });
 
@@ -1474,7 +1541,7 @@ const deleteInfra = baseApi<
     infra_id: number;
   }
 >("DELETE", (pathParams) => {
-  let { project_id, infra_id } = pathParams;
+  const { project_id, infra_id } = pathParams;
   return `/api/projects/${project_id}/infras/${infra_id}`;
 });
 
@@ -1496,7 +1563,7 @@ const getOperation = baseApi<
     operation_id: string;
   }
 >("GET", (pathParams) => {
-  let { project_id, infra_id, operation_id } = pathParams;
+  const { project_id, infra_id, operation_id } = pathParams;
   return `/api/projects/${project_id}/infras/${infra_id}/operations/${operation_id}`;
 });
 
@@ -1508,7 +1575,7 @@ const getOperationLogs = baseApi<
     operation_id: string;
   }
 >("GET", (pathParams) => {
-  let { project_id, infra_id, operation_id } = pathParams;
+  const { project_id, infra_id, operation_id } = pathParams;
   return `/api/projects/${project_id}/infras/${infra_id}/operations/${operation_id}/logs`;
 });
 
@@ -1566,7 +1633,7 @@ const getIngress = baseApi<
   {},
   { namespace: string; cluster_id: number; name: string; id: number }
 >("GET", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams;
+  const { id, name, cluster_id, namespace } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/ingresses/${name}`;
 });
@@ -1579,7 +1646,7 @@ const getJobs = baseApi<
   {},
   { namespace: string; cluster_id: number; release_name: string; id: number }
 >("GET", (pathParams) => {
-  let { id, release_name, cluster_id, namespace } = pathParams;
+  const { id, release_name, cluster_id, namespace } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/jobs`;
 });
@@ -1588,7 +1655,7 @@ const getJobStatus = baseApi<
   {},
   { namespace: string; cluster_id: number; release_name: string; id: number }
 >("GET", (pathParams) => {
-  let { id, release_name, cluster_id, namespace } = pathParams;
+  const { id, release_name, cluster_id, namespace } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${release_name}/0/jobs/status`;
 });
@@ -1597,7 +1664,7 @@ const getJobPods = baseApi<
   {},
   { name: string; namespace: string; id: number; cluster_id: number }
 >("GET", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams;
+  const { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/pods`;
 });
 
@@ -1747,7 +1814,7 @@ const getReleaseToken = baseApi<
   {},
   { name: string; id: number; namespace: string; cluster_id: number }
 >("GET", (pathParams) => {
-  let { id, cluster_id, namespace, name } = pathParams;
+  const { id, cluster_id, namespace, name } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/webhook`;
 });
@@ -1756,7 +1823,7 @@ const getReleaseSteps = baseApi<
   {},
   { name: string; id: number; namespace: string; cluster_id: number }
 >("GET", (pathParams) => {
-  let { id, cluster_id, namespace, name } = pathParams;
+  const { id, cluster_id, namespace, name } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/steps`;
 });
@@ -1800,7 +1867,7 @@ const getRevisions = baseApi<
   {},
   { id: number; cluster_id: number; namespace: string; name: string }
 >("GET", (pathParams) => {
-  let { id, cluster_id, namespace, name } = pathParams;
+  const { id, cluster_id, namespace, name } = pathParams;
 
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/history`;
 });
@@ -1915,7 +1982,7 @@ const rollbackChart = baseApi<
     cluster_id: number;
   }
 >("POST", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams;
+  const { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/rollback`;
 });
 
@@ -1928,7 +1995,7 @@ const uninstallTemplate = baseApi<
     namespace: string;
   }
 >("DELETE", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams;
+  const { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0`;
 });
 
@@ -1966,7 +2033,7 @@ const upgradeChartValues = baseApi<
     cluster_id: number;
   }
 >("POST", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams;
+  const { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/0/upgrade`;
 });
 
@@ -2109,8 +2176,8 @@ const cloneEnvGroup = baseApi<
 const updateEnvGroup = baseApi<
   {
     name: string;
-    variables: { [key: string]: string };
-    secret_variables?: { [key: string]: string };
+    variables: Record<string, string>;
+    secret_variables?: Record<string, string>;
   },
   {
     project_id: number;
@@ -2126,8 +2193,8 @@ const updateEnvGroup = baseApi<
 const updateStacksEnvGroup = baseApi<
   {
     name: string;
-    variables: { [key: string]: string };
-    secret_variables?: { [key: string]: string };
+    variables: Record<string, string>;
+    secret_variables?: Record<string, string>;
     apps?: string[];
   },
   {
@@ -2168,7 +2235,7 @@ const updateConfigMap = baseApi<
     namespace: string;
   }
 >("POST", (pathParams) => {
-  let { id, cluster_id } = pathParams;
+  const { id, cluster_id } = pathParams;
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/namespaces/${pathParams.namespace}/configmap/update`;
 });
 
@@ -2230,7 +2297,7 @@ const createNamespace = baseApi<
   },
   { id: number; cluster_id: number }
 >("POST", (pathParams) => {
-  let { id, cluster_id } = pathParams;
+  const { id, cluster_id } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/create`;
 });
 
@@ -2242,7 +2309,7 @@ const deleteNamespace = baseApi<
     namespace: string;
   }
 >("DELETE", (pathParams) => {
-  let { id, cluster_id, namespace } = pathParams;
+  const { id, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}`;
 });
 
@@ -2250,7 +2317,7 @@ const deleteJob = baseApi<
   {},
   { name: string; namespace: string; id: number; cluster_id: number }
 >("DELETE", (pathParams) => {
-  let { id, name, cluster_id, namespace } = pathParams;
+  const { id, name, cluster_id, namespace } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}`;
 });
 
@@ -2258,7 +2325,7 @@ const stopJob = baseApi<
   {},
   { name: string; namespace: string; id: number; cluster_id: number }
 >("POST", (pathParams) => {
-  let { id, name, namespace, cluster_id } = pathParams;
+  const { id, name, namespace, cluster_id } = pathParams;
   return `/api/projects/${id}/clusters/${cluster_id}/namespaces/${namespace}/jobs/${name}/stop`;
 });
 
@@ -2926,7 +2993,7 @@ const updateStackStep = baseApi<
     cluster_id: number;
   }
 >("POST", (pathParams) => {
-  let { project_id, cluster_id } = pathParams;
+  const { project_id, cluster_id } = pathParams;
   return `/api/projects/${project_id}/clusters/${cluster_id}/applications/analytics`;
 });
 
@@ -3220,6 +3287,7 @@ export default {
   getGitRepos,
   getImageRepos,
   getImageTags,
+  images,
   listInfraTemplates,
   getInfraTemplate,
   getInfra,
@@ -3262,7 +3330,10 @@ export default {
   validatePorterApp,
   createApp,
   createAppTemplate,
+  updateApp,
+  updateBuildSettings,
   applyApp,
+  revertApp,
   getAttachedEnvGroups,
   getLatestRevision,
   getRevision,

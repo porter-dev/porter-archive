@@ -28,6 +28,9 @@ const (
 	// DBEnabled enables the "Databases" tab
 	DBEnabled FeatureFlagLabel = "db_enabled"
 
+	// EFSEnabled enables the "EFS" checkbox in App Settings
+	EFSEnabled FeatureFlagLabel = "efs_enabled"
+
 	// EnableReprovision enables the provisioning button after initial creation of the cluster
 	EnableReprovision FeatureFlagLabel = "enable_reprovision"
 
@@ -60,6 +63,9 @@ const (
 
 	// ValidateApplyV2 controls whether apps deploys use a porter app revision contract vs helm
 	ValidateApplyV2 FeatureFlagLabel = "validate_apply_v2"
+
+	// BetaFeaturesEnabled controls whether a project uses beta features
+	BetaFeaturesEnabled FeatureFlagLabel = "beta_features_enabled"
 )
 
 // ProjectFeatureFlags keeps track of all project-related feature flags
@@ -68,6 +74,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	AzureEnabled:           false,
 	CapiProvisionerEnabled: true,
 	DBEnabled:              false,
+	EFSEnabled:             false,
 	EnableReprovision:      false,
 	FullAddOns:             false,
 	HelmValuesEnabled:      false,
@@ -79,6 +86,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	SimplifiedViewEnabled:  true,
 	StacksEnabled:          false,
 	ValidateApplyV2:        true,
+	BetaFeaturesEnabled:    false,
 }
 
 type ProjectPlan string
@@ -209,6 +217,8 @@ func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *
 			return p.StacksEnabled
 		case "validate_apply_v2":
 			return p.ValidateApplyV2
+		case "efs_enabled":
+			return false
 		}
 	}
 
@@ -251,6 +261,8 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		ValidateApplyV2:        p.GetFeatureFlag(ValidateApplyV2, launchDarklyClient),
 		FullAddOns:             p.GetFeatureFlag(FullAddOns, launchDarklyClient),
 		QuotaIncrease:          p.GetFeatureFlag(QuotaIncrease, launchDarklyClient),
+		EFSEnabled:             p.GetFeatureFlag(EFSEnabled, launchDarklyClient),
+		BetaFeaturesEnabled:    p.GetFeatureFlag(BetaFeaturesEnabled, launchDarklyClient),
 	}
 }
 

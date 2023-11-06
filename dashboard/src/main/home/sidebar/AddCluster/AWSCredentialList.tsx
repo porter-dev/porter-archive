@@ -56,11 +56,12 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
         setHasError(true);
         setCurrentError(err.response?.data?.error);
         setIsLoading(false);
+
       });
   }, [currentProject]);
 
   if (hasError) {
-    return <Placeholder>Error</Placeholder>;
+    return <ProvisionerFlow />;
   }
 
   if (isLoading) {
@@ -85,7 +86,7 @@ const AWSCredentialsList: React.FunctionComponent<Props> = ({
           credential:
         </Description>
         <CredentialList
-          credentials={awsCredentials.map((cred) => {
+          credentials={awsCredentials?.map((cred) => {
             return {
               id: cred.id,
               display_name: cred.aws_arn,

@@ -32,6 +32,7 @@ type Props = {
   clusterId: number;
   gitCommitUrl: string;
   displayCommitSha: string;
+  isMostRecentDeployEvent: boolean;
 };
 
 const DeployEventCard: React.FC<Props> = ({
@@ -324,7 +325,8 @@ const DeployEventCard: React.FC<Props> = ({
               event.metadata.service_deployment_metadata
             }
             appName={appName}
-            revision={revisionIdToNumber[event.metadata.app_revision_id]}
+            revisionNumber={revisionIdToNumber[event.metadata.app_revision_id]}
+            revisionId={event.metadata.app_revision_id}
           />
         </AnimateHeight>
       )}

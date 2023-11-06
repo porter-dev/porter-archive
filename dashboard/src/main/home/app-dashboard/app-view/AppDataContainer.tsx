@@ -13,6 +13,7 @@ import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
+import styled from "styled-components";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
@@ -20,8 +21,9 @@ import Banner from "components/porter/Banner";
 import Button from "components/porter/Button";
 import { Error as ErrorComponent } from "components/porter/Error";
 import Icon from "components/porter/Icon";
+import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
+import Tag from "components/porter/Tag";
 import TabSelector from "components/TabSelector";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
@@ -35,6 +37,7 @@ import {
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import alert from "assets/alert-red.svg";
 import save from "assets/save-01.svg";
 
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
@@ -447,7 +450,23 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         value: "notifications",
         sibling:
           numNotifications > 0 ? (
-            <Text color={"#FF6060"}>({numNotifications})</Text>
+            <Tag borderColor={"#FF6060"}>
+              <Link
+                to={`/apps/${latestProto.name}/notifications`}
+                color={"#FF6060"}
+              >
+                <TagIcon src={alert} />
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: "13px",
+                  }}
+                >
+                  {numNotifications}
+                </div>
+              </Link>
+            </Tag>
           ) : undefined,
       },
       { label: "Activity", value: "activity" },
@@ -619,3 +638,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 };
 
 export default AppDataContainer;
+
+const TagIcon = styled.img`
+  height: 13px;
+  margin-right: 3px;
+  margin-top: 1px;
+`;

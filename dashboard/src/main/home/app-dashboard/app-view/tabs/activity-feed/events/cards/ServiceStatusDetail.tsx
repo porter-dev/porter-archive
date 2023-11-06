@@ -10,6 +10,7 @@ import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { Service } from "main/home/app-dashboard/new-app-flow/serviceTypes";
 
+import alert from "assets/alert-red.svg";
 import metrics from "assets/bar-group-03.svg";
 import calendar from "assets/calendar-02.svg";
 import document from "assets/document.svg";
@@ -29,13 +30,15 @@ type Props = {
     }
   >;
   appName: string;
-  revision: number;
+  revisionId: string;
+  revisionNumber: number;
 };
 
 const ServiceStatusDetail: React.FC<Props> = ({
   serviceDeploymentMetadata,
   appName,
-  revision,
+  revisionId,
+  revisionNumber,
 }) => {
   const { latestClientServices, latestNotifications } = useLatestRevision();
   const convertEventStatusToCopy = (status: string): string => {
@@ -69,7 +72,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
               ? service.config.domains[0].name.value
               : "";
           const notificationsExistForService = latestNotifications.some(
-            (n) => n.serviceName === key
+            (n) => n.serviceName === key && n.appRevisionId === revisionId
           );
           return (
             <ServiceStatusTableRow key={key}>
@@ -90,65 +93,64 @@ const ServiceStatusDetail: React.FC<Props> = ({
                 </Text>
               </ServiceStatusTableData>
               <ServiceStatusTableData>
-                {notificationsExistForService ? (
-                  <>
-                    <Tag>
-                      <Link
-                        to={`/apps/${appName}/notifications?service=${key}`}
-                      >
-                        <TagIcon src={document} />
-                        Notifications
-                      </Link>
-                    </Tag>
-                  </>
-                ) : (
-                  <>
-                    {serviceType !== "job" && (
-                      <>
-                        <Tag>
-                          <Link
-                            to={`/apps/${appName}/logs?version=${revision}&service=${key}`}
-                          >
-                            <TagIcon src={document} />
-                            Logs
-                          </Link>
-                        </Tag>
-                        <Spacer inline x={0.5} />
-                        <Tag>
-                          <Link to={`/apps/${appName}/metrics?service=${key}`}>
-                            <TagIcon src={metrics} />
-                            Metrics
-                          </Link>
-                        </Tag>
-                      </>
-                    )}
-                    {serviceType === "job" && (
-                      <Tag>
-                        <TagIcon src={calendar} style={{ marginTop: "2px" }} />
+                <>
+                  {notificationsExistForService && (
+                    <>
+                      <Tag borderColor="#FF6060">
                         <Link
-                          to={`/apps/${appName}/job-history?service=${key}`}
+                          to={`/apps/${appName}/notifications?service=${key}`}
+                          color={"#FF6060"}
                         >
-                          History
+                          <TagIcon src={alert} />
+                          <div style={{ color: "#FF6060" }}>Notifications</div>
                         </Link>
                       </Tag>
-                    )}
-                    {externalUri !== "" && (
-                      <>
-                        <Spacer inline x={0.5} />
-                        <Tag>
-                          <Link
-                            to={Service.prefixSubdomain(externalUri)}
-                            target={"_blank"}
-                            showTargetBlankIcon={false}
-                          >
-                            <TagIcon src={link} />
-                            External Link
-                          </Link>
-                        </Tag>
-                      </>
-                    )}
-                  </>
-                )}
+                      <Spacer inline x={0.5} />
+                    </>
+                  )}
+                  {serviceType !== "job" && (
+                    <>
+                      <Tag>
+                        <Link
+                          to={`/apps/${appName}/logs?version=${revisionNumber}&service=${key}`}
+                        >
+                          <TagIcon src={document} />
+                          Logs
+                        </Link>
+                      </Tag>
+                      <Spacer inline x={0.5} />
+                      <Tag>
+                        <Link to={`/apps/${appName}/metrics?service=${key}`}>
+                          <TagIcon src={metrics} />
+                          Metrics
+                        </Link>
+                      </Tag>
+                    </>
+                  )}
+                  {serviceType === "job" && (
+                    <Tag>
+                      <TagIcon src={calendar} style={{ marginTop: "2px" }} />
+                      <Link to={`/apps/${appName}/job-history?service=${key}`}>
+                        History
+                      </Link>
+                    </Tag>
+                  )}
+                  {externalUri !== "" && (
+                    <>
+                      <Spacer inline x={0.5} />
+                      <Tag>
+                        <Link
+                          to={Service.prefixSubdomain(externalUri)}
+                          target={"_blank"}
+                          showTargetBlankIcon={false}
+                        >
+                          <TagIcon src={link} />
+                          External Link
+                        </Link>
+                      </Tag>
+                    </>
+                  )}
+                </>
               </ServiceStatusTableData>
             </ServiceStatusTableRow>
           );

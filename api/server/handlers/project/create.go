@@ -1,6 +1,7 @@
 package project
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -11,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type ProjectCreateHandler struct {
@@ -28,16 +30,19 @@ func NewProjectCreateHandler(
 }
 
 func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-project")
+	defer span.End()
+
 	request := &types.CreateProjectRequest{}
 
-	ok := p.DecodeAndValidate(w, r, request)
-
-	if !ok {
+	if ok := p.DecodeAndValidate(w, r, request); !ok {
+		telemetry.Error(ctx, span, nil, "error decoding request")
 		return
 	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "project-name", Value: request.Name})
 
 	// read the user from context
-	user, _ := r.Context().Value(types.UserScope).(*models.User)
+	user, _ := ctx.Value(types.UserScope).(*models.User)
 
 	proj := &models.Project{
 		Name:                   request.Name,
@@ -49,10 +54,11 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	var err error
-	proj, _, err = CreateProjectWithUser(p.Repo().Project(), proj, user)
+	proj, _, err = CreateProjectWithUser(ctx, p.Repo().Project(), proj, user)
 
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err := telemetry.Error(ctx, span, err, "error creating project")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -63,7 +69,8 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	})
 
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err := telemetry.Error(ctx, span, err, "error creating project onboarding")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -77,7 +84,8 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	})
 
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err := telemetry.Error(ctx, span, err, "error creating project usage")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -89,6 +97,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		// we do not write error response, since setting up billing error can be
 		// resolved later and may not be fatal
+		err := telemetry.Error(ctx, span, err, "error adding project to new billing team")
 		p.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
 	}
 
@@ -98,12 +107,17 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 func CreateProjectWithUser(
+	ctx context.Context,
 	projectRepo repository.ProjectRepository,
 	proj *models.Project,
 	user *models.User,
 ) (*models.Project, *models.Role, error) {
+	ctx, span := telemetry.NewSpan(ctx, "create-project-with-user")
+	defer span.End()
+
 	proj, err := projectRepo.CreateProject(proj)
 	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error creating project")
 		return nil, nil, err
 	}
 
@@ -116,6 +130,7 @@ func CreateProjectWithUser(
 		},
 	})
 	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error adding user as admin in project")
 		return nil, nil, err
 	}
 
@@ -123,6 +138,7 @@ func CreateProjectWithUser(
 	proj, err = projectRepo.ReadProject(proj.ID)
 
 	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error reading project")
 		return nil, nil, err
 	}
 

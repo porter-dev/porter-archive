@@ -63,7 +63,7 @@ type FeatureFlags struct {
 }
 
 type CreateProjectRequest struct {
-	Name string `json:"name" form:"required"`
+	Name string `json:"name" form:"required,min=1,max=25"`
 }
 
 type CreateProjectResponse Project

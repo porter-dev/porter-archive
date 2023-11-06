@@ -7,7 +7,10 @@ import Error from "components/porter/Error";
 
 import Spacer from "components/porter/Spacer";
 import { useIntercom } from "lib/hooks/useIntercom";
-import { runJob } from "./utils";
+import api from "shared/api";
+import {z} from "zod";
+import target from "assets/target.svg";
+import Icon from "components/porter/Icon";
 
 type Props = {
   projectId: number;
@@ -30,22 +33,36 @@ const TriggerJobButton: React.FC<Props> = ({
   const [errorMessage, setErrorMessage] = useState("");
   const [status, setStatus] = useState("");
 
-  const triggerJobRun = (): void => {
+  const triggerJobRun = async (): Promise<void> => {
     setStatus("loading");
     setErrorMessage("");
-    runJob(projectId, clusterId, deploymentTargetId, appName, jobName)
-      .then((jobRunID: string) => {
-        history.push(
+
+    try {
+      const resp = await api.appRun(
+          "<token>",
+          {
+            deployment_target_id: deploymentTargetId,
+            service_name: jobName,
+          },
+          {
+            project_id: projectId,
+            cluster_id: clusterId,
+            porter_app_name: appName,
+          })
+
+      const parsed = await z.object({job_run_id: z.string()}).parseAsync(resp.data)
+
+      const jobRunID = parsed.job_run_id
+      history.push(
           `/apps/${appName}/job-history?job_run_id=${jobRunID}&service=${jobName}`
-        );
-      })
-      .catch(() => {
-        setStatus("");
-        setErrorMessage("Unable to run job");
-        showIntercomWithMessage({
-          message: "I am running into an issue running my job.",
-        });
+      );
+    } catch {
+      setStatus("");
+      setErrorMessage("Unable to run job");
+      showIntercomWithMessage({
+        message: "I am running into an issue running my job.",
       });
+    }
   };
 
   return (
@@ -54,8 +71,11 @@ const TriggerJobButton: React.FC<Props> = ({
         onClick={triggerJobRun}
         loadingText={"Running..."}
         status={status}
+        height={"33px"}
       >
-        Run job
+        <Icon src={target} height={"15px"}/>
+        <Spacer inline x={.5}/>
+        Run once
       </Button>
       {errorMessage !== "" && (
         <>

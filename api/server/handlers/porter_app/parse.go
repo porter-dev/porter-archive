@@ -120,6 +120,10 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 	defer span.End()
 
 	parsed := &PorterStackYAML{}
+	if err := yaml.Unmarshal(conf.PorterYaml, parsed); err != nil {
+		err = telemetry.Error(ctx, span, err, "error parsing porter.yaml")
+		return nil, nil, nil, err
+	}
 
 	if conf.FullHelmValues != "" {
 		parsedHelmValues, err := convertHelmValuesToPorterYaml(conf.FullHelmValues)
@@ -127,13 +131,12 @@ func parse(ctx context.Context, conf ParseConf) (*chart.Chart, map[string]interf
 			err = telemetry.Error(ctx, span, err, "error parsing raw helm values")
 			return nil, nil, nil, err
 		}
-		parsed = parsedHelmValues
-	} else {
-		err := yaml.Unmarshal(conf.PorterYaml, parsed)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error parsing porter.yaml")
-			return nil, nil, nil, err
+
+		if parsed.Release != nil && parsed.Release.Run != nil {
+			parsedHelmValues.Release = parsed.Release
 		}
+
+		parsed = parsedHelmValues
 	}
 
 	synced_env := make([]*SyncedEnvSection, 0)

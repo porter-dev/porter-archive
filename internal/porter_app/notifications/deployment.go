@@ -3,9 +3,11 @@ package notifications
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
 	v1 "k8s.io/api/apps/v1"
 )
@@ -39,6 +41,8 @@ type hydrateNotificationWithDeploymentInput struct {
 	Namespace string
 	// K8sAgent is the k8s agent, used to query for deployment info
 	K8sAgent *kubernetes.Agent
+	// EventRepo is the repository for app events, used to check if we've already marked this deployment as successful/failed
+	EventRepo repository.PorterAppEventRepository
 }
 
 // hydrateNotificationWithDeployment hydrates a notification with k8s deployment info
@@ -65,33 +69,50 @@ func hydrateNotificationWithDeployment(ctx context.Context, inp hydrateNotificat
 		telemetry.AttributeKV{Key: "service-name", Value: inp.ServiceName},
 	)
 
-	selectors := []string{
-		fmt.Sprintf("porter.run/deployment-target-id=%s", inp.DeploymentTargetId),
-		fmt.Sprintf("porter.run/app-name=%s", inp.AppName),
-		fmt.Sprintf("porter.run/app-revision-id=%s", inp.Notification.AppRevisionID),
-		fmt.Sprintf("porter.run/service-name=%s", inp.ServiceName),
-	}
-	depls, err := inp.K8sAgent.GetDeploymentsBySelector(inp.Namespace, strings.Join(selectors, ","))
+	// first, we check if we've already marked this deployment as successful or failed
+	status, err := porterAppDeployEventStatus(ctx, porterAppDeployEventStatusInput{
+		AppID:         inp.AppID,
+		EventRepo:     inp.EventRepo,
+		AppRevisionID: inp.Notification.AppRevisionID,
+		ServiceName:   inp.Notification.ServiceName,
+	})
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "failed to get deployments for notification")
-		return hydratedNotification, err
-	}
-	if len(depls.Items) == 0 {
-		err := telemetry.Error(ctx, span, nil, "no deployments found for notification")
-		return hydratedNotification, err
-	}
-	if len(depls.Items) > 1 {
-		err := telemetry.Error(ctx, span, nil, "multiple deployments found for notification")
+		err := telemetry.Error(ctx, span, err, "failed to get deployment status from db")
 		return hydratedNotification, err
 	}
 
-	matchingDeployment := depls.Items[0]
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "deployment-name", Value: matchingDeployment.Name},
-		telemetry.AttributeKV{Key: "deployment-uid", Value: matchingDeployment.ObjectMeta.UID},
-		telemetry.AttributeKV{Key: "deployment-creation-timestamp", Value: matchingDeployment.ObjectMeta.CreationTimestamp},
-	)
-	status := deploymentStatus(matchingDeployment)
+	// the status is still pending in the db, so we haven't updated the user on it yet
+	// therefore, we check the k8s deployment status
+	if status == DeploymentStatus_Pending {
+		selectors := []string{
+			fmt.Sprintf("porter.run/deployment-target-id=%s", inp.DeploymentTargetId),
+			fmt.Sprintf("porter.run/app-name=%s", inp.AppName),
+			fmt.Sprintf("porter.run/app-revision-id=%s", inp.Notification.AppRevisionID),
+			fmt.Sprintf("porter.run/service-name=%s", inp.ServiceName),
+		}
+		depls, err := inp.K8sAgent.GetDeploymentsBySelector(inp.Namespace, strings.Join(selectors, ","))
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "failed to get deployments for notification")
+			return hydratedNotification, err
+		}
+		if len(depls.Items) == 0 {
+			err := telemetry.Error(ctx, span, nil, "no deployments found for notification")
+			return hydratedNotification, err
+		}
+		if len(depls.Items) > 1 {
+			err := telemetry.Error(ctx, span, nil, "multiple deployments found for notification")
+			return hydratedNotification, err
+		}
+
+		matchingDeployment := depls.Items[0]
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "deployment-name", Value: matchingDeployment.Name},
+			telemetry.AttributeKV{Key: "deployment-uid", Value: matchingDeployment.ObjectMeta.UID},
+			telemetry.AttributeKV{Key: "deployment-creation-timestamp", Value: matchingDeployment.ObjectMeta.CreationTimestamp},
+		)
+		status = k8sDeploymentStatus(matchingDeployment)
+	}
+
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-status", Value: status})
 	if status == DeploymentStatus_Unknown {
 		err := telemetry.Error(ctx, span, nil, "unable to determine status of deployment")
@@ -105,8 +126,57 @@ func hydrateNotificationWithDeployment(ctx context.Context, inp hydrateNotificat
 	return hydratedNotification, nil
 }
 
-// deploymentStatus returns the status of a k8s deployment
-func deploymentStatus(depl v1.Deployment) DeploymentStatus {
+// porterAppDeployEventStatusInput is the input struct for porterAppDeployEventStatus
+type porterAppDeployEventStatusInput struct {
+	// AppID is the ID of the app
+	AppID string
+	// EventRepo is the repository for app events, used to check if we've already marked this deployment as successful/failed
+	EventRepo repository.PorterAppEventRepository
+	// AppRevisionID is the ID of the app revision
+	AppRevisionID string
+	// ServiceName is the name of the service
+	ServiceName string
+}
+
+// porterAppDeployEventStatus returns the status of a deploy event from the app events repository
+func porterAppDeployEventStatus(ctx context.Context, inp porterAppDeployEventStatusInput) (DeploymentStatus, error) {
+	ctx, span := telemetry.NewSpan(ctx, "db-deploy-event-status")
+	defer span.End()
+
+	deploymentStatus := DeploymentStatus_Unknown
+
+	appIdInt, err := strconv.Atoi(inp.AppID)
+	if err != nil {
+		return deploymentStatus, telemetry.Error(ctx, span, err, "failed to convert app id to int")
+	}
+	matchingDeployEvent, err := inp.EventRepo.ReadDeployEventByAppRevisionID(ctx, uint(appIdInt), inp.AppRevisionID)
+	if err != nil {
+		return deploymentStatus, telemetry.Error(ctx, span, err, "failed to read deploy event by app revision id")
+	}
+
+	serviceDeploymentMetadata, err := serviceDeploymentMetadataFromDeployEvent(ctx, matchingDeployEvent, inp.ServiceName)
+	if err != nil {
+		return deploymentStatus, telemetry.Error(ctx, span, err, "failed to get service deployment metadata from deploy event")
+	}
+
+	switch serviceDeploymentMetadata.Status {
+	case PorterAppEventStatus_Success:
+		deploymentStatus = DeploymentStatus_Success
+	case PorterAppEventStatus_Failed:
+		deploymentStatus = DeploymentStatus_Failure
+	case PorterAppEventStatus_Progressing:
+		deploymentStatus = DeploymentStatus_Pending
+	default:
+		deploymentStatus = DeploymentStatus_Unknown
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-status", Value: string(deploymentStatus)})
+
+	return deploymentStatus, nil
+}
+
+// k8sDeploymentStatus returns the status of a k8s deployment
+func k8sDeploymentStatus(depl v1.Deployment) DeploymentStatus {
 	deploymentStatus := DeploymentStatus_Unknown
 
 	if depl.Status.Replicas == depl.Status.ReadyReplicas &&

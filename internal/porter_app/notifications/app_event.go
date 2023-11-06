@@ -15,6 +15,9 @@ import (
 // PorterAppEventType_Notification is the type of a Porter App Event that is a notification
 const PorterAppEventType_Notification = "NOTIFICATION"
 
+// PorterAppEventType_Deploy is the type of a Porter App Event that is a deploy event
+const PorterAppEventType_Deploy = "DEPLOY"
+
 // PorterAppEventStatus is an alias for a string that represents a Porter App Event Status
 type PorterAppEventStatus string
 
@@ -227,6 +230,60 @@ func updateDeployEvent(ctx context.Context, inp updateDeployEventInput) error {
 	}
 
 	return nil
+}
+
+// serviceDeploymentMetadataFromDeployEvent returns the serviceDeploymentMetadata of a service from a deploy event
+func serviceDeploymentMetadataFromDeployEvent(ctx context.Context, deployEvent models.PorterAppEvent, serviceName string) (ServiceDeploymentMetadata, error) {
+	ctx, span := telemetry.NewSpan(ctx, "service-deployment-metadata-from-deploy-event")
+	defer span.End()
+
+	serviceDeploymentMetadata := ServiceDeploymentMetadata{}
+
+	if deployEvent.ID == uuid.Nil {
+		return serviceDeploymentMetadata, telemetry.Error(ctx, span, nil, "deploy event id cannot be nil")
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "app-id", Value: deployEvent.PorterAppID},
+		telemetry.AttributeKV{Key: "event-id", Value: deployEvent.ID},
+		telemetry.AttributeKV{Key: "event-type", Value: deployEvent.Type},
+		telemetry.AttributeKV{Key: "event-status", Value: deployEvent.Status},
+		telemetry.AttributeKV{Key: "service-name", Value: serviceName},
+	)
+
+	if deployEvent.Type != string(PorterAppEventType_Deploy) {
+		return serviceDeploymentMetadata, telemetry.Error(ctx, span, nil, "event is not a deploy event")
+	}
+
+	serviceStatus, ok := deployEvent.Metadata["service_deployment_metadata"]
+	if !ok {
+		return serviceDeploymentMetadata, telemetry.Error(ctx, span, nil, "service deployment metadata not found in deploy event metadata")
+	}
+	serviceDeploymentGenericMap, ok := serviceStatus.(map[string]interface{})
+	if !ok {
+		return serviceDeploymentMetadata, telemetry.Error(ctx, span, nil, "service deployment metadata is not correct type")
+	}
+	serviceDeploymentMap := make(map[string]ServiceDeploymentMetadata)
+	for k, v := range serviceDeploymentGenericMap {
+		by, err := json.Marshal(v)
+		if err != nil {
+			return serviceDeploymentMetadata, telemetry.Error(ctx, span, nil, "unable to marshal service deployment metadata")
+		}
+
+		var serviceDeploymentMetadata ServiceDeploymentMetadata
+		err = json.Unmarshal(by, &serviceDeploymentMetadata)
+		if err != nil {
+			return serviceDeploymentMetadata, telemetry.Error(ctx, span, nil, "unable to unmarshal service deployment metadata")
+		}
+		serviceDeploymentMap[k] = serviceDeploymentMetadata
+	}
+	serviceDeploymentMetadata, ok = serviceDeploymentMap[serviceName]
+	if !ok {
+		return serviceDeploymentMetadata, telemetry.Error(ctx, span, nil, "deployment metadata not found for service")
+	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "status", Value: string(serviceDeploymentMetadata.Status)})
+
+	return serviceDeploymentMetadata, nil
 }
 
 // saveNotification saves a notification to the db

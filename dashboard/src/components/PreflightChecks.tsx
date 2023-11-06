@@ -212,7 +212,7 @@ const AWS_VPC_QUOTA_ERROR_MESSAGE =
 const AWS_NAT_GATEWAY_QUOTA_ERROR_MESSAGE =
   "Your AWS account has reached the limit of NAT Gateways allowed in the region. Additional NAT Gateways must be requested in order to provision.";
 const AWS_VCPU_QUOTA_ERROR_MESSAGE =
-  "Your AWS account has reached the limit of vCPUs allowed in the region. Additional vCPUs must be requested in order to provision.";
+  "Your AWS account has reached the limit of vCPUs allowed in the region. Additional addresses must be requested in order to provision.";
 const DEFAULT_ERROR_MESSAGE =
   "An error occurred while provisioning your infrastructure. Please try again.";
 

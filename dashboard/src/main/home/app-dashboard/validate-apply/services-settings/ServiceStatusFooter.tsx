@@ -5,14 +5,15 @@ import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Button from "components/porter/Button";
 
-import AnimateHeight, { Height } from "react-animate-height";
+import AnimateHeight, { type Height } from "react-animate-height";
 import _ from "lodash";
 import Link from "components/porter/Link";
-import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
+import { type PorterAppVersionStatus } from "lib/hooks/useAppStatus";
 import { match } from "ts-pattern";
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
+import TriggerJobButton from "../jobs/TriggerJobButton";
 
-interface ServiceStatusFooterProps {
+type ServiceStatusFooterProps = {
     serviceName: string;
     status: PorterAppVersionStatus[];
     isJob: boolean,
@@ -23,7 +24,7 @@ const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
     isJob
 }) => {
     const [expanded, setExpanded] = useState<boolean>(false);
-    const { latestProto } = useLatestRevision();
+    const { latestProto, projectId, clusterId, deploymentTarget, appName } = useLatestRevision();
     const [height, setHeight] = useState<Height>(0);
 
     if (isJob) {
@@ -49,6 +50,7 @@ const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
                             History
                         </Button>
                     </Link>
+                    <TriggerJobButton projectId={projectId} clusterId={clusterId} appName={appName} jobName={serviceName} deploymentTargetId={deploymentTarget.id} />
                 </Container>
 
             </StyledStatusFooter>

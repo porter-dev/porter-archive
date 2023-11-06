@@ -5,15 +5,16 @@ import history from "assets/history.png";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
-import { JobRun, useJobs } from "lib/hooks/useJobs";
+import { type JobRun, useJobs } from "lib/hooks/useJobs";
 import Table from "components/OldTable";
-import { CellProps, Column } from "react-table";
+import { type CellProps, type Column } from "react-table";
 import { relativeDate, timeFrom } from "shared/string_utils";
 import { useLocation } from "react-router";
 import SelectRow from "components/form-components/SelectRow";
 import Link from "components/porter/Link";
 import { ranFor } from "./utils";
 import JobRunDetails from "./JobRunDetails";
+import TriggerJobButton from "./TriggerJobButton";
 
 type Props = {
   appName: string;
@@ -59,7 +60,7 @@ const JobsSection: React.FC<Props> = ({
     return jobRuns.find((jr) => jr.metadata.uid === jobRunId);
   }, [jobRuns, jobRunId]);
 
-  const columns = useMemo<Column<JobRun>[]>(
+  const columns = useMemo<Array<Column<JobRun>>>(
     () => [
       {
         Header: "Started",
@@ -146,16 +147,21 @@ const JobsSection: React.FC<Props> = ({
       {!selectedJobRun && (
         <StyledExpandedApp>
           <Container row>
+          <Container row spaced>
             <Icon src={history} />
             <Text size={21}>Run history for</Text>
             <SelectRow
               displayFlex={true}
               label=""
               value={selectedJobName}
-              setActiveValue={(x: string) => setSelectedJobName(x)}
+              setActiveValue={(x: string) => { setSelectedJobName(x); }}
               options={jobOptions}
               width="200px"
             />
+          </Container>
+            {selectedJobName !== "all" && (
+              <TriggerJobButton projectId={projectId} clusterId={clusterId} appName={appName} jobName={selectedJobName} deploymentTargetId={deploymentTargetId}/>
+            )}
           </Container>
           <Spacer y={1} />
           <Table

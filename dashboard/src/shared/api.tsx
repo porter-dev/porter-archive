@@ -1024,6 +1024,19 @@ const updateApp = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/update`;
 });
 
+const appRun = baseApi<
+    {
+        deployment_target_id: string;
+        service_name: string;
+    },
+    {
+        project_id: number;
+        cluster_id: number;
+    }
+>("POST", (pathParams) => {
+    return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.porter_app_name}/run`;
+});
+
 const updateBuildSettings = baseApi<
   {
     build_settings: {
@@ -3331,6 +3344,7 @@ export default {
   createApp,
   createAppTemplate,
   updateApp,
+  appRun,
   updateBuildSettings,
   applyApp,
   revertApp,

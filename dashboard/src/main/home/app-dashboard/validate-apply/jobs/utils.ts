@@ -1,6 +1,8 @@
-import { JobRun } from "lib/hooks/useJobs";
+import { type JobRun } from "lib/hooks/useJobs";
 import { timeFrom } from "shared/string_utils";
 import { differenceInSeconds, intervalToDuration } from 'date-fns';
+import api from "shared/api";
+import {z} from "zod";
 
 export const ranFor = (start: string, end?: string | number) => {
     const duration = timeFrom(start, end);
@@ -32,3 +34,21 @@ export const getDuration = (jobRun: JobRun): string => {
         return `${duration.seconds}s`
     }
 };
+
+export const runJob = async (projectId: number, clusterId: number, deploymentTargetId: string, appName:string, jobName: string): Promise<string> => {
+    const resp = await api.appRun(
+        "<token>",
+        {
+            deployment_target_id: deploymentTargetId,
+            service_name: jobName,
+        },
+        {
+            project_id: projectId,
+            cluster_id: clusterId,
+            porter_app_name: appName,
+        })
+
+    const parsed = await z.object({job_run_id: z.string()}).parseAsync(resp.data)
+
+    return parsed.job_run_id
+}

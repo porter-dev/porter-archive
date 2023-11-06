@@ -5,8 +5,8 @@ import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Error from "components/porter/Error";
 
-import Spacer from "../../../../../components/porter/Spacer";
-import { useIntercom } from "../../../../../lib/hooks/useIntercom";
+import Spacer from "components/porter/Spacer";
+import { useIntercom } from "lib/hooks/useIntercom";
 import { runJob } from "./utils";
 
 type Props = {
@@ -34,7 +34,7 @@ const TriggerJobButton: React.FC<Props> = ({
     setStatus("loading");
     setErrorMessage("");
     runJob(projectId, clusterId, deploymentTargetId, appName, jobName)
-      .then((jobRunID) => {
+      .then((jobRunID: string) => {
         history.push(
           `/apps/${appName}/job-history?job_run_id=${jobRunID}&service=${jobName}`
         );

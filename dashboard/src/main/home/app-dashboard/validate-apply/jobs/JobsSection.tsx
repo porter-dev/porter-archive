@@ -146,8 +146,8 @@ const JobsSection: React.FC<Props> = ({
       )}
       {!selectedJobRun && (
         <StyledExpandedApp>
-          <Container row>
           <Container row spaced>
+          <Container row>
             <Icon src={history} />
             <Text size={21}>Run history for</Text>
             <SelectRow

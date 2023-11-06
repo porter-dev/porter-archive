@@ -12,6 +12,7 @@ import { type PorterAppVersionStatus } from "lib/hooks/useAppStatus";
 import { match } from "ts-pattern";
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import TriggerJobButton from "../jobs/TriggerJobButton";
+import Spacer from "components/porter/Spacer";
 
 type ServiceStatusFooterProps = {
     serviceName: string;
@@ -50,6 +51,7 @@ const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
                             History
                         </Button>
                     </Link>
+                    <Spacer inline x={1}/>
                     <TriggerJobButton projectId={projectId} clusterId={clusterId} appName={appName} jobName={serviceName} deploymentTargetId={deploymentTarget.id} />
                 </Container>
 

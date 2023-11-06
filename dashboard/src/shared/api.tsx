@@ -1032,6 +1032,7 @@ const appRun = baseApi<
     {
         project_id: number;
         cluster_id: number;
+        porter_app_name: string;
     }
 >("POST", (pathParams) => {
     return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.porter_app_name}/run`;

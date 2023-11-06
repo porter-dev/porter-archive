@@ -7,7 +7,7 @@ import loading from "assets/loading.gif";
 import Container from "components/porter/Container";
 import Logs from "main/home/app-dashboard/validate-apply/logs/Logs";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import { JobRun } from "lib/hooks/useJobs";
+import { type JobRun } from "lib/hooks/useJobs";
 import { match } from "ts-pattern";
 import { getStatusColor } from "../../app-view/tabs/activity-feed/events/utils";
 import { AppearingView } from "../../app-view/tabs/activity-feed/events/focus-views/EventFocusView";
@@ -75,6 +75,8 @@ const JobRunDetails: React.FC<Props> = ({
                     endTime: jobRun.status.completionTime != null ? dayjs(jobRun.status.completionTime).add(30, 'second') : undefined,
                 }}
                 appId={parseInt(jobRun.metadata.labels["porter.run/app-id"])}
+                defaultLatestRevision={false}
+                jobRunID={jobRun.metadata.uid}
             />
         </>
     );

@@ -12,6 +12,7 @@ import { Service } from "main/home/app-dashboard/new-app-flow/serviceTypes";
 import job from "assets/job.png";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
+
 import { getStatusColor, getStatusIcon } from "../utils";
 
 type Props = {
@@ -80,7 +81,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                   {convertEventStatusToCopy(serviceStatus)}
                 </Text>
               </ServiceStatusTableData>
-              <ServiceStatusTableData showBorderRight={false}>
+              <ServiceStatusTableData>
                 {serviceType !== "job" && (
                   <>
                     <Link
@@ -143,16 +144,17 @@ const ServiceStatusTable = styled.table`
 const ServiceStatusTableRow = styled.tr`
   display: flex;
   align-items: center;
+  > td:last-child {
+    border-right: none;
+  }
 `;
 
 const ServiceStatusTableData = styled.td<{
   width?: string;
-  showBorderRight?: boolean;
 }>`
   padding: 8px 10px;
   display: flex;
   align-items: center;
+  border-right: 2px solid #ffffff11;
   ${(props) => props.width && `width: ${props.width};`}
-  ${({ showBorderRight = true }) =>
-    showBorderRight && `border-right: 2px solid #ffffff11;`}
 `;

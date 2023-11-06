@@ -85,7 +85,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   >({
     service_name:
       serviceFromQueryParams &&
-      Object.keys(services).includes(serviceFromQueryParams)
+      services.map((s) => s.name.value).includes(serviceFromQueryParams)
         ? serviceFromQueryParams
         : "",
   });

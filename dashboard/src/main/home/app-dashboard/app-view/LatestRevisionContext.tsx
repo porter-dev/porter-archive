@@ -1,32 +1,44 @@
-import React, { Dispatch, SetStateAction, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
-import { createContext, useContext } from "react";
-import { Context } from "shared/Context";
-import api from "shared/api";
-import { PorterAppRecord, porterAppValidator } from "./AppView";
+import styled from "styled-components";
 import { z } from "zod";
-import { AppRevision, appRevisionValidator } from "lib/revisions/types";
+
 import Loading from "components/Loading";
 import Container from "components/porter/Container";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
 import Link from "components/porter/Link";
-import notFound from "assets/not-found.png";
-import styled from "styled-components";
-import { SourceOptions, clientAppFromProto } from "lib/porter-apps";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
-import { ClientService, DetectedServices } from "lib/porter-apps/services";
+import { clientAppFromProto, type SourceOptions } from "lib/porter-apps";
 import {
-  DeploymentTarget,
-  useDeploymentTarget,
-} from "shared/DeploymentTargetContext";
-import {
-  PopulatedEnvGroup,
-  populatedEnvGroup,
-} from "../validate-apply/app-settings/types";
+  type ClientService,
+  type DetectedServices,
+} from "lib/porter-apps/services";
+import { appRevisionValidator, type AppRevision } from "lib/revisions/types";
 
-export const LatestRevisionContext = createContext<{
+import api from "shared/api";
+import { Context } from "shared/Context";
+import {
+  useDeploymentTarget,
+  type DeploymentTarget,
+} from "shared/DeploymentTargetContext";
+import notFound from "assets/not-found.png";
+
+import {
+  populatedEnvGroup,
+  type PopulatedEnvGroup,
+} from "../validate-apply/app-settings/types";
+import { porterAppValidator, type PorterAppRecord } from "./AppView";
+
+type LatestRevisionContextType = {
   porterApp: PorterAppRecord;
   latestRevision: AppRevision;
   latestProto: PorterApp;
@@ -40,9 +52,12 @@ export const LatestRevisionContext = createContext<{
   appEnv?: PopulatedEnvGroup;
   setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
   latestClientServices: ClientService[];
-} | null>(null);
+};
 
-export const useLatestRevision = () => {
+export const LatestRevisionContext =
+  createContext<LatestRevisionContextType | null>(null);
+
+export const useLatestRevision = (): LatestRevisionContextType => {
   const context = useContext(LatestRevisionContext);
   if (context === null) {
     throw new Error(
@@ -52,12 +67,14 @@ export const useLatestRevision = () => {
   return context;
 };
 
-export const LatestRevisionProvider = ({
-  appName,
-  children,
-}: {
+type LatestRevisionProviderProps = {
   appName?: string;
   children: JSX.Element;
+};
+
+export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
+  appName,
+  children,
 }) => {
   const [previewRevision, setPreviewRevision] = useState<AppRevision | null>(
     null
@@ -157,7 +174,7 @@ export const LatestRevisionProvider = ({
         }
       );
 
-      const { deployment_target } = await z
+      const { deployment_target: deploymentTarget } = await z
         .object({
           deployment_target: z.object({
             cluster_id: z.number(),
@@ -167,7 +184,7 @@ export const LatestRevisionProvider = ({
         })
         .parseAsync(res.data);
 
-      return deployment_target;
+      return deploymentTarget;
     },
     {
       enabled: !!currentCluster && !!currentProject,
@@ -246,7 +263,7 @@ export const LatestRevisionProvider = ({
 
   const { loading: porterYamlLoading, detectedServices } = usePorterYaml({
     source: latestSource?.type === "github" ? latestSource : null,
-    appName: appName,
+    appName,
     useDefaults: false,
   });
 
@@ -265,7 +282,10 @@ export const LatestRevisionProvider = ({
       return [];
     }
 
-    const app = clientAppFromProto({proto: latestProto, overrides: detectedServices});
+    const app = clientAppFromProto({
+      proto: latestProto,
+      overrides: detectedServices,
+    });
     return app.services;
   }, [latestProto, detectedServices]);
 
@@ -292,7 +312,7 @@ export const LatestRevisionProvider = ({
         <Container row>
           <PlaceholderIcon src={notFound} />
           <Text color="helper">
-            No application matching "{appName}" was found.
+            No application matching &quot;{appName}&quot; was found.
           </Text>
         </Container>
         <Spacer y={1} />

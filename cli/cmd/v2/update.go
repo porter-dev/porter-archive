@@ -84,6 +84,16 @@ func Update(ctx context.Context, inp UpdateInput) error {
 		return fmt.Errorf("error getting git source from env: %w", err)
 	}
 
+	if commitSHA != "" {
+		if len(commitSHA) < 7 {
+			return fmt.Errorf("commit SHA %s is not long enough", commitSHA)
+		}
+
+		// shorten commit SHA to 7 characters, which is a way of indicating to our hydration function that
+		// the app is being built and deployed with the new update logic
+		commitSHA = commitSHA[:7]
+	}
+
 	updateInput := api.UpdateAppInput{
 		ProjectID:          cliConf.Project,
 		ClusterID:          cliConf.Cluster,

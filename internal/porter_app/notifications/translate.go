@@ -82,6 +82,10 @@ func translateAgentDetail(notification Notification) string {
 		return invalidImageDetail(humanReadableDetail)
 	}
 
+	if strings.Contains(notification.AgentDetail, "exceeded its memory limit") {
+		return exceededMemoryLimitDetail(humanReadableDetail)
+	}
+
 	return humanReadableDetail
 }
 
@@ -119,12 +123,11 @@ func livenessHealthCheckDetail(agentDetail string) string {
 	pattern := `Your liveness health check is set to the path (\S+)\.`
 	regex := regexp.MustCompile(pattern)
 	matches := regex.FindStringSubmatch(humanReadableDetail)
-	if len(matches) > 1 {
-		pathValue := matches[1]
-		return fmt.Sprintf("The liveness health check for this service is set to the path %s. The service is not responding with a 200-level response code on this endpoint, so it is continuously restarting.", pathValue)
+	if len(matches) != 2 {
+		return humanReadableDetail
 	}
-
-	return humanReadableDetail
+	pathValue := matches[1]
+	return fmt.Sprintf("The liveness health check for this service is set to the path %s. The service is not responding with a 200-level response code on this endpoint, so it is continuously restarting.", pathValue)
 }
 
 // readinessHealthCheckDetail translates the agent detail to a human readable detail for readiness health check errors
@@ -135,12 +138,11 @@ func readinessHealthCheckDetail(agentDetail string) string {
 	pattern := `Your readiness health check is set to the path (\S+)\.`
 	regex := regexp.MustCompile(pattern)
 	matches := regex.FindStringSubmatch(humanReadableDetail)
-	if len(matches) > 1 {
-		pathValue := matches[1]
-		return fmt.Sprintf("The readiness health check for this service is set to the path %s. The service is not responding with a 200-level response code on this endpoint, so it is continuously restarting.", pathValue)
+	if len(matches) != 2 {
+		return humanReadableDetail
 	}
-
-	return humanReadableDetail
+	pathValue := matches[1]
+	return fmt.Sprintf("The readiness health check for this service is set to the path %s. The service is not responding with a 200-level response code on this endpoint, so it is continuously restarting.", pathValue)
 }
 
 // restartedDueToErrorDetail translates the agent detail to a human readable detail for "restarted due to error" errors
@@ -151,6 +153,21 @@ func restartedDueToErrorDetail(agentDetail string) string {
 // invalidImageDetail translates the agent detail to a human readable detail for "invalid image" errors
 func invalidImageDetail(agentDetail string) string {
 	return "The service cannot pull from the image registry. This is likely due to an invalid image name or bad credentials."
+}
+
+// exceededMemoryLimitDetail translates the agent detail to a human readable detail for "exceeded memory limit" errors
+func exceededMemoryLimitDetail(agentDetail string) string {
+	// Example detail from the agent: "Your service was restarted because it exceeded its memory limit of 4M..."
+	// We want to get the memory limit
+	pattern := `exceeded its memory limit of (\S+)\.`
+	regex := regexp.MustCompile(pattern)
+	matches := regex.FindStringSubmatch(agentDetail)
+	if len(matches) != 2 {
+		return agentDetail
+	}
+	memoryLimit := matches[1]
+
+	return fmt.Sprintf("The service exceeded its memory limit of %s.", memoryLimit)
 }
 
 func mitigationSteps(errorCode PorterErrorCode) string {

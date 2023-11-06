@@ -36,7 +36,7 @@ import {
 import api from "shared/api";
 import { Context } from "shared/Context";
 import save from "assets/save-01.svg";
-import RevisionsList from "../validate-apply/revisions-list/RevisionsList";
+
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
 import { useLatestRevision } from "./LatestRevisionContext";
 import Activity from "./tabs/Activity";
@@ -224,25 +224,58 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         return;
       }
 
+      if (currentProject?.beta_features_enabled && !needsRebuild) {
+        await api.updateApp(
+          "<token>",
+          {
+            b64_app_proto: btoa(validatedAppProto.toJsonString()),
+            deployment_target_id: deploymentTarget.id,
+            variables,
+            secrets,
+            is_env_override: true,
+          },
+          {
+            project_id: projectId,
+            cluster_id: clusterId,
+          }
+        );
+      }
+
       // force_build will create a new 0 revision that will not be deployed
       // but will be used to hydrate values when the workflow is run
-      await api.applyApp(
-        "<token>",
-        {
-          b64_app_proto: btoa(validatedAppProto.toJsonString()),
-          deployment_target_id: deploymentTarget.id,
-          force_build: needsRebuild,
-          variables,
-          secrets,
-          hard_env_update: true,
-        },
-        {
-          project_id: projectId,
-          cluster_id: clusterId,
-        }
-      );
+      if (!currentProject?.beta_features_enabled) {
+        await api.applyApp(
+          "<token>",
+          {
+            b64_app_proto: btoa(validatedAppProto.toJsonString()),
+            deployment_target_id: deploymentTarget.id,
+            force_build: needsRebuild,
+            variables,
+            secrets,
+            hard_env_update: true,
+          },
+          {
+            project_id: projectId,
+            cluster_id: clusterId,
+          }
+        );
+      }
 
       if (latestSource.type === "github" && needsRebuild) {
+        if (currentProject?.beta_features_enabled && validatedAppProto.build) {
+          await api.updateBuildSettings(
+            "<token>",
+            {
+              build_settings: validatedAppProto.build,
+            },
+            {
+              project_id: projectId,
+              cluster_id: clusterId,
+              porter_app_name: porterAppRecord.name,
+            }
+          );
+        }
+
         const res = await api.reRunGHWorkflow(
           "<token>",
           {},
@@ -443,7 +476,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     if ((currentProject?.helm_values_enabled ?? false) || user?.isPorterUser) {
       base.push({ label: "Helm Overrides", value: "helm-overrides" });
     }
-
     if (user?.isPorterUser) {
       base.push({ label: "Latest Helm Values", value: "helm-values" });
     }
@@ -499,14 +531,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   return (
     <FormProvider {...porterAppFormMethods}>
       <form onSubmit={onSubmit}>
-        <RevisionsList
-          latestRevisionNumber={latestRevision.revision_number}
-          deploymentTargetId={deploymentTarget.id}
-          projectId={projectId}
-          clusterId={clusterId}
-          appName={porterAppRecord.name}
-          onSubmit={onSubmit}
-        />
         <AnimateHeight height={isDirty && !onlyExpandedChanged ? "auto" : 0}>
           <Banner
             type="warning"

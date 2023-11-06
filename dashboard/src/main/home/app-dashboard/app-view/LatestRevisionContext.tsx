@@ -35,6 +35,7 @@ import {
   type DeploymentTarget,
 } from "shared/DeploymentTargetContext";
 import notFound from "assets/not-found.png";
+
 import {
   populatedEnvGroup,
   type PopulatedEnvGroup,
@@ -73,13 +74,15 @@ export const useLatestRevision = (): LatestRevisionContextType => {
   return context;
 };
 
-export const LatestRevisionProvider = ({
-  appName,
-  children,
-}: {
+type LatestRevisionProviderProps = {
   appName?: string;
   children: JSX.Element;
-}): JSX.Element => {
+};
+
+export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
+  appName,
+  children,
+}) => {
   const [previewRevision, setPreviewRevision] = useState<AppRevision | null>(
     null
   );
@@ -329,7 +332,7 @@ export const LatestRevisionProvider = ({
         <Container row>
           <PlaceholderIcon src={notFound} />
           <Text color="helper">
-            No application matching &ldquo;{appName}&rdquo; was found.
+            No application matching &quot;{appName}&quot; was found.
           </Text>
         </Container>
         <Spacer y={1} />

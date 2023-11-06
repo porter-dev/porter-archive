@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/porter_app/notifications/porter_error"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
@@ -72,8 +73,8 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 		return telemetry.Error(ctx, span, err, "failed to hydrate notification with deployment")
 	}
 
-	// 5. hydrate notification with user-facing details
-	hydratedNotification = hydrateNotificationWithUserFacingDetails(ctx, hydratedNotification)
+	// 5. hydrate notification with a Porter error containing user-facing details
+	hydratedNotification = hydrateNotificationWithError(ctx, hydratedNotification)
 
 	// 6. based on notification + k8s deployment, update the status of the matching deploy event
 	if hydratedNotification.Deployment.Status == DeploymentStatus_Failure ||
@@ -114,14 +115,8 @@ type Notification struct {
 	AgentDetail string `json:"agent_detail"`
 	// AgentSummary is the raw summary of the agent event
 	AgentSummary string `json:"agent_summary"`
-	// HumanReadableDetail is the agent event detail translated to user-facing form
-	HumanReadableDetail string `json:"human_readable_detail"`
-	// HumanReadableSummary is the agent event summary translated to user-facing form
-	HumanReadableSummary string `json:"human_readable_summary"`
-	// ErrorCode is the Porter-defined error code of the notification
-	ErrorCode PorterErrorCode `json:"error_code"`
-	// MitigationSteps is string containing steps to resolve the issue (if applicable)
-	MitigationSteps string `json:"mitigation_steps"`
+	// Error is the Porter error parsed from the agent event
+	Error porter_error.PorterError `json:"error"`
 	// Deployment is the deployment metadata, used to determine if the notification occurred during deployment or after
 	Deployment Deployment `json:"deployment"`
 	// Timestamp is the time that the notification was created

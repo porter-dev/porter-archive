@@ -1,6 +1,7 @@
 package project_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/porter-dev/porter/api/server/handlers/project"
@@ -15,14 +16,14 @@ func TestListProjectsSuccessful(t *testing.T) {
 	// create a test project
 	config := apitest.LoadConfig(t)
 	user := apitest.CreateTestUser(t, config, true)
-	proj1, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
+	proj1, _, err := project.CreateProjectWithUser(context.Background(), config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	proj2, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
+	proj2, _, err := project.CreateProjectWithUser(context.Background(), config.Repo.Project(), &models.Project{
 		Name: "test-project-2",
 	}, user)
 	if err != nil {

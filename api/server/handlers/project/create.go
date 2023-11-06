@@ -36,7 +36,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	request := &types.CreateProjectRequest{}
 
 	if ok := p.DecodeAndValidate(w, r, request); !ok {
-		telemetry.Error(ctx, span, nil, "error decoding request")
+		telemetry.Error(ctx, span, nil, "error decoding request") //nolint:errcheck
 		return
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "project-name", Value: request.Name})

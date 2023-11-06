@@ -8,8 +8,8 @@ import styled from "styled-components";
 import spinner from "assets/loading.gif";
 import api from "shared/api";
 import { useLogs } from "./utils";
-import { Direction, GenericFilterOption, GenericFilter, type FilterName } from "../../expanded-app/logs/types";
-import dayjs, { type Dayjs } from "dayjs";
+import { Direction, GenericFilterOption, GenericFilter, FilterName } from "../../expanded-app/logs/types";
+import dayjs, { Dayjs } from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
 import Banner from "components/porter/Banner";
@@ -101,7 +101,7 @@ const Logs: React.FC<Props> = ({
         if (version === "dev") {
             return true;
         }
-        // make sure version is above v3.1.3
+        //make sure version is above v3.1.3
         if (version == null) {
             return false;
         }
@@ -319,7 +319,7 @@ const Logs: React.FC<Props> = ({
                             selectedFilterValues={selectedFilterValues}
                         />
                         <Spacer inline x={1} />
-                        <ScrollButton onClick={() => { setScrollToBottomEnabled((s) => !s); }}>
+                        <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
                             <Checkbox checked={scrollToBottomEnabled}>
                                 <i className="material-icons">done</i>
                             </Checkbox>
@@ -360,7 +360,7 @@ const Logs: React.FC<Props> = ({
                                 <LoadMoreButton
                                     active={selectedDate != null && logs.length !== 0}
                                     role="button"
-                                    onClick={async () => { await moveCursor(Direction.forward); }}
+                                    onClick={() => moveCursor(Direction.forward)}
                                 >
                                     Load more
                                 </LoadMoreButton>
@@ -369,7 +369,7 @@ const Logs: React.FC<Props> = ({
                         {!isLoading && logs.length === 0 && selectedDate != null && (
                             <Message>
                                 No logs found for this time range.
-                                <Highlight onClick={() => { setSelectedDate(undefined); }}>
+                                <Highlight onClick={() => setSelectedDate(undefined)}>
                                     <i className="material-icons">autorenew</i>
                                     Reset
                                 </Highlight>
@@ -415,7 +415,7 @@ const Logs: React.FC<Props> = ({
 
         const checkForAgentInterval = setInterval(checkForAgent, 3000);
 
-        return () => { clearInterval(checkForAgentInterval); };
+        return () => clearInterval(checkForAgentInterval);
     }, [isPorterAgentInstalling]);
 
     const checkForAgent = async () => {
@@ -473,7 +473,7 @@ const Logs: React.FC<Props> = ({
                 In order to use the Logs tab, you need to install the Porter agent.
             </Text>
             <Spacer y={1} />
-            <Button onClick={() => { triggerInstall(); }}>
+            <Button onClick={() => triggerInstall()}>
                 <I className="material-icons">add</I> Install Porter agent
             </Button>
         </Fieldset>

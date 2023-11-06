@@ -134,6 +134,7 @@ var fatalDeploymentDetailSubstrings = []string{
 	"restarted with exit code",
 	"failed its health check",
 	"cannot pull from the image registry",
+	"exceeded its memory limit",
 }
 
 // detailIndicatesDeploymentFailure returns true if the detail indicates that the deployment will eventually time out and fail

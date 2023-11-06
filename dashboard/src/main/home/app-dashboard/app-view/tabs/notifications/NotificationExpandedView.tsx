@@ -28,10 +28,6 @@ const NotificationExpandedView: React.FC<Props> = ({
   deploymentTargetId,
   appId,
 }) => {
-  const capitalizeFirstLetter = (str: string): string => {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  };
-
   return (
     <StyledNotificationExpandedView>
       <ExpandedViewContent>
@@ -66,11 +62,11 @@ const NotificationExpandedView: React.FC<Props> = ({
                       src={document}
                       style={{ width: "15px", marginRight: "15px" }}
                     />
-                    {capitalizeFirstLetter(message.human_readable_summary)}
+                    {message.error.summary}
                   </Container>
                   <Spacer y={0.5} />
                   <Container row style={{ color: "#aaaabb" }}>
-                    {message.human_readable_detail}
+                    {message.error.detail}
                   </Container>
                 </Message>
               </NotificationWrapper>

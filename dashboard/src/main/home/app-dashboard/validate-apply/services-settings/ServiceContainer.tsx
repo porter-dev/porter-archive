@@ -142,7 +142,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {service.name.value.trim().length > 0
             ? service.name.value
             : "New Service"}
-          {service.gpuCoresNvidia.value == 0 &&
+          {service.gpuCoresNvidia.value > 0 &&
             <><Spacer inline x={1.5} /><TagContainer>
               <ChipIcon src={chip} alt="Chip Icon" />
               <TagText>GPU Workload</TagText>

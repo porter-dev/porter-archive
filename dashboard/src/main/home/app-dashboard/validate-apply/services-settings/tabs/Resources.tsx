@@ -186,7 +186,7 @@ const Resources: React.FC<ResourcesProps> = ({
           />
         )}
       />
-      {clusterContainsGPUNodes && (
+      {!clusterContainsGPUNodes && (
         <>
           <Spacer y={1} />
           <Controller

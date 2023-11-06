@@ -11,6 +11,7 @@ import ProvisionerSettings from "components/ProvisionerSettings";
 import Spacer from "components/porter/Spacer";
 import ProvisionerForm from "components/ProvisionerForm";
 import GPUCostConsent from "components/GPUCostConsent";
+import { Context } from "shared/Context";
 
 
 type Props = RouteComponentProps & {
@@ -22,6 +23,10 @@ const ProvisionClusterModal: React.FC<Props> = ({
     closeModal,
     gpuModal
 }) => {
+    const {
+        currentCluster,
+    } = useContext(Context);
+
     const [currentCredential, setCurrentCredential] = useState<InfraCredentials>(
         null
     );
@@ -46,33 +51,35 @@ const ProvisionClusterModal: React.FC<Props> = ({
                             () => setCurrentStep("credentials")
                         }}
                     />
-                ) : (
-                    currentCredential && targetArn ? (
-                        <>
-                            <ProvisionerSettings
-                                credentialId={targetArn}
-                                closeModal={closeModal}
-                                gpuModal={gpuModal}
-                            />
-                            {/* Uncommented for future use if needed.
-                    <ProvisionerForm
-                        goBack={() => setCurrentStep("credentials")}
-                        credentialId={String(currentCredential.aws_integration_id)}
-                        provider={"aws"}
-                    /> */}
-                        </>
-                    ) : (
-                        <AWSCredentialsList
-                            setTargetARN={setTargetARN}
-                            selectCredential={
-                                (i) => setCurrentCredential({
-                                    aws_integration_id: i,
-                                })
-                            }
+                ) :
+                    gpuModal ? (
+                        <ProvisionerSettings
+                            clusterId={gpuModal ? currentCluster?.id : null}
                             gpuModal={gpuModal}
+                            credentialId={currentCluster.cloud_provider_credential_identifier}
                         />
-                    )
-                )}
+                    ) :
+                        (
+                            currentCredential && targetArn ? (
+                                <>
+                                    <ProvisionerSettings
+                                        credentialId={targetArn}
+                                        closeModal={closeModal}
+                                        clusterId={gpuModal ? currentCluster?.id : null}
+                                    />
+                                </>
+                            ) : (
+                                <AWSCredentialsList
+                                    setTargetARN={setTargetARN}
+                                    selectCredential={
+                                        (i) => setCurrentCredential({
+                                            aws_integration_id: i,
+                                        })
+                                    }
+                                    gpuModal={gpuModal}
+                                />
+                            )
+                        )}
             </ScrollableContent>
 
 

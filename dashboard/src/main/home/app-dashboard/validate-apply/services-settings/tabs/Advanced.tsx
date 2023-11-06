@@ -102,14 +102,20 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
               color="primary"
               checked={value.value > 0}
               onChange={() => {
-                if (!clusterContainsGPUNodes && !(value.value > 0)) {
+                //if cluster doesn't already have gpuNodes 
+                if (clusterContainsGPUNodes) {
                   setClusterModalVisible(true);
-
                 } else {
-                  onChange({
-                    ...value,
-                    value: .5
-                  });
+                  if (value.value > 0) {
+                    onChange({
+                      ...value,
+                      value: 0
+                    });
+                  } else
+                    onChange({
+                      ...value,
+                      value: .3
+                    });
                 }
               }}
               inputProps={{ 'aria-label': 'controlled' }} /><Spacer inline x={.5} /><Text color="helper">

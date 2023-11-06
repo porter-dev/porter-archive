@@ -2,6 +2,7 @@ package porter_app
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -161,6 +162,7 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			}
 		}
 	}
+	fmt.Println("App Proto", appProto)
 
 	validateReq := connect.NewRequest(&porterv1.ValidatePorterAppRequest{
 		ProjectId:          int64(project.ID),

@@ -128,7 +128,7 @@ type Service struct {
 	Instances          *int32            `yaml:"instances,omitempty"`
 	CpuCores           float32           `yaml:"cpuCores,omitempty"`
 	RamMegabytes       int               `yaml:"ramMegabytes,omitempty"`
-	GpuCoresNvidia     float32           `yaml:"gpuCoresNvidia,omitempty"`
+	GpuCoresNvidia     float32           `yaml:"gpuCoresNvidia"`
 	SmartOptimization  *bool             `yaml:"smartOptimization,omitempty"`
 	Port               int               `yaml:"port,omitempty"`
 	Autoscaling        *AutoScaling      `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
@@ -164,6 +164,7 @@ type HealthCheck struct {
 
 // ProtoFromApp converts a PorterApp type to a base PorterApp proto type and returns env variables
 func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp, map[string]string, error) {
+	fmt.Println("PROTO", porterApp)
 	ctx, span := telemetry.NewSpan(ctx, "build-app-proto")
 	defer span.End()
 

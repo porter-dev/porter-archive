@@ -65,6 +65,7 @@ type ClusterState = {
   cidrRangeVPC: string;
   cidrRangeServices: string;
   clusterVersion: string;
+  gpuInstanceType?: string
 };
 
 
@@ -125,6 +126,11 @@ const machineTypeOptions = [
   { value: "m5n.2xlarge", label: "m5n.2xlarge" },
 ];
 
+const gpuMachineTypeOptions = [
+  { value: "g4dn.large", label: "g4dn.large" },
+  { value: "g4dn.xlarge", label: "g4dn.xlarge" },
+];
+
 const defaultCidrVpc = "10.78.0.0/16"
 const defaultCidrServices = "172.20.0.0/16"
 const defaultClusterVersion = "v1.24.0"
@@ -149,6 +155,7 @@ const initialClusterState: ClusterState = {
   cidrRangeVPC: defaultCidrVpc,
   cidrRangeServices: defaultCidrServices,
   clusterVersion: defaultClusterVersion,
+  gpuInstanceType: "g4dn.xlarge",
 };
 
 
@@ -156,7 +163,7 @@ type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
   provisionerError?: string;
   credentialId: string;
-  clusterId?: number;
+  clusterId?: number | null;
   closeModal?: () => void;
   gpuModal?: boolean;
 };
@@ -206,7 +213,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
   };
 
-  const getStatus = (): JSX.Element | "Provisioning is still in progress..." | undefined => {
+  const getStatus = (): React.ReactNode => {
     if (isLoading) {
       return <Loading />
     }
@@ -323,6 +330,47 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       }
     }
 
+
+    let nodeGroups = [
+      new EKSNodeGroup({
+        instanceType: "t3.medium",
+        minInstances: 1,
+        maxInstances: 5,
+        nodeGroupType: NodeGroupType.SYSTEM,
+        isStateful: false,
+        additionalPolicies: clusterState.additionalNodePolicies,
+      }),
+      new EKSNodeGroup({
+        instanceType: "t3.large",
+        minInstances: 1,
+        maxInstances: 1,
+        nodeGroupType: NodeGroupType.MONITORING,
+        isStateful: true,
+        additionalPolicies: clusterState.additionalNodePolicies,
+      }),
+      new EKSNodeGroup({
+        instanceType: clusterState.machineType,
+        minInstances: clusterState.minInstances || 1,
+        maxInstances: clusterState.maxInstances || 10,
+        nodeGroupType: NodeGroupType.APPLICATION,
+        isStateful: false,
+        additionalPolicies: clusterState.additionalNodePolicies,
+      }),
+    ];
+
+    // Conditionally add the last EKSNodeGroup if gpuModal is enabled
+    if (props.gpuModal) {
+      nodeGroups.push(new EKSNodeGroup({
+        instanceType: clusterState.gpuInstanceType,
+        minInstances: clusterState.minInstances || 1,
+        maxInstances: clusterState.maxInstances || 10,
+        nodeGroupType: NodeGroupType.CUSTOM,
+        isStateful: false,
+        additionalPolicies: clusterState.additionalNodePolicies,
+      }));
+    }
+
+
     let data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -344,32 +392,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               vpcCidr: clusterState.cidrRangeVPC || defaultCidrVpc,
               serviceCidr: clusterState.cidrRangeServices || defaultCidrServices,
             }),
-            nodeGroups: [
-              new EKSNodeGroup({
-                instanceType: "t3.medium",
-                minInstances: 1,
-                maxInstances: 5,
-                nodeGroupType: NodeGroupType.SYSTEM,
-                isStateful: false,
-                additionalPolicies: clusterState.additionalNodePolicies,
-              }),
-              new EKSNodeGroup({
-                instanceType: "t3.large",
-                minInstances: 1,
-                maxInstances: 1,
-                nodeGroupType: NodeGroupType.MONITORING,
-                isStateful: true,
-                additionalPolicies: clusterState.additionalNodePolicies,
-              }),
-              new EKSNodeGroup({
-                instanceType: clusterState.machineType,
-                minInstances: clusterState.minInstances || 1,
-                maxInstances: clusterState.maxInstances || 10,
-                nodeGroupType: NodeGroupType.APPLICATION,
-                isStateful: false,
-                additionalPolicies: clusterState.additionalNodePolicies,
-              }),
-            ],
+            nodeGroups: nodeGroups,
           }),
         },
       }),
@@ -511,7 +534,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   }, [isExpanded, props.selectedClusterVersion]);
 
   useEffect(() => {
-    if (!props.clusterId) {
+    if (!props.clusterId || (props.gpuModal)) {
       setStep(1)
       preflightChecks()
     }
@@ -1059,18 +1082,102 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   const renderGPUSettings = () => {
     return (
-      <>
-        <Spacer y={1} />
-        <Select
-          options={machineTypeOptions}
-          width="350px"
-          disabled={true}
-          value={"g4dn.xlarge"}
-          setValue={(x: string) => handleClusterStateChange("machineType", x)}
-          label="Machine type"
-        />
+      <VerticalSteps
+        currentStep={step}
+        steps={[
+          <>
+            <Heading isAtTop> Select GPU Instance Type </Heading>
+            <Spacer y={.5} />
+            <Select
+              options={gpuMachineTypeOptions}
+              width="350px"
+              disabled={isReadOnly}
+              value={clusterState.gpuInstanceType}
+              setValue={(x: string) => {
+                handleClusterStateChange("gpuInstanceType", x)
+                // handleClusterStateChange("machineType", x)
+              }
+              }
+              label="Machine type"
+            />
+            <Spacer y={.5} />
+          </>,
+          <>
+            {showEmailMessage ?
+              <>
+                <CheckItemContainer>
+                  <CheckItemTop>
+                    <StatusIcon src={healthy} />
+                    <Spacer inline x={1} />
+                    <Text style={{ marginLeft: '10px', flex: 1 }}>{"Porter will request to increase quotas when you provision"}</Text>
+                  </CheckItemTop>
+                </CheckItemContainer>
 
-      </>
+              </> :
+              <>
+                <PreflightChecks provider='AWS' preflightData={preflightData} error={preflightError} />
+                <Spacer y={.5} />
+                {(preflightFailed && preflightData) &&
+                  <>
+                    {(showHelpMessage && currentProject?.quota_increase) ? <>
+                      <Text color="helper">
+                        Your account currently is blocked from provisioning in {clusterState.awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
+                      </Text>
+                      <Spacer y={.5} />
+                      <Text color="helper">
+                        Porter can automatically request quota increases on your behalf and email you once the cluster is provisioned.
+                      </Text>
+                      <Spacer y={.5} />
+                      <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '15px' }}>
+                        <Button
+                          disabled={isLoading}
+                          onClick={proceedToProvision}
+
+                        >
+                          Auto request increase
+                        </Button>
+                        <Button
+                          disabled={isLoading}
+                          onClick={dismissPreflight}
+                          color="#313539"
+                        >
+                          I'll do it myself
+                        </Button>
+                      </div>
+
+                    </> : (
+                      <><Text color="helper">
+                        Your account currently is blocked from provisioning in {clusterState.awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
+                      </Text><Spacer y={.5} /><Button
+                        disabled={isLoading}
+                        onClick={preflightChecks}
+
+                      >
+                          Retry checks
+                        </Button></>)}
+                  </>}
+              </>}
+          </>, <>
+            <Text size={16}>Provision your cluster</Text>
+            <Spacer y={1} />
+            {showEmailMessage && <>
+              <Text color="helper">
+                After your quota requests have been approved by AWS, Porter will email you when your cluster has been provisioned.
+              </Text>
+              <Spacer y={1} />
+            </>}
+            <Button
+              disabled={(preflightFailed && !showEmailMessage) || isLoading}
+              onClick={showEmailMessage ? requestQuotasAndProvision : createCluster}
+              status={getStatus()}
+            >
+              Provision
+            </Button>
+            <Spacer y={1} /></>
+          ,
+
+        ].filter((x) => x)}
+      />
     );
   };
 
@@ -1104,7 +1211,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 setActiveValue={(x: string) => handleClusterStateChange("awsRegion", x)}
                 label="📍 AWS region" />
               <>
-                {props?.gpuModal && renderGPUSettings()}
                 {
                   (user?.isPorterUser || currentProject?.multi_cluster) && renderAdvancedSettings()
                 }
@@ -1194,6 +1300,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
 
     // If settings, update full form
+    if (props.clusterId && props.gpuModal) {
+      return renderGPUSettings();
+    }
+
+
     return (
       <><StyledForm>
         <Heading isAtTop>EKS configuration</Heading>

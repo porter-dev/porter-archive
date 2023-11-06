@@ -270,16 +270,12 @@ const Icon = styled.img`
   margin-right: 15px;
 `;
 
-
-const shimmer = keyframes`
-  0% {
-    box-shadow: 0 0 0 1.5px rgba(204, 204, 204, 0.1);
+const reflectiveGleam = keyframes`
+  0%, 100% {
+    background-position: 0% 50%;
   }
   50% {
-    box-shadow: 0 0 0 1.5px rgba(204, 204, 204, 1);
-  }
-  100% {
-    box-shadow: 0 0 0 1.5px rgba(204, 204, 204, 0.3);
+    background-position: 100% 50%;
   }
 `;
 
@@ -292,10 +288,43 @@ const TagContainer = styled.div`
   position: relative;
   width: auto;
   height: 30px;
-  background: props.theme.clickable.bg; 
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.05) 25%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 200%;
   border-radius: 10px;
-  animation: ${shimmer} 3s infinite linear;
+  animation: ${reflectiveGleam} 4s infinite linear;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 `;
+
+// const shimmer = keyframes`
+//   0% {
+//     box-shadow: 0 0 0 1.5px rgba(204, 204, 204, 0.1);
+//   }
+//   50% {
+//     box-shadow: 0 0 0 1.5px rgba(204, 204, 204, 1);
+//   }
+//   100% {
+//     box-shadow: 0 0 0 1.5px rgba(204, 204, 204, 0.3);
+//   }
+// `;
+
+// const TagContainer = styled.div`
+//   box-sizing: border-box;
+//   display: flex;
+//   flex-direction: row;
+//   align-items: center;
+//   padding: 4px 8px;
+//   position: relative;
+//   width: auto;
+//   height: 30px;
+//   background: transparent; 
+//   border-radius: 10px;
+//   animation: ${shimmer} 3s infinite linear;
+// `;
 
 
 const ChipIcon = styled.img`

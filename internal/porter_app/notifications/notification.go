@@ -66,6 +66,7 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 		DeploymentTargetId: inp.DeploymentTargetID,
 		Namespace:          inp.Namespace,
 		K8sAgent:           inp.K8sAgent,
+		EventRepo:          inp.EventRepo,
 	})
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to hydrate notification with deployment")

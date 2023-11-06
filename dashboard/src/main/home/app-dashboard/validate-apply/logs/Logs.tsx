@@ -376,11 +376,11 @@ const Logs: React.FC<Props> = ({
                             </Message>
                         )}
                         {!isLoading && logs.length === 0 && selectedDate == null && isRunning && (
-                            <Loading message={`Waiting ${totalSeconds} seconds for logs...`} />
+                            <Loading message={`No logs emitted in the past 24 hours. Waiting ${totalSeconds} seconds for live logs...`} />
                         )}
                         {!isLoading && logs.length === 0 && selectedDate == null && !isRunning && (
                             <Message>
-                                Timed out waiting for logs.
+                                Timed out waiting for logs. To see earlier logs, select a time range.
                                 <Highlight onClick={() => {
                                     restartLogTimeout(dayjs().add(DEFAULT_LOG_TIMEOUT_SECONDS, 'seconds').toDate());
                                     refresh({ isLive: selectedDate == null && timeRange?.endTime == null });

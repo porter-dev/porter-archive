@@ -45,7 +45,7 @@ const BuildEventCard: React.FC<Props> = ({
         {match(event.status)
           .with("SUCCESS", () => "Build successful")
           .with("FAILED", () => "Build failed")
-          .with("CANCELED", () => "Build cancelled")
+          .with("CANCELED", () => "Build canceled")
           .otherwise(() => "Build in progress...")
         }
       </StatusContainer>

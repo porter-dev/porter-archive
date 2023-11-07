@@ -18,7 +18,7 @@ type Props = {
     event: PorterAppBuildEvent;
 };
 
-const BuildFailureEventFocusView: React.FC<Props> = ({
+const BuildEventFocusView: React.FC<Props> = ({
     event,
 }) => {
     const { porterApp, projectId, clusterId } = useLatestRevision();
@@ -195,7 +195,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
     );
 };
 
-export default BuildFailureEventFocusView;
+export default BuildEventFocusView;
 
 const StyledLogsSection = styled.div`
   width: 100%;

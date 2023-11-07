@@ -45,7 +45,7 @@ func Update(ctx context.Context, inp UpdateInput) error {
 		signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
 		select {
 		case <-termChan:
-			color.New(color.FgYellow).Printf("Shutdown signal received, cancelling processes\n")
+			color.New(color.FgYellow).Printf("Shutdown signal received, cancelling processes\n") // nolint:errcheck,gosec
 			cancel()
 		case <-ctx.Done():
 		}

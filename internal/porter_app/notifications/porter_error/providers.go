@@ -26,6 +26,7 @@ var ErrorCodeToProvider = map[PorterErrorCode]ErrorDetailsProvider{
 	PorterErrorCode_RestartedDueToError:                 &RestartedDueToErrorProvider{},
 	PorterErrorCode_InvalidImageError:                   &InvalidImageErrorProvider{},
 	PorterErrorCode_MemoryLimitExceeded:                 &MemoryLimitExceededErrorProvider{},
+	PorterErrorCode_CPULimitExceeded:                    &CPULimitExceededErrorProvider{},
 }
 
 // NonZeroExitCodeErrorProvider provides error details for NonZeroExitCode errors.
@@ -192,12 +193,12 @@ type RestartedDueToErrorProvider struct{}
 
 // Detail returns the error detail for RestartedDueToError errors.
 func (e *RestartedDueToErrorProvider) Detail(rawAgentDetail string) string {
-	return "The service is stuck in a restart loop. This is likely due to another error."
+	return "The service is stuck in a restart loop. This is likely due to other errors."
 }
 
 // MitigationSteps returns the mitigation steps for RestartedDueToError errors.
 func (e *RestartedDueToErrorProvider) MitigationSteps(rawAgentDetail string) string {
-	return "Please address other errors if they exist, or check container logs for further troubleshooting."
+	return "Please address other errors if they exist, or check service logs for further troubleshooting."
 }
 
 // Documentation returns the documentation links for RestartedDueToError errors.
@@ -233,13 +234,14 @@ type MemoryLimitExceededErrorProvider struct{}
 
 // Detail returns the error detail for MemoryLimitExceededError errors, parsing out the memory limit from the agent event.
 func (e *MemoryLimitExceededErrorProvider) Detail(rawAgentDetail string) string {
+	detail := "The service exceeded its memory limit. This may be caused by other errors."
 	// Example detail from the agent: "Your service was restarted because it exceeded its memory limit of 4M..."
 	// We want to get the memory limit
 	pattern := `exceeded its memory limit of (\S+)\.`
 	regex := regexp.MustCompile(pattern)
 	matches := regex.FindStringSubmatch(rawAgentDetail)
 	if len(matches) != 2 {
-		return rawAgentDetail
+		return detail
 	}
 	memoryLimit := matches[1]
 
@@ -248,11 +250,31 @@ func (e *MemoryLimitExceededErrorProvider) Detail(rawAgentDetail string) string 
 
 // MitigationSteps returns the mitigation steps for MemoryLimitExceededError errors.
 func (e *MemoryLimitExceededErrorProvider) MitigationSteps(rawAgentDetail string) string {
-	return "Please reduce the memory allocation for the service, then redeploy. Alternatively, you can choose a machine type with higher resources in the Advanced settings under the Infrastructure tab."
+	return "If other errors exist, address them first. Otherwise, please reduce the memory allocation for the service, then redeploy. Alternatively, you can choose a machine type with higher resource limits in the Advanced settings under the Infrastructure tab."
 }
 
 // Documentation returns the documentation links for MemoryLimitExceededError errors.
 func (e *MemoryLimitExceededErrorProvider) Documentation(rawAgentDetail string) []string {
+	return []string{
+		"https://docs.porter.run/standard/deploying-applications/runtime-configuration-options/web-applications#resources",
+	}
+}
+
+// CPULimitExceededErrorProvider provides error details for CPULimitExceededError errors.
+type CPULimitExceededErrorProvider struct{}
+
+// Detail returns the error detail for CPULimitExceededError errors.
+func (e *CPULimitExceededErrorProvider) Detail(rawAgentDetail string) string {
+	return "The service exceeded its CPU limit. This may be caused by other errors."
+}
+
+// MitigationSteps returns the mitigation steps for CPULimitExceededError errors.
+func (e *CPULimitExceededErrorProvider) MitigationSteps(rawAgentDetail string) string {
+	return "If other errors exist, address them first. Otherwise, please reduce the CPU allocation for the service, then redeploy. Alternatively, you can choose a machine type with higher resource limits in Infrastructure -> Advanced settings."
+}
+
+// Documentation returns the documentation links for CPULimitExceededError errors.
+func (e *CPULimitExceededErrorProvider) Documentation(rawAgentDetail string) []string {
 	return []string{
 		"https://docs.porter.run/standard/deploying-applications/runtime-configuration-options/web-applications#resources",
 	}

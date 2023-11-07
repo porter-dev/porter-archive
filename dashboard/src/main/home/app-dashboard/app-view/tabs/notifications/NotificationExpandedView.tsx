@@ -10,6 +10,7 @@ import { useIntercom } from "lib/hooks/useIntercom";
 import { type ClientNotification } from "lib/porter-apps/notification";
 
 import { feedDate } from "shared/string_utils";
+import chat from "assets/chat.svg";
 import document from "assets/document.svg";
 import time from "assets/time.svg";
 import web from "assets/web.png";
@@ -96,6 +97,10 @@ const NotificationExpandedView: React.FC<Props> = ({
                         });
                       }}
                     >
+                      <img
+                        src={chat}
+                        style={{ width: "15px", marginRight: "10px" }}
+                      />
                       Talk to support
                     </Button>
                   </Container>

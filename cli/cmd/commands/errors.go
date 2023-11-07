@@ -79,6 +79,11 @@ func checkLoginAndRunWithConfig(cmd *cobra.Command, cliConf config.CLIConfig, ar
 			return nil
 		}
 
+		if errors.Is(err, context.Canceled) {
+			color.New(color.FgYellow).Println("Command was cancelled")
+			return nil
+		}
+
 		cliErrors.GetErrorHandler(cliConf).HandleError(err)
 
 		return err

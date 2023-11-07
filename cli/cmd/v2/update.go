@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
@@ -35,6 +37,20 @@ type UpdateInput struct {
 
 // Update implements the functionality of the `porter apply` command for validate apply v2 projects
 func Update(ctx context.Context, inp UpdateInput) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	go func() {
+		termChan := make(chan os.Signal, 1)
+		signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
+		select {
+		case <-termChan:
+			color.New(color.FgYellow).Printf("Shutdown signal received, cancelling processes\n") // nolint:errcheck,gosec
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+
 	cliConf := inp.CLIConfig
 	client := inp.Client
 
@@ -113,16 +129,34 @@ func Update(ctx context.Context, inp UpdateInput) error {
 	if buildSettings != nil && buildSettings.Build.Method != "" {
 		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, commitSHA)
 
-		reportBuildFailureInput := reportBuildFailureInput{
-			client:             client,
-			appName:            appName,
-			cliConf:            cliConf,
-			deploymentTargetID: deploymentTargetID,
-			appRevisionID:      updateResp.AppRevisionId,
-			eventID:            eventID,
-			commitSHA:          commitSHA,
-			prNumber:           prNumber,
-		}
+		var buildFinished bool
+		var buildError error
+		var buildLogs string
+
+		defer func() {
+			if buildError != nil && !errors.Is(buildError, context.Canceled) {
+				reportBuildFailureInput := reportBuildFailureInput{
+					client:             client,
+					appName:            appName,
+					cliConf:            cliConf,
+					deploymentTargetID: deploymentTargetID,
+					appRevisionID:      updateResp.AppRevisionId,
+					eventID:            eventID,
+					commitSHA:          commitSHA,
+					prNumber:           prNumber,
+					buildError:         buildError,
+					buildLogs:          buildLogs,
+				}
+				_ = reportBuildFailure(ctx, reportBuildFailureInput)
+				return
+			}
+			if !buildFinished {
+				buildMetadata := make(map[string]interface{})
+				buildMetadata["end_time"] = time.Now().UTC()
+				_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_Build, eventID, types.PorterAppEventStatus_Canceled, buildMetadata)
+				return
+			}
+		}()
 
 		if commitSHA == "" {
 			return errors.New("build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI")
@@ -132,27 +166,21 @@ func Update(ctx context.Context, inp UpdateInput) error {
 
 		buildInput, err := buildInputFromBuildSettings(cliConf.Project, appName, commitSHA, buildSettings.Image, buildSettings.Build)
 		if err != nil {
-			err := fmt.Errorf("error creating build input from build settings: %w", err)
-			reportBuildFailureInput.buildError = err
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
+			buildError = fmt.Errorf("error creating build input from build settings: %w", err)
+			return buildError
 		}
 
 		buildOutput := build(ctx, client, buildInput)
 		if buildOutput.Error != nil {
-			err := fmt.Errorf("error building app: %w", buildOutput.Error)
-			reportBuildFailureInput.buildLogs = buildOutput.Logs
-			reportBuildFailureInput.buildError = buildOutput.Error
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
+			buildError = fmt.Errorf("error building app: %w", buildOutput.Error)
+			buildLogs = buildOutput.Logs
+			return buildError
 		}
 
 		_, err = client.UpdateRevisionStatus(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId, models.AppRevisionStatus_BuildSuccessful)
 		if err != nil {
-			err := fmt.Errorf("error updating revision status post build: %w", err)
-			reportBuildFailureInput.buildError = err
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
+			buildError = fmt.Errorf("error updating revision status post build: %w", err)
+			return buildError
 		}
 
 		color.New(color.FgGreen).Printf("Successfully built image (tag: %s)\n", buildSettings.Image.Tag) // nolint:errcheck,gosec
@@ -160,6 +188,7 @@ func Update(ctx context.Context, inp UpdateInput) error {
 		buildMetadata := make(map[string]interface{})
 		buildMetadata["end_time"] = time.Now().UTC()
 		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_Build, eventID, types.PorterAppEventStatus_Success, buildMetadata)
+		buildFinished = true
 	}
 
 	color.New(color.FgGreen).Printf("Deploying new revision %s for app %s...\n", updateResp.AppRevisionId, appName) // nolint:errcheck,gosec

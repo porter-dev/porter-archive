@@ -112,6 +112,9 @@ class ContextProvider extends Component<PropsType, StateType> {
       this.setState({ currentCluster }, () => {
         callback && callback();
       });
+      if (window.intercomSettings) {
+        window.intercomSettings["Cluster ID"] = currentCluster.id;
+      }
     },
     currentProject: null,
     setCurrentProject: (currentProject: ProjectType, callback?: any) => {
@@ -140,6 +143,10 @@ class ContextProvider extends Component<PropsType, StateType> {
       this.setState({
         user: { userId, email, isPorterUser: email?.endsWith("@porter.run") },
       });
+      if (window.intercomSettings) {
+        window.intercomSettings["Porter User ID"] = userId;
+        window.intercomSettings["Porter User Email"] = email;
+      }
     },
     devOpsMode: true,
     setDevOpsMode: (devOpsMode: boolean) => {

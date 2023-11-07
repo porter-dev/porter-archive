@@ -43,7 +43,7 @@ type DeploymentTarget struct {
 	Metadata JSONB `json:"metadata" sql:"type:jsonb" gorm:"type:jsonb;default:'{}'"`
 
 	// IsDefault indicates whether this is the default deployment target for the cluster
-	IsDefault bool `gorm:"default:true" json:"is_default"`
+	IsDefault bool `gorm:"default:false" json:"is_default"`
 }
 
 // ToDeploymentTargetType generates an external types.PorterApp to be shared over REST

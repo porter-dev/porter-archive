@@ -43,9 +43,11 @@ const (
 	PorterErrorCode_InvalidImageError PorterErrorCode = 50
 	// PorterErrorCode_MemoryLimitExceeded is the error code for a memory limit exceeded
 	PorterErrorCode_MemoryLimitExceeded PorterErrorCode = 60
+	// PorterErrorCode_CPULimitExceeded is the error code for a CPU limit exceeded
+	PorterErrorCode_CPULimitExceeded PorterErrorCode = 70
 )
 
-// errorCode parses the agent summary and possibly the detail (if it needs supplemental info) to return a standard Porter error code
+// ErrorCode parses the agent summary and possibly the detail (if it needs supplemental info) to return a standard Porter error code
 func ErrorCode(agentSummary, agentDetail string) PorterErrorCode {
 	errorCode := PorterErrorCode_Unknown
 
@@ -71,6 +73,10 @@ func ErrorCode(agentSummary, agentDetail string) PorterErrorCode {
 
 	if strings.Contains(agentSummary, "ran out of memory") {
 		return PorterErrorCode_MemoryLimitExceeded
+	}
+
+	if strings.Contains(agentSummary, "requesting more cpu than is available") {
+		return PorterErrorCode_CPULimitExceeded
 	}
 
 	return errorCode

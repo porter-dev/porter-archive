@@ -126,6 +126,9 @@ class ContextProvider extends Component<PropsType, StateType> {
       this.setState({ currentProject }, () => {
         callback && callback();
       });
+      if (window.intercomSettings) {
+        window.intercomSettings["Project ID"] = currentProject.id;
+      }
     },
     projects: [],
     setProjects: (projects: ProjectListType[]) => {

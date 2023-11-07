@@ -131,6 +131,7 @@ class ContextProvider extends Component<PropsType, StateType> {
       });
       if (window.intercomSettings) {
         window.intercomSettings["Project ID"] = currentProject.id;
+        window.intercomSettings.project_id = currentProject.id;
       }
     },
     projects: [],

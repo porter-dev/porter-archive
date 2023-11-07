@@ -3,22 +3,22 @@ import Spacer from "components/porter/Spacer";
 import React, { useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
-import Anser, { AnserJsonEntry } from "anser";
+import Anser, { type AnserJsonEntry } from "anser";
 import JSZip from "jszip";
 import dayjs from "dayjs";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
-import { getDuration } from "../utils";
+import {getDuration, getStatusColor} from "../utils";
 import Link from "components/porter/Link";
-import { PorterAppBuildEvent } from "../types";
-import { PorterLog } from "main/home/app-dashboard/expanded-app/logs/types";
+import { type PorterAppBuildEvent } from "../types";
+import { type PorterLog } from "main/home/app-dashboard/expanded-app/logs/types";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 
 type Props = {
     event: PorterAppBuildEvent;
 };
 
-const BuildFailureEventFocusView: React.FC<Props> = ({
+const BuildEventFocusView: React.FC<Props> = ({
     event,
 }) => {
     const { porterApp, projectId, clusterId } = useLatestRevision();
@@ -56,7 +56,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
                     run_id: event.metadata.action_run_id.toString(),
                 }
             );
-            let logs: PorterLog[] = [];
+            const logs: PorterLog[] = [];
             if (res.data != null) {
                 // Fetch the logs
                 const logsResponse = await fetch(res.data);
@@ -121,9 +121,18 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
         getBuildLogs();
     }, []);
 
+    const renderHeaderText = () => {
+        switch (event.status) {
+            case "CANCELED":
+                return <Text color={getStatusColor(event.status)} size={16}>Build canceled</Text>;
+            case "FAILED":
+                return <Text color={getStatusColor(event.status)} size={16}>Build failed</Text>;
+        }
+    };
+
     return (
         <>
-            <Text size={16} color="#FF6060">Build failed</Text>
+            {renderHeaderText()}
             <Spacer y={0.5} />
             <Text color="helper">Started {readableDate(event.created_at)} and ran for {getDuration(event)}.</Text>
             <Spacer y={0.5} />
@@ -186,7 +195,7 @@ const BuildFailureEventFocusView: React.FC<Props> = ({
     );
 };
 
-export default BuildFailureEventFocusView;
+export default BuildEventFocusView;
 
 const StyledLogsSection = styled.div`
   width: 100%;

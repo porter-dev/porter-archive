@@ -45,7 +45,7 @@ const AWSCostConsent: React.FC<Props> = ({
           <Text size={16}>Select your Porter tier</Text>
           <Spacer y={1} />
           <Container row>
-            <ProfileWrapper onClick={() => { setSelectedProfile("express") }}>
+            <ProfileWrapper>
               <BadgeWrapper>
                 <BadgeBg />
                 <Badge>
@@ -56,6 +56,8 @@ const AWSCostConsent: React.FC<Props> = ({
               <Spacer y={1} />
               <Text>Free forever</Text>
               <Spacer y={2} />
+              <AltButton onClick={() => { setSelectedProfile("express") }}>Get started</AltButton>
+              <Spacer y={1} />
               <Text>Features:</Text>
               <Spacer y={.5} />
               <Text color="helper"><Bullet src={bullet}></Bullet>Unlimited resources</Text>
@@ -69,7 +71,7 @@ const AWSCostConsent: React.FC<Props> = ({
               <Text color="helper"><Bullet src={bullet}></Bullet>One-click ejection to Standard</Text>
             </ProfileWrapper>
             <Spacer inline width="20px" />
-            <ProfileWrapper onClick={() => { setSelectedProfile("standard") }}>
+            <ProfileWrapper>
               <BadgeWrapper>
                 <BadgeBg />
                 <Badge>
@@ -81,6 +83,8 @@ const AWSCostConsent: React.FC<Props> = ({
               <Text>$6/mo <Text color="helper">per GB RAM</Text></Text>
               <Spacer height="5px" />
               <Text>$13/mo <Text color="helper">per vCPU</Text></Text>
+              <Spacer y={1} />
+              <AltButton onClick={() => { setSelectedProfile("standard") }}>14-day free trial</AltButton>
               <Spacer y={1} />
               <Text>Features:</Text>
               <Spacer y={.5} />
@@ -295,6 +299,21 @@ const AWSCostConsent: React.FC<Props> = ({
 
 export default AWSCostConsent;
 
+const AltButton = styled.div`
+  background: linear-gradient(90deg, #21232F 0%, #5A5D72 70%, #393C4C 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50px;
+  cursor: pointer;
+  border: 1px solid #797A80;
+  height: 35px;
+
+  :hover {
+    filter: ${(props) => (props.disabled ? "" : "brightness(120%)")};
+  }
+`;
+
 const Bullet = styled.img`
   height: 10px;
   margin-right: 10px;
@@ -326,7 +345,7 @@ const Badge = styled.div`
   height: 30px;
   border-radius: 30px;
   font-size: 14px;
-  background: ${({ theme }) => theme.fg};
+  background: #1F2022;
   display: flex;
   align-items: center;
   padding: 0 10px;
@@ -337,14 +356,10 @@ const ProfileWrapper = styled.div`
   flex: 1;
   padding: 25px;
   border-radius: 10px;
-  background: ${({ theme }) => theme.clickable.bg};
+  background: #ffffff05;
   border: 1px solid #494b4f;
   font-size: 13px;
-  cursor: pointer;
-  :hover {
-    border: ${(props) => (props.disabled ? "" : "1px solid #7a7b80")};
-  }
-  height: 400px;
+  height: 450px;
 `;
 
 const Cost = styled.div`

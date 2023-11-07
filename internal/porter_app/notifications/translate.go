@@ -39,22 +39,24 @@ func createError(ctx context.Context, errorCode porter_error.PorterErrorCode, ag
 	defer span.End()
 
 	porterError := porter_error.PorterError{
-		Code:    errorCode,
-		Summary: translateAgentSummary(agentSummary, serviceName),
-		Detail:  strings.ReplaceAll(agentDetail, "application", "service"),
+		Code:            errorCode,
+		Summary:         translateAgentSummary(agentSummary, serviceName),
+		Detail:          strings.ReplaceAll(agentDetail, "application", "service"),
+		MitigationSteps: "",
+		Documentation:   []string{},
 	}
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "agent-summary", Value: agentSummary},
 		telemetry.AttributeKV{Key: "agent-detail", Value: agentDetail},
-		telemetry.AttributeKV{Key: "error-code", Value: string(errorCode)},
+		telemetry.AttributeKV{Key: "error-code", Value: int(errorCode)},
 	)
 
 	errorDetailsProvider, ok := porter_error.ErrorCodeToProvider[errorCode]
 	if ok {
 		porterError.Detail = errorDetailsProvider.Detail(agentDetail)
 		porterError.MitigationSteps = errorDetailsProvider.MitigationSteps(agentDetail)
-		porterError.Documentation = errorDetailsProvider.Documentation()
+		porterError.Documentation = errorDetailsProvider.Documentation(agentDetail)
 	}
 
 	// if we do not know the error, or the error is a generic non-zero exit code, we report error so that we can handle it later, but we do not block

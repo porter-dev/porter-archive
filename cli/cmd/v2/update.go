@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -46,7 +45,7 @@ func Update(ctx context.Context, inp UpdateInput) error {
 		signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
 		select {
 		case <-termChan:
-			log.Println("Shutdown signal received, cancelling processes")
+			color.New(color.FgYellow).Printf("Shutdown signal received, cancelling processes")
 			cancel()
 		case <-ctx.Done():
 		}

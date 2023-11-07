@@ -10,7 +10,7 @@ import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { Service } from "main/home/app-dashboard/new-app-flow/serviceTypes";
 
-import alert from "assets/alert-red.svg";
+import alert from "assets/alert-warning.svg";
 import metrics from "assets/bar-group-03.svg";
 import calendar from "assets/calendar-02.svg";
 import document from "assets/document.svg";
@@ -96,13 +96,13 @@ const ServiceStatusDetail: React.FC<Props> = ({
                 <>
                   {notificationsExistForService && (
                     <>
-                      <Tag borderColor="#FF6060">
+                      <Tag borderColor="#FFBF00">
                         <Link
                           to={`/apps/${appName}/notifications?service=${key}`}
-                          color={"#FF6060"}
+                          color={"#FFBF00"}
                         >
                           <TagIcon src={alert} />
-                          <div style={{ color: "#FF6060" }}>Notifications</div>
+                          Notifications
                         </Link>
                       </Tag>
                       <Spacer inline x={0.5} />

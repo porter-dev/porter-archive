@@ -38,7 +38,7 @@ const NotificationExpandedView: React.FC<Props> = ({
             {notification.serviceName}
           </ServiceNameTag>
           <Spacer inline x={0.5} />
-          <Text size={16} color={"#ff6060"}>
+          <Text size={16} color={"#FFBF00"}>
             {notification.isDeployRelated ? "failed to deploy" : "is unhealthy"}
           </Text>
         </Container>
@@ -65,9 +65,35 @@ const NotificationExpandedView: React.FC<Props> = ({
                     {message.error.summary}
                   </Container>
                   <Spacer y={0.5} />
-                  <Container row style={{ color: "#aaaabb" }}>
-                    {message.error.detail}
+                  <Text>Details:</Text>
+                  <Spacer y={0.25} />
+                  <Container row>
+                    <Text color="helper">{message.error.detail}</Text>
                   </Container>
+                  <Spacer y={0.5} />
+                  <Text>Resolution steps:</Text>
+                  <Spacer y={0.25} />
+                  <Container row>
+                    <Text color="helper">{message.error.mitigation_steps}</Text>
+                  </Container>
+                  {message.error.documentation.length && (
+                    <>
+                      <Spacer y={0.5} />
+                      <Text>Relevant documentation:</Text>
+                      <Spacer y={0.25} />
+                      <ul>
+                        {message.error.documentation.map((doc, i) => {
+                          return (
+                            <li key={i}>
+                              <a href={doc} target="_blank" rel="noreferrer">
+                                {doc}
+                              </a>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </>
+                  )}
                 </Message>
               </NotificationWrapper>
             );

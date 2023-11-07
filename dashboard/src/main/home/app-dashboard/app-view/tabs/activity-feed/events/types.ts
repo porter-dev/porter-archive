@@ -54,7 +54,7 @@ export const porterAppNotificationEventMetadataValidator = z.object({
     summary: z.string(),
     detail: z.string(),
     mitigation_steps: z.string(),
-    documentation: z.array(z.string()),
+    documentation: z.array(z.string()).default([]),
   }),
   timestamp: z.string(),
   deployment: z.discriminatedUnion("status", [

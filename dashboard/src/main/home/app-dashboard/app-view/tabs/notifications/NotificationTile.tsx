@@ -39,7 +39,7 @@ const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
         </Container>
       </Container>
       <Container row style={{ paddingRight: "10px" }}>
-        <StatusDot color={"#ff6060"} />
+        <StatusDot color={"#FFBF00"} />
       </Container>
     </StyledNotificationTile>
   );
@@ -71,7 +71,7 @@ const StyledNotificationTile = styled.div`
 `;
 
 const NotificationSummary = styled.div`
-  color: #ff6060;
+  color: #ffbf00;
   font-size: 13px;
   font-weight: 500;
 `;

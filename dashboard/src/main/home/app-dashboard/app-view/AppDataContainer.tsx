@@ -37,7 +37,7 @@ import {
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-import alert from "assets/alert-red.svg";
+import alert from "assets/alert-warning.svg";
 import save from "assets/save-01.svg";
 
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
@@ -450,10 +450,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         value: "notifications",
         sibling:
           numNotifications > 0 ? (
-            <Tag borderColor={"#FF6060"}>
+            <Tag borderColor={"#FFBF00"}>
               <Link
                 to={`/apps/${latestProto.name}/notifications`}
-                color={"#FF6060"}
+                color={"#FFBF00"}
               >
                 <TagIcon src={alert} />
                 <div

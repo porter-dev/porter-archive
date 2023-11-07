@@ -52,7 +52,7 @@ func ErrorCode(agentSummary, agentDetail string) PorterErrorCode {
 		return PorterErrorCode_InvalidImageError
 	}
 
-	if strings.Contains(agentSummary, "exceeded its memory limit") {
+	if strings.Contains(agentSummary, "ran out of memory") {
 		return PorterErrorCode_MemoryLimitExceeded
 	}
 

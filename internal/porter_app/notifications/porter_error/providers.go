@@ -9,7 +9,7 @@ import (
 type ErrorDetailsProvider interface {
 	Detail(rawAgentDetail string) string
 	MitigationSteps(rawAgentDetail string) string
-	Documentation() []string
+	Documentation(rawAgentDetail string) []string
 }
 
 // ErrorCodeToProvider maps PorterErrorCode to their respective ErrorDetailsProvider implementations.
@@ -43,7 +43,7 @@ func (e *NonZeroExitCodeErrorProvider) Detail(rawAgentDetail string) string {
 	prefix := fmt.Sprintf("The service restarted with exit code %s.", exitCode)
 	switch exitCode {
 	case "137":
-		return fmt.Sprintf("%s This indicates that the service was killed by SIGKILL. The most common reason for this is that your service does not handle graceful shutdown when it receives a SIGTERM signal. After receiving SIGTERM, your service should close existing connections and terminate with exit code 0.", prefix)
+		return fmt.Sprintf("%s This indicates that the service was killed by SIGKILL. The most common reason for this is that your service does not handle graceful shutdown when it receives a SIGTERM signal.", prefix)
 	case "1":
 		return fmt.Sprintf("%s This indicates common issues.", prefix)
 	case "127":
@@ -54,13 +54,49 @@ func (e *NonZeroExitCodeErrorProvider) Detail(rawAgentDetail string) string {
 }
 
 func (e *NonZeroExitCodeErrorProvider) MitigationSteps(rawAgentDetail string) string {
-	// Implement logic to populate mitigation steps for NonZeroExitCode errors
-	return ""
+	mitigationSteps := "Please consult our documentation for further guidance. If you need additional help, please reach out to us at support@porter.run."
+	// Example detail from the agent: "restarted with exit code 137"
+	// We want to get the exit code
+	pattern := `restarted with exit code (\S+)`
+	regex := regexp.MustCompile(pattern)
+	matches := regex.FindStringSubmatch(rawAgentDetail)
+	if len(matches) != 2 {
+		return mitigationSteps
+	}
+
+	exitCode := matches[1]
+	switch exitCode {
+	case "137":
+		return "Please make sure that your service handles graceful shutdown when it receives a SIGTERM signal. After receiving SIGTERM, your service should close existing connections and terminate with exit code 0."
+	case "1":
+		return "Check container logs for further troubleshooting."
+	case "127":
+		return "Please verify that the service start command is correct and redeploy."
+	default:
+		return mitigationSteps
+	}
 }
 
-func (e *NonZeroExitCodeErrorProvider) Documentation() []string {
-	// Implement logic to populate documentation links for NonZeroExitCode errors
-	return []string{}
+func (e *NonZeroExitCodeErrorProvider) Documentation(rawAgentDetail string) []string {
+	docLinks := []string{
+		"https://docs.porter.run/enterprise/managing-applications/application-troubleshooting#application-issues-and-non-zero-exit-codes",
+	}
+	// Example detail from the agent: "restarted with exit code 137"
+	// We want to get the exit code
+	pattern := `restarted with exit code (\S+)`
+	regex := regexp.MustCompile(pattern)
+	matches := regex.FindStringSubmatch(rawAgentDetail)
+	if len(matches) != 2 {
+		return docLinks
+	}
+
+	exitCode := matches[1]
+	switch exitCode {
+	case "137":
+		docLinks = append(docLinks, "https://docs.porter.run/enterprise/deploying-applications/zero-downtime-deployments#graceful-shutdown")
+	}
+
+	return docLinks
 }
 
 // LivenessHealthCheckErrorProvider provides error details for LivenessHealthCheck errors.
@@ -85,7 +121,7 @@ func (e *LivenessHealthCheckErrorProvider) MitigationSteps(rawAgentDetail string
 	return ""
 }
 
-func (e *LivenessHealthCheckErrorProvider) Documentation() []string {
+func (e *LivenessHealthCheckErrorProvider) Documentation(rawAgentDetail string) []string {
 	// Implement logic to populate documentation links for LivenessHealthCheck errors
 	return []string{}
 }
@@ -112,7 +148,7 @@ func (e *ReadinessHealthCheckErrorProvider) MitigationSteps(rawAgentDetail strin
 	return ""
 }
 
-func (e *ReadinessHealthCheckErrorProvider) Documentation() []string {
+func (e *ReadinessHealthCheckErrorProvider) Documentation(rawAgentDetail string) []string {
 	// Implement logic to populate documentation links for ReadinessHealthCheck errors
 	return []string{}
 }
@@ -129,7 +165,7 @@ func (e *RestartedDueToErrorProvider) MitigationSteps(rawAgentDetail string) str
 	return ""
 }
 
-func (e *RestartedDueToErrorProvider) Documentation() []string {
+func (e *RestartedDueToErrorProvider) Documentation(rawAgentDetail string) []string {
 	// Implement logic to populate documentation links for RestartedDueToError errors
 	return []string{}
 }
@@ -146,7 +182,7 @@ func (e *InvalidImageErrorProvider) MitigationSteps(rawAgentDetail string) strin
 	return ""
 }
 
-func (e *InvalidImageErrorProvider) Documentation() []string {
+func (e *InvalidImageErrorProvider) Documentation(rawAgentDetail string) []string {
 	// Implement logic to populate documentation links for InvalidImageError errors
 	return []string{}
 }
@@ -173,7 +209,7 @@ func (e *MemoryLimitExceededErrorProvider) MitigationSteps(rawAgentDetail string
 	return ""
 }
 
-func (e *MemoryLimitExceededErrorProvider) Documentation() []string {
+func (e *MemoryLimitExceededErrorProvider) Documentation(rawAgentDetail string) []string {
 	// Implement logic to populate documentation links for MemoryLimitExceededError errors
 	return []string{}
 }

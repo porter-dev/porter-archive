@@ -1,14 +1,17 @@
 import React from "react";
 import styled from "styled-components";
 
+import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Logs from "main/home/app-dashboard/validate-apply/logs/Logs";
+import { useIntercom } from "lib/hooks/useIntercom";
 import { type ClientNotification } from "lib/porter-apps/notification";
 
 import { feedDate } from "shared/string_utils";
 import document from "assets/document.svg";
+import time from "assets/time.svg";
 import web from "assets/web.png";
 
 type Props = {
@@ -28,6 +31,8 @@ const NotificationExpandedView: React.FC<Props> = ({
   deploymentTargetId,
   appId,
 }) => {
+  const { showIntercomWithMessage } = useIntercom();
+
   return (
     <StyledNotificationExpandedView>
       <ExpandedViewContent>
@@ -50,19 +55,22 @@ const NotificationExpandedView: React.FC<Props> = ({
                 isLast={i === notification.messages.length - 1}
                 key={i}
               >
-                {i !== notification.messages.length - 1 &&
-                  notification.messages.length > 1 && <Line />}
-                <Dot />
-                <Time>
-                  <Text>{feedDate(message.timestamp)}</Text>
-                </Time>
                 <Message key={i}>
-                  <Container row>
-                    <img
-                      src={document}
-                      style={{ width: "15px", marginRight: "15px" }}
-                    />
-                    {message.error.summary}
+                  <Container row spaced>
+                    <Container row>
+                      <img
+                        src={document}
+                        style={{ width: "15px", marginRight: "15px" }}
+                      />
+                      {message.error.summary}
+                    </Container>
+                    <Container row>
+                      <img
+                        src={time}
+                        style={{ width: "15px", marginRight: "15px" }}
+                      />
+                      <Text>{feedDate(message.timestamp)}</Text>
+                    </Container>
                   </Container>
                   <Spacer y={0.5} />
                   <Text>Details:</Text>
@@ -76,7 +84,22 @@ const NotificationExpandedView: React.FC<Props> = ({
                   <Container row>
                     <Text color="helper">{message.error.mitigation_steps}</Text>
                   </Container>
-                  {message.error.documentation.length && (
+                  <Spacer y={0.25} />
+                  <Container row>
+                    <Text color="helper">Need help debugging?</Text>
+                    <Spacer inline x={0.5} />
+                    <Button
+                      onClick={() => {
+                        showIntercomWithMessage({
+                          message: `I need help debugging an issue with my application ${appName} in project ${projectId}.`,
+                          delaySeconds: 0,
+                        });
+                      }}
+                    >
+                      Talk to support
+                    </Button>
+                  </Container>
+                  {message.error.documentation.length > 0 && (
                     <>
                       <Spacer y={0.5} />
                       <Text>Relevant documentation:</Text>
@@ -198,40 +221,7 @@ const ServiceTypeIcon = styled.img`
   margin-top: 2px;
 `;
 
-const Time = styled.div`
-  opacity: 0;
-  animation: fadeIn 0.3s 0.1s;
-  animation-fill-mode: forwards;
-  width: 150px;
-`;
-
-const Line = styled.div`
-  width: 1px;
-  height: calc(100% + 30px);
-  background: #414141;
-  position: absolute;
-  left: 3px;
-  top: 36px;
-  opacity: 0;
-  animation: fadeIn 0.3s 0.1s;
-  animation-fill-mode: forwards;
-`;
-
-const Dot = styled.div`
-  width: 7px;
-  height: 7px;
-  background: #fff;
-  border-radius: 50%;
-  margin-left: -29px;
-  margin-right: 20px;
-  z-index: 1;
-  opacity: 0;
-  animation: fadeIn 0.3s 0.1s;
-  animation-fill-mode: forwards;
-`;
-
 const NotificationWrapper = styled.div<{ isLast: boolean }>`
-  padding-left: 30px;
   display: flex;
   align-items: center;
   position: relative;

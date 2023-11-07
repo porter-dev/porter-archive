@@ -14,10 +14,10 @@ import Icon from "components/porter/Icon";
 import { getDuration, getStatusColor, getStatusIcon, triggerWorkflow } from '../utils';
 import { Code, ImageTagContainer, CommitIcon, StyledEventCard } from "./EventCard";
 import document from "assets/document.svg";
-import { PorterAppBuildEvent } from "../types";
+import { type PorterAppBuildEvent } from "../types";
 import { match } from "ts-pattern";
 import pull_request_icon from "assets/pull_request_icon.svg";
-import { PorterAppRecord } from "main/home/app-dashboard/app-view/AppView";
+import { type PorterAppRecord } from "main/home/app-dashboard/app-view/AppView";
 
 type Props = {
   event: PorterAppBuildEvent;
@@ -45,40 +45,47 @@ const BuildEventCard: React.FC<Props> = ({
         {match(event.status)
           .with("SUCCESS", () => "Build successful")
           .with("FAILED", () => "Build failed")
+          .with("CANCELED", () => "Build cancelled")
           .otherwise(() => "Build in progress...")
         }
       </StatusContainer>
     );
   };
 
+  const renderLogsAndRetry = (event: PorterAppBuildEvent) => {
+    return (
+        <Wrapper>
+          <Link to={`/apps/${appName}/events?event_id=${event.id}`} hasunderline>
+            <Container row>
+              <Icon src={document} height="10px" />
+              <Spacer inline width="5px" />
+              View logs
+            </Container>
+          </Link>
+          <Spacer inline x={1} />
+          <Link hasunderline onClick={async () => { await triggerWorkflow({
+            projectId,
+            clusterId,
+            porterApp,
+          }); }}>
+            <Container row>
+              <Icon height="10px" src={refresh} />
+              <Spacer inline width="5px" />
+              Retry
+            </Container>
+          </Link>
+        </Wrapper>
+    );
+  }
+
   const renderInfoCta = (event: PorterAppBuildEvent) => {
     switch (event.status) {
       case "SUCCESS":
         return null;
+      case "CANCELED":
+        return renderLogsAndRetry(event);
       case "FAILED":
-        return (
-          <Wrapper>
-            <Link to={`/apps/${appName}/events?event_id=${event.id}`} hasunderline>
-              <Container row>
-                <Icon src={document} height="10px" />
-                <Spacer inline width="5px" />
-                View logs
-              </Container>
-            </Link>
-            <Spacer inline x={1} />
-            <Link hasunderline onClick={() => triggerWorkflow({
-              projectId,
-              clusterId,
-              porterApp,
-            })}>
-              <Container row>
-                <Icon height="10px" src={refresh} />
-                <Spacer inline width="5px" />
-                Retry
-              </Container>
-            </Link>
-          </Wrapper>
-        );
+        return renderLogsAndRetry(event);
       default:
         return (
           <Wrapper>

@@ -14,7 +14,7 @@ import list from "assets/list.png";
 import healthy from "assets/status-healthy.png";
 import letter from "assets/vector.svg";
 import calendar from "assets/calendar-number.svg";
-import database from "assets/database.svg";
+import database from "assets/database-dashboard.svg";
 import notFound from "assets/not-found.png";
 
 import { Context } from "shared/Context";

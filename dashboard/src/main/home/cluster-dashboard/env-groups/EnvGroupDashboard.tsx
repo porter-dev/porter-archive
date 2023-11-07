@@ -1,7 +1,7 @@
 import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import sliders from "assets/env-groups.svg";
+import sliders from "assets/env-groups-dashboard.svg";
 
 import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";

@@ -2,7 +2,7 @@ import React, { useState, useContext, useCallback } from "react";
 import styled from "styled-components";
 import _ from "lodash";
 
-import web from "assets/web.png";
+import applications from "assets/applications-dashboard.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import letter from "assets/vector.svg";
@@ -309,7 +309,7 @@ const Apps: React.FC<Props> = ({}) => {
     <StyledAppDashboard>
       {!currentDeploymentTarget?.preview && (
         <DashboardHeader
-          image={web}
+          image={applications}
           title="Applications"
           description="Web services, workers, and jobs for this project."
           disableLineBreak

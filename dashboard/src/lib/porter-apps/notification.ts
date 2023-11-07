@@ -14,22 +14,13 @@ export type ClientNotification = {
 export function deserializeNotifications(
   notifications: PorterAppNotification[]
 ): ClientNotification[] {
-  // Group notifications by service name
   const notificationsGroupedByService = _.groupBy(
     notifications,
     (notification) => notification.service_name
   );
 
-  // create client notifications
-  const clientNotifications = Object.keys(
-    notificationsGroupedByService
-  ).flatMap((serviceName) => {
-    // if the deployment is PENDING for any of the notifications, group them together and assume that they are all related to the failing deployment
-    if (
-      notificationsGroupedByService[serviceName].some(
-        (notification) => notification.deployment.status === "PENDING"
-      )
-    ) {
+  const clientNotifications = Object.keys(notificationsGroupedByService).map(
+    (serviceName) => {
       const messages = orderNotificationsByTimestamp(
         notificationsGroupedByService[serviceName],
         "asc"
@@ -37,27 +28,20 @@ export function deserializeNotifications(
       const timestamp = messages[0].timestamp;
       const id = messages[0].id;
       return {
-        isDeployRelated: true,
+        // if the deployment is PENDING for any of the notifications, assume that they are all related to the failing deployment
+        // if not, then the deployment has already occurred
+        isDeployRelated: notificationsGroupedByService[serviceName].some(
+          (notification) => notification.deployment.status === "PENDING"
+        ),
         serviceName,
         timestamp,
         id,
         messages,
         appRevisionId: messages[0].app_revision_id,
       };
-      // otherwise, assume that the notifications are not related to a deployment, and report them separately
-    } else {
-      return notificationsGroupedByService[serviceName].map((notification) => {
-        return {
-          isDeployRelated: false,
-          serviceName,
-          timestamp: notification.timestamp,
-          id: notification.id,
-          messages: [notification],
-          appRevisionId: notification.app_revision_id,
-        };
-      });
     }
-  });
+  );
+
   return orderNotificationsByTimestamp(clientNotifications, "asc");
 }
 

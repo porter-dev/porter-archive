@@ -86,12 +86,12 @@ const NotificationExpandedView: React.FC<Props> = ({
                   </Container>
                   <Spacer y={0.25} />
                   <Container row>
-                    <Text color="helper">Need help debugging?</Text>
+                    <Text color="helper">Need help troubleshooting?</Text>
                     <Spacer inline x={0.5} />
                     <Button
                       onClick={() => {
                         showIntercomWithMessage({
-                          message: `I need help debugging an issue with my application ${appName} in project ${projectId}.`,
+                          message: `I need help troubleshooting an issue with my application ${appName} in project ${projectId}.`,
                           delaySeconds: 0,
                         });
                       }}
@@ -104,7 +104,9 @@ const NotificationExpandedView: React.FC<Props> = ({
                       <Spacer y={0.5} />
                       <Text>Relevant documentation:</Text>
                       <Spacer y={0.25} />
-                      <ul>
+                      <ul
+                        style={{ paddingInlineStart: "12px", marginTop: "0px" }}
+                      >
                         {message.error.documentation.map((doc, i) => {
                           return (
                             <li key={i}>

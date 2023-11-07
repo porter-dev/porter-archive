@@ -5,27 +5,44 @@ import (
 	"strings"
 )
 
+// PorterError is the translation of a generic error from the agent into an actionable error for the user
 type PorterError struct {
-	Code            PorterErrorCode `json:"code"`
-	Summary         string          `json:"summary"`
-	Detail          string          `json:"detail"`
-	MitigationSteps string          `json:"mitigation_steps"`
-	Documentation   []string        `json:"documentation"`
+	// Code is the error code that can be used to determine the type of error
+	Code PorterErrorCode `json:"code"`
+	// Summary is a short description of the error
+	Summary string `json:"summary"`
+	// Detail is a longer description of the error
+	Detail string `json:"detail"`
+	// MitigationSteps are the steps that can be taken to resolve the error
+	MitigationSteps string `json:"mitigation_steps"`
+	// Documentation is a list of links to documentation that can be used to resolve the error
+	Documentation []string `json:"documentation"`
 }
 
+// PorterErrorCode is the error code that can be used to determine the type of error
 type PorterErrorCode int
 
 const (
-	PorterErrorCode_Unknown                             PorterErrorCode = 0
-	PorterErrorCode_NonZeroExitCode                     PorterErrorCode = 10
-	PorterErrorCode_NonZeroExitCode_SIGKILL             PorterErrorCode = 11
+	// PorterErrorCode_Unknown is the default error code
+	PorterErrorCode_Unknown PorterErrorCode = 0
+	// PorterErrorCode_NonZeroExitCode is the error code for a generic non-zero exit code
+	PorterErrorCode_NonZeroExitCode PorterErrorCode = 10
+	// PorterErrorCode_NonZeroExitCode_SIGKILL is the error code for a non-zero exit code due to a SIGKILL
+	PorterErrorCode_NonZeroExitCode_SIGKILL PorterErrorCode = 11
+	// PorterErrorCode_NonZeroExitCode_InvalidStartCommand is the error code for a non-zero exit code due to an invalid start command
 	PorterErrorCode_NonZeroExitCode_InvalidStartCommand PorterErrorCode = 12
-	PorterErrorCode_NonZeroExitCode_CommonIssues        PorterErrorCode = 13
-	PorterErrorCode_LivenessHealthCheck                 PorterErrorCode = 20
-	PorterErrorCode_ReadinessHealthCheck                PorterErrorCode = 30
-	PorterErrorCode_RestartedDueToError                 PorterErrorCode = 40
-	PorterErrorCode_InvalidImageError                   PorterErrorCode = 50
-	PorterErrorCode_MemoryLimitExceeded                 PorterErrorCode = 60
+	// PorterErrorCode_NonZeroExitCode_CommonIssues is the error code for a non-zero exit code due to common issues
+	PorterErrorCode_NonZeroExitCode_CommonIssues PorterErrorCode = 13
+	// PorterErrorCode_LivenessHealthCheck is the error code for a failed liveness health check
+	PorterErrorCode_LivenessHealthCheck PorterErrorCode = 20
+	// PorterErrorCode_ReadinessHealthCheck is the error code for a failed readiness health check
+	PorterErrorCode_ReadinessHealthCheck PorterErrorCode = 30
+	// PorterErrorCode_RestartedDueToError is the error code for a restart due to an error
+	PorterErrorCode_RestartedDueToError PorterErrorCode = 40
+	// PorterErrorCode_InvalidImageError is the error code for an invalid image
+	PorterErrorCode_InvalidImageError PorterErrorCode = 50
+	// PorterErrorCode_MemoryLimitExceeded is the error code for a memory limit exceeded
+	PorterErrorCode_MemoryLimitExceeded PorterErrorCode = 60
 )
 
 // errorCode parses the agent summary and possibly the detail (if it needs supplemental info) to return a standard Porter error code
@@ -59,6 +76,7 @@ func ErrorCode(agentSummary, agentDetail string) PorterErrorCode {
 	return errorCode
 }
 
+// nonZeroExitCodeErrorCode parses the agent detail for non-zero exit code errors to return a standard Porter error code
 func nonZeroExitCodeErrorCode(agentDetail string) PorterErrorCode {
 	errorCode := PorterErrorCode_NonZeroExitCode
 	pattern := `restarted with exit code (\S+)`

@@ -8,8 +8,8 @@ import styled from "styled-components";
 import spinner from "assets/loading.gif";
 import api from "shared/api";
 import { useLogs } from "./utils";
-import { Direction, GenericFilterOption, GenericFilter, FilterName } from "../../expanded-app/logs/types";
-import dayjs, { Dayjs } from "dayjs";
+import { Direction, GenericFilterOption, GenericFilter, type FilterName } from "../../expanded-app/logs/types";
+import dayjs, { type Dayjs } from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
 import Banner from "components/porter/Banner";
@@ -43,6 +43,8 @@ type Props = {
     };
     filterPredeploy?: boolean;
     appId: number;
+    defaultLatestRevision?: boolean;
+    jobRunID?: string;
 };
 
 const DEFAULT_LOG_TIMEOUT_SECONDS = 60;
@@ -58,6 +60,8 @@ const Logs: React.FC<Props> = ({
     logFilterNames = ["service_name", "revision", "output_stream"], // these are the names of filters that will be displayed in the UI
     filterPredeploy = false,
     appId,
+    defaultLatestRevision = true,
+    jobRunID = ""
 }) => {
     const { search } = useLocation();
     const queryParams = new URLSearchParams(search);
@@ -101,7 +105,7 @@ const Logs: React.FC<Props> = ({
         if (version === "dev") {
             return true;
         }
-        //make sure version is above v3.1.3
+        // make sure version is above v3.1.3
         if (version == null) {
             return false;
         }
@@ -202,6 +206,7 @@ const Logs: React.FC<Props> = ({
         filterPredeploy,
         timeRange,
         appID: appId,
+        jobRunID
     });
 
     const { totalSeconds, isRunning, pause: pauseLogTimeout, restart: restartLogTimeout } = useTimer({
@@ -263,7 +268,7 @@ const Logs: React.FC<Props> = ({
             } as GenericFilter,
         ].filter((f: GenericFilter) => logFilterNames.includes(f.name)))
 
-        if (latestRevisionNumber && !logQueryParamOpts.revision && !logQueryParamOpts.revision_id) { // default to filter by latest revision number if no revision-related query params supplied
+        if (latestRevisionNumber && !logQueryParamOpts.revision && !logQueryParamOpts.revision_id && defaultLatestRevision) { // default to filter by latest revision number if no revision-related query params supplied
             setSelectedFilterValues({
                 ...selectedFilterValues,
                 revision: latestRevisionNumber.toString(),
@@ -319,7 +324,7 @@ const Logs: React.FC<Props> = ({
                             selectedFilterValues={selectedFilterValues}
                         />
                         <Spacer inline x={1} />
-                        <ScrollButton onClick={() => setScrollToBottomEnabled((s) => !s)}>
+                        <ScrollButton onClick={() => { setScrollToBottomEnabled((s) => !s); }}>
                             <Checkbox checked={scrollToBottomEnabled}>
                                 <i className="material-icons">done</i>
                             </Checkbox>
@@ -360,7 +365,7 @@ const Logs: React.FC<Props> = ({
                                 <LoadMoreButton
                                     active={selectedDate != null && logs.length !== 0}
                                     role="button"
-                                    onClick={() => moveCursor(Direction.forward)}
+                                    onClick={async () => { await moveCursor(Direction.forward); }}
                                 >
                                     Load more
                                 </LoadMoreButton>
@@ -369,18 +374,18 @@ const Logs: React.FC<Props> = ({
                         {!isLoading && logs.length === 0 && selectedDate != null && (
                             <Message>
                                 No logs found for this time range.
-                                <Highlight onClick={() => setSelectedDate(undefined)}>
+                                <Highlight onClick={() => { setSelectedDate(undefined); }}>
                                     <i className="material-icons">autorenew</i>
                                     Reset
                                 </Highlight>
                             </Message>
                         )}
                         {!isLoading && logs.length === 0 && selectedDate == null && isRunning && (
-                            <Loading message={`Waiting ${totalSeconds} seconds for logs...`} />
+                            <Loading message={`No logs emitted in the past 24 hours. Waiting ${totalSeconds} seconds for live logs...`} />
                         )}
                         {!isLoading && logs.length === 0 && selectedDate == null && !isRunning && (
                             <Message>
-                                Timed out waiting for logs.
+                                Timed out waiting for logs. To see earlier logs, select a time range.
                                 <Highlight onClick={() => {
                                     restartLogTimeout(dayjs().add(DEFAULT_LOG_TIMEOUT_SECONDS, 'seconds').toDate());
                                     refresh({ isLive: selectedDate == null && timeRange?.endTime == null });
@@ -415,7 +420,7 @@ const Logs: React.FC<Props> = ({
 
         const checkForAgentInterval = setInterval(checkForAgent, 3000);
 
-        return () => clearInterval(checkForAgentInterval);
+        return () => { clearInterval(checkForAgentInterval); };
     }, [isPorterAgentInstalling]);
 
     const checkForAgent = async () => {
@@ -473,7 +478,7 @@ const Logs: React.FC<Props> = ({
                 In order to use the Logs tab, you need to install the Porter agent.
             </Text>
             <Spacer y={1} />
-            <Button onClick={() => triggerInstall()}>
+            <Button onClick={() => { triggerInstall(); }}>
                 <I className="material-icons">add</I> Install Porter agent
             </Button>
         </Fieldset>

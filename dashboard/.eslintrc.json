@@ -44,6 +44,13 @@
       {
         "ignoreVoid": true
       }
+    ],
+    "@typescript-eslint/prefer-nullish-coalescing": [
+      "error",
+      {
+        "ignoreConditionalTests": true,
+        "ignoreMixedLogicalExpressions": true
+      }
     ]
   }
 }

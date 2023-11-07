@@ -65,7 +65,9 @@ type ClusterState = {
   cidrRangeVPC: string;
   cidrRangeServices: string;
   clusterVersion: string;
-  gpuInstanceType?: string
+  gpuInstanceType?: string;
+  gpuMinInstances: number;
+  gpuMaxInstances: number;
 };
 
 
@@ -156,6 +158,8 @@ const initialClusterState: ClusterState = {
   cidrRangeServices: defaultCidrServices,
   clusterVersion: defaultClusterVersion,
   gpuInstanceType: "g4dn.xlarge",
+  gpuMinInstances: 1,
+  gpuMaxInstances: 5,
 };
 
 
@@ -362,8 +366,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     if (props.gpuModal) {
       nodeGroups.push(new EKSNodeGroup({
         instanceType: clusterState.gpuInstanceType,
-        minInstances: clusterState.minInstances || 1,
-        maxInstances: clusterState.maxInstances || 10,
+        minInstances: clusterState.gpuMinInstances || 1,
+        maxInstances: clusterState.gpuMaxInstances || 5,
         nodeGroupType: NodeGroupType.CUSTOM,
         isStateful: false,
         additionalPolicies: clusterState.additionalNodePolicies,
@@ -476,6 +480,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
+    //Unmarshall Contract here
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
       if (eksValues === null) {
@@ -525,7 +530,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           enableControllerManagerLogs: eksValues.logging.enableControllerManagerLogs,
           enableSchedulerLogs: eksValues.logging.enableSchedulerLogs,
         };
-        handleClusterStateChange('controlPlaneLogs', logging);
+        setControlPlaneLogs(logging);
       }
 
       handleClusterStateChange('guardDutyEnabled', eksValues.enableGuardDuty);
@@ -534,11 +539,14 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   }, [isExpanded, props.selectedClusterVersion]);
 
   useEffect(() => {
-    if (!props.clusterId || (props.gpuModal)) {
-      setStep(1)
-      preflightChecks()
+    if (!props.clusterId || (props.gpuModal && clusterState.clusterName === currentCluster?.name)) {
+      if (clusterState.clusterName != "") {
+        setStep(1)
+        preflightChecks()
+
+      }
     }
-  }, [props.selectedClusterVersion, clusterState]);
+  }, [clusterState]);
 
   const proceedToProvision = async (): Promise<void> => {
     setShowEmailMessage(true)
@@ -560,7 +568,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         preflightValues: {
           case: "eksPreflightValues",
           value: new EKSPreflightValues({
-            region: awsRegion,
+            region: clusterState.awsRegion,
           })
         },
         quotaIncreases: quotaIncrease
@@ -670,7 +678,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Input
                 width="350px"
                 type="number"
-                disabled={isReadOnly || isLoading}
+                disabled={isReadOnly}
                 value={clusterState.maxInstances.toString()}
                 setValue={(x: string) => {
                   const num = parseInt(x, 10);
@@ -685,7 +693,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               <Input
                 width="350px"
                 type="number"
-                disabled={isReadOnly || isLoading}
+                disabled={isReadOnly}
                 value={clusterState.minInstances.toString()}
                 setValue={(x: string) => {
                   const num = parseInt(x, 10)
@@ -1099,6 +1107,37 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               }
               }
               label="Machine type"
+            />
+            <Spacer y={1} />
+            <Input
+              width="350px"
+              type="number"
+              disabled={isReadOnly}
+              value={clusterState.gpuMaxInstances.toString()}
+              setValue={(x: string) => {
+                const num = parseInt(x, 10);
+                if (!isNaN(num)) {
+                  handleClusterStateChange('gpuMaxInstances', num);
+                }
+              }}
+              label="Maximum number of application nodes"
+              placeholder="ex: 1"
+            />
+            <Spacer y={1} />
+            <Input
+              width="350px"
+              type="number"
+              disabled={isReadOnly}
+              value={clusterState.gpuMinInstances.toString()}
+              setValue={(x: string) => {
+                const num = parseInt(x, 10)
+                if (num === undefined) {
+                  return
+                }
+                handleClusterStateChange('gpuMinInstances', num);
+              }}
+              label="Minimum number of application nodes. If set to 0, no applications will be deployed."
+              placeholder="ex: 1"
             />
             <Spacer y={.5} />
           </>,

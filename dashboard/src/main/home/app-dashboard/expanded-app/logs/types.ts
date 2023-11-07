@@ -1,19 +1,19 @@
 import { z } from "zod";
-import { AnserJsonEntry } from "anser";
+import { type AnserJsonEntry } from "anser";
 
 export enum Direction {
     forward = "forward",
     backward = "backward",
 }
 
-export interface PorterLog {
+export type PorterLog = {
     line: AnserJsonEntry[];
     lineNumber: number;
     timestamp?: string;
     metadata?: z.infer<typeof agentLogMetadataValidator>;
 }
 
-export interface PaginationInfo {
+export type PaginationInfo = {
     previousCursor: string | null;
     nextCursor: string | null;
 }
@@ -25,6 +25,7 @@ const rawLabelsValidator = z.object({
     porter_run_app_revision_id: z.string().optional(),
     porter_run_service_name: z.string().optional(),
     porter_run_service_type: z.string().optional(),
+    controller_uid: z.string().optional(),
 });
 export type RawLabels = z.infer<typeof rawLabelsValidator>;
 
@@ -44,7 +45,7 @@ export const agentLogValidator = z.object({
 });
 export type AgentLog = z.infer<typeof agentLogValidator>;
 
-export interface GenericFilterOption {
+export type GenericFilterOption = {
     label: string;
     value: string;
 }
@@ -54,7 +55,7 @@ export const GenericFilterOption = {
     }
 }
 export type FilterName = 'revision' | 'output_stream' | 'pod_name' | 'service_name' | 'revision_id';
-export interface GenericFilter {
+export type GenericFilter = {
     name: FilterName;
     displayName: string;
     default: GenericFilterOption | undefined;

@@ -72,7 +72,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
 
-  const { currentClusterResources: {maxCPU, maxRAM, clusterContainsGPUNodes, clusterIngressIp, defaultCPU, defaultRAM} } = useClusterResources();
+  const { currentClusterResources: { maxCPU, maxRAM, clusterContainsGPUNodes, clusterIngressIp, defaultCPU, defaultRAM } } = useClusterResources();
 
   // add service modal form
   const {
@@ -177,6 +177,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
     // if service was previously deleted, remove from deletions
     // handle case such as pre-deploy (which always has the same name)
     // being deleted and then re-added
+    console.log("data", data);
     const previouslyDeleted = deletedServices.findIndex(
       (s) => s.name === data.name
     );

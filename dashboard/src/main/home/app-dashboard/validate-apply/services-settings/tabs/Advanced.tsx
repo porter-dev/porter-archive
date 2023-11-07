@@ -103,7 +103,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
               checked={value.value > 0}
               onChange={() => {
                 //if cluster doesn't already have gpuNodes 
-                if (clusterContainsGPUNodes) {
+                if (!clusterContainsGPUNodes) {
                   setClusterModalVisible(true);
                 } else {
                   if (value.value > 0) {

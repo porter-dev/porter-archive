@@ -45,22 +45,18 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	input := porterv1.PreflightCheckRequest{}
-	fmt.Println("cloudValues", cloudValues)
-	if cloudValues.Contract == nil {
-		input.ProjectId = int64(project.ID)
-		input.CloudProvider = cloudValues.CloudProvider
-		input.CloudProviderCredentialsId = cloudValues.CloudProviderCredentialsId
-
-		if cloudValues.PreflightValues != nil {
-			if cloudValues.CloudProvider == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP || cloudValues.CloudProvider == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS {
-				input.PreflightValues = cloudValues.PreflightValues
-			}
-		}
-	} else {
-		input.Contract = cloudValues.Contract
+	input := porterv1.PreflightCheckRequest{
+		ProjectId:                  int64(project.ID),
+		CloudProvider:              cloudValues.CloudProvider,
+		CloudProviderCredentialsId: cloudValues.CloudProviderCredentialsId,
+		Contract:                   cloudValues.Contract,
 	}
-	fmt.Println("input", input)
+
+	if cloudValues.PreflightValues != nil {
+		if cloudValues.CloudProvider == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP || cloudValues.CloudProvider == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS {
+			input.PreflightValues = cloudValues.PreflightValues
+		}
+	}
 
 	checkResp, err := p.Config().ClusterControlPlaneClient.PreflightCheck(ctx, connect.NewRequest(&input))
 	if err != nil {

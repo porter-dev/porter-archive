@@ -891,6 +891,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/build -> porter_app.NewUpdateAppBuildSettingsHandler
+	updateAppBuildSettingsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/build", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	updateAppBuildSettingsHandler := porter_app.NewUpdateAppBuildSettingsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: updateAppBuildSettingsEndpoint,
+		Handler:  updateAppBuildSettingsHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/revisions -> porter_app.NewCurrentAppRevisionHandler
 	latestAppRevisionsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -1499,6 +1528,35 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: useNewApplyLogicEndpoint,
 		Handler:  useNewApplyLogicHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{app_name}/run -> porter_app.NewAppRunHandler
+	appRunEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/run", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appRunHandler := porter_app.NewAppRunHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appRunEndpoint,
+		Handler:  appRunHandler,
 		Router:   r,
 	})
 

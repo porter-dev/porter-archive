@@ -12,6 +12,7 @@ import Spacer from "components/porter/Spacer";
 import ProvisionerForm from "components/ProvisionerForm";
 import GPUCostConsent from "components/GPUCostConsent";
 import { Context } from "shared/Context";
+import ClusterRevisionSelector from "../cluster-dashboard/dashboard/ClusterRevisionSelector";
 
 
 type Props = RouteComponentProps & {
@@ -32,6 +33,9 @@ const ProvisionClusterModal: React.FC<Props> = ({
     );
     const [currentStep, setCurrentStep] = useState("cloud");
     const [targetArn, setTargetARN] = useState("")
+    const [selectedClusterVersion, setSelectedClusterVersion] = useState(null);
+    const [showProvisionerStatus, setShowProvisionerStatus] = useState(false);
+    const [provisionFailureReason, setProvisionFailureReason] = useState("");
 
     return (
         <Modal closeModal={closeModal} width={"1000px"}>
@@ -53,11 +57,20 @@ const ProvisionClusterModal: React.FC<Props> = ({
                     />
                 ) :
                     gpuModal ? (
-                        <ProvisionerSettings
-                            clusterId={gpuModal ? currentCluster?.id : null}
-                            gpuModal={gpuModal}
-                            credentialId={currentCluster.cloud_provider_credential_identifier}
-                        />
+                        <>
+                            <ClusterRevisionSelector
+                                selectedClusterVersion={selectedClusterVersion}
+                                setSelectedClusterVersion={setSelectedClusterVersion}
+                                setShowProvisionerStatus={setShowProvisionerStatus}
+                                setProvisionFailureReason={setProvisionFailureReason} />
+
+                            <ProvisionerSettings
+                                clusterId={gpuModal ? currentCluster?.id : null}
+                                gpuModal={gpuModal}
+                                credentialId={currentCluster.cloud_provider_credential_identifier}
+                                selectedClusterVersion={selectedClusterVersion}
+                            />
+                        </>
                     ) :
                         (
                             currentCredential && targetArn ? (

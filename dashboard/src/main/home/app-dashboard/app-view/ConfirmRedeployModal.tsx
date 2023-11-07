@@ -1,11 +1,13 @@
+import React, { useMemo, type Dispatch, type SetStateAction } from "react";
+import { useFormContext } from "react-hook-form";
+import styled from "styled-components";
+
 import Button from "components/porter/Button";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { PorterAppFormData } from "lib/porter-apps";
-import React, { Dispatch, SetStateAction, useMemo } from "react";
-import { useFormContext } from "react-hook-form";
-import styled from "styled-components";
+import { type PorterAppFormData } from "lib/porter-apps";
+
 import { useLatestRevision } from "./LatestRevisionContext";
 
 type Props = {
@@ -36,7 +38,11 @@ const ConfirmRedeployModal: React.FC<Props> = ({
   }, [latestRevision, buildIsDirty]);
 
   return (
-    <Modal closeModal={() => setOpen(false)}>
+    <Modal
+      closeModal={() => {
+        setOpen(false);
+      }}
+    >
       <Text size={16}>Confirm deploy</Text>
       <Spacer y={0.5} />
       <Text color="helper">{message}</Text>

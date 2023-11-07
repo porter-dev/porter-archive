@@ -49,6 +49,7 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		ProjectId:                  int64(project.ID),
 		CloudProvider:              cloudValues.CloudProvider,
 		CloudProviderCredentialsId: cloudValues.CloudProviderCredentialsId,
+		Contract:                   cloudValues.Contract,
 	}
 
 	if cloudValues.PreflightValues != nil {

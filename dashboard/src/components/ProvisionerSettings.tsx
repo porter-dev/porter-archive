@@ -536,7 +536,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         preflightValues: {
           case: "eksPreflightValues",
           value: new EKSPreflightValues({
-            region: awsRegion,
+            region: clusterState.awsRegion,
           })
         },
         quotaIncreases: quotaIncrease

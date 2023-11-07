@@ -51,6 +51,9 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		CloudProviderCredentialsId: cloudValues.CloudProviderCredentialsId,
 	}
 
+	if cloudValues.Contract != nil {
+		input.Contract = cloudValues.Contract
+	}
 	if cloudValues.PreflightValues != nil {
 		if cloudValues.CloudProvider == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP || cloudValues.CloudProvider == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS {
 			input.PreflightValues = cloudValues.PreflightValues

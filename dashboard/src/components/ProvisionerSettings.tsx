@@ -129,8 +129,9 @@ const machineTypeOptions = [
 ];
 
 const gpuMachineTypeOptions = [
-  { value: "g4dn.large", label: "g4dn.large" },
+
   { value: "g4dn.xlarge", label: "g4dn.xlarge" },
+  { value: "g4dn.2xlarge", label: "g4dn.2xlarge" },
 ];
 
 const defaultCidrVpc = "10.78.0.0/16"
@@ -243,7 +244,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       return false;
     }
     // Split the input string by comma and remove any empty elements
-    const ipAddresses = IPAllowList.split(",").filter(Boolean);
+    const ipAddresses = IPAllowList?.split(",").filter(Boolean);
     // Validate each IP address
     for (let ip of ipAddresses) {
       if (!regex.test(ip.trim())) {
@@ -506,20 +507,20 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       handleClusterStateChange('cidrRangeServices', eksValues.network?.serviceCidr || defaultCidrServices);
 
       if (eksValues.loadBalancer !== null) {
-        handleClusterStateChange('IPAllowList', eksValues.loadBalancer.allowlistIpRanges);
-        handleClusterStateChange('wildCardDomain', eksValues.loadBalancer.wildcardDomain);
+        handleClusterStateChange('IPAllowList', eksValues.loadBalancer?.allowlistIpRanges);
+        handleClusterStateChange('wildCardDomain', eksValues.loadBalancer?.wildcardDomain);
 
-        const awsTags = eksValues.loadBalancer.tags
-          ? Object.entries(eksValues.loadBalancer.tags)
+        const awsTags = eksValues.loadBalancer?.tags
+          ? Object.entries(eksValues.loadBalancer?.tags)
             .map(([key, value]) => `${key}=${value}`)
             .join(",")
           : '';
         handleClusterStateChange('awsTags', awsTags);
 
-        const loadBalancerType = eksValues.loadBalancer.loadBalancerType?.toString() === "LOAD_BALANCER_TYPE_ALB";
+        const loadBalancerType = eksValues.loadBalancer?.loadBalancerType?.toString() === "LOAD_BALANCER_TYPE_ALB";
         handleClusterStateChange('loadBalancerType', loadBalancerType);
-        handleClusterStateChange('wafV2ARN', eksValues.loadBalancer.wafv2Arn);
-        handleClusterStateChange('wafV2Enabled', eksValues.loadBalancer.enableWafv2);
+        handleClusterStateChange('wafV2ARN', eksValues.loadBalancer?.wafv2Arn);
+        handleClusterStateChange('wafV2Enabled', eksValues.loadBalancer?.enableWafv2);
       }
 
       if (eksValues.logging != null) {

@@ -4,10 +4,10 @@ import React, { useEffect, useState } from "react";
 import api from "shared/api";
 import styled from "styled-components";
 import Link from "components/porter/Link";
-import BuildFailureEventFocusView from "./BuildFailureEventFocusView";
+import BuildEventFocusView from "./BuildEventFocusView";
 import PreDeployEventFocusView from "./PredeployEventFocusView";
 import _ from "lodash";
-import { PorterAppBuildEvent, PorterAppPreDeployEvent, porterAppEventValidator } from "../types";
+import { type PorterAppBuildEvent, type PorterAppPreDeployEvent, porterAppEventValidator } from "../types";
 import { useLocation } from "react-router";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { useQuery } from "@tanstack/react-query";
@@ -50,7 +50,7 @@ const EventFocusView: React.FC = ({ }) => {
         },
         {
             // last condition checks if the event is done running; then we stop refetching
-            enabled: eventId != null && eventId !== "" && !(event != null && event.metadata.end_time != null),
+            enabled: eventId != null && eventId !== "" && !(event?.metadata.end_time != null),
             refetchInterval: EVENT_POLL_INTERVAL,
         }
     );
@@ -63,7 +63,7 @@ const EventFocusView: React.FC = ({ }) => {
 
     const getEventFocusView = () => {
         return match(event)
-            .with({ type: "BUILD" }, (ev) => <BuildFailureEventFocusView event={ev} />)
+            .with({ type: "BUILD" }, (ev) => <BuildEventFocusView event={ev} />)
             .with({ type: "PRE_DEPLOY" }, (ev) => <PreDeployEventFocusView event={ev} />)
             .with(null, () => {
                 if (eventId != null && eventId !== "") {

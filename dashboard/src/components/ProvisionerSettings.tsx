@@ -480,8 +480,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         handleClusterStateChange('IPAllowList', eksValues.loadBalancer.allowlistIpRanges);
         handleClusterStateChange('wildCardDomain', eksValues.loadBalancer.wildcardDomain);
 
-        const awsTags = eksValues.loadBalancer?.tags
-          ? Object.entries(eksValues.loadBalancer?.tags)
+        const awsTags = eksValues.loadBalancer.tags
+          ? Object.entries(eksValues.loadBalancer.tags)
             .map(([key, value]) => `${key}=${value}`)
             .join(",")
           : '';

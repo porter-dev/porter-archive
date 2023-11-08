@@ -231,7 +231,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       return false;
     }
     // Split the input string by comma and remove any empty elements
-    const ipAddresses = IPAllowList?.split(",").filter(Boolean);
+    const ipAddresses = IPAllowList.split(",").filter(Boolean);
     // Validate each IP address
     for (let ip of ipAddresses) {
       if (!regex.test(ip.trim())) {
@@ -454,7 +454,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
-      if (eksValues === null) {
+      if (eksValues == null) {
         return;
       }
 
@@ -476,9 +476,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       handleClusterStateChange('cidrRangeVPC', eksValues.cidrRange ?? eksValues.network?.vpcCidr ?? defaultCidrVpc);
       handleClusterStateChange('cidrRangeServices', eksValues.network?.serviceCidr || defaultCidrServices);
 
-      if (eksValues.loadBalancer !== null) {
-        handleClusterStateChange('IPAllowList', eksValues.loadBalancer?.allowlistIpRanges);
-        handleClusterStateChange('wildCardDomain', eksValues.loadBalancer?.wildcardDomain);
+      if (eksValues.loadBalancer != null) {
+        handleClusterStateChange('IPAllowList', eksValues.loadBalancer.allowlistIpRanges);
+        handleClusterStateChange('wildCardDomain', eksValues.loadBalancer.wildcardDomain);
 
         const awsTags = eksValues.loadBalancer?.tags
           ? Object.entries(eksValues.loadBalancer?.tags)

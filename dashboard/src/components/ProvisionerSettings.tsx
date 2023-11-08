@@ -231,7 +231,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       return false;
     }
     // Split the input string by comma and remove any empty elements
-    const ipAddresses = IPAllowList.split(",").filter(Boolean);
+    const ipAddresses = IPAllowList?.split(",").filter(Boolean);
     // Validate each IP address
     for (let ip of ipAddresses) {
       if (!regex.test(ip.trim())) {

@@ -2,6 +2,7 @@ package notifications
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,7 +23,7 @@ type HandleNotificationInput struct {
 	// Namespace is the namespace of the deployment target
 	Namespace string
 	// K8sAgent is the k8s agent, used to query for deployment info
-	K8sAgent *kubernetes.Agent
+	K8sAgent kubernetes.Agent
 }
 
 // HandleNotification handles the logic for processing agent events
@@ -39,11 +40,11 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 		return telemetry.Error(ctx, span, nil, "app event metadata is nil")
 	}
 
-	// 2. convert agent event to baseNotification
-	baseNotification := agentEventToNotification(*agentEventMetadata)
+	// 2. convert agent event to notification
+	hydratedNotification := agentEventToNotification(*agentEventMetadata)
 
 	// 3. dedupe notification
-	isDuplicate, err := isNotificationDuplicate(ctx, baseNotification, inp.EventRepo, inp.DeploymentTargetID)
+	isDuplicate, err := isNotificationDuplicate(ctx, hydratedNotification, inp.EventRepo, inp.DeploymentTargetID)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to check if app event is duplicate")
 	}
@@ -53,24 +54,26 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 	}
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "app-id", Value: baseNotification.AppID},
-		telemetry.AttributeKV{Key: "app-name", Value: baseNotification.AppName},
-		telemetry.AttributeKV{Key: "service-name", Value: baseNotification.ServiceName},
-		telemetry.AttributeKV{Key: "app-revision-id", Value: baseNotification.AppRevisionID},
-		telemetry.AttributeKV{Key: "agent-event-id", Value: baseNotification.AgentEventID},
-		telemetry.AttributeKV{Key: "agent-detail", Value: baseNotification.AgentDetail},
+		telemetry.AttributeKV{Key: "app-id", Value: hydratedNotification.AppID},
+		telemetry.AttributeKV{Key: "app-name", Value: hydratedNotification.AppName},
+		telemetry.AttributeKV{Key: "service-name", Value: hydratedNotification.ServiceName},
+		telemetry.AttributeKV{Key: "app-revision-id", Value: hydratedNotification.AppRevisionID},
+		telemetry.AttributeKV{Key: "agent-event-id", Value: hydratedNotification.AgentEventID},
+		telemetry.AttributeKV{Key: "agent-detail", Value: hydratedNotification.AgentDetail},
 	)
 
-	// 4. hydrate notification with k8s deployment info
-	hydratedNotification, err := hydrateNotificationWithDeployment(ctx, hydrateNotificationWithDeploymentInput{
-		Notification:       baseNotification,
-		DeploymentTargetId: inp.DeploymentTargetID,
-		Namespace:          inp.Namespace,
-		K8sAgent:           inp.K8sAgent,
-		EventRepo:          inp.EventRepo,
-	})
-	if err != nil {
-		return telemetry.Error(ctx, span, err, "failed to hydrate notification with deployment")
+	if !strings.Contains(hydratedNotification.AgentSummary, "job run") {
+		// 4. hydrate notification with k8s deployment info, only if this isn't a job run
+		hydratedNotification, err = hydrateNotificationWithDeployment(ctx, hydrateNotificationWithDeploymentInput{
+			Notification:       hydratedNotification,
+			DeploymentTargetId: inp.DeploymentTargetID,
+			Namespace:          inp.Namespace,
+			K8sAgent:           inp.K8sAgent,
+			EventRepo:          inp.EventRepo,
+		})
+		if err != nil {
+			return telemetry.Error(ctx, span, err, "failed to hydrate notification with deployment")
+		}
 	}
 
 	// 5. hydrate notification with a Porter error containing user-facing details
@@ -79,7 +82,7 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 	// 6. based on notification + k8s deployment, update the status of the matching deploy event
 	if hydratedNotification.Deployment.Status == DeploymentStatus_Failure ||
 		(hydratedNotification.Deployment.Status == DeploymentStatus_Pending &&
-			detailIndicatesDeploymentFailure(hydratedNotification.AgentDetail)) {
+			errorCodeIndicatesDeploymentFailure(hydratedNotification.Error.Code)) {
 		err = updateDeployEvent(ctx, updateDeployEventInput{
 			Notification: hydratedNotification,
 			EventRepo:    inp.EventRepo,
@@ -127,10 +130,18 @@ type Notification struct {
 
 // agentEventToNotification converts an app event to a notification
 func agentEventToNotification(appEventMetadata AppEventMetadata) Notification {
+	// There is a discrepancy between the predeploy naming; the front-end calls it "pre-deploy", but the job name is "predeploy"
+	// This is a hack to make sure that the front-end can still parse the notification
+	// TODO: rename the job to pre-deploy on the backend to match the front-end UI representation
+	serviceName := appEventMetadata.ServiceName
+	if serviceName == "predeploy" {
+		serviceName = "pre-deploy"
+	}
+
 	notification := Notification{
 		AppID:         appEventMetadata.AppID,
 		AppName:       appEventMetadata.AppName,
-		ServiceName:   appEventMetadata.ServiceName,
+		ServiceName:   serviceName,
 		AgentEventID:  appEventMetadata.AgentEventID,
 		AgentDetail:   appEventMetadata.Detail,
 		AgentSummary:  appEventMetadata.Summary,

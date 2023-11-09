@@ -87,7 +87,13 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 			return
 		}
 
-		err = p.handleNotification(ctx, request, project.ID, cluster.ID, agent)
+		if agent == nil {
+			err := telemetry.Error(ctx, span, nil, "agent not found")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		err = p.handleNotification(ctx, request, project.ID, cluster.ID, *agent)
 		if err != nil {
 			e := telemetry.Error(ctx, span, err, "error handling notification")
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
@@ -618,7 +624,7 @@ func (p *CreateUpdatePorterAppEventHandler) updateDeployEventMatchingAppEventDet
 func (p *CreateUpdatePorterAppEventHandler) handleNotification(ctx context.Context,
 	request *types.CreateOrUpdatePorterAppEventRequest,
 	projectId, clusterId uint,
-	agent *kubernetes.Agent,
+	agent kubernetes.Agent,
 ) error {
 	ctx, span := telemetry.NewSpan(ctx, "serve-handle-notification")
 	defer span.End()

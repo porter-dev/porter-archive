@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/porter_app/notifications/porter_error"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
 	v1 "k8s.io/api/apps/v1"
@@ -40,7 +41,7 @@ type hydrateNotificationWithDeploymentInput struct {
 	// Namespace is the namespace of the deployment target
 	Namespace string
 	// K8sAgent is the k8s agent, used to query for deployment info
-	K8sAgent *kubernetes.Agent
+	K8sAgent kubernetes.Agent
 	// EventRepo is the repository for app events, used to check if we've already marked this deployment as successful/failed
 	EventRepo repository.PorterAppEventRepository
 }
@@ -54,11 +55,6 @@ func hydrateNotificationWithDeployment(ctx context.Context, inp hydrateNotificat
 
 	if inp.Notification.Deployment.Status != DeploymentStatus_Unknown {
 		return hydratedNotification, nil
-	}
-
-	if inp.K8sAgent == nil {
-		err := telemetry.Error(ctx, span, nil, "k8s agent is nil")
-		return hydratedNotification, err
 	}
 
 	telemetry.WithAttributes(span,
@@ -199,20 +195,24 @@ func k8sDeploymentStatus(depl v1.Deployment) DeploymentStatus {
 	return deploymentStatus
 }
 
-var fatalDeploymentDetailSubstrings = []string{
-	"stuck in a restart loop",
-	"restarted with exit code",
-	"failed its health check",
-	"cannot pull from the image registry",
-	"exceeded its memory limit",
+var fatalDeploymentErrorCodes = []porter_error.PorterErrorCode{
+	porter_error.PorterErrorCode_NonZeroExitCode,
+	porter_error.PorterErrorCode_NonZeroExitCode_InvalidStartCommand,
+	porter_error.PorterErrorCode_NonZeroExitCode_CommonIssues,
+	porter_error.PorterErrorCode_ReadinessHealthCheck,
+	porter_error.PorterErrorCode_LivenessHealthCheck,
+	porter_error.PorterErrorCode_InvalidImageError,
+	porter_error.PorterErrorCode_RestartedDueToError,
+	porter_error.PorterErrorCode_MemoryLimitExceeded_ScaleUp,
+	porter_error.PorterErrorCode_CPULimitExceeded_ScaleUp,
 }
 
-// detailIndicatesDeploymentFailure returns true if the detail indicates that the deployment will eventually time out and fail
+// errorCodeIndicatesDeploymentFailure returns true if the error code indicates that the deployment will eventually time out and fail
 // we use this to report deployment failure to the user early, rather than waiting for the deployment to time out
-func detailIndicatesDeploymentFailure(detail string) bool {
-	// if any of the fatal deployment detail substrings are found in the detail, then the deployment will fail
-	for _, fatalSubstring := range fatalDeploymentDetailSubstrings {
-		if strings.Contains(detail, fatalSubstring) {
+func errorCodeIndicatesDeploymentFailure(errorCode porter_error.PorterErrorCode) bool {
+	// if any of the fatal deployment error codes matches the provided error code, then the deployment will fail
+	for _, fatalErrorCode := range fatalDeploymentErrorCodes {
+		if errorCode == fatalErrorCode {
 			return true
 		}
 	}

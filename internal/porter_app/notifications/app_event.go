@@ -144,6 +144,7 @@ type updateDeployEventInput struct {
 }
 
 // updateDeployEvent updates the service status of a deploy event and possibly the event status itself with the input status
+// TODO: simplify this logic after https://linear.app/porter/issue/POR-2101/turn-servicedeploymentmetadata-from-a-map-into-a-list-in-ccp
 func updateDeployEvent(ctx context.Context, inp updateDeployEventInput) error {
 	ctx, span := telemetry.NewSpan(ctx, "update-matching-deploy-event")
 	defer span.End()
@@ -233,6 +234,7 @@ func updateDeployEvent(ctx context.Context, inp updateDeployEventInput) error {
 }
 
 // serviceDeploymentMetadataFromDeployEvent returns the serviceDeploymentMetadata of a service from a deploy event
+// TODO: simplify this logic after https://linear.app/porter/issue/POR-2101/turn-servicedeploymentmetadata-from-a-map-into-a-list-in-ccp
 func serviceDeploymentMetadataFromDeployEvent(ctx context.Context, deployEvent models.PorterAppEvent, serviceName string) (ServiceDeploymentMetadata, error) {
 	ctx, span := telemetry.NewSpan(ctx, "service-deployment-metadata-from-deploy-event")
 	defer span.End()

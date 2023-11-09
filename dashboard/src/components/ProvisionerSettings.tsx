@@ -454,7 +454,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
       let eksValues: EKS = contract.cluster?.eksKind as EKS;
-      if (eksValues === null) {
+      if (eksValues == null) {
         return;
       }
 
@@ -476,7 +476,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       handleClusterStateChange('cidrRangeVPC', eksValues.cidrRange ?? eksValues.network?.vpcCidr ?? defaultCidrVpc);
       handleClusterStateChange('cidrRangeServices', eksValues.network?.serviceCidr || defaultCidrServices);
 
-      if (eksValues.loadBalancer !== null) {
+      if (eksValues.loadBalancer != null) {
         handleClusterStateChange('IPAllowList', eksValues.loadBalancer.allowlistIpRanges);
         handleClusterStateChange('wildCardDomain', eksValues.loadBalancer.wildcardDomain);
 
@@ -487,10 +487,10 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           : '';
         handleClusterStateChange('awsTags', awsTags);
 
-        const loadBalancerType = eksValues.loadBalancer.loadBalancerType?.toString() === "LOAD_BALANCER_TYPE_ALB";
+        const loadBalancerType = eksValues.loadBalancer?.loadBalancerType?.toString() === "LOAD_BALANCER_TYPE_ALB";
         handleClusterStateChange('loadBalancerType', loadBalancerType);
-        handleClusterStateChange('wafV2ARN', eksValues.loadBalancer.wafv2Arn);
-        handleClusterStateChange('wafV2Enabled', eksValues.loadBalancer.enableWafv2);
+        handleClusterStateChange('wafV2ARN', eksValues.loadBalancer?.wafv2Arn);
+        handleClusterStateChange('wafV2Enabled', eksValues.loadBalancer?.enableWafv2);
       }
 
       if (eksValues.logging != null) {

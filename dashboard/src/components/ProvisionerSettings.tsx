@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 
 import { OFState } from "main/home/onboarding/state";
 import api from "shared/api";
@@ -24,11 +24,11 @@ import {
   EKSPreflightValues,
   PreflightCheckRequest,
   QuotaIncreaseRequest,
-  EnumQuotaIncrease,
+  type EnumQuotaIncrease,
   AWSClusterNetwork,
 } from "@porter-dev/api-contracts";
 
-import { ClusterType } from "shared/types";
+import { type ClusterType } from "shared/types";
 import Button from "./porter/Button";
 import healthy from "assets/status-healthy.png";
 
@@ -246,7 +246,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     // Split the input string by comma and remove any empty elements
     const ipAddresses = IPAllowList?.split(",").filter(Boolean);
     // Validate each IP address
-    for (let ip of ipAddresses) {
+    for (const ip of ipAddresses) {
       if (!regex.test(ip.trim())) {
         // If any IP is invalid, return true (error)
         return true;
@@ -261,7 +261,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     // Split the input string by comma and remove any empty elements
     const tags = awsTags.split(",").filter(Boolean);
     // Validate each tag
-    for (let tag of tags) {
+    for (const tag of tags) {
       if (!regex.test(tag.trim())) {
         // If any tag is invalid, return true (error)
         return true;
@@ -274,7 +274,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     return !clusterState.clusterName;
   };
   const userProvisioning = (): boolean => {
-    //If the cluster is updating or updating unavailabe but there are no errors do not allow re-provisioning
+    // If the cluster is updating or updating unavailabe but there are no errors do not allow re-provisioning
     return isReadOnly && props.provisionerError === "";
   };
 
@@ -283,13 +283,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       (clusterNameDoesNotExist() || userProvisioning() || isClicked || (currentCluster && !currentProject?.enable_reprovision)
       ))
   };
-  function convertStringToTags(tagString: string): { [key: string]: string } {
+  function convertStringToTags(tagString: string): Record<string, string> {
     if (typeof tagString !== "string" || tagString.trim() === "") {
       return {};
     }
 
     // Split the input string by comma, then reduce the resulting array to an object
-    const tags = tagString.split(",").reduce<{ [key: string]: string }>((obj, item) => {
+    const tags = tagString.split(",").reduce<Record<string, string>>((obj, item) => {
       // Split each item by "=", and trim whitespace from both key and value
       const [key, value] = item.split("=").map(part => part.trim());
 
@@ -310,7 +310,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setClusterState((prevState: ClusterState) => ({ ...prevState, [key]: value }));
   };
   const createClusterObj = (): Contract => {
-    let loadBalancerObj = new LoadBalancer({});
+    const loadBalancerObj = new LoadBalancer({});
     loadBalancerObj.loadBalancerType = LoadBalancerType.NLB;
     if (clusterState.loadBalancerType) {
       loadBalancerObj.loadBalancerType = LoadBalancerType.ALB;
@@ -336,7 +336,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
 
 
-    let nodeGroups = [
+    const nodeGroups = [
       new EKSNodeGroup({
         instanceType: "t3.medium",
         minInstances: 1,
@@ -376,7 +376,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     }
 
 
-    let data = new Contract({
+    const data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
         kind: EnumKubernetesKind.EKS,
@@ -397,7 +397,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               vpcCidr: clusterState.cidrRangeVPC || defaultCidrVpc,
               serviceCidr: clusterState.cidrRangeServices || defaultCidrServices,
             }),
-            nodeGroups: nodeGroups,
+            nodeGroups,
           }),
         },
       }),
@@ -410,7 +410,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setIsClicked(true);
     const data = createClusterObj();
     if (props.clusterId) {
-      data["cluster"]["clusterId"] = props.clusterId;
+      data.cluster.clusterId = props.clusterId;
     }
 
     try {
@@ -481,10 +481,10 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const contract = props.selectedClusterVersion as any;
-    //Unmarshall Contract here
+    // Unmarshall Contract here
     if (contract?.cluster) {
-      let eksValues: EKS = contract.cluster?.eksKind as EKS;
-      if (eksValues === null) {
+      const eksValues: EKS = contract.cluster?.eksKind as EKS;
+      if (eksValues == null) {
         return;
       }
 
@@ -506,9 +506,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       handleClusterStateChange('cidrRangeVPC', eksValues.cidrRange ?? eksValues.network?.vpcCidr ?? defaultCidrVpc);
       handleClusterStateChange('cidrRangeServices', eksValues.network?.serviceCidr || defaultCidrServices);
 
-      if (eksValues.loadBalancer !== null) {
-        handleClusterStateChange('IPAllowList', eksValues.loadBalancer?.allowlistIpRanges);
-        handleClusterStateChange('wildCardDomain', eksValues.loadBalancer?.wildcardDomain);
+      if (eksValues.loadBalancer != null) {
+        handleClusterStateChange('IPAllowList', eksValues.loadBalancer.allowlistIpRanges);
+        handleClusterStateChange('wildCardDomain', eksValues.loadBalancer.wildcardDomain);
 
         const awsTags = eksValues.loadBalancer?.tags
           ? Object.entries(eksValues.loadBalancer?.tags)
@@ -562,7 +562,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
     try {
       setIsLoading(true);
-      var data = new QuotaIncreaseRequest({
+      const data = new QuotaIncreaseRequest({
         projectId: BigInt(currentProject.id),
         cloudProvider: EnumCloudProvider.AWS,
         cloudProviderCredentialsId: props.credentialId,
@@ -598,8 +598,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       setShowEmailMessage(false)
 
       const contract = createClusterObj();
-      var data = new PreflightCheckRequest({
-        contract: contract,
+      const data = new PreflightCheckRequest({
+        contract,
       });
       const preflightDataResp = await api.preflightCheck(
         "<token>", data,
@@ -610,8 +610,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       // Check if any of the preflight checks has a message
       let hasMessage = false;
       let errors = "Preflight Checks Failed : ";
-      let quotas: EnumQuotaIncrease[] = [];
-      for (let check in preflightDataResp?.data?.Msg.preflight_checks) {
+      const quotas: EnumQuotaIncrease[] = [];
+      for (const check in preflightDataResp?.data?.Msg.preflight_checks) {
 
         if (preflightDataResp?.data?.Msg.preflight_checks[check]?.message) {
           quotas.push(PREFLIGHT_TO_ENUM[check])
@@ -644,7 +644,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         {
           < Heading >
             <ExpandHeader
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={() => { setIsExpanded(!isExpanded); }}
               isExpanded={isExpanded}
             >
               <i className="material-icons">arrow_drop_down</i>
@@ -661,7 +661,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                   type="string"
                   value={clusterState.clusterVersion}
                   disabled={true}
-                  setValue={(x: string) => handleClusterStateChange("clusterVersion", x)}
+                  setValue={(x: string) => { handleClusterStateChange("clusterVersion", x); }}
                   label="Cluster version (only shown to porter.run emails)"
                 />
 
@@ -672,7 +672,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 width="350px"
                 disabled={isReadOnly}
                 value={clusterState.machineType}
-                setValue={(x: string) => handleClusterStateChange("machineType", x)}
+                setValue={(x: string) => { handleClusterStateChange("machineType", x); }}
                 label="Machine type"
               />
               <Spacer y={1} />
@@ -712,7 +712,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 type="string"
                 value={clusterState.cidrRangeVPC}
                 disabled={props.clusterId !== undefined || isLoading}
-                setValue={(x: string) => handleClusterStateChange('cidrRangeVPC', x)}
+                setValue={(x: string) => { handleClusterStateChange('cidrRangeVPC', x); }}
                 label="CIDR range for AWS VPC"
                 placeholder="ex: 10.78.0.0/16"
               />
@@ -722,7 +722,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 type="string"
                 value={clusterState.cidrRangeServices}
                 disabled={props.clusterId !== undefined || isLoading}
-                setValue={(x: string) => handleClusterStateChange('cidrRangeServices', x)}
+                setValue={(x: string) => { handleClusterStateChange('cidrRangeServices', x); }}
                 label="CIDR range for Kubernetes internal services"
                 placeholder="ex: 172.20.0.0/16"
               />
@@ -864,7 +864,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                           width="350px"
                           disabled={isReadOnly}
                           value={clusterState.wildCardDomain}
-                          setValue={(x: string) => handleClusterStateChange("wildCardDomain", x)}
+                          setValue={(x: string) => { handleClusterStateChange("wildCardDomain", x); }}
                           label="Wildcard domain"
                           placeholder="user-2.porter.run"
                         />
@@ -893,7 +893,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                             width="350px"
                             disabled={isReadOnly}
                             value={clusterState.IPAllowList}
-                            setValue={(x: string) => handleClusterStateChange("IPAllowList", x)}
+                            setValue={(x: string) => { handleClusterStateChange("IPAllowList", x); }}
                             label="IP Allow List"
                             placeholder="160.72.72.58/32,160.72.72.59/32"
                           />
@@ -920,7 +920,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                         width="350px"
                         disabled={isReadOnly}
                         value={clusterState.certificateARN}
-                        setValue={(x: string) => handleClusterStateChange("certificateARN", x)}
+                        setValue={(x: string) => { handleClusterStateChange("certificateARN", x); }}
                         label="Certificate ARN"
                         placeholder="arn:aws:acm:REGION:ACCOUNT_ID:certificate/ACM_ID"
                       />
@@ -932,7 +932,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                             width="350px"
                             disabled={isReadOnly}
                             value={clusterState.awsTags}
-                            setValue={(x: string) => handleClusterStateChange("awsTags", x)}
+                            setValue={(x: string) => { handleClusterStateChange("awsTags", x); }}
                             label="AWS Tags"
                             placeholder="costcenter=1,environment=10,project=32"
                           />
@@ -968,7 +968,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             >
               <Text color="helper">Access Logs to S3</Text>
             </Checkbox> */}
-                      {/*<Spacer y={1} />*/}
+                      {/* <Spacer y={1} /> */}
                       <Checkbox
                         checked={clusterState.wafV2Enabled}
                         disabled={isReadOnly}
@@ -996,7 +996,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                                 label="WAFv2 ARN"
                                 disabled={isReadOnly}
                                 value={clusterState.wafV2ARN}
-                                setValue={(x: string) => handleClusterStateChange("wafV2ARN", x)}
+                                setValue={(x: string) => { handleClusterStateChange("wafV2ARN", x); }}
                                 placeholder="arn:aws:wafv2:REGION:ACCOUNT_ID:regional/webacl/ACL_NAME/RULE_ID"
                               />
                               <Wrapper>
@@ -1248,7 +1248,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 value={clusterState.awsRegion}
                 scrollBuffer={true}
                 dropdownMaxHeight="240px"
-                setActiveValue={(x: string) => handleClusterStateChange("awsRegion", x)}
+                setActiveValue={(x: string) => { handleClusterStateChange("awsRegion", x); }}
                 label="📍 AWS region" />
               <>
                 {
@@ -1355,7 +1355,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           value={clusterState.awsRegion}
           scrollBuffer={true}
           dropdownMaxHeight="240px"
-          setActiveValue={(x: string) => handleClusterStateChange("awsRegion", x)}
+          setActiveValue={(x: string) => { handleClusterStateChange("awsRegion", x); }}
           label="📍 AWS region" />
         {renderAdvancedSettings()}
       </StyledForm>

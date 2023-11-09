@@ -13,7 +13,7 @@ type PorterUser = {
 type AuthContextType = {
   currentProject: ProjectType;
   currentCluster: ClusterType;
-  user?: PorterUser;
+  user: PorterUser;
 };
 
 export const AuthStateContext = createContext<AuthContextType | null>(null);

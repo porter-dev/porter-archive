@@ -85,8 +85,7 @@ func ErrorCode(agentSummary, agentDetail string) PorterErrorCode {
 // nonZeroExitCodeErrorCode parses the agent detail for non-zero exit code errors to return a standard Porter error code
 func nonZeroExitCodeErrorCode(agentDetail string) PorterErrorCode {
 	errorCode := PorterErrorCode_NonZeroExitCode
-	pattern := `restarted with exit code (\S+)`
-	regex := regexp.MustCompile(pattern)
+	regex := regexp.MustCompile(restartedWithErrorCodePattern)
 	matches := regex.FindStringSubmatch(agentDetail)
 	if len(matches) != 2 {
 		return errorCode

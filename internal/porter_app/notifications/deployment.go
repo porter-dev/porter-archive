@@ -90,7 +90,7 @@ func hydrateNotificationWithDeployment(ctx context.Context, inp hydrateNotificat
 			fmt.Sprintf("porter.run/app-revision-id=%s", inp.Notification.AppRevisionID),
 			fmt.Sprintf("porter.run/service-name=%s", inp.ServiceName),
 		}
-		depls, err := inp.K8sAgent.GetDeploymentsBySelector(inp.Namespace, strings.Join(selectors, ","))
+		depls, err := inp.K8sAgent.GetDeploymentsBySelector(ctx, inp.Namespace, strings.Join(selectors, ","))
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "failed to get deployments for notification")
 			return hydratedNotification, err

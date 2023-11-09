@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 
 import { OFState } from "main/home/onboarding/state";
 import api from "shared/api";
@@ -20,7 +20,7 @@ import {
   AKSNodePool,
   NodePoolType,
 } from "@porter-dev/api-contracts";
-import { ClusterType } from "shared/types";
+import { type ClusterType } from "shared/types";
 import Button from "./porter/Button";
 import Error from "./porter/Error";
 import Spacer from "./porter/Spacer";
@@ -176,7 +176,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       console.log(err);
     }
     
-    var data = new Contract({
+    const data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
         kind: EnumKubernetesKind.AKS,
@@ -185,7 +185,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
         kindValues: {
           case: "aksKind",
           value: new AKS({
-            clusterName: clusterName,
+            clusterName,
             clusterVersion: clusterVersion || "v1.27.3",
             cidrRange: cidrRange || "10.78.0.0/16",
             location: azureLocation,
@@ -218,7 +218,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
     });
 
     if (props.clusterId) {
-      data["cluster"]["clusterId"] = props.clusterId;
+      data.cluster.clusterId = props.clusterId;
     }
 
     try {
@@ -260,7 +260,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
     } catch (err) {
       showIntercomWithMessage({ message: "I am running into an issue provisioning a cluster." });
       let errorMessage = DEFAULT_ERROR_MESSAGE;
-      let errorDetails = err.response?.data?.error?.replace("unknown: ", "") ?? "";
+      const errorDetails = err.response?.data?.error?.replace("unknown: ", "") ?? "";
       // hacky, need to standardize error contract with backend
       setIsClicked(false);
       if (errorDetails.includes("resource provider")) {
@@ -287,7 +287,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
         currentCluster?.status === "UPDATING_UNAVAILABLE")
     );
     setClusterName(
-      `${currentProject.name}-cluster-${Math.random()
+        `${currentProject?.name.substring(0,16)}-cluster-${Math.random()
         .toString(36)
         .substring(2, 8)}`
     );
@@ -354,7 +354,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
         {user?.isPorterUser && (
           <Heading>
             <ExpandHeader
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={() => { setIsExpanded(!isExpanded); }}
               isExpanded={isExpanded}
             >
               <i className="material-icons">arrow_drop_down</i>
@@ -390,7 +390,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
               type="number"
               disabled={isReadOnly}
               value={maxInstances}
-              setValue={(x: number) => setMaxInstances(x)}
+              setValue={(x: number) => { setMaxInstances(x); }}
               label="Maximum number of application nodes"
               placeholder="ex: 1"
             />
@@ -399,7 +399,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
               type="string"
               disabled={isReadOnly}
               value={cidrRange}
-              setValue={(x: string) => setCidrRange(x)}
+              setValue={(x: string) => { setCidrRange(x); }}
               label="VPC CIDR range"
               placeholder="ex: 10.78.0.0/16"
             />

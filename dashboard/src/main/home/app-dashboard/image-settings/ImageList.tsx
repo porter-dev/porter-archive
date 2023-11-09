@@ -9,6 +9,7 @@ import SearchBar from "components/SearchBar";
 import Link from "components/porter/Link";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
+import _ from "lodash";
 
 type Props = {
   loading: boolean;
@@ -21,18 +22,15 @@ const ImageList: React.FC<Props> = ({
   loading,
   images,
 }) => {
-  const [error, setError] = useState<boolean>(false);
   const [searchFilter, setSearchFilter] = useState<string>("");
 
   const renderImageList = () => {
     if (loading) {
       return (
         <LoadingWrapper>
-          <Loading />
+          <Loading message={"Loading all images linked to your project"}/>
         </LoadingWrapper>
       );
-    } else if (error) {
-      return <LoadingWrapper>Error loading images</LoadingWrapper>;
     } else if (images.length === 0 && !searchFilter) {
       return <LoadingWrapper>
         <Text color="helper">No linked images found.</Text>
@@ -54,9 +52,21 @@ const ImageList: React.FC<Props> = ({
           return aIndex - bIndex;
         })
       : images.sort((a, b) => {
+        const mostRecentTagA = _.maxBy(a.artifacts, (artifact) => {
+          return new Date(artifact.updated_at ?? "").getTime();
+        });
+        const mostRecentTagB = _.maxBy(b.artifacts, (artifact) => {
+          return new Date(artifact.updated_at ?? "").getTime();
+        });
+        if (!mostRecentTagA) {
+          return 1;
+        }
+        if (!mostRecentTagB) {
+          return -1;
+        }
         return (
-          new Date(b.created_at ?? "").getTime() -
-          new Date(a.created_at ?? "").getTime()
+          new Date(mostRecentTagB.updated_at ?? "").getTime() -
+          new Date(mostRecentTagA.updated_at ?? "").getTime()
         );
       });
 
@@ -80,8 +90,7 @@ const ImageList: React.FC<Props> = ({
           onClick={() => {
             setSelectedImage({
               uri: searchFilter,
-              name: searchFilter,
-              registry_id: 0,
+              artifacts: [],
             });
           }}
         >
@@ -97,7 +106,7 @@ const ImageList: React.FC<Props> = ({
     <>
       <SearchBar
         setSearchFilter={setSearchFilter}
-        disabled={error || loading}
+        disabled={loading}
         prompt={"Search images..."}
       />
       <ExpandedWrapper>

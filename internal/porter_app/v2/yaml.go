@@ -88,14 +88,20 @@ type PorterApp struct {
 	Build    *Build            `yaml:"build,omitempty"`
 	Env      map[string]string `yaml:"env,omitempty"`
 
-	Predeploy *Service   `yaml:"predeploy,omitempty"`
-	EnvGroups []EnvGroup `yaml:"envGroups,omitempty"`
+	Predeploy  *Service    `yaml:"predeploy,omitempty"`
+	EnvGroups  []EnvGroup  `yaml:"envGroups,omitempty"`
+	EfsStorage *EfsStorage `yaml:"efsStorage,omitempty"`
 }
 
 // PorterYAML represents all the possible fields in a Porter YAML file
 type PorterYAML struct {
 	PorterApp `yaml:",inline"`
 	Previews  *PorterApp `yaml:"previews,omitempty"`
+}
+
+// EfsStorage represents the EFS storage settings for a Porter app
+type EfsStorage struct {
+	Enabled bool `yaml:"enabled"`
 }
 
 // Build represents the build settings for a Porter app
@@ -119,7 +125,7 @@ type Service struct {
 	Name               string            `yaml:"name,omitempty"`
 	Run                *string           `yaml:"run,omitempty"`
 	Type               ServiceType       `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
-	Instances          int               `yaml:"instances,omitempty"`
+	Instances          *int32            `yaml:"instances,omitempty"`
 	CpuCores           float32           `yaml:"cpuCores,omitempty"`
 	RamMegabytes       int               `yaml:"ramMegabytes,omitempty"`
 	GpuCoresNvidia     float32           `yaml:"gpuCoresNvidia,omitempty"`
@@ -227,6 +233,11 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 	}
 	appProto.EnvGroups = envGroups
 
+	if porterApp.EfsStorage != nil {
+		appProto.EfsStorage = &porterv1.EFS{
+			Enabled: porterApp.EfsStorage.Enabled,
+		}
+	}
 	return appProto, porterApp.Env, nil
 }
 
@@ -259,7 +270,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	serviceProto := &porterv1.Service{
 		Name:              service.Name,
 		RunOptional:       service.Run,
-		Instances:         int32(service.Instances),
+		InstancesOptional: service.Instances,
 		CpuCores:          service.CpuCores,
 		RamMegabytes:      int32(service.RamMegabytes),
 		GpuCoresNvidia:    service.GpuCoresNvidia,
@@ -403,6 +414,12 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 		})
 	}
 
+	if appProto.EfsStorage != nil {
+		porterApp.EfsStorage = &EfsStorage{
+			Enabled: appProto.EfsStorage.Enabled,
+		}
+	}
+
 	return porterApp, nil
 }
 
@@ -410,7 +427,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 	appService := Service{
 		Name:              service.Name,
 		Run:               service.RunOptional,
-		Instances:         int(service.Instances),
+		Instances:         service.InstancesOptional,
 		CpuCores:          service.CpuCores,
 		RamMegabytes:      int(service.RamMegabytes),
 		GpuCoresNvidia:    service.GpuCoresNvidia,

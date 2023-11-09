@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "ESNext"
-    ],
+    "lib": ["ESNext"],
     "baseUrl": "src",
     "outDir": "./build/",
     "sourceMap": true,
@@ -15,5 +13,7 @@
     "removeComments": true,
     "moduleResolution": "node",
     "strict": true,
-  }
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules", "build"]
 }

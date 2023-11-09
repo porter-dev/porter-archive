@@ -1,16 +1,16 @@
-import dayjs, { Dayjs } from "dayjs";
+import dayjs, { type Dayjs } from "dayjs";
 import _ from "lodash";
 import { useEffect, useRef, useState } from "react";
 import api from "shared/api";
 import Anser from "anser";
-import { useWebsockets, NewWebsocketOptions } from "shared/hooks/useWebsockets";
+import { useWebsockets, type NewWebsocketOptions } from "shared/hooks/useWebsockets";
 import {
-  AgentLog,
+  type AgentLog,
   agentLogValidator,
   Direction,
-  PorterLog,
-  PaginationInfo,
-  FilterName,
+  type PorterLog,
+  type PaginationInfo,
+  type FilterName,
   GenericFilter
 } from "../../expanded-app/logs/types";
 
@@ -56,6 +56,7 @@ export const useLogs = ({
   timeRange,
   filterPredeploy,
   appID,
+  jobRunID = ""
 }: {
   projectID: number,
   clusterID: number,
@@ -75,6 +76,7 @@ export const useLogs = ({
   },
   filterPredeploy: boolean,
   appID: number,
+  jobRunID?: string,
 }
 ) => {
   const [isLive, setIsLive] = useState<boolean>(!setDate && (timeRange?.startTime == null && timeRange?.endTime == null));
@@ -240,6 +242,10 @@ export const useLogs = ({
     return logs.filter(log => {
       if (log.metadata == null) {
         return true;
+      }
+
+      if (jobRunID !== "" && log.metadata.raw_labels?.controller_uid !== jobRunID) {
+        return false;
       }
 
       if (selectedFilterValues.output_stream !== GenericFilter.getDefaultOption("output_stream").value &&
@@ -462,7 +468,7 @@ export const useLogs = ({
 
     const flushLogsBufferInterval = setInterval(flushLogsBuffer, 3000);
 
-    return () => clearInterval(flushLogsBufferInterval);
+    return () => { clearInterval(flushLogsBufferInterval); };
   }, []);
 
   useEffect(() => {
@@ -501,5 +507,6 @@ export const useLogs = ({
     refresh,
     moveCursor,
     paginationInfo,
+    stopLogStream: closeAllWebsockets,
   };
 };

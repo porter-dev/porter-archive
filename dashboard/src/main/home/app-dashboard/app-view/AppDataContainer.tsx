@@ -5,49 +5,51 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { FormProvider, useForm } from "react-hook-form";
-import {
-  PorterAppFormData,
-  SourceOptions,
-  clientAppFromProto,
-  porterAppFormValidator,
-} from "lib/porter-apps";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLatestRevision } from "./LatestRevisionContext";
-import Spacer from "components/porter/Spacer";
-import TabSelector from "components/TabSelector";
+import { PorterApp } from "@porter-dev/api-contracts";
+import { useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import _ from "lodash";
+import AnimateHeight from "react-animate-height";
+import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
 import { match } from "ts-pattern";
-import Overview from "./tabs/Overview";
-import { useAppValidation } from "lib/hooks/useAppValidation";
-import api from "shared/api";
-import { useQueryClient } from "@tanstack/react-query";
-import Settings from "./tabs/Settings";
-import BuildSettingsTab from "./tabs/BuildSettingsTab";
-import Environment from "./tabs/Environment";
-import AnimateHeight from "react-animate-height";
+import { z } from "zod";
+
 import Banner from "components/porter/Banner";
 import Button from "components/porter/Button";
+import { Error as ErrorComponent } from "components/porter/Error";
 import Icon from "components/porter/Icon";
+import Spacer from "components/porter/Spacer";
+import TabSelector from "components/TabSelector";
+import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { useAppValidation } from "lib/hooks/useAppValidation";
+import { useIntercom } from "lib/hooks/useIntercom";
+import {
+  clientAppFromProto,
+  porterAppFormValidator,
+  type PorterAppFormData,
+  type SourceOptions,
+} from "lib/porter-apps";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
 import save from "assets/save-01.svg";
-import LogsTab from "./tabs/LogsTab";
-import MetricsTab from "./tabs/MetricsTab";
-import RevisionsList from "../validate-apply/revisions-list/RevisionsList";
+
+import ConfirmRedeployModal from "./ConfirmRedeployModal";
+import { useLatestRevision } from "./LatestRevisionContext";
 import Activity from "./tabs/Activity";
 import EventFocusView from "./tabs/activity-feed/events/focus-views/EventFocusView";
-import { z } from "zod";
-import { PorterApp } from "@porter-dev/api-contracts";
-import JobsTab from "./tabs/JobsTab";
-import ConfirmRedeployModal from "./ConfirmRedeployModal";
-import ImageSettingsTab from "./tabs/ImageSettingsTab";
-import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
-import { Error as ErrorComponent } from "components/porter/Error";
-import _ from "lodash";
-import axios from "axios";
+import BuildSettingsTab from "./tabs/BuildSettingsTab";
+import Environment from "./tabs/Environment";
 import HelmEditorTab from "./tabs/HelmEditorTab";
 import HelmLatestValuesTab from "./tabs/HelmLatestValuesTab";
-import { Context } from "shared/Context";
-import { useIntercom } from "lib/hooks/useIntercom";
+import ImageSettingsTab from "./tabs/ImageSettingsTab";
+import JobsTab from "./tabs/JobsTab";
+import LogsTab from "./tabs/LogsTab";
+import MetricsTab from "./tabs/MetricsTab";
+import Overview from "./tabs/Overview";
+import Settings from "./tabs/Settings";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -67,7 +69,7 @@ const validTabs = [
   "job-history",
 ] as const;
 const DEFAULT_TAB = "activity";
-type ValidTab = typeof validTabs[number];
+type ValidTab = (typeof validTabs)[number];
 
 type AppDataContainerProps = {
   tabParam?: string;
@@ -164,12 +166,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
   // getAllDirtyFields recursively gets all dirty fields from the dirtyFields object
   // all fields in the form are set to a boolean indicating if the current value is different from the default value
-  const getAllDirtyFields = (dirtyFields: object) => {
+  const getAllDirtyFields = (dirtyFields: object): string[] => {
     const dirty: string[] = [];
 
     Object.entries(dirtyFields).forEach(([key, value]) => {
       if (value) {
-        if (typeof value === "boolean" && value === true) {
+        if (typeof value === "boolean" && value) {
           dirty.push(key);
         }
 
@@ -218,58 +220,58 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         return;
       }
 
-      // updates the default env group associated with this app to store app specific env vars
-      const res = await api.updateEnvironmentGroupV2(
-        "<token>",
-        {
-          deployment_target_id: deploymentTarget.id,
-          variables,
-          secrets,
-          b64_app_proto: btoa(validatedAppProto.toJsonString()),
-          remove_missing: true,
-        },
-        {
-          id: projectId,
-          cluster_id: clusterId,
-          app_name: porterAppRecord.name,
-        }
-      );
-
-      const updatedEnvGroups = z
-        .object({
-          env_groups: z
-            .object({
-              name: z.string(),
-              latest_version: z.coerce.bigint(),
-            })
-            .array(),
-        })
-        .parse(res.data);
-
-      const protoWithUpdatedEnv = new PorterApp({
-        ...validatedAppProto,
-        envGroups: updatedEnvGroups.env_groups.map((eg) => ({
-          name: eg.name,
-          version: eg.latest_version,
-        })),
-      });
+      if (currentProject?.beta_features_enabled && !needsRebuild) {
+        await api.updateApp(
+          "<token>",
+          {
+            b64_app_proto: btoa(validatedAppProto.toJsonString()),
+            deployment_target_id: deploymentTarget.id,
+            variables,
+            secrets,
+            is_env_override: true,
+          },
+          {
+            project_id: projectId,
+            cluster_id: clusterId,
+          }
+        );
+      }
 
       // force_build will create a new 0 revision that will not be deployed
       // but will be used to hydrate values when the workflow is run
-      await api.applyApp(
-        "<token>",
-        {
-          b64_app_proto: btoa(protoWithUpdatedEnv.toJsonString()),
-          deployment_target_id: deploymentTarget.id,
-          force_build: needsRebuild,
-        },
-        {
-          project_id: projectId,
-          cluster_id: clusterId,
-        }
-      );
+      if (!currentProject?.beta_features_enabled) {
+        await api.applyApp(
+          "<token>",
+          {
+            b64_app_proto: btoa(validatedAppProto.toJsonString()),
+            deployment_target_id: deploymentTarget.id,
+            force_build: needsRebuild,
+            variables,
+            secrets,
+            hard_env_update: true,
+          },
+          {
+            project_id: projectId,
+            cluster_id: clusterId,
+          }
+        );
+      }
 
       if (latestSource.type === "github" && needsRebuild) {
+        if (currentProject?.beta_features_enabled && validatedAppProto.build) {
+          await api.updateBuildSettings(
+            "<token>",
+            {
+              build_settings: validatedAppProto.build,
+            },
+            {
+              project_id: projectId,
+              cluster_id: clusterId,
+              porter_app_name: porterAppRecord.name,
+            }
+          );
+        }
+
         const res = await api.reRunGHWorkflow(
           "<token>",
           {},
@@ -307,8 +309,10 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       // redirect to the default tab after save
       history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
     } catch (err) {
-      showIntercomWithMessage({ message: "I am running into an issue updating my application." });
-      
+      showIntercomWithMessage({
+        message: "I am running into an issue updating my application.",
+      });
+
       let message =
         "App update failed: please try again or contact support@porter.run if the error persists.";
       let stack = "Unable to get error stack";
@@ -323,7 +327,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         stack = err.stack ?? "(No error stack)";
       }
 
-      updateAppStep({
+      void updateAppStep({
         step: "porter-app-update-failure",
         errorMessage: message,
         appName: latestProto.name,
@@ -364,6 +368,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       }),
       source: resetSource,
       deletions: {
+        predeploy: [],
         envGroupNames: [],
         serviceNames: [],
       },
@@ -374,7 +379,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
   const finalizeDeploy = useCallback(() => {
     setConfirmDeployModalOpen(false);
-    onSubmit();
+    void onSubmit();
   }, [onSubmit, setConfirmDeployModalOpen]);
 
   const buttonStatus = useMemo(() => {
@@ -404,13 +409,16 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             errorMessage = `${errorMessage} - ${serviceErrorMessage}`;
           }
           errorMessage = `${errorMessage}. To undo all changes, refresh the page.`;
-        } else if (appErrors.includes("message")) {  // this is the high level error message coming from the apply
+        } else if (appErrors.includes("message")) {
+          // this is the high level error message coming from the apply
           errorMessage = errors.app?.message ?? errorMessage;
         }
       }
 
-      showIntercomWithMessage({ message: "I am running into an issue updating my application." });
-      updateAppStep({
+      showIntercomWithMessage({
+        message: "I am running into an issue updating my application.",
+      });
+      void updateAppStep({
         step: "porter-app-update-failure",
         errorMessage: `Form validation error (visible to user): ${errorMessage}. Stringified JSON errors (invisible to user): ${stringifiedJson}`,
         appName: latestProto.name,
@@ -451,14 +459,13 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       });
     }
 
-    {
-      (currentProject?.helm_values_enabled || user?.isPorterUser) &&
-        base.push({ label: "Helm Overrides", value: "helm-overrides" });
+    if ((currentProject?.helm_values_enabled ?? false) || user?.isPorterUser) {
+      base.push({ label: "Helm Overrides", value: "helm-overrides" });
     }
-    {
-      user?.isPorterUser &&
-        base.push({ label: "Latest Helm Values", value: "helm-values" });
+    if (user?.isPorterUser) {
+      base.push({ label: "Latest Helm Values", value: "helm-values" });
     }
+
     base.push({ label: "Settings", value: "settings" });
     return base;
   }, [deploymentTarget.preview, latestProto.build]);
@@ -510,14 +517,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   return (
     <FormProvider {...porterAppFormMethods}>
       <form onSubmit={onSubmit}>
-        <RevisionsList
-          latestRevisionNumber={latestRevision.revision_number}
-          deploymentTargetId={deploymentTarget.id}
-          projectId={projectId}
-          clusterId={clusterId}
-          appName={porterAppRecord.name}
-          onSubmit={onSubmit}
-        />
         <AnimateHeight height={isDirty && !onlyExpandedChanged ? "auto" : 0}>
           <Banner
             type="warning"

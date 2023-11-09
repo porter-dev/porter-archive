@@ -51,7 +51,6 @@ var result_nobuild = &porterv1.PorterApp{
 		"example-web": {
 			Name:         "example-web",
 			RunOptional:  pointer.String("node index.js"),
-			Instances:    0,
 			Port:         8080,
 			CpuCores:     0.1,
 			RamMegabytes: 256,
@@ -81,13 +80,13 @@ var result_nobuild = &porterv1.PorterApp{
 			Type: 1,
 		},
 		"example-wkr": {
-			Name:           "example-wkr",
-			RunOptional:    pointer.String("echo 'work'"),
-			Instances:      1,
-			Port:           80,
-			CpuCores:       0.1,
-			RamMegabytes:   256,
-			GpuCoresNvidia: 0,
+			Name:              "example-wkr",
+			RunOptional:       pointer.String("echo 'work'"),
+			InstancesOptional: pointer.Int32(1),
+			Port:              80,
+			CpuCores:          0.1,
+			RamMegabytes:      256,
+			GpuCoresNvidia:    0,
 			Config: &porterv1.Service_WorkerConfig{
 				WorkerConfig: &porterv1.WorkerServiceConfig{
 					Autoscaling: nil,
@@ -116,7 +115,6 @@ var result_nobuild = &porterv1.PorterApp{
 		{
 			Name:           "example-web",
 			RunOptional:    pointer.String("node index.js"),
-			Instances:      0,
 			Port:           8080,
 			CpuCores:       0.1,
 			RamMegabytes:   256,
@@ -147,13 +145,13 @@ var result_nobuild = &porterv1.PorterApp{
 			Type: 1,
 		},
 		{
-			Name:           "example-wkr",
-			RunOptional:    pointer.String("echo 'work'"),
-			Instances:      1,
-			Port:           80,
-			CpuCores:       0.1,
-			RamMegabytes:   256,
-			GpuCoresNvidia: 0,
+			Name:              "example-wkr",
+			RunOptional:       pointer.String("echo 'work'"),
+			InstancesOptional: pointer.Int32(1),
+			Port:              80,
+			CpuCores:          0.1,
+			RamMegabytes:      256,
+			GpuCoresNvidia:    0,
 			Config: &porterv1.Service_WorkerConfig{
 				WorkerConfig: &porterv1.WorkerServiceConfig{
 					Autoscaling: nil,
@@ -180,7 +178,6 @@ var result_nobuild = &porterv1.PorterApp{
 	},
 	Predeploy: &porterv1.Service{
 		RunOptional:    pointer.String("ls"),
-		Instances:      0,
 		Port:           0,
 		CpuCores:       0,
 		RamMegabytes:   0,

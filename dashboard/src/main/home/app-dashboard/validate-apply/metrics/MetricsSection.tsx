@@ -1,21 +1,38 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "react-router";
 import styled from "styled-components";
+import { match } from "ts-pattern";
+
+import CheckboxRow from "components/CheckboxRow";
+import Loading from "components/Loading";
+import Filter from "components/porter/Filter";
+import TabSelector from "components/TabSelector";
+import {
+  type AvailableMetrics,
+  type GenericMetricResponseResults,
+  type NormalizedMetricsData,
+} from "main/home/cluster-dashboard/expanded-chart/metrics/types";
+import { type ClientService } from "lib/porter-apps/services";
 
 import api from "shared/api";
 
-import TabSelector from "components/TabSelector";
-import { MetricNormalizer, resolutions, secondsBeforeNow } from "../../expanded-app/metrics/utils";
-import { Metric, MetricType, NginxStatusMetric } from "../../expanded-app/metrics/types";
-import { match } from "ts-pattern";
-import { AvailableMetrics, NormalizedMetricsData } from "main/home/cluster-dashboard/expanded-chart/metrics/types";
+import {
+  GenericFilterOption,
+  type FilterName,
+  type GenericFilter,
+} from "../../expanded-app/logs/types";
 import MetricsChart from "../../expanded-app/metrics/MetricsChart";
-import { useQuery } from "@tanstack/react-query";
-import Loading from "components/Loading";
-import CheckboxRow from "components/CheckboxRow";
-import { useLocation } from "react-router";
-import Filter from "components/porter/Filter";
-import { GenericFilterOption, GenericFilter, FilterName } from "../../expanded-app/logs/types";
-import { ClientService } from "lib/porter-apps/services";
+import {
+  type Metric,
+  type MetricType,
+  type NginxStatusMetric,
+} from "../../expanded-app/metrics/types";
+import {
+  MetricNormalizer,
+  resolutions,
+  secondsBeforeNow,
+} from "../../expanded-app/metrics/utils";
 
 type PropsType = {
   projectId: number;
@@ -36,12 +53,17 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   const queryParams = new URLSearchParams(search);
   const serviceFromQueryParams = queryParams.get("service");
   const [selectedRange, setSelectedRange] = useState("1H");
-  const [showAutoscalingThresholds, setShowAutoscalingThresholds] = useState(true);
+  const [showAutoscalingThresholds, setShowAutoscalingThresholds] =
+    useState(true);
 
   // filter out jobs until we can display metrics on them
   const serviceOptions: GenericFilterOption[] = useMemo(() => {
-    const nonJobServiceNames = services.filter((s) => s.config.type !== "job").map((s) => s.name);
-    return nonJobServiceNames.map(({ value }) => GenericFilterOption.of(value, value));
+    const nonJobServiceNames = services
+      .filter((s) => s.config.type !== "job")
+      .map((s) => s.name);
+    return nonJobServiceNames.map(({ value }) =>
+      GenericFilterOption.of(value, value)
+    );
   }, [services]);
 
   const filters: GenericFilter[] = useMemo(() => {
@@ -54,17 +76,26 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         setValue: (value: string) => {
           setSelectedFilterValues((prev) => ({ ...prev, service_name: value }));
         },
-      } as GenericFilter,
+      } satisfies GenericFilter,
     ];
-  },[serviceOptions]);
+  }, [serviceOptions]);
 
-  const [selectedFilterValues, setSelectedFilterValues] = useState<Partial<Record<FilterName, string>>>({
-    service_name: serviceFromQueryParams && Object.keys(services).includes(serviceFromQueryParams) ? serviceFromQueryParams : "",
-  }); 
+  const [selectedFilterValues, setSelectedFilterValues] = useState<
+    Partial<Record<FilterName, string>>
+  >({
+    service_name:
+      serviceFromQueryParams &&
+      services.map((s) => s.name.value).includes(serviceFromQueryParams)
+        ? serviceFromQueryParams
+        : "",
+  });
 
   useEffect(() => {
     if (serviceOptions.length > 0 && selectedFilterValues.service_name === "") {
-      setSelectedFilterValues((prev) => ({ ...prev, service_name: serviceOptions[0].value }));
+      setSelectedFilterValues((prev) => ({
+        ...prev,
+        service_name: serviceOptions[0].value,
+      }));
     }
   }, [serviceOptions, selectedFilterValues.service_name]);
 
@@ -73,7 +104,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       return ["", "", [], false];
     }
 
-    const service = services.find(s => s.name.value === selectedFilterValues.service_name);
+    const service = services.find(
+      (s) => s.name.value === selectedFilterValues.service_name
+    );
     if (!service) {
       return ["", "", [], false];
     }
@@ -91,21 +124,24 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       }
       if (service.config.type === "web") {
         metricTypes.push("network");
-        if (!service.config.private) {
+        if (!service.config.private?.value) {
           metricTypes.push("nginx:status");
         }
-      } 
-    } 
+      }
+    }
 
     if (isHpaEnabled) {
       metricTypes.push("hpa_replicas");
     }
 
-    return [serviceName, serviceKind, metricTypes, isHpaEnabled]
-  }, [selectedFilterValues.service_name])
+    return [serviceName, serviceKind, metricTypes, isHpaEnabled];
+  }, [selectedFilterValues.service_name]);
 
-
-  const { data: metricsData, isLoading: isMetricsDataLoading, refetch } = useQuery(
+  const {
+    data: metricsData,
+    isLoading: isMetricsDataLoading,
+    refetch,
+  } = useQuery(
     [
       "getMetrics",
       projectId,
@@ -115,7 +151,11 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       deploymentTargetId,
     ],
     async () => {
-      if (serviceName === "" || serviceKind === "" || metricTypes.length === 0) {
+      if (
+        serviceName === "" ||
+        serviceKind === "" ||
+        metricTypes.length === 0
+      ) {
         return;
       }
 
@@ -126,7 +166,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       const start = end - secondsBeforeNow[selectedRange];
 
       for (const metricType of metricTypes) {
-        var kind = "";
+        let kind = "";
         if (serviceKind === "web") {
           kind = "deployment";
         } else if (serviceKind === "worker") {
@@ -135,7 +175,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           kind = "job";
         }
         if (metricType === "nginx:status") {
-          kind = "Ingress"
+          kind = "Ingress";
         }
 
         const aggregatedMetricsResponse = await api.appMetrics(
@@ -143,7 +183,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           {
             metric: metricType,
             shouldsum: false,
-            kind: kind,
+            kind,
             name: serviceName,
             deployment_target_id: deploymentTargetId,
             startrange: start,
@@ -158,24 +198,31 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
         );
 
         const metricsNormalizer = new MetricNormalizer(
-          [{ results: (aggregatedMetricsResponse.data ?? []).flatMap((d: any) => d.results) }],
-          metricType,
+          [
+            {
+              results: (aggregatedMetricsResponse.data ?? []).flatMap(
+                (d: { results: GenericMetricResponseResults }) => d.results
+              ),
+            },
+          ],
+          metricType
         );
         if (metricType === "nginx:status") {
           const nginxMetric: NginxStatusMetric = {
             type: metricType,
             label: "Throughput",
             areaData: metricsNormalizer.getNginxStatusData(),
-          }
-          metrics.push(nginxMetric)
+          };
+          metrics.push(nginxMetric);
         } else {
-          const [data, allPodsAggregatedData] = metricsNormalizer.getAggregatedData();
+          const [data, allPodsAggregatedData] =
+            metricsNormalizer.getAggregatedData();
           const hpaData: NormalizedMetricsData[] = [];
 
           if (isHpaEnabled && ["cpu", "memory"].includes(metricType)) {
-            let hpaMetricType = "cpu_hpa_threshold"
+            let hpaMetricType = "cpu_hpa_threshold";
             if (metricType === "memory") {
-              hpaMetricType = "memory_hpa_threshold"
+              hpaMetricType = "memory_hpa_threshold";
             }
 
             const hpaRes = await api.appMetrics(
@@ -183,7 +230,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               {
                 metric: hpaMetricType,
                 shouldsum: false,
-                kind: kind,
+                kind,
                 name: serviceName,
                 deployment_target_id: deploymentTargetId,
                 startrange: start,
@@ -197,7 +244,10 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               }
             );
 
-            const autoscalingMetrics = new MetricNormalizer(hpaRes.data, hpaMetricType as AvailableMetrics);
+            const autoscalingMetrics = new MetricNormalizer(
+              hpaRes.data,
+              hpaMetricType as AvailableMetrics
+            );
             hpaData.push(...autoscalingMetrics.getParsedData());
           }
 
@@ -205,42 +255,42 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
             .with("cpu", () => ({
               type: metricType,
               label: "CPU Utilization (vCPUs)",
-              data: data,
+              data,
               aggregatedData: allPodsAggregatedData,
               hpaData,
             }))
             .with("memory", () => ({
               type: metricType,
               label: "RAM Utilization (Mi)",
-              data: data,
+              data,
               aggregatedData: allPodsAggregatedData,
               hpaData,
             }))
             .with("network", () => ({
               type: metricType,
               label: "Network Received Bytes (Ki)",
-              data: data,
+              data,
               aggregatedData: allPodsAggregatedData,
               hpaData,
             }))
             .with("hpa_replicas", () => ({
               type: metricType,
               label: "Number of replicas",
-              data: data,
+              data,
               aggregatedData: allPodsAggregatedData,
               hpaData,
             }))
             .with("nginx:errors", () => ({
               type: metricType,
               label: "5XX Error Percentage",
-              data: data,
+              data,
               aggregatedData: allPodsAggregatedData,
               hpaData,
             }))
             .exhaustive();
           metrics.push(metric);
         }
-      };
+      }
       return metrics;
     },
     {
@@ -250,11 +300,11 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     }
   );
 
-  const renderMetrics = () => {
+  const renderMetrics = (): JSX.Element | JSX.Element[] => {
     if (metricsData == null || isMetricsDataLoading) {
       return <Loading />;
     }
-    return metricsData.map((metric: Metric, i: number) => {
+    return metricsData.map((metric: Metric, _: number) => {
       return (
         <MetricsChart
           key={metric.type}
@@ -264,10 +314,13 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
           showAutoscalingLine={showAutoscalingThresholds}
         />
       );
-    })
-  }
+    });
+  };
 
-  const renderShowAutoscalingThresholdsCheckbox = (serviceName: string, isHpaEnabled: boolean) => {
+  const renderShowAutoscalingThresholdsCheckbox = (
+    serviceName: string,
+    isHpaEnabled: boolean
+  ): JSX.Element | null => {
     if (serviceName === "") {
       return null;
     }
@@ -277,12 +330,14 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
     }
     return (
       <CheckboxRow
-        toggle={() => setShowAutoscalingThresholds(!showAutoscalingThresholds)}
+        toggle={() => {
+          setShowAutoscalingThresholds(!showAutoscalingThresholds);
+        }}
         checked={showAutoscalingThresholds}
         label="Show Autoscaling Thresholds"
       />
-    )
-  }
+    );
+  };
 
   return (
     <StyledMetricsSection>
@@ -292,14 +347,13 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
             filters={filters}
             selectedFilterValues={selectedFilterValues}
           />
-          <Highlight color={"#7d7d81"} onClick={() => refetch()}>
+          <Highlight color={"#7d7d81"} onClick={async () => await refetch()}>
             <i className="material-icons">autorenew</i>
           </Highlight>
           {renderShowAutoscalingThresholdsCheckbox(serviceName, isHpaEnabled)}
         </Flex>
         <RangeWrapper>
-          <Relative>
-          </Relative>
+          <Relative></Relative>
           <TabSelector
             noBuffer={true}
             options={[
@@ -309,7 +363,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               { value: "1M", label: "1M" },
             ]}
             currentTab={selectedRange}
-            setCurrentTab={(x: string) => setSelectedRange(x)}
+            setCurrentTab={(x: string) => {
+              setSelectedRange(x);
+            }}
           />
         </RangeWrapper>
       </MetricsHeader>

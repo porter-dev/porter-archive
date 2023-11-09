@@ -31,7 +31,7 @@ const ResourceList: React.FC<ResourceListField> = (props) => {
       !formState?.variables?.currentChart?.name ||
       !formState?.variables?.namespace
     ) {
-      return () => {};
+      return () => { };
     }
 
     let { group, version, resource } = props.context.config;
@@ -50,7 +50,7 @@ const ResourceList: React.FC<ResourceListField> = (props) => {
           // attempt to find a corresponding name and label in the current array
           let foundMatch = false;
 
-          resourceList.forEach((resource, index) => {
+          Array.isArray(resourceList) && resourceList?.forEach((resource, index) => {
             if (resource.name == name && resource.label == label) {
               foundMatch = true;
 
@@ -92,7 +92,7 @@ const ResourceList: React.FC<ResourceListField> = (props) => {
 
   return (
     <ResourceListWrapper>
-      {resourceList?.map((resource: any, i: number) => {
+      {Array.isArray(resourceList) && resourceList?.map((resource: any, i: number) => {
         if (resource.data) {
           return (
             <ExpandableResource

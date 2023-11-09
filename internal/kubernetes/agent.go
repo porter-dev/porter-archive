@@ -995,9 +995,9 @@ func (a *Agent) GetDeployment(c grapher.Object) (*appsv1.Deployment, error) {
 }
 
 // GetDeploymentsBySelector returns the deployments by label selector
-func (a *Agent) GetDeploymentsBySelector(namespace string, selector string) (*appsv1.DeploymentList, error) {
+func (a *Agent) GetDeploymentsBySelector(ctx context.Context, namespace string, selector string) (*appsv1.DeploymentList, error) {
 	res, err := a.Clientset.AppsV1().Deployments(namespace).List(
-		context.TODO(),
+		ctx,
 		metav1.ListOptions{
 			LabelSelector: selector,
 		},

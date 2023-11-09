@@ -1,62 +1,53 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import {
-  Route,
-  Switch,
-  withRouter,
-  type RouteComponentProps,
-} from "react-router";
+import React, { useEffect, useState, useContext, useRef } from "react";
+import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 import styled, { ThemeProvider } from "styled-components";
+import { createPortal } from "react-dom";
+
+import api from "shared/api";
+import midnight from "shared/themes/midnight";
+import standard from "shared/themes/standard";
+import { Context } from "shared/Context";
+import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
+import { ClusterType, ProjectType, ProjectListType } from "shared/types";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
-import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
-import Button from "components/porter/Button";
-import Modal from "components/porter/Modal";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { AuthStateProvider } from "main/auth/context";
-
-import api from "shared/api";
-import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { fakeGuardedRoute } from "shared/auth/RouteGuard";
-import ClusterResourcesProvider from "shared/ClusterResourcesContext";
-import { Context } from "shared/Context";
-import DeploymentTargetProvider from "shared/DeploymentTargetContext";
-import { pushFiltered, pushQueryParams, type PorterUrl } from "shared/routing";
-import midnight from "shared/themes/midnight";
-import standard from "shared/themes/standard";
-import {
-  type ClusterType,
-  type ProjectListType,
-  type ProjectType,
-} from "shared/types";
-import { overrideInfraTabEnabled } from "utils/infrastructure";
-
-import discordLogo from "../../assets/discord.svg";
-import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
-import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
-import AppView from "./app-dashboard/app-view/AppView";
-import AppDashboard from "./app-dashboard/AppDashboard";
-import Apps from "./app-dashboard/apps/Apps";
-import CreateApp from "./app-dashboard/create-app/CreateApp";
-import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
-import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
 import DashboardRouter from "./cluster-dashboard/DashboardRouter";
-import PreviewEnvs from "./cluster-dashboard/preview-environments/v2/PreviewEnvs";
-import SetupApp from "./cluster-dashboard/preview-environments/v2/setup-app/SetupApp";
 import Dashboard from "./dashboard/Dashboard";
-import CreateDatabase from "./database-dashboard/CreateDatabase";
-import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
-import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
-import ModalHandler from "./ModalHandler";
+
 import Navbar from "./navbar/Navbar";
-import { NewProjectFC } from "./new-project/NewProject";
-import Onboarding from "./onboarding/Onboarding";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
+import AppDashboard from "./app-dashboard/AppDashboard";
+import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
+import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
+import CreateDatabase from "./database-dashboard/CreateDatabase";
+
+import { fakeGuardedRoute } from "shared/auth/RouteGuard";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import discordLogo from "../../assets/discord.svg";
+import Onboarding from "./onboarding/Onboarding";
+import ModalHandler from "./ModalHandler";
+import { NewProjectFC } from "./new-project/NewProject";
+import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
+import { overrideInfraTabEnabled } from "utils/infrastructure";
+import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
+import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
+import Modal from "components/porter/Modal";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
+import Button from "components/porter/Button";
+import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
+import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
+import CreateApp from "./app-dashboard/create-app/CreateApp";
+import AppView from "./app-dashboard/app-view/AppView";
+import Apps from "./app-dashboard/apps/Apps";
+import DeploymentTargetProvider from "shared/DeploymentTargetContext";
+import PreviewEnvs from "./cluster-dashboard/preview-environments/v2/PreviewEnvs";
+import SetupApp from "./cluster-dashboard/preview-environments/v2/setup-app/SetupApp";
+import ClusterResourcesProvider from "shared/ClusterResourcesContext";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -132,10 +123,10 @@ const Home: React.FC<Props> = (props) => {
   };
 
   const getProjects = async (id?: number) => {
-    const { currentProject } = props;
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const projectId = urlParams.get("project_id");
+    let { currentProject } = props;
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+    let projectId = urlParams.get("project_id");
     if (!projectId && currentProject?.id) {
       pushQueryParams(props, { project_id: currentProject.id.toString() });
     }
@@ -163,7 +154,7 @@ const Home: React.FC<Props> = (props) => {
         }
 
         const project = await api
-          .getProject("<token>", {}, { id })
+          .getProject("<token>", {}, { id: id })
           .then((res) => res.data as ProjectType);
 
         setCurrentProject(project);
@@ -213,18 +204,18 @@ const Home: React.FC<Props> = (props) => {
   useEffect(() => {
     checkOnboarding();
     checkIfCanCreateProject();
-    const { match } = props;
+    let { match } = props;
 
     // Handle redirect from DO
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
 
-    const err = urlParams.get("error");
+    let err = urlParams.get("error");
     if (err) {
       setCurrentError(err);
     }
 
-    const defaultProjectId = parseInt(urlParams.get("project_id"));
+    let defaultProjectId = parseInt(urlParams.get("project_id"));
 
     setGhRedirect(urlParams.get("gh_oauth") !== null);
     urlParams.delete("gh_oauth");
@@ -297,9 +288,9 @@ const Home: React.FC<Props> = (props) => {
   }, [props.currentProject?.id]);
 
   useEffect(() => {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const err = urlParams.get("error");
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+    let err = urlParams.get("error");
     if (
       !hasFinishedOnboarding &&
       props.history.location.pathname &&
@@ -335,9 +326,7 @@ const Home: React.FC<Props> = (props) => {
 
       setProjects(projectList);
       if (!projectList.length) {
-        setCurrentProject(null, () => {
-          redirectToNewProject();
-        });
+        setCurrentProject(null, () => redirectToNewProject());
       } else {
         const project = await api
           .getProject("<token>", {}, { id: projectList[0].id })
@@ -371,18 +360,18 @@ const Home: React.FC<Props> = (props) => {
 
     try {
       const res = await api.getClusters<
-        Array<{
+        {
           infra_id?: number;
           name: string;
-        }>
+        }[]
       >("<token>", {}, { id: currentProject?.id });
 
-      const destroyInfraPromises = res.data.map(async (cluster) => {
+      const destroyInfraPromises = res.data.map((cluster) => {
         if (!cluster.infra_id) {
           return undefined;
         }
 
-        return await api.destroyInfra(
+        return api.destroyInfra(
           "<token>",
           {},
           { project_id: currentProject.id, infra_id: cluster.infra_id }
@@ -399,244 +388,233 @@ const Home: React.FC<Props> = (props) => {
 
   const { cluster, baseRoute } = props.match.params as any;
   return (
-    <AuthStateProvider
-    user={user}
-      currentCluster={currentCluster}
-      currentProject={currentProject}
+    <ThemeProvider
+      theme={currentProject?.simplified_view_enabled ? midnight : standard}
     >
-      <ThemeProvider
-        theme={currentProject?.simplified_view_enabled ? midnight : standard}
-      >
-        <ClusterResourcesProvider>
-          <DeploymentTargetProvider>
-            <StyledHome>
-              <ModalHandler setRefreshClusters={setForceRefreshClusters} />
-              {currentOverlay &&
-                createPortal(
-                  <ConfirmOverlay
-                    show={true}
-                    message={currentOverlay.message}
-                    onYes={currentOverlay.onYes}
-                    onNo={currentOverlay.onNo}
-                  />,
-                  document.body
-                )}
-              {/* Render sidebar when there's at least one project */}
-              {projects?.length > 0 && baseRoute !== "new-project" ? (
-                <Sidebar
-                  key="sidebar"
-                  forceSidebar={forceSidebar}
-                  setWelcome={setShowWelcome}
-                  currentView={props.currentRoute}
-                  forceRefreshClusters={forceRefreshClusters}
-                  setRefreshClusters={setForceRefreshClusters}
-                />
-              ) : (
-                <DiscordButton
-                  href="https://discord.gg/34n7NN7FJ7"
-                  target="_blank"
-                >
-                  <Icon src={discordLogo} />
-                  Join Our Discord
-                </DiscordButton>
-              )}
-              <ViewWrapper id="HomeViewWrapper">
-                <Navbar
-                  logOut={props.logOut}
-                  currentView={props.currentRoute} // For form feedback
-                />
-
-                <Switch>
-                  <Route path="/apps/new/app">
-                    {currentProject?.validate_apply_v2 ? (
-                      <CreateApp />
-                    ) : (
-                      <NewAppFlow />
-                    )}
-                  </Route>
-                  <Route path="/apps/:appName/:tab">
-                    {currentProject?.validate_apply_v2 ? (
-                      <AppView />
-                    ) : (
-                      <ExpandedApp />
-                    )}
-                  </Route>
-                  <Route path="/apps/:appName">
-                    {currentProject?.validate_apply_v2 ? (
-                      <AppView />
-                    ) : (
-                      <ExpandedApp />
-                    )}
-                  </Route>
-                  <Route path="/apps">
-                    {currentProject?.validate_apply_v2 ? (
-                      <Apps />
-                    ) : (
-                      <AppDashboard />
-                    )}
-                  </Route>
-
-                  <Route path="/databases/new">
-                    <CreateDatabase />
-                  </Route>
-                  <Route path="/databases">
-                    <DatabaseDashboard />
-                  </Route>
-
-                  <Route path="/addons/new">
-                    <NewAddOnFlow />
-                  </Route>
-                  <Route path="/addons">
-                    <AddOnDashboard />
-                  </Route>
-                  <Route
-                    path="/new-project"
-                    render={() => {
-                      return <NewProjectFC />;
-                    }}
-                  ></Route>
-                  <Route
-                    path="/onboarding"
-                    render={() => {
-                      return <Onboarding />;
-                    }}
-                  />
-                  {(user?.isPorterUser ||
-                    overrideInfraTabEnabled({
-                      projectID: currentProject?.id,
-                    })) && (
-                    <Route
-                      path="/infrastructure"
-                      render={() => {
-                        return (
-                          <DashboardWrapper>
-                            <InfrastructureRouter />
-                          </DashboardWrapper>
-                        );
-                      }}
-                    />
-                  )}
-                  <Route
-                    path="/dashboard"
-                    render={() => {
-                      return (
-                        <DashboardWrapper>
-                          <Dashboard
-                            projectId={currentProject?.id}
-                            setRefreshClusters={setForceRefreshClusters}
-                          />
-                        </DashboardWrapper>
-                      );
-                    }}
-                  />
-                  <Route
-                    path={[
-                      "/cluster-dashboard",
-                      "/applications",
-                      "/jobs",
-                      "/env-groups",
-                      "/databases",
-                      ...(!currentProject?.validate_apply_v2
-                        ? ["/preview-environments"]
-                        : []),
-                      "/stacks",
-                    ]}
-                    render={() => {
-                      if (currentCluster?.id === -1) {
-                        return <Loading />;
-                      } else if (!currentCluster?.name) {
-                        return (
-                          <DashboardWrapper>
-                            <NoClusterPlaceHolder></NoClusterPlaceHolder>
-                          </DashboardWrapper>
-                        );
-                      }
-                      return (
-                        <DashboardWrapper>
-                          <DashboardRouter
-                            currentCluster={currentCluster}
-                            setSidebar={setForceSidebar}
-                            currentView={props.currentRoute}
-                          />
-                        </DashboardWrapper>
-                      );
-                    }}
-                  />
-                  <Route
-                    path={"/integrations"}
-                    render={() => <GuardedIntegrations />}
-                  />
-                  <Route
-                    exact
-                    path={"/project-settings"}
-                    render={() => <GuardedProjectSettings />}
-                  />
-                  {currentProject?.validate_apply_v2 &&
-                  currentProject.preview_envs_enabled ? (
-                    <>
-                      <Route exact path="/preview-environments/configure">
-                        <SetupApp />
-                      </Route>
-                      <Route
-                        exact
-                        path={`/preview-environments/apps/:appName/:tab`}
-                      >
-                        <AppView />
-                      </Route>
-                      <Route exact path="/preview-environments/apps/:appName">
-                        <AppView />
-                      </Route>
-                      <Route exact path={`/preview-environments/apps`}>
-                        <Apps />
-                      </Route>
-                      <Route exact path={`/preview-environments`}>
-                        <PreviewEnvs />
-                      </Route>
-                    </>
-                  ) : null}
-                  <Route path={"*"} render={() => <LaunchWrapper />} />
-                </Switch>
-              </ViewWrapper>
-              {createPortal(
+      <ClusterResourcesProvider>
+        <DeploymentTargetProvider>
+          <StyledHome>
+            <ModalHandler setRefreshClusters={setForceRefreshClusters} />
+            {currentOverlay &&
+              createPortal(
                 <ConfirmOverlay
-                  show={currentModal === "UpdateProjectModal"}
-                  message={
-                    currentProject
-                      ? `Are you sure you want to delete ${currentProject.name}?`
-                      : ""
-                  }
-                  onYes={handleDelete}
-                  onNo={() => {
-                    setCurrentModal(null, null);
-                  }}
+                  show={true}
+                  message={currentOverlay.message}
+                  onYes={currentOverlay.onYes}
+                  onNo={currentOverlay.onNo}
                 />,
                 document.body
               )}
-              {showWrongEmailModal && (
-                <Modal>
-                  <Text size={16}>
-                    Oops! This invite link wasn't for {user?.email}
-                  </Text>
-                  <Spacer y={1} />
-                  <Text color="helper">
-                    Your account email does not match the email associated with
-                    this project invite. Please log out and sign up again with
-                    the correct email using the invite link.
-                  </Text>
-                  <Spacer y={1} />
-                  <Text color="helper">
-                    You should reach out to the person who sent you the invite
-                    link to get the correct email.
-                  </Text>
-                  <Spacer y={1} />
-                  <Button onClick={props.logOut}>Log out</Button>
-                </Modal>
-              )}
-            </StyledHome>
-          </DeploymentTargetProvider>
-        </ClusterResourcesProvider>
-      </ThemeProvider>
-    </AuthStateProvider>
+            {/* Render sidebar when there's at least one project */}
+            {projects?.length > 0 && baseRoute !== "new-project" ? (
+              <Sidebar
+                key="sidebar"
+                forceSidebar={forceSidebar}
+                setWelcome={setShowWelcome}
+                currentView={props.currentRoute}
+                forceRefreshClusters={forceRefreshClusters}
+                setRefreshClusters={setForceRefreshClusters}
+              />
+            ) : (
+              <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
+                <Icon src={discordLogo} />
+                Join Our Discord
+              </DiscordButton>
+            )}
+            <ViewWrapper id="HomeViewWrapper">
+              <Navbar
+                logOut={props.logOut}
+                currentView={props.currentRoute} // For form feedback
+              />
+
+              <Switch>
+                <Route path="/apps/new/app">
+                  {currentProject?.validate_apply_v2 ? (
+                    <CreateApp />
+                  ) : (
+                    <NewAppFlow />
+                  )}
+                </Route>
+                <Route path="/apps/:appName/:tab">
+                  {currentProject?.validate_apply_v2 ? (
+                    <AppView />
+                  ) : (
+                    <ExpandedApp />
+                  )}
+                </Route>
+                <Route path="/apps/:appName">
+                  {currentProject?.validate_apply_v2 ? (
+                    <AppView />
+                  ) : (
+                    <ExpandedApp />
+                  )}
+                </Route>
+                <Route path="/apps">
+                  {currentProject?.validate_apply_v2 ? (
+                    <Apps />
+                  ) : (
+                    <AppDashboard />
+                  )}
+                </Route>
+
+                <Route path="/databases/new">
+                  <CreateDatabase />
+                </Route>
+                <Route path="/databases">
+                  <DatabaseDashboard />
+                </Route>
+
+                <Route path="/addons/new">
+                  <NewAddOnFlow />
+                </Route>
+                <Route path="/addons">
+                  <AddOnDashboard />
+                </Route>
+                <Route
+                  path="/new-project"
+                  render={() => {
+                    return <NewProjectFC />;
+                  }}
+                ></Route>
+                <Route
+                  path="/onboarding"
+                  render={() => {
+                    return <Onboarding />;
+                  }}
+                />
+                {(user?.isPorterUser ||
+                  overrideInfraTabEnabled({
+                    projectID: currentProject?.id,
+                  })) && (
+                  <Route
+                    path="/infrastructure"
+                    render={() => {
+                      return (
+                        <DashboardWrapper>
+                          <InfrastructureRouter />
+                        </DashboardWrapper>
+                      );
+                    }}
+                  />
+                )}
+                <Route
+                  path="/dashboard"
+                  render={() => {
+                    return (
+                      <DashboardWrapper>
+                        <Dashboard
+                          projectId={currentProject?.id}
+                          setRefreshClusters={setForceRefreshClusters}
+                        />
+                      </DashboardWrapper>
+                    );
+                  }}
+                />
+                <Route
+                  path={[
+                    "/cluster-dashboard",
+                    "/applications",
+                    "/jobs",
+                    "/env-groups",
+                    "/databases",
+                    ...(!currentProject?.validate_apply_v2
+                      ? ["/preview-environments"]
+                      : []),
+                    "/stacks",
+                  ]}
+                  render={() => {
+                    if (currentCluster?.id === -1) {
+                      return <Loading />;
+                    } else if (!currentCluster || !currentCluster.name) {
+                      return (
+                        <DashboardWrapper>
+                          <NoClusterPlaceHolder></NoClusterPlaceHolder>
+                        </DashboardWrapper>
+                      );
+                    }
+                    return (
+                      <DashboardWrapper>
+                        <DashboardRouter
+                          currentCluster={currentCluster}
+                          setSidebar={setForceSidebar}
+                          currentView={props.currentRoute}
+                        />
+                      </DashboardWrapper>
+                    );
+                  }}
+                />
+                <Route
+                  path={"/integrations"}
+                  render={() => <GuardedIntegrations />}
+                />
+                <Route
+                  exact
+                  path={"/project-settings"}
+                  render={() => <GuardedProjectSettings />}
+                />
+                {currentProject?.validate_apply_v2 &&
+                currentProject.preview_envs_enabled ? (
+                  <>
+                    <Route exact path="/preview-environments/configure">
+                      <SetupApp />
+                    </Route>
+                    <Route
+                      exact
+                      path={`/preview-environments/apps/:appName/:tab`}
+                    >
+                      <AppView />
+                    </Route>
+                    <Route exact path="/preview-environments/apps/:appName">
+                      <AppView />
+                    </Route>
+                    <Route exact path={`/preview-environments/apps`}>
+                      <Apps />
+                    </Route>
+                    <Route exact path={`/preview-environments`}>
+                      <PreviewEnvs />
+                    </Route>
+                  </>
+                ) : null}
+                <Route path={"*"} render={() => <LaunchWrapper />} />
+              </Switch>
+            </ViewWrapper>
+            {createPortal(
+              <ConfirmOverlay
+                show={currentModal === "UpdateProjectModal"}
+                message={
+                  currentProject
+                    ? `Are you sure you want to delete ${currentProject.name}?`
+                    : ""
+                }
+                onYes={handleDelete}
+                onNo={() => setCurrentModal(null, null)}
+              />,
+              document.body
+            )}
+            {showWrongEmailModal && (
+              <Modal>
+                <Text size={16}>
+                  Oops! This invite link wasn't for {user?.email}
+                </Text>
+                <Spacer y={1} />
+                <Text color="helper">
+                  Your account email does not match the email associated with this
+                  project invite. Please log out and sign up again with the
+                  correct email using the invite link.
+                </Text>
+                <Spacer y={1} />
+                <Text color="helper">
+                  You should reach out to the person who sent you the invite link
+                  to get the correct email.
+                </Text>
+                <Spacer y={1} />
+                <Button onClick={props.logOut}>Log out</Button>
+              </Modal>
+            )}
+          </StyledHome>
+        </DeploymentTargetProvider>
+      </ClusterResourcesProvider>
+    </ThemeProvider>
   );
 };
 
@@ -696,9 +674,7 @@ const DiscordButton = styled.a`
   border-radius: 3px;
   color: #ffffff44;
   height: 40px;
-  font-family:
-    Work Sans,
-    sans-serif;
+  font-family: Work Sans, sans-serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;

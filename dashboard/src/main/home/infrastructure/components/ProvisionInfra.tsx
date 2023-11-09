@@ -12,7 +12,6 @@ import Placeholder from "components/OldPlaceholder";
 import AWSCredentialsList from "./credentials/AWSCredentialList";
 import Heading from "components/form-components/Heading";
 import GCPCredentialsList from "./credentials/GCPCredentialList";
-import DOCredentialsList from "./credentials/DOCredentialList";
 import { getQueryParam, useRouting } from "shared/routing";
 import {
   InfraTemplateMeta,
@@ -232,19 +231,6 @@ const ProvisionInfra: React.FunctionComponent<Props> = () => {
               selectCredential={(i) =>
                 setCurrentCredential({
                   gcp_integration_id: i,
-                })
-              }
-            />
-          </ActionContainer>
-        );
-      } else if (currentTemplate.required_credential == "do_integration_id") {
-        return (
-          <ActionContainer>
-            <Heading>Step 1 of {numSteps} - Link DO Credentials</Heading>
-            <DOCredentialsList
-              selectCredential={(i) =>
-                setCurrentCredential({
-                  do_integration_id: i,
                 })
               }
             />

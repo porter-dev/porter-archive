@@ -16,11 +16,6 @@ import {
 } from "./_AWSProvisionerForm";
 
 import {
-  CredentialsForm as DOCredentialsForm,
-  SettingsForm as DOSettingsForm,
-} from "./_DOProvisionerForm";
-
-import {
   CredentialsForm as GCPCredentialsForm,
   SettingsForm as GCPSettingsForm,
 } from "./_GCPProvisionerForm";
@@ -41,10 +36,6 @@ const Forms = {
     credentials: GCPCredentialsForm,
     settings: GCPSettingsForm,
   },
-  do: {
-    credentials: DOCredentialsForm,
-    settings: DOSettingsForm,
-  },
 };
 
 const FormTitle = {
@@ -57,11 +48,6 @@ const FormTitle = {
     label: "Google Cloud Platform (GCP)",
     icon: integrationList["gcp"].icon,
     doc: "https://docs.porter.run/getting-started/provisioning-on-gcp",
-  },
-  do: {
-    label: "DigitalOcean (DO)",
-    icon: integrationList["do"].icon,
-    doc: "https://docs.porter.run/getting-started/provisioning-on-do",
   },
   external: {
     label: "Connect an existing cluster",

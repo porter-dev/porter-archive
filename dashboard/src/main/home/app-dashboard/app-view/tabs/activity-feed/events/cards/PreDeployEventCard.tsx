@@ -116,21 +116,6 @@ const PreDeployEventCard: React.FC<Props> = ({
           {event.status !== "SUCCESS" && (
             <>
               <Spacer inline x={0.5} />
-              {/* <Link
-                  hasunderline
-                  onClick={async () => {
-                    await triggerWorkflow({
-                      projectId,
-                      clusterId,
-                      porterApp,
-                    });
-                  }}
-                >
-                  <Icon height="10px" src={refresh} />
-                  <Spacer inline width="5px" />
-                  Retry
-                </Link>
-              </> */}
               <Tag>
                 <Link
                   onClick={async () => {

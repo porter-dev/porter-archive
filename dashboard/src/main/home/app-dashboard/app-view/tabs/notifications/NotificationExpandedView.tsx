@@ -4,13 +4,16 @@ import { match } from "ts-pattern";
 
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
+import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import Logs from "main/home/app-dashboard/validate-apply/logs/Logs";
 import { useIntercom } from "lib/hooks/useIntercom";
 import { type ClientNotification } from "lib/porter-apps/notification";
 
 import { feedDate } from "shared/string_utils";
+import calendar from "assets/calendar-02.svg";
 import chat from "assets/chat.svg";
 import document from "assets/document.svg";
 import job from "assets/job.png";
@@ -38,13 +41,10 @@ const NotificationExpandedView: React.FC<Props> = ({
   const { showIntercomWithMessage } = useIntercom();
 
   const summary = useMemo(() => {
-    if (
-      notification.service.config.type === "job" ||
-      notification.service.config.type === "predeploy"
-    ) {
-      return "crashed while running";
-    } else if (notification.isDeployRelated) {
+    if (notification.isDeployRelated) {
       return "failed to deploy";
+    } else {
+      return "is unhealthy";
     }
   }, [JSON.stringify(notification)]);
 
@@ -61,21 +61,38 @@ const NotificationExpandedView: React.FC<Props> = ({
   return (
     <StyledNotificationExpandedView>
       <ExpandedViewContent>
-        <Container row>
-          <ServiceNameTag>
-            {match(notification.service.config.type)
-              .with("web", () => <ServiceTypeIcon src={web} />)
-              .with("worker", () => <ServiceTypeIcon src={worker} />)
-              .with("job", () => <ServiceTypeIcon src={job} />)
-              .with("predeploy", () => <ServiceTypeIcon src={job} />)
-              .exhaustive()}
+        <Container row spaced>
+          <Container row>
+            <ServiceNameTag>
+              {match(notification.service.config.type)
+                .with("web", () => <ServiceTypeIcon src={web} />)
+                .with("worker", () => <ServiceTypeIcon src={worker} />)
+                .with("job", () => <ServiceTypeIcon src={job} />)
+                .with("predeploy", () => <ServiceTypeIcon src={job} />)
+                .exhaustive()}
+              <Spacer inline x={0.5} />
+              {notification.service.name.value}
+            </ServiceNameTag>
             <Spacer inline x={0.5} />
-            {notification.service.name.value}
-          </ServiceNameTag>
-          <Spacer inline x={0.5} />
-          <Text size={16} color={"#FFBF00"}>
-            {summary}
-          </Text>
+            <Text size={16} color={"#FFBF00"}>
+              {summary}
+            </Text>
+          </Container>
+          {notification.service.config.type === "job" && (
+            <Container row>
+              <Tag>
+                <TagIcon
+                  src={calendar}
+                  style={{ marginTop: "3px", marginLeft: "5px" }}
+                />
+                <Link
+                  to={`/apps/${appName}/job-history?service=${notification.service.name.value}`}
+                >
+                  <Text size={16}>Job history</Text>
+                </Link>
+              </Tag>
+            </Container>
+          )}
         </Container>
         <Spacer y={0.5} />
         <StyledActivityFeed>
@@ -159,21 +176,22 @@ const NotificationExpandedView: React.FC<Props> = ({
           })}
         </StyledActivityFeed>
         <Spacer y={1} />
-        <LogsContainer>
-          <Logs
-            projectId={projectId}
-            clusterId={clusterId}
-            appName={appName}
-            serviceNames={serviceNames}
-            deploymentTargetId={deploymentTargetId}
-            appRevisionId={notification.appRevisionId}
-            logFilterNames={["service_name"]}
-            appId={appId}
-            selectedService={serviceNames[0]}
-            selectedRevisionId={notification.appRevisionId}
-            defaultScrollToBottomEnabled={false}
-          />
-        </LogsContainer>
+        {notification.service.config.type !== "job" &&
+          notification.service.config.type !== "predeploy" && (
+            <Logs
+              projectId={projectId}
+              clusterId={clusterId}
+              appName={appName}
+              serviceNames={serviceNames}
+              deploymentTargetId={deploymentTargetId}
+              appRevisionId={notification.appRevisionId}
+              logFilterNames={["service_name"]}
+              appId={appId}
+              selectedService={serviceNames[0]}
+              selectedRevisionId={notification.appRevisionId}
+              defaultScrollToBottomEnabled={false}
+            />
+          )}
       </ExpandedViewContent>
       {/* uncomment below once we implement recommended actions */}
       {/* <ExpandedViewFooter>
@@ -277,4 +295,7 @@ const StyledActivityFeed = styled.div`
   }
 `;
 
-const LogsContainer = styled.div``;
+const TagIcon = styled.img`
+  height: 16px;
+  margin-right: 3px;
+`;

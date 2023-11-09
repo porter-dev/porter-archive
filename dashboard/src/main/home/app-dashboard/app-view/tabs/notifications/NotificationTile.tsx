@@ -19,12 +19,7 @@ type Props = {
 
 const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
   const summary = useMemo(() => {
-    if (
-      notification.service.config.type === "job" ||
-      notification.service.config.type === "predeploy"
-    ) {
-      return "Your job crashed while running";
-    } else if (notification.isDeployRelated) {
+    if (notification.isDeployRelated) {
       return "Your service failed to deploy";
     } else {
       return "Your service is unhealthy";

@@ -56,13 +56,9 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
   const [showAutoscalingThresholds, setShowAutoscalingThresholds] =
     useState(true);
 
-  // filter out jobs until we can display metrics on them
   const serviceOptions: GenericFilterOption[] = useMemo(() => {
-    const nonJobServiceNames = services
-      .filter((s) => s.config.type !== "job")
-      .map((s) => s.name);
-    return nonJobServiceNames.map(({ value }) =>
-      GenericFilterOption.of(value, value)
+    return services.map((svc) =>
+      GenericFilterOption.of(svc.name.value, svc.name.value)
     );
   }, [services]);
 

@@ -16,7 +16,6 @@ import Container from "components/porter/Container";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { useAuthState } from "main/auth/context";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import { clientAppFromProto, type SourceOptions } from "lib/porter-apps";
 import {
@@ -26,6 +25,7 @@ import {
 import { appRevisionValidator, type AppRevision } from "lib/revisions/types";
 
 import api from "shared/api";
+import { Context } from "shared/Context";
 import {
   useDeploymentTarget,
   type DeploymentTarget,
@@ -79,13 +79,17 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
   const [previewRevision, setPreviewRevision] = useState<AppRevision | null>(
     null
   );
-  const { currentCluster, currentProject } = useAuthState();
+  const { currentCluster, currentProject } = useContext(Context);
   const { currentDeploymentTarget } = useDeploymentTarget();
 
-  const appParamsExist = !!appName && !!currentDeploymentTarget;
+  const appParamsExist =
+    !!appName &&
+    !!currentCluster &&
+    !!currentProject &&
+    !!currentDeploymentTarget;
 
   const { data: porterApp, status: porterAppStatus } = useQuery(
-    ["getPorterApp", currentCluster.id, currentProject.id, appName],
+    ["getPorterApp", currentCluster?.id, currentProject?.id, appName],
     async () => {
       if (!appParamsExist) {
         return;
@@ -112,8 +116,8 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
   const { data: latestRevision, status } = useQuery(
     [
       "getLatestRevision",
-      currentProject.id,
-      currentCluster.id,
+      currentProject?.id,
+      currentCluster?.id,
       currentDeploymentTarget,
       appName,
     ],
@@ -157,7 +161,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
       },
     ],
     async () => {
-      if (!currentDeploymentTarget) {
+      if (!currentCluster || !currentProject || !currentDeploymentTarget) {
         return;
       }
       const res = await api.getDeploymentTarget(
@@ -181,6 +185,9 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
         .parseAsync(res.data);
 
       return deploymentTarget;
+    },
+    {
+      enabled: !!currentCluster && !!currentProject,
     }
   );
 
@@ -224,7 +231,8 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
       };
     },
     {
-      enabled: !!appName && !!revisionId,
+      enabled:
+        !!appName && !!revisionId && !!currentCluster && !!currentProject,
     }
   );
 

@@ -13,7 +13,7 @@ import infra from "assets/cluster.svg";
 import ProvisionClusterModal from "./ProvisionClusterModal";
 import SidebarLink from "./SidebarLink";
 
-type Option = {
+type ClusterOptions = {
   label: string;
   value: string;
 };
@@ -29,7 +29,7 @@ const ClusterList: React.FC = (props) => {
     useState<boolean>(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [clusters, setClusters] = useState<ClusterType[]>([]);
-  const [options, setOptions] = useState<Option[]>([]);
+  const [options, setOptions] = useState<ClusterOptions[]>([]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent): void => {
@@ -59,7 +59,7 @@ const ClusterList: React.FC = (props) => {
               (a: { id: number }, b: { id: number }) => a.id - b.id
             );
             if (clusters.length > 0) {
-              const options: Option[] = clusters.map(
+              const options: ClusterOptions[] = clusters.map(
                 (item: { vanity_name: string; name: string }) => ({
                   label: item.vanity_name ? item.vanity_name : item.name,
                   value: item.name,
@@ -78,13 +78,13 @@ const ClusterList: React.FC = (props) => {
         });
     }
   }, [currentProject, currentCluster]);
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  const truncate = (input: string) =>
+
+  const truncate = (input: string): string =>
     input.length > 27 ? `${input.substring(0, 27)}...` : input;
 
   const renderOptionList = (): JSX.Element[] =>
     options.map((option, i: number) => (
-      <OptionDis
+      <OptionDiv
         key={i}
         selected={option.value === currentCluster?.name}
         title={option.label}
@@ -97,7 +97,7 @@ const ClusterList: React.FC = (props) => {
       >
         <Icon src={infra} height={"14px"} />
         <ClusterLabel>{option.label}</ClusterLabel>
-      </OptionDis>
+      </OptionDiv>
     ));
 
   const renderDropdown = (): false | JSX.Element =>
@@ -106,7 +106,7 @@ const ClusterList: React.FC = (props) => {
         <Dropdown>
           {renderOptionList()}
           {currentProject?.enable_reprovision && (
-            <OptionDis
+            <OptionDiv
               selected={false}
               onClick={() => {
                 setClusterModalVisible(true);
@@ -114,7 +114,7 @@ const ClusterList: React.FC = (props) => {
               }}
             >
               <Plus>+</Plus> Deploy new cluster
-            </OptionDis>
+            </OptionDiv>
           )}
         </Dropdown>
       </>
@@ -202,7 +202,7 @@ const InitializeButton = styled.div`
   }
 `;
 
-const OptionDis = styled.div<{ selected: boolean }>`
+const OptionDiv = styled.div<{ selected: boolean }>`
   width: 100%;
   height: 45px;
   display: flex;

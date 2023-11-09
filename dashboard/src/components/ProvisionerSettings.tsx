@@ -198,7 +198,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const getStatus = ():
@@ -453,8 +453,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     setIsReadOnly(
       props.clusterId &&
-        (currentCluster.status === "UPDATING" ||
-          currentCluster.status === "UPDATING_UNAVAILABLE")
+      (currentCluster.status === "UPDATING" ||
+        currentCluster.status === "UPDATING_UNAVAILABLE")
     );
     handleClusterStateChange(
       "clusterName",
@@ -514,8 +514,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
         const awsTags = eksValues.loadBalancer.tags
           ? Object.entries(eksValues.loadBalancer.tags)
-              .map(([key, value]) => `${key}=${value}`)
-              .join(",")
+            .map(([key, value]) => `${key}=${value}`)
+            .join(",")
           : "";
         handleClusterStateChange("awsTags", awsTags);
 
@@ -672,7 +672,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                   handleClusterStateChange("clusterVersion", x);
                 }}
                 label="Cluster version (only shown to porter.run emails)"
-              />
+                placeholder={""} />
             )}
             <Spacer y={1} />
             <Select
@@ -740,7 +740,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               label="CIDR range for Kubernetes internal services"
               placeholder="ex: 172.20.0.0/16"
             />
-            {currentProject && !currentProject.simplified_view_enabled && (
+            {currentProject && (
               <>
                 <Spacer y={1} />
                 <Checkbox
@@ -1051,11 +1051,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
                         {(clusterState.wafV2ARN === undefined ||
                           clusterState.wafV2ARN?.length === 0) && (
-                          <ErrorInLine>
-                            <i className="material-icons">error</i>
-                            {"Required if WafV2 is enabled"}
-                          </ErrorInLine>
-                        )}
+                            <ErrorInLine>
+                              <i className="material-icons">error</i>
+                              {"Required if WafV2 is enabled"}
+                            </ErrorInLine>
+                          )}
                       </>
                     )}
                     <Spacer y={1} />
@@ -1142,7 +1142,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setShowHelpMessage(false);
     try {
       await preflightChecks();
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const renderForm = (): JSX.Element => {
@@ -1153,7 +1153,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           currentStep={step}
           steps={[
             <>
-              <Text size={16}>Select an AWS region</Text>
+              <Text size={16}>Set your cluster settings</Text>
               <Spacer y={0.5} />
               <Text color="helper">
                 Porter will automatically provision your infrastructure in the
@@ -1173,7 +1173,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 label="📍 AWS region"
               />
               <>
-                {(user?.isPorterUser || currentProject?.multi_cluster) &&
+                {(user?.isPorterUser || currentProject?.enable_reprovision) &&
                   renderAdvancedSettings()}
               </>
             </>,
@@ -1349,7 +1349,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
         margin - right: 7px;
       margin-left: -7px;
       transform: ${(props) =>
-        props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
       transition: transform 0.1s ease;
   }
       `;

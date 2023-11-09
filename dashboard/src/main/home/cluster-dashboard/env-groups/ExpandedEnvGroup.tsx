@@ -1072,7 +1072,6 @@ const EnvGroupSettings = ({
                   label="New env group namespace"
                   placeholder="ex: default"
                 />
-              )}
               <FlexAlt>
                 <Button onClick={cloneEnvGroup}>Clone {envGroup.name}</Button>
                 {cloneSuccess && (

@@ -1,30 +1,38 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { withRouter } from "react-router";
 import styled from "styled-components";
-import gradient from "assets/gradient.png";
+
+import Icon from "components/porter/Icon";
+
 import api from "shared/api";
+import { Context } from "shared/Context";
+import { pushFiltered } from "shared/routing";
+import { type ClusterType } from "shared/types";
 import infra from "assets/cluster.svg";
 
-import { Context } from "shared/Context";
-import { ClusterType } from "shared/types";
-import { RouteComponentProps, withRouter } from "react-router";
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import { pushFiltered } from "shared/routing";
-import SidebarLink from "./SidebarLink";
-import { OFState } from "main/home/onboarding/state";
 import ProvisionClusterModal from "./ProvisionClusterModal";
+import SidebarLink from "./SidebarLink";
 
-
-const ClusterList: React.FC<PropsType> = (props) => {
-  const { setCurrentCluster, user, currentCluster, currentProject, setHasFinishedOnboarding } = useContext(Context);
+type ClusterOptions = {
+  label: string;
+  value: string;
+};
+type NavButtonProps = {
+  disabled?: boolean;
+  active?: boolean;
+};
+const ClusterList: React.FC = (props) => {
+  const { setCurrentCluster, currentCluster, currentProject } =
+    useContext(Context);
   const [expanded, setExpanded] = useState<boolean>(false);
-  const [clusterModalVisible, setClusterModalVisible] = useState<boolean>(false);
+  const [clusterModalVisible, setClusterModalVisible] =
+    useState<boolean>(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [clusters, setClusters] = useState<ClusterType[]>([]);
-  const [options, setOptions] = useState<any[]>([]);
+  const [options, setOptions] = useState<ClusterOptions[]>([]);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent): void => {
       if (
         wrapperRef.current &&
         !wrapperRef.current.contains(e.target as Node)
@@ -46,62 +54,69 @@ const ClusterList: React.FC<PropsType> = (props) => {
         .getClusters("<token>", {}, { id: currentProject?.id })
         .then((res) => {
           if (res.data) {
-            let clusters = res.data;
-            clusters.sort((a: any, b: any) => a.id - b.id);
+            const clusters = res.data;
+            clusters.sort(
+              (a: { id: number }, b: { id: number }) => a.id - b.id
+            );
             if (clusters.length > 0) {
-              let options = clusters.map((item: { name: any; vanity_name: string; }) => ({
-                label: (item.vanity_name ? item.vanity_name : item.name),
-                value: item.name
-              }));
+              const options: ClusterOptions[] = clusters.map(
+                (item: { vanity_name: string; name: string }) => ({
+                  label: item.vanity_name ? item.vanity_name : item.name,
+                  value: item.name,
+                })
+              );
               setClusters(clusters);
               setOptions(options);
             }
           }
+        })
+        .catch((error) => {
+          if (error) {
+            setClusters([]);
+            setOptions([]);
+          }
         });
     }
   }, [currentProject, currentCluster]);
-  const truncate = (input: string) => input.length > 27 ? `${input.substring(0, 27)}...` : input;
 
-  const renderOptionList = () =>
+  const truncate = (input: string): string =>
+    input.length > 27 ? `${input.substring(0, 27)}...` : input;
+
+  const renderOptionList = (): JSX.Element[] =>
     options.map((option, i: number) => (
-      <Option
+      <OptionDiv
         key={i}
         selected={option.value === currentCluster?.name}
         title={option.label}
         onClick={() => {
           setExpanded(false);
-          const cluster = clusters.find(c => c.name === option.value);
+          const cluster = clusters.find((c) => c.name === option.value);
           setCurrentCluster(cluster);
           pushFiltered(props, "/apps", ["project_id"], {});
         }}
       >
         <Icon src={infra} height={"14px"} />
         <ClusterLabel>{option.label}</ClusterLabel>
-      </Option>
-
+      </OptionDiv>
     ));
 
-  const renderDropdown = () =>
+  const renderDropdown = (): false | JSX.Element =>
     expanded && (
       <>
         <Dropdown>
           {renderOptionList()}
-
-          {/* Connect Cluster Option */}
-          {
-            currentProject?.enable_reprovision && <Option
+          {currentProject?.enable_reprovision && (
+            <OptionDiv
+              selected={false}
               onClick={() => {
-                setClusterModalVisible(true)
+                setClusterModalVisible(true);
                 setExpanded(false);
-
-              }}>
-
-              <Plus>+</Plus>    Deploy new cluster
-            </Option>
-          }
-
+              }}
+            >
+              <Plus>+</Plus> Deploy new cluster
+            </OptionDiv>
+          )}
         </Dropdown>
-
       </>
     );
 
@@ -109,33 +124,43 @@ const ClusterList: React.FC<PropsType> = (props) => {
     return (
       <StyledClusterSection ref={wrapperRef}>
         <MainSelector
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => {
+            setExpanded(!expanded);
+          }}
           expanded={expanded}
         >
-
-          <NavButton>
+          <NavButton active={false} path={``}>
             <Img src={infra} />
-            <ClusterName>{truncate(currentCluster.vanity_name ? currentCluster.vanity_name : currentCluster?.name)}</ClusterName>
+            <ClusterName>
+              {truncate(
+                currentCluster.vanity_name
+                  ? currentCluster.vanity_name
+                  : currentCluster?.name
+              )}
+            </ClusterName>
 
             <i className="material-icons">arrow_drop_down</i>
           </NavButton>
         </MainSelector>
         {renderDropdown()}
-        {
-          clusterModalVisible && <ProvisionClusterModal
-            closeModal={() => setClusterModalVisible(false)} />
-        }
-      </StyledClusterSection >
+        {clusterModalVisible && (
+          <ProvisionClusterModal
+            closeModal={() => {
+              setClusterModalVisible(false);
+            }}
+          />
+        )}
+      </StyledClusterSection>
     );
   }
 
   return (
     <InitializeButton
-      onClick={() =>
+      onClick={() => {
         pushFiltered(props, "/new-cluster", ["cluster_id"], {
           new_cluster: true,
-        })
-      }
+        });
+      }}
     >
       <Plus>+</Plus> Create a cluster
     </InitializeButton>
@@ -148,7 +173,7 @@ const ClusterLabel = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  margin-left: 12px
+  margin-left: 12px;
 `;
 
 const Plus = styled.div`
@@ -167,7 +192,7 @@ const InitializeButton = styled.div`
   font-size: 13px;
   font-weight: 500;
   border-radius: 3px;
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   padding-bottom: 1px;
   cursor: pointer;
   background: #ffffff11;
@@ -177,7 +202,7 @@ const InitializeButton = styled.div`
   }
 `;
 
-const Option = styled.div<{ selected: boolean }>`
+const OptionDiv = styled.div<{ selected: boolean }>`
   width: 100%;
   height: 45px;
   display: flex;
@@ -187,8 +212,8 @@ const Option = styled.div<{ selected: boolean }>`
   padding: 0 15px;
   cursor: pointer;
   padding-right: 10px;
-  text-decoration: ${props => props.selected ? "underline" : "none"};
-  color: ${props => props.theme.text.primary};
+  text-decoration: ${(props) => (props.selected ? "underline" : "none")};
+  color: ${(props) => props.theme.text.primary};
   opacity: 0.6;
   :hover {
     opacity: 1;
@@ -210,7 +235,7 @@ const Dropdown = styled.div`
   width: 230px;
   max-height: 500px;
   border-radius: 5px;
-  border: 1px solid #494B4F;
+  border: 1px solid #494b4f;
   z-index: 999;
   overflow-y: auto;
   margin-bottom: 20px;
@@ -222,7 +247,7 @@ const ClusterName = styled.div`
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  max-width: 200px; 
+  max-width: 200px;
 `;
 
 const MainSelector = styled.div`
@@ -233,7 +258,7 @@ const MainSelector = styled.div`
   font-size: 14px;
   cursor: pointer;
   padding: 10px 0;
-  
+
   :hover {
     > i {
       background: #ffffff22;
@@ -249,14 +274,14 @@ const MainSelector = styled.div`
     justify-content: center;
     border-radius: 20px;
     background: ${(props: { expanded: boolean }) =>
-    props.expanded ? "#ffffff22" : ""};
+      props.expanded ? "#ffffff22" : ""};
   }
 `;
 
 const StyledClusterSection = styled.div`
   position: relative;
   margin-left: 3px;
-  background: #181B20;
+  background: #181b20;
   border: 1px solid #383a3f;
   border-left: none;
 `;
@@ -269,14 +294,15 @@ const NavButton = styled(SidebarLink)`
   border-radius: 5px;
   margin-left: 16px;
   font-size: 13px;
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 
-  background: ${(props: any) => (props.active ? "#ffffff11" : "")};
+  background: ${(props: NavButtonProps) => (props.active ? "#ffffff11" : "")};
 
   :hover {
-    background: ${(props: any) => (props.active ? "#ffffff11" : "#ffffff08")};
+    background: ${(props: NavButtonProps) =>
+      props.active ? "#ffffff11" : "#ffffff08"};
   }
 
   &.active {
@@ -298,7 +324,6 @@ const NavButton = styled(SidebarLink)`
     margin-right: 0px;
   }
 `;
-
 
 const Img = styled.img<{ enlarge?: boolean }>`
   padding: ${(props) => (props.enlarge ? "0 0 0 1px" : "4px")};

@@ -183,6 +183,7 @@ func (repo *PorterAppEventRepository) ReadNotificationsByAppRevisionID(ctx conte
 
 	strAppID := strconv.Itoa(int(porterAppID))
 
+	// TODO: make app_revision_id a column in porter_app_event table: https://linear.app/porter/issue/POR-2096/add-app-revision-id-column-to-porter-app-events-table
 	if err := repo.db.Where("porter_app_id = ? AND type = 'NOTIFICATION' AND metadata->>'app_revision_id' = ?", strAppID, appRevisionId).Find(&notifications).Error; err != nil {
 		return notifications, err
 	}

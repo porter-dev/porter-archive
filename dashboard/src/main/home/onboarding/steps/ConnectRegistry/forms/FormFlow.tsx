@@ -15,11 +15,6 @@ import {
   TestRegistryConnection as AWSTestRegistryConnection,
 } from "./_AWSRegistryForm";
 import { integrationList } from "shared/common";
-import {
-  CredentialsForm as DOCredentialsForm,
-  SettingsForm as DOSettingsForm,
-  TestRegistryConnection as DOTestRegistryConnection,
-} from "./_DORegistryForm";
 
 import {
   CredentialsForm as GCPCredentialsForm,
@@ -47,11 +42,6 @@ const Forms = {
     credentials: GCPCredentialsForm,
     settings: GARegistryConfig,
     test_connection: GCPTestRegistryConnection,
-  },
-  do: {
-    credentials: DOCredentialsForm,
-    settings: DOSettingsForm,
-    test_connection: DOTestRegistryConnection,
   },
 };
 

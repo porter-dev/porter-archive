@@ -281,8 +281,9 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   };
 
   useEffect(() => {
+    if (!currentProject) return;
     setIsReadOnly(
-      props.clusterId &&
+      !!props.clusterId &&
       (currentCluster?.status === "UPDATING" ||
         currentCluster?.status === "UPDATING_UNAVAILABLE")
     );

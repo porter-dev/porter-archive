@@ -72,7 +72,8 @@ const ServiceStatusDetail: React.FC<Props> = ({
               ? service.config.domains[0].name.value
               : "";
           const notificationsExistForService = latestNotifications.some(
-            (n) => n.serviceName === key && n.appRevisionId === revisionId
+            (n) =>
+              n.service.name.value === key && n.appRevisionId === revisionId
           );
           return (
             <ServiceStatusTableRow key={key}>

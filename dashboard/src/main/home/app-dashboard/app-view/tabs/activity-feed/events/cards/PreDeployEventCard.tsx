@@ -1,24 +1,35 @@
-import React from "react";
+import React, { useMemo } from "react";
 import styled from "styled-components";
-
-import pre_deploy from "assets/pre_deploy.png";
-
-import run_for from "assets/run_for.png";
-import refresh from "assets/refresh.png";
-
-import Text from "components/porter/Text";
-import Container from "components/porter/Container";
-import Spacer from "components/porter/Spacer";
-import Icon from "components/porter/Icon";
-
-import { getDuration, getStatusColor, getStatusIcon, triggerWorkflow } from '../utils';
-import { Code, ImageTagContainer, CommitIcon, StyledEventCard } from "./EventCard";
-import Link from "components/porter/Link";
-import document from "assets/document.svg";
-import { PorterAppPreDeployEvent } from "../types";
-import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import pull_request_icon from "assets/pull_request_icon.svg";
 import { match } from "ts-pattern";
+
+import Container from "components/porter/Container";
+import Icon from "components/porter/Icon";
+import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
+import Text from "components/porter/Text";
+import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+
+import alert from "assets/alert-warning.svg";
+import document from "assets/document.svg";
+import pre_deploy from "assets/pre_deploy.png";
+import pull_request_icon from "assets/pull_request_icon.svg";
+import refresh from "assets/refresh.png";
+import run_for from "assets/run_for.png";
+
+import { type PorterAppPreDeployEvent } from "../types";
+import {
+  getDuration,
+  getStatusColor,
+  getStatusIcon,
+  triggerWorkflow,
+} from "../utils";
+import {
+  Code,
+  CommitIcon,
+  ImageTagContainer,
+  StyledEventCard,
+} from "./EventCard";
 
 type Props = {
   event: PorterAppPreDeployEvent;
@@ -29,25 +40,34 @@ type Props = {
   displayCommitSha: string;
 };
 
-const PreDeployEventCard: React.FC<Props> = ({ 
+const PreDeployEventCard: React.FC<Props> = ({
   event,
   appName,
-  projectId, 
+  projectId,
   clusterId,
   gitCommitUrl,
-  displayCommitSha, 
+  displayCommitSha,
 }) => {
-  const { porterApp } = useLatestRevision();
+  const { porterApp, latestNotifications } = useLatestRevision();
 
-  const renderStatusText = (event: PorterAppPreDeployEvent) => {
+  const renderStatusText = (event: PorterAppPreDeployEvent): JSX.Element => {
     const color = getStatusColor(event.status);
     const text = match(event.status)
       .with("SUCCESS", () => "Pre-deploy successful")
       .with("FAILED", () => "Pre-deploy failed")
       .with("CANCELED", () => "Pre-deploy canceled")
-      .otherwise(() => "Pre-deploy  in progress...")
+      .otherwise(() => "Pre-deploy  in progress...");
     return <Text color={color}>{text}</Text>;
   };
+
+  const predeployNotificationsExist = useMemo(() => {
+    return latestNotifications.some((notification) => {
+      return (
+        notification.service.config.type === "predeploy" &&
+        notification.appRevisionId === event.metadata.app_revision_id
+      );
+    });
+  }, [JSON.stringify(latestNotifications)]);
 
   return (
     <StyledEventCard>
@@ -56,17 +76,21 @@ const PreDeployEventCard: React.FC<Props> = ({
           <Icon height="16px" src={pre_deploy} />
           <Spacer inline width="10px" />
           <Text>Application pre-deploy</Text>
-          {gitCommitUrl && displayCommitSha &&
+          {gitCommitUrl && displayCommitSha && (
             <>
               <Spacer inline x={0.5} />
               <ImageTagContainer>
-                <Link to={gitCommitUrl} target="_blank" showTargetBlankIcon={false}>
+                <Link
+                  to={gitCommitUrl}
+                  target="_blank"
+                  showTargetBlankIcon={false}
+                >
                   <CommitIcon src={pull_request_icon} />
                   <Code>{displayCommitSha}</Code>
                 </Link>
-              </ImageTagContainer> 
+              </ImageTagContainer>
             </>
-          }
+          )}
         </Container>
         <Container row>
           <Icon height="14px" src={run_for} />
@@ -81,31 +105,61 @@ const PreDeployEventCard: React.FC<Props> = ({
           <Spacer inline width="10px" />
           {renderStatusText(event)}
           <Spacer inline x={1} />
-          <Wrapper>
-            <Link to={`/apps/${appName}/events?event_id=${event.id}&service=predeploy&revision_id=${event.metadata.app_revision_id}`} hasunderline>
-              <Container row>
-                <Icon src={document} height="10px" />
-                <Spacer inline width="5px" />
-                View logs
-              </Container>
+          <Tag>
+            <Link
+              to={`/apps/${appName}/events?event_id=${event.id}&service=predeploy&revision_id=${event.metadata.app_revision_id}`}
+            >
+              <TagIcon src={document} />
+              Logs
             </Link>
-            {(event.status !== "SUCCESS") &&
-              <>
-                <Spacer inline x={1} />
-                <Link hasunderline onClick={() => triggerWorkflow({
-                  projectId,
-                  clusterId,
-                  porterApp,
-                })}>
-                  <Container row>
-                    <Icon height="10px" src={refresh} />
-                    <Spacer inline width="5px" />
-                    Retry
-                  </Container>
+          </Tag>
+          {event.status !== "SUCCESS" && (
+            <>
+              <Spacer inline x={0.5} />
+              {/* <Link
+                  hasunderline
+                  onClick={async () => {
+                    await triggerWorkflow({
+                      projectId,
+                      clusterId,
+                      porterApp,
+                    });
+                  }}
+                >
+                  <Icon height="10px" src={refresh} />
+                  <Spacer inline width="5px" />
+                  Retry
                 </Link>
-              </>}
-          </Wrapper>
-          <Spacer inline x={1} />
+              </> */}
+              <Tag>
+                <Link
+                  onClick={async () => {
+                    await triggerWorkflow({
+                      projectId,
+                      clusterId,
+                      porterApp,
+                    });
+                  }}
+                >
+                  <TagIcon src={refresh} />
+                  Retry
+                </Link>
+              </Tag>
+            </>
+          )}
+          {predeployNotificationsExist && (
+            <>
+              <Spacer inline x={0.5} />
+              <Container row>
+                <Tag borderColor="#FFBF00">
+                  <Link to={`/apps/${appName}/notifications`} color={"#FFBF00"}>
+                    <TagIcon src={alert} />
+                    Notifications
+                  </Link>
+                </Tag>
+              </Container>
+            </>
+          )}
         </Container>
       </Container>
     </StyledEventCard>
@@ -114,6 +168,7 @@ const PreDeployEventCard: React.FC<Props> = ({
 
 export default PreDeployEventCard;
 
-const Wrapper = styled.div`
-  margin-top: -3px;
+const TagIcon = styled.img`
+  height: 12px;
+  margin-right: 3px;
 `;

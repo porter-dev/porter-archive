@@ -67,6 +67,9 @@ export const porterAppNotificationEventMetadataValidator = z.object({
     z.object({
       status: z.literal("FAILURE"),
     }),
+    z.object({
+      status: z.literal("UNKNOWN"),
+    }),
   ]),
 });
 export type PorterAppNotification = z.infer<

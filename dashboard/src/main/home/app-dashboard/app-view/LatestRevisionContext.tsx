@@ -34,6 +34,7 @@ import {
   useDeploymentTarget,
   type DeploymentTarget,
 } from "shared/DeploymentTargetContext";
+import { valueExists } from "shared/util";
 import notFound from "assets/not-found.png";
 
 import {
@@ -123,7 +124,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
   const {
     data: {
       app_revision: latestRevision,
-      notifications: latestNotifications = [],
+      notifications: latestPorterAppNotifications = [],
     } = {},
     status,
   } = useQuery(
@@ -161,7 +162,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
         .parseAsync(res.data);
       return {
         app_revision: appRevision,
-        notifications: deserializeNotifications(porterAppNotifications),
+        notifications: porterAppNotifications,
       };
     },
     {
@@ -301,13 +302,22 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
     if (!latestProto) {
       return [];
     }
-
     const app = clientAppFromProto({
       proto: latestProto,
       overrides: detectedServices,
     });
-    return app.services;
+    return [
+      ...app.services,
+      app.predeploy?.length ? app.predeploy[0] : undefined,
+    ].filter(valueExists);
   }, [latestProto, detectedServices]);
+
+  const latestNotifications = useMemo(() => {
+    return deserializeNotifications(
+      latestPorterAppNotifications,
+      latestClientServices
+    );
+  }, [latestPorterAppNotifications, latestClientServices]);
 
   if (
     status === "loading" ||

@@ -2,25 +2,30 @@ import _ from "lodash";
 
 import { type PorterAppNotification } from "main/home/app-dashboard/app-view/tabs/activity-feed/events/types";
 
+import { type ClientService } from "./services";
+
 export type ClientNotification = {
   isDeployRelated: boolean;
-  serviceName: string;
   messages: PorterAppNotification[];
   timestamp: string;
   id: string;
   appRevisionId: string;
+  service: ClientService;
 };
 
 export function deserializeNotifications(
-  notifications: PorterAppNotification[]
+  notifications: PorterAppNotification[],
+  clientServices: ClientService[]
 ): ClientNotification[] {
   const notificationsGroupedByService = _.groupBy(
     notifications,
     (notification) => notification.service_name
   );
 
-  const clientNotifications = Object.keys(notificationsGroupedByService).map(
-    (serviceName) => {
+  const clientNotifications = clientServices
+    .filter((svc) => notificationsGroupedByService[svc.name.value] != null)
+    .map((svc) => {
+      const serviceName = svc.name.value;
       const messages = orderNotificationsByTimestamp(
         notificationsGroupedByService[serviceName],
         "asc"
@@ -33,14 +38,13 @@ export function deserializeNotifications(
         isDeployRelated: notificationsGroupedByService[serviceName].some(
           (notification) => notification.deployment.status === "PENDING"
         ),
-        serviceName,
         timestamp,
         id,
         messages,
         appRevisionId: messages[0].app_revision_id,
+        service: svc,
       };
-    }
-  );
+    });
 
   return orderNotificationsByTimestamp(clientNotifications, "asc");
 }

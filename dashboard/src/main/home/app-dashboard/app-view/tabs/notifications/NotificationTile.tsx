@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useMemo } from "react";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
@@ -7,7 +8,9 @@ import Text from "components/porter/Text";
 import { type ClientNotification } from "lib/porter-apps/notification";
 
 import { feedDate } from "shared/string_utils";
+import job from "assets/job.png";
 import web from "assets/web.png";
+import worker from "assets/worker.png";
 
 type Props = {
   notification: ClientNotification;
@@ -15,15 +18,24 @@ type Props = {
 };
 
 const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
+  const summary = useMemo(() => {
+    if (
+      notification.service.config.type === "job" ||
+      notification.service.config.type === "predeploy"
+    ) {
+      return "Your job crashed while running";
+    } else if (notification.isDeployRelated) {
+      return "Your service failed to deploy";
+    } else {
+      return "Your service is unhealthy";
+    }
+  }, [JSON.stringify(notification)]);
+
   return (
     <StyledNotificationTile onClick={onClick}>
       <Container row>
         <Container row style={{ width: "200px" }}>
-          <NotificationSummary>
-            {notification.isDeployRelated
-              ? "Your service failed to deploy"
-              : "Your service is unhealthy"}
-          </NotificationSummary>
+          <NotificationSummary>{summary}</NotificationSummary>
         </Container>
         <Spacer inline x={0.5} />
         <Container row style={{ width: "120px" }}>
@@ -32,9 +44,14 @@ const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
         <Spacer inline x={0.5} />
         <Container row style={{ width: "200px" }}>
           <ServiceNameTag>
-            <ServiceTypeIcon src={web} />
+            {match(notification.service.config.type)
+              .with("web", () => <ServiceTypeIcon src={web} />)
+              .with("worker", () => <ServiceTypeIcon src={worker} />)
+              .with("job", () => <ServiceTypeIcon src={job} />)
+              .with("predeploy", () => <ServiceTypeIcon src={job} />)
+              .exhaustive()}
             <Spacer inline x={0.5} />
-            {notification.serviceName}
+            {notification.service.name.value}
           </ServiceNameTag>
         </Container>
       </Container>

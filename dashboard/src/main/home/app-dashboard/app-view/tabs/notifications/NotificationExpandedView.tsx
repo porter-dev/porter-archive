@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useMemo } from "react";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
@@ -12,8 +13,10 @@ import { type ClientNotification } from "lib/porter-apps/notification";
 import { feedDate } from "shared/string_utils";
 import chat from "assets/chat.svg";
 import document from "assets/document.svg";
+import job from "assets/job.png";
 import time from "assets/time.svg";
 import web from "assets/web.png";
+import worker from "assets/worker.png";
 
 type Props = {
   notification: ClientNotification;
@@ -34,18 +37,44 @@ const NotificationExpandedView: React.FC<Props> = ({
 }) => {
   const { showIntercomWithMessage } = useIntercom();
 
+  const summary = useMemo(() => {
+    if (
+      notification.service.config.type === "job" ||
+      notification.service.config.type === "predeploy"
+    ) {
+      return "crashed while running";
+    } else if (notification.isDeployRelated) {
+      return "failed to deploy";
+    }
+  }, [JSON.stringify(notification)]);
+
+  // this is necessary because the name for the pre-deploy job is called "pre-deploy" by the front-end but predeploy in k8s
+  // TODO: standardize the naming of the pre-deploy job
+  const serviceNames = useMemo(() => {
+    if (notification.service.config.type === "predeploy") {
+      return ["predeploy"];
+    } else {
+      return [notification.service.name.value];
+    }
+  }, [notification.service.name.value]);
+
   return (
     <StyledNotificationExpandedView>
       <ExpandedViewContent>
         <Container row>
           <ServiceNameTag>
-            <ServiceTypeIcon src={web} />
+            {match(notification.service.config.type)
+              .with("web", () => <ServiceTypeIcon src={web} />)
+              .with("worker", () => <ServiceTypeIcon src={worker} />)
+              .with("job", () => <ServiceTypeIcon src={job} />)
+              .with("predeploy", () => <ServiceTypeIcon src={job} />)
+              .exhaustive()}
             <Spacer inline x={0.5} />
-            {notification.serviceName}
+            {notification.service.name.value}
           </ServiceNameTag>
           <Spacer inline x={0.5} />
           <Text size={16} color={"#FFBF00"}>
-            {notification.isDeployRelated ? "failed to deploy" : "is unhealthy"}
+            {summary}
           </Text>
         </Container>
         <Spacer y={0.5} />
@@ -135,12 +164,12 @@ const NotificationExpandedView: React.FC<Props> = ({
             projectId={projectId}
             clusterId={clusterId}
             appName={appName}
-            serviceNames={[notification.serviceName]}
+            serviceNames={serviceNames}
             deploymentTargetId={deploymentTargetId}
             appRevisionId={notification.appRevisionId}
             logFilterNames={["service_name"]}
             appId={appId}
-            selectedService={notification.serviceName}
+            selectedService={serviceNames[0]}
             selectedRevisionId={notification.appRevisionId}
             defaultScrollToBottomEnabled={false}
           />

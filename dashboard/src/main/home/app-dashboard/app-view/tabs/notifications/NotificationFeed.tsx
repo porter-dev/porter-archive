@@ -55,12 +55,11 @@ const NotificationFeed: React.FC<Props> = ({
   if (notifications.length === 0) {
     return (
       <Fieldset>
-        <Text size={16}>
-          No notifications found for &ldquo;{appName}&rdquo;
-        </Text>
+        <Text size={16}>This application currently has no notifications. </Text>
         <Spacer height="15px" />
         <Text color="helper">
-          This application currently has no notifications.
+          You will receive notifications here if we need to alert you about any
+          issues with your services.
         </Text>
       </Fieldset>
     );

@@ -301,8 +301,7 @@ const NavButton = styled(SidebarLink)`
   background: ${(props: NavButtonProps) => (props.active ? "#ffffff11" : "")};
 
   :hover {
-    background: ${(props: NavButtonProps) =>
-    props.active ? "#ffffff11" : "#ffffff08"};
+    background: ${(props: any) => (props.active ? "#ffffff11" : "#ffffff08")};
   }
 
   &.active {

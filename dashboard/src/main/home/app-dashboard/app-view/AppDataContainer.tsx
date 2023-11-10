@@ -13,6 +13,7 @@ import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
+import styled from "styled-components";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
@@ -20,7 +21,9 @@ import Banner from "components/porter/Banner";
 import Button from "components/porter/Button";
 import { Error as ErrorComponent } from "components/porter/Error";
 import Icon from "components/porter/Icon";
+import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
 import TabSelector from "components/TabSelector";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
@@ -34,6 +37,7 @@ import {
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import alert from "assets/alert-warning.svg";
 import save from "assets/save-01.svg";
 
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
@@ -48,6 +52,7 @@ import ImageSettingsTab from "./tabs/ImageSettingsTab";
 import JobsTab from "./tabs/JobsTab";
 import LogsTab from "./tabs/LogsTab";
 import MetricsTab from "./tabs/MetricsTab";
+import Notifications from "./tabs/Notifications";
 import Overview from "./tabs/Overview";
 import Settings from "./tabs/Settings";
 
@@ -67,6 +72,7 @@ const validTabs = [
   "helm-overrides",
   "helm-values",
   "job-history",
+  "notifications",
 ] as const;
 const DEFAULT_TAB = "activity";
 type ValidTab = (typeof validTabs)[number];
@@ -99,6 +105,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     servicesFromYaml,
     appEnv,
     setPreviewRevision,
+    latestNotifications,
   } = useLatestRevision();
   const { validateApp } = useAppValidation({
     deploymentTargetID: deploymentTarget.id,
@@ -400,7 +407,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         } else if (appErrors.includes("services")) {
           errorMessage = "Service settings are not properly configured";
           if (
-            errors.app?.services?.root?.message ||
+            errors.app?.services?.root?.message ??
             errors.app?.services?.message
           ) {
             const serviceErrorMessage =
@@ -435,7 +442,33 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [isSubmitting, JSON.stringify(errors)]);
 
   const tabs = useMemo(() => {
+    const numNotifications = latestNotifications.length;
+
     const base = [
+      {
+        label: `Notifications`,
+        value: "notifications",
+        sibling:
+          numNotifications > 0 ? (
+            <Tag borderColor={"#FFBF00"}>
+              <Link
+                to={`/apps/${latestProto.name}/notifications`}
+                color={"#FFBF00"}
+              >
+                <TagIcon src={alert} />
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: "13px",
+                  }}
+                >
+                  {numNotifications}
+                </div>
+              </Link>
+            </Tag>
+          ) : undefined,
+      },
       { label: "Activity", value: "activity" },
       { label: "Overview", value: "overview" },
       { label: "Logs", value: "logs" },
@@ -468,7 +501,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
     base.push({ label: "Settings", value: "settings" });
     return base;
-  }, [deploymentTarget.preview, latestProto.build]);
+  }, [deploymentTarget.preview, latestProto.build, latestNotifications.length]);
 
   useEffect(() => {
     const newProto = previewRevision
@@ -588,6 +621,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             />
           ))
           .with("helm-values", () => <HelmLatestValuesTab />)
+          .with("notifications", () => <Notifications />)
           .otherwise(() => null)}
         <Spacer y={2} />
       </form>
@@ -604,3 +638,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 };
 
 export default AppDataContainer;
+
+const TagIcon = styled.img`
+  height: 13px;
+  margin-right: 3px;
+  margin-top: 1px;
+`;

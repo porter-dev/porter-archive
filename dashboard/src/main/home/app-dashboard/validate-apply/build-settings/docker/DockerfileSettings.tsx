@@ -6,7 +6,6 @@ import { PorterAppFormData } from 'lib/porter-apps';
 import Input from 'components/porter/Input';
 import FileSelector from '../FileSelector';
 import styled from 'styled-components';
-import CollapsibleContainer from 'components/porter/CollapsibleContainer';
 import Button from 'components/porter/Button';
 
 type Props = {

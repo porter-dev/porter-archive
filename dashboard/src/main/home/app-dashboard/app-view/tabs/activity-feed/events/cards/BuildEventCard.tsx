@@ -1,23 +1,34 @@
 import React from "react";
 import styled from "styled-components";
+import { match } from "ts-pattern";
+
+import Container from "components/porter/Container";
+import Icon from "components/porter/Icon";
+import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
+import Text from "components/porter/Text";
+import { type PorterAppRecord } from "main/home/app-dashboard/app-view/AppView";
 
 import build from "assets/build.png";
-
-import run_for from "assets/run_for.png";
-import refresh from "assets/refresh.png";
-
-import Text from "components/porter/Text";
-import Container from "components/porter/Container";
-import Spacer from "components/porter/Spacer";
-import Link from "components/porter/Link";
-import Icon from "components/porter/Icon";
-import { getDuration, getStatusColor, getStatusIcon, triggerWorkflow } from '../utils';
-import { Code, ImageTagContainer, CommitIcon, StyledEventCard } from "./EventCard";
 import document from "assets/document.svg";
-import { type PorterAppBuildEvent } from "../types";
-import { match } from "ts-pattern";
 import pull_request_icon from "assets/pull_request_icon.svg";
-import { type PorterAppRecord } from "main/home/app-dashboard/app-view/AppView";
+import refresh from "assets/refresh.png";
+import run_for from "assets/run_for.png";
+
+import { type PorterAppBuildEvent } from "../types";
+import {
+  getDuration,
+  getStatusColor,
+  getStatusIcon,
+  triggerWorkflow,
+} from "../utils";
+import {
+  Code,
+  CommitIcon,
+  ImageTagContainer,
+  StyledEventCard,
+} from "./EventCard";
 
 type Props = {
   event: PorterAppBuildEvent;
@@ -29,16 +40,16 @@ type Props = {
   porterApp: PorterAppRecord;
 };
 
-const BuildEventCard: React.FC<Props> = ({ 
-  event, 
-  appName, 
-  projectId, 
+const BuildEventCard: React.FC<Props> = ({
+  event,
+  appName,
+  projectId,
   clusterId,
   gitCommitUrl,
-  displayCommitSha, 
+  displayCommitSha,
   porterApp,
 }) => {
-  const renderStatusText = (event: PorterAppBuildEvent) => {
+  const renderStatusText = (event: PorterAppBuildEvent): JSX.Element => {
     const color = getStatusColor(event.status);
     return (
       <StatusContainer color={color}>
@@ -46,39 +57,40 @@ const BuildEventCard: React.FC<Props> = ({
           .with("SUCCESS", () => "Build successful")
           .with("FAILED", () => "Build failed")
           .with("CANCELED", () => "Build canceled")
-          .otherwise(() => "Build in progress...")
-        }
+          .otherwise(() => "Build in progress...")}
       </StatusContainer>
     );
   };
 
-  const renderLogsAndRetry = (event: PorterAppBuildEvent) => {
+  const renderLogsAndRetry = (event: PorterAppBuildEvent): JSX.Element => {
     return (
-        <Wrapper>
-          <Link to={`/apps/${appName}/events?event_id=${event.id}`} hasunderline>
-            <Container row>
-              <Icon src={document} height="10px" />
-              <Spacer inline width="5px" />
-              View logs
-            </Container>
+      <Container row>
+        <Tag>
+          <Link to={`/apps/${appName}/events?event_id=${event.id}`}>
+            <TagIcon src={document} />
+            Logs
           </Link>
-          <Spacer inline x={1} />
-          <Link hasunderline onClick={async () => { await triggerWorkflow({
-            projectId,
-            clusterId,
-            porterApp,
-          }); }}>
-            <Container row>
-              <Icon height="10px" src={refresh} />
-              <Spacer inline width="5px" />
-              Retry
-            </Container>
+        </Tag>
+        <Spacer inline x={0.5} />
+        <Tag>
+          <Link
+            onClick={async () => {
+              await triggerWorkflow({
+                projectId,
+                clusterId,
+                porterApp,
+              });
+            }}
+          >
+            <TagIcon src={refresh} />
+            Retry
           </Link>
-        </Wrapper>
+        </Tag>
+      </Container>
     );
-  }
+  };
 
-  const renderInfoCta = (event: PorterAppBuildEvent) => {
+  const renderInfoCta = (event: PorterAppBuildEvent): JSX.Element | null => {
     switch (event.status) {
       case "SUCCESS":
         return null;
@@ -88,16 +100,18 @@ const BuildEventCard: React.FC<Props> = ({
         return renderLogsAndRetry(event);
       default:
         return (
-          <Wrapper>
-            <Link
-              hasunderline
-              target="_blank"
-              to={`https://github.com/${porterApp.repo_name}/actions/runs/${event.metadata.action_run_id}`}
-            >
-              View live logs
-            </Link>
-            <Spacer inline x={1} />
-          </Wrapper>
+          <Container row>
+            <Tag>
+              <Link
+                target="_blank"
+                to={`https://github.com/${porterApp.repo_name}/actions/runs/${event.metadata.action_run_id}`}
+                showTargetBlankIcon={false}
+              >
+                <TagIcon src={document} />
+                Live logs
+              </Link>
+            </Tag>
+          </Container>
         );
     }
   };
@@ -109,17 +123,21 @@ const BuildEventCard: React.FC<Props> = ({
           <Icon height="16px" src={build} />
           <Spacer inline width="10px" />
           <Text>Application build</Text>
-          {gitCommitUrl && displayCommitSha &&
+          {gitCommitUrl && displayCommitSha && (
             <>
               <Spacer inline x={0.5} />
               <ImageTagContainer>
-                <Link to={gitCommitUrl} target="_blank" showTargetBlankIcon={false}>
+                <Link
+                  to={gitCommitUrl}
+                  target="_blank"
+                  showTargetBlankIcon={false}
+                >
                   <CommitIcon src={pull_request_icon} />
                   <Code>{displayCommitSha}</Code>
                 </Link>
-              </ImageTagContainer> 
+              </ImageTagContainer>
             </>
-          }
+          )}
         </Container>
         <Container row>
           <Icon height="14px" src={run_for} />
@@ -144,15 +162,14 @@ const BuildEventCard: React.FC<Props> = ({
 
 export default BuildEventCard;
 
-const Wrapper = styled.div`
-  display: flex;
-  height: 20px;
-  margin-top: -3px;
-`;
-
 const StatusContainer = styled.div<{ color: string }>`
   display: flex;
   align-items: center;
-  color: ${props => props.color};
+  color: ${(props) => props.color};
   font-size: 13px;
+`;
+
+const TagIcon = styled.img`
+  height: 12px;
+  margin-right: 3px;
 `;

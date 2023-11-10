@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import styled from "styled-components";
 
 type Props = {
@@ -7,6 +7,7 @@ type Props = {
   column?: boolean;
   spaced?: boolean;
   alignItems?: string;
+  style?: React.CSSProperties;
 };
 
 const Container: React.FC<Props> = ({
@@ -15,15 +16,15 @@ const Container: React.FC<Props> = ({
   spaced,
   column,
   alignItems,
+  style,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   return (
     <StyledContainer
       spaced={spaced}
       row={row}
       column={column}
       alignItems={alignItems}
+      style={style}
     >
       {children}
     </StyledContainer>
@@ -36,10 +37,12 @@ const StyledContainer = styled.div<{
   row?: boolean;
   column?: boolean;
   spaced?: boolean;
-  alignItems?: string
+  alignItems?: string;
 }>`
-  display: ${props => props.row || props.column ? "flex" : "block"};
-  flex-direction: ${props => props.row ? "row" : "column"};
-  align-items: ${props => props.alignItems ? props.alignItems : "center"};
-  justify-content: ${props => props.spaced ? "space-between" : "flex-start"};
+  display: ${({ row = false, column = false }) =>
+    row || column ? "flex" : "block"};
+  flex-direction: ${(props) => (props.row ? "row" : "column")};
+  align-items: ${(props) => (props.alignItems ? props.alignItems : "center")};
+  justify-content: ${(props) =>
+    props.spaced ? "space-between" : "flex-start"};
 `;

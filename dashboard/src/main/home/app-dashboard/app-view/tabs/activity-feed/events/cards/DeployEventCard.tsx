@@ -7,12 +7,15 @@ import Container from "components/porter/Container";
 import Icon from "components/porter/Icon";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { useRevisionList } from "lib/hooks/useRevisionList";
 
 import api from "shared/api";
 import deploy from "assets/deploy.png";
+import view_changes from "assets/edit-contained.svg";
+import revert from "assets/fast-backward.svg";
 import pull_request_icon from "assets/pull_request_icon.svg";
 import run_for from "assets/run_for.png";
 
@@ -32,6 +35,7 @@ type Props = {
   clusterId: number;
   gitCommitUrl: string;
   displayCommitSha: string;
+  isMostRecentDeployEvent: boolean;
 };
 
 const DeployEventCard: React.FC<Props> = ({
@@ -195,14 +199,16 @@ const DeployEventCard: React.FC<Props> = ({
     const baseRevisionId = numberToRevisionId[baseRevisionNumber];
     return (
       <>
-        <Link
-          hasunderline
-          onClick={() => {
-            setDiffModalVisible(true);
-          }}
-        >
-          View changes
-        </Link>
+        <Tag>
+          <Link
+            onClick={() => {
+              setDiffModalVisible(true);
+            }}
+          >
+            <TagIcon src={view_changes} />
+            View changes
+          </Link>
+        </Tag>
         {diffModalVisible && (
           <RevisionDiffModal
             base={{
@@ -294,9 +300,8 @@ const DeployEventCard: React.FC<Props> = ({
           {isRevertable && (
             <>
               <Spacer inline x={1} />
-              <TempWrapper>
+              <Tag>
                 <Link
-                  hasunderline
                   onClick={() => {
                     setRevertData({
                       revisionNumber:
@@ -304,12 +309,12 @@ const DeployEventCard: React.FC<Props> = ({
                       id: event.metadata.app_revision_id,
                     });
                   }}
-                  color="#6e9df5"
                 >
+                  <TagIcon src={revert} />
                   Revert to version{" "}
-                  {revisionIdToNumber[event.metadata.app_revision_id]}
+                  {revisionIdToNumber[event.metadata.app_revision_id]}{" "}
                 </Link>
-              </TempWrapper>
+              </Tag>
             </>
           )}
           <Spacer inline x={0.5} />
@@ -324,7 +329,8 @@ const DeployEventCard: React.FC<Props> = ({
               event.metadata.service_deployment_metadata
             }
             appName={appName}
-            revision={revisionIdToNumber[event.metadata.app_revision_id]}
+            revisionNumber={revisionIdToNumber[event.metadata.app_revision_id]}
+            revisionId={event.metadata.app_revision_id}
           />
         </AnimateHeight>
       )}
@@ -343,11 +349,6 @@ const DeployEventCard: React.FC<Props> = ({
 };
 
 export default DeployEventCard;
-
-// TODO: remove after fixing v-align
-const TempWrapper = styled.div`
-  margin-top: -3px;
-`;
 
 const Code = styled.span`
   font-family: monospace;
@@ -377,4 +378,9 @@ const StatusTextContainer = styled.div`
   display: flex;
   align-items: center;
   flex-direction: row;
+`;
+
+const TagIcon = styled.img`
+  height: 12px;
+  margin-right: 3px;
 `;

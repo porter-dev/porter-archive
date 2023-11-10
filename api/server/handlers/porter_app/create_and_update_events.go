@@ -16,7 +16,10 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/deployment_target"
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/porter_app/notifications"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -32,6 +35,7 @@ func NewCreateUpdatePorterAppEventHandler(
 ) *CreateUpdatePorterAppEventHandler {
 	return &CreateUpdatePorterAppEventHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
+		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
@@ -72,6 +76,30 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	if request.Type == types.PorterAppEventType_Build {
 		validateApplyV2 := project.GetFeatureFlag(models.ValidateApplyV2, p.Config().LaunchDarklyClient)
 		reportBuildStatus(ctx, request, p.Config(), user, project, appName, validateApplyV2)
+	}
+
+	// This branch will only be hit for v2 app_event type events
+	if request.ID == "" && request.DeploymentTargetID != "" && request.Type == types.PorterAppEventType_AppEvent {
+		agent, err := p.GetAgent(r, cluster, "")
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting agent")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		if agent == nil {
+			err := telemetry.Error(ctx, span, nil, "agent not found")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		err = p.handleNotification(ctx, request, project.ID, cluster.ID, *agent)
+		if err != nil {
+			e := telemetry.Error(ctx, span, err, "error handling notification")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+		return
 	}
 
 	if request.ID == "" {
@@ -589,5 +617,41 @@ func (p *CreateUpdatePorterAppEventHandler) updateDeployEventMatchingAppEventDet
 	updateMetadataMap["deploy_status"] = string(status)
 	// we do not need the returned updated event
 	_ = p.updateDeployEvent(ctx, porterAppName, porterAppId, deploymentTargetID, updateMetadataMap)
+	return nil
+}
+
+// handleNotification handles all logic for notifications in app v2
+func (p *CreateUpdatePorterAppEventHandler) handleNotification(ctx context.Context,
+	request *types.CreateOrUpdatePorterAppEventRequest,
+	projectId, clusterId uint,
+	agent kubernetes.Agent,
+) error {
+	ctx, span := telemetry.NewSpan(ctx, "serve-handle-notification")
+	defer span.End()
+
+	// get the namespace associated with the deployment target id
+	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
+		ProjectID:          int64(projectId),
+		ClusterID:          int64(clusterId),
+		DeploymentTargetID: request.DeploymentTargetID,
+		CCPClient:          p.Config().ClusterControlPlaneClient,
+	})
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error getting deployment target details")
+	}
+
+	inp := notifications.HandleNotificationInput{
+		RawAgentEventMetadata: request.Metadata,
+		EventRepo:             p.Repo().PorterAppEvent(),
+		DeploymentTargetID:    request.DeploymentTargetID,
+		Namespace:             deploymentTarget.Namespace,
+		K8sAgent:              agent,
+	}
+
+	err = notifications.HandleNotification(ctx, inp)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "error handling notification")
+	}
+
 	return nil
 }

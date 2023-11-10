@@ -118,6 +118,8 @@ const (
 	PorterAppEventType_PreDeploy PorterAppEventType = "PRE_DEPLOY"
 	// PorterAppEventType_AppEvent represents a Porter Stack App Event which occurred whilst the application was running, such as an OutOfMemory (OOM) error
 	PorterAppEventType_AppEvent PorterAppEventType = "APP_EVENT"
+	// PorterAppEventType_Notification represents a translation of the porter agent app event into the new notification format, which details everything that occurs while the app is running
+	PorterAppEventType_Notification PorterAppEventType = "NOTIFICATION"
 )
 
 // PorterAppEventStatus is an alias for a string that represents a Porter Stack Event Status

@@ -19,6 +19,10 @@ import Text from "components/porter/Text";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import { clientAppFromProto, type SourceOptions } from "lib/porter-apps";
 import {
+  deserializeNotifications,
+  type ClientNotification,
+} from "lib/porter-apps/notification";
+import {
   type ClientService,
   type DetectedServices,
 } from "lib/porter-apps/services";
@@ -30,6 +34,7 @@ import {
   useDeploymentTarget,
   type DeploymentTarget,
 } from "shared/DeploymentTargetContext";
+import { valueExists } from "shared/util";
 import notFound from "assets/not-found.png";
 
 import {
@@ -37,11 +42,13 @@ import {
   type PopulatedEnvGroup,
 } from "../validate-apply/app-settings/types";
 import { porterAppValidator, type PorterAppRecord } from "./AppView";
+import { porterAppNotificationEventMetadataValidator } from "./tabs/activity-feed/events/types";
 
 type LatestRevisionContextType = {
   porterApp: PorterAppRecord;
   latestRevision: AppRevision;
   latestProto: PorterApp;
+  latestNotifications: ClientNotification[];
   servicesFromYaml: DetectedServices | null;
   clusterId: number;
   projectId: number;
@@ -54,12 +61,13 @@ type LatestRevisionContextType = {
   latestClientServices: ClientService[];
 };
 
-export const LatestRevisionContext =
-  createContext<LatestRevisionContextType | null>(null);
+const LatestRevisionContext = createContext<LatestRevisionContextType | null>(
+  null
+);
 
 export const useLatestRevision = (): LatestRevisionContextType => {
   const context = useContext(LatestRevisionContext);
-  if (context === null) {
+  if (context == null) {
     throw new Error(
       "useLatestRevision must be used within a LatestRevisionContext"
     );
@@ -113,7 +121,13 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
     }
   );
 
-  const { data: latestRevision, status } = useQuery(
+  const {
+    data: {
+      app_revision: latestRevision,
+      notifications: latestPorterAppNotifications = [],
+    } = {},
+    status,
+  } = useQuery(
     [
       "getLatestRevision",
       currentProject?.id,
@@ -123,7 +137,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
     ],
     async () => {
       if (!appParamsExist) {
-        return;
+        return { app_revision: undefined, notifications: [] };
       }
       const res = await api.getLatestRevision(
         "<token>",
@@ -137,12 +151,19 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
         }
       );
 
-      const revisionData = await z
+      const {
+        app_revision: appRevision,
+        notifications: porterAppNotifications,
+      } = await z
         .object({
           app_revision: appRevisionValidator,
+          notifications: z.array(porterAppNotificationEventMetadataValidator),
         })
         .parseAsync(res.data);
-      return revisionData.app_revision;
+      return {
+        app_revision: appRevision,
+        notifications: porterAppNotifications,
+      };
     },
     {
       enabled: appParamsExist,
@@ -281,13 +302,22 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
     if (!latestProto) {
       return [];
     }
-
     const app = clientAppFromProto({
       proto: latestProto,
       overrides: detectedServices,
     });
-    return app.services;
+    return [
+      ...app.services,
+      app.predeploy?.length ? app.predeploy[0] : undefined,
+    ].filter(valueExists);
   }, [latestProto, detectedServices]);
+
+  const latestNotifications = useMemo(() => {
+    return deserializeNotifications(
+      latestPorterAppNotifications,
+      latestClientServices
+    );
+  }, [latestPorterAppNotifications, latestClientServices]);
 
   if (
     status === "loading" ||
@@ -326,6 +356,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
       value={{
         latestRevision,
         latestProto,
+        latestNotifications,
         porterApp,
         clusterId: currentCluster.id,
         projectId: currentProject.id,

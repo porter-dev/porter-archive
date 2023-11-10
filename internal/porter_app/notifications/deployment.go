@@ -205,12 +205,12 @@ var fatalDeploymentErrorCodes = []porter_error.PorterErrorCode{
 	porter_error.PorterErrorCode_RestartedDueToError,
 	porter_error.PorterErrorCode_MemoryLimitExceeded_ScaleUp,
 	porter_error.PorterErrorCode_CPULimitExceeded_ScaleUp,
+	porter_error.PorterErrorCode_CannotBeScheduled,
 }
 
 // errorCodeIndicatesDeploymentFailure returns true if the error code indicates that the deployment will eventually time out and fail
 // we use this to report deployment failure to the user early, rather than waiting for the deployment to time out
 func errorCodeIndicatesDeploymentFailure(errorCode porter_error.PorterErrorCode) bool {
-	// if any of the fatal deployment error codes matches the provided error code, then the deployment will fail
 	for _, fatalErrorCode := range fatalDeploymentErrorCodes {
 		if errorCode == fatalErrorCode {
 			return true

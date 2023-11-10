@@ -60,6 +60,7 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 		telemetry.AttributeKV{Key: "app-revision-id", Value: hydratedNotification.AppRevisionID},
 		telemetry.AttributeKV{Key: "agent-event-id", Value: hydratedNotification.AgentEventID},
 		telemetry.AttributeKV{Key: "agent-detail", Value: hydratedNotification.AgentDetail},
+		telemetry.AttributeKV{Key: "agent-summary", Value: hydratedNotification.AgentSummary},
 	)
 
 	if !strings.Contains(hydratedNotification.AgentSummary, "job run") {

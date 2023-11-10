@@ -3,6 +3,7 @@ package porter_error
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 const restartedWithErrorCodePattern = `restarted with exit code (\S+)`
@@ -28,7 +29,10 @@ var ErrorCodeToProvider = map[PorterErrorCode]ErrorDetailsProvider{
 	PorterErrorCode_RestartedDueToError:                 RestartedDueToErrorProvider{},
 	PorterErrorCode_InvalidImageError:                   InvalidImageErrorProvider{},
 	PorterErrorCode_MemoryLimitExceeded:                 MemoryLimitExceededErrorProvider{},
+	PorterErrorCode_MemoryLimitExceeded_ScaleUp:         MemoryLimitExceededScaleUpErrorProvider{},
 	PorterErrorCode_CPULimitExceeded:                    CPULimitExceededErrorProvider{},
+	PorterErrorCode_CPULimitExceeded_ScaleUp:            CPULimitExceededScaleUpErrorProvider{},
+	PorterErrorCode_CannotBeScheduled:                   CannotBeScheduledErrorProvider{},
 }
 
 // NonZeroExitCodeErrorProvider provides error details for NonZeroExitCode errors.
@@ -259,6 +263,27 @@ func (e MemoryLimitExceededErrorProvider) Documentation(rawAgentDetail string) [
 	}
 }
 
+// MemoryLimitExceededScaleUpErrorProvider provides error details for MemoryLimitExceededError_ScaleUp errors that occur.
+type MemoryLimitExceededScaleUpErrorProvider struct{}
+
+// Detail returns the error detail for MemoryLimitExceededError_ScaleUp errors.
+func (e MemoryLimitExceededScaleUpErrorProvider) Detail(rawAgentDetail string) string {
+	return "The service is requesting more memory than the underlying infrastructure can provide."
+}
+
+// MitigationSteps returns the mitigation steps for MemoryLimitExceededError_ScaleUp errors.
+func (e MemoryLimitExceededScaleUpErrorProvider) MitigationSteps(rawAgentDetail string) string {
+	return "Please reduce the memory allocation for the service, then redeploy. Alternatively, you can choose a machine type with higher resource limits in Infrastructure -> Advanced settings."
+}
+
+// Documentation returns the documentation links for MemoryLimitExceededError_ScaleUp errors.
+func (e MemoryLimitExceededScaleUpErrorProvider) Documentation(rawAgentDetail string) []string {
+	return []string{
+		"https://docs.porter.run/standard/deploying-applications/runtime-configuration-options/web-applications#resources",
+		"https://docs.porter.run/other/kubernetes-101#resources",
+	}
+}
+
 // CPULimitExceededErrorProvider provides error details for CPULimitExceededError errors.
 type CPULimitExceededErrorProvider struct{}
 
@@ -276,5 +301,72 @@ func (e CPULimitExceededErrorProvider) MitigationSteps(rawAgentDetail string) st
 func (e CPULimitExceededErrorProvider) Documentation(rawAgentDetail string) []string {
 	return []string{
 		"https://docs.porter.run/standard/deploying-applications/runtime-configuration-options/web-applications#resources",
+	}
+}
+
+// CPULimitExceededScaleUpErrorProvider provides error details for CPULimitExceededError_ScaleUp errors that occur.
+type CPULimitExceededScaleUpErrorProvider struct{}
+
+// Detail returns the error detail for CPULimitExceededError_ScaleUp errors.
+func (e CPULimitExceededScaleUpErrorProvider) Detail(rawAgentDetail string) string {
+	return "The service is requesting more CPU than the underlying infrastructure can provide."
+}
+
+// MitigationSteps returns the mitigation steps for CPULimitExceededError_ScaleUp errors.
+func (e CPULimitExceededScaleUpErrorProvider) MitigationSteps(rawAgentDetail string) string {
+	return "Please reduce the CPU allocation for the service, then redeploy. Alternatively, you can choose a machine type with higher resource limits in Infrastructure -> Advanced settings."
+}
+
+// Documentation returns the documentation links for CPULimitExceededError_ScaleUp errors.
+func (e CPULimitExceededScaleUpErrorProvider) Documentation(rawAgentDetail string) []string {
+	return []string{
+		"https://docs.porter.run/standard/deploying-applications/runtime-configuration-options/web-applications#resources",
+		"https://docs.porter.run/other/kubernetes-101#resources",
+	}
+}
+
+// CannotBeScheduledErrorProvider provides error details for CannotBeScheduledError errors.
+type CannotBeScheduledErrorProvider struct{}
+
+// Detail returns the error detail for CannotBeScheduledError errors.
+func (e CannotBeScheduledErrorProvider) Detail(rawAgentDetail string) string {
+	prefix := "The service cannot be scheduled to run on the underlying infrastructure"
+	lowercaseDetail := strings.ToLower(rawAgentDetail)
+	if strings.Contains(lowercaseDetail, "insufficient cpu") && strings.Contains(lowercaseDetail, "insufficient memory") {
+		return fmt.Sprintf("%s because the service is requesting too much CPU and memory.", prefix)
+	}
+	if strings.Contains(lowercaseDetail, "insufficient cpu") {
+		return fmt.Sprintf("%s because the service is requesting too much CPU.", prefix)
+	}
+	if strings.Contains(lowercaseDetail, "Insufficient memory") {
+		return fmt.Sprintf("%s because the service is requesting too much memory.", prefix)
+	}
+
+	return fmt.Sprintf("%s.", prefix)
+}
+
+// MitigationSteps returns the mitigation steps for CannotBeScheduledError errors.
+func (e CannotBeScheduledErrorProvider) MitigationSteps(rawAgentDetail string) string {
+	lowercaseDetail := strings.ToLower(rawAgentDetail)
+	suffix := "Alternatively, you can choose a machine type with higher resource limits in Infrastructure -> Advanced settings."
+
+	if strings.Contains(lowercaseDetail, "insufficient cpu") && strings.Contains(lowercaseDetail, "insufficient memory") {
+		return fmt.Sprintf("Please reduce the CPU and memory allocation for the service, then redeploy. %s", suffix)
+	}
+	if strings.Contains(lowercaseDetail, "insufficient cpu") {
+		return fmt.Sprintf("Please reduce the CPU allocation for the service, then redeploy. %s", suffix)
+	}
+	if strings.Contains(lowercaseDetail, "Insufficient memory") {
+		return fmt.Sprintf("Please reduce the memory allocation for the service, then redeploy. %s", suffix)
+	}
+
+	return fmt.Sprintf("Please try reducing the CPU and memory allocation for the service, then redeploy. %s", suffix)
+}
+
+// Documentation returns the documentation links for CannotBeScheduledError errors.
+func (e CannotBeScheduledErrorProvider) Documentation(rawAgentDetail string) []string {
+	return []string{
+		"https://docs.porter.run/standard/deploying-applications/runtime-configuration-options/web-applications#resources",
+		"https://docs.porter.run/other/kubernetes-101#resources",
 	}
 }

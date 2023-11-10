@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/porter-dev/porter/internal/porter_app"
+	"github.com/porter-dev/porter/internal/porter_app/notifications"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -50,6 +51,8 @@ type LatestAppRevisionRequest struct {
 type LatestAppRevisionResponse struct {
 	// AppRevision is the latest revision for the app
 	AppRevision porter_app.Revision `json:"app_revision"`
+	// Notifications are the notifications associated with the app revision
+	Notifications []notifications.Notification `json:"notifications"`
 }
 
 // ServeHTTP translates the request into a CurrentAppRevision grpc request, forwards to the cluster control plane, and returns the response.
@@ -107,7 +110,10 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if porterApps[0].ID == 0 {
+	appId := porterApps[0].ID
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-id", Value: appId})
+
+	if appId == 0 {
 		err := telemetry.Error(ctx, span, err, "porter app id is missing")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
@@ -115,7 +121,7 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	currentAppRevisionReq := connect.NewRequest(&porterv1.CurrentAppRevisionRequest{
 		ProjectId:          int64(project.ID),
-		AppId:              int64(porterApps[0].ID),
+		AppId:              int64(appId),
 		DeploymentTargetId: request.DeploymentTargetID,
 	})
 
@@ -140,8 +146,32 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	appRevisionId := encodedRevision.ID
+	notificationEvents, err := c.Repo().PorterAppEvent().ReadNotificationsByAppRevisionID(ctx, appId, appRevisionId)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting notifications from repo")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+	latestNotifications := make([]notifications.Notification, 0)
+	for _, event := range notificationEvents {
+		notification, err := notifications.NotificationFromPorterAppEvent(event)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error converting porter app event to notification")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		if notification == nil {
+			err := telemetry.Error(ctx, span, err, "notification is nil")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		latestNotifications = append(latestNotifications, *notification)
+	}
+
 	response := LatestAppRevisionResponse{
-		AppRevision: encodedRevision,
+		AppRevision:   encodedRevision,
+		Notifications: latestNotifications,
 	}
 
 	c.WriteResult(w, r, response)

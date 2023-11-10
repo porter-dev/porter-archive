@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext"],
+    "lib": ["dom", "esnext"],
     "baseUrl": "src",
     "outDir": "./build/",
     "sourceMap": true,
     "noImplicitAny": true,
-    "module": "es6",
+    "module": "esnext",
+    "esModuleInterop": true,
     "target": "es5",
     "jsx": "react",
     "allowJs": true,

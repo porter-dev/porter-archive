@@ -15,16 +15,15 @@ import { isAlphanumeric } from "shared/common";
 import InputRow from "components/form-components/InputRow";
 import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
-import WelcomeForm from "./WelcomeForm";
 import { trackCreateNewProject } from "shared/anayltics";
-import { ProjectListType } from "shared/types";
+import type { ProjectListType } from "shared/types";
 
 type ValidationError = {
   hasError: boolean;
   description?: string;
 };
 
-export const NewProjectFC = () => {
+export const NewProjectFC = (): React.ReactNode => {
   const {
     user,
     setProjects,

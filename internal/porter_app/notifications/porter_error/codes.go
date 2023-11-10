@@ -49,6 +49,8 @@ const (
 	PorterErrorCode_CPULimitExceeded PorterErrorCode = 70
 	// PorterErrorCode_CPULimitExceeded_ScaleUp is the error code for a CPU limit exceeded when scaling up
 	PorterErrorCode_CPULimitExceeded_ScaleUp PorterErrorCode = 71
+	// PorterErrorCode_CannotBeScheduled is the error code for a pod that cannot be scheduled
+	PorterErrorCode_CannotBeScheduled PorterErrorCode = 80
 )
 
 // ErrorCode parses the agent summary and possibly the detail (if it needs supplemental info) to return a standard Porter error code
@@ -89,6 +91,10 @@ func ErrorCode(agentSummary, agentDetail string) PorterErrorCode {
 
 	if strings.Contains(agentSummary, "requesting too much cpu and cannot scale up") {
 		return PorterErrorCode_CPULimitExceeded_ScaleUp
+	}
+
+	if strings.Contains(agentSummary, "cannot be scheduled") {
+		return PorterErrorCode_CannotBeScheduled
 	}
 
 	return errorCode

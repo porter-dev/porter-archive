@@ -18,7 +18,7 @@ jobs:
           go-version-file: go.mod
       - name: Build Linux binaries
         run: |
-          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=dev' -X 'github.com/porter-dev/porter/cli/cmd/errors.SentryDSN=${{secrets.SENTRY_DSN}}'" -a -tags cli -o ./porter ./cli &
+          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=dev_${{ github.sha }}' -X 'github.com/porter-dev/porter/cli/cmd/errors.SentryDSN=${{secrets.SENTRY_DSN}}'" -a -tags cli -o ./porter ./cli &
           wait
         env:
           GOOS: linux
@@ -27,7 +27,7 @@ jobs:
       - name: Zip Linux binaries
         run: |
           mkdir -p ./release/linux
-          zip --junk-paths ./release/linux/porter_dev_Linux_x86_64.zip ./porter
+          zip --junk-paths ./release/linux/porter_dev_${{ github.sha }}_Linux_x86_64.zip ./porter
       - name: Upload binaries
         uses: actions/upload-artifact@v3
         with:
@@ -49,8 +49,8 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: dev
-          name: Release dev cli
+          tag_name: dev_${{ github.sha }}
+          name: Release dev cli for ${{ github.sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
           draft: false
           prerelease: true
@@ -59,11 +59,11 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TAG: dev
+          GITHUB_TAG: dev_${{ github.sha }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/linux/porter_dev_Linux_x86_64.zip
-          asset_name: porter_dev_Linux_x86_64.zip
+          asset_path: ./release/linux/porter_dev_${{ github.sha }}_Linux_x86_64.zip
+          asset_name: porter_dev_${{ github.sha }}_Linux_x86_64.zip
           asset_content_type: application/zip
   build-push-docker-cli:
     name: Build a new porter-cli docker image and push to dev tag

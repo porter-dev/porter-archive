@@ -5,9 +5,9 @@ import EnvEditorModal from "main/home/modals/EnvEditorModal";
 
 import upload from "assets/upload.svg";
 import { dotenv_parse } from "shared/string_utils";
-import { NewPopulatedEnvGroup } from "components/porter-form/types";
+import { type NewPopulatedEnvGroup } from "components/porter-form/types";
 import Spacer from "components/porter/Spacer";
-import { PorterAppFormData } from "lib/porter-apps";
+import { type PorterAppFormData } from "lib/porter-apps";
 import { useFormContext, useFieldArray } from "react-hook-form";
 import EnvVarRow from "./EnvVarRow";
 
@@ -35,12 +35,19 @@ const EnvVariables = ({
     name: "app.env",
   });
 
-  const isKeyOverriding = (key: string) => {
+  const isKeyOverriding = (key: string): boolean => {
     if (!syncedEnvGroups) return false;
     return syncedEnvGroups.some(envGroup =>
       key in envGroup.variables || key in envGroup?.secret_variables
     );
   };
+
+  const invalidKey = (key: string): boolean => {
+    const isValid = /^[A-Za-z]/.test(key);
+
+    return isValid;
+  };
+
 
   const readFile = (env: string) => {
     const envObj = dotenv_parse(env);
@@ -69,8 +76,9 @@ const EnvVariables = ({
             key={entry.id}
             entry={entry}
             index={i}
-            remove={() => remove(i)}
+            remove={() => { remove(i); }}
             isKeyOverriding={isKeyOverriding}
+            invalidKey={invalidKey}
           />
         )}
         <InputWrapper>
@@ -88,24 +96,24 @@ const EnvVariables = ({
             <i className="material-icons">add</i> Add Row
           </AddRowButton>
           <Spacer x={0.5} inline />
-            <UploadButton
-              onClick={() => {
-                setShowEditorModal(true);
-              }}
-            >
-              <img src={upload} alt="Upload" /> Copy from File
-            </UploadButton>
+          <UploadButton
+            onClick={() => {
+              setShowEditorModal(true);
+            }}
+          >
+            <img src={upload} alt="Upload" /> Copy from File
+          </UploadButton>
         </InputWrapper>
       </StyledInputArray>
       {showEditorModal && (
         <Modal
-          onRequestClose={() => setShowEditorModal(false)}
+          onRequestClose={() => { setShowEditorModal(false); }}
           width="60%"
           height="650px"
         >
           <EnvEditorModal
-            closeModal={() => setShowEditorModal(false)}
-            setEnvVariables={(envFile: string) => readFile(envFile)}
+            closeModal={() => { setShowEditorModal(false); }}
+            setEnvVariables={(envFile: string) => { readFile(envFile); }}
           />
         </Modal>
       )}

@@ -1,9 +1,39 @@
 on:
   push:
     branches:
-      - master
+      - dev_cli
 name: Release dev cli
 jobs:
+  build-linux:
+    name: Build Linux binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          cache: false
+          go-version: '1.20.5'
+          go-version-file: go.mod
+      - name: Build Linux binaries
+        run: |
+          go build -ldflags="-w -s -X 'github.com/porter-dev/porter/cli/cmd/config.Version=dev' -X 'github.com/porter-dev/porter/cli/cmd/errors.SentryDSN=${{secrets.SENTRY_DSN}}'" -a -tags cli -o ./porter ./cli &
+          wait
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 0
+      - name: Zip Linux binaries
+        run: |
+          mkdir -p ./release/linux
+          zip --junk-paths ./release/linux/porter_dev_Linux_x86_64.zip ./porter
+      - name: Upload binaries
+        uses: actions/upload-artifact@v3
+        with:
+          path: ./release/linux
+          name: linux-binaries
+          retention-days: 1
   build-push-docker-cli:
     name: Build a new porter-cli docker image and push to dev tag
     runs-on: ubuntu-latest

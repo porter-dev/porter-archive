@@ -36,7 +36,9 @@ export function deserializeNotifications(
         // if the deployment is PENDING for any of the notifications, assume that they are all related to the failing deployment
         // if not, then the deployment has already occurred
         isDeployRelated: notificationsGroupedByService[serviceName].some(
-          (notification) => notification.deployment.status === "PENDING"
+          (notification) =>
+            notification.deployment.status === "PENDING" ||
+            notification.deployment.status === "FAILURE"
         ),
         timestamp,
         id,

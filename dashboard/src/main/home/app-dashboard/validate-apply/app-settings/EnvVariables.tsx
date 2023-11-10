@@ -43,7 +43,7 @@ const EnvVariables = ({
   };
 
   const invalidKey = (key: string): boolean => {
-    const isValid = !/^[0-9\s]/.test(key);
+    const isValid = /^[A-Za-z]/.test(key);
 
     return isValid;
   };

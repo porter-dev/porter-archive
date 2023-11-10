@@ -26,11 +26,11 @@ const EnvVarRow: React.FC<Props> = ({
     const keys = watch(`app.env.${index}.key`);
 
     const validateKey = (key: string): boolean => {
-        const isValid = !/^[0-9\s]/.test(key);
+        const isValid = /^[A-Za-z]/.test(key);
         if (!isValid) {
             setError(`app.env.${index}.key`, {
                 type: "manual",
-                message: "Key cannot start with a number or a space",
+                message: "Key must begin with a letter",
             });
         } else {
             clearErrors(`app.env.${index}.key`);
@@ -173,7 +173,7 @@ const EnvVarRow: React.FC<Props> = ({
             {!invalidKey(keys) && (
                 <>
                     <Spacer x={1} inline />
-                    <Text color={'#fbc902'}>Key cannot start with a number or a space</Text>
+                    <Text color={'#fbc902'}>Key must begin with a letter</Text>
                 </>
             )}
             {isKeyOverriding(entry.key) && (

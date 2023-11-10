@@ -37,6 +37,7 @@ jobs:
   build-push-docker-cli:
     name: Build a new porter-cli docker image and push to dev tag
     runs-on: ubuntu-latest
+    needs: build-linux
     steps:
       - name: Checkout
         uses: actions/checkout@v3

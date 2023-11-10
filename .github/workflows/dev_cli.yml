@@ -78,10 +78,11 @@ jobs:
       - name: Build
         run: |
           docker build ./services/porter_cli_container \
+            -t ghcr.io/porter-dev/porter/porter-cli:dev \
             -f ./services/porter_cli_container/Dockerfile \
             --build-arg VERSION=dev \
             --build-arg SENTRY_DSN=${{secrets.SENTRY_DSN}}
       - name: Push to GHCR
         run: |
-          docker tag ghcr.io/porter-dev/porter/porter-cli:dev
+          docker tag ghcr.io/porter-dev/porter/porter-cli:dev ghcr.io/porter-dev/porter/porter-cli:dev
           docker push ghcr.io/porter-dev/porter/porter-cli:dev

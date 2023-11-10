@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - "master"
+      - master
 name: Release dev cli
 jobs:
   build-push-docker-cli:

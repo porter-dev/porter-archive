@@ -61,7 +61,7 @@ const templateBlacklist = [
 const AddOnDashboard: React.FC<Props> = ({
 }) => {
 
-  const { currentProject, currentCluster } = useAuthState();
+  const { currentProject, currentCluster } = useContext(Context);
   const [addOns, setAddOns] = useState([]);
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState("grid");

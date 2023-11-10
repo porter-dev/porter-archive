@@ -1,0 +1,25 @@
+on:
+  push:
+    branches:
+      - master
+name: Release dev cli
+jobs:
+  build-push-docker-cli:
+    name: Build a new porter-cli docker image and push to dev tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Login to GHCR
+        id: login-ghcr
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Build
+        run: |
+          docker build ./services/porter_cli_container \
+            -f ./services/porter_cli_container/Dockerfile \
+            --build-arg VERSION=dev \
+            --build-arg SENTRY_DSN=${{secrets.SENTRY_DSN}}
+      - name: Push to GHCR
+        run: |
+          docker tag ghcr.io/porter-dev/porter/porter-cli:dev
+          docker push ghcr.io/porter-dev/porter/porter-cli:dev

@@ -91,7 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:   
     - name: Porter app run
-      uses: porter-dev/porter-cli-action@latest
+      uses: porter-dev/porter-cli-action@v0.1.0
       with:
         command: app run app-integration-tests -- /app/trigger
       env:

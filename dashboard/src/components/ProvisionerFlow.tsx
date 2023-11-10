@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo } from "react";
+import React, { useState, useContext } from "react";
 import styled from "styled-components";
 
 import { integrationList } from "shared/common";
@@ -14,37 +14,34 @@ import AzureCredentialForm from "components/AzureCredentialForm";
 import AWSCostConsent from "./AWSCostConsent";
 import AzureCostConsent from "./AzureCostConsent";
 import GCPCostConsent from "./GCPCostConsent";
+import { type Props } from "./porter-form/PorterFormContextProvider";
 
 const providers = ["aws", "gcp", "azure"];
 
-type Props = {};
 
-const ProvisionerFlow: React.FC<Props> = ({ }) => {
+
+const ProvisionerFlow: React.FC<Props> = () => {
   const {
-    usage,
-    hasBillingEnabled,
     currentProject,
-    featurePreview,
   } = useContext(Context);
   const [currentStep, setCurrentStep] = useState("cloud");
   const [credentialId, setCredentialId] = useState("");
   const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
-  const [confirmCost, setConfirmCost] = useState("");
   const [useCloudFormationForm, setUseCloudFormationForm] = useState(true);
   const [selectedProvider, setSelectedProvider] = useState("");
 
-  const markStepCostConsent = async (step: string, provider: string) => {
+  const markStepCostConsent = async (step: string, provider: string): Promise<void> => {
     try {
       await api.updateOnboardingStep("<token>", { step, provider }, { project_id: currentProject.id });
     } catch (err) {
-      console.log(err);
+      ;
     }
   };
 
-  const openCostConsentModal = (provider: string) => {
+  const openCostConsentModal = (provider: string): void => {
     setSelectedProvider(provider);
     setShowCostConfirmModal(true);
-    markStepCostConsent("cost-consent-opened", provider);
+    void markStepCostConsent("cost-consent-opened", provider);
   };
 
   if (currentStep === "cloud") {
@@ -54,7 +51,7 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
           <Helper>Select your hosting backend:</Helper>
           <BlockList>
             {providers.map((provider: string, i: number) => {
-              let providerInfo = integrationList[provider];
+              const providerInfo = integrationList[provider];
               return (
                 <Block
                   key={i}
@@ -63,7 +60,7 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                     (provider === "gcp" && !currentProject?.azure_enabled)
                   }
                   onClick={() => {
-                    if ((provider != "gcp" || currentProject?.azure_enabled)) {
+                    if ((provider !== "gcp" || currentProject?.azure_enabled)) {
                       openCostConsentModal(provider);
                       // setSelectedProvider(provider);
                       // setCurrentStep("credentials");
@@ -85,22 +82,20 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
             <AWSCostConsent
               setCurrentStep={setCurrentStep}
               setShowCostConfirmModal={setShowCostConfirmModal}
-              markCostConsentComplete={() => {
+              markCostConsentComplete={async () => {
                 try {
-                  markStepCostConsent("cost-consent-complete", "aws");
+                  void markStepCostConsent("cost-consent-complete", "aws");
                 } catch (err) {
-                  console.log(err);
-                }
 
+                }
                 if (currentProject != null) {
                   try {
-                    api.inviteAdmin(
+                    await api.inviteAdmin(
                       "<token>",
                       {},
                       { project_id: currentProject.id }
                     );
                   } catch (err) {
-                    console.log(err);
                   }
                 }
               }}
@@ -110,22 +105,20 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
               <GCPCostConsent
                 setCurrentStep={setCurrentStep}
                 setShowCostConfirmModal={setShowCostConfirmModal}
-                markCostConsentComplete={() => {
+                markCostConsentComplete={async () => {
                   try {
-                    markStepCostConsent("cost-consent-complete", "gcp");
+                    void markStepCostConsent("cost-consent-complete", "gcp");
                   } catch (err) {
-                    console.log(err);
                   }
-
                   if (currentProject != null) {
                     try {
-                      api.inviteAdmin(
+                      await api.inviteAdmin(
                         "<token>",
                         {},
                         { project_id: currentProject.id }
                       );
                     } catch (err) {
-                      console.log(err);
+
                     }
                   }
                 }}
@@ -135,21 +128,21 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
               <AzureCostConsent
                 setCurrentStep={setCurrentStep}
                 setShowCostConfirmModal={setShowCostConfirmModal}
-                markCostConsentComplete={() => {
+                markCostConsentComplete={async () => {
                   try {
-                    markStepCostConsent("cost-consent-complete", "azure");
+                    void markStepCostConsent("cost-consent-complete", "azure");
                   } catch (err) {
-                    console.log(err);
+
                   }
                   if (currentProject != null) {
                     try {
-                      api.inviteAdmin(
+                      await api.inviteAdmin(
                         "<token>",
                         {},
                         { project_id: currentProject.id }
                       );
                     } catch (err) {
-                      console.log(err);
+
                     }
                   }
                 }}
@@ -158,67 +151,65 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
       </>
     );
   } else if (currentStep === "credentials") {
-    return (
-      (selectedProvider === "aws" &&
-        (useCloudFormationForm ? (
+    if (selectedProvider === "aws") {
+      if (useCloudFormationForm) {
+        return (
           <CloudFormationForm
-            goBack={() => setCurrentStep("cloud")}
-            proceed={(id) => {
+            goBack={() => { setCurrentStep("cloud"); }}
+            proceed={(id: string) => {
               setCredentialId(id);
               setCurrentStep("cluster");
             }}
-            switchToCredentialFlow={() => setUseCloudFormationForm(false)}
+            switchToCredentialFlow={() => { setUseCloudFormationForm(false); }}
           />
-        ) : (
+        );
+      } else {
+        return (
           <CredentialsForm
-            goBack={() => setCurrentStep("cloud")}
-            proceed={(id) => {
+            goBack={() => { setCurrentStep("cloud"); }}
+            proceed={(id: string) => {
               setCredentialId(id);
               setCurrentStep("cluster");
             }}
           />
-        ))) ||
-      (selectedProvider === "azure" && (
+        );
+      }
+    } else if (selectedProvider === "azure") {
+      return (
         <AzureCredentialForm
-          goBack={() => setCurrentStep("cloud")}
-          proceed={(id) => {
+          goBack={() => { setCurrentStep("cloud"); }}
+          proceed={(id: string) => {
             setCredentialId(id);
             setCurrentStep("cluster");
           }}
         />
-      )) ||
-      (selectedProvider === "gcp" && (
+      );
+    } else if (selectedProvider === "gcp") {
+      return (
         <GCPCredentialsForm
-          goBack={() => setCurrentStep("cloud")}
-          proceed={(id) => {
+          goBack={() => { setCurrentStep("cloud"); }}
+          proceed={(id: string) => {
             setCredentialId(id);
             setCurrentStep("cluster");
           }}
         />
-      ))
-    );
+      );
+    }
+    return null;
   } else if (currentStep === "cluster") {
     return (
       <ProvisionerForm
-        goBack={() => setCurrentStep("credentials")}
+        goBack={() => { setCurrentStep("credentials"); }}
         credentialId={credentialId}
         provider={selectedProvider}
       />
     );
   }
+  return null;
 };
 
 export default ProvisionerFlow;
 
-const Cost = styled.div`
-  font-weight: 600;
-  font-size: 20px;
-`;
-
-const Tab = styled.span`
-  margin-left: 20px;
-  height: 1px;
-`;
 
 const BlockList = styled.div`
   overflow: visible;

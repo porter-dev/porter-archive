@@ -81,6 +81,10 @@ func ErrorCode(agentSummary, agentDetail string) PorterErrorCode {
 		return PorterErrorCode_MemoryLimitExceeded
 	}
 
+	if strings.Contains(agentSummary, "requested more memory than is available") {
+		return PorterErrorCode_MemoryLimitExceeded
+	}
+
 	if strings.Contains(agentSummary, "requesting too much memory and cannot scale up") {
 		return PorterErrorCode_MemoryLimitExceeded_ScaleUp
 	}

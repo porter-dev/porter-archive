@@ -38,6 +38,12 @@ func createError(ctx context.Context, errorCode porter_error.PorterErrorCode, ag
 	ctx, span := telemetry.NewSpan(ctx, "create-error")
 	defer span.End()
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "agent-summary", Value: agentSummary},
+		telemetry.AttributeKV{Key: "agent-detail", Value: agentDetail},
+		telemetry.AttributeKV{Key: "error-code", Value: int(errorCode)},
+	)
+
 	porterError := porter_error.PorterError{
 		Code:            errorCode,
 		Summary:         translateAgentSummary(agentSummary, serviceName),
@@ -46,11 +52,10 @@ func createError(ctx context.Context, errorCode porter_error.PorterErrorCode, ag
 		Documentation:   []string{},
 	}
 
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "agent-summary", Value: agentSummary},
-		telemetry.AttributeKV{Key: "agent-detail", Value: agentDetail},
-		telemetry.AttributeKV{Key: "error-code", Value: int(errorCode)},
-	)
+	// if we can ignore the error, there is nothing to hydrate
+	if errorCode == porter_error.PorterErrorCode_Ignorable {
+		return porterError
+	}
 
 	errorDetailsProvider, ok := porter_error.ErrorCodeToProvider[errorCode]
 	if ok {

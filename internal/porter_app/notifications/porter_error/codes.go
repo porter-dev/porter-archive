@@ -83,6 +83,7 @@ func ErrorCode(agentSummary, agentDetail string) PorterErrorCode {
 		return PorterErrorCode_MemoryLimitExceeded
 	}
 
+	// this is often a false alarm. if it is actually blocking deploy, we will get a PorterErrorCode_MemoryLimitExceeded_ScaleUp
 	if strings.Contains(agentSummary, "requested more memory than is available") {
 		return PorterErrorCode_Ignorable
 	}
@@ -91,6 +92,7 @@ func ErrorCode(agentSummary, agentDetail string) PorterErrorCode {
 		return PorterErrorCode_MemoryLimitExceeded_ScaleUp
 	}
 
+	// this is often a false alarm. if it is actually blocking deploy, we will get a PorterErrorCode_CPULimitExceeded_ScaleUp
 	if strings.Contains(agentSummary, "requesting more cpu than is available") {
 		return PorterErrorCode_Ignorable
 	}

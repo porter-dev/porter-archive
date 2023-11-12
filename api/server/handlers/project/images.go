@@ -90,7 +90,7 @@ func (p *ImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, image := range ccpResp.Msg.Images {
-		var artifacts []ImageArtifact
+		artifacts := make([]ImageArtifact, 0)
 		for _, artifact := range image.Artifacts {
 			artifacts = append(artifacts, ImageArtifact{
 				Tag:       artifact.Tag,

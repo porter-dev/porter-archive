@@ -84,7 +84,7 @@ func ErrorCode(agentSummary, agentDetail string) PorterErrorCode {
 	}
 
 	// this is often a false alarm. if it is actually blocking deploy, we will get a PorterErrorCode_MemoryLimitExceeded_ScaleUp
-	if strings.Contains(agentSummary, "requested more memory than is available") {
+	if strings.Contains(agentSummary, "requesting more memory than is available") {
 		return PorterErrorCode_Ignorable
 	}
 

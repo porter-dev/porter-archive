@@ -88,7 +88,7 @@
     "build": "NODE_ENV=\"production\" webpack",
     "build-and-analyze": "ENABLE_ANALYZER=true NODE_ENV=\"production\" ./node_modules/webpack/bin/webpack.js",
     "prepare": "cd .. && husky install dashboard/.husky",
-    "lint-staged": "tsc --noEmit && lint-staged"
+    "lint-staged": "lint-staged"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",

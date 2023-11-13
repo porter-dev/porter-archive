@@ -100,6 +100,7 @@ type PorterYAML struct {
 	Previews  *PorterApp `yaml:"previews,omitempty"`
 }
 
+// RequiredApp specifies another porter app that this app expects to be deployed alongside it
 type RequiredApp struct {
 	Name       string `yaml:"name"`
 	FromTarget string `yaml:"fromTarget"`

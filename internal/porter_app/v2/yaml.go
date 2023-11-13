@@ -88,15 +88,22 @@ type PorterApp struct {
 	Build    *Build            `yaml:"build,omitempty"`
 	Env      map[string]string `yaml:"env,omitempty"`
 
-	Predeploy  *Service    `yaml:"predeploy,omitempty"`
-	EnvGroups  []EnvGroup  `yaml:"envGroups,omitempty"`
-	EfsStorage *EfsStorage `yaml:"efsStorage,omitempty"`
+	Predeploy    *Service      `yaml:"predeploy,omitempty"`
+	EnvGroups    []EnvGroup    `yaml:"envGroups,omitempty"`
+	EfsStorage   *EfsStorage   `yaml:"efsStorage,omitempty"`
+	RequiredApps []RequiredApp `yaml:"requiredApps,omitempty"`
 }
 
 // PorterYAML represents all the possible fields in a Porter YAML file
 type PorterYAML struct {
 	PorterApp `yaml:",inline"`
 	Previews  *PorterApp `yaml:"previews,omitempty"`
+}
+
+// RequiredApp specifies another porter app that this app expects to be deployed alongside it
+type RequiredApp struct {
+	Name       string `yaml:"name"`
+	FromTarget string `yaml:"fromTarget"`
 }
 
 // EfsStorage represents the EFS storage settings for a Porter app
@@ -189,10 +196,6 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		}
 	}
 
-	if porterApp.Services == nil {
-		return appProto, nil, telemetry.Error(ctx, span, nil, "porter yaml is missing services")
-	}
-
 	// service map is only needed for backwards compatibility at this time
 	serviceMap := make(map[string]*porterv1.Service)
 	var services []*porterv1.Service
@@ -238,6 +241,26 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 			Enabled: porterApp.EfsStorage.Enabled,
 		}
 	}
+
+	for _, requiredApp := range porterApp.RequiredApps {
+		var targetIdentifier *porterv1.DeploymentTargetIdentifier
+
+		if requiredApp.Name == "" {
+			return appProto, nil, telemetry.Error(ctx, span, nil, "required app specified with no name")
+		}
+
+		if requiredApp.FromTarget != "" {
+			targetIdentifier = &porterv1.DeploymentTargetIdentifier{
+				Name: requiredApp.FromTarget,
+			}
+		}
+
+		appProto.RequiredApps = append(appProto.RequiredApps, &porterv1.RequiredApp{
+			Name:       requiredApp.Name,
+			FromTarget: targetIdentifier,
+		})
+	}
+
 	return appProto, porterApp.Env, nil
 }
 

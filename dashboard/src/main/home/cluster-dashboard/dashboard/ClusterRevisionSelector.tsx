@@ -108,7 +108,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
         .createContract("<token>", selectedClusterVersion, {
           project_id: currentProject.id,
         })
-        .then(() => {})
+        .then(() => { })
         .catch((err) => {
           console.log(err);
         });
@@ -188,7 +188,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
         <Td>{readableDate(pendingContract.CreatedAt)}</Td>
         {failedContractId && (
           <DeleteButton>
-            <div onClick={() => setShowConfirmOverlay(true)}>
+            <div onClick={() => { setShowConfirmOverlay(true); }}>
               Clear Revision
             </div>
           </DeleteButton>
@@ -223,10 +223,10 @@ const ClusterRevisionSelector: React.FC<Props> = ({
                     {selectedId === 0
                       ? "Current version -"
                       : selectedId === -1
-                      ? failedContractId
-                        ? ""
-                        : "In progress -"
-                      : "Previewing version (not deployed) -"}
+                        ? failedContractId
+                          ? ""
+                          : "In progress -"
+                        : "Previewing version (not deployed) -"}
                   </Label>
                   {selectedId === -1 ? (
                     failedContractId ? (
@@ -273,7 +273,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
               deleteContract();
               setShowConfirmOverlay(false);
             }}
-            onNo={() => setShowConfirmOverlay(false)}
+            onNo={() => { setShowConfirmOverlay(false); }}
           />,
           document.body
         )}
@@ -353,7 +353,7 @@ const RollbackButton = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled: boolean }) =>
-      props.disabled ? "" : "#405eddbb"};
+    props.disabled ? "" : "#405eddbb"};
   }
 `;
 
@@ -367,7 +367,7 @@ const Tr = styled.tr`
     props.selected ? "#ffffff11" : ""};
   :hover {
     background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-      props.disableHover ? "" : "#ffffff22"};
+    props.disableHover ? "" : "#ffffff22"};
   }
 `;
 

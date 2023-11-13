@@ -1166,7 +1166,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     );
   };
 
-  const renderGPUSettings = () => {
+  const renderGPUSettings = (): JSX.Element => {
     return (
       <VerticalSteps
         currentStep={step}
@@ -1189,10 +1189,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             <Spacer y={1} />
             <Input
               width="350px"
-              type="number"
-              disabled={isReadOnly}
+              disabled={isReadOnly || isLoading}
               value={clusterState.gpuMaxInstances.toString()}
               setValue={(x: string) => {
+                if (x == "") {
+                  x = "0"
+                }
                 const num = parseInt(x, 10);
                 if (!isNaN(num)) {
                   handleClusterStateChange('gpuMaxInstances', num);
@@ -1204,10 +1206,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             <Spacer y={1} />
             <Input
               width="350px"
-              type="number"
-              disabled={isReadOnly}
+              disabled={isReadOnly || isLoading}
               value={clusterState.gpuMinInstances.toString()}
               setValue={(x: string) => {
+                if (x == "") {
+                  x = "0"
+                }
                 const num = parseInt(x, 10)
                 if (num === undefined) {
                   return

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Spacer from "components/porter/Spacer";
-import { ClientService } from "lib/porter-apps/services";
+import { type ClientService } from "lib/porter-apps/services";
 import { Controller, useFormContext } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
+import { type PorterAppFormData } from "lib/porter-apps";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Checkbox from "components/porter/Checkbox";
 import Text from "components/porter/Text";
@@ -186,7 +186,7 @@ const Resources: React.FC<ResourcesProps> = ({
           />
         )}
       />
-      {!clusterContainsGPUNodes && (
+      {clusterContainsGPUNodes && (
         <>
           <Spacer y={1} />
           <Controller
@@ -198,7 +198,7 @@ const Resources: React.FC<ResourcesProps> = ({
                 unit="Cores"
                 min={0}
                 max={1}
-                step={.1}
+                step={1}
                 value={(value.value).toString()}
                 disabled={value.readOnly}
                 width="300px"

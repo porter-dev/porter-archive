@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import AnimateHeight, { Height } from "react-animate-height";
+import AnimateHeight, { type Height } from "react-animate-height";
 import styled, { keyframes } from "styled-components";
 import _ from "lodash";
 
@@ -13,15 +13,15 @@ import Spacer from "components/porter/Spacer";
 import WebTabs from "./tabs/WebTabs";
 import WorkerTabs from "./tabs/WorkerTabs";
 import JobTabs from "./tabs/JobTabs";
-import { ClientService } from "lib/porter-apps/services";
-import { UseFieldArrayUpdate } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
+import { type ClientService } from "lib/porter-apps/services";
+import { type UseFieldArrayUpdate } from "react-hook-form";
+import { type PorterAppFormData } from "lib/porter-apps";
 import { match } from "ts-pattern";
 import useResizeObserver from "lib/hooks/useResizeObserver";
-import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
+import { type PorterAppVersionStatus } from "lib/hooks/useAppStatus";
 import ServiceStatusFooter from "./ServiceStatusFooter";
 
-interface ServiceProps {
+type ServiceProps = {
   index: number;
   service: ClientService;
   update: UseFieldArrayUpdate<PorterAppFormData, "app.services" | "app.predeploy">;

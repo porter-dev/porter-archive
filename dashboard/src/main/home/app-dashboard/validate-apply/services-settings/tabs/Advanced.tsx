@@ -2,8 +2,8 @@ import Checkbox from "components/porter/Checkbox";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { PorterAppFormData } from "lib/porter-apps";
-import { ClientService } from "lib/porter-apps/services";
+import { type PorterAppFormData } from "lib/porter-apps";
+import { type ClientService } from "lib/porter-apps/services";
 import React, { useContext, useState } from "react";
 import AnimateHeight from "react-animate-height";
 import { Controller, useFormContext } from "react-hook-form";
@@ -48,7 +48,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
           <span>Health checks</span>
           <a
             href="https://docs.porter.run/enterprise/deploying-applications/zero-downtime-deployments#health-checks"
-            target="_blank"
+            target="_blank" rel="noreferrer"
           >
             &nbsp;(?)
           </a>
@@ -102,8 +102,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
               color="primary"
               checked={value.value > 0}
               onChange={() => {
-                //if cluster doesn't already have gpuNodes 
-                if (!clusterContainsGPUNodes) {
+                if (!clusterContainsGPUNodes && value.value === 0) {
                   setClusterModalVisible(true);
                 } else {
                   if (value.value > 0) {
@@ -114,7 +113,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
                   } else
                     onChange({
                       ...value,
-                      value: .3
+                      value: 1
                     });
                 }
               }}
@@ -123,7 +122,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
                   <span>Enable GPU</span>
                   <a
                     href="https://docs.porter.run/enterprise/deploying-applications/zero-downtime-deployments#health-checks"
-                    target="_blank"
+                    target="_blank" rel="noreferrer"
                   >
                     &nbsp;(?)
                   </a>
@@ -159,7 +158,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
       </>
       {
         clusterModalVisible && <ProvisionClusterModal
-          closeModal={() => setClusterModalVisible(false)}
+          closeModal={() => { setClusterModalVisible(false); }}
           gpuModal={true}
         />
       }

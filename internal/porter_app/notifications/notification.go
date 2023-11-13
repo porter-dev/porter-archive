@@ -80,6 +80,11 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 	// 5. hydrate notification with a Porter error containing user-facing details
 	hydratedNotification = hydrateNotificationWithError(ctx, hydratedNotification)
 
+	// if we can ignore this error, then we don't need to save it
+	if hydratedNotification.Error.Code == porter_error.PorterErrorCode_Ignorable {
+		return nil
+	}
+
 	// 6. based on notification + k8s deployment, update the status of the matching deploy event
 	if hydratedNotification.Deployment.Status == DeploymentStatus_Failure ||
 		(hydratedNotification.Deployment.Status == DeploymentStatus_Pending &&

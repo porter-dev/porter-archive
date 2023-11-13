@@ -25,6 +25,8 @@ type PorterErrorCode int
 const (
 	// PorterErrorCode_Unknown is the default error code
 	PorterErrorCode_Unknown PorterErrorCode = 0
+	// PorterErrorCode_Ignorable is the error code for an ignorable error
+	PorterErrorCode_Ignorable PorterErrorCode = 1
 	// PorterErrorCode_NonZeroExitCode is the error code for a generic non-zero exit code
 	PorterErrorCode_NonZeroExitCode PorterErrorCode = 10
 	// PorterErrorCode_NonZeroExitCode_SIGKILL is the error code for a non-zero exit code due to a SIGKILL
@@ -81,16 +83,18 @@ func ErrorCode(agentSummary, agentDetail string) PorterErrorCode {
 		return PorterErrorCode_MemoryLimitExceeded
 	}
 
-	if strings.Contains(agentSummary, "requested more memory than is available") {
-		return PorterErrorCode_MemoryLimitExceeded
+	// this is often a false alarm. if it is actually blocking deploy, we will get a PorterErrorCode_MemoryLimitExceeded_ScaleUp
+	if strings.Contains(agentSummary, "requesting more memory than is available") {
+		return PorterErrorCode_Ignorable
 	}
 
 	if strings.Contains(agentSummary, "requesting too much memory and cannot scale up") {
 		return PorterErrorCode_MemoryLimitExceeded_ScaleUp
 	}
 
+	// this is often a false alarm. if it is actually blocking deploy, we will get a PorterErrorCode_CPULimitExceeded_ScaleUp
 	if strings.Contains(agentSummary, "requesting more cpu than is available") {
-		return PorterErrorCode_CPULimitExceeded
+		return PorterErrorCode_Ignorable
 	}
 
 	if strings.Contains(agentSummary, "requesting too much cpu and cannot scale up") {

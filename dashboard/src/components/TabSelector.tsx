@@ -1,15 +1,18 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-export interface selectOption<T> {
+import Spacer from "./porter/Spacer";
+
+export type selectOption<T> = {
   value: T;
   label: string;
   component?: any;
-}
+  sibling?: JSX.Element;
+};
 
 type PropsType<T> = {
   currentTab: string;
-  options: selectOption<T>[];
+  options: Array<selectOption<T>>;
   setCurrentTab: (value: T) => void;
   addendum?: any;
   color?: string;
@@ -34,12 +37,30 @@ export default class TabSelector<T> extends Component<PropsType<T>, StateType> {
   };
 
   renderTabList = () => {
-    let color = this.props.color || "#aaaabb";
+    const color = this.props.color ?? "#aaaabb";
     return this.props.options.map((option: selectOption<T>, i: number) => {
-      return (
+      return option.sibling ? (
+        <TabWithSibling>
+          <Tab
+            key={i}
+            onClick={() => {
+              this.handleTabClick(option.value);
+            }}
+            lastItem={i === this.props.options.length - 1}
+            highlight={option.value === this.props.currentTab ? color : null}
+            style={{ marginRight: "0px" }}
+          >
+            {option.label}
+          </Tab>
+          <Spacer inline x={0.5} />
+          {option.sibling}
+        </TabWithSibling>
+      ) : (
         <Tab
           key={i}
-          onClick={() => this.handleTabClick(option.value)}
+          onClick={() => {
+            this.handleTabClick(option.value);
+          }}
           lastItem={i === this.props.options.length - 1}
           highlight={option.value === this.props.currentTab ? color : null}
         >
@@ -49,9 +70,11 @@ export default class TabSelector<T> extends Component<PropsType<T>, StateType> {
     });
   };
 
-  renderAddendumBuffer = () => {};
+  renderAddendumBuffer = (): JSX.Element => {
+    return <Buffer />;
+  };
 
-  render() {
+  render(): JSX.Element {
     return (
       <>
         <StyledTabSelector>
@@ -95,7 +118,7 @@ const TabWrapper = styled.div`
 
 const Tab = styled.div`
   height: 30px;
-  margin-right: ${(props: { lastItem: boolean; highlight: string | null}) =>
+  margin-right: ${(props: { lastItem: boolean; highlight: string | null }) =>
     props.lastItem ? "" : "30px"};
   display: flex;
   font-family: "Work Sans", sans-serif;
@@ -126,4 +149,11 @@ const StyledTabSelector = styled.div`
   padding-bottom: 1px;
   margin-left: 1px;
   position: relative;
+`;
+
+const TabWithSibling = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-right: 30px;
 `;

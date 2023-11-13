@@ -35,6 +35,7 @@ import Fieldset from "components/porter/Fieldset";
 import Select from "components/porter/Select";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import { useAuthState } from "main/auth/context";
 
 type Props = {
 };
@@ -67,7 +68,7 @@ const AddOnDashboard: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   const filteredAddOns = useMemo(() => {
-    const filtered = addOns.filter((app: any) => {
+    const filtered = addOns.filter((app) => {
       return (
         !namespaceBlacklist.includes(app.namespace) &&
         !templateBlacklist.includes(app.chart.metadata.name)

@@ -994,6 +994,21 @@ func (a *Agent) GetDeployment(c grapher.Object) (*appsv1.Deployment, error) {
 	return res, nil
 }
 
+// GetDeploymentsBySelector returns the deployments by label selector
+func (a *Agent) GetDeploymentsBySelector(ctx context.Context, namespace string, selector string) (*appsv1.DeploymentList, error) {
+	res, err := a.Clientset.AppsV1().Deployments(namespace).List(
+		ctx,
+		metav1.ListOptions{
+			LabelSelector: selector,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // GetStatefulSet gets the statefulset given the name and namespace
 func (a *Agent) GetStatefulSet(c grapher.Object) (*appsv1.StatefulSet, error) {
 	res, err := a.Clientset.AppsV1().StatefulSets(c.Namespace).Get(

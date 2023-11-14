@@ -1,12 +1,13 @@
 import React from "react";
 import TabSelector from "components/TabSelector";
 
-import { ClientService } from "lib/porter-apps/services";
+import { type ClientService } from "lib/porter-apps/services";
 import { match } from "ts-pattern";
 import MainTab from "./Main";
 import Resources from "./Resources";
+import AdvancedWorker from "./AdvancedWorker";
 
-interface Props {
+type Props = {
   index: number;
   service: ClientService & {
     config: {
@@ -20,7 +21,7 @@ interface Props {
 }
 
 const WorkerTabs: React.FC<Props> = ({ index, service, maxCPU, maxRAM, clusterContainsGPUNodes }) => {
-  const [currentTab, setCurrentTab] = React.useState<"main" | "resources">(
+  const [currentTab, setCurrentTab] = React.useState<"main" | "resources" | "advanced">(
     "main"
   );
 
@@ -30,6 +31,7 @@ const WorkerTabs: React.FC<Props> = ({ index, service, maxCPU, maxRAM, clusterCo
         options={[
           { label: "Main", value: "main" },
           { label: "Resources", value: "resources" },
+          { label: "Advanced", value: "advanced" }
         ]}
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
@@ -44,6 +46,9 @@ const WorkerTabs: React.FC<Props> = ({ index, service, maxCPU, maxRAM, clusterCo
             service={service}
             clusterContainsGPUNodes={clusterContainsGPUNodes}
           />
+        ))
+        .with("advanced", () => (
+          <AdvancedWorker clusterContainsGPUNodes={clusterContainsGPUNodes} index={index} />
         ))
         .exhaustive()}
     </>

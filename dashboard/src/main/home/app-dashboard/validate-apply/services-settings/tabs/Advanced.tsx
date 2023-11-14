@@ -137,8 +137,6 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
               )} />)
           }
         </>
-
-
       </>
       {
         clusterModalVisible && <ProvisionClusterModal
@@ -175,7 +173,4 @@ const CheckItemTop = styled.div`
   background: ${props => props.theme.clickable.bg};
 `;
 
-const StatusIcon = styled.img`
-height: 14px;
-`;
 

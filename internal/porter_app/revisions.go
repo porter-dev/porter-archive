@@ -37,6 +37,8 @@ type Revision struct {
 	DeploymentTargetID string `json:"deployment_target_id"`
 	// Env is the environment variables for the revision
 	Env environment_groups.EnvironmentGroup `json:"env,omitempty"`
+	// AppInstanceID is the id of the app instance the revision is associated with
+	AppInstanceID uuid.UUID `json:"app_instance_id"`
 }
 
 // GetAppRevisionInput is the input struct for GetAppRevisions
@@ -112,6 +114,12 @@ func EncodedRevisionFromProto(ctx context.Context, appRevision *porterv1.AppRevi
 		return revision, telemetry.Error(ctx, span, err, "error getting app revision status from proto")
 	}
 
+	appInstanceIdStr := appRevision.AppInstanceId
+	appInstanceId, err := uuid.Parse(appInstanceIdStr)
+	if err != nil {
+		return revision, telemetry.Error(ctx, span, err, "error parsing app instance id")
+	}
+
 	revision = Revision{
 		B64AppProto:        b64,
 		Status:             status,
@@ -120,6 +128,7 @@ func EncodedRevisionFromProto(ctx context.Context, appRevision *porterv1.AppRevi
 		CreatedAt:          appRevision.CreatedAt.AsTime(),
 		UpdatedAt:          appRevision.UpdatedAt.AsTime(),
 		DeploymentTargetID: appRevision.DeploymentTargetId,
+		AppInstanceID:      appInstanceId,
 	}
 
 	return revision, nil

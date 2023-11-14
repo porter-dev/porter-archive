@@ -66,8 +66,8 @@ type ServiceDeploymentMetadata struct {
 	Type string `json:"type"`
 }
 
-// parseAgentEventMetadata parses raw app event metadata to a AppEventMetadata struct
-func parseAgentEventMetadata(metadata map[string]interface{}) (*AppEventMetadata, error) {
+// ParseAgentEventMetadata parses raw app event metadata to a AppEventMetadata struct
+func ParseAgentEventMetadata(metadata map[string]interface{}) (*AppEventMetadata, error) {
 	appEventMetadata := &AppEventMetadata{}
 
 	bytes, err := json.Marshal(metadata)

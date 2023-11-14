@@ -147,7 +147,12 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	appRevisionId := encodedRevision.ID
-	notificationEvents, err := c.Repo().PorterAppEvent().ReadNotificationsByAppRevisionID(ctx, appId, appRevisionId)
+	appInstanceId := encodedRevision.AppInstanceID
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "app-revision-id", Value: appRevisionId},
+		telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId},
+	)
+	notificationEvents, err := c.Repo().PorterAppEvent().ReadNotificationsByAppRevisionID(ctx, appInstanceId, appRevisionId)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting notifications from repo")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

@@ -32,7 +32,7 @@ func HandleNotification(ctx context.Context, inp HandleNotificationInput) error 
 	defer span.End()
 
 	// 1. parse agent event
-	agentEventMetadata, err := parseAgentEventMetadata(inp.RawAgentEventMetadata)
+	agentEventMetadata, err := ParseAgentEventMetadata(inp.RawAgentEventMetadata)
 	if err != nil {
 		return telemetry.Error(ctx, span, err, "failed to unmarshal app event metadata")
 	}

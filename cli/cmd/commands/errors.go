@@ -33,7 +33,7 @@ func checkLoginAndRunWithConfig(cmd *cobra.Command, cliConf config.CLIConfig, ar
 		CookieFileName: "cookie.json",
 	})
 	if err != nil {
-		red.Print("You are not logged in. Log in using \"porter auth login\"\n")
+		red.Print("You are not logged in. Log in using \"porter auth login\"\n") // nolint:errcheck,gosec
 		return fmt.Errorf("error creating porter API client: %w", err)
 	}
 

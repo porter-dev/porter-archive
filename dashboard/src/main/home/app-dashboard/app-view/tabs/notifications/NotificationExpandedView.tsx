@@ -48,14 +48,11 @@ const NotificationExpandedView: React.FC<Props> = ({
     }
   }, [JSON.stringify(notification)]);
 
-  // this is necessary because the name for the pre-deploy job is called "pre-deploy" by the front-end but predeploy in k8s
-  // TODO: standardize the naming of the pre-deploy job
   const serviceNames = useMemo(() => {
     if (notification.service.config.type === "predeploy") {
       return ["predeploy"];
-    } else {
-      return [notification.service.name.value];
     }
+    return [notification.service.name.value];
   }, [notification.service.name.value]);
 
   return (
@@ -176,22 +173,21 @@ const NotificationExpandedView: React.FC<Props> = ({
           })}
         </StyledActivityFeed>
         <Spacer y={1} />
-        {notification.service.config.type !== "job" &&
-          notification.service.config.type !== "predeploy" && (
-            <Logs
-              projectId={projectId}
-              clusterId={clusterId}
-              appName={appName}
-              serviceNames={serviceNames}
-              deploymentTargetId={deploymentTargetId}
-              appRevisionId={notification.appRevisionId}
-              logFilterNames={["service_name"]}
-              appId={appId}
-              selectedService={serviceNames[0]}
-              selectedRevisionId={notification.appRevisionId}
-              defaultScrollToBottomEnabled={false}
-            />
-          )}
+        {notification.service.config.type !== "job" && (
+          <Logs
+            projectId={projectId}
+            clusterId={clusterId}
+            appName={appName}
+            serviceNames={serviceNames}
+            deploymentTargetId={deploymentTargetId}
+            appRevisionId={notification.appRevisionId}
+            logFilterNames={["service_name"]}
+            appId={appId}
+            selectedService={serviceNames[0]}
+            selectedRevisionId={notification.appRevisionId}
+            defaultScrollToBottomEnabled={false}
+          />
+        )}
       </ExpandedViewContent>
       {/* uncomment below once we implement recommended actions */}
       {/* <ExpandedViewFooter>

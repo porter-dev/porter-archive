@@ -169,22 +169,20 @@ func (repo *PorterAppEventRepository) ReadEvent(ctx context.Context, id uuid.UUI
 	return appEvent, nil
 }
 
-// ReadNotificationsByAppRevisionID returns a list of notifications for a given porter app id and app revision ID
-func (repo *PorterAppEventRepository) ReadNotificationsByAppRevisionID(ctx context.Context, porterAppID uint, appRevisionId string) ([]*models.PorterAppEvent, error) {
+// ReadNotificationsByAppRevisionID returns a list of notifications for a given porter app instance id and app revision ID
+func (repo *PorterAppEventRepository) ReadNotificationsByAppRevisionID(ctx context.Context, porterAppInstanceId uuid.UUID, appRevisionId string) ([]*models.PorterAppEvent, error) {
 	notifications := []*models.PorterAppEvent{}
 
 	if appRevisionId == "" {
 		return notifications, errors.New("invalid app revision ID supplied")
 	}
 
-	if porterAppID == 0 {
-		return notifications, errors.New("invalid porter app ID supplied")
+	if porterAppInstanceId == uuid.Nil {
+		return notifications, errors.New("invalid porter app instance ID supplied")
 	}
 
-	strAppID := strconv.Itoa(int(porterAppID))
-
 	// TODO: make app_revision_id a column in porter_app_event table: https://linear.app/porter/issue/POR-2096/add-app-revision-id-column-to-porter-app-events-table
-	if err := repo.db.Where("porter_app_id = ? AND type = 'NOTIFICATION' AND metadata->>'app_revision_id' = ?", strAppID, appRevisionId).Find(&notifications).Error; err != nil {
+	if err := repo.db.Where("app_instance_id = ? AND type = 'NOTIFICATION' AND metadata->>'app_revision_id' = ?", porterAppInstanceId, appRevisionId).Find(&notifications).Error; err != nil {
 		return notifications, err
 	}
 

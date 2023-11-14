@@ -25,6 +25,7 @@ type authenticatedRunnerFunc func(ctx context.Context, user *types.GetAuthentica
 func checkLoginAndRunWithConfig(cmd *cobra.Command, cliConf config.CLIConfig, args []string, runner authenticatedRunnerFunc) error {
 	ctx := cmd.Context()
 	cliConf = overrideConfigWithFlags(cmd, cliConf)
+	red := color.New(color.FgRed)
 
 	client, err := api.NewClientWithConfig(ctx, api.NewClientInput{
 		BaseURL:        fmt.Sprintf("%s/api", cliConf.Host),
@@ -32,13 +33,12 @@ func checkLoginAndRunWithConfig(cmd *cobra.Command, cliConf config.CLIConfig, ar
 		CookieFileName: "cookie.json",
 	})
 	if err != nil {
+		red.Print("You are not logged in. Log in using \"porter auth login\"\n") // nolint:errcheck,gosec
 		return fmt.Errorf("error creating porter API client: %w", err)
 	}
 
 	user, err := client.AuthCheck(ctx)
 	if err != nil {
-		red := color.New(color.FgRed)
-
 		if strings.Contains(err.Error(), "Forbidden") {
 			red.Print("You are not logged in. Log in using \"porter auth login\"\n")
 			return ErrNotLoggedIn

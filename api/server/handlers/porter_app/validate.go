@@ -161,7 +161,7 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			}
 		}
 	}
-	
+
 	validateReq := connect.NewRequest(&porterv1.ValidatePorterAppRequest{
 		ProjectId:          int64(project.ID),
 		DeploymentTargetId: request.DeploymentTargetId,

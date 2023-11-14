@@ -54,6 +54,6 @@ func (repo *PorterAppEventRepository) ReadDeployEventByAppRevisionID(ctx context
 }
 
 // ReadNotificationsByAppRevisionID is a test method
-func (repo *PorterAppEventRepository) ReadNotificationsByAppRevisionID(ctx context.Context, porterAppID uint, appRevisionID string) ([]*models.PorterAppEvent, error) {
+func (repo *PorterAppEventRepository) ReadNotificationsByAppRevisionID(ctx context.Context, porterAppInstanceID uuid.UUID, appRevisionID string) ([]*models.PorterAppEvent, error) {
 	return nil, errors.New("cannot read database")
 }

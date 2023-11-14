@@ -639,7 +639,7 @@ func (p *CreateUpdatePorterAppEventHandler) handleNotification(ctx context.Conte
 
 	_, err = p.Config().ClusterControlPlaneClient.CreateNotification(ctx, createNotificationRequest)
 	if err != nil {
-		return telemetry.Error(ctx, span, err, "error getting deployment target details from cluster control plane client")
+		return telemetry.Error(ctx, span, err, "error creating notification")
 	}
 
 	return nil

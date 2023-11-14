@@ -93,67 +93,59 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
 
       <>
         <Spacer y={1} />
-        <Controller
-          name={`app.services.${index}.gpuCoresNvidia`}
-          control={control}
-          render={({ field: { value, onChange } }) => (
-            <><Switch
-              size="small"
-              color="primary"
-              checked={value.value > 0}
-              onChange={() => {
-                if (!clusterContainsGPUNodes && value.value === 0) {
-                  setClusterModalVisible(true);
-                } else {
-                  if (value.value > 0) {
-                    onChange({
-                      ...value,
-                      value: 0
-                    });
-                  } else
-                    onChange({
-                      ...value,
-                      value: 1
-                    });
-                }
-              }}
-              inputProps={{ 'aria-label': 'controlled' }} /><Spacer inline x={.5} /><Text color="helper">
-                <>
-                  <span>Enable GPU</span>
-                  <a
-                    href="https://docs.porter.run/enterprise/deploying-applications/zero-downtime-deployments#health-checks"
-                    target="_blank" rel="noreferrer"
-                  >
-                    &nbsp;(?)
-                  </a>
-                </>
-              </Text><Spacer y={.5} /></>
-          )} />
-        {gpuEnabledValue.value > 0 &&
-          <>
-            {(currentCluster.status == "UPDATING" && currentCluster?.gpuCluster) ?
-              (< CheckItemContainer >
-                <CheckItemTop >
-                  <Loading
-                    offset="0px"
-                    width="20px"
-                    height="20px" />
-                  <Spacer inline x={1} />
-                  <Text style={{ marginLeft: '10px', flex: 1 }}>{"Creating GPU nodes..."}</Text>
-                </CheckItemTop>
-              </CheckItemContainer>
-              )
-              :
-              (<CheckItemContainer >
-                <CheckItemTop >
-                  <StatusIcon src={healthy} />
-                  <Spacer inline x={1} />
-                  <Text style={{ marginLeft: '10px', flex: 1 }}>{"Service running on GPU workload "}</Text>
-                </CheckItemTop>
-              </CheckItemContainer>
-              )}
-          </>
-        }
+        <>
+          {(currentCluster.status === "UPDATING") ?
+            (< CheckItemContainer >
+              <CheckItemTop >
+                <Loading
+                  offset="0px"
+                  width="20px"
+                  height="20px" />
+                <Spacer inline x={1} />
+                <Text style={{ marginLeft: '10px', flex: 1 }}>{"Creating GPU nodes..."}</Text>
+              </CheckItemTop>
+            </CheckItemContainer>
+            )
+            :
+            (<Controller
+              name={`app.services.${index}.gpuCoresNvidia`}
+              control={control}
+              render={({ field: { value, onChange } }) => (
+                <><Switch
+                  size="small"
+                  color="primary"
+                  checked={value.value > 0}
+                  onChange={() => {
+                    if (!clusterContainsGPUNodes && value.value === 0) {
+                      setClusterModalVisible(true);
+                    } else {
+                      if (value.value > 0) {
+                        onChange({
+                          ...value,
+                          value: 0
+                        });
+                      } else
+                        onChange({
+                          ...value,
+                          value: 1
+                        });
+                    }
+                  }}
+                  inputProps={{ 'aria-label': 'controlled' }} /><Spacer inline x={.5} /><Text color="helper">
+                    <>
+                      <span>Enable GPU</span>
+                      <a
+                        href="https://docs.porter.run/enterprise/deploying-applications/zero-downtime-deployments#health-checks"
+                        target="_blank" rel="noreferrer"
+                      >
+                        &nbsp;(?)
+                      </a>
+                    </>
+                  </Text><Spacer y={.5} /></>
+              )} />)
+          }
+        </>
+
 
       </>
       {

@@ -32,14 +32,6 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
   const healthCheckEnabled = watch(
     `app.services.${index}.config.healthCheck.enabled`
   );
-
-  const gpuEnabledValue = watch(
-    `app.services.${index}.gpuCoresNvidia`, {
-    readOnly: false,
-    value: 0
-  }
-  );
-
   return (
     <>
       <Spacer y={1} />

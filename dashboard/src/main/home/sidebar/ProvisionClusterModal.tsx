@@ -20,58 +20,6 @@ type Props = RouteComponentProps & {
   gpuModal?: boolean;
 }
 
-type EncodedContract = {
-  ID: number;
-  CreatedAt: string;
-  UpdatedAt: string;
-  DeletedAt: string | null;
-  id: string;
-  base64_contract: string;
-  cluster_id: number;
-  project_id: number;
-  condition: string;
-  condition_metadata: Record<string, unknown>;
-};
-
-type NodeGroup = {
-  instanceType: string;
-  minInstances: number;
-  maxInstances: number;
-  nodeGroupType: string;
-  isStateful?: boolean;
-};
-
-type EksKind = {
-  clusterName: string;
-  clusterVersion: string;
-  cidrRange: string;
-  region: string;
-  nodeGroups: NodeGroup[];
-  loadBalancer: {
-    loadBalancerType: string;
-  };
-  logging: Record<string, unknown>;
-  network: {
-    vpcCidr: string;
-    serviceCidr: string;
-  };
-};
-
-type Cluster = {
-  projectId: number;
-  clusterId: number;
-  kind: string;
-  cloudProvider: string;
-  cloudProviderCredentialsId: string;
-  eksKind: EksKind;
-};
-
-type ContractData = {
-  cluster: Cluster;
-  user: {
-    id: number;
-  };
-};
 
 const ProvisionClusterModal: React.FC<Props> = ({
   closeModal,

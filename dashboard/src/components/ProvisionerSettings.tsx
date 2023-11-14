@@ -105,12 +105,6 @@ const machineTypeOptions = [
   { value: "m5n.2xlarge", label: "m5n.2xlarge" },
 ];
 
-const gpuMachineTypeOptions = [
-
-  { value: "g4dn.xlarge", label: "g4dn.xlarge" },
-  { value: "g4dn.2xlarge", label: "g4dn.2xlarge" },
-];
-
 const defaultCidrVpc = "10.78.0.0/16";
 const defaultCidrServices = "172.20.0.0/16";
 const defaultClusterVersion = "v1.24.0";

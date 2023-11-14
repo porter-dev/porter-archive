@@ -419,6 +419,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               });
             }
           });
+          window.location.reload();
         })
         .catch((err) => {
           if (err) {

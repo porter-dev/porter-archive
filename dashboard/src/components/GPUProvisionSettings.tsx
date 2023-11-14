@@ -170,6 +170,8 @@ const GPUProvisionerSettings: React.FC<Props> = ({
                         </Button></>)}
                   </>}
               </>}
+            <Spacer y={1} />
+
             <StepChangeButtonsContainer>
               <Button onClick={() => { setGPUStep(2); }}>Continue</Button>
               <Spacer inline x={0.5} />

@@ -189,7 +189,7 @@ export const useClusterResourceLimits = ({
     ["getContracts", projectId, clusterId],
     async () => {
       if (!projectId || !clusterId || clusterId === -1) {
-        return false;
+        return "";
       }
 
       const res = await api.getContracts(
@@ -202,30 +202,19 @@ export const useClusterResourceLimits = ({
         .parseAsync(res.data);
       // Use zod to validate the data
       const latestContract = contracts
+        .filter((contract) => contract.cluster_id === clusterId) // Filter contracts by the currentCluster.id
         .sort(
           (a, b) =>
             new Date(b.CreatedAt).getTime() - new Date(a.CreatedAt).getTime()
-        )
+        ) // Sort them by the CreatedAt date in descending order
         .map((contract) => contract)[0];
 
-      if (latestContract.condition === "SUCCESS") {
-        const decodedContract = JSON.parse(
-          atob(latestContract.base64_contract)
-        ) as ContractData;
+      const decodedContract = JSON.parse(
+        atob(latestContract.base64_contract)
+      ) as ContractData;
+      // Check for NODE_GROUP_TYPE_CUSTOM with instanceType containing "g4dn"
 
-        // Check for NODE_GROUP_TYPE_CUSTOM with instanceType containing "g4dn"
-        const containsCustomNodeGroup =
-          decodedContract.cluster.eksKind.nodeGroups.some(
-            (ng) =>
-              (ng.nodeGroupType === "NODE_GROUP_TYPE_CUSTOM" &&
-                ng.instanceType.includes("g4dn")) ||
-              (ng.nodeGroupType === "NODE_GROUP_TYPE_APPLICATION" &&
-                ng.instanceType.includes("g4dn"))
-          );
-
-        return containsCustomNodeGroup;
-      }
-      return false;
+      return decodedContract;
     },
     {
       enabled: !!projectId,
@@ -233,12 +222,6 @@ export const useClusterResourceLimits = ({
       retry: false,
     }
   );
-
-  useEffect(() => {
-    if (getContract.isSuccess && getContract.data) {
-      setClusterContainsGPUNodes(getContract.data);
-    }
-  }, [getContract.data, getContract.isSuccess]);
 
   useEffect(() => {
     if (getClusterNodes.isSuccess) {
@@ -299,6 +282,20 @@ export const useClusterResourceLimits = ({
       setClusterIngressIp(getCluster.data.ingress_ip);
     }
   }, [getCluster]);
+
+  useEffect(() => {
+    if (getContract.isSuccess && getContract.data) {
+      const containsCustomNodeGroup =
+        getContract.data.cluster.eksKind.nodeGroups.some(
+          (ng: NodeGroup) =>
+            (ng.nodeGroupType === "NODE_GROUP_TYPE_CUSTOM" &&
+              ng.instanceType.includes("g4dn")) ||
+            (ng.nodeGroupType === "NODE_GROUP_TYPE_APPLICATION" &&
+              ng.instanceType.includes("g4dn"))
+        );
+      setClusterContainsGPUNodes(containsCustomNodeGroup);
+    }
+  }, [getContract]);
 
   return {
     maxCPU,

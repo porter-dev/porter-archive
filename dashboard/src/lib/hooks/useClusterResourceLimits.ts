@@ -208,6 +208,7 @@ export const useClusterResourceLimits = ({
         )
         .map((contract) => contract)[0];
 
+      console.log("latestContract", latestContract);
       if (latestContract.condition === "SUCCESS") {
         const decodedContract = JSON.parse(
           atob(latestContract.base64_contract)

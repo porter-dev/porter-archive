@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
-import { InviteType } from "shared/types";
+import { type InviteType } from "shared/types";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
@@ -10,7 +10,7 @@ import InputRow from "components/form-components/InputRow";
 import Helper from "components/form-components/Helper";
 import Heading from "components/form-components/Heading";
 import CopyToClipboard from "components/CopyToClipboard";
-import { Column } from "react-table";
+import { type Column } from "react-table";
 import Table from "components/OldTable";
 import RadioSelector from "components/RadioSelector";
 
@@ -35,7 +35,7 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
     edition,
   } = useContext(Context);
   const [isLoading, setIsLoading] = useState(true);
-  const [invites, setInvites] = useState<Array<InviteType>>([]);
+  const [invites, setInvites] = useState<InviteType[]>([]);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("developer");
   const [roleList, setRoleList] = useState([]);
@@ -96,8 +96,8 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
   };
 
   const parseCollaboratorsResponse = (
-    collaborators: Array<Collaborator>
-  ): Array<InviteType> => {
+    collaborators: Collaborator[]
+  ): InviteType[] => {
     const admins = collaborators
       .filter((c) => c.kind === "admin" && !c.email.includes("@porter.run"))
       .map((c) => ({ ...c, id: Number(c.id) }))
@@ -119,11 +119,11 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
     }));
   };
 
-  const createInvite = () => {
+  const createInvite = (inputEmail: string) => {
     api
       .createInvite(
         "<token>",
-        { email: email.toLowerCase(), kind: role },
+        { email: inputEmail.toLowerCase(), kind: role },
         { id: currentProject.id }
       )
       .then(() => {
@@ -150,7 +150,7 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
         }
       )
       .then(getData)
-      .catch((err) => console.log(err));
+      .catch((err) => { console.log(err); });
   };
 
   const replaceInvite = (
@@ -164,8 +164,8 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
         { email: inviteEmail, kind },
         { id: currentProject.id }
       )
-      .then(() =>
-        api.deleteInvite(
+      .then(async () =>
+        await api.deleteInvite(
           "<token>",
           {},
           {
@@ -195,7 +195,7 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
     }
 
     setIsInvalidEmail(false);
-    createInvite();
+    createInvite(trimmedEmail);
   };
 
   const openEditModal = (user: any) => {
@@ -222,13 +222,13 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
   };
 
   const columns = useMemo<
-    Column<{
+    Array<Column<{
       email: string;
       id: number;
       status: string;
       invite_link: string;
       kind: string;
-    }>[]
+    }>>
   >(
     () => [
       {
@@ -259,11 +259,11 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
             return (
               <NewLinkButton
                 onClick={() =>
-                  replaceInvite(
+                  { replaceInvite(
                     row.values.email,
                     row.original.id,
                     row.values.kind
-                  )
+                  ); }
                 }
               >
                 <u>Generate a new link</u>
@@ -298,13 +298,13 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
               <Flex>
                 <SettingsButton
                   invis={row.original.currentUser}
-                  onClick={() => openEditModal(row.original)}
+                  onClick={() => { openEditModal(row.original); }}
                 >
                   <i className="material-icons">more_vert</i>
                 </SettingsButton>
                 <DeleteButton
                   invis={row.original.currentUser}
-                  onClick={() => removeCollaborator(row.original.id)}
+                  onClick={() => { removeCollaborator(row.original.id); }}
                 >
                   <i className="material-icons">delete</i>
                 </DeleteButton>
@@ -315,13 +315,13 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
             <Flex>
               <SettingsButton
                 invis={row.original.currentUser}
-                onClick={() => openEditModal(row.original)}
+                onClick={() => { openEditModal(row.original); }}
               >
                 <i className="material-icons">more_vert</i>
               </SettingsButton>
               <DeleteButton
                 invis={row.original.currentUser}
-                onClick={() => deleteInvite(row.original.id)}
+                onClick={() => { deleteInvite(row.original.id); }}
               >
                 <i className="material-icons">delete</i>
               </DeleteButton>
@@ -410,7 +410,7 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
           <InputRow
             value={email}
             type="text"
-            setValue={(newEmail: string) => setEmail(newEmail)}
+            setValue={(newEmail: string) => { setEmail(newEmail); }}
             width="100%"
             placeholder="ex: mrp@porter.run"
           />
@@ -424,7 +424,7 @@ const InvitePage: React.FunctionComponent<Props> = ({ }) => {
           />
         </RoleSelectorWrapper>
         <ButtonWrapper>
-          <InviteButton disabled={!hasSeats} onClick={() => validateEmail()}>
+          <InviteButton disabled={!hasSeats} onClick={() => { validateEmail(); }}>
             Create invite
           </InviteButton>
           {isInvalidEmail && (

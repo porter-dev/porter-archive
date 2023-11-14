@@ -14,12 +14,12 @@ import time from "assets/time.svg";
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { Direction, useLogs } from "./useAgentLogs";
-import Anser from "anser";
+import type Anser from "anser";
 import DateTimePicker from "components/date-time-picker/DateTimePicker";
 import dayjs from "dayjs";
 import Loading from "components/Loading";
 import _ from "lodash";
-import { ChartType } from "shared/types";
+import { type ChartType } from "shared/types";
 import Banner from "components/porter/Banner";
 
 export type InitLogData = Partial<{
@@ -37,11 +37,15 @@ type Props = {
   overridingPodSelector?: string;
 };
 
-const escapeRegExp = (str: string) => {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeExp = (str: string) => {
+  // regex special character need to be escaped twice
+  const regEscaped = str.replace(/[.*+?^${}()|[\]\\]/g, "\\\\$&");
+  // double quotes need to be escaped once
+  const quoteEscaped = regEscaped.replace(/["]/g, "\\$&");
+  return quoteEscaped;
 };
 
-interface QueryModeSelectionToggleProps {
+type QueryModeSelectionToggleProps = {
   selectedDate?: Date;
   setSelectedDate: React.Dispatch<React.SetStateAction<Date>>;
   resetSearch: () => void;
@@ -69,7 +73,7 @@ const QueryModeSelectionToggle = (props: QueryModeSelectionToggleProps) => {
         </ToggleOption>
         <ToggleOption
           nudgeLeft
-          onClick={() => props.setSelectedDate(dayjs().toDate())}
+          onClick={() => { props.setSelectedDate(dayjs().toDate()); }}
           selected={!!props.selectedDate}
         >
           <TimeIcon src={time} selected={!!props.selectedDate} />
@@ -209,7 +213,7 @@ const LogsSection: React.FC<Props> = ({
                   }}
                   onKeyPress={(event) => {
                     if (event.key === "Enter") {
-                      setEnteredSearchText(searchText);
+                      setEnteredSearchText(escapeExp(searchText));
                       if (selectedDate == null) {
                         setSelectedDate(dayjs().toDate());
                       }
@@ -226,7 +230,7 @@ const LogsSection: React.FC<Props> = ({
             />
           </Flex>
           <Flex>
-            <Button onClick={() => setScrollToBottomEnabled((s) => !s)}>
+            <Button onClick={() => { setScrollToBottomEnabled((s) => !s); }}>
               <Checkbox checked={scrollToBottomEnabled}>
                 <i className="material-icons">done</i>
               </Checkbox>
@@ -240,7 +244,7 @@ const LogsSection: React.FC<Props> = ({
             {!isFullscreen && (
               <>
                 <Spacer />
-                <Icon onClick={() => setIsFullscreen(true)}>
+                <Icon onClick={() => { setIsFullscreen(true); }}>
                   <i className="material-icons">open_in_full</i>
                 </Icon>
               </>
@@ -276,7 +280,7 @@ const LogsSection: React.FC<Props> = ({
                 <LoadMoreButton
                   active={selectedDate && logs.length !== 0}
                   role="button"
-                  onClick={() => moveCursor(Direction.forward)}
+                  onClick={async () => { await moveCursor(Direction.forward); }}
                 >
                   Load more
                 </LoadMoreButton>
@@ -300,7 +304,7 @@ const LogsSection: React.FC<Props> = ({
       {isFullscreen ? (
         <Fullscreen>
           <AbsoluteTitle>
-            <BackButton onClick={() => setIsFullscreen(false)}>
+            <BackButton onClick={() => { setIsFullscreen(false); }}>
               <i className="material-icons">navigate_before</i>
             </BackButton>
             Logs ({currentChart.name})

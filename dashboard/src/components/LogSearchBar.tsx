@@ -4,15 +4,19 @@ import styled from "styled-components";
 import dayjs from "dayjs";
 import SearchBar from "./porter/SearchBar";
 
-interface Props {
+type Props = {
   searchText: string;
   setSearchText: (x: string) => void;
   setEnteredSearchText: (x: string) => void;
   setSelectedDate: () => void;
 }
 
-const escapeRegExp = (str: string) => {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeExp = (str: string) => {
+  // regex special character need to be escaped twice
+  const regEscaped = str.replace(/[.*+?^${}()|[\]\\]/g, "\\\\$&");
+  // double quotes need to be escaped once
+  const quoteEscaped = regEscaped.replace(/["]/g, "\\$&");
+  return quoteEscaped;
 };
 
 const LogSearchBar: React.FC<Props> = ({
@@ -29,7 +33,7 @@ const LogSearchBar: React.FC<Props> = ({
         setSearchText(x);
       }}
       onEnter={() => {
-        setEnteredSearchText(searchText);
+        setEnteredSearchText(escapeExp(searchText));
         setSelectedDate();
       }}
       placeholder="Search logs . . ."

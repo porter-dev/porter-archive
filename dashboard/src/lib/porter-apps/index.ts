@@ -1,25 +1,27 @@
-import { BUILDPACK_TO_NAME } from "main/home/app-dashboard/types/buildpack";
-import { z } from "zod";
 import {
-  DetectedServices,
-  defaultSerialized,
-  deserializeService,
-  serializeService,
-  serializedServiceFromProto,
-  serviceProto,
-  serviceValidator,
-  uniqueServices,
-} from "./services";
-import {
-  Build,
+  EFS,
   HelmOverrides,
   PorterApp,
   Service,
-  EFS,
+  type Build,
 } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
-import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
-import { BuildOptions, buildValidator } from "./build";
+import { z } from "zod";
+
+import { BUILDPACK_TO_NAME } from "main/home/app-dashboard/types/buildpack";
+import { type KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+
+import { buildValidator, type BuildOptions } from "./build";
+import {
+  defaultSerialized,
+  deserializeService,
+  serializedServiceFromProto,
+  serializeService,
+  serviceProto,
+  serviceValidator,
+  uniqueServices,
+  type DetectedServices,
+} from "./services";
 
 // sourceValidator is used to validate inputs for source setting fields
 export const sourceValidator = z.discriminatedUnion("type", [
@@ -144,6 +146,15 @@ export const porterAppFormValidator = z
     {
       message: "app must have at least one service",
       path: ["app", "services"],
+    }
+  )
+  .refine(
+    ({ app: { env } }) => {
+      return env.every((e) => e.key.length > 0 && /^[A-Za-z]/.test(e.key));
+    },
+    {
+      message: "All environment variables keys must start with a letter",
+      path: ["app", "env"],
     }
   );
 export type PorterAppFormData = z.infer<typeof porterAppFormValidator>;
@@ -285,12 +296,10 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
               app.helmOverrides != null
                 ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
                 : undefined,
-
           }),
-          efsStorage:
-            new EFS({
-              enabled: app.efsStorage.enabled,
-            })
+          efsStorage: new EFS({
+            enabled: app.efsStorage.enabled,
+          }),
         })
     )
     .with(
@@ -311,11 +320,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
             app.helmOverrides != null
               ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
               : undefined,
-          efsStorage:
-            new EFS({
-              enabled: app.efsStorage.enabled,
-            })
-
+          efsStorage: new EFS({
+            enabled: app.efsStorage.enabled,
+          }),
         })
     )
     .exhaustive();
@@ -459,11 +466,10 @@ export function clientAppFromProto({
         buildpacks: [],
         builder: "",
       },
-      helmOverrides: helmOverrides,
+      helmOverrides,
       efsStorage: new EFS({
         enabled: proto.efsStorage?.enabled ?? false,
-      })
-
+      }),
     };
   }
 
@@ -501,11 +507,8 @@ export function clientAppFromProto({
       buildpacks: [],
       builder: "",
     },
-    helmOverrides: helmOverrides,
-    efsStorage:
-      { enabled: proto.efsStorage?.enabled ?? false }
-
-    ,
+    helmOverrides,
+    efsStorage: { enabled: proto.efsStorage?.enabled ?? false },
   };
 }
 

@@ -27,7 +27,7 @@ import { useIntercom } from "lib/hooks/useIntercom";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
-import { type ClusterType } from "shared/types";
+import { type ClusterType, type ClusterState } from "shared/types";
 import { PREFLIGHT_TO_ENUM } from "shared/util";
 import info from "assets/info-outlined.svg";
 import healthy from "assets/status-healthy.png";
@@ -45,30 +45,8 @@ import VerticalSteps from "./porter/VerticalSteps";
 import PreflightChecks from "./PreflightChecks";
 import { Integer } from "type-fest";
 import InputSlider from "./porter/InputSlider";
+import GPUProvisionSettings from "./GPUProvisionSettings";
 
-type ClusterState = {
-  clusterName: string;
-  awsRegion: string;
-  machineType: string;
-  guardDutyEnabled: boolean;
-  kmsEncryptionEnabled: boolean;
-  loadBalancerType: boolean;
-  wildCardDomain: string;
-  IPAllowList: string;
-  wafV2Enabled: boolean;
-  awsTags: string;
-  wafV2ARN: string;
-  certificateARN: string;
-  minInstances: number;
-  maxInstances: number;
-  additionalNodePolicies: string[];
-  cidrRangeVPC: string;
-  cidrRangeServices: string;
-  clusterVersion: string;
-  gpuInstanceType?: string;
-  gpuMinInstances: number;
-  gpuMaxInstances: number;
-};
 
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
@@ -179,7 +157,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setShouldRefreshClusters,
   } = useContext(Context);
   const [step, setStep] = useState(0);
-  const [gpuStep, setGPUStep] = useState(0);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -577,7 +554,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   }, [isExpanded, props.selectedClusterVersion]);
 
   useEffect(() => {
-    if (!props.clusterId || (props.gpuModal && clusterState.clusterName === currentCluster?.name && gpuStep == 1)) {
+    if (!props.clusterId) {
       if (clusterState.clusterName != "") {
         setStep(1);
         try {
@@ -1168,140 +1145,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     );
   };
 
-  const renderGPUSettings = (): JSX.Element => {
-    return (
-      <VerticalSteps
-        currentStep={gpuStep}
-        onlyShowCurrentStep={true}
-        steps={[
-          <>
-            <Heading isAtTop> Select GPU Instance Type </Heading>
-            <Spacer y={.5} />
-            <Select
-              options={gpuMachineTypeOptions}
-              width="350px"
-              disabled={isReadOnly}
-              value={clusterState.gpuInstanceType}
-              setValue={(x: string) => {
-                handleClusterStateChange("gpuInstanceType", x)
-                // handleClusterStateChange("machineType", x)
-              }
-              }
-              label="Machine type"
-            />
-            <Spacer y={1} />
-            <InputSlider
-              label="Max Instances: "
-              unit="nodes"
-              min={0}
-              max={5}
-              step={1}
-              width="350px"
-              disabled={isReadOnly || isLoading}
-              value={clusterState.gpuMaxInstances.toString()}
-              setValue={(x: number) => {
-                handleClusterStateChange("gpuMaxInstances", x)
-
-              }}
-            />
-            <Button onClick={() => {
-              setGPUStep(1)
-              preflightChecks();
-            }}>
-              Continue
-            </Button>
-
-            <Spacer y={.5} />
-          </>,
-          <>
-            {showEmailMessage ?
-              <>
-                <CheckItemContainer>
-                  <CheckItemTop>
-                    <StatusIcon src={healthy} />
-                    <Spacer inline x={1} />
-                    <Text style={{ marginLeft: '10px', flex: 1 }}>{"Porter will request to increase quotas when you provision"}</Text>
-                  </CheckItemTop>
-                </CheckItemContainer>
-
-              </> :
-              <>
-                <PreflightChecks provider='AWS' preflightData={preflightData} error={preflightError} />
-                <Spacer y={.5} />
-                {(preflightFailed && preflightData) &&
-                  <>
-                    {(showHelpMessage && currentProject?.quota_increase) ? <>
-                      <Text color="helper">
-                        Your account currently is blocked from provisioning in {clusterState.awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
-                      </Text>
-                      <Spacer y={.5} />
-                      <Text color="helper">
-                        Porter can automatically request quota increases on your behalf and email you once the cluster is provisioned.
-                      </Text>
-                      <Spacer y={.5} />
-                      <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '15px' }}>
-                        <Button
-                          disabled={isLoading}
-                          onClick={proceedToProvision}
-
-                        >
-                          Auto request increase
-                        </Button>
-                        <Button
-                          disabled={isLoading}
-                          onClick={dismissPreflight}
-                          color="#313539"
-                        >
-                          I'll do it myself
-                        </Button>
-                      </div>
-
-                    </> : (
-                      <><Text color="helper">
-                        Your account currently is blocked from provisioning in {clusterState.awsRegion} due to a quota limit imposed by AWS. Either change the region or request to increase quotas.
-                      </Text><Spacer y={.5} /><Button
-                        disabled={isLoading}
-                        onClick={preflightChecks}
-
-                      >
-                          Retry checks
-                        </Button></>)}
-                  </>}
-              </>}
-            <StepChangeButtonsContainer>
-              <Button onClick={() => setGPUStep(2)}>Continue</Button>
-              <Spacer inline x={0.5} />
-              <Button onClick={() => setGPUStep(0)} color="#222222">Back</Button>
-            </StepChangeButtonsContainer>
-
-          </>, <>
-            <Text size={16}>Provision your cluster</Text>
-            <Spacer y={1} />
-            {showEmailMessage && <>
-              <Text color="helper">
-                After your quota requests have been approved by AWS, Porter will email you when your cluster has been provisioned.
-              </Text>
-              <Spacer y={1} />
-            </>}
-            <StepChangeButtonsContainer>
-              <Button
-                disabled={(preflightFailed && !showEmailMessage) || isLoading}
-                onClick={showEmailMessage ? requestQuotasAndProvision : createCluster}
-                status={getStatus()}
-              >
-                Provision
-              </Button>
-              <Spacer inline x={0.5} />
-              <Button onClick={() => setGPUStep(1)} color="#222222">Back</Button>
-            </StepChangeButtonsContainer>
-            <Spacer y={1} /></>
-          ,
-
-        ].filter((x) => x)}
-      />
-    );
-  };
-
   const dismissPreflight = async (): Promise<void> => {
     setShowHelpMessage(false);
     try {
@@ -1434,7 +1277,25 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
     // If settings, update full form
     if (props.clusterId && props.gpuModal) {
-      return renderGPUSettings();
+      return (
+        <GPUProvisionSettings
+          handleClusterStateChange={handleClusterStateChange}
+          clusterState={clusterState}
+          preflightChecks={preflightChecks}
+          isReadOnly={isReadOnly}
+          isLoading={isLoading}
+          createCluster={createCluster}
+          preflightData={preflightData}
+          preflightFailed={preflightFailed}
+          preflightError={preflightError}
+          proceedToProvision={proceedToProvision}
+          getStatus={getStatus}
+          dismissPreflight={dismissPreflight}
+          showHelpMessage={showHelpMessage}
+          showEmailMessage={showEmailMessage}
+          requestQuotasAndProvision={requestQuotaIncrease}
+        />
+      )
     }
 
 
@@ -1553,8 +1414,4 @@ const CheckItemTop = styled.div`
 
 const StatusIcon = styled.img`
   height: 14px;
-`;
-
-const StepChangeButtonsContainer = styled.div`
-  display: flex;
 `;

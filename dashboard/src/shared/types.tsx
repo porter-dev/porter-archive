@@ -363,7 +363,7 @@ export type CapabilityType = {
   default_addon_helm_repo_url?: string;
 };
 
-export interface ContextProps {
+export type ContextProps = {
   currentModal?: string;
   currentModalData: any;
   setCurrentModal: (currentModal: any, currentModalData?: any) => void;
@@ -674,4 +674,28 @@ export type CreateUpdatePorterAppOptions = {
   };
   override_release?: boolean;
   full_helm_values?: string;
+};
+
+export type ClusterState = {
+  clusterName: string;
+  awsRegion: string;
+  machineType: string;
+  guardDutyEnabled: boolean;
+  kmsEncryptionEnabled: boolean;
+  loadBalancerType: boolean;
+  wildCardDomain: string;
+  IPAllowList: string;
+  wafV2Enabled: boolean;
+  awsTags: string;
+  wafV2ARN: string;
+  certificateARN: string;
+  minInstances: number;
+  maxInstances: number;
+  additionalNodePolicies: string[];
+  cidrRangeVPC: string;
+  cidrRangeServices: string;
+  clusterVersion: string;
+  gpuInstanceType?: string;
+  gpuMinInstances: number;
+  gpuMaxInstances: number;
 };

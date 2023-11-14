@@ -113,7 +113,7 @@ const JobTabs: React.FC<Props> = ({
               }
               {...register(`app.services.${index}.config.timeoutSeconds.value`)}
             />
-            {currentCluster.cloud_provider === "AWS" && <>
+            {(currentCluster.cloud_provider === "AWS" && currentProject.gpu_enabled) && <>
               <>
                 <Spacer y={1} />
                 <>

@@ -28,7 +28,7 @@ const AdvancedWorker: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNode
   return (
     <>
       {
-        currentCluster.cloud_provider === "AWS" && <>
+        (currentCluster.cloud_provider === "AWS" && currentProject.gpu_enabled) && <>
           <>
             <Spacer y={1} />
             <>

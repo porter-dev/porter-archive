@@ -2,7 +2,6 @@ package porter_app
 
 import (
 	"encoding/base64"
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -119,8 +118,6 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	fmt.Println("App Proto Before OVERRIDES", request.Base64AppProto)
-
 	if appProto.Name == "" {
 		err := telemetry.Error(ctx, span, nil, "app proto name is empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -164,9 +161,7 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			}
 		}
 	}
-
-	fmt.Println("App Proto", appProto)
-
+	
 	validateReq := connect.NewRequest(&porterv1.ValidatePorterAppRequest{
 		ProjectId:          int64(project.ID),
 		DeploymentTargetId: request.DeploymentTargetId,

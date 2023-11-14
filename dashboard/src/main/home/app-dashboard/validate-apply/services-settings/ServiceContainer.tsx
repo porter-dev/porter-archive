@@ -300,33 +300,6 @@ const TagContainer = styled.div`
   border: 1px solid rgba(255, 255, 255, 0.2);
 `;
 
-// const shimmer = keyframes`
-//   0% {
-//     box-shadow: 0 0 0 1.5px rgba(204, 204, 204, 0.1);
-//   }
-//   50% {
-//     box-shadow: 0 0 0 1.5px rgba(204, 204, 204, 1);
-//   }
-//   100% {
-//     box-shadow: 0 0 0 1.5px rgba(204, 204, 204, 0.3);
-//   }
-// `;
-
-// const TagContainer = styled.div`
-//   box-sizing: border-box;
-//   display: flex;
-//   flex-direction: row;
-//   align-items: center;
-//   padding: 4px 8px;
-//   position: relative;
-//   width: auto;
-//   height: 30px;
-//   background: transparent; 
-//   border-radius: 10px;
-//   animation: ${shimmer} 3s infinite linear;
-// `;
-
-
 const ChipIcon = styled.img`
   width: 14px;
   height: 14px;

@@ -43,35 +43,44 @@ const porterAppPreDeployEventMetadataValidator = z.object({
   app_revision_id: z.string(),
   commit_sha: z.string().optional(),
 });
-export const porterAppNotificationEventMetadataValidator = z.object({
-  id: z.string(),
-  app_id: z.string(),
-  app_name: z.string(),
-  service_name: z.string(),
-  app_revision_id: z.string(),
-  error: z.object({
-    code: z.number(),
-    summary: z.string(),
-    detail: z.string(),
-    mitigation_steps: z.string(),
-    documentation: z.array(z.string()).default([]),
-  }),
-  timestamp: z.string(),
-  deployment: z.discriminatedUnion("status", [
-    z.object({
-      status: z.literal("PENDING"),
+export const porterAppNotificationEventMetadataValidator = z
+  .object({
+    id: z.string(),
+    app_id: z.string(),
+    app_name: z.string(),
+    service_name: z.string(),
+    app_revision_id: z.string(),
+    error: z.object({
+      code: z.number(),
+      summary: z.string(),
+      detail: z.string(),
+      mitigation_steps: z.string(),
+      documentation: z.array(z.string()).default([]),
     }),
-    z.object({
-      status: z.literal("SUCCESS"),
-    }),
-    z.object({
-      status: z.literal("FAILURE"),
-    }),
-    z.object({
-      status: z.literal("UNKNOWN"),
-    }),
-  ]),
-});
+    timestamp: z.string(),
+    deployment: z.discriminatedUnion("status", [
+      z.object({
+        status: z.literal("PENDING"),
+      }),
+      z.object({
+        status: z.literal("SUCCESS"),
+      }),
+      z.object({
+        status: z.literal("FAILURE"),
+      }),
+      z.object({
+        status: z.literal("UNKNOWN"),
+      }),
+    ]),
+  })
+  // this is necessary because the name for the pre-deploy job is called "pre-deploy" by the front-end but predeploy in k8s
+  // TODO: standardize the naming of the pre-deploy job: https://linear.app/porter/issue/POR-2119/standardize-naming-of-pre-deploy
+  .transform((obj) => {
+    if (obj.service_name === "predeploy") {
+      obj.service_name = "pre-deploy";
+    }
+    return obj;
+  });
 export type PorterAppNotification = z.infer<
   typeof porterAppNotificationEventMetadataValidator
 >;

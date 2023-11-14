@@ -83,7 +83,11 @@ require (
 	github.com/matryer/is v1.4.0
 	github.com/nats-io/nats.go v1.24.0
 	github.com/open-policy-agent/opa v0.44.0
+<<<<<<< HEAD
 	github.com/porter-dev/api-contracts v0.2.44
+=======
+	github.com/porter-dev/api-contracts v0.2.43
+>>>>>>> fb4617d1b86c2623f664d5119981c4f11bd63411
 	github.com/riandyrn/otelchi v0.5.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d

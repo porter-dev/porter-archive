@@ -113,68 +113,74 @@ const JobTabs: React.FC<Props> = ({
               }
               {...register(`app.services.${index}.config.timeoutSeconds.value`)}
             />
-            <>
-              <Spacer y={1} />
+            {currentCluster.cloud_provider === "AWS" && <>
               <>
-                {(currentCluster.status === "UPDATING" && clusterContainsGPUNodes) ?
-                  (< CheckItemContainer >
-                    <CheckItemTop >
-                      <Loading
-                        offset="0px"
-                        width="20px"
-                        height="20px" />
-                      <Spacer inline x={1} />
-                      <Text style={{ marginLeft: '10px', flex: 1 }}>{"Creating GPU nodes..."}</Text>
-                    </CheckItemTop>
-                  </CheckItemContainer>
-                  )
-                  :
-                  (<Controller
-                    name={`app.services.${index}.gpuCoresNvidia`}
-                    control={control}
-                    render={({ field: { value, onChange } }) => (
-                      <><Switch
-                        size="small"
-                        color="primary"
-                        checked={value.value > 0}
-                        onChange={() => {
-                          if (!clusterContainsGPUNodes && value.value === 0) {
-                            setClusterModalVisible(true);
-                          } else {
-                            if (value.value > 0) {
-                              onChange({
-                                ...value,
-                                value: 0
-                              });
-                            } else
-                              onChange({
-                                ...value,
-                                value: 1
-                              });
-                          }
-                        }}
-                        inputProps={{ 'aria-label': 'controlled' }} /><Spacer inline x={.5} /><Text color="helper">
-                          <>
-                            <span>Enable GPU</span>
-                            <a
-                              href="https://docs.porter.run/enterprise/deploying-applications/zero-downtime-deployments#health-checks"
-                              target="_blank" rel="noreferrer"
-                            >
-                              &nbsp;(?)
-                            </a>
-                          </>
-                        </Text><Spacer y={.5} /></>
-                    )} />)
-                }
+                <Spacer y={1} />
+                <>
+                  {(currentCluster.status === "UPDATING" && clusterContainsGPUNodes) ?
+                    (< CheckItemContainer >
+                      <CheckItemTop >
+                        <Loading
+                          offset="0px"
+                          width="20px"
+                          height="20px" />
+                        <Spacer inline x={1} />
+                        <Text style={{ marginLeft: '10px', flex: 1 }}>{"Creating GPU nodes..."}</Text>
+                      </CheckItemTop>
+                    </CheckItemContainer>
+                    )
+                    :
+                    (<Controller
+                      name={`app.services.${index}.gpuCoresNvidia`}
+                      control={control}
+                      render={({ field: { value, onChange } }) => (
+                        <><Switch
+                          size="small"
+                          color="primary"
+                          checked={value.value > 0}
+                          onChange={() => {
+                            if (!clusterContainsGPUNodes && value.value === 0) {
+                              setClusterModalVisible(true);
+                            } else {
+                              if (value.value > 0) {
+                                onChange({
+                                  ...value,
+                                  value: 0
+                                });
+                              } else
+                                onChange({
+                                  ...value,
+                                  value: 1
+                                });
+                            }
+                          }}
+                          inputProps={{ 'aria-label': 'controlled' }} /><Spacer inline x={.5} /><Text color="helper">
+                            <>
+                              <span>Enable GPU</span>
+                              <a
+                                href="https://docs.porter.run/enterprise/deploying-applications/zero-downtime-deployments#health-checks"
+                                target="_blank" rel="noreferrer"
+                              >
+                                &nbsp;(?)
+                              </a>
+                            </>
+                          </Text><Spacer y={.5} />
+                          {clusterContainsGPUNodes && value.value === 0 && <Text>
+                            You have GPU nodes available in your cluster. Toggle this to enable GPU support for this service.
+                          </Text>}
+                        </>
+                      )} />)
+                  }
+                </>
               </>
+              {
+                clusterModalVisible && <ProvisionClusterModal
+                  closeModal={() => { setClusterModalVisible(false); }}
+                  gpuModal={true}
+                />
+              }
             </>
-            {
-              clusterModalVisible && <ProvisionClusterModal
-                closeModal={() => { setClusterModalVisible(false); }}
-                gpuModal={true}
-              />
             }
-
           </>
         ))
         .exhaustive()}

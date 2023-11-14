@@ -278,6 +278,7 @@ export type ProjectType = {
   stacks_enabled: boolean;
   simplified_view_enabled: boolean;
   azure_enabled: boolean;
+  gpu_enabled: boolean;
   helm_values_enabled: boolean;
   multi_cluster: boolean;
   full_add_ons: boolean;

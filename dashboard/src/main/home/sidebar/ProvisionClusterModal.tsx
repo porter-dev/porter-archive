@@ -12,7 +12,7 @@ import { Context } from "shared/Context";
 import ClusterRevisionSelector from "../cluster-dashboard/dashboard/ClusterRevisionSelector";
 
 import AWSCredentialsList from "./AddCluster/AWSCredentialList";
-import { InfraCredentials } from "shared/types";
+import { type InfraCredentials } from "shared/types";
 import { z } from "zod";
 
 type Props = RouteComponentProps & {
@@ -51,15 +51,8 @@ const ProvisionClusterModal: React.FC<Props> = ({
 
 
       <ScrollableContent>
-        {currentStep === "cloud" && gpuModal ? (
-          <GPUCostConsent
-            setCurrentStep={setCurrentStep}
-            markCostConsentComplete={() => {
-              () => { setCurrentStep("credentials"); }
-            }}
-          />
-        ) :
-          gpuModal ? (
+        <>
+          {gpuModal ? (
             <>
               <ClusterRevisionSelector
                 selectedClusterVersion={selectedClusterVersion}
@@ -100,6 +93,7 @@ const ProvisionClusterModal: React.FC<Props> = ({
                 />
               )
             )}
+        </>
       </ScrollableContent>
 
 

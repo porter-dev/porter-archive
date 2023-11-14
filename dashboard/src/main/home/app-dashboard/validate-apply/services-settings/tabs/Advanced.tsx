@@ -94,7 +94,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index, clusterContainsGPUNodes, ser
       <>
         <Spacer y={1} />
         <>
-          {(currentCluster.status === "UPDATING") ?
+          {(currentCluster.status === "UPDATING" && clusterContainsGPUNodes) ?
             (< CheckItemContainer >
               <CheckItemTop >
                 <Loading

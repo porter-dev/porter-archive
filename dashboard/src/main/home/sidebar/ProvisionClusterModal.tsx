@@ -1,6 +1,7 @@
 import React, { useContext, useState } from "react";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
+import api from "shared/api";
 
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
@@ -11,11 +12,66 @@ import { Context } from "shared/Context";
 import ClusterRevisionSelector from "../cluster-dashboard/dashboard/ClusterRevisionSelector";
 
 import AWSCredentialsList from "./AddCluster/AWSCredentialList";
+import { InfraCredentials } from "shared/types";
+import { z } from "zod";
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
   gpuModal?: boolean;
 }
+
+type EncodedContract = {
+  ID: number;
+  CreatedAt: string;
+  UpdatedAt: string;
+  DeletedAt: string | null;
+  id: string;
+  base64_contract: string;
+  cluster_id: number;
+  project_id: number;
+  condition: string;
+  condition_metadata: Record<string, unknown>;
+};
+
+type NodeGroup = {
+  instanceType: string;
+  minInstances: number;
+  maxInstances: number;
+  nodeGroupType: string;
+  isStateful?: boolean;
+};
+
+type EksKind = {
+  clusterName: string;
+  clusterVersion: string;
+  cidrRange: string;
+  region: string;
+  nodeGroups: NodeGroup[];
+  loadBalancer: {
+    loadBalancerType: string;
+  };
+  logging: Record<string, unknown>;
+  network: {
+    vpcCidr: string;
+    serviceCidr: string;
+  };
+};
+
+type Cluster = {
+  projectId: number;
+  clusterId: number;
+  kind: string;
+  cloudProvider: string;
+  cloudProviderCredentialsId: string;
+  eksKind: EksKind;
+};
+
+type ContractData = {
+  cluster: Cluster;
+  user: {
+    id: number;
+  };
+};
 
 const ProvisionClusterModal: React.FC<Props> = ({
   closeModal,
@@ -23,6 +79,7 @@ const ProvisionClusterModal: React.FC<Props> = ({
 }) => {
   const {
     currentCluster,
+    currentProject
   } = useContext(Context);
 
   const [currentCredential, setCurrentCredential] = useState<InfraCredentials>(
@@ -30,9 +87,10 @@ const ProvisionClusterModal: React.FC<Props> = ({
   );
   const [currentStep, setCurrentStep] = useState("cloud");
   const [targetArn, setTargetARN] = useState("")
-  const [selectedClusterVersion, setSelectedClusterVersion] = useState(null);
+  const [selectedClusterVersion, setSelectedClusterVersion] = useState<ContractData>();
   const [showProvisionerStatus, setShowProvisionerStatus] = useState(false);
   const [provisionFailureReason, setProvisionFailureReason] = useState("");
+
 
   return (
     <Modal closeModal={closeModal} width={"1000px"}>
@@ -45,7 +103,7 @@ const ProvisionClusterModal: React.FC<Props> = ({
 
 
       <ScrollableContent>
-        {currentStep == "cloud" && gpuModal ? (
+        {currentStep === "cloud" && gpuModal ? (
           <GPUCostConsent
             setCurrentStep={setCurrentStep}
             markCostConsentComplete={() => {
@@ -59,7 +117,9 @@ const ProvisionClusterModal: React.FC<Props> = ({
                 selectedClusterVersion={selectedClusterVersion}
                 setSelectedClusterVersion={setSelectedClusterVersion}
                 setShowProvisionerStatus={setShowProvisionerStatus}
-                setProvisionFailureReason={setProvisionFailureReason} />
+                setProvisionFailureReason={setProvisionFailureReason}
+                gpuModal={true}
+              />
 
               <ProvisionerSettings
                 clusterId={gpuModal ? currentCluster?.id : null}

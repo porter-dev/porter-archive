@@ -43,6 +43,8 @@ import Text from "./porter/Text";
 import Tooltip from "./porter/Tooltip";
 import VerticalSteps from "./porter/VerticalSteps";
 import PreflightChecks from "./PreflightChecks";
+import { Integer } from "type-fest";
+import InputSlider from "./porter/InputSlider";
 
 type ClusterState = {
   clusterName: string;
@@ -177,7 +179,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setShouldRefreshClusters,
   } = useContext(Context);
   const [step, setStep] = useState(0);
-
+  const [gpuStep, setGPUStep] = useState(0);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -575,7 +577,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   }, [isExpanded, props.selectedClusterVersion]);
 
   useEffect(() => {
-    if (!props.clusterId || (props.gpuModal && clusterState.clusterName === currentCluster?.name)) {
+    if (!props.clusterId || (props.gpuModal && clusterState.clusterName === currentCluster?.name && gpuStep == 1)) {
       if (clusterState.clusterName != "") {
         setStep(1);
         try {
@@ -1169,7 +1171,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   const renderGPUSettings = (): JSX.Element => {
     return (
       <VerticalSteps
-        currentStep={step}
+        currentStep={gpuStep}
+        onlyShowCurrentStep={true}
         steps={[
           <>
             <Heading isAtTop> Select GPU Instance Type </Heading>
@@ -1187,40 +1190,27 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               label="Machine type"
             />
             <Spacer y={1} />
-            <Input
+            <InputSlider
+              label="Max Instances: "
+              unit="nodes"
+              min={0}
+              max={5}
+              step={1}
               width="350px"
               disabled={isReadOnly || isLoading}
               value={clusterState.gpuMaxInstances.toString()}
-              setValue={(x: string) => {
-                if (x == "") {
-                  x = "0"
-                }
-                const num = parseInt(x, 10);
-                if (!isNaN(num)) {
-                  handleClusterStateChange('gpuMaxInstances', num);
-                }
+              setValue={(x: number) => {
+                handleClusterStateChange("gpuMaxInstances", x)
+
               }}
-              label="Maximum number of application nodes"
-              placeholder="ex: 1"
             />
-            <Spacer y={1} />
-            <Input
-              width="350px"
-              disabled={isReadOnly || isLoading}
-              value={clusterState.gpuMinInstances.toString()}
-              setValue={(x: string) => {
-                if (x == "") {
-                  x = "0"
-                }
-                const num = parseInt(x, 10)
-                if (num === undefined) {
-                  return
-                }
-                handleClusterStateChange('gpuMinInstances', num);
-              }}
-              label="Minimum number of application nodes. If set to 0, no applications will be deployed."
-              placeholder="ex: 1"
-            />
+            <Button onClick={() => {
+              setGPUStep(1)
+              preflightChecks();
+            }}>
+              Continue
+            </Button>
+
             <Spacer y={.5} />
           </>,
           <>
@@ -1278,6 +1268,12 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                         </Button></>)}
                   </>}
               </>}
+            <StepChangeButtonsContainer>
+              <Button onClick={() => setGPUStep(2)}>Continue</Button>
+              <Spacer inline x={0.5} />
+              <Button onClick={() => setGPUStep(0)} color="#222222">Back</Button>
+            </StepChangeButtonsContainer>
+
           </>, <>
             <Text size={16}>Provision your cluster</Text>
             <Spacer y={1} />
@@ -1287,13 +1283,17 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               </Text>
               <Spacer y={1} />
             </>}
-            <Button
-              disabled={(preflightFailed && !showEmailMessage) || isLoading}
-              onClick={showEmailMessage ? requestQuotasAndProvision : createCluster}
-              status={getStatus()}
-            >
-              Provision
-            </Button>
+            <StepChangeButtonsContainer>
+              <Button
+                disabled={(preflightFailed && !showEmailMessage) || isLoading}
+                onClick={showEmailMessage ? requestQuotasAndProvision : createCluster}
+                status={getStatus()}
+              >
+                Provision
+              </Button>
+              <Spacer inline x={0.5} />
+              <Button onClick={() => setGPUStep(1)} color="#222222">Back</Button>
+            </StepChangeButtonsContainer>
             <Spacer y={1} /></>
           ,
 
@@ -1553,4 +1553,8 @@ const CheckItemTop = styled.div`
 
 const StatusIcon = styled.img`
   height: 14px;
+`;
+
+const StepChangeButtonsContainer = styled.div`
+  display: flex;
 `;

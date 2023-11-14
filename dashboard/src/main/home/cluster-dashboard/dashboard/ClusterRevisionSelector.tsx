@@ -8,14 +8,7 @@ import warning from "assets/warning.png";
 import { readableDate } from "shared/string_utils";
 import { Context } from "shared/Context";
 import ExpandableSection from "components/porter/ExpandableSection";
-import {
-  Contract,
-  Cluster,
-  EKS,
-  NodeGroupType,
-  EnumKubernetesKind,
-  EnumCloudProvider,
-} from "@porter-dev/api-contracts";
+
 import Spacer from "components/porter/Spacer";
 import { createPortal } from "react-dom";
 import ConfirmOverlay from "components/ConfirmOverlay";
@@ -25,6 +18,7 @@ type Props = {
   setSelectedClusterVersion: any;
   setShowProvisionerStatus: any;
   setProvisionFailureReason: any;
+  gpuModal?: boolean;
 };
 
 const ClusterRevisionSelector: React.FC<Props> = ({
@@ -32,6 +26,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
   setSelectedClusterVersion,
   setShowProvisionerStatus,
   setProvisionFailureReason,
+  gpuModal
 }) => {
   const [showConfirmOverlay, setShowConfirmOverlay] = useState(false);
   const { currentProject, currentCluster } = useContext(Context);
@@ -209,74 +204,79 @@ const ClusterRevisionSelector: React.FC<Props> = ({
 
   return (
     <>
-      {hideSelector ? (
-        <></>
-      ) : (
+      {
+        !gpuModal &&
         <>
-          <StyledClusterRevisionSelector>
-            <ExpandableSection
-              isInitiallyExpanded={false}
-              color={selectedId <= 0 ? "#ffffff66" : "#f5cb42"}
-              Header={
-                <>
-                  <Label isCurrent={selectedId <= 0}>
-                    {selectedId === 0
-                      ? "Current version -"
-                      : selectedId === -1
-                        ? failedContractId
-                          ? ""
-                          : "In progress -"
-                        : "Previewing version (not deployed) -"}
-                  </Label>
-                  {selectedId === -1 ? (
-                    failedContractId ? (
-                      <>
-                        <WarningIcon src={warning} /> Last update failed
-                      </>
-                    ) : (
-                      <>
-                        <Img src={loading} /> Updating
-                      </>
-                    )
-                  ) : (
-                    `No. ${versions?.length - selectedId}`
-                  )}
-                </>
-              }
-              ExpandedSection={
-                <TableWrapper>
-                  <RevisionsTable>
-                    <tbody>
-                      <Tr disableHover={true}>
-                        <Th>Version no.</Th>
-                        <Th>Created</Th>
-                        {/* <Th>Rollback</Th> */}
-                      </Tr>
-                      {(pendingContract || failedContractId) &&
-                        renderActiveAttempt()}
-                      {renderVersionList()}
-                    </tbody>
-                  </RevisionsTable>
-                </TableWrapper>
-              }
-            />
-          </StyledClusterRevisionSelector>
-          <Spacer y={1} />
+          {hideSelector ? (
+            <></>
+          ) : (
+            <>
+              <StyledClusterRevisionSelector>
+                <ExpandableSection
+                  isInitiallyExpanded={false}
+                  color={selectedId <= 0 ? "#ffffff66" : "#f5cb42"}
+                  Header={
+                    <>
+                      <Label isCurrent={selectedId <= 0}>
+                        {selectedId === 0
+                          ? "Current version -"
+                          : selectedId === -1
+                            ? failedContractId
+                              ? ""
+                              : "In progress -"
+                            : "Previewing version (not deployed) -"}
+                      </Label>
+                      {selectedId === -1 ? (
+                        failedContractId ? (
+                          <>
+                            <WarningIcon src={warning} /> Last update failed
+                          </>
+                        ) : (
+                          <>
+                            <Img src={loading} /> Updating
+                          </>
+                        )
+                      ) : (
+                        `No. ${versions?.length - selectedId}`
+                      )}
+                    </>
+                  }
+                  ExpandedSection={
+                    <TableWrapper>
+                      <RevisionsTable>
+                        <tbody>
+                          <Tr disableHover={true}>
+                            <Th>Version no.</Th>
+                            <Th>Created</Th>
+                            {/* <Th>Rollback</Th> */}
+                          </Tr>
+                          {(pendingContract || failedContractId) &&
+                            renderActiveAttempt()}
+                          {renderVersionList()}
+                        </tbody>
+                      </RevisionsTable>
+                    </TableWrapper>
+                  }
+                />
+              </StyledClusterRevisionSelector>
+              <Spacer y={1} />
+            </>
+          )}
+          {showConfirmOverlay &&
+            createPortal(
+              <ConfirmOverlay
+                show={true}
+                message={`Clear the failed revision?`}
+                onYes={() => {
+                  deleteContract();
+                  setShowConfirmOverlay(false);
+                }}
+                onNo={() => { setShowConfirmOverlay(false); }}
+              />,
+              document.body
+            )}
         </>
-      )}
-      {showConfirmOverlay &&
-        createPortal(
-          <ConfirmOverlay
-            show={true}
-            message={`Clear the failed revision?`}
-            onYes={() => {
-              deleteContract();
-              setShowConfirmOverlay(false);
-            }}
-            onNo={() => { setShowConfirmOverlay(false); }}
-          />,
-          document.body
-        )}
+      }
     </>
   );
 };

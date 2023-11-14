@@ -220,7 +220,7 @@ export const useClusterResourceLimits = ({
               (ng.nodeGroupType === "NODE_GROUP_TYPE_CUSTOM" &&
                 ng.instanceType.includes("g4dn")) ||
               (ng.nodeGroupType === "NODE_GROUP_TYPE_APPLICATION" &&
-                ng.instanceType.includes("t3"))
+                ng.instanceType.includes("g4dn"))
           );
 
         return containsCustomNodeGroup;

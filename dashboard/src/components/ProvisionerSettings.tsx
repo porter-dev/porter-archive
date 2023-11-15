@@ -129,7 +129,7 @@ const initialClusterState: ClusterState = {
   cidrRangeServices: defaultCidrServices,
   clusterVersion: defaultClusterVersion,
   gpuInstanceType: "g4dn.xlarge",
-  gpuMinInstances: 1,
+  gpuMinInstances: 0,
   gpuMaxInstances: 5,
 };
 
@@ -140,6 +140,7 @@ type Props = RouteComponentProps & {
   clusterId?: number | null;
   closeModal?: () => void;
   gpuModal?: boolean;
+  setGPUStatus?: (status: string) => void;
 };
 
 const ProvisionerSettings: React.FC<Props> = (props) => {
@@ -343,7 +344,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     if (props.gpuModal) {
       nodeGroups.push(new EKSNodeGroup({
         instanceType: clusterState.gpuInstanceType,
-        minInstances: clusterState.gpuMinInstances || 1,
+        minInstances: clusterState.gpuMinInstances || 0,
         maxInstances: clusterState.gpuMaxInstances || 5,
         nodeGroupType: NodeGroupType.CUSTOM,
         isStateful: false,
@@ -414,12 +415,20 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               // setHasFinishedOnboarding(true);
               setCurrentCluster(cluster);
               OFState.actions.goTo("clean_up");
-              pushFiltered(props, "/cluster-dashboard", ["project_id"], {
-                cluster: cluster.name,
-              });
+              if (!props.gpuModal) {
+                pushFiltered(props, "/cluster-dashboard", ["project_id"], {
+                  cluster: cluster.name,
+                });
+                window.location.reload();
+              }
+              else {
+                if (props.closeModal) {
+                  props.closeModal();
+                }
+              }
             }
           });
-          window.location.reload();
+
         })
         .catch((err) => {
           if (err) {
@@ -550,7 +559,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     if (!props.clusterId) {
-      if (clusterState.clusterName != "") {
+      if (clusterState.clusterName !== "") {
         setStep(1);
         try {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Spacer from "components/porter/Spacer";
 import { type ClientService } from "lib/porter-apps/services";
 import { Controller, useFormContext } from "react-hook-form";
@@ -13,6 +13,12 @@ import SmartOptModal from "main/home/app-dashboard/new-app-flow/tabs/SmartOptMod
 import IntelligentSlider from "./IntelligentSlider";
 import InputSlider from "components/porter/InputSlider";
 import { closestMultiplier, lowestClosestResourceMultipler } from "lib/hooks/useClusterResourceLimits";
+import Loading from "components/Loading";
+import ProvisionClusterModal from "main/home/sidebar/ProvisionClusterModal";
+import { Context } from "shared/Context";
+import Link from "components/porter/Link";
+import Tag from "components/porter/Tag";
+import infra from "assets/cluster.svg";
 
 type ResourcesProps = {
   index: number;
@@ -33,6 +39,8 @@ const Resources: React.FC<ResourcesProps> = ({
 }) => {
   const { control, register, watch, setValue } = useFormContext<PorterAppFormData>();
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
+  const [clusterModalVisible, setClusterModalVisible] = useState<boolean>(false);
+  const { currentCluster, currentProject, setCurrentCluster } = useContext(Context);
 
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`, {
@@ -186,181 +194,280 @@ const Resources: React.FC<ResourcesProps> = ({
           />
         )}
       />
-      {clusterContainsGPUNodes && (
+
+      {(currentCluster.cloud_provider === "AWS" && currentProject.gpu_enabled) &&
         <>
           <Spacer y={1} />
           <Controller
             name={`app.services.${index}.gpuCoresNvidia`}
             control={control}
             render={({ field: { value, onChange } }) => (
-              <InputSlider
-                label="GPUs: "
-                unit="Cores"
-                min={0}
-                max={1}
-                step={1}
-                value={(value.value).toString()}
-                disabled={value.readOnly}
-                width="300px"
-                setValue={(e) => {
-                  onChange({
-                    ...value,
-                    value: e,
-                  });
-                }}
-                disabledTooltip={"You may only edit this field in your porter.yaml."
-                }
-              />
-            )}
-          />
-        </>
-      )
+              <>
+                <>
+                  <Switch
+                    size="small"
+                    color="primary"
+                    checked={value.value > 0}
+                    disabled={!clusterContainsGPUNodes}
+                    onChange={() => {
+                      if (value.value > 0) {
+                        onChange({
+                          ...value,
+                          value: 0
+                        });
+                      }
+                      else
+                        onChange({
+                          ...value,
+                          value: 1
+                        });
+                    }}
 
+                    inputProps={{ 'aria-label': 'controlled' }} /><Spacer inline x={.5} /><Text >
+                    <>
+                      <span>Enable GPU</span>
+                    </>
+                  </Text>
+                  {
+                    !clusterContainsGPUNodes &&
+                    <>
+
+                      <Spacer inline x={2} />
+                      <Text
+                        color="helper"
+                      >
+                        You cluster has no GPU nodes available.
+                      </Text>
+                      <Spacer inline x={.5} />
+                      <Link
+                        onClick={() => { setClusterModalVisible(true); }}
+                        hasunderline
+                      >
+                        Add GPU nodes
+                      </Link>
+                      {/* <a
+                        href="https://docs.porter.run/enterprise/deploying-applications/zero-downtime-deployments#health-checks"
+                        target="_blank" rel="noreferrer"
+                      >
+                        &nbsp;(?)
+                      </a> */}
+                    </>
+
+                  }
+                </>
+                <Spacer y={.5} />
+                {
+                  clusterModalVisible && <ProvisionClusterModal
+                    closeModal={() => {
+                      setClusterModalVisible(false);
+                    }}
+                    gpuModal={true}
+                  />
+                }
+              </>
+            )} />
+          {(currentCluster.status === "UPDATING" && clusterContainsGPUNodes) &&
+            < CheckItemContainer >
+              <CheckItemTop >
+                <Loading
+                  offset="0px"
+                  width="20px"
+                  height="20px" />
+                <Spacer inline x={1} />
+                <Text style={{ marginLeft: '10px', flex: 1 }}>{"Creating GPU nodes..."}</Text>
+                <Spacer inline x={1} />
+                <Tag>
+                  <Link
+                    to={`/cluster-dashboard`}
+                  >
+                    <TagIcon src={infra} />
+                    View Status
+                  </Link>
+                </Tag>
+              </CheckItemTop>
+            </CheckItemContainer>
+          }
+        </>
       }
-      {match(service.config)
-        .with({ type: "job" }, () => null)
-        .with({ type: "predeploy" }, () => null)
-        .otherwise((config) => (
+
+      {/* {
+        // Show GPU slider if cluster contains GPU nodes and it is not in an updating state 
+        (currentCluster.status !== "UPDATING" && clusterContainsGPUNodes) && (
           <>
             <Spacer y={1} />
-            <ControlledInput
-              type="text"
-              label="Instances"
-              placeholder="ex: 1"
-              disabled={service.instances.readOnly || autoscalingEnabled.value}
-              width="300px"
-              disabledTooltip={
-                service.instances.readOnly
-                  ? "You may only edit this field in your porter.yaml."
-                  : "Disable autoscaling to specify instances."
-              }
-              {...register(`app.services.${index}.instances.value`)}
-            />
-            <Spacer y={1} />
-
-            {!clusterContainsGPUNodes && (<Controller
-              name={`app.services.${index}.config.autoscaling.enabled`}
+            <Controller
+              name={`app.services.${index}.gpuCoresNvidia`}
               control={control}
               render={({ field: { value, onChange } }) => (
-                <Checkbox
-                  checked={value.value}
-                  toggleChecked={() => {
+                <InputSlider
+                  label="GPUs: "
+                  unit="GPU"
+                  min={0}
+                  max={1}
+                  step={1}
+                  value={(value.value).toString()}
+                  disabled={value.readOnly}
+                  width="300px"
+                  setValue={(e) => {
                     onChange({
                       ...value,
-                      value: !value.value,
+                      value: e,
                     });
                   }}
-                  disabled={value.readOnly}
-                  disabledTooltip={
-                    "You may only edit this field in your porter.yaml."
+                  disabledTooltip={"You may only edit this field in your porter.yaml."
                   }
-                >
-                  <Text color="helper">
-                    Enable autoscaling (overrides instances)
-                  </Text>
-                </Checkbox>
+                />
               )}
-            />)}
-
-
-            {autoscalingEnabled.value && (
-              <>
-                <Spacer y={1} />
-                <ControlledInput
-                  type="text"
-                  label="Min instances"
-                  placeholder="ex: 1"
-                  disabled={
-                    config.autoscaling?.minInstances?.readOnly ??
-                    !config.autoscaling?.enabled.value
-                  }
-                  width="300px"
-                  disabledTooltip={
-                    config.autoscaling?.minInstances?.readOnly
-                      ? "You may only edit this field in your porter.yaml."
-                      : "Enable autoscaling to specify min instances."
-                  }
-                  {...register(
-                    `app.services.${index}.config.autoscaling.minInstances.value`
-                  )}
-                />
-                <Spacer y={1} />
-                <ControlledInput
-                  type="text"
-                  label="Max instances"
-                  placeholder="ex: 10"
-                  disabled={
-                    config.autoscaling?.maxInstances?.readOnly ??
-                    !config.autoscaling?.enabled.value
-                  }
-                  width="300px"
-                  disabledTooltip={
-                    config.autoscaling?.maxInstances?.readOnly
-                      ? "You may only edit this field in your porter.yaml."
-                      : "Enable autoscaling to specify max instances."
-                  }
-                  {...register(
-                    `app.services.${index}.config.autoscaling.maxInstances.value`
-                  )}
-                />
-                <Spacer y={1} />
-                <Controller
-                  name={`app.services.${index}.config.autoscaling.cpuThresholdPercent`}
-                  control={control}
-                  render={({ field: { value, onChange } }) => (
-                    <InputSlider
-                      label="CPU threshold: "
-                      unit="%"
-                      min={0}
-                      max={100}
-                      value={value?.value.toString() ?? "50"}
-                      disabled={value?.readOnly || !config.autoscaling?.enabled}
-                      width="300px"
-                      setValue={(e) => {
-                        onChange({
-                          ...value,
-                          value: e,
-                        });
-                      }}
-                      disabledTooltip={
-                        value?.readOnly
-                          ? "You may only edit this field in your porter.yaml."
-                          : "Enable autoscaling to specify CPU threshold."
-                      }
-                    />
-                  )}
-                />
-                <Spacer y={1} />
-                <Controller
-                  name={`app.services.${index}.config.autoscaling.memoryThresholdPercent`}
-                  control={control}
-                  render={({ field: { value, onChange } }) => (
-                    <InputSlider
-                      label="RAM threshold: "
-                      unit="%"
-                      min={0}
-                      max={100}
-                      value={value?.value.toString() ?? "50"}
-                      disabled={value?.readOnly || !config.autoscaling?.enabled}
-                      width="300px"
-                      setValue={(e) => {
-                        onChange({
-                          ...value,
-                          value: e,
-                        });
-                      }}
-                      disabledTooltip={
-                        value?.readOnly
-                          ? "You may only edit this field in your porter.yaml."
-                          : "Enable autoscaling to specify RAM threshold."
-                      }
-                    />
-                  )}
-                />
-              </>
-            )}
+            />
           </>
-        ))}
+        )
+      } */}
+      {
+        match(service.config)
+          .with({ type: "job" }, () => null)
+          .with({ type: "predeploy" }, () => null)
+          .otherwise((config) => (
+            <>
+              <Spacer y={1} />
+              <ControlledInput
+                type="text"
+                label="Instances"
+                placeholder="ex: 1"
+                disabled={service.instances.readOnly || autoscalingEnabled.value}
+                width="300px"
+                disabledTooltip={
+                  service.instances.readOnly
+                    ? "You may only edit this field in your porter.yaml."
+                    : "Disable autoscaling to specify instances."
+                }
+                {...register(`app.services.${index}.instances.value`)}
+              />
+              <Spacer y={1} />
+
+              {!clusterContainsGPUNodes && (<Controller
+                name={`app.services.${index}.config.autoscaling.enabled`}
+                control={control}
+                render={({ field: { value, onChange } }) => (
+                  <Checkbox
+                    checked={value.value}
+                    toggleChecked={() => {
+                      onChange({
+                        ...value,
+                        value: !value.value,
+                      });
+                    }}
+                    disabled={value.readOnly}
+                    disabledTooltip={
+                      "You may only edit this field in your porter.yaml."
+                    }
+                  >
+                    <Text color="helper">
+                      Enable autoscaling (overrides instances)
+                    </Text>
+                  </Checkbox>
+                )}
+              />)}
+
+
+              {autoscalingEnabled.value && (
+                <>
+                  <Spacer y={1} />
+                  <ControlledInput
+                    type="text"
+                    label="Min instances"
+                    placeholder="ex: 1"
+                    disabled={
+                      config.autoscaling?.minInstances?.readOnly ??
+                      !config.autoscaling?.enabled.value
+                    }
+                    width="300px"
+                    disabledTooltip={
+                      config.autoscaling?.minInstances?.readOnly
+                        ? "You may only edit this field in your porter.yaml."
+                        : "Enable autoscaling to specify min instances."
+                    }
+                    {...register(
+                      `app.services.${index}.config.autoscaling.minInstances.value`
+                    )}
+                  />
+                  <Spacer y={1} />
+                  <ControlledInput
+                    type="text"
+                    label="Max instances"
+                    placeholder="ex: 10"
+                    disabled={
+                      config.autoscaling?.maxInstances?.readOnly ??
+                      !config.autoscaling?.enabled.value
+                    }
+                    width="300px"
+                    disabledTooltip={
+                      config.autoscaling?.maxInstances?.readOnly
+                        ? "You may only edit this field in your porter.yaml."
+                        : "Enable autoscaling to specify max instances."
+                    }
+                    {...register(
+                      `app.services.${index}.config.autoscaling.maxInstances.value`
+                    )}
+                  />
+                  <Spacer y={1} />
+                  <Controller
+                    name={`app.services.${index}.config.autoscaling.cpuThresholdPercent`}
+                    control={control}
+                    render={({ field: { value, onChange } }) => (
+                      <InputSlider
+                        label="CPU threshold: "
+                        unit="%"
+                        min={0}
+                        max={100}
+                        value={value?.value.toString() ?? "50"}
+                        disabled={value?.readOnly || !config.autoscaling?.enabled}
+                        width="300px"
+                        setValue={(e) => {
+                          onChange({
+                            ...value,
+                            value: e,
+                          });
+                        }}
+                        disabledTooltip={
+                          value?.readOnly
+                            ? "You may only edit this field in your porter.yaml."
+                            : "Enable autoscaling to specify CPU threshold."
+                        }
+                      />
+                    )}
+                  />
+                  <Spacer y={1} />
+                  <Controller
+                    name={`app.services.${index}.config.autoscaling.memoryThresholdPercent`}
+                    control={control}
+                    render={({ field: { value, onChange } }) => (
+                      <InputSlider
+                        label="RAM threshold: "
+                        unit="%"
+                        min={0}
+                        max={100}
+                        value={value?.value.toString() ?? "50"}
+                        disabled={value?.readOnly || !config.autoscaling?.enabled}
+                        width="300px"
+                        setValue={(e) => {
+                          onChange({
+                            ...value,
+                            value: e,
+                          });
+                        }}
+                        disabledTooltip={
+                          value?.readOnly
+                            ? "You may only edit this field in your porter.yaml."
+                            : "Enable autoscaling to specify RAM threshold."
+                        }
+                      />
+                    )}
+                  />
+                </>
+              )}
+            </>
+          ))
+      }
     </>
   );
 };
@@ -368,16 +475,42 @@ const Resources: React.FC<ResourcesProps> = ({
 export default Resources;
 
 const StyledIcon = styled.i`
-  cursor: pointer;
-  font-size: 16px; 
-  margin-right : 5px;
-  &:hover {
-    color: #666;  
+      cursor: pointer;
+      font-size: 16px;
+      margin-right : 5px;
+      &:hover {
+        color: #666;  
   }
-`;
+      `;
 
 const SmartOptHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-`
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      `
+
+const CheckItemContainer = styled.div`
+      display: flex;
+      flex-direction: column;
+      border: 1px solid ${props => props.theme.border};
+      border-radius: 5px;
+      font-size: 13px;
+      width: 100%;
+      margin-bottom: 10px;
+      padding-left: 10px;
+      cursor: ${props => (props.hasMessage ? 'pointer' : 'default')};
+      background: ${props => props.theme.clickable.bg};
+
+      `;
+
+const CheckItemTop = styled.div`
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: ${props => props.theme.clickable.bg};
+      `;
+
+const TagIcon = styled.img`
+      height: 12px;
+      margin-right: 3px;
+      `;

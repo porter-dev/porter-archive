@@ -261,7 +261,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		DBEnabled:              p.GetFeatureFlag(DBEnabled, launchDarklyClient),
 		SimplifiedViewEnabled:  p.GetFeatureFlag(SimplifiedViewEnabled, launchDarklyClient),
 		AzureEnabled:           p.GetFeatureFlag(AzureEnabled, launchDarklyClient),
-		GPUEnabled: 			p.GetFeatureFlag(GPUEnabled, launchDarklyClient),
+		GPUEnabled:             p.GetFeatureFlag(GPUEnabled, launchDarklyClient),
 		HelmValuesEnabled:      p.GetFeatureFlag(HelmValuesEnabled, launchDarklyClient),
 		MultiCluster:           p.GetFeatureFlag(MultiCluster, launchDarklyClient),
 		EnableReprovision:      p.GetFeatureFlag(EnableReprovision, launchDarklyClient),

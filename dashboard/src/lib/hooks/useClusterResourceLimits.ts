@@ -113,9 +113,11 @@ const clusterNodesValidator = z
 export const useClusterResourceLimits = ({
   projectId,
   clusterId,
+  clusterStatus,
 }: {
   projectId: number | undefined;
   clusterId: number | undefined;
+  clusterStatus: string | undefined;
 }): {
   maxCPU: number;
   maxRAM: number;
@@ -186,7 +188,7 @@ export const useClusterResourceLimits = ({
   );
 
   const getContract = useQuery(
-    ["getContracts", projectId, clusterId],
+    ["getContracts", projectId, clusterId, clusterStatus],
     async () => {
       if (!projectId || !clusterId || clusterId === -1) {
         return "";

@@ -170,18 +170,7 @@ const GPUProvisionerSettings: React.FC<Props> = ({
                         </Button></>)}
                   </>}
               </>}
-            <Spacer y={1} />
 
-            <StepChangeButtonsContainer>
-              <Button
-                disabled={isLoading}
-                onClick={() => { setGPUStep(2); }}>Continue</Button>
-              <Spacer inline x={0.5} />
-              <Button onClick={() => { setGPUStep(0); }} color="#222222">Back</Button>
-            </StepChangeButtonsContainer>
-
-          </>, <>
-            <Text size={16}>Provision your cluster</Text>
             <Spacer y={1} />
             {showEmailMessage && <>
               <Text color="helper">
@@ -198,10 +187,9 @@ const GPUProvisionerSettings: React.FC<Props> = ({
                 Provision
               </Button>
               <Spacer inline x={0.5} />
-              <Button onClick={() => { setGPUStep(1); }} color="#222222">Back</Button>
+              <Button onClick={() => { setGPUStep(0); }} color="#222222">Back</Button>
             </StepChangeButtonsContainer>
-            <Spacer y={1} /></>
-          ,
+            <Spacer y={1} /></>,
 
         ].filter((x) => x)}
       />

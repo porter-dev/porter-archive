@@ -1,14 +1,14 @@
 import React from "react";
 import TabSelector from "components/TabSelector";
 
-import { type ClientService } from "lib/porter-apps/services";
+import { ClientService } from "lib/porter-apps/services";
 import { match } from "ts-pattern";
 import Networking from "./Networking";
 import MainTab from "./Main";
 import Resources from "./Resources";
-import Advanced from "./Advanced";
+import Health from "./Health";
 
-type Props = {
+interface Props {
   index: number;
   service: ClientService & {
     config: {
@@ -26,13 +26,13 @@ type Props = {
   clusterIngressIp: string;
 }
 
-const WebTabs: React.FC<Props> = ({
-  index,
-  service,
-  maxRAM,
-  maxCPU,
-  clusterContainsGPUNodes,
-  internalNetworkingDetails,
+const WebTabs: React.FC<Props> = ({ 
+  index, 
+  service, 
+  maxRAM, 
+  maxCPU, 
+  clusterContainsGPUNodes, 
+  internalNetworkingDetails, 
   clusterIngressIp,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<
@@ -70,7 +70,7 @@ const WebTabs: React.FC<Props> = ({
             service={service}
           />
         ))
-        .with("advanced", () => <Advanced clusterContainsGPUNodes={clusterContainsGPUNodes} index={index} service={service} />)
+        .with("advanced", () => <Health index={index} service={service} />)
         .exhaustive()}
     </>
   );

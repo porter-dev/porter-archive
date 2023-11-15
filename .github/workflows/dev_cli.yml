@@ -103,3 +103,5 @@ jobs:
         PORTER_HOST: https://dashboard.internal-tools.porter.run
         PORTER_PROJECT: "301"
         PORTER_TOKEN: ${{ secrets.APP_INTEGRATION_PROJECT_TOKEN }}
+        PORTER_SERVICE: porter
+        PORTER_COMMIT: ${{ github.sha }}

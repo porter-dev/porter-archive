@@ -1018,7 +1018,7 @@ const updateApp = baseApi<
     deletions?: {
       service_names: string[];
       predeploy: string[];
-      env_variable_names: string[];
+      env_variable_names?: string[];
       env_group_names: string[];
       service_deletions: Record<
         string,

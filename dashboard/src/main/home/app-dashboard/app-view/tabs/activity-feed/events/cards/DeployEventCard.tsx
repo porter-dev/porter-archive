@@ -18,6 +18,7 @@ import view_changes from "assets/edit-contained.svg";
 import revert from "assets/fast-backward.svg";
 import pull_request_icon from "assets/pull_request_icon.svg";
 import run_for from "assets/run_for.png";
+import tag_icon from "assets/tag.png";
 
 import RevisionDiffModal from "../modals/RevisionDiffModal";
 import { type PorterAppDeployEvent } from "../types";
@@ -280,7 +281,10 @@ const DeployEventCard: React.FC<Props> = ({
             <>
               <Spacer inline x={0.5} />
               <ImageTagContainer hoverable={false}>
-                <Code>{event.metadata.image_tag}</Code>
+                <TagContainer>
+                  <CommitIcon src={tag_icon} />
+                  <Code>{event.metadata.image_tag}</Code>
+                </TagContainer>
               </ImageTagContainer>
             </>
           ) : null}
@@ -383,4 +387,12 @@ const StatusTextContainer = styled.div`
 const TagIcon = styled.img`
   height: 12px;
   margin-right: 3px;
+`;
+
+const TagContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 1px;
+  padding: 0px 2px;
 `;

@@ -39,6 +39,10 @@ var tabOptions: {
   value: TabEnum;
 }[] = [{ label: "Additional settings", value: "settings" }];
 
+const showComplianceTab = (capi_provisioner_enabled: boolean, cloud_provider: string): boolean => {
+  return capi_provisioner_enabled && ['AWS'].includes(cloud_provider)
+}
+
 export const Dashboard: React.FunctionComponent = () => {
   const [currentTab, setCurrentTab] = useState<TabEnum>("settings");
   const [currentTabOptions, setCurrentTabOptions] = useState(tabOptions);
@@ -69,7 +73,13 @@ export const Dashboard: React.FunctionComponent = () => {
       case "namespaces":
         return <NamespaceList />;
       case "compliance":
-        return <Compliance />
+        return (
+          <>
+            {showComplianceTab(context.currentProject?.capi_provisioner_enabled, context.currentCluster.cloud_provider) && (
+              <Compliance/>
+              )}
+          </>
+        )
       case "configuration":
         return (
           <>
@@ -127,7 +137,7 @@ export const Dashboard: React.FunctionComponent = () => {
     }
 
     if (
-      context.currentProject?.capi_provisioner_enabled &&
+      showComplianceTab(context.currentProject?.capi_provisioner_enabled, context.currentCluster.cloud_provider) &&
       !tabOptions.find((tab) => tab.value === "compliance")
     ) {
       tabOptions.unshift({ value: "compliance", label: "Compliance" });

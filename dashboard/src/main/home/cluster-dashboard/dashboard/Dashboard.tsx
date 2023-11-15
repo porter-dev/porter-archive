@@ -20,7 +20,6 @@ import Metrics from "./Metrics";
 import ClusterSettingsModal from "./ClusterSettingsModal";
 import Compliance from "./Compliance";
 
-import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 import AzureProvisionerSettings from "components/AzureProvisionerSettings";
 import GCPProvisionerSettings from "components/GCPProvisionerSettings";
@@ -53,7 +52,6 @@ export const Dashboard: React.FunctionComponent = () => {
   const [provisionFailureReason, setProvisionFailureReason] = useState("");
   const [ingressIp, setIngressIp] = useState("");
   const [ingressError, setIngressError] = useState("");
-  const [cloudProvider, setCloudProvider] = useState("azure");
 
   const context = useContext(Context);
   const renderTab = () => {
@@ -84,7 +82,7 @@ export const Dashboard: React.FunctionComponent = () => {
         return (
           <>
             <Br />
-            {context.currentCluster.cloud_provider == "AWS" && (
+            {context.currentCluster.cloud_provider === "AWS" && (
               <ProvisionerSettings
                 selectedClusterVersion={selectedClusterVersion}
                 provisionerError={provisionFailureReason}
@@ -94,7 +92,7 @@ export const Dashboard: React.FunctionComponent = () => {
                 }
               />
             )}
-            {context.currentCluster.cloud_provider == "Azure" && (
+            {context.currentCluster.cloud_provider === "Azure" && (
               <AzureProvisionerSettings
                 selectedClusterVersion={selectedClusterVersion}
                 provisionerError={provisionFailureReason}
@@ -104,7 +102,7 @@ export const Dashboard: React.FunctionComponent = () => {
                 }
               />
             )}
-            {context.currentCluster.cloud_provider == "GCP" && (
+            {context.currentCluster.cloud_provider === "GCP" && (
               <GCPProvisionerSettings
                 selectedClusterVersion={selectedClusterVersion}
                 provisionerError={provisionFailureReason}
@@ -132,8 +130,6 @@ export const Dashboard: React.FunctionComponent = () => {
         tabOptions.unshift({ label: "Metrics", value: "metrics" });
         tabOptions.unshift({ label: "Nodes", value: "nodes" });
       }
-      // tabOptions.unshift({ label: "Metrics", value: "metrics" });
-      // tabOptions.unshift({ label: "Nodes", value: "nodes" });
     }
 
     if (

@@ -47,7 +47,6 @@ import { Integer } from "type-fest";
 import InputSlider from "./porter/InputSlider";
 import GPUProvisionSettings from "./GPUProvisionSettings";
 
-
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -116,6 +115,7 @@ const initialClusterState: ClusterState = {
   clusterName: "",
   awsRegion: "us-east-1",
   machineType: "t3.medium",
+  ecrScanningEnabled: false,
   guardDutyEnabled: false,
   kmsEncryptionEnabled: false,
   loadBalancerType: false,
@@ -372,6 +372,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             logging: controlPlaneLogs,
             enableGuardDuty: clusterState.guardDutyEnabled,
             enableKmsEncryption: clusterState.kmsEncryptionEnabled,
+            enableEcrScanning: clusterState.ecrScanningEnabled,
             network: new AWSClusterNetwork({
               vpcCidr: clusterState.cidrRangeVPC || defaultCidrVpc,
               serviceCidr: clusterState.cidrRangeServices || defaultCidrServices,
@@ -554,6 +555,10 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       handleClusterStateChange(
         "kmsEncryptionEnabled",
         eksValues.enableKmsEncryption
+      );
+      handleClusterStateChange(
+        "ecrScanningEnabled",
+        eksValues.enableEcrScanning
       );
     }
   }, [isExpanded, props.selectedClusterVersion]);
@@ -1073,6 +1078,28 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                     <Spacer y={1} />
                   </>
                 )}
+
+                <FlexCenter>
+                  <Checkbox
+                    checked={clusterState.ecrScanningEnabled}
+                    disabled={isReadOnly}
+                    toggleChecked={() => {
+                      handleClusterStateChange(
+                        "ecrScanningEnabled",
+                        !clusterState.ecrScanningEnabled
+                      );
+                    }}
+                    disabledTooltip={
+                      "Wait for provisioning to complete before editing this field."
+                    }
+                  >
+                    <Text color="helper">
+                      Enable ECR scanning for this cluster
+                    </Text>
+                  </Checkbox>
+                </FlexCenter>
+                <Spacer y={1} />
+
                 <FlexCenter>
                   <Checkbox
                     checked={clusterState.guardDutyEnabled}

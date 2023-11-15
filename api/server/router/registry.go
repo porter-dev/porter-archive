@@ -229,5 +229,34 @@ func getRegistryRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/registries/{registry_id}/status -> registry.NewStatusHandler
+	statusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/status",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.RegistryScope,
+			},
+		},
+	)
+
+	statusHandler := registry.NewStatusHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: statusEndpoint,
+		Handler:  statusHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

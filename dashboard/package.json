@@ -98,7 +98,7 @@
     "@babel/preset-typescript": "^7.15.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.1.1",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.4.3",
-    "@porter-dev/api-contracts": "^0.2.28",
+    "@porter-dev/api-contracts": "^0.2.44",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",

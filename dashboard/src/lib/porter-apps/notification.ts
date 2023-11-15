@@ -1,6 +1,9 @@
 import _ from "lodash";
 
-import { type PorterAppNotification } from "main/home/app-dashboard/app-view/tabs/activity-feed/events/types";
+import {
+  isServiceNotification,
+  type PorterAppNotification,
+} from "main/home/app-dashboard/app-view/tabs/activity-feed/events/types";
 
 import { type ClientService } from "./services";
 
@@ -17,12 +20,14 @@ export function deserializeNotifications(
   notifications: PorterAppNotification[],
   clientServices: ClientService[]
 ): ClientNotification[] {
+  const serviceNotifications = notifications.filter(isServiceNotification);
+
   const notificationsGroupedByService = _.groupBy(
-    notifications,
-    (notification) => notification.service_name
+    serviceNotifications,
+    (notification) => notification.metadata.service_name
   );
 
-  const clientNotifications = clientServices
+  const clientServiceNotifications = clientServices
     .filter((svc) => notificationsGroupedByService[svc.name.value] != null)
     .map((svc) => {
       const serviceName = svc.name.value;
@@ -37,8 +42,8 @@ export function deserializeNotifications(
         // if not, then the deployment has already occurred
         isDeployRelated: notificationsGroupedByService[serviceName].some(
           (notification) =>
-            notification.deployment.status === "PENDING" ||
-            notification.deployment.status === "FAILURE"
+            notification.metadata.deployment.status === "PENDING" ||
+            notification.metadata.deployment.status === "FAILURE"
         ),
         timestamp,
         id,
@@ -48,7 +53,7 @@ export function deserializeNotifications(
       };
     });
 
-  return orderNotificationsByTimestamp(clientNotifications, "asc");
+  return orderNotificationsByTimestamp(clientServiceNotifications, "asc");
 }
 
 const orderNotificationsByTimestamp = <T extends Array<{ timestamp: string }>>(

@@ -8,7 +8,7 @@ import React, {
 import styled from "styled-components";
 import _ from "lodash";
 
-import addOn from "assets/add-ons.svg";
+import addOn from "assets/add-ons-dashboard.svg";
 import time from "assets/time.png";
 import healthy from "assets/status-healthy.png";
 import grid from "assets/grid.png";

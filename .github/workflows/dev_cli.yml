@@ -4,7 +4,7 @@ on:
     branches: [master]
     types: 
       - completed
-name: Release dev cli
+name: Release dev cli and run integration tests
 jobs:
   build-linux:
     name: Build Linux binaries

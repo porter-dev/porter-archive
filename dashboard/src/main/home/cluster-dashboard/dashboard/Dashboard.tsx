@@ -18,6 +18,7 @@ import { NamespaceList } from "./NamespaceList";
 import ClusterSettings from "./ClusterSettings";
 import Metrics from "./Metrics";
 import ClusterSettingsModal from "./ClusterSettingsModal";
+import Compliance from "./Compliance";
 
 import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
@@ -30,6 +31,7 @@ type TabEnum =
   | "namespaces"
   | "metrics"
   | "incidents"
+  | "compliance"
   | "configuration";
 
 var tabOptions: {
@@ -66,6 +68,8 @@ export const Dashboard: React.FunctionComponent = () => {
         return <Metrics />;
       case "namespaces":
         return <NamespaceList />;
+      case "compliance":
+        return <Compliance />
       case "configuration":
         return (
           <>
@@ -120,6 +124,13 @@ export const Dashboard: React.FunctionComponent = () => {
       }
       // tabOptions.unshift({ label: "Metrics", value: "metrics" });
       // tabOptions.unshift({ label: "Nodes", value: "nodes" });
+    }
+
+    if (
+      context.currentProject?.capi_provisioner_enabled &&
+      !tabOptions.find((tab) => tab.value === "compliance")
+    ) {
+      tabOptions.unshift({ value: "compliance", label: "Compliance" });
     }
 
     if (

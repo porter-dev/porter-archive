@@ -89,7 +89,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                                             hoverColor="#949eff"
                                             target={"_blank"}
                                         >
-                                            External Link
+                                            External link
                                         </Link>
                                     </>
                                 }

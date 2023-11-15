@@ -1,12 +1,15 @@
 on:
-  push:
-    branches:
-      - master
+  workflow_run:
+    workflows: ["Deploy Porter to Internal Tooling"]
+    branches: [master]
+    types: 
+      - completed
 name: Release dev cli
 jobs:
   build-linux:
     name: Build Linux binaries
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -100,3 +103,5 @@ jobs:
         PORTER_HOST: https://dashboard.internal-tools.porter.run
         PORTER_PROJECT: "301"
         PORTER_TOKEN: ${{ secrets.APP_INTEGRATION_PROJECT_TOKEN }}
+        PORTER_SERVICE: porter
+        PORTER_COMMIT: ${{ github.sha }}

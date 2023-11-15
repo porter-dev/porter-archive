@@ -37,7 +37,7 @@ const (
 	// FullAddOns shows all addons, not just curated
 	FullAddOns FeatureFlagLabel = "full_add_ons"
 
-	//GPUEnabled allows user to provision gpu nodes
+	// GPUEnabled allows gpus to be provisioned 
 	GPUEnabled FeatureFlagLabel = "gpu_enabled"
 
 	// HelmValuesEnabled shows the helm values tab for porter apps (when simplified_view_enabled=true)
@@ -80,7 +80,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	EFSEnabled:             false,
 	EnableReprovision:      false,
 	FullAddOns:             false,
-	GPUEnabled:				false,
+	GPUEnabled:             false,
 	HelmValuesEnabled:      false,
 	ManagedInfraEnabled:    false,
 	MultiCluster:           false,

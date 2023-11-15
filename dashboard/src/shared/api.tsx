@@ -1015,6 +1015,19 @@ const updateApp = baseApi<
     variables?: Record<string, string>;
     secrets?: Record<string, string>;
     is_env_override?: boolean;
+    deletions?: {
+      service_names: string[];
+      predeploy: string[];
+      env_variable_names: string[];
+      env_group_names: string[];
+      service_deletions: Record<
+        string,
+        {
+          domain_names: string[];
+          ingress_annotation_keys: string[];
+        }
+      >;
+    };
   },
   {
     project_id: number;

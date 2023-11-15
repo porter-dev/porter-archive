@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import {
   clientAppToProto,
+  type ClientPorterApp,
   type PorterAppFormData,
   type SourceOptions,
 } from "lib/porter-apps";
@@ -19,11 +20,22 @@ export type AppValidationResult = {
   commitSha: string;
 };
 
+type ServiceDeletions = Record<
+  string,
+  {
+    domain_names: string[];
+    ingress_annotation_keys: string[];
+  }
+>;
+
 type AppValidationHook = {
   validateApp: (
     data: PorterAppFormData,
     skipValidation?: boolean
   ) => Promise<AppValidationResult>;
+  setServiceDeletions: (
+    services: ClientPorterApp["services"]
+  ) => ServiceDeletions;
 };
 
 export const useAppValidation = ({
@@ -34,6 +46,32 @@ export const useAppValidation = ({
   creating?: boolean;
 }): AppValidationHook => {
   const { currentProject, currentCluster } = useContext(Context);
+
+  const setServiceDeletions = (
+    services: ClientPorterApp["services"]
+  ): ServiceDeletions => {
+    const serviceDeletions = services.reduce(
+      (
+        acc: Record<
+          string,
+          { domain_names: string[]; ingress_annotation_keys: string[] }
+        >,
+        svc
+      ) => {
+        acc[svc.name.value] = {
+          domain_names: svc.domainDeletions.map((d) => d.name),
+          ingress_annotation_keys: svc.ingressAnnotationDeletions.map(
+            (ia) => ia.key
+          ),
+        };
+
+        return acc;
+      },
+      {}
+    );
+
+    return serviceDeletions;
+  };
 
   const getBranchHead = async ({
     projectID,
@@ -124,25 +162,7 @@ export const useAppValidation = ({
         return { validatedAppProto: proto, variables, secrets, commitSha };
       }
 
-      const serviceDeletions = data.app.services.reduce(
-        (
-          acc: Record<
-            string,
-            { domain_names: string[]; ingress_annotation_keys: string[] }
-          >,
-          svc
-        ) => {
-          acc[svc.name.value] = {
-            domain_names: svc.domainDeletions.map((d) => d.name),
-            ingress_annotation_keys: svc.ingressAnnotationDeletions.map(
-              (ia) => ia.key
-            ),
-          };
-
-          return acc;
-        },
-        {}
-      );
+      const serviceDeletions = setServiceDeletions(data.app.services);
 
       const res = await api.validatePorterApp(
         "<token>",
@@ -188,5 +208,6 @@ export const useAppValidation = ({
 
   return {
     validateApp,
+    setServiceDeletions,
   };
 };

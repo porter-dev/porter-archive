@@ -107,7 +107,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     setPreviewRevision,
     latestNotifications,
   } = useLatestRevision();
-  const { validateApp } = useAppValidation({
+  const { validateApp, setServiceDeletions } = useAppValidation({
     deploymentTargetID: deploymentTarget.id,
   });
 
@@ -228,6 +228,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       }
 
       if (currentProject?.beta_features_enabled && !needsRebuild) {
+        const serviceDeletions = setServiceDeletions(data.app.services);
+
         await api.updateApp(
           "<token>",
           {
@@ -236,6 +238,15 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             variables,
             secrets,
             is_env_override: true,
+            deletions: {
+              service_names: data.deletions.serviceNames.map((s) => s.name),
+              predeploy: data.deletions.predeploy.map((s) => s.name),
+              env_group_names: data.deletions.envGroupNames.map(
+                (eg) => eg.name
+              ),
+              env_variable_names: [],
+              service_deletions: serviceDeletions,
+            },
           },
           {
             project_id: projectId,

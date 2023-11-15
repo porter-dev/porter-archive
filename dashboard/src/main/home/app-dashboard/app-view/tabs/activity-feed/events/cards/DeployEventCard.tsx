@@ -276,14 +276,14 @@ const DeployEventCard: React.FC<Props> = ({
                 </Link>
               </ImageTagContainer>
             </>
-          ) : (
+          ) : event.metadata.image_tag ? (
             <>
               <Spacer inline x={0.5} />
               <ImageTagContainer hoverable={false}>
                 <Code>{event.metadata.image_tag}</Code>
               </ImageTagContainer>
             </>
-          )}
+          ) : null}
         </Container>
         <Container row>
           <Icon height="14px" src={run_for} />

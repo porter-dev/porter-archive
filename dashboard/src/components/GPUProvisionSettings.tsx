@@ -173,7 +173,9 @@ const GPUProvisionerSettings: React.FC<Props> = ({
             <Spacer y={1} />
 
             <StepChangeButtonsContainer>
-              <Button onClick={() => { setGPUStep(2); }}>Continue</Button>
+              <Button
+                disabled={isLoading}
+                onClick={() => { setGPUStep(2); }}>Continue</Button>
               <Spacer inline x={0.5} />
               <Button onClick={() => { setGPUStep(0); }} color="#222222">Back</Button>
             </StepChangeButtonsContainer>

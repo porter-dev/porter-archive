@@ -42,11 +42,18 @@ const ProvisionClusterModal: React.FC<Props> = ({
 
   return (
     <Modal closeModal={closeModal} width={"1000px"}>
-      {gpuModal ? <Text size={16}>
-        Add A GPU workload
-      </Text> : <Text size={16}>
-        Provision A New Cluster
-      </Text>}
+      {gpuModal ? <>
+        <Text size={16}>
+          Add A GPU workload
+        </Text>
+        <Spacer y={.5} />
+        <Text color="helper" >
+          To enable GPU workloads on this service, you need to provision new GPU nodes.
+        </Text>
+      </>
+        : <Text size={16}>
+          Provision A New Cluster
+        </Text>}
       <Spacer y={1} />
 
 

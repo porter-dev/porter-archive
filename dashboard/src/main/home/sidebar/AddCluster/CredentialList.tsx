@@ -10,6 +10,7 @@ type Props = {
   isLink?: boolean;
   linkHref?: string;
   setTargetARN: (targetARN: string) => void;
+  gpuModal?: boolean;
 };
 
 type GenericCredential = {
@@ -55,7 +56,7 @@ const CredentialList: React.FunctionComponent<Props> = (props) => {
           </PreviewRow>
         );
       })}
-      {renderCreateSection()}
+      {!props.gpuModal && renderCreateSection()}
     </>
   );
 };

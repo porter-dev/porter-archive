@@ -1,6 +1,5 @@
-import React from "react";
+import React, { createContext, useContext } from "react";
 import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
-import { createContext, useContext } from "react";
 import { Context } from "./Context";
 
 export type ClusterResources = {
@@ -32,6 +31,7 @@ const ClusterResourcesProvider = ({ children }: { children: JSX.Element }) => {
   const { maxCPU, maxRAM, defaultCPU, defaultRAM, clusterContainsGPUNodes, clusterIngressIp } = useClusterResourceLimits({
     projectId: currentProject?.id,
     clusterId: currentCluster?.id,
+    clusterStatus: currentCluster?.status
   });
 
   return (

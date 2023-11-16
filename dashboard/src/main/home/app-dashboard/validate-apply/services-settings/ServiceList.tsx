@@ -12,9 +12,9 @@ import web from "assets/web.png";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
 import { z } from "zod";
-import { PorterAppFormData } from "lib/porter-apps";
+import { type PorterAppFormData } from "lib/porter-apps";
 import {
-  ClientService,
+  type ClientService,
   defaultSerialized,
   deserializeService,
   isPredeployService,
@@ -26,7 +26,7 @@ import {
   useFormContext,
 } from "react-hook-form";
 import { ControlledInput } from "components/porter/ControlledInput";
-import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
+import { type PorterAppVersionStatus } from "lib/hooks/useAppStatus";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useClusterResources } from "shared/ClusterResourcesContext";
 
@@ -72,7 +72,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
 
-  const { currentClusterResources: {maxCPU, maxRAM, clusterContainsGPUNodes, clusterIngressIp, defaultCPU, defaultRAM} } = useClusterResources();
+  const { currentClusterResources: { maxCPU, maxRAM, clusterContainsGPUNodes, clusterIngressIp, defaultCPU, defaultRAM } } = useClusterResources();
 
   // add service modal form
   const {
@@ -233,7 +233,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
       )}
       {maybeRenderAddServicesButton()}
       {showAddServiceModal && (
-        <Modal closeModal={() => setShowAddServiceModal(false)} width="500px">
+        <Modal closeModal={() => { setShowAddServiceModal(false); }} width="500px">
           <Text size={16}>{addNewText}</Text>
           <Spacer y={1} />
           <Text color="helper">Select a service type:</Text>
@@ -251,7 +251,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 <Select
                   value={serviceType}
                   width="100%"
-                  setValue={(value: string) => onChange(value)}
+                  setValue={(value: string) => { onChange(value); }}
                   options={[
                     { label: "Web", value: "web" },
                     { label: "Worker", value: "worker" },

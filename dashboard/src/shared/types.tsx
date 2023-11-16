@@ -13,7 +13,8 @@ export type ClusterType = {
   cloud_provider_credential_identifier?: string;
   status?: string;
   cloud_provider: string;
-};
+  gpuCluster?: boolean;
+}
 
 export type AddonCard = {
   id: string;
@@ -246,15 +247,15 @@ export type FormElement = {
 export type RepoType = {
   FullName: string;
 } & (
-  | {
+    | {
       Kind: "github";
       GHRepoID: number;
     }
-  | {
+    | {
       Kind: "gitlab";
       GitIntegrationId: number;
     }
-);
+  );
 
 export type FileType = {
   path: string;
@@ -277,6 +278,7 @@ export type ProjectType = {
   stacks_enabled: boolean;
   simplified_view_enabled: boolean;
   azure_enabled: boolean;
+  gpu_enabled: boolean;
   helm_values_enabled: boolean;
   multi_cluster: boolean;
   full_add_ons: boolean;
@@ -326,15 +328,15 @@ export type ActionConfigType = {
   image_repo_uri: string;
   dockerfile_path?: string;
 } & (
-  | {
+    | {
       kind: "gitlab";
       gitlab_integration_id: number;
     }
-  | {
+    | {
       kind: "github";
       git_repo_id: number;
     }
-);
+  );
 
 export type GithubActionConfigType = ActionConfigType & {
   kind: "github";
@@ -673,4 +675,28 @@ export type CreateUpdatePorterAppOptions = {
   };
   override_release?: boolean;
   full_helm_values?: string;
+};
+
+export type ClusterState = {
+  clusterName: string;
+  awsRegion: string;
+  machineType: string;
+  guardDutyEnabled: boolean;
+  kmsEncryptionEnabled: boolean;
+  loadBalancerType: boolean;
+  wildCardDomain: string;
+  IPAllowList: string;
+  wafV2Enabled: boolean;
+  awsTags: string;
+  wafV2ARN: string;
+  certificateARN: string;
+  minInstances: number;
+  maxInstances: number;
+  additionalNodePolicies: string[];
+  cidrRangeVPC: string;
+  cidrRangeServices: string;
+  clusterVersion: string;
+  gpuInstanceType?: string;
+  gpuMinInstances: number;
+  gpuMaxInstances: number;
 };

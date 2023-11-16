@@ -140,13 +140,13 @@ func (c *ReportRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTarget.ID},
 		telemetry.AttributeKV{Key: "pr-number", Value: request.PRNumber},
 		telemetry.AttributeKV{Key: "commit-sha", Value: request.CommitSHA},
-		telemetry.AttributeKV{Key: "preview", Value: deploymentTarget.Preview},
+		telemetry.AttributeKV{Key: "is-preview", Value: deploymentTarget.IsPreview},
 		telemetry.AttributeKV{Key: "revision-number", Value: revision.RevisionNumber},
 	)
 
 	resp := &ReportRevisionStatusResponse{}
 
-	if !deploymentTarget.Preview || request.PRNumber == 0 || revision.RevisionNumber > 1 {
+	if !deploymentTarget.IsPreview || request.PRNumber == 0 || revision.RevisionNumber > 1 {
 		c.WriteResult(w, r, resp)
 		return
 	}

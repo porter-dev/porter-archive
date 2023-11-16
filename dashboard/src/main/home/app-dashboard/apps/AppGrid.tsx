@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { AppRevisionWithSource } from "./types";
+import { type AppRevisionWithSource } from "./types";
 import { search } from "shared/search";
 import _ from "lodash";
 import { match } from "ts-pattern";
@@ -81,7 +81,7 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
   }, [appsWithProto, searchValue, sort]);
 
   const renderIcon = (bp: string[], size?: string) => {
-    var src = box;
+    let src = box;
     if (bp.length) {
       const [_, name] = bp[0].split("/");
       switch (name) {
@@ -118,7 +118,7 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
         {source.repo_name ? (
           <Container row>
             <SmallIcon opacity="0.6" src={github} />
-            <Text size={13} color="#ffffff44">
+            <Text truncate={true} size={13} color="#ffffff44">
               {source.repo_name}
             </Text>
           </Container>
@@ -157,7 +157,7 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
             return (
               <Link
                 to={
-                  currentDeploymentTarget?.preview
+                  currentDeploymentTarget?.isPreview
                     ? `/preview-environments/apps/${proto.name}/activity?target=${currentDeploymentTarget.id}`
                     : `/apps/${proto.name}`
                 }

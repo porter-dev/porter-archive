@@ -3,11 +3,9 @@ package porter_app
 import (
 	"net/http"
 
+	"github.com/porter-dev/porter/internal/deployment_target"
 	"github.com/porter-dev/porter/internal/kubernetes/prometheus"
 
-	"connectrpc.com/connect"
-
-	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -80,31 +78,19 @@ func (c *AppMetricsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
 
-	deploymentTargetDetailsReq := connect.NewRequest(&porterv1.DeploymentTargetDetailsRequest{
-		ProjectId:          int64(project.ID),
-		DeploymentTargetId: request.DeploymentTargetID,
+	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
+		ProjectID:          int64(project.ID),
+		ClusterID:          int64(cluster.ID),
+		DeploymentTargetID: request.DeploymentTargetID,
+		CCPClient:          c.Config().ClusterControlPlaneClient,
 	})
-
-	deploymentTargetDetailsResp, err := c.Config().ClusterControlPlaneClient.DeploymentTargetDetails(ctx, deploymentTargetDetailsReq)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting deployment target details from cluster control plane client")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	if deploymentTargetDetailsResp == nil || deploymentTargetDetailsResp.Msg == nil {
-		err := telemetry.Error(ctx, span, err, "deployment target details resp is nil")
+		err := telemetry.Error(ctx, span, err, "error getting deployment target details")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	if deploymentTargetDetailsResp.Msg.ClusterId != int64(cluster.ID) {
-		err := telemetry.Error(ctx, span, err, "deployment target details resp cluster id does not match cluster id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	namespace := deploymentTargetDetailsResp.Msg.Namespace
+	namespace := deploymentTarget.Namespace
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: namespace})
 
 	agent, err := c.GetAgent(r, cluster, "")

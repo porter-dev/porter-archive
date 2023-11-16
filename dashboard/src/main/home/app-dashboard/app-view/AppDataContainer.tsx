@@ -316,7 +316,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       ]);
       setPreviewRevision(null);
 
-      if (deploymentTarget.preview) {
+      if (deploymentTarget.isPreview) {
         history.push(
           `/preview-environments/apps/${porterAppRecord.name}/${DEFAULT_TAB}?target=${deploymentTarget.id}`
         );
@@ -494,7 +494,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       { label: "Environment", value: "environment" },
     ];
 
-    if (deploymentTarget.preview) {
+    if (deploymentTarget.isPreview) {
       return base;
     }
 
@@ -519,7 +519,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
     base.push({ label: "Settings", value: "settings" });
     return base;
-  }, [deploymentTarget.preview, latestProto.build, latestNotifications.length]);
+  }, [deploymentTarget.isPreview, latestProto.build, latestNotifications.length]);
 
   useEffect(() => {
     const newProto = previewRevision
@@ -602,7 +602,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           options={tabs}
           currentTab={currentTab}
           setCurrentTab={(tab) => {
-            if (deploymentTarget.preview) {
+            if (deploymentTarget.isPreview) {
               history.push(
                 `/preview-environments/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`
               );

@@ -42,6 +42,7 @@ var (
 	appTag           string
 	appCpuMilli      int
 	appMemoryMi      int
+	jobName          string
 )
 
 const (
@@ -60,7 +61,7 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 	// appRunCmd represents the "porter app run" subcommand
 	appRunCmd := &cobra.Command{
 		Use:   "run [application] -- COMMAND [args...]",
-		Args:  cobra.MinimumNArgs(2),
+		Args:  cobra.MinimumNArgs(1),
 		Short: "Runs a command inside a connected cluster container.",
 		Run: func(cmd *cobra.Command, args []string) {
 			err := checkLoginAndRunWithConfig(cmd, cliConf, args, appRun)
@@ -169,6 +170,20 @@ func appRunFlags(appRunCmd *cobra.Command) {
 		"",
 		"name of the container inside pod to run the command in",
 	)
+
+	appRunCmd.PersistentFlags().BoolVar(
+		&waitForSuccessfulDeploy,
+		"wait",
+		false,
+		"whether to wait for the job to complete before exiting",
+	)
+
+	appRunCmd.PersistentFlags().StringVar(
+		&jobName,
+		"job",
+		"",
+		"name of the job to run (will run the job as defined instead of the provided command)",
+	)
 }
 
 func appRollback(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
@@ -198,7 +213,24 @@ func appRollback(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cli
 	return nil
 }
 
-func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
+func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, ff config.FeatureFlags, _ *cobra.Command, args []string) error {
+	if jobName != "" {
+		if !ff.ValidateApplyV2Enabled {
+			return fmt.Errorf("job command is not enabled for this project")
+		}
+
+		return v2.RunAppJob(ctx, v2.RunAppJobInput{
+			CLIConfig: cliConfig,
+			Client:    client,
+			AppName:   args[0],
+			JobName:   jobName,
+		})
+	}
+
+	if len(args) < 2 {
+		return fmt.Errorf("porter app run requires at least 2 arguments")
+	}
+
 	execArgs := args[1:]
 
 	color.New(color.FgGreen).Println("Attempting to run", strings.Join(execArgs, " "), "for application", args[0])

@@ -166,7 +166,7 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 	}
 
 	var httpErr *types.ExternalError
-	var err error
+	var sendErr error
 
 	for i := 0; i < int(retryCount); i++ {
 		strData, err := json.Marshal(data)
@@ -184,10 +184,10 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 		}
 
 		httpErr, err = c.sendRequest(req, response, true)
-
 		if httpErr == nil && err == nil {
 			return nil
 		}
+		sendErr = err
 
 		if i != int(retryCount)-1 {
 			if httpErr != nil {
@@ -202,7 +202,7 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 		return fmt.Errorf("%v", httpErr.Error)
 	}
 
-	return err
+	return sendErr
 }
 
 type patchRequestOpts struct {

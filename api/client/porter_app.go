@@ -724,3 +724,30 @@ func (c *Client) UseNewApplyLogic(
 
 	return resp, err
 }
+
+// RunAppJob runs a job for an app
+func (c *Client) RunAppJob(
+	ctx context.Context,
+	projectID, clusterID uint,
+	appName string, jobName string,
+	deploymentTargetID string,
+) (*porter_app.AppRunResponse, error) {
+	resp := &porter_app.AppRunResponse{}
+
+	req := &porter_app.AppRunRequest{
+		ServiceName:        jobName,
+		DeploymentTargetID: deploymentTargetID,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/run",
+			projectID, clusterID,
+			appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}

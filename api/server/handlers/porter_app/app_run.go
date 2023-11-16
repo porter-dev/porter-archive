@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -53,6 +54,8 @@ type AppRunResponse struct {
 func (c *AppRunHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-app-run")
 	defer span.End()
+
+	fmt.Println("Path: porter/api/server/handlers/porter_app/app_run.go")
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 

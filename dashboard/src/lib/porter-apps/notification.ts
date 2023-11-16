@@ -1,28 +1,80 @@
 import _ from "lodash";
 
-import { type PorterAppNotification } from "main/home/app-dashboard/app-view/tabs/activity-feed/events/types";
+import {
+  isRevisionNotification,
+  isServiceNotification,
+  type PorterAppNotification,
+} from "main/home/app-dashboard/app-view/tabs/activity-feed/events/types";
 
 import { type ClientService } from "./services";
 
-export type ClientNotification = {
-  isDeployRelated: boolean;
-  messages: PorterAppNotification[];
-  timestamp: string;
+type BaseClientNotification = {
   id: string;
-  appRevisionId: string;
+  timestamp: string;
+  messages: PorterAppNotification[];
+};
+
+type ClientServiceNotification = BaseClientNotification & {
+  scope: "SERVICE";
   service: ClientService;
+  isDeployRelated: boolean;
+  appRevisionId: string;
+};
+
+type ClientRevisionNotification = BaseClientNotification & {
+  scope: "REVISION";
+  isDeployRelated: boolean;
+  appRevisionId: string;
+};
+
+type ClientApplicationNotification = BaseClientNotification & {
+  scope: "APPLICATION";
+};
+
+export type ClientNotification =
+  | ClientServiceNotification
+  | ClientRevisionNotification
+  | ClientApplicationNotification;
+
+export const isClientServiceNotification = (
+  notification: ClientNotification
+): notification is ClientServiceNotification => {
+  return notification.scope === "SERVICE";
+};
+export const isClientRevisionNotification = (
+  notification: ClientNotification
+): notification is ClientRevisionNotification => {
+  return notification.scope === "REVISION";
 };
 
 export function deserializeNotifications(
   notifications: PorterAppNotification[],
   clientServices: ClientService[]
 ): ClientNotification[] {
-  const notificationsGroupedByService = _.groupBy(
-    notifications,
-    (notification) => notification.service_name
+  const revisionNotifications = orderNotificationsByTimestamp(
+    clientRevisionNotifications(notifications),
+    "asc"
+  );
+  const serviceNotifications = orderNotificationsByTimestamp(
+    clientServiceNotifications(notifications, clientServices),
+    "asc"
   );
 
-  const clientNotifications = clientServices
+  return [...revisionNotifications, ...serviceNotifications];
+}
+
+const clientServiceNotifications = (
+  notifications: PorterAppNotification[],
+  clientServices: ClientService[]
+): ClientServiceNotification[] => {
+  const serviceNotifications = notifications.filter(isServiceNotification);
+
+  const notificationsGroupedByService = _.groupBy(
+    serviceNotifications,
+    (notification) => notification.metadata.service_name
+  );
+
+  return clientServices
     .filter((svc) => notificationsGroupedByService[svc.name.value] != null)
     .map((svc) => {
       const serviceName = svc.name.value;
@@ -30,26 +82,51 @@ export function deserializeNotifications(
         notificationsGroupedByService[serviceName],
         "asc"
       );
-      const timestamp = messages[0].timestamp;
-      const id = messages[0].id;
+      const parentMessage = messages[0];
+      const timestamp = parentMessage.timestamp;
+      const id = parentMessage.id;
+      const appRevisionId = parentMessage.app_revision_id;
       return {
-        // if the deployment is PENDING for any of the notifications, assume that they are all related to the failing deployment
+        scope: "SERVICE",
+        // if the deployment is PENDING or FAILURE for any of the notifications, assume that they are all related to the failing deployment
         // if not, then the deployment has already occurred
         isDeployRelated: notificationsGroupedByService[serviceName].some(
           (notification) =>
-            notification.deployment.status === "PENDING" ||
-            notification.deployment.status === "FAILURE"
+            notification.metadata.deployment.status === "PENDING" ||
+            notification.metadata.deployment.status === "FAILURE"
         ),
         timestamp,
         id,
         messages,
-        appRevisionId: messages[0].app_revision_id,
+        appRevisionId,
         service: svc,
       };
     });
+};
 
-  return orderNotificationsByTimestamp(clientNotifications, "asc");
-}
+const clientRevisionNotifications = (
+  notifications: PorterAppNotification[]
+): ClientRevisionNotification[] => {
+  const revisionNotifications = notifications.filter(isRevisionNotification);
+  const messages = orderNotificationsByTimestamp(revisionNotifications, "asc");
+  if (messages.length === 0) {
+    return [];
+  }
+  const parentMessage = messages[0];
+  const timestamp = parentMessage.timestamp;
+  const id = parentMessage.id;
+  const appRevisionId = parentMessage.app_revision_id;
+  return [
+    {
+      scope: "REVISION",
+      id,
+      timestamp,
+      isDeployRelated: true,
+      messages,
+      appRevisionId,
+    },
+  ];
+};
 
 const orderNotificationsByTimestamp = <T extends Array<{ timestamp: string }>>(
   notifications: T,

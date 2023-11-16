@@ -162,14 +162,12 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	for _, event := range notificationEvents {
 		notification, err := notifications.NotificationFromPorterAppEvent(event)
 		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error converting porter app event to notification")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "notification-conversion-error", Value: err.Error()})
+			continue
 		}
 		if notification == nil {
-			err := telemetry.Error(ctx, span, err, "notification is nil")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "notification-conversion-error", Value: "notification is nil"})
+			continue
 		}
 		latestNotifications = append(latestNotifications, *notification)
 	}

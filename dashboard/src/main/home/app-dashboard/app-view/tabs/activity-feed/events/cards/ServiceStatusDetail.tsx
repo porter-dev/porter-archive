@@ -9,6 +9,7 @@ import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { Service } from "main/home/app-dashboard/new-app-flow/serviceTypes";
+import { isClientServiceNotification } from "lib/porter-apps/notification";
 
 import alert from "assets/alert-warning.svg";
 import metrics from "assets/bar-group-03.svg";
@@ -71,10 +72,12 @@ const ServiceStatusDetail: React.FC<Props> = ({
             service.config.domains.length
               ? service.config.domains[0].name.value
               : "";
-          const notificationsExistForService = latestNotifications.some(
-            (n) =>
-              n.service.name.value === key && n.appRevisionId === revisionId
-          );
+          const notificationsExistForService = latestNotifications
+            .filter(isClientServiceNotification)
+            .some(
+              (n) =>
+                n.service.name.value === key && n.appRevisionId === revisionId
+            );
           return (
             <ServiceStatusTableRow key={key}>
               <ServiceStatusTableData width={"200px"}>

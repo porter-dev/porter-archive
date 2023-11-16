@@ -40,7 +40,7 @@ const Resources: React.FC<ResourcesProps> = ({
   const { control, register, watch, setValue } = useFormContext<PorterAppFormData>();
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
   const [clusterModalVisible, setClusterModalVisible] = useState<boolean>(false);
-  const { currentCluster, currentProject, setCurrentCluster } = useContext(Context);
+  const { currentCluster, currentProject } = useContext(Context);
 
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`, {

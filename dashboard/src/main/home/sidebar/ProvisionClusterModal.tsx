@@ -18,15 +18,12 @@ import { z } from "zod";
 type Props = RouteComponentProps & {
   closeModal: () => void;
   gpuModal?: boolean;
-  setGPUStatus?: (status: string) => void;
 }
 
 
 const ProvisionClusterModal: React.FC<Props> = ({
   closeModal,
   gpuModal,
-  gpuStatus,
-  setGPUStatus,
 }) => {
   const {
     currentCluster,
@@ -79,7 +76,6 @@ const ProvisionClusterModal: React.FC<Props> = ({
                 credentialId={currentCluster.cloud_provider_credential_identifier}
                 selectedClusterVersion={selectedClusterVersion}
                 closeModal={closeModal}
-                setGPUStatus={setGPUStatus}
               />
             </>
           ) :

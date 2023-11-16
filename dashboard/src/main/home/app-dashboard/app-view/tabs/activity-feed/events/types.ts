@@ -56,7 +56,7 @@ const serviceNoticationValidator = z.object({
     mitigation_steps: z.string(),
     documentation: z.array(z.string()).default([]),
   }),
-  scope: z.literal("service"),
+  scope: z.literal("SERVICE"),
   timestamp: z.string(),
   metadata: z.object({
     service_name: z.string(),
@@ -76,6 +76,21 @@ const serviceNoticationValidator = z.object({
     ]),
   }),
 });
+const revisionNotificationValidator = z.object({
+  id: z.string(),
+  app_id: z.string(),
+  app_name: z.string(),
+  app_revision_id: z.string(),
+  error: z.object({
+    code: z.number(),
+    summary: z.string(),
+    detail: z.string(),
+    mitigation_steps: z.string(),
+    documentation: z.array(z.string()).default([]),
+  }),
+  scope: z.literal("REVISION"),
+  timestamp: z.string(),
+});
 const applicationNotificationValidator = z.object({
   id: z.string(),
   app_id: z.string(),
@@ -88,31 +103,38 @@ const applicationNotificationValidator = z.object({
     mitigation_steps: z.string(),
     documentation: z.array(z.string()).default([]),
   }),
-  scope: z.literal("application"),
+  scope: z.literal("APPLICATION"),
   timestamp: z.string(),
 });
 
 export const isServiceNotification = (
   notification: PorterAppNotification
 ): notification is z.infer<typeof serviceNoticationValidator> => {
-  return notification.scope === "service";
+  return notification.scope === "SERVICE";
 };
 
 export const isApplicationNotification = (
   notification: PorterAppNotification
 ): notification is z.infer<typeof applicationNotificationValidator> => {
-  return notification.scope === "application";
+  return notification.scope === "APPLICATION";
+};
+
+export const isRevisionNotification = (
+  notification: PorterAppNotification
+): notification is z.infer<typeof revisionNotificationValidator> => {
+  return notification.scope === "REVISION";
 };
 
 export const porterAppNotificationEventMetadataValidator = z
   .discriminatedUnion("scope", [
     serviceNoticationValidator,
+    revisionNotificationValidator,
     applicationNotificationValidator,
   ])
   // this is necessary because the name for the pre-deploy job is called "pre-deploy" by the front-end but predeploy in k8s
   // TODO: standardize the naming of the pre-deploy job: https://linear.app/porter/issue/POR-2119/standardize-naming-of-pre-deploy
   .transform((obj) => {
-    if (obj.scope === "service" && obj.metadata.service_name === "predeploy") {
+    if (obj.scope === "SERVICE" && obj.metadata.service_name === "predeploy") {
       obj.metadata.service_name = "pre-deploy";
     }
     return obj;

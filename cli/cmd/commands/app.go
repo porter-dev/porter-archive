@@ -175,7 +175,7 @@ func appRunFlags(appRunCmd *cobra.Command) {
 		&jobName,
 		"job",
 		"",
-		"name of the job to run (will run the job as defined instead of the provided command)",
+		"name of the job to run (will run the job as defined instead of the provided command, and returns the job run id without waiting for the job to complete or displaying logs)",
 	)
 }
 
@@ -209,7 +209,7 @@ func appRollback(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cli
 func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, ff config.FeatureFlags, _ *cobra.Command, args []string) error {
 	if jobName != "" {
 		if !ff.ValidateApplyV2Enabled {
-			return fmt.Errorf("job command is not enabled for this project")
+			return fmt.Errorf("job flag is not supported on this project")
 		}
 
 		return v2.RunAppJob(ctx, v2.RunAppJobInput{

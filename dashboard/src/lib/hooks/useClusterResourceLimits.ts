@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { Cluster, NodeGroupType } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import convert from "convert";
+import { match } from "ts-pattern";
 import { z } from "zod";
 
 import { AWS_INSTANCE_LIMITS } from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
@@ -10,20 +12,20 @@ import api from "shared/api";
 const DEFAULT_INSTANCE_CLASS = "t3";
 const DEFAULT_INSTANCE_SIZE = "medium";
 
-type EncodedContract = {
-  ID: number;
-  CreatedAt: string;
-  UpdatedAt: string;
-  DeletedAt: string | null;
-  id: string;
-  base64_contract: string;
-  cluster_id: number;
-  project_id: number;
-  condition: string;
-  condition_metadata: Record<string, unknown>;
-};
+const encodedContractValidator = z.object({
+  ID: z.number(),
+  CreatedAt: z.string(),
+  UpdatedAt: z.string(),
+  DeletedAt: z.string().nullable(),
+  id: z.string(),
+  base64_contract: z.string(),
+  cluster_id: z.number(),
+  project_id: z.number(),
+  condition: z.string(),
+  condition_metadata: z.record(z.any()),
+});
 
-type NodeGroup = {
+export type NodeGroup = {
   instanceType: string;
   minInstances: number;
   maxInstances: number;
@@ -31,7 +33,7 @@ type NodeGroup = {
   isStateful?: boolean;
 };
 
-type EksKind = {
+export type EksKind = {
   clusterName: string;
   clusterVersion: string;
   cidrRange: string;
@@ -47,21 +49,6 @@ type EksKind = {
   };
 };
 
-type Cluster = {
-  projectId: number;
-  clusterId: number;
-  kind: string;
-  cloudProvider: string;
-  cloudProviderCredentialsId: string;
-  eksKind: EksKind;
-};
-
-type ContractData = {
-  cluster: Cluster;
-  user: {
-    id: number;
-  };
-};
 const clusterNodesValidator = z
   .object({
     labels: z
@@ -187,11 +174,11 @@ export const useClusterResourceLimits = ({
     }
   );
 
-  const getContract = useQuery(
+  const { data: contract } = useQuery(
     ["getContracts", projectId, clusterId, clusterStatus],
     async () => {
       if (!projectId || !clusterId || clusterId === -1) {
-        return "";
+        return;
       }
 
       const res = await api.getContracts(
@@ -199,8 +186,8 @@ export const useClusterResourceLimits = ({
         {},
         { project_id: projectId }
       );
-      const contracts: EncodedContract[] = await z
-        .array(z.any())
+      const contracts = await z
+        .array(encodedContractValidator)
         .parseAsync(res.data);
       // Use zod to validate the data
       const latestContract = contracts
@@ -211,9 +198,9 @@ export const useClusterResourceLimits = ({
         ) // Sort them by the CreatedAt date in descending order
         .map((contract) => contract)[0];
 
-      const decodedContract = JSON.parse(
+      const decodedContract = Cluster.fromJsonString(
         atob(latestContract.base64_contract)
-      ) as ContractData;
+      );
       // Check for NODE_GROUP_TYPE_CUSTOM with instanceType containing "g4dn"
 
       return decodedContract;
@@ -286,18 +273,22 @@ export const useClusterResourceLimits = ({
   }, [getCluster]);
 
   useEffect(() => {
-    if (getContract.isSuccess && getContract.data) {
-      const containsCustomNodeGroup =
-        getContract.data.cluster.eksKind.nodeGroups.some(
-          (ng: NodeGroup) =>
-            (ng.nodeGroupType === "NODE_GROUP_TYPE_CUSTOM" &&
-              ng.instanceType.includes("g4dn")) ||
-            (ng.nodeGroupType === "NODE_GROUP_TYPE_APPLICATION" &&
-              ng.instanceType.includes("g4dn"))
-        );
+    if (contract) {
+      const containsCustomNodeGroup = match(contract)
+        .with({ kindValues: { case: "eksKind" } }, (c) => {
+          return c.kindValues.value.nodeGroups.some(
+            (ng) =>
+              (ng.nodeGroupType === NodeGroupType.CUSTOM &&
+                ng.instanceType.includes("g4dn")) ||
+              (ng.nodeGroupType === NodeGroupType.APPLICATION &&
+                ng.instanceType.includes("g4dn"))
+          );
+        })
+        .otherwise(() => false);
+
       setClusterContainsGPUNodes(containsCustomNodeGroup);
     }
-  }, [getContract]);
+  }, [contract]);
 
   return {
     maxCPU,

@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"context"
 	"encoding/base64"
 	"net/http"
 
@@ -164,10 +165,15 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		appProto.Name = request.Name
 	}
 
-	sourceType, image := sourceFromAppAndGitSource(appProto, request.GitSource)
+	sourceType, image, err := sourceFromAppAndGitSource(ctx, appProto, request.GitSource)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting source from app and git source")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
 
 	// create porter app if it doesn't exist for the given name
-	_, err := porter_app.CreateOrGetAppRecord(ctx, porter_app.CreateOrGetAppRecordInput{
+	_, err = porter_app.CreateOrGetAppRecord(ctx, porter_app.CreateOrGetAppRecordInput{
 		ClusterID:           cluster.ID,
 		ProjectID:           project.ID,
 		Name:                appProto.Name,
@@ -253,16 +259,33 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.WriteResult(w, r, response)
 }
 
-func sourceFromAppAndGitSource(appProto *porterv1.PorterApp, gitSource GitSource) (porter_app.SourceType, *porter_app.Image) {
+func sourceFromAppAndGitSource(ctx context.Context, appProto *porterv1.PorterApp, gitSource GitSource) (porter_app.SourceType, *porter_app.Image, error) {
+	ctx, span := telemetry.NewSpan(ctx, "source-from-app-and-git-source")
+	defer span.End()
+
 	var sourceType porter_app.SourceType
 	var image *porter_app.Image
 
+	if appProto == nil {
+		return sourceType, image, telemetry.Error(ctx, span, nil, "app proto is nil")
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "app-name", Value: appProto.Name},
+		telemetry.AttributeKV{Key: "git-repo-id", Value: gitSource.GitRepoID},
+		telemetry.AttributeKV{Key: "has-build", Value: appProto.Build != nil},
+		telemetry.AttributeKV{Key: "has-image", Value: appProto.Image != nil},
+	)
+
 	if appProto.Build != nil {
 		if gitSource.GitRepoID == 0 {
-			return porter_app.SourceType_Local, nil
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "source-type", Value: porter_app.SourceType_Local})
+
+			return porter_app.SourceType_Local, image, nil
 		}
 
-		sourceType = porter_app.SourceType_Github
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "source-type", Value: porter_app.SourceType_Github})
+		return porter_app.SourceType_Github, image, nil
 	}
 
 	if appProto.Image != nil {
@@ -273,7 +296,9 @@ func sourceFromAppAndGitSource(appProto *porterv1.PorterApp, gitSource GitSource
 		}
 	}
 
-	return sourceType, image
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "source-type", Value: sourceType})
+
+	return sourceType, image, nil
 }
 
 func mergeEnvVariables(currentEnv, previousEnv map[string]string) map[string]string {

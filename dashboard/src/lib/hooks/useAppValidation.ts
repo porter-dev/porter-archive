@@ -1,19 +1,41 @@
-import { PorterApp } from "@porter-dev/api-contracts";
-import {
-  PorterAppFormData,
-  SourceOptions,
-  clientAppToProto,
-} from "lib/porter-apps";
 import { useCallback, useContext } from "react";
-import { Context } from "shared/Context";
-import api from "shared/api";
+import { PorterApp } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { z } from "zod";
+
+import {
+  clientAppToProto,
+  type ClientPorterApp,
+  type PorterAppFormData,
+  type SourceOptions,
+} from "lib/porter-apps";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
 
 export type AppValidationResult = {
   validatedAppProto: PorterApp;
   variables: Record<string, string>;
   secrets: Record<string, string>;
+  commitSha: string;
+};
+
+type ServiceDeletions = Record<
+  string,
+  {
+    domain_names: string[];
+    ingress_annotation_keys: string[];
+  }
+>;
+
+type AppValidationHook = {
+  validateApp: (
+    data: PorterAppFormData,
+    skipValidation?: boolean
+  ) => Promise<AppValidationResult>;
+  setServiceDeletions: (
+    services: ClientPorterApp["services"]
+  ) => ServiceDeletions;
 };
 
 export const useAppValidation = ({
@@ -22,8 +44,34 @@ export const useAppValidation = ({
 }: {
   deploymentTargetID?: string;
   creating?: boolean;
-}) => {
+}): AppValidationHook => {
   const { currentProject, currentCluster } = useContext(Context);
+
+  const setServiceDeletions = (
+    services: ClientPorterApp["services"]
+  ): ServiceDeletions => {
+    const serviceDeletions = services.reduce(
+      (
+        acc: Record<
+          string,
+          { domain_names: string[]; ingress_annotation_keys: string[] }
+        >,
+        svc
+      ) => {
+        acc[svc.name.value] = {
+          domain_names: svc.domainDeletions.map((d) => d.name),
+          ingress_annotation_keys: svc.ingressAnnotationDeletions.map(
+            (ia) => ia.key
+          ),
+        };
+
+        return acc;
+      },
+      {}
+    );
+
+    return serviceDeletions;
+  };
 
   const getBranchHead = async ({
     projectID,
@@ -33,8 +81,8 @@ export const useAppValidation = ({
     source: SourceOptions & {
       type: "github";
     };
-  }) => {
-    const [owner, repo_name] = await z
+  }): Promise<string> => {
+    const [owner, repoName] = await z
       .tuple([z.string(), z.string()])
       .parseAsync(source.git_repo_name?.split("/"));
 
@@ -46,7 +94,7 @@ export const useAppValidation = ({
         project_id: projectID,
         kind: "github",
         owner,
-        name: repo_name,
+        name: repoName,
         branch: source.git_branch,
       }
     );
@@ -57,13 +105,13 @@ export const useAppValidation = ({
       })
       .parseAsync(res.data);
 
-    return commitData;
+    return commitData.commit_sha;
   };
 
   const validateApp = useCallback(
     async (
       data: PorterAppFormData,
-      prevRevision?: PorterApp
+      skipValidation = false
     ): Promise<AppValidationResult> => {
       if (!currentProject || !currentCluster) {
         throw new Error("No project or cluster selected");
@@ -93,42 +141,28 @@ export const useAppValidation = ({
         }, {});
 
       const proto = clientAppToProto(data);
-      const commit_sha = await match(data.source)
+
+      const commitSha = await match(data.source)
         .with({ type: "github" }, async (src) => {
           if (!creating) {
             return "";
           }
 
-          const { commit_sha } = await getBranchHead({
+          return await getBranchHead({
             projectID: currentProject.id,
             source: src,
           });
-          return commit_sha;
         })
         .with({ type: "docker-registry" }, () => {
           return "";
         })
         .exhaustive();
 
-      const serviceDeletions = data.app.services.reduce(
-        (
-          acc: Record<
-            string,
-            { domain_names: string[]; ingress_annotation_keys: string[] }
-          >,
-          svc
-        ) => {
-          acc[svc.name.value] = {
-            domain_names: svc.domainDeletions.map((d) => d.name),
-            ingress_annotation_keys: svc.ingressAnnotationDeletions.map(
-              (ia) => ia.key
-            ),
-          };
+      if (skipValidation) {
+        return { validatedAppProto: proto, variables, secrets, commitSha };
+      }
 
-          return acc;
-        },
-        {}
-      );
+      const serviceDeletions = setServiceDeletions(data.app.services);
 
       const res = await api.validatePorterApp(
         "<token>",
@@ -139,7 +173,7 @@ export const useAppValidation = ({
             })
           ),
           deployment_target_id: deploymentTargetID,
-          commit_sha,
+          commit_sha: commitSha,
           deletions: {
             service_names: data.deletions.serviceNames.map((s) => s.name),
             predeploy: data.deletions.predeploy.map((s) => s.name),
@@ -167,12 +201,13 @@ export const useAppValidation = ({
         }
       );
 
-      return { validatedAppProto: validatedAppProto, variables, secrets };
+      return { validatedAppProto, variables, secrets, commitSha };
     },
     [deploymentTargetID, currentProject, currentCluster]
   );
 
   return {
     validateApp,
+    setServiceDeletions,
   };
 };

@@ -289,39 +289,6 @@ const Resources: React.FC<ResourcesProps> = ({
           }
         </>
       }
-
-      {/* {
-        // Show GPU slider if cluster contains GPU nodes and it is not in an updating state 
-        (currentCluster.status !== "UPDATING" && clusterContainsGPUNodes) && (
-          <>
-            <Spacer y={1} />
-            <Controller
-              name={`app.services.${index}.gpuCoresNvidia`}
-              control={control}
-              render={({ field: { value, onChange } }) => (
-                <InputSlider
-                  label="GPUs: "
-                  unit="GPU"
-                  min={0}
-                  max={1}
-                  step={1}
-                  value={(value.value).toString()}
-                  disabled={value.readOnly}
-                  width="300px"
-                  setValue={(e) => {
-                    onChange({
-                      ...value,
-                      value: e,
-                    });
-                  }}
-                  disabledTooltip={"You may only edit this field in your porter.yaml."
-                  }
-                />
-              )}
-            />
-          </>
-        )
-      } */}
       {
         match(service.config)
           .with({ type: "job" }, () => null)

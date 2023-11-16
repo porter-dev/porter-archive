@@ -37,7 +37,7 @@ const (
 	// FullAddOns shows all addons, not just curated
 	FullAddOns FeatureFlagLabel = "full_add_ons"
 
-	// GPUEnabled allows gpus to be provisioned 
+	// GPUEnabled enables the "GPU for users"
 	GPUEnabled FeatureFlagLabel = "gpu_enabled"
 
 	// HelmValuesEnabled shows the helm values tab for porter apps (when simplified_view_enabled=true)

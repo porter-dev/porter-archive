@@ -157,7 +157,7 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
             return (
               <Link
                 to={
-                  currentDeploymentTarget?.preview
+                  currentDeploymentTarget?.isPreview
                     ? `/preview-environments/apps/${proto.name}/activity?target=${currentDeploymentTarget.id}`
                     : `/apps/${proto.name}`
                 }

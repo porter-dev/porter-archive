@@ -112,23 +112,23 @@ const Apps: React.FC<Props> = ({}) => {
         }
       );
 
-      const { deployment_target } = await z
+      const { deployment_target: deploymentTarget } = await z
         .object({
           deployment_target: z.object({
             cluster_id: z.number(),
             namespace: z.string(),
-            preview: z.boolean(),
+            is_preview: z.boolean(),
           }),
         })
         .parseAsync(res.data);
 
-      return deployment_target;
+      return deploymentTarget;
     },
     {
       enabled:
         !!currentCluster &&
         !!currentProject &&
-        currentDeploymentTarget?.preview,
+        currentDeploymentTarget?.isPreview,
     }
   );
 
@@ -171,7 +171,7 @@ const Apps: React.FC<Props> = ({}) => {
 
     if (
       status === "loading" ||
-      (currentDeploymentTarget?.preview && deploymentTargetStatus === "loading")
+      (currentDeploymentTarget?.isPreview && deploymentTargetStatus === "loading")
     ) {
       return <Loading offset="-150px" />;
     }
@@ -205,7 +205,7 @@ const Apps: React.FC<Props> = ({}) => {
 
     return (
       <>
-        {currentDeploymentTarget?.preview && (
+        {currentDeploymentTarget?.isPreview && (
           <DashboardHeader
             image={pull_request}
             title={
@@ -269,7 +269,7 @@ const Apps: React.FC<Props> = ({}) => {
             activeColor={"transparent"}
           />
           <Spacer inline x={2} />
-          {currentDeploymentTarget?.preview ? (
+          {currentDeploymentTarget?.isPreview ? (
             <Button
               onClick={async () => {
                 setShowDeleteEnvModal(true);
@@ -307,7 +307,7 @@ const Apps: React.FC<Props> = ({}) => {
 
   return (
     <StyledAppDashboard>
-      {!currentDeploymentTarget?.preview && (
+      {!currentDeploymentTarget?.isPreview && (
         <DashboardHeader
           image={web}
           title="Applications"

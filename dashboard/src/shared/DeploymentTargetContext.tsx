@@ -1,17 +1,11 @@
-import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
-import React, {
-  Dispatch,
-  SetStateAction,
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import React, { createContext, useContext, useMemo } from "react";
 import { useLocation } from "react-router";
+
+import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
 
 export type DeploymentTarget = {
   id: string;
-  preview: boolean;
+  isPreview: boolean;
 };
 
 export const DeploymentTargetContext = createContext<{
@@ -43,14 +37,14 @@ const DeploymentTargetProvider = ({ children }: { children: JSX.Element }) => {
     if (idParam) {
       return {
         id: idParam,
-        preview: true,
+        isPreview: true,
       };
     }
 
     if (defaultDeploymentTarget) {
       return {
         id: defaultDeploymentTarget.deployment_target_id,
-        preview: false,
+        isPreview: false,
       };
     }
 

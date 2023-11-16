@@ -200,7 +200,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
           deployment_target: z.object({
             cluster_id: z.number(),
             namespace: z.string(),
-            preview: z.boolean(),
+            is_preview: z.boolean(),
           }),
         })
         .parseAsync(res.data);

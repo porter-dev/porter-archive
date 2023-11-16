@@ -93,8 +93,8 @@ const AppDashboard: React.FC<Props> = ({ }) => {
       );
       const apps = res.data;
       const timeRes = await Promise.all(
-        apps.map(async (app: any) => {
-          return await api.getCharts(
+        apps.map((app: any) => {
+          return api.getCharts(
             "<token>",
             {
               limit: 1,
@@ -120,7 +120,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
       );
       apps.forEach((app: any, i: number) => {
         if (timeRes?.[i]?.data?.[0]?.info?.last_deployed != null) {
-          app.last_deployed = readableDate(
+          app["last_deployed"] = readableDate(
             timeRes[i].data[0].info.last_deployed
           );
         }
@@ -180,7 +180,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
 
 
   const renderIcon = (b: string, size?: string) => {
-    let src = box;
+    var src = box;
     if (b) {
       const bp = b.split(",")[0]?.split("/")[1];
       switch (bp) {
@@ -229,7 +229,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                 </Text>
                 <Spacer y={1} />
                 <PorterLink to="/apps/new/app">
-                  <Button alt onClick={async () => { await updateStackStartedStep(); }} height="35px">
+                  <Button alt onClick={async () => updateStackStartedStep()} height="35px">
                     Deploy app <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
                   </Button>
                 </PorterLink>
@@ -271,7 +271,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
 
               <Spacer inline x={2} />
               <PorterLink to="/apps/new/app">
-                <Button onClick={async () => { await updateStackStartedStep(); }} height="30px" width="160px">
+                <Button onClick={async () => updateStackStartedStep()} height="30px" width="160px">
                   <I className="material-icons">add</I> New application
                 </Button>
               </PorterLink>
@@ -295,7 +295,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                       <Link to={`/apps/${app.name}`} key={i}>
                         <Block>
                           <Container row>
-                            {renderIcon(app.buildpacks)}
+                            {renderIcon(app["buildpacks"])}
                             <Spacer inline width="12px" />
                             <Text size={14}>{app.name}</Text>
                             <Spacer inline x={2} />
@@ -321,7 +321,7 @@ const AppDashboard: React.FC<Props> = ({ }) => {
                         <Row>
                           <Container row>
                             <Spacer inline width="1px" />
-                            {renderIcon(app.buildpacks, "larger")}
+                            {renderIcon(app["buildpacks"], "larger")}
                             <Spacer inline width="12px" />
                             <Text size={14}>
                               {app.name}

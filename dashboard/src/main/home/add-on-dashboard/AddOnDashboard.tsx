@@ -134,7 +134,7 @@ const AddOnDashboard: React.FC<Props> = ({
     const cluster = currentCluster?.name;
     const route = `/applications/${cluster}/${x.namespace}/${x.name}`;
     const newParams = {
-      // @ts-expect-error
+      // @ts-ignore
       project_id: params.project_id,
       closeChartRedirectUrl: '/addons',
     };
@@ -143,8 +143,6 @@ const AddOnDashboard: React.FC<Props> = ({
     );
     return `${route}?${newURLSearchParams.toString()}`;
   }, [currentCluster]);
-
-  console.log("addOns", addOns)
 
   return (
     <StyledAppDashboard>
@@ -158,6 +156,7 @@ const AddOnDashboard: React.FC<Props> = ({
       {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (
+
         (addOns.length === 0) ? (
 
           isLoading ?

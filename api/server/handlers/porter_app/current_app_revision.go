@@ -169,6 +169,11 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "notification-conversion-error", Value: "notification is nil"})
 			continue
 		}
+		// TODO: remove this check once this attribute is not found in the span for >30 days
+		if notification.Scope == "" {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "notification-conversion-error", Value: "old-notification-format"})
+			continue
+		}
 		latestNotifications = append(latestNotifications, *notification)
 	}
 

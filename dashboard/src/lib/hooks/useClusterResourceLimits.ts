@@ -202,19 +202,17 @@ export const useClusterResourceLimits = ({
       const contracts: EncodedContract[] = await z
         .array(z.any())
         .parseAsync(res.data);
-      // Use zod to validate the data
       const latestContract = contracts
-        .filter((contract) => contract.cluster_id === clusterId) // Filter contracts by the currentCluster.id
+        .filter((contract) => contract.cluster_id === clusterId)
         .sort(
           (a, b) =>
             new Date(b.CreatedAt).getTime() - new Date(a.CreatedAt).getTime()
-        ) // Sort them by the CreatedAt date in descending order
+        )
         .map((contract) => contract)[0];
 
       const decodedContract = JSON.parse(
         atob(latestContract.base64_contract)
       ) as ContractData;
-      // Check for NODE_GROUP_TYPE_CUSTOM with instanceType containing "g4dn"
 
       return decodedContract;
     },
@@ -286,7 +284,12 @@ export const useClusterResourceLimits = ({
   }, [getCluster]);
 
   useEffect(() => {
-    if (getContract.isSuccess && getContract.data) {
+    if (
+      getContract.isSuccess ??
+      getContract.data ??
+      getContract.data.cluster ??
+      getContract.data.cluster.eksKind
+    ) {
       const containsCustomNodeGroup =
         getContract.data.cluster.eksKind.nodeGroups.some(
           (ng: NodeGroup) =>

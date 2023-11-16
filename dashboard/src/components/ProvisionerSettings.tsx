@@ -106,7 +106,7 @@ const machineTypeOptions = [
 
 const defaultCidrVpc = "10.78.0.0/16";
 const defaultCidrServices = "172.20.0.0/16";
-const defaultClusterVersion = "v1.24.0";
+const defaultClusterVersion = "v1.27.0";
 
 const initialClusterState: ClusterState = {
   clusterName: "",
@@ -183,7 +183,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const getStatus = (): React.ReactNode => {
@@ -456,8 +456,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     setIsReadOnly(
       props.clusterId &&
-      (currentCluster.status === "UPDATING" ||
-        currentCluster.status === "UPDATING_UNAVAILABLE")
+        (currentCluster.status === "UPDATING" ||
+          currentCluster.status === "UPDATING_UNAVAILABLE")
     );
     handleClusterStateChange(
       "clusterName",
@@ -516,10 +516,10 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           eksValues.loadBalancer.wildcardDomain
         );
 
-        const awsTags = eksValues.loadBalancer?.tags
-          ? Object.entries(eksValues.loadBalancer?.tags)
-            .map(([key, value]) => `${key}=${value}`)
-            .join(",")
+        const awsTags = eksValues.loadBalancer.tags
+          ? Object.entries(eksValues.loadBalancer.tags)
+              .map(([key, value]) => `${key}=${value}`)
+              .join(",")
           : "";
         handleClusterStateChange("awsTags", awsTags);
 
@@ -1059,11 +1059,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
                         {(clusterState.wafV2ARN === undefined ||
                           clusterState.wafV2ARN?.length === 0) && (
-                            <ErrorInLine>
-                              <i className="material-icons">error</i>
-                              {"Required if WafV2 is enabled"}
-                            </ErrorInLine>
-                          )}
+                          <ErrorInLine>
+                            <i className="material-icons">error</i>
+                            {"Required if WafV2 is enabled"}
+                          </ErrorInLine>
+                        )}
                       </>
                     )}
                     <Spacer y={1} />
@@ -1150,10 +1150,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setShowHelpMessage(false);
     try {
       await preflightChecks();
-    } catch (err) {
+    } catch (err) {}
+  };
 
-    }
-  }
 
   const renderForm = (): JSX.Element => {
     // Render simplified form if initial create
@@ -1356,7 +1355,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
         margin - right: 7px;
       margin-left: -7px;
       transform: ${(props) =>
-    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+        props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
       transition: transform 0.1s ease;
   }
       `;

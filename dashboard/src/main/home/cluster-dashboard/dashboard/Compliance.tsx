@@ -1,21 +1,195 @@
-import React, { useState, useEffect } from "react";
+import React, { useContext, useState, useEffect } from "react";
+import { type RouteComponentProps } from "react-router";
+import { match } from "ts-pattern";
 
+import {
+  Cluster,
+  Contract,
+  EKS,
+  EKSLogging,
+} from "@porter-dev/api-contracts";
+
+import sparkle from "assets/sparkle.svg";
+import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import ToggleRow from "components/porter/ToggleRow";
 
-import sparkle from "assets/sparkle.svg";
+import api from "shared/api"; 
+import { Context } from "shared/Context";
 
 import styled from "styled-components";
-import Button from "components/porter/Button";
 
-const Compliance: React.FC = (_) => {
-  const [soc2Enabled, setSoc2Enabled] = useState(false);
+type Props = RouteComponentProps & {
+  credentialId: string;
+  provisionerError?: string;
+  selectedClusterVersion?: Contract;
+};
+
+const Compliance: React.FC<Props> = (props) => {
+  const {
+    currentProject,
+    currentCluster,
+    setShouldRefreshClusters
+  } = useContext(Context);
+
   const [cloudTrailEnabled, setCloudTrailEnabled] = useState(false);
   const [cloudTrailRetention, setCloudTrailRetention] = useState(false);
   const [ecrScanningEnabled, setEcrScanningEnabled] = useState(false);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [kmsEnabled, setKmsEnabled] = useState(false);
+  const [soc2Enabled, setSoc2Enabled] = useState(false);
+  const [clusterRegion, setClusterRegion] = useState("");
+
+  const applySettings = async (): Promise<void> => {
+    if (!currentCluster || !currentProject || !setShouldRefreshClusters) {
+      return
+    }
+
+    try {
+      setIsLoading(true);
+      setIsClicked(true);
+      setIsReadOnly(true);
+
+      const contractResults = await api.getContracts(
+        "<token>",
+        { cluster_id: currentCluster.id  },
+        { project_id: currentProject.id }
+      );
+      const result = contractResults.data.reduce((prev: { CreatedAt: string }, current: { CreatedAt: string }) => Date.parse(current.CreatedAt) > Date.parse(prev.CreatedAt) ? current : prev);
+
+      const contract = createContract(result.base64_contract);
+
+      api.createContract("<token>", contract, {
+        project_id: currentProject.id,
+      });
+      setShouldRefreshClusters(true);
+
+      setIsClicked(false);
+      setIsLoading(false);
+      setIsReadOnly(false);
+    } catch (err) {
+      const errMessage = err.response.data?.error.replace("unknown: ", "");
+      // hacky, need to standardize error contract with backend
+      setIsClicked(false);
+      setIsLoading(false);
+      void markStepStarted("provisioning-failed", errMessage);
+
+      // enable edit again only in the case of an error
+      setIsClicked(false);
+      setIsReadOnly(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createContract = (base64_contract: string): Contract => {
+    const contractData = JSON.parse(atob(base64_contract))
+    let latestCluster: Cluster = Cluster.fromJson(contractData.cluster, { ignoreUnknownFields: true });
+
+    const updatedKindValues = match(latestCluster.kindValues)
+      .with({ case: "eksKind" }, ({ value }) => ({
+        value: new EKS({
+          ...value,
+          enableKmsEncryption: soc2Enabled || kmsEnabled || value.enableKmsEncryption || false,
+          enableEcrScanning: soc2Enabled || ecrScanningEnabled || value.enableEcrScanning || false,
+          logging: new EKSLogging({
+            enableApiServerLogs: soc2Enabled || value.logging?.enableApiServerLogs || false,
+            enableAuditLogs: soc2Enabled || value.logging?.enableAuditLogs || false,
+            enableAuthenticatorLogs: soc2Enabled || value.logging?.enableAuthenticatorLogs || false,
+            enableCloudwatchLogsToS3: soc2Enabled || value.logging?.enableCloudwatchLogsToS3 || false,
+            enableControllerManagerLogs: soc2Enabled || value.logging?.enableControllerManagerLogs || false,
+            enableSchedulerLogs: soc2Enabled || value.logging?.enableSchedulerLogs || false,
+          }),
+        }),
+        case: "eksKind" as const
+      }))
+      .with({ case: "gkeKind" }, ({ value }) => ({
+        value,
+        case: "gkeKind" as const
+      }))
+      .with({ case: "aksKind" }, ({ value }) => ({
+        value,
+        case: "aksKind" as const
+      }))
+      .with({ case: undefined }, ({ value }) => ({
+        value: undefined,
+        case: undefined
+      }))
+      .exhaustive();
+    const cluster = new Cluster({
+      ...latestCluster,
+      kindValues: updatedKindValues
+    });
+
+    return new Contract({
+      cluster: cluster,
+    })
+  }
+
+  const isDisabled = (): boolean | undefined => {
+    return (
+      userProvisioning() ||
+      isClicked ||
+      (currentCluster && !currentProject?.enable_reprovision)
+    );
+  };
+
+  const markStepStarted = async (
+    step: string,
+    errMessage?: string
+  ): Promise<void> => {
+    try {
+      await api.updateOnboardingStep(
+        "<token>",
+        {
+          step,
+          error_message: errMessage,
+          region: clusterRegion,
+          provider: "aws",
+        },
+        {
+          project_id: currentProject ? currentProject.id : 0,
+        }
+      );
+    } catch (err) { }
+  };
+
+  const userProvisioning = (): boolean => {
+    return isReadOnly && props.provisionerError === "";
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const contract = props.selectedClusterVersion as any;
+    if (contract?.cluster) {
+      const eksValues: EKS = contract.cluster?.eksKind as EKS;
+      if (eksValues == null) {
+        return;
+      }
+
+      if (eksValues.logging != null) {
+        setCloudTrailEnabled(eksValues.logging.enableApiServerLogs && eksValues.logging.enableAuditLogs && eksValues.logging.enableAuthenticatorLogs && eksValues.logging.enableControllerManagerLogs)
+      }
+
+      setClusterRegion(eksValues.region);
+      setEcrScanningEnabled(eksValues.enableEcrScanning);
+      setKmsEnabled(eksValues.enableKmsEncryption);
+    }
+  }, [props.selectedClusterVersion]);
+
+  useEffect(() => {
+    if (!currentCluster) {
+      return;
+    }
+
+    setIsReadOnly(
+      currentCluster.status === "UPDATING" || currentCluster.status === "UPDATING_UNAVAILABLE"
+    );
+  }, []);
 
   useEffect(() => {
     if (soc2Enabled) {
@@ -43,6 +217,10 @@ const Compliance: React.FC = (_) => {
       <ToggleRow
         isToggled={soc2Enabled}
         onToggle={() => { setSoc2Enabled(!soc2Enabled)}}
+        disabled={isReadOnly}
+        disabledTooltip={
+          "Wait for provisioning to complete before editing this field."
+        }
       >
         <Container row>
           <Text>Enable all SOC 2 settings</Text>
@@ -53,7 +231,10 @@ const Compliance: React.FC = (_) => {
         <ToggleRow
           isToggled={cloudTrailEnabled}
           onToggle={() => { setCloudTrailEnabled(!cloudTrailEnabled) }}
-          disabled={soc2Enabled}
+          disabled={soc2Enabled || isReadOnly}
+          disabledTooltip={
+            soc2Enabled ? "Global SOC 2 setting must be disabled to toggle this" : "Wait for provisioning to complete before editing this field."
+          }
         >
           <Container row>
             <Text>Enable AWS CloudTrail</Text>
@@ -65,7 +246,10 @@ const Compliance: React.FC = (_) => {
         <ToggleRow
           isToggled={cloudTrailRetention}
           onToggle={() => { setCloudTrailRetention(!cloudTrailRetention) }}
-          disabled={soc2Enabled}
+          disabled={soc2Enabled || isReadOnly}
+          disabledTooltip={
+            soc2Enabled ? "Global SOC 2 setting must be disabled to toggle this" : "Wait for provisioning to complete before editing this field."
+          }
         >
           <Container row>
             <Text>Retain CloudTrail logs for 365 days</Text>
@@ -77,7 +261,12 @@ const Compliance: React.FC = (_) => {
         <ToggleRow
           isToggled={kmsEnabled}
           onToggle={() => { setKmsEnabled(!kmsEnabled)}}
-          disabled={soc2Enabled}
+          disabled={soc2Enabled || isReadOnly || kmsEnabled}
+          disabledTooltip={
+            kmsEnabled ? "KMS encryption can never be disabled." :
+            soc2Enabled ? "Global SOC 2 setting must be disabled to toggle this" : "Wait for provisioning to complete before editing this field."
+          }
+
         >
           <Container row>
             <Text>Enable AWS KMS</Text>
@@ -89,7 +278,10 @@ const Compliance: React.FC = (_) => {
         <ToggleRow
           isToggled={ecrScanningEnabled}
           onToggle={() => { setEcrScanningEnabled(!ecrScanningEnabled)}}
-          disabled={soc2Enabled}
+          disabled={soc2Enabled || isReadOnly}
+          disabledTooltip={
+            soc2Enabled ? "Global SOC 2 setting must be disabled to toggle this" : "Wait for provisioning to complete before editing this field."
+          }
         >
           <Container row>
             <Text>Enable enhanced ECR scanning</Text>
@@ -99,7 +291,10 @@ const Compliance: React.FC = (_) => {
         </ToggleRow>
       </GutterContainer>
       <Spacer y={1} />
-      <Button>
+      <Button
+        disabled={isDisabled() ?? isLoading}
+        onClick={applySettings}
+      >
         Save settings
       </Button>
     </StyledCompliance>

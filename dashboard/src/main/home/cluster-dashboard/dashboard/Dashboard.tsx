@@ -74,7 +74,13 @@ export const Dashboard: React.FunctionComponent = () => {
         return (
           <>
             {showComplianceTab(context.currentProject?.capi_provisioner_enabled, context.currentCluster.cloud_provider) && (
-              <Compliance/>
+              <Compliance
+                provisionerError={provisionFailureReason}
+                selectedClusterVersion={selectedClusterVersion}
+                credentialId={
+                  context.currentCluster.cloud_provider_credential_identifier
+                }
+                />
               )}
           </>
         )

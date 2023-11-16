@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import Tooltip from "./Tooltip";
 
 type Props = {
   isToggled: boolean;
@@ -14,18 +15,33 @@ const ToggleRow: React.FC<Props> = ({
   onToggle,
   children,
   disabled = false,
+  disabledTooltip,
 }) => {
   return (
-    <StyledToggle>
-      <ToggleContainer
-        isToggled={isToggled}
-        onClick={disabled ? () => { } : onToggle}
-        disabled={disabled}
-      >
-        <ToggleDot />
-      </ToggleContainer>
-      {children}
-    </StyledToggle>
+    disabled && disabledTooltip ?
+      <Tooltip content={disabledTooltip} position="right">
+        <StyledToggle>
+          <ToggleContainer
+            isToggled={isToggled}
+            onClick={disabled ? () => { } : onToggle}
+            disabled={disabled}
+          >
+            <ToggleDot />
+          </ToggleContainer>
+          {children}
+        </StyledToggle>
+      </Tooltip>
+      :
+      <StyledToggle>
+        <ToggleContainer
+          isToggled={isToggled}
+          onClick={disabled ? () => { } : onToggle}
+          disabled={disabled}
+        >
+          <ToggleDot />
+        </ToggleContainer>
+        {children}
+      </StyledToggle>
   );
 };
 

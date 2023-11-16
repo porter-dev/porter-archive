@@ -1133,7 +1133,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 <FlexCenter>
                   <Checkbox
                     checked={clusterState.kmsEncryptionEnabled}
-                    disabled={isReadOnly || currentCluster != null}
+                    disabled={isReadOnly}
                     toggleChecked={() => {
                       handleClusterStateChange(
                         "kmsEncryptionEnabled",
@@ -1143,7 +1143,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                     disabledTooltip={
                       clusterState.kmsEncryptionEnabled
                         ? "KMS encryption can never be disabled."
-                        : "Encryption is only supported at cluster creation."
+                        : "Wait for provisioning to complete before editing this field."
                     }
                   >
                     <Text color="helper">

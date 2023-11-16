@@ -171,13 +171,6 @@ func appRunFlags(appRunCmd *cobra.Command) {
 		"name of the container inside pod to run the command in",
 	)
 
-	appRunCmd.PersistentFlags().BoolVar(
-		&waitForSuccessfulDeploy,
-		"wait",
-		false,
-		"whether to wait for the job to complete before exiting",
-	)
-
 	appRunCmd.PersistentFlags().StringVar(
 		&jobName,
 		"job",

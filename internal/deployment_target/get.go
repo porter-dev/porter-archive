@@ -20,9 +20,11 @@ type DeploymentTargetDetailsInput struct {
 // DeploymentTarget is a struct representing the unique cluster, namespace pair for a deployment target
 type DeploymentTarget struct {
 	ID        string `json:"id"`
+	Name      string `json:"name"`
 	ClusterID int64  `json:"cluster_id"`
 	Namespace string `json:"namespace"`
-	Preview   bool   `json:"preview"`
+	IsPreview bool   `json:"is_preview"`
+	IsDefault bool   `json:"is_default"`
 }
 
 // DeploymentTargetDetails gets the deployment target details from CCP
@@ -59,15 +61,18 @@ func DeploymentTargetDetails(ctx context.Context, inp DeploymentTargetDetailsInp
 		return deploymentTarget, telemetry.Error(ctx, span, err, "deployment target details resp is nil")
 	}
 
-	if deploymentTargetDetailsResp.Msg.ClusterId != inp.ClusterID {
+	target := deploymentTargetDetailsResp.Msg.DeploymentTarget
+	if target.ClusterId != inp.ClusterID {
 		return deploymentTarget, telemetry.Error(ctx, span, err, "deployment target details resp cluster id does not match cluster id")
 	}
 
 	deploymentTarget = DeploymentTarget{
 		ID:        inp.DeploymentTargetID,
-		Namespace: deploymentTargetDetailsResp.Msg.Namespace,
-		ClusterID: deploymentTargetDetailsResp.Msg.ClusterId,
-		Preview:   deploymentTargetDetailsResp.Msg.IsPreview,
+		Name:      target.Name,
+		Namespace: target.Namespace,
+		ClusterID: target.ClusterId,
+		IsPreview: target.IsPreview,
+		IsDefault: target.IsDefault,
 	}
 
 	return deploymentTarget, nil

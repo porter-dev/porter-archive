@@ -174,18 +174,18 @@ const AppHeader: React.FC = () => {
               </A>
             </Container>
             <Spacer inline x={1} />
-            <TagWrapper preview={deploymentTarget.preview}>
-              {deploymentTarget.preview ? "Preview" : "Branch"}
-              <BranchTag preview={deploymentTarget.preview}>
+            <TagWrapper preview={deploymentTarget.isPreview}>
+              {deploymentTarget.isPreview ? "Preview" : "Branch"}
+              <BranchTag preview={deploymentTarget.isPreview}>
                 <PullRequestIcon
                   styles={{
                     height: "14px",
                     opacity: "0.65",
                     marginRight: "5px",
-                    fill: deploymentTarget.preview ? "" : "#fff",
+                    fill: deploymentTarget.isPreview ? "" : "#fff",
                   }}
                 />
-                {deploymentTarget.preview
+                {deploymentTarget.isPreview
                   ? deploymentTarget.namespace
                   : gitData.branch}
               </BranchTag>

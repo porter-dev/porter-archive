@@ -1,25 +1,27 @@
 import React, { useCallback, useEffect, useState } from "react";
-import AnimateHeight, { Height } from "react-animate-height";
-import styled from "styled-components";
+import AnimateHeight, { type Height } from "react-animate-height";
+import styled, { keyframes } from "styled-components";
 import _ from "lodash";
 
 import web from "assets/web.png";
+import chip from "assets/computer-chip.svg";
+import gpu from "assets/lightning.svg";
 import worker from "assets/worker.png";
 import job from "assets/job.png";
-
+import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import WebTabs from "./tabs/WebTabs";
 import WorkerTabs from "./tabs/WorkerTabs";
 import JobTabs from "./tabs/JobTabs";
-import { ClientService } from "lib/porter-apps/services";
-import { UseFieldArrayUpdate } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
+import { type ClientService } from "lib/porter-apps/services";
+import { type UseFieldArrayUpdate } from "react-hook-form";
+import { type PorterAppFormData } from "lib/porter-apps";
 import { match } from "ts-pattern";
 import useResizeObserver from "lib/hooks/useResizeObserver";
-import { PorterAppVersionStatus } from "lib/hooks/useAppStatus";
+import { type PorterAppVersionStatus } from "lib/hooks/useAppStatus";
 import ServiceStatusFooter from "./ServiceStatusFooter";
 
-interface ServiceProps {
+type ServiceProps = {
   index: number;
   service: ClientService;
   update: UseFieldArrayUpdate<PorterAppFormData, "app.services" | "app.predeploy">;
@@ -45,7 +47,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   maxRAM,
   clusterContainsGPUNodes,
   internalNetworkingDetails,
-  clusterIngressIp, 
+  clusterIngressIp,
 }) => {
   const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
 
@@ -140,7 +142,14 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {service.name.value.trim().length > 0
             ? service.name.value
             : "New Service"}
+          {service.gpuCoresNvidia.value > 0 &&
+            <><Spacer inline x={1.5} /><TagContainer>
+              <ChipIcon src={chip} alt="Chip Icon" />
+              <TagText>GPU Workload</TagText>
+            </TagContainer></>
+          }
         </ServiceTitle>
+
         {service.canDelete && (
           <ActionButton
             onClick={(e) => {
@@ -259,4 +268,49 @@ const ServiceHeader = styled.div<{
 const Icon = styled.img`
   height: 18px;
   margin-right: 15px;
+`;
+
+const reflectiveGleam = keyframes`
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+`;
+
+const TagContainer = styled.div`
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 4px 8px;
+  position: relative;
+  width: auto;
+  height: 30px;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.05) 25%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 200%;
+  border-radius: 10px;
+  animation: ${reflectiveGleam} 4s infinite linear;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+`;
+
+const ChipIcon = styled.img`
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+`;
+
+const TagText = styled.span`
+  font-family: 'General Sans';
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 100%;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
 `;

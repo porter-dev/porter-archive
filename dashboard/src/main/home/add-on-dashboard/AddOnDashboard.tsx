@@ -134,7 +134,7 @@ const AddOnDashboard: React.FC<Props> = ({
     const cluster = currentCluster?.name;
     const route = `/applications/${cluster}/${x.namespace}/${x.name}`;
     const newParams = {
-      // @ts-ignore
+      // @ts-expect-error
       project_id: params.project_id,
       closeChartRedirectUrl: '/addons',
     };
@@ -157,7 +157,7 @@ const AddOnDashboard: React.FC<Props> = ({
         <ClusterProvisioningPlaceholder />
       ) : (
 
-        (addOns.length === 0) ? (
+        (addOns.length === 0 || (filteredAddOns.length === 0 && searchValue === "")) ? (
 
           isLoading ?
             (<Loading offset="-150px" />) : (

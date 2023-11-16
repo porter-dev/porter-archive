@@ -244,7 +244,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
               env_group_names: data.deletions.envGroupNames.map(
                 (eg) => eg.name
               ),
-              env_variable_names: [],
               service_deletions: serviceDeletions,
             },
           },

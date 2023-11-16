@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 )
 
+// RunAppJobInput is the input for the RunAppJob function
 type RunAppJobInput struct {
 	// CLIConfig is the CLI configuration
 	CLIConfig config.CLIConfig

@@ -155,4 +155,5 @@ export const PORTER_IMAGE_TEMPLATES = [
   "public.ecr.aws/o1j4x7p4/hello-porter-job:latest",
   "public.ecr.aws/o1j4x7p4/hello-porter",
   "public.ecr.aws/o1j4x7p4/hello-porter:latest",
+  "ghcr.io/porter-dev/porter/hello-porter",
 ];

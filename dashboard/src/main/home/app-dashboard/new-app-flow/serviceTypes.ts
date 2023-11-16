@@ -9,7 +9,7 @@ export type ImageInfo = {
 }
 export const ImageInfo = {
     BASE_IMAGE: {
-        repository: "public.ecr.aws/o1j4x7p4/hello-porter",
+        repository: "ghcr.io/porter-dev/porter/hello-porter",
         tag: "latest",
     } as const,
 }

@@ -34,6 +34,8 @@ const icons = [
   web,
 ];
 
+const HELLO_PORTER_PLACEHOLDER_TAG = "porter-initial-image";
+
 const AppHeader: React.FC = () => {
   const { latestProto, porterApp, latestRevision, deploymentTarget } =
     useLatestRevision();
@@ -97,6 +99,28 @@ const AppHeader: React.FC = () => {
       default:
         return box;
     }
+  };
+
+  const renderTagBadge = (tag: string): JSX.Element => {
+    if (tag === HELLO_PORTER_PLACEHOLDER_TAG) {
+      return (
+        <ImageTagContainer hoverable={false}>
+          <TagContainer>
+            <StatusDot color="#FFA500" />
+            <Code>Awaiting Build</Code>
+          </TagContainer>
+        </ImageTagContainer>
+      );
+    }
+
+    return (
+      <ImageTagContainer hoverable={false}>
+        <TagContainer>
+          <CommitIcon src={tag_icon} />
+          <Code>{tag}</Code>
+        </TagContainer>
+      </ImageTagContainer>
+    );
   };
 
   const displayDomain = useMemo(() => {
@@ -220,12 +244,7 @@ const AppHeader: React.FC = () => {
               </Link>
             </ImageTagContainer>
           ) : latestProto.image?.tag ? (
-            <ImageTagContainer hoverable={false}>
-              <TagContainer>
-                <CommitIcon src={tag_icon} />
-                <Code>{latestProto.image.tag}</Code>
-              </TagContainer>
-            </ImageTagContainer>
+            renderTagBadge(latestProto.image.tag)
           ) : null}
         </NoShrink>
         <Spacer y={0.5} />
@@ -297,4 +316,33 @@ const BranchTag = styled.div<{ preview?: boolean }>`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+`;
+
+const StatusDot = styled.div<{ color?: string }>`
+  min-width: 7px;
+  max-width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 10px;
+  background: ${(props) => props.color ?? "#38a88a"};
+
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
+  transform: scale(1);
+  animation: pulse 2s infinite;
+  @keyframes pulse {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+    }
+
+    70% {
+      transform: scale(1);
+      box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    }
+
+    100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
+  }
 `;

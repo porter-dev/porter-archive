@@ -11,10 +11,8 @@ import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { useRevisionList } from "lib/hooks/useRevisionList";
-import { isClientRevisionNotification } from "lib/porter-apps/notification";
 
 import api from "shared/api";
-import alert from "assets/alert-warning.svg";
 import deploy from "assets/deploy.png";
 import view_changes from "assets/edit-contained.svg";
 import revert from "assets/fast-backward.svg";
@@ -67,8 +65,7 @@ const DeployEventCard: React.FC<Props> = ({
     projectId,
     clusterId,
   });
-  const { latestRevision, porterApp, latestNotifications } =
-    useLatestRevision();
+  const { latestRevision, porterApp } = useLatestRevision();
 
   const isRevertable = useMemo(() => {
     const latestRevisionNumber = revisionIdToNumber[latestRevision.id];
@@ -98,12 +95,6 @@ const DeployEventCard: React.FC<Props> = ({
     event.metadata.service_deployment_metadata,
     revisionIdToNumber,
   ]);
-
-  const revisionNotificationsExist = useMemo(() => {
-    return latestNotifications
-      .filter(isClientRevisionNotification)
-      .some((n) => n.appRevisionId === event.metadata.app_revision_id);
-  }, [JSON.stringify(latestNotifications)]);
 
   const onRevert = useCallback(async (id: string) => {
     try {
@@ -297,17 +288,6 @@ const DeployEventCard: React.FC<Props> = ({
               </ImageTagContainer>
             </>
           ) : null}
-          {revisionNotificationsExist && (
-            <>
-              <Spacer inline x={0.5} />
-              <Tag borderColor="#FFBF00">
-                <Link to={`/apps/${appName}/notifications`} color={"#FFBF00"}>
-                  <TagIcon src={alert} />
-                  Notifications
-                </Link>
-              </Tag>
-            </>
-          )}
         </Container>
         <Container row>
           <Icon height="14px" src={run_for} />

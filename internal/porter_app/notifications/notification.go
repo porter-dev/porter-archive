@@ -12,41 +12,25 @@ type Notification struct {
 	AppID string `json:"app_id"`
 	// AppName is the name of the app
 	AppName string `json:"app_name"`
+	// ServiceName is the name of the service
+	ServiceName string `json:"service_name"`
 	// AppRevisionID is the ID of the app revision that the notification belongs to
 	AppRevisionID string `json:"app_revision_id"`
+	// AgentEventID is the ID of the agent event, used for deduping
+	AgentEventID int `json:"agent_event_id"`
+	// AgentDetail is the raw detail of the agent event
+	AgentDetail string `json:"agent_detail"`
+	// AgentSummary is the raw summary of the agent event
+	AgentSummary string `json:"agent_summary"`
 	// Error is the Porter error parsed from the agent event
 	Error PorterError `json:"error"`
+	// Deployment is the deployment metadata, used to determine if the notification occurred during deployment or after
+	Deployment Deployment `json:"deployment"`
 	// Timestamp is the time that the notification was created
 	Timestamp time.Time `json:"timestamp"`
 	// ID is the ID of the notification
 	ID uuid.UUID `json:"id"`
-	// Scope is the scope of the notification
-	Scope Scope `json:"scope"`
-	// Metadata is the metadata of the notification
-	Metadata Metadata `json:"metadata"`
 }
-
-// Metadata is the metadata of the notification
-type Metadata struct {
-	// Deployment is the deployment metadata, used to determine if the notification occurred during deployment or after
-	Deployment Deployment `json:"deployment,omitempty"`
-	// ServiceName is the name of the service
-	ServiceName string `json:"service_name,omitempty"`
-	// JobRunID is the id of the job run, if the service is a job
-	JobRunID string `json:"job_run_id,omitempty"`
-}
-
-// Scope is the scope of the notification
-type Scope string
-
-const (
-	// Scope_Application indicates that the notification is scoped to the application
-	Scope_Application Scope = "APPLICATION"
-	// Scope_Revision indicates that the notification is scoped to the revision
-	Scope_Revision Scope = "REVISION"
-	// Scope_Service indicates that the notification is scoped to the service
-	Scope_Service Scope = "SERVICE"
-)
 
 // PorterError is the translation of a generic error from the agent into an actionable error for the user
 type PorterError struct {

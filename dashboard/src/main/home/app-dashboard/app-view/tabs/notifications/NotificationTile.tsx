@@ -5,10 +5,7 @@ import { match } from "ts-pattern";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import {
-  isClientServiceNotification,
-  type ClientNotification,
-} from "lib/porter-apps/notification";
+import { type ClientNotification } from "lib/porter-apps/notification";
 
 import { feedDate } from "shared/string_utils";
 import job from "assets/job.png";
@@ -22,21 +19,11 @@ type Props = {
 
 const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
   const summary = useMemo(() => {
-    return match(notification)
-      .with({ scope: "REVISION" }, () => {
-        return "The latest version failed to deploy";
-      })
-      .with({ scope: "SERVICE" }, (n) => {
-        return n.isDeployRelated
-          ? "A service failed to deploy"
-          : "A service is unhealthy";
-      })
-      .with({ scope: "APPLICATION" }, () => {
-        return "The application failed to deploy";
-      })
-      .otherwise(() => {
-        return "";
-      });
+    if (notification.isDeployRelated) {
+      return "Your service failed to deploy";
+    } else {
+      return "Your service is unhealthy";
+    }
   }, [JSON.stringify(notification)]);
 
   return (
@@ -50,20 +37,18 @@ const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
           <Text color="helper">{feedDate(notification.timestamp)}</Text>
         </Container>
         <Spacer inline x={0.5} />
-        {isClientServiceNotification(notification) && (
-          <Container row style={{ width: "200px" }}>
-            <ServiceNameTag>
-              {match(notification.service.config.type)
-                .with("web", () => <ServiceTypeIcon src={web} />)
-                .with("worker", () => <ServiceTypeIcon src={worker} />)
-                .with("job", () => <ServiceTypeIcon src={job} />)
-                .with("predeploy", () => <ServiceTypeIcon src={job} />)
-                .exhaustive()}
-              <Spacer inline x={0.5} />
-              {notification.service.name.value}
-            </ServiceNameTag>
-          </Container>
-        )}
+        <Container row style={{ width: "200px" }}>
+          <ServiceNameTag>
+            {match(notification.service.config.type)
+              .with("web", () => <ServiceTypeIcon src={web} />)
+              .with("worker", () => <ServiceTypeIcon src={worker} />)
+              .with("job", () => <ServiceTypeIcon src={job} />)
+              .with("predeploy", () => <ServiceTypeIcon src={job} />)
+              .exhaustive()}
+            <Spacer inline x={0.5} />
+            {notification.service.name.value}
+          </ServiceNameTag>
+        </Container>
       </Container>
       <Container row style={{ paddingRight: "10px" }}>
         <StatusDot color={"#FFBF00"} />

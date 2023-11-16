@@ -43,23 +43,21 @@ const porterAppPreDeployEventMetadataValidator = z.object({
   app_revision_id: z.string(),
   commit_sha: z.string().optional(),
 });
-
-const serviceNoticationValidator = z.object({
-  id: z.string(),
-  app_id: z.string(),
-  app_name: z.string(),
-  app_revision_id: z.string(),
-  error: z.object({
-    code: z.number(),
-    summary: z.string(),
-    detail: z.string(),
-    mitigation_steps: z.string(),
-    documentation: z.array(z.string()).default([]),
-  }),
-  scope: z.literal("SERVICE"),
-  timestamp: z.string(),
-  metadata: z.object({
+export const porterAppNotificationEventMetadataValidator = z
+  .object({
+    id: z.string(),
+    app_id: z.string(),
+    app_name: z.string(),
     service_name: z.string(),
+    app_revision_id: z.string(),
+    error: z.object({
+      code: z.number(),
+      summary: z.string(),
+      detail: z.string(),
+      mitigation_steps: z.string(),
+      documentation: z.array(z.string()).default([]),
+    }),
+    timestamp: z.string(),
     deployment: z.discriminatedUnion("status", [
       z.object({
         status: z.literal("PENDING"),
@@ -74,68 +72,12 @@ const serviceNoticationValidator = z.object({
         status: z.literal("UNKNOWN"),
       }),
     ]),
-  }),
-});
-const revisionNotificationValidator = z.object({
-  id: z.string(),
-  app_id: z.string(),
-  app_name: z.string(),
-  app_revision_id: z.string(),
-  error: z.object({
-    code: z.number(),
-    summary: z.string(),
-    detail: z.string(),
-    mitigation_steps: z.string(),
-    documentation: z.array(z.string()).default([]),
-  }),
-  scope: z.literal("REVISION"),
-  timestamp: z.string(),
-});
-const applicationNotificationValidator = z.object({
-  id: z.string(),
-  app_id: z.string(),
-  app_name: z.string(),
-  app_revision_id: z.string(),
-  error: z.object({
-    code: z.number(),
-    summary: z.string(),
-    detail: z.string(),
-    mitigation_steps: z.string(),
-    documentation: z.array(z.string()).default([]),
-  }),
-  scope: z.literal("APPLICATION"),
-  timestamp: z.string(),
-});
-
-export const isServiceNotification = (
-  notification: PorterAppNotification
-): notification is z.infer<typeof serviceNoticationValidator> => {
-  return notification.scope === "SERVICE";
-};
-
-export const isApplicationNotification = (
-  notification: PorterAppNotification
-): notification is z.infer<typeof applicationNotificationValidator> => {
-  return notification.scope === "APPLICATION";
-};
-
-export const isRevisionNotification = (
-  notification: PorterAppNotification
-): notification is z.infer<typeof revisionNotificationValidator> => {
-  return notification.scope === "REVISION";
-};
-
-export const porterAppNotificationEventMetadataValidator = z
-  .discriminatedUnion("scope", [
-    serviceNoticationValidator,
-    revisionNotificationValidator,
-    applicationNotificationValidator,
-  ])
+  })
   // this is necessary because the name for the pre-deploy job is called "pre-deploy" by the front-end but predeploy in k8s
   // TODO: standardize the naming of the pre-deploy job: https://linear.app/porter/issue/POR-2119/standardize-naming-of-pre-deploy
   .transform((obj) => {
-    if (obj.scope === "SERVICE" && obj.metadata.service_name === "predeploy") {
-      obj.metadata.service_name = "pre-deploy";
+    if (obj.service_name === "predeploy") {
+      obj.service_name = "pre-deploy";
     }
     return obj;
   });

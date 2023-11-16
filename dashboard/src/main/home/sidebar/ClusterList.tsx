@@ -274,7 +274,7 @@ const MainSelector = styled.div`
     justify-content: center;
     border-radius: 20px;
     background: ${(props: { expanded: boolean }) =>
-      props.expanded ? "#ffffff22" : ""};
+    props.expanded ? "#ffffff22" : ""};
   }
 `;
 
@@ -302,7 +302,7 @@ const NavButton = styled(SidebarLink)`
 
   :hover {
     background: ${(props: NavButtonProps) =>
-      props.active ? "#ffffff11" : "#ffffff08"};
+    props.active ? "#ffffff11" : "#ffffff08"};
   }
 
   &.active {

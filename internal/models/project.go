@@ -37,6 +37,9 @@ const (
 	// FullAddOns shows all addons, not just curated
 	FullAddOns FeatureFlagLabel = "full_add_ons"
 
+	// GPUEnabled enables the "GPU for users"
+	GPUEnabled FeatureFlagLabel = "gpu_enabled"
+
 	// HelmValuesEnabled shows the helm values tab for porter apps (when simplified_view_enabled=true)
 	HelmValuesEnabled FeatureFlagLabel = "helm_values_enabled"
 
@@ -77,6 +80,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	EFSEnabled:             false,
 	EnableReprovision:      false,
 	FullAddOns:             false,
+	GPUEnabled:             false,
 	HelmValuesEnabled:      false,
 	ManagedInfraEnabled:    false,
 	MultiCluster:           false,
@@ -199,6 +203,8 @@ func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *
 			return p.EnableReprovision
 		case "full_add_ons":
 			return p.FullAddOns
+		case "gpu_enabled":
+			return false
 		case "helm_values_enabled":
 			return p.HelmValuesEnabled
 		case "managed_infra_enabled":
@@ -255,6 +261,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		DBEnabled:              p.GetFeatureFlag(DBEnabled, launchDarklyClient),
 		SimplifiedViewEnabled:  p.GetFeatureFlag(SimplifiedViewEnabled, launchDarklyClient),
 		AzureEnabled:           p.GetFeatureFlag(AzureEnabled, launchDarklyClient),
+		GPUEnabled:             p.GetFeatureFlag(GPUEnabled, launchDarklyClient),
 		HelmValuesEnabled:      p.GetFeatureFlag(HelmValuesEnabled, launchDarklyClient),
 		MultiCluster:           p.GetFeatureFlag(MultiCluster, launchDarklyClient),
 		EnableReprovision:      p.GetFeatureFlag(EnableReprovision, launchDarklyClient),

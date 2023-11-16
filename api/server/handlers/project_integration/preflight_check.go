@@ -21,7 +21,7 @@ type CreatePreflightCheckHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-// NewCreatePreflightCheckHandler Create Preflight Checks
+// NewCreatePreflightCheckHandler Create Preflight Checks with /integrations/preflightcheck
 func NewCreatePreflightCheckHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

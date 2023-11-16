@@ -31,10 +31,11 @@ import { z } from "zod";
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 import DeleteEnvModal from "main/home/cluster-dashboard/preview-environments/v2/DeleteEnvModal";
 import { useHistory } from "react-router";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 
 type Props = {};
 
-const Apps: React.FC<Props> = ({}) => {
+const Apps: React.FC<Props> = ({ }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
   const { currentDeploymentTarget } = useDeploymentTarget();
@@ -178,28 +179,21 @@ const Apps: React.FC<Props> = ({}) => {
 
     if (apps.length === 0) {
       return (
-        <Fieldset>
-          <CentralContainer>
-            <Text size={16}>No apps have been deployed yet.</Text>
-            <Spacer y={1} />
-
-            <Text color={"helper"}>Get started by deploying your app.</Text>
-            <Spacer y={0.5} />
-            <PorterLink to="/apps/new/app">
-              <Button
-                onClick={async () =>
-                  updateAppStep({ step: "stack-launch-start" })
-                }
-                height="35px"
-              >
-                Deploy app <Spacer inline x={1} />{" "}
-                <i className="material-icons" style={{ fontSize: "18px" }}>
-                  east
-                </i>
-              </Button>
-            </PorterLink>
-          </CentralContainer>
-        </Fieldset>
+        <DashboardPlaceholder>
+          <Text size={16}>
+            No apps have been deployed yet
+          </Text>
+          <Spacer y={0.5} />
+          <Text color={"helper"}>
+            Get started by deploying your app.
+          </Text>
+          <Spacer y={1} />
+          <PorterLink to="/apps/new/app">
+            <Button alt onClick={async () => { await updateAppStep({ step: "stack-launch-start" }); }} height="35px">
+              Deploy app <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
+            </Button>
+          </PorterLink>
+        </DashboardPlaceholder>
       );
     }
 
@@ -283,8 +277,7 @@ const Apps: React.FC<Props> = ({}) => {
           ) : (
             <PorterLink to="/apps/new/app">
               <Button
-                onClick={async () =>
-                  updateAppStep({ step: "stack-launch-start" })
+                onClick={async () => { await updateAppStep({ step: "stack-launch-start" }); }
                 }
                 height="30px"
                 width="160px"
@@ -319,7 +312,7 @@ const Apps: React.FC<Props> = ({}) => {
       <Spacer y={5} />
       {showDeleteEnvModal && (
         <DeleteEnvModal
-          closeModal={() => setShowDeleteEnvModal(false)}
+          closeModal={() => { setShowDeleteEnvModal(false); }}
           deleteEnv={deletePreviewEnv}
           loading={envDeleting}
         />

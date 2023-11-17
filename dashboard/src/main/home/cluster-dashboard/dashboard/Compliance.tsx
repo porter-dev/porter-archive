@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useMemo, useState, useEffect } from "react";
 import { match } from "ts-pattern";
 
 import {
@@ -154,7 +154,7 @@ const Compliance: React.FC<Props> = (props) => {
     if (isLoading) {
       return <Loading />
     }
-    if (isReadOnly && props.provisionerError == "") {
+    if (isReadOnly && props.provisionerError === "") {
       return "Provisioning is still in progress...";
     } else if (errorMessage !== "") {
       return (
@@ -200,16 +200,16 @@ const Compliance: React.FC<Props> = (props) => {
     } catch (err) { }
   };
 
-  const isUserProvisioning = (): boolean => {
+  const isUserProvisioning = useMemo(() => {
     return isReadOnly && props.provisionerError === "";
-  };
+  }, [isReadOnly, props.provisionerError]);
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
       const eksValues: EKS = contract.cluster?.eksKind;
-      if (eksValues == null) {
+      if (eksValues === null) {
         return;
       }
 

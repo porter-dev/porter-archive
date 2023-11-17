@@ -1,28 +1,28 @@
 import React, { useContext, useEffect, useState } from "react";
-import styled from "styled-components";
 import { useLocation } from "react-router";
-import editIcon from "assets/edit-button.svg";
+import styled from "styled-components";
 
-import api from "shared/api";
-import { getQueryParam } from "shared/routing";
-import useAuth from "shared/auth/useAuth";
-import { Context } from "shared/Context";
-
-import ClusterRevisionSelector from "./ClusterRevisionSelector";
-import DashboardHeader from "../DashboardHeader";
-import TabSelector from "components/TabSelector";
-import ProvisionerSettings from "components/ProvisionerSettings";
-import ProvisionerStatus from "./ProvisionerStatus";
-import NodeList from "./NodeList";
-import { NamespaceList } from "./NamespaceList";
-import ClusterSettings from "./ClusterSettings";
-import Metrics from "./Metrics";
-import ClusterSettingsModal from "./ClusterSettingsModal";
-import Compliance from "./Compliance";
-
-import Spacer from "components/porter/Spacer";
 import AzureProvisionerSettings from "components/AzureProvisionerSettings";
 import GCPProvisionerSettings from "components/GCPProvisionerSettings";
+import Spacer from "components/porter/Spacer";
+import ProvisionerSettings from "components/ProvisionerSettings";
+import TabSelector from "components/TabSelector";
+
+import api from "shared/api";
+import useAuth from "shared/auth/useAuth";
+import { Context } from "shared/Context";
+import { getQueryParam } from "shared/routing";
+import editIcon from "assets/edit-button.svg";
+
+import DashboardHeader from "../DashboardHeader";
+import ClusterRevisionSelector from "./ClusterRevisionSelector";
+import ClusterSettings from "./ClusterSettings";
+import ClusterSettingsModal from "./ClusterSettingsModal";
+import Compliance from "./Compliance";
+import Metrics from "./Metrics";
+import { NamespaceList } from "./NamespaceList";
+import NodeList from "./NodeList";
+import ProvisionerStatus from "./ProvisionerStatus";
 
 type TabEnum =
   | "nodes"
@@ -40,9 +40,15 @@ var tabOptions: {
 
 const COMPLIANCE_SUPPORTED_PROVIDERS = ["AWS"];
 
-const showComplianceTab = (capi_provisioner_enabled: boolean, cloud_provider: string): boolean => {
-  return capi_provisioner_enabled && COMPLIANCE_SUPPORTED_PROVIDERS.includes(cloud_provider)
-}
+const showComplianceTab = (
+  capi_provisioner_enabled: boolean,
+  cloud_provider: string
+): boolean => {
+  return (
+    capi_provisioner_enabled &&
+    COMPLIANCE_SUPPORTED_PROVIDERS.includes(cloud_provider)
+  );
+};
 
 export const Dashboard: React.FunctionComponent = () => {
   const [currentTab, setCurrentTab] = useState<TabEnum>("settings");
@@ -73,15 +79,15 @@ export const Dashboard: React.FunctionComponent = () => {
       case "namespaces":
         return <NamespaceList />;
       case "compliance":
-        return (
+        return selectedClusterVersion ? (
           <Compliance
             provisionerError={provisionFailureReason}
             selectedClusterVersion={selectedClusterVersion}
             credentialId={
               context.currentCluster.cloud_provider_credential_identifier
             }
-            />
-        )
+          />
+        ) : null;
       case "configuration":
         return (
           <>
@@ -137,7 +143,10 @@ export const Dashboard: React.FunctionComponent = () => {
     }
 
     if (
-      showComplianceTab(context.currentProject?.capi_provisioner_enabled, context.currentCluster.cloud_provider) &&
+      showComplianceTab(
+        context.currentProject?.capi_provisioner_enabled,
+        context.currentCluster.cloud_provider
+      ) &&
       !tabOptions.find((tab) => tab.value === "compliance")
     ) {
       tabOptions.unshift({ value: "compliance", label: "Compliance" });
@@ -194,7 +203,7 @@ export const Dashboard: React.FunctionComponent = () => {
         setIngressIp(ingress_ip);
         setIngressError(ingress_error);
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -321,8 +330,9 @@ export const Dashboard: React.FunctionComponent = () => {
             </EditIconStyle>
           </Flex>
         }
-        description={`Cluster settings and status for ${context.currentCluster.vanity_name || context.currentCluster.name
-          }.`}
+        description={`Cluster settings and status for ${
+          context.currentCluster.vanity_name || context.currentCluster.name
+        }.`}
         disableLineBreak
         capitalize={false}
       />

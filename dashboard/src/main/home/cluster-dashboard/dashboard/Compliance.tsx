@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
+import type { JsonValue } from "@bufbuild/protobuf";
 import { Cluster, Contract, EKS, EKSLogging } from "@porter-dev/api-contracts";
 import axios from "axios";
 import styled from "styled-components";
@@ -19,7 +20,7 @@ import sparkle from "assets/sparkle.svg";
 type Props = {
   credentialId: string;
   provisionerError?: string;
-  selectedClusterVersion?: Contract;
+  selectedClusterVersion: JsonValue;
 };
 
 const DEFAULT_ERROR_MESSAGE =
@@ -217,23 +218,29 @@ const Compliance: React.FC<Props> = (props) => {
   }, [isReadOnly, props.provisionerError]);
 
   useEffect(() => {
-    const contract = props.selectedClusterVersion;
-    if (contract?.cluster) {
-      if (contract.cluster.kindValues.case === "eksKind") {
-        const eksValues = contract.cluster.kindValues.value;
-        if (eksValues.logging != null) {
-          setCloudTrailEnabled(
-            eksValues.logging.enableApiServerLogs &&
-              eksValues.logging.enableAuditLogs &&
-              eksValues.logging.enableAuthenticatorLogs &&
-              eksValues.logging.enableControllerManagerLogs
-          );
-        }
+    const contract: Contract = Contract.fromJson(props.selectedClusterVersion, {
+      ignoreUnknownFields: true,
+    });
 
-        setClusterRegion(eksValues.region);
-        setEcrScanningEnabled(eksValues.enableEcrScanning);
-        setKmsEnabled(eksValues.enableKmsEncryption);
-      }
+    if (contract.cluster && contract.cluster.kindValues.case === "eksKind") {
+      const eksValues = contract.cluster.kindValues.value;
+      const cloudTrailEnabled =
+        eksValues.logging != null &&
+        eksValues.logging.enableApiServerLogs &&
+        eksValues.logging.enableAuditLogs &&
+        eksValues.logging.enableAuthenticatorLogs &&
+        eksValues.logging.enableControllerManagerLogs;
+
+      setCloudTrailEnabled(cloudTrailEnabled);
+      setClusterRegion(eksValues.region);
+      setEcrScanningEnabled(eksValues.enableEcrScanning);
+      setKmsEnabled(eksValues.enableKmsEncryption);
+
+      setSoc2Enabled(
+        cloudTrailEnabled &&
+          eksValues.enableKmsEncryption &&
+          eksValues.enableEcrScanning
+      );
     }
   }, [props.selectedClusterVersion]);
 
@@ -301,7 +308,7 @@ const Compliance: React.FC<Props> = (props) => {
           }
         >
           <Container row>
-            <Text>Enable AWS CloudTrail</Text>
+            <Text>EKS CloudTrail Forwarding</Text>
             <Spacer inline x={1} />
             <Text color="helper">
               Forward all application and control plane logs to CloudTrail.
@@ -339,7 +346,7 @@ const Compliance: React.FC<Props> = (props) => {
           }
         >
           <Container row>
-            <Text>Enable AWS KMS</Text>
+            <Text>AWS KMS Secret Encryption</Text>
             <Spacer inline x={1} />
             <Text color="helper">
               Encrypt secrets with AWS Key Management Service.
@@ -360,7 +367,7 @@ const Compliance: React.FC<Props> = (props) => {
           }
         >
           <Container row>
-            <Text>Enable enhanced ECR scanning</Text>
+            <Text>Enhanced ECR scanning</Text>
             <Spacer inline x={1} />
             <Text color="helper">
               Scan ECR image repositories for vulnerabilities.

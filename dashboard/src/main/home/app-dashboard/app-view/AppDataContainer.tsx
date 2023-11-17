@@ -280,6 +280,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             "<token>",
             {
               build_settings: validatedAppProto.build,
+              deployment_target_id: deploymentTarget.id,
             },
             {
               project_id: projectId,
@@ -519,7 +520,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
     base.push({ label: "Settings", value: "settings" });
     return base;
-  }, [deploymentTarget.isPreview, latestProto.build, latestNotifications.length]);
+  }, [
+    deploymentTarget.isPreview,
+    latestProto.build,
+    latestNotifications.length,
+  ]);
 
   useEffect(() => {
     const newProto = previewRevision

@@ -163,7 +163,7 @@ const Networking: React.FC<NetworkingProps> = ({
           </Text>
           <Spacer y={0.5} />
           <IngressCustomAnnotations index={index} />
-          {currentClusterResources.loadBalancerType === "NLB" && (
+          {currentClusterResources.loadBalancerType === "ALB" && (
             <>
               <Spacer y={1} />
               <Controller

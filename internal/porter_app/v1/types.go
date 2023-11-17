@@ -6,10 +6,10 @@ type ServiceConfig struct {
 	Container        Container         `yaml:"container"`
 	Health           *Health           `yaml:"health,omitempty" validate:"excluded_unless=Type web"`
 	Ingress          *Ingress          `yaml:"ingress"`
-	ReplicaCount     string            `yaml:"replicaCount"`
+	ReplicaCount     *int32            `yaml:"replicaCount"`
 	Resources        Resources         `yaml:"resources"`
 	Service          KubernetesService `yaml:"service"`
-	AllowConcurrency bool              `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
+	AllowConcurrency *bool             `yaml:"allowConcurrent" validate:"excluded_unless=Type job"`
 	Schedule         Schedule          `yaml:"schedule" validate:"excluded_unless=Type job"`
 }
 

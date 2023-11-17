@@ -86,7 +86,6 @@ require (
 	github.com/porter-dev/api-contracts v0.2.53
 	github.com/riandyrn/otelchi v0.5.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
-	github.com/sethvargo/go-envconfig v0.9.0
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d
 	github.com/xanzy/go-gitlab v0.68.0
 	go.opentelemetry.io/otel v1.16.0
@@ -160,6 +159,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20220927061507-ef77025ab5aa // indirect
+	github.com/sethvargo/go-envconfig v0.9.0 // indirect
 	github.com/shirou/gopsutil/v3 v3.23.4 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.1 // indirect

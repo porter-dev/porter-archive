@@ -21,6 +21,7 @@ type Props = {
   alt?: boolean;
   type?: React.ButtonHTMLAttributes<HTMLButtonElement>["type"];
   disabledTooltipMessage?: string;
+  disabledTooltipPosition?: "top" | "right" | "bottom" | "left";
 };
 
 const Button: React.FC<Props> = ({
@@ -40,6 +41,7 @@ const Button: React.FC<Props> = ({
   alt,
   type = "button",
   disabledTooltipMessage,
+  disabledTooltipPosition = "right",
 }) => {
   const renderStatus = () => {
     switch (status) {
@@ -69,7 +71,7 @@ const Button: React.FC<Props> = ({
   };
 
   return disabled && disabledTooltipMessage ? (
-    <Tooltip content={disabledTooltipMessage} position="right">
+    <Tooltip content={disabledTooltipMessage} position={disabledTooltipPosition}>
       <Wrapper>
         <StyledButton
           disabled={disabled}

@@ -83,6 +83,7 @@ export const serviceValidator = z.object({
   ramMegabytes: serviceNumberValidator,
   gpuCoresNvidia: serviceNumberValidator,
   smartOptimization: serviceBooleanValidator.optional(),
+  terminationGracePeriodSeconds: serviceNumberValidator.optional(),
   config: z.discriminatedUnion("type", [
     webConfigValidator,
     workerConfigValidator,
@@ -116,6 +117,7 @@ export type SerializedService = {
   ramMegabytes: number;
   smartOptimization?: boolean;
   gpuCoresNvidia: number;
+  terminationGracePeriodSeconds?: number;
   config:
     | {
         type: "web";
@@ -195,6 +197,7 @@ export function defaultSerialized({
     ramMegabytes: defaultRAM,
     gpuCoresNvidia: 0,
     smartOptimization: true,
+    terminationGracePeriodSeconds: 30,
   };
 
   const defaultAutoscaling: SerializedAutoscaling = {
@@ -262,6 +265,7 @@ export function serializeService(service: ClientService): SerializedService {
     ramMegabytes: Math.round(service.ramMegabytes.value), // RAM must be an integer
     smartOptimization: service.smartOptimization?.value,
     gpuCoresNvidia: service.gpuCoresNvidia.value,
+    terminationGracePeriodSeconds: service.terminationGracePeriodSeconds?.value,
     config: match(service.config)
       .with({ type: "web" }, (config) =>
         Object.freeze({
@@ -344,6 +348,10 @@ export function deserializeService({
     smartOptimization: ServiceField.boolean(
       service.smartOptimization,
       override?.smartOptimization
+    ),
+    terminationGracePeriodSeconds: ServiceField.number(
+      service.terminationGracePeriodSeconds ?? 30, // if not set explicitly, assume the value is at default (30 seconds)
+      override?.terminationGracePeriodSeconds
     ),
     domainDeletions: [],
     ingressAnnotationDeletions: [],

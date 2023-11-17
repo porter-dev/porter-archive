@@ -10,7 +10,6 @@ import Text from "components/porter/Text";
 import { type PorterAppFormData } from "lib/porter-apps";
 import { prefixSubdomain, type ClientService } from "lib/porter-apps/services";
 
-import { useClusterResources } from "shared/ClusterResourcesContext";
 import copy from "assets/copy-left.svg";
 
 import CustomDomains from "./CustomDomains";
@@ -28,6 +27,7 @@ type NetworkingProps = {
     appName: string;
   };
   clusterIngressIp: string;
+  showDisableTls: boolean;
 };
 
 const Networking: React.FC<NetworkingProps> = ({
@@ -35,9 +35,9 @@ const Networking: React.FC<NetworkingProps> = ({
   service,
   internalNetworkingDetails: { namespace, appName },
   clusterIngressIp,
+  showDisableTls,
 }) => {
   const { register, control, watch } = useFormContext<PorterAppFormData>();
-  const { currentClusterResources } = useClusterResources();
 
   const privateService = watch(`app.services.${index}.config.private.value`);
 
@@ -163,7 +163,7 @@ const Networking: React.FC<NetworkingProps> = ({
           </Text>
           <Spacer y={0.5} />
           <IngressCustomAnnotations index={index} />
-          {currentClusterResources.loadBalancerType === "ALB" && (
+          {showDisableTls && (
             <>
               <Spacer y={1} />
               <Controller

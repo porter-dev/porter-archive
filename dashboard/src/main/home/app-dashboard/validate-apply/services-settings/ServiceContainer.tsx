@@ -1,30 +1,33 @@
 import React, { useCallback, useEffect, useState } from "react";
-import AnimateHeight, { type Height } from "react-animate-height";
-import styled, { keyframes } from "styled-components";
 import _ from "lodash";
+import AnimateHeight, { type Height } from "react-animate-height";
+import { type UseFieldArrayUpdate } from "react-hook-form";
+import styled, { keyframes } from "styled-components";
+import { match } from "ts-pattern";
 
-import web from "assets/web.png";
-import chip from "assets/computer-chip.svg";
-import gpu from "assets/lightning.svg";
-import worker from "assets/worker.png";
-import job from "assets/job.png";
-import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
+import { type PorterAppVersionStatus } from "lib/hooks/useAppStatus";
+import useResizeObserver from "lib/hooks/useResizeObserver";
+import { type PorterAppFormData } from "lib/porter-apps";
+import { type ClientService } from "lib/porter-apps/services";
+
+import chip from "assets/computer-chip.svg";
+import job from "assets/job.png";
+import web from "assets/web.png";
+import worker from "assets/worker.png";
+
+import ServiceStatusFooter from "./ServiceStatusFooter";
+import JobTabs from "./tabs/JobTabs";
 import WebTabs from "./tabs/WebTabs";
 import WorkerTabs from "./tabs/WorkerTabs";
-import JobTabs from "./tabs/JobTabs";
-import { type ClientService } from "lib/porter-apps/services";
-import { type UseFieldArrayUpdate } from "react-hook-form";
-import { type PorterAppFormData } from "lib/porter-apps";
-import { match } from "ts-pattern";
-import useResizeObserver from "lib/hooks/useResizeObserver";
-import { type PorterAppVersionStatus } from "lib/hooks/useAppStatus";
-import ServiceStatusFooter from "./ServiceStatusFooter";
 
 type ServiceProps = {
   index: number;
   service: ClientService;
-  update: UseFieldArrayUpdate<PorterAppFormData, "app.services" | "app.predeploy">;
+  update: UseFieldArrayUpdate<
+    PorterAppFormData,
+    "app.services" | "app.predeploy"
+  >;
   remove: (index: number) => void;
   status?: PorterAppVersionStatus[];
   maxCPU: number;
@@ -35,7 +38,8 @@ type ServiceProps = {
     appName: string;
   };
   clusterIngressIp: string;
-}
+  showDisableTls: boolean;
+};
 
 const ServiceContainer: React.FC<ServiceProps> = ({
   index,
@@ -48,6 +52,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   clusterContainsGPUNodes,
   internalNetworkingDetails,
   clusterIngressIp,
+  showDisableTls,
 }) => {
   const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
 
@@ -71,7 +76,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
     }
   }, [service.expanded]);
 
-  const renderTabs = (service: ClientService) => {
+  const renderTabs = (service: ClientService): JSX.Element => {
     return match(service)
       .with({ config: { type: "web" } }, (svc) => (
         <WebTabs
@@ -82,6 +87,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           clusterContainsGPUNodes={clusterContainsGPUNodes}
           internalNetworkingDetails={internalNetworkingDetails}
           clusterIngressIp={clusterIngressIp}
+          showDisableTls={showDisableTls}
         />
       ))
       .with({ config: { type: "worker" } }, (svc) => (
@@ -94,7 +100,13 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         />
       ))
       .with({ config: { type: "job" } }, (svc) => (
-        <JobTabs index={index} service={svc} maxCPU={maxCPU} maxRAM={maxRAM} clusterContainsGPUNodes={clusterContainsGPUNodes} />
+        <JobTabs
+          index={index}
+          service={svc}
+          maxCPU={maxCPU}
+          maxRAM={maxRAM}
+          clusterContainsGPUNodes={clusterContainsGPUNodes}
+        />
       ))
       .with({ config: { type: "predeploy" } }, (svc) => (
         <JobTabs
@@ -109,7 +121,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
       .exhaustive();
   };
 
-  const renderIcon = (service: ClientService) => {
+  const renderIcon = (service: ClientService): JSX.Element => {
     switch (service.config.type) {
       case "web":
         return <Icon src={web} />;
@@ -142,12 +154,15 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {service.name.value.trim().length > 0
             ? service.name.value
             : "New Service"}
-          {service.gpuCoresNvidia.value > 0 &&
-            <><Spacer inline x={1.5} /><TagContainer>
-              <ChipIcon src={chip} alt="Chip Icon" />
-              <TagText>GPU Workload</TagText>
-            </TagContainer></>
-          }
+          {service.gpuCoresNvidia.value > 0 && (
+            <>
+              <Spacer inline x={1.5} />
+              <TagContainer>
+                <ChipIcon src={chip} alt="Chip Icon" />
+                <TagText>GPU Workload</TagText>
+              </TagContainer>
+            </>
+          )}
         </ServiceTitle>
 
         {service.canDelete && (
@@ -260,8 +275,8 @@ const ServiceHeader = styled.div<{
     cursor: pointer;
     border-radius: 20px;
     margin-left: -10px;
-    transform: ${(props: { showExpanded?: boolean; }) =>
-    props.showExpanded ? "" : "rotate(-90deg)"};
+    transform: ${(props: { showExpanded?: boolean }) =>
+      props.showExpanded ? "" : "rotate(-90deg)"};
   }
 `;
 
@@ -290,8 +305,8 @@ const TagContainer = styled.div`
   height: 30px;
   background-image: linear-gradient(
     45deg,
-    rgba(255, 255, 255, 0.05) 25%, 
-    rgba(255, 255, 255, 0.2) 50%, 
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.2) 50%,
     rgba(255, 255, 255, 0.05) 75%
   );
   background-size: 200% 200%;
@@ -307,10 +322,10 @@ const ChipIcon = styled.img`
 `;
 
 const TagText = styled.span`
-  font-family: 'General Sans';
+  font-family: "General Sans";
   font-weight: 400;
   font-size: 10px;
   line-height: 100%;
   letter-spacing: -0.02em;
-  color: #FFFFFF;
+  color: #ffffff;
 `;

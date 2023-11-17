@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  Cluster,
+  Contract,
   LoadBalancerType,
   NodeGroupType,
 } from "@porter-dev/api-contracts";
@@ -195,21 +195,18 @@ export const useClusterResourceLimits = ({
       const contracts = await z
         .array(encodedContractValidator)
         .parseAsync(res.data);
-      // Use zod to validate the data
-      const latestContract = contracts
-        .filter((contract) => contract.cluster_id === clusterId) // Filter contracts by the currentCluster.id
-        .sort(
-          (a, b) =>
-            new Date(b.CreatedAt).getTime() - new Date(a.CreatedAt).getTime()
-        ) // Sort them by the CreatedAt date in descending order
-        .map((contract) => contract)[0];
-
-      const decodedContract = Cluster.fromJsonString(
-        atob(latestContract.base64_contract)
-      );
-      // Check for NODE_GROUP_TYPE_CUSTOM with instanceType containing "g4dn"
-
-      return decodedContract;
+      if (contracts.length) {
+        const latestContract = contracts
+          .filter((contract) => contract.cluster_id === clusterId)
+          .sort(
+            (a, b) =>
+              new Date(b.CreatedAt).getTime() - new Date(a.CreatedAt).getTime()
+          )[0];
+        const decodedContract = Contract.fromJsonString(
+          atob(latestContract.base64_contract)
+        );
+        return decodedContract.cluster;
+      }
     },
     {
       enabled: !!projectId,
@@ -296,22 +293,14 @@ export const useClusterResourceLimits = ({
         .with({ kindValues: { case: "eksKind" } }, (c) => {
           const loadBalancer = c.kindValues.value.loadBalancer;
           if (!loadBalancer) {
-            return "UNSPECIFIED" as const;
+            return "UNSPECIFIED";
           }
           return match(loadBalancer.loadBalancerType)
-            .with(LoadBalancerType.ALB, () => {
-              return "ALB" as const;
-            })
-            .with(LoadBalancerType.NLB, () => {
-              return "NLB" as const;
-            })
-            .otherwise(() => {
-              return "UNSPECIFIED" as const;
-            });
+            .with(LoadBalancerType.ALB, (): ClientLoadBalancerType => "ALB")
+            .with(LoadBalancerType.NLB, (): ClientLoadBalancerType => "NLB")
+            .otherwise((): ClientLoadBalancerType => "UNSPECIFIED");
         })
-        .otherwise(() => {
-          return "UNSPECIFIED" as const;
-        });
+        .otherwise(() => "UNSPECIFIED");
 
       setClusterContainsGPUNodes(containsCustomNodeGroup);
       setLoadBalancerType(loadBalancerType);

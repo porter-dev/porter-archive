@@ -1,5 +1,4 @@
 import React, { useContext, useState, useEffect } from "react";
-import { type RouteComponentProps } from "react-router";
 import { match } from "ts-pattern";
 
 import {
@@ -12,6 +11,8 @@ import {
 import sparkle from "assets/sparkle.svg";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
+import Error from "components/porter/Error";
+import Loading from "components/Loading";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import ToggleRow from "components/porter/ToggleRow";
@@ -21,10 +22,20 @@ import { Context } from "shared/Context";
 
 import styled from "styled-components";
 
-type Props = RouteComponentProps & {
+type Props = {
   credentialId: string;
   provisionerError?: string;
   selectedClusterVersion?: Contract;
+};
+
+const DEFAULT_ERROR_MESSAGE =
+  "An error occurred while provisioning your infrastructure. Please try again.";
+
+const errorMessageToModal = (errorMessage: string) => {
+  switch (errorMessage) {
+    default:
+      return null;
+  }
 };
 
 const Compliance: React.FC<Props> = (props) => {
@@ -43,6 +54,8 @@ const Compliance: React.FC<Props> = (props) => {
   const [kmsEnabled, setKmsEnabled] = useState(false);
   const [soc2Enabled, setSoc2Enabled] = useState(false);
   const [clusterRegion, setClusterRegion] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [errorDetails, setErrorDetails] = useState<string>("");
 
   const applySettings = async (): Promise<void> => {
     if (!currentCluster || !currentProject || !setShouldRefreshClusters) {
@@ -59,6 +72,13 @@ const Compliance: React.FC<Props> = (props) => {
         { cluster_id: currentCluster.id  },
         { project_id: currentProject.id }
       );
+
+      if (contractResults.data.length === 0) {
+        setErrorMessage("Unable to retrieve contract results")
+        setErrorDetails("")
+        return
+      }
+
       const result = contractResults.data.reduce((prev: { CreatedAt: string }, current: { CreatedAt: string }) => Date.parse(current.CreatedAt) > Date.parse(prev.CreatedAt) ? current : prev);
 
       const contract = createContract(result.base64_contract);
@@ -130,9 +150,31 @@ const Compliance: React.FC<Props> = (props) => {
     })
   }
 
+  const getStatus = () => {
+    if (isLoading) {
+      return <Loading />
+    }
+    if (isReadOnly && props.provisionerError == "") {
+      return "Provisioning is still in progress...";
+    } else if (errorMessage !== "") {
+      return (
+        <Error
+          message={errorDetails !== "" ? errorMessage + " (" + errorDetails + ")" : errorMessage}
+          ctaText={
+            errorMessage !== DEFAULT_ERROR_MESSAGE
+              ? "Troubleshooting steps"
+              : undefined
+          }
+          errorModalContents={errorMessageToModal(errorMessage)}
+        />
+      );
+    }
+    return undefined;
+  }
+
   const isDisabled = (): boolean | undefined => {
     return (
-      userProvisioning() ||
+      isUserProvisioning() ||
       isClicked ||
       (currentCluster && !currentProject?.enable_reprovision)
     );
@@ -158,7 +200,7 @@ const Compliance: React.FC<Props> = (props) => {
     } catch (err) { }
   };
 
-  const userProvisioning = (): boolean => {
+  const isUserProvisioning = (): boolean => {
     return isReadOnly && props.provisionerError === "";
   };
 
@@ -166,7 +208,7 @@ const Compliance: React.FC<Props> = (props) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
-      const eksValues: EKS = contract.cluster?.eksKind as EKS;
+      const eksValues: EKS = contract.cluster?.eksKind;
       if (eksValues == null) {
         return;
       }
@@ -199,7 +241,6 @@ const Compliance: React.FC<Props> = (props) => {
       setKmsEnabled(true);
     }
   }, [soc2Enabled]);
-
   return (
     <StyledCompliance>
       <Spacer y={1} />
@@ -216,7 +257,7 @@ const Compliance: React.FC<Props> = (props) => {
       <Spacer y={0.5} />
       <ToggleRow
         isToggled={soc2Enabled}
-        onToggle={() => { setSoc2Enabled(!soc2Enabled)}}
+        onToggle={() => { setSoc2Enabled((prev) => !prev) }}
         disabled={isReadOnly}
         disabledTooltip={
           "Wait for provisioning to complete before editing this field."
@@ -230,7 +271,7 @@ const Compliance: React.FC<Props> = (props) => {
       <GutterContainer>
         <ToggleRow
           isToggled={cloudTrailEnabled}
-          onToggle={() => { setCloudTrailEnabled(!cloudTrailEnabled) }}
+          onToggle={() => { setCloudTrailEnabled((prev) => !prev) }}
           disabled={soc2Enabled || isReadOnly}
           disabledTooltip={
             soc2Enabled ? "Global SOC 2 setting must be disabled to toggle this" : "Wait for provisioning to complete before editing this field."
@@ -245,7 +286,7 @@ const Compliance: React.FC<Props> = (props) => {
         {/* <Spacer y={0.5} />
         <ToggleRow
           isToggled={cloudTrailRetention}
-          onToggle={() => { setCloudTrailRetention(!cloudTrailRetention) }}
+          onToggle={() => { setCloudTrailRetention((prev) => !prev) }}
           disabled={soc2Enabled || isReadOnly}
           disabledTooltip={
             soc2Enabled ? "Global SOC 2 setting must be disabled to toggle this" : "Wait for provisioning to complete before editing this field."
@@ -260,7 +301,7 @@ const Compliance: React.FC<Props> = (props) => {
         <Spacer y={0.5} />
         <ToggleRow
           isToggled={kmsEnabled}
-          onToggle={() => { setKmsEnabled(!kmsEnabled)}}
+          onToggle={() => { setKmsEnabled((prev) => !prev)}}
           disabled={soc2Enabled || isReadOnly || kmsEnabled}
           disabledTooltip={
             kmsEnabled ? "KMS encryption can never be disabled." :
@@ -277,7 +318,7 @@ const Compliance: React.FC<Props> = (props) => {
         <Spacer y={0.5} />
         <ToggleRow
           isToggled={ecrScanningEnabled}
-          onToggle={() => { setEcrScanningEnabled(!ecrScanningEnabled)}}
+          onToggle={() => { setEcrScanningEnabled((prev) => !prev)}}
           disabled={soc2Enabled || isReadOnly}
           disabledTooltip={
             soc2Enabled ? "Global SOC 2 setting must be disabled to toggle this" : "Wait for provisioning to complete before editing this field."
@@ -294,6 +335,7 @@ const Compliance: React.FC<Props> = (props) => {
       <Button
         disabled={isDisabled() ?? isLoading}
         onClick={applySettings}
+        status={getStatus()}
       >
         Save settings
       </Button>

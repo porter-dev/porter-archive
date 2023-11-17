@@ -38,8 +38,10 @@ var tabOptions: {
   value: TabEnum;
 }[] = [{ label: "Additional settings", value: "settings" }];
 
+const COMPLIANCE_SUPPORTED_PROVIDERS = ["AWS"];
+
 const showComplianceTab = (capi_provisioner_enabled: boolean, cloud_provider: string): boolean => {
-  return capi_provisioner_enabled && ['AWS'].includes(cloud_provider)
+  return capi_provisioner_enabled && COMPLIANCE_SUPPORTED_PROVIDERS.includes(cloud_provider)
 }
 
 export const Dashboard: React.FunctionComponent = () => {
@@ -72,17 +74,13 @@ export const Dashboard: React.FunctionComponent = () => {
         return <NamespaceList />;
       case "compliance":
         return (
-          <>
-            {showComplianceTab(context.currentProject?.capi_provisioner_enabled, context.currentCluster.cloud_provider) && (
-              <Compliance
-                provisionerError={provisionFailureReason}
-                selectedClusterVersion={selectedClusterVersion}
-                credentialId={
-                  context.currentCluster.cloud_provider_credential_identifier
-                }
-                />
-              )}
-          </>
+          <Compliance
+            provisionerError={provisionFailureReason}
+            selectedClusterVersion={selectedClusterVersion}
+            credentialId={
+              context.currentCluster.cloud_provider_credential_identifier
+            }
+            />
         )
       case "configuration":
         return (

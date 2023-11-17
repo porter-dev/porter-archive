@@ -35,7 +35,7 @@ const Compliance: React.FC<Props> = (props) => {
   } = useContext(Context);
 
   const [cloudTrailEnabled, setCloudTrailEnabled] = useState(false);
-  const [cloudTrailRetention, setCloudTrailRetention] = useState(false);
+  // const [cloudTrailRetention, setCloudTrailRetention] = useState(false);
   const [ecrScanningEnabled, setEcrScanningEnabled] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
@@ -115,7 +115,7 @@ const Compliance: React.FC<Props> = (props) => {
         value,
         case: "aksKind" as const
       }))
-      .with({ case: undefined }, ({ value }) => ({
+      .with({ case: undefined }, ({ }) => ({
         value: undefined,
         case: undefined
       }))
@@ -194,7 +194,7 @@ const Compliance: React.FC<Props> = (props) => {
   useEffect(() => {
     if (soc2Enabled) {
       setCloudTrailEnabled(true);
-      setCloudTrailRetention(true);
+      // setCloudTrailRetention(true);
       setEcrScanningEnabled(true);
       setKmsEnabled(true);
     }
@@ -242,7 +242,7 @@ const Compliance: React.FC<Props> = (props) => {
             <Text color="helper">Forward all application and control plane logs to CloudTrail.</Text>
           </Container>
         </ToggleRow>
-        <Spacer y={0.5} />
+        {/* <Spacer y={0.5} />
         <ToggleRow
           isToggled={cloudTrailRetention}
           onToggle={() => { setCloudTrailRetention(!cloudTrailRetention) }}
@@ -256,7 +256,7 @@ const Compliance: React.FC<Props> = (props) => {
             <Spacer inline x={1} />
             <Text color="helper">Store CloudTrail logs in an S3 bucket for 365 days.</Text>
           </Container>
-        </ToggleRow>
+        </ToggleRow> */}
         <Spacer y={0.5} />
         <ToggleRow
           isToggled={kmsEnabled}

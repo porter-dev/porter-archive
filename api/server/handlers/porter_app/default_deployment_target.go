@@ -3,8 +3,9 @@ package porter_app
 import (
 	"net/http"
 
-	"github.com/google/uuid"
+	"connectrpc.com/connect"
 
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -59,23 +60,27 @@ func (c *DefaultDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
 	)
 
-	defaultDeploymentTarget, err := c.Repo().DeploymentTarget().DeploymentTargetBySelectorAndSelectorType(project.ID, cluster.ID, DeploymentTargetSelector_Default, DeploymentTargetSelectorType_Default)
+	defaultDeploymentTargetReq := connect.NewRequest(&porterv1.DefaultDeploymentTargetRequest{
+		ProjectId: int64(project.ID),
+		ClusterId: int64(cluster.ID),
+	})
+
+	defaultDeploymentTargetResp, err := c.Config().ClusterControlPlaneClient.DefaultDeploymentTarget(ctx, defaultDeploymentTargetReq)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting default deployment target from repo")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		err := telemetry.Error(ctx, span, err, "error getting default deployment target")
+		c.WriteResult(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	if defaultDeploymentTarget.ID == uuid.Nil {
-		err := telemetry.Error(ctx, span, err, "default deployment target not found")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+	if defaultDeploymentTargetResp == nil || defaultDeploymentTargetResp.Msg == nil {
+		err := telemetry.Error(ctx, span, nil, "default deployment target response is nil")
+		c.WriteResult(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: defaultDeploymentTarget.ID.String()})
-
+	defaultDeploymentTarget := defaultDeploymentTargetResp.Msg.DeploymentTarget
 	response := &DefaultDeploymentTargetResponse{
-		DeploymentTargetID: defaultDeploymentTarget.ID.String(),
+		DeploymentTargetID: defaultDeploymentTarget.Id,
 	}
 
 	c.WriteResult(w, r, response)

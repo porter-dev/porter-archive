@@ -49,11 +49,8 @@ const PreflightChecks: React.FC<Props> = (props) => {
   const PreflightCheckItem: React.FC<ItemProps> = ({ checkKey, checkLabel }) => {
     // Using optional chaining to prevent potential null/undefined errors
     const checkLabelConst = currentMessageConst[checkKey];
-    console.log(checkLabelConst)
     const checkData = props.preflightData?.preflight_checks?.[checkKey];
     const hasMessage = checkData?.message;
-
-    console.log(checkData)
     const [isExpanded, setIsExpanded] = useState(true);
 
     const handleToggle = (): void => {

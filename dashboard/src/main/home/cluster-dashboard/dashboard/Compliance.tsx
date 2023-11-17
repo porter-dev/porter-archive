@@ -111,28 +111,20 @@ const Compliance: React.FC<Props> = (props) => {
       .with({ case: "eksKind" }, ({ value }) => ({
         value: new EKS({
           ...value,
-          enableKmsEncryption:
-            soc2Enabled || kmsEnabled || value.enableKmsEncryption || false,
+          enableKmsEncryption: soc2Enabled || kmsEnabled || false,
           enableEcrScanning:
             soc2Enabled ||
             ecrScanningEnabled ||
             value.enableEcrScanning ||
             false,
           logging: new EKSLogging({
-            enableApiServerLogs:
-              soc2Enabled || value.logging?.enableApiServerLogs || false,
-            enableAuditLogs:
-              soc2Enabled || value.logging?.enableAuditLogs || false,
-            enableAuthenticatorLogs:
-              soc2Enabled || value.logging?.enableAuthenticatorLogs || false,
-            enableCloudwatchLogsToS3:
-              soc2Enabled || value.logging?.enableCloudwatchLogsToS3 || false,
+            enableApiServerLogs: soc2Enabled || cloudTrailEnabled || false,
+            enableAuditLogs: soc2Enabled || cloudTrailEnabled || false,
+            enableAuthenticatorLogs: soc2Enabled || cloudTrailEnabled || false,
+            enableCloudwatchLogsToS3: soc2Enabled || cloudTrailEnabled || false,
             enableControllerManagerLogs:
-              soc2Enabled ||
-              value.logging?.enableControllerManagerLogs ||
-              false,
-            enableSchedulerLogs:
-              soc2Enabled || value.logging?.enableSchedulerLogs || false,
+              soc2Enabled || cloudTrailEnabled || false,
+            enableSchedulerLogs: soc2Enabled || cloudTrailEnabled || false,
           }),
         }),
         case: "eksKind" as const,

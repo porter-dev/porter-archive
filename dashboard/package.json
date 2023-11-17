@@ -83,7 +83,7 @@
     "npm": "9.7.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "start": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js",
     "build": "NODE_ENV=\"production\" webpack",
     "build-and-analyze": "ENABLE_ANALYZER=true NODE_ENV=\"production\" ./node_modules/webpack/bin/webpack.js",

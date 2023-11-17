@@ -46,6 +46,7 @@ type Project struct {
 	ValidateApplyV2        bool    `json:"validate_apply_v2"`
 	QuotaIncrease          bool    `json:"quota_increase"`
 	BetaFeaturesEnabled    bool    `json:"beta_features_enabled"`
+	AWSACKAuthEnabled      bool    `json:"aws_ack_auth_enabled"`
 }
 
 type FeatureFlags struct {

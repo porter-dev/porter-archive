@@ -681,6 +681,7 @@ export type ClusterState = {
   clusterName: string;
   awsRegion: string;
   machineType: string;
+  ecrScanningEnabled: boolean;
   guardDutyEnabled: boolean;
   kmsEncryptionEnabled: boolean;
   loadBalancerType: boolean;

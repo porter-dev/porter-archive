@@ -77,7 +77,9 @@ const (
 // ProjectFeatureFlags keeps track of all project-related feature flags
 var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	APITokensEnabled:       false,
+	AWSACKAuthEnabled:      false,
 	AzureEnabled:           false,
+	BetaFeaturesEnabled:    false,
 	CapiProvisionerEnabled: true,
 	DBEnabled:              false,
 	EFSEnabled:             false,
@@ -88,13 +90,11 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	ManagedInfraEnabled:    false,
 	MultiCluster:           false,
 	PreviewEnvsEnabled:     false,
-	RDSDatabasesEnabled:    false,
 	QuotaIncrease:          false,
+	RDSDatabasesEnabled:    false,
 	SimplifiedViewEnabled:  true,
 	StacksEnabled:          false,
 	ValidateApplyV2:        true,
-	BetaFeaturesEnabled:    false,
-	AWSACKAuthEnabled:      false,
 }
 
 type ProjectPlan string
@@ -258,25 +258,25 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		Name:  projectName,
 		Roles: roles,
 
-		PreviewEnvsEnabled:     p.GetFeatureFlag(PreviewEnvsEnabled, launchDarklyClient),
-		RDSDatabasesEnabled:    p.GetFeatureFlag(RDSDatabasesEnabled, launchDarklyClient),
-		ManagedInfraEnabled:    p.GetFeatureFlag(ManagedInfraEnabled, launchDarklyClient),
-		StacksEnabled:          p.GetFeatureFlag(StacksEnabled, launchDarklyClient),
 		APITokensEnabled:       p.GetFeatureFlag(APITokensEnabled, launchDarklyClient),
+		AWSACKAuthEnabled:      p.GetFeatureFlag(AWSACKAuthEnabled, launchDarklyClient),
+		AzureEnabled:           p.GetFeatureFlag(AzureEnabled, launchDarklyClient),
+		BetaFeaturesEnabled:    p.GetFeatureFlag(BetaFeaturesEnabled, launchDarklyClient),
 		CapiProvisionerEnabled: p.GetFeatureFlag(CapiProvisionerEnabled, launchDarklyClient),
 		DBEnabled:              p.GetFeatureFlag(DBEnabled, launchDarklyClient),
-		SimplifiedViewEnabled:  p.GetFeatureFlag(SimplifiedViewEnabled, launchDarklyClient),
-		AzureEnabled:           p.GetFeatureFlag(AzureEnabled, launchDarklyClient),
+		EFSEnabled:             p.GetFeatureFlag(EFSEnabled, launchDarklyClient),
+		EnableReprovision:      p.GetFeatureFlag(EnableReprovision, launchDarklyClient),
+		FullAddOns:             p.GetFeatureFlag(FullAddOns, launchDarklyClient),
 		GPUEnabled:             p.GetFeatureFlag(GPUEnabled, launchDarklyClient),
 		HelmValuesEnabled:      p.GetFeatureFlag(HelmValuesEnabled, launchDarklyClient),
+		ManagedInfraEnabled:    p.GetFeatureFlag(ManagedInfraEnabled, launchDarklyClient),
 		MultiCluster:           p.GetFeatureFlag(MultiCluster, launchDarklyClient),
-		EnableReprovision:      p.GetFeatureFlag(EnableReprovision, launchDarklyClient),
-		ValidateApplyV2:        p.GetFeatureFlag(ValidateApplyV2, launchDarklyClient),
-		FullAddOns:             p.GetFeatureFlag(FullAddOns, launchDarklyClient),
+		PreviewEnvsEnabled:     p.GetFeatureFlag(PreviewEnvsEnabled, launchDarklyClient),
 		QuotaIncrease:          p.GetFeatureFlag(QuotaIncrease, launchDarklyClient),
-		EFSEnabled:             p.GetFeatureFlag(EFSEnabled, launchDarklyClient),
-		BetaFeaturesEnabled:    p.GetFeatureFlag(BetaFeaturesEnabled, launchDarklyClient),
-		AWSACKAuthEnabled:      p.GetFeatureFlag(AWSACKAuthEnabled, launchDarklyClient),
+		RDSDatabasesEnabled:    p.GetFeatureFlag(RDSDatabasesEnabled, launchDarklyClient),
+		SimplifiedViewEnabled:  p.GetFeatureFlag(SimplifiedViewEnabled, launchDarklyClient),
+		StacksEnabled:          p.GetFeatureFlag(StacksEnabled, launchDarklyClient),
+		ValidateApplyV2:        p.GetFeatureFlag(ValidateApplyV2, launchDarklyClient),
 	}
 }
 

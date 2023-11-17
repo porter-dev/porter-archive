@@ -229,6 +229,8 @@ func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *
 			return p.ValidateApplyV2
 		case "efs_enabled":
 			return false
+		case "aws_ack_auth_enabled":
+			return false
 		}
 	}
 

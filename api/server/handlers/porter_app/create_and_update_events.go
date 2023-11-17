@@ -177,7 +177,7 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 					return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error parsing deployment target id")
 				}
 				if deploymentTargetUUID == uuid.Nil {
-					return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "deployment target id cannot be nil")
+					return types.PorterAppEvent{}, telemetry.Error(ctx, span, nil, "deployment target id cannot be nil")
 				}
 
 				existingEvents, _, err = p.Repo().PorterAppEvent().ListEventsByPorterAppIDAndDeploymentTargetID(ctx, app.ID, deploymentTargetUUID)
@@ -242,9 +242,32 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 			return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error parsing deployment target id")
 		}
 		if deploymentTargetUUID == uuid.Nil {
-			return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "deployment target id cannot be nil")
+			return types.PorterAppEvent{}, telemetry.Error(ctx, span, nil, "deployment target id cannot be nil")
 		}
+
+		// hacky way to get the app instance id into the build event
+		revision, err := p.Config().ClusterControlPlaneClient.CurrentAppRevision(ctx, connect.NewRequest(&porterv1.CurrentAppRevisionRequest{
+			ProjectId:          int64(cluster.ProjectID),
+			AppId:              int64(app.ID),
+			DeploymentTargetId: deploymentTargetID,
+		}))
+		if err != nil {
+			return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error getting current app revision from cluster control plane client")
+		}
+		if revision.Msg.AppRevision == nil {
+			return types.PorterAppEvent{}, telemetry.Error(ctx, span, nil, "app revision is nil")
+		}
+
+		appInstanceUUID, err := uuid.Parse(revision.Msg.AppRevision.AppInstanceId)
+		if err != nil {
+			return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error parsing app instance id")
+		}
+		if appInstanceUUID == uuid.Nil {
+			return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "app instance id cannot be nil")
+		}
+
 		event.DeploymentTargetID = deploymentTargetUUID
+		event.AppInstanceID = appInstanceUUID
 	}
 
 	for k, v := range requestMetadata {
@@ -267,12 +290,7 @@ func (p *CreateUpdatePorterAppEventHandler) updateExistingAppEvent(ctx context.C
 	ctx, span := telemetry.NewSpan(ctx, "update-porter-app-event")
 	defer span.End()
 
-	app, err := p.Repo().PorterApp().ReadPorterAppByName(cluster.ID, porterAppName)
-	if err != nil {
-		return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error retrieving porter app by name for cluster")
-	}
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "porter-app-id", Value: app.ID},
 		telemetry.AttributeKV{Key: "porter-app-name", Value: porterAppName},
 		telemetry.AttributeKV{Key: "cluster-id", Value: int(cluster.ID)},
 		telemetry.AttributeKV{Key: "project-id", Value: int(cluster.ProjectID)},

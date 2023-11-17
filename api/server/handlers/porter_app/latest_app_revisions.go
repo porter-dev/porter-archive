@@ -69,7 +69,7 @@ func (c *LatestAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if deploymentTargetID == uuid.Nil {
-		err := telemetry.Error(ctx, span, err, "deployment target id is nil")
+		err := telemetry.Error(ctx, span, nil, "deployment target id is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}

@@ -127,7 +127,7 @@ func (c *ApplyPorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 
 		if request.DeploymentTargetId == "" {
-			err := telemetry.Error(ctx, span, err, "deployment target id is empty")
+			err := telemetry.Error(ctx, span, nil, "deployment target id is empty")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
 		}

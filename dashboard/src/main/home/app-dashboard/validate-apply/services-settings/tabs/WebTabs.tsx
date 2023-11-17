@@ -1,21 +1,21 @@
 import React from "react";
-import TabSelector from "components/TabSelector";
-
-import { ClientService } from "lib/porter-apps/services";
 import { match } from "ts-pattern";
-import Networking from "./Networking";
-import MainTab from "./Main";
-import Resources from "./Resources";
-import Health from "./Health";
 
-interface Props {
+import TabSelector from "components/TabSelector";
+import { type ClientService } from "lib/porter-apps/services";
+
+import Health from "./Health";
+import MainTab from "./Main";
+import Networking from "./Networking";
+import Resources from "./Resources";
+
+type Props = {
   index: number;
   service: ClientService & {
     config: {
       type: "web";
     };
   };
-  chart?: any;
   maxRAM: number;
   maxCPU: number;
   clusterContainsGPUNodes: boolean;
@@ -24,16 +24,18 @@ interface Props {
     appName: string;
   };
   clusterIngressIp: string;
-}
+  showDisableTls: boolean;
+};
 
-const WebTabs: React.FC<Props> = ({ 
-  index, 
-  service, 
-  maxRAM, 
-  maxCPU, 
-  clusterContainsGPUNodes, 
-  internalNetworkingDetails, 
+const WebTabs: React.FC<Props> = ({
+  index,
+  service,
+  maxRAM,
+  maxCPU,
+  clusterContainsGPUNodes,
+  internalNetworkingDetails,
   clusterIngressIp,
+  showDisableTls,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "networking" | "advanced"
@@ -59,6 +61,7 @@ const WebTabs: React.FC<Props> = ({
             service={service}
             internalNetworkingDetails={internalNetworkingDetails}
             clusterIngressIp={clusterIngressIp}
+            showDisableTls={showDisableTls}
           />
         ))
         .with("resources", () => (

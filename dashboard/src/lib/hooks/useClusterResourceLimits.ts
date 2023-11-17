@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { Cluster, NodeGroupType } from "@porter-dev/api-contracts";
+import {
+  Contract,
+  LoadBalancerType,
+  NodeGroupType,
+} from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import convert from "convert";
 import { match } from "ts-pattern";
@@ -11,6 +15,8 @@ import api from "shared/api";
 
 const DEFAULT_INSTANCE_CLASS = "t3";
 const DEFAULT_INSTANCE_SIZE = "medium";
+
+export type ClientLoadBalancerType = "ALB" | "NLB" | "UNSPECIFIED";
 
 const encodedContractValidator = z.object({
   ID: z.number(),
@@ -82,10 +88,7 @@ const clusterNodesValidator = z
       return defaultResources;
     }
     const [instanceClass, instanceSize] = res.data;
-    if (
-      AWS_INSTANCE_LIMITS[instanceClass] &&
-      AWS_INSTANCE_LIMITS[instanceClass][instanceSize]
-    ) {
+    if (AWS_INSTANCE_LIMITS[instanceClass]?.[instanceSize]) {
       const { vCPU, RAM } = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
       return {
         maxCPU: vCPU,
@@ -113,6 +116,7 @@ export const useClusterResourceLimits = ({
   defaultRAM: number;
   clusterContainsGPUNodes: boolean;
   clusterIngressIp: string;
+  loadBalancerType: ClientLoadBalancerType;
 } => {
   const SMALL_INSTANCE_UPPER_BOUND = 0.75;
   const LARGE_INSTANCE_UPPER_BOUND = 0.9;
@@ -149,6 +153,8 @@ export const useClusterResourceLimits = ({
     ) * 100
   );
   const [clusterIngressIp, setClusterIngressIp] = useState<string>("");
+  const [loadBalancerType, setLoadBalancerType] =
+    useState<ClientLoadBalancerType>("UNSPECIFIED");
 
   const getClusterNodes = useQuery(
     ["getClusterNodes", projectId, clusterId],
@@ -189,21 +195,18 @@ export const useClusterResourceLimits = ({
       const contracts = await z
         .array(encodedContractValidator)
         .parseAsync(res.data);
-      // Use zod to validate the data
-      const latestContract = contracts
-        .filter((contract) => contract.cluster_id === clusterId) // Filter contracts by the currentCluster.id
-        .sort(
-          (a, b) =>
-            new Date(b.CreatedAt).getTime() - new Date(a.CreatedAt).getTime()
-        ) // Sort them by the CreatedAt date in descending order
-        .map((contract) => contract)[0];
-
-      const decodedContract = Cluster.fromJsonString(
-        atob(latestContract.base64_contract)
-      );
-      // Check for NODE_GROUP_TYPE_CUSTOM with instanceType containing "g4dn"
-
-      return decodedContract;
+      if (contracts.length) {
+        const latestContract = contracts
+          .filter((contract) => contract.cluster_id === clusterId)
+          .sort(
+            (a, b) =>
+              new Date(b.CreatedAt).getTime() - new Date(a.CreatedAt).getTime()
+          )[0];
+        const decodedContract = Contract.fromJsonString(
+          atob(latestContract.base64_contract)
+        );
+        return decodedContract.cluster;
+      }
     },
     {
       enabled: !!projectId,
@@ -286,7 +289,21 @@ export const useClusterResourceLimits = ({
         })
         .otherwise(() => false);
 
+      const loadBalancerType: ClientLoadBalancerType = match(contract)
+        .with({ kindValues: { case: "eksKind" } }, (c) => {
+          const loadBalancer = c.kindValues.value.loadBalancer;
+          if (!loadBalancer) {
+            return "UNSPECIFIED";
+          }
+          return match(loadBalancer.loadBalancerType)
+            .with(LoadBalancerType.ALB, (): ClientLoadBalancerType => "ALB")
+            .with(LoadBalancerType.NLB, (): ClientLoadBalancerType => "NLB")
+            .otherwise((): ClientLoadBalancerType => "UNSPECIFIED");
+        })
+        .otherwise(() => "UNSPECIFIED");
+
       setClusterContainsGPUNodes(containsCustomNodeGroup);
+      setLoadBalancerType(loadBalancerType);
     }
   }, [contract]);
 
@@ -297,6 +314,7 @@ export const useClusterResourceLimits = ({
     defaultRAM,
     clusterContainsGPUNodes,
     clusterIngressIp,
+    loadBalancerType,
   };
 };
 

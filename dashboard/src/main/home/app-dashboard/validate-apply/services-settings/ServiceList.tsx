@@ -1,34 +1,36 @@
 import React, { useEffect, useMemo, useState } from "react";
-import ServiceContainer from "./ServiceContainer";
-import styled from "styled-components";
-import Spacer from "components/porter/Spacer";
-import Modal from "components/porter/Modal";
-import Text from "components/porter/Text";
-import Select from "components/porter/Select";
-import Container from "components/porter/Container";
-import Button from "components/porter/Button";
-
-import web from "assets/web.png";
-import worker from "assets/worker.png";
-import job from "assets/job.png";
-import { z } from "zod";
-import { type PorterAppFormData } from "lib/porter-apps";
-import {
-  type ClientService,
-  defaultSerialized,
-  deserializeService,
-  isPredeployService,
-} from "lib/porter-apps/services";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Controller,
   useFieldArray,
   useForm,
   useFormContext,
 } from "react-hook-form";
+import styled from "styled-components";
+import { z } from "zod";
+
+import Button from "components/porter/Button";
+import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
+import Modal from "components/porter/Modal";
+import Select from "components/porter/Select";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import { type PorterAppVersionStatus } from "lib/hooks/useAppStatus";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { type PorterAppFormData } from "lib/porter-apps";
+import {
+  defaultSerialized,
+  deserializeService,
+  isPredeployService,
+  type ClientService,
+} from "lib/porter-apps/services";
+
 import { useClusterResources } from "shared/ClusterResourcesContext";
+import job from "assets/job.png";
+import web from "assets/web.png";
+import worker from "assets/worker.png";
+
+import ServiceContainer from "./ServiceContainer";
 
 const addServiceFormValidator = z.object({
   name: z
@@ -72,7 +74,17 @@ const ServiceList: React.FC<ServiceListProps> = ({
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
 
-  const { currentClusterResources: { maxCPU, maxRAM, clusterContainsGPUNodes, clusterIngressIp, defaultCPU, defaultRAM } } = useClusterResources();
+  const {
+    currentClusterResources: {
+      maxCPU,
+      maxRAM,
+      clusterContainsGPUNodes,
+      clusterIngressIp,
+      defaultCPU,
+      defaultRAM,
+      loadBalancerType,
+    },
+  } = useClusterResources();
 
   // add service modal form
   const {
@@ -111,9 +123,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
   const serviceType = watch("type");
   const serviceName = watch("name");
 
-  const [showAddServiceModal, setShowAddServiceModal] = useState<boolean>(
-    false
-  );
+  const [showAddServiceModal, setShowAddServiceModal] =
+    useState<boolean>(false);
 
   const services = useMemo(() => {
     // if predeploy, only show predeploy services
@@ -142,11 +153,11 @@ const ServiceList: React.FC<ServiceListProps> = ({
     }
   }, [serviceName, isPredeploy]);
 
-  const isServiceNameDuplicate = (name: string) => {
+  const isServiceNameDuplicate = (name: string): boolean => {
     return services.some(({ svc: s }) => s.name.value === name);
   };
 
-  const maybeRenderAddServicesButton = () => {
+  const maybeRenderAddServicesButton = (): JSX.Element | null => {
     if (
       (isPredeploy && services.find((s) => isPredeployService(s.svc))) ||
       !allowAddServices
@@ -199,7 +210,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
     setShowAddServiceModal(false);
   });
 
-  const onRemove = (index: number) => {
+  const onRemove = (index: number): void => {
     const name = services[index].svc.name.value;
     remove(index);
 
@@ -226,6 +237,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 clusterContainsGPUNodes={clusterContainsGPUNodes}
                 internalNetworkingDetails={internalNetworkingDetails}
                 clusterIngressIp={clusterIngressIp}
+                showDisableTls={loadBalancerType === "ALB"}
               />
             ) : null;
           })}
@@ -233,7 +245,12 @@ const ServiceList: React.FC<ServiceListProps> = ({
       )}
       {maybeRenderAddServicesButton()}
       {showAddServiceModal && (
-        <Modal closeModal={() => { setShowAddServiceModal(false); }} width="500px">
+        <Modal
+          closeModal={() => {
+            setShowAddServiceModal(false);
+          }}
+          width="500px"
+        >
           <Text size={16}>{addNewText}</Text>
           <Spacer y={1} />
           <Text color="helper">Select a service type:</Text>
@@ -251,7 +268,9 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 <Select
                   value={serviceType}
                   width="100%"
-                  setValue={(value: string) => { onChange(value); }}
+                  setValue={(value: string) => {
+                    onChange(value);
+                  }}
                   options={[
                     { label: "Web", value: "web" },
                     { label: "Worker", value: "worker" },

@@ -1,12 +1,14 @@
+import { useCallback, useContext, useEffect, useState } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
-import { SourceOptions, serviceOverrides } from "lib/porter-apps";
-import { DetectedServices } from "lib/porter-apps/services";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { z } from "zod";
+
+import { serviceOverrides, type SourceOptions } from "lib/porter-apps";
+import { type DetectedServices } from "lib/porter-apps/services";
+
+import api from "shared/api";
 import { useClusterResources } from "shared/ClusterResourcesContext";
 import { Context } from "shared/Context";
-import api from "shared/api";
-import { z } from "zod";
 
 type PorterYamlStatus =
   | {
@@ -40,10 +42,8 @@ export const usePorterYaml = ({
 }): PorterYamlStatus => {
   const { currentProject, currentCluster } = useContext(Context);
   const { currentClusterResources } = useClusterResources();
-  const [
-    detectedServices,
-    setDetectedServices,
-  ] = useState<DetectedServices | null>(null);
+  const [detectedServices, setDetectedServices] =
+    useState<DetectedServices | null>(null);
   const [detectedName, setDetectedName] = useState<string | null>(null);
   const [porterYamlFound, setPorterYamlFound] = useState(false);
 
@@ -76,7 +76,7 @@ export const usePorterYaml = ({
       );
 
       setPorterYamlFound(true);
-      return z.string().parseAsync(res.data);
+      return await z.string().parseAsync(res.data);
     },
     {
       enabled:
@@ -193,9 +193,9 @@ export const usePorterYaml = ({
     }
 
     if (data) {
-      detectServices({
+      void detectServices({
         b64Yaml: data,
-        appName: appName,
+        appName,
         projectId: currentProject.id,
         clusterId: currentCluster.id,
       });

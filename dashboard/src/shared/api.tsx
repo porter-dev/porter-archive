@@ -1060,6 +1060,7 @@ const updateBuildSettings = baseApi<
       builder: string;
       buildpacks: string[];
     };
+    deployment_target_id: string;
   },
   {
     project_id: number;

@@ -97,7 +97,7 @@ jobs:
     - name: Porter app run
       uses: porter-dev/porter-cli-action@v0.1.0
       with:
-        command: app run app-integration-tests -- /app/trigger
+        command: app run app-integration-tests --job trigger
       env:
         PORTER_CLUSTER: "142"
         PORTER_HOST: https://dashboard.internal-tools.porter.run

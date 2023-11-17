@@ -1,5 +1,10 @@
 import React, { createContext, useContext } from "react";
-import { useClusterResourceLimits } from "lib/hooks/useClusterResourceLimits";
+
+import {
+  useClusterResourceLimits,
+  type ClientLoadBalancerType,
+} from "lib/hooks/useClusterResourceLimits";
+
 import { Context } from "./Context";
 
 export type ClusterResources = {
@@ -9,13 +14,16 @@ export type ClusterResources = {
   defaultRAM: number;
   clusterContainsGPUNodes: boolean;
   clusterIngressIp: string;
+  loadBalancerType: ClientLoadBalancerType;
 };
 
 export const ClusterResourcesContext = createContext<{
   currentClusterResources: ClusterResources;
 } | null>(null);
 
-export const useClusterResources = () => {
+export const useClusterResources = (): {
+  currentClusterResources: ClusterResources;
+} => {
   const context = useContext(ClusterResourcesContext);
   if (context == null) {
     throw new Error(
@@ -25,13 +33,25 @@ export const useClusterResources = () => {
   return context;
 };
 
-const ClusterResourcesProvider = ({ children }: { children: JSX.Element }) => {
+const ClusterResourcesProvider = ({
+  children,
+}: {
+  children: JSX.Element;
+}): JSX.Element => {
   const { currentCluster, currentProject } = useContext(Context);
 
-  const { maxCPU, maxRAM, defaultCPU, defaultRAM, clusterContainsGPUNodes, clusterIngressIp } = useClusterResourceLimits({
+  const {
+    maxCPU,
+    maxRAM,
+    defaultCPU,
+    defaultRAM,
+    clusterContainsGPUNodes,
+    clusterIngressIp,
+    loadBalancerType,
+  } = useClusterResourceLimits({
     projectId: currentProject?.id,
     clusterId: currentCluster?.id,
-    clusterStatus: currentCluster?.status
+    clusterStatus: currentCluster?.status,
   });
 
   return (
@@ -44,6 +64,7 @@ const ClusterResourcesProvider = ({ children }: { children: JSX.Element }) => {
           defaultRAM,
           clusterContainsGPUNodes,
           clusterIngressIp,
+          loadBalancerType,
         },
       }}
     >

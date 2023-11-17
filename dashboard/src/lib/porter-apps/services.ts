@@ -1,8 +1,13 @@
-import { PorterApp, Service, ServiceType } from "@porter-dev/api-contracts";
+import {
+  Service,
+  ServiceType,
+  type PorterApp,
+} from "@porter-dev/api-contracts";
+import _ from "lodash";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
-import { BuildOptions } from "./build";
+import { type BuildOptions } from "./build";
 import {
   autoscalingValidator,
   deserializeAutoscaling,
@@ -11,15 +16,14 @@ import {
   healthcheckValidator,
   ingressAnnotationsValidator,
   serializeAutoscaling,
-  SerializedAutoscaling,
-  SerializedHealthcheck,
   serializeHealth,
   serviceBooleanValidator,
   ServiceField,
   serviceNumberValidator,
   serviceStringValidator,
+  type SerializedAutoscaling,
+  type SerializedHealthcheck,
 } from "./values";
-import _ from "lodash";
 
 const LAUNCHER_PREFIX = "/cnb/lifecycle/launcher ";
 
@@ -42,6 +46,7 @@ const webConfigValidator = z.object({
   healthCheck: healthcheckValidator.optional(),
   private: serviceBooleanValidator.optional(),
   ingressAnnotations: ingressAnnotationsValidator.default([]),
+  disableTls: serviceBooleanValidator.optional(),
 });
 export type ClientWebConfig = z.infer<typeof webConfigValidator>;
 
@@ -114,12 +119,13 @@ export type SerializedService = {
   config:
     | {
         type: "web";
-        domains: {
+        domains: Array<{
           name: string;
-        }[];
+        }>;
         autoscaling?: SerializedAutoscaling;
         healthCheck?: SerializedHealthcheck;
         private?: boolean;
+        disableTls?: boolean;
         ingressAnnotations: Record<string, string>;
       }
     | {
@@ -138,11 +144,13 @@ export type SerializedService = {
       };
 };
 
-export function isPredeployService(service: SerializedService | ClientService) {
-  return service.config.type == "predeploy";
+export function isPredeployService(
+  service: SerializedService | ClientService
+): boolean {
+  return service.config.type === "predeploy";
 }
 
-export function prefixSubdomain(subdomain: string) {
+export function prefixSubdomain(subdomain: string): string {
   if (subdomain.startsWith("https://") || subdomain.startsWith("http://")) {
     return subdomain;
   }
@@ -212,6 +220,7 @@ export function defaultSerialized({
         domains: [],
         private: false,
         ingressAnnotations: {},
+        disableTls: false,
       },
     }))
     .with("worker", () => ({
@@ -262,7 +271,9 @@ export function serializeService(service: ClientService): SerializedService {
           }),
           healthCheck: serializeHealth({ health: config.healthCheck }),
           domains: config.domains.map((domain) => ({
-            name: domain.name.value.replace("https://", "").replace("http://", ""),
+            name: domain.name.value
+              .replace("https://", "")
+              .replace("http://", ""),
           })),
           ingressAnnotations: Object.fromEntries(
             config.ingressAnnotations
@@ -270,6 +281,7 @@ export function serializeService(service: ClientService): SerializedService {
               .map((annotation) => [annotation.key, annotation.value])
           ),
           private: config.private?.value,
+          disableTls: config.disableTls?.value,
         })
       )
       .with({ type: "worker" }, (config) =>
@@ -351,7 +363,7 @@ export function deserializeService({
   return match(service.config)
     .with({ type: "web" }, (config) => {
       const overrideWebConfig =
-        override?.config.type == "web" ? override.config : undefined;
+        override?.config.type === "web" ? override.config : undefined;
 
       const uniqueDomains = Array.from(
         new Set([
@@ -389,19 +401,19 @@ export function deserializeService({
           autoscaling: deserializeAutoscaling({
             autoscaling: config.autoscaling,
             override: overrideWebConfig?.autoscaling,
-            setDefaults: setDefaults,
+            setDefaults,
           }),
           healthCheck: deserializeHealthCheck({
             health: config.healthCheck,
             override: overrideWebConfig?.healthCheck,
-            setDefaults: setDefaults,
+            setDefaults,
           }),
 
           domains: uniqueDomains.map((domain) => ({
             name: ServiceField.string(
               domain.name,
               overrideWebConfig?.domains.find(
-                (overrideDomain) => overrideDomain.name == domain.name
+                (overrideDomain) => overrideDomain.name === domain.name
               )?.name
             ),
           })),
@@ -413,12 +425,22 @@ export function deserializeService({
               : setDefaults
               ? ServiceField.boolean(false, undefined)
               : undefined,
+          disableTls:
+            typeof config.disableTls === "boolean" ||
+            typeof overrideWebConfig?.disableTls === "boolean"
+              ? ServiceField.boolean(
+                  config.disableTls,
+                  overrideWebConfig?.disableTls
+                )
+              : setDefaults
+              ? ServiceField.boolean(false, undefined)
+              : undefined,
         },
       };
     })
     .with({ type: "worker" }, (config) => {
       const overrideWorkerConfig =
-        override?.config.type == "worker" ? override.config : undefined;
+        override?.config.type === "worker" ? override.config : undefined;
 
       return {
         ...baseService,
@@ -427,14 +449,14 @@ export function deserializeService({
           autoscaling: deserializeAutoscaling({
             autoscaling: config.autoscaling,
             override: overrideWorkerConfig?.autoscaling,
-            setDefaults: setDefaults,
+            setDefaults,
           }),
         },
       };
     })
     .with({ type: "job" }, (config) => {
       const overrideJobConfig =
-        override?.config.type == "job" ? override.config : undefined;
+        override?.config.type === "job" ? override.config : undefined;
 
       return {
         ...baseService,
@@ -462,7 +484,7 @@ export function deserializeService({
               ? ServiceField.boolean(false, undefined)
               : undefined,
           timeoutSeconds:
-            config.timeoutSeconds != 0
+            config.timeoutSeconds !== 0
               ? ServiceField.number(
                   config.timeoutSeconds,
                   overrideJobConfig?.timeoutSeconds
@@ -586,6 +608,7 @@ export function serializedServiceFromProto({
         type: "web" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
         healthCheck: value.healthCheck ? value.healthCheck : undefined,
+        disableTls: value.disableTls ? value.disableTls : undefined,
         ...value,
       },
     }))

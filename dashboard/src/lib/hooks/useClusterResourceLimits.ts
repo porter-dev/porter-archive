@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { Cluster, NodeGroupType } from "@porter-dev/api-contracts";
+import {
+  Cluster,
+  LoadBalancerType,
+  NodeGroupType,
+} from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import convert from "convert";
 import { match } from "ts-pattern";
@@ -11,6 +15,8 @@ import api from "shared/api";
 
 const DEFAULT_INSTANCE_CLASS = "t3";
 const DEFAULT_INSTANCE_SIZE = "medium";
+
+export type ClientLoadBalancerType = "ALB" | "NLB" | "UNSPECIFIED";
 
 const encodedContractValidator = z.object({
   ID: z.number(),
@@ -82,10 +88,7 @@ const clusterNodesValidator = z
       return defaultResources;
     }
     const [instanceClass, instanceSize] = res.data;
-    if (
-      AWS_INSTANCE_LIMITS[instanceClass] &&
-      AWS_INSTANCE_LIMITS[instanceClass][instanceSize]
-    ) {
+    if (AWS_INSTANCE_LIMITS[instanceClass]?.[instanceSize]) {
       const { vCPU, RAM } = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
       return {
         maxCPU: vCPU,
@@ -113,6 +116,7 @@ export const useClusterResourceLimits = ({
   defaultRAM: number;
   clusterContainsGPUNodes: boolean;
   clusterIngressIp: string;
+  loadBalancerType: ClientLoadBalancerType;
 } => {
   const SMALL_INSTANCE_UPPER_BOUND = 0.75;
   const LARGE_INSTANCE_UPPER_BOUND = 0.9;
@@ -149,6 +153,8 @@ export const useClusterResourceLimits = ({
     ) * 100
   );
   const [clusterIngressIp, setClusterIngressIp] = useState<string>("");
+  const [loadBalancerType, setLoadBalancerType] =
+    useState<ClientLoadBalancerType>("UNSPECIFIED");
 
   const getClusterNodes = useQuery(
     ["getClusterNodes", projectId, clusterId],
@@ -286,7 +292,29 @@ export const useClusterResourceLimits = ({
         })
         .otherwise(() => false);
 
+      const loadBalancerType: ClientLoadBalancerType = match(contract)
+        .with({ kindValues: { case: "eksKind" } }, (c) => {
+          const loadBalancer = c.kindValues.value.loadBalancer;
+          if (!loadBalancer) {
+            return "UNSPECIFIED" as const;
+          }
+          return match(loadBalancer.loadBalancerType)
+            .with(LoadBalancerType.ALB, () => {
+              return "ALB" as const;
+            })
+            .with(LoadBalancerType.NLB, () => {
+              return "NLB" as const;
+            })
+            .otherwise(() => {
+              return "UNSPECIFIED" as const;
+            });
+        })
+        .otherwise(() => {
+          return "UNSPECIFIED" as const;
+        });
+
       setClusterContainsGPUNodes(containsCustomNodeGroup);
+      setLoadBalancerType(loadBalancerType);
     }
   }, [contract]);
 
@@ -297,6 +325,7 @@ export const useClusterResourceLimits = ({
     defaultRAM,
     clusterContainsGPUNodes,
     clusterIngressIp,
+    loadBalancerType,
   };
 };
 

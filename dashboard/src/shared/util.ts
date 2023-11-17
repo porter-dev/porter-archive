@@ -21,6 +21,7 @@ export const PREFLIGHT_MESSAGE_CONST_AWS = {
   eip: "Elastic IP availability",
   natGateway: "NAT Gateway availability",
   vpc: "VPC availability",
+  // vcpus: "vCPU availability",
 };
 
 export const PREFLIGHT_MESSAGE_CONST_GCP = {

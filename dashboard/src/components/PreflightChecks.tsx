@@ -12,7 +12,7 @@ import { PREFLIGHT_MESSAGE_CONST, PREFLIGHT_MESSAGE_CONST_AWS, PREFLIGHT_MESSAGE
 import Loading from "./Loading";
 type Props = RouteComponentProps & {
   preflightData: any
-  provider: 'AWS' | 'GCP' | 'DEFAULT | PROVISIONING_STATUS';
+  provider: 'AWS' | 'GCP' | 'DEFAULT' | 'PROVISIONING_STATUS';
   error?: string;
 
 };
@@ -48,9 +48,12 @@ const PreflightChecks: React.FC<Props> = (props) => {
 
   const PreflightCheckItem: React.FC<ItemProps> = ({ checkKey, checkLabel }) => {
     // Using optional chaining to prevent potential null/undefined errors
+    const checkLabelConst = currentMessageConst[checkKey];
+    console.log(checkLabelConst)
     const checkData = props.preflightData?.preflight_checks?.[checkKey];
     const hasMessage = checkData?.message;
 
+    console.log(checkData)
     const [isExpanded, setIsExpanded] = useState(true);
 
     const handleToggle = (): void => {
@@ -75,7 +78,7 @@ const PreflightChecks: React.FC<Props> = (props) => {
             <StatusIcon src={healthy} />
           )}
           <Spacer inline x={1} />
-          <Text style={{ marginLeft: '10px', flex: 1 }}>{checkLabel}</Text>
+          <Text style={{ marginLeft: '10px', flex: 1 }}>{checkLabel ?? checkLabelConst}</Text>
           {hasMessage && <ExpandIcon className="material-icons" isExpanded={isExpanded}>
             arrow_drop_down
           </ExpandIcon>}
@@ -117,7 +120,6 @@ const PreflightChecks: React.FC<Props> = (props) => {
       :
 
       (
-
         <AppearingDiv>
           <Text size={16}>Cluster provision check</Text>
           <Spacer y={.5} />

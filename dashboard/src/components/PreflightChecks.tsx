@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext } from "react";
 import styled from "styled-components";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
 import Link from "./porter/Link";
@@ -12,12 +12,18 @@ import { PREFLIGHT_MESSAGE_CONST, PREFLIGHT_MESSAGE_CONST_AWS, PREFLIGHT_MESSAGE
 import Loading from "./Loading";
 type Props = RouteComponentProps & {
   preflightData: any
-  provider: 'AWS' | 'GCP' | 'DEFAULT | PROVISIONING_STATUS';
+  provider: 'AWS' | 'GCP' | 'DEFAULT' | 'PROVISIONING_STATUS';
   error?: string;
 
 };
+type ItemProps = RouteComponentProps & {
+  checkKey: string
+  checkLabel?: string
+};
+
 
 const PreflightChecks: React.FC<Props> = (props) => {
+
   const getMessageConstByProvider = (provider: 'AWS' | 'GCP' | 'DEFAULT' | 'PROVISIONING_STATUS') => {
     switch (provider) {
       case 'PROVISIONING_STATUS':
@@ -32,14 +38,22 @@ const PreflightChecks: React.FC<Props> = (props) => {
   };
   const currentMessageConst = getMessageConstByProvider(props.provider);
 
-  const PreflightCheckItem = ({ checkKey }) => {
+  const preflightChecks = props.preflightData?.preflight_checks || {};
+
+  const combinedKeys = new Set([
+    ...Object.keys(currentMessageConst),
+    ...Object.keys(preflightChecks)
+  ]);
+
+
+  const PreflightCheckItem: React.FC<ItemProps> = ({ checkKey, checkLabel }) => {
     // Using optional chaining to prevent potential null/undefined errors
+    const checkLabelConst = currentMessageConst[checkKey];
     const checkData = props.preflightData?.preflight_checks?.[checkKey];
     const hasMessage = checkData?.message;
-
     const [isExpanded, setIsExpanded] = useState(true);
 
-    const handleToggle = () => {
+    const handleToggle = (): void => {
       if (hasMessage) {
         setIsExpanded(!isExpanded);
       }
@@ -61,7 +75,7 @@ const PreflightChecks: React.FC<Props> = (props) => {
             <StatusIcon src={healthy} />
           )}
           <Spacer inline x={1} />
-          <Text style={{ marginLeft: '10px', flex: 1 }}>{currentMessageConst[checkKey]}</Text>
+          <Text style={{ marginLeft: '10px', flex: 1 }}>{checkLabel ?? checkLabelConst}</Text>
           {hasMessage && <ExpandIcon className="material-icons" isExpanded={isExpanded}>
             arrow_drop_down
           </ExpandIcon>}
@@ -103,7 +117,6 @@ const PreflightChecks: React.FC<Props> = (props) => {
       :
 
       (
-
         <AppearingDiv>
           <Text size={16}>Cluster provision check</Text>
           <Spacer y={.5} />
@@ -124,10 +137,13 @@ const PreflightChecks: React.FC<Props> = (props) => {
                   <Spacer y={.5} />
                 </>
               :
-              Object.keys(currentMessageConst).map((checkKey) => (
-                <PreflightCheckItem key={checkKey} checkKey={checkKey} />
+              Array.from(combinedKeys).map((checkKey) => (
+                <PreflightCheckItem
+                  key={checkKey}
+                  checkKey={checkKey}
+                  checkLabel={currentMessageConst[checkKey] || checkKey}
+                />
               ))
-
           }
         </AppearingDiv >
       )

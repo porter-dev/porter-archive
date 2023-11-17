@@ -46,6 +46,7 @@ type Project struct {
 	QuotaIncrease          bool    `json:"quota_increase"`
 	RDSDatabasesEnabled    bool    `json:"enable_rds_databases"`
 	SimplifiedViewEnabled  bool    `json:"simplified_view_enabled"`
+	SOC2ControlsEnabled    bool    `json:"soc2_controls_enabled"`
 	StacksEnabled          bool    `json:"stacks_enabled"`
 	ValidateApplyV2        bool    `json:"validate_apply_v2"`
 }

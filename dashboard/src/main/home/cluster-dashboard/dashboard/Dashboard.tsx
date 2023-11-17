@@ -42,10 +42,12 @@ const COMPLIANCE_SUPPORTED_PROVIDERS = ["AWS"];
 
 const showComplianceTab = (
   capi_provisioner_enabled: boolean,
+  soc2_controls_enabled: boolean,
   cloud_provider: string
 ): boolean => {
   return (
     capi_provisioner_enabled &&
+    soc2_controls_enabled &&
     COMPLIANCE_SUPPORTED_PROVIDERS.includes(cloud_provider)
   );
 };
@@ -145,6 +147,7 @@ export const Dashboard: React.FunctionComponent = () => {
     if (
       showComplianceTab(
         context.currentProject?.capi_provisioner_enabled,
+        context.currentProject?.soc2_controls_enabled,
         context.currentCluster.cloud_provider
       ) &&
       !tabOptions.find((tab) => tab.value === "compliance")

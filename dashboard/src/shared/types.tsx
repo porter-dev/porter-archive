@@ -285,6 +285,7 @@ export type ProjectType = {
   preview_envs_enabled: boolean;
   quota_increase: boolean;
   simplified_view_enabled: boolean;
+  soc2_controls_enabled: boolean;
   stacks_enabled: boolean;
   validate_apply_v2: boolean;
   roles: Array<{

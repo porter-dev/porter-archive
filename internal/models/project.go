@@ -61,6 +61,9 @@ const (
 	// SimplifiedViewEnabled shows the new UI dashboard or not
 	SimplifiedViewEnabled FeatureFlagLabel = "simplified_view_enabled"
 
+	// SOC2ControlsEnabled decides on whether the SOC2 Compliance UI is shown on the infrastructure tab
+	SOC2ControlsEnabled FeatureFlagLabel = "soc2_controls_enabled"
+
 	// StacksEnabled uses stack view for legacy (simplified_view_enabled=false)
 	StacksEnabled FeatureFlagLabel = "stacks_enabled"
 
@@ -93,6 +96,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	QuotaIncrease:          false,
 	RDSDatabasesEnabled:    false,
 	SimplifiedViewEnabled:  true,
+	SOC2ControlsEnabled:    false,
 	StacksEnabled:          false,
 	ValidateApplyV2:        true,
 }
@@ -223,6 +227,8 @@ func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *
 			return p.RDSDatabasesEnabled
 		case "simplified_view_enabled":
 			return p.SimplifiedViewEnabled
+		case "soc2_controls_enabled":
+			return false
 		case "stacks_enabled":
 			return p.StacksEnabled
 		case "validate_apply_v2":
@@ -275,6 +281,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		QuotaIncrease:          p.GetFeatureFlag(QuotaIncrease, launchDarklyClient),
 		RDSDatabasesEnabled:    p.GetFeatureFlag(RDSDatabasesEnabled, launchDarklyClient),
 		SimplifiedViewEnabled:  p.GetFeatureFlag(SimplifiedViewEnabled, launchDarklyClient),
+		SOC2ControlsEnabled:    p.GetFeatureFlag(SOC2ControlsEnabled, launchDarklyClient),
 		StacksEnabled:          p.GetFeatureFlag(StacksEnabled, launchDarklyClient),
 		ValidateApplyV2:        p.GetFeatureFlag(ValidateApplyV2, launchDarklyClient),
 	}

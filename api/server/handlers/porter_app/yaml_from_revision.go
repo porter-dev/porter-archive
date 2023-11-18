@@ -298,6 +298,10 @@ func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 	}
 
 	if app.Predeploy != nil {
+		// remove name
+		app.Predeploy.Name = ""
+		// remove type
+		app.Predeploy.Type = ""
 		// remove smart optimization
 		app.Predeploy.SmartOptimization = nil
 		// remove launcher
@@ -314,6 +318,8 @@ func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 		app.Predeploy.SuspendCron = nil
 		// remove allowConcurrency
 		app.Predeploy.AllowConcurrent = nil
+		// remove timeout
+		app.Predeploy.TimeoutSeconds = 0
 	}
 
 	return app

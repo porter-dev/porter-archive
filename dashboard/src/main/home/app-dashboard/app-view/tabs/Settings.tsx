@@ -10,19 +10,24 @@ import DeleteApplicationModal from "../../expanded-app/DeleteApplicationModal";
 import { useLatestRevision } from "../LatestRevisionContext";
 import api from "shared/api";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
-import { useQueryClient } from "@tanstack/react-query";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
 import { Context } from "shared/Context";
 import PreviewEnvironmentSettings from "./preview-environments/PreviewEnvironmentSettings";
 import { Controller, useFormContext } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
+import { type PorterAppFormData } from "lib/porter-apps";
 import Checkbox from "components/porter/Checkbox";
+import YamlEditor from "../../../../../components/YamlEditor";
+import {z} from "zod";
+import yaml from "js-yaml";
+import ExportAppModal from "./ExportAppModal";
 
 const Settings: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
   const queryClient = useQueryClient();
   const history = useHistory();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const { porterApp, clusterId, projectId, latestProto } = useLatestRevision();
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const { porterApp, clusterId, projectId, latestProto, latestRevision } = useLatestRevision();
   const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
   const {
@@ -64,6 +69,35 @@ const Settings: React.FC = () => {
       return false;
     }
   }, [porterApp.name, clusterId, projectId]);
+
+  const { data: yamlResp} = useQuery(
+      [
+        "getExportablePorterYamlFromRevision",
+        projectId,
+        clusterId,
+        latestRevision.id
+      ],
+      async () => {
+
+        const yamlResp = await api.porterYamlFromRevision(
+            "<token>",
+      {
+          should_format_for_export: true,
+            },
+            {
+              project_id: projectId,
+              cluster_id: clusterId,
+              porter_app_name: porterApp.name,
+              revision_id: latestRevision.id,
+            }
+        );
+
+        const parsedBase = z.object({ b64_porter_yaml: z.string() }).parse(yamlResp.data);
+        const decodedBase = atob(parsedBase.b64_porter_yaml);
+
+        return decodedBase;
+      },
+  );
 
   useEffect(() => {
     const checkWorkflowExists = async () => {
@@ -179,8 +213,27 @@ const Settings: React.FC = () => {
           )} />
         <Spacer y={1} />
       </>}
-      <Text size={16}>Delete "{porterApp.name}"</Text>
+      <Text size={16}>Export "{porterApp.name}"</Text>
       <Spacer y={.5} />
+      <Text color="helper">
+        Export this application as Porter YAML.
+      </Text>
+      <Spacer y={0.5} />
+      <Button
+          onClick={() => {
+            setIsExportModalOpen(true);
+          }}
+      >
+        Export
+      </Button>
+      {isExportModalOpen && (
+          <ExportAppModal
+              closeModal={() => { setIsExportModalOpen(false); }}
+              yaml={yamlResp}/>
+      )}
+      <Spacer y={0.5} />
+      <Text size={16}>Delete "{porterApp.name}"</Text>
+      <Spacer y={0.5} />
       <Text color="helper">
         Delete this application and all of its resources.
       </Text>
@@ -196,7 +249,7 @@ const Settings: React.FC = () => {
       </Button>
       {isDeleteModalOpen && (
         <DeleteApplicationModal
-          closeModal={() => setIsDeleteModalOpen(false)}
+          closeModal={() => { setIsDeleteModalOpen(false); }}
           githubWorkflowFilename={githubWorkflowFilename}
           deleteApplication={onDelete}
           loading={isDeleting}

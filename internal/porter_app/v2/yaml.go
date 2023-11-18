@@ -113,12 +113,12 @@ type EfsStorage struct {
 
 // Build represents the build settings for a Porter app
 type Build struct {
-	Context    string   `yaml:"context" validate:"dir"`
-	Method     string   `yaml:"method" validate:"required,oneof=pack docker registry"`
-	Builder    string   `yaml:"builder" validate:"required_if=Method pack"`
-	Buildpacks []string `yaml:"buildpacks"`
-	Dockerfile string   `yaml:"dockerfile" validate:"required_if=Method docker"`
-	CommitSHA  string   `yaml:"commitSha"`
+	Context    string   `yaml:"context,omitempty" validate:"dir"`
+	Method     string   `yaml:"method,omitempty" validate:"required,oneof=pack docker registry"`
+	Builder    string   `yaml:"builder,omitempty" validate:"required_if=Method pack"`
+	Buildpacks []string `yaml:"buildpacks,omitempty"`
+	Dockerfile string   `yaml:"dockerfile,omitempty" validate:"required_if=Method docker"`
+	CommitSHA  string   `yaml:"commitSha,omitempty"`
 }
 
 // Image is the repository and tag for an app's build image

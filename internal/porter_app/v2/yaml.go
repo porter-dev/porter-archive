@@ -460,7 +460,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		Instances:                     service.InstancesOptional,
 		CpuCores:                      service.CpuCores,
 		RamMegabytes:                  int(service.RamMegabytes),
-		GpuCoresNvidia:                service.GpuCoresNvidia,
+		GpuCoresNvidia:                service.GpuCoresNvidia, // nolint:staticcheck // https://linear.app/porter/issue/POR-2137/support-new-gpu-field-in-porteryaml
 		Port:                          int(service.Port),
 		SmartOptimization:             service.SmartOptimization,
 		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,

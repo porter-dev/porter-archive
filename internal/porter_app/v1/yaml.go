@@ -132,7 +132,16 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		Type:        serviceType,
 	}
 
-	serviceProto.InstancesOptional = service.Config.ReplicaCount
+	if service.Config.ReplicaCount != nil {
+		// if the revision number cannot be converted, it will default to 0
+		replicaCount, _ := strconv.Atoi(*service.Config.ReplicaCount)
+		if replicaCount < math.MinInt32 || replicaCount > math.MaxInt32 {
+			return nil, fmt.Errorf("replica count is out of range of int32")
+		}
+		// nolint:gosec
+		int32Value := int32(replicaCount)
+		serviceProto.InstancesOptional = &int32Value
+	}
 
 	if service.Config.Resources.Requests.Cpu != "" {
 		cpuCoresStr := service.Config.Resources.Requests.Cpu

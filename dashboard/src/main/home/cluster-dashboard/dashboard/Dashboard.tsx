@@ -1,28 +1,28 @@
 import React, { useContext, useEffect, useState } from "react";
-import styled from "styled-components";
 import { useLocation } from "react-router";
-import editIcon from "assets/edit-button.svg";
+import styled from "styled-components";
 
-import api from "shared/api";
-import { getQueryParam } from "shared/routing";
-import useAuth from "shared/auth/useAuth";
-import { Context } from "shared/Context";
-
-import ClusterRevisionSelector from "./ClusterRevisionSelector";
-import DashboardHeader from "../DashboardHeader";
-import TabSelector from "components/TabSelector";
-import ProvisionerSettings from "components/ProvisionerSettings";
-import ProvisionerStatus from "./ProvisionerStatus";
-import NodeList from "./NodeList";
-import { NamespaceList } from "./NamespaceList";
-import ClusterSettings from "./ClusterSettings";
-import Metrics from "./Metrics";
-import ClusterSettingsModal from "./ClusterSettingsModal";
-
-import Loading from "components/Loading";
-import Spacer from "components/porter/Spacer";
 import AzureProvisionerSettings from "components/AzureProvisionerSettings";
 import GCPProvisionerSettings from "components/GCPProvisionerSettings";
+import Spacer from "components/porter/Spacer";
+import ProvisionerSettings from "components/ProvisionerSettings";
+import TabSelector from "components/TabSelector";
+
+import api from "shared/api";
+import useAuth from "shared/auth/useAuth";
+import { Context } from "shared/Context";
+import { getQueryParam } from "shared/routing";
+import editIcon from "assets/edit-button.svg";
+
+import DashboardHeader from "../DashboardHeader";
+import ClusterRevisionSelector from "./ClusterRevisionSelector";
+import ClusterSettings from "./ClusterSettings";
+import ClusterSettingsModal from "./ClusterSettingsModal";
+import Compliance from "./Compliance";
+import Metrics from "./Metrics";
+import { NamespaceList } from "./NamespaceList";
+import NodeList from "./NodeList";
+import ProvisionerStatus from "./ProvisionerStatus";
 
 type TabEnum =
   | "nodes"
@@ -30,12 +30,27 @@ type TabEnum =
   | "namespaces"
   | "metrics"
   | "incidents"
+  | "compliance"
   | "configuration";
 
 var tabOptions: {
   label: string;
   value: TabEnum;
 }[] = [{ label: "Additional settings", value: "settings" }];
+
+const COMPLIANCE_SUPPORTED_PROVIDERS = ["AWS"];
+
+const showComplianceTab = (
+  capi_provisioner_enabled: boolean,
+  soc2_controls_enabled: boolean,
+  cloud_provider: string
+): boolean => {
+  return (
+    capi_provisioner_enabled &&
+    soc2_controls_enabled &&
+    COMPLIANCE_SUPPORTED_PROVIDERS.includes(cloud_provider)
+  );
+};
 
 export const Dashboard: React.FunctionComponent = () => {
   const [currentTab, setCurrentTab] = useState<TabEnum>("settings");
@@ -47,7 +62,6 @@ export const Dashboard: React.FunctionComponent = () => {
   const [provisionFailureReason, setProvisionFailureReason] = useState("");
   const [ingressIp, setIngressIp] = useState("");
   const [ingressError, setIngressError] = useState("");
-  const [cloudProvider, setCloudProvider] = useState("azure");
 
   const context = useContext(Context);
   const renderTab = () => {
@@ -66,11 +80,21 @@ export const Dashboard: React.FunctionComponent = () => {
         return <Metrics />;
       case "namespaces":
         return <NamespaceList />;
+      case "compliance":
+        return selectedClusterVersion ? (
+          <Compliance
+            provisionerError={provisionFailureReason}
+            selectedClusterVersion={selectedClusterVersion}
+            credentialId={
+              context.currentCluster.cloud_provider_credential_identifier
+            }
+          />
+        ) : null;
       case "configuration":
         return (
           <>
             <Br />
-            {context.currentCluster.cloud_provider == "AWS" && (
+            {context.currentCluster.cloud_provider === "AWS" && (
               <ProvisionerSettings
                 selectedClusterVersion={selectedClusterVersion}
                 provisionerError={provisionFailureReason}
@@ -80,7 +104,7 @@ export const Dashboard: React.FunctionComponent = () => {
                 }
               />
             )}
-            {context.currentCluster.cloud_provider == "Azure" && (
+            {context.currentCluster.cloud_provider === "Azure" && (
               <AzureProvisionerSettings
                 selectedClusterVersion={selectedClusterVersion}
                 provisionerError={provisionFailureReason}
@@ -90,7 +114,7 @@ export const Dashboard: React.FunctionComponent = () => {
                 }
               />
             )}
-            {context.currentCluster.cloud_provider == "GCP" && (
+            {context.currentCluster.cloud_provider === "GCP" && (
               <GCPProvisionerSettings
                 selectedClusterVersion={selectedClusterVersion}
                 provisionerError={provisionFailureReason}
@@ -118,8 +142,17 @@ export const Dashboard: React.FunctionComponent = () => {
         tabOptions.unshift({ label: "Metrics", value: "metrics" });
         tabOptions.unshift({ label: "Nodes", value: "nodes" });
       }
-      // tabOptions.unshift({ label: "Metrics", value: "metrics" });
-      // tabOptions.unshift({ label: "Nodes", value: "nodes" });
+    }
+
+    if (
+      showComplianceTab(
+        context.currentProject?.capi_provisioner_enabled,
+        context.currentProject?.soc2_controls_enabled,
+        context.currentCluster.cloud_provider
+      ) &&
+      !tabOptions.find((tab) => tab.value === "compliance")
+    ) {
+      tabOptions.unshift({ value: "compliance", label: "Compliance" });
     }
 
     if (
@@ -173,7 +206,7 @@ export const Dashboard: React.FunctionComponent = () => {
         setIngressIp(ingress_ip);
         setIngressError(ingress_error);
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -300,8 +333,9 @@ export const Dashboard: React.FunctionComponent = () => {
             </EditIconStyle>
           </Flex>
         }
-        description={`Cluster settings and status for ${context.currentCluster.vanity_name || context.currentCluster.name
-          }.`}
+        description={`Cluster settings and status for ${
+          context.currentCluster.vanity_name || context.currentCluster.name
+        }.`}
         disableLineBreak
         capitalize={false}
       />

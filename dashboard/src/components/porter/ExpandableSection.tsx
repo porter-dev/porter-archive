@@ -132,7 +132,7 @@ const StyledExpandableSection = styled.div<{
   max-height: 350px;
   overflow: hidden;
   border-radius: 5px;
-  background: ${props => !props.noWrapper && (props.background || "#26292e")};
+  background: ${props => !props.noWrapper && (props.background || "#181B20")};
   border: ${props => !props.noWrapper && "1px solid #494b4f"};
   :hover {
     border: ${props => !props.noWrapper && "1px solid #7a7b80"};

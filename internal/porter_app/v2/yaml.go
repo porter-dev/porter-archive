@@ -73,12 +73,6 @@ const (
 	ServiceType_Job ServiceType = "job"
 )
 
-// EnvGroup is a struct containing the name and version of an environment group
-type EnvGroup struct {
-	Name    string `yaml:"name"`
-	Version int    `yaml:"version"`
-}
-
 // PorterApp represents all the possible fields in a Porter YAML file
 type PorterApp struct {
 	Version  string            `yaml:"version,omitempty"`
@@ -89,7 +83,7 @@ type PorterApp struct {
 	Env      map[string]string `yaml:"env,omitempty"`
 
 	Predeploy    *Service      `yaml:"predeploy,omitempty"`
-	EnvGroups    []EnvGroup    `yaml:"envGroups,omitempty"`
+	EnvGroups    []string      `yaml:"envGroups,omitempty"`
 	EfsStorage   *EfsStorage   `yaml:"efsStorage,omitempty"`
 	RequiredApps []RequiredApp `yaml:"requiredApps,omitempty"`
 }
@@ -226,16 +220,12 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		appProto.Predeploy = predeployProto
 	}
 
-	envGroups := make([]*porterv1.EnvGroup, 0)
-	if porterApp.EnvGroups != nil {
-		for _, envGroup := range porterApp.EnvGroups {
-			envGroups = append(envGroups, &porterv1.EnvGroup{
-				Name:    envGroup.Name,
-				Version: int64(envGroup.Version),
-			})
-		}
+	for _, envGroup := range porterApp.EnvGroups {
+		appProto.EnvGroups = append(appProto.EnvGroups, &porterv1.EnvGroup{
+			Name:    envGroup,
+			Version: 0, // this will be updated to latest when applied
+		})
 	}
-	appProto.EnvGroups = envGroups
 
 	if porterApp.EfsStorage != nil {
 		appProto.EfsStorage = &porterv1.EFS{
@@ -434,12 +424,8 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 		porterApp.Predeploy = &appPredeploy
 	}
 
-	porterApp.EnvGroups = make([]EnvGroup, 0)
 	for _, envGroup := range appProto.EnvGroups {
-		porterApp.EnvGroups = append(porterApp.EnvGroups, EnvGroup{
-			Name:    envGroup.Name,
-			Version: int(envGroup.Version),
-		})
+		porterApp.EnvGroups = append(porterApp.EnvGroups, fmt.Sprintf("%s:v%d", envGroup.Name, envGroup.Version))
 	}
 
 	if appProto.EfsStorage != nil {

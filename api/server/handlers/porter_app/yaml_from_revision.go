@@ -53,7 +53,7 @@ func NewPorterYAMLFromRevisionHandler(
 
 // PorterYAMLFromRevisionRequest is the request object for the /apps/{porter_app_name}/revisions/{app_revision_id}/yaml endpoint
 type PorterYAMLFromRevisionRequest struct {
-	shouldFormatForExport bool `schema:"should_format_for_export"`
+	ShouldFormatForExport bool `schema:"should_format_for_export"`
 }
 
 // PorterYAMLFromRevisionResponse is the response object for the /apps/{porter_app_name}/revisions/{app_revision_id}/yaml endpoint
@@ -149,9 +149,9 @@ func (c *PorterYAMLFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	var envGroups []v2.EnvGroup
+	var envGroups []string
 	for _, envGroup := range app.EnvGroups {
-		if envGroup.Name != defaultEnvGroupName {
+		if !strings.Contains(envGroup, defaultEnvGroupName) {
 			envGroups = append(envGroups, envGroup)
 		}
 	}
@@ -161,8 +161,7 @@ func (c *PorterYAMLFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	app = zeroOutValues(app)
 
-	// if request.shouldFormatForExport {
-	if true {
+	if request.ShouldFormatForExport {
 		app = formatForExport(app)
 	}
 
@@ -252,9 +251,15 @@ func defaultEnvGroup(ctx context.Context, input formatDefaultEnvGroupInput) (map
 }
 
 func formatForExport(app v2.PorterApp) v2.PorterApp {
+	// don't show image or commit sha if build is present
 	if app.Build != nil {
 		app.Image = nil
 		app.Build.CommitSHA = ""
+	}
+
+	// don't show env group versions
+	for i := range app.EnvGroups {
+		app.EnvGroups[i] = strings.Split(app.EnvGroups[i], ":")[0]
 	}
 
 	return app
@@ -282,6 +287,14 @@ func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 			if app.Services[i].HealthCheck != nil && !app.Services[i].HealthCheck.Enabled {
 				app.Services[i].HealthCheck = nil
 			}
+			// don't show disableTLS if not enabled
+			if app.Services[i].DisableTLS != nil && !*app.Services[i].DisableTLS {
+				app.Services[i].DisableTLS = nil
+			}
+			// remove private if not enabled
+			if app.Services[i].Private != nil && !*app.Services[i].Private {
+				app.Services[i].Private = nil
+			}
 		case v2.ServiceType_Worker:
 			// remove autoscaling if not enabled
 			if app.Services[i].Autoscaling != nil && !app.Services[i].Autoscaling.Enabled {
@@ -294,6 +307,14 @@ func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 			app.Services[i].Port = 0
 			// remove instances
 			app.Services[i].Instances = nil
+			// remove suspendCron if not enabled
+			if app.Services[i].SuspendCron != nil && !*app.Services[i].SuspendCron {
+				app.Services[i].SuspendCron = nil
+			}
+			// remove allowConcurrency if not enabled
+			if app.Services[i].AllowConcurrent != nil && !*app.Services[i].AllowConcurrent {
+				app.Services[i].AllowConcurrent = nil
+			}
 		}
 	}
 

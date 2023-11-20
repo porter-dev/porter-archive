@@ -269,24 +269,25 @@ export type ProjectListType = {
 export type ProjectType = {
   id: number;
   name: string;
-  preview_envs_enabled: boolean;
-  db_enabled: boolean;
-  enable_rds_databases: boolean;
-  managed_infra_enabled: boolean;
-  capi_provisioner_enabled: boolean;
   api_tokens_enabled: boolean;
-  stacks_enabled: boolean;
-  simplified_view_enabled: boolean;
   azure_enabled: boolean;
+  beta_features_enabled: boolean;
+  capi_provisioner_enabled: boolean;
+  db_enabled: boolean;
+  efs_enabled: boolean;
+  enable_rds_databases: boolean;
+  enable_reprovision: boolean;
+  full_add_ons: boolean;
   gpu_enabled: boolean;
   helm_values_enabled: boolean;
+  managed_infra_enabled: boolean;
   multi_cluster: boolean;
-  full_add_ons: boolean;
-  enable_reprovision: boolean;
+  preview_envs_enabled: boolean;
   quota_increase: boolean;
-  efs_enabled: boolean;
+  simplified_view_enabled: boolean;
+  soc2_controls_enabled: boolean;
+  stacks_enabled: boolean;
   validate_apply_v2: boolean;
-  beta_features_enabled: boolean;
   roles: Array<{
     id: number;
     kind: string;
@@ -681,6 +682,7 @@ export type ClusterState = {
   clusterName: string;
   awsRegion: string;
   machineType: string;
+  ecrScanningEnabled: boolean;
   guardDutyEnabled: boolean;
   kmsEncryptionEnabled: boolean;
   loadBalancerType: boolean;

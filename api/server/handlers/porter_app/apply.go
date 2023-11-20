@@ -255,7 +255,7 @@ func addPorterSubdomainsIfNecessary(ctx context.Context, appProto *porterv1.Port
 	for _, service := range appProto.ServiceList {
 		serviceMap[service.Name] = service
 	}
-	appProto.Services = serviceMap
+	appProto.Services = serviceMap // nolint:staticcheck
 
 	return appProto, nil
 }

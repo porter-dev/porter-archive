@@ -83,7 +83,7 @@
     "npm": "9.7.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "start": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js",
     "build": "NODE_ENV=\"production\" webpack",
     "build-and-analyze": "ENABLE_ANALYZER=true NODE_ENV=\"production\" ./node_modules/webpack/bin/webpack.js",
@@ -98,7 +98,7 @@
     "@babel/preset-typescript": "^7.15.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.1.1",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.4.3",
-    "@porter-dev/api-contracts": "^0.2.51",
+    "@porter-dev/api-contracts": "^0.2.52",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",

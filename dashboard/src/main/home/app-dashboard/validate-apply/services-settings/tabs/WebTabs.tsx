@@ -1,9 +1,11 @@
 import React from "react";
 import { match } from "ts-pattern";
 
+import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import { type ClientService } from "lib/porter-apps/services";
 
+import Advanced from "./Advanced";
 import Health from "./Health";
 import MainTab from "./Main";
 import Networking from "./Networking";
@@ -73,7 +75,13 @@ const WebTabs: React.FC<Props> = ({
             service={service}
           />
         ))
-        .with("advanced", () => <Health index={index} service={service} />)
+        .with("advanced", () => (
+          <>
+            <Health index={index} />
+            <Spacer y={1} />
+            <Advanced index={index} />
+          </>
+        ))
         .exhaustive()}
     </>
   );

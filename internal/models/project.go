@@ -69,6 +69,9 @@ const (
 
 	// BetaFeaturesEnabled controls whether a project uses beta features
 	BetaFeaturesEnabled FeatureFlagLabel = "beta_features_enabled"
+
+	// AWSACKAuthEnabled controls whether a project's AWS access is governed through AWS ACK
+	AWSACKAuthEnabled FeatureFlagLabel = "aws_ack_auth_enabled"
 )
 
 // ProjectFeatureFlags keeps track of all project-related feature flags
@@ -91,6 +94,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	StacksEnabled:          false,
 	ValidateApplyV2:        true,
 	BetaFeaturesEnabled:    false,
+	AWSACKAuthEnabled:      false,
 }
 
 type ProjectPlan string
@@ -225,6 +229,8 @@ func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *
 			return p.ValidateApplyV2
 		case "efs_enabled":
 			return false
+		case "aws_ack_auth_enabled":
+			return false
 		}
 	}
 
@@ -270,6 +276,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		QuotaIncrease:          p.GetFeatureFlag(QuotaIncrease, launchDarklyClient),
 		EFSEnabled:             p.GetFeatureFlag(EFSEnabled, launchDarklyClient),
 		BetaFeaturesEnabled:    p.GetFeatureFlag(BetaFeaturesEnabled, launchDarklyClient),
+		AWSACKAuthEnabled:      p.GetFeatureFlag(AWSACKAuthEnabled, launchDarklyClient),
 	}
 }
 

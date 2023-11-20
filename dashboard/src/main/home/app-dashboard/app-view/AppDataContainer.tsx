@@ -589,6 +589,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                     latestRevision.status === "AWAITING_BUILD_ARTIFACT"
                   }
                   disabledTooltipMessage="Please wait for the deploy to complete before updating the app"
+                  disabledTooltipPosition="bottom"
                 >
                   <Icon src={save} height={"13px"} />
                   <Spacer inline x={0.5} />

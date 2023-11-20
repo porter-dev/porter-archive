@@ -80,7 +80,7 @@ jobs:
         run: go mod download
       - name: Run Go tests
         if: needs.cache.outputs.go-changes == 'true'
-        run: go test ./${{ matrix.folder }}/...
+        run: go test ./${{ matrix.folder }}/... -count 1
 
   linting:
     name: Go Linter

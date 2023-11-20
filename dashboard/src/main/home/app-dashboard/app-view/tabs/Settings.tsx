@@ -153,8 +153,8 @@ const Settings: React.FC = () => {
         currentProject?.efs_enabled && (
           <>
             <Text size={16}>
-              Enable shared storage across services for &quot{porterApp.name}
-              &quot
+              Enable shared storage across services for &quot;{porterApp.name}
+              &quot;
             </Text>
             <Spacer y={0.5} />
             <Spacer y={0.5} />
@@ -182,7 +182,7 @@ const Settings: React.FC = () => {
             <Spacer y={1} />
           </>
         )}
-      <Text size={16}>Export &quot{porterApp.name}&quot</Text>
+      <Text size={16}>Export &quot;{porterApp.name}&quot;</Text>
       <Spacer y={0.5} />
       <Text color="helper">Export this application as Porter YAML.</Text>
       <Spacer y={0.5} />
@@ -201,7 +201,7 @@ const Settings: React.FC = () => {
         />
       )}
       <Spacer y={0.75} />
-      <Text size={16}>Delete &quot{porterApp.name}&quot</Text>
+      <Text size={16}>Delete &quot;{porterApp.name}&quot;</Text>
       <Spacer y={0.5} />
       <Text color="helper">
         Delete this application and all of its resources.

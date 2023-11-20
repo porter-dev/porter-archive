@@ -226,7 +226,7 @@ func addPorterSubdomainsIfNecessary(ctx context.Context, appProto *porterv1.Port
 
 	// use deprecated services if service list is empty
 	if len(appProto.ServiceList) == 0 {
-		for _, service := range appProto.Services {
+		for _, service := range appProto.Services { // nolint:staticcheck
 			appProto.ServiceList = append(appProto.ServiceList, service)
 		}
 	}

@@ -1,9 +1,9 @@
 import {
+  Build,
   EFS,
   HelmOverrides,
   PorterApp,
   Service,
-  type Build,
 } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { z } from "zod";
@@ -246,22 +246,26 @@ export function serviceOverrides({
   };
 }
 
-const clientBuildToProto = (build: BuildOptions) => {
+const clientBuildToProto = (build: BuildOptions): Build => {
   return match(build)
-    .with({ method: "pack" }, (b) =>
-      Object.freeze({
-        method: "pack",
-        context: b.context,
-        buildpacks: b.buildpacks.map((b) => b.buildpack),
-        builder: b.builder,
-      })
+    .with(
+      { method: "pack" },
+      (b) =>
+        new Build({
+          method: "pack",
+          context: b.context,
+          buildpacks: b.buildpacks.map((b) => b.buildpack),
+          builder: b.builder,
+        })
     )
-    .with({ method: "docker" }, (b) =>
-      Object.freeze({
-        method: "docker",
-        context: b.context,
-        dockerfile: b.dockerfile,
-      })
+    .with(
+      { method: "docker" },
+      (b) =>
+        new Build({
+          method: "docker",
+          context: b.context,
+          dockerfile: b.dockerfile,
+        })
     )
     .exhaustive();
 };
@@ -529,7 +533,7 @@ export function applyPreviewOverrides({
         override: serializeService(override),
       });
 
-      if (ds.config.type == "web") {
+      if (ds.config.type === "web") {
         return {
           ...ds,
           config: {
@@ -541,7 +545,7 @@ export function applyPreviewOverrides({
       return ds;
     }
 
-    if (svc.config.type == "web") {
+    if (svc.config.type === "web") {
       return {
         ...svc,
         config: {

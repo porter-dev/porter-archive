@@ -129,25 +129,26 @@ type Image struct {
 
 // Service represents a single service in a porter app
 type Service struct {
-	Name               string            `yaml:"name,omitempty"`
-	Run                *string           `yaml:"run,omitempty"`
-	Type               ServiceType       `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
-	Instances          *int32            `yaml:"instances,omitempty"`
-	CpuCores           float32           `yaml:"cpuCores,omitempty"`
-	RamMegabytes       int               `yaml:"ramMegabytes,omitempty"`
-	GpuCoresNvidia     float32           `yaml:"gpuCoresNvidia,omitempty"`
-	SmartOptimization  *bool             `yaml:"smartOptimization,omitempty"`
-	Port               int               `yaml:"port,omitempty"`
-	Autoscaling        *AutoScaling      `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
-	Domains            []Domains         `yaml:"domains,omitempty" validate:"excluded_unless=Type web"`
-	HealthCheck        *HealthCheck      `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
-	AllowConcurrent    *bool             `yaml:"allowConcurrent,omitempty" validate:"excluded_unless=Type job"`
-	Cron               string            `yaml:"cron,omitempty" validate:"excluded_unless=Type job"`
-	SuspendCron        *bool             `yaml:"suspendCron,omitempty" validate:"excluded_unless=Type job"`
-	TimeoutSeconds     int               `yaml:"timeoutSeconds,omitempty" validate:"excluded_unless=Type job"`
-	Private            *bool             `yaml:"private,omitempty" validate:"excluded_unless=Type web"`
-	IngressAnnotations map[string]string `yaml:"ingressAnnotations,omitempty" validate:"excluded_unless=Type web"`
-	DisableTLS         *bool             `yaml:"disableTLS,omitempty" validate:"excluded_unless=Type web"`
+	Name                          string            `yaml:"name,omitempty"`
+	Run                           *string           `yaml:"run,omitempty"`
+	Type                          ServiceType       `yaml:"type,omitempty" validate:"required, oneof=web worker job"`
+	Instances                     *int32            `yaml:"instances,omitempty"`
+	CpuCores                      float32           `yaml:"cpuCores,omitempty"`
+	RamMegabytes                  int               `yaml:"ramMegabytes,omitempty"`
+	GpuCoresNvidia                float32           `yaml:"gpuCoresNvidia,omitempty"`
+	SmartOptimization             *bool             `yaml:"smartOptimization,omitempty"`
+	TerminationGracePeriodSeconds *int32            `yaml:"terminationGracePeriodSeconds,omitempty"`
+	Port                          int               `yaml:"port,omitempty"`
+	Autoscaling                   *AutoScaling      `yaml:"autoscaling,omitempty" validate:"excluded_if=Type job"`
+	Domains                       []Domains         `yaml:"domains,omitempty" validate:"excluded_unless=Type web"`
+	HealthCheck                   *HealthCheck      `yaml:"healthCheck,omitempty" validate:"excluded_unless=Type web"`
+	AllowConcurrent               *bool             `yaml:"allowConcurrent,omitempty" validate:"excluded_unless=Type job"`
+	Cron                          string            `yaml:"cron,omitempty" validate:"excluded_unless=Type job"`
+	SuspendCron                   *bool             `yaml:"suspendCron,omitempty" validate:"excluded_unless=Type job"`
+	TimeoutSeconds                int               `yaml:"timeoutSeconds,omitempty" validate:"excluded_unless=Type job"`
+	Private                       *bool             `yaml:"private,omitempty" validate:"excluded_unless=Type web"`
+	IngressAnnotations            map[string]string `yaml:"ingressAnnotations,omitempty" validate:"excluded_unless=Type web"`
+	DisableTLS                    *bool             `yaml:"disableTLS,omitempty" validate:"excluded_unless=Type web"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -292,15 +293,16 @@ func protoEnumFromType(name string, service Service) porterv1.ServiceType {
 
 func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (*porterv1.Service, error) {
 	serviceProto := &porterv1.Service{
-		Name:              service.Name,
-		RunOptional:       service.Run,
-		InstancesOptional: service.Instances,
-		CpuCores:          service.CpuCores,
-		RamMegabytes:      int32(service.RamMegabytes),
-		GpuCoresNvidia:    service.GpuCoresNvidia,
-		Port:              int32(service.Port),
-		SmartOptimization: service.SmartOptimization,
-		Type:              serviceType,
+		Name:                          service.Name,
+		RunOptional:                   service.Run,
+		InstancesOptional:             service.Instances,
+		CpuCores:                      service.CpuCores,
+		RamMegabytes:                  int32(service.RamMegabytes),
+		GpuCoresNvidia:                service.GpuCoresNvidia,
+		Port:                          int32(service.Port),
+		SmartOptimization:             service.SmartOptimization,
+		Type:                          serviceType,
+		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
 	}
 
 	switch serviceType {
@@ -453,14 +455,15 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 
 func appServiceFromProto(service *porterv1.Service) (Service, error) {
 	appService := Service{
-		Name:              service.Name,
-		Run:               service.RunOptional,
-		Instances:         service.InstancesOptional,
-		CpuCores:          service.CpuCores,
-		RamMegabytes:      int(service.RamMegabytes),
-		GpuCoresNvidia:    service.GpuCoresNvidia,
-		Port:              int(service.Port),
-		SmartOptimization: service.SmartOptimization,
+		Name:                          service.Name,
+		Run:                           service.RunOptional,
+		Instances:                     service.InstancesOptional,
+		CpuCores:                      service.CpuCores,
+		RamMegabytes:                  int(service.RamMegabytes),
+		GpuCoresNvidia:                service.GpuCoresNvidia,
+		Port:                          int(service.Port),
+		SmartOptimization:             service.SmartOptimization,
+		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
 	}
 
 	switch service.Type {

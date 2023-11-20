@@ -197,7 +197,6 @@ export function defaultSerialized({
     ramMegabytes: defaultRAM,
     gpuCoresNvidia: 0,
     smartOptimization: true,
-    terminationGracePeriodSeconds: 30,
   };
 
   const defaultAutoscaling: SerializedAutoscaling = {
@@ -349,10 +348,12 @@ export function deserializeService({
       service.smartOptimization,
       override?.smartOptimization
     ),
-    terminationGracePeriodSeconds: ServiceField.number(
-      service.terminationGracePeriodSeconds ?? 30, // if not set explicitly, assume the value is at default (30 seconds)
-      override?.terminationGracePeriodSeconds
-    ),
+    terminationGracePeriodSeconds: setDefaults
+      ? ServiceField.number(
+          service.terminationGracePeriodSeconds ?? 30, // if not set explicitly, assume the value is at default (30 seconds)
+          override?.terminationGracePeriodSeconds
+        )
+      : undefined,
     domainDeletions: [],
     ingressAnnotationDeletions: [],
   };

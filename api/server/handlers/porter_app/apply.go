@@ -224,6 +224,13 @@ func addPorterSubdomainsIfNecessary(ctx context.Context, appProto *porterv1.Port
 	ctx, span := telemetry.NewSpan(ctx, "add-porter-subdomains-if-necessary")
 	defer span.End()
 
+	// use deprecated services if service list is empty
+	if len(appProto.ServiceList) == 0 {
+		for _, service := range appProto.Services {
+			appProto.ServiceList = append(appProto.ServiceList, service)
+		}
+	}
+
 	for _, service := range appProto.ServiceList {
 		if service == nil {
 			continue

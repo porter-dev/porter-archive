@@ -60,7 +60,11 @@ const serviceNoticationValidator = z.object({
   scope: z.literal("SERVICE"),
   timestamp: z.string(),
   metadata: z.object({
-    service_name: z.string(),
+    service_name: z
+      .string()
+      // this is necessary because the name for the pre-deploy job is called "pre-deploy" by the front-end but predeploy in k8s
+      // TODO: standardize the naming of the pre-deploy job: https://linear.app/porter/issue/POR-2119/standardize-naming-of-pre-deploy
+      .transform((val) => (val === "predeploy" ? "pre-deploy" : val)),
     deployment: z.discriminatedUnion("status", [
       z.object({
         status: z.literal("PENDING"),
@@ -129,20 +133,14 @@ export const isRevisionNotification = (
   return notification.scope === "REVISION";
 };
 
-export const porterAppNotificationEventMetadataValidator = z
-  .discriminatedUnion("scope", [
+export const porterAppNotificationEventMetadataValidator = z.discriminatedUnion(
+  "scope",
+  [
     serviceNoticationValidator,
     revisionNotificationValidator,
     applicationNotificationValidator,
-  ])
-  // this is necessary because the name for the pre-deploy job is called "pre-deploy" by the front-end but predeploy in k8s
-  // TODO: standardize the naming of the pre-deploy job: https://linear.app/porter/issue/POR-2119/standardize-naming-of-pre-deploy
-  .transform((obj) => {
-    if (obj.scope === "SERVICE" && obj.metadata.service_name === "predeploy") {
-      obj.metadata.service_name = "pre-deploy";
-    }
-    return obj;
-  });
+  ]
+);
 export type PorterAppNotification = z.infer<
   typeof porterAppNotificationEventMetadataValidator
 >;

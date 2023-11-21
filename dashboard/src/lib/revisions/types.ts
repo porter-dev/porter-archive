@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const appRevisionValidator = z.object({
   status: z.enum([
+    "UNKNOWN",
     "CREATED",
     "IMAGE_AVAILABLE",
     "AWAITING_BUILD_ARTIFACT",

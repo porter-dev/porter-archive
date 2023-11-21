@@ -9,6 +9,8 @@ import (
 type AppRevisionStatus string
 
 const (
+	// AppRevisionStatus_Unknown is the default status for an app revision
+	AppRevisionStatus_Unknown AppRevisionStatus = "UNKNOWN"
 	// AppRevisionStatus_Created is the initial status for a revision when first inserted in database
 	AppRevisionStatus_Created AppRevisionStatus = "CREATED"
 	// AppRevisionStatus_ImageAvailable is the status for a revision that has an image available
@@ -41,6 +43,8 @@ const (
 
 	// AppRevisionStatus_ApplyFailed is the status for a revision that failed due to an internal system error
 	AppRevisionStatus_ApplyFailed AppRevisionStatus = "APPLY_FAILED"
+	// AppRevisionStatus_UpdateFailed is the status for a revision that failed due to an internal system error
+	AppRevisionStatus_UpdateFailed AppRevisionStatus = "UPDATE_FAILED"
 )
 
 // AppRevision represents the full spec for a revision of a porter app

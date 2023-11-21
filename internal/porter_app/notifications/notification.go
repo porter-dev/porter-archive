@@ -60,6 +60,8 @@ type PorterError struct {
 	MitigationSteps string `json:"mitigation_steps"`
 	// Documentation is a list of links to documentation that can be used to resolve the error
 	Documentation []string `json:"documentation"`
+	// ShouldViewLogs is a boolean indicating whether the user should look at container logs for more information
+	ShouldViewLogs bool `json:"should_view_logs"`
 }
 
 // PorterErrorCode is the error code that can be used to determine the type of error

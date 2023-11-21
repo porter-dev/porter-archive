@@ -6,6 +6,7 @@ type Props = {
   hoverable?: boolean;
   children: React.ReactNode;
   borderColor?: string;
+  style?: React.CSSProperties;
 };
 
 const Tag: React.FC<Props> = ({
@@ -13,6 +14,7 @@ const Tag: React.FC<Props> = ({
   hoverable = true,
   children,
   borderColor,
+  style,
 }) => {
   return (
     <StyledTag
@@ -20,6 +22,7 @@ const Tag: React.FC<Props> = ({
       hoverable={hoverable}
       hoverColor={backgroundColor ?? "#ffffff44"}
       borderColor={borderColor}
+      style={style}
     >
       {children}
     </StyledTag>

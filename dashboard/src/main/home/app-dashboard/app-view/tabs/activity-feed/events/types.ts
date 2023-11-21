@@ -55,6 +55,7 @@ const serviceNoticationValidator = z.object({
     detail: z.string(),
     mitigation_steps: z.string(),
     documentation: z.array(z.string()).default([]),
+    should_view_logs: z.boolean(),
   }),
   scope: z.literal("SERVICE"),
   timestamp: z.string(),

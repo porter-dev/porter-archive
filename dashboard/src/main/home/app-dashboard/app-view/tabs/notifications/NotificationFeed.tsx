@@ -9,7 +9,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type ClientNotification } from "lib/porter-apps/notification";
 
-import NotificationExpandedView from "./NotificationExpandedView";
+import NotificationExpandedView from "./expanded-views/NotificationExpandedView";
 import NotificationList from "./NotificationList";
 
 type Props = {

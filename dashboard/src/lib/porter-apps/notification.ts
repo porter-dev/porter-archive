@@ -14,14 +14,14 @@ type BaseClientNotification = {
   messages: PorterAppNotification[];
 };
 
-type ClientServiceNotification = BaseClientNotification & {
+export type ClientServiceNotification = BaseClientNotification & {
   scope: "SERVICE";
   service: ClientService;
   isDeployRelated: boolean;
   appRevisionId: string;
 };
 
-type ClientRevisionNotification = BaseClientNotification & {
+export type ClientRevisionNotification = BaseClientNotification & {
   scope: "REVISION";
   isDeployRelated: boolean;
   appRevisionId: string;

@@ -132,13 +132,16 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		Type:        serviceType,
 	}
 
-	// if the revision number cannot be converted, it will default to 0
-	replicaCount, _ := strconv.Atoi(service.Config.ReplicaCount)
-	if replicaCount < math.MinInt32 || replicaCount > math.MaxInt32 {
-		return nil, fmt.Errorf("replica count is out of range of int32")
+	if service.Config.ReplicaCount != nil {
+		// if the revision number cannot be converted, it will default to 0
+		replicaCount, _ := strconv.Atoi(*service.Config.ReplicaCount)
+		if replicaCount < math.MinInt32 || replicaCount > math.MaxInt32 {
+			return nil, fmt.Errorf("replica count is out of range of int32")
+		}
+		// nolint:gosec
+		int32Value := int32(replicaCount)
+		serviceProto.InstancesOptional = &int32Value
 	}
-	// nolint:gosec
-	serviceProto.Instances = int32(replicaCount)
 
 	if service.Config.Resources.Requests.Cpu != "" {
 		cpuCoresStr := service.Config.Resources.Requests.Cpu
@@ -220,8 +223,8 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		}
 	case porterv1.ServiceType_SERVICE_TYPE_JOB:
 		jobConfig := &porterv1.JobServiceConfig{
-			AllowConcurrent: service.Config.AllowConcurrency,
-			Cron:            service.Config.Schedule.Value,
+			AllowConcurrentOptional: service.Config.AllowConcurrency,
+			Cron:                    service.Config.Schedule.Value,
 		}
 
 		serviceProto.Config = &porterv1.Service_JobConfig{

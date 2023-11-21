@@ -51,10 +51,7 @@ const RevisionNotificationExpandedView: React.FC<Props> = ({
             .filter(isRevisionNotification)
             .map((message, i) => {
               return (
-                <NotificationWrapper
-                  isLast={i === notification.messages.length - 1}
-                  key={i}
-                >
+                <NotificationWrapper key={i}>
                   <Message key={i}>
                     <Container row spaced>
                       <Container row>

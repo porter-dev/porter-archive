@@ -108,9 +108,12 @@ const applicationNotificationValidator = z.object({
   timestamp: z.string(),
 });
 
+export type PorterAppServiceNotification = z.infer<
+  typeof serviceNoticationValidator
+>;
 export const isServiceNotification = (
   notification: PorterAppNotification
-): notification is z.infer<typeof serviceNoticationValidator> => {
+): notification is PorterAppServiceNotification => {
   return notification.scope === "SERVICE";
 };
 

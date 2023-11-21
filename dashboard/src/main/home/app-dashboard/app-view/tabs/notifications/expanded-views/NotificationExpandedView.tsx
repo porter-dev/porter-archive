@@ -100,16 +100,18 @@ export const Message = styled.div`
   }
 `;
 
-export const NotificationWrapper = styled.div<{ isLast: boolean }>`
+export const NotificationWrapper = styled.div`
   display: flex;
   align-items: center;
   position: relative;
-  margin-bottom: ${(props) => (props.isLast ? "" : "25px")};
 `;
 
 export const StyledMessageFeed = styled.div`
   width: 100%;
   animation: fadeIn 0.3s 0s;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   @keyframes fadeIn {
     from {
       opacity: 0;

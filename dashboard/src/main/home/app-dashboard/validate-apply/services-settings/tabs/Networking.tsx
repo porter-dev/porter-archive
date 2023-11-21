@@ -141,7 +141,7 @@ const Networking: React.FC<NetworkingProps> = ({
           <Text color="helper">
             Custom domains
             <a
-              href="https://docs.porter.run/standard/deploying-applications/https-and-domains/custom-domains"
+              href="https://docs.porter.run/configure/custom-domains#custom-domains"
               target="_blank"
               rel="noreferrer"
             >
@@ -154,7 +154,7 @@ const Networking: React.FC<NetworkingProps> = ({
           <Text color="helper">
             Ingress Custom Annotations
             <a
-              href="https://docs.porter.run/standard/deploying-applications/runtime-configuration-options/web-applications#ingress-custom-annotations"
+              href="https://docs.porter.run/configure/advanced-networking#customizing-network-settings-for-an-application"
               target="_blank"
               rel="noreferrer"
             >

@@ -2,6 +2,7 @@ import React from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
 import Checkbox from "components/porter/Checkbox";
+import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -21,18 +22,20 @@ const Health: React.FC<HealthProps> = ({ index }) => {
   return (
     <>
       <Spacer y={1} />
-      <Text>
-        <>
-          <span>Health checks</span>
+      <Text>Health checks</Text>
+      <Spacer y={0.25} />
+      <Container style={{ width: "400px" }}>
+        <Text color="helper">
+          Configure health checks to prevent downtime during deployments
           <a
-            href="https://docs.porter.run/enterprise/deploying-applications/zero-downtime-deployments#health-checks"
+            href="https://docs.porter.run/configure/health-checks"
             target="_blank"
             rel="noreferrer"
           >
             &nbsp;(?)
           </a>
-        </>
-      </Text>
+        </Text>
+      </Container>
       <Spacer y={0.5} />
       <Controller
         name={`app.services.${index}.config.healthCheck.enabled`}
@@ -58,9 +61,10 @@ const Health: React.FC<HealthProps> = ({ index }) => {
       {healthCheckEnabled.value && (
         <>
           <Spacer y={0.5} />
+          <Text>Health check endpoint</Text>
+          <Spacer y={0.5} />
           <ControlledInput
             type="text"
-            label="Health Check Endpoint "
             placeholder="ex: /healthz"
             {...register(
               `app.services.${index}.config.healthCheck.httpPath.value`

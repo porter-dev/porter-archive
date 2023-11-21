@@ -220,8 +220,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setDeployError("");
-      const { validatedAppProto, variables, secrets } =
-        await validateApp(data, currentProject?.beta_features_enabled);
+      const { validatedAppProto, variables, secrets } = await validateApp(
+        data,
+        currentProject?.beta_features_enabled
+      );
       setValidatedAppProto(validatedAppProto);
       setFinalizedAppEnv({ variables, secrets });
 
@@ -596,7 +598,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       <Spacer inline width="5px" />
                       <Link
                         hasunderline
-                        to="https://docs.porter.run/standard/deploying-applications/overview"
+                        to="https://docs.porter.run/deploy/overview"
                         target="_blank"
                       >
                         Learn more

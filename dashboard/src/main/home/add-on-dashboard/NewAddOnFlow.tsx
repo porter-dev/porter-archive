@@ -34,7 +34,7 @@ const HIDDEN_CHARTS = [
   "loki",
   "porter-agent",
   "rds-chart",
-  "rds-postgresql"
+  "rds-postgresql",
   "rds-postgresql-aurora"
 ];
 

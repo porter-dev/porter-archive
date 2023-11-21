@@ -94,6 +94,7 @@ const ServiceNotificationExpandedView: React.FC<Props> = ({
                 deploymentTargetId={deploymentTargetId}
                 appId={appId}
                 appRevisionId={notification.appRevisionId}
+                showLiveLogs={notification.isDeployRelated}
               />
             ))}
         </StyledMessageFeed>

@@ -30,6 +30,7 @@ type Props = {
   deploymentTargetId: string;
   appId: number;
   appRevisionId: string;
+  showLiveLogs: boolean;
 };
 
 const ServiceMessage: React.FC<Props> = ({
@@ -42,6 +43,7 @@ const ServiceMessage: React.FC<Props> = ({
   deploymentTargetId,
   appId,
   appRevisionId,
+  showLiveLogs,
 }) => {
   const { showIntercomWithMessage } = useIntercom();
   const [logsVisible, setLogsVisible] = useState<boolean>(isFirst);
@@ -150,10 +152,17 @@ const ServiceMessage: React.FC<Props> = ({
                 selectedService={serviceNames[0]}
                 selectedRevisionId={appRevisionId}
                 defaultScrollToBottomEnabled={false}
-                timeRange={{
-                  startTime: dayjs(message.timestamp).subtract(1, "minute"),
-                  endTime: dayjs(message.timestamp).add(1, "minute"),
-                }}
+                timeRange={
+                  showLiveLogs
+                    ? undefined
+                    : {
+                        startTime: dayjs(message.timestamp).subtract(
+                          1,
+                          "minute"
+                        ),
+                        endTime: dayjs(message.timestamp).add(1, "minute"),
+                      }
+                }
               />
             </CollapsibleContainer>
           </>

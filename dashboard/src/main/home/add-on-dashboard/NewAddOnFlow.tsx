@@ -35,6 +35,7 @@ const HIDDEN_CHARTS = [
   "porter-agent",
   "rds-chart",
   "rds-postgresql"
+  "rds-postgresql-aurora"
 ];
 
 //For Charts that don't exist locally we need to add them in manually

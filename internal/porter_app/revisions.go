@@ -112,8 +112,7 @@ func EncodedRevisionFromProto(ctx context.Context, appRevision *porterv1.AppRevi
 	status, err := appRevisionStatusFromProto(appRevision.Status)
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "status", Value: string(status)})
 	if err != nil {
-		// ignore error so that we can still return the revision
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "get-status-error", Value: err.Error()})
+		_ = telemetry.Error(ctx, span, nil, "unknown revision type") // flagged as an error for visibility
 	}
 
 	appInstanceIdStr := appRevision.AppInstanceId

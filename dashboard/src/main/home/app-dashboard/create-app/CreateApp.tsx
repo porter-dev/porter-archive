@@ -604,7 +604,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       <Spacer inline width="5px" />
                       <Link
                         hasunderline
-                        to="https://docs.porter.run/standard/deploying-applications/overview"
+                        to="https://docs.porter.run/deploy/overview"
                         target="_blank"
                       >
                         Learn more

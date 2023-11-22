@@ -80,10 +80,10 @@ const machineTypeOptions = [
   { value: "t3a.large", label: "t3a.large" },
   { value: "t3a.xlarge", label: "t3a.xlarge" },
   { value: "t3a.2xlarge", label: "t3a.2xlarge" },
-  { value: "t4g.medium", label: "t4g.medium"},
-  { value: "t4g.large", label: "t4g.large"},
-  { value: "t4g.xlarge", label: "t4g.xlarge"},
-  { value: "t4g.2xlarge", label: "t4g.2xlarge"},
+  { value: "t4g.medium", label: "t4g.medium" },
+  { value: "t4g.large", label: "t4g.large" },
+  { value: "t4g.xlarge", label: "t4g.xlarge" },
+  { value: "t4g.2xlarge", label: "t4g.2xlarge" },
   { value: "c6i.large", label: "c6i.large" },
   { value: "c6i.xlarge", label: "c6i.xlarge" },
   { value: "c6i.2xlarge", label: "c6i.2xlarge" },
@@ -187,7 +187,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const getStatus = (): React.ReactNode => {
@@ -461,8 +461,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     setIsReadOnly(
       props.clusterId &&
-        (currentCluster.status === "UPDATING" ||
-          currentCluster.status === "UPDATING_UNAVAILABLE")
+      (currentCluster.status === "UPDATING" ||
+        currentCluster.status === "UPDATING_UNAVAILABLE")
     );
     handleClusterStateChange(
       "clusterName",
@@ -523,8 +523,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
         const awsTags = eksValues.loadBalancer.tags
           ? Object.entries(eksValues.loadBalancer.tags)
-              .map(([key, value]) => `${key}=${value}`)
-              .join(",")
+            .map(([key, value]) => `${key}=${value}`)
+            .join(",")
           : "";
         handleClusterStateChange("awsTags", awsTags);
 
@@ -559,6 +559,10 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       handleClusterStateChange(
         "ecrScanningEnabled",
         eksValues.enableEcrScanning
+      );
+      handleClusterStateChange(
+        "certificateARN",
+        eksValues.loadBalancer?.additionalCertificateArns?.join(",")
       );
     }
   }, [isExpanded, props.selectedClusterVersion]);
@@ -1068,11 +1072,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
                         {(clusterState.wafV2ARN === undefined ||
                           clusterState.wafV2ARN?.length === 0) && (
-                          <ErrorInLine>
-                            <i className="material-icons">error</i>
-                            {"Required if WafV2 is enabled"}
-                          </ErrorInLine>
-                        )}
+                            <ErrorInLine>
+                              <i className="material-icons">error</i>
+                              {"Required if WafV2 is enabled"}
+                            </ErrorInLine>
+                          )}
                       </>
                     )}
                     <Spacer y={1} />
@@ -1181,7 +1185,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setShowHelpMessage(false);
     try {
       await preflightChecks();
-    } catch (err) {}
+    } catch (err) { }
   };
 
 
@@ -1386,7 +1390,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
         margin - right: 7px;
       margin-left: -7px;
       transform: ${(props) =>
-        props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
       transition: transform 0.1s ease;
   }
       `;

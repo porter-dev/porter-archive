@@ -204,6 +204,7 @@ func (c *CreateAddonHandler) performAddonPreinstall(ctx context.Context, r *http
 	defer span.End()
 
 	awsTemplates := map[string][]string{
+		"elasticache-redis":     {"ack-chart-ec2", "ack-chart-elasticache"},
 		"rds-postgresql":        {"ack-chart-ec2", "ack-chart-rds"},
 		"rds-postgresql-aurora": {"ack-chart-ec2", "ack-chart-rds"},
 	}

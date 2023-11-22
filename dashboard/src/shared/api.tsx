@@ -584,6 +584,10 @@ const createProject = baseApi<{ name: string }, {}>("POST", (pathParams) => {
   return `/api/projects`;
 });
 
+const createHostedProject = baseApi<{ name: string, code: string }, {}>("POST", (pathParams) => {
+    return `/api/projects/hosted`;
+});
+
 const createSubdomain = baseApi<
   {},
   {
@@ -3257,6 +3261,7 @@ export default {
   createPasswordResetVerify,
   createPasswordResetFinalize,
   createProject,
+  createHostedProject,
   // ------------ PORTER APP -----------
   getPorterApps,
   getPorterApp,

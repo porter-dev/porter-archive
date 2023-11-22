@@ -135,8 +135,16 @@ export const integrationList: any = {
 };
 
 export const isAlphanumeric = (x: string | null) => {
-  let re = /^[a-z0-9-]+$/;
+  const re = /^[a-z0-9-]+$/;
   if (!x || x.length == 0 || x.search(re) === -1) {
+    return false;
+  }
+  return true;
+};
+
+export const isTrueAlphanumeric = (x: string | null) => {
+  const re = /^[a-zA-Z0-9]+$/;
+  if (!x || x.length === 0 || x.search(re) === -1) {
     return false;
   }
   return true;

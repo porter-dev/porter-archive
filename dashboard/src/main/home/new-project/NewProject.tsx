@@ -17,7 +17,7 @@ import Helper from "components/form-components/Helper";
 import TitleSection from "components/TitleSection";
 import WelcomeForm from "./WelcomeForm";
 import { trackCreateNewProject } from "shared/anayltics";
-import { ProjectListType } from "shared/types";
+import { type ProjectListType } from "shared/types";
 
 type ValidationError = {
   hasError: boolean;
@@ -37,6 +37,7 @@ export const NewProjectFC = () => {
   const [name, setName] = useState("");
 
   useEffect(() => {
+    alert("NewProjectFC")
     if (!canCreateProject) {
       pushFiltered("/", []);
     }

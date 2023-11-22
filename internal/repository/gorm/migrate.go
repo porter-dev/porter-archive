@@ -65,6 +65,7 @@ func AutoMigrate(db *gorm.DB, debug bool) error {
 		&models.AppRevision{},
 		&models.AppInstance{},
 		&models.DeploymentTarget{},
+		&models.HostedCode{},
 		&models.AppTemplate{},
 		&models.GithubWebhook{},
 		&ints.KubeIntegration{},

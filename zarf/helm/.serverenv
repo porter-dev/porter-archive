@@ -14,6 +14,7 @@ DB_PORT=5432
 ENABLE_CAPI_PROVISIONER=true
 NATS_URL=nats:4222
 CLUSTER_CONTROL_PLANE_ADDRESS=http://ccp-web:7833
+AUTH_MANAGEMENT_ADDRESS=http://porter-auth-web:8090
 
 # Domain we use to generate custom subdomains from
 APP_ROOT_DOMAIN=withporter.run

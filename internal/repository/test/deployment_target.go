@@ -22,6 +22,11 @@ func (repo *DeploymentTargetRepository) DeploymentTargetBySelectorAndSelectorTyp
 	return nil, errors.New("cannot read database")
 }
 
+// DefaultDeploymentTarget is dummy
+func (repo *DeploymentTargetRepository) DefaultDeploymentTarget(projectID uint, clusterID uint) (*models.DeploymentTarget, error) {
+	return nil, errors.New("cannot read database")
+}
+
 // List returns all deployment targets for a project
 func (repo *DeploymentTargetRepository) List(projectID uint, clusterID uint, preview bool) ([]*models.DeploymentTarget, error) {
 	return nil, errors.New("cannot read database")

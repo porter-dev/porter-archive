@@ -73,6 +73,43 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
 	)
 
+	if request.DeploymentTargetID != "" {
+		deploymentTargetUUID, err := uuid.Parse(request.DeploymentTargetID)
+		if err != nil {
+			e := telemetry.Error(ctx, span, err, "error parsing deployment target id")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
+			return
+		}
+		if deploymentTargetUUID == uuid.Nil {
+			e := telemetry.Error(ctx, span, err, "deployment target id cannot be nil")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
+			return
+		}
+
+		deploymentTarget, err := p.Repo().DeploymentTarget().DeploymentTargetByID(deploymentTargetUUID)
+		if err != nil {
+			e := telemetry.Error(ctx, span, err, "error getting deployment target")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "deployment-target-project-id", Value: deploymentTarget.ProjectID},
+			telemetry.AttributeKV{Key: "deployment-target-cluster-id", Value: deploymentTarget.ClusterID},
+		)
+		project, err = p.Repo().Project().ReadProject(uint(deploymentTarget.ProjectID))
+		if err != nil {
+			e := telemetry.Error(ctx, span, err, "error getting tenant project")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+		cluster, err = p.Repo().Cluster().ReadCluster(project.ID, uint(deploymentTarget.ClusterID))
+		if err != nil {
+			e := telemetry.Error(ctx, span, err, "error getting tenant cluster")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			return
+		}
+	}
+
 	if request.Type == types.PorterAppEventType_Build {
 		validateApplyV2 := project.GetFeatureFlag(models.ValidateApplyV2, p.Config().LaunchDarklyClient)
 		reportBuildStatus(ctx, request, p.Config(), user, project, appName, validateApplyV2)

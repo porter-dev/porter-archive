@@ -219,6 +219,31 @@ func getUserRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/hosted -> project.NewHostedProjectCreateHandler
+	createHostedEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: "/projects/hosted",
+			},
+			Scopes: []types.PermissionScope{types.UserScope},
+		},
+	)
+
+	createHostedHandler := project.NewHostedProjectCreateHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createHostedEndpoint,
+		Handler:  createHostedHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects -> project.NewProjectListHandler
 	listEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

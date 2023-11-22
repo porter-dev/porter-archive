@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
-import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
+import { Route, type RouteComponentProps, Switch, withRouter } from "react-router";
 import styled, { ThemeProvider } from "styled-components";
 import { createPortal } from "react-dom";
 
@@ -7,8 +7,8 @@ import api from "shared/api";
 import midnight from "shared/themes/midnight";
 import standard from "shared/themes/standard";
 import { Context } from "shared/Context";
-import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
-import { ClusterType, ProjectType, ProjectListType } from "shared/types";
+import { type PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
+import { type ClusterType, type ProjectType, type ProjectListType } from "shared/types";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
@@ -26,7 +26,7 @@ import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
 import CreateDatabase from "./database-dashboard/CreateDatabase";
 
 import { fakeGuardedRoute } from "shared/auth/RouteGuard";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import discordLogo from "../../assets/discord.svg";
 import Onboarding from "./onboarding/Onboarding";
 import ModalHandler from "./ModalHandler";
@@ -48,6 +48,7 @@ import DeploymentTargetProvider from "shared/DeploymentTargetContext";
 import PreviewEnvs from "./cluster-dashboard/preview-environments/v2/PreviewEnvs";
 import SetupApp from "./cluster-dashboard/preview-environments/v2/setup-app/SetupApp";
 import ClusterResourcesProvider from "shared/ClusterResourcesContext";
+import NewHostedProject from "./new-project/NewHostedProject";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -123,10 +124,10 @@ const Home: React.FC<Props> = (props) => {
   };
 
   const getProjects = async (id?: number) => {
-    let { currentProject } = props;
-    let queryString = window.location.search;
-    let urlParams = new URLSearchParams(queryString);
-    let projectId = urlParams.get("project_id");
+    const { currentProject } = props;
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const projectId = urlParams.get("project_id");
     if (!projectId && currentProject?.id) {
       pushQueryParams(props, { project_id: currentProject.id.toString() });
     }
@@ -154,7 +155,7 @@ const Home: React.FC<Props> = (props) => {
         }
 
         const project = await api
-          .getProject("<token>", {}, { id: id })
+          .getProject("<token>", {}, { id })
           .then((res) => res.data as ProjectType);
 
         setCurrentProject(project);
@@ -204,18 +205,18 @@ const Home: React.FC<Props> = (props) => {
   useEffect(() => {
     checkOnboarding();
     checkIfCanCreateProject();
-    let { match } = props;
+    const { match } = props;
 
     // Handle redirect from DO
-    let queryString = window.location.search;
-    let urlParams = new URLSearchParams(queryString);
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
 
-    let err = urlParams.get("error");
+    const err = urlParams.get("error");
     if (err) {
       setCurrentError(err);
     }
 
-    let defaultProjectId = parseInt(urlParams.get("project_id"));
+    const defaultProjectId = parseInt(urlParams.get("project_id"));
 
     setGhRedirect(urlParams.get("gh_oauth") !== null);
     urlParams.delete("gh_oauth");
@@ -288,9 +289,9 @@ const Home: React.FC<Props> = (props) => {
   }, [props.currentProject?.id]);
 
   useEffect(() => {
-    let queryString = window.location.search;
-    let urlParams = new URLSearchParams(queryString);
-    let err = urlParams.get("error");
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const err = urlParams.get("error");
     if (
       !hasFinishedOnboarding &&
       props.history.location.pathname &&
@@ -326,7 +327,7 @@ const Home: React.FC<Props> = (props) => {
 
       setProjects(projectList);
       if (!projectList.length) {
-        setCurrentProject(null, () => redirectToNewProject());
+        setCurrentProject(null, () => { redirectToNewProject(); });
       } else {
         const project = await api
           .getProject("<token>", {}, { id: projectList[0].id })
@@ -360,18 +361,18 @@ const Home: React.FC<Props> = (props) => {
 
     try {
       const res = await api.getClusters<
-        {
+        Array<{
           infra_id?: number;
           name: string;
-        }[]
+        }>
       >("<token>", {}, { id: currentProject?.id });
 
-      const destroyInfraPromises = res.data.map((cluster) => {
+      const destroyInfraPromises = res.data.map(async (cluster) => {
         if (!cluster.infra_id) {
           return undefined;
         }
 
-        return api.destroyInfra(
+        return await api.destroyInfra(
           "<token>",
           {},
           { project_id: currentProject.id, infra_id: cluster.infra_id }
@@ -463,12 +464,14 @@ const Home: React.FC<Props> = (props) => {
                 <Route path="/databases">
                   <DatabaseDashboard />
                 </Route>
-
                 <Route path="/addons/new">
                   <NewAddOnFlow />
                 </Route>
                 <Route path="/addons">
                   <AddOnDashboard />
+                </Route>
+                <Route path="/new-project/hosted">
+                  <NewHostedProject />
                 </Route>
                 <Route
                   path="/new-project"
@@ -525,7 +528,7 @@ const Home: React.FC<Props> = (props) => {
                   render={() => {
                     if (currentCluster?.id === -1) {
                       return <Loading />;
-                    } else if (!currentCluster || !currentCluster.name) {
+                    } else if (!currentCluster?.name) {
                       return (
                         <DashboardWrapper>
                           <NoClusterPlaceHolder></NoClusterPlaceHolder>
@@ -587,7 +590,7 @@ const Home: React.FC<Props> = (props) => {
                     : ""
                 }
                 onYes={handleDelete}
-                onNo={() => setCurrentModal(null, null)}
+                onNo={() => { setCurrentModal(null, null); }}
               />,
               document.body
             )}

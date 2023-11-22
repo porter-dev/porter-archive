@@ -32,6 +32,28 @@ func (repo *DeploymentTargetRepository) DeploymentTargetBySelectorAndSelectorTyp
 	return deploymentTarget, nil
 }
 
+// DeploymentTargetByID does not scope by projectID and should only be used for internal queries when project id cannot be known.  This should never be exposed to the user.
+func (repo *DeploymentTargetRepository) DeploymentTargetByID(id uuid.UUID) (*models.DeploymentTarget, error) {
+	deploymentTarget := &models.DeploymentTarget{}
+
+	if err := repo.db.Where("id = ?", id).Limit(1).Find(&deploymentTarget).Error; err != nil {
+		return nil, err
+	}
+
+	return deploymentTarget, nil
+}
+
+// DefaultDeploymentTarget finds the default deployment target for a projectID and clusterID
+func (repo *DeploymentTargetRepository) DefaultDeploymentTarget(projectID uint, clusterID uint) (*models.DeploymentTarget, error) {
+	deploymentTarget := &models.DeploymentTarget{}
+
+	if err := repo.db.Where("project_id = ? AND cluster_id = ? AND is_default = TRUE", projectID, clusterID).Limit(1).Find(&deploymentTarget).Error; err != nil {
+		return nil, err
+	}
+
+	return deploymentTarget, nil
+}
+
 // List finds all deployment targets for a given project
 func (repo *DeploymentTargetRepository) List(projectID uint, clusterID uint, preview bool) ([]*models.DeploymentTarget, error) {
 	deploymentTargets := []*models.DeploymentTarget{}

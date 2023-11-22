@@ -53,7 +53,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 		excludes, err = dockerignore.ReadAll(bytes.NewBuffer(dockerIgnoreBytes))
 
 		if err != nil {
-			return err
+			return fmt.Errorf("error reading .dockerignore: %w", err)
 		}
 	}
 
@@ -63,7 +63,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 		ExcludePatterns: excludes,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating tar: %w", err)
 	}
 
 	var writer io.Writer = os.Stderr
@@ -74,7 +74,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 	if !opts.IsDockerfileInCtx {
 		dockerfileCtx, err := os.Open(dockerfilePath)
 		if err != nil {
-			return fmt.Errorf("unable to open Dockerfile: %v", err)
+			return fmt.Errorf("error opening Dockerfile: %w", err)
 		}
 
 		defer dockerfileCtx.Close()
@@ -83,7 +83,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 		tar, dockerfilePath, err = AddDockerfileToBuildContext(dockerfileCtx, tar)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("error adding Dockerfile to build context: %w", err)
 		}
 	}
 
@@ -111,7 +111,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 		Platform: "linux/amd64",
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error building image: %w", err)
 	}
 
 	defer out.Body.Close()

@@ -267,6 +267,13 @@ func (c *CreateAddonHandler) scaleAckChartDeployment(ctx context.Context, chart 
 	return nil
 }
 
+type VpcConfig struct {
+	AWSRegion string   `json:"awsRegion"`
+	CIDRBlock string   `json:"cidrBlock"`
+	SubnetIDs []string `json:"subnetIDs"`
+	VpcID     string   `json:"vpcID"`
+}
+
 func (c *CreateAddonHandler) getVPCConfig(ctx context.Context, request *types.CreateAddonRequest, project *models.Project, cluster *models.Cluster) (map[string]any, error) {
 	ctx, span := telemetry.NewSpan(ctx, "get-vpc-config")
 	defer span.End()
@@ -281,35 +288,42 @@ func (c *CreateAddonHandler) getVPCConfig(ctx context.Context, request *types.Cr
 		return vpcConfig, nil
 	}
 
-	awsTemplates := map[string]bool{
-		"rds-postgresql":        true,
-		"rds-postgresql-aurora": true,
+	awsTemplates := map[string]string{
+		"elasticache-redis":     "elasticache",
+		"rds-postgresql":        "rds",
+		"rds-postgresql-aurora": "rds",
 	}
 
-	if !awsTemplates[request.TemplateName] {
+	serviceType, ok := awsTemplates[request.TemplateName]
+	if !ok {
 		return vpcConfig, nil
 	}
 
-	req := connect.NewRequest(&porterv1.ClusterNetworkSettingsRequest{
-		ProjectId: int64(project.ID),
-		ClusterId: int64(cluster.ID),
+	req := connect.NewRequest(&porterv1.SharedNetworkSettingsRequest{
+		ProjectId:   int64(project.ID),
+		ClusterId:   int64(cluster.ID),
+		ServiceType: serviceType,
 	})
 
-	resp, err := c.Config().ClusterControlPlaneClient.ClusterNetworkSettings(ctx, req)
+	resp, err := c.Config().ClusterControlPlaneClient.SharedNetworkSettings(ctx, req)
 	if err != nil {
 		return vpcConfig, telemetry.Error(ctx, span, err, "error fetching cluster network settings from ccp")
 	}
 
-	vpcConfig["awsRegion"] = resp.Msg.Region
+	vpcConfig["cidrBlock"] = resp.Msg.CidrRange
 	vpcConfig["subnetIDs"] = resp.Msg.SubnetIds
 	switch resp.Msg.CloudProvider {
 	case *porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS.Enum():
+		vpcConfig["awsRegion"] = resp.Msg.Region
 		vpcConfig["vpcID"] = resp.Msg.GetEksCloudProviderNetwork().Id
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "vpc-id", Value: resp.Msg.GetEksCloudProviderNetwork().Id})
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "aws-region", Value: resp.Msg.Region},
+			telemetry.AttributeKV{Key: "vpc-id", Value: resp.Msg.GetEksCloudProviderNetwork().Id},
+		)
 	}
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "aws-region", Value: resp.Msg.Region},
+		telemetry.AttributeKV{Key: "cidr-block", Value: resp.Msg.CidrRange},
 		telemetry.AttributeKV{Key: "subnet-ids", Value: strings.Join(resp.Msg.SubnetIds, ",")},
 	)
 

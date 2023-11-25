@@ -206,12 +206,15 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 	commandArgs := []string{
 		"build",
 		"-f", dockerfileName,
-		"--platform", "linux/amd64",
 		"--tag", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
 		"--cache-from", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag),
 	}
 	for key, val := range opts.Env {
 		commandArgs = append(commandArgs, "--build-arg", fmt.Sprintf("%s=%s", key, val))
+	}
+
+	if !sliceContainsString(extraDockerArgs, "--platform") {
+		commandArgs = append(commandArgs, "--platform", "linux/amd64")
 	}
 
 	commandArgs = append(commandArgs, extraDockerArgs...)
@@ -298,4 +301,15 @@ func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string
 	}
 
 	return randomName, nil
+}
+
+// sliceContainsString implements slice.Contains and should be removed on upgrade to golang 1.21
+func sliceContainsString(haystack []string, needle string) bool {
+	for _, value := range haystack {
+		if value == needle {
+			return true
+		}
+	}
+
+	return false
 }

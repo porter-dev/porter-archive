@@ -77,7 +77,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     React.useState<PorterApp | null>(null);
   const [isDeploying, setIsDeploying] = React.useState(false);
   const [deployError, setDeployError] = React.useState("");
-  const [{ variables, secrets }, setFinalizedAppEnv] = React.useState<{
+  const [appEnv, setFinalizedAppEnv] = React.useState<{
     variables: Record<string, string>;
     secrets: Record<string, string>;
   }>({
@@ -254,11 +254,15 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     projectID,
     clusterID,
     deploymentTargetID,
+    variables,
+    secrets,
   }: {
     app: PorterApp;
     projectID: number;
     clusterID: number;
     deploymentTargetID: string;
+    variables: Record<string, string>;
+    secrets: Record<string, string>;
   }): Promise<void> => {
     await api.createApp(
       "<token>",
@@ -346,6 +350,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             projectID: currentProject.id,
             clusterID: currentCluster.id,
             deploymentTargetID: deploymentTarget.deployment_target_id,
+            variables,
+            secrets,
           });
         }
 
@@ -786,8 +792,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             await createAndApply({
               app: validatedAppProto,
               source,
-              variables,
-              secrets,
+              variables: appEnv.variables,
+              secrets: appEnv.secrets,
             })
           }
           deploymentError={deployError}

@@ -117,7 +117,7 @@ export const porterAppFormValidator = z
       return true;
     },
     {
-      message: "pre-deploy start command must be non-empty",
+      message: "if using a pre-deploy job, its start command must be non-empty",
       path: ["app", "services"],
     }
   )

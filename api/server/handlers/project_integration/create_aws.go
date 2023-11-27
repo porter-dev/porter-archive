@@ -56,28 +56,67 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AWSIntegration: aws.ToAWSIntegrationType(),
 	}
 
-	if project.GetFeatureFlag(models.CapiProvisionerEnabled, p.Config().LaunchDarklyClient) && p.Config().EnableCAPIProvisioner {
-		credReq := porterv1.CreateAssumeRoleChainRequest{
-			ProjectId:       int64(project.ID),
-			SourceArn:       "arn:aws:iam::108458755588:role/CAPIManagement", // hard coded as this is the final hop for a CAPI cluster
-			TargetAccessId:  request.AWSAccessKeyID,
-			TargetSecretKey: request.AWSSecretAccessKey,
-			TargetArn:       request.TargetArn,
-			ExternalId:      request.ExternalID,
-		}
+	if project.GetFeatureFlag(models.CapiProvisionerEnabled, p.Config().LaunchDarklyClient) {
 		telemetry.WithAttributes(span,
 			telemetry.AttributeKV{Key: "target-arn", Value: request.TargetArn},
 			telemetry.AttributeKV{Key: "external-id", Value: request.ExternalID},
 			telemetry.AttributeKV{Key: "target-access-id", Value: request.AWSAccessKeyID},
 		)
-		credResp, err := p.Config().ClusterControlPlaneClient.CreateAssumeRoleChain(ctx, connect.NewRequest(&credReq))
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error creating CAPI required credential")
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed, err.Error()))
-			return
+
+		if project.GetFeatureFlag(models.AWSACKAuthEnabled, p.Config().LaunchDarklyClient) {
+			if request.TargetArn == "" {
+				err = telemetry.Error(ctx, span, err, "target arn is required for AWS ACK auth")
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest, "target arn is required for AWS ACK auth"))
+				return
+			}
+
+			credReq := porterv1.UpdateCloudProviderCredentialsRequest{
+				ProjectId:     int64(project.ID),
+				CloudProvider: porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS,
+				CloudProviderCredentials: &porterv1.UpdateCloudProviderCredentialsRequest_AwsCredentials{
+					AwsCredentials: &porterv1.AWSCredentials{
+						TargetArn:  request.TargetArn,
+						ExternalId: request.ExternalID,
+					},
+				},
+			}
+
+			credResp, err := p.Config().ClusterControlPlaneClient.UpdateCloudProviderCredentials(ctx, connect.NewRequest(&credReq))
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "error updating AWS credential")
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed, err.Error()))
+				return
+			}
+			if credResp == nil {
+				err = telemetry.Error(ctx, span, err, "error reading AWS credential response")
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed, "response is nil"))
+				return
+			}
+			if credResp.Msg == nil {
+				err = telemetry.Error(ctx, span, err, "error reading AWS credential message")
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed, "response message is nil"))
+				return
+			}
+			res.CloudProviderCredentialIdentifier = credResp.Msg.CredentialsIdentifier
+		} else {
+			credReq := porterv1.CreateAssumeRoleChainRequest{
+				ProjectId:       int64(project.ID),
+				SourceArn:       "arn:aws:iam::108458755588:role/CAPIManagement", // hard coded as this is the final hop for a CAPI cluster
+				TargetAccessId:  request.AWSAccessKeyID,
+				TargetSecretKey: request.AWSSecretAccessKey,
+				TargetArn:       request.TargetArn,
+				ExternalId:      request.ExternalID,
+			}
+
+			credResp, err := p.Config().ClusterControlPlaneClient.CreateAssumeRoleChain(ctx, connect.NewRequest(&credReq))
+			if err != nil {
+				err = telemetry.Error(ctx, span, err, "error creating CAPI required credential")
+				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed, err.Error()))
+				return
+			}
+			res.CloudProviderCredentialIdentifier = credResp.Msg.TargetArn
 		}
-		res.CloudProviderCredentialIdentifier = credResp.Msg.TargetArn
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cloud-provider-credential-identifier", Value: credResp.Msg.TargetArn})
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cloud-provider-credential-identifier", Value: res.CloudProviderCredentialIdentifier})
 	}
 
 	p.WriteResult(w, r, res)

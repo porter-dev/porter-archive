@@ -14,6 +14,7 @@ import (
 // AppProtoWithEnv is a struct containing a PorterApp proto object and its environment variables
 type AppProtoWithEnv struct {
 	AppProto     *porterv1.PorterApp
+	Addons       []*porterv1.Addon
 	EnvVariables map[string]string
 }
 
@@ -47,8 +48,20 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 	out.AppProto = appProto
 	out.EnvVariables = envVariables
 
+	var addons []*porterv1.Addon
+	for _, addon := range porterYaml.Addons {
+		addonProto, err := ProtoFromAddon(ctx, addon)
+		if err != nil {
+			return out, telemetry.Error(ctx, span, err, "error converting addon to proto")
+		}
+		addons = append(addons, addonProto)
+	}
+	out.Addons = addons
+
 	if porterYaml.Previews != nil {
-		previewAppProto, previewEnvVariables, err := ProtoFromApp(ctx, *porterYaml.Previews)
+		previewConfig := *porterYaml.Previews
+
+		previewAppProto, previewEnvVariables, err := ProtoFromApp(ctx, previewConfig.PorterApp)
 		if err != nil {
 			return out, telemetry.Error(ctx, span, err, "error converting preview porter yaml to proto")
 		}
@@ -56,6 +69,16 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (AppWithPrevi
 			AppProto:     previewAppProto,
 			EnvVariables: previewEnvVariables,
 		}
+
+		var previewAddons []*porterv1.Addon
+		for _, addon := range previewConfig.Addons {
+			addonProto, err := ProtoFromAddon(ctx, addon)
+			if err != nil {
+				return out, telemetry.Error(ctx, span, err, "error converting preview addon to proto")
+			}
+			previewAddons = append(previewAddons, addonProto)
+		}
+		out.PreviewApp.Addons = previewAddons
 	}
 
 	return out, nil
@@ -94,10 +117,26 @@ type PorterApp struct {
 	RequiredApps []RequiredApp `yaml:"requiredApps,omitempty"`
 }
 
+// PorterAppWithAddons is the definition of a porter app in a Porter YAML file with addons
+type PorterAppWithAddons struct {
+	PorterApp `yaml:",inline"`
+	Addons    []Addon `yaml:"addons,omitempty"`
+}
+
 // PorterYAML represents all the possible fields in a Porter YAML file
 type PorterYAML struct {
-	PorterApp `yaml:",inline"`
-	Previews  *PorterApp `yaml:"previews,omitempty"`
+	PorterAppWithAddons `yaml:",inline"`
+	Previews            *PorterAppWithAddons `yaml:"previews,omitempty"`
+}
+
+// Addon represents an addon that should be installed alongside a Porter app
+type Addon struct {
+	Name             string     `yaml:"name"`
+	Type             string     `yaml:"type"`
+	EnvGroups        []EnvGroup `yaml:"envGroups,omitempty"`
+	CpuCores         float32    `yaml:"cpuCores,omitempty"`
+	RamMegabytes     int        `yaml:"ramMegabytes,omitempty"`
+	StorageGigabytes float32    `yaml:"storageGigabytes,omitempty"`
 }
 
 // RequiredApp specifies another porter app that this app expects to be deployed alongside it

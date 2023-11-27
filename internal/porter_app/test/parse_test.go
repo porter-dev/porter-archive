@@ -93,15 +93,15 @@ var result_nobuild = &porterv1.PorterApp{
 			},
 			Type: 2,
 			Gpu: &porterv1.GPU{
-				Enabled: false,
+				Enabled:        false,
 				GpuCoresNvidia: 0,
 			},
 		},
 		"example-job": {
-			Name:           "example-job",
-			RunOptional:    pointer.String("echo 'hello world'"),
-			CpuCores:       0.1,
-			RamMegabytes:   256,
+			Name:         "example-job",
+			RunOptional:  pointer.String("echo 'hello world'"),
+			CpuCores:     0.1,
+			RamMegabytes: 256,
 			Config: &porterv1.Service_JobConfig{
 				JobConfig: &porterv1.JobServiceConfig{
 					AllowConcurrentOptional: pointer.Bool(true),
@@ -111,7 +111,7 @@ var result_nobuild = &porterv1.PorterApp{
 				},
 			},
 			Gpu: &porterv1.GPU{
-				Enabled: false,
+				Enabled:        false,
 				GpuCoresNvidia: 0,
 			},
 			Type: 3,
@@ -119,13 +119,13 @@ var result_nobuild = &porterv1.PorterApp{
 	},
 	ServiceList: []*porterv1.Service{
 		{
-			Name:           "example-web",
-			RunOptional:    pointer.String("node index.js"),
-			Port:           8080,
-			CpuCores:       0.1,
-			RamMegabytes:   256,
+			Name:         "example-web",
+			RunOptional:  pointer.String("node index.js"),
+			Port:         8080,
+			CpuCores:     0.1,
+			RamMegabytes: 256,
 			Gpu: &porterv1.GPU{
-				Enabled: false,
+				Enabled:        false,
 				GpuCoresNvidia: 0,
 			},
 			Config: &porterv1.Service_WebConfig{
@@ -149,7 +149,6 @@ var result_nobuild = &porterv1.PorterApp{
 						Enabled:  true,
 						HttpPath: "/healthz",
 					},
-					
 				},
 			},
 			Type: 1,
@@ -162,7 +161,7 @@ var result_nobuild = &porterv1.PorterApp{
 			CpuCores:          0.1,
 			RamMegabytes:      256,
 			Gpu: &porterv1.GPU{
-				Enabled: false,
+				Enabled:        false,
 				GpuCoresNvidia: 0,
 			},
 			Config: &porterv1.Service_WorkerConfig{
@@ -173,12 +172,12 @@ var result_nobuild = &porterv1.PorterApp{
 			Type: 2,
 		},
 		{
-			Name:           "example-job",
-			RunOptional:    pointer.String("echo 'hello world'"),
-			CpuCores:       0.1,
-			RamMegabytes:   256,
+			Name:         "example-job",
+			RunOptional:  pointer.String("echo 'hello world'"),
+			CpuCores:     0.1,
+			RamMegabytes: 256,
 			Gpu: &porterv1.GPU{
-				Enabled: false,
+				Enabled:        false,
 				GpuCoresNvidia: 0,
 			},
 			Config: &porterv1.Service_JobConfig{
@@ -217,12 +216,12 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 	Name: "test-app",
 	Services: map[string]*porterv1.Service{
 		"example-job": {
-			Name:           "example-job",
-			RunOptional:    pointer.String("echo 'hello world'"),
-			CpuCores:       0.1,
-			RamMegabytes:   256,
+			Name:         "example-job",
+			RunOptional:  pointer.String("echo 'hello world'"),
+			CpuCores:     0.1,
+			RamMegabytes: 256,
 			Gpu: &porterv1.GPU{
-				Enabled: false,
+				Enabled:        false,
 				GpuCoresNvidia: 0,
 			},
 			Config: &porterv1.Service_JobConfig{
@@ -285,12 +284,12 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 	},
 	ServiceList: []*porterv1.Service{
 		{
-			Name:           "example-job",
-			RunOptional:    pointer.String("echo 'hello world'"),
-			CpuCores:       0.1,
-			RamMegabytes:   256,
+			Name:         "example-job",
+			RunOptional:  pointer.String("echo 'hello world'"),
+			CpuCores:     0.1,
+			RamMegabytes: 256,
 			Gpu: &porterv1.GPU{
-				Enabled: false,
+				Enabled:        false,
 				GpuCoresNvidia: 0,
 			},
 			Config: &porterv1.Service_JobConfig{
@@ -309,7 +308,7 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 			CpuCores:          0.1,
 			RamMegabytes:      256,
 			Gpu: &porterv1.GPU{
-				Enabled: false,
+				Enabled:        false,
 				GpuCoresNvidia: 0,
 			},
 			Config: &porterv1.Service_WorkerConfig{
@@ -327,7 +326,7 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 			CpuCores:          0.1,
 			RamMegabytes:      256,
 			Gpu: &porterv1.GPU{
-				Enabled: false,
+				Enabled:        false,
 				GpuCoresNvidia: 0,
 			},
 			Config: &porterv1.Service_WebConfig{
@@ -358,17 +357,17 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 		},
 	},
 	Predeploy: &porterv1.Service{
-		RunOptional:    pointer.String("ls"),
-		Instances:      0,
-		Port:           0,
-		CpuCores:       0,
-		RamMegabytes:   0,
+		RunOptional:  pointer.String("ls"),
+		Instances:    0,
+		Port:         0,
+		CpuCores:     0,
+		RamMegabytes: 0,
 		Gpu: &porterv1.GPU{
-			Enabled: false,
+			Enabled:        false,
 			GpuCoresNvidia: 0,
 		},
-		Config:         &porterv1.Service_JobConfig{},
-		Type:           3,
+		Config: &porterv1.Service_JobConfig{},
+		Type:   3,
 	},
 }
 

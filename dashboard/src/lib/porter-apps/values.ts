@@ -2,21 +2,21 @@ import { z } from "zod";
 
 // ServiceString is a string value in a service that can be read-only or editable
 export const serviceStringValidator = z.object({
-  readOnly: z.boolean(),
+  readOnly: z.boolean().default(false),
   value: z.string(),
 });
 export type ServiceString = z.infer<typeof serviceStringValidator>;
 
 // ServiceNumber is a number value in a service that can be read-only or editable
 export const serviceNumberValidator = z.object({
-  readOnly: z.boolean(),
+  readOnly: z.boolean().default(false),
   value: z.coerce.number(),
 });
 export type ServiceNumber = z.infer<typeof serviceNumberValidator>;
 
 // ServiceBoolean is a boolean value in a service that can be read-only or editable
 export const serviceBooleanValidator = z.object({
-  readOnly: z.boolean(),
+  readOnly: z.boolean().default(false),
   value: z.boolean(),
 });
 export type ServiceBoolean = z.infer<typeof serviceBooleanValidator>;

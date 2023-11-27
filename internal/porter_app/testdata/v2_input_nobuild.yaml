@@ -1,5 +1,5 @@
 version: v2
-name: 'test-app'
+name: "test-app"
 image:
   repository: nginx
   tag: latest
@@ -22,6 +22,9 @@ services:
     healthCheck:
       enabled: true
       httpPath: /healthz
+    gpu:
+      enabled: false
+      gpuCoresNvidia: 0
   - name: example-wkr
     type: worker
     run: echo 'work'
@@ -35,7 +38,7 @@ services:
     allowConcurrent: true
     cpuCores: 0.1
     ramMegabytes: 256
-    cron: '*/10 * * * *'
+    cron: "*/10 * * * *"
     timeoutSeconds: 60
     suspendCron: false
 predeploy:

@@ -99,7 +99,7 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			res.CloudProviderCredentialIdentifier = credResp.Msg.CredentialsIdentifier
 		} else {
-			credReq := porterv1.CreateAssumeRoleChainRequest{
+			credReq := porterv1.CreateAssumeRoleChainRequest{ //nolint:staticcheck // being deprecated by the above UpdateCloudProviderCredentials
 				ProjectId:       int64(project.ID),
 				SourceArn:       "arn:aws:iam::108458755588:role/CAPIManagement", // hard coded as this is the final hop for a CAPI cluster
 				TargetAccessId:  request.AWSAccessKeyID,
@@ -108,7 +108,7 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				ExternalId:      request.ExternalID,
 			}
 
-			credResp, err := p.Config().ClusterControlPlaneClient.CreateAssumeRoleChain(ctx, connect.NewRequest(&credReq))
+			credResp, err := p.Config().ClusterControlPlaneClient.CreateAssumeRoleChain(ctx, connect.NewRequest(&credReq)) //nolint:staticcheck // being deprecated by the above UpdateCloudProviderCredentials
 			if err != nil {
 				err = telemetry.Error(ctx, span, err, "error creating CAPI required credential")
 				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusPreconditionFailed, err.Error()))

@@ -110,6 +110,18 @@ export const porterAppFormValidator = z
     redeployOnSave: z.boolean().default(false),
   })
   .refine(
+    ({ app }) => {
+      if (app.predeploy?.[0]?.run) {
+        return app.predeploy[0].run.value.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "if using a pre-deploy job, its start command must be non-empty",
+      path: ["app", "services"],
+    }
+  )
+  .refine(
     ({ app, source }) => {
       if (source.type !== "docker-registry" && app.build.method === "pack") {
         return app.services.every((svc) => svc.run.value.length > 0);

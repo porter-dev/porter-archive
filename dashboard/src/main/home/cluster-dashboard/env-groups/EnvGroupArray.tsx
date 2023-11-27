@@ -23,6 +23,7 @@ type PropsType = {
   fileUpload?: boolean;
   secretOption?: boolean;
   setButtonDisabled?: (x: boolean) => void;
+  setButtonStatus?: (x: string) => void;
 };
 
 const EnvGroupArray = ({
@@ -33,6 +34,7 @@ const EnvGroupArray = ({
   fileUpload,
   secretOption,
   setButtonDisabled,
+  setButtonStatus,
 }: PropsType) => {
   const [showEditorModal, setShowEditorModal] = useState(false);
   const blankValues = (): void => {
@@ -41,6 +43,9 @@ const EnvGroupArray = ({
       (envVar) => !envVar.key.trim() || !envVar.value.trim()
     );
     if (setButtonDisabled) {
+      if (setButtonStatus) {
+        setButtonStatus(isAnyEnvVariableBlank ? "Please fill out all fields" : "");
+      }
       setButtonDisabled(isAnyEnvVariableBlank);
     }
   };
@@ -149,7 +154,7 @@ const EnvGroupArray = ({
                       rows={entry.value?.split("\n").length}
                       disabled={disabled || entry.locked}
                       spellCheck={false}
-                      override={incorrectRegex(entry.key)}
+                      override={incorrectRegex(entry.value)}
                     />
                   )}
                   {secretOption && (

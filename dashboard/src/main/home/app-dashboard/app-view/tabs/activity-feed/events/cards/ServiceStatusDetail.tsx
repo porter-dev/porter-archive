@@ -149,7 +149,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                           showTargetBlankIcon={false}
                         >
                           <TagIcon src={link} />
-                          External Link
+                          External link
                         </Link>
                       </Tag>
                     </>

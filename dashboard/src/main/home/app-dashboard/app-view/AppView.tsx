@@ -4,7 +4,6 @@ import styled from "styled-components";
 import { z } from "zod";
 
 import Back from "components/porter/Back";
-import Spacer from "components/porter/Spacer";
 
 import AppDataContainer from "./AppDataContainer";
 import AppHeader from "./AppHeader";
@@ -56,7 +55,6 @@ const AppView: React.FC<Props> = ({ match }) => {
       <StyledExpandedApp>
         <Back to="/apps" />
         <AppHeader />
-        <Spacer y={0.5} />
         <AppDataContainer tabParam={params.tab} />
       </StyledExpandedApp>
     </LatestRevisionProvider>

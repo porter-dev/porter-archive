@@ -67,9 +67,9 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 		output.Error = errors.New("must specify a registry url")
 		return output
 	}
-	imageURL := strings.TrimPrefix(inp.RepositoryURL, "https://")
+	repositoryURL := strings.TrimPrefix(inp.RepositoryURL, "https://")
 
-	err := createImageRepositoryIfNotExists(ctx, client, projectID, imageURL)
+	err := createImageRepositoryIfNotExists(ctx, client, projectID, repositoryURL)
 	if err != nil {
 		output.Error = fmt.Errorf("error creating image repository: %w", err)
 		return output
@@ -104,7 +104,7 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 		}
 
 		opts := &docker.BuildOpts{
-			ImageRepo:         inp.RepositoryURL,
+			ImageRepo:         repositoryURL,
 			Tag:               tag,
 			CurrentTag:        inp.CurrentImageTag,
 			BuildContext:      buildCtx,
@@ -136,7 +136,7 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 		packAgent := &pack.Agent{}
 
 		opts := &docker.BuildOpts{
-			ImageRepo:    imageURL,
+			ImageRepo:    repositoryURL,
 			Tag:          tag,
 			BuildContext: inp.BuildContext,
 			Env:          inp.Env,
@@ -168,7 +168,7 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 		return output
 	}
 
-	err = dockerAgent.PushImage(ctx, fmt.Sprintf("%s:%s", imageURL, tag))
+	err = dockerAgent.PushImage(ctx, fmt.Sprintf("%s:%s", repositoryURL, tag))
 	if err != nil {
 		output.Error = fmt.Errorf("error pushing image: %w", err)
 		return output

@@ -23,6 +23,7 @@ type PropsType = {
   fileUpload?: boolean;
   secretOption?: boolean;
   setButtonDisabled?: (x: boolean) => void;
+  setButtonStatus?: (x: string) => void;
 };
 
 const EnvGroupArray = ({
@@ -33,12 +34,27 @@ const EnvGroupArray = ({
   fileUpload,
   secretOption,
   setButtonDisabled,
+  setButtonStatus,
 }: PropsType) => {
   const [showEditorModal, setShowEditorModal] = useState(false);
+  const blankValues = (): void => {
+
+    const isAnyEnvVariableBlank = values.some(
+      (envVar) => !envVar.key.trim() || !envVar.value.trim()
+    );
+    if (setButtonDisabled) {
+      if (setButtonStatus) {
+        setButtonStatus(isAnyEnvVariableBlank ? "Please fill out all fields" : "");
+      }
+      setButtonDisabled(isAnyEnvVariableBlank);
+    }
+  };
+
   const incorrectRegex = (key: string) => {
-    var pattern = /^[a-zA-Z0-9._-]+$/;
+    const pattern = /^[a-zA-Z0-9._-]+$/;
     if (setButtonDisabled) {
       setButtonDisabled(!pattern.test(key))
+      blankValues();
     }
     if (key) {
       // The test() method tests for a match in a string
@@ -60,10 +76,10 @@ const EnvGroupArray = ({
       let push = true;
 
       for (let i = 0; i < values.length; i++) {
-        const existingKey = values[i]["key"];
-        const isExistingKeyDeleted = values[i]["deleted"];
+        const existingKey = values[i].key;
+        const isExistingKeyDeleted = values[i].deleted;
         if (key === existingKey && !isExistingKeyDeleted) {
-          _values[i]["value"] = envObj[key];
+          _values[i].value = envObj[key];
           push = false;
         }
       }
@@ -138,7 +154,7 @@ const EnvGroupArray = ({
                       rows={entry.value?.split("\n").length}
                       disabled={disabled || entry.locked}
                       spellCheck={false}
-                      override={incorrectRegex(entry.key)}
+                      override={incorrectRegex(entry.value)}
                     />
                   )}
                   {secretOption && (
@@ -207,13 +223,13 @@ const EnvGroupArray = ({
       </StyledInputArray>
       {showEditorModal && (
         <Modal
-          onRequestClose={() => setShowEditorModal(false)}
+          onRequestClose={() => { setShowEditorModal(false); }}
           width="60%"
           height="650px"
         >
           <EnvEditorModal
-            closeModal={() => setShowEditorModal(false)}
-            setEnvVariables={(envFile: string) => readFile(envFile)}
+            closeModal={() => { setShowEditorModal(false); }}
+            setEnvVariables={(envFile: string) => { readFile(envFile); }}
           />
         </Modal>
       )}

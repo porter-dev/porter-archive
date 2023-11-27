@@ -87,7 +87,7 @@ func (c *CreateDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 	if ccpResp.Msg.DeploymentTargetId == "" {
-		err := telemetry.Error(ctx, span, err, "deployment target id is empty")
+		err := telemetry.Error(ctx, span, nil, "deployment target id is empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

@@ -58,12 +58,12 @@ func DeploymentTargetDetails(ctx context.Context, inp DeploymentTargetDetailsInp
 	}
 
 	if deploymentTargetDetailsResp == nil || deploymentTargetDetailsResp.Msg == nil {
-		return deploymentTarget, telemetry.Error(ctx, span, err, "deployment target details resp is nil")
+		return deploymentTarget, telemetry.Error(ctx, span, nil, "deployment target details resp is nil")
 	}
 
 	target := deploymentTargetDetailsResp.Msg.DeploymentTarget
 	if target.ClusterId != inp.ClusterID {
-		return deploymentTarget, telemetry.Error(ctx, span, err, "deployment target details resp cluster id does not match cluster id")
+		return deploymentTarget, telemetry.Error(ctx, span, nil, "deployment target details resp cluster id does not match cluster id")
 	}
 
 	deploymentTarget = DeploymentTarget{

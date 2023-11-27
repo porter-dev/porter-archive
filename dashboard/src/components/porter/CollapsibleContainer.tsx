@@ -1,23 +1,15 @@
-import React, { ReactNode } from "react";
-
+import React, { type ReactNode } from "react";
 import { Collapse } from "react-collapse";
-import './collapsible-container.css';
+
+import "./collapsible-container.css";
 
 type Props = {
-    isOpened: boolean;
-    children: ReactNode;
+  isOpened: boolean;
+  children: ReactNode;
 };
 
-const CollapsibleContainer: React.FC<Props> = ({
-    isOpened,
-    children,
-}) => {
-
-  return (
-    <Collapse isOpened={isOpened}>
-        {children}
-    </Collapse>
-  );
+const CollapsibleContainer: React.FC<Props> = ({ isOpened, children }) => {
+  return <Collapse isOpened={isOpened}>{children}</Collapse>;
 };
 
 export default CollapsibleContainer;

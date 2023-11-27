@@ -1,23 +1,18 @@
+import React from "react";
+import { Controller, useFormContext } from "react-hook-form";
+
 import Checkbox from "components/porter/Checkbox";
+import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { PorterAppFormData } from "lib/porter-apps";
-import { ClientService } from "lib/porter-apps/services";
-import React from "react";
-import AnimateHeight from "react-animate-height";
-import { Controller, useFormContext } from "react-hook-form";
+import { type PorterAppFormData } from "lib/porter-apps";
 
 type HealthProps = {
   index: number;
-  service: ClientService & {
-    config: {
-      type: "web";
-    };
-  };
 };
 
-const Health: React.FC<HealthProps> = ({ index, service }) => {
+const Health: React.FC<HealthProps> = ({ index }) => {
   const { register, control, watch } = useFormContext<PorterAppFormData>();
 
   const healthCheckEnabled = watch(
@@ -27,17 +22,20 @@ const Health: React.FC<HealthProps> = ({ index, service }) => {
   return (
     <>
       <Spacer y={1} />
-      <Text color="helper">
-        <>
-          <span>Health checks</span>
+      <Text>Health checks</Text>
+      <Spacer y={0.25} />
+      <Container style={{ width: "400px" }}>
+        <Text color="helper">
+          Configure health checks to prevent downtime during deployments
           <a
-            href="https://docs.porter.run/enterprise/deploying-applications/zero-downtime-deployments#health-checks"
+            href="https://docs.porter.run/configure/health-checks"
             target="_blank"
+            rel="noreferrer"
           >
             &nbsp;(?)
           </a>
-        </>
-      </Text>
+        </Text>
+      </Container>
       <Spacer y={0.5} />
       <Controller
         name={`app.services.${index}.config.healthCheck.enabled`}
@@ -63,15 +61,15 @@ const Health: React.FC<HealthProps> = ({ index, service }) => {
       {healthCheckEnabled.value && (
         <>
           <Spacer y={0.5} />
+          <Text>Health check endpoint</Text>
+          <Spacer y={0.5} />
           <ControlledInput
             type="text"
-            label="Health Check Endpoint "
             placeholder="ex: /healthz"
             {...register(
               `app.services.${index}.config.healthCheck.httpPath.value`
             )}
           />
-          <Spacer y={0.5} />
         </>
       )}
     </>

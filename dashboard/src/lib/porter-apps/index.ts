@@ -1,9 +1,9 @@
 import {
+  Build,
   EFS,
   HelmOverrides,
   PorterApp,
   Service,
-  type Build,
 } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { z } from "zod";
@@ -109,6 +109,18 @@ export const porterAppFormValidator = z
     deletions: deletionValidator,
     redeployOnSave: z.boolean().default(false),
   })
+  .refine(
+    ({ app }) => {
+      if (app.predeploy?.[0]?.run) {
+        return app.predeploy[0].run.value.length > 0;
+      }
+      return true;
+    },
+    {
+      message: "if using a pre-deploy job, its start command must be non-empty",
+      path: ["app", "services"],
+    }
+  )
   .refine(
     ({ app, source }) => {
       if (source.type !== "docker-registry" && app.build.method === "pack") {
@@ -246,22 +258,26 @@ export function serviceOverrides({
   };
 }
 
-const clientBuildToProto = (build: BuildOptions) => {
+const clientBuildToProto = (build: BuildOptions): Build => {
   return match(build)
-    .with({ method: "pack" }, (b) =>
-      Object.freeze({
-        method: "pack",
-        context: b.context,
-        buildpacks: b.buildpacks.map((b) => b.buildpack),
-        builder: b.builder,
-      })
+    .with(
+      { method: "pack" },
+      (b) =>
+        new Build({
+          method: "pack",
+          context: b.context,
+          buildpacks: b.buildpacks.map((b) => b.buildpack),
+          builder: b.builder,
+        })
     )
-    .with({ method: "docker" }, (b) =>
-      Object.freeze({
-        method: "docker",
-        context: b.context,
-        dockerfile: b.dockerfile,
-      })
+    .with(
+      { method: "docker" },
+      (b) =>
+        new Build({
+          method: "docker",
+          context: b.context,
+          dockerfile: b.dockerfile,
+        })
     )
     .exhaustive();
 };
@@ -529,7 +545,7 @@ export function applyPreviewOverrides({
         override: serializeService(override),
       });
 
-      if (ds.config.type == "web") {
+      if (ds.config.type === "web") {
         return {
           ...ds,
           config: {
@@ -541,7 +557,7 @@ export function applyPreviewOverrides({
       return ds;
     }
 
-    if (svc.config.type == "web") {
+    if (svc.config.type === "web") {
       return {
         ...svc,
         config: {

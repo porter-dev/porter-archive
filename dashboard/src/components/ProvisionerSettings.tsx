@@ -47,7 +47,6 @@ import { Integer } from "type-fest";
 import InputSlider from "./porter/InputSlider";
 import GPUProvisionSettings from "./GPUProvisionSettings";
 
-
 const regionOptions = [
   { value: "us-east-1", label: "US East (N. Virginia) us-east-1" },
   { value: "us-east-2", label: "US East (Ohio) us-east-2" },
@@ -81,10 +80,10 @@ const machineTypeOptions = [
   { value: "t3a.large", label: "t3a.large" },
   { value: "t3a.xlarge", label: "t3a.xlarge" },
   { value: "t3a.2xlarge", label: "t3a.2xlarge" },
-  { value: "t4g.medium", label: "t4g.medium"},
-  { value: "t4g.large", label: "t4g.large"},
-  { value: "t4g.xlarge", label: "t4g.xlarge"},
-  { value: "t4g.2xlarge", label: "t4g.2xlarge"},
+  { value: "t4g.medium", label: "t4g.medium" },
+  { value: "t4g.large", label: "t4g.large" },
+  { value: "t4g.xlarge", label: "t4g.xlarge" },
+  { value: "t4g.2xlarge", label: "t4g.2xlarge" },
   { value: "c6i.large", label: "c6i.large" },
   { value: "c6i.xlarge", label: "c6i.xlarge" },
   { value: "c6i.2xlarge", label: "c6i.2xlarge" },
@@ -116,6 +115,7 @@ const initialClusterState: ClusterState = {
   clusterName: "",
   awsRegion: "us-east-1",
   machineType: "t3.medium",
+  ecrScanningEnabled: false,
   guardDutyEnabled: false,
   kmsEncryptionEnabled: false,
   loadBalancerType: false,
@@ -187,7 +187,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const getStatus = (): React.ReactNode => {
@@ -372,6 +372,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
             logging: controlPlaneLogs,
             enableGuardDuty: clusterState.guardDutyEnabled,
             enableKmsEncryption: clusterState.kmsEncryptionEnabled,
+            enableEcrScanning: clusterState.ecrScanningEnabled,
             network: new AWSClusterNetwork({
               vpcCidr: clusterState.cidrRangeVPC || defaultCidrVpc,
               serviceCidr: clusterState.cidrRangeServices || defaultCidrServices,
@@ -460,8 +461,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
     setIsReadOnly(
       props.clusterId &&
-        (currentCluster.status === "UPDATING" ||
-          currentCluster.status === "UPDATING_UNAVAILABLE")
+      (currentCluster.status === "UPDATING" ||
+        currentCluster.status === "UPDATING_UNAVAILABLE")
     );
     handleClusterStateChange(
       "clusterName",
@@ -522,8 +523,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
         const awsTags = eksValues.loadBalancer.tags
           ? Object.entries(eksValues.loadBalancer.tags)
-              .map(([key, value]) => `${key}=${value}`)
-              .join(",")
+            .map(([key, value]) => `${key}=${value}`)
+            .join(",")
           : "";
         handleClusterStateChange("awsTags", awsTags);
 
@@ -554,6 +555,14 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       handleClusterStateChange(
         "kmsEncryptionEnabled",
         eksValues.enableKmsEncryption
+      );
+      handleClusterStateChange(
+        "ecrScanningEnabled",
+        eksValues.enableEcrScanning
+      );
+      handleClusterStateChange(
+        "certificateARN",
+        eksValues.loadBalancer?.additionalCertificateArns?.join(",")
       );
     }
   }, [isExpanded, props.selectedClusterVersion]);
@@ -1063,16 +1072,38 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
                         {(clusterState.wafV2ARN === undefined ||
                           clusterState.wafV2ARN?.length === 0) && (
-                          <ErrorInLine>
-                            <i className="material-icons">error</i>
-                            {"Required if WafV2 is enabled"}
-                          </ErrorInLine>
-                        )}
+                            <ErrorInLine>
+                              <i className="material-icons">error</i>
+                              {"Required if WafV2 is enabled"}
+                            </ErrorInLine>
+                          )}
                       </>
                     )}
                     <Spacer y={1} />
                   </>
                 )}
+
+                <FlexCenter>
+                  <Checkbox
+                    checked={clusterState.ecrScanningEnabled}
+                    disabled={isReadOnly}
+                    toggleChecked={() => {
+                      handleClusterStateChange(
+                        "ecrScanningEnabled",
+                        !clusterState.ecrScanningEnabled
+                      );
+                    }}
+                    disabledTooltip={
+                      "Wait for provisioning to complete before editing this field."
+                    }
+                  >
+                    <Text color="helper">
+                      Enable ECR scanning for this cluster
+                    </Text>
+                  </Checkbox>
+                </FlexCenter>
+                <Spacer y={1} />
+
                 <FlexCenter>
                   <Checkbox
                     checked={clusterState.guardDutyEnabled}
@@ -1106,7 +1137,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                 <FlexCenter>
                   <Checkbox
                     checked={clusterState.kmsEncryptionEnabled}
-                    disabled={isReadOnly || currentCluster != null}
+                    disabled={isReadOnly}
                     toggleChecked={() => {
                       handleClusterStateChange(
                         "kmsEncryptionEnabled",
@@ -1116,7 +1147,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                     disabledTooltip={
                       clusterState.kmsEncryptionEnabled
                         ? "KMS encryption can never be disabled."
-                        : "Encryption is only supported at cluster creation."
+                        : "Wait for provisioning to complete before editing this field."
                     }
                   >
                     <Text color="helper">
@@ -1154,7 +1185,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
     setShowHelpMessage(false);
     try {
       await preflightChecks();
-    } catch (err) {}
+    } catch (err) { }
   };
 
 
@@ -1359,7 +1390,7 @@ const ExpandHeader = styled.div<{ isExpanded: boolean }>`
         margin - right: 7px;
       margin-left: -7px;
       transform: ${(props) =>
-        props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
+    props.isExpanded ? "rotate(0deg)" : "rotate(-90deg)"};
       transition: transform 0.1s ease;
   }
       `;

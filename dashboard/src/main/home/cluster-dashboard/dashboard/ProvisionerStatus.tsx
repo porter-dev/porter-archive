@@ -10,7 +10,6 @@ import { Context } from "shared/Context";
 import LoadingBar from "components/porter/LoadingBar";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import Button from "components/porter/Button";
 
 type Props = {
   provisionFailureReason: string;

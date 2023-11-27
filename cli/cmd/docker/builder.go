@@ -53,7 +53,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 		excludes, err = dockerignore.ReadAll(bytes.NewBuffer(dockerIgnoreBytes))
 
 		if err != nil {
-			return err
+			return fmt.Errorf("error reading .dockerignore: %w", err)
 		}
 	}
 
@@ -63,7 +63,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 		ExcludePatterns: excludes,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating tar: %w", err)
 	}
 
 	var writer io.Writer = os.Stderr
@@ -74,7 +74,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 	if !opts.IsDockerfileInCtx {
 		dockerfileCtx, err := os.Open(dockerfilePath)
 		if err != nil {
-			return fmt.Errorf("unable to open Dockerfile: %v", err)
+			return fmt.Errorf("error opening Dockerfile: %w", err)
 		}
 
 		defer dockerfileCtx.Close()
@@ -83,7 +83,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 		tar, dockerfilePath, err = AddDockerfileToBuildContext(dockerfileCtx, tar)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("error adding Dockerfile to build context: %w", err)
 		}
 	}
 
@@ -111,7 +111,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 		Platform: "linux/amd64",
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("error building image: %w", err)
 	}
 
 	defer out.Body.Close()
@@ -206,12 +206,15 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 	commandArgs := []string{
 		"build",
 		"-f", dockerfileName,
-		"--platform", "linux/amd64",
 		"--tag", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
 		"--cache-from", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag),
 	}
 	for key, val := range opts.Env {
 		commandArgs = append(commandArgs, "--build-arg", fmt.Sprintf("%s=%s", key, val))
+	}
+
+	if !sliceContainsString(extraDockerArgs, "--platform") {
+		commandArgs = append(commandArgs, "--platform", "linux/amd64")
 	}
 
 	commandArgs = append(commandArgs, extraDockerArgs...)
@@ -298,4 +301,15 @@ func injectDockerfileIntoBuildContext(buildContext string, dockerfilePath string
 	}
 
 	return randomName, nil
+}
+
+// sliceContainsString implements slice.Contains and should be removed on upgrade to golang 1.21
+func sliceContainsString(haystack []string, needle string) bool {
+	for _, value := range haystack {
+		if value == needle {
+			return true
+		}
+	}
+
+	return false
 }

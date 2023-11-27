@@ -3,7 +3,7 @@ package porter_app
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
+	"errors"
 	"time"
 
 	"connectrpc.com/connect"
@@ -110,8 +110,9 @@ func EncodedRevisionFromProto(ctx context.Context, appRevision *porterv1.AppRevi
 	b64 := base64.StdEncoding.EncodeToString(encoded)
 
 	status, err := appRevisionStatusFromProto(appRevision.Status)
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "status", Value: string(status)})
 	if err != nil {
-		return revision, telemetry.Error(ctx, span, err, "error getting app revision status from proto")
+		_ = telemetry.Error(ctx, span, nil, "unknown revision type") // flagged as an error for visibility
 	}
 
 	appInstanceIdStr := appRevision.AppInstanceId
@@ -202,7 +203,7 @@ func AttachEnvToRevision(ctx context.Context, inp AttachEnvToRevisionInput) (Rev
 }
 
 func appRevisionStatusFromProto(status string) (models.AppRevisionStatus, error) {
-	var appRevisionStatus models.AppRevisionStatus
+	appRevisionStatus := models.AppRevisionStatus_Unknown
 	switch status {
 	case string(models.AppRevisionStatus_ImageAvailable):
 		appRevisionStatus = models.AppRevisionStatus_ImageAvailable
@@ -234,9 +235,11 @@ func appRevisionStatusFromProto(status string) (models.AppRevisionStatus, error)
 		appRevisionStatus = models.AppRevisionStatus_BuildSuccessful
 	case string(models.AppRevisionStatus_ApplyFailed):
 		appRevisionStatus = models.AppRevisionStatus_ApplyFailed
+	case string(models.AppRevisionStatus_UpdateFailed):
+		appRevisionStatus = models.AppRevisionStatus_UpdateFailed
 
 	default:
-		return appRevisionStatus, fmt.Errorf("unknown app revision status")
+		return appRevisionStatus, errors.New("unknown app revision status")
 	}
 
 	return appRevisionStatus, nil

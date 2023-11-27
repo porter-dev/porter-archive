@@ -1,9 +1,8 @@
 import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
-import EnvGroupArray from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { PopulatedEnvGroup } from "components/porter-form/types";
+import { type PopulatedEnvGroup } from "components/porter-form/types";
 import _, { isObject, differenceBy, omit } from "lodash";
 
 
@@ -22,10 +21,10 @@ const ExpandableEnvGroup: React.FC<{
             </EventInformation>
           </ContentContainer>
           <ActionContainer>
-            <ActionButton onClick={() => onDelete()}>
+            <ActionButton onClick={() => { onDelete(); }}>
               <span className="material-icons">delete</span>
             </ActionButton>
-            <ActionButton onClick={() => setIsExpanded((prev) => !prev)}>
+            <ActionButton onClick={() => { setIsExpanded((prev) => !prev); }}>
               <i className="material-icons">
                 {isExpanded ? "arrow_drop_up" : "arrow_drop_down"}
               </i>

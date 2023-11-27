@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// ProtoFromAddon converts an Addon to the Addon proto type
 func ProtoFromAddon(ctx context.Context, addon Addon) (*porterv1.Addon, error) {
 	ctx, span := telemetry.NewSpan(ctx, "proto-from-addon")
 	defer span.End()
@@ -65,7 +66,7 @@ func addonEnumProtoFromType(ctx context.Context, addonType string) (porterv1.Add
 func postgresConfigProtoFromAddon(addon Addon) *porterv1.Postgres {
 	return &porterv1.Postgres{
 		RamMegabytes:     int32(addon.RamMegabytes),
-		CpuCores:         float32(addon.CpuCores),
+		CpuCores:         addon.CpuCores,
 		StorageGigabytes: int32(addon.StorageGigabytes),
 	}
 }

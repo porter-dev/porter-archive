@@ -166,7 +166,7 @@ const Icon = styled.img`
 
 const StyledProvisionerStatus = styled.div`
   border-radius: 5px;
-  background: #26292e;
+  background: ${props => props.theme.fg};
   border: 1px solid #494b4f;
   font-size: 13px;
   width: 100%;

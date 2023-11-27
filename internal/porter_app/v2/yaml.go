@@ -136,7 +136,7 @@ type Service struct {
 	CpuCores                      float32           `yaml:"cpuCores,omitempty"`
 	RamMegabytes                  int               `yaml:"ramMegabytes,omitempty"`
 	GpuCoresNvidia                float32           `yaml:"gpuCoresNvidia,omitempty"`
-	GPU 						  *GPU				`yaml:"gpu,omitempty"`
+	GPU                           *GPU              `yaml:"gpu,omitempty"`
 	SmartOptimization             *bool             `yaml:"smartOptimization,omitempty"`
 	TerminationGracePeriodSeconds *int32            `yaml:"terminationGracePeriodSeconds,omitempty"`
 	Port                          int               `yaml:"port,omitempty"`
@@ -161,10 +161,10 @@ type AutoScaling struct {
 	MemoryThresholdPercent int  `yaml:"memoryThresholdPercent"`
 }
 
-//GPU represents GPU settings for a service
+// GPU represents GPU settings for a service
 type GPU struct {
-	Enabled                bool `yaml:"enabled"`
-	GpuCoresNvidia 	   	   int  `yaml:"gpuCoresNvidia"`
+	Enabled        bool `yaml:"enabled"`
+	GpuCoresNvidia int  `yaml:"gpuCoresNvidia"`
 }
 
 // Domains are the custom domains for a web service
@@ -313,8 +313,8 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	}
 
 	gpu := &porterv1.GPU{
-		Enabled:                service.GPU.Enabled,
-		GpuCoresNvidia:         int32(service.GPU.GpuCoresNvidia),
+		Enabled:        service.GPU.Enabled,
+		GpuCoresNvidia: int32(service.GPU.GpuCoresNvidia),
 	}
 
 	serviceProto.Gpu = gpu
@@ -469,17 +469,17 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 
 func appServiceFromProto(service *porterv1.Service) (Service, error) {
 	appService := Service{
-		Name:                          service.Name,
-		Run:                           service.RunOptional,
-		Instances:                     service.InstancesOptional,
-		CpuCores:                      service.CpuCores,
-		RamMegabytes:                  int(service.RamMegabytes),
-		GpuCoresNvidia:                service.GpuCoresNvidia, // nolint:staticcheck // https://linear.app/porter/issue/POR-2137/support-new-gpu-field-in-porteryaml
-		Port:                          int(service.Port),
-		SmartOptimization:             service.SmartOptimization,
-		GPU: 						  &GPU{
-			Enabled:                service.Gpu.Enabled,
-			GpuCoresNvidia:         int(service.Gpu.GpuCoresNvidia),
+		Name:              service.Name,
+		Run:               service.RunOptional,
+		Instances:         service.InstancesOptional,
+		CpuCores:          service.CpuCores,
+		RamMegabytes:      int(service.RamMegabytes),
+		GpuCoresNvidia:    service.GpuCoresNvidia, // nolint:staticcheck // https://linear.app/porter/issue/POR-2137/support-new-gpu-field-in-porteryaml
+		Port:              int(service.Port),
+		SmartOptimization: service.SmartOptimization,
+		GPU: &GPU{
+			Enabled:        service.Gpu.Enabled,
+			GpuCoresNvidia: int(service.Gpu.GpuCoresNvidia),
 		},
 		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
 	}

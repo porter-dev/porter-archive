@@ -653,6 +653,7 @@ func (p *CreateUpdatePorterAppEventHandler) handleNotification(ctx context.Conte
 		PorterAgentEventId: int64(agentEventMetadata.AgentEventID),
 		RawSummary:         agentEventMetadata.Summary,
 		RawDetail:          agentEventMetadata.Detail,
+		JobRunId:           agentEventMetadata.JobRunID,
 	})
 
 	_, err = p.Config().ClusterControlPlaneClient.CreateNotification(ctx, createNotificationRequest)

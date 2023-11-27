@@ -79,6 +79,7 @@ const serviceNoticationValidator = z.object({
         status: z.literal("UNKNOWN"),
       }),
     ]),
+    job_run_id: z.string(),
   }),
 });
 const revisionNotificationValidator = z.object({

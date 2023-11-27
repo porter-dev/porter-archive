@@ -227,7 +227,7 @@ const Resources: React.FC<ResourcesProps> = ({
           <>
             <Spacer y={1} />
             <Controller
-              name={`app.services.${index}.gpuCoresNvidia`}
+              name={`app.services.${index}.gpu`}
               control={control}
               render={({ field: { value, onChange } }) => (
                 <>
@@ -235,19 +235,16 @@ const Resources: React.FC<ResourcesProps> = ({
                     <Switch
                       size="small"
                       color="primary"
-                      checked={value.value > 0}
+                      checked={value.enabled}
                       disabled={!clusterContainsGPUNodes}
                       onChange={() => {
-                        if (value.value > 0) {
-                          onChange({
-                            ...value,
-                            value: 0,
-                          });
-                        } else
-                          onChange({
-                            ...value,
-                            value: 1,
-                          });
+                        onChange({
+                          ...value,
+                          enabled: !value.enabled,
+                          gpuCoresNvidia: {
+                            value: value.enabled ? 1 : 0,
+                          }
+                        });
                       }}
                       inputProps={{ "aria-label": "controlled" }}
                     />

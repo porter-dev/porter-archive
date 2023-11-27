@@ -154,7 +154,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {service.name.value.trim().length > 0
             ? service.name.value
             : "New Service"}
-          {service.gpuCoresNvidia.value > 0 && (
+          {service.gpu.enabled && (
             <>
               <Spacer inline x={1.5} />
               <TagContainer>
@@ -276,7 +276,7 @@ const ServiceHeader = styled.div<{
     border-radius: 20px;
     margin-left: -10px;
     transform: ${(props: { showExpanded?: boolean }) =>
-      props.showExpanded ? "" : "rotate(-90deg)"};
+    props.showExpanded ? "" : "rotate(-90deg)"};
   }
 `;
 

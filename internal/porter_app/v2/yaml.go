@@ -136,6 +136,7 @@ type Service struct {
 	CpuCores                      float32           `yaml:"cpuCores,omitempty"`
 	RamMegabytes                  int               `yaml:"ramMegabytes,omitempty"`
 	GpuCoresNvidia                float32           `yaml:"gpuCoresNvidia,omitempty"`
+	GPU 						  *GPU				`yaml:"gpu,omitempty"`
 	SmartOptimization             *bool             `yaml:"smartOptimization,omitempty"`
 	TerminationGracePeriodSeconds *int32            `yaml:"terminationGracePeriodSeconds,omitempty"`
 	Port                          int               `yaml:"port,omitempty"`
@@ -158,6 +159,12 @@ type AutoScaling struct {
 	MaxInstances           int  `yaml:"maxInstances"`
 	CpuThresholdPercent    int  `yaml:"cpuThresholdPercent"`
 	MemoryThresholdPercent int  `yaml:"memoryThresholdPercent"`
+}
+
+//GPU represents GPU settings for a service
+type GPU struct {
+	Enabled                bool `yaml:"enabled"`
+	GpuCoresNvidia 	   	   int  `yaml:"gpuCoresNvidia"`
 }
 
 // Domains are the custom domains for a web service
@@ -304,6 +311,13 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		Type:                          serviceType,
 		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
 	}
+
+	gpu := &porterv1.GPU{
+		Enabled:                service.GPU.Enabled,
+		GpuCoresNvidia:         int32(service.GPU.GpuCoresNvidia),
+	}
+
+	serviceProto.Gpu = gpu
 
 	switch serviceType {
 	default:
@@ -463,6 +477,10 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		GpuCoresNvidia:                service.GpuCoresNvidia, // nolint:staticcheck // https://linear.app/porter/issue/POR-2137/support-new-gpu-field-in-porteryaml
 		Port:                          int(service.Port),
 		SmartOptimization:             service.SmartOptimization,
+		GPU: 						  &GPU{
+			Enabled:                service.Gpu.Enabled,
+			GpuCoresNvidia:         int(service.Gpu.GpuCoresNvidia),
+		},
 		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
 	}
 

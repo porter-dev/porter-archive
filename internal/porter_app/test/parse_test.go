@@ -86,20 +86,22 @@ var result_nobuild = &porterv1.PorterApp{
 			Port:              80,
 			CpuCores:          0.1,
 			RamMegabytes:      256,
-			GpuCoresNvidia:    0,
 			Config: &porterv1.Service_WorkerConfig{
 				WorkerConfig: &porterv1.WorkerServiceConfig{
 					Autoscaling: nil,
 				},
 			},
 			Type: 2,
+			Gpu: &porterv1.GPU{
+				Enabled: false,
+				GpuCoresNvidia: 0,
+			},
 		},
 		"example-job": {
 			Name:           "example-job",
 			RunOptional:    pointer.String("echo 'hello world'"),
 			CpuCores:       0.1,
 			RamMegabytes:   256,
-			GpuCoresNvidia: 0,
 			Config: &porterv1.Service_JobConfig{
 				JobConfig: &porterv1.JobServiceConfig{
 					AllowConcurrentOptional: pointer.Bool(true),
@@ -107,6 +109,10 @@ var result_nobuild = &porterv1.PorterApp{
 					SuspendCron:             pointer.Bool(false),
 					TimeoutSeconds:          60,
 				},
+			},
+			Gpu: &porterv1.GPU{
+				Enabled: false,
+				GpuCoresNvidia: 0,
 			},
 			Type: 3,
 		},
@@ -118,7 +124,10 @@ var result_nobuild = &porterv1.PorterApp{
 			Port:           8080,
 			CpuCores:       0.1,
 			RamMegabytes:   256,
-			GpuCoresNvidia: 0,
+			Gpu: &porterv1.GPU{
+				Enabled: false,
+				GpuCoresNvidia: 0,
+			},
 			Config: &porterv1.Service_WebConfig{
 				WebConfig: &porterv1.WebServiceConfig{
 					Autoscaling: &porterv1.Autoscaling{
@@ -140,6 +149,7 @@ var result_nobuild = &porterv1.PorterApp{
 						Enabled:  true,
 						HttpPath: "/healthz",
 					},
+					
 				},
 			},
 			Type: 1,
@@ -151,7 +161,10 @@ var result_nobuild = &porterv1.PorterApp{
 			Port:              80,
 			CpuCores:          0.1,
 			RamMegabytes:      256,
-			GpuCoresNvidia:    0,
+			Gpu: &porterv1.GPU{
+				Enabled: false,
+				GpuCoresNvidia: 0,
+			},
 			Config: &porterv1.Service_WorkerConfig{
 				WorkerConfig: &porterv1.WorkerServiceConfig{
 					Autoscaling: nil,
@@ -164,7 +177,10 @@ var result_nobuild = &porterv1.PorterApp{
 			RunOptional:    pointer.String("echo 'hello world'"),
 			CpuCores:       0.1,
 			RamMegabytes:   256,
-			GpuCoresNvidia: 0,
+			Gpu: &porterv1.GPU{
+				Enabled: false,
+				GpuCoresNvidia: 0,
+			},
 			Config: &porterv1.Service_JobConfig{
 				JobConfig: &porterv1.JobServiceConfig{
 					AllowConcurrentOptional: pointer.Bool(true),
@@ -205,7 +221,10 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 			RunOptional:    pointer.String("echo 'hello world'"),
 			CpuCores:       0.1,
 			RamMegabytes:   256,
-			GpuCoresNvidia: 0,
+			Gpu: &porterv1.GPU{
+				Enabled: false,
+				GpuCoresNvidia: 0,
+			},
 			Config: &porterv1.Service_JobConfig{
 				JobConfig: &porterv1.JobServiceConfig{
 					AllowConcurrentOptional: &trueBool,
@@ -270,7 +289,10 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 			RunOptional:    pointer.String("echo 'hello world'"),
 			CpuCores:       0.1,
 			RamMegabytes:   256,
-			GpuCoresNvidia: 0,
+			Gpu: &porterv1.GPU{
+				Enabled: false,
+				GpuCoresNvidia: 0,
+			},
 			Config: &porterv1.Service_JobConfig{
 				JobConfig: &porterv1.JobServiceConfig{
 					AllowConcurrentOptional: &trueBool,
@@ -286,7 +308,10 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 			Port:              80,
 			CpuCores:          0.1,
 			RamMegabytes:      256,
-			GpuCoresNvidia:    0,
+			Gpu: &porterv1.GPU{
+				Enabled: false,
+				GpuCoresNvidia: 0,
+			},
 			Config: &porterv1.Service_WorkerConfig{
 				WorkerConfig: &porterv1.WorkerServiceConfig{
 					Autoscaling: nil,
@@ -301,7 +326,10 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 			Port:              8080,
 			CpuCores:          0.1,
 			RamMegabytes:      256,
-			GpuCoresNvidia:    0,
+			Gpu: &porterv1.GPU{
+				Enabled: false,
+				GpuCoresNvidia: 0,
+			},
 			Config: &porterv1.Service_WebConfig{
 				WebConfig: &porterv1.WebServiceConfig{
 					Autoscaling: &porterv1.Autoscaling{
@@ -335,7 +363,10 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 		Port:           0,
 		CpuCores:       0,
 		RamMegabytes:   0,
-		GpuCoresNvidia: 0,
+		Gpu: &porterv1.GPU{
+			Enabled: false,
+			GpuCoresNvidia: 0,
+		},
 		Config:         &porterv1.Service_JobConfig{},
 		Type:           3,
 	},

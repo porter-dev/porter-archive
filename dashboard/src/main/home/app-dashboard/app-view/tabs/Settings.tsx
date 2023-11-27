@@ -7,12 +7,14 @@ import styled from "styled-components";
 import Button from "components/porter/Button";
 import Checkbox from "components/porter/Checkbox";
 import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { type PorterAppFormData } from "lib/porter-apps";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import document from "assets/document.svg";
 
 import DeleteApplicationModal from "../../expanded-app/DeleteApplicationModal";
 import { useLatestRevision } from "../LatestRevisionContext";
@@ -193,13 +195,17 @@ const Settings: React.FC = () => {
         &nbsp;(?)
       </a>
       <Spacer y={0.5} />
-      <Button
+      <div
+        style={{ width: "fit-content", fontSize: "14px" }}
         onClick={() => {
           setIsExportModalOpen(true);
         }}
       >
-        Export
-      </Button>
+        <Tag>
+          <TagIcon src={document} />
+          Export
+        </Tag>
+      </div>
       {isExportModalOpen && (
         <ExportAppModal
           closeModal={() => {
@@ -241,4 +247,10 @@ export default Settings;
 
 const StyledSettingsTab = styled.div`
   width: 100%;
+`;
+
+const TagIcon = styled.img`
+  margin-top: 2px;
+  height: 12px;
+  margin-right: 3px;
 `;

@@ -1,46 +1,47 @@
+import _ from "lodash";
 import React, {
-  useState,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
-  useCallback,
+  useState,
 } from "react";
 import styled from "styled-components";
-import _ from "lodash";
 
-import time from "assets/time.png";
-import grid from "assets/grid.png";
-import list from "assets/list.png";
-import healthy from "assets/status-healthy.png";
-import letter from "assets/vector.svg";
 import calendar from "assets/calendar-number.svg";
 import database from "assets/database.svg";
+import grid from "assets/grid.png";
+import list from "assets/list.png";
 import notFound from "assets/not-found.png";
+import healthy from "assets/status-healthy.png";
+import time from "assets/time.png";
+import letter from "assets/vector.svg";
 
 import { Context } from "shared/Context";
-import { search } from "shared/search";
 import api from "shared/api";
 import { hardcodedIcons } from "shared/hardcodedNameDict";
+import { search } from "shared/search";
 
-import Container from "components/porter/Container";
+import Loading from "components/Loading";
 import Button from "components/porter/Button";
+import Container from "components/porter/Container";
+import Fieldset from "components/porter/Fieldset";
+import PorterLink from "components/porter/Link";
+import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
-import PorterLink from "components/porter/Link";
-import Loading from "components/Loading";
-import Fieldset from "components/porter/Fieldset";
 import { Link } from "react-router-dom";
 import { readableDate } from "shared/string_utils";
 
-import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 
 type Props = {};
 
 const templateWhitelist = [
+  "elasticache-redis",
   "rds-postgresql",
   "rds-postgresql-aurora",
 ];

@@ -205,7 +205,6 @@ export const useClusterResourceLimits = ({
         const decodedContract = Contract.fromJsonString(
           atob(latestContract.base64_contract)
         );
-        console.log(decodedContract);
         return decodedContract.cluster;
       }
     },
@@ -278,7 +277,6 @@ export const useClusterResourceLimits = ({
 
   useEffect(() => {
     if (contract) {
-      console.log(contract);
       const containsCustomNodeGroup = match(contract)
         .with({ kindValues: { case: "eksKind" } }, (c) => {
           return c.kindValues.value.nodeGroups.some(

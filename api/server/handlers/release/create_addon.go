@@ -267,13 +267,6 @@ func (c *CreateAddonHandler) scaleAckChartDeployment(ctx context.Context, chart 
 	return nil
 }
 
-type VpcConfig struct {
-	AWSRegion string   `json:"awsRegion"`
-	CIDRBlock string   `json:"cidrBlock"`
-	SubnetIDs []string `json:"subnetIDs"`
-	VpcID     string   `json:"vpcID"`
-}
-
 func (c *CreateAddonHandler) getVPCConfig(ctx context.Context, request *types.CreateAddonRequest, project *models.Project, cluster *models.Cluster) (map[string]any, error) {
 	ctx, span := telemetry.NewSpan(ctx, "get-vpc-config")
 	defer span.End()

@@ -344,7 +344,6 @@ export function deserializeService({
   setDefaults?: boolean;
   lockDeletions?: boolean;
 }): ClientService {
-  console.log("GPU SERVICE VALUE: ", service.gpu);
   const baseService = {
     expanded,
     canDelete: !override && !lockDeletions,
@@ -354,10 +353,13 @@ export function deserializeService({
     port: ServiceField.number(service.port, override?.port),
     cpuCores: ServiceField.number(service.cpuCores, override?.cpuCores),
     gpu: {
-      enabled: ServiceField.boolean(service.gpu.enabled, override?.gpu.enabled),
+      enabled: ServiceField.boolean(
+        service.gpu?.enabled,
+        override?.gpu.enabled
+      ),
       gpuCoresNvidia: ServiceField.number(
-        service.gpu.gpuCoresNvidia,
-        override?.gpu.gpuCoresNvidia
+        service.gpu?.gpuCoresNvidia,
+        override?.gpu?.gpuCoresNvidia
       ),
     },
     gpuCoresNvidia: ServiceField.number(

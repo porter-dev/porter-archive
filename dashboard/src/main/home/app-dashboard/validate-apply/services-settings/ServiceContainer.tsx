@@ -154,7 +154,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           {service.name.value.trim().length > 0
             ? service.name.value
             : "New Service"}
-          {service.gpu.enabled && (
+          {service.gpu.enabled.value && (
             <>
               <Spacer inline x={1.5} />
               <TagContainer>

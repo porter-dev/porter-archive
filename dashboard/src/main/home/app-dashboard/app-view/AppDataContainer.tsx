@@ -211,6 +211,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [isDirty, JSON.stringify(dirtyFields)]);
 
   const onSubmit = handleSubmit(async (data) => {
+    console.log(" Initial Data:", data)
     try {
       const { variables, secrets, validatedAppProto } = await validateApp(
         data,
@@ -360,8 +361,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const cancelRedeploy = useCallback(() => {
     const resetProto = previewRevision
       ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
-          ignoreUnknownFields: true,
-        })
+        ignoreUnknownFields: true,
+      })
       : latestProto;
 
     // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
@@ -369,12 +370,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     const resetSource =
       porterAppRecord.image_repo_uri && resetProto.image
         ? {
-            type: "docker-registry" as const,
-            image: {
-              repository: resetProto.image.repository,
-              tag: resetProto.image.tag,
-            },
-          }
+          type: "docker-registry" as const,
+          image: {
+            repository: resetProto.image.repository,
+            tag: resetProto.image.tag,
+          },
+        }
         : latestSource;
 
     reset({
@@ -529,8 +530,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   useEffect(() => {
     const newProto = previewRevision
       ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
-          ignoreUnknownFields: true,
-        })
+        ignoreUnknownFields: true,
+      })
       : latestProto;
 
     // we don't store versions of build settings because they are stored in the db, so we just have to use the latest version
@@ -538,12 +539,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     const newSource =
       porterAppRecord.image_repo_uri && newProto.image
         ? {
-            type: "docker-registry" as const,
-            image: {
-              repository: newProto.image.repository,
-              tag: newProto.image.tag,
-            },
-          }
+          type: "docker-registry" as const,
+          image: {
+            repository: newProto.image.repository,
+            tag: newProto.image.tag,
+          },
+        }
         : latestSource;
 
     reset({

@@ -235,14 +235,18 @@ const Resources: React.FC<ResourcesProps> = ({
                     <Switch
                       size="small"
                       color="primary"
-                      checked={value.enabled}
+                      checked={value.enabled.value}
                       disabled={!clusterContainsGPUNodes}
                       onChange={() => {
                         onChange({
                           ...value,
-                          enabled: !value.enabled,
+                          enabled: {
+                            ...value.enabled,
+                            value: !value.enabled.value,
+                          },
                           gpuCoresNvidia: {
-                            value: value.enabled ? 1 : 0,
+                            ...value.gpuCoresNvidia,
+                            value: value.enabled.value ? 0 : 1,
                           }
                         });
                       }}

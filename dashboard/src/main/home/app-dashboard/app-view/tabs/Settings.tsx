@@ -185,6 +185,13 @@ const Settings: React.FC = () => {
       <Text size={16}>Export &quot;{porterApp.name}&quot;</Text>
       <Spacer y={0.5} />
       <Text color="helper">Export this application as Porter YAML.</Text>
+      <a
+        href="https://docs.porter.run/deploy/configuration-as-code/overview"
+        target="_blank"
+        rel="noreferrer"
+      >
+        &nbsp;(?)
+      </a>
       <Spacer y={0.5} />
       <Button
         onClick={() => {

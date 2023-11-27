@@ -183,7 +183,7 @@ func Update(ctx context.Context, inp UpdateInput) error {
 			return buildError
 		}
 
-		color.New(color.FgGreen).Printf("Successfully built image (tag: %s)\n", buildSettings.Image.Tag) // nolint:errcheck,gosec
+		color.New(color.FgGreen).Printf("Successfully built image (tag: %s)\n", commitSHA) // nolint:errcheck,gosec
 
 		buildMetadata := make(map[string]interface{})
 		buildMetadata["end_time"] = time.Now().UTC()
@@ -280,14 +280,15 @@ func buildInputFromBuildSettings(projectID uint, appName string, commitSHA strin
 	}
 
 	return buildInput{
-		ProjectID:     projectID,
-		AppName:       appName,
-		BuildContext:  build.Context,
-		Dockerfile:    build.Dockerfile,
-		BuildMethod:   build.Method,
-		Builder:       build.Builder,
-		BuildPacks:    build.Buildpacks,
-		ImageTag:      commitSHA,
-		RepositoryURL: image.Repository,
+		ProjectID:       projectID,
+		AppName:         appName,
+		BuildContext:    build.Context,
+		Dockerfile:      build.Dockerfile,
+		BuildMethod:     build.Method,
+		Builder:         build.Builder,
+		BuildPacks:      build.Buildpacks,
+		ImageTag:        commitSHA,
+		RepositoryURL:   image.Repository,
+		CurrentImageTag: image.Tag,
 	}, nil
 }

@@ -278,7 +278,7 @@ export function serializeService(service: ClientService): SerializedService {
     gpuCoresNvidia: service.gpuCoresNvidia.value,
     gpu: {
       enabled: service.gpu.enabled.value,
-      gpuCoresNvidia: service.gpuCoresNvidia.value,
+      gpuCoresNvidia: service.gpu.gpuCoresNvidia.value,
     },
     terminationGracePeriodSeconds: service.terminationGracePeriodSeconds?.value,
     config: match(service.config)

@@ -164,12 +164,6 @@ export const useAppValidation = ({
 
       const serviceDeletions = setServiceDeletions(data.app.services);
 
-      console.log(
-        "SOSHAM: ",
-        proto.toJsonString({
-          emitDefaultValues: true,
-        })
-      );
       const res = await api.validatePorterApp(
         "<token>",
         {

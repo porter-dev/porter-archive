@@ -227,7 +227,7 @@ const Resources: React.FC<ResourcesProps> = ({
           <>
             <Spacer y={1} />
             <Controller
-              name={`app.services.${index}.gpuCoresNvidia`}
+              name={`app.services.${index}.gpu`}
               control={control}
               render={({ field: { value, onChange } }) => (
                 <>
@@ -235,19 +235,20 @@ const Resources: React.FC<ResourcesProps> = ({
                     <Switch
                       size="small"
                       color="primary"
-                      checked={value.value > 0}
+                      checked={value.enabled.value}
                       disabled={!clusterContainsGPUNodes}
                       onChange={() => {
-                        if (value.value > 0) {
-                          onChange({
-                            ...value,
-                            value: 0,
-                          });
-                        } else
-                          onChange({
-                            ...value,
-                            value: 1,
-                          });
+                        onChange({
+                          ...value,
+                          enabled: {
+                            ...value.enabled,
+                            value: !value.enabled.value,
+                          },
+                          gpuCoresNvidia: {
+                            ...value.gpuCoresNvidia,
+                            value: value.enabled.value ? 0 : 1,
+                          }
+                        });
                       }}
                       inputProps={{ "aria-label": "controlled" }}
                     />
@@ -264,7 +265,7 @@ const Resources: React.FC<ResourcesProps> = ({
                           You cluster has no GPU nodes available.
                         </Text>
                         <Spacer inline x={0.5} />
-                        <Tag>
+                        {currentCluster.status !== "UPDATING" && <Tag>
                           <Link
                             onClick={() => {
                               setClusterModalVisible(true);
@@ -273,7 +274,7 @@ const Resources: React.FC<ResourcesProps> = ({
                             <TagIcon src={addCircle} />
                             Add GPU nodes
                           </Link>
-                        </Tag>
+                        </Tag>}
                       </>
                     )}
                   </Container>
@@ -290,23 +291,22 @@ const Resources: React.FC<ResourcesProps> = ({
                 </>
               )}
             />
-            {currentCluster.status === "UPDATING" &&
-              clusterContainsGPUNodes && (
-                <CheckItemContainer>
-                  <CheckItemTop>
-                    <Loading offset="0px" width="20px" height="20px" />
-                    <Spacer inline x={1} />
-                    <Text>{"Creating GPU nodes..."}</Text>
-                    <Spacer inline x={1} />
-                    <Tag>
-                      <Link to={`/cluster-dashboard`}>
-                        <TagIcon src={infra} />
-                        View Status
-                      </Link>
-                    </Tag>
-                  </CheckItemTop>
-                </CheckItemContainer>
-              )}
+            {(currentCluster.status === "UPDATING" && !clusterContainsGPUNodes) && (
+              <CheckItemContainer>
+                <CheckItemTop>
+                  <Loading offset="0px" width="20px" height="20px" />
+                  <Spacer inline x={1} />
+                  <Text>{"Cluster is updating..."}</Text>
+                  <Spacer inline x={1} />
+                  <Tag>
+                    <Link to={`/cluster-dashboard`}>
+                      <TagIcon src={infra} />
+                      View Status
+                    </Link>
+                  </Tag>
+                </CheckItemTop>
+              </CheckItemContainer>
+            )}
           </>
         )}
       {match(service.config)

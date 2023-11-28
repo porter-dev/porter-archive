@@ -4,6 +4,7 @@ import { match } from "ts-pattern";
 
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import {
   isClientServiceNotification,
@@ -29,6 +30,8 @@ const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
       .with({ scope: "SERVICE" }, (n) => {
         return n.isDeployRelated
           ? "A service failed to deploy"
+          : ["job", "predeploy"].includes(n.service.config.type)
+          ? "A job run encountered issues"
           : "A service is unhealthy";
       })
       .with({ scope: "APPLICATION" }, () => {
@@ -52,7 +55,7 @@ const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
         <Spacer inline x={0.5} />
         {isClientServiceNotification(notification) && (
           <Container row style={{ width: "200px" }}>
-            <ServiceNameTag>
+            <Tag>
               {match(notification.service.config.type)
                 .with("web", () => <ServiceTypeIcon src={web} />)
                 .with("worker", () => <ServiceTypeIcon src={worker} />)
@@ -60,8 +63,8 @@ const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
                 .with("predeploy", () => <ServiceTypeIcon src={job} />)
                 .exhaustive()}
               <Spacer inline x={0.5} />
-              {notification.service.name.value}
-            </ServiceNameTag>
+              <Text>{notification.service.name.value}</Text>
+            </Tag>
           </Container>
         )}
       </Container>
@@ -103,19 +106,9 @@ const NotificationSummary = styled.div`
   font-weight: 500;
 `;
 
-const ServiceNameTag = styled.div`
-  display: flex;
-  justify-content: center;
-  padding: 3px 5px;
-  border-radius: 5px;
-  background: #ffffff22;
-  user-select: text;
-  font-size: 13px;
-`;
-
 const ServiceTypeIcon = styled.img`
-  height: 12px;
-  margin-top: 2px;
+  height: 13px;
+  margin-top: 4px;
 `;
 
 const StatusDot = styled.div<{ color: string }>`

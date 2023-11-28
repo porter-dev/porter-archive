@@ -28,6 +28,8 @@ type AppEventMetadata struct {
 	AppName string `json:"app_name"`
 	// Detail is the detail of the app event
 	Detail string `json:"detail"`
+	// JobRunID is the ID of the job run that this event refers to, if applicable
+	JobRunID string `json:"job_run_id"`
 }
 
 // ParseAgentEventMetadata parses raw app event metadata to a AppEventMetadata struct

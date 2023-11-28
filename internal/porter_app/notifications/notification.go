@@ -29,11 +29,11 @@ type Notification struct {
 // Metadata is the metadata of the notification
 type Metadata struct {
 	// Deployment is the deployment metadata, used to determine if the notification occurred during deployment or after
-	Deployment Deployment `json:"deployment,omitempty"`
+	Deployment Deployment `json:"deployment"`
 	// ServiceName is the name of the service
-	ServiceName string `json:"service_name,omitempty"`
+	ServiceName string `json:"service_name"`
 	// JobRunID is the id of the job run, if the service is a job
-	JobRunID string `json:"job_run_id,omitempty"`
+	JobRunID string `json:"job_run_id"`
 }
 
 // Scope is the scope of the notification

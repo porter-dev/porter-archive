@@ -1141,7 +1141,9 @@ const getRevision = baseApi<
 });
 
 const porterYamlFromRevision = baseApi<
-  {},
+  {
+      should_format_for_export: boolean;
+  },
   {
     project_id: number;
     cluster_id: number;

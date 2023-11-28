@@ -164,7 +164,7 @@ func Update(ctx context.Context, inp UpdateInput) error {
 
 		color.New(color.FgGreen).Printf("Building new image with tag %s...\n", commitSHA) // nolint:errcheck,gosec
 
-		buildInput, err := buildInputFromBuildSettings(cliConf.Project, appName, commitSHA, buildSettings.Image, buildSettings.Build)
+		buildInput, err := buildInputFromBuildSettings(cliConf.Project, appName, commitSHA, buildSettings.Image, buildSettings.Build, buildSettings.BuildEnvVariables)
 		if err != nil {
 			buildError = fmt.Errorf("error creating build input from build settings: %w", err)
 			return buildError
@@ -263,7 +263,7 @@ func gitSourceFromEnv() (porter_app.GitSource, error) {
 	}, nil
 }
 
-func buildInputFromBuildSettings(projectID uint, appName string, commitSHA string, image porter_app.Image, build porter_app.BuildSettings) (buildInput, error) {
+func buildInputFromBuildSettings(projectID uint, appName string, commitSHA string, image porter_app.Image, build porter_app.BuildSettings, buildEnv map[string]string) (buildInput, error) {
 	var buildSettings buildInput
 
 	if appName == "" {
@@ -290,5 +290,6 @@ func buildInputFromBuildSettings(projectID uint, appName string, commitSHA strin
 		ImageTag:        commitSHA,
 		RepositoryURL:   image.Repository,
 		CurrentImageTag: image.Tag,
+		Env:             buildEnv,
 	}, nil
 }

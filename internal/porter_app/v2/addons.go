@@ -37,8 +37,8 @@ func ProtoFromAddon(ctx context.Context, addon Addon) (*porterv1.Addon, error) {
 
 	for _, envGroup := range addon.EnvGroups {
 		eg := &porterv1.EnvGroup{
-			Name:    envGroup.Name,
-			Version: int64(envGroup.Version),
+			Name:    envGroup,
+			Version: 0, // this is updated to latest when applied to cluster
 		}
 		envGroups = append(envGroups, eg)
 	}

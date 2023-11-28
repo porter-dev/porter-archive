@@ -10,6 +10,10 @@ services:
     port: 8080
     cpuCores: 0.1
     ramMegabytes: 256
+    gpu: {
+      enabled:        false,
+			gpuCoresNvidia: 0,
+    }
     autoscaling:
       enabled: true
       minInstances: 1
@@ -29,15 +33,27 @@ services:
     cpuCores: 0.1
     ramMegabytes: 256
     instances: 1
+    gpu: {
+      enabled:        false,
+			gpuCoresNvidia: 0,
+    }
   - name: example-job
     type: job
     run: echo 'hello world'
     allowConcurrent: true
     cpuCores: 0.1
     ramMegabytes: 256
-    cron: '*/10 * * * *'
+    cron: "*/10 * * * *"
     timeoutSeconds: 60
     suspendCron: false
+    gpu: {
+      enabled:        false,
+			gpuCoresNvidia: 0,
+    }
 predeploy:
   type: job
   run: ls
+  gpu: {
+      enabled:        false,
+			gpuCoresNvidia: 0,
+  }

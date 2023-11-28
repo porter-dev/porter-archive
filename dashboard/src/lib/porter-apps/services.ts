@@ -82,6 +82,10 @@ export const serviceValidator = z.object({
   cpuCores: serviceNumberValidator,
   ramMegabytes: serviceNumberValidator,
   gpuCoresNvidia: serviceNumberValidator,
+  gpu: z.object({
+    enabled: serviceBooleanValidator,
+    gpuCoresNvidia: serviceNumberValidator,
+  }),
   smartOptimization: serviceBooleanValidator.optional(),
   terminationGracePeriodSeconds: serviceNumberValidator.optional(),
   config: z.discriminatedUnion("type", [
@@ -117,6 +121,10 @@ export type SerializedService = {
   ramMegabytes: number;
   smartOptimization?: boolean;
   gpuCoresNvidia: number;
+  gpu: {
+    enabled: boolean;
+    gpuCoresNvidia: number;
+  };
   terminationGracePeriodSeconds?: number;
   config:
     | {
@@ -196,6 +204,10 @@ export function defaultSerialized({
     cpuCores: defaultCPU,
     ramMegabytes: defaultRAM,
     gpuCoresNvidia: 0,
+    gpu: {
+      enabled: false,
+      gpuCoresNvidia: 0,
+    },
     smartOptimization: true,
   };
 
@@ -264,6 +276,10 @@ export function serializeService(service: ClientService): SerializedService {
     ramMegabytes: Math.round(service.ramMegabytes.value), // RAM must be an integer
     smartOptimization: service.smartOptimization?.value,
     gpuCoresNvidia: service.gpuCoresNvidia.value,
+    gpu: {
+      enabled: service.gpu.enabled.value,
+      gpuCoresNvidia: service.gpu.gpuCoresNvidia.value,
+    },
     terminationGracePeriodSeconds: service.terminationGracePeriodSeconds?.value,
     config: match(service.config)
       .with({ type: "web" }, (config) =>
@@ -336,6 +352,16 @@ export function deserializeService({
     instances: ServiceField.number(service.instances, override?.instances),
     port: ServiceField.number(service.port, override?.port),
     cpuCores: ServiceField.number(service.cpuCores, override?.cpuCores),
+    gpu: {
+      enabled: ServiceField.boolean(
+        service.gpu?.enabled,
+        override?.gpu.enabled
+      ),
+      gpuCoresNvidia: ServiceField.number(
+        service.gpu?.gpuCoresNvidia,
+        override?.gpu?.gpuCoresNvidia
+      ),
+    },
     gpuCoresNvidia: ServiceField.number(
       service.gpuCoresNvidia,
       override?.gpuCoresNvidia

@@ -1,5 +1,5 @@
 version: v2
-name: "test-app"
+name: 'test-app'
 image:
   repository: nginx
   tag: latest
@@ -10,7 +10,6 @@ services:
     port: 8080
     cpuCores: 0.1
     ramMegabytes: 256
-    gpu: {}
     autoscaling:
       enabled: true
       minInstances: 1
@@ -29,7 +28,6 @@ services:
     port: 80
     cpuCores: 0.1
     ramMegabytes: 256
-    gpu: {}
     instances: 1
   - name: example-job
     type: job
@@ -37,14 +35,12 @@ services:
     allowConcurrent: true
     cpuCores: 0.1
     ramMegabytes: 256
-    gpu: {}
-    cron: "*/10 * * * *"
+    cron: '*/10 * * * *'
     timeoutSeconds: 60
     suspendCron: false
 predeploy:
   type: job
   run: ls
-  gpu: {}
 env:
   PORT: 8080
   NODE_ENV: production

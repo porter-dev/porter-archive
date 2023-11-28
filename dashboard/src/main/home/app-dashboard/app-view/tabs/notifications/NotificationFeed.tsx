@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import styled from "styled-components";
 
-import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
@@ -68,7 +67,7 @@ const NotificationFeed: React.FC<Props> = ({
   return (
     <StyledNotificationFeed>
       {selectedNotification ? (
-        <Container>
+        <>
           <Link to={`/apps/${appName}/notifications`}>
             <BackButton>
               <i className="material-icons">keyboard_backspace</i>
@@ -84,7 +83,7 @@ const NotificationFeed: React.FC<Props> = ({
             deploymentTargetId={deploymentTargetId}
             appId={appId}
           />
-        </Container>
+        </>
       ) : (
         <NotificationList
           notifications={notifications}
@@ -103,6 +102,7 @@ export default NotificationFeed;
 
 const StyledNotificationFeed = styled.div`
   display: flex;
+  flex-direction: column;
   margin-bottom: -50px;
   width: 100%;
   animation: fadeIn 0.3s 0s;

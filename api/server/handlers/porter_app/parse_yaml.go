@@ -47,6 +47,7 @@ type EncodedAppWithEnv struct {
 	B64AppProto  string            `json:"b64_app_proto"`
 	EnvVariables map[string]string `json:"env_variables"`
 	EnvSecrets   map[string]string `json:"env_secrets"`
+	B64Addons    []string          `json:"b64_addons"`
 }
 
 // ParsePorterYAMLToProtoResponse is the response object for the /apps/parse endpoint
@@ -117,6 +118,14 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 	response.B64AppProto = encodedApp
 	response.EnvVariables = appDefinition.EnvVariables
 
+	encodedAddons, err := encodeAddonProtos(ctx, appDefinition.Addons)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error encoding addon protos")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+	response.B64Addons = encodedAddons
+
 	if appDefinition.PreviewApp != nil {
 		encodedPreviewApp, err := encodeAppProto(ctx, appDefinition.PreviewApp.AppProto)
 		if err != nil {
@@ -124,9 +133,18 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
+
+		encodedPreviewAddons, err := encodeAddonProtos(ctx, appDefinition.PreviewApp.Addons)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error encoding preview addon protos")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
 		response.PreviewApp = &EncodedAppWithEnv{
 			B64AppProto:  encodedPreviewApp,
 			EnvVariables: appDefinition.PreviewApp.EnvVariables,
+			B64Addons:    encodedPreviewAddons,
 		}
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "includes-preview-app", Value: true})
 	}
@@ -142,10 +160,29 @@ func encodeAppProto(ctx context.Context, app *porterv1.PorterApp) (string, error
 
 	by, err := helpers.MarshalContractObject(ctx, app)
 	if err != nil {
-		return encodedApp, err
+		return encodedApp, telemetry.Error(ctx, span, err, "error marshaling app proto")
 	}
 
 	encodedApp = base64.StdEncoding.EncodeToString(by)
 
 	return encodedApp, nil
+}
+
+func encodeAddonProtos(ctx context.Context, addons []*porterv1.Addon) ([]string, error) {
+	ctx, span := telemetry.NewSpan(ctx, "encode-addon-proto")
+	defer span.End()
+
+	var encodedAddons []string
+
+	for _, addon := range addons {
+		by, err := helpers.MarshalContractObject(ctx, addon)
+		if err != nil {
+			return encodedAddons, telemetry.Error(ctx, span, err, "error marshaling addon proto")
+		}
+
+		encodedAddon := base64.StdEncoding.EncodeToString(by)
+		encodedAddons = append(encodedAddons, encodedAddon)
+	}
+
+	return encodedAddons, nil
 }

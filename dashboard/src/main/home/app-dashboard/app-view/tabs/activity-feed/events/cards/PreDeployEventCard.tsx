@@ -9,6 +9,7 @@ import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import { isClientServiceNotification } from "lib/porter-apps/notification";
 
 import alert from "assets/alert-warning.svg";
 import document from "assets/document.svg";
@@ -61,12 +62,14 @@ const PreDeployEventCard: React.FC<Props> = ({
   };
 
   const predeployNotificationsExist = useMemo(() => {
-    return latestNotifications.some((notification) => {
-      return (
-        notification.service.config.type === "predeploy" &&
-        notification.appRevisionId === event.metadata.app_revision_id
-      );
-    });
+    return latestNotifications
+      .filter(isClientServiceNotification)
+      .some((notification) => {
+        return (
+          notification.service.config.type === "predeploy" &&
+          notification.appRevisionId === event.metadata.app_revision_id
+        );
+      });
   }, [JSON.stringify(latestNotifications)]);
 
   return (

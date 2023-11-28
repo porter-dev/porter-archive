@@ -125,12 +125,12 @@ type PorterYAML struct {
 
 // Addon represents an addon that should be installed alongside a Porter app
 type Addon struct {
-	Name             string     `yaml:"name"`
-	Type             string     `yaml:"type"`
-	EnvGroups        []EnvGroup `yaml:"envGroups,omitempty"`
-	CpuCores         float32    `yaml:"cpuCores,omitempty"`
-	RamMegabytes     int        `yaml:"ramMegabytes,omitempty"`
-	StorageGigabytes float32    `yaml:"storageGigabytes,omitempty"`
+	Name             string   `yaml:"name"`
+	Type             string   `yaml:"type"`
+	EnvGroups        []string `yaml:"envGroups,omitempty"`
+	CpuCores         float32  `yaml:"cpuCores,omitempty"`
+	RamMegabytes     int      `yaml:"ramMegabytes,omitempty"`
+	StorageGigabytes float32  `yaml:"storageGigabytes,omitempty"`
 }
 
 // RequiredApp specifies another porter app that this app expects to be deployed alongside it

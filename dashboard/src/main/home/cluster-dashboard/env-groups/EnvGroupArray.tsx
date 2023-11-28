@@ -23,7 +23,6 @@ type PropsType = {
   fileUpload?: boolean;
   secretOption?: boolean;
   setButtonDisabled?: (x: boolean) => void;
-  setButtonStatus?: (x: string) => void;
 };
 
 const EnvGroupArray = ({

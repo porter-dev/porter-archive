@@ -62,6 +62,8 @@ const ExportAppModal: React.FC<Props> = ({ closeModal }) => {
   return (
     <Modal closeModal={closeModal}>
       <Spacer y={1} />
+      Note: Secret environment variables are not included in the exported YAML.
+      <Spacer y={0.5} />
       <StyledValuesYaml>
         <Wrapper>
           <YamlEditor

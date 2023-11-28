@@ -257,6 +257,13 @@ func formatForExport(app v2.PorterApp) v2.PorterApp {
 		app.Build.CommitSHA = ""
 	}
 
+	// remove env secrets from env
+	for key, val := range app.Env {
+		if val == "********" {
+			delete(app.Env, key)
+		}
+	}
+
 	// don't show env group versions
 	for i := range app.EnvGroups {
 		app.EnvGroups[i] = strings.Split(app.EnvGroups[i], ":")[0]

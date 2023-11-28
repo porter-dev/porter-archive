@@ -927,7 +927,6 @@ const EnvGroupVariablesEditor = ({
           configuration.
         </Helper>
         <EnvGroupArray
-          setButtonStatus={setButtonStatus}
           setButtonDisabled={setButtonDisabled}
           values={variables}
           setValues={(x: any) => {

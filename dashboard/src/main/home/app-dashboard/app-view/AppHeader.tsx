@@ -251,6 +251,7 @@ const AppHeader: React.FC = () => {
       </LatestDeployContainer>
       <Spacer y={0.5} />
       <GHStatusBanner />
+      <Spacer y={0.5} />
     </>
   );
 };

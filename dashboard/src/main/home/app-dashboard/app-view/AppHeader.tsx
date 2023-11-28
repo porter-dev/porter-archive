@@ -34,7 +34,7 @@ const icons = [
   web,
 ];
 
-const HELLO_PORTER_PLACEHOLDER_TAG = "porter-initial-image";
+export const HELLO_PORTER_PLACEHOLDER_TAG = "porter-initial-image";
 
 const AppHeader: React.FC = () => {
   const { latestProto, porterApp, latestRevision, deploymentTarget } =

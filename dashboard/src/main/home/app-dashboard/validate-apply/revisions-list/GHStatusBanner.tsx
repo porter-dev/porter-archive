@@ -12,6 +12,7 @@ import { appRevisionValidator } from "lib/revisions/types";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
+import { HELLO_PORTER_PLACEHOLDER_TAG } from "../../app-view/AppHeader";
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import GHABanner from "../../expanded-app/GHABanner";
 
@@ -24,6 +25,7 @@ const GHStatusBanner: React.FC = () => {
     latestRevision,
     appName,
     deploymentTarget,
+    latestProto,
   } = useLatestRevision();
 
   const { data: revisions = [], status } = useQuery(
@@ -58,6 +60,14 @@ const GHStatusBanner: React.FC = () => {
   );
 
   const previouslyBuilt = useMemo(() => {
+    if (revisions.length === 1) {
+      if (
+        revisions[0].status === "DEPLOYED" &&
+        latestProto.image?.tag === HELLO_PORTER_PLACEHOLDER_TAG
+      ) {
+        return false;
+      }
+    }
     return revisions.some((r) =>
       match(r.status)
         .with(

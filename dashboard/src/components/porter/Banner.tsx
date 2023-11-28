@@ -4,7 +4,7 @@ import styled from "styled-components";
 import info from "assets/info.svg";
 import warning from "assets/warning.png";
 
-interface Props {
+type Props = {
   type?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
@@ -37,7 +37,7 @@ const Banner: React.FC<Props> = ({
     >
       <>
       {renderIcon()}
-      <span>{children}</span>
+      {children}
       </>
       {suffix && (
         <Suffix>{suffix}</Suffix>

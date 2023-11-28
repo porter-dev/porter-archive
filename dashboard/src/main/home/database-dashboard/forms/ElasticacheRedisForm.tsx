@@ -212,7 +212,7 @@ const ElasticacheRedisForm: React.FC<Props> = ({
                 </ResourceOption>
                 <Spacer height="15px" />
                 <ResourceOption
-                  selected={tier === "cache.r7gx.large"}
+                  selected={tier === "cache.r7g.xlarge"}
                   onClick={() => {
                     setTier("cache.r7g.xlarge");
                   }}
@@ -220,7 +220,7 @@ const ElasticacheRedisForm: React.FC<Props> = ({
                   <Container row>
                     <Text>Extra Large</Text>
                     <Spacer inline width="5px" />
-                    <Text color="helper">- 2 cpu</Text>
+                    <Text color="helper">- 4 cpu</Text>
                   </Container>
                   <StorageTag>26 GB RAM</StorageTag>
                 </ResourceOption>

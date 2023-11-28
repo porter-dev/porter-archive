@@ -265,7 +265,7 @@ const Resources: React.FC<ResourcesProps> = ({
                           You cluster has no GPU nodes available.
                         </Text>
                         <Spacer inline x={0.5} />
-                        <Tag>
+                        {currentCluster.status !== "UPDATING" && <Tag>
                           <Link
                             onClick={() => {
                               setClusterModalVisible(true);
@@ -274,7 +274,7 @@ const Resources: React.FC<ResourcesProps> = ({
                             <TagIcon src={addCircle} />
                             Add GPU nodes
                           </Link>
-                        </Tag>
+                        </Tag>}
                       </>
                     )}
                   </Container>
@@ -291,23 +291,22 @@ const Resources: React.FC<ResourcesProps> = ({
                 </>
               )}
             />
-            {currentCluster.status === "UPDATING" &&
-              clusterContainsGPUNodes && (
-                <CheckItemContainer>
-                  <CheckItemTop>
-                    <Loading offset="0px" width="20px" height="20px" />
-                    <Spacer inline x={1} />
-                    <Text>{"Creating GPU nodes..."}</Text>
-                    <Spacer inline x={1} />
-                    <Tag>
-                      <Link to={`/cluster-dashboard`}>
-                        <TagIcon src={infra} />
-                        View Status
-                      </Link>
-                    </Tag>
-                  </CheckItemTop>
-                </CheckItemContainer>
-              )}
+            {currentCluster.status === "UPDATING" && (
+              <CheckItemContainer>
+                <CheckItemTop>
+                  <Loading offset="0px" width="20px" height="20px" />
+                  <Spacer inline x={1} />
+                  <Text>{"Cluster is updating..."}</Text>
+                  <Spacer inline x={1} />
+                  <Tag>
+                    <Link to={`/cluster-dashboard`}>
+                      <TagIcon src={infra} />
+                      View Status
+                    </Link>
+                  </Tag>
+                </CheckItemTop>
+              </CheckItemContainer>
+            )}
           </>
         )}
       {match(service.config)

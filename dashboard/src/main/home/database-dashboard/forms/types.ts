@@ -15,3 +15,11 @@ export type AuroraPostgresFormValues = {
     allocatedStorage: number,
     instanceClass: string,
 };
+
+export type ElasticacheRedisFormValues = {
+    name: string,
+    databaseName: string,
+    masterUsername: string,
+    masterUserPassword: string,
+    instanceClass: string,
+};

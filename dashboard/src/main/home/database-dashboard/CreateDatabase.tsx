@@ -1,29 +1,25 @@
-import React, { useEffect, useState, useContext, useMemo } from "react";
+import _ from "lodash";
+import React, { useContext, useMemo, useState } from "react";
 import styled from "styled-components";
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import semver from "semver";
-import _ from "lodash";
 
-import database from "assets/database.svg";
-import notFound from "assets/not-found.png";
 import awsRDS from "assets/amazon-rds.png";
 import awsElastiCache from "assets/aws-elasticache.png";
+import database from "assets/database.svg";
+import notFound from "assets/not-found.png";
 
 import { Context } from "shared/Context";
-import api from "shared/api";
 import { search } from "shared/search";
 import { AddonCard } from "shared/types";
 
-import TemplateList from "../launch/TemplateList";
-import SearchBar from "components/porter/SearchBar";
-import Spacer from "components/porter/Spacer";
-import Loading from "components/Loading";
 import Back from "components/porter/Back";
-import Fieldset from "components/porter/Fieldset";
-import Text from "components/porter/Text";
 import Container from "components/porter/Container";
-import RDSForm from "./forms/RDSForm";
+import Fieldset from "components/porter/Fieldset";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import AuroraPostgresForm from "./forms/AuroraPostgresForm";
+import ElasticacheRedisForm from "./forms/ElasticacheRedisForm";
+import RDSForm from "./forms/RDSForm";
 
 type Props = {
 };
@@ -51,8 +47,7 @@ const CreateDatabase: React.FC<Props> = ({
       id: "elasticache-redis",
       icon: awsElastiCache,
       name: "ElastiCache Redis",
-      description: "Contact support@porter.run.",
-      disabled: true,
+      description: "A fast nosql datastore used for caching, real-time interactions, and more.",
     },
     {
       id: "elasticache-memcached",
@@ -89,6 +84,13 @@ const CreateDatabase: React.FC<Props> = ({
             )}
             {currentTemplate.id === "rds-postgresql-aurora" && (
               <AuroraPostgresForm
+                currentTemplate={currentTemplate}
+                goBack={() => setCurrentTemplate(null)}
+                repoURL={capabilities?.default_addon_helm_repo_url}
+              />
+            )}
+            {currentTemplate.id === "elasticache-redis" && (
+              <ElasticacheRedisForm
                 currentTemplate={currentTemplate}
                 goBack={() => setCurrentTemplate(null)}
                 repoURL={capabilities?.default_addon_helm_repo_url}

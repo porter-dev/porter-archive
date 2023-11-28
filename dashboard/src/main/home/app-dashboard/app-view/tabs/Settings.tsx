@@ -1,35 +1,36 @@
 import React, { useCallback, useContext, useEffect, useState } from "react";
-import styled from "styled-components";
-import { useHistory } from "react-router";
-
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import Button from "components/porter/Button";
-import DeleteApplicationModal from "../../expanded-app/DeleteApplicationModal";
-
-import { useLatestRevision } from "../LatestRevisionContext";
-import api from "shared/api";
-import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useQueryClient } from "@tanstack/react-query";
-import { Context } from "shared/Context";
-import PreviewEnvironmentSettings from "./preview-environments/PreviewEnvironmentSettings";
 import { Controller, useFormContext } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
+import { useHistory } from "react-router";
+import styled from "styled-components";
+
+import Button from "components/porter/Button";
 import Checkbox from "components/porter/Checkbox";
+import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
+import Text from "components/porter/Text";
+import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { type PorterAppFormData } from "lib/porter-apps";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import document from "assets/document.svg";
+
+import DeleteApplicationModal from "../../expanded-app/DeleteApplicationModal";
+import { useLatestRevision } from "../LatestRevisionContext";
+import ExportAppModal from "./ExportAppModal";
+import PreviewEnvironmentSettings from "./preview-environments/PreviewEnvironmentSettings";
 
 const Settings: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
   const queryClient = useQueryClient();
   const history = useHistory();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const { porterApp, clusterId, projectId, latestProto } = useLatestRevision();
   const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
-  const {
-    control,
-    setValue,
-    watch
-  } = useFormContext<PorterAppFormData>();
+  const { control } = useFormContext<PorterAppFormData>();
   const [githubWorkflowFilename, setGithubWorkflowFilename] = useState(
     `porter_stack_${porterApp.name}.yml`
   );
@@ -66,14 +67,14 @@ const Settings: React.FC = () => {
   }, [porterApp.name, clusterId, projectId]);
 
   useEffect(() => {
-    const checkWorkflowExists = async () => {
+    const checkWorkflowExists = async (): Promise<void> => {
       const exists = await workflowFileExists();
       if (!exists) {
         setGithubWorkflowFilename("");
       }
     };
 
-    checkWorkflowExists();
+    checkWorkflowExists().catch(() => {});
   }, [workflowFileExists]);
 
   const onDelete = useCallback(
@@ -125,7 +126,7 @@ const Settings: React.FC = () => {
             step: "stack-deletion",
             deleteWorkflow: true,
             appName: porterApp.name,
-          });
+          }).catch(() => {});
           history.push("/apps");
           return;
         }
@@ -134,7 +135,7 @@ const Settings: React.FC = () => {
           step: "stack-deletion",
           deleteWorkflow: false,
           appName: porterApp.name,
-        });
+        }).catch(() => {});
         history.push("/apps");
       } catch (err) {
       } finally {
@@ -150,37 +151,71 @@ const Settings: React.FC = () => {
         <PreviewEnvironmentSettings />
       ) : null}
 
-      {(currentCluster?.cloud_provider == "AWS" && currentProject?.efs_enabled) && <>
-        <Text size={16}>Enable shared storage across services for "{porterApp.name}"</Text>
-        <Spacer y={0.5} />
-        <Spacer y={.5} />
-        <Controller
-          name={`app.efsStorage`}
-          control={control}
-          render={({ field: { value, onChange } }) => (
-            <Checkbox
-              checked={value.enabled}
-              toggleChecked={() => {
-                onChange({
-                  ...value,
-                  enabled: !value.enabled,
-                },
-                );
-              }}
-              disabled={value.readOnly}
-              disabledTooltip={
-                "You may only edit this field in your porter.yaml."
-              }
-            >
-              <Text color="helper">
-                Enable EFS Storage
-              </Text>
-            </Checkbox>
-          )} />
-        <Spacer y={1} />
-      </>}
-      <Text size={16}>Delete "{porterApp.name}"</Text>
-      <Spacer y={.5} />
+      {currentCluster?.cloud_provider === "AWS" &&
+        currentProject?.efs_enabled && (
+          <>
+            <Text size={16}>
+              Enable shared storage across services for &quot;{porterApp.name}
+              &quot;
+            </Text>
+            <Spacer y={0.5} />
+            <Spacer y={0.5} />
+            <Controller
+              name={`app.efsStorage`}
+              control={control}
+              render={({ field: { value, onChange } }) => (
+                <Checkbox
+                  checked={value.enabled}
+                  toggleChecked={() => {
+                    onChange({
+                      ...value,
+                      enabled: !value.enabled,
+                    });
+                  }}
+                  disabled={value.readOnly}
+                  disabledTooltip={
+                    "You may only edit this field in your porter.yaml."
+                  }
+                >
+                  <Text color="helper">Enable EFS Storage</Text>
+                </Checkbox>
+              )}
+            />
+            <Spacer y={1} />
+          </>
+        )}
+      <Text size={16}>Export &quot;{porterApp.name}&quot;</Text>
+      <Spacer y={0.5} />
+      <Text color="helper">Export this application as Porter YAML.</Text>
+      <a
+        href="https://docs.porter.run/deploy/configuration-as-code/overview"
+        target="_blank"
+        rel="noreferrer"
+      >
+        &nbsp;(?)
+      </a>
+      <Spacer y={0.5} />
+      <div
+        style={{ width: "fit-content", fontSize: "14px" }}
+        onClick={() => {
+          setIsExportModalOpen(true);
+        }}
+      >
+        <Tag>
+          <TagIcon src={document} />
+          Export
+        </Tag>
+      </div>
+      {isExportModalOpen && (
+        <ExportAppModal
+          closeModal={() => {
+            setIsExportModalOpen(false);
+          }}
+        />
+      )}
+      <Spacer y={0.75} />
+      <Text size={16}>Delete &quot;{porterApp.name}&quot;</Text>
+      <Spacer y={0.5} />
       <Text color="helper">
         Delete this application and all of its resources.
       </Text>
@@ -196,7 +231,9 @@ const Settings: React.FC = () => {
       </Button>
       {isDeleteModalOpen && (
         <DeleteApplicationModal
-          closeModal={() => setIsDeleteModalOpen(false)}
+          closeModal={() => {
+            setIsDeleteModalOpen(false);
+          }}
           githubWorkflowFilename={githubWorkflowFilename}
           deleteApplication={onDelete}
           loading={isDeleting}
@@ -210,4 +247,10 @@ export default Settings;
 
 const StyledSettingsTab = styled.div`
   width: 100%;
+`;
+
+const TagIcon = styled.img`
+  margin-top: 2px;
+  height: 12px;
+  margin-right: 3px;
 `;

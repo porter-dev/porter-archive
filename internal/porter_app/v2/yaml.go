@@ -96,12 +96,6 @@ const (
 	ServiceType_Job ServiceType = "job"
 )
 
-// EnvGroup is a struct containing the name and version of an environment group
-type EnvGroup struct {
-	Name    string `yaml:"name"`
-	Version int    `yaml:"version"`
-}
-
 // PorterApp represents all the possible fields in a Porter YAML file
 type PorterApp struct {
 	Version  string            `yaml:"version,omitempty"`
@@ -112,7 +106,7 @@ type PorterApp struct {
 	Env      map[string]string `yaml:"env,omitempty"`
 
 	Predeploy    *Service      `yaml:"predeploy,omitempty"`
-	EnvGroups    []EnvGroup    `yaml:"envGroups,omitempty"`
+	EnvGroups    []string      `yaml:"envGroups,omitempty"`
 	EfsStorage   *EfsStorage   `yaml:"efsStorage,omitempty"`
 	RequiredApps []RequiredApp `yaml:"requiredApps,omitempty"`
 }
@@ -131,12 +125,12 @@ type PorterYAML struct {
 
 // Addon represents an addon that should be installed alongside a Porter app
 type Addon struct {
-	Name             string     `yaml:"name"`
-	Type             string     `yaml:"type"`
-	EnvGroups        []EnvGroup `yaml:"envGroups,omitempty"`
-	CpuCores         float32    `yaml:"cpuCores,omitempty"`
-	RamMegabytes     int        `yaml:"ramMegabytes,omitempty"`
-	StorageGigabytes float32    `yaml:"storageGigabytes,omitempty"`
+	Name             string   `yaml:"name"`
+	Type             string   `yaml:"type"`
+	EnvGroups        []string `yaml:"envGroups,omitempty"`
+	CpuCores         float32  `yaml:"cpuCores,omitempty"`
+	RamMegabytes     int      `yaml:"ramMegabytes,omitempty"`
+	StorageGigabytes float32  `yaml:"storageGigabytes,omitempty"`
 }
 
 // RequiredApp specifies another porter app that this app expects to be deployed alongside it
@@ -152,12 +146,12 @@ type EfsStorage struct {
 
 // Build represents the build settings for a Porter app
 type Build struct {
-	Context    string   `yaml:"context" validate:"dir"`
-	Method     string   `yaml:"method" validate:"required,oneof=pack docker registry"`
-	Builder    string   `yaml:"builder" validate:"required_if=Method pack"`
-	Buildpacks []string `yaml:"buildpacks"`
-	Dockerfile string   `yaml:"dockerfile" validate:"required_if=Method docker"`
-	CommitSHA  string   `yaml:"commitSha"`
+	Context    string   `yaml:"context,omitempty" validate:"dir"`
+	Method     string   `yaml:"method,omitempty" validate:"required,oneof=pack docker registry"`
+	Builder    string   `yaml:"builder,omitempty" validate:"required_if=Method pack"`
+	Buildpacks []string `yaml:"buildpacks,omitempty"`
+	Dockerfile string   `yaml:"dockerfile,omitempty" validate:"required_if=Method docker"`
+	CommitSHA  string   `yaml:"commitSha,omitempty"`
 }
 
 // Image is the repository and tag for an app's build image
@@ -273,16 +267,12 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		appProto.Predeploy = predeployProto
 	}
 
-	envGroups := make([]*porterv1.EnvGroup, 0)
-	if porterApp.EnvGroups != nil {
-		for _, envGroup := range porterApp.EnvGroups {
-			envGroups = append(envGroups, &porterv1.EnvGroup{
-				Name:    envGroup.Name,
-				Version: int64(envGroup.Version),
-			})
-		}
+	for _, envGroup := range porterApp.EnvGroups {
+		appProto.EnvGroups = append(appProto.EnvGroups, &porterv1.EnvGroup{
+			Name:    envGroup,
+			Version: 0, // this will be updated to latest when applied
+		})
 	}
-	appProto.EnvGroups = envGroups
 
 	if porterApp.EfsStorage != nil {
 		appProto.EfsStorage = &porterv1.EFS{
@@ -490,12 +480,8 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 		porterApp.Predeploy = &appPredeploy
 	}
 
-	porterApp.EnvGroups = make([]EnvGroup, 0)
 	for _, envGroup := range appProto.EnvGroups {
-		porterApp.EnvGroups = append(porterApp.EnvGroups, EnvGroup{
-			Name:    envGroup.Name,
-			Version: int(envGroup.Version),
-		})
+		porterApp.EnvGroups = append(porterApp.EnvGroups, fmt.Sprintf("%s:v%d", envGroup.Name, envGroup.Version))
 	}
 
 	if appProto.EfsStorage != nil {

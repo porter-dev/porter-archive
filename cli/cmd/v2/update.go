@@ -164,7 +164,14 @@ func Update(ctx context.Context, inp UpdateInput) error {
 
 		color.New(color.FgGreen).Printf("Building new image with tag %s...\n", commitSHA) // nolint:errcheck,gosec
 
-		buildInput, err := buildInputFromBuildSettings(cliConf.Project, appName, commitSHA, buildSettings.Image, buildSettings.Build, buildSettings.BuildEnvVariables)
+		buildInput, err := buildInputFromBuildSettings(buildInputFromBuildSettingsInput{
+			projectID: cliConf.Project,
+			appName:   appName,
+			commitSHA: commitSHA,
+			image:     buildSettings.Image,
+			build:     buildSettings.Build,
+			buildEnv:  buildSettings.BuildEnvVariables,
+		})
 		if err != nil {
 			buildError = fmt.Errorf("error creating build input from build settings: %w", err)
 			return buildError
@@ -212,7 +219,7 @@ func Update(ctx context.Context, inp UpdateInput) error {
 			break
 		}
 		if status == models.AppRevisionStatus_AwaitingPredeploy {
-			color.New(color.FgGreen).Printf("Waiting for predeploy to complete..\n") // nolint:errcheck,gosec
+			color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec
 		}
 
 		time.Sleep(checkDeployFrequency)
@@ -263,33 +270,42 @@ func gitSourceFromEnv() (porter_app.GitSource, error) {
 	}, nil
 }
 
-func buildInputFromBuildSettings(projectID uint, appName string, commitSHA string, image porter_app.Image, build porter_app.BuildSettings, buildEnv map[string]string) (buildInput, error) {
+type buildInputFromBuildSettingsInput struct {
+	projectID uint
+	appName   string
+	commitSHA string
+	image     porter_app.Image
+	build     porter_app.BuildSettings
+	buildEnv  map[string]string
+}
+
+func buildInputFromBuildSettings(inp buildInputFromBuildSettingsInput) (buildInput, error) {
 	var buildSettings buildInput
 
-	if appName == "" {
+	if inp.appName == "" {
 		return buildSettings, errors.New("app name is empty")
 	}
-	if image.Repository == "" {
+	if inp.image.Repository == "" {
 		return buildSettings, errors.New("image repository is empty")
 	}
-	if build.Method == "" {
+	if inp.build.Method == "" {
 		return buildSettings, errors.New("build method is empty")
 	}
-	if commitSHA == "" {
+	if inp.commitSHA == "" {
 		return buildSettings, errors.New("commit SHA is empty")
 	}
 
 	return buildInput{
-		ProjectID:       projectID,
-		AppName:         appName,
-		BuildContext:    build.Context,
-		Dockerfile:      build.Dockerfile,
-		BuildMethod:     build.Method,
-		Builder:         build.Builder,
-		BuildPacks:      build.Buildpacks,
-		ImageTag:        commitSHA,
-		RepositoryURL:   image.Repository,
-		CurrentImageTag: image.Tag,
-		Env:             buildEnv,
+		ProjectID:       inp.projectID,
+		AppName:         inp.appName,
+		BuildContext:    inp.build.Context,
+		Dockerfile:      inp.build.Dockerfile,
+		BuildMethod:     inp.build.Method,
+		Builder:         inp.build.Builder,
+		BuildPacks:      inp.build.Buildpacks,
+		ImageTag:        inp.commitSHA,
+		RepositoryURL:   inp.image.Repository,
+		CurrentImageTag: inp.image.Tag,
+		Env:             inp.buildEnv,
 	}, nil
 }

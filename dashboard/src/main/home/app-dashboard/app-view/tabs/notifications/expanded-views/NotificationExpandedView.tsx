@@ -50,6 +50,7 @@ export default NotificationExpandedView;
 
 export const StyledNotificationExpandedView = styled.div`
   height: 100%;
+  width: 100%;
   display: flex;
   justify-content: space-between;
   flex-direction: column;

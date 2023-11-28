@@ -61,12 +61,12 @@ const ServiceMessage: React.FC<Props> = ({
           <Container row>
             <img
               src={document}
-              style={{ width: "15px", marginRight: "15px" }}
+              style={{ width: "15px", marginRight: "10px" }}
             />
             {message.error.summary}
           </Container>
           <Container row>
-            <img src={time} style={{ width: "15px", marginRight: "15px" }} />
+            <img src={time} style={{ width: "15px", marginRight: "10px" }} />
             <Text>{feedDate(message.timestamp)}</Text>
           </Container>
         </Container>
@@ -121,7 +121,26 @@ const ServiceMessage: React.FC<Props> = ({
             </ul>
           </>
         )}
-
+        {service.config.type === "job" && message.metadata.job_run_id && (
+          <Container row>
+            <Tag>
+              <Link
+                to={`/apps/${appName}/job-history?job_run_id=${message.metadata.job_run_id}&service=${service.name.value}`}
+              >
+                <Text size={16}>Job run</Text>
+                <i
+                  className="material-icons"
+                  style={{
+                    fontSize: "16px",
+                    marginLeft: "5px",
+                  }}
+                >
+                  open_in_new
+                </i>
+              </Link>
+            </Tag>
+          </Container>
+        )}
         {service.config.type !== "job" && message.error.should_view_logs && (
           <>
             <Container row>

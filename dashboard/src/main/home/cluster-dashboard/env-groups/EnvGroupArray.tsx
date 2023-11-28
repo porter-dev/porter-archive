@@ -23,7 +23,6 @@ type PropsType = {
   fileUpload?: boolean;
   secretOption?: boolean;
   setButtonDisabled?: (x: boolean) => void;
-  setButtonStatus?: (x: string) => void;
 };
 
 const EnvGroupArray = ({
@@ -34,20 +33,21 @@ const EnvGroupArray = ({
   fileUpload,
   secretOption,
   setButtonDisabled,
-  setButtonStatus,
 }: PropsType) => {
   const [showEditorModal, setShowEditorModal] = useState(false);
   const blankValues = (): void => {
-
     const isAnyEnvVariableBlank = values.some(
       (envVar) => !envVar.key.trim() || !envVar.value.trim()
     );
     if (setButtonDisabled) {
-      if (setButtonStatus) {
-        setButtonStatus(isAnyEnvVariableBlank ? "Please fill out all fields" : "");
-      }
       setButtonDisabled(isAnyEnvVariableBlank);
     }
+  };
+  const blankValue = (key: string): boolean => {
+    if (key === "" && setButtonDisabled) {
+      return true
+    }
+    return false
   };
 
   const incorrectRegex = (key: string) => {
@@ -142,8 +142,8 @@ const EnvGroupArray = ({
                       override={incorrectRegex(entry.key)}
                     />
                   ) : (
-                    <MultiLineInput
-                      placeholder="ex: value"
+                    <MultiLineInputer
+                      placeholder={blankValue(entry.value) ? "value cannot be blank" : "ex: value"}
                       width="270px"
                       value={entry.value}
                       onChange={(e: any) => {
@@ -154,7 +154,7 @@ const EnvGroupArray = ({
                       rows={entry.value?.split("\n").length}
                       disabled={disabled || entry.locked}
                       spellCheck={false}
-                      override={incorrectRegex(entry.value)}
+                      override={blankValue(entry.value)}
                     />
                   )}
                   {secretOption && (

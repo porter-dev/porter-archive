@@ -184,6 +184,20 @@ const ElasticacheRedisForm: React.FC<Props> = ({
                 </Text>
                 <Spacer height="20px" />
                 <ResourceOption
+                  selected={tier === "cache.t4g.micro"}
+                  onClick={() => {
+                    setTier("cache.t4g.micro");
+                  }}
+                >
+                  <Container row>
+                    <Text>Micro</Text>
+                    <Spacer inline width="5px" />
+                    <Text color="helper">- 2 CPU</Text>
+                  </Container>
+                  <StorageTag>0.5 GB RAM</StorageTag>
+                </ResourceOption>
+                <Spacer height="20px" />
+                <ResourceOption
                   selected={tier === "cache.t4g.medium"}
                   onClick={() => {
                     setTier("cache.t4g.medium");

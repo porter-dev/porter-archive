@@ -29,6 +29,8 @@ const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
       .with({ scope: "SERVICE" }, (n) => {
         return n.isDeployRelated
           ? "A service failed to deploy"
+          : ["job", "predeploy"].includes(n.service.config.type)
+          ? "A job run failed"
           : "A service is unhealthy";
       })
       .with({ scope: "APPLICATION" }, () => {

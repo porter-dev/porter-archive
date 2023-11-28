@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import styled from "styled-components";
 
-import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";

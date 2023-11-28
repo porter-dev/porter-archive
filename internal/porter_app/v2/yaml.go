@@ -352,12 +352,12 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	}
 
 	if service.GPU != nil {
-	gpu := &porterv1.GPU{
-		Enabled:        service.GPU.Enabled,
-		GpuCoresNvidia: int32(service.GPU.GpuCoresNvidia),
-	}
+		gpu := &porterv1.GPU{
+			Enabled:        service.GPU.Enabled,
+			GpuCoresNvidia: int32(service.GPU.GpuCoresNvidia),
+		}
 
-	serviceProto.Gpu = gpu
+		serviceProto.Gpu = gpu
 	}
 	switch serviceType {
 	default:

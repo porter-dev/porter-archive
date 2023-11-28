@@ -291,7 +291,7 @@ const Resources: React.FC<ResourcesProps> = ({
                 </>
               )}
             />
-            {currentCluster.status === "UPDATING" && (
+            {(currentCluster.status === "UPDATING" && !clusterContainsGPUNodes) && (
               <CheckItemContainer>
                 <CheckItemTop>
                   <Loading offset="0px" width="20px" height="20px" />

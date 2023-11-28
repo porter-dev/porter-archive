@@ -54,10 +54,6 @@ var result_nobuild = &porterv1.PorterApp{
 			Port:         8080,
 			CpuCores:     0.1,
 			RamMegabytes: 256,
-			Gpu: &porterv1.GPU{
-				Enabled:        false,
-				GpuCoresNvidia: 0,
-			},
 			Config: &porterv1.Service_WebConfig{
 				WebConfig: &porterv1.WebServiceConfig{
 					Autoscaling: &porterv1.Autoscaling{
@@ -91,10 +87,6 @@ var result_nobuild = &porterv1.PorterApp{
 			CpuCores:          0.1,
 			RamMegabytes:      256,
 			GpuCoresNvidia:    0,
-			Gpu: &porterv1.GPU{
-				Enabled:        false,
-				GpuCoresNvidia: 0,
-			},
 			Config: &porterv1.Service_WorkerConfig{
 				WorkerConfig: &porterv1.WorkerServiceConfig{
 					Autoscaling: nil,
@@ -108,10 +100,6 @@ var result_nobuild = &porterv1.PorterApp{
 			CpuCores:       0.1,
 			RamMegabytes:   256,
 			GpuCoresNvidia: 0,
-			Gpu: &porterv1.GPU{
-				Enabled:        false,
-				GpuCoresNvidia: 0,
-			},
 			Config: &porterv1.Service_JobConfig{
 				JobConfig: &porterv1.JobServiceConfig{
 					AllowConcurrentOptional: pointer.Bool(true),
@@ -131,10 +119,6 @@ var result_nobuild = &porterv1.PorterApp{
 			CpuCores:       0.1,
 			RamMegabytes:   256,
 			GpuCoresNvidia: 0,
-			Gpu: &porterv1.GPU{
-				Enabled:        false,
-				GpuCoresNvidia: 0,
-			},
 			Config: &porterv1.Service_WebConfig{
 				WebConfig: &porterv1.WebServiceConfig{
 					Autoscaling: &porterv1.Autoscaling{
@@ -168,10 +152,6 @@ var result_nobuild = &porterv1.PorterApp{
 			CpuCores:          0.1,
 			RamMegabytes:      256,
 			GpuCoresNvidia:    0,
-			Gpu: &porterv1.GPU{
-				Enabled:        false,
-				GpuCoresNvidia: 0,
-			},
 			Config: &porterv1.Service_WorkerConfig{
 				WorkerConfig: &porterv1.WorkerServiceConfig{
 					Autoscaling: nil,
@@ -185,10 +165,6 @@ var result_nobuild = &porterv1.PorterApp{
 			CpuCores:       0.1,
 			RamMegabytes:   256,
 			GpuCoresNvidia: 0,
-			Gpu: &porterv1.GPU{
-				Enabled:        false,
-				GpuCoresNvidia: 0,
-			},
 			Config: &porterv1.Service_JobConfig{
 				JobConfig: &porterv1.JobServiceConfig{
 					AllowConcurrentOptional: pointer.Bool(true),
@@ -206,10 +182,6 @@ var result_nobuild = &porterv1.PorterApp{
 		CpuCores:       0,
 		RamMegabytes:   0,
 		GpuCoresNvidia: 0,
-		Gpu: &porterv1.GPU{
-			Enabled:        false,
-			GpuCoresNvidia: 0,
-		},
 		Config:         &porterv1.Service_JobConfig{},
 		Type:           3,
 	},

@@ -602,8 +602,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                   status={isSubmitting ? "loading" : ""}
                   disabled={
                     isSubmitting ||
-                    latestRevision.status === "CREATED" ||
-                    latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+                    latestRevision.status === "CREATED"
                   }
                   disabledTooltipMessage="Please wait for the deploy to complete before updating the app"
                   disabledTooltipPosition="bottom"

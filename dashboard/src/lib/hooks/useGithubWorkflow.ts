@@ -1,10 +1,18 @@
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import axios from "axios";
-import { PorterAppRecord } from "main/home/app-dashboard/app-view/AppView";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Context } from "shared/Context";
-import api from "shared/api";
 import { z } from "zod";
+
+import { type PorterAppRecord } from "main/home/app-dashboard/app-view/AppView";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+
+type WorkflowResult = {
+  githubWorkflowFilename: string;
+  isLoading: boolean;
+  userHasGithubAccess: boolean;
+};
 
 export const useGithubWorkflow = ({
   porterApp,
@@ -14,7 +22,7 @@ export const useGithubWorkflow = ({
   porterApp: PorterAppRecord;
   fileNames: string[];
   previouslyBuilt?: boolean;
-}) => {
+}): WorkflowResult => {
   const { currentProject, currentCluster } = useContext(Context);
   const [githubWorkflowFilename, setGithubWorkflowName] = useState<string>("");
   const [userHasGithubAccess, setUserHasGithubAccess] = useState<boolean>(true);
@@ -97,7 +105,7 @@ export const useGithubWorkflow = ({
         fn,
         previouslyBuilt,
       ],
-      queryFn: () => fetchGithubWorkflow(fn),
+      queryFn: async () => await fetchGithubWorkflow(fn),
       enabled,
       refetchInterval: 5000,
       retry: (_failureCount: number, error: unknown) => {

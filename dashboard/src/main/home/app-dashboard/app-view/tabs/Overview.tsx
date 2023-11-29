@@ -1,18 +1,21 @@
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import { PorterAppFormData } from "lib/porter-apps";
 import React from "react";
 import { useFormContext } from "react-hook-form";
-import ServiceList from "../../validate-apply/services-settings/ServiceList";
+
+import Button from "components/porter/Button";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import { useAppStatus } from "lib/hooks/useAppStatus";
+import { type PorterAppFormData } from "lib/porter-apps";
 import {
   defaultSerialized,
   deserializeService,
 } from "lib/porter-apps/services";
-import Button from "components/porter/Button";
-import { useLatestRevision } from "../LatestRevisionContext";
-import { useAppStatus } from "lib/hooks/useAppStatus";
-import { ButtonStatus } from "../AppDataContainer";
+
 import { useClusterResources } from "shared/ClusterResourcesContext";
+
+import ServiceList from "../../validate-apply/services-settings/ServiceList";
+import { type ButtonStatus } from "../AppDataContainer";
+import { useLatestRevision } from "../LatestRevisionContext";
 
 type Props = {
   buttonStatus: ButtonStatus;
@@ -80,11 +83,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
         type="submit"
         status={buttonStatus}
         loadingText={"Updating..."}
-        disabled={
-          formState.isSubmitting ||
-          latestRevision.status === "CREATED" ||
-          latestRevision.status === "AWAITING_BUILD_ARTIFACT"
-        }
+        disabled={formState.isSubmitting || latestRevision.status === "CREATED"}
         disabledTooltipMessage="Please wait for the deploy to complete before updating services"
       >
         Update app

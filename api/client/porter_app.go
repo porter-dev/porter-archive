@@ -253,6 +253,9 @@ func (c *Client) ApplyPorterApp(
 		),
 		req,
 		resp,
+		postRequestOpts{
+			retryCount: 3,
+		},
 	)
 
 	return resp, err

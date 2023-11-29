@@ -72,8 +72,7 @@ const Environment: React.FC<Props> = ({ latestSource, buttonStatus }) => {
         loadingText={"Updating..."}
         disabled={
           isSubmitting ||
-          latestRevision.status === "CREATED" ||
-          latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+          latestRevision.status === "CREATED"
         }
         disabledTooltipMessage="Please wait for the deploy to complete before updating environment variables"
       >

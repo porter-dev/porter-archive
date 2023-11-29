@@ -40,8 +40,7 @@ const BuildSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
               status={buttonStatus}
               disabled={
                 isSubmitting ||
-                latestRevision.status === "CREATED" ||
-                latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+                latestRevision.status === "CREATED"
               }
               disabledTooltipMessage="Please wait for the build to complete before updating build settings"
             >

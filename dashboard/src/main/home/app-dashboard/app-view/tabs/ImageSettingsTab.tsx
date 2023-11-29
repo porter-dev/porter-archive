@@ -45,7 +45,6 @@ const ImageSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
                     disabled={
                         isSubmitting
                         || latestRevision.status === "CREATED"
-                        || latestRevision.status === "AWAITING_BUILD_ARTIFACT"
                         || !source.image?.repository
                         || !source.image?.tag
                     }

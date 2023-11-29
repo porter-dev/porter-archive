@@ -25,6 +25,10 @@ import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import TabSelector from "components/TabSelector";
+import {
+  runGithubWorkflow,
+  type GithubResultErrorCode,
+} from "lib/github/workflows";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
 import { useIntercom } from "lib/hooks/useIntercom";
@@ -41,6 +45,7 @@ import alert from "assets/alert-warning.svg";
 import save from "assets/save-01.svg";
 
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
+import { GithubErrorBanner } from "./GithubErrorBanner";
 import { useLatestRevision } from "./LatestRevisionContext";
 import Activity from "./tabs/Activity";
 import EventFocusView from "./tabs/activity-feed/events/focus-views/EventFocusView";
@@ -88,6 +93,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   const history = useHistory();
   const queryClient = useQueryClient();
   const [confirmDeployModalOpen, setConfirmDeployModalOpen] = useState(false);
+  const [workflowRerunError, setWorkflowRerunError] =
+    useState<GithubResultErrorCode | null>(null);
 
   const { currentProject, user } = useContext(Context);
 
@@ -227,7 +234,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         return;
       }
 
-      if (currentProject?.beta_features_enabled && !needsRebuild) {
+      if (currentProject?.beta_features_enabled && !buildIsDirty) {
         const serviceDeletions = setServiceDeletions(data.app.services);
 
         await api.updateApp(
@@ -275,7 +282,12 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       }
 
       if (latestSource.type === "github" && needsRebuild) {
-        if (currentProject?.beta_features_enabled && validatedAppProto.build) {
+        // add a new revision with updated build settings only if they have changed
+        if (
+          currentProject?.beta_features_enabled &&
+          validatedAppProto.build &&
+          buildIsDirty
+        ) {
           await api.updateBuildSettings(
             "<token>",
             {
@@ -290,22 +302,27 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           );
         }
 
-        const res = await api.reRunGHWorkflow(
-          "<token>",
-          {},
-          {
-            project_id: projectId,
-            cluster_id: clusterId,
-            git_installation_id: latestSource.git_repo_id,
-            owner: latestSource.git_repo_name.split("/")[0],
-            name: latestSource.git_repo_name.split("/")[1],
-            branch: porterAppRecord.git_branch,
-            filename: "porter_stack_" + porterAppRecord.name + ".yml",
-          }
-        );
+        const [repoOwner, repoName] = z
+          .tuple([z.string(), z.string()])
+          .parse(latestSource.git_repo_name.split("/"));
 
-        if (res.data != null) {
-          window.open(res.data, "_blank", "noreferrer");
+        const res = await runGithubWorkflow({
+          projectId,
+          clusterId,
+          gitInstallationId: latestSource.git_repo_id,
+          owner: repoOwner,
+          name: repoName,
+          branch: latestSource.git_branch,
+          filename: `porter_stack_${porterAppRecord.name}.yml`,
+        });
+
+        if (!res.success) {
+          setWorkflowRerunError(res.error);
+          return;
+        }
+
+        if (res.url != null) {
+          window.open(res.url, "_blank", "noreferrer");
         }
       }
       await queryClient.invalidateQueries([
@@ -585,8 +602,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                   status={isSubmitting ? "loading" : ""}
                   disabled={
                     isSubmitting ||
-                    latestRevision.status === "CREATED" ||
-                    latestRevision.status === "AWAITING_BUILD_ARTIFACT"
+                    latestRevision.status === "CREATED"
                   }
                   disabledTooltipMessage="Please wait for the deploy to complete before updating the app"
                   disabledTooltipPosition="bottom"
@@ -603,6 +619,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           </Banner>
           <Spacer y={1} />
         </AnimateHeight>
+        <GithubErrorBanner
+          appName={porterAppRecord.name}
+          workflowRerunError={workflowRerunError}
+          setWorkflowRerunError={setWorkflowRerunError}
+        />
         <TabSelector
           noBuffer
           options={tabs}

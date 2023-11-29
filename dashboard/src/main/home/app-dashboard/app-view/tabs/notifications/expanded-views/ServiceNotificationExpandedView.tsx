@@ -55,7 +55,6 @@ const ServiceNotificationExpandedView: React.FC<Props> = ({
               {notification.service.name.value}
             </ServiceNameTag>
             <Spacer inline x={0.5} />
-
             <Text size={16} color={"#FFBF00"}>
               {notification.isDeployRelated
                 ? "failed to deploy"

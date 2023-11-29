@@ -55,7 +55,6 @@ const HelmEditorTab: React.FC<Props> = ({ buttonStatus, featureFlagEnabled }) =>
         disabled={
           isSubmitting ||
           latestRevision.status === "CREATED" ||
-          latestRevision.status === "AWAITING_BUILD_ARTIFACT" ||
           error !== ""
         }
         disabledTooltipMessage={

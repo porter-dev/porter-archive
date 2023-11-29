@@ -196,16 +196,11 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 
 		if i != int(retryCount)-1 {
 			if httpErr != nil {
-				if onlyRetry500 {
-					if httpErr.Code >= 500 {
-						fmt.Fprintf(os.Stderr, "Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
-					} else {
-						// if we only retry 500-range responses and this is not a 500-range response, do not retry, instead return the error
-						return fmt.Errorf("%v", httpErr.Error)
-					}
-				} else {
-					fmt.Fprintf(os.Stderr, "Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
+				if onlyRetry500 && httpErr.Code < 500 {
+					// if we only retry 500-range responses and this is not a 500-range response, do not retry, instead return the error
+					return fmt.Errorf("%v", httpErr.Error)
 				}
+				fmt.Fprintf(os.Stderr, "Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
 			} else {
 				fmt.Fprintf(os.Stderr, "Error: %v, retrying request...\n", err)
 			}

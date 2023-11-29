@@ -60,6 +60,8 @@ type UpdateAppRequest struct {
 	// Only one of Base64AppProto or Base64PorterYAML should be specified
 	// Base64AppProto is a ful base64 encoded porter app contract to apply
 	Base64AppProto string `json:"b64_app_proto"`
+	// Base64AddonProtos is a list of base64 encoded addon contracts to apply along with the app
+	Base64AddonProtos []string `json:"b64_addon_protos"`
 	// Base64PorterYAML is a base64 encoded porter yaml to apply representing a potentially partial porter app contract
 	Base64PorterYAML string `json:"b64_porter_yaml"`
 	// IsEnvOverride is used to remove any variables that are not specified in the request.  If false, the request will only update the variables specified in the request,
@@ -109,6 +111,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		telemetry.AttributeKV{Key: "is-env-override", Value: request.IsEnvOverride},
 	)
 
+	var addons []*porterv1.Addon
 	var overrides *porterv1.PorterApp
 	appProto := &porterv1.PorterApp{}
 
@@ -129,6 +132,26 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
 		}
+
+	}
+
+	for _, b64AddonProto := range request.Base64AddonProtos {
+		decoded, err := base64.StdEncoding.DecodeString(b64AddonProto)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error decoding base yaml")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		addon := &porterv1.Addon{}
+		err = helpers.UnmarshalContractObject(decoded, addon)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error unmarshalling addon proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		addons = append(addons, addon)
 	}
 
 	if request.Base64PorterYAML != "" {
@@ -154,6 +177,8 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			overrides = appFromYaml.PreviewApp.AppProto
 			envVariables = mergeEnvVariables(envVariables, appFromYaml.PreviewApp.EnvVariables)
 		}
+
+		addons = appFromYaml.Addons
 	}
 
 	if appProto.Name == "" {
@@ -223,6 +248,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AppOverrides:  overrides,
 		CommitSha:     request.CommitSHA,
 		IsEnvOverride: request.IsEnvOverride,
+		Addons:        addons,
 	})
 
 	ccpResp, err := c.Config().ClusterControlPlaneClient.UpdateApp(ctx, updateReq)

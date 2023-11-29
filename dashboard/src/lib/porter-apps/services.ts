@@ -121,7 +121,7 @@ export type SerializedService = {
   ramMegabytes: number;
   smartOptimization?: boolean;
   gpuCoresNvidia: number;
-  gpu: {
+  gpu?: {
     enabled: boolean;
     gpuCoresNvidia: number;
   };
@@ -355,10 +355,10 @@ export function deserializeService({
     gpu: {
       enabled: ServiceField.boolean(
         service.gpu?.enabled,
-        override?.gpu.enabled
+        override?.gpu?.enabled
       ),
       gpuCoresNvidia: ServiceField.number(
-        service.gpu?.gpuCoresNvidia,
+        service.gpu?.gpuCoresNvidia ?? 0,
         override?.gpu?.gpuCoresNvidia
       ),
     },

@@ -153,15 +153,20 @@ func (c *Client) getRequest(relPath string, data interface{}, response interface
 }
 
 type postRequestOpts struct {
+	// retryCount is the number of times to retry the request
 	retryCount uint
+	// onlyRetry500 will only retry the request if the status code is in the 500-range
+	onlyRetry500 bool
 }
 
 func (c *Client) postRequest(relPath string, data interface{}, response interface{}, opts ...postRequestOpts) error {
 	var retryCount uint = 1
+	var onlyRetry500 bool = false
 
 	if len(opts) > 0 {
 		for _, opt := range opts {
 			retryCount = opt.retryCount
+			onlyRetry500 = opt.onlyRetry500
 		}
 	}
 
@@ -191,7 +196,16 @@ func (c *Client) postRequest(relPath string, data interface{}, response interfac
 
 		if i != int(retryCount)-1 {
 			if httpErr != nil {
-				fmt.Fprintf(os.Stderr, "Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
+				if onlyRetry500 {
+					if httpErr.Code >= 500 {
+						fmt.Fprintf(os.Stderr, "Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
+					} else {
+						// if we only retry 500-range responses and this is not a 500-range response, do not retry, instead return the error
+						return fmt.Errorf("%v", httpErr.Error)
+					}
+				} else {
+					fmt.Fprintf(os.Stderr, "Error: %s (status code %d), retrying request...\n", httpErr.Error, httpErr.Code)
+				}
 			} else {
 				fmt.Fprintf(os.Stderr, "Error: %v, retrying request...\n", err)
 			}

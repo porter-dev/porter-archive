@@ -23,8 +23,6 @@ type AppEventMetadata struct {
 	ShortSummary string `json:"short_summary"`
 	// Summary is the summary of the app event
 	Summary string `json:"summary"`
-	// AppID is the ID of the app that this event refers to
-	AppID string `json:"app_id"`
 	// AppName is the name of the app that this event refers to
 	AppName string `json:"app_name"`
 	// Detail is the detail of the app event

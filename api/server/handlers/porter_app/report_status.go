@@ -127,7 +127,7 @@ func (c *ReportRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
 		ProjectID:          int64(project.ID),
 		ClusterID:          int64(cluster.ID),
-		DeploymentTargetID: revision.DeploymentTargetID,
+		DeploymentTargetID: revision.DeploymentTarget.ID,
 		CCPClient:          c.Config().ClusterControlPlaneClient,
 	})
 	if err != nil {
@@ -237,7 +237,7 @@ func writePRComment(ctx context.Context, inp writePRCommentInput) error {
 	}
 
 	body := "## Porter Preview Environments\n"
-	porterURL := fmt.Sprintf("%s/preview-environments/apps/%s?target=%s", inp.serverURL, inp.porterApp.Name, inp.revision.DeploymentTargetID)
+	porterURL := fmt.Sprintf("%s/preview-environments/apps/%s?target=%s", inp.serverURL, inp.porterApp.Name, inp.revision.DeploymentTarget.ID)
 
 	switch inp.revision.Status {
 	case models.AppRevisionStatus_BuildFailed:

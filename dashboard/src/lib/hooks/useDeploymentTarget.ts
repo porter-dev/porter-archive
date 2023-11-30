@@ -4,12 +4,20 @@ import { Context } from "shared/Context";
 import api from "shared/api";
 import { z } from "zod";
 
-const deploymentTargetValidator = z.object({
-  deployment_target_id: z.string(),
+export const deploymentTargetValidator = z.object({
+    id: z.string(),
+    project_id: z.number(),
+    cluster_id: z.number(),
+    namespace: z.string(),
+    name: z.string(),
+    is_preview: z.boolean(),
+    is_default: z.boolean(),
+    created_at: z.string(),
+    updated_at: z.string(),
 });
-type DeploymentTarget = z.infer<typeof deploymentTargetValidator>;
+export type DeploymentTarget = z.infer<typeof deploymentTargetValidator>;
 
-export function useDefaultDeploymentTarget() {
+export function useDefaultDeploymentTarget(): DeploymentTarget | null {
   const { currentProject, currentCluster } = useContext(Context);
   const [
     deploymentTarget,
@@ -36,7 +44,11 @@ export function useDefaultDeploymentTarget() {
         }
       );
 
-      return deploymentTargetValidator.parseAsync(res.data);
+      const object = await z.object({
+          deployment_target: deploymentTargetValidator,
+      }).parseAsync(res.data);
+
+      return object.deployment_target;
     },
     {
       enabled:
@@ -53,4 +65,51 @@ export function useDefaultDeploymentTarget() {
   }, [data]);
 
   return deploymentTarget;
+}
+
+export function useListDeploymentTargets(preview: boolean): DeploymentTarget[] | undefined {
+    const { currentProject, currentCluster } = useContext(Context);
+    const [
+        deploymentTargets,
+        setDeploymentTargets,
+    ] = useState<DeploymentTarget[] | undefined>(undefined);
+
+    const { data  } = useQuery(
+        ["listDeploymentTargets", currentProject?.id, currentCluster?.id, preview],
+        async () => {
+            if (!currentProject || !currentCluster) {
+                return;
+            }
+
+            const res = await api.listDeploymentTargets(
+                "<token>",
+                {
+                    preview,
+                },
+                {
+                    project_id: currentProject?.id,
+                    cluster_id: currentCluster?.id,
+                }
+            );
+
+            const deploymentTargets = await z
+                .object({
+                    deployment_targets: z.array(deploymentTargetValidator),
+                })
+                .parseAsync(res.data);
+
+            return deploymentTargets.deployment_targets;
+        },
+        {
+            enabled: !!currentProject && !!currentCluster,
+        }
+    );
+
+    useEffect(() => {
+        if (data) {
+            setDeploymentTargets(data);
+        }
+    }, [data]);
+
+    return deploymentTargets;
 }

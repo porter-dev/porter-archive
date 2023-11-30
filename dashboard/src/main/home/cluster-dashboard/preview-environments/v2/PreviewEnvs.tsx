@@ -1,14 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
 import Loading from "components/Loading";
 import Container from "components/porter/Container";
-import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import React, { useContext, useState } from "react";
-import { Context } from "shared/Context";
-import api from "shared/api";
+import React, { useState } from "react";
 import styled from "styled-components";
-import { z } from "zod";
 
 import PullRequestIcon from "assets/pull_request_icon.svg";
 import grid from "assets/grid.png";
@@ -16,65 +11,22 @@ import list from "assets/list.png";
 import letter from "assets/vector.svg";
 import calendar from "assets/calendar-number.svg";
 
-import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "../../DashboardHeader";
 import Fieldset from "components/porter/Fieldset";
-import Button from "components/porter/Button";
 import PreviewEnvGrid from "./PreviewEnvGrid";
-
-const rawDeploymentTargetValidator = z.object({
-  id: z.string(),
-  project_id: z.number(),
-  cluster_id: z.number(),
-  selector: z.string(),
-  selector_type: z.string(),
-  created_at: z.string(),
-  updated_at: z.string(),
-});
-export type RawDeploymentTarget = z.infer<typeof rawDeploymentTargetValidator>;
+import {useListDeploymentTargets} from "../../../../../lib/hooks/useDeploymentTarget";
 
 const PreviewEnvs: React.FC = () => {
-  const { currentProject, currentCluster } = useContext(Context);
-
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [sort, setSort] = useState<"calendar" | "letter">("calendar");
 
-  const { data: deploymentTargets = [], status } = useQuery(
-    ["listDeploymentTargets", currentProject?.id, currentCluster?.id],
-    async () => {
-      if (!currentProject || !currentCluster) {
-        return;
-      }
+  const deploymentTargets = useListDeploymentTargets(true);
 
-      const res = await api.listDeploymentTargets(
-        "<token>",
-        {
-          preview: true,
-        },
-        {
-          project_id: currentProject?.id,
-          cluster_id: currentCluster?.id,
-        }
-      );
-
-      const deploymentTargets = await z
-        .object({
-          deployment_targets: z.array(rawDeploymentTargetValidator),
-        })
-        .parseAsync(res.data);
-
-      return deploymentTargets.deployment_targets;
-    },
-    {
-      enabled: !!currentProject && !!currentCluster,
-    }
-  );
-
-  const renderContents = () => {
-    if (status === "loading") {
+  const renderContents = (): JSX.Element => {
+    if (!deploymentTargets) {
       return <Loading offset="-150px" />;
     }
 
@@ -178,52 +130,4 @@ const ToggleIcon = styled.img`
   height: 12px;
   margin: 0 5px;
   min-width: 12px;
-`;
-
-const GridList = styled.div`
-  display: grid;
-  grid-column-gap: 25px;
-  grid-row-gap: 25px;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-`;
-
-const Block = styled.div`
-  height: 150px;
-  flex-direction: column;
-  display: flex;
-  justify-content: space-between;
-  cursor: pointer;
-  padding: 20px;
-  color: ${(props) => props.theme.text.primary};
-  position: relative;
-  border-radius: 5px;
-  background: ${(props) => props.theme.clickable.bg};
-  border: 1px solid #494b4f;
-  :hover {
-    border: 1px solid #7a7b80;
-  }
-  animation: fadeIn 0.3s 0s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
-const StatusIcon = styled.img`
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  height: 18px;
-`;
-
-const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
-  margin-left: 2px;
-  height: ${(props) => props.height || "14px"};
-  opacity: ${(props) => props.opacity || 1};
-  filter: grayscale(100%);
-  margin-right: 10px;
 `;

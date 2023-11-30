@@ -288,6 +288,7 @@ export type ProjectType = {
   soc2_controls_enabled: boolean;
   stacks_enabled: boolean;
   validate_apply_v2: boolean;
+  managed_deployment_targets_enabled: boolean;
   roles: Array<{
     id: number;
     kind: string;

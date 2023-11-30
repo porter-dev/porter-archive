@@ -2,6 +2,9 @@ package porter_app
 
 import (
 	"net/http"
+	"time"
+
+	"github.com/google/uuid"
 
 	"connectrpc.com/connect"
 
@@ -37,7 +40,7 @@ type DefaultDeploymentTargetRequest struct{}
 
 // DefaultDeploymentTargetResponse is the response object for the /default-deployment-target endpoint
 type DefaultDeploymentTargetResponse struct {
-	DeploymentTargetID string `json:"deployment_target_id"`
+	types.DeploymentTarget `json:"deployment_target"`
 }
 
 const (
@@ -79,8 +82,32 @@ func (c *DefaultDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	}
 
 	defaultDeploymentTarget := defaultDeploymentTargetResp.Msg.DeploymentTarget
+
+	id, err := uuid.Parse(defaultDeploymentTarget.Id)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error parsing default deployment target id")
+		c.WriteResult(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	if id == uuid.Nil {
+		err := telemetry.Error(ctx, span, nil, "default deployment target id is nil")
+		c.WriteResult(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	response := &DefaultDeploymentTargetResponse{
-		DeploymentTargetID: defaultDeploymentTarget.Id,
+		DeploymentTarget: types.DeploymentTarget{
+			ID:        id,
+			ProjectID: uint(defaultDeploymentTarget.ProjectId),
+			ClusterID: uint(defaultDeploymentTarget.ClusterId),
+			Name:      defaultDeploymentTarget.Name,
+			Namespace: defaultDeploymentTarget.Namespace,
+			IsPreview: defaultDeploymentTarget.IsPreview,
+			IsDefault: defaultDeploymentTarget.IsDefault,
+			CreatedAt: time.Time{},
+			UpdatedAt: time.Time{},
+		},
 	}
 
 	c.WriteResult(w, r, response)

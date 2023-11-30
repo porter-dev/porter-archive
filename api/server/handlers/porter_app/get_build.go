@@ -163,7 +163,7 @@ func (c *GetBuildFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
 		ProjectID:          int64(project.ID),
 		ClusterID:          int64(cluster.ID),
-		DeploymentTargetID: revision.DeploymentTargetID,
+		DeploymentTargetID: revision.DeploymentTarget.ID,
 		CCPClient:          c.Config().ClusterControlPlaneClient,
 	})
 	if err != nil {

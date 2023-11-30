@@ -21,7 +21,7 @@ import VerticalSteps from "components/porter/VerticalSteps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
-import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
+import {type DeploymentTarget, useDefaultDeploymentTarget, useListDeploymentTargets} from "lib/hooks/useDeploymentTarget";
 import { useIntercom } from "lib/hooks/useIntercom";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import {
@@ -51,6 +51,7 @@ import {
 import ServiceList from "../validate-apply/services-settings/ServiceList";
 import PorterYamlModal from "./PorterYamlModal";
 import RepoSettings from "./RepoSettings";
+import Select from "components/porter/Select";
 
 type CreateAppProps = RouteComponentProps;
 
@@ -197,13 +198,24 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     source: source?.type === "github" ? source : null,
     appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
   });
-  const deploymentTarget = useDefaultDeploymentTarget();
+  const defaultDeploymentTarget = useDefaultDeploymentTarget();
+  const deploymentTargets = useListDeploymentTargets(false)
+  const [ deploymentTargetID, setDeploymentTargetID ] = React.useState("");
   const { updateAppStep } = useAppAnalytics();
   const { validateApp } = useAppValidation({
-    deploymentTargetID: deploymentTarget?.deployment_target_id,
+    deploymentTargetID,
     creating: true,
   });
   const { currentClusterResources } = useClusterResources();
+
+  useEffect(() => {
+    if (deploymentTargetID === "") {
+      setDeploymentTargetID(defaultDeploymentTarget?.id ?? "")
+    }
+
+  }, [
+    defaultDeploymentTarget
+  ]);
 
   const resetAllExceptName = (): void => {
     setIsNameHighlight(true);
@@ -317,7 +329,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           return false;
         }
 
-        if (!app || !deploymentTarget) {
+        if (!app || !deploymentTargetID) {
           return false;
         }
 
@@ -325,7 +337,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           await api.updateApp(
             "<token>",
             {
-              deployment_target_id: deploymentTarget.deployment_target_id,
+              deployment_target_id: deploymentTargetID,
               b64_app_proto: btoa(app.toJsonString()),
               secrets,
               variables,
@@ -349,7 +361,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             app,
             projectID: currentProject.id,
             clusterID: currentCluster.id,
-            deploymentTargetID: deploymentTarget.deployment_target_id,
+            deploymentTargetID,
             variables,
             secrets,
           });
@@ -397,7 +409,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     [
       currentProject?.id,
       currentCluster?.id,
-      deploymentTarget,
+      deploymentTargetID,
       name.value,
       createWithValidateApply,
     ]
@@ -595,6 +607,32 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       }
                       {...register("app.name.value")}
                     />
+                    {currentProject?.managed_deployment_targets_enabled && (
+                        <>
+                          <Spacer y={1} />
+                          <Select
+                              value={deploymentTargetID}
+                              width="300px"
+                              options={deploymentTargets ? deploymentTargets.filter(
+                                  (target: DeploymentTarget) => {
+                                    return !target.is_preview
+                                  }
+                              ).map((target: DeploymentTarget) => {
+                                return {
+                                  value: target.id,
+                                  label: target.name,
+                                };
+                              }) : []}
+                              setValue={(value) => {
+                                if (value !== deploymentTargetID) {
+                                  setDeploymentTargetID(value);
+                                }
+                              }}
+                              label={"Deployment Target"}
+                          />
+                        </>
+                      )
+                    }
                   </>,
                   <>
                     <Text size={16}>Deployment method</Text>

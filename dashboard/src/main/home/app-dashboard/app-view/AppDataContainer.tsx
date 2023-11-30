@@ -334,14 +334,18 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       ]);
       setPreviewRevision(null);
 
-      if (deploymentTarget.isPreview) {
+      if (deploymentTarget.is_preview) {
         history.push(
           `/preview-environments/apps/${porterAppRecord.name}/${DEFAULT_TAB}?target=${deploymentTarget.id}`
         );
         return;
       }
 
-      // redirect to the default tab after save
+      if (currentProject?.managed_deployment_targets_enabled) {
+        history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}?target=${deploymentTarget.id}`);
+        return;
+      }
+
       history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
     } catch (err) {
       showIntercomWithMessage({
@@ -512,7 +516,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       { label: "Environment", value: "environment" },
     ];
 
-    if (deploymentTarget.isPreview) {
+    if (deploymentTarget.is_preview) {
       return base;
     }
 
@@ -538,7 +542,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     base.push({ label: "Settings", value: "settings" });
     return base;
   }, [
-    deploymentTarget.isPreview,
+    deploymentTarget.is_preview,
     latestProto.build,
     latestNotifications.length,
   ]);
@@ -629,12 +633,18 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           options={tabs}
           currentTab={currentTab}
           setCurrentTab={(tab) => {
-            if (deploymentTarget.isPreview) {
+            if (deploymentTarget.is_preview) {
               history.push(
                 `/preview-environments/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`
               );
               return;
             }
+
+            if (currentProject?.managed_deployment_targets_enabled) {
+              history.push(`/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`);
+              return;
+            }
+
             history.push(`/apps/${porterAppRecord.name}/${tab}`);
           }}
         />

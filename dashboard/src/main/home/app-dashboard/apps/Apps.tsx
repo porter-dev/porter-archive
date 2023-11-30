@@ -1,6 +1,5 @@
 import React, { useState, useContext, useCallback } from "react";
 import styled from "styled-components";
-import _ from "lodash";
 
 import web from "assets/web.png";
 import grid from "assets/grid.png";
@@ -20,7 +19,6 @@ import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
 import PorterLink from "components/porter/Link";
 import Loading from "components/Loading";
-import Fieldset from "components/porter/Fieldset";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import { useQuery } from "@tanstack/react-query";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
@@ -33,9 +31,9 @@ import DeleteEnvModal from "main/home/cluster-dashboard/preview-environments/v2/
 import { useHistory } from "react-router";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 
-type Props = {};
+type Props = unknown;
 
-const Apps: React.FC<Props> = ({ }) => {
+const Apps: React.FC<Props> = () => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
   const { currentDeploymentTarget } = useDeploymentTarget();
@@ -70,7 +68,7 @@ const Apps: React.FC<Props> = ({ }) => {
       const res = await api.getLatestAppRevisions(
         "<token>",
         {
-          deployment_target_id: currentDeploymentTarget?.id,
+          deployment_target_id: currentProject?.managed_deployment_targets_enabled ? "" : currentDeploymentTarget?.id,
         },
         { cluster_id: currentCluster.id, project_id: currentProject.id }
       );
@@ -129,7 +127,7 @@ const Apps: React.FC<Props> = ({ }) => {
       enabled:
         !!currentCluster &&
         !!currentProject &&
-        currentDeploymentTarget?.isPreview,
+        currentDeploymentTarget?.is_preview,
     }
   );
 
@@ -165,14 +163,14 @@ const Apps: React.FC<Props> = ({ }) => {
     setEnvDeleting,
   ]);
 
-  const renderContents = () => {
+  const renderContents = (): JSX.Element => {
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
     }
 
     if (
       status === "loading" ||
-      (currentDeploymentTarget?.isPreview && deploymentTargetStatus === "loading")
+      (currentDeploymentTarget?.is_preview && deploymentTargetStatus === "loading")
     ) {
       return <Loading offset="-150px" />;
     }
@@ -199,7 +197,7 @@ const Apps: React.FC<Props> = ({ }) => {
 
     return (
       <>
-        {currentDeploymentTarget?.isPreview && (
+        {currentDeploymentTarget?.is_preview && (
           <DashboardHeader
             image={pull_request}
             title={
@@ -263,7 +261,7 @@ const Apps: React.FC<Props> = ({ }) => {
             activeColor={"transparent"}
           />
           <Spacer inline x={2} />
-          {currentDeploymentTarget?.isPreview ? (
+          {currentDeploymentTarget?.is_preview ? (
             <Button
               onClick={async () => {
                 setShowDeleteEnvModal(true);
@@ -300,7 +298,7 @@ const Apps: React.FC<Props> = ({ }) => {
 
   return (
     <StyledAppDashboard>
-      {!currentDeploymentTarget?.isPreview && (
+      {!currentDeploymentTarget?.is_preview && (
         <DashboardHeader
           image={web}
           title="Applications"
@@ -341,13 +339,6 @@ const I = styled.i`
 const StyledAppDashboard = styled.div`
   width: 100%;
   height: 100%;
-`;
-
-const CentralContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: left;
-  align-items: left;
 `;
 
 const Badge = styled.div`

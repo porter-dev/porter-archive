@@ -221,7 +221,7 @@ func defaultEnvGroup(ctx context.Context, input formatDefaultEnvGroupInput) (map
 	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
 		ProjectID:          int64(input.ProjectID),
 		ClusterID:          int64(input.Cluster.ID),
-		DeploymentTargetID: revision.DeploymentTargetID,
+		DeploymentTargetID: revision.DeploymentTarget.ID,
 		CCPClient:          input.ClusterControlPlaneClient,
 	})
 	if err != nil {

@@ -2,6 +2,9 @@ package deployment_target
 
 import (
 	"net/http"
+	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -37,7 +40,7 @@ type GetDeploymentTargetRequest struct {
 
 // GetDeploymentTargetResponse is the response object for the /deployment-targets/{deployment_target_id} GET endpoint
 type GetDeploymentTargetResponse struct {
-	DeploymentTarget deployment_target.DeploymentTarget `json:"deployment_target"`
+	DeploymentTarget types.DeploymentTarget `json:"deployment_target"`
 }
 
 func (c *GetDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -77,8 +80,31 @@ func (c *GetDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	id, err := uuid.Parse(deploymentTarget.ID)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error parsing deployment target id")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	if id == uuid.Nil {
+		err := telemetry.Error(ctx, span, err, "deployment target id is nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	res := &GetDeploymentTargetResponse{
-		DeploymentTarget: deploymentTarget,
+		DeploymentTarget: types.DeploymentTarget{
+			ID:        id,
+			ProjectID: project.ID,
+			ClusterID: cluster.ID,
+			Name:      deploymentTarget.Name,
+			Namespace: deploymentTarget.Namespace,
+			IsPreview: deploymentTarget.IsPreview,
+			IsDefault: deploymentTarget.IsDefault,
+			CreatedAt: time.Time{},
+			UpdatedAt: time.Time{},
+		},
 	}
 
 	c.WriteResult(w, r, res)

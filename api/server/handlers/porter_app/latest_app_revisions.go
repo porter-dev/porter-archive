@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"connectrpc.com/connect"
-	"github.com/google/uuid"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -62,21 +61,16 @@ func (c *LatestAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	deploymentTargetID, err := uuid.Parse(request.DeploymentTargetID)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error parsing deployment target id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if deploymentTargetID == uuid.Nil {
-		err := telemetry.Error(ctx, span, nil, "deployment target id is nil")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
+	var deploymentTargetIdentifier *porterv1.DeploymentTargetIdentifier
+	if request.DeploymentTargetID != "" {
+		deploymentTargetIdentifier = &porterv1.DeploymentTargetIdentifier{
+			Id: request.DeploymentTargetID,
+		}
 	}
 
 	listAppRevisionsReq := connect.NewRequest(&porterv1.LatestAppRevisionsRequest{
-		ProjectId:          int64(project.ID),
-		DeploymentTargetId: deploymentTargetID.String(),
+		ProjectId:                  int64(project.ID),
+		DeploymentTargetIdentifier: deploymentTargetIdentifier,
 	})
 
 	latestAppRevisionsResp, err := c.Config().ClusterControlPlaneClient.LatestAppRevisions(ctx, listAppRevisionsReq)
@@ -120,6 +114,28 @@ func (c *LatestAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
+
+		details, err := c.Config().ClusterControlPlaneClient.DeploymentTargetDetails(ctx, connect.NewRequest(&porterv1.DeploymentTargetDetailsRequest{
+			ProjectId:          int64(project.ID),
+			DeploymentTargetId: encodedRevision.DeploymentTarget.ID,
+		}))
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting deployment target details")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		if details == nil || details.Msg == nil || details.Msg.DeploymentTarget == nil {
+			err := telemetry.Error(ctx, span, err, "deployment target details are nil")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		if details.Msg.DeploymentTarget.IsPreview {
+			continue
+		}
+
+		encodedRevision.DeploymentTarget.Name = details.Msg.DeploymentTarget.Name
 
 		res.AppRevisions = append(res.AppRevisions, LatestRevisionWithSource{
 			AppRevision: encodedRevision,

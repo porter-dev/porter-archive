@@ -157,7 +157,7 @@ const GCPCredentialsForm: React.FC<Props> = ({ goBack, proceed }) => {
           <>
             <Text size={16}> Create the service account </Text>
             <Spacer y={.5} />
-            <Link onClick={incrementStep} to="https://docs.porter.run/standard/getting-started/provisioning-on-gcp" target="_blank">
+            <Link onClick={incrementStep} to="https://docs.porter.run/provision/provisioning-on-gcp" target="_blank">
               Follow the steps in the Porter docs to generate your service account credentials
             </Link>
             <Spacer y={.5} />

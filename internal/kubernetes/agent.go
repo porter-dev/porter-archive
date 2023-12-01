@@ -254,6 +254,21 @@ func (a *Agent) CreateLinkedSecret(name, namespace, cmName string, data map[stri
 	)
 }
 
+// CreateSecret creates any generic secret given the key-value pairs and namespace. Values are
+func (a *Agent) CreateSecret(name string, namespace string, data map[string][]byte) (*v1.Secret, error) {
+	return a.Clientset.CoreV1().Secrets(namespace).Create(
+		context.TODO(),
+		&v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+			Data: data,
+		},
+		metav1.CreateOptions{},
+	)
+}
+
 type mergeConfigMapData struct {
 	Data map[string]*string `json:"data"`
 }

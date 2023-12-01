@@ -42,12 +42,12 @@ const FormTitle = {
   aws: {
     label: "Amazon Web Services (AWS)",
     icon: integrationList["aws"].icon,
-    doc: "https://docs.porter.run/getting-started/provisioning-on-aws",
+    doc: "https://docs.porter.run/provision/provisioning-on-aws",
   },
   gcp: {
     label: "Google Cloud Platform (GCP)",
     icon: integrationList["gcp"].icon,
-    doc: "https://docs.porter.run/getting-started/provisioning-on-gcp",
+    doc: "https://docs.porter.run/provision/provisioning-on-gcp",
   },
   external: {
     label: "Connect an existing cluster",

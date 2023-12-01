@@ -60,7 +60,7 @@ const CronInput: React.FC<CronField> = (props) => {
             click{" "}
             <DynamicLink
               style={{ color: "red", textDecoration: "underline" }}
-              to="https://docs.porter.run/running-jobs/deploying-jobs#deploying-a-cron-job"
+              to="https://docs.porter.run/deploy/types-of-services#jobs-and-cron-jobs"
             >
               here
             </DynamicLink>

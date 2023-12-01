@@ -1,5 +1,13 @@
 package types
 
+type CreateCRDRequest struct {
+	Name      string `schema:"name" form:"required"`
+	Namespace string `schema:"namespace" form:"required"`
+	Group     string `schema:"group" form:"required"`
+	Version   string `schema:"version" form:"required"`
+	Resource  string `schema:"resource" form`
+}
+
 type DeleteCRDRequest struct {
 	Name      string `schema:"name" form:"required"`
 	Namespace string `schema:"namespace" form:"required"`

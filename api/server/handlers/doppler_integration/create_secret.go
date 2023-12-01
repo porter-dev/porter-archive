@@ -79,11 +79,6 @@ func (c *CreateDopplerSecretHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	// Install Doppler CRD
 
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
 	dopplerSecretResponse := &CreateDopplerSecretHandlerResponse{
 		Name: request.Name,
 	}

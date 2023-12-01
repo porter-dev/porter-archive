@@ -5,6 +5,7 @@ import { Context } from "shared/Context";
 import { integrationList } from "shared/common";
 import { RouteComponentProps, withRouter } from "react-router";
 import IntegrationList from "./IntegrationList";
+import DopplerIntegrationList from "./DopplerIntegrationList";
 import api from "shared/api";
 import { pushFiltered } from "shared/routing";
 import Loading from "../../../components/Loading";
@@ -102,6 +103,9 @@ const IntegrationCategories: React.FC<Props> = (props) => {
 
   useEffect(() => {
     getIntegrationsForCategory(props.category);
+    if (props.category === "doppler") {
+      setLoading(false);
+    }
   }, [props.category]);
 
   const { category: currentCategory } = props;
@@ -127,30 +131,35 @@ const IntegrationCategories: React.FC<Props> = (props) => {
         <TitleSection icon={icon} iconWidth="32px">
           {label}
         </TitleSection>
-        <Button
-          onClick={() => {
-            if (props.category === "gitlab") {
-              pushFiltered(props, `/integrations/gitlab/create/gitlab`, [
-                "project_id",
-              ]);
-            } else if (props.category != "slack") {
-              setCurrentModal("IntegrationsModal", {
-                category: currentCategory,
-                setCurrentIntegration: (x: string) =>
-                  pushFiltered(
-                    props,
-                    `/integrations/${props.category}/create/${x}`,
-                    ["project_id"]
-                  ),
-              });
-            } else {
-              window.location.href = `/api/projects/${currentProject.id}/oauth/slack`;
-            }
-          }}
-        >
-          <i className="material-icons">add</i>
-          {buttonText}
-        </Button>
+        {props.category === "doppler" ? null : (
+          <Button
+            onClick={() => {
+              if (props.category === "gitlab") {
+                pushFiltered(props, `/integrations/gitlab/create/gitlab`, [
+                  "project_id",
+                ]);
+              } else if (props.category === "doppler") {
+                // ret2
+              } else if (props.category !== "slack") {
+                setCurrentModal("IntegrationsModal", {
+                  category: currentCategory,
+                  setCurrentIntegration: (x: string) => {
+                    pushFiltered(
+                      props,
+                      `/integrations/${props.category}/create/${x}`,
+                      ["project_id"]
+                    )
+                  }
+                });
+              } else {
+                window.location.href = `/api/projects/${currentProject.id}/oauth/slack`;
+              }
+            }}
+          >
+            <i className="material-icons">add</i>
+            {buttonText}
+          </Button>
+        )}
       </Flex>
       <Spacer y={1} />
       {loading ? (
@@ -162,8 +171,10 @@ const IntegrationCategories: React.FC<Props> = (props) => {
             getIntegrationsForCategory(props.category)
           }
         />
-      ) : props.category == "slack" ? (
+      ) : props.category === "slack" ? (
         <SlackIntegrationList slackData={slackData} />
+      ) : props.category === "doppler" ? (
+        <DopplerIntegrationList />
       ) : (
         <IntegrationList
           currentCategory={props.category}

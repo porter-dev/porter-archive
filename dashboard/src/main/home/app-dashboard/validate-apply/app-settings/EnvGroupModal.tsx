@@ -3,12 +3,14 @@ import React, {
   Dispatch,
   SetStateAction,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from "react";
 import { UseFieldArrayAppend, useFormContext } from "react-hook-form";
 
 import sliders from "assets/sliders.svg";
+import doppler from "assets/doppler.png";
 
 import { PopulatedEnvGroup } from "./types";
 import Text from "components/porter/Text";
@@ -29,6 +31,28 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
     selectedEnvGroup,
     setSelectedEnvGroup,
   ] = useState<PopulatedEnvGroup | null>(null);
+  const [
+    selectedDopplerEnvGroup,
+    setSelectedDopplerEnvGroup
+  ] = useState<string>("");
+
+  const [dopplerEnvGroups, setDopplerEnvGroups] = useState<any[]>([]);
+
+  // DOPPLER_TODO: call endpoint to get doppler env groups
+  const loadDopplerEnvGroups = (): void => {
+    setDopplerEnvGroups([
+      {
+        name: "doppler-env-group-1",
+      },
+      {
+        name: "doppler-env-group-2",
+      }
+    ]);
+  };
+
+  useEffect(() => {
+    loadDopplerEnvGroups();
+  }, []);
 
   const { watch } = useFormContext<PorterAppFormData>();
   const envGroups = watch("app.envGroups", []);
@@ -60,7 +84,7 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
               <Text color="helper">
                 Select an Env Group to load into your application.
               </Text>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <GroupModalSections>
                 <SidebarSection $expanded={!selectedEnvGroup}>
                   <EnvGroupList>
@@ -71,11 +95,28 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
                           Boolean(selectedEnvGroup) &&
                           selectedEnvGroup?.name === eg.name
                         }
-                        lastItem={i === remainingEnvGroupOptions?.length - 1}
-                        onClick={() => setSelectedEnvGroup(eg)}
+                        lastItem={i === remainingEnvGroupOptions?.length - 1 && dopplerEnvGroups.length === 0}
+                        onClick={() => {
+                          setSelectedEnvGroup(eg);
+                          setSelectedDopplerEnvGroup("");
+                        }}
                       >
                         <img src={sliders} />
                         {eg.name}
+                      </EnvGroupRow>
+                    ))}
+                    {dopplerEnvGroups.map((x, i) => (
+                      <EnvGroupRow
+                        key={i}
+                        lastItem={i === dopplerEnvGroups.length - 1}
+                        isSelected={x.name === selectedDopplerEnvGroup}
+                        onClick={() => { 
+                          setSelectedDopplerEnvGroup(x.name);
+                          setSelectedEnvGroup(null);
+                        }}
+                      >
+                        <img src={doppler} />
+                        {x.name}
                       </EnvGroupRow>
                     ))}
                   </EnvGroupList>
@@ -114,16 +155,17 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
           )}
         </ScrollableContainer>
       </ColumnContainer>
-      <SubmitButtonContainer>
-        <Button onClick={onSubmit} disabled={!selectedEnvGroup}>
-          Load Env Group
-        </Button>
-      </SubmitButtonContainer>
+      <Button onClick={onSubmit} disabled={!selectedEnvGroup}>
+        Load env group
+      </Button>
     </Modal>
   );
 };
 
 export default EnvGroupModal;
+
+const DopplerEnvGroupList = styled.div`
+`;
 
 const EnvGroupRow = styled.div<{ lastItem?: boolean; isSelected: boolean }>`
   display: flex;
@@ -182,7 +224,6 @@ const GroupEnvPreview = styled.pre`
   }
 `;
 const GroupModalSections = styled.div`
-  margin-top: 20px;
   width: 100%;
   height: 100%;
   display: grid;
@@ -200,9 +241,4 @@ const ScrollableContainer = styled.div`
   flex: 1;
   overflow-y: auto;
   max-height: 300px;
-`;
-
-const SubmitButtonContainer = styled.div`
-  margin-top: 10px;
-  text-align: right;
 `;

@@ -256,7 +256,7 @@ func QueryPrometheus(
 		queryParams,
 	)
 
-	rawQuery, err := resp.DoRaw(context.TODO())
+	rawQuery, err := resp.DoRaw(ctx)
 	if err != nil {
 		// in this case, it's very likely that prometheus doesn't contain any data for the given labels
 		if strings.Contains(err.Error(), "rejected our request for an unknown reason") {

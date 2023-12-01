@@ -481,7 +481,9 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 	}
 
 	for _, envGroup := range appProto.EnvGroups {
-		porterApp.EnvGroups = append(porterApp.EnvGroups, fmt.Sprintf("%s:v%d", envGroup.Name, envGroup.Version))
+		if envGroup != nil {
+			porterApp.EnvGroups = append(porterApp.EnvGroups, fmt.Sprintf("%s:v%d", envGroup.Name, envGroup.Version))
+		}
 	}
 
 	if appProto.EfsStorage != nil {
@@ -494,19 +496,24 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 }
 
 func appServiceFromProto(service *porterv1.Service) (Service, error) {
-	appService := Service{
-		Name:              service.Name,
-		Run:               service.RunOptional,
-		Instances:         service.InstancesOptional,
-		CpuCores:          service.CpuCores,
-		RamMegabytes:      int(service.RamMegabytes),
-		GpuCoresNvidia:    service.GpuCoresNvidia, // nolint:staticcheck // https://linear.app/porter/issue/POR-2137/support-new-gpu-field-in-porteryaml
-		Port:              int(service.Port),
-		SmartOptimization: service.SmartOptimization,
-		GPU: &GPU{
+	var gpu *GPU
+	if service.Gpu != nil {
+		gpu = &GPU{
 			Enabled:        service.Gpu.Enabled,
 			GpuCoresNvidia: int(service.Gpu.GpuCoresNvidia),
-		},
+		}
+	}
+
+	appService := Service{
+		Name:                          service.Name,
+		Run:                           service.RunOptional,
+		Instances:                     service.InstancesOptional,
+		CpuCores:                      service.CpuCores,
+		RamMegabytes:                  int(service.RamMegabytes),
+		GpuCoresNvidia:                service.GpuCoresNvidia, // nolint:staticcheck // https://linear.app/porter/issue/POR-2137/support-new-gpu-field-in-porteryaml
+		Port:                          int(service.Port),
+		SmartOptimization:             service.SmartOptimization,
+		GPU:                           gpu,
 		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
 	}
 

@@ -17,7 +17,7 @@ import Input from "components/porter/Input";
 import Container from "components/porter/Container";
 
 const DopplerIntegrationList: React.FC = (_) => {
-  const [dopplerEnabled, setDopplerEnabled] = useState<boolean>(true);
+  const [dopplerEnabled, setDopplerEnabled] = useState<boolean>(false);
   const [dopplerToggled, setDopplerToggled] = useState<boolean>(false);
   const [showServiceTokenModal, setShowServiceTokenModal] = useState<boolean>(false);
   const [envGroupName, setEnvGroupName] = useState<string>("");

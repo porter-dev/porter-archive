@@ -151,6 +151,7 @@ func QueryPrometheus(
 		telemetry.AttributeKV{Key: "namespace", Value: opts.Namespace},
 		telemetry.AttributeKV{Key: "start-range", Value: opts.StartRange},
 		telemetry.AttributeKV{Key: "end-range", Value: opts.EndRange},
+		telemetry.AttributeKV{Key: "range", Value: opts.EndRange - opts.StartRange},
 		telemetry.AttributeKV{Key: "resolution", Value: opts.Resolution},
 		telemetry.AttributeKV{Key: "percentile", Value: opts.Percentile},
 	)

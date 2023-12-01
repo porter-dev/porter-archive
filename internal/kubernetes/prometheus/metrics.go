@@ -151,6 +151,7 @@ func QueryPrometheus(
 		telemetry.AttributeKV{Key: "namespace", Value: opts.Namespace},
 		telemetry.AttributeKV{Key: "start-range", Value: opts.StartRange},
 		telemetry.AttributeKV{Key: "end-range", Value: opts.EndRange},
+		telemetry.AttributeKV{Key: "range", Value: opts.EndRange - opts.StartRange},
 		telemetry.AttributeKV{Key: "resolution", Value: opts.Resolution},
 		telemetry.AttributeKV{Key: "percentile", Value: opts.Percentile},
 	)
@@ -256,7 +257,7 @@ func QueryPrometheus(
 		queryParams,
 	)
 
-	rawQuery, err := resp.DoRaw(context.TODO())
+	rawQuery, err := resp.DoRaw(ctx)
 	if err != nil {
 		// in this case, it's very likely that prometheus doesn't contain any data for the given labels
 		if strings.Contains(err.Error(), "rejected our request for an unknown reason") {

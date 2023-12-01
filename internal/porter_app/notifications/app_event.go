@@ -3,6 +3,7 @@ package notifications
 import (
 	"encoding/json"
 
+	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 )
 
@@ -22,14 +23,14 @@ type AppEventMetadata struct {
 	ShortSummary string `json:"short_summary"`
 	// Summary is the summary of the app event
 	Summary string `json:"summary"`
-	// AppID is the ID of the app that this event refers to
-	AppID string `json:"app_id"`
 	// AppName is the name of the app that this event refers to
 	AppName string `json:"app_name"`
 	// Detail is the detail of the app event
 	Detail string `json:"detail"`
 	// JobRunID is the ID of the job run that this event refers to, if applicable
 	JobRunID string `json:"job_run_id"`
+	// DeployStatus is the status of the deployment, if applicable
+	DeployStatus types.PorterAppEventStatus `json:"deploy_status"`
 }
 
 // ParseAgentEventMetadata parses raw app event metadata to a AppEventMetadata struct

@@ -24,9 +24,10 @@ type Props = {
   baseEnvGroups: PopulatedEnvGroup[];
   setOpen: Dispatch<SetStateAction<boolean>>;
   append: (inp: IterableElement<PorterAppFormData["app"]["envGroups"]>) => void;
+  setDopplerEnvGroup: Dispatch<SetStateAction<string>>;
 };
 
-const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
+const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups, setDopplerEnvGroup }) => {
   const [
     selectedEnvGroup,
     setSelectedEnvGroup,
@@ -35,6 +36,8 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
     selectedDopplerEnvGroup,
     setSelectedDopplerEnvGroup
   ] = useState<string>("");
+
+  const { setValue } = useFormContext<PorterAppFormData>();
 
   const [dopplerEnvGroups, setDopplerEnvGroups] = useState<any[]>([]);
 
@@ -64,6 +67,21 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
         version: selectedEnvGroup.latest_version,
       });
       setOpen(false);
+    }
+
+    // DOPPLER_TODO: rename "dopplerEnvGroup" to whatever the helm value key should be
+    if (selectedDopplerEnvGroup) {
+      console.log("attempted submit");
+      try {
+        const jsonValues = JSON.stringify({
+          dopplerEnvGroup: selectedDopplerEnvGroup
+        });
+        setValue("app.helmOverrides", jsonValues);
+        setDopplerEnvGroup(selectedDopplerEnvGroup);
+        setOpen(false);
+      } catch (e) {
+        console.log("could not attach env group");
+      }
     }
   }, [selectedEnvGroup]);
 
@@ -107,7 +125,7 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
                     ))}
                     {dopplerEnvGroups.map((x, i) => (
                       <EnvGroupRow
-                        key={i}
+                        key={i*100}
                         lastItem={i === dopplerEnvGroups.length - 1}
                         isSelected={x.name === selectedDopplerEnvGroup}
                         onClick={() => { 
@@ -155,7 +173,7 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
           )}
         </ScrollableContainer>
       </ColumnContainer>
-      <Button onClick={onSubmit} disabled={!selectedEnvGroup}>
+      <Button onClick={onSubmit} disabled={!selectedEnvGroup && !selectedDopplerEnvGroup}>
         Load env group
       </Button>
     </Modal>

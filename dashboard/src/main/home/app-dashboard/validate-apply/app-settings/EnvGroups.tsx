@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 import sliders from "assets/sliders.svg";
+import doppler from "assets/doppler.png";
 
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -13,6 +14,7 @@ import { PopulatedEnvGroup } from "./types";
 import { valueExists } from "shared/util";
 import EnvGroupModal from "./EnvGroupModal";
 import { IterableElement } from "type-fest";
+import Container from "components/porter/Container";
 
 type Props = {
   baseEnvGroups?: PopulatedEnvGroup[];
@@ -25,6 +27,8 @@ const EnvGroups: React.FC<Props> = ({
 }) => {
   const [showEnvModal, setShowEnvModal] = useState(false);
   const [hovered, setHovered] = useState(false);
+
+  const [dopplerEnvGroup, setDopplerEnvGroup] = useState<string>("");
 
   const { control } = useFormContext<PorterAppFormData>();
   const { append, remove, fields: envGroups } = useFieldArray({
@@ -114,6 +118,17 @@ const EnvGroups: React.FC<Props> = ({
           Max 3 Env Groups allowed
         </TooltipText>
       </TooltipWrapper>
+      {dopplerEnvGroup && (
+        <>
+          <Spacer y={1} />
+          <DopplerRow>
+            <Container row>
+              <Icon src={doppler} />
+              <Text>{dopplerEnvGroup}</Text>
+            </Container>
+          </DopplerRow>
+        </>
+      )}
       {populatedEnvWithFallback.length > 0 && (
         <>
           <Spacer y={0.5} />
@@ -135,6 +150,7 @@ const EnvGroups: React.FC<Props> = ({
           setOpen={setShowEnvModal}
           baseEnvGroups={baseEnvGroups}
           append={onAdd}
+          setDopplerEnvGroup={setDopplerEnvGroup}
         />
       ) : null}
     </div>
@@ -142,6 +158,25 @@ const EnvGroups: React.FC<Props> = ({
 };
 
 export default EnvGroups;
+
+const Icon = styled.img`
+  height: 20px;
+  margin-right: 10px;
+`;
+
+const DopplerRow = styled.div`
+  position: relative;
+  padding: 15px;
+  border-radius: 5px;
+  background: ${props => props.theme.clickable.bg};
+  border: 1px solid #494b4f;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  cursor: not-allowed;
+  justify-content: space-between;
+`;
 
 const AddRowButton = styled.div`
   display: flex;

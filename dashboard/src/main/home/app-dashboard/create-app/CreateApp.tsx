@@ -15,13 +15,18 @@ import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Error from "components/porter/Error";
 import Link from "components/porter/Link";
+import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
-import {type DeploymentTarget, useDefaultDeploymentTarget, useListDeploymentTargets} from "lib/hooks/useDeploymentTarget";
+import {
+  useDefaultDeploymentTarget,
+  useDeploymentTargetList,
+  type DeploymentTarget,
+} from "lib/hooks/useDeploymentTarget";
 import { useIntercom } from "lib/hooks/useIntercom";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import {
@@ -51,7 +56,6 @@ import {
 import ServiceList from "../validate-apply/services-settings/ServiceList";
 import PorterYamlModal from "./PorterYamlModal";
 import RepoSettings from "./RepoSettings";
-import Select from "components/porter/Select";
 
 type CreateAppProps = RouteComponentProps;
 
@@ -198,9 +202,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     source: source?.type === "github" ? source : null,
     appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
   });
-  const defaultDeploymentTarget = useDefaultDeploymentTarget();
-  const deploymentTargets = useListDeploymentTargets(false)
-  const [ deploymentTargetID, setDeploymentTargetID ] = React.useState("");
+  const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
+    useDefaultDeploymentTarget();
+  const { deploymentTargetList } = useDeploymentTargetList({ preview: false });
+  const [deploymentTargetID, setDeploymentTargetID] = React.useState("");
   const { updateAppStep } = useAppAnalytics();
   const { validateApp } = useAppValidation({
     deploymentTargetID,
@@ -209,13 +214,10 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const { currentClusterResources } = useClusterResources();
 
   useEffect(() => {
-    if (deploymentTargetID === "") {
-      setDeploymentTargetID(defaultDeploymentTarget?.id ?? "")
+    if (deploymentTargetID === "" && !isDefaultDeploymentTargetLoading) {
+      setDeploymentTargetID(defaultDeploymentTarget?.id ?? "");
     }
-
-  }, [
-    defaultDeploymentTarget
-  ]);
+  }, [isDefaultDeploymentTargetLoading]);
 
   const resetAllExceptName = (): void => {
     setIsNameHighlight(true);
@@ -608,31 +610,28 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       {...register("app.name.value")}
                     />
                     {currentProject?.managed_deployment_targets_enabled && (
-                        <>
-                          <Spacer y={1} />
-                          <Select
-                              value={deploymentTargetID}
-                              width="300px"
-                              options={deploymentTargets ? deploymentTargets.filter(
-                                  (target: DeploymentTarget) => {
-                                    return !target.is_preview
-                                  }
-                              ).map((target: DeploymentTarget) => {
-                                return {
-                                  value: target.id,
-                                  label: target.name,
-                                };
-                              }) : []}
-                              setValue={(value) => {
-                                if (value !== deploymentTargetID) {
-                                  setDeploymentTargetID(value);
-                                }
-                              }}
-                              label={"Deployment Target"}
-                          />
-                        </>
-                      )
-                    }
+                      <>
+                        <Spacer y={1} />
+                        <Select
+                          value={deploymentTargetID}
+                          width="300px"
+                          options={deploymentTargetList.map(
+                            (target: DeploymentTarget) => {
+                              return {
+                                value: target.id,
+                                label: target.name,
+                              };
+                            }
+                          )}
+                          setValue={(value) => {
+                            if (value !== deploymentTargetID) {
+                              setDeploymentTargetID(value);
+                            }
+                          }}
+                          label={"Deployment Target"}
+                        />
+                      </>
+                    )}
                   </>,
                   <>
                     <Text size={16}>Deployment method</Text>

@@ -1,39 +1,37 @@
-import React, { useState, useContext, useCallback } from "react";
+import React, { useCallback, useContext, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useHistory } from "react-router";
 import styled from "styled-components";
+import { z } from "zod";
 
-import web from "assets/web.png";
-import grid from "assets/grid.png";
-import list from "assets/list.png";
-import letter from "assets/vector.svg";
-import calendar from "assets/calendar-number.svg";
-import pull_request from "assets/pull_request_icon.svg";
-
-import { Context } from "shared/Context";
-import api from "shared/api";
-
-import Container from "components/porter/Container";
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import Loading from "components/Loading";
 import Button from "components/porter/Button";
+import Container from "components/porter/Container";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import PorterLink from "components/porter/Link";
+import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
-import PorterLink from "components/porter/Link";
-import Loading from "components/Loading";
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import { useQuery } from "@tanstack/react-query";
-import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
-import { appRevisionWithSourceValidator } from "./types";
-import AppGrid from "./AppGrid";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import { z } from "zod";
-import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 import DeleteEnvModal from "main/home/cluster-dashboard/preview-environments/v2/DeleteEnvModal";
-import { useHistory } from "react-router";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 
-type Props = unknown;
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { useDeploymentTarget } from "shared/DeploymentTargetContext";
+import calendar from "assets/calendar-number.svg";
+import grid from "assets/grid.png";
+import list from "assets/list.png";
+import pull_request from "assets/pull_request_icon.svg";
+import letter from "assets/vector.svg";
+import web from "assets/web.png";
 
-const Apps: React.FC<Props> = () => {
+import AppGrid from "./AppGrid";
+import { appRevisionWithSourceValidator } from "./types";
+
+const Apps: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
   const { currentDeploymentTarget } = useDeploymentTarget();
@@ -68,7 +66,10 @@ const Apps: React.FC<Props> = () => {
       const res = await api.getLatestAppRevisions(
         "<token>",
         {
-          deployment_target_id: currentProject?.managed_deployment_targets_enabled ? "" : currentDeploymentTarget?.id,
+          deployment_target_id:
+            currentProject?.managed_deployment_targets_enabled
+              ? ""
+              : currentDeploymentTarget?.id,
         },
         { cluster_id: currentCluster.id, project_id: currentProject.id }
       );
@@ -170,7 +171,8 @@ const Apps: React.FC<Props> = () => {
 
     if (
       status === "loading" ||
-      (currentDeploymentTarget?.is_preview && deploymentTargetStatus === "loading")
+      (currentDeploymentTarget?.is_preview &&
+        deploymentTargetStatus === "loading")
     ) {
       return <Loading offset="-150px" />;
     }
@@ -178,17 +180,22 @@ const Apps: React.FC<Props> = () => {
     if (apps.length === 0) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>
-            No apps have been deployed yet
-          </Text>
+          <Text size={16}>No apps have been deployed yet</Text>
           <Spacer y={0.5} />
-          <Text color={"helper"}>
-            Get started by deploying your app.
-          </Text>
+          <Text color={"helper"}>Get started by deploying your app.</Text>
           <Spacer y={1} />
           <PorterLink to="/apps/new/app">
-            <Button alt onClick={async () => { await updateAppStep({ step: "stack-launch-start" }); }} height="35px">
-              Deploy app <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
+            <Button
+              alt
+              onClick={async () => {
+                await updateAppStep({ step: "stack-launch-start" });
+              }}
+              height="35px"
+            >
+              Deploy app <Spacer inline x={1} />{" "}
+              <i className="material-icons" style={{ fontSize: "18px" }}>
+                east
+              </i>
             </Button>
           </PorterLink>
         </DashboardPlaceholder>
@@ -275,8 +282,9 @@ const Apps: React.FC<Props> = () => {
           ) : (
             <PorterLink to="/apps/new/app">
               <Button
-                onClick={async () => { await updateAppStep({ step: "stack-launch-start" }); }
-                }
+                onClick={async () => {
+                  await updateAppStep({ step: "stack-launch-start" });
+                }}
                 height="30px"
                 width="160px"
               >
@@ -310,7 +318,9 @@ const Apps: React.FC<Props> = () => {
       <Spacer y={5} />
       {showDeleteEnvModal && (
         <DeleteEnvModal
-          closeModal={() => { setShowDeleteEnvModal(false); }}
+          closeModal={() => {
+            setShowDeleteEnvModal(false);
+          }}
           deleteEnv={deletePreviewEnv}
           loading={envDeleting}
         />

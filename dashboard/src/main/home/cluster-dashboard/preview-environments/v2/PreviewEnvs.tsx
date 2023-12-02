@@ -1,36 +1,38 @@
-import Loading from "components/Loading";
-import Container from "components/porter/Container";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import React, { useState } from "react";
 import styled from "styled-components";
 
-import PullRequestIcon from "assets/pull_request_icon.svg";
+import Loading from "components/Loading";
+import Container from "components/porter/Container";
+import Fieldset from "components/porter/Fieldset";
+import SearchBar from "components/porter/SearchBar";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import Toggle from "components/porter/Toggle";
+import { useDeploymentTargetList } from "lib/hooks/useDeploymentTarget";
+
+import calendar from "assets/calendar-number.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
+import PullRequestIcon from "assets/pull_request_icon.svg";
 import letter from "assets/vector.svg";
-import calendar from "assets/calendar-number.svg";
 
-import SearchBar from "components/porter/SearchBar";
-import Toggle from "components/porter/Toggle";
 import DashboardHeader from "../../DashboardHeader";
-import Fieldset from "components/porter/Fieldset";
 import PreviewEnvGrid from "./PreviewEnvGrid";
-import {useListDeploymentTargets} from "../../../../../lib/hooks/useDeploymentTarget";
 
 const PreviewEnvs: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [sort, setSort] = useState<"calendar" | "letter">("calendar");
 
-  const deploymentTargets = useListDeploymentTargets(true);
+  const { deploymentTargetList, isDeploymentTargetListLoading } =
+    useDeploymentTargetList({ preview: true });
 
   const renderContents = (): JSX.Element => {
-    if (!deploymentTargets) {
+    if (isDeploymentTargetListLoading) {
       return <Loading offset="-150px" />;
     }
 
-    if (!deploymentTargets || deploymentTargets.length === 0) {
+    if (deploymentTargetList.length === 0) {
       <Fieldset>
         <CentralContainer>
           <Text size={16}>No preview environments have been deployed yet.</Text>
@@ -89,7 +91,7 @@ const PreviewEnvs: React.FC = () => {
         </Container>
         <Spacer y={1} />
         <PreviewEnvGrid
-          deploymentTargets={deploymentTargets}
+          deploymentTargets={deploymentTargetList}
           sort={sort}
           view={view}
           searchValue={searchValue}

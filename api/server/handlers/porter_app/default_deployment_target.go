@@ -40,6 +40,8 @@ type DefaultDeploymentTargetRequest struct{}
 
 // DefaultDeploymentTargetResponse is the response object for the /default-deployment-target endpoint
 type DefaultDeploymentTargetResponse struct {
+	// Deprecated: use inline types.DeploymentTarget fields instead
+	DeploymentTargetID     string `json:"deployment_target_id"`
 	types.DeploymentTarget `json:"deployment_target"`
 }
 

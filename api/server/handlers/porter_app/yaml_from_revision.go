@@ -66,6 +66,8 @@ func (c *PorterYAMLFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-porter-yaml-from-revision")
 	defer span.End()
 
+	r = r.Clone(ctx)
+
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 

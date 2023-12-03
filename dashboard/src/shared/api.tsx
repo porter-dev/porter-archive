@@ -1169,7 +1169,7 @@ const listAppRevisions = baseApi<
 
 const getLatestAppRevisions = baseApi<
   {
-    deployment_target_id: string;
+    deployment_target_id: string | undefined;
   },
   {
     project_id: number;

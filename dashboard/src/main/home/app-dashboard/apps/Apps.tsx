@@ -68,7 +68,7 @@ const Apps: React.FC = () => {
         {
           deployment_target_id:
             currentProject?.managed_deployment_targets_enabled
-              ? ""
+              ? undefined
               : currentDeploymentTarget?.id,
         },
         { cluster_id: currentCluster.id, project_id: currentProject.id }

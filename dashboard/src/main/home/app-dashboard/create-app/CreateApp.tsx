@@ -376,7 +376,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         });
 
         if (source.type === "docker-registry") {
-          history.push(`/apps/${app.name}`);
+          let targetSuffix = "";
+          if (currentProject?.managed_deployment_targets_enabled) {
+            targetSuffix = `?target=${deploymentTargetID}`;
+          }
+          history.push(`/apps/${app.name}${targetSuffix}`);
         }
 
         return true;

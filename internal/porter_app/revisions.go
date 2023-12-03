@@ -41,6 +41,7 @@ type Revision struct {
 	AppInstanceID uuid.UUID `json:"app_instance_id"`
 }
 
+// DeploymentTarget is a simplified version of the deployment target struct
 type DeploymentTarget struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`

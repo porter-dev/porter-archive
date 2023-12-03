@@ -95,6 +95,8 @@ func (c *LatestAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		AppRevisions: make([]LatestRevisionWithSource, 0),
 	}
 
+	deploymentTargets := map[string]*porterv1.DeploymentTarget{}
+
 	for _, revision := range appRevisions {
 		encodedRevision, err := porter_app.EncodedRevisionFromProto(ctx, revision)
 		if err != nil {
@@ -115,27 +117,34 @@ func (c *LatestAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			return
 		}
 
-		details, err := c.Config().ClusterControlPlaneClient.DeploymentTargetDetails(ctx, connect.NewRequest(&porterv1.DeploymentTargetDetailsRequest{
-			ProjectId:          int64(project.ID),
-			DeploymentTargetId: encodedRevision.DeploymentTarget.ID,
-		}))
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error getting deployment target details")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
+		deploymentTarget, ok := deploymentTargets[encodedRevision.DeploymentTarget.ID]
+		if !ok {
+			details, err := c.Config().ClusterControlPlaneClient.DeploymentTargetDetails(ctx, connect.NewRequest(&porterv1.DeploymentTargetDetailsRequest{
+				ProjectId:          int64(project.ID),
+				DeploymentTargetId: encodedRevision.DeploymentTarget.ID,
+			}))
+			if err != nil {
+				err := telemetry.Error(ctx, span, err, "error getting deployment target details")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
+
+			if details == nil || details.Msg == nil || details.Msg.DeploymentTarget == nil {
+				err := telemetry.Error(ctx, span, err, "deployment target details are nil")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
+
+			deploymentTarget = details.Msg.DeploymentTarget
+			deploymentTargets[encodedRevision.DeploymentTarget.ID] = deploymentTarget
 		}
 
-		if details == nil || details.Msg == nil || details.Msg.DeploymentTarget == nil {
-			err := telemetry.Error(ctx, span, err, "deployment target details are nil")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		if details.Msg.DeploymentTarget.IsPreview {
+		// skip preview deployment targets, need to confirm with @ianedwards that this is fine
+		if deploymentTarget.IsPreview {
 			continue
 		}
 
-		encodedRevision.DeploymentTarget.Name = details.Msg.DeploymentTarget.Name
+		encodedRevision.DeploymentTarget.Name = deploymentTarget.Name
 
 		res.AppRevisions = append(res.AppRevisions, LatestRevisionWithSource{
 			AppRevision: encodedRevision,

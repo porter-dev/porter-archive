@@ -99,6 +99,7 @@ func (c *DefaultDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	}
 
 	response := &DefaultDeploymentTargetResponse{
+		DeploymentTargetID: defaultDeploymentTarget.Id,
 		DeploymentTarget: types.DeploymentTarget{
 			ID:        id,
 			ProjectID: uint(defaultDeploymentTarget.ProjectId),

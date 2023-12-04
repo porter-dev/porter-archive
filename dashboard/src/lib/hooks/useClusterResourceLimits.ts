@@ -28,7 +28,7 @@ const encodedContractValidator = z.object({
   cluster_id: z.number(),
   project_id: z.number(),
   condition: z.string(),
-  condition_metadata: z.record(z.any()),
+  condition_metadata: z.record(z.any()).nullable(),
 });
 
 export type NodeGroup = {
@@ -276,6 +276,52 @@ export const useClusterResourceLimits = ({
   }, [getCluster]);
 
   useEffect(() => {
+    const contract = {
+      cluster: {
+        projectId: 8114,
+        clusterId: 2940,
+        kind: "ENUM_KUBERNETES_KIND_EKS",
+        cloudProvider: "ENUM_CLOUD_PROVIDER_AWS",
+        cloudProviderCredentialsId:
+          "arn:aws:iam::699462293159:role/porter-manager",
+        eksKind: {
+          clusterName: "dealpage-cluster-2qudt1",
+          clusterVersion: "v1.24.0",
+          cidrRange: "10.78.0.0/16",
+          region: "us-east-1",
+          nodeGroups: [
+            {
+              instanceType: "t3.medium",
+              minInstances: 1,
+              maxInstances: 5,
+              nodeGroupType: "NODE_GROUP_TYPE_SYSTEM",
+            },
+            {
+              instanceType: "t3.large",
+              minInstances: 1,
+              maxInstances: 1,
+              nodeGroupType: "NODE_GROUP_TYPE_MONITORING",
+              isStateful: true,
+            },
+            {
+              instanceType: "t3.medium",
+              minInstances: 1,
+              maxInstances: 20,
+              nodeGroupType: "NODE_GROUP_TYPE_APPLICATION",
+            },
+            {
+              instanceType: "g4dn.xlarge",
+              maxInstances: 2,
+              nodeGroupType: "NODE_GROUP_TYPE_CUSTOM",
+            },
+          ],
+          loadBalancer: { loadBalancerType: "LOAD_BALANCER_TYPE_NLB" },
+          logging: { enableApiServerLogs: true },
+          network: { vpcCidr: "10.78.0.0/16", serviceCidr: "172.20.0.0/16" },
+        },
+      },
+      user: { id: 10756 },
+    };
     if (contract) {
       const containsCustomNodeGroup = match(contract)
         .with({ kindValues: { case: "eksKind" } }, (c) => {

@@ -28,6 +28,9 @@ import BuildSettingsTab from "./build-settings/BuildSettingsTab";
 import { DisabledNamespacesForIncidents } from "./incidents/DisabledNamespaces";
 import { useStackEnvGroups } from "./useStackEnvGroups";
 import DeployStatusSection from "./deploy-status-section/DeployStatusSection";
+import Banner from "components/porter/Banner";
+import Spacer from "components/porter/Spacer";
+
 
 type Props = {
   namespace: string;
@@ -136,6 +139,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const updatedChart = res.data;
 
     setCurrentChart(updatedChart);
+    console.log(updatedChart)
 
     updateComponents(updatedChart).finally(() => setIsLoadingChartData(false));
   };
@@ -192,7 +196,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           if (
             oldControllers &&
             oldControllers[object.metadata.uid]?.status?.conditions ==
-              object.status?.conditions
+            object.status?.conditions
           ) {
             return oldControllers;
           }
@@ -463,7 +467,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   being deployed
                 </Header>
                 {props.currentChart.git_action_config &&
-                props.currentChart.git_action_config.gitlab_integration_id ? (
+                  props.currentChart.git_action_config.gitlab_integration_id ? (
                   <>
                     Navigate to the{" "}
                     <A
@@ -899,7 +903,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
               isFullscreen={true}
               setIsFullscreen={setIsFullscreen}
               currentChart={currentChart}
-              setInitData={() => {}}
+              setInitData={() => { }}
             />
           ) : (
             <StyledExpandedChart>
@@ -946,6 +950,14 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     {" " + getReadableDate(currentChart.info.last_deployed)}
                   </LastDeployed>
                 </InfoWrapper>
+                <Spacer y={1} />
+                {currentChart.chart.metadata.annotations?.category === "Database" &&
+                  <Banner>
+                    <BannerContents>
+                      <b>Database is being created</b>
+                    </BannerContents>
+                    <Spacer inline width="5px" />
+                  </Banner>}
               </HeaderWrapper>
               {deleting ? (
                 <>
@@ -976,7 +988,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     shouldUpdate={
                       currentChart.latest_version &&
                       currentChart.latest_version !==
-                        currentChart.chart.metadata.version
+                      currentChart.chart.metadata.version
                     }
                     latestVersion={currentChart.latest_version}
                     upgradeVersion={handleUpgradeVersion}
@@ -1186,11 +1198,11 @@ const TabButton = styled.div`
   border-radius: 20px;
   text-shadow: 0px 0px 8px
     ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "#ffffff66" : "none"};
+    props.devOpsMode ? "#ffffff66" : "none"};
   cursor: pointer;
   :hover {
     color: ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "" : "#aaaabb99"};
+    props.devOpsMode ? "" : "#aaaabb99"};
   }
 
   > i {
@@ -1278,4 +1290,31 @@ const A = styled.a`
   color: #8590ff;
   text-decoration: underline;
   cursor: pointer;
+`;
+
+
+const BannerContents = styled.div`
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.5rem;
+`;
+
+const CloseButton = styled.div`
+  display: block;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  :hover {
+    background-color: #ffffff11;
+  }
+
+  > i {
+    font-size: 20px;
+    color: #aaaabb;
+  }
 `;

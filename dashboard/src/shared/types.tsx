@@ -32,6 +32,9 @@ export type DetailedIngressError = {
   message: string;
   error: string;
 };
+export type Annotations = {
+  category: string;
+}
 
 export type ChartType = {
   stack_id: string;
@@ -54,6 +57,7 @@ export type ChartType = {
       description: string;
       icon: string;
       apiVersion: string;
+      annotations?: Annotations;
     };
     files?: Array<{
       data: string;

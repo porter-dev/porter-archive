@@ -22,7 +22,6 @@ import api from "shared/api";
 import { hardcodedIcons } from "shared/hardcodedNameDict";
 import { search } from "shared/search";
 
-import Loading from "components/Loading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
@@ -37,6 +36,7 @@ import { readableDate } from "shared/string_utils";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import loading from "assets/loading.gif";
 
 type Props = {};
 
@@ -46,7 +46,7 @@ const templateWhitelist = [
   "rds-postgresql-aurora",
 ];
 
-const Apps: React.FC<Props> = ({ 
+const Apps: React.FC<Props> = ({
 }) => {
   const { currentProject, currentCluster } = useContext(Context);
 
@@ -57,6 +57,7 @@ const Apps: React.FC<Props> = ({
   // Placeholder (replace w useQuery)
   const [databases, setDatabases] = useState([]);
   const [status, setStatus] = useState("");
+  const [databaseStatuses, setDatabaseStatuses] = useState({});
 
   const filteredDatabases = useMemo(() => {
     const filteredBySearch = search(
@@ -70,6 +71,30 @@ const Apps: React.FC<Props> = ({
 
     return _.sortBy(filteredBySearch);
   }, [databases, searchValue]);
+
+  const updateDatabaseStatuses = async (): Promise<void> => {
+    const newStatuses = {};
+    for (const db of filteredDatabases) {
+      try {
+        if (databaseStatuses[db.name] !== "available") {
+          const statusRes = await api.getDatabaseStatus("<token>", {
+            name: db.name,
+            type: db.chart.metadata.name
+          }, {
+            project_id: currentProject?.id ?? 0,
+            cluster_id: currentCluster?.id ?? 0,
+          });
+          newStatuses[db.name] = statusRes.data.status;
+        }// Assuming status is returned in this field
+      } catch (err) {
+        console.error("Error fetching database status for", db.name, err);
+        newStatuses[db.name] = "error"; // Or some error state
+      }
+
+    }
+    setDatabaseStatuses(newStatuses);
+  };
+
 
   const getExpandedChartLinkURL = useCallback((x: any) => {
     const params = new Proxy(new URLSearchParams(window.location.search), {
@@ -127,11 +152,41 @@ const Apps: React.FC<Props> = ({
   };
 
   useEffect(() => {
+    // Call once when the component mounts
+    void updateDatabaseStatuses();
+
+    // Set up the interval for polling every 5 minutes
+    const intervalId = setInterval(() => {
+      void updateDatabaseStatuses();
+    }, 60000); // 60000 milliseconds = 5 minutes
+
+    // Clear interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [filteredDatabases]);
+
+  useEffect(() => {
     // currentCluster sometimes returns as -1 and passes null check
+
     if (currentProject?.id >= 0 && currentCluster?.id >= 0) {
       getAddOns();
     }
   }, [currentCluster, currentProject]);
+
+  const renderStatusIcon = (dbName: string): JSX.Element => {
+    const status: string = databaseStatuses[dbName];
+    switch (status) {
+      case "available":
+        return <StatusIcon src={healthy} />;
+      default:
+        return <StatusText>
+          <StatusWrapper success={false}>
+            <Loading src={loading} />
+            {"Creating database"}
+          </StatusWrapper>
+        </StatusText>
+    }
+  };
+
 
   const renderContents = () => {
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
@@ -248,7 +303,7 @@ const Apps: React.FC<Props> = ({
                     <Text size={14}>{app.name}</Text>
                     <Spacer inline x={2} />
                   </Container>
-                  <StatusIcon src={healthy} />
+                  {renderStatusIcon(app.name)}
                   <Container row>
                     <SmallIcon opacity="0.4" src={time} />
                     <Text size={13} color="#ffffff44">
@@ -309,109 +364,137 @@ const Apps: React.FC<Props> = ({
 export default Apps;
 
 const MidIcon = styled.img<{ height?: string }>`
-  height: ${props => props.height || "18px"};
-  margin-right: 11px;
-`;
+          height: ${props => props.height || "18px"};
+          margin-right: 11px;
+          `;
 
 const Row = styled(Link) <{ isAtBottom?: boolean }>`
-  cursor: pointer;
-  display: block;
-  padding: 15px;
-  border-bottom: ${props => props.isAtBottom ? "none" : "1px solid #494b4f"};
-  background: ${props => props.theme.clickable.bg};
-  position: relative;
-  border: 1px solid #494b4f;
-  border-radius: 5px;
-  margin-bottom: 15px;
-  animation: fadeIn 0.3s 0s;
-`;
+            cursor: pointer;
+            display: block;
+            padding: 15px;
+            border-bottom: ${props => props.isAtBottom ? "none" : "1px solid #494b4f"};
+            background: ${props => props.theme.clickable.bg};
+            position: relative;
+            border: 1px solid #494b4f;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s 0s;
+            `;
 
 const List = styled.div`
-  overflow: hidden;
-`;
+            overflow: hidden;
+            `;
 
 const SmallIcon = styled.img<{ opacity?: string }>`
-  margin-left: 2px;
-  height: 14px;
-  opacity: ${props => props.opacity || 1};
-  margin-right: 10px;
-`;
+              margin-left: 2px;
+              height: 14px;
+              opacity: ${props => props.opacity || 1};
+              margin-right: 10px;
+              `;
 
 const StatusIcon = styled.img`
+              position: absolute;
+              top: 20px;
+              right: 20px;
+              height: 18px;
+              `;
+
+const Icon = styled.img`
+              height: 20px;
+              margin-right: 13px;
+              `;
+
+const Block = styled(Link)`
+              height: 110px;
+              flex-direction: column;
+              display: flex;
+              justify-content: space-between;
+              cursor: pointer;
+              padding: 20px;
+              color: ${props => props.theme.text.primary};
+              position: relative;
+              border-radius: 5px;
+              background: ${props => props.theme.clickable.bg};
+              border: 1px solid #494b4f;
+              :hover {
+                border: 1px solid #7a7b80;
+  }
+
+              animation: fadeIn 0.3s 0s;
+              @keyframes fadeIn {
+                from {
+                opacity: 0;
+    }
+              to {
+                opacity: 1;
+    }
+  }
+              `;
+
+const GridList = styled.div`
+              display: grid;
+              grid-column-gap: 25px;
+              grid-row-gap: 25px;
+              grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+              `;
+
+const PlaceholderIcon = styled.img`
+              height: 13px;
+              margin-right: 12px;
+              opacity: 0.65;
+              `;
+
+const ToggleIcon = styled.img`
+              height: 12px;
+              margin: 0 5px;
+              min-width: 12px;
+              `;
+
+const I = styled.i`
+              color: white;
+              font-size: 14px;
+              display: flex;
+              align-items: center;
+              margin-right: 5px;
+              justify-content: center;
+              `;
+
+const StyledAppDashboard = styled.div`
+              width: 100%;
+              height: 100%;
+              `;
+
+const StatusText = styled.div`
   position: absolute;
   top: 20px;
   right: 20px;
-  height: 18px;
-`;
-
-const Icon = styled.img`
-  height: 20px;
-  margin-right: 13px;
-`;
-
-const Block = styled(Link)`
-  height: 110px;
-  flex-direction: column;
-  display: flex;
-  justify-content: space-between;
-  cursor: pointer;
-  padding: 20px;
-  color: ${props => props.theme.text.primary};
-  position: relative;
-  border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
-  border: 1px solid #494b4f;
-  :hover {
-    border: 1px solid #7a7b80;
-  }
-
-  animation: fadeIn 0.3s 0s;
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-`;
-
-const GridList = styled.div`
-  display: grid;
-  grid-column-gap: 25px;
-  grid-row-gap: 25px;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-`;
-
-const PlaceholderIcon = styled.img`
-  height: 13px;
-  margin-right: 12px;
-  opacity: 0.65;
-`;
-
-const ToggleIcon = styled.img`
-  height: 12px;
-  margin: 0 5px;
-  min-width: 12px;
-`;
-
-const I = styled.i`
-  color: white;
-  font-size: 14px;
   display: flex;
   align-items: center;
-  margin-right: 5px;
   justify-content: center;
 `;
 
-const StyledAppDashboard = styled.div`
-  width: 100%;
-  height: 100%;
-`;
-
-const CentralContainer = styled.div`
+const StatusWrapper = styled.div<{
+  success?: boolean;
+}>`
   display: flex;
-  flex-direction: column;
-  justify-content: left;
-  align-items: left;
+  line-height: 1.5;
+  align-items: center;
+  font-family: "Work Sans", sans-serif;
+  font-size: 13px;
+  color: #ffffff55;
+  margin-left: 15px;
+  text-overflow: ellipsis;
+  animation-fill-mode: forwards;
+  > i {
+    font-size: 18px;
+    margin-right: 10px;
+    float: left;
+    color: ${(props) => (props.success ? "#4797ff" : "#fcba03")};
+  }
+`;
+const Loading = styled.img`
+  width: 15px;
+  height: 15px;
+  margin-right: 9px;
+  margin-bottom: 0px;
 `;

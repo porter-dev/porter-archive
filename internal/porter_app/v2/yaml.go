@@ -169,6 +169,7 @@ type Service struct {
 	CpuCores                      float32           `yaml:"cpuCores,omitempty"`
 	RamMegabytes                  int               `yaml:"ramMegabytes,omitempty"`
 	GpuCoresNvidia                float32           `yaml:"gpuCoresNvidia,omitempty"`
+	GPU                           *GPU              `yaml:"gpu,omitempty"`
 	SmartOptimization             *bool             `yaml:"smartOptimization,omitempty"`
 	TerminationGracePeriodSeconds *int32            `yaml:"terminationGracePeriodSeconds,omitempty"`
 	Port                          int               `yaml:"port,omitempty"`
@@ -191,6 +192,12 @@ type AutoScaling struct {
 	MaxInstances           int  `yaml:"maxInstances"`
 	CpuThresholdPercent    int  `yaml:"cpuThresholdPercent"`
 	MemoryThresholdPercent int  `yaml:"memoryThresholdPercent"`
+}
+
+// GPU represents GPU settings for a service
+type GPU struct {
+	Enabled        bool `yaml:"enabled"`
+	GpuCoresNvidia int  `yaml:"gpuCoresNvidia"`
 }
 
 // Domains are the custom domains for a web service
@@ -334,6 +341,14 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
 	}
 
+	if service.GPU != nil {
+		gpu := &porterv1.GPU{
+			Enabled:        service.GPU.Enabled,
+			GpuCoresNvidia: int32(service.GPU.GpuCoresNvidia),
+		}
+
+		serviceProto.Gpu = gpu
+	}
 	switch serviceType {
 	default:
 		return nil, fmt.Errorf("invalid service type '%s'", serviceType)
@@ -466,7 +481,9 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 	}
 
 	for _, envGroup := range appProto.EnvGroups {
-		porterApp.EnvGroups = append(porterApp.EnvGroups, fmt.Sprintf("%s:v%d", envGroup.Name, envGroup.Version))
+		if envGroup != nil {
+			porterApp.EnvGroups = append(porterApp.EnvGroups, fmt.Sprintf("%s:v%d", envGroup.Name, envGroup.Version))
+		}
 	}
 
 	if appProto.EfsStorage != nil {
@@ -479,6 +496,14 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 }
 
 func appServiceFromProto(service *porterv1.Service) (Service, error) {
+	var gpu *GPU
+	if service.Gpu != nil {
+		gpu = &GPU{
+			Enabled:        service.Gpu.Enabled,
+			GpuCoresNvidia: int(service.Gpu.GpuCoresNvidia),
+		}
+	}
+
 	appService := Service{
 		Name:                          service.Name,
 		Run:                           service.RunOptional,
@@ -488,6 +513,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		GpuCoresNvidia:                service.GpuCoresNvidia, // nolint:staticcheck // https://linear.app/porter/issue/POR-2137/support-new-gpu-field-in-porteryaml
 		Port:                          int(service.Port),
 		SmartOptimization:             service.SmartOptimization,
+		GPU:                           gpu,
 		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
 	}
 

@@ -16,7 +16,7 @@ download_and_install() {
     echo "[INFO] Please make sure /usr/local/bin is included in your PATH."
 
     curl -L https://github.com/porter-dev/porter/releases/download/{{ .TagName }}/porter_{{ .TagName }}_${osname}_x86_64.zip --output porter.zip
-    unzip -a porter.zip
+    unzip -o -a porter.zip
     rm porter.zip
 
     chmod +x ./porter

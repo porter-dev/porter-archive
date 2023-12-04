@@ -1,33 +1,36 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, {useContext, useEffect, useState} from "react";
 import styled from "styled-components";
-import { type RouteComponentProps, withRouter } from "react-router";
+import {type RouteComponentProps, withRouter} from "react-router";
 
-import { OFState } from "main/home/onboarding/state";
+import {OFState} from "main/home/onboarding/state";
 import api from "shared/api";
-import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
+import {Context} from "shared/Context";
+import {pushFiltered} from "shared/routing";
 
 import SelectRow from "components/form-components/SelectRow";
 import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
 import InputRow from "./form-components/InputRow";
 import {
-  Contract,
-  EnumKubernetesKind,
-  EnumCloudProvider,
-  Cluster,
   AKS,
   AKSNodePool,
-  NodePoolType,
+  AksSkuTier,
+  Cluster,
+  Contract,
+  EnumCloudProvider,
+  EnumKubernetesKind,
+  NodePoolType
 } from "@porter-dev/api-contracts";
-import { type ClusterType } from "shared/types";
+import {type ClusterType} from "shared/types";
 import Button from "./porter/Button";
 import Error from "./porter/Error";
 import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
 import Link from "./porter/Link";
 import Text from "./porter/Text";
-import { useIntercom } from "lib/hooks/useIntercom";
+import {useIntercom} from "lib/hooks/useIntercom";
+import Icon from "./porter/Icon";
+import dotVertical from "assets/dot-vertical.svg";
+import {Label} from "@tanstack/react-query-devtools/build/lib/Explorer";
 
 const locationOptions = [
   { value: "eastus", label: "East US" },
@@ -54,6 +57,11 @@ const machineTypeOptions = [
   { value: "Standard_B2als_v2", label: "Standard_B2als_v2"},
   { value: "Standard_A2_v2", label: "Standard_A2_v2" },
   { value: "Standard_A4_v2", label: "Standard_A4_v2" },
+];
+
+const skuTierOptions = [
+  { value: AksSkuTier.FREE, label: "Free" },
+  { value: AksSkuTier.STANDARD, label: "Standard (for production workloads, +$73/month)" },
 ];
 
 const clusterVersionOptions = [{ value: "v1.27.3", label: "v1.27" }, { value: "v1.24.9", label: "v1.24" }];
@@ -86,6 +94,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
   const [clusterVersion, setClusterVersion] = useState("v1.27.3");
   const [isReadOnly, setIsReadOnly] = useState(false);
+  const [skuTier, setSkuTier] = useState(AksSkuTier.FREE)
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
@@ -198,7 +207,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
                 mode: "User",
               }),
               new AKSNodePool({
-                instanceType: "Standard_B2als_v2",
+                instanceType: "Standard_B2as_v2",
                 minInstances: 1,
                 maxInstances: 3,
                 nodePoolType: NodePoolType.MONITORING,
@@ -212,6 +221,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
                 mode: "User",
               }),
             ],
+            skuTier,
           }),
         },
       }),
@@ -295,20 +305,27 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   }, []);
 
   useEffect(() => {
-    const contract = props.selectedClusterVersion as any;
-    if (contract?.cluster) {
-      contract.cluster.aksKind.nodePools.map((nodePool: any) => {
-        if (nodePool.nodePoolType === "NODE_POOL_TYPE_APPLICATION") {
+
+    if (!props.selectedClusterVersion) return;
+
+    // TODO: pass in contract as the already parsed object, rather than JSON (requires changes to AWS/GCP provisioning)
+    const contract = Contract.fromJsonString(JSON.stringify(props.selectedClusterVersion))
+
+    if (contract?.cluster?.kindValues && contract.cluster.kindValues.case === "aksKind") {
+      const aksValues = contract.cluster.kindValues.value
+      aksValues.nodePools.map((nodePool: AKSNodePool) => {
+        if (nodePool.nodePoolType === NodePoolType.APPLICATION) {
           setMachineType(nodePool.instanceType);
           setMinInstances(nodePool.minInstances);
           setMaxInstances(nodePool.maxInstances);
         }
       });
       setCreateStatus("");
-      setClusterName(contract.cluster.aksKind.clusterName);
-      setAzureLocation(contract.cluster.aksKind.location);
-      setClusterVersion(contract.cluster.aksKind.clusterVersion);
-      setCidrRange(contract.cluster.aksKind.cidrRange);
+      setClusterName(aksValues.clusterName);
+      setAzureLocation(aksValues.location);
+      setClusterVersion(aksValues.clusterVersion);
+      setCidrRange(aksValues.cidrRange);
+      setSkuTier(aksValues.skuTier)
     }
   }, [props.selectedClusterVersion]);
 
@@ -317,11 +334,11 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
     if (!props.clusterId) {
       return (
         <>
-          <Text size={16}>Select an Azure location</Text>
+          <Text size={16}>Select an Azure location and tier</Text>
           <Spacer y={1} />
           <Text color="helper">
-            Porter will automatically provision your infrastructure in the
-            specified location.
+            Porter will automatically provision your infrastructure with the
+            specified configuration.
           </Text>
           <Spacer height="10px" />
           <SelectRow
@@ -334,14 +351,34 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
             setActiveValue={setAzureLocation}
             label="📍 Azure location"
           />
+          <Spacer y={.75} />
+          <div style={{display: "flex", alignItems: "center"}}>
+            <Spacer inline x={.05}/>
+            <Icon src={dotVertical} height={"15px"}/>
+            <Spacer inline x={.1}/>
+            <Label>Azure Tier</Label>
+          </div>
+          <SelectRow
+              options={skuTierOptions}
+              width="350px"
+              disabled={isReadOnly}
+              value={skuTier}
+              scrollBuffer={true}
+              dropdownMaxHeight="240px"
+              setActiveValue={setSkuTier}
+          />
         </>
       );
     }
+
+    console.log(skuTier as AksSkuTier)
+    console.log(skuTierOptions)
 
     // If settings, update full form
     return (
       <>
         <Heading isAtTop>AKS configuration</Heading>
+        <Spacer y={0.75} />
         <SelectRow
           options={locationOptions}
           width="350px"
@@ -351,6 +388,22 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
           dropdownMaxHeight="240px"
           setActiveValue={setAzureLocation}
           label="📍 Azure location"
+        />
+        <Spacer y={.75} />
+        <div style={{display: "flex", alignItems: "center"}}>
+          <Spacer inline x={.05}/>
+          <Icon src={dotVertical} height={"15px"}/>
+          <Spacer inline x={.1}/>
+          <Label>Tier</Label>
+        </div>
+        <SelectRow
+            options={skuTierOptions}
+            width="350px"
+            disabled={isReadOnly}
+            value={skuTier}
+            scrollBuffer={true}
+            dropdownMaxHeight="240px"
+            setActiveValue={setSkuTier}
         />
         {user?.isPorterUser && (
           <Heading>
@@ -591,3 +644,7 @@ const errorMessageToModal = (errorMessage: string) => {
       return null;
   }
 };
+
+const Wrapper = styled.div`
+  transform: translateY(+13px);
+`;

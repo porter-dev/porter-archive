@@ -202,7 +202,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	default:
 		return nil, fmt.Errorf("invalid service type '%s'", serviceType)
 	case porterv1.ServiceType_SERVICE_TYPE_UNSPECIFIED:
-		return nil, errors.New("KubernetesService type unspecified")
+		return nil, errors.New("service type unspecified")
 	case porterv1.ServiceType_SERVICE_TYPE_WEB:
 		webConfig, err := webConfigProtoFromConfig(service)
 		if err != nil {

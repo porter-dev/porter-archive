@@ -371,9 +371,6 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       );
     }
 
-    console.log(skuTier as AksSkuTier)
-    console.log(skuTierOptions)
-
     // If settings, update full form
     return (
       <>

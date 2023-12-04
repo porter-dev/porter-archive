@@ -28,7 +28,7 @@ const encodedContractValidator = z.object({
   cluster_id: z.number(),
   project_id: z.number(),
   condition: z.string(),
-  condition_metadata: z.record(z.any()),
+  condition_metadata: z.record(z.any()).nullable(),
 });
 
 export type NodeGroup = {

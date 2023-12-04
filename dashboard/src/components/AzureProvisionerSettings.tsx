@@ -641,7 +641,3 @@ const errorMessageToModal = (errorMessage: string) => {
       return null;
   }
 };
-
-const Wrapper = styled.div`
-  transform: translateY(+13px);
-`;

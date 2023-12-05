@@ -125,9 +125,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         project_id: currentProject?.id ?? 0,
         cluster_id: currentCluster?.id ?? 0,
       });
-      console.log("statusRes", statusRes.data.status)
       if (statusRes.data.status === "available") {
-        console.log("STEEING DATABASE STATUS TO TRUE")
         setDatabaseStatus(true);
       }
       else {
@@ -168,7 +166,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
     const updatedChart = res.data;
 
     setCurrentChart(updatedChart);
-    console.log(updatedChart)
 
     updateComponents(updatedChart).finally(() => setIsLoadingChartData(false));
   };

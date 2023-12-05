@@ -161,7 +161,7 @@ func (c *PorterYAMLFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http
 	app.Env = env
 	app.EnvGroups = envGroups
 
-	app = zeroOutValues(app)
+	app = zeroOutValues(app, c.Config().ServerConf.AppRootDomain)
 
 	if request.ShouldFormatForExport {
 		app = formatForExport(app)
@@ -310,7 +310,7 @@ func filterNewServiceValues(service v2.Service) v2.Service {
 	}
 }
 
-func zeroOutValues(app v2.PorterApp) v2.PorterApp {
+func zeroOutValues(app v2.PorterApp, appRootDomain string) v2.PorterApp {
 	for i := range app.Services {
 		// remove smart optimization
 		app.Services[i].SmartOptimization = nil
@@ -344,6 +344,14 @@ func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 			if app.Services[i].Private != nil && !*app.Services[i].Private {
 				app.Services[i].Private = nil
 			}
+			// remove porter domains
+			var filteredDomains []v2.Domains
+			for j := range app.Services[i].Domains {
+				if !strings.HasSuffix(app.Services[i].Domains[j].Name, appRootDomain) {
+					filteredDomains = append(filteredDomains, app.Services[i].Domains[j])
+				}
+			}
+			app.Services[i].Domains = filteredDomains
 		case v2.ServiceType_Worker:
 			// remove autoscaling if not enabled
 			if app.Services[i].Autoscaling != nil && !app.Services[i].Autoscaling.Enabled {

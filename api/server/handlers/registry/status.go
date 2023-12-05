@@ -43,11 +43,11 @@ func (c *StatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	registry, _ := ctx.Value(types.RegistryScope).(*models.Registry)
-	req := connect.NewRequest(&porterv1.ECRStatusRequest{
+	req := connect.NewRequest(&porterv1.RegistryStatusRequest{
 		ProjectId:  int64(registry.ProjectID),
 		RegistryId: int64(registry.ID),
 	})
-	status, err := c.Config().ClusterControlPlaneClient.ECRStatus(ctx, req)
+	status, err := c.Config().ClusterControlPlaneClient.RegistryStatus(ctx, req)
 	if err != nil {
 		err := fmt.Errorf("unable to retrieve status for cluster: %w", err)
 		err = telemetry.Error(ctx, span, err, err.Error())
@@ -65,11 +65,11 @@ func (c *StatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp := StatusResponse{
 		ProjectID:  int(registry.ProjectID),
 		RegistryID: int(registry.ID),
-		Status:     statusResp.Scanned,
+		Status:     statusResp.IsVulnerabilityScanningEnabled,
 	}
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "registry-status", Value: statusResp.Scanned},
+		telemetry.AttributeKV{Key: "registry-status", Value: statusResp.IsVulnerabilityScanningEnabled},
 	)
 
 	c.WriteResult(w, r, resp)

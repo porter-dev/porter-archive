@@ -213,11 +213,12 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   });
   const { currentClusterResources } = useClusterResources();
 
+  // set the deployment target id to the default if no deployment target has been selected yet
   useEffect(() => {
-    if (deploymentTargetID === "" && !isDefaultDeploymentTargetLoading) {
+    if (!isDefaultDeploymentTargetLoading && deploymentTargetID === "") {
       setDeploymentTargetID(defaultDeploymentTarget?.id ?? "");
     }
-  }, [isDefaultDeploymentTargetLoading]);
+  }, [defaultDeploymentTarget]);
 
   const resetAllExceptName = (): void => {
     setIsNameHighlight(true);
@@ -837,6 +838,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
           deploymentError={deployError}
           porterYamlPath={source.porter_yaml_path}
+          historySuffix={currentProject.managed_deployment_targets_enabled ? `?target=${deploymentTargetID}` : ""}
         />
       )}
     </CenterWrapper>

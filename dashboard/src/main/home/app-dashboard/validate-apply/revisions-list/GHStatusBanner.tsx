@@ -62,7 +62,9 @@ const GHStatusBanner: React.FC = () => {
   const previouslyBuilt = useMemo(() => {
     if (revisions.length === 1) {
       if (
-        revisions[0].status === "DEPLOYMENT_SUCCESSFUL" &&
+        // TODO: remove checking for DEPLOYED status once update flow is GA'd
+        (revisions[0].status === "DEPLOYMENT_SUCCESSFUL" ||
+          revisions[0].status === "DEPLOYED") &&
         latestProto.image?.tag === HELLO_PORTER_PLACEHOLDER_TAG
       ) {
         return false;

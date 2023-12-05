@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 
-import Modal from "./porter/Modal";
-import Text from "./porter/Text";
-import Spacer from "./porter/Spacer";
-import Fieldset from "./porter/Fieldset";
 import Button from "./porter/Button";
 import ExpandableSection from "./porter/ExpandableSection";
+import Fieldset from "./porter/Fieldset";
 import Input from "./porter/Input";
 import Link from "./porter/Link";
+import Modal from "./porter/Modal";
+import Spacer from "./porter/Spacer";
+import Text from "./porter/Text";
 
 type Props = {
   setCurrentStep: (step: string) => void;
@@ -43,20 +43,18 @@ const AzureCostConsent: React.FC<Props> = ({
           noWrapper
           expandText="[+] Show details"
           collapseText="[-] Hide details"
-          Header={<Cost>$210.24 / mo</Cost>}
+          Header={<Cost>$164.49 / mo</Cost>}
           ExpandedSection={
             <>
               <Spacer height="15px" />
               <Fieldset background="#1b1d2688">
-                • Azure Kubernetes Service (AKS) = $73/mo
-                <Spacer height="15px" />
                 • Azure virtual machines:
                 <Spacer height="15px" />
                 <Tab />+ System workloads: Standard_B2als_v2 instance (3) =
                 $82.34/mo
                 <Spacer height="15px" />
-                <Tab />+ Monitoring workloads: Standard_B2als_v2 instance (1) =
-                $27.45/mo
+                <Tab />+ Monitoring workloads: Standard_B2as_v2 instance (1) =
+                $54.90/mo
                 <Spacer height="15px" />
                 <Tab />+ Application workloads: Standard_B2als_v2 instance (1) =
                 $27.45/mo
@@ -66,9 +64,9 @@ const AzureCostConsent: React.FC<Props> = ({
         />
         <Spacer y={1} />
         <Text color="helper">
-          The base Azure infrastructure covers up to 2 vCPU and 4GB of RAM for application workloads.
-          Separate from the Azure cost, Porter charges based on your resource
-          usage.
+          The base Azure infrastructure covers up to 2 vCPU and 4GB of RAM for
+          application workloads. Separate from the Azure cost, Porter charges
+          based on your resource usage.
         </Text>
         <Spacer inline width="5px" />
         <Spacer y={0.5} />
@@ -93,12 +91,12 @@ const AzureCostConsent: React.FC<Props> = ({
         <Spacer y={0.5} />
         <Text color="helper">
           All Azure resources will be automatically deleted when you delete your
-          Porter project. Please enter the Azure base cost (&quot;210.24&quot;) below to
-          proceed:
+          Porter project. Please enter the Azure base cost (&quot;164.49&quot;)
+          below to proceed:
         </Text>
         <Spacer y={1} />
         <Input
-          placeholder="210.24"
+          placeholder="164.49"
           value={confirmCost}
           setValue={setConfirmCost}
           width="100%"
@@ -106,7 +104,7 @@ const AzureCostConsent: React.FC<Props> = ({
         />
         <Spacer y={1} />
         <Button
-          disabled={confirmCost !== "210.24"}
+          disabled={confirmCost !== "164.49"}
           onClick={() => {
             setShowCostConfirmModal(false);
             setConfirmCost("");

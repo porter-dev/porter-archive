@@ -293,7 +293,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         instanceType: gpuInstanceType,
         minInstances: gpuMinInstances || 0,
         maxInstances: gpuMaxInstances || 5,
-        nodeGroupType: GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM,
+        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM,
       }));
     }
 

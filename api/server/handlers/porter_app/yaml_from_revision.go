@@ -164,7 +164,7 @@ func (c *PorterYAMLFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http
 	app = zeroOutValues(app)
 
 	if request.ShouldFormatForExport {
-		app = formatForExport(app)
+		app = formatForExport(app, c.Config().ServerConf.AppRootDomain)
 	}
 
 	porterYAMLString, err := yaml.Marshal(app)
@@ -252,9 +252,20 @@ func defaultEnvGroup(ctx context.Context, input formatDefaultEnvGroupInput) (map
 	return env, revisionWithEnv.Env.Name, nil
 }
 
-func formatForExport(app v2.PorterApp) v2.PorterApp {
+func formatForExport(app v2.PorterApp, appRootDomain string) v2.PorterApp {
 	for i := range app.Services {
 		app.Services[i] = filterNewServiceValues(app.Services[i])
+
+		if app.Services[i].Type == v2.ServiceType_Web {
+			// remove porter domains
+			var filteredDomains []v2.Domains
+			for _, domain := range app.Services[i].Domains {
+				if !strings.HasSuffix(domain.Name, appRootDomain) {
+					filteredDomains = append(filteredDomains, domain)
+				}
+			}
+			app.Services[i].Domains = filteredDomains
+		}
 	}
 
 	if app.Predeploy != nil {

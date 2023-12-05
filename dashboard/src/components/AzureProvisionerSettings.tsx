@@ -391,7 +391,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
           <Spacer inline x={.05}/>
           <Icon src={dotVertical} height={"15px"}/>
           <Spacer inline x={.1}/>
-          <Label>Tier</Label>
+          <Label>Azure Tier</Label>
         </div>
         <SelectRow
             options={skuTierOptions}

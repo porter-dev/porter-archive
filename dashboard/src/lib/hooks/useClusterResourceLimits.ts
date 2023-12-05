@@ -3,6 +3,7 @@ import {
   Contract,
   LoadBalancerType,
   NodeGroupType,
+  NodePoolType,
 } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import convert from "convert";
@@ -53,6 +54,30 @@ export type EksKind = {
     vpcCidr: string;
     serviceCidr: string;
   };
+};
+
+export type GKEKind = {
+  clusterName: string;
+  clusterVersion: string;
+  region: string;
+  nodePools: NodePools[];
+  user: {
+    id: number;
+  };
+  network: {
+    cidrRange: string;
+    controlPlaneCidr: string;
+    podCidr: string;
+    serviceCidr: string;
+  };
+};
+
+export type NodePools = {
+  instanceType: string;
+  minInstances: number;
+  maxInstances: number;
+  nodePoolType: string;
+  isStateful?: boolean;
 };
 
 const clusterNodesValidator = z
@@ -277,7 +302,8 @@ export const useClusterResourceLimits = ({
 
   useEffect(() => {
     if (contract) {
-      const containsCustomNodeGroup = match(contract)
+      let containsCustomNodeGroup = false;
+      containsCustomNodeGroup = match(contract)
         .with({ kindValues: { case: "eksKind" } }, (c) => {
           return c.kindValues.value.nodeGroups.some(
             (ng) =>
@@ -288,6 +314,21 @@ export const useClusterResourceLimits = ({
           );
         })
         .otherwise(() => false);
+
+      if (!containsCustomNodeGroup) {
+        containsCustomNodeGroup = match(contract)
+          .with({ kindValues: { case: "gkeKind" } }, (c) => {
+            return c.kindValues.value.nodePools.some(
+              (ng) =>
+                (ng.nodePoolType === NodePoolType.CUSTOM &&
+                  ng.instanceType.includes("n2")) ||
+                (ng.nodePoolType === NodePoolType.APPLICATION &&
+                  ng.instanceType.includes("n2"))
+            );
+          })
+          .otherwise(() => false);
+      }
+      console.log("containsCustomNodeGroup", containsCustomNodeGroup);
 
       const loadBalancerType: ClientLoadBalancerType = match(contract)
         .with({ kindValues: { case: "eksKind" } }, (c) => {

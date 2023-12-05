@@ -8,11 +8,12 @@ import Text from "./porter/Text";
 import Error from "./porter/Error";
 import healthy from "assets/status-healthy.png";
 import failure from "assets/failure.svg";
+import Button from "./porter/Button";
 import { PREFLIGHT_MESSAGE_CONST, PREFLIGHT_MESSAGE_CONST_AWS, PREFLIGHT_MESSAGE_CONST_GCP, PROVISIONING_STATUS } from "shared/util";
 import Loading from "./Loading";
 type Props = RouteComponentProps & {
   preflightData: any
-  provider: 'AWS' | 'GCP' | 'DEFAULT' | 'PROVISIONING_STATUS';
+  provider: 'AWS' | 'GCP' | 'DEFAULT' | 'PROVISIONING_STATUS' | 'SOC2';
   error?: string;
 
 };
@@ -24,7 +25,7 @@ type ItemProps = RouteComponentProps & {
 
 const PreflightChecks: React.FC<Props> = (props) => {
 
-  const getMessageConstByProvider = (provider: 'AWS' | 'GCP' | 'DEFAULT' | 'PROVISIONING_STATUS') => {
+  const getMessageConstByProvider = (provider: 'AWS' | 'GCP' | 'DEFAULT' | 'PROVISIONING_STATUS' | 'SOC2') => {
     switch (provider) {
       case 'PROVISIONING_STATUS':
         return PROVISIONING_STATUS;
@@ -32,6 +33,8 @@ const PreflightChecks: React.FC<Props> = (props) => {
         return PREFLIGHT_MESSAGE_CONST_AWS;
       case 'GCP':
         return PREFLIGHT_MESSAGE_CONST_GCP;
+      case 'SOC2':
+        return {}
       default:
         return PREFLIGHT_MESSAGE_CONST;
     }
@@ -70,15 +73,20 @@ const PreflightChecks: React.FC<Props> = (props) => {
               width="20px"
               height="20px" />
           ) : hasMessage ? (
-            <StatusIcon src={failure} />
+            <>
+              <StatusIcon src={failure} />
+
+            </>
           ) : (
             <StatusIcon src={healthy} />
           )}
           <Spacer inline x={1} />
           <Text style={{ marginLeft: '10px', flex: 1 }}>{checkLabel ?? checkLabelConst}</Text>
+
           {hasMessage && <ExpandIcon className="material-icons" isExpanded={isExpanded}>
             arrow_drop_down
           </ExpandIcon>}
+          <Button onClick={handleToggle}> Enable </Button>
         </CheckItemTop>
         {isExpanded && hasMessage && (
           <div>
@@ -108,12 +116,17 @@ const PreflightChecks: React.FC<Props> = (props) => {
   };
   return (
 
-    props.provider === 'DEFAULT' ?
-      <AppearingDiv>
-        {Object.keys(currentMessageConst).map((checkKey) => (
-          <PreflightCheckItem key={checkKey} checkKey={checkKey} />
-        ))}
-      </AppearingDiv >
+    (props.provider === 'DEFAULT' || props.provider === 'SOC2') ?
+
+      <><Spacer y={1} /><AppearingDiv>
+        {Array.from(combinedKeys).map((checkKey) => (
+          <PreflightCheckItem
+            key={checkKey}
+            checkKey={checkKey}
+            checkLabel={currentMessageConst[checkKey] || checkKey} />
+        )
+        )}
+      </AppearingDiv></>
       :
 
       (

@@ -975,7 +975,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     margin_left={"0px"}
                   />
                   */}
-                  {templateWhitelist.includes(currentChart.chart.metadata.name) &&
+                  {!templateWhitelist.includes(currentChart.chart.metadata.name) &&
                     <><DeployStatusSection
                       chart={currentChart}
                       setLogData={renderLogsAtTimestamp} /><LastDeployed>

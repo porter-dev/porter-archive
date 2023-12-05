@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
@@ -18,24 +18,25 @@ export const deploymentTargetValidator = z.object({
 });
 export type DeploymentTarget = z.infer<typeof deploymentTargetValidator>;
 
+const emptyDeploymentTarget: DeploymentTarget = {
+  cluster_id: 0,
+  created_at: "",
+  id: "",
+  is_default: false,
+  is_preview: false,
+  name: "",
+  namespace: "",
+  project_id: 0,
+  updated_at: "",
+};
+
 export function useDefaultDeploymentTarget(): {
   defaultDeploymentTarget: DeploymentTarget;
   isDefaultDeploymentTargetLoading: boolean;
 } {
   const { currentProject, currentCluster } = useContext(Context);
-  const [deploymentTarget, setDeploymentTarget] = useState<DeploymentTarget>({
-    cluster_id: 0,
-    created_at: "",
-    id: "",
-    is_default: false,
-    is_preview: false,
-    name: "",
-    namespace: "",
-    project_id: 0,
-    updated_at: "",
-  });
 
-  const { data, isLoading } = useQuery(
+  const { data = emptyDeploymentTarget, isLoading } = useQuery(
     ["getDefaultDeploymentTarget", currentProject?.id, currentCluster?.id],
     async () => {
       // see Context.tsx L98 for why the last check is necessary
@@ -71,14 +72,8 @@ export function useDefaultDeploymentTarget(): {
     }
   );
 
-  useEffect(() => {
-    if (data) {
-      setDeploymentTarget(data);
-    }
-  }, [data]);
-
   return {
-    defaultDeploymentTarget: deploymentTarget,
+    defaultDeploymentTarget: data,
     isDefaultDeploymentTargetLoading: isLoading,
   };
 }
@@ -88,11 +83,8 @@ export function useDeploymentTargetList(input: { preview: boolean }): {
   isDeploymentTargetListLoading: boolean;
 } {
   const { currentProject, currentCluster } = useContext(Context);
-  const [deploymentTargets, setDeploymentTargets] = useState<
-    DeploymentTarget[]
-  >([]);
 
-  const { data, isLoading } = useQuery(
+  const { data = [], isLoading } = useQuery(
     [
       "listDeploymentTargets",
       currentProject?.id,
@@ -128,14 +120,8 @@ export function useDeploymentTargetList(input: { preview: boolean }): {
     }
   );
 
-  useEffect(() => {
-    if (data) {
-      setDeploymentTargets(data);
-    }
-  }, [data]);
-
   return {
-    deploymentTargetList: deploymentTargets,
+    deploymentTargetList: data,
     isDeploymentTargetListLoading: isLoading,
   };
 }

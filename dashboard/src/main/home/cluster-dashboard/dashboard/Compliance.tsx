@@ -16,7 +16,6 @@ import ToggleRow from "components/porter/ToggleRow";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import sparkle from "assets/sparkle.svg";
-import PreflightChecks from "components/PreflightChecks";
 
 type Props = {
   credentialId: string;
@@ -203,7 +202,7 @@ const Compliance: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const isUserProvisioning = useMemo(() => {
@@ -231,8 +230,8 @@ const Compliance: React.FC<Props> = (props) => {
 
       setSoc2Enabled(
         cloudTrailEnabled &&
-        eksValues.enableKmsEncryption &&
-        eksValues.enableEcrScanning
+          eksValues.enableKmsEncryption &&
+          eksValues.enableEcrScanning
       );
     }
   }, [props.selectedClusterVersion]);
@@ -244,7 +243,7 @@ const Compliance: React.FC<Props> = (props) => {
 
     setIsReadOnly(
       currentCluster.status === "UPDATING" ||
-      currentCluster.status === "UPDATING_UNAVAILABLE"
+        currentCluster.status === "UPDATING_UNAVAILABLE"
     );
   }, []);
 
@@ -267,16 +266,6 @@ const Compliance: React.FC<Props> = (props) => {
           New
         </NewBadge>
       </Container>
-
-      <PreflightChecks preflightData={{
-        "preflight_checks": {
-          "AWS KMS Secret Encryption": {},
-          "EKS CloudTrail Forwarding": {},
-          "Error EKS CloudTrail Forwarding": {
-            "message": "CloudTrail is not enabled for the cluster. Please enable CloudTrail for the cluster to enable SOC 2 compliance.",
-          },
-        }
-      }} provider={"SOC2"} />
       <Spacer y={0.5} />
       <Text color="helper">
         Configure your AWS infrastructure to be SOC 2 compliant with Porter.
@@ -344,8 +333,8 @@ const Compliance: React.FC<Props> = (props) => {
             kmsEnabled
               ? "KMS encryption can never be disabled."
               : soc2Enabled
-                ? "Global SOC 2 setting must be disabled to toggle this"
-                : "Wait for provisioning to complete before editing this field."
+              ? "Global SOC 2 setting must be disabled to toggle this"
+              : "Wait for provisioning to complete before editing this field."
           }
         >
           <Container row>

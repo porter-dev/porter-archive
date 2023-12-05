@@ -108,8 +108,8 @@ func (c *DefaultDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 			Namespace: defaultDeploymentTarget.Namespace,
 			IsPreview: defaultDeploymentTarget.IsPreview,
 			IsDefault: defaultDeploymentTarget.IsDefault,
-			CreatedAt: time.Time{},
-			UpdatedAt: time.Time{},
+			CreatedAt: time.Time{}, // not provided by default deployment target response
+			UpdatedAt: time.Time{}, // not provided by default deployment target response
 		},
 	}
 

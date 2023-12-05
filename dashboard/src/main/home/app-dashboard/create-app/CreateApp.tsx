@@ -628,9 +628,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                             }
                           )}
                           setValue={(value) => {
-                            if (value !== deploymentTargetID) {
-                              setDeploymentTargetID(value);
-                            }
+                            setDeploymentTargetID(value);
                           }}
                           label={"Deployment Target"}
                         />

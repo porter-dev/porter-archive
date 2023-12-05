@@ -102,8 +102,8 @@ func (c *GetDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			Namespace: deploymentTarget.Namespace,
 			IsPreview: deploymentTarget.IsPreview,
 			IsDefault: deploymentTarget.IsDefault,
-			CreatedAt: time.Time{},
-			UpdatedAt: time.Time{},
+			CreatedAt: time.Time{}, // not provided by deployment target details response
+			UpdatedAt: time.Time{}, // not provided by deployment target details response
 		},
 	}
 

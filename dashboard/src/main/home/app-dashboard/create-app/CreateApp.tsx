@@ -572,7 +572,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     } else {
       clearErrors("app.name.value");
     }
-  }, [porterApps, name.value]);
+  }, [porterApps.join(""), name.value]);
 
   if (!currentProject || !currentCluster) {
     return null;

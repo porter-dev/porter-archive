@@ -16,11 +16,20 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// StatusHandler is a struct for handling registry status requests
 type StatusHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
+// StatusResponse describes an outbound registry status response
+type StatusResponse struct {
+	ProjectID  int  `json:"project_id"`
+	RegistryID int  `json:"registry_id"`
+	Status     bool `json:"status"`
+}
+
+// NewStatusHandler constructs a registry StatusHandler
 func NewStatusHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -30,12 +39,6 @@ func NewStatusHandler(
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
-}
-
-type StatusResponse struct {
-	ProjectID  int  `json:"project_id"`
-	RegistryID int  `json:"registry_id"`
-	Status     bool `json:"status"`
 }
 
 func (c *StatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

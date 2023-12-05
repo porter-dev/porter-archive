@@ -253,6 +253,15 @@ func defaultEnvGroup(ctx context.Context, input formatDefaultEnvGroupInput) (map
 }
 
 func formatForExport(app v2.PorterApp) v2.PorterApp {
+	for i := range app.Services {
+		app.Services[i] = filterNewServiceValues(app.Services[i])
+	}
+
+	if app.Predeploy != nil {
+		predeploy := filterNewServiceValues(*app.Predeploy)
+		app.Predeploy = &predeploy
+	}
+
 	// don't show image or commit sha if build is present
 	if app.Build != nil {
 		app.Image = nil
@@ -274,10 +283,41 @@ func formatForExport(app v2.PorterApp) v2.PorterApp {
 	return app
 }
 
+// this "no-op" ensures that new fields are always zero-ed out in the exported yaml, until we specifically add it here
+func filterNewServiceValues(service v2.Service) v2.Service {
+	return v2.Service{
+		Name:                          service.Name,
+		Run:                           service.Run,
+		Type:                          service.Type,
+		Instances:                     service.Instances,
+		CpuCores:                      service.CpuCores,
+		RamMegabytes:                  service.RamMegabytes,
+		GpuCoresNvidia:                service.GpuCoresNvidia,
+		GPU:                           service.GPU,
+		SmartOptimization:             service.SmartOptimization,
+		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
+		Port:                          service.Port,
+		Autoscaling:                   service.Autoscaling,
+		Domains:                       service.Domains,
+		HealthCheck:                   service.HealthCheck,
+		AllowConcurrent:               service.AllowConcurrent,
+		Cron:                          service.Cron,
+		SuspendCron:                   service.SuspendCron,
+		TimeoutSeconds:                service.TimeoutSeconds,
+		Private:                       service.Private,
+		IngressAnnotations:            service.IngressAnnotations,
+		DisableTLS:                    service.DisableTLS,
+	}
+}
+
 func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 	for i := range app.Services {
 		// remove smart optimization
 		app.Services[i].SmartOptimization = nil
+
+		if app.Services[i].GPU != nil && !app.Services[i].GPU.Enabled {
+			app.Services[i].GPU = nil
+		}
 
 		// remove launcher
 		if app.Services[i].Run != nil {

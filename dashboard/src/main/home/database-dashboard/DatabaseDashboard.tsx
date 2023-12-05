@@ -77,6 +77,7 @@ const Apps: React.FC<Props> = ({
     for (const db of filteredDatabases) {
       try {
         if (databaseStatuses[db.name] !== "available") {
+          console.log(db)
           const statusRes = await api.getDatabaseStatus("<token>", {
             name: db.name,
             type: db.chart.metadata.name
@@ -84,7 +85,12 @@ const Apps: React.FC<Props> = ({
             project_id: currentProject?.id ?? 0,
             cluster_id: currentCluster?.id ?? 0,
           });
-          newStatuses[db.name] = statusRes.data.status;
+          if (statusRes.data.status === "available") {
+            newStatuses[db.name] = statusRes.data.status;
+          }
+          else {
+            newStatuses[db.name] = "updating";
+          }
         }// Assuming status is returned in this field
       } catch (err) {
         console.error("Error fetching database status for", db.name, err);
@@ -177,13 +183,24 @@ const Apps: React.FC<Props> = ({
     switch (status) {
       case "available":
         return <StatusIcon src={healthy} />;
-      default:
+      case "":
+        return <></>;
+      case "error":
         return <StatusText>
           <StatusWrapper success={false}>
             <Loading src={loading} />
             {"Creating database"}
           </StatusWrapper>
         </StatusText>
+      case "updating":
+        return <StatusText>
+          <StatusWrapper success={false}>
+            <Loading src={loading} />
+            {"Creating database"}
+          </StatusWrapper>
+        </StatusText>
+      default:
+        return <></>;
     }
   };
 

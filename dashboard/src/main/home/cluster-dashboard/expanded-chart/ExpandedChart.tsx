@@ -51,6 +51,12 @@ const getReadableDate = (s: string) => {
   return `${time} on ${date}`;
 };
 
+const templateWhitelist = [
+  "elasticache-redis",
+  "rds-postgresql",
+  "rds-postgresql-aurora",
+];
+
 const ExpandedChart: React.FC<Props> = (props) => {
   const [currentChart, setCurrentChart] = useState<ChartType>(
     props.currentChart
@@ -82,6 +88,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [logData, setLogData] = useState<InitLogData>({});
   const [overrideCurrentTab, setOverrideCurrentTab] = useState("");
   const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
+  const [databaseStatus, setDatabaseStatus] = useState<boolean>(true);
 
   const {
     isStack,
@@ -108,6 +115,28 @@ const ExpandedChart: React.FC<Props> = (props) => {
     setOverrideCurrentTab("logs");
   };
 
+  const updateDatabaseStatuses = async (): Promise<void> => {
+    try {
+
+      const statusRes = await api.getDatabaseStatus("<token>", {
+        name: currentChart.name,
+        type: currentChart.chart.metadata.name
+      }, {
+        project_id: currentProject?.id ?? 0,
+        cluster_id: currentCluster?.id ?? 0,
+      });
+      console.log("statusRes", statusRes.data.status)
+      if (statusRes.data.status === "available") {
+        console.log("STEEING DATABASE STATUS TO TRUE")
+        setDatabaseStatus(true);
+      }
+      else {
+        setDatabaseStatus(false);
+      }
+    } catch (err) {
+      setDatabaseStatus(false);
+    }
+  };
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
     setIsLoadingChartData(true);
@@ -780,6 +809,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
       });
   }, [currentChart]);
 
+
+
   useEffect(() => {
     if (logData.revision) {
       api
@@ -822,7 +853,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
           });
       });
     });
-
+    if (templateWhitelist.includes(currentChart.chart.metadata.name)) {
+      void updateDatabaseStatuses()
+    }
     return () => {
       closeAllWebsockets();
     };
@@ -885,6 +918,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         }
       })
       .catch(console.log);
+
     return () => (isSubscribed = false);
   }, [components, currentCluster, currentProject, currentChart]);
 
@@ -941,23 +975,25 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     margin_left={"0px"}
                   />
                   */}
-                  <DeployStatusSection
-                    chart={currentChart}
-                    setLogData={renderLogsAtTimestamp}
-                  />
-                  <LastDeployed>
-                    <Dot>•</Dot>Last deployed
-                    {" " + getReadableDate(currentChart.info.last_deployed)}
-                  </LastDeployed>
+                  {templateWhitelist.includes(currentChart.chart.metadata.name) &&
+                    <><DeployStatusSection
+                      chart={currentChart}
+                      setLogData={renderLogsAtTimestamp} /><LastDeployed>
+                        <Dot>•</Dot>Last deployed
+                        {" " + getReadableDate(currentChart.info.last_deployed)}
+                      </LastDeployed></>
+                  }
                 </InfoWrapper>
                 <Spacer y={1} />
-                {currentChart.chart.metadata.annotations?.category === "Database" &&
-                  <Banner>
-                    <BannerContents>
-                      <b>Database is being created</b>
-                    </BannerContents>
-                    <Spacer inline width="5px" />
-                  </Banner>}
+                {!databaseStatus &&
+                  <>
+                    {/* <Spacer y={1} /> */}
+                    <Banner>
+                      <BannerContents>
+                        <b>Database is being created</b>
+                      </BannerContents>
+                      <Spacer inline width="5px" />
+                    </Banner></>}
               </HeaderWrapper>
               {deleting ? (
                 <>
@@ -1068,7 +1104,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
             </StyledExpandedChart>
           )}
         </>
-      )}
+      )
+      }
     </>
   );
 };

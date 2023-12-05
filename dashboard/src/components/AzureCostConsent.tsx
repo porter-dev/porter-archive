@@ -43,7 +43,7 @@ const AzureCostConsent: React.FC<Props> = ({
           noWrapper
           expandText="[+] Show details"
           collapseText="[-] Hide details"
-          Header={<Cost>$164.49 / mo</Cost>}
+          Header={<Cost>$164.69 / mo</Cost>}
           ExpandedSection={
             <>
               <Spacer height="15px" />
@@ -91,12 +91,12 @@ const AzureCostConsent: React.FC<Props> = ({
         <Spacer y={0.5} />
         <Text color="helper">
           All Azure resources will be automatically deleted when you delete your
-          Porter project. Please enter the Azure base cost (&quot;164.49&quot;)
+          Porter project. Please enter the Azure base cost (&quot;164.69&quot;)
           below to proceed:
         </Text>
         <Spacer y={1} />
         <Input
-          placeholder="164.49"
+          placeholder="164.69"
           value={confirmCost}
           setValue={setConfirmCost}
           width="100%"
@@ -104,7 +104,7 @@ const AzureCostConsent: React.FC<Props> = ({
         />
         <Spacer y={1} />
         <Button
-          disabled={confirmCost !== "164.49"}
+          disabled={confirmCost !== "164.69"}
           onClick={() => {
             setShowCostConfirmModal(false);
             setConfirmCost("");

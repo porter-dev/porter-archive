@@ -47,6 +47,18 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	user, _ := ctx.Value(types.UserScope).(*models.User)
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
+	if project == nil {
+		e := telemetry.Error(ctx, span, nil, "project not found")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusNotFound))
+		return
+	}
+
+	if cluster == nil {
+		e := telemetry.Error(ctx, span, nil, "cluster not found")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusNotFound))
+		return
+	}
+
 	request := &types.CreateOrUpdatePorterAppEventRequest{}
 	if ok := p.DecodeAndValidate(w, r, request); !ok {
 		e := telemetry.Error(ctx, span, nil, "error decoding request")
@@ -86,7 +98,7 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 				return
 			}
 		} else {
-			event, err = p.createNewAppEvent(ctx, *cluster, appName, request.DeploymentTargetID, request.Status, string(request.Type), request.TypeExternalSource, request.Metadata)
+			event, err = p.createNewAppEvent(ctx, *project, *cluster, appName, request.DeploymentTargetID, request.Status, string(request.Type), request.TypeExternalSource, request.Metadata)
 			if err != nil {
 				e := telemetry.Error(ctx, span, err, "error creating new app event")
 				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
@@ -138,7 +150,7 @@ func reportBuildStatus(ctx context.Context, request *types.CreateOrUpdatePorterA
 }
 
 // createNewAppEvent will create a new app event for the given porter app name. If the app event is an agent event, then it will be created only if there is no existing event which has the agent ID. In the case that an existing event is found, that will be returned instead
-func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Context, cluster models.Cluster, porterAppName string, deploymentTargetID string, status types.PorterAppEventStatus, eventType string, externalSource string, requestMetadata map[string]any) (types.PorterAppEvent, error) {
+func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Context, project models.Project, cluster models.Cluster, porterAppName string, deploymentTargetID string, status types.PorterAppEventStatus, eventType string, externalSource string, requestMetadata map[string]any) (types.PorterAppEvent, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-porter-app-event")
 	defer span.End()
 
@@ -193,17 +205,25 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 				}
 				return event, nil
 			} else {
-				err := p.updateDeployEventV2(ctx, updateDeployEventV2Input{
-					projectID:             cluster.ProjectID,
-					appName:               porterAppName,
-					appID:                 app.ID,
-					deploymentTargetID:    deploymentTargetID,
-					updatedStatusMetadata: requestMetadata,
-				})
-				if err != nil {
-					return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error updating v2 deploy event")
+				betaFeaturesEnabled := project.GetFeatureFlag(models.BetaFeaturesEnabled, p.Config().LaunchDarklyClient)
+				telemetry.WithAttributes(span,
+					telemetry.AttributeKV{Key: "beta_features_enabled", Value: betaFeaturesEnabled},
+				)
+				// if beta features are not enabled, then porter makes a request to ccp to update the deploy status
+				// if beta features are enabled, ccp is checking the deploy status, so this request is not necessary
+				// TODO remove this entire branch once beta features are enabled by default
+				if !betaFeaturesEnabled {
+					err := p.updateDeployEventV2(ctx, updateDeployEventV2Input{
+						projectID:             cluster.ProjectID,
+						appName:               porterAppName,
+						appID:                 app.ID,
+						deploymentTargetID:    deploymentTargetID,
+						updatedStatusMetadata: requestMetadata,
+					})
+					if err != nil {
+						return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error updating v2 deploy event")
+					}
 				}
-				// v2 method calls ccp and will not return an event, so we just return an empty event
 				return types.PorterAppEvent{}, nil
 			}
 		}

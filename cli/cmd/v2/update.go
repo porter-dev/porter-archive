@@ -215,7 +215,12 @@ func Update(ctx context.Context, inp UpdateInput) error {
 		}
 		status = revision.AppRevision.Status
 
-		if status == models.AppRevisionStatus_DeployFailed || status == models.AppRevisionStatus_PredeployFailed || status == models.AppRevisionStatus_Deployed {
+		if status == models.AppRevisionStatus_PredeployFailed ||
+			status == models.AppRevisionStatus_InstallFailed ||
+			status == models.AppRevisionStatus_InstallSuccessful ||
+			status == models.AppRevisionStatus_DeploymentSuccessful ||
+			status == models.AppRevisionStatus_DeploymentProgressing ||
+			status == models.AppRevisionStatus_DeploymentFailed {
 			break
 		}
 		if status == models.AppRevisionStatus_AwaitingPredeploy {
@@ -234,7 +239,7 @@ func Update(ctx context.Context, inp UpdateInput) error {
 		CommitSHA:     commitSHA,
 	})
 
-	if status == models.AppRevisionStatus_DeployFailed {
+	if status == models.AppRevisionStatus_InstallFailed {
 		return errors.New("app failed to deploy")
 	}
 	if status == models.AppRevisionStatus_PredeployFailed {

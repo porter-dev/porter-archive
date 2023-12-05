@@ -62,7 +62,7 @@ const GHStatusBanner: React.FC = () => {
   const previouslyBuilt = useMemo(() => {
     if (revisions.length === 1) {
       if (
-        revisions[0].status === "DEPLOYED" &&
+        revisions[0].status === "DEPLOYMENT_SUCCESSFUL" &&
         latestProto.image?.tag === HELLO_PORTER_PLACEHOLDER_TAG
       ) {
         return false;
@@ -76,6 +76,9 @@ const GHStatusBanner: React.FC = () => {
           "DEPLOY_FAILED",
           "BUILD_FAILED",
           "IMAGE_AVAILABLE",
+          "DEPLOYMENT_PROGRESSING",
+          "DEPLOYMENT_SUCCESSFUL",
+          "DEPLOYMENT_FAILED",
           () => true
         )
         .otherwise(() => false)

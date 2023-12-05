@@ -242,9 +242,9 @@ func writePRComment(ctx context.Context, inp writePRCommentInput) error {
 	switch inp.revision.Status {
 	case models.AppRevisionStatus_BuildFailed:
 		body = fmt.Sprintf("%s❌ The latest deploy failed to build. Check the [Porter Dashboard](%s) or [action logs](https://github.com/%s/actions/runs/) for more information.", body, porterURL, inp.porterApp.RepoName)
-	case models.AppRevisionStatus_DeployFailed:
+	case models.AppRevisionStatus_InstallFailed:
 		body = fmt.Sprintf("%s❌ The latest SHA ([`%s`](https://github.com/%s/%s/commit/%s)) failed to deploy.\nCheck the [Porter Dashboard](%s) or [action logs](https://github.com/%s/actions/runs/) for more information.\nContact Porter Support if the errors persists", body, inp.commitSha, repoDetails[0], repoDetails[1], inp.commitSha, porterURL, inp.porterApp.RepoName)
-	case models.AppRevisionStatus_Deployed:
+	case models.AppRevisionStatus_InstallSuccessful:
 		body = fmt.Sprintf("%s✅ The latest SHA ([`%s`](https://github.com/%s/%s/commit/%s)) has been successfully deployed.\nApp details available in the [Porter Dashboard](%s)", body, inp.commitSha, repoDetails[0], repoDetails[1], inp.commitSha, porterURL)
 	default:
 		return nil

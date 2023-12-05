@@ -334,7 +334,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       ]);
       setPreviewRevision(null);
 
-      history.push(formattedPath(DEFAULT_TAB));
+      history.push(
+        formattedPath(DEFAULT_TAB, deploymentTarget.id, porterAppRecord.name)
+      );
     } catch (err) {
       showIntercomWithMessage({
         message: "I am running into an issue updating my application.",
@@ -535,13 +537,17 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     latestNotifications.length,
   ]);
 
-  const formattedPath = (tab: string): string => {
-    let path = `/apps/${porterAppRecord.name}/${tab}`
+  const formattedPath = (
+    tab: string,
+    deploymentTargetId: string,
+    appName: string
+  ): string => {
+    let path = `/apps/${appName}/${tab}`;
     if (currentProject?.managed_deployment_targets_enabled) {
-      path = `/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`
+      path = `/apps/${appName}/${tab}?target=${deploymentTargetId}`;
     }
     if (deploymentTarget.is_preview) {
-      path = `/preview-environments/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`
+      path = `/preview-environments/apps/${appName}/${tab}?target=${deploymentTargetId}`;
     }
 
     return path;
@@ -604,10 +610,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                   loadingText={"Updating..."}
                   height={"10px"}
                   status={isSubmitting ? "loading" : ""}
-                  disabled={
-                    isSubmitting ||
-                    latestRevision.status === "CREATED"
-                  }
+                  disabled={isSubmitting || latestRevision.status === "CREATED"}
                   disabledTooltipMessage="Please wait for the deploy to complete before updating the app"
                   disabledTooltipPosition="bottom"
                 >
@@ -633,7 +636,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           options={tabs}
           currentTab={currentTab}
           setCurrentTab={(tab) => {
-            history.push(formattedPath(tab));
+            history.push(
+              formattedPath(tab, deploymentTarget.id, porterAppRecord.name)
+            );
           }}
         />
         <Spacer y={1} />

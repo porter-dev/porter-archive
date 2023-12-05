@@ -35,6 +35,7 @@ const Apps: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
   const { currentDeploymentTarget } = useDeploymentTarget();
+  console.log("currentDeploymentTarget", currentDeploymentTarget)
   const history = useHistory();
 
   const [searchValue, setSearchValue] = useState("");
@@ -63,13 +64,16 @@ const Apps: React.FC = () => {
         return;
       }
 
+      let deploymentTargetID: string | undefined = currentDeploymentTarget.id;
+      if (currentProject.managed_deployment_targets_enabled && !currentDeploymentTarget.is_preview) {
+        deploymentTargetID = undefined;
+      }
+
       const res = await api.getLatestAppRevisions(
         "<token>",
         {
-          deployment_target_id:
-            currentProject?.managed_deployment_targets_enabled
-              ? undefined
-              : currentDeploymentTarget?.id,
+          deployment_target_id: deploymentTargetID,
+          ignore_preview_apps: !currentDeploymentTarget.is_preview,
         },
         { cluster_id: currentCluster.id, project_id: currentProject.id }
       );
@@ -86,49 +90,6 @@ const Apps: React.FC = () => {
       refetchOnWindowFocus: false,
       enabled:
         !!currentCluster && !!currentProject && !!currentDeploymentTarget,
-    }
-  );
-
-  const { data, status: deploymentTargetStatus } = useQuery(
-    [
-      "getDeploymentTarget",
-      {
-        cluster_id: currentCluster?.id,
-        project_id: currentProject?.id,
-        deployment_target_id: currentDeploymentTarget?.id,
-      },
-    ],
-    async () => {
-      if (!currentCluster || !currentProject || !currentDeploymentTarget) {
-        return;
-      }
-      const res = await api.getDeploymentTarget(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          deployment_target_id: currentDeploymentTarget.id,
-        }
-      );
-
-      const { deployment_target: deploymentTarget } = await z
-        .object({
-          deployment_target: z.object({
-            cluster_id: z.number(),
-            namespace: z.string(),
-            is_preview: z.boolean(),
-          }),
-        })
-        .parseAsync(res.data);
-
-      return deploymentTarget;
-    },
-    {
-      enabled:
-        !!currentCluster &&
-        !!currentProject &&
-        currentDeploymentTarget?.is_preview,
     }
   );
 
@@ -171,8 +132,7 @@ const Apps: React.FC = () => {
 
     if (
       status === "loading" ||
-      (currentDeploymentTarget?.is_preview &&
-        deploymentTargetStatus === "loading")
+      (currentDeploymentTarget?.is_preview && currentDeploymentTarget.id === "")
     ) {
       return <Loading offset="-150px" />;
     }
@@ -215,7 +175,7 @@ const Apps: React.FC = () => {
                   alignItems: "center",
                 }}
               >
-                <div>{data?.namespace ?? "Preview Apps"}</div>
+                <div>{currentDeploymentTarget?.namespace ?? "Preview Apps"}</div>
                 <Badge>Preview</Badge>
               </div>
             }

@@ -334,19 +334,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       ]);
       setPreviewRevision(null);
 
-      if (deploymentTarget.is_preview) {
-        history.push(
-          `/preview-environments/apps/${porterAppRecord.name}/${DEFAULT_TAB}?target=${deploymentTarget.id}`
-        );
-        return;
-      }
-
-      if (currentProject?.managed_deployment_targets_enabled) {
-        history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}?target=${deploymentTarget.id}`);
-        return;
-      }
-
-      history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
+      history.push(formattedPath(DEFAULT_TAB));
     } catch (err) {
       showIntercomWithMessage({
         message: "I am running into an issue updating my application.",
@@ -547,6 +535,18 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     latestNotifications.length,
   ]);
 
+  const formattedPath = (tab: string): string => {
+    let path = `/apps/${porterAppRecord.name}/${tab}`
+    if (currentProject?.managed_deployment_targets_enabled) {
+      path = `/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`
+    }
+    if (deploymentTarget.is_preview) {
+      path = `/preview-environments/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`
+    }
+
+    return path;
+  };
+
   useEffect(() => {
     const newProto = previewRevision
       ? PorterApp.fromJsonString(atob(previewRevision.b64_app_proto), {
@@ -633,19 +633,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           options={tabs}
           currentTab={currentTab}
           setCurrentTab={(tab) => {
-            if (deploymentTarget.is_preview) {
-              history.push(
-                `/preview-environments/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`
-              );
-              return;
-            }
-
-            if (currentProject?.managed_deployment_targets_enabled) {
-              history.push(`/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`);
-              return;
-            }
-
-            history.push(`/apps/${porterAppRecord.name}/${tab}`);
+            history.push(formattedPath(tab));
           }}
         />
         <Spacer y={1} />

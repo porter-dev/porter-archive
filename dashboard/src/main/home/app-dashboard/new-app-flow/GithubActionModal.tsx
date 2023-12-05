@@ -27,7 +27,7 @@ type Props = RouteComponentProps & {
   deploymentError?: string;
   porterYamlPath?: string;
   type?: "create" | "preview";
-  historySuffix?: string;
+  redirectPath: string;
 };
 
 type Choice = "open_pr" | "copy";
@@ -45,7 +45,7 @@ const GithubActionModal: React.FC<Props> = ({
   deploymentError,
   porterYamlPath,
   type = "create",
-  historySuffix = "",
+  redirectPath ,
   ...props
 }) => {
   const [choice, setChoice] = React.useState<Choice>("open_pr");
@@ -128,7 +128,7 @@ const GithubActionModal: React.FC<Props> = ({
               window.location.reload();
             }
           }
-          props.history.push(`/apps/${stackName}${historySuffix}`);
+          props.history.push(redirectPath);
         }
       } catch (error) {
       } finally {

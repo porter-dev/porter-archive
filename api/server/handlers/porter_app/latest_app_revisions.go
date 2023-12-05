@@ -34,6 +34,8 @@ func NewLatestAppRevisionsHandler(
 // LatestAppRevisionsRequest represents the request for the /apps/revisions endpoint
 type LatestAppRevisionsRequest struct {
 	DeploymentTargetID string `schema:"deployment_target_id"`
+	// if true, apps in a preview deployment target will be filtered out
+	IgnorePreviewApps bool `schema:"ignore_preview_apps"`
 }
 
 // LatestRevisionWithSource is an app revision and its source porter app
@@ -60,6 +62,13 @@ func (c *LatestAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
+		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+		telemetry.AttributeKV{Key: "ignore-preview-apps", Value: request.IgnorePreviewApps},
+	)
 
 	var deploymentTargetIdentifier *porterv1.DeploymentTargetIdentifier
 	if request.DeploymentTargetID != "" {
@@ -139,8 +148,7 @@ func (c *LatestAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			deploymentTargets[encodedRevision.DeploymentTarget.ID] = deploymentTarget
 		}
 
-		// skip preview deployment targets, need to confirm with @ianedwards that this is fine
-		if deploymentTarget.IsPreview {
+		if request.IgnorePreviewApps && deploymentTarget.IsPreview {
 			continue
 		}
 

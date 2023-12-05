@@ -838,7 +838,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
           deploymentError={deployError}
           porterYamlPath={source.porter_yaml_path}
-          historySuffix={currentProject.managed_deployment_targets_enabled ? `?target=${deploymentTargetID}` : ""}
+          redirectPath={currentProject.managed_deployment_targets_enabled ? `/apps/${name.value}?target=${deploymentTargetID}` : `/apps/${name.value}`}
         />
       )}
     </CenterWrapper>

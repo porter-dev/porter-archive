@@ -156,15 +156,18 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
       <GridList>
         {(filteredApps ?? []).map(
           ({ app_revision: { proto, updated_at: updatedAt, deployment_target: deploymentTarget }, source }, i) => {
+
+            let appLink = `/apps/${proto.name}`;
+            if (currentProject?.managed_deployment_targets_enabled) {
+                appLink = `/apps/${proto.name}/activity?target=${deploymentTarget.id}`;
+            }
+            if (currentDeploymentTarget?.is_preview) {
+                appLink = `/preview-environments/apps/${proto.name}/activity?target=${currentDeploymentTarget.id}`;
+            }
+
             return (
               <Link
-                to={
-                  currentDeploymentTarget?.is_preview
-                    ? `/preview-environments/apps/${proto.name}/activity?target=${currentDeploymentTarget.id}` :
-                      currentProject?.managed_deployment_targets_enabled
-                    ? `/apps/${proto.name}/activity?target=${deploymentTarget.id}`
-                    : `/apps/${proto.name}`
-                }
+                to={appLink}
                 key={i}
               >
                 <Block>
@@ -177,7 +180,7 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
                   {/** TODO: make the status icon dynamic */}
                   {/* <StatusIcon src={healthy} /> */}
                   {renderSource(source)}
-                  {currentProject?.managed_deployment_targets_enabled && (
+                  {currentProject?.managed_deployment_targets_enabled && !currentDeploymentTarget?.is_preview && (
                     <Container row>
                       <SmallIcon opacity="0.4" src={target} />
                       <Text size={13} color="#ffffff44">

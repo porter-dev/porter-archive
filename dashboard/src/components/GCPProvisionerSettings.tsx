@@ -131,7 +131,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [preflightError, setPreflightError] = useState<string>("")
   const [gpuMinInstances, setGpuMinInstances] = useState(1);
   const [gpuMaxInstances, setGpuMaxInstances] = useState(5);
-  const [gpuInstanceType, setGpuInstanceType] = useState("n1.standard");
+  const [gpuInstanceType, setGpuInstanceType] = useState("n1-standard-1");
 
   const { showIntercomWithMessage } = useIntercom();
 

@@ -984,10 +984,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
                       </LastDeployed></>
                   }
                 </InfoWrapper>
-                <Spacer y={1} />
+
                 {!databaseStatus &&
                   <>
-                    {/* <Spacer y={1} /> */}
                     <Banner>
                       <BannerContents>
                         <b>Database is being created</b>

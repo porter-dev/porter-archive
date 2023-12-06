@@ -46,6 +46,7 @@ func runHelm(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client 
 
 	execCommand := exec.Command("helm", args...)
 
+	execCommand.Stdin = os.Stdin
 	execCommand.Stdout = os.Stdout
 	execCommand.Stderr = os.Stderr
 

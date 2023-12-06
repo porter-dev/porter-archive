@@ -102,7 +102,7 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 }
 
 func protoEnumFromType(name string, service Service) porterv1.ServiceType {
-	serviceType := porterv1.ServiceType_SERVICE_TYPE_WORKER
+	serviceType := porterv1.ServiceType_SERVICE_TYPE_UNSPECIFIED
 
 	if strings.Contains(name, "web") {
 		serviceType = porterv1.ServiceType_SERVICE_TYPE_WEB
@@ -202,7 +202,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 	default:
 		return nil, fmt.Errorf("invalid service type '%s'", serviceType)
 	case porterv1.ServiceType_SERVICE_TYPE_UNSPECIFIED:
-		return nil, errors.New("KubernetesService type unspecified")
+		return nil, errors.New("service type unspecified")
 	case porterv1.ServiceType_SERVICE_TYPE_WEB:
 		webConfig, err := webConfigProtoFromConfig(service)
 		if err != nil {

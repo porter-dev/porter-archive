@@ -1,18 +1,24 @@
 import React, { createContext, useContext, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "react-router";
+import { z } from "zod";
 
-import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
+import {
+  deploymentTargetValidator,
+  useDefaultDeploymentTarget,
+  type DeploymentTarget,
+} from "lib/hooks/useDeploymentTarget";
 
-export type DeploymentTarget = {
-  id: string;
-  isPreview: boolean;
-};
+import api from "./api";
+import { Context } from "./Context";
 
 export const DeploymentTargetContext = createContext<{
   currentDeploymentTarget: DeploymentTarget | null;
 } | null>(null);
 
-export const useDeploymentTarget = () => {
+export const useDeploymentTarget = (): {
+  currentDeploymentTarget: DeploymentTarget | null;
+} => {
   const context = useContext(DeploymentTargetContext);
   if (context === null) {
     throw new Error(
@@ -22,34 +28,78 @@ export const useDeploymentTarget = () => {
   return context;
 };
 
-const DeploymentTargetProvider = ({ children }: { children: JSX.Element }) => {
+const DeploymentTargetProvider = ({
+  children,
+}: {
+  children: JSX.Element;
+}): JSX.Element => {
   const { search } = useLocation();
+  const { currentCluster, currentProject } = useContext(Context);
   const queryParams = new URLSearchParams(search);
 
-  const idParam = queryParams.get("target");
-  const defaultDeploymentTarget = useDefaultDeploymentTarget();
+  const deploymentTargetID = queryParams.get("target");
+  const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
+    useDefaultDeploymentTarget();
+
+  const { data: deploymentTargetFromIdParam, status } = useQuery(
+    [
+      "getDeploymentTarget",
+      {
+        cluster_id: currentCluster?.id,
+        project_id: currentProject?.id,
+        deployment_target_id: deploymentTargetID,
+      },
+    ],
+    async () => {
+      if (!currentCluster || !currentProject || !deploymentTargetID) {
+        return;
+      }
+      const res = await api.getDeploymentTarget(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: currentCluster.id,
+          deployment_target_id: deploymentTargetID,
+        }
+      );
+
+      const deploymentTarget = await z
+        .object({ deployment_target: deploymentTargetValidator })
+        .parseAsync(res.data);
+
+      return deploymentTarget.deployment_target;
+    },
+    {
+      enabled: !!currentCluster && !!currentProject && !!deploymentTargetID,
+    }
+  );
 
   const deploymentTarget: DeploymentTarget | null = useMemo(() => {
-    if (!idParam && !defaultDeploymentTarget) {
+    if (!deploymentTargetID && isDefaultDeploymentTargetLoading) {
       return null;
     }
 
-    if (idParam) {
-      return {
-        id: idParam,
-        isPreview: true,
-      };
+    if (deploymentTargetID) {
+      if (status === "loading" || !deploymentTargetFromIdParam) {
+        return null;
+      }
+
+      return deploymentTargetFromIdParam;
     }
 
     if (defaultDeploymentTarget) {
-      return {
-        id: defaultDeploymentTarget.deployment_target_id,
-        isPreview: false,
-      };
+      return defaultDeploymentTarget;
     }
 
     return null;
-  }, [idParam, defaultDeploymentTarget]);
+  }, [
+    deploymentTargetID,
+    isDefaultDeploymentTargetLoading,
+    defaultDeploymentTarget,
+    deploymentTargetFromIdParam,
+    status,
+  ]);
 
   return (
     <DeploymentTargetContext.Provider

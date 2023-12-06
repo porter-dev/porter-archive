@@ -334,15 +334,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       ]);
       setPreviewRevision(null);
 
-      if (deploymentTarget.isPreview) {
-        history.push(
-          `/preview-environments/apps/${porterAppRecord.name}/${DEFAULT_TAB}?target=${deploymentTarget.id}`
-        );
-        return;
-      }
-
-      // redirect to the default tab after save
-      history.push(`/apps/${porterAppRecord.name}/${DEFAULT_TAB}`);
+      history.push(
+        formattedPath(DEFAULT_TAB, deploymentTarget.id, porterAppRecord.name)
+      );
     } catch (err) {
       showIntercomWithMessage({
         message: "I am running into an issue updating my application.",
@@ -512,7 +506,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       { label: "Environment", value: "environment" },
     ];
 
-    if (deploymentTarget.isPreview) {
+    if (deploymentTarget.is_preview) {
       return base;
     }
 
@@ -538,10 +532,26 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     base.push({ label: "Settings", value: "settings" });
     return base;
   }, [
-    deploymentTarget.isPreview,
+    deploymentTarget.is_preview,
     latestProto.build,
     latestNotifications.length,
   ]);
+
+  const formattedPath = (
+    tab: string,
+    deploymentTargetId: string,
+    appName: string
+  ): string => {
+    let path = `/apps/${appName}/${tab}`;
+    if (currentProject?.managed_deployment_targets_enabled) {
+      path = `/apps/${appName}/${tab}?target=${deploymentTargetId}`;
+    }
+    if (deploymentTarget.is_preview) {
+      path = `/preview-environments/apps/${appName}/${tab}?target=${deploymentTargetId}`;
+    }
+
+    return path;
+  };
 
   useEffect(() => {
     const newProto = previewRevision
@@ -600,10 +610,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                   loadingText={"Updating..."}
                   height={"10px"}
                   status={isSubmitting ? "loading" : ""}
-                  disabled={
-                    isSubmitting ||
-                    latestRevision.status === "CREATED"
-                  }
+                  disabled={isSubmitting || latestRevision.status === "CREATED"}
                   disabledTooltipMessage="Please wait for the deploy to complete before updating the app"
                   disabledTooltipPosition="bottom"
                 >
@@ -629,13 +636,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           options={tabs}
           currentTab={currentTab}
           setCurrentTab={(tab) => {
-            if (deploymentTarget.isPreview) {
-              history.push(
-                `/preview-environments/apps/${porterAppRecord.name}/${tab}?target=${deploymentTarget.id}`
-              );
-              return;
-            }
-            history.push(`/apps/${porterAppRecord.name}/${tab}`);
+            history.push(
+              formattedPath(tab, deploymentTarget.id, porterAppRecord.name)
+            );
           }}
         />
         <Spacer y={1} />

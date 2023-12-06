@@ -1158,7 +1158,8 @@ const listAppRevisions = baseApi<
 
 const getLatestAppRevisions = baseApi<
   {
-    deployment_target_id: string;
+    deployment_target_id: string | undefined;
+    ignore_preview_apps: boolean;
   },
   {
     project_id: number;

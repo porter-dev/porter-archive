@@ -32,7 +32,6 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import {
   useDeploymentTarget,
-  type DeploymentTarget,
 } from "shared/DeploymentTargetContext";
 import { valueExists } from "shared/util";
 import notFound from "assets/not-found.png";
@@ -43,6 +42,7 @@ import {
 } from "../validate-apply/app-settings/types";
 import { porterAppValidator, type PorterAppRecord } from "./AppView";
 import { porterAppNotificationEventMetadataValidator } from "./tabs/activity-feed/events/types";
+import {type DeploymentTarget} from "lib/hooks/useDeploymentTarget";
 
 type LatestRevisionContextType = {
   porterApp: PorterAppRecord;
@@ -136,6 +136,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
       appName,
     ],
     async () => {
+
       if (!appParamsExist) {
         return { app_revision: undefined, notifications: [] };
       }
@@ -169,46 +170,6 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
       enabled: appParamsExist,
       refetchInterval: 5000,
       refetchOnWindowFocus: false,
-    }
-  );
-
-  const { data, status: deploymentTargetStatus } = useQuery(
-    [
-      "getDeploymentTarget",
-      {
-        cluster_id: currentCluster?.id,
-        project_id: currentProject?.id,
-        deployment_target_id: currentDeploymentTarget?.id,
-      },
-    ],
-    async () => {
-      if (!currentCluster || !currentProject || !currentDeploymentTarget) {
-        return;
-      }
-      const res = await api.getDeploymentTarget(
-        "<token>",
-        {},
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-          deployment_target_id: currentDeploymentTarget.id,
-        }
-      );
-
-      const { deployment_target: deploymentTarget } = await z
-        .object({
-          deployment_target: z.object({
-            cluster_id: z.number(),
-            namespace: z.string(),
-            is_preview: z.boolean(),
-          }),
-        })
-        .parseAsync(res.data);
-
-      return deploymentTarget;
-    },
-    {
-      enabled: !!currentCluster && !!currentProject,
     }
   );
 
@@ -322,7 +283,6 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
   if (
     status === "loading" ||
     porterAppStatus === "loading" ||
-    deploymentTargetStatus === "loading" ||
     !appParamsExist ||
     porterYamlLoading
   ) {
@@ -332,7 +292,6 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
   if (
     status === "error" ||
     porterAppStatus === "error" ||
-    deploymentTargetStatus === "error" ||
     !latestRevision ||
     !latestProto ||
     !porterApp
@@ -360,10 +319,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
         porterApp,
         clusterId: currentCluster.id,
         projectId: currentProject.id,
-        deploymentTarget: {
-          ...currentDeploymentTarget,
-          namespace: data?.namespace ?? "",
-        },
+        deploymentTarget: currentDeploymentTarget,
         servicesFromYaml: detectedServices,
         attachedEnvGroups,
         appEnv,

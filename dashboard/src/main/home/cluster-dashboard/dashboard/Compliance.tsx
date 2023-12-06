@@ -16,6 +16,8 @@ import ToggleRow from "components/porter/ToggleRow";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import sparkle from "assets/sparkle.svg";
+import SOC2Checks from "components/SOC2Checks";
+import Checkbox from "components/porter/Checkbox";
 
 type Props = {
   credentialId: string;
@@ -41,6 +43,7 @@ const Compliance: React.FC<Props> = (props) => {
   const [clusterRegion, setClusterRegion] = useState("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
+  const [enabled, setEnabled] = useState(false);
 
   const applySettings = async (): Promise<void> => {
     if (!currentCluster || !currentProject || !setShouldRefreshClusters) {
@@ -202,7 +205,7 @@ const Compliance: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const isUserProvisioning = useMemo(() => {
@@ -230,8 +233,8 @@ const Compliance: React.FC<Props> = (props) => {
 
       setSoc2Enabled(
         cloudTrailEnabled &&
-          eksValues.enableKmsEncryption &&
-          eksValues.enableEcrScanning
+        eksValues.enableKmsEncryption &&
+        eksValues.enableEcrScanning
       );
     }
   }, [props.selectedClusterVersion]);
@@ -243,7 +246,7 @@ const Compliance: React.FC<Props> = (props) => {
 
     setIsReadOnly(
       currentCluster.status === "UPDATING" ||
-        currentCluster.status === "UPDATING_UNAVAILABLE"
+      currentCluster.status === "UPDATING_UNAVAILABLE"
     );
   }, []);
 
@@ -266,7 +269,28 @@ const Compliance: React.FC<Props> = (props) => {
           New
         </NewBadge>
       </Container>
-      <Spacer y={0.5} />
+
+      <SOC2Checks preflightData={{
+        "preflight_checks": {
+          "AWS KMS Secret Encryption": {
+            "passed": "healthy",
+            "message": "KMS encryption is enabled for the cluster.",
+
+          },
+          "EKS CloudTrail Forwarding": {
+            "message": "CloudTrail is not enabled for the cluster. Please enable CloudTrail for the cluster to enable SOC 2 compliance.",
+          },
+          "Enhanced ECR Forwarding": {
+            "passed": "failure",
+            "message": "ECR Forwarding is not enabled for the cluster. Please enable ECR Forwarding for the cluster to enable SOC 2 compliance.",
+            "metadata": {
+              "link": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/log-forwarding.html"
+            }
+          },
+
+        }
+      }} provider={"SOC2"} />
+      {/* <Spacer y={0.5} />
       <Text color="helper">
         Configure your AWS infrastructure to be SOC 2 compliant with Porter.
       </Text>
@@ -306,8 +330,8 @@ const Compliance: React.FC<Props> = (props) => {
               Forward all application and control plane logs to CloudTrail.
             </Text>
           </Container>
-        </ToggleRow>
-        {/* <Spacer y={0.5} />
+        </ToggleRow> */}
+      {/* <Spacer y={0.5} />
         <ToggleRow
           isToggled={cloudTrailRetention}
           onToggle={() => { setCloudTrailRetention((prev) => !prev) }}
@@ -322,7 +346,7 @@ const Compliance: React.FC<Props> = (props) => {
             <Text color="helper">Store CloudTrail logs in an S3 bucket for 365 days.</Text>
           </Container>
         </ToggleRow> */}
-        <Spacer y={0.5} />
+      {/* <Spacer y={0.5} />
         <ToggleRow
           isToggled={kmsEnabled}
           onToggle={() => {
@@ -333,8 +357,8 @@ const Compliance: React.FC<Props> = (props) => {
             kmsEnabled
               ? "KMS encryption can never be disabled."
               : soc2Enabled
-              ? "Global SOC 2 setting must be disabled to toggle this"
-              : "Wait for provisioning to complete before editing this field."
+                ? "Global SOC 2 setting must be disabled to toggle this"
+                : "Wait for provisioning to complete before editing this field."
           }
         >
           <Container row>
@@ -366,15 +390,26 @@ const Compliance: React.FC<Props> = (props) => {
             </Text>
           </Container>
         </ToggleRow>
-      </GutterContainer>
+      </GutterContainer> */}
       <Spacer y={1} />
-      <Button
-        disabled={isDisabled() ?? isLoading}
-        onClick={applySettings}
-        status={getStatus()}
-      >
-        Save settings
-      </Button>
+      <Container row >
+        <Button
+          disabled={isDisabled() ?? isLoading}
+          onClick={applySettings}
+          status={getStatus()}
+        >
+          Save settings
+        </Button>
+        <Spacer inline x={1} />
+        <Checkbox
+          checked={enabled}
+          toggleChecked={() => { setEnabled(!enabled) }}
+        >
+          <Text>
+            Enable All
+          </Text>
+        </Checkbox>
+      </Container>
     </StyledCompliance>
   );
 };

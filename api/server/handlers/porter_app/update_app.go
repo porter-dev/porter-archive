@@ -132,7 +132,6 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
 		}
-
 	}
 
 	for _, b64AddonProto := range request.Base64AddonProtos {

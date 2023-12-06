@@ -15,13 +15,18 @@ import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Error from "components/porter/Error";
 import Link from "components/porter/Link";
+import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
-import { useDefaultDeploymentTarget } from "lib/hooks/useDeploymentTarget";
+import {
+  useDefaultDeploymentTarget,
+  useDeploymentTargetList,
+  type DeploymentTarget,
+} from "lib/hooks/useDeploymentTarget";
 import { useIntercom } from "lib/hooks/useIntercom";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
 import {
@@ -197,13 +202,23 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     source: source?.type === "github" ? source : null,
     appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
   });
-  const deploymentTarget = useDefaultDeploymentTarget();
+  const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
+    useDefaultDeploymentTarget();
+  const { deploymentTargetList } = useDeploymentTargetList({ preview: false });
+  const [deploymentTargetID, setDeploymentTargetID] = React.useState("");
   const { updateAppStep } = useAppAnalytics();
   const { validateApp } = useAppValidation({
-    deploymentTargetID: deploymentTarget?.deployment_target_id,
+    deploymentTargetID,
     creating: true,
   });
   const { currentClusterResources } = useClusterResources();
+
+  // set the deployment target id to the default if no deployment target has been selected yet
+  useEffect(() => {
+    if (!isDefaultDeploymentTargetLoading && deploymentTargetID === "") {
+      setDeploymentTargetID(defaultDeploymentTarget?.id ?? "");
+    }
+  }, [defaultDeploymentTarget]);
 
   const resetAllExceptName = (): void => {
     setIsNameHighlight(true);
@@ -317,7 +332,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           return false;
         }
 
-        if (!app || !deploymentTarget) {
+        if (!app || !deploymentTargetID) {
           return false;
         }
 
@@ -325,7 +340,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           await api.updateApp(
             "<token>",
             {
-              deployment_target_id: deploymentTarget.deployment_target_id,
+              deployment_target_id: deploymentTargetID,
               b64_app_proto: btoa(app.toJsonString()),
               secrets,
               variables,
@@ -349,7 +364,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             app,
             projectID: currentProject.id,
             clusterID: currentCluster.id,
-            deploymentTargetID: deploymentTarget.deployment_target_id,
+            deploymentTargetID,
             variables,
             secrets,
           });
@@ -362,7 +377,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         });
 
         if (source.type === "docker-registry") {
-          history.push(`/apps/${app.name}`);
+          let targetSuffix = "";
+          if (currentProject?.managed_deployment_targets_enabled) {
+            targetSuffix = `?target=${deploymentTargetID}`;
+          }
+          history.push(`/apps/${app.name}${targetSuffix}`);
         }
 
         return true;
@@ -397,7 +416,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     [
       currentProject?.id,
       currentCluster?.id,
-      deploymentTarget,
+      deploymentTargetID,
       name.value,
       createWithValidateApply,
     ]
@@ -554,7 +573,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     } else {
       clearErrors("app.name.value");
     }
-  }, [porterApps, name.value]);
+  }, [porterApps.join(""), name.value]);
 
   if (!currentProject || !currentCluster) {
     return null;
@@ -595,6 +614,27 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       }
                       {...register("app.name.value")}
                     />
+                    {currentProject?.managed_deployment_targets_enabled && (
+                      <>
+                        <Spacer y={1} />
+                        <Select
+                          value={deploymentTargetID}
+                          width="300px"
+                          options={deploymentTargetList.map(
+                            (target: DeploymentTarget) => {
+                              return {
+                                value: target.id,
+                                label: target.name,
+                              };
+                            }
+                          )}
+                          setValue={(value) => {
+                            setDeploymentTargetID(value);
+                          }}
+                          label={"Deployment Target"}
+                        />
+                      </>
+                    )}
                   </>,
                   <>
                     <Text size={16}>Deployment method</Text>
@@ -798,6 +838,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
           deploymentError={deployError}
           porterYamlPath={source.porter_yaml_path}
+          redirectPath={currentProject.managed_deployment_targets_enabled ? `/apps/${name.value}?target=${deploymentTargetID}` : `/apps/${name.value}`}
         />
       )}
     </CenterWrapper>

@@ -28,6 +28,9 @@ import BuildSettingsTab from "./build-settings/BuildSettingsTab";
 import { DisabledNamespacesForIncidents } from "./incidents/DisabledNamespaces";
 import { useStackEnvGroups } from "./useStackEnvGroups";
 import DeployStatusSection from "./deploy-status-section/DeployStatusSection";
+import Banner from "components/porter/Banner";
+import Spacer from "components/porter/Spacer";
+
 
 type Props = {
   namespace: string;
@@ -47,6 +50,12 @@ const getReadableDate = (s: string) => {
   });
   return `${time} on ${date}`;
 };
+
+const templateWhitelist = [
+  "elasticache-redis",
+  "rds-postgresql",
+  "rds-postgresql-aurora",
+];
 
 const ExpandedChart: React.FC<Props> = (props) => {
   const [currentChart, setCurrentChart] = useState<ChartType>(
@@ -79,6 +88,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
   const [logData, setLogData] = useState<InitLogData>({});
   const [overrideCurrentTab, setOverrideCurrentTab] = useState("");
   const [isAgentInstalled, setIsAgentInstalled] = useState<boolean>(false);
+  const [databaseStatus, setDatabaseStatus] = useState<boolean>(true);
 
   const {
     isStack,
@@ -105,6 +115,26 @@ const ExpandedChart: React.FC<Props> = (props) => {
     setOverrideCurrentTab("logs");
   };
 
+  const updateDatabaseStatuses = async (): Promise<void> => {
+    try {
+
+      const statusRes = await api.getDatabaseStatus("<token>", {
+        name: currentChart.name,
+        type: currentChart.chart.metadata.name
+      }, {
+        project_id: currentProject?.id ?? 0,
+        cluster_id: currentCluster?.id ?? 0,
+      });
+      if (statusRes.data.status === "available") {
+        setDatabaseStatus(true);
+      }
+      else {
+        setDatabaseStatus(false);
+      }
+    } catch (err) {
+      setDatabaseStatus(false);
+    }
+  };
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
     setIsLoadingChartData(true);
@@ -192,7 +222,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
           if (
             oldControllers &&
             oldControllers[object.metadata.uid]?.status?.conditions ==
-              object.status?.conditions
+            object.status?.conditions
           ) {
             return oldControllers;
           }
@@ -463,7 +493,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                   being deployed
                 </Header>
                 {props.currentChart.git_action_config &&
-                props.currentChart.git_action_config.gitlab_integration_id ? (
+                  props.currentChart.git_action_config.gitlab_integration_id ? (
                   <>
                     Navigate to the{" "}
                     <A
@@ -776,6 +806,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
       });
   }, [currentChart]);
 
+
+
   useEffect(() => {
     if (logData.revision) {
       api
@@ -818,7 +850,9 @@ const ExpandedChart: React.FC<Props> = (props) => {
           });
       });
     });
-
+    if (templateWhitelist.includes(currentChart.chart.metadata.name)) {
+      void updateDatabaseStatuses()
+    }
     return () => {
       closeAllWebsockets();
     };
@@ -881,6 +915,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
         }
       })
       .catch(console.log);
+
     return () => (isSubscribed = false);
   }, [components, currentCluster, currentProject, currentChart]);
 
@@ -899,7 +934,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
               isFullscreen={true}
               setIsFullscreen={setIsFullscreen}
               currentChart={currentChart}
-              setInitData={() => {}}
+              setInitData={() => { }}
             />
           ) : (
             <StyledExpandedChart>
@@ -937,15 +972,24 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     margin_left={"0px"}
                   />
                   */}
-                  <DeployStatusSection
-                    chart={currentChart}
-                    setLogData={renderLogsAtTimestamp}
-                  />
-                  <LastDeployed>
-                    <Dot>•</Dot>Last deployed
-                    {" " + getReadableDate(currentChart.info.last_deployed)}
-                  </LastDeployed>
+                  {!templateWhitelist.includes(currentChart.chart.metadata.name) &&
+                    <><DeployStatusSection
+                      chart={currentChart}
+                      setLogData={renderLogsAtTimestamp} /><LastDeployed>
+                        <Dot>•</Dot>Last deployed
+                        {" " + getReadableDate(currentChart.info.last_deployed)}
+                      </LastDeployed></>
+                  }
                 </InfoWrapper>
+
+                {!databaseStatus &&
+                  <>
+                    <Banner>
+                      <BannerContents>
+                        <b>Database is being created</b>
+                      </BannerContents>
+                      <Spacer inline width="5px" />
+                    </Banner></>}
               </HeaderWrapper>
               {deleting ? (
                 <>
@@ -976,7 +1020,7 @@ const ExpandedChart: React.FC<Props> = (props) => {
                     shouldUpdate={
                       currentChart.latest_version &&
                       currentChart.latest_version !==
-                        currentChart.chart.metadata.version
+                      currentChart.chart.metadata.version
                     }
                     latestVersion={currentChart.latest_version}
                     upgradeVersion={handleUpgradeVersion}
@@ -1056,7 +1100,8 @@ const ExpandedChart: React.FC<Props> = (props) => {
             </StyledExpandedChart>
           )}
         </>
-      )}
+      )
+      }
     </>
   );
 };
@@ -1186,11 +1231,11 @@ const TabButton = styled.div`
   border-radius: 20px;
   text-shadow: 0px 0px 8px
     ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "#ffffff66" : "none"};
+    props.devOpsMode ? "#ffffff66" : "none"};
   cursor: pointer;
   :hover {
     color: ${(props: { devOpsMode: boolean }) =>
-      props.devOpsMode ? "" : "#aaaabb99"};
+    props.devOpsMode ? "" : "#aaaabb99"};
   }
 
   > i {
@@ -1278,4 +1323,31 @@ const A = styled.a`
   color: #8590ff;
   text-decoration: underline;
   cursor: pointer;
+`;
+
+
+const BannerContents = styled.div`
+  display: flex;
+  flex-direction: column;
+  row-gap: 0.5rem;
+`;
+
+const CloseButton = styled.div`
+  display: block;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  border-radius: 50%;
+  cursor: pointer;
+  :hover {
+    background-color: #ffffff11;
+  }
+
+  > i {
+    font-size: 20px;
+    color: #aaaabb;
+  }
 `;

@@ -35,7 +35,6 @@ const Apps: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
   const { currentDeploymentTarget } = useDeploymentTarget();
-  console.log("currentDeploymentTarget", currentDeploymentTarget)
   const history = useHistory();
 
   const [searchValue, setSearchValue] = useState("");
@@ -64,15 +63,14 @@ const Apps: React.FC = () => {
         return;
       }
 
-      let deploymentTargetID: string | undefined = currentDeploymentTarget.id;
-      if (currentProject.managed_deployment_targets_enabled && !currentDeploymentTarget.is_preview) {
-        deploymentTargetID = undefined;
-      }
-
       const res = await api.getLatestAppRevisions(
         "<token>",
         {
-          deployment_target_id: deploymentTargetID,
+          deployment_target_id:
+            currentProject.managed_deployment_targets_enabled &&
+            !currentDeploymentTarget.is_preview
+              ? undefined
+              : currentDeploymentTarget.id,
           ignore_preview_apps: !currentDeploymentTarget.is_preview,
         },
         { cluster_id: currentCluster.id, project_id: currentProject.id }
@@ -175,7 +173,9 @@ const Apps: React.FC = () => {
                   alignItems: "center",
                 }}
               >
-                <div>{currentDeploymentTarget?.namespace ?? "Preview Apps"}</div>
+                <div>
+                  {currentDeploymentTarget?.namespace ?? "Preview Apps"}
+                </div>
                 <Badge>Preview</Badge>
               </div>
             }

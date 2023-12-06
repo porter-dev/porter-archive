@@ -64,6 +64,7 @@ func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 
 	execCommand := exec.Command("kubectl", args...)
 
+	execCommand.Stdin = os.Stdin
 	execCommand.Stdout = os.Stdout
 	execCommand.Stderr = os.Stderr
 

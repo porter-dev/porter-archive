@@ -150,7 +150,7 @@ const Resources: React.FC<ResourcesProps> = ({
           <IntelligentSlider
             label="CPUs: "
             unit="Cores"
-            min={0}
+            min={0.01}
             max={maxCPU}
             color={"#3f51b5"}
             value={value.value.toString()}
@@ -192,7 +192,7 @@ const Resources: React.FC<ResourcesProps> = ({
           <IntelligentSlider
             label="RAM: "
             unit="MB"
-            min={0}
+            min={1}
             max={maxRAM}
             color={"#3f51b5"}
             value={value.value.toString()}
@@ -247,7 +247,7 @@ const Resources: React.FC<ResourcesProps> = ({
                           gpuCoresNvidia: {
                             ...value.gpuCoresNvidia,
                             value: value.enabled.value ? 0 : 1,
-                          }
+                          },
                         });
                       }}
                       inputProps={{ "aria-label": "controlled" }}
@@ -265,16 +265,18 @@ const Resources: React.FC<ResourcesProps> = ({
                           You cluster has no GPU nodes available.
                         </Text>
                         <Spacer inline x={0.5} />
-                        {currentCluster.status !== "UPDATING" && <Tag>
-                          <Link
-                            onClick={() => {
-                              setClusterModalVisible(true);
-                            }}
-                          >
-                            <TagIcon src={addCircle} />
-                            Add GPU nodes
-                          </Link>
-                        </Tag>}
+                        {currentCluster.status !== "UPDATING" && (
+                          <Tag>
+                            <Link
+                              onClick={() => {
+                                setClusterModalVisible(true);
+                              }}
+                            >
+                              <TagIcon src={addCircle} />
+                              Add GPU nodes
+                            </Link>
+                          </Tag>
+                        )}
                       </>
                     )}
                   </Container>
@@ -291,22 +293,23 @@ const Resources: React.FC<ResourcesProps> = ({
                 </>
               )}
             />
-            {(currentCluster.status === "UPDATING" && !clusterContainsGPUNodes) && (
-              <CheckItemContainer>
-                <CheckItemTop>
-                  <Loading offset="0px" width="20px" height="20px" />
-                  <Spacer inline x={1} />
-                  <Text>{"Cluster is updating..."}</Text>
-                  <Spacer inline x={1} />
-                  <Tag>
-                    <Link to={`/cluster-dashboard`}>
-                      <TagIcon src={infra} />
-                      View Status
-                    </Link>
-                  </Tag>
-                </CheckItemTop>
-              </CheckItemContainer>
-            )}
+            {currentCluster.status === "UPDATING" &&
+              !clusterContainsGPUNodes && (
+                <CheckItemContainer>
+                  <CheckItemTop>
+                    <Loading offset="0px" width="20px" height="20px" />
+                    <Spacer inline x={1} />
+                    <Text>{"Cluster is updating..."}</Text>
+                    <Spacer inline x={1} />
+                    <Tag>
+                      <Link to={`/cluster-dashboard`}>
+                        <TagIcon src={infra} />
+                        View Status
+                      </Link>
+                    </Tag>
+                  </CheckItemTop>
+                </CheckItemContainer>
+              )}
           </>
         )}
       {match(service.config)

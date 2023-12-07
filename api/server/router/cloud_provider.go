@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/porter-dev/porter/api/server/handlers/cloud_provider"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -56,12 +58,13 @@ func getCloudProviderRoutes(
 	routes := make([]*router.Route, 0)
 
 	// GET /api/projects/{project_id}/cloud-providers/aws -> cloud_provider.NewListAwsHandler
+	listAwsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/aws",
+				RelativePath: fmt.Sprintf("%s/aws", relPath),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -70,14 +73,14 @@ func getCloudProviderRoutes(
 		},
 	)
 
-	getHandler := cloud_provider.NewListAwsHandler(
+	listAwsHandler := cloud_provider.NewListAwsHandler(
 		config,
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: getEndpoint,
-		Handler:  getHandler,
+		Endpoint: listAwsEndpoint,
+		Handler:  listAwsHandler,
 		Router:   r,
 	})
 

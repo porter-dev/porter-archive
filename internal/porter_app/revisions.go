@@ -34,11 +34,17 @@ type Revision struct {
 	// UpdatedAt is the time the revision was updated
 	UpdatedAt time.Time `json:"updated_at"`
 	// DeploymentTargetID is the id of the deployment target the revision is associated with
-	DeploymentTargetID string `json:"deployment_target_id"`
+	DeploymentTarget DeploymentTarget `json:"deployment_target"`
 	// Env is the environment variables for the revision
 	Env environment_groups.EnvironmentGroup `json:"env,omitempty"`
 	// AppInstanceID is the id of the app instance the revision is associated with
 	AppInstanceID uuid.UUID `json:"app_instance_id"`
+}
+
+// DeploymentTarget is a simplified version of the deployment target struct
+type DeploymentTarget struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 // GetAppRevisionInput is the input struct for GetAppRevisions
@@ -122,14 +128,14 @@ func EncodedRevisionFromProto(ctx context.Context, appRevision *porterv1.AppRevi
 	}
 
 	revision = Revision{
-		B64AppProto:        b64,
-		Status:             status,
-		ID:                 appRevision.Id,
-		RevisionNumber:     appRevision.RevisionNumber,
-		CreatedAt:          appRevision.CreatedAt.AsTime(),
-		UpdatedAt:          appRevision.UpdatedAt.AsTime(),
-		DeploymentTargetID: appRevision.DeploymentTargetId,
-		AppInstanceID:      appInstanceId,
+		B64AppProto:      b64,
+		Status:           status,
+		ID:               appRevision.Id,
+		RevisionNumber:   appRevision.RevisionNumber,
+		CreatedAt:        appRevision.CreatedAt.AsTime(),
+		UpdatedAt:        appRevision.UpdatedAt.AsTime(),
+		DeploymentTarget: DeploymentTarget{ID: appRevision.DeploymentTargetId},
+		AppInstanceID:    appInstanceId,
 	}
 
 	return revision, nil
@@ -174,7 +180,7 @@ func AttachEnvToRevision(ctx context.Context, inp AttachEnvToRevisionInput) (Rev
 		return revision, telemetry.Error(ctx, span, err, "error unmarshalling app proto")
 	}
 
-	envName, err := AppEnvGroupName(ctx, appDef.Name, inp.Revision.DeploymentTargetID, uint(inp.ClusterID), inp.PorterAppRepository)
+	envName, err := AppEnvGroupName(ctx, appDef.Name, inp.Revision.DeploymentTarget.ID, uint(inp.ClusterID), inp.PorterAppRepository)
 	if err != nil {
 		return revision, telemetry.Error(ctx, span, err, "error getting app env group name")
 	}

@@ -496,7 +496,7 @@ func createHPAAbsoluteCPUThresholdQuery(cpuMetricName, metricName, podSelectionR
 	)
 
 	targetCPUUtilThresholdOne := fmt.Sprintf(
-		`%s{%s} / 50`,
+		`%s{%s} / 100`,
 		metricName,
 		kubeMetricsHPASelectorOne,
 	)
@@ -511,7 +511,7 @@ func createHPAAbsoluteCPUThresholdQuery(cpuMetricName, metricName, podSelectionR
 	)
 
 	targetCPUUtilThresholdTwo := fmt.Sprintf(
-		`%s{%s} / 50`,
+		`%s{%s} / 100`,
 		metricName,
 		kubeMetricsHPASelectorTwo,
 	)
@@ -565,7 +565,7 @@ func createHPAAbsoluteMemoryThresholdQuery(memMetricName, metricName, podSelecti
 	)
 
 	targetMemUtilThresholdOne := fmt.Sprintf(
-		`%s{%s} / 50`,
+		`%s{%s} / 100`,
 		metricName,
 		kubeMetricsHPASelectorOne,
 	)
@@ -580,7 +580,7 @@ func createHPAAbsoluteMemoryThresholdQuery(memMetricName, metricName, podSelecti
 	)
 
 	targetMemUtilThresholdTwo := fmt.Sprintf(
-		`%s{%s} / 50`,
+		`%s{%s} / 100`,
 		metricName,
 		kubeMetricsHPASelectorTwo,
 	)

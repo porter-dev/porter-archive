@@ -1,5 +1,4 @@
 import React, { useMemo } from "react";
-import { RawDeploymentTarget } from "./PreviewEnvs";
 import { match } from "ts-pattern";
 import _ from "lodash";
 import styled from "styled-components";
@@ -17,9 +16,10 @@ import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { readableDate } from "shared/string_utils";
+import type {DeploymentTarget} from "lib/hooks/useDeploymentTarget";
 
 type PreviewEnvGridProps = {
-  deploymentTargets: RawDeploymentTarget[];
+  deploymentTargets: DeploymentTarget[];
   searchValue: string;
   view: "grid" | "list";
   sort: "letter" | "calendar";
@@ -33,7 +33,7 @@ const PreviewEnvGrid: React.FC<PreviewEnvGridProps> = ({
 }) => {
   const filteredEnvs = useMemo(() => {
     const filteredBySearch = search(deploymentTargets ?? [], searchValue, {
-      keys: ["selector"],
+      keys: ["namespace"],
       isCaseSensitive: false,
     });
 
@@ -41,7 +41,7 @@ const PreviewEnvGrid: React.FC<PreviewEnvGridProps> = ({
       .with("calendar", () =>
         _.sortBy(filteredBySearch, ["created_at"]).reverse()
       )
-      .with("letter", () => _.sortBy(filteredBySearch, ["selector"]))
+      .with("letter", () => _.sortBy(filteredBySearch, ["namespace"]))
       .exhaustive();
   }, [deploymentTargets, searchValue, sort]);
 
@@ -67,13 +67,13 @@ const PreviewEnvGrid: React.FC<PreviewEnvGridProps> = ({
           return (
             <Link
               to={`/preview-environments/apps?target=${env.id}`}
-              key={env.selector}
+              key={env.namespace}
             >
               <Block>
                 <Container row>
                   <Icon height="18px" src={pull_request} />
                   <Spacer inline width="12px" />
-                  <Text size={14}>{env.selector}</Text>
+                  <Text size={14}>{env.namespace}</Text>
                   <Spacer inline x={2} />
                 </Container>
                 <StatusIcon src={healthy} />
@@ -95,14 +95,14 @@ const PreviewEnvGrid: React.FC<PreviewEnvGridProps> = ({
           return (
             <Link
               to={`/preview-environments/apps?target=${env.id}`}
-              key={env.selector}
+              key={env.namespace}
             >
               <Row>
                 <Container row>
                   <Spacer inline width="1px" />
                   <Icon height="18px" src={pull_request} />
                   <Spacer inline width="12px" />
-                  <Text size={14}>{env.selector}</Text>
+                  <Text size={14}>{env.namespace}</Text>
                   <Spacer inline x={1} />
                   <Icon height="16px" src={healthy} />
                 </Container>

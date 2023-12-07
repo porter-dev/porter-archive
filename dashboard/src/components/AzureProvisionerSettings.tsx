@@ -325,7 +325,9 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       setAzureLocation(aksValues.location);
       setClusterVersion(aksValues.clusterVersion);
       setCidrRange(aksValues.cidrRange);
-      setSkuTier(aksValues.skuTier)
+      if (aksValues.skuTier !== AksSkuTier.UNSPECIFIED) {
+        setSkuTier(aksValues.skuTier)
+      }
     }
   }, [props.selectedClusterVersion]);
 
@@ -391,7 +393,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
           <Spacer inline x={.05}/>
           <Icon src={dotVertical} height={"15px"}/>
           <Spacer inline x={.1}/>
-          <Label>Tier</Label>
+          <Label>Azure Tier</Label>
         </div>
         <SelectRow
             options={skuTierOptions}

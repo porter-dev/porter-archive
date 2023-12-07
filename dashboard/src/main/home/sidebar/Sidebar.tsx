@@ -148,21 +148,21 @@ class Sidebar extends Component<PropsType, StateType> {
             "update",
             "delete",
           ]) && (
-            <NavButton path={"/integrations"}>
-              <Img src={integrations} />
-              Integrations
-            </NavButton>
-          )}
+              <NavButton path={"/integrations"}>
+                <Img src={integrations} />
+                Integrations
+              </NavButton>
+            )}
           {this.props.isAuthorized("settings", "", [
             "get",
             "update",
             "delete",
           ]) && (
-            <NavButton path={"/project-settings"}>
-              <Img src={settings} />
-              Project settings
-            </NavButton>
-          )}
+              <NavButton path={"/project-settings"}>
+                <Img src={settings} />
+                Project settings
+              </NavButton>
+            )}
 
           <br />
 
@@ -189,22 +189,22 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-              <NavButton path={"/project-settings"}>
-                <Img src={settings} />
-                Project settings
-              </NavButton>
-            )}
+                <NavButton path={"/project-settings"}>
+                  <Img src={settings} />
+                  Project settings
+                </NavButton>
+              )}
             {this.props.isAuthorized("integrations", "", [
               "get",
               "create",
               "update",
               "delete",
             ]) && (
-              <NavButton path={"/integrations"}>
-                <Img src={integrations} />
-                Integrations
-              </NavButton>
-            )}
+                <NavButton path={"/integrations"}>
+                  <Img src={integrations} />
+                  Integrations
+                </NavButton>
+              )}
             {currentCluster && (
               <>
                 <Spacer y={0.5} />
@@ -218,6 +218,15 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={applications} />
               Applications
             </NavButton>
+            {currentProject.db_enabled && (
+              <NavButton
+                path="/databases"
+                active={window.location.pathname.startsWith("/apps")}
+              >
+                <Img src={database} />
+                Databases
+              </NavButton>
+            )}
             <NavButton
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}
@@ -237,16 +246,16 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-              <NavButton
-                path={"/cluster-dashboard"}
-                active={window.location.pathname.startsWith(
-                  "/cluster-dashboard"
-                )}
-              >
-                <Img src={settings} />
-                Infrastructure
-              </NavButton>
-            )}
+                <NavButton
+                  path={"/cluster-dashboard"}
+                  active={window.location.pathname.startsWith(
+                    "/cluster-dashboard"
+                  )}
+                >
+                  <Img src={settings} />
+                  Infrastructure
+                </NavButton>
+              )}
 
             {currentProject.preview_envs_enabled && (
               <NavButton path="/preview-environments">
@@ -304,16 +313,16 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-              <NavButton
-                path={"/cluster-dashboard"}
-                active={window.location.pathname.startsWith(
-                  "/cluster-dashboard"
-                )}
-              >
-                <Img src={infra} />
-                Infrastructure
-              </NavButton>
-            )}
+                <NavButton
+                  path={"/cluster-dashboard"}
+                  active={window.location.pathname.startsWith(
+                    "/cluster-dashboard"
+                  )}
+                >
+                  <Img src={infra} />
+                  Infrastructure
+                </NavButton>
+              )}
 
             {currentProject.preview_envs_enabled && (
               <NavButton path="/preview-environments">
@@ -328,22 +337,22 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-              <NavButton path={"/integrations"}>
-                <Img src={integrations} />
-                Integrations
-              </NavButton>
-            )}
+                <NavButton path={"/integrations"}>
+                  <Img src={integrations} />
+                  Integrations
+                </NavButton>
+              )}
 
             {this.props.isAuthorized("settings", "", [
               "get",
               "update",
               "delete",
             ]) && (
-              <NavButton path={"/project-settings"}>
-                <Img src={settings} />
-                Project settings
-              </NavButton>
-            )}
+                <NavButton path={"/project-settings"}>
+                  <Img src={settings} />
+                  Project settings
+                </NavButton>
+              )}
 
             {/* Hacky workaround for setting currentCluster with legacy method */}
             <Clusters

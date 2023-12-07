@@ -26,29 +26,30 @@ type ProjectList struct {
 
 // Project type for entries in api responses for everything other than `GET /projects`
 type Project struct {
-	ID                     uint    `json:"id"`
-	Name                   string  `json:"name"`
-	Roles                  []*Role `json:"roles"`
-	APITokensEnabled       bool    `json:"api_tokens_enabled"`
-	AWSACKAuthEnabled      bool    `json:"aws_ack_auth_enabled"`
-	AzureEnabled           bool    `json:"azure_enabled"`
-	BetaFeaturesEnabled    bool    `json:"beta_features_enabled"`
-	CapiProvisionerEnabled bool    `json:"capi_provisioner_enabled"`
-	DBEnabled              bool    `json:"db_enabled"`
-	EFSEnabled             bool    `json:"efs_enabled"`
-	EnableReprovision      bool    `json:"enable_reprovision"`
-	FullAddOns             bool    `json:"full_add_ons"`
-	GPUEnabled             bool    `json:"gpu_enabled"`
-	HelmValuesEnabled      bool    `json:"helm_values_enabled"`
-	ManagedInfraEnabled    bool    `json:"managed_infra_enabled"`
-	MultiCluster           bool    `json:"multi_cluster"`
-	PreviewEnvsEnabled     bool    `json:"preview_envs_enabled"`
-	QuotaIncrease          bool    `json:"quota_increase"`
-	RDSDatabasesEnabled    bool    `json:"enable_rds_databases"`
-	SimplifiedViewEnabled  bool    `json:"simplified_view_enabled"`
-	SOC2ControlsEnabled    bool    `json:"soc2_controls_enabled"`
-	StacksEnabled          bool    `json:"stacks_enabled"`
-	ValidateApplyV2        bool    `json:"validate_apply_v2"`
+	ID                              uint    `json:"id"`
+	Name                            string  `json:"name"`
+	Roles                           []*Role `json:"roles"`
+	APITokensEnabled                bool    `json:"api_tokens_enabled"`
+	AWSACKAuthEnabled               bool    `json:"aws_ack_auth_enabled"`
+	AzureEnabled                    bool    `json:"azure_enabled"`
+	BetaFeaturesEnabled             bool    `json:"beta_features_enabled"`
+	CapiProvisionerEnabled          bool    `json:"capi_provisioner_enabled"`
+	DBEnabled                       bool    `json:"db_enabled"`
+	EFSEnabled                      bool    `json:"efs_enabled"`
+	EnableReprovision               bool    `json:"enable_reprovision"`
+	FullAddOns                      bool    `json:"full_add_ons"`
+	GPUEnabled                      bool    `json:"gpu_enabled"`
+	HelmValuesEnabled               bool    `json:"helm_values_enabled"`
+	ManagedInfraEnabled             bool    `json:"managed_infra_enabled"`
+	MultiCluster                    bool    `json:"multi_cluster"`
+	PreviewEnvsEnabled              bool    `json:"preview_envs_enabled"`
+	QuotaIncrease                   bool    `json:"quota_increase"`
+	RDSDatabasesEnabled             bool    `json:"enable_rds_databases"`
+	SimplifiedViewEnabled           bool    `json:"simplified_view_enabled"`
+	SOC2ControlsEnabled             bool    `json:"soc2_controls_enabled"`
+	StacksEnabled                   bool    `json:"stacks_enabled"`
+	ValidateApplyV2                 bool    `json:"validate_apply_v2"`
+	ManagedDeploymentTargetsEnabled bool    `json:"managed_deployment_targets_enabled"`
 }
 
 // FeatureFlags is a struct that contains old feature flag representations
@@ -56,18 +57,19 @@ type Project struct {
 // Deprecated: Add the feature flag to the `Project` struct instead and
 // retrieve feature flags from the `GET /projects/{project_id}` response instead
 type FeatureFlags struct {
-	AzureEnabled               bool   `json:"azure_enabled,omitempty"`
-	CapiProvisionerEnabled     string `json:"capi_provisioner_enabled,omitempty"`
-	EnableReprovision          bool   `json:"enable_reprovision,omitempty"`
-	FullAddOns                 bool   `json:"full_add_ons,omitempty"`
-	HelmValuesEnabled          bool   `json:"helm_values_enabled,omitempty"`
-	ManagedDatabasesEnabled    string `json:"managed_databases_enabled,omitempty"`
-	ManagedInfraEnabled        string `json:"managed_infra_enabled,omitempty"`
-	MultiCluster               bool   `json:"multi_cluster,omitempty"`
-	PreviewEnvironmentsEnabled string `json:"preview_environments_enabled,omitempty"`
-	SimplifiedViewEnabled      string `json:"simplified_view_enabled,omitempty"`
-	StacksEnabled              string `json:"stacks_enabled,omitempty"`
-	ValidateApplyV2            bool   `json:"validate_apply_v2"`
+	AzureEnabled                    bool   `json:"azure_enabled,omitempty"`
+	CapiProvisionerEnabled          string `json:"capi_provisioner_enabled,omitempty"`
+	EnableReprovision               bool   `json:"enable_reprovision,omitempty"`
+	FullAddOns                      bool   `json:"full_add_ons,omitempty"`
+	HelmValuesEnabled               bool   `json:"helm_values_enabled,omitempty"`
+	ManagedDatabasesEnabled         string `json:"managed_databases_enabled,omitempty"`
+	ManagedInfraEnabled             string `json:"managed_infra_enabled,omitempty"`
+	MultiCluster                    bool   `json:"multi_cluster,omitempty"`
+	PreviewEnvironmentsEnabled      string `json:"preview_environments_enabled,omitempty"`
+	SimplifiedViewEnabled           string `json:"simplified_view_enabled,omitempty"`
+	StacksEnabled                   string `json:"stacks_enabled,omitempty"`
+	ValidateApplyV2                 bool   `json:"validate_apply_v2"`
+	ManagedDeploymentTargetsEnabled bool   `json:"managed_deployment_targets_enabled"`
 }
 
 // CreateProjectRequest is a struct that contains the information

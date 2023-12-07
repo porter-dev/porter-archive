@@ -33,25 +33,30 @@ const EventCard: React.FC<Props> = ({
       return "";
     }
 
-    return match(event)
-      .with({ type: "APP_EVENT" }, () => "")
-      .with({ type: "NOTIFICATION" }, () => "")
-      .with({ type: "BUILD" }, (event) =>
-        event.metadata.commit_sha
-          ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.commit_sha}`
-          : ""
-      )
-      .with({ type: "PRE_DEPLOY" }, (event) =>
-        event.metadata.commit_sha
-          ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.commit_sha}`
-          : ""
-      )
-      .with({ type: "DEPLOY" }, (event) =>
-        event.metadata.image_tag
-          ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.image_tag}`
-          : ""
-      )
-      .exhaustive();
+    return (
+      match(event)
+        .with({ type: "APP_EVENT" }, () => "")
+        .with({ type: "NOTIFICATION" }, () => "")
+        .with({ type: "BUILD" }, (event) =>
+          event.metadata.commit_sha
+            ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.commit_sha}`
+            : ""
+        )
+        // TODO: remove check for commit_sha when update flow is GA'd
+        .with({ type: "PRE_DEPLOY" }, (event) =>
+          event.metadata.commit_sha
+            ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.commit_sha}`
+            : event.metadata.image_tag
+            ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.image_tag}`
+            : ""
+        )
+        .with({ type: "DEPLOY" }, (event) =>
+          event.metadata.image_tag
+            ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.image_tag}`
+            : ""
+        )
+        .exhaustive()
+    );
   }, [JSON.stringify(event), porterApp]);
 
   const displayCommitSha = useMemo(() => {
@@ -59,19 +64,26 @@ const EventCard: React.FC<Props> = ({
       return "";
     }
 
-    return match(event)
-      .with({ type: "APP_EVENT" }, () => "")
-      .with({ type: "NOTIFICATION" }, () => "")
-      .with({ type: "BUILD" }, (event) =>
-        event.metadata.commit_sha ? event.metadata.commit_sha.slice(0, 7) : ""
-      )
-      .with({ type: "PRE_DEPLOY" }, (event) =>
-        event.metadata.commit_sha ? event.metadata.commit_sha.slice(0, 7) : ""
-      )
-      .with({ type: "DEPLOY" }, (event) =>
-        event.metadata.image_tag ? event.metadata.image_tag.slice(0, 7) : ""
-      )
-      .exhaustive();
+    return (
+      match(event)
+        .with({ type: "APP_EVENT" }, () => "")
+        .with({ type: "NOTIFICATION" }, () => "")
+        .with({ type: "BUILD" }, (event) =>
+          event.metadata.commit_sha ? event.metadata.commit_sha.slice(0, 7) : ""
+        )
+        // TODO: remove check for commit_sha when update flow is GA'd
+        .with({ type: "PRE_DEPLOY" }, (event) =>
+          event.metadata.commit_sha
+            ? event.metadata.commit_sha.slice(0, 7)
+            : event.metadata.image_tag
+            ? event.metadata.image_tag.slice(0, 7)
+            : ""
+        )
+        .with({ type: "DEPLOY" }, (event) =>
+          event.metadata.image_tag ? event.metadata.image_tag.slice(0, 7) : ""
+        )
+        .exhaustive()
+    );
   }, [JSON.stringify(event), porterApp]);
 
   return match(event)

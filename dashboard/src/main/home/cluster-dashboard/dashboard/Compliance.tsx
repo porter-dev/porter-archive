@@ -25,6 +25,37 @@ type Props = {
   selectedClusterVersion: JsonValue;
 };
 
+const soc2DataDefault = {
+  "preflight_checks": {
+    "EBS Volume": {
+      "message": "EBS volume is enabled for the cluster by default.",
+      "enabled": true,
+      "hideToggle": true,
+      "status": "ENABLED"
+    },
+    "AWS KMS Secret Encryption": {
+      "message": "KMS encryption is enabled for the cluster.",
+      "enabled": false,
+      "disabledTooltip": "Enable KMS encryption for the cluster to enable SOC 2 compliance.",
+      "locked": true,
+      "status": "",
+    },
+    "EKS CloudTrail Forwarding": {
+      "message": "Forward all application and control plane logs to CloudTrail.",
+      "enabled": false,
+      "enabledField": "Retain CloudTrail logs for 365 days",
+      "status": "",
+    },
+    "Enhanced ECR Forwarding": {
+      "message": "ECR Forwarding is not enabled for the cluster. Please enable ECR Forwarding for the cluster to enable SOC 2 compliance.",
+      "link": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/log-forwarding.html",
+      "enabled": false,
+      "info": "",
+      "status": ""
+    },
+  }
+}
+
 const DEFAULT_ERROR_MESSAGE =
   "An error occurred while provisioning your infrastructure. Please try again.";
 
@@ -32,18 +63,14 @@ const Compliance: React.FC<Props> = (props) => {
   const { currentProject, currentCluster, setShouldRefreshClusters } =
     useContext(Context);
 
-  const [cloudTrailEnabled, setCloudTrailEnabled] = useState(false);
-  // const [cloudTrailRetention, setCloudTrailRetention] = useState(false);
-  const [ecrScanningEnabled, setEcrScanningEnabled] = useState(false);
-  const [isReadOnly, setIsReadOnly] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [kmsEnabled, setKmsEnabled] = useState(false);
   const [soc2Enabled, setSoc2Enabled] = useState(false);
   const [clusterRegion, setClusterRegion] = useState("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
-  const [enabled, setEnabled] = useState(false);
+  const [soc2Data, setSoc2Data] = useState(soc2DataDefault);
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
   const applySettings = async (): Promise<void> => {
     if (!currentCluster || !currentProject || !setShouldRefreshClusters) {
@@ -105,6 +132,11 @@ const Compliance: React.FC<Props> = (props) => {
   };
 
   const createContract = (base64Contract: string): Contract => {
+    //
+    const cloudTrailEnabled = soc2Data.preflight_checks["EKS CloudTrail Forwarding"].enabled
+    const kmsEnabled = soc2Data.preflight_checks["AWS KMS Secret Encryption"].enabled
+    const ecrScanningEnabled = soc2Data.preflight_checks["Enhanced ECR Forwarding"].enabled
+
     const contractData = JSON.parse(atob(base64Contract));
     const latestCluster: Cluster = Cluster.fromJson(contractData.cluster, {
       ignoreUnknownFields: true,
@@ -212,6 +244,17 @@ const Compliance: React.FC<Props> = (props) => {
     return isReadOnly && props.provisionerError === "";
   }, [isReadOnly, props.provisionerError]);
 
+  const determineStatus = (enabled: boolean): string => {
+    if (enabled) {
+      if (currentCluster?.status === "UPDATING") {
+        return "PENDING"
+      }
+      else
+        return "ENABLED"
+    }
+    return ""
+  }
+
   useEffect(() => {
     const contract: Contract = Contract.fromJson(props.selectedClusterVersion, {
       ignoreUnknownFields: true,
@@ -226,10 +269,31 @@ const Compliance: React.FC<Props> = (props) => {
         eksValues.logging.enableAuthenticatorLogs &&
         eksValues.logging.enableControllerManagerLogs;
 
-      setCloudTrailEnabled(cloudTrailEnabled);
       setClusterRegion(eksValues.region);
-      setEcrScanningEnabled(eksValues.enableEcrScanning);
-      setKmsEnabled(eksValues.enableKmsEncryption);
+
+      setSoc2Data(prevSoc2Data => {
+        return {
+          ...prevSoc2Data,
+          preflight_checks: {
+            ...prevSoc2Data.preflight_checks,
+            "EKS CloudTrail Forwarding": {
+              ...prevSoc2Data.preflight_checks["EKS CloudTrail Forwarding"],
+              enabled: cloudTrailEnabled,
+              status: determineStatus(cloudTrailEnabled)
+            },
+            "AWS KMS Secret Encryption": {
+              ...prevSoc2Data.preflight_checks["AWS KMS Secret Encryption"],
+              enabled: eksValues.enableKmsEncryption,
+              status: determineStatus(eksValues.enableKmsEncryption)
+            },
+            "Enhanced ECR Forwarding": {
+              ...prevSoc2Data.preflight_checks["Enhanced ECR Forwarding"],
+              enabled: eksValues.enableEcrScanning,
+              status: determineStatus(eksValues.enableEcrScanning)
+            }
+          }
+        };
+      });
 
       setSoc2Enabled(
         cloudTrailEnabled &&
@@ -250,14 +314,6 @@ const Compliance: React.FC<Props> = (props) => {
     );
   }, []);
 
-  useEffect(() => {
-    if (soc2Enabled) {
-      setCloudTrailEnabled(true);
-      // setCloudTrailRetention(true);
-      setEcrScanningEnabled(true);
-      setKmsEnabled(true);
-    }
-  }, [soc2Enabled]);
   return (
     <StyledCompliance>
       <Spacer y={1} />
@@ -270,127 +326,11 @@ const Compliance: React.FC<Props> = (props) => {
         </NewBadge>
       </Container>
 
-      <SOC2Checks preflightData={{
-        "preflight_checks": {
-          "AWS KMS Secret Encryption": {
-            "passed": "healthy",
-            "message": "KMS encryption is enabled for the cluster.",
-
-          },
-          "EKS CloudTrail Forwarding": {
-            "message": "CloudTrail is not enabled for the cluster. Please enable CloudTrail for the cluster to enable SOC 2 compliance.",
-          },
-          "Enhanced ECR Forwarding": {
-            "passed": "failure",
-            "message": "ECR Forwarding is not enabled for the cluster. Please enable ECR Forwarding for the cluster to enable SOC 2 compliance.",
-            "metadata": {
-              "link": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/log-forwarding.html"
-            }
-          },
-
-        }
-      }} provider={"SOC2"} />
-      {/* <Spacer y={0.5} />
-      <Text color="helper">
-        Configure your AWS infrastructure to be SOC 2 compliant with Porter.
-      </Text>
-      <Spacer y={0.5} />
-      <ToggleRow
-        isToggled={soc2Enabled}
-        onToggle={() => {
-          setSoc2Enabled((prev) => !prev);
-        }}
-        disabled={isReadOnly}
-        disabledTooltip={
-          "Wait for provisioning to complete before editing this field."
-        }
-      >
-        <Container row>
-          <Text>Enable all SOC 2 settings</Text>
-        </Container>
-      </ToggleRow>
-      <Spacer y={0.5} />
-      <GutterContainer>
-        <ToggleRow
-          isToggled={cloudTrailEnabled}
-          onToggle={() => {
-            setCloudTrailEnabled((prev) => !prev);
-          }}
-          disabled={soc2Enabled || isReadOnly}
-          disabledTooltip={
-            soc2Enabled
-              ? "Global SOC 2 setting must be disabled to toggle this"
-              : "Wait for provisioning to complete before editing this field."
-          }
-        >
-          <Container row>
-            <Text>EKS CloudTrail Forwarding</Text>
-            <Spacer inline x={1} />
-            <Text color="helper">
-              Forward all application and control plane logs to CloudTrail.
-            </Text>
-          </Container>
-        </ToggleRow> */}
-      {/* <Spacer y={0.5} />
-        <ToggleRow
-          isToggled={cloudTrailRetention}
-          onToggle={() => { setCloudTrailRetention((prev) => !prev) }}
-          disabled={soc2Enabled || isReadOnly}
-          disabledTooltip={
-            soc2Enabled ? "Global SOC 2 setting must be disabled to toggle this" : "Wait for provisioning to complete before editing this field."
-          }
-        >
-          <Container row>
-            <Text>Retain CloudTrail logs for 365 days</Text>
-            <Spacer inline x={1} />
-            <Text color="helper">Store CloudTrail logs in an S3 bucket for 365 days.</Text>
-          </Container>
-        </ToggleRow> */}
-      {/* <Spacer y={0.5} />
-        <ToggleRow
-          isToggled={kmsEnabled}
-          onToggle={() => {
-            setKmsEnabled((prev) => !prev);
-          }}
-          disabled={soc2Enabled || isReadOnly || kmsEnabled}
-          disabledTooltip={
-            kmsEnabled
-              ? "KMS encryption can never be disabled."
-              : soc2Enabled
-                ? "Global SOC 2 setting must be disabled to toggle this"
-                : "Wait for provisioning to complete before editing this field."
-          }
-        >
-          <Container row>
-            <Text>AWS KMS Secret Encryption</Text>
-            <Spacer inline x={1} />
-            <Text color="helper">
-              Encrypt secrets with AWS Key Management Service.
-            </Text>
-          </Container>
-        </ToggleRow>
-        <Spacer y={0.5} />
-        <ToggleRow
-          isToggled={ecrScanningEnabled}
-          onToggle={() => {
-            setEcrScanningEnabled((prev) => !prev);
-          }}
-          disabled={soc2Enabled || isReadOnly}
-          disabledTooltip={
-            soc2Enabled
-              ? "Global SOC 2 setting must be disabled to toggle this"
-              : "Wait for provisioning to complete before editing this field."
-          }
-        >
-          <Container row>
-            <Text>Enhanced ECR scanning</Text>
-            <Spacer inline x={1} />
-            <Text color="helper">
-              Scan ECR image repositories for vulnerabilities.
-            </Text>
-          </Container>
-        </ToggleRow>
-      </GutterContainer> */}
+      <SOC2Checks
+        enableAll={soc2Enabled}
+        soc2Data={soc2Data}
+        setSoc2Data={setSoc2Data}
+      />
       <Spacer y={1} />
       <Container row >
         <Button
@@ -401,14 +341,22 @@ const Compliance: React.FC<Props> = (props) => {
           Save settings
         </Button>
         <Spacer inline x={1} />
-        <Checkbox
-          checked={enabled}
-          toggleChecked={() => { setEnabled(!enabled) }}
+        <ToggleRow
+          isToggled={soc2Enabled}
+          onToggle={() => {
+            setSoc2Enabled((prev) => !prev);
+          }}
+          disabled={isReadOnly}
+          disabledTooltip={
+            soc2Enabled
+              ? "Global SOC 2 setting must be disabled to toggle this"
+              : "Wait for provisioning to complete before editing this field."
+          }
         >
-          <Text>
-            Enable All
-          </Text>
-        </Checkbox>
+          <Container row>
+            <Text>Enable All</Text>
+          </Container>
+        </ToggleRow>
       </Container>
     </StyledCompliance>
   );

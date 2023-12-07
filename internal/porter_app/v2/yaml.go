@@ -303,7 +303,7 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 }
 
 func protoEnumFromType(name string, service Service) porterv1.ServiceType {
-	serviceType := porterv1.ServiceType_SERVICE_TYPE_WORKER
+	serviceType := porterv1.ServiceType_SERVICE_TYPE_UNSPECIFIED
 
 	if strings.Contains(name, "web") {
 		serviceType = porterv1.ServiceType_SERVICE_TYPE_WEB

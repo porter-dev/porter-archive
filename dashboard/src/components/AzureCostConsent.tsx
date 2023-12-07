@@ -1,24 +1,14 @@
-import React, { useState, useContext, useMemo } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 
-import { integrationList } from "shared/common";
-import { Context } from "shared/Context";
-import api from "shared/api";
-
-import ProvisionerForm from "components/ProvisionerForm";
-import CloudFormationForm from "components/CloudFormationForm";
-import CredentialsForm from "components/CredentialsForm";
-import Helper from "components/form-components/Helper";
 import Modal from "./porter/Modal";
 import Text from "./porter/Text";
 import Spacer from "./porter/Spacer";
 import Fieldset from "./porter/Fieldset";
-import Checkbox from "./porter/Checkbox";
 import Button from "./porter/Button";
 import ExpandableSection from "./porter/ExpandableSection";
 import Input from "./porter/Input";
 import Link from "./porter/Link";
-import AzureCredentialForm from "components/AzureCredentialForm";
 
 type Props = {
   setCurrentStep: (step: string) => void;
@@ -103,7 +93,7 @@ const AzureCostConsent: React.FC<Props> = ({
         <Spacer y={0.5} />
         <Text color="helper">
           All Azure resources will be automatically deleted when you delete your
-          Porter project. Please enter the Azure base cost ("210.24") below to
+          Porter project. Please enter the Azure base cost (&quot;210.24&quot;) below to
           proceed:
         </Text>
         <Spacer y={1} />

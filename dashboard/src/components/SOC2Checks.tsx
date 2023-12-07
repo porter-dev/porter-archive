@@ -35,45 +35,44 @@ type ItemProps = RouteComponentProps & {
 const SOC2Checks: React.FC<Props> = ({ soc2Data, enableAll, setSoc2Data, readOnly }) => {
 
   // const { soc2Data, setSoc2Data } = useContext(Context);
-  const preflightChecks = soc2Data?.preflight_checks || {};
+  const soc2Checks = soc2Data?.soc2_checks || {};
 
   const combinedKeys = new Set([
-    ...Object.keys(preflightChecks)
+    ...Object.keys(soc2Checks)
   ]);
 
   useEffect(() => {
 
     if (enableAll) {
-      const newPreflightChecks = Object.keys(preflightChecks).reduce((acc, key) => {
+      const newSOC2Checks = Object.keys(soc2Checks).reduce((acc, key) => {
         acc[key] = {
-          ...preflightChecks[key],
-          status: preflightChecks[key].enabled ? (preflightChecks[key].status === "PENDING" ? "PENDING" : "ENABLED") : "PENDING",
+          ...soc2Checks[key],
+          status: soc2Checks[key].enabled ? (soc2Checks[key].status === "PENDING" ? "PENDING" : "ENABLED") : "PENDING",
         }
         return acc;
       }, {});
       setSoc2Data(prev => ({
         ...prev,
-        preflight_checks: newPreflightChecks
+        soc2_checks: newSOC2Checks
       }));
     }
     else {
-      const newPreflightChecks = Object.keys(preflightChecks).reduce((acc, key) => {
+      const newSOC2Checks = Object.keys(soc2Checks).reduce((acc, key) => {
         acc[key] = {
-          ...preflightChecks[key],
-          status: !preflightChecks[key].enabled ? "" : (preflightChecks[key].status === "PENDING" ? "PENDING" : "ENABLED"),
+          ...soc2Checks[key],
+          status: !soc2Checks[key].enabled ? "" : (soc2Checks[key].status === "PENDING" ? "PENDING" : "ENABLED"),
         }
         return acc;
       }, {});
       setSoc2Data(prev => ({
         ...prev,
-        preflight_checks: newPreflightChecks
+        soc2_checks: newSOC2Checks
       }));
     }
-    console.log("SOC2Checks: ", soc2Data)
   }, [enableAll]);
 
-  const PreflightCheckItem: React.FC<ItemProps> = ({ checkKey, checkLabel }) => {
-    const checkData = soc2Data?.preflight_checks?.[checkKey];
+  const Soc2Item: React.FC<ItemProps> = ({ checkKey, checkLabel }) => {
+    const checkData = soc2Data?.soc2_checks?.[checkKey];
     const hasMessage = checkData?.message;
     const enabled = checkData?.enabled;
     const status = checkData?.status;
@@ -89,12 +88,12 @@ const SOC2Checks: React.FC<Props> = ({ soc2Data, enableAll, setSoc2Data, readOnl
     const handleEnable = (): void => {
       setSoc2Data(prev => ({
         ...prev,
-        preflight_checks: {
-          ...prev.preflight_checks,
+        soc2_checks: {
+          ...prev.soc2_checks,
           [checkKey]: {
-            ...prev.preflight_checks[checkKey],
-            enabled: !prev.preflight_checks[checkKey].enabled,
-            status: !prev.preflight_checks[checkKey].enabled ? "PENDING" : !prev.preflight_checks[checkKey].enabled ? "ENABLED" : "",
+            ...prev.soc2_checks[checkKey],
+            enabled: !prev.soc2_checks[checkKey].enabled,
+            status: !prev.soc2_checks[checkKey].enabled ? "PENDING" : !prev.soc2_checks[checkKey].enabled ? "ENABLED" : "",
           }
         }
       }));
@@ -195,7 +194,7 @@ const SOC2Checks: React.FC<Props> = ({ soc2Data, enableAll, setSoc2Data, readOnl
         <Spacer y={1} />
         <AppearingDiv>
           {Array.from(combinedKeys).map((checkKey) => (
-            <PreflightCheckItem
+            <Soc2Item
               key={checkKey}
               checkKey={checkKey}
               checkLabel={checkKey} />

@@ -25,7 +25,7 @@ type Props = {
   selectedClusterVersion: JsonValue;
 };
 const soc2DataDefault = {
-  "preflight_checks": {
+  "soc2_checks": {
     "EBS Volume": {
       "message": "EBS volume is enabled for the cluster by default.",
       "enabled": true,
@@ -132,9 +132,9 @@ const Compliance: React.FC<Props> = (props) => {
 
   const createContract = (base64Contract: string): Contract => {
     //
-    const cloudTrailEnabled = soc2Data.preflight_checks["EKS CloudTrail Forwarding"].enabled
-    const kmsEnabled = soc2Data.preflight_checks["AWS KMS Secret Encryption"].enabled
-    const ecrScanningEnabled = soc2Data.preflight_checks["Enhanced ECR Forwarding"].enabled
+    const cloudTrailEnabled = soc2Data.soc2_checks["EKS CloudTrail Forwarding"].enabled
+    const kmsEnabled = soc2Data.soc2_checks["AWS KMS Secret Encryption"].enabled
+    const ecrScanningEnabled = soc2Data.soc2_checks["Enhanced ECR Forwarding"].enabled
 
     const contractData = JSON.parse(atob(base64Contract));
     const latestCluster: Cluster = Cluster.fromJson(contractData.cluster, {
@@ -273,20 +273,20 @@ const Compliance: React.FC<Props> = (props) => {
       setSoc2Data(prevSoc2Data => {
         return {
           ...prevSoc2Data,
-          preflight_checks: {
-            ...prevSoc2Data.preflight_checks,
+          soc2_checks: {
+            ...prevSoc2Data.soc2_checks,
             "EKS CloudTrail Forwarding": {
-              ...prevSoc2Data.preflight_checks["EKS CloudTrail Forwarding"],
+              ...prevSoc2Data.soc2_checks["EKS CloudTrail Forwarding"],
               enabled: cloudTrailEnabled,
               status: determineStatus(cloudTrailEnabled)
             },
             "AWS KMS Secret Encryption": {
-              ...prevSoc2Data.preflight_checks["AWS KMS Secret Encryption"],
+              ...prevSoc2Data.soc2_checks["AWS KMS Secret Encryption"],
               enabled: eksValues.enableKmsEncryption,
               status: determineStatus(eksValues.enableKmsEncryption)
             },
             "Enhanced ECR Forwarding": {
-              ...prevSoc2Data.preflight_checks["Enhanced ECR Forwarding"],
+              ...prevSoc2Data.soc2_checks["Enhanced ECR Forwarding"],
               enabled: eksValues.enableEcrScanning,
               status: determineStatus(eksValues.enableEcrScanning)
             }
@@ -329,6 +329,7 @@ const Compliance: React.FC<Props> = (props) => {
         enableAll={soc2Enabled}
         soc2Data={soc2Data}
         setSoc2Data={setSoc2Data}
+        readOnly={isReadOnly}
       />
       <Spacer y={1} />
       <Container row >

@@ -127,7 +127,7 @@ const SOC2Checks: React.FC<Props> = ({ soc2Data, enableAll, setSoc2Data, readOnl
         </CheckItemTop >
         {
           isExpanded && hasMessage && (
-            <div style={{ marginLeft: '15px' }}>
+            <div style={{ marginLeft: '10px' }}>
               <Spacer y={.5} />
               <Text>
                 {checkData?.message}

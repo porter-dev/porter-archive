@@ -24,6 +24,19 @@ type Props = {
   provisionerError?: string;
   selectedClusterVersion: JsonValue;
 };
+
+
+//  Example SOC2 Check
+//  "Display_Name_Of_SOC2_Check": {
+//   "message": "Main Example Message about the Check",
+//   "link": "example link for more docs ",
+//   "enabled": (false or true if porter does it by default),
+//   "status": ""(Keep blank or ENABLED if porter does it by default)
+//  "enabledField": "text that goes next to the toggle",
+//   "info": " more information",
+//   "locked":(true if unmutable field like KMS),
+//   "disabledTooltip": "display if message is disabled",
+//}
 const soc2DataDefault = {
   "soc2_checks": {
     "EBS Volume": {

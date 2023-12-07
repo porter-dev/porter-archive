@@ -55,7 +55,7 @@ func (c *ListAwsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		dblinks, err := c.Repo().AWSAssumeRoleChainer().List(ctx, project.ID)
 		if err != nil {
 			e := fmt.Errorf("unable to find assume role chain links: %w", err)
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 			return
 		}
 
@@ -63,7 +63,7 @@ func (c *ListAwsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			b, err := arn.Parse(link.TargetARN)
 			if err != nil {
 				e := fmt.Errorf("unable to parse target arn: %w", err)
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 				return
 			}
 
@@ -79,7 +79,7 @@ func (c *ListAwsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	awsInts, err := c.Repo().AWSIntegration().ListAWSIntegrationsByProjectID(project.ID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -87,7 +87,7 @@ func (c *ListAwsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		b, err := arn.Parse(awsInt.AWSArn)
 		if err != nil {
 			e := fmt.Errorf("unable to parse target arn: %w", err)
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 			return
 		}
 

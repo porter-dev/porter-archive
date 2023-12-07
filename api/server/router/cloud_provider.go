@@ -47,7 +47,7 @@ func getCloudProviderRoutes(
 	basePath *types.Path,
 	factory shared.APIEndpointFactory,
 ) ([]*router.Route, *types.Path) {
-	relPath := "/cloud-provider"
+	relPath := "/cloud-providers"
 
 	newPath := &types.Path{
 		Parent:       basePath,
@@ -55,8 +55,7 @@ func getCloudProviderRoutes(
 	}
 	routes := make([]*router.Route, 0)
 
-	// GET /api/projects/{project_id}/cloud-provider/aws -> cloud_provider.NewListAwsHandler
-	getEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/cloud-providers/aws -> cloud_provider.NewListAwsHandler
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,

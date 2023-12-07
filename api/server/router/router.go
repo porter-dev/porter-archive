@@ -30,7 +30,8 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 
 	releaseRegisterer := NewReleaseScopedRegisterer()
 	namespaceRegisterer := NewNamespaceScopedRegisterer(releaseRegisterer)
-	cloudProviderRegisterer := NewCloudProviderScopedRegisterer()
+	datastoreRegisterer := NewDatastoreScopedRegisterer()
+	cloudProviderRegisterer := NewCloudProviderScopedRegisterer(datastoreRegisterer)
 	clusterIntegrationRegisterer := NewClusterIntegrationScopedRegisterer()
 	stackRegisterer := NewPorterAppScopedRegisterer()
 	deploymentTargetRegisterer := NewDeploymentTargetScopedRegisterer()

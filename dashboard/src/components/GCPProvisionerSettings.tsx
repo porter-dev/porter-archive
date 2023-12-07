@@ -69,10 +69,9 @@ const defaultClusterNetworking = new GKENetwork({
 
 const instanceTypes = [
   { value: "e2-standard-2", label: "e2-standard-2" },
-  { value: "e2-standard-2", label: "e2-standard-4" },
+  { value: "e2-standard-4", label: "e2-standard-4" },
   { value: "e2-standard-8", label: "e2-standard-8" },
   { value: "e2-standard-16", label: "e2-standard-16" },
-  { value: "e2-standard-32", label: "e2-standard-32" },
   { value: "e2-standard-32", label: "e2-standard-32" },
   // { value: "n1-standard-1", label: "n1-standard-1" }, // start of GPU nodes. 
   // { value: "n1-standard-2", label: "n1-standard-2" },
@@ -623,7 +622,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           <SelectRow
             options={locationOptions}
             width="350px"
-            disabled={isReadOnly || isLoading}
+            disabled={true}
             value={region}
             scrollBuffer={true}
             dropdownMaxHeight="240px"

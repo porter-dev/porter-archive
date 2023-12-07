@@ -1,4 +1,4 @@
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 import styled from "styled-components";
 import React, { useMemo } from "react";
 
@@ -27,6 +27,7 @@ type Props = RouteComponentProps & {
   deploymentError?: string;
   porterYamlPath?: string;
   type?: "create" | "preview";
+  redirectPath: string;
 };
 
 type Choice = "open_pr" | "copy";
@@ -44,6 +45,7 @@ const GithubActionModal: React.FC<Props> = ({
   deploymentError,
   porterYamlPath,
   type = "create",
+  redirectPath ,
   ...props
 }) => {
   const [choice, setChoice] = React.useState<Choice>("open_pr");
@@ -94,7 +96,7 @@ const GithubActionModal: React.FC<Props> = ({
       try {
         setLoading(true);
         // this creates the dummy chart
-        var success = true;
+        let success = true;
         if (deployPorterApp) {
           success = await deployPorterApp();
         }
@@ -126,7 +128,7 @@ const GithubActionModal: React.FC<Props> = ({
               window.location.reload();
             }
           }
-          props.history.push(`/apps/${stackName}`);
+          props.history.push(redirectPath);
         }
       } catch (error) {
       } finally {
@@ -184,7 +186,7 @@ const GithubActionModal: React.FC<Props> = ({
                 value: "copy",
               },
             ]}
-            setValue={(x: string) => setChoice(x as Choice)}
+            setValue={(x: string) => { setChoice(x as Choice); }}
             width="100%"
           />
           <Spacer y={1} />
@@ -207,7 +209,7 @@ const GithubActionModal: React.FC<Props> = ({
         <>
           <Checkbox
             checked={isChecked}
-            toggleChecked={() => setIsChecked(!isChecked)}
+            toggleChecked={() => { setIsChecked(!isChecked); }}
           >
             <Text>I authorize Porter to open a PR on my behalf</Text>
           </Checkbox>

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, {useContext, useMemo} from "react";
 import { type AppRevisionWithSource } from "./types";
 import { search } from "shared/search";
 import _ from "lodash";
@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import web from "assets/web.png";
 import box from "assets/box.png";
 import time from "assets/time.png";
-import healthy from "assets/status-healthy.png";
+import target from "assets/target.svg";
 import notFound from "assets/not-found.png";
 import github from "assets/github.png";
 
@@ -21,6 +21,7 @@ import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import { readableDate } from "shared/string_utils";
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
+import {Context} from "../../../../shared/Context";
 
 type AppGridProps = {
   apps: AppRevisionWithSource[];
@@ -39,6 +40,7 @@ const icons = [
 
 const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
   const { currentDeploymentTarget } = useDeploymentTarget();
+  const { currentProject } = useContext(Context);
   const appsWithProto = useMemo(() => {
     return apps.map((app) => {
       return {
@@ -80,7 +82,7 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
       .exhaustive();
   }, [appsWithProto, searchValue, sort]);
 
-  const renderIcon = (bp: string[], size?: string) => {
+  const renderIcon = (bp: string[], size?: string): JSX.Element => {
     let src = box;
     if (bp.length) {
       const [_, name] = bp[0].split("/");
@@ -112,7 +114,7 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
     );
   };
 
-  const renderSource = (source: AppRevisionWithSource["source"]) => {
+  const renderSource = (source: AppRevisionWithSource["source"]): JSX.Element => {
     return (
       <>
         {source.repo_name ? (
@@ -153,14 +155,19 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
     .with("grid", () => (
       <GridList>
         {(filteredApps ?? []).map(
-          ({ app_revision: { proto, updated_at }, source }, i) => {
+          ({ app_revision: { proto, updated_at: updatedAt, deployment_target: deploymentTarget }, source }, i) => {
+
+            let appLink = `/apps/${proto.name}`;
+            if (currentProject?.managed_deployment_targets_enabled) {
+                appLink = `/apps/${proto.name}/activity?target=${deploymentTarget.id}`;
+            }
+            if (currentDeploymentTarget?.is_preview) {
+                appLink = `/preview-environments/apps/${proto.name}/activity?target=${currentDeploymentTarget.id}`;
+            }
+
             return (
               <Link
-                to={
-                  currentDeploymentTarget?.isPreview
-                    ? `/preview-environments/apps/${proto.name}/activity?target=${currentDeploymentTarget.id}`
-                    : `/apps/${proto.name}`
-                }
+                to={appLink}
                 key={i}
               >
                 <Block>
@@ -173,10 +180,18 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
                   {/** TODO: make the status icon dynamic */}
                   {/* <StatusIcon src={healthy} /> */}
                   {renderSource(source)}
+                  {currentProject?.managed_deployment_targets_enabled && !currentDeploymentTarget?.is_preview && (
+                    <Container row>
+                      <SmallIcon opacity="0.4" src={target} />
+                      <Text size={13} color="#ffffff44">
+                        {deploymentTarget.name}
+                      </Text>
+                    </Container>
+                  )}
                   <Container row>
                     <SmallIcon opacity="0.4" src={time} />
                     <Text size={13} color="#ffffff44">
-                      {readableDate(updated_at)}
+                      {readableDate(updatedAt)}
                     </Text>
                   </Container>
                 </Block>
@@ -189,11 +204,11 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
     .with("list", () => (
       <List>
         {(filteredApps ?? []).map(
-          ({ app_revision: { proto, updated_at }, source }, i) => {
+          ({ app_revision: { proto, updated_at: updatedAt }, source }, i) => {
             return (
               <Link
                 to={
-                  currentDeploymentTarget?.preview
+                  currentDeploymentTarget?.is_preview
                     ? `/preview-environments/apps/${proto.name}/activity?target=${currentDeploymentTarget.id}`
                     : `/apps/${proto.name}`
                 }
@@ -215,7 +230,7 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
                     <Spacer inline x={1} />
                     <SmallIcon opacity="0.4" src={time} />
                     <Text size={13} color="#ffffff44">
-                      {readableDate(updated_at)}
+                      {readableDate(updatedAt)}
                     </Text>
                   </Container>
                 </Row>
@@ -267,13 +282,6 @@ const Block = styled.div`
       opacity: 1;
     }
   }
-`;
-
-const StatusIcon = styled.img`
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  height: 18px;
 `;
 
 const List = styled.div`

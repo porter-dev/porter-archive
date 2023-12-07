@@ -17,8 +17,8 @@ import (
 
 // ListAwsResponse describes an inbound cloud provider request
 type ListAwsResponse struct {
-	// AccountID is the cloud provider account id
-	AccountID string `json:"account_id"`
+	// CloudProviderID is the cloud provider id
+	CloudProviderID string `json:"cloud_provider_id"`
 
 	// ProjectID is the project the account is associated with
 	ProjectID uint `json:"project_id"`
@@ -68,8 +68,8 @@ func (c *ListAwsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 
 			res = append(res, ListAwsResponse{
-				AccountID: b.AccountID,
-				ProjectID: uint(link.ProjectID),
+				CloudProviderID: b.AccountID,
+				ProjectID:       uint(link.ProjectID),
 			})
 		}
 		c.WriteResult(w, r, res)
@@ -92,8 +92,8 @@ func (c *ListAwsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		res = append(res, ListAwsResponse{
-			AccountID: b.AccountID,
-			ProjectID: awsInt.ProjectID,
+			CloudProviderID: b.AccountID,
+			ProjectID:       awsInt.ProjectID,
 		})
 	}
 

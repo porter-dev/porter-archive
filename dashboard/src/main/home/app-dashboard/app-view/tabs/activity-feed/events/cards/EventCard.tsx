@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
+import Container from "components/porter/Container";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 
 import { type PorterAppEvent } from "../types";
@@ -51,6 +52,11 @@ const EventCard: React.FC<Props> = ({
           ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.image_tag}`
           : ""
       )
+      .with({ type: "AUTO_ROLLBACK" }, (event) =>
+        event.metadata.image_tag
+          ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.image_tag}`
+          : ""
+      )
       .exhaustive();
   }, [JSON.stringify(event), porterApp]);
 
@@ -69,6 +75,9 @@ const EventCard: React.FC<Props> = ({
         event.metadata.commit_sha ? event.metadata.commit_sha.slice(0, 7) : ""
       )
       .with({ type: "DEPLOY" }, (event) =>
+        event.metadata.image_tag ? event.metadata.image_tag.slice(0, 7) : ""
+      )
+      .with({ type: "AUTO_ROLLBACK" }, (event) =>
         event.metadata.image_tag ? event.metadata.image_tag.slice(0, 7) : ""
       )
       .exhaustive();
@@ -109,6 +118,15 @@ const EventCard: React.FC<Props> = ({
         gitCommitUrl={gitCommitUrl}
         displayCommitSha={displayCommitSha}
       />
+    ))
+    .with({ type: "AUTO_ROLLBACK" }, (ev) => (
+      <StyledEventCard>
+        <Container>
+          Deployment failed, rolling back to{" "}
+          <Code>{ev.metadata.image_tag}</Code>, revision ID:{" "}
+          <Code>{ev.metadata.app_revision_id}</Code>
+        </Container>
+      </StyledEventCard>
     ))
     .exhaustive();
 };

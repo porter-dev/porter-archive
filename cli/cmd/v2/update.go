@@ -215,12 +215,14 @@ func Update(ctx context.Context, inp UpdateInput) error {
 		}
 		status = revision.AppRevision.Status
 
+		// TODO: create an endpoint to query CCP for whether the revision has a status that can end this loop
 		if status == models.AppRevisionStatus_PredeployFailed ||
 			status == models.AppRevisionStatus_InstallFailed ||
 			status == models.AppRevisionStatus_InstallSuccessful ||
 			status == models.AppRevisionStatus_DeploymentSuccessful ||
 			status == models.AppRevisionStatus_DeploymentProgressing ||
-			status == models.AppRevisionStatus_DeploymentFailed {
+			status == models.AppRevisionStatus_RollbackFailed ||
+			status == models.AppRevisionStatus_RollbackSuccessful {
 			break
 		}
 		if status == models.AppRevisionStatus_AwaitingPredeploy {

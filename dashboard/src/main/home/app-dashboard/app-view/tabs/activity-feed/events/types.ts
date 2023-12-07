@@ -194,6 +194,16 @@ export const porterAppEventValidator = z.discriminatedUnion("type", [
     porter_app_id: z.number(),
     metadata: porterAppNotificationEventMetadataValidator,
   }),
+  z.object({
+    id: z.string(),
+    created_at: z.string(),
+    updated_at: z.string(),
+    status: z.string().optional().default(""),
+    type: z.literal("AUTO_ROLLBACK"),
+    type_external_source: z.string().optional().default(""),
+    porter_app_id: z.number(),
+    metadata: porterAppDeployEventMetadataValidator,
+  }),
 ]);
 
 export const getPorterAppEventsValidator = z

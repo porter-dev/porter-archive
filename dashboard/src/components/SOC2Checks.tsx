@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { type RouteComponentProps, withRouter } from "react-router";
 import Spacer from "./porter/Spacer";
@@ -14,6 +14,7 @@ import Container from "components/porter/Container";
 import external_link from "assets/external-link.svg";
 import pending from "assets/pending.svg";
 import Fieldset from "./porter/Fieldset";
+import { Context } from "shared/Context";
 //import DonutChart from "./DonutChart";
 // import DonutChart from "components/porter/DonutChart";
 
@@ -33,6 +34,7 @@ type ItemProps = RouteComponentProps & {
 
 const SOC2Checks: React.FC<Props> = ({ soc2Data, enableAll, setSoc2Data, readOnly }) => {
 
+  // const { soc2Data, setSoc2Data } = useContext(Context);
   const preflightChecks = soc2Data?.preflight_checks || {};
 
   const combinedKeys = new Set([

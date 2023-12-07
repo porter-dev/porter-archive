@@ -69,6 +69,8 @@ export interface GlobalContextType {
   setShouldRefreshClusters: (shouldRefreshClusters: boolean) => void;
   featurePreview: boolean;
   setFeaturePreview: (featurePreview: boolean) => void;
+  soc2Data: any;
+  setSoc2Data: (x: any) => void;
 }
 
 /**
@@ -220,6 +222,39 @@ class ContextProvider extends Component<PropsType, StateType> {
     setFeaturePreview: (featurePreview) => {
       this.setState({ featurePreview });
     },
+    soc2Data: {
+      "preflight_checks": {
+        "EBS Volume": {
+          "message": "EBS volume is enabled for the cluster by default.",
+          "enabled": true,
+          "hideToggle": true,
+          "status": "ENABLED"
+        },
+        "AWS KMS Secret Encryption": {
+          "message": "KMS encryption is enabled for the cluster.",
+          "enabled": false,
+          "disabledTooltip": "Enable KMS encryption for the cluster to enable SOC 2 compliance.",
+          "locked": true,
+          "status": "",
+        },
+        "EKS CloudTrail Forwarding": {
+          "message": "Forward all application and control plane logs to CloudTrail.",
+          "enabled": false,
+          "enabledField": "Retain CloudTrail logs for 365 days",
+          "status": "",
+        },
+        "Enhanced ECR Forwarding": {
+          "message": "ECR Forwarding is not enabled for the cluster. Please enable ECR Forwarding for the cluster to enable SOC 2 compliance.",
+          "link": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/log-forwarding.html",
+          "enabled": false,
+          "info": "",
+          "status": ""
+        },
+      }
+    },
+    setSoc2Data: (soc2Data) => {
+      localStorage.setItem("soc2Data", JSON.stringify(soc2Data));
+    }
   };
 
   render() {

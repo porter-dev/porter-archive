@@ -24,7 +24,6 @@ type Props = {
   provisionerError?: string;
   selectedClusterVersion: JsonValue;
 };
-
 const soc2DataDefault = {
   "preflight_checks": {
     "EBS Volume": {
@@ -52,7 +51,7 @@ const soc2DataDefault = {
       "enabled": false,
       "info": "",
       "status": ""
-    },
+    }
   }
 }
 

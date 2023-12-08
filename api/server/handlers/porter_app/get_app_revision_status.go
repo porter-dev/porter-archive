@@ -35,7 +35,7 @@ func NewGetAppRevisionStatusHandler(
 	}
 }
 
-// GetAppRevisionResponse represents the response from the /apps/{porter_app_name}/revisions/{app_revision_id}/status endpoint
+// GetAppRevisionStatusResponse represents the response from the /apps/{porter_app_name}/revisions/{app_revision_id}/status endpoint
 type GetAppRevisionStatusResponse struct {
 	AppRevisionStatus porter_app.RevisionStatus `json:"app_revision_status"`
 }

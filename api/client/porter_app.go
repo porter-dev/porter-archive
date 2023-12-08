@@ -479,6 +479,26 @@ func (c *Client) GetRevision(
 	return resp, err
 }
 
+// GetRevisionStatus returns the status of an app revision
+func (c *Client) GetRevisionStatus(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string, appRevisionId string,
+) (*porter_app.GetAppRevisionStatusResponse, error) {
+	resp := &porter_app.GetAppRevisionStatusResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/revisions/%s/status",
+			projectID, clusterID, appName, appRevisionId,
+		),
+		nil,
+		resp,
+	)
+
+	return resp, err
+}
+
 // UpdateRevisionStatus updates the status of an app revision
 func (c *Client) UpdateRevisionStatus(
 	ctx context.Context,

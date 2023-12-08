@@ -3,6 +3,7 @@ import {
   Contract,
   LoadBalancerType,
   NodeGroupType,
+  NodePoolType,
 } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import convert from "convert";
@@ -53,6 +54,30 @@ export type EksKind = {
     vpcCidr: string;
     serviceCidr: string;
   };
+};
+
+export type GKEKind = {
+  clusterName: string;
+  clusterVersion: string;
+  region: string;
+  nodePools: NodePools[];
+  user: {
+    id: number;
+  };
+  network: {
+    cidrRange: string;
+    controlPlaneCidr: string;
+    podCidr: string;
+    serviceCidr: string;
+  };
+};
+
+export type NodePools = {
+  instanceType: string;
+  minInstances: number;
+  maxInstances: number;
+  nodePoolType: string;
+  isStateful?: boolean;
 };
 
 const clusterNodesValidator = z
@@ -287,6 +312,15 @@ export const useClusterResourceLimits = ({
                 ng.instanceType.includes("g4dn")) ||
               (ng.nodeGroupType === NodeGroupType.APPLICATION &&
                 ng.instanceType.includes("g4dn"))
+          );
+        })
+        .with({ kindValues: { case: "gkeKind" } }, (c) => {
+          return c.kindValues.value.nodePools.some(
+            (ng) =>
+              (ng.nodePoolType === NodePoolType.CUSTOM &&
+                ng.instanceType.includes("n1")) ||
+              (ng.nodePoolType === NodePoolType.APPLICATION &&
+                ng.instanceType.includes("n1"))
           );
         })
         .otherwise(() => false);

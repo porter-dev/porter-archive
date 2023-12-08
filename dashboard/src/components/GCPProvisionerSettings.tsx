@@ -40,6 +40,8 @@ import PreflightChecks from "./PreflightChecks";
 import VerticalSteps from "./porter/VerticalSteps";
 import { useIntercom } from "lib/hooks/useIntercom";
 import { log } from "console";
+import InputSlider from "./porter/InputSlider";
+import Select from "./porter/Select";
 
 
 const locationOptions = [
@@ -78,6 +80,15 @@ const instanceTypes = [
   // { value: "n1-standard-16", label: "n1-standard-16" }, // Maximum of 1 GPU per node until further notice
 ];
 
+const gpuMachineTypeOptions = [
+  { value: "n1-standard-1", label: "n1-standard-1" }, // start of GPU nodes. 
+  { value: "n1-standard-2", label: "n1-standard-2" },
+  { value: "n1-standard-4", label: "n1-standard-4" },
+  { value: "n1-standard-8", label: "n1-standard-8" },
+  { value: "n1-standard-16", label: "n1-standard-16" }
+];
+
+
 const clusterVersionOptions = [{ value: "1.27", label: "v1.27" }];
 
 type Props = RouteComponentProps & {
@@ -85,6 +96,7 @@ type Props = RouteComponentProps & {
   provisionerError?: string;
   credentialId: string;
   clusterId?: number;
+  gpuModal?: boolean;
 };
 
 const VALID_CIDR_RANGE_PATTERN = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(8|9|1\d|2[0-8])$/;
@@ -116,6 +128,9 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [preflightError, setPreflightError] = useState<string>("")
+  const [gpuMinInstances, setGpuMinInstances] = useState(1);
+  const [gpuMaxInstances, setGpuMaxInstances] = useState(5);
+  const [gpuInstanceType, setGpuInstanceType] = useState("n1-standard-1");
 
   const { showIntercomWithMessage } = useIntercom();
 
@@ -249,6 +264,67 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     return "";
   }
 
+  const createClusterObj = (): Contract => {
+    const nodePools = [
+      new GKENodePool({
+        instanceType: "custom-2-4096",
+        minInstances: 1,
+        maxInstances: 1,
+        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_MONITORING
+      }),
+      new GKENodePool({
+        instanceType: "custom-2-4096",
+        minInstances: 1,
+        maxInstances: 2,
+        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_SYSTEM
+      }),
+      new GKENodePool({
+        instanceType: instanceType,
+        minInstances: 1, // TODO: make these customizable before merging
+        maxInstances: 10, // TODO: make these customizable before merging
+        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION
+      }),
+    ];
+
+    // Conditionally add the last EKSNodeGroup if gpuModal is enabled
+    if (props.gpuModal) {
+      nodePools.push(new GKENodePool({
+        instanceType: gpuInstanceType,
+        minInstances: gpuMinInstances || 0,
+        maxInstances: gpuMaxInstances || 5,
+        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM,
+      }));
+    }
+
+
+    const data = new Contract({
+      cluster: new Cluster({
+        projectId: currentProject.id,
+        kind: EnumKubernetesKind.GKE,
+        cloudProvider: EnumCloudProvider.GCP,
+        cloudProviderCredentialsId: props.credentialId,
+        kindValues: {
+          case: "gkeKind",
+          value: new GKE({
+            clusterName: clusterName,
+            clusterVersion: clusterVersion || clusterVersionOptions[0].value,
+            region: region,
+            network: new GKENetwork({
+              cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
+              controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
+              podCidr: defaultClusterNetworking.podCidr,
+              serviceCidr: defaultClusterNetworking.serviceCidr,
+            }),
+            nodePools
+          }),
+        },
+      }),
+    });
+
+    return data
+  }
+
+
   const createCluster = async () => {
 
     const err = validateInputs();
@@ -274,50 +350,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       console.log(err);
     }
 
-    var data = new Contract({
-      cluster: new Cluster({
-        projectId: currentProject.id,
-        kind: EnumKubernetesKind.GKE,
-        cloudProvider: EnumCloudProvider.GCP,
-        cloudProviderCredentialsId: props.credentialId,
-        kindValues: {
-          case: "gkeKind",
-          value: new GKE({
-            clusterName: clusterName,
-            clusterVersion: clusterVersion || clusterVersionOptions[0].value,
-            region: region,
-            network: new GKENetwork({
-              cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
-              controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
-              podCidr: defaultClusterNetworking.podCidr,
-              serviceCidr: defaultClusterNetworking.serviceCidr,
-            }),
-            nodePools: [
-              new GKENodePool({
-                instanceType: "custom-2-4096",
-                minInstances: 1,
-                maxInstances: 1,
-                nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_MONITORING
-              }),
-              new GKENodePool({
-                instanceType: "custom-2-4096",
-                minInstances: 1,
-                maxInstances: 2,
-                nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_SYSTEM
-              }),
-              new GKENodePool({
-                instanceType: instanceType,
-                minInstances: 1, // TODO: make these customizable before merging
-                maxInstances: 10, // TODO: make these customizable before merging
-                nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION
-              }),
-
-            ],
-          }),
-        },
-      }),
-    });
-
+    const data = createClusterObj();
 
     if (props.clusterId) {
       data["cluster"]["clusterId"] = props.clusterId;
@@ -541,6 +574,46 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       );
     }
 
+    if (props.gpuModal) {
+      return (
+        <>
+          <Select
+            options={gpuMachineTypeOptions}
+            width="350px"
+            disabled={isReadOnly}
+            value={gpuInstanceType}
+            setValue={(x: string) => {
+              setGpuInstanceType(x)
+            }
+            }
+            label="GPU Instance type"
+          />
+          <Spacer y={1} />
+          <InputSlider
+            label="Max Instances: "
+            unit="nodes"
+            min={0}
+            max={5}
+            step={1}
+            width="350px"
+            disabled={isReadOnly || isLoading}
+            value={gpuMaxInstances.toString()}
+            setValue={(x: number) => {
+              setGpuMaxInstances(x)
+            }}
+          />
+          <Button
+            disabled={isDisabled() || isLoading}
+            onClick={createCluster}
+            status={getStatus()}
+          >
+            Provision
+          </Button>
+
+          <Spacer y={.5} />
+        </>
+      )
+    }
     // If settings, update full form
     return (
       <>

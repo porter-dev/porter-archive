@@ -309,7 +309,7 @@ const Apps: React.FC<Props> = ({
           <GridList>
             {(filteredDatabases ?? []).map((app: any, i: number) => {
               return (
-                <Link to={`/databases/${app.name}`} key={i}>
+                <Link to={`databases/dashboard/${app.chart.metadata.name}/${app.name}`} key={i}>
                   <Block>
                     <Container row>
                       <Icon
@@ -337,7 +337,7 @@ const Apps: React.FC<Props> = ({
           <List>
             {(filteredDatabases ?? []).map((app: any, i: number) => {
               return (
-                <Row to={getExpandedChartLinkURL(app)} key={i}>
+                <Row to={`/databases/dashboard/${app.chart.metadata.name}/${app.name}/`} key={i}>
                   <Container row>
                     <MidIcon
                       src={

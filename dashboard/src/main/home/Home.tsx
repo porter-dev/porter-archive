@@ -48,6 +48,8 @@ import DeploymentTargetProvider from "shared/DeploymentTargetContext";
 import PreviewEnvs from "./cluster-dashboard/preview-environments/v2/PreviewEnvs";
 import SetupApp from "./cluster-dashboard/preview-environments/v2/setup-app/SetupApp";
 import ClusterResourcesProvider from "shared/ClusterResourcesContext";
+import DatabaseView from "./database-dashboard/DatabaseView";
+
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -198,7 +200,7 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
@@ -463,6 +465,9 @@ const Home: React.FC<Props> = (props) => {
                 <Route path="/databases">
                   <DatabaseDashboard />
                 </Route>
+                <Route path="/databases/dashboard/:databaseName">
+                  <DatabaseView />
+                </Route>
 
                 <Route path="/addons/new">
                   <NewAddOnFlow />
@@ -486,17 +491,17 @@ const Home: React.FC<Props> = (props) => {
                   overrideInfraTabEnabled({
                     projectID: currentProject?.id,
                   })) && (
-                  <Route
-                    path="/infrastructure"
-                    render={() => {
-                      return (
-                        <DashboardWrapper>
-                          <InfrastructureRouter />
-                        </DashboardWrapper>
-                      );
-                    }}
-                  />
-                )}
+                    <Route
+                      path="/infrastructure"
+                      render={() => {
+                        return (
+                          <DashboardWrapper>
+                            <InfrastructureRouter />
+                          </DashboardWrapper>
+                        );
+                      }}
+                    />
+                  )}
                 <Route
                   path="/dashboard"
                   render={() => {
@@ -553,7 +558,7 @@ const Home: React.FC<Props> = (props) => {
                   render={() => <GuardedProjectSettings />}
                 />
                 {currentProject?.validate_apply_v2 &&
-                currentProject.preview_envs_enabled ? (
+                  currentProject.preview_envs_enabled ? (
                   <>
                     <Route exact path="/preview-environments/configure">
                       <SetupApp />

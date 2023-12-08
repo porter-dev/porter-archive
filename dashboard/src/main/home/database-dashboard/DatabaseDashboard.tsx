@@ -309,25 +309,27 @@ const Apps: React.FC<Props> = ({
           <GridList>
             {(filteredDatabases ?? []).map((app: any, i: number) => {
               return (
-                <Block to={getExpandedChartLinkURL(app)} key={i}>
-                  <Container row>
-                    <Icon
-                      src={
-                        hardcodedIcons[app.chart.metadata.name] ||
-                        app.chart.metadata.icon
-                      }
-                    />
-                    <Text size={14}>{app.name}</Text>
-                    <Spacer inline x={2} />
-                  </Container>
-                  {renderStatusIcon(app.name)}
-                  <Container row>
-                    <SmallIcon opacity="0.4" src={time} />
-                    <Text size={13} color="#ffffff44">
-                      {readableDate(app.info.last_deployed)}
-                    </Text>
-                  </Container>
-                </Block>
+                <Link to={`/databses/dashboard/${app.name}`} key={i}>
+                  <Block>
+                    <Container row>
+                      <Icon
+                        src={
+                          hardcodedIcons[app.chart.metadata.name] ||
+                          app.chart.metadata.icon
+                        }
+                      />
+                      <Text size={14}>{app.name}</Text>
+                      <Spacer inline x={2} />
+                    </Container>
+                    {renderStatusIcon(app.name)}
+                    <Container row>
+                      <SmallIcon opacity="0.4" src={time} />
+                      <Text size={13} color="#ffffff44">
+                        {readableDate(app.info.last_deployed)}
+                      </Text>
+                    </Container>
+                  </Block>
+                </Link>
               );
             })}
           </GridList>

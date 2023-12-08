@@ -217,12 +217,12 @@ func appRevisionStatusFromProto(status string) (models.AppRevisionStatus, error)
 		appRevisionStatus = models.AppRevisionStatus_AwaitingBuild
 	case string(models.AppRevisionStatus_AwaitingPredeploy):
 		appRevisionStatus = models.AppRevisionStatus_AwaitingPredeploy
-	case string(models.AppRevisionStatus_Deployed):
-		appRevisionStatus = models.AppRevisionStatus_Deployed
-	case string(models.AppRevisionStatus_Deploying):
-		appRevisionStatus = models.AppRevisionStatus_Deploying
-	case string(models.AppRevisionStatus_AwaitingDeploy):
-		appRevisionStatus = models.AppRevisionStatus_AwaitingDeploy
+	case string(models.AppRevisionStatus_InstallSuccessful):
+		appRevisionStatus = models.AppRevisionStatus_InstallSuccessful
+	case string(models.AppRevisionStatus_InstallProgressing):
+		appRevisionStatus = models.AppRevisionStatus_InstallProgressing
+	case string(models.AppRevisionStatus_AwaitingInstall):
+		appRevisionStatus = models.AppRevisionStatus_AwaitingInstall
 	case string(models.AppRevisionStatus_BuildCanceled):
 		appRevisionStatus = models.AppRevisionStatus_BuildCanceled
 	case string(models.AppRevisionStatus_BuildFailed):
@@ -233,8 +233,8 @@ func appRevisionStatusFromProto(status string) (models.AppRevisionStatus, error)
 		appRevisionStatus = models.AppRevisionStatus_PredeploySuccessful
 	case string(models.AppRevisionStatus_PredeployProgressing):
 		appRevisionStatus = models.AppRevisionStatus_PredeployProgressing
-	case string(models.AppRevisionStatus_DeployFailed):
-		appRevisionStatus = models.AppRevisionStatus_DeployFailed
+	case string(models.AppRevisionStatus_InstallFailed):
+		appRevisionStatus = models.AppRevisionStatus_InstallFailed
 	case string(models.AppRevisionStatus_Created):
 		appRevisionStatus = models.AppRevisionStatus_Created
 	case string(models.AppRevisionStatus_BuildSuccessful):
@@ -243,7 +243,12 @@ func appRevisionStatusFromProto(status string) (models.AppRevisionStatus, error)
 		appRevisionStatus = models.AppRevisionStatus_ApplyFailed
 	case string(models.AppRevisionStatus_UpdateFailed):
 		appRevisionStatus = models.AppRevisionStatus_UpdateFailed
-
+	case string(models.AppRevisionStatus_DeploymentProgressing):
+		appRevisionStatus = models.AppRevisionStatus_DeploymentProgressing
+	case string(models.AppRevisionStatus_DeploymentSuccessful):
+		appRevisionStatus = models.AppRevisionStatus_DeploymentSuccessful
+	case string(models.AppRevisionStatus_DeploymentFailed):
+		appRevisionStatus = models.AppRevisionStatus_DeploymentFailed
 	default:
 		return appRevisionStatus, errors.New("unknown app revision status")
 	}

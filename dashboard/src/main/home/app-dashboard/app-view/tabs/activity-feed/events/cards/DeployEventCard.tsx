@@ -38,7 +38,6 @@ type Props = {
   clusterId: number;
   gitCommitUrl: string;
   displayCommitSha: string;
-  isMostRecentDeployEvent: boolean;
 };
 
 const DeployEventCard: React.FC<Props> = ({

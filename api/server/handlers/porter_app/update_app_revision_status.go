@@ -78,7 +78,7 @@ func (c *UpdateAppRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	switch request.Status {
 	case models.AppRevisionStatus_BuildFailed:
 		statusProto = porterv1.EnumRevisionStatus_ENUM_REVISION_STATUS_BUILD_FAILED
-	case models.AppRevisionStatus_DeployFailed:
+	case models.AppRevisionStatus_InstallFailed:
 		statusProto = porterv1.EnumRevisionStatus_ENUM_REVISION_STATUS_DEPLOY_FAILED
 	case models.AppRevisionStatus_PredeployFailed:
 		statusProto = porterv1.EnumRevisionStatus_ENUM_REVISION_STATUS_PREDEPLOY_FAILED

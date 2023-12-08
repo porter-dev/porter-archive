@@ -202,8 +202,6 @@ func Update(ctx context.Context, inp UpdateInput) error {
 
 	now := time.Now().UTC()
 
-	var status *porter_app.GetAppRevisionStatusResponse
-
 	for {
 		if time.Since(now) > checkDeployTimeout {
 			return errors.New("timed out waiting for app to deploy")
@@ -218,16 +216,16 @@ func Update(ctx context.Context, inp UpdateInput) error {
 			return errors.New("unable to determine status of app revision")
 		}
 
+		if status.AppRevisionStatus.IsInTerminalStatus {
+			break
+		}
+
 		if status.AppRevisionStatus.PredeployStarted {
 			color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec
 		}
 
 		if status.AppRevisionStatus.InstallStarted {
 			color.New(color.FgGreen).Printf("Waiting for deploy to complete...\n") // nolint:errcheck,gosec
-		}
-
-		if status.AppRevisionStatus.IsInTerminalStatus {
-			break
 		}
 
 		time.Sleep(checkDeployFrequency)
@@ -241,6 +239,15 @@ func Update(ctx context.Context, inp UpdateInput) error {
 		PRNumber:      prNumber,
 		CommitSHA:     commitSHA,
 	})
+
+	status, err := client.GetRevisionStatus(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
+	if err != nil {
+		return fmt.Errorf("error getting app revision status: %w", err)
+	}
+
+	if status == nil {
+		return errors.New("unable to determine status of app revision")
+	}
 
 	if status.AppRevisionStatus.InstallFailed {
 		return errors.New("app failed to deploy")

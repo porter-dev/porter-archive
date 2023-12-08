@@ -304,8 +304,7 @@ export const useClusterResourceLimits = ({
 
   useEffect(() => {
     if (contract) {
-      let containsCustomNodeGroup = false;
-      containsCustomNodeGroup = match(contract)
+      const containsCustomNodeGroup = match(contract)
         .with({ kindValues: { case: "eksKind" } }, (c) => {
           return c.kindValues.value.nodeGroups.some(
             (ng) =>
@@ -315,21 +314,17 @@ export const useClusterResourceLimits = ({
                 ng.instanceType.includes("g4dn"))
           );
         })
+        .with({ kindValues: { case: "gkeKind" } }, (c) => {
+          return c.kindValues.value.nodePools.some(
+            (ng) =>
+              (ng.nodePoolType === NodePoolType.CUSTOM &&
+                ng.instanceType.includes("n1")) ||
+              (ng.nodePoolType === NodePoolType.APPLICATION &&
+                ng.instanceType.includes("n1"))
+          );
+        })
         .otherwise(() => false);
 
-      if (!containsCustomNodeGroup) {
-        containsCustomNodeGroup = match(contract)
-          .with({ kindValues: { case: "gkeKind" } }, (c) => {
-            return c.kindValues.value.nodePools.some(
-              (ng) =>
-                (ng.nodePoolType === NodePoolType.CUSTOM &&
-                  ng.instanceType.includes("n1")) ||
-                (ng.nodePoolType === NodePoolType.APPLICATION &&
-                  ng.instanceType.includes("n1"))
-            );
-          })
-          .otherwise(() => false);
-      }
       const loadBalancerType: ClientLoadBalancerType = match(contract)
         .with({ kindValues: { case: "eksKind" } }, (c) => {
           const loadBalancer = c.kindValues.value.loadBalancer;

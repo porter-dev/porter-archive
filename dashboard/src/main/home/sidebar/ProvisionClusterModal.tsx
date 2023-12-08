@@ -14,16 +14,19 @@ import ClusterRevisionSelector from "../cluster-dashboard/dashboard/ClusterRevis
 import AWSCredentialsList from "./AddCluster/AWSCredentialList";
 import { type InfraCredentials } from "shared/types";
 import { z } from "zod";
+import GCPProvisionerSettings from "components/GCPProvisionerSettings";
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
   gpuModal?: boolean;
+  gcp?: boolean;
 }
 
 
 const ProvisionClusterModal: React.FC<Props> = ({
   closeModal,
   gpuModal,
+  gcp,
 }) => {
   const {
     currentCluster,
@@ -70,13 +73,25 @@ const ProvisionClusterModal: React.FC<Props> = ({
                 gpuModal={true}
               />
 
-              <ProvisionerSettings
-                clusterId={gpuModal ? currentCluster?.id : null}
-                gpuModal={gpuModal}
-                credentialId={currentCluster.cloud_provider_credential_identifier}
-                selectedClusterVersion={selectedClusterVersion}
-                closeModal={closeModal}
-              />
+              {gcp ? (
+                <GCPProvisionerSettings
+                  clusterId={gpuModal ? currentCluster?.id : null}
+                  gpuModal={gpuModal}
+                  credentialId={currentCluster.cloud_provider_credential_identifier}
+                  selectedClusterVersion={selectedClusterVersion}
+                  closeModal={closeModal}
+                />
+              ) : (
+                <ProvisionerSettings
+                  clusterId={gpuModal ? currentCluster?.id : undefined}
+                  gpuModal={gpuModal}
+                  credentialId={currentCluster.cloud_provider_credential_identifier}
+                  selectedClusterVersion={selectedClusterVersion}
+                  closeModal={closeModal}
+                />
+              )}
+
+
             </>
           ) :
             (

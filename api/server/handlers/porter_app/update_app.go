@@ -111,7 +111,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		telemetry.AttributeKV{Key: "is-env-override", Value: request.IsEnvOverride},
 	)
 
-	var addons []*porterv1.Addon
+	var addons, addonOverrides []*porterv1.Addon
 	var overrides *porterv1.PorterApp
 	appProto := &porterv1.PorterApp{}
 
@@ -174,6 +174,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if appFromYaml.PreviewApp != nil {
 			overrides = appFromYaml.PreviewApp.AppProto
+			addonOverrides = appFromYaml.PreviewApp.Addons
 			envVariables = mergeEnvVariables(envVariables, appFromYaml.PreviewApp.EnvVariables)
 		}
 
@@ -248,6 +249,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		CommitSha:     request.CommitSHA,
 		IsEnvOverride: request.IsEnvOverride,
 		Addons:        addons,
+		AddonOverrides: addonOverrides,
 	})
 
 	ccpResp, err := c.Config().ClusterControlPlaneClient.UpdateApp(ctx, updateReq)

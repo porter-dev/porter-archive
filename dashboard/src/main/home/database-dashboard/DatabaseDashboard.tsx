@@ -309,7 +309,7 @@ const Apps: React.FC<Props> = ({
           <GridList>
             {(filteredDatabases ?? []).map((app: any, i: number) => {
               return (
-                <Link to={`/databses/dashboard/${app.name}`} key={i}>
+                <Link to={`/databases/${app.name}`} key={i}>
                   <Block>
                     <Container row>
                       <Icon
@@ -423,7 +423,7 @@ const Icon = styled.img`
               margin-right: 13px;
               `;
 
-const Block = styled(Link)`
+const Block = styled.div`
               height: 110px;
               flex-direction: column;
               display: flex;

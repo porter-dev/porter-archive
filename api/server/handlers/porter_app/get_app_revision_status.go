@@ -28,8 +28,8 @@ func NewGetAppRevisionStatusHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetAppRevisionHandler {
-	return &GetAppRevisionHandler{
+) *GetAppRevisionStatusHandler {
+	return &GetAppRevisionStatusHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
@@ -42,7 +42,7 @@ type GetAppRevisionStatusResponse struct {
 
 // GetAppRevisionStatusHandler returns the status of an app revision
 func (c *GetAppRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-app-revision")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-app-revision-status")
 	defer span.End()
 
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)

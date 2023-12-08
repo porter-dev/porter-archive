@@ -16,11 +16,13 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// EnableExternalProvidersHandler is the handler for the /environment-groups/enable-external-providers endpoint
 type EnableExternalProvidersHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
+// NewEnableExternalProvidersHandler creates an instance of EnableExternalProvidersHandler
 func NewEnableExternalProvidersHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -32,6 +34,7 @@ func NewEnableExternalProvidersHandler(
 	}
 }
 
+// EnableExternalProvidersResponse is the response object for the /environment-groups/enable-external-providers endpoint
 func (c *EnableExternalProvidersHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-enable-external-providers")
 	defer span.End()

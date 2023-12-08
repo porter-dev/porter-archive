@@ -17,11 +17,13 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// DeleteEnvironmentGroupHandler is the handler for the DELETE /environment-group endpoint
 type DeleteEnvironmentGroupHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
+// NewDeleteEnvironmentGroupHandler creates an instance of DeleteEnvironmentGroupHandler
 func NewDeleteEnvironmentGroupHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -33,6 +35,7 @@ func NewDeleteEnvironmentGroupHandler(
 	}
 }
 
+// DeleteEnvironmentGroupRequest is the request object for the DELETE /environment-group endpoint
 type DeleteEnvironmentGroupRequest struct {
 	// Name of the env group to delete
 	Name string `json:"name"`
@@ -40,8 +43,8 @@ type DeleteEnvironmentGroupRequest struct {
 	// Type of the env group to delete
 	Type string `json:"type"`
 }
-type DeleteEnvironmentGroupResponse struct{}
 
+// ServeHTTP deletes an environment group
 func (c *DeleteEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-delete-env-group")
 	defer span.End()

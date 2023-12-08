@@ -2193,7 +2193,7 @@ const createEnvironmentGroups = baseApi<
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
 });
 
-const enabledExternalEnvGroupProviders = baseApi<
+const enableExternalEnvGroupProviders = baseApi<
   {},
   {
     id: number;
@@ -3271,7 +3271,7 @@ export default {
   createEmailVerification,
   createEnvironment,
   createEnvironmentGroups,
-  enabledExternalEnvGroupProviders,
+  enableExternalEnvGroupProviders,
   areExternalEnvGroupProvidersEnabled,
   updateEnvironment,
   deleteEnvironment,

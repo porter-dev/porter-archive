@@ -22,11 +22,14 @@ import {useQuery} from "@tanstack/react-query";
 import {appRevisionValidator} from "../../../lib/revisions/types";
 import Loading from "../../../components/Loading";
 import {useHistory} from "react-router";
+import axios from "axios";
 
 const DopplerIntegrationList: React.FC = (_) => {
   const history = useHistory();
   const [dopplerToggled, setDopplerToggled] = useState<boolean>(false);
   const [dopplerEnabled, setDopplerEnabled] = useState<boolean>(false);
+  const [dopplerEnvGroupCreationError, setDopplerEnvGroupCreationError] = useState<string>("");
+  const [dopplerEnvGroupCreationStatus, setDopplerEnvGroupCreationStatus] = useState<string>("");
   const [showServiceTokenModal, setShowServiceTokenModal] = useState<boolean>(false);
   const [envGroupName, setEnvGroupName] = useState<string>("");
   const [dopplerServiceToken, setDopplerServiceToken] = useState<string>("");
@@ -66,7 +69,7 @@ const DopplerIntegrationList: React.FC = (_) => {
     );
 
     useEffect(() => {
-        if (externalProviderStatus !== undefined) {
+        if (externalProviderStatus) {
             setDopplerToggled(externalProviderStatus.enabled);
             setDopplerEnabled(externalProviderStatus.enabled)
         }
@@ -80,7 +83,7 @@ const DopplerIntegrationList: React.FC = (_) => {
     setDopplerToggled(true);
 
     api
-        .enabledExternalEnvGroupProviders(
+        .enableExternalEnvGroupProviders(
         "<token>",
         {},
         {
@@ -95,6 +98,7 @@ const DopplerIntegrationList: React.FC = (_) => {
     if (!currentCluster || !currentProject) {
         return;
     }
+    setDopplerEnvGroupCreationStatus("loading")
     api
         .createEnvironmentGroups(
             "<token>",
@@ -110,7 +114,21 @@ const DopplerIntegrationList: React.FC = (_) => {
         ).then( () => {
             setShowServiceTokenModal(false);
             history.push("/env-groups")
-        }).catch(() => {});
+        }).catch((err) => {
+            let message =
+                "Env group creation failed: please try again or contact support@porter.run if the error persists.";
+
+            if (axios.isAxiosError(err)) {
+                const parsed = z
+                    .object({ error: z.string() })
+                    .safeParse(err.response?.data);
+                if (parsed.success) {
+                    message = `Env group creation failed: ${parsed.data.error}`;
+                }
+            }
+        setDopplerEnvGroupCreationError(message);
+        setDopplerEnvGroupCreationStatus("error");
+    });
   };
 
   if (!dopplerEnabled) {
@@ -165,10 +183,16 @@ const DopplerIntegrationList: React.FC = (_) => {
         <Spacer y={1} />
         <Button onClick={() => { setShowServiceTokenModal(true) }}>
         + Add Doppler env group
-      </Button>
+        </Button>
 
-      {showServiceTokenModal &&
-        <Modal closeModal={() => { setShowServiceTokenModal(false) }}>
+        {showServiceTokenModal &&
+        <Modal closeModal={() => {
+            setShowServiceTokenModal(false)
+            setDopplerEnvGroupCreationError("")
+            setDopplerEnvGroupCreationStatus("")
+            setEnvGroupName("")
+            setDopplerServiceToken("")
+        }}>
           <Text size={16}>
             Add a new Doppler service token
           </Text>
@@ -198,7 +222,10 @@ const DopplerIntegrationList: React.FC = (_) => {
           <Spacer y={1} />
           <Button 
             onClick={addDopplerEnvGroup}
-            disabled={envGroupName === "" || dopplerServiceToken === ""}
+            disabled={envGroupName === "" || dopplerServiceToken === "" || dopplerEnvGroupCreationStatus === "loading"}
+            status={dopplerEnvGroupCreationStatus}
+            errorText={dopplerEnvGroupCreationError}
+            width="180px"
           >
             Add Doppler env group 
           </Button>
@@ -209,44 +236,3 @@ const DopplerIntegrationList: React.FC = (_) => {
 };
 
 export default DopplerIntegrationList;
-
-const DeleteButton = styled.div`
-  display: flex;
-  visibility: ${(props: { invis?: boolean }) =>
-    props.invis ? "hidden" : "visible"};
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  float: right;
-  height: 30px;
-  :hover {
-    background: #ffffff11;
-    border-radius: 20px;
-    cursor: pointer;
-  }
-
-  > i {
-    font-size: 20px;
-    color: #ffffff44;
-    border-radius: 20px;
-  }
-`;
-
-const Icon = styled.img`
-  height: 20px;
-  margin-right: 10px;
-`;
-
-const DopplerRow = styled.div`
-  position: relative;
-  padding: 15px;
-  border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
-  border: 1px solid #494b4f;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-  cursor: not-allowed;
-  justify-content: space-between;
-`;

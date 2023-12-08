@@ -1758,7 +1758,7 @@ func getClusterRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/environment-groups/enable-external-providers",
+				RelativePath: fmt.Sprintf("%s/environment-groups/enable-external-providers", relPath),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -1787,7 +1787,7 @@ func getClusterRoutes(
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/environment-groups/are-external-providers-enabled",
+				RelativePath: fmt.Sprintf("%s/environment-groups/are-external-providers-enabled", relPath),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

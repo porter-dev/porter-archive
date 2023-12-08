@@ -32,7 +32,9 @@ func NewListEnvironmentGroupsHandler(
 	}
 }
 
+// ListEnvironmentGroupsRequest is the request object for the /environment-groups endpoint
 type ListEnvironmentGroupsRequest struct {
+	// Type of the env group to filter by. If empty, all env groups will be returned.
 	Type string `json:"type"`
 }
 
@@ -63,6 +65,8 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "env-group-type", Value: request.Type})
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {

@@ -57,6 +57,7 @@ const templateBlacklist = [
   "worker",
   "job",
   "umbrella",
+  "postgresql-managed"
 ];
 
 const AddOnDashboard: React.FC<Props> = ({

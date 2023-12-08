@@ -321,15 +321,13 @@ export const useClusterResourceLimits = ({
             return c.kindValues.value.nodePools.some(
               (ng) =>
                 (ng.nodePoolType === NodePoolType.CUSTOM &&
-                  ng.instanceType.includes("n2")) ||
+                  ng.instanceType.includes("n1")) ||
                 (ng.nodePoolType === NodePoolType.APPLICATION &&
-                  ng.instanceType.includes("n2"))
+                  ng.instanceType.includes("n1"))
             );
           })
           .otherwise(() => false);
       }
-      console.log("containsCustomNodeGroup", containsCustomNodeGroup);
-
       const loadBalancerType: ClientLoadBalancerType = match(contract)
         .with({ kindValues: { case: "eksKind" } }, (c) => {
           const loadBalancer = c.kindValues.value.loadBalancer;

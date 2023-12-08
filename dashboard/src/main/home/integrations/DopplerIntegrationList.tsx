@@ -15,138 +15,157 @@ import Modal from "components/porter/Modal";
 import Text from "components/porter/Text";
 import Input from "components/porter/Input";
 import Container from "components/porter/Container";
+import {z} from "zod";
+import {type PopulatedEnvGroup, populatedEnvGroup} from "../app-dashboard/validate-apply/app-settings/types";
+import Link from "../../../components/porter/Link";
+import {useQuery} from "@tanstack/react-query";
+import {appRevisionValidator} from "../../../lib/revisions/types";
+import Loading from "../../../components/Loading";
+import {useHistory} from "react-router";
 
 const DopplerIntegrationList: React.FC = (_) => {
-  const [dopplerEnabled, setDopplerEnabled] = useState<boolean>(false);
+  const history = useHistory();
   const [dopplerToggled, setDopplerToggled] = useState<boolean>(false);
+  const [dopplerEnabled, setDopplerEnabled] = useState<boolean>(false);
   const [showServiceTokenModal, setShowServiceTokenModal] = useState<boolean>(false);
   const [envGroupName, setEnvGroupName] = useState<string>("");
   const [dopplerServiceToken, setDopplerServiceToken] = useState<string>("");
-  const [dopplerEnvGroups, setDopplerEnvGroups] = useState<any[]>([]);
 
   const { currentCluster, currentProject } = useContext(
     Context
   );
 
-  // Check for the "doppler-integration" namespace
-  const checkDopplerEnabled = (): void => {
-    api
-    .getNamespaces(
-      "<token>",
-      {},
-      { id: currentProject.id, cluster_id: currentCluster.id }
-    )
-    .then((res) => {
-      res.data?.forEach((namespace: { name: string }) => {
-        if (namespace.name === "doppler-integration") {
-          setDopplerEnabled(true);
+    const { data: externalProviderStatus, isLoading: isExternalProviderStatusLoading } = useQuery(
+        [
+            "areExternalEnvGroupProvidersEnabled",
+            currentProject?.id,
+            currentCluster?.id,
+        ],
+        async () => {
+
+            const res = await api
+                .areExternalEnvGroupProvidersEnabled(
+                    "<token>",
+                    {},
+                    {id: currentProject?.id, cluster_id: currentCluster?.id}
+                )
+            const externalEnvGroupProviderStatus = await z.object({
+                enabled: z.boolean(),
+                reprovision_required: z.boolean(),
+                k8s_upgrade_required: z.boolean(),
+            }).parseAsync(res.data)
+
+
+            return externalEnvGroupProviderStatus;
+        },
+        {
+            enabled: !!currentProject && !!currentCluster,
+            refetchInterval: 5000,
+            refetchOnWindowFocus: false,
         }
-      });
-    })
-    .catch((_) => {});
-  };
+    );
+
+    useEffect(() => {
+        if (externalProviderStatus !== undefined) {
+            setDopplerToggled(externalProviderStatus.enabled);
+            setDopplerEnabled(externalProviderStatus.enabled)
+        }
+    }, [externalProviderStatus])
 
   const installDoppler = (): void => {
+    if (!currentCluster || !currentProject) {
+      return;
+    }
+
     setDopplerToggled(true);
 
-    // DOPPLER_TODO: call endpoint to install doppler
-    // Will automatically check for doppler-integration namespace in 10 seconds or on refresh
-
-    setTimeout(() => {
-      checkDopplerEnabled();
-    }, 10000);
-  };
-
-  const loadDopplerEnvGroups = (): void => {
-    // DOPPLER_TODO: replace dummy data
-    setDopplerEnvGroups([
-      {
-        name: "my-doppler-dev",
-        serviceToken: "dp.st...abcdef",
-      },
-      {
-        name: "my-doppler-staging",
-        serviceToken: "dp.st...abcdef",
-      },
-      {
-        name: "my-doppler-prod",
-        serviceToken: "dp.st...abcdef",
-      }
-    ]);
+    api
+        .enabledExternalEnvGroupProviders(
+        "<token>",
+        {},
+        {
+          id: currentProject.id,
+          cluster_id: currentCluster.id,
+        }
+    ).catch(() => {setDopplerToggled(false)});
   };
 
   // Install the CRD for a new Doppler secret
   const addDopplerEnvGroup = (): void => {
-    // DOPPLER_TODO: call endpoint to install doppler CRD
-    // Call the following after the API call succeeds:
-    setShowServiceTokenModal(false);
-    loadDopplerEnvGroups();
-  };
-
-  const deleteDopplerEnvGroup = (envGroupName: string): void => {
-    // DOPPLER_TODO: call endpoint to delete doppler CRD
-    // Call the following after the API call succeeds:
-    loadDopplerEnvGroups();
-  };
-
-  useEffect(() => {
-    checkDopplerEnabled();
-  }, []);
-
-  useEffect(() => {
-    if (dopplerEnabled) {
-      loadDopplerEnvGroups();
+    if (!currentCluster || !currentProject) {
+        return;
     }
-  }, [dopplerEnabled]);
+    api
+        .createEnvironmentGroups(
+            "<token>",
+            {
+              name: envGroupName,
+              type: "doppler",
+              auth_token: dopplerServiceToken,
+            },
+            {
+              id: currentProject.id,
+              cluster_id: currentCluster.id,
+            }
+        ).then( () => {
+            setShowServiceTokenModal(false);
+            history.push("/env-groups")
+        }).catch(() => {});
+  };
 
   if (!dopplerEnabled) {
     return (
       <>
-        <Banner icon="none">
-          <ToggleRow
-            isToggled={dopplerToggled}
-            onToggle={installDoppler}
-            disabled={dopplerToggled}
-          >
-            {dopplerToggled ? "Enabling Doppler integration . . ." : "Enable Doppler integration"}
-          </ToggleRow>
-        </Banner>
-        <Spacer y={1} />
-        <Placeholder>
-          You need to enable the Doppler integration to add environment groups from Doppler.
-        </Placeholder>
+        { isExternalProviderStatusLoading ?
+            (<Placeholder>
+                <Loading message={"Checking status of Doppler integration..."}/>
+            </Placeholder>)
+            : externalProviderStatus?.k8s_upgrade_required ?
+            (<Placeholder>
+                Cluster must be upgraded to Kubernetes v1.27 to integrate with Doppler.
+            </Placeholder>)
+            : externalProviderStatus?.reprovision_required ?
+            (<Placeholder>
+                To enable integration with Doppler, <Spacer inline x={.5}/><Link to={`/cluster-dashboard`} hasunderline>re-provision your cluster</Link>.
+            </Placeholder>)
+            :
+            (
+            <>
+                <Banner icon="none">
+                    <ToggleRow
+                        isToggled={dopplerToggled}
+                        onToggle={installDoppler}
+                        disabled={dopplerToggled}
+                    >
+                        {dopplerToggled ? "Enabling Doppler integration . . ." : "Enable Doppler integration"}
+                    </ToggleRow>
+                </Banner>
+                <Spacer y={1} />
+                <Placeholder>
+                    Enable the Doppler integration to add environment groups from Doppler.
+                </Placeholder>
+            </>)
+
+        }
       </>
     );
   }
 
   return (
     <>
-      <Button onClick={() => { setShowServiceTokenModal(true) }}>
+        <Banner icon="none">
+            <ToggleRow
+                isToggled={dopplerToggled}
+                onToggle={installDoppler}
+                disabled={dopplerToggled}
+            >
+                {dopplerToggled ? dopplerEnabled ? "Doppler integration enabled": "Enabling Doppler integration . . ." : "Enable Doppler integration"}
+            </ToggleRow>
+        </Banner>
+        <Spacer y={1} />
+        <Button onClick={() => { setShowServiceTokenModal(true) }}>
         + Add Doppler env group
       </Button>
-      <Spacer y={1} />
-
-      {dopplerEnvGroups.length > 0 ? (
-        <>
-          {dopplerEnvGroups.map((envGroup: any, i: number) => {
-            return (
-              <DopplerRow key={i}>
-                <Container row>
-                  <Icon src={doppler} />
-                  <Text>
-                    {envGroup.name}
-                  </Text>
-                </Container>
-                <DeleteButton onClick={() => deleteDopplerEnvGroup(envGroup.name)}>
-                  <i className="material-icons">delete</i>
-                </DeleteButton>
-              </DopplerRow>
-            );
-          })}
-        </>
-      ) : (
-        <Placeholder>No environment groups have been added from Doppler yet</Placeholder>
-      )}
 
       {showServiceTokenModal &&
         <Modal closeModal={() => { setShowServiceTokenModal(false) }}>

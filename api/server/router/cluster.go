@@ -1751,5 +1751,63 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/environment-groups/enable-external-providers
+	enableExternalProvidersEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/environment-groups/enable-external-providers",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	enableExternalProvidersHandler := environment_groups.NewEnableExternalProvidersHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: enableExternalProvidersEndpoint,
+		Handler:  enableExternalProvidersHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/environment-groups/are-external-providers-enabled
+	areExternalProvidersEnabledEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/environment-groups/are-external-providers-enabled",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	areExternalProvidersEnabledHandler := environment_groups.NewAreExternalProvidersEnabledHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: areExternalProvidersEnabledEndpoint,
+		Handler:  areExternalProvidersEnabledHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

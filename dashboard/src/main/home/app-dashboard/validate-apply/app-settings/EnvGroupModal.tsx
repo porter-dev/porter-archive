@@ -1,7 +1,7 @@
-import { PorterAppFormData } from "lib/porter-apps";
+import { type PorterAppFormData } from "lib/porter-apps";
 import React, {
-  Dispatch,
-  SetStateAction,
+  type Dispatch,
+  type SetStateAction,
   useCallback,
   useEffect,
   useMemo,
@@ -12,50 +12,25 @@ import { UseFieldArrayAppend, useFormContext } from "react-hook-form";
 import sliders from "assets/sliders.svg";
 import doppler from "assets/doppler.png";
 
-import { PopulatedEnvGroup } from "./types";
+import { type PopulatedEnvGroup } from "./types";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Modal from "components/porter/Modal";
 import styled, { css } from "styled-components";
 import Button from "components/porter/Button";
-import { IterableElement } from "type-fest";
+import { type IterableElement } from "type-fest";
 
 type Props = {
   baseEnvGroups: PopulatedEnvGroup[];
   setOpen: Dispatch<SetStateAction<boolean>>;
   append: (inp: IterableElement<PorterAppFormData["app"]["envGroups"]>) => void;
-  setDopplerEnvGroup: Dispatch<SetStateAction<string>>;
 };
 
-const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups, setDopplerEnvGroup }) => {
+const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
   const [
     selectedEnvGroup,
     setSelectedEnvGroup,
   ] = useState<PopulatedEnvGroup | null>(null);
-  const [
-    selectedDopplerEnvGroup,
-    setSelectedDopplerEnvGroup
-  ] = useState<string>("");
-
-  const { setValue } = useFormContext<PorterAppFormData>();
-
-  const [dopplerEnvGroups, setDopplerEnvGroups] = useState<any[]>([]);
-
-  // DOPPLER_TODO: call endpoint to get doppler env groups
-  const loadDopplerEnvGroups = (): void => {
-    setDopplerEnvGroups([
-      {
-        name: "doppler-env-group-1",
-      },
-      {
-        name: "doppler-env-group-2",
-      }
-    ]);
-  };
-
-  useEffect(() => {
-    loadDopplerEnvGroups();
-  }, []);
 
   const { watch } = useFormContext<PorterAppFormData>();
   const envGroups = watch("app.envGroups", []);
@@ -68,21 +43,6 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups, setDop
       });
       setOpen(false);
     }
-
-    // DOPPLER_TODO: rename "dopplerEnvGroup" to whatever the helm value key should be
-    if (selectedDopplerEnvGroup) {
-      console.log("attempted submit");
-      try {
-        const jsonValues = JSON.stringify({
-          dopplerEnvGroup: selectedDopplerEnvGroup
-        });
-        setValue("app.helmOverrides", jsonValues);
-        setDopplerEnvGroup(selectedDopplerEnvGroup);
-        setOpen(false);
-      } catch (e) {
-        console.log("could not attach env group");
-      }
-    }
   }, [selectedEnvGroup]);
 
   const remainingEnvGroupOptions = useMemo(() => {
@@ -92,7 +52,7 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups, setDop
   }, [envGroups, baseEnvGroups]);
 
   return (
-    <Modal closeModal={() => setOpen(false)}>
+    <Modal closeModal={() => { setOpen(false); }}>
       <Text size={16}>Load env group</Text>
       <Spacer height="15px" />
       <ColumnContainer>
@@ -113,28 +73,17 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups, setDop
                           Boolean(selectedEnvGroup) &&
                           selectedEnvGroup?.name === eg.name
                         }
-                        lastItem={i === remainingEnvGroupOptions?.length - 1 && dopplerEnvGroups.length === 0}
+                        lastItem={i === remainingEnvGroupOptions?.length - 1}
                         onClick={() => {
                           setSelectedEnvGroup(eg);
-                          setSelectedDopplerEnvGroup("");
                         }}
                       >
+                        {eg.type === "doppler" ? (
+                          <img src={doppler} />
+                            ) : (
                         <img src={sliders} />
+                        )}
                         {eg.name}
-                      </EnvGroupRow>
-                    ))}
-                    {dopplerEnvGroups.map((x, i) => (
-                      <EnvGroupRow
-                        key={i*100}
-                        lastItem={i === dopplerEnvGroups.length - 1}
-                        isSelected={x.name === selectedDopplerEnvGroup}
-                        onClick={() => { 
-                          setSelectedDopplerEnvGroup(x.name);
-                          setSelectedEnvGroup(null);
-                        }}
-                      >
-                        <img src={doppler} />
-                        {x.name}
                       </EnvGroupRow>
                     ))}
                   </EnvGroupList>
@@ -173,7 +122,7 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups, setDop
           )}
         </ScrollableContainer>
       </ColumnContainer>
-      <Button onClick={onSubmit} disabled={!selectedEnvGroup && !selectedDopplerEnvGroup}>
+      <Button onClick={onSubmit} disabled={!selectedEnvGroup}>
         Load env group
       </Button>
     </Modal>
@@ -181,9 +130,6 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups, setDop
 };
 
 export default EnvGroupModal;
-
-const DopplerEnvGroupList = styled.div`
-`;
 
 const EnvGroupRow = styled.div<{ lastItem?: boolean; isSelected: boolean }>`
   display: flex;

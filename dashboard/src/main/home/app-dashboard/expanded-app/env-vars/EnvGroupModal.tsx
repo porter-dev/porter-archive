@@ -1,4 +1,4 @@
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 import styled, { css } from "styled-components";
 import React, { useContext, useEffect, useState } from "react";
 import Loading from "components/Loading";
@@ -22,11 +22,11 @@ import {
   formattedEnvironmentValue,
 } from "../../../cluster-dashboard/env-groups/EnvGroup";
 import {
-  PartialEnvGroup,
-  PopulatedEnvGroup,
-  NewPopulatedEnvGroup,
+  type PartialEnvGroup,
+  type PopulatedEnvGroup,
+  type NewPopulatedEnvGroup,
 } from "components/porter-form/types";
-import { KeyValueType } from "../../../cluster-dashboard/env-groups/EnvGroupArray";
+import { type KeyValueType } from "../../../cluster-dashboard/env-groups/EnvGroupArray";
 import { set } from "zod";
 
 type Props = RouteComponentProps & {
@@ -70,7 +70,7 @@ const EnvGroupModal: React.FC<Props> = ({
             cluster_id: currentCluster?.id,
           }
         )
-        .then((res) => res.data?.environment_groups);
+        .then((res) => res.data?.environmentGroups);
     } catch (error) {
       setLoading(false)
       setError(true);
@@ -130,7 +130,7 @@ const EnvGroupModal: React.FC<Props> = ({
               key={i}
               isSelected={selectedEnvGroup === envGroup}
               lastItem={i === envGroups?.length - 1}
-              onClick={() => setSelectedEnvGroup(envGroup)}
+              onClick={() => { setSelectedEnvGroup(envGroup); }}
             >
               <img src={sliders} />
               {envGroup?.name}
@@ -154,7 +154,7 @@ const EnvGroupModal: React.FC<Props> = ({
           ([key, value]) =>
             _values.push({
               key,
-              value: value as string,
+              value ,
               hidden: false,
               locked: false,
               deleted: false,

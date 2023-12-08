@@ -49,6 +49,7 @@ const namespaceBlacklist = [
   "kube-system",
   "monitoring",
   "porter-agent-system",
+  "external-secrets",
 ];
 
 const templateBlacklist = [

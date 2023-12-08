@@ -56,7 +56,7 @@ func AppEnvironmentFromProto(ctx context.Context, inp AppEnvironmentFromProtoInp
 	ctx, span := telemetry.NewSpan(ctx, "porter-app-env-from-proto")
 	defer span.End()
 
-	envGroups := []environment_groups.EnvironmentGroup{}
+	var envGroups []environment_groups.EnvironmentGroup
 
 	if inp.ProjectID == 0 {
 		return nil, telemetry.Error(ctx, span, nil, "must provide a project id")

@@ -3,16 +3,18 @@ import styled from "styled-components";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 import sliders from "assets/sliders.svg";
+import doppler from "assets/doppler.png";
 
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { PorterAppFormData } from "lib/porter-apps";
+import { type PorterAppFormData } from "lib/porter-apps";
 import ExpandableEnvGroup from "./ExpandableEnvGroup";
-import { PopulatedEnvGroup } from "./types";
+import { type PopulatedEnvGroup } from "./types";
 
 import { valueExists } from "shared/util";
 import EnvGroupModal from "./EnvGroupModal";
-import { IterableElement } from "type-fest";
+import { type IterableElement } from "type-fest";
+import Icon from "components/porter/Icon";
 
 type Props = {
   baseEnvGroups?: PopulatedEnvGroup[];
@@ -76,7 +78,7 @@ const EnvGroups: React.FC<Props> = ({
 
   const onAdd = (
     inp: IterableElement<PorterAppFormData["app"]["envGroups"]>
-  ) => {
+  ): void => {
     const previouslyDeleted = deletedEnvGroups.findIndex(
       (s) => s.name === inp.name
     );
@@ -88,7 +90,7 @@ const EnvGroups: React.FC<Props> = ({
     append(inp);
   };
 
-  const onRemove = (index: number) => {
+  const onRemove = (index: number): void => {
     const name = populatedEnvWithFallback[index].envGroup.name;
     remove(index);
 
@@ -101,12 +103,12 @@ const EnvGroups: React.FC<Props> = ({
   return (
     <div>
       <TooltipWrapper
-        onMouseOver={() => setHovered(true)}
-        onMouseOut={() => setHovered(false)}
+        onMouseOver={() => { setHovered(true); }}
+        onMouseOut={() => { setHovered(false); }}
       >
         <LoadButton
           disabled={maxEnvGroupsReached}
-          onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
+          onClick={() => { !maxEnvGroupsReached && setShowEnvModal(true); }}
         >
           <img src={sliders} /> Load from Env Group
         </LoadButton>
@@ -125,6 +127,7 @@ const EnvGroups: React.FC<Props> = ({
                 index={index}
                 envGroup={envGroup}
                 remove={onRemove}
+                icon={<Icon src={envGroup.type === "doppler" ? doppler : sliders} />}
               />
             );
           })}

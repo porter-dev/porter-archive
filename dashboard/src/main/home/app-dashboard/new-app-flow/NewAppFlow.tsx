@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import styled from "styled-components";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 import _ from "lodash";
 import yaml from "js-yaml";
 
@@ -16,27 +16,27 @@ import Spacer from "components/porter/Spacer";
 import Input from "components/porter/Input";
 import VerticalSteps from "components/porter/VerticalSteps";
 import Button from "components/porter/Button";
-import SourceSelector, { SourceType } from "./SourceSelector";
+import SourceSelector, { type SourceType } from "./SourceSelector";
 import Container from "components/porter/Container";
 
 import SourceSettings from "./SourceSettings";
 import Services from "./Services";
-import { KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import { type KeyValueType } from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
 import GithubActionModal from "./GithubActionModal";
 import Error from "components/porter/Error";
-import { PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
+import { type PorterJson, PorterYamlSchema, createFinalPorterYaml } from "./schema";
 import { ImageInfo, Service } from "./serviceTypes";
 import GithubConnectModal from "./GithubConnectModal";
 import Link from "components/porter/Link";
-import { BuildMethod, PorterApp } from "../types/porterApp";
-import { NewPopulatedEnvGroup, PartialEnvGroup, PopulatedEnvGroup } from "components/porter-form/types";
+import { type BuildMethod, PorterApp } from "../types/porterApp";
+import { type NewPopulatedEnvGroup, PartialEnvGroup, type PopulatedEnvGroup } from "components/porter-form/types";
 import EnvGroupArrayStacks from "main/home/cluster-dashboard/env-groups/EnvGroupArrayStacks";
 import EnvGroupModal from "../expanded-app/env-vars/EnvGroupModal";
 import ExpandableEnvGroup from "../expanded-app/env-vars/ExpandableEnvGroup";
 
 type Props = RouteComponentProps & {};
 
-interface FormState {
+type FormState = {
   applicationName: string;
   selectedSourceType: SourceType | undefined;
   serviceList: Service[];
@@ -63,12 +63,12 @@ type Detected = {
   detected: boolean;
   message: string;
 };
-interface GithubAppAccessData {
+type GithubAppAccessData = {
   username?: string;
   accounts?: string[];
 }
 
-interface PorterJsonWithPath {
+type PorterJsonWithPath = {
   porterYamlPath: string;
   porterJson: PorterJson;
 }
@@ -134,7 +134,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
         if (!Array.isArray(data)) {
           setHasProviders(false);
-          return;
+          
         }
       })
       .catch((err) => {
@@ -214,7 +214,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
     try {
       parsedYaml = yaml.load(yamlString);
       const parsedData = PorterYamlSchema.parse(parsedYaml);
-      const porterYamlToJson = parsedData as PorterJson;
+      const porterYamlToJson = parsedData ;
       setPorterJsonWithPath({ porterJson: porterYamlToJson, porterYamlPath: filename });
       const newServices = [];
       const existingServices = formState.serviceList.map((s) => s.name);
@@ -338,7 +338,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
         git_repo_id: porterApp.git_repo_id,
         build_context: porterApp.build_context,
         image_repo_uri: porterApp.image_repo_uri,
-        environment_groups: syncedEnvGroups?.map((env: NewPopulatedEnvGroup) => env.name),
+        environmentGroups: syncedEnvGroups?.map((env: NewPopulatedEnvGroup) => env.name),
         user_update: true,
       }
       if (porterApp.image_repo_uri && imageTag) {
@@ -403,7 +403,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       <Div>
         {showConnectModal && !hasProviders && (
           <GithubConnectModal
-            closeModal={() => setConnectModal(false)}
+            closeModal={() => { setConnectModal(false); }}
             hasClickedDoNotConnect={hasClickedDoNotConnect}
             handleDoNotConnect={handleDoNotConnect}
             accessData={accessData}
@@ -536,11 +536,11 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
 
                 <>
                   <TooltipWrapper
-                    onMouseOver={() => setHovered(true)}
-                    onMouseOut={() => setHovered(false)}>
+                    onMouseOver={() => { setHovered(true); }}
+                    onMouseOut={() => { setHovered(false); }}>
                     <LoadButton
                       disabled={maxEnvGroupsReached}
-                      onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
+                      onClick={() => { !maxEnvGroupsReached && setShowEnvModal(true); }}
                     >
                       <img src={sliders} /> Load from Env Group
                     </LoadButton>
@@ -552,7 +552,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
                       setFormState({ ...formState, envVariables: x });
                     }}
                     values={formState.envVariables}
-                    closeModal={() => setShowEnvModal(false)}
+                    closeModal={() => { setShowEnvModal(false); }}
                     syncedEnvGroups={syncedEnvGroups}
                     setSyncedEnvGroups={setSyncedEnvGroups}
                     namespace={"porter-stack-" + porterApp.name}
@@ -628,7 +628,7 @@ const NewAppFlow: React.FC<Props> = ({ ...props }) => {
       </Div>
       {showGHAModal && currentCluster != null && currentProject != null && (
         <GithubActionModal
-          closeModal={() => setShowGHAModal(false)}
+          closeModal={() => { setShowGHAModal(false); }}
           githubAppInstallationID={porterApp.git_repo_id}
           githubRepoOwner={porterApp.repo_name.split("/")[0]}
           githubRepoName={porterApp.repo_name.split("/")[1]}

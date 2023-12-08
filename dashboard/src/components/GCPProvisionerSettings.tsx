@@ -190,11 +190,11 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     if (!region) {
       return "GCP region is required";
     }
-    if (!clusterNetworking.cidrRange) {
-      return "VPC CIDR range is required";
+    if (!clusterNetworking.cidrRange || !clusterNetworking.controlPlaneCidr || !clusterNetworking.podCidr || !clusterNetworking.serviceCidr) {
+      return "CIDR ranges are required";
     }
-    if (!VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.cidrRange)) {
-      return "VPC CIDR range must be in the format of [0-255].[0-255].0.0/16";
+    if (!VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.cidrRange) || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.controlPlaneCidr) || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.podCidr) || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.serviceCidr)) {
+      return "CIDR ranges must be in the format of [0-255].[0-255].0.0/16";
     }
 
     return "";

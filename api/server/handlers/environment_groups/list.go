@@ -32,12 +32,19 @@ func NewListEnvironmentGroupsHandler(
 	}
 }
 
+// ListEnvironmentGroupsRequest is the request object for the /environment-groups endpoint
+type ListEnvironmentGroupsRequest struct {
+	// Type of the env group to filter by. If empty, all env groups will be returned.
+	Type string `json:"type"`
+}
+
 type ListEnvironmentGroupsResponse struct {
 	EnvironmentGroups []EnvironmentGroupListItem `json:"environment_groups,omitempty"`
 }
 
 type EnvironmentGroupListItem struct {
 	Name               string            `json:"name"`
+	Type               string            `json:"type"`
 	LatestVersion      int               `json:"latest_version"`
 	Variables          map[string]string `json:"variables,omitempty"`
 	SecretVariables    map[string]string `json:"secret_variables,omitempty"`
@@ -52,6 +59,15 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
+	request := &ListEnvironmentGroupsRequest{}
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "unable to decode or validate request body")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "env-group-type", Value: request.Type})
+
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "unable to connect to cluster")
@@ -64,6 +80,16 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		err = telemetry.Error(ctx, span, err, "unable to list all environment groups")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
+	}
+
+	if request.Type != "" {
+		var filteredEnvGroupVersions []environmentgroups.EnvironmentGroup
+		for _, envGroup := range allEnvGroupVersions {
+			if envGroup.Type == request.Type {
+				filteredEnvGroupVersions = append(filteredEnvGroupVersions, envGroup)
+			}
+		}
+		allEnvGroupVersions = filteredEnvGroupVersions
 	}
 
 	envGroupSet := make(map[string]struct{})
@@ -126,6 +152,7 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		}
 		envGroups = append(envGroups, EnvironmentGroupListItem{
 			Name:               latestVersion.Name,
+			Type:               latestVersion.Type,
 			LatestVersion:      latestVersion.Version,
 			Variables:          latestVersion.Variables,
 			SecretVariables:    secrets,

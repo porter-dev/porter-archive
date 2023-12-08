@@ -5,14 +5,14 @@
 
 // YAML Field interfaces
 
-import { ChartType, ContextProps } from "../../shared/types";
+import { type ChartType, type ContextProps } from "../../shared/types";
 
-export interface GenericField {
+export type GenericField = {
   id: string;
   injectedProps: unknown;
 }
 
-export interface GenericInputField extends GenericField {
+export type GenericInputField = {
   isReadOnly?: boolean;
   required?: boolean;
   variable: string;
@@ -20,24 +20,24 @@ export interface GenericInputField extends GenericField {
 
   // Read in value from Helm for existing revisions
   value?: [any] | [];
-}
+} & GenericField
 
-export interface HeadingField extends GenericField {
+export type HeadingField = {
   type: "heading";
   label: string;
-}
+} & GenericField
 
-export interface SubtitleField extends GenericField {
+export type SubtitleField = {
   type: "subtitle";
   label: string;
-}
+} & GenericField
 
-export interface ServiceIPListField extends GenericField {
+export type ServiceIPListField = {
   type: "service-ip-list";
   value: any[];
-}
+} & GenericField
 
-export interface ResourceListField extends GenericField {
+export type ResourceListField = {
   type: "resource-list";
   value: any[];
   context?: {
@@ -52,13 +52,13 @@ export interface ResourceListField extends GenericField {
       "resource-button": any;
     };
   };
-}
+} & GenericField
 
-export interface VeleroBackupField extends GenericField {
+export type VeleroBackupField = {
   type: "velero-create-backup";
-}
+} & GenericField
 
-export interface InputField extends GenericInputField {
+export type InputField = {
   type: "input";
   label?: string;
   placeholder?: string;
@@ -69,15 +69,15 @@ export interface InputField extends GenericInputField {
     omitUnitFromValue?: boolean;
     default: string | number;
   };
-}
+} & GenericInputField
 
-export interface CheckboxField extends GenericInputField {
+export type CheckboxField = {
   type: "checkbox";
   label?: string;
   settings?: {};
-}
+} & GenericInputField
 
-export interface KeyValueArrayField extends GenericInputField {
+export type KeyValueArrayField = {
   type: "key-value-array";
   label?: string;
   secretOption?: boolean;
@@ -92,29 +92,29 @@ export interface KeyValueArrayField extends GenericInputField {
   injectedProps: {
     availableSyncEnvGroups: PopulatedEnvGroup[];
   };
-}
+} & GenericInputField
 
-export interface ArrayInputField extends GenericInputField {
+export type ArrayInputField = {
   type: "array-input";
   label?: string;
-}
+} & GenericInputField
 
-export interface DictionaryField extends GenericInputField {
+export type DictionaryField = {
   type: "dictionary";
   label?: string;
-}
+} & GenericInputField
 
-export interface DictionaryArrayField extends GenericInputField {
+export type DictionaryArrayField = {
   type: "dictionary-array";
   label?: string;
-}
+} & GenericInputField
 
-export interface SelectField extends GenericInputField {
+export type SelectField = {
   type: "select";
   settings:
   | {
     type: "normal";
-    options: { value: string; label: string }[];
+    options: Array<{ value: string; label: string }>;
   }
   | {
     type: "provider";
@@ -124,25 +124,25 @@ export interface SelectField extends GenericInputField {
   dropdownLabel?: string;
   dropdownWidth?: number;
   dropdownMaxHeight?: string;
-}
+} & GenericInputField
 
-export interface VariableField extends GenericInputField {
+export type VariableField = {
   type: "variable";
   settings?: {
     default: any;
   };
-}
+} & GenericInputField
 
-export interface CronField extends GenericInputField {
+export type CronField = {
   type: "cron";
   label: string;
   placeholder: string;
   settings: {
     default: string;
   };
-}
+} & GenericInputField
 
-export interface TextAreaField extends GenericInputField {
+export type TextAreaField = {
   type: "text-area";
   label: string;
   placeholder: string;
@@ -154,15 +154,15 @@ export interface TextAreaField extends GenericInputField {
       minCount?: number;
     };
   };
-}
+} & GenericInputField
 
-export interface UrlLinkField extends GenericInputField {
+export type UrlLinkField = {
   type: "url-link";
   label: string;
   injectedProps: {
     chart: ChartType;
   };
-}
+} & GenericInputField
 
 export type FormField =
   | HeadingField
@@ -182,27 +182,27 @@ export type FormField =
   | DictionaryArrayField
   | UrlLinkField;
 
-export interface ShowIfAnd {
+export type ShowIfAnd = {
   and: ShowIf[];
 }
 
-export interface ShowIfOr {
+export type ShowIfOr = {
   or: ShowIf[];
 }
 
-export interface ShowIfNot {
+export type ShowIfNot = {
   not: ShowIf;
 }
 
 export type ShowIf = string | ShowIfAnd | ShowIfOr | ShowIfNot;
 
-export interface Section {
+export type Section = {
   name: string;
   show_if?: ShowIf;
   contents: FormField[];
 }
 
-export interface Tab {
+export type Tab = {
   name: string;
   label: string;
   sections: Section[];
@@ -211,7 +211,7 @@ export interface Tab {
   };
 }
 
-export interface PorterFormData {
+export type PorterFormData = {
   name: string;
   hasSource: boolean;
   includeHiddenFields: boolean;
@@ -219,14 +219,14 @@ export interface PorterFormData {
   tabs: Tab[];
 }
 
-export interface PorterFormValidationInfo {
+export type PorterFormValidationInfo = {
   validated: boolean;
   error?: string;
 }
 
 // internal field state interfaces
-export interface StringInputFieldState { }
-export interface CheckboxFieldState { }
+export type StringInputFieldState = { }
+export type CheckboxFieldState = { }
 
 export type PartialEnvGroup = {
   name: string;
@@ -236,11 +236,10 @@ export type PartialEnvGroup = {
 
 export type PopulatedEnvGroup = {
   name: string;
+  type?: string;
   namespace: string;
   version: number;
-  variables: {
-    [key: string]: string;
-  };
+  variables: Record<string, string>;
   applications: any[];
   meta_version: number;
   stack_id?: string;
@@ -249,28 +248,24 @@ export type PopulatedEnvGroup = {
 export type NewPopulatedEnvGroup = {
   name: string;
   current_version: number;
-  variables: {
-    [key: string]: string;
-  };
-  secret_variables: {
-    [key: string]: string;
-  };
+  variables: Record<string, string>;
+  secret_variables: Record<string, string>;
   linked_applications: any[];
   created_at: number;
 };
-export interface KeyValueArrayFieldState {
-  values: {
+export type KeyValueArrayFieldState = {
+  values: Array<{
     key: string;
     value: string;
-  }[];
+  }>;
   showEnvModal: boolean;
   showEditorModal: boolean;
   synced_env_groups: PopulatedEnvGroup[];
 }
-export interface ArrayInputFieldState { }
-export interface DictionaryFieldState {}
-export interface DictionaryArrayFieldState { }
-export interface SelectFieldState { }
+export type ArrayInputFieldState = { }
+export type DictionaryFieldState = {}
+export type DictionaryArrayFieldState = { }
+export type SelectFieldState = { }
 
 export type PorterFormFieldFieldState =
   | StringInputFieldState
@@ -283,27 +278,21 @@ export type PorterFormFieldFieldState =
 
 // reducer interfaces
 
-export interface PorterFormFieldValidationState {
+export type PorterFormFieldValidationState = {
   validated: boolean;
 }
 
-export interface PorterFormVariableList {
-  [key: string]: any;
-}
+export type PorterFormVariableList = Record<string, any>
 
-export interface PorterFormState {
-  components: {
-    [key: string]: {
+export type PorterFormState = {
+  components: Record<string, {
       state: PorterFormFieldFieldState;
-    };
-  };
-  validation: {
-    [key: string]: PorterFormFieldValidationState;
-  };
+    }>;
+  validation: Record<string, PorterFormFieldValidationState>;
   variables: PorterFormVariableList;
 }
 
-export interface PorterFormInitFieldAction {
+export type PorterFormInitFieldAction = {
   type: "init-field";
   id: string;
   initValue: PorterFormFieldFieldState;
@@ -311,7 +300,7 @@ export interface PorterFormInitFieldAction {
   initVars?: PorterFormVariableList;
 }
 
-export interface PorterFormUpdateFieldAction {
+export type PorterFormUpdateFieldAction = {
   type: "update-field";
   id: string;
   updateFunc: (
@@ -319,7 +308,7 @@ export interface PorterFormUpdateFieldAction {
   ) => Partial<PorterFormFieldFieldState>;
 }
 
-export interface PorterFormUpdateValidationAction {
+export type PorterFormUpdateValidationAction = {
   type: "update-validation";
   id: string;
   updateFunc: (
@@ -327,7 +316,7 @@ export interface PorterFormUpdateValidationAction {
   ) => PorterFormFieldValidationState;
 }
 
-export interface PorterFormMutateVariablesAction {
+export type PorterFormMutateVariablesAction = {
   type: "mutate-vars";
   mutateFunc: (prev: PorterFormVariableList) => PorterFormVariableList;
 }

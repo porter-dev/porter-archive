@@ -25,4 +25,6 @@ type AppInstance struct {
 	PorterAppID uint `json:"porter_app_id"`
 	// DeploymentTargetID is the ID of the deployment target that the event relates to
 	DeploymentTargetID uuid.UUID `json:"deployment_target_id" gorm:"type:uuid"`
+	// IsRequiredApp indicates whether this instance of an app was listed as a requirement of another app in the deployment target
+	IsRequiredApp bool `json:"is_required_app" gorm:"default:false"`
 }

@@ -374,9 +374,9 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
             region: region,
             network: new GKENetwork({
               cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
-              controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
-              podCidr: defaultClusterNetworking.podCidr,
-              serviceCidr: defaultClusterNetworking.serviceCidr,
+              controlPlaneCidr: clusterNetworking.controlPlaneCidr || defaultClusterNetworking.controlPlaneCidr,
+              podCidr: clusterNetworking.podCidr || defaultClusterNetworking.podCidr,
+              serviceCidr: clusterNetworking.serviceCidr || defaultClusterNetworking.serviceCidr,
             }),
             nodePools
           }),

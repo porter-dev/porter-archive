@@ -47,8 +47,6 @@ const porterAppPreDeployEventMetadataValidator = z.object({
 
 const serviceNoticationValidator = z.object({
   id: z.string(),
-  app_id: z.string(),
-  app_name: z.string(),
   app_revision_id: z.string(),
   error: z.object({
     code: z.number(),
@@ -85,8 +83,6 @@ const serviceNoticationValidator = z.object({
 });
 const revisionNotificationValidator = z.object({
   id: z.string(),
-  app_id: z.string(),
-  app_name: z.string(),
   app_revision_id: z.string(),
   error: z.object({
     code: z.number(),
@@ -100,8 +96,6 @@ const revisionNotificationValidator = z.object({
 });
 const applicationNotificationValidator = z.object({
   id: z.string(),
-  app_id: z.string(),
-  app_name: z.string(),
   app_revision_id: z.string(),
   error: z.object({
     code: z.number(),

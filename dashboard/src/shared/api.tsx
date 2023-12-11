@@ -1117,6 +1117,19 @@ const getLatestRevision = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/latest`;
 });
 
+const appNotifications = baseApi<
+  {
+    deployment_target_id: string;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+    porter_app_name: string;
+  }
+>("GET", ({ project_id, cluster_id, porter_app_name }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/${porter_app_name}/notifications`;
+});
+
 const getRevision = baseApi<
   {},
   {
@@ -3396,6 +3409,7 @@ export default {
   revertApp,
   getAttachedEnvGroups,
   getLatestRevision,
+  appNotifications,
   getRevision,
   listAppRevisions,
   getLatestAppRevisions,

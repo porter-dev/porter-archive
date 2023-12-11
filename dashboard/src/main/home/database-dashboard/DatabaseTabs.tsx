@@ -47,12 +47,13 @@ type ValidTab = (typeof validTabs)[number];
 type DbTabProps = {
   tabParam?: string;
   dbData: any;
+  goBack: string;
 };
 
 // todo(ianedwards): refactor button to use more predictable state
 export type ButtonStatus = "" | "loading" | JSX.Element | "success";
 
-const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, dbData }) => {
+const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, dbData, goBack }) => {
   const history = useHistory();
   const queryClient = useQueryClient();
 
@@ -92,7 +93,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, dbData }) => {
         .with("environment", () => (
           <EnvTab envData={dbData?.env} />
         ))
-        .with("settings", () => <Settings />)
+        .with("settings", () => <Settings dbData={dbData} goBack={goBack} />)
         .with("metrics", () => <MetricsTab />)
 
         .otherwise(() => null)}

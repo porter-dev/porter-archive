@@ -8,6 +8,7 @@ import Spacer from "components/porter/Spacer";
 import DynamicLink from "components/DynamicLink";
 import Text from "components/porter/Text";
 import Icon from "components/porter/Icon";
+import Container from "components/porter/Container";
 
 type Props = {
     envData: any;
@@ -23,9 +24,8 @@ export type KeyValueType = {
 
 const EnvTab: React.FC<Props> = ({ envData
 }) => {
-    const [keyValues, setKeyValues] = useState<KeyValueType[]>([]);
 
-    useEffect(() => {
+    const setKeys = (): KeyValueType[] => {
         // Do something
         // Adding normal variables
         const keys: KeyValueType[] = [];
@@ -40,31 +40,33 @@ const EnvTab: React.FC<Props> = ({ envData
             });
         }
 
-        setKeyValues(keys)
-    }, []);
+        return (keys)
+
+    }
 
     return (
         <StyledTemplateComponent>
 
 
-            <TabWrapper>
-                <InnerWrapper>
-                    <Icon src={key} />
-                    <Text size={16}> {envData?.name}</Text>
-                    <EnvGroupArray
-                        values={keyValues}
-                        setValues={(x: any) => {
-                            setKeyValues(x);
-                        }}
-                        fileUpload={true}
-                        secretOption={true}
-                        disabled={
-                            true
-                        }
-                    />
+            <Text size={16}> Env Group </Text>
+            <Spacer y={.5} />
+            <Text size={14} color="helper"> {envData?.name}</Text>
+            <EnvGroupArray
+                values={setKeys()}
+                setValues={(x: any) => {
+                    setKeyValues(x);
+                }}
+                fileUpload={true}
+                secretOption={true}
+                disabled={
+                    true
+                }
+            />
+            <Spacer y={1} />
 
-                </InnerWrapper>
-            </TabWrapper>
+            {envData?.linked_applications &&
+                <><Text size={16}> Linked Applications</Text><Spacer y={.5} /></>
+            }
             {envData?.linked_applications.map((appName: string) => {
                 return (
                     <StyledCard>
@@ -123,7 +125,7 @@ border: 1px solid #494b4f;
 const TabWrapper = styled.div`
 height: 100%;
 width: 100%;
-padding-bottom: 65px;
+padding-bottom: 10px;
 overflow: hidden;
 `;
 

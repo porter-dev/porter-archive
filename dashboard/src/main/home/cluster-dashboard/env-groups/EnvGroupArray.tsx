@@ -348,7 +348,7 @@ const Label = styled.div`
 
 const StyledInputArray = styled.div`
   margin-bottom: 15px;
-  margin-top: 22px;
+  margin-top: 10px;
 `;
 
 export const MultiLineInputer = styled.textarea<InputProps>`

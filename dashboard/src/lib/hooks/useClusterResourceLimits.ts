@@ -106,13 +106,27 @@ const clusterNodesValidator = z
       return defaultResources;
     }
     const instanceType = data.labels["beta.kubernetes.io/instance-type"];
-    const res = z
-      .tuple([z.string(), z.string()])
-      .safeParse(instanceType?.split("."));
-    if (!res.success) {
+
+    let parsedType;
+    if (instanceType && instanceType.includes(".")) {
+      parsedType = z
+        .tuple([z.string(), z.string()])
+        .safeParse(instanceType.split("."));
+    } else if (instanceType && instanceType.includes("-")) {
+      const [instanceClass, ...instanceSizeParts] = instanceType.split("-");
+      const instanceSize = instanceSizeParts.join("-");
+      parsedType = z
+        .tuple([z.string(), z.string()])
+        .safeParse([instanceClass, instanceSize]);
+    } else {
+      return defaultResources; // Return defaults if instanceType format is not recognized
+    }
+
+    if (!parsedType.success) {
       return defaultResources;
     }
-    const [instanceClass, instanceSize] = res.data;
+
+    const [instanceClass, instanceSize] = parsedType.data;
     if (AWS_INSTANCE_LIMITS[instanceClass]?.[instanceSize]) {
       const { vCPU, RAM } = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
       return {

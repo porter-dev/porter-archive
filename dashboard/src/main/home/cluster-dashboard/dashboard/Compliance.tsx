@@ -1,7 +1,7 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
 import type { JsonValue } from "@bufbuild/protobuf";
 import { Cluster, Contract, EKS, EKSLogging } from "@porter-dev/api-contracts";
 import axios from "axios";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
@@ -13,11 +13,10 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import ToggleRow from "components/porter/ToggleRow";
 
-import api from "shared/api";
-import { Context } from "shared/Context";
 import sparkle from "assets/sparkle.svg";
 import SOC2Checks from "components/SOC2Checks";
-import Checkbox from "components/porter/Checkbox";
+import { Context } from "shared/Context";
+import api from "shared/api";
 
 type Props = {
   credentialId: string;
@@ -40,28 +39,29 @@ type Props = {
 //}
 const soc2DataDefault = {
   "soc2_checks": {
-    "EBS Volume": {
-      "message": "EBS volume is enabled for the cluster by default.",
+    "Public SSH Access": {
+      "message": "Porter-provisioned instances do not allow remote SSH access. Users are not allowed to invoke commands directly on the host, and all commands are invoked via the EKS Control Plane.",
       "enabled": true,
       "hideToggle": true,
       "status": "ENABLED"
     },
-    "AWS KMS Secret Encryption": {
-      "message": "KMS encryption is enabled for the cluster.",
+    "Cluster Secret Encryption": {
+      "message": "Cluster secrets can be encrypted using an AWS KMS Key. Secrets will be encrypted at rest, and encryption cannot be disabled for secrets.",
       "enabled": false,
       "disabledTooltip": "Enable KMS encryption for the cluster to enable SOC 2 compliance.",
+      "link": "https://aws.amazon.com/about-aws/whats-new/2020/03/amazon-eks-adds-envelope-encryption-for-secrets-with-aws-kms/",
       "locked": true,
       "status": "",
     },
-    "EKS CloudTrail Forwarding": {
-      "message": "Forward all application and control plane logs to CloudTrail.",
+    "Control Plane Log Retention": {
+      "message": "EKS Control Plane logs are by default available for a minimal amount of time, typically 1 hour or less. EKS CloudTrail Forwarding automatically sends control plane logs to CloudTrail for longer retention and later inspection.",
       "enabled": false,
       "enabledField": "Retain CloudTrail logs for 365 days",
       "status": "",
     },
-    "Enhanced ECR Forwarding": {
-      "message": "ECR Forwarding is not enabled for the cluster. Please enable ECR Forwarding for the cluster to enable SOC 2 compliance.",
-      "link": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/log-forwarding.html",
+    "Enhanced Image Vulnerability Scanning": {
+      "message": "AWS ECR scans for CVEs from the open-source Clair database on push image push. Enhanced scanning provides continuous, automated scans against images as new vulnerabilities appear.",
+      "link": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
       "enabled": false,
       "info": "",
       "status": ""
@@ -146,9 +146,9 @@ const Compliance: React.FC<Props> = (props) => {
 
   const createContract = (base64Contract: string): Contract => {
     //
-    const cloudTrailEnabled = soc2Data.soc2_checks["EKS CloudTrail Forwarding"].enabled
-    const kmsEnabled = soc2Data.soc2_checks["AWS KMS Secret Encryption"].enabled
-    const ecrScanningEnabled = soc2Data.soc2_checks["Enhanced ECR Forwarding"].enabled
+    const cloudTrailEnabled = soc2Data.soc2_checks["Control Plane Log Retention"].enabled
+    const kmsEnabled = soc2Data.soc2_checks["Cluster Secret Encryption"].enabled
+    const ecrScanningEnabled = soc2Data.soc2_checks["Control Plane Log Retention"].enabled
 
     const contractData = JSON.parse(atob(base64Contract));
     const latestCluster: Cluster = Cluster.fromJson(contractData.cluster, {
@@ -289,18 +289,18 @@ const Compliance: React.FC<Props> = (props) => {
           ...prevSoc2Data,
           soc2_checks: {
             ...prevSoc2Data.soc2_checks,
-            "EKS CloudTrail Forwarding": {
-              ...prevSoc2Data.soc2_checks["EKS CloudTrail Forwarding"],
+            "Control Plane Log Retention": {
+              ...prevSoc2Data.soc2_checks["Control Plane Log Retention"],
               enabled: cloudTrailEnabled,
               status: determineStatus(cloudTrailEnabled)
             },
-            "AWS KMS Secret Encryption": {
-              ...prevSoc2Data.soc2_checks["AWS KMS Secret Encryption"],
+            "Cluster Secret Encryption": {
+              ...prevSoc2Data.soc2_checks["Cluster Secret Encryption"],
               enabled: eksValues.enableKmsEncryption,
               status: determineStatus(eksValues.enableKmsEncryption)
             },
-            "Enhanced ECR Forwarding": {
-              ...prevSoc2Data.soc2_checks["Enhanced ECR Forwarding"],
+            "Enhanced Image Vulnerability Scanning": {
+              ...prevSoc2Data.soc2_checks["Enhanced Image Vulnerability Scanning"],
               enabled: eksValues.enableEcrScanning,
               status: determineStatus(eksValues.enableEcrScanning)
             }
@@ -377,12 +377,6 @@ const Compliance: React.FC<Props> = (props) => {
 export default Compliance;
 
 const StyledCompliance = styled.div``;
-
-const GutterContainer = styled.div`
-  border-left: 1px solid #313237;
-  margin-left: 5px;
-  padding-left: 15px;
-`;
 
 const NewBadge = styled.div`
   font-size: 13px;

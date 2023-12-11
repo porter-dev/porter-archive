@@ -224,28 +224,29 @@ class ContextProvider extends Component<PropsType, StateType> {
     },
     soc2Data: {
       "preflight_checks": {
-        "EBS Volume": {
-          "message": "EBS volume is enabled for the cluster by default.",
+        "Public SSH Access": {
+          "message": "Porter-provisioned instances do not allow remote SSH access. Users are not allowed to invoke commands directly on the host, and all commands are invoked via the EKS Control Plane.",
           "enabled": true,
           "hideToggle": true,
           "status": "ENABLED"
         },
-        "AWS KMS Secret Encryption": {
-          "message": "KMS encryption is enabled for the cluster.",
+        "Cluster Secret Encryption": {
+          "message": "Cluster secrets can be encrypted using an AWS KMS Key. Secrets will be encrypted at rest, and encryption cannot be disabled for secrets.",
           "enabled": false,
           "disabledTooltip": "Enable KMS encryption for the cluster to enable SOC 2 compliance.",
+          "link": "https://aws.amazon.com/about-aws/whats-new/2020/03/amazon-eks-adds-envelope-encryption-for-secrets-with-aws-kms/",
           "locked": true,
           "status": "",
         },
-        "EKS CloudTrail Forwarding": {
-          "message": "Forward all application and control plane logs to CloudTrail.",
+        "Control Plane Log Retention": {
+          "message": "EKS Control Plane logs are by default available for a minimal amount of time, typically 1 hour or less. EKS CloudTrail Forwarding automatically sends control plane logs to CloudTrail for longer retention and later inspection.",
           "enabled": false,
           "enabledField": "Retain CloudTrail logs for 365 days",
           "status": "",
         },
-        "Enhanced ECR Forwarding": {
-          "message": "ECR Forwarding is not enabled for the cluster. Please enable ECR Forwarding for the cluster to enable SOC 2 compliance.",
-          "link": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/log-forwarding.html",
+        "Enhanced Image Vulnerability Scanning": {
+          "message": "AWS ECR scans for CVEs from the open-source Clair database on push image push. Enhanced scanning provides continuous, automated scans against images as new vulnerabilities appear.",
+          "link": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
           "enabled": false,
           "info": "",
           "status": ""
@@ -262,4 +263,4 @@ class ContextProvider extends Component<PropsType, StateType> {
   }
 }
 
-export { Context, ContextProvider, ContextConsumer };
+export { Context, ContextConsumer, ContextProvider };

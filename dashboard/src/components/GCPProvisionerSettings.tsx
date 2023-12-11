@@ -94,6 +94,8 @@ const gpuMachineTypeOptions = [
   { value: "n1-standard-8", label: "n1-standard-8" },
   { value: "n1-standard-16", label: "n1-standard-16" },
   { value: "n1-standard-32", label: "n1-standard-32" },
+  { value: "n1-highmem-2", label: "n1-highmem-2" },
+  { value: "n1-highmem-4", label: "n1-highmem-4" },
   { value: "n1-highmem-8", label: "n1-highmem-8" },
   { value: "n1-highmem-16", label: "n1-highmem-16" },
   { value: "n1-highmem-32", label: "n1-highmem-32" },

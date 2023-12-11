@@ -3,6 +3,7 @@ import digitalOcean from "../assets/do.png";
 import gcp from "../assets/gcp.png";
 import github from "../assets/github.png";
 import azure from "assets/azure.png";
+import doppler from "assets/doppler.png";
 
 export const infraNames: any = {
   ecr: "Elastic Container Registry (ECR)",
@@ -14,16 +15,21 @@ export const infraNames: any = {
 };
 
 export const integrationList: any = {
+  doppler: {
+    icon: doppler,
+    label: "Doppler",
+    buttonText: "Add a service token",
+  },
   kubernetes: {
     icon:
       "https://upload.wikimedia.org/wikipedia/labs/thumb/b/ba/Kubernetes-icon-color.svg/2110px-Kubernetes-icon-color.svg.png",
     label: "Kubernetes",
-    buttonText: "Add a Cluster",
+    buttonText: "Add a cluster",
   },
   repo: {
     icon: "https://git-scm.com/images/logos/downloads/Git-Icon-1788C.png",
     label: "Git Repository",
-    buttonText: "Link a Github Account",
+    buttonText: "Link a GitHub account",
   },
   slack: {
     icon:

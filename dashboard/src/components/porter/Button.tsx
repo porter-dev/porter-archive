@@ -59,6 +59,13 @@ const Button: React.FC<Props> = ({
             {loadingText || "Updating . . ."}
           </StatusWrapper>
         );
+      case "error":
+        return (
+          <StatusWrapper success={false}>
+            <i className="material-icons">error_outline</i>
+            {errorText}
+          </StatusWrapper>
+        );
       case "":
         return (
           helperText && (

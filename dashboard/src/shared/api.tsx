@@ -2072,7 +2072,9 @@ const upgradeChartValues = baseApi<
 });
 
 const getAllEnvGroups = baseApi<
-  {},
+  {
+    type?: string;
+  },
   {
     id: number;
     cluster_id: number;
@@ -2178,8 +2180,10 @@ const createEnvGroup = baseApi<
 const createEnvironmentGroups = baseApi<
   {
     name: string;
-    variables: Record<string, string>;
+    variables?: Record<string, string>;
     secret_variables?: Record<string, string>;
+    type?: string;
+    auth_token?: string;
   },
   {
     id: number;
@@ -2187,6 +2191,26 @@ const createEnvironmentGroups = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups`;
+});
+
+const enableExternalEnvGroupProviders = baseApi<
+  {},
+  {
+    id: number;
+    cluster_id: number;
+  }
+>("POST", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups/enable-external-providers`;
+});
+
+const areExternalEnvGroupProvidersEnabled = baseApi<
+  {},
+  {
+    id: number;
+    cluster_id: number;
+  }
+>("GET", (pathParams) => {
+  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id}/environment-groups/are-external-providers-enabled`;
 });
 
 const cloneEnvGroup = baseApi<
@@ -2301,6 +2325,7 @@ const deleteEnvGroup = baseApi<
 const deleteNewEnvGroup = baseApi<
   {
     name: string;
+    type?: string;
   },
   {
     id: number;
@@ -3246,6 +3271,8 @@ export default {
   createEmailVerification,
   createEnvironment,
   createEnvironmentGroups,
+  enableExternalEnvGroupProviders,
+  areExternalEnvGroupProvidersEnabled,
   updateEnvironment,
   deleteEnvironment,
   createPreviewEnvironmentDeployment,

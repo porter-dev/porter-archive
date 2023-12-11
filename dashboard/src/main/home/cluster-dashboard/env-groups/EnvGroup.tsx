@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import styled from "styled-components";
 
-import key from "assets/key.svg";
+import sliders from "assets/sliders.svg";
+import doppler from "assets/doppler.png";
 
 import { Context } from "shared/Context";
 import { readableDate } from "shared/string_utils";
@@ -10,6 +11,7 @@ import _ from "lodash";
 
 export type EnvGroupData = {
   name: string;
+  type?: string;
   namespace: string;
   created_at?: string;
   version: number;
@@ -29,18 +31,18 @@ export default class EnvGroup extends Component<PropsType, StateType> {
   };
 
   render() {
-    let { envGroup } = this.props;
-    let name = envGroup?.name;
-    let timestamp = envGroup?.created_at;
-    let namespace = envGroup?.namespace;
-    let version = this.context?.currentProject.simplified_view_enabled ? envGroup?.latest_version : envGroup?.version ;
+    const { envGroup } = this.props;
+    const name = envGroup?.name;
+    const timestamp = envGroup?.created_at;
+    const namespace = envGroup?.namespace;
+    const version = this.context?.currentProject.simplified_view_enabled ? envGroup?.latest_version : envGroup?.version ;
 
     return (
       <Link to={`/env-groups/${name}${window.location.search}`} target="_self">
         <StyledEnvGroup>
           <Title>
             <IconWrapper>
-              <Icon src={key} />
+              <Icon src={envGroup.type === "doppler" ? doppler : sliders} />
             </IconWrapper>
             {name}
           </Title>

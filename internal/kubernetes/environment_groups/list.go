@@ -18,6 +18,7 @@ const (
 	LabelKey_LinkedEnvironmentGroup  = "porter.run/linked-environment-group"
 	LabelKey_EnvironmentGroupVersion = "porter.run/environment-group-version"
 	LabelKey_EnvironmentGroupName    = "porter.run/environment-group-name"
+	LabelKey_EnvironmentGroupType    = "porter.run/environment-group-type"
 	// LabelKey_PorterManaged is the label key signifying the resource is managed by porter
 	LabelKey_PorterManaged = "porter.run/managed"
 
@@ -33,6 +34,8 @@ const (
 
 // EnvironmentGroup represents a ConfigMap in the porter-env-group namespace
 type EnvironmentGroup struct {
+	// Type is the type of environment group
+	Type string `json:"type"`
 	// Name is the environment group name which can be found in the labels (LabelKey_EnvironmentGroupName) of the ConfigMap. This is NOT the configmap name
 	Name string `json:"name"`
 	// Version is the environment group version which can be found in the labels (LabelKey_EnvironmentGroupVersion) of the ConfigMap. This is NOT included in the configmap name
@@ -153,6 +156,7 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			envGroupSet[cm.Name] = EnvironmentGroup{}
 		}
 		envGroupSet[cm.Name] = EnvironmentGroup{
+			Type:                  cm.Labels[LabelKey_EnvironmentGroupType],
 			Name:                  name,
 			Version:               version,
 			Variables:             cm.Data,
@@ -192,6 +196,7 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			envGroupSet[secret.Name] = EnvironmentGroup{}
 		}
 		envGroupSet[secret.Name] = EnvironmentGroup{
+			Type:                  secret.Labels[LabelKey_EnvironmentGroupType],
 			Name:                  name,
 			Version:               version,
 			SecretVariables:       stringSecret,

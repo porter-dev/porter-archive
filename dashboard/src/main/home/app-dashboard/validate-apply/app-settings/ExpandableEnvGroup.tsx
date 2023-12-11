@@ -1,32 +1,36 @@
 import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { PopulatedEnvGroup } from "./types";
+import { type PopulatedEnvGroup } from "./types";
 import Spacer from "components/porter/Spacer";
+import Icon from "components/porter/Icon";
 
 type Props = {
   index: number;
   remove: (index: number) => void;
   envGroup: PopulatedEnvGroup;
+  icon: JSX.Element;
 };
 
-const ExpandableEnvGroup: React.FC<Props> = ({ index, remove, envGroup }) => {
+const ExpandableEnvGroup: React.FC<Props> = ({ index, remove, envGroup, icon }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <StyledCard>
       <Flex>
+        {icon}
+        <Spacer inline x={1} />
         <ContentContainer>
           <EventInformation>
             <EventName>{envGroup.name}</EventName>
           </EventInformation>
         </ContentContainer>
         <ActionContainer>
-          <ActionButton type="button" onClick={() => remove(index)}>
+          <ActionButton type="button" onClick={() => { remove(index); }}>
             <span className="material-icons">delete</span>
           </ActionButton>
           <ActionButton
             type="button"
-            onClick={() => setIsExpanded((prev) => !prev)}
+            onClick={() => { setIsExpanded((prev) => !prev); }}
           >
             <i className="material-icons">
               {isExpanded ? "arrow_drop_up" : "arrow_drop_down"}
@@ -163,13 +167,6 @@ const ActionButton = styled.button`
   > span {
     font-size: 20px;
   }
-`;
-
-const NoVariablesTextWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff99;
 `;
 
 const InputWrapper = styled.div`

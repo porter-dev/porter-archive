@@ -29,7 +29,7 @@ import alert from "assets/alert-warning.svg";
 
 
 import MetricsTab from "./tabs/MetricsTab";
-import Environment from "./tabs/DatabaseEnvTab";
+import EnvTab from "./tabs/DatabaseEnvTab";
 import Settings from "./tabs/SettingsTab";
 
 // commented out tabs are not yet implemented
@@ -90,7 +90,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, dbData }) => {
         }} /><Spacer y={1} />
       {match(currentTab)
         .with("environment", () => (
-          <Environment envData={dbData?.env} />
+          <EnvTab envData={dbData?.env} />
         ))
         .with("settings", () => <Settings />)
         .with("metrics", () => <MetricsTab />)

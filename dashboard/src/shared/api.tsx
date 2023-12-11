@@ -1194,6 +1194,19 @@ const listDeploymentTargets = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/deployment-targets`;
 });
 
+const createDeploymentTarget = baseApi<
+    {
+        name: string;
+        preview: boolean;
+    },
+    {
+        project_id: number;
+        cluster_id: number;
+    }
+>("POST", ({ project_id, cluster_id }) => {
+    return `/api/projects/${project_id}/clusters/${cluster_id}/deployment-targets`;
+});
+
 const getDeploymentTarget = baseApi<
   {},
   {
@@ -3414,6 +3427,7 @@ export default {
   listAppRevisions,
   getLatestAppRevisions,
   listDeploymentTargets,
+  createDeploymentTarget,
   getDeploymentTarget,
   getAppTemplate,
   getGitlabProcfileContents,

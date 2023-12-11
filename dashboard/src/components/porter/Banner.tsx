@@ -20,6 +20,10 @@ const Banner: React.FC<Props> = ({
   suffix,
 }) => {
   const renderIcon = () => {
+    if (icon === "none") {
+      return null;
+    }
+    
     if (icon) {
       return icon;
     }

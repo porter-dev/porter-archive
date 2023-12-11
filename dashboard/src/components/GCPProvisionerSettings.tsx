@@ -40,6 +40,8 @@ import PreflightChecks from "./PreflightChecks";
 import VerticalSteps from "./porter/VerticalSteps";
 import { useIntercom } from "lib/hooks/useIntercom";
 import { log } from "console";
+import InputSlider from "./porter/InputSlider";
+import Select from "./porter/Select";
 
 
 const locationOptions = [
@@ -71,12 +73,28 @@ const instanceTypes = [
   { value: "e2-standard-8", label: "e2-standard-8" },
   { value: "e2-standard-16", label: "e2-standard-16" },
   { value: "e2-standard-32", label: "e2-standard-32" },
-  // { value: "n1-standard-1", label: "n1-standard-1" }, // start of GPU nodes. 
-  // { value: "n1-standard-2", label: "n1-standard-2" },
-  // { value: "n1-standard-4", label: "n1-standard-4" },
-  // { value: "n1-standard-8", label: "n1-standard-8" },
-  // { value: "n1-standard-16", label: "n1-standard-16" }, // Maximum of 1 GPU per node until further notice
+  { value: "c3-standard-4", label: "c3-standard-4" },
+  { value: "c3-standard-8", label: "c3-standard-8" },
+  { value: "c3-standard-22", label: "c3-standard-22" },
+  { value: "c3-standard-44", label: "c3-standard-44" },
+  { value: "c3-highcpu-4", label: "c3-highcpu-4" },
+  { value: "c3-highcpu-8", label: "c3-highcpu-8" },
+  { value: "c3-highcpu-22", label: "c3-highcpu-22" },
+  { value: "c3-highcpu-44", label: "c3-highcpu-44" },
+  { value: "c3-highmem-4", label: "c3-highmem-4" },
+  { value: "c3-highmem-8", label: "c3-highmem-8" },
+  { value: "c3-highmem-22", label: "c3-highmem-22" },
+  { value: "c3-highmem-44", label: "c3-highmem-44" }, // Maximum of 1 GPU per node until further notice
 ];
+
+const gpuMachineTypeOptions = [
+  { value: "n1-standard-1", label: "n1-standard-1" }, // start of GPU nodes. 
+  { value: "n1-standard-2", label: "n1-standard-2" },
+  { value: "n1-standard-4", label: "n1-standard-4" },
+  { value: "n1-standard-8", label: "n1-standard-8" },
+  { value: "n1-standard-16", label: "n1-standard-16" }
+];
+
 
 const clusterVersionOptions = [{ value: "1.27", label: "v1.27" }];
 
@@ -85,6 +103,7 @@ type Props = RouteComponentProps & {
   provisionerError?: string;
   credentialId: string;
   clusterId?: number;
+  gpuModal?: boolean;
 };
 
 const VALID_CIDR_RANGE_PATTERN = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(8|9|1\d|2[0-8])$/;
@@ -116,7 +135,10 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [preflightError, setPreflightError] = useState<string>("")
-
+  const [gpuMinInstances, setGpuMinInstances] = useState(1);
+  const [gpuMaxInstances, setGpuMaxInstances] = useState(5);
+  const [gpuInstanceType, setGpuInstanceType] = useState("n1-standard-1");
+  const [expandAdvancedCidrs, setAdvancedCidrs] = useState(false);
   const { showIntercomWithMessage } = useIntercom();
 
   const markStepStarted = async (step: string, region?: string) => {
@@ -168,11 +190,11 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     if (!region) {
       return "GCP region is required";
     }
-    if (!clusterNetworking.cidrRange) {
-      return "VPC CIDR range is required";
+    if (!clusterNetworking.cidrRange || !clusterNetworking.controlPlaneCidr || !clusterNetworking.podCidr || !clusterNetworking.serviceCidr) {
+      return "CIDR ranges are required";
     }
-    if (!VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.cidrRange)) {
-      return "VPC CIDR range must be in the format of [0-255].[0-255].0.0/16";
+    if (!VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.cidrRange) || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.controlPlaneCidr) || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.podCidr) || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.serviceCidr)) {
+      return "CIDR ranges must be in the format of [0-255].[0-255].0.0/16";
     }
 
     return "";
@@ -227,8 +249,51 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
                 label="VPC CIDR range"
                 placeholder="ex: 10.78.0.0/16"
               />
-              <Spacer y={0.25} />
-              <Text color="helper">The following ranges will be used: {clusterNetworking.cidrRange}, {clusterNetworking.controlPlaneCidr}, {clusterNetworking.serviceCidr}, {clusterNetworking.podCidr}</Text>
+              {
+                <Heading>
+                  <ExpandHeader
+                    onClick={() => {
+                      setAdvancedCidrs(!expandAdvancedCidrs);
+                    }}
+                    isExpanded={expandAdvancedCidrs}
+                  >
+                    <i className="material-icons">arrow_drop_down</i>
+                    Advanced CIDR settings
+                  </ExpandHeader>
+                </Heading>
+              }
+              {expandAdvancedCidrs && <>
+                <InputRow
+                  width="350px"
+                  type="string"
+                  disabled={isReadOnly}
+                  value={clusterNetworking.controlPlaneCidr}
+                  setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, controlPlaneCidr: x }))}
+                  label="Control Plane CIDR range"
+                  placeholder="ex: 10.78.0.0/16"
+                />
+                <InputRow
+                  width="350px"
+                  type="string"
+                  disabled={isReadOnly}
+                  value={clusterNetworking.podCidr}
+                  setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, podCidr: x }))}
+                  label="Pod CIDR range"
+                  placeholder="ex: 10.78.0.0/16"
+                />
+                <InputRow
+                  width="350px"
+                  type="string"
+                  disabled={isReadOnly}
+                  value={clusterNetworking.serviceCidr}
+                  setValue={(x: string) => setClusterNetworking(new GKENetwork({ ...clusterNetworking, serviceCidr: x }))}
+                  label="Service CIDR range"
+                  placeholder="ex: 10.78.0.0/16"
+                />
+                <Spacer y={0.25} />
+                <Text color="helper">The following ranges will be used: {clusterNetworking.cidrRange}, {clusterNetworking.controlPlaneCidr}, {clusterNetworking.serviceCidr}, {clusterNetworking.podCidr}</Text>
+              </>
+              }
             </>
           )
         }
@@ -242,12 +307,77 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
     if (!clusterNetworking.cidrRange) {
       return "VPC CIDR range is required";
     }
-    if (!VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.cidrRange)) {
+    if (!VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.cidrRange)
+      || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.controlPlaneCidr)
+      || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.podCidr)
+      || !VALID_CIDR_RANGE_PATTERN.test(clusterNetworking.serviceCidr)
+    ) {
       return "VPC CIDR range must be in the format of [0-255].[0-255].0.0/16";
     }
 
     return "";
   }
+
+  const createClusterObj = (): Contract => {
+    const nodePools = [
+      new GKENodePool({
+        instanceType: "custom-2-4096",
+        minInstances: 1,
+        maxInstances: 1,
+        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_MONITORING
+      }),
+      new GKENodePool({
+        instanceType: "custom-2-4096",
+        minInstances: 1,
+        maxInstances: 2,
+        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_SYSTEM
+      }),
+      new GKENodePool({
+        instanceType: instanceType,
+        minInstances: 1, // TODO: make these customizable before merging
+        maxInstances: 10, // TODO: make these customizable before merging
+        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION
+      }),
+    ];
+
+    // Conditionally add the last EKSNodeGroup if gpuModal is enabled
+    if (props.gpuModal) {
+      nodePools.push(new GKENodePool({
+        instanceType: gpuInstanceType,
+        minInstances: gpuMinInstances || 0,
+        maxInstances: gpuMaxInstances || 5,
+        nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM,
+      }));
+    }
+
+
+    const data = new Contract({
+      cluster: new Cluster({
+        projectId: currentProject.id,
+        kind: EnumKubernetesKind.GKE,
+        cloudProvider: EnumCloudProvider.GCP,
+        cloudProviderCredentialsId: props.credentialId,
+        kindValues: {
+          case: "gkeKind",
+          value: new GKE({
+            clusterName: clusterName,
+            clusterVersion: clusterVersion || clusterVersionOptions[0].value,
+            region: region,
+            network: new GKENetwork({
+              cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
+              controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
+              podCidr: defaultClusterNetworking.podCidr,
+              serviceCidr: defaultClusterNetworking.serviceCidr,
+            }),
+            nodePools
+          }),
+        },
+      }),
+    });
+
+    return data
+  }
+
 
   const createCluster = async () => {
 
@@ -274,50 +404,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       console.log(err);
     }
 
-    var data = new Contract({
-      cluster: new Cluster({
-        projectId: currentProject.id,
-        kind: EnumKubernetesKind.GKE,
-        cloudProvider: EnumCloudProvider.GCP,
-        cloudProviderCredentialsId: props.credentialId,
-        kindValues: {
-          case: "gkeKind",
-          value: new GKE({
-            clusterName: clusterName,
-            clusterVersion: clusterVersion || clusterVersionOptions[0].value,
-            region: region,
-            network: new GKENetwork({
-              cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
-              controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
-              podCidr: defaultClusterNetworking.podCidr,
-              serviceCidr: defaultClusterNetworking.serviceCidr,
-            }),
-            nodePools: [
-              new GKENodePool({
-                instanceType: "custom-2-4096",
-                minInstances: 1,
-                maxInstances: 1,
-                nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_MONITORING
-              }),
-              new GKENodePool({
-                instanceType: "custom-2-4096",
-                minInstances: 1,
-                maxInstances: 2,
-                nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_SYSTEM
-              }),
-              new GKENodePool({
-                instanceType: instanceType,
-                minInstances: 1, // TODO: make these customizable before merging
-                maxInstances: 10, // TODO: make these customizable before merging
-                nodePoolType: GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION
-              }),
-
-            ],
-          }),
-        },
-      }),
-    });
-
+    const data = createClusterObj();
 
     if (props.clusterId) {
       data["cluster"]["clusterId"] = props.clusterId;
@@ -541,6 +628,46 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       );
     }
 
+    if (props.gpuModal) {
+      return (
+        <>
+          <Select
+            options={gpuMachineTypeOptions}
+            width="350px"
+            disabled={isReadOnly}
+            value={gpuInstanceType}
+            setValue={(x: string) => {
+              setGpuInstanceType(x)
+            }
+            }
+            label="GPU Instance type"
+          />
+          <Spacer y={1} />
+          <InputSlider
+            label="Max Instances: "
+            unit="nodes"
+            min={0}
+            max={5}
+            step={1}
+            width="350px"
+            disabled={isReadOnly || isLoading}
+            value={gpuMaxInstances.toString()}
+            setValue={(x: number) => {
+              setGpuMaxInstances(x)
+            }}
+          />
+          <Button
+            disabled={isDisabled() || isLoading}
+            onClick={createCluster}
+            status={getStatus()}
+          >
+            Provision
+          </Button>
+
+          <Spacer y={.5} />
+        </>
+      )
+    }
     // If settings, update full form
     return (
       <>

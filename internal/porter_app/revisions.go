@@ -41,6 +41,30 @@ type Revision struct {
 	AppInstanceID uuid.UUID `json:"app_instance_id"`
 }
 
+// RevisionStatus describes the status of a revision
+type RevisionStatus struct {
+	// PredeployStarted is true if the predeploy process has started
+	PredeployStarted bool `json:"predeploy_started"`
+	// PredeploySuccessful is true if the predeploy process has completed successfully
+	PredeploySuccessful bool `json:"predeploy_successful"`
+	// PredeployFailed is true if the predeploy process has failed
+	PredeployFailed bool `json:"predeploy_failed"`
+	// InstallStarted is true if the install process has started
+	InstallStarted bool `json:"install_started"`
+	// InstallSuccessful is true if the install process has completed successfully
+	InstallSuccessful bool `json:"install_successful"`
+	// InstallFailed is true if the install process has failed
+	InstallFailed bool `json:"install_failed"`
+	// DeploymentStarted is true if the deployment process has started
+	DeploymentStarted bool `json:"deployment_started"`
+	// DeploymentSuccessful is true if the deployment process has completed successfully
+	DeploymentSuccessful bool `json:"deployment_successful"`
+	// DeploymentFailed is true if the deployment process has failed
+	DeploymentFailed bool `json:"deployment_failed"`
+	// IsInTerminalStatus is true if the revision is in a terminal status
+	IsInTerminalStatus bool `json:"is_in_terminal_status"`
+}
+
 // DeploymentTarget is a simplified version of the deployment target struct
 type DeploymentTarget struct {
 	ID   string `json:"id"`
@@ -217,12 +241,12 @@ func appRevisionStatusFromProto(status string) (models.AppRevisionStatus, error)
 		appRevisionStatus = models.AppRevisionStatus_AwaitingBuild
 	case string(models.AppRevisionStatus_AwaitingPredeploy):
 		appRevisionStatus = models.AppRevisionStatus_AwaitingPredeploy
-	case string(models.AppRevisionStatus_Deployed):
-		appRevisionStatus = models.AppRevisionStatus_Deployed
-	case string(models.AppRevisionStatus_Deploying):
-		appRevisionStatus = models.AppRevisionStatus_Deploying
-	case string(models.AppRevisionStatus_AwaitingDeploy):
-		appRevisionStatus = models.AppRevisionStatus_AwaitingDeploy
+	case string(models.AppRevisionStatus_InstallSuccessful):
+		appRevisionStatus = models.AppRevisionStatus_InstallSuccessful
+	case string(models.AppRevisionStatus_InstallProgressing):
+		appRevisionStatus = models.AppRevisionStatus_InstallProgressing
+	case string(models.AppRevisionStatus_AwaitingInstall):
+		appRevisionStatus = models.AppRevisionStatus_AwaitingInstall
 	case string(models.AppRevisionStatus_BuildCanceled):
 		appRevisionStatus = models.AppRevisionStatus_BuildCanceled
 	case string(models.AppRevisionStatus_BuildFailed):
@@ -233,8 +257,8 @@ func appRevisionStatusFromProto(status string) (models.AppRevisionStatus, error)
 		appRevisionStatus = models.AppRevisionStatus_PredeploySuccessful
 	case string(models.AppRevisionStatus_PredeployProgressing):
 		appRevisionStatus = models.AppRevisionStatus_PredeployProgressing
-	case string(models.AppRevisionStatus_DeployFailed):
-		appRevisionStatus = models.AppRevisionStatus_DeployFailed
+	case string(models.AppRevisionStatus_InstallFailed):
+		appRevisionStatus = models.AppRevisionStatus_InstallFailed
 	case string(models.AppRevisionStatus_Created):
 		appRevisionStatus = models.AppRevisionStatus_Created
 	case string(models.AppRevisionStatus_BuildSuccessful):
@@ -243,7 +267,12 @@ func appRevisionStatusFromProto(status string) (models.AppRevisionStatus, error)
 		appRevisionStatus = models.AppRevisionStatus_ApplyFailed
 	case string(models.AppRevisionStatus_UpdateFailed):
 		appRevisionStatus = models.AppRevisionStatus_UpdateFailed
-
+	case string(models.AppRevisionStatus_DeploymentProgressing):
+		appRevisionStatus = models.AppRevisionStatus_DeploymentProgressing
+	case string(models.AppRevisionStatus_DeploymentSuccessful):
+		appRevisionStatus = models.AppRevisionStatus_DeploymentSuccessful
+	case string(models.AppRevisionStatus_DeploymentFailed):
+		appRevisionStatus = models.AppRevisionStatus_DeploymentFailed
 	default:
 		return appRevisionStatus, errors.New("unknown app revision status")
 	}

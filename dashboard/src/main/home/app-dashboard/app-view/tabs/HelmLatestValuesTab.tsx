@@ -1,29 +1,37 @@
-import React from "react";
-import { useLatestRevision } from "../LatestRevisionContext";
-import HelmLatestValues from "../../validate-apply/helm/HelmLatestValues";
-import Text from "components/porter/Text";
+import React, { useContext } from "react";
+
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+
+import { Context } from "shared/Context";
+
+import HelmLatestValues from "../../validate-apply/helm/HelmLatestValues";
+import { useLatestRevision } from "../LatestRevisionContext";
 
 const HelmLatestValuesTab: React.FC = () => {
-    const { projectId, clusterId, latestProto, deploymentTarget, porterApp, latestRevision } = useLatestRevision();
+  const { user } = useContext(Context);
+  const { projectId, clusterId, latestProto, deploymentTarget, porterApp } =
+    useLatestRevision();
 
-    const appName = latestProto.name
+  const appName = latestProto.name;
 
-    return (
-        <>
+  return (
+    <>
+      {user?.isPorterUser && (
         <Text color="helper">
-            This tab is only visible to Porter operators.
+          This tab is only visible to Porter operators.
         </Text>
-        <Spacer y={1} />
-        <HelmLatestValues
-            projectId={projectId}
-            clusterId={clusterId}
-            appName={appName}
-            deploymentTargetId={deploymentTarget.id}
-            appId={porterApp.id}
-        />
-        </>
-    );
+      )}
+      <Spacer y={1} />
+      <HelmLatestValues
+        projectId={projectId}
+        clusterId={clusterId}
+        appName={appName}
+        deploymentTargetId={deploymentTarget.id}
+        appId={porterApp.id}
+      />
+    </>
+  );
 };
 
 export default HelmLatestValuesTab;

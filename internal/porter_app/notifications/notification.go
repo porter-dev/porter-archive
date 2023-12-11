@@ -8,10 +8,6 @@ import (
 
 // Notification is a struct that contains all actionable information from an app event
 type Notification struct {
-	// AppID is the ID of the app
-	AppID string `json:"app_id"`
-	// AppName is the name of the app
-	AppName string `json:"app_name"`
 	// AppRevisionID is the ID of the app revision that the notification belongs to
 	AppRevisionID string `json:"app_revision_id"`
 	// Error is the Porter error parsed from the agent event

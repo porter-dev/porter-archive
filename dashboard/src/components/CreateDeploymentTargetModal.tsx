@@ -3,6 +3,8 @@ import axios from "axios";
 import styled from "styled-components";
 import { z } from "zod";
 
+import target from "assets/target.svg";
+
 import { useDeploymentTargetList } from "../lib/hooks/useDeploymentTarget";
 import { RestrictedNamespaces } from "../main/home/add-on-dashboard/AddOnDashboard";
 import api from "../shared/api";
@@ -54,7 +56,12 @@ const CreateDeploymentTargetModal: React.FC<Props> = ({
     setIsNameHighlight(false);
 
     if (isRestrictedName(name)) {
-      setCreationError("Name is a restricted Porter deployment target");
+      setCreationError("Name is a Porter-internal name");
+      return;
+    }
+
+    if (name.length > 60) {
+      setCreationError("Name must be 60 characters or fewer");
       return;
     }
 
@@ -131,7 +138,7 @@ const CreateDeploymentTargetModal: React.FC<Props> = ({
         </Text>
         <InputWrapper>
           <DashboardIcon>
-            <i className="material-icons">space_dashboard</i>
+            <img src={target} />
           </DashboardIcon>
           <InputRow
             type="string"
@@ -157,9 +164,9 @@ const CreateDeploymentTargetModal: React.FC<Props> = ({
           }
           status={creationError ? "error" : deploymentTargetCreationStatus}
           errorText={creationError}
-          width="200px"
+          width="220px"
         >
-          Create deployment target
+          <I className="material-icons">add</I> Create deployment target
         </Button>
       </Modal>
     </>
@@ -168,25 +175,40 @@ const CreateDeploymentTargetModal: React.FC<Props> = ({
 
 export default CreateDeploymentTargetModal;
 
+const I = styled.i`
+  color: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin-right: 7px;
+  justify-content: center;
+`;
+
 const DashboardIcon = styled.div`
-  width: 32px;
-  margin-top: 6px;
-  min-width: 25px;
-  height: 32px;
-  border-radius: 3px;
-  overflow: hidden;
-  position: relative;
-  margin-right: 15px;
-  font-weight: 400;
+  border: 1px solid #ffffff55;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #676c7c;
-  border: 2px solid #8e94aa;
-  color: white;
-
-  > i {
-    font-size: 17px;
+  height: 37px;
+  width: 35px;
+  min-width: 35px;
+  margin-right: 10px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 5px;
+  > img {
+    height: 18px;
+    animation: floatIn 0.5s 0s;
+    @keyframes floatIn {
+      from {
+        opacity: 0;
+        transform: translateY(7px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0px);
+      }
+    }
   }
 `;
 

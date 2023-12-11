@@ -629,6 +629,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               return {
                                 value: target.id,
                                 label: target.name,
+                                key: target.id,
                               };
                             }
                           )}

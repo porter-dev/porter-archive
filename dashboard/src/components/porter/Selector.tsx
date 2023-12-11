@@ -8,7 +8,7 @@ import { useOutsideClick } from "../../lib/hooks/UseOutsideClick";
 export type SelectorPropsType<T> = {
   activeValue: T;
   refreshOptions?: () => void;
-  options: Array<{ value: T; label: string; icon?: JSX.Element }>;
+  options: Array<{ value: T; label: string; key: string; icon?: JSX.Element }>;
   createNew?: { openModal: (x: boolean) => void; label: string };
   setActiveValue: (x: T) => void;
   width: string;
@@ -51,12 +51,17 @@ const Selector = <T,>({
       <>
         {options.map(
           (
-            option: { value: T; label: string; icon?: JSX.Element },
+            option: {
+              value: T;
+              label: string;
+              key: string;
+              icon?: JSX.Element;
+            },
             i: number
           ) => {
             return (
               <Option
-                key={i}
+                key={option.key}
                 height={height || ""}
                 selected={option.value === activeValue}
                 onClick={() => {
@@ -79,26 +84,28 @@ const Selector = <T,>({
     setExpanded(false);
   };
 
-  const renderDropdownLabel = (): JSX.Element => {
-    return (
-      <>{dropdownLabel && <DropdownLabel>{dropdownLabel}</DropdownLabel>}</>
-    );
+  const renderDropdownLabel = (): JSX.Element | null => {
+    if (!dropdownLabel) {
+      return null;
+    }
+
+    return <DropdownLabel>{dropdownLabel}</DropdownLabel>;
   };
 
-  const renderAddButton = (): JSX.Element => {
+  const renderAddButton = (): JSX.Element | null => {
+    if (!createNew) {
+      return null;
+    }
+
     return (
-      <>
-        {createNew && (
-          <NewOption
-            onClick={() => {
-              createNew.openModal(true);
-            }}
-          >
-            <Plus>+</Plus>
-            {createNew.label}
-          </NewOption>
-        )}
-      </>
+      <NewOption
+        onClick={() => {
+          createNew.openModal(true);
+        }}
+      >
+        <Plus>+</Plus>
+        {createNew.label}
+      </NewOption>
     );
   };
 
@@ -130,24 +137,14 @@ const Selector = <T,>({
     }
   };
 
-  const renderIcon = (): JSX.Element => {
-    let icon;
-    options.forEach(
-      (option: { value: T; label: string; icon?: JSX.Element }) => {
-        if (option.icon && option.value === activeValue) {
-          icon = option.icon;
-        }
-      }
-    );
-    return (
-      <>
-        {icon && (
-          <Icon>
-            <img src={icon} />
-          </Icon>
-        )}
-      </>
-    );
+  const renderIcon = (): JSX.Element | null => {
+    const icon = options.find((opt) => opt.icon && opt.value === activeValue);
+
+    if (!icon) {
+      return null;
+    }
+
+    return <Icon>{icon.icon}</Icon>;
   };
 
   return (
@@ -235,7 +232,7 @@ const Icon = styled.div`
 
 const Plus = styled.div`
   margin-right: 10px;
-  font-size: 15px;
+  font-size: 18px;
 `;
 
 const TextWrap = styled.div`

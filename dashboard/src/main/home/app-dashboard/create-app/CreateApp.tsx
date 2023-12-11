@@ -45,7 +45,7 @@ import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 import web from "assets/web.png";
 
-import CreateDeploymentTargetModal from "../../../../components/CreateDeploymentTargetModal";
+import CreateDeploymentTargetModal from "components/CreateDeploymentTargetModal";
 import ImageSettings from "../image-settings/ImageSettings";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import SourceSelector from "../new-app-flow/SourceSelector";

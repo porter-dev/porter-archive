@@ -153,7 +153,7 @@ const SOC2Checks: React.FC<Props> = ({ soc2Data, enableAll, setSoc2Data, readOnl
                         handleEnable();
                       }}
                       disabled={readOnly || enableAll || (enabled && checkData?.locked && status !== "PENDING")}
-                      disabledTooltip={enableAll ? "Global SOC 2 setting must be disabled to toggle this" : checkData?.disabledTooltip}
+                      disabledTooltip={readOnly ? ("Wait for provisioning to complete before editing this field.") : (enableAll ? "Global SOC 2 setting must be disabled to toggle this" : checkData?.disabledTooltip)}
                     >
                       <Container row>
                         <Text>{checkData.enabledField}</Text>

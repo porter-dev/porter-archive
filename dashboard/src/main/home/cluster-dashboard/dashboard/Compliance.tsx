@@ -26,7 +26,7 @@ type Props = {
 };
 
 
-//  Example SOC2 Check
+//  Example SOC2 Check NOTE PLEASE ADD FUNC TO createContract and useEffect(() to correctly READ AND WRITE 
 //  "Display_Name_Of_SOC2_Check": {
 //   "message": "Main Example Message about the Check",
 //   "link": "example link for more docs ",
@@ -36,6 +36,7 @@ type Props = {
 //   "info": " more information",
 //   "locked":(true if unmutable field like KMS),
 //   "disabledTooltip": "display if message is disabled",
+//  "hideToggle": true (if you want to hide the toggle
 //}
 const soc2DataDefault = {
   "soc2_checks": {
@@ -361,9 +362,7 @@ const Compliance: React.FC<Props> = (props) => {
           }}
           disabled={isReadOnly}
           disabledTooltip={
-            soc2Enabled
-              ? "Global SOC 2 setting must be disabled to toggle this"
-              : "Wait for provisioning to complete before editing this field."
+            "Wait for provisioning to complete before editing this field."
           }
         >
           <Container row>

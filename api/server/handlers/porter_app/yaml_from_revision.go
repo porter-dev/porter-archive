@@ -401,6 +401,9 @@ func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 		app.Predeploy.AllowConcurrent = nil
 		// remove timeout
 		app.Predeploy.TimeoutSeconds = 0
+		//remove gpu
+		app.Predeploy.GPU = nil;
+	
 	}
 
 	return app

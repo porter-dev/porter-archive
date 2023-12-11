@@ -410,6 +410,8 @@ export type ContextProps = {
   setEnableGitlab: (enableGitlab: boolean) => void;
   shouldRefreshClusters: boolean;
   setShouldRefreshClusters: (shouldRefreshClusters: boolean) => void;
+  soc2Data: any;
+  setSoc2Data: (x: any) => void;
 };
 
 export enum JobStatusType {

@@ -40,7 +40,7 @@ import { useAuthState } from "main/auth/context";
 type Props = {
 };
 
-const namespaceBlacklist = [
+export const RestrictedNamespaces = [
   "ack-system",
   "cert-manager",
   "ingress-nginx",
@@ -72,7 +72,7 @@ const AddOnDashboard: React.FC<Props> = ({
   const filteredAddOns = useMemo(() => {
     const filtered = addOns.filter((app) => {
       return (
-        !namespaceBlacklist.includes(app.namespace) &&
+        !RestrictedNamespaces.includes(app.namespace) &&
         !templateBlacklist.includes(app.chart.metadata.name)
       );
     });

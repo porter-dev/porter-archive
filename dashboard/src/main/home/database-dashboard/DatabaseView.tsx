@@ -21,7 +21,6 @@ import Link from "components/porter/Link";
 import { withRouter, type RouteComponentProps } from "react-router";
 import { z } from "zod";
 import DatabaseHeader from "./DatabaseHeader";
-import TabSelector from "components/TabSelector";
 import DatabaseTabs from "./DatabaseTabs";
 
 

@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/porter-dev/porter/internal/porter_app"
+	"github.com/porter-dev/porter/internal/porter_app/notifications"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -23,48 +24,40 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-// LatestAppRevisionHandler handles requests to the /apps/{porter_app_name}/latest endpoint
-type LatestAppRevisionHandler struct {
+// AppNotificationsHandler handles requests to the /apps/{porter_app_name}/notifications endpoint
+type AppNotificationsHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewLatestAppRevisionHandler returns a new LatestAppRevisionHandler
-func NewLatestAppRevisionHandler(
+// NewAppNotificationsHandler returns a new AppNotificationsHandler
+func NewAppNotificationsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *LatestAppRevisionHandler {
-	return &LatestAppRevisionHandler{
+) *AppNotificationsHandler {
+	return &AppNotificationsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-// LatestAppRevisionRequest is the request object for the /apps/{porter_app_name}/latest endpoint
-type LatestAppRevisionRequest struct {
+// AppNotificationsRequest is the request object for the /apps/{porter_app_name}/notifications endpoint
+type AppNotificationsRequest struct {
 	DeploymentTargetID string `schema:"deployment_target_id"`
 }
 
-// LatestAppRevisionResponse is the response object for the /apps/{porter_app_name}/latest endpoint
-type LatestAppRevisionResponse struct {
-	// AppRevision is the latest revision for the app
-	AppRevision porter_app.Revision `json:"app_revision"`
+// AppNotificationsResponse is the response object for the /apps/{porter_app_name}/notifications endpoint
+type AppNotificationsResponse struct {
+	// Notifications are the notifications associated with the app revision
+	Notifications []notifications.Notification `json:"notifications"`
 }
 
-// ServeHTTP translates the request into a CurrentAppRevision grpc request, forwards to the cluster control plane, and returns the response.
-// Multi-cluster projects are not supported, as they may have multiple porter-apps with the same name in the same project.
-func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-latest-app-revision")
+func (c *AppNotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-app-notifications")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
-	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
-		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
-	)
 
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
@@ -75,7 +68,7 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
 
-	request := &LatestAppRevisionRequest{}
+	request := &AppNotificationsRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding request")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -92,7 +85,7 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	porterApps, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(project.ID, appName)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting porter app from repo")
+		err := telemetry.Error(ctx, span, err, "error getting porter apps")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
@@ -117,9 +110,11 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	currentAppRevisionReq := connect.NewRequest(&porterv1.CurrentAppRevisionRequest{
-		ProjectId:          int64(project.ID),
-		AppId:              int64(appId),
-		DeploymentTargetId: request.DeploymentTargetID,
+		ProjectId: int64(project.ID),
+		AppId:     int64(appId),
+		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+			Id: request.DeploymentTargetID,
+		},
 	})
 
 	currentAppRevisionResp, err := c.Config().ClusterControlPlaneClient.CurrentAppRevision(ctx, currentAppRevisionReq)
@@ -149,9 +144,33 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		telemetry.AttributeKV{Key: "app-revision-id", Value: appRevisionId},
 		telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId},
 	)
+	notificationEvents, err := c.Repo().PorterAppEvent().ReadNotificationsByAppRevisionID(ctx, appInstanceId, appRevisionId)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting notifications from repo")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+	latestNotifications := make([]notifications.Notification, 0)
+	for _, event := range notificationEvents {
+		notification, err := notifications.NotificationFromPorterAppEvent(event)
+		if err != nil {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "notification-conversion-error", Value: err.Error()})
+			continue
+		}
+		if notification == nil {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "notification-conversion-error", Value: "notification is nil"})
+			continue
+		}
+		// TODO: remove this check once this attribute is not found in the span for >30 days
+		if notification.Scope == "" {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "notification-conversion-error", Value: "old-notification-format"})
+			continue
+		}
+		latestNotifications = append(latestNotifications, *notification)
+	}
 
-	response := LatestAppRevisionResponse{
-		AppRevision: encodedRevision,
+	response := AppNotificationsResponse{
+		Notifications: latestNotifications,
 	}
 
 	c.WriteResult(w, r, response)

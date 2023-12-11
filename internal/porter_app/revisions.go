@@ -41,6 +41,30 @@ type Revision struct {
 	AppInstanceID uuid.UUID `json:"app_instance_id"`
 }
 
+// RevisionStatus describes the status of a revision
+type RevisionStatus struct {
+	// PredeployStarted is true if the predeploy process has started
+	PredeployStarted bool `json:"predeploy_started"`
+	// PredeploySuccessful is true if the predeploy process has completed successfully
+	PredeploySuccessful bool `json:"predeploy_successful"`
+	// PredeployFailed is true if the predeploy process has failed
+	PredeployFailed bool `json:"predeploy_failed"`
+	// InstallStarted is true if the install process has started
+	InstallStarted bool `json:"install_started"`
+	// InstallSuccessful is true if the install process has completed successfully
+	InstallSuccessful bool `json:"install_successful"`
+	// InstallFailed is true if the install process has failed
+	InstallFailed bool `json:"install_failed"`
+	// DeploymentStarted is true if the deployment process has started
+	DeploymentStarted bool `json:"deployment_started"`
+	// DeploymentSuccessful is true if the deployment process has completed successfully
+	DeploymentSuccessful bool `json:"deployment_successful"`
+	// DeploymentFailed is true if the deployment process has failed
+	DeploymentFailed bool `json:"deployment_failed"`
+	// IsInTerminalStatus is true if the revision is in a terminal status
+	IsInTerminalStatus bool `json:"is_in_terminal_status"`
+}
+
 // DeploymentTarget is a simplified version of the deployment target struct
 type DeploymentTarget struct {
 	ID   string `json:"id"`

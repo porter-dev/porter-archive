@@ -49,6 +49,7 @@ const namespaceBlacklist = [
   "kube-system",
   "monitoring",
   "porter-agent-system",
+  "external-secrets",
 ];
 
 const templateBlacklist = [
@@ -56,6 +57,7 @@ const templateBlacklist = [
   "worker",
   "job",
   "umbrella",
+  "postgresql-managed"
 ];
 
 const AddOnDashboard: React.FC<Props> = ({

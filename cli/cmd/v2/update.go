@@ -202,31 +202,30 @@ func Update(ctx context.Context, inp UpdateInput) error {
 
 	now := time.Now().UTC()
 
-	var status models.AppRevisionStatus
-
 	for {
 		if time.Since(now) > checkDeployTimeout {
 			return errors.New("timed out waiting for app to deploy")
 		}
 
-		revision, err := client.GetRevision(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
+		status, err := client.GetRevisionStatus(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
 		if err != nil {
 			return fmt.Errorf("error getting app revision status: %w", err)
 		}
-		status = revision.AppRevision.Status
 
-		// TODO: create an endpoint to query CCP for whether the revision has a status that can end this loop
-		if status == models.AppRevisionStatus_PredeployFailed ||
-			status == models.AppRevisionStatus_InstallFailed ||
-			status == models.AppRevisionStatus_InstallSuccessful ||
-			status == models.AppRevisionStatus_DeploymentSuccessful ||
-			status == models.AppRevisionStatus_DeploymentProgressing ||
-			status == models.AppRevisionStatus_RollbackFailed ||
-			status == models.AppRevisionStatus_RollbackSuccessful {
+		if status == nil {
+			return errors.New("unable to determine status of app revision")
+		}
+
+		if status.AppRevisionStatus.IsInTerminalStatus {
 			break
 		}
-		if status == models.AppRevisionStatus_AwaitingPredeploy {
+
+		if status.AppRevisionStatus.PredeployStarted {
 			color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec
+		}
+
+		if status.AppRevisionStatus.InstallStarted {
+			color.New(color.FgGreen).Printf("Waiting for deploy to complete...\n") // nolint:errcheck,gosec
 		}
 
 		time.Sleep(checkDeployFrequency)
@@ -241,10 +240,19 @@ func Update(ctx context.Context, inp UpdateInput) error {
 		CommitSHA:     commitSHA,
 	})
 
-	if status == models.AppRevisionStatus_InstallFailed {
+	status, err := client.GetRevisionStatus(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
+	if err != nil {
+		return fmt.Errorf("error getting app revision status: %w", err)
+	}
+
+	if status == nil {
+		return errors.New("unable to determine status of app revision")
+	}
+
+	if status.AppRevisionStatus.InstallFailed {
 		return errors.New("app failed to deploy")
 	}
-	if status == models.AppRevisionStatus_PredeployFailed {
+	if status.AppRevisionStatus.PredeployFailed {
 		return errors.New("predeploy failed for new revision")
 	}
 

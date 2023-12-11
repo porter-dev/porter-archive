@@ -280,12 +280,13 @@ export const ExpandedEnvGroupFC = ({
   };
 
   const deleteEnvGroup = async () => {
-    const { name, stack_id } = currentEnvGroup;
+    const { name, stack_id, type } = currentEnvGroup;
     if (currentProject?.simplified_view_enabled) {
       return await api.deleteNewEnvGroup(
         "<token>",
         {
           name,
+          type,
         },
         {
           id: currentProject.id,
@@ -480,7 +481,7 @@ export const ExpandedEnvGroupFC = ({
           git_branch: newAppData?.git_branch,
           buildpacks: "",
           // full_helm_values: yaml.dump(values),
-          environment_groups: filteredEnvGroups?.map((env) => env.name),
+          environmentGroups: filteredEnvGroups?.map((env) => env.name),
           user_update: true,
         }
 
@@ -608,18 +609,21 @@ export const ExpandedEnvGroupFC = ({
 
 
           const linkedApp: string[] = currentEnvGroup?.linked_applications;
-          await api.createEnvironmentGroups(
-            "<token>",
-            {
-              name,
-              variables: normalVariables,
-              secret_variables: secretVariables,
-            },
-            {
-              id: currentProject.id,
-              cluster_id: currentCluster.id,
-            }
-          );
+          // doppler env groups update themselves, and we don't want to increment the version
+          if (currentEnvGroup?.type !== "doppler") {
+            await api.createEnvironmentGroups(
+                "<token>",
+                {
+                  name,
+                  variables: normalVariables,
+                  secret_variables: secretVariables,
+                },
+                {
+                  id: currentProject.id,
+                  cluster_id: currentCluster.id,
+                }
+            );
+          }
           if (!currentProject.validate_apply_v2) {
             if (linkedApp) {
               const promises = linkedApp.map(async appName => {

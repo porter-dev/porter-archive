@@ -222,7 +222,7 @@ const Resources: React.FC<ResourcesProps> = ({
         )}
       />
 
-      {currentCluster?.cloud_provider === "AWS" &&
+      {(currentCluster?.cloud_provider === "AWS" || currentCluster?.cloud_provider === "GCP") &&
         currentProject?.gpu_enabled && (
           <>
             <Spacer y={1} />
@@ -288,6 +288,7 @@ const Resources: React.FC<ResourcesProps> = ({
                         setClusterModalVisible(false);
                       }}
                       gpuModal={true}
+                      gcp={currentCluster?.cloud_provider === "GCP"}
                     />
                   )}
                 </>

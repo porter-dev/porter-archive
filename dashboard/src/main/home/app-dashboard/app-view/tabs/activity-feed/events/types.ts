@@ -41,7 +41,8 @@ const porterAppPreDeployEventMetadataValidator = z.object({
   start_time: z.string(),
   end_time: z.string().optional(),
   app_revision_id: z.string(),
-  commit_sha: z.string().optional(),
+  image_tag: z.string().optional(), // used by the update flow
+  commit_sha: z.string().optional(), // used by the apply flow. TODO: remove this field
 });
 
 const serviceNoticationValidator = z.object({

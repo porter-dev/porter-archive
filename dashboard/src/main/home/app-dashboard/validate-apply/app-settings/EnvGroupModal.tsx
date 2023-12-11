@@ -1,22 +1,24 @@
-import { PorterAppFormData } from "lib/porter-apps";
+import { type PorterAppFormData } from "lib/porter-apps";
 import React, {
-  Dispatch,
-  SetStateAction,
+  type Dispatch,
+  type SetStateAction,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from "react";
 import { UseFieldArrayAppend, useFormContext } from "react-hook-form";
 
 import sliders from "assets/sliders.svg";
+import doppler from "assets/doppler.png";
 
-import { PopulatedEnvGroup } from "./types";
+import { type PopulatedEnvGroup } from "./types";
 import Text from "components/porter/Text";
 import Spacer from "components/porter/Spacer";
 import Modal from "components/porter/Modal";
 import styled, { css } from "styled-components";
 import Button from "components/porter/Button";
-import { IterableElement } from "type-fest";
+import { type IterableElement } from "type-fest";
 
 type Props = {
   baseEnvGroups: PopulatedEnvGroup[];
@@ -50,7 +52,7 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
   }, [envGroups, baseEnvGroups]);
 
   return (
-    <Modal closeModal={() => setOpen(false)}>
+    <Modal closeModal={() => { setOpen(false); }}>
       <Text size={16}>Load env group</Text>
       <Spacer height="15px" />
       <ColumnContainer>
@@ -60,7 +62,7 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
               <Text color="helper">
                 Select an Env Group to load into your application.
               </Text>
-              <Spacer y={0.5} />
+              <Spacer y={1} />
               <GroupModalSections>
                 <SidebarSection $expanded={!selectedEnvGroup}>
                   <EnvGroupList>
@@ -72,9 +74,15 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
                           selectedEnvGroup?.name === eg.name
                         }
                         lastItem={i === remainingEnvGroupOptions?.length - 1}
-                        onClick={() => setSelectedEnvGroup(eg)}
+                        onClick={() => {
+                          setSelectedEnvGroup(eg);
+                        }}
                       >
+                        {eg.type === "doppler" ? (
+                          <img src={doppler} />
+                            ) : (
                         <img src={sliders} />
+                        )}
                         {eg.name}
                       </EnvGroupRow>
                     ))}
@@ -114,11 +122,9 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
           )}
         </ScrollableContainer>
       </ColumnContainer>
-      <SubmitButtonContainer>
-        <Button onClick={onSubmit} disabled={!selectedEnvGroup}>
-          Load Env Group
-        </Button>
-      </SubmitButtonContainer>
+      <Button onClick={onSubmit} disabled={!selectedEnvGroup}>
+        Load env group
+      </Button>
     </Modal>
   );
 };
@@ -182,7 +188,6 @@ const GroupEnvPreview = styled.pre`
   }
 `;
 const GroupModalSections = styled.div`
-  margin-top: 20px;
   width: 100%;
   height: 100%;
   display: grid;
@@ -200,9 +205,4 @@ const ScrollableContainer = styled.div`
   flex: 1;
   overflow-y: auto;
   max-height: 300px;
-`;
-
-const SubmitButtonContainer = styled.div`
-  margin-top: 10px;
-  text-align: right;
 `;

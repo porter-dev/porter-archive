@@ -11,14 +11,14 @@ import ExpandableEnvGroup from "./ExpandableEnvGroup";
 import {
   PopulatedEnvGroup,
   PartialEnvGroup,
-  NewPopulatedEnvGroup,
+  type NewPopulatedEnvGroup,
 } from "../../../../../components/porter-form/types";
 import _, { isObject, differenceBy, omit } from "lodash";
 import api from "../../../../../shared/api";
 import { Context } from "../../../../../shared/Context";
 import yaml from "js-yaml";
 
-interface EnvVariablesTabProps {
+type EnvVariablesTabProps = {
   envVars: any;
   setEnvVars: (x: any) => void;
   status: React.ReactNode;
@@ -80,7 +80,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
             cluster_id: currentCluster.id,
           }
         )
-        .then((res) => res?.data?.environment_groups);
+        .then((res) => res?.data?.environmentGroups);
     } catch (error) {
       return;
     }
@@ -95,7 +95,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
       );
       setSyncedEnvGroups(filteredEnvGroups);
     } catch (error) {
-      return;
+      
     }
   };
 
@@ -127,12 +127,12 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
 
       <>
         <TooltipWrapper
-          onMouseOver={() => setHovered(true)}
-          onMouseOut={() => setHovered(false)}
+          onMouseOver={() => { setHovered(true); }}
+          onMouseOut={() => { setHovered(false); }}
         >
           <LoadButton
             disabled={maxEnvGroupsReached}
-            onClick={() => !maxEnvGroupsReached && setShowEnvModal(true)}
+            onClick={() => { !maxEnvGroupsReached && setShowEnvModal(true); }}
           >
             <img src={sliders} /> Load from Env Group
           </LoadButton>
@@ -150,7 +150,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
               setEnvVars(x);
             }}
             values={envVars}
-            closeModal={() => setShowEnvModal(false)}
+            closeModal={() => { setShowEnvModal(false); }}
             syncedEnvGroups={syncedEnvGroups}
             setSyncedEnvGroups={setSyncedEnvGroups}
             namespace={appData.chart.namespace}

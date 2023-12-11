@@ -8,7 +8,8 @@ import Spacer from "components/porter/Spacer";
 import DynamicLink from "components/DynamicLink";
 import Text from "components/porter/Text";
 import Icon from "components/porter/Icon";
-import Container from "components/porter/Container";
+import CopyToClipboard from "components/CopyToClipboard";
+import copy from "assets/copy-left.svg"
 
 type Props = {
     envData: any;
@@ -63,10 +64,31 @@ const EnvTab: React.FC<Props> = ({ envData
                 }
             />
             <Spacer y={1} />
+            {
+                envData?.connection_string &&
+                <>
+                    <Text size={16}>Connection String</Text>
+                    <Spacer y={.5} />
+                    <IdContainer>
+                        <ConnectionContainer>
+
+                            <IconWithName>Connection String: </IconWithName>
+                            <CopyContainer>
+                                <IdText> {"sshdsfadsfadsfadsf"}</IdText>
+                                <CopyToClipboard text={envData?.connection_string.toString()}>
+                                    <CopyIcon src={copy} alt="copy" />
+                                </CopyToClipboard>
+                            </CopyContainer>
+                        </ConnectionContainer>
+                    </IdContainer>
+                </>
+
+            }
 
             {envData?.linked_applications &&
                 <><Text size={16}> Linked Applications</Text><Spacer y={.5} /></>
             }
+
             {envData?.linked_applications.map((appName: string) => {
                 return (
                     <StyledCard>
@@ -206,4 +228,57 @@ const ActionButton = styled(DynamicLink)`
   > span {
     font-size: 20px;
   }
+`;
+
+
+const IdContainer = styled.div`
+    color: #aaaabb;
+    border-radius: 5px;
+    padding: 5px;
+    padding-left: 10px;
+    display: block;
+    width: 100%;
+    border-radius: 5px;
+    background: ${(props) => props.theme.fg};
+    border: 1px solid ${({ theme }) => theme.border};
+    margin-bottom: 10px;
+    margin-top: 5px;
+`;
+
+// const BoxContainer = styled.div`
+// color: #aaaabb;
+// border-radius: 5px;
+// background: ${({ theme }) => theme.fg}};
+// border: 1px solid ${({ theme }) => theme.border};
+// `;
+
+const ConnectionContainer = styled.div`
+  padding: 5px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+`;
+
+const IconWithName = styled.span`
+  font-size: 0.8em;
+  margin-left: 10px;
+`;
+
+const CopyContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+`;
+
+const IdText = styled.span`
+  font-size: 0.8em;
+  margin-right: 5px;
+`;
+
+const CopyIcon = styled.img`
+  cursor: pointer;
+  margin-left: 5px;
+  margin-right: 5px;
+  width: 10px;
+  height: 10px;
 `;

@@ -22,12 +22,14 @@ import { withRouter, type RouteComponentProps } from "react-router";
 import { z } from "zod";
 import DatabaseHeader from "./DatabaseHeader";
 import DatabaseTabs from "./DatabaseTabs";
+import Loading from "components/Loading";
 
 
 type Props = RouteComponentProps;
 
 const DatabaseView: React.FC<Props> = ({ match }) => {
     const [dbData, setDbData] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
     const params = useMemo(() => {
         const { params } = match;
         const validParams = z
@@ -50,6 +52,7 @@ const DatabaseView: React.FC<Props> = ({ match }) => {
     }, [match]);
 
     useEffect(() => {
+        setIsLoading(true)
         //get api
         const data = {
             "name": "my-redis",
@@ -111,22 +114,26 @@ const DatabaseView: React.FC<Props> = ({ match }) => {
                 "linked_applications": [
                     "django"
                 ]
-            }
+            },
+            "connection_string": "server=ServerName;Database=DatabaseName;Trusted_Connection=True;"
         }
         setDbData(data);
+        setIsLoading(false);
     }, [])
 
 
     return (
         <>
-            {/* {!isLoading && appData == null && ( */}
-            <StyledExpandedDB>
-                <Back to="/databases" />
-                <DatabaseHeader dbData={dbData} />
-                <Spacer y={1} />
-                <DatabaseTabs tabParam={params.tab} dbData={dbData} />
-            </StyledExpandedDB>
-            {/* )} */}
+            {(isLoading || dbData == null) ?
+                <Loading />
+                :
+                <StyledExpandedDB>
+                    <Back to="/databases" />
+                    <DatabaseHeader dbData={dbData} />
+                    <Spacer y={1} />
+                    <DatabaseTabs tabParam={params.tab} dbData={dbData} />
+                </StyledExpandedDB>
+            }
         </>
     );
 };

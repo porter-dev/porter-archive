@@ -24,7 +24,7 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-// AppNotifications handles requests to the /apps/{porter_app_name}/notifications endpoint
+// AppNotificationsHandler handles requests to the /apps/{porter_app_name}/notifications endpoint
 type AppNotificationsHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter

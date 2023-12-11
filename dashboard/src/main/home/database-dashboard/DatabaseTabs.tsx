@@ -91,7 +91,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, dbData, goBack }) => {
         }} /><Spacer y={1} />
       {match(currentTab)
         .with("environment", () => (
-          <EnvTab envData={dbData?.env} />
+          <EnvTab envData={dbData?.env} connectionString={dbData.connection_string} />
         ))
         .with("settings", () => <Settings dbData={dbData} goBack={goBack} />)
         .with("metrics", () => <MetricsTab />)

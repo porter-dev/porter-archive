@@ -13,6 +13,7 @@ import copy from "assets/copy-left.svg"
 
 type Props = {
     envData: any;
+    connectionString?: string;
 };
 
 export type KeyValueType = {
@@ -23,7 +24,7 @@ export type KeyValueType = {
     deleted: boolean;
 };
 
-const EnvTab: React.FC<Props> = ({ envData
+const EnvTab: React.FC<Props> = ({ envData, connectionString
 }) => {
 
     const setKeys = (): KeyValueType[] => {
@@ -47,8 +48,6 @@ const EnvTab: React.FC<Props> = ({ envData
 
     return (
         <StyledTemplateComponent>
-
-
             <Text size={16}> Env Group </Text>
             <Spacer y={.5} />
             <Text size={14} color="helper"> {envData?.name}</Text>
@@ -65,7 +64,7 @@ const EnvTab: React.FC<Props> = ({ envData
             />
             <Spacer y={1} />
             {
-                envData?.connection_string &&
+                connectionString &&
                 <>
                     <Text size={16}>Connection String</Text>
                     <Spacer y={.5} />
@@ -74,13 +73,14 @@ const EnvTab: React.FC<Props> = ({ envData
 
                             <IconWithName>Connection String: </IconWithName>
                             <CopyContainer>
-                                <IdText> {"sshdsfadsfadsfadsf"}</IdText>
-                                <CopyToClipboard text={envData?.connection_string.toString()}>
+                                <IdText> {connectionString}</IdText>
+                                <CopyToClipboard text={connectionString.toString()}>
                                     <CopyIcon src={copy} alt="copy" />
                                 </CopyToClipboard>
                             </CopyContainer>
                         </ConnectionContainer>
                     </IdContainer>
+                    <Spacer y={1} />
                 </>
 
             }
@@ -242,7 +242,6 @@ const IdContainer = styled.div`
     background: ${(props) => props.theme.fg};
     border: 1px solid ${({ theme }) => theme.border};
     margin-bottom: 10px;
-    margin-top: 5px;
 `;
 
 // const BoxContainer = styled.div`

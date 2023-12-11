@@ -15,7 +15,7 @@ import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Error from "components/porter/Error";
 import Link from "components/porter/Link";
-import Select from "components/porter/Select";
+import Selector from "components/porter/Selector";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
@@ -45,6 +45,7 @@ import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 import web from "assets/web.png";
 
+import CreateDeploymentTargetModal from "../../../../components/CreateDeploymentTargetModal";
 import ImageSettings from "../image-settings/ImageSettings";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import SourceSelector from "../new-app-flow/SourceSelector";
@@ -204,8 +205,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   });
   const { defaultDeploymentTarget, isDefaultDeploymentTargetLoading } =
     useDefaultDeploymentTarget();
-  const { deploymentTargetList } = useDeploymentTargetList({ preview: false });
+  const { deploymentTargetList, refetchDeploymentTargetList } =
+    useDeploymentTargetList({ preview: false });
   const [deploymentTargetID, setDeploymentTargetID] = React.useState("");
+  const [showCreateDeploymentTargetModal, setShowCreateDeploymentTargetModal] =
+    React.useState(false);
   const { updateAppStep } = useAppAnalytics();
   const { validateApp } = useAppValidation({
     deploymentTargetID,
@@ -617,8 +621,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     {currentProject?.managed_deployment_targets_enabled && (
                       <>
                         <Spacer y={1} />
-                        <Select
-                          value={deploymentTargetID}
+                        <Selector<string>
+                          activeValue={deploymentTargetID}
                           width="300px"
                           options={deploymentTargetList.map(
                             (target: DeploymentTarget) => {
@@ -628,8 +632,14 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               };
                             }
                           )}
-                          setValue={(value) => {
+                          setActiveValue={(value: string) => {
                             setDeploymentTargetID(value);
+                          }}
+                          createNew={{
+                            openModal: () => {
+                              setShowCreateDeploymentTargetModal(true);
+                            },
+                            label: "Create new deployment target",
                           }}
                           label={"Deployment Target"}
                         />
@@ -838,7 +848,22 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
           deploymentError={deployError}
           porterYamlPath={source.porter_yaml_path}
-          redirectPath={currentProject.managed_deployment_targets_enabled ? `/apps/${name.value}?target=${deploymentTargetID}` : `/apps/${name.value}`}
+          redirectPath={
+            currentProject.managed_deployment_targets_enabled
+              ? `/apps/${name.value}?target=${deploymentTargetID}`
+              : `/apps/${name.value}`
+          }
+        />
+      )}
+      {showCreateDeploymentTargetModal && (
+        <CreateDeploymentTargetModal
+          closeModal={() => {
+            setShowCreateDeploymentTargetModal(false);
+          }}
+          setDeploymentTargetID={(x: string) => {
+            setDeploymentTargetID(x);
+            refetchDeploymentTargetList();
+          }}
         />
       )}
     </CenterWrapper>

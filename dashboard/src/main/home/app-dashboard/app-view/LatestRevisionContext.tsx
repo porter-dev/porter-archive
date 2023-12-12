@@ -57,6 +57,7 @@ type LatestRevisionContextType = {
   appEnv?: PopulatedEnvGroup;
   setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
   latestClientServices: ClientService[];
+  loading: boolean;
 };
 
 const LatestRevisionContext = createContext<LatestRevisionContextType | null>(
@@ -75,11 +76,13 @@ export const useLatestRevision = (): LatestRevisionContextType => {
 
 type LatestRevisionProviderProps = {
   appName?: string;
+  showLoader?: boolean;
   children: JSX.Element;
 };
 
 export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
   appName,
+  showLoader = true,
   children,
 }) => {
   const [previewRevision, setPreviewRevision] = useState<AppRevision | null>(
@@ -307,12 +310,16 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
     );
   }, [latestPorterAppNotifications, latestClientServices]);
 
-  if (
+  const loading =
     status === "loading" ||
     porterAppStatus === "loading" ||
     !appParamsExist ||
-    porterYamlLoading
-  ) {
+    porterYamlLoading;
+
+  if (loading) {
+    if (!showLoader) {
+      return null;
+    }
     return <Loading />;
   }
 
@@ -354,6 +361,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
         setPreviewRevision,
         latestClientServices,
         appName,
+        loading,
       }}
     >
       {children}

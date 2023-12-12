@@ -308,11 +308,11 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           build: clientBuildToProto(app.build),
           ...(predeploy && {
             predeploy: serviceProto(serializeService(predeploy)),
-            helmOverrides:
-              app.helmOverrides != null
-                ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
-                : undefined,
           }),
+          helmOverrides:
+            app.helmOverrides != null
+              ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
+              : undefined,
           efsStorage: new EFS({
             enabled: app.efsStorage.enabled,
           }),

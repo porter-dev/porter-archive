@@ -83,6 +83,7 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 			return
 		}
 
+		// TODO (POR-2170): remove this database call once endpoint is deprecated
 		revision, err := c.Repo().AppRevision().AppRevisionByInstanceIDAndRevisionNumber(project.ID, appInstance.Id, version)
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error getting app revision by instance id and revision number")

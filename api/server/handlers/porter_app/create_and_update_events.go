@@ -47,18 +47,6 @@ func (p *CreateUpdatePorterAppEventHandler) ServeHTTP(w http.ResponseWriter, r *
 	user, _ := ctx.Value(types.UserScope).(*models.User)
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	if project == nil {
-		e := telemetry.Error(ctx, span, nil, "project not found")
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusNotFound))
-		return
-	}
-
-	if cluster == nil {
-		e := telemetry.Error(ctx, span, nil, "cluster not found")
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusNotFound))
-		return
-	}
-
 	request := &types.CreateOrUpdatePorterAppEventRequest{}
 	if ok := p.DecodeAndValidate(w, r, request); !ok {
 		e := telemetry.Error(ctx, span, nil, "error decoding request")

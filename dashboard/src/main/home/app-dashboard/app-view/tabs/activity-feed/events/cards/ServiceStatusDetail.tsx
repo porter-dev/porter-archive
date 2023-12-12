@@ -41,7 +41,8 @@ const ServiceStatusDetail: React.FC<Props> = ({
   revisionId,
   revisionNumber,
 }) => {
-  const { latestClientServices, latestNotifications } = useLatestRevision();
+  const { latestClientServices, latestClientNotifications } =
+    useLatestRevision();
   const convertEventStatusToCopy = (status: string): string => {
     switch (status) {
       case "PROGRESSING":
@@ -72,7 +73,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
             service.config.domains.length
               ? service.config.domains[0].name.value
               : "";
-          const notificationsExistForService = latestNotifications
+          const notificationsExistForService = latestClientNotifications
             .filter(isClientServiceNotification)
             .some(
               (n) =>

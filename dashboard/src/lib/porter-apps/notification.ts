@@ -6,6 +6,10 @@ import {
   type PorterAppNotification,
 } from "main/home/app-dashboard/app-view/tabs/activity-feed/events/types";
 
+import {
+  ERROR_CODE_APPLICATION_ROLLBACK,
+  ERROR_CODE_APPLICATION_ROLLBACK_FAILED,
+} from "./error";
 import { type ClientService } from "./services";
 
 type BaseClientNotification = {
@@ -132,7 +136,9 @@ const clientRevisionNotifications = (
       messages,
       appRevisionId,
       isRollbackRelated: messages.some(
-        (m) => m.error.code === 91 || m.error.code === 92
+        (m) =>
+          m.error.code === ERROR_CODE_APPLICATION_ROLLBACK ||
+          m.error.code === ERROR_CODE_APPLICATION_ROLLBACK_FAILED
       ),
     },
   ];

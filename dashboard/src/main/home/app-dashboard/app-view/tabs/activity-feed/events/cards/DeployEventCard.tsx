@@ -66,7 +66,7 @@ const DeployEventCard: React.FC<Props> = ({
     projectId,
     clusterId,
   });
-  const { latestRevision, porterApp, latestNotifications } =
+  const { latestRevision, porterApp, latestClientNotifications } =
     useLatestRevision();
 
   const isRevertable = useMemo(() => {
@@ -99,10 +99,10 @@ const DeployEventCard: React.FC<Props> = ({
   ]);
 
   const revisionNotificationsExist = useMemo(() => {
-    return latestNotifications
+    return latestClientNotifications
       .filter(isClientRevisionNotification)
       .some((n) => n.appRevisionId === event.metadata.app_revision_id);
-  }, [JSON.stringify(latestNotifications)]);
+  }, [JSON.stringify(latestClientNotifications)]);
 
   const onRevert = useCallback(async (id: string) => {
     try {
@@ -300,10 +300,7 @@ const DeployEventCard: React.FC<Props> = ({
             <>
               <Spacer inline x={0.5} />
               <Tag borderColor="#FFBF00">
-                <Link
-                  to={`/apps/${appName}/notifications?revision_id=${event.metadata.app_revision_id}`}
-                  color={"#FFBF00"}
-                >
+                <Link to={`/apps/${appName}/notifications`} color={"#FFBF00"}>
                   <TagIcon src={alert} />
                   Notifications
                 </Link>

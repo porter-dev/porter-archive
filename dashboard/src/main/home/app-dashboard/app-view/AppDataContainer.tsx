@@ -112,7 +112,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     servicesFromYaml,
     appEnv,
     setPreviewRevision,
-    latestNotifications,
+    latestClientNotifications,
   } = useLatestRevision();
   const { validateApp, setServiceDeletions } = useAppValidation({
     deploymentTargetID: deploymentTarget.id,
@@ -472,7 +472,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [isSubmitting, JSON.stringify(errors)]);
 
   const tabs = useMemo(() => {
-    const numNotifications = latestNotifications.length;
+    const numNotifications = latestClientNotifications.length;
 
     const base = [
       {
@@ -534,7 +534,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [
     deploymentTarget.is_preview,
     latestProto.build,
-    latestNotifications.length,
+    latestClientNotifications.length,
   ]);
 
   const formattedPath = (

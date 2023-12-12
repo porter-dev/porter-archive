@@ -49,8 +49,8 @@ type LatestRevisionContextType = {
   porterApp: PorterAppRecord;
   latestRevision: AppRevision;
   latestProto: PorterApp;
-  latestNotifications: ClientNotification[];
-  latestPorterAppNotifications: PorterAppNotification[];
+  latestClientNotifications: ClientNotification[];
+  latestSerializedNotifications: PorterAppNotification[];
   servicesFromYaml: DetectedServices | null;
   clusterId: number;
   projectId: number;
@@ -163,7 +163,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
     }
   );
 
-  const { data: { notifications: latestPorterAppNotifications = [] } = {} } =
+  const { data: { notifications: latestSerializedNotifications = [] } = {} } =
     useQuery(
       [
         "appNotifications",
@@ -304,17 +304,17 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
     ].filter(valueExists);
   }, [latestProto, detectedServices]);
 
-  const latestNotifications = useMemo(() => {
+  const latestClientNotifications = useMemo(() => {
     if (!latestRevision) {
       return [];
     }
 
     return deserializeNotifications(
-      latestPorterAppNotifications,
+      latestSerializedNotifications,
       latestClientServices,
       latestRevision.id
     );
-  }, [latestPorterAppNotifications, latestClientServices, latestRevision]);
+  }, [latestSerializedNotifications, latestClientServices, latestRevision]);
 
   if (
     status === "loading" ||
@@ -351,8 +351,8 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
       value={{
         latestRevision,
         latestProto,
-        latestNotifications,
-        latestPorterAppNotifications,
+        latestClientNotifications,
+        latestSerializedNotifications,
         porterApp,
         clusterId: currentCluster.id,
         projectId: currentProject.id,

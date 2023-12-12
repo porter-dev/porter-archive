@@ -23,8 +23,8 @@ export type ClientServiceNotification = BaseClientNotification & {
 
 export type ClientRevisionNotification = BaseClientNotification & {
   scope: "REVISION";
-  isDeployRelated: boolean;
   appRevisionId: string;
+  isRollbackRelated: boolean;
 };
 
 type ClientApplicationNotification = BaseClientNotification & {
@@ -49,14 +49,19 @@ export const isClientRevisionNotification = (
 
 export function deserializeNotifications(
   notifications: PorterAppNotification[],
-  clientServices: ClientService[]
+  latestClientServices: ClientService[],
+  latestRevisionId: string
 ): ClientNotification[] {
   const revisionNotifications = orderNotificationsByTimestamp(
     clientRevisionNotifications(notifications),
     "asc"
   );
   const serviceNotifications = orderNotificationsByTimestamp(
-    clientServiceNotifications(notifications, clientServices),
+    clientServiceNotifications(
+      notifications,
+      latestClientServices,
+      latestRevisionId
+    ),
     "asc"
   );
 
@@ -65,16 +70,19 @@ export function deserializeNotifications(
 
 const clientServiceNotifications = (
   notifications: PorterAppNotification[],
-  clientServices: ClientService[]
+  latestClientServices: ClientService[],
+  latestRevisionId: string
 ): ClientServiceNotification[] => {
-  const serviceNotifications = notifications.filter(isServiceNotification);
+  const serviceNotifications = notifications
+    .filter((n) => n.app_revision_id === latestRevisionId)
+    .filter(isServiceNotification);
 
   const notificationsGroupedByService = _.groupBy(
     serviceNotifications,
     (notification) => notification.metadata.service_name
   );
 
-  return clientServices
+  return latestClientServices
     .filter((svc) => notificationsGroupedByService[svc.name.value] != null)
     .map((svc) => {
       const serviceName = svc.name.value;
@@ -121,9 +129,11 @@ const clientRevisionNotifications = (
       scope: "REVISION",
       id,
       timestamp,
-      isDeployRelated: true,
       messages,
       appRevisionId,
+      isRollbackRelated: messages.some(
+        (m) => m.error.code === 91 || m.error.code === 92
+      ),
     },
   ];
 };

@@ -2,13 +2,13 @@ import React, { useMemo } from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Container from "components/porter/Container";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 
 import { type PorterAppEvent } from "../types";
 import BuildEventCard from "./BuildEventCard";
 import DeployEventCard from "./DeployEventCard";
 import PreDeployEventCard from "./PreDeployEventCard";
+import RollbackEventCard from "./RollbackEventCard";
 
 type Props = {
   event: PorterAppEvent;
@@ -132,13 +132,11 @@ const EventCard: React.FC<Props> = ({
       />
     ))
     .with({ type: "AUTO_ROLLBACK" }, (ev) => (
-      <StyledEventCard>
-        <Container>
-          Deployment failed, rolling back to{" "}
-          <Code>{ev.metadata.image_tag}</Code>, revision ID:{" "}
-          <Code>{ev.metadata.app_revision_id}</Code>
-        </Container>
-      </StyledEventCard>
+      <RollbackEventCard
+        event={ev}
+        gitCommitUrl={gitCommitUrl}
+        displayCommitSha={displayCommitSha}
+      />
     ))
     .exhaustive();
 };

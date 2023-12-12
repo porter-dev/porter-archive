@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import dayjs from "dayjs";
+import { match } from "ts-pattern";
 
 import Button from "components/porter/Button";
 import CollapsibleContainer from "components/porter/CollapsibleContainer";
@@ -15,10 +16,17 @@ import { type ClientService } from "lib/porter-apps/services";
 import { feedDate } from "shared/string_utils";
 import chat from "assets/chat.svg";
 import document from "assets/document.svg";
+import job from "assets/job.png";
 import time from "assets/time.svg";
+import web from "assets/web.png";
+import worker from "assets/worker.png";
 
 import { type PorterAppServiceNotification } from "../../../activity-feed/events/types";
 import { Message, NotificationWrapper } from "../NotificationExpandedView";
+import {
+  ServiceNameTag,
+  ServiceTypeIcon,
+} from "../ServiceNotificationExpandedView";
 
 type Props = {
   message: PorterAppServiceNotification;
@@ -31,6 +39,7 @@ type Props = {
   appId: number;
   appRevisionId: string;
   showLiveLogs: boolean;
+  includeServiceNameHeader: boolean;
 };
 
 const ServiceMessage: React.FC<Props> = ({
@@ -44,6 +53,7 @@ const ServiceMessage: React.FC<Props> = ({
   appId,
   appRevisionId,
   showLiveLogs,
+  includeServiceNameHeader,
 }) => {
   const { showIntercomWithMessage } = useIntercom();
   const [logsVisible, setLogsVisible] = useState<boolean>(isFirst);
@@ -57,6 +67,23 @@ const ServiceMessage: React.FC<Props> = ({
   return (
     <NotificationWrapper>
       <Message>
+        {includeServiceNameHeader && (
+          <>
+            <Container row spaced>
+              <ServiceNameTag>
+                {match(service.config.type)
+                  .with("web", () => <ServiceTypeIcon src={web} />)
+                  .with("worker", () => <ServiceTypeIcon src={worker} />)
+                  .with("job", () => <ServiceTypeIcon src={job} />)
+                  .with("predeploy", () => <ServiceTypeIcon src={job} />)
+                  .exhaustive()}
+                <Spacer inline x={0.5} />
+                {service.name.value}
+              </ServiceNameTag>
+            </Container>
+            <Spacer y={0.5} />
+          </>
+        )}
         <Container row spaced>
           <Container row>
             <img

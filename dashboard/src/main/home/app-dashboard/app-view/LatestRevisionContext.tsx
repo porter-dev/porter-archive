@@ -40,13 +40,17 @@ import {
   type PopulatedEnvGroup,
 } from "../validate-apply/app-settings/types";
 import { porterAppValidator, type PorterAppRecord } from "./AppView";
-import { porterAppNotificationEventMetadataValidator } from "./tabs/activity-feed/events/types";
+import {
+  porterAppNotificationEventMetadataValidator,
+  type PorterAppNotification,
+} from "./tabs/activity-feed/events/types";
 
 type LatestRevisionContextType = {
   porterApp: PorterAppRecord;
   latestRevision: AppRevision;
   latestProto: PorterApp;
   latestNotifications: ClientNotification[];
+  latestPorterAppNotifications: PorterAppNotification[];
   servicesFromYaml: DetectedServices | null;
   clusterId: number;
   projectId: number;
@@ -301,11 +305,16 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
   }, [latestProto, detectedServices]);
 
   const latestNotifications = useMemo(() => {
+    if (!latestRevision) {
+      return [];
+    }
+
     return deserializeNotifications(
       latestPorterAppNotifications,
-      latestClientServices
+      latestClientServices,
+      latestRevision.id
     );
-  }, [latestPorterAppNotifications, latestClientServices]);
+  }, [latestPorterAppNotifications, latestClientServices, latestRevision]);
 
   if (
     status === "loading" ||
@@ -343,6 +352,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
         latestRevision,
         latestProto,
         latestNotifications,
+        latestPorterAppNotifications,
         porterApp,
         clusterId: currentCluster.id,
         projectId: currentProject.id,

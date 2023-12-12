@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useMemo } from "react";
+import { PorterApp } from "@porter-dev/api-contracts";
 import styled from "styled-components";
 
 import Button from "components/porter/Button";
@@ -6,14 +7,27 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { useIntercom } from "lib/hooks/useIntercom";
-import { type ClientRevisionNotification } from "lib/porter-apps/notification";
+import { useRevisionList } from "lib/hooks/useRevisionList";
+import { clientAppFromProto } from "lib/porter-apps";
+import { ERROR_CODE_TO_SUMMARY } from "lib/porter-apps/error";
+import {
+  deserializeNotifications,
+  isClientServiceNotification,
+  type ClientRevisionNotification,
+} from "lib/porter-apps/notification";
 
 import { feedDate } from "shared/string_utils";
+import { valueExists } from "shared/util";
 import chat from "assets/chat.svg";
 import document from "assets/document.svg";
 import time from "assets/time.svg";
 
-import { isRevisionNotification } from "../../activity-feed/events/types";
+import { useLatestRevision } from "../../../LatestRevisionContext";
+import {
+  isRevisionNotification,
+  isServiceNotification,
+} from "../../activity-feed/events/types";
+import ServiceMessage from "./messages/ServiceMessage";
 import {
   ExpandedViewContent,
   Message,
@@ -26,14 +40,79 @@ type Props = {
   notification: ClientRevisionNotification;
   projectId: number;
   appName: string;
+  deploymentTargetId: string;
+  clusterId: number;
+  appId: number;
 };
 
 const RevisionNotificationExpandedView: React.FC<Props> = ({
   notification,
   projectId,
   appName,
+  deploymentTargetId,
+  clusterId,
+  appId,
 }) => {
   const { showIntercomWithMessage } = useIntercom();
+
+  const summary = useMemo(() => {
+    return notification.messages.length &&
+      ERROR_CODE_TO_SUMMARY[notification.messages[0].error.code]
+      ? ERROR_CODE_TO_SUMMARY[notification.messages[0].error.code]
+      : "The latest version failed to deploy";
+  }, [JSON.stringify(notification)]);
+
+  const { revisionList } = useRevisionList({
+    appName,
+    deploymentTargetId,
+    projectId,
+    clusterId,
+  });
+
+  const { latestPorterAppNotifications } = useLatestRevision();
+
+  const rollbackClientServiceNotifications = useMemo(() => {
+    if (!notification.isRollbackRelated) {
+      return [];
+    }
+
+    const rollbackSourceRevision = revisionList.find(
+      (r) => r.id === notification.appRevisionId
+    );
+    if (!rollbackSourceRevision) {
+      return [];
+    }
+
+    const rollbackProto = PorterApp.fromJsonString(
+      atob(rollbackSourceRevision.b64_app_proto),
+      {
+        ignoreUnknownFields: true,
+      }
+    );
+
+    const rollbackApp = clientAppFromProto({
+      proto: rollbackProto,
+      overrides: null,
+    });
+    const rollbackClientServices = [
+      ...rollbackApp.services,
+      rollbackApp.predeploy?.length ? rollbackApp.predeploy[0] : undefined,
+    ].filter(valueExists);
+
+    const rollbackClientNotifications = deserializeNotifications(
+      latestPorterAppNotifications,
+      rollbackClientServices,
+      rollbackSourceRevision.id
+    );
+
+    return rollbackClientNotifications
+      .filter(isClientServiceNotification)
+      .filter((n) => n.isDeployRelated);
+  }, [
+    JSON.stringify(notification),
+    JSON.stringify(revisionList),
+    JSON.stringify(latestPorterAppNotifications),
+  ]);
 
   return (
     <StyledNotificationExpandedView>
@@ -41,7 +120,7 @@ const RevisionNotificationExpandedView: React.FC<Props> = ({
         <Container row spaced>
           <Container row>
             <Text size={16} color={"#FFBF00"}>
-              The latest version failed to deploy
+              {summary}
             </Text>
           </Container>
         </Container>
@@ -131,6 +210,31 @@ const RevisionNotificationExpandedView: React.FC<Props> = ({
             })}
         </StyledMessageFeed>
         <Spacer y={1} />
+        {rollbackClientServiceNotifications.map((notification) => (
+          <div key={notification.id}>
+            <Spacer y={0.5} />
+            <StyledMessageFeed>
+              {notification.messages
+                .filter(isServiceNotification)
+                .map((message, i) => (
+                  <ServiceMessage
+                    key={i}
+                    isFirst={i === 0}
+                    message={message}
+                    service={notification.service}
+                    projectId={projectId}
+                    clusterId={clusterId}
+                    appName={appName}
+                    deploymentTargetId={deploymentTargetId}
+                    appId={appId}
+                    appRevisionId={notification.appRevisionId}
+                    showLiveLogs={false} // do not show live logs because the deployment is already rolled back
+                    includeServiceNameHeader={true}
+                  />
+                ))}
+            </StyledMessageFeed>
+          </div>
+        ))}
       </ExpandedViewContent>
     </StyledNotificationExpandedView>
   );

@@ -148,7 +148,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                           target={"_blank"}
                           showTargetBlankIcon={false}
                         >
-                          <TagIcon src={link} />
+                          <TagIcon src={link} height={"10px"} />
                           External link
                         </Link>
                       </Tag>
@@ -189,7 +189,7 @@ const ServiceStatusTableData = styled.td<{
   ${(props) => props.width && `width: ${props.width};`}
 `;
 
-const TagIcon = styled.img`
-  height: 12px;
+const TagIcon = styled.img<{ height?: string }>`
+  height: ${(props) => props.height ?? "12px"};
   margin-right: 3px;
 `;

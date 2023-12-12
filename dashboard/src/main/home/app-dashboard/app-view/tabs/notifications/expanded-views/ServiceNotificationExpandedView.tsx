@@ -94,6 +94,7 @@ const ServiceNotificationExpandedView: React.FC<Props> = ({
                 appId={appId}
                 appRevisionId={notification.appRevisionId}
                 showLiveLogs={notification.isDeployRelated}
+                includeServiceNameHeader={false}
               />
             ))}
         </StyledMessageFeed>
@@ -105,7 +106,7 @@ const ServiceNotificationExpandedView: React.FC<Props> = ({
 
 export default ServiceNotificationExpandedView;
 
-const ServiceNameTag = styled.div`
+export const ServiceNameTag = styled.div`
   display: flex;
   justify-content: center;
   padding: 3px 5px;
@@ -115,7 +116,7 @@ const ServiceNameTag = styled.div`
   font-size: 16px;
 `;
 
-const ServiceTypeIcon = styled.img`
+export const ServiceTypeIcon = styled.img`
   height: 16px;
   margin-top: 2px;
 `;

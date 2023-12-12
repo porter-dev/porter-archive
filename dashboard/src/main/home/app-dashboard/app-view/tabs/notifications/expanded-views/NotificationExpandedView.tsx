@@ -40,6 +40,9 @@ const NotificationExpandedView: React.FC<Props> = ({
         notification={n}
         projectId={projectId}
         appName={appName}
+        deploymentTargetId={deploymentTargetId}
+        clusterId={clusterId}
+        appId={appId}
       />
     ))
     .with({ scope: "APPLICATION" }, () => null) // not implemented yet

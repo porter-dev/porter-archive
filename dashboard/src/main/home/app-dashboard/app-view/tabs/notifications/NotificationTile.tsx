@@ -6,6 +6,7 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
+import { ERROR_CODE_TO_SUMMARY } from "lib/porter-apps/error";
 import {
   isClientServiceNotification,
   type ClientNotification,
@@ -25,7 +26,10 @@ const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
   const summary = useMemo(() => {
     return match(notification)
       .with({ scope: "REVISION" }, () => {
-        return "The latest version failed to deploy";
+        return notification.messages.length &&
+          ERROR_CODE_TO_SUMMARY[notification.messages[0].error.code]
+          ? ERROR_CODE_TO_SUMMARY[notification.messages[0].error.code]
+          : "The latest version failed to deploy";
       })
       .with({ scope: "SERVICE" }, (n) => {
         return n.isDeployRelated

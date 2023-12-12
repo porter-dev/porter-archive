@@ -300,7 +300,10 @@ const DeployEventCard: React.FC<Props> = ({
             <>
               <Spacer inline x={0.5} />
               <Tag borderColor="#FFBF00">
-                <Link to={`/apps/${appName}/notifications`} color={"#FFBF00"}>
+                <Link
+                  to={`/apps/${appName}/notifications?revision_id=${event.metadata.app_revision_id}`}
+                  color={"#FFBF00"}
+                >
                   <TagIcon src={alert} />
                   Notifications
                 </Link>

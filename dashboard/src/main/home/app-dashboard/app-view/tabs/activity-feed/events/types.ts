@@ -193,7 +193,6 @@ export const porterAppEventValidator = z.discriminatedUnion("type", [
     id: z.string(),
     created_at: z.string(),
     updated_at: z.string(),
-    status: z.string().optional().default(""),
     type: z.literal("AUTO_ROLLBACK"),
     type_external_source: z.string().optional().default(""),
     porter_app_id: z.number(),
@@ -213,4 +212,7 @@ export type PorterAppPreDeployEvent = PorterAppEvent & { type: "PRE_DEPLOY" };
 export type PorterAppAppEvent = PorterAppEvent & { type: "APP_EVENT" };
 export type PorterAppNotificationEvent = PorterAppEvent & {
   type: "NOTIFICATION";
+};
+export type PorterAppRollbackEvent = PorterAppEvent & {
+  type: "AUTO_ROLLBACK";
 };

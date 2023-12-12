@@ -243,7 +243,7 @@ export const useClusterResourceLimits = ({
             (a, b) =>
               new Date(b.CreatedAt).getTime() - new Date(a.CreatedAt).getTime()
           )[0];
-        let decodedContract = Contract.fromJsonString(
+        const decodedContract = Contract.fromJsonString(
           atob(latestContract.base64_contract)
         );
         return decodedContract.cluster;

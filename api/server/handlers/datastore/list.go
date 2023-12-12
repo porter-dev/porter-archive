@@ -114,6 +114,7 @@ func (h *ListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "datastore-name", Value: request.Name},
+		telemetry.AttributeKV{Key: "datastore-type", Value: request.Type},
 		telemetry.AttributeKV{Key: "include-env-group", Value: request.IncludeEnvGroup},
 		telemetry.AttributeKV{Key: "include-metadata", Value: request.IncludeMetadata},
 	)

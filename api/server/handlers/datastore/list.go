@@ -108,7 +108,6 @@ func (h *ListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			err := telemetry.Error(ctx, span, err, "invalid datastore type specified")
 			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
-
 		}
 	}
 

@@ -20,7 +20,7 @@ import AppTemplateForm from "./AppTemplateForm";
 
 type Props = RouteComponentProps;
 
-const SetupApp: React.FC<Props> = ({ location, history }) => {
+const SetupApp: React.FC<Props> = ({ location }) => {
   const { currentCluster, currentProject } = useContext(Context);
   const params = useMemo(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -109,14 +109,7 @@ const SetupApp: React.FC<Props> = ({ location, history }) => {
             {match(templateRes)
               .with({ status: "loading" }, () => <Loading />)
               .with({ status: "success" }, ({ data }) => {
-                return (
-                  <AppTemplateForm
-                    existingTemplate={data}
-                    onCancel={() => {
-                      history.push(`/apps/${appName}`);
-                    }}
-                  />
-                );
+                return <AppTemplateForm existingTemplate={data} />;
               })
               .otherwise(() => null)}
             <Spacer y={3} />

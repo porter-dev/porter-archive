@@ -14,7 +14,7 @@ import { ConfigurableAppList } from "./ConfigurableAppList";
 import PreviewEnvGrid from "./PreviewEnvGrid";
 
 const tabs = ["environments", "config"] as const;
-type ValidTab = (typeof tabs)[number];
+export type ValidTab = (typeof tabs)[number];
 
 const PreviewEnvs: React.FC = () => {
   const [tab, setTab] = useState<ValidTab>("environments");
@@ -29,7 +29,10 @@ const PreviewEnvs: React.FC = () => {
 
     return match(tab)
       .with("environments", () => (
-        <PreviewEnvGrid deploymentTargets={deploymentTargetList} />
+        <PreviewEnvGrid
+          deploymentTargets={deploymentTargetList}
+          setTab={setTab}
+        />
       ))
       .with("config", () => <ConfigurableAppList />)
       .exhaustive();
@@ -47,7 +50,7 @@ const PreviewEnvs: React.FC = () => {
         noBuffer
         options={[
           { label: "Environments", value: "environments" },
-          { label: "Configure Apps", value: "config" },
+          { label: "Settings", value: "config" },
         ]}
         currentTab={tab}
         setCurrentTab={(tab: string) => {

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useHistory } from "react-router";
 import styled from "styled-components";
@@ -9,25 +9,18 @@ import Button from "components/porter/Button";
 import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import {
-  appRevisionWithSourceValidator,
-  type AppRevisionWithSource,
-} from "main/home/app-dashboard/apps/types";
+import { appRevisionWithSourceValidator } from "main/home/app-dashboard/apps/types";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
 
 import { ConfigurableAppRow } from "./ConfigurableAppRow";
-import { SetupPreviewAppModal } from "./setup-app/SetupAppModal";
 
 export const ConfigurableAppList: React.FC = () => {
   const history = useHistory();
   const queryParams = new URLSearchParams(window.location.search);
 
   const { currentProject, currentCluster } = useContext(Context);
-  const [editingApp, setEditingApp] = useState<AppRevisionWithSource | null>(
-    null
-  );
 
   const { data: apps = [], status } = useQuery(
     [
@@ -102,23 +95,15 @@ export const ConfigurableAppList: React.FC = () => {
           key={a.source.id}
           setEditingApp={() => {
             queryParams.set("target", a.app_revision.deployment_target.id);
+            queryParams.set("app_name", a.source.name);
             history.push({
-              pathname: "/preview-environments",
+              pathname: "/preview-environments/configure",
               search: queryParams.toString(),
             });
-            setEditingApp(a);
           }}
           app={a}
         />
       ))}
-      {editingApp && (
-        <SetupPreviewAppModal
-          app={editingApp}
-          onClose={() => {
-            setEditingApp(null);
-          }}
-        />
-      )}
     </List>
   );
 };

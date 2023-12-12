@@ -1,4 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, {
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import _ from "lodash";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
@@ -23,12 +28,16 @@ import healthy from "assets/status-healthy.png";
 import time from "assets/time.png";
 import letter from "assets/vector.svg";
 
+import { type ValidTab } from "./PreviewEnvs";
+
 type PreviewEnvGridProps = {
   deploymentTargets: DeploymentTarget[];
+  setTab: Dispatch<SetStateAction<ValidTab>>;
 };
 
 const PreviewEnvGrid: React.FC<PreviewEnvGridProps> = ({
   deploymentTargets,
+  setTab,
 }) => {
   const [searchValue, setSearchValue] = useState("");
   const [sort, setSort] = useState<"calendar" | "letter">("calendar");
@@ -60,7 +69,7 @@ const PreviewEnvGrid: React.FC<PreviewEnvGridProps> = ({
           <Spacer y={1} />
           <Button
             onClick={() => {
-              // setTab("config");
+              setTab("config");
             }}
           >
             Configure Preview Environments

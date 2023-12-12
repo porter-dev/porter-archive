@@ -77,7 +77,7 @@ const Row = styled.div<{ isAtBottom?: boolean }>`
   padding: 15px;
   border-bottom: ${(props) =>
     props.isAtBottom ? "none" : "1px solid #494b4f"};
-  background: ${(props) => props.theme.clickable.bg};
+  background: ${({ theme }) => theme.fg};
   position: relative;
   border: 1px solid #494b4f;
   border-radius: 5px;

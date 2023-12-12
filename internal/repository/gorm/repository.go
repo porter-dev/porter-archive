@@ -248,7 +248,7 @@ func (t *GormRepository) DeploymentTarget() repository.DeploymentTargetRepositor
 	return t.deploymentTarget
 }
 
-// AppRevisiion returns the AppRevisionRepository interface implemented by gorm
+// AppRevision returns the AppRevisionRepository interface implemented by gorm
 func (t *GormRepository) AppRevision() repository.AppRevisionRepository {
 	return t.appRevision
 }

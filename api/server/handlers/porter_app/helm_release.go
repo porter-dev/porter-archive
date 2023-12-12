@@ -71,7 +71,7 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 
 	// TODO (POR-2170): Deprecate this entire endpoint in favor of v2 endpoints
 	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
-		appInstance, err := appInstanceFromAppName(ctx, deploymentTargetIDFromAppNameInput{
+		appInstance, err := appInstanceFromAppName(ctx, appInstanceFromAppNameInput{
 			ProjectID: project.ID,
 			ClusterID: cluster.ID,
 			AppName:   appName,
@@ -170,7 +170,7 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	c.WriteResult(w, r, res)
 }
 
-type deploymentTargetIDFromAppNameInput struct {
+type appInstanceFromAppNameInput struct {
 	ProjectID uint
 	ClusterID uint
 	AppName   string
@@ -181,8 +181,8 @@ type deploymentTargetIDFromAppNameInput struct {
 // It does this by getting all deployment targets in the cluster, then getting all app instances in the project,
 // then filtering the app instances by app name and non-preview deployment targets. If there is only one matching
 // app instance, then the instance is returned. Otherwise, an error is returned.
-func appInstanceFromAppName(ctx context.Context, input deploymentTargetIDFromAppNameInput) (*porterv1.AppInstance, error) {
-	ctx, span := telemetry.NewSpan(ctx, "deployment-target-id-from-app-name")
+func appInstanceFromAppName(ctx context.Context, input appInstanceFromAppNameInput) (*porterv1.AppInstance, error) {
+	ctx, span := telemetry.NewSpan(ctx, "app-instance-from-app-name")
 	defer span.End()
 
 	var appInstance *porterv1.AppInstance
@@ -203,7 +203,7 @@ func appInstanceFromAppName(ctx context.Context, input deploymentTargetIDFromApp
 	}
 
 	if listDeploymentTargetsResp.Msg == nil || listDeploymentTargetsResp.Msg.DeploymentTargets == nil {
-		return appInstance, telemetry.Error(ctx, span, err, "deployment targets response is nil")
+		return appInstance, telemetry.Error(ctx, span, nil, "deployment targets response is nil")
 	}
 
 	deploymentTargetSet := map[string]*porterv1.DeploymentTarget{}
@@ -220,7 +220,7 @@ func appInstanceFromAppName(ctx context.Context, input deploymentTargetIDFromApp
 	}
 
 	if listAppInstancesResp.Msg == nil || listAppInstancesResp.Msg.AppInstances == nil {
-		return appInstance, telemetry.Error(ctx, span, err, "app instances response is nil")
+		return appInstance, telemetry.Error(ctx, span, nil, "app instances response is nil")
 	}
 
 	var matchingAppInstances []*porterv1.AppInstance

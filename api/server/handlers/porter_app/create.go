@@ -84,7 +84,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		appInstance, err := appInstanceFromAppName(ctx, deploymentTargetIDFromAppNameInput{
+		appInstance, err := appInstanceFromAppName(ctx, appInstanceFromAppNameInput{
 			ProjectID: project.ID,
 			ClusterID: cluster.ID,
 			AppName:   appName,
@@ -615,8 +615,6 @@ func pollForRevisionNumber(ctx context.Context, input pollForRevisionNumberInput
 
 		time.Sleep(2 * time.Second)
 	}
-
-	return 0, telemetry.Error(ctx, span, nil, "should not reach here")
 }
 
 // createOldPorterAppDeployEvent creates an event for use in the activity feed

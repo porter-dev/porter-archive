@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Contract,
+  GKENodePoolType,
   LoadBalancerType,
   NodeGroupType,
   NodePoolType,
@@ -78,6 +79,7 @@ export type NodePools = {
   maxInstances: number;
   nodePoolType: string;
   isStateful?: boolean;
+  additionalTaints?: string[];
 };
 
 const clusterNodesValidator = z
@@ -241,7 +243,7 @@ export const useClusterResourceLimits = ({
             (a, b) =>
               new Date(b.CreatedAt).getTime() - new Date(a.CreatedAt).getTime()
           )[0];
-        const decodedContract = Contract.fromJsonString(
+        let decodedContract = Contract.fromJsonString(
           atob(latestContract.base64_contract)
         );
         return decodedContract.cluster;

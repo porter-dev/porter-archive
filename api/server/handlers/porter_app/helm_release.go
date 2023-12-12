@@ -71,14 +71,7 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 
 	// TODO (POR-2170): Deprecate this entire endpoint in favor of v2 endpoints
 	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
-		porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error getting porter app by name")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
-
-		deploymentTargetID, err := deploymentTargetIDFromAppName(ctx, deploymentTargetIDFromAppNameInput{
+		appInstance, err := appInstanceFromAppName(ctx, deploymentTargetIDFromAppNameInput{
 			ProjectID: project.ID,
 			ClusterID: cluster.ID,
 			AppName:   appName,
@@ -86,48 +79,46 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		})
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error getting deployment target id from app name")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
-		listAppRevisionsRequest := connect.NewRequest(&porterv1.ListAppRevisionsRequest{
-			ProjectId: int64(project.ID),
-			AppId:     int64(porterApp.ID),
-			DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
-				Id: deploymentTargetID,
-			},
+		revision, err := c.Repo().AppRevision().AppRevisionByInstanceIDAndRevisionNumber(project.ID, appInstance.Id, version)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting app revision by instance id and revision number")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		if revision == nil {
+			err := telemetry.Error(ctx, span, err, "app revision is nil")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		appRevisionRequest := connect.NewRequest(&porterv1.GetAppRevisionRequest{
+			ProjectId:     int64(project.ID),
+			AppRevisionId: revision.ID.String(),
 		})
 
-		listAppRevisionResp, err := c.Config().ClusterControlPlaneClient.ListAppRevisions(ctx, listAppRevisionsRequest)
+		getAppRevisionResp, err := c.Config().ClusterControlPlaneClient.GetAppRevision(ctx, appRevisionRequest)
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error getting current app revision from cluster control plane client")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
-		if listAppRevisionResp.Msg == nil || listAppRevisionResp.Msg.AppRevisions == nil {
+		if getAppRevisionResp.Msg == nil || getAppRevisionResp.Msg.AppRevision == nil {
 			err := telemetry.Error(ctx, span, err, "app revision is nil")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
-		var matchingRevision *porterv1.AppRevision
-		for _, appRevision := range listAppRevisionResp.Msg.AppRevisions {
-			if uint(appRevision.RevisionNumber) == version {
-				matchingRevision = appRevision
-				break
-			}
-		}
+		appRevision := getAppRevisionResp.Msg.AppRevision
 
-		if matchingRevision == nil {
-			err := telemetry.Error(ctx, span, err, "unable to find revision matching version")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
-
-		if matchingRevision.App == nil || matchingRevision.App.Image == nil {
-			err := telemetry.Error(ctx, span, err, "image is nil")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		if appRevision.App == nil || appRevision.App.Image == nil {
+			err := telemetry.Error(ctx, span, err, "app revision app or image is nil")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
@@ -139,13 +130,13 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 				Config: map[string]interface{}{
 					"global": map[string]interface{}{
 						"image": map[string]interface{}{
-							"tag": matchingRevision.App.Image.Tag,
+							"tag": appRevision.App.Image.Tag,
 						},
 					},
 				},
 				Manifest:  "",
 				Hooks:     nil,
-				Version:   int(matchingRevision.RevisionNumber),
+				Version:   int(appRevision.RevisionNumber),
 				Namespace: "",
 				Labels:    nil,
 			},
@@ -185,13 +176,15 @@ type deploymentTargetIDFromAppNameInput struct {
 	CCPClient porterv1connect.ClusterControlPlaneServiceClient
 }
 
-// deploymentTargetIDFromAppName makes a best-effort attempt to find the deployment target id for an app name
+// appInstanceFromAppName makes a best-effort attempt to find the app instance for an app name
 // It does this by getting all deployment targets in the cluster, then getting all app instances in the project,
 // then filtering the app instances by app name and non-preview deployment targets. If there is only one matching
-// app instance, then the deployment target id is returned. Otherwise, an error is returned.
-func deploymentTargetIDFromAppName(ctx context.Context, input deploymentTargetIDFromAppNameInput) (string, error) {
+// app instance, then the instance is returned. Otherwise, an error is returned.
+func appInstanceFromAppName(ctx context.Context, input deploymentTargetIDFromAppNameInput) (*porterv1.AppInstance, error) {
 	ctx, span := telemetry.NewSpan(ctx, "deployment-target-id-from-app-name")
 	defer span.End()
+
+	var appInstance *porterv1.AppInstance
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "project-id", Value: input.ProjectID},
@@ -205,11 +198,11 @@ func deploymentTargetIDFromAppName(ctx context.Context, input deploymentTargetID
 	})
 	listDeploymentTargetsResp, err := input.CCPClient.DeploymentTargets(ctx, listDeploymentTargetsReq)
 	if err != nil {
-		return "", telemetry.Error(ctx, span, err, "error getting deployment targets from cluster control plane client")
+		return appInstance, telemetry.Error(ctx, span, err, "error getting deployment targets from cluster control plane client")
 	}
 
 	if listDeploymentTargetsResp.Msg == nil || listDeploymentTargetsResp.Msg.DeploymentTargets == nil {
-		return "", telemetry.Error(ctx, span, err, "deployment targets response is nil")
+		return appInstance, telemetry.Error(ctx, span, err, "deployment targets response is nil")
 	}
 
 	deploymentTargetSet := map[string]*porterv1.DeploymentTarget{}
@@ -222,27 +215,27 @@ func deploymentTargetIDFromAppName(ctx context.Context, input deploymentTargetID
 	})
 	listAppInstancesResp, err := input.CCPClient.ListAppInstances(ctx, listAppInstancesReq)
 	if err != nil {
-		return "", telemetry.Error(ctx, span, err, "error getting app instances from cluster control plane client")
+		return appInstance, telemetry.Error(ctx, span, err, "error getting app instances from cluster control plane client")
 	}
 
 	if listAppInstancesResp.Msg == nil || listAppInstancesResp.Msg.AppInstances == nil {
-		return "", telemetry.Error(ctx, span, err, "app instances response is nil")
+		return appInstance, telemetry.Error(ctx, span, err, "app instances response is nil")
 	}
 
 	var matchingAppInstances []*porterv1.AppInstance
 
-	for _, appInstance := range listAppInstancesResp.Msg.AppInstances {
-		if appInstance == nil {
+	for _, instance := range listAppInstancesResp.Msg.AppInstances {
+		if instance == nil {
 			continue
 		}
-		if appInstance.Name == input.AppName {
-			if deploymentTargetSet[appInstance.DeploymentTargetId] == nil {
+		if instance.Name == input.AppName {
+			if deploymentTargetSet[instance.DeploymentTargetId] == nil {
 				continue
 			}
-			if deploymentTargetSet[appInstance.DeploymentTargetId].IsPreview {
+			if deploymentTargetSet[instance.DeploymentTargetId].IsPreview {
 				continue
 			}
-			matchingAppInstances = append(matchingAppInstances, appInstance)
+			matchingAppInstances = append(matchingAppInstances, instance)
 		}
 	}
 
@@ -259,15 +252,15 @@ func deploymentTargetIDFromAppName(ctx context.Context, input deploymentTargetID
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instances", Value: printInstances(matchingAppInstances)})
 
 	if len(matchingAppInstances) == 0 {
-		return "", telemetry.Error(ctx, span, nil, "no matching app instances found")
+		return appInstance, telemetry.Error(ctx, span, nil, "no matching app instances found")
 	}
 
 	if len(matchingAppInstances) > 1 {
-		return "", telemetry.Error(ctx, span, nil, "multiple matching app instances found")
+		return appInstance, telemetry.Error(ctx, span, nil, "multiple matching app instances found")
 	}
 
 	matchingDeploymentTarget := deploymentTargetSet[matchingAppInstances[0].DeploymentTargetId]
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "matching-deployment-target", Value: matchingDeploymentTarget.String()})
 
-	return matchingAppInstances[0].DeploymentTargetId, nil
+	return matchingAppInstances[0], nil
 }

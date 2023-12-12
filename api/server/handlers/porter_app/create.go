@@ -77,7 +77,14 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	// TODO (POR-2170): Deprecate this entire endpoint in favor of v2 endpoints
 	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
-		deploymentTargetID, err := deploymentTargetIDFromAppName(ctx, deploymentTargetIDFromAppNameInput{
+		porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "porter app not found in cluster")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		appInstance, err := appInstanceFromAppName(ctx, deploymentTargetIDFromAppNameInput{
 			ProjectID: project.ID,
 			ClusterID: cluster.ID,
 			AppName:   appName,
@@ -85,7 +92,7 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		})
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error getting deployment target id from app name")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
@@ -95,20 +102,20 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			RepositoryUrl: request.ImageInfo.Repository,
 			Tag:           request.ImageInfo.Tag,
 			DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
-				Id: deploymentTargetID,
+				Id: appInstance.DeploymentTargetId,
 			},
 		})
 
 		appImageResp, err := c.Config().ClusterControlPlaneClient.UpdateAppImage(ctx, updateAppImageReq)
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error updating app image")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
 		if appImageResp == nil || appImageResp.Msg == nil {
 			err := telemetry.Error(ctx, span, errors.New("app image response is nil"), "error updating app image")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
@@ -120,13 +127,6 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error polling for revision number")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error getting porter app by name")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
 		}
 

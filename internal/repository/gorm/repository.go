@@ -54,6 +54,7 @@ type GormRepository struct {
 	porterApp                 repository.PorterAppRepository
 	porterAppEvent            repository.PorterAppEventRepository
 	deploymentTarget          repository.DeploymentTargetRepository
+	appRevision               repository.AppRevisionRepository
 	appTemplate               repository.AppTemplateRepository
 	githubWebhook             repository.GithubWebhookRepository
 }
@@ -247,6 +248,11 @@ func (t *GormRepository) DeploymentTarget() repository.DeploymentTargetRepositor
 	return t.deploymentTarget
 }
 
+// AppRevisiion returns the AppRevisionRepository interface implemented by gorm
+func (t *GormRepository) AppRevision() repository.AppRevisionRepository {
+	return t.appRevision
+}
+
 // AppTemplate returns the AppTemplateRepository interface implemented by gorm
 func (t *GormRepository) AppTemplate() repository.AppTemplateRepository {
 	return t.appTemplate
@@ -308,6 +314,7 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		porterApp:                 NewPorterAppRepository(db),
 		porterAppEvent:            NewPorterAppEventRepository(db),
 		deploymentTarget:          NewDeploymentTargetRepository(db),
+		appRevision:               NewAppRevisionRepository(db),
 		appTemplate:               NewAppTemplateRepository(db),
 		githubWebhook:             NewGithubWebhookRepository(db),
 	}

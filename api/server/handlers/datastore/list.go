@@ -25,17 +25,11 @@ type ListRequest struct {
 	// Type is the type of the datastore to filter by
 	Type string `schema:"type"`
 
-	// IncludeConfig controls whether to include the datastore config or not
-	IncludeConfig bool `schema:"include_config"`
-
 	// IncludeEnvGroup controls whether to include the datastore env group or not
 	IncludeEnvGroup bool `schema:"include_env_group"`
 
 	// IncludeMetadata controls whether to include datastore metadata or not
 	IncludeMetadata bool `schema:"include_metadata"`
-
-	// IncludeStatus controls whether to include the datastore status or not
-	IncludeStatus bool `schema:"include_status"`
 }
 
 // ListResponseEntry describes an outbound datastores response entry
@@ -47,7 +41,7 @@ type ListResponseEntry struct {
 	Type string `json:"type"`
 
 	// Env is the env group for the datastore
-	Env *porterv1.DatastoreEnv `json:"env,omitempty"`
+	Env *porterv1.EnvGroup `json:"env,omitempty"`
 
 	// Metadata is a list of metadata objects for the datastore
 	Metadata []*porterv1.DatastoreMetadata `json:"metadata,omitempty"`
@@ -125,10 +119,8 @@ func (h *ListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			CloudProvider:          porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS,
 			CloudProviderAccountId: cloudProviderID,
 			Name:                   request.Name,
-			IncludeConfig:          request.IncludeConfig,
 			IncludeEnvGroup:        request.IncludeEnvGroup,
 			IncludeMetadata:        request.IncludeMetadata,
-			IncludeStatus:          request.IncludeStatus,
 		}
 		if datastoreType != porterv1.EnumDatastore_ENUM_DATASTORE_UNSPECIFIED {
 			message.Type = &datastoreType
@@ -152,7 +144,6 @@ func (h *ListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				Name:     datastore.Name,
 				Type:     datastore.Type.Enum().String(),
 				Metadata: datastore.Metadata,
-				Status:   datastore.Status,
 				Env:      datastore.Env,
 			})
 		}

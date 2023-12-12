@@ -594,8 +594,7 @@ func pollForRevisionNumber(ctx context.Context, input pollForRevisionNumberInput
 
 	for {
 		if time.Now().UTC().After(startTime.Add(2 * time.Minute)) {
-			err := errors.New("timed out waiting for revision number")
-			return 0, telemetry.Error(ctx, span, err, "error getting app revision number")
+			return 0, telemetry.Error(ctx, span, nil, "timed out waiting for revision number")
 		}
 
 		appRevisionResp, err := input.CCPClient.GetAppRevision(ctx, connect.NewRequest(&porterv1.GetAppRevisionRequest{
@@ -614,7 +613,7 @@ func pollForRevisionNumber(ctx context.Context, input pollForRevisionNumberInput
 			return int(appRevisionResp.Msg.AppRevision.RevisionNumber), nil
 		}
 
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
 	return 0, telemetry.Error(ctx, span, nil, "should not reach here")

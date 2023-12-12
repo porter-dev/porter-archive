@@ -20,6 +20,8 @@ const porterAppAppEventMetadataValidator = z.object({
 const porterAppDeployEventMetadataValidator = z.object({
   image_tag: z.string().optional(),
   app_revision_id: z.string(),
+  rollback_target_app_revision_id: z.string().optional(),
+  rollback_target_image_tag: z.string().optional(),
   service_deployment_metadata: z
     .record(
       z.object({

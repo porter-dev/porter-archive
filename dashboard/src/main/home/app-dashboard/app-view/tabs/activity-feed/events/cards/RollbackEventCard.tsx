@@ -11,7 +11,6 @@ import pull_request_icon from "assets/pull_request_icon.svg";
 import refresh from "assets/refresh.png";
 import tag_icon from "assets/tag.png";
 
-import { type PorterAppRollbackEvent } from "../types";
 import { getStatusColor, getStatusIcon } from "../utils";
 import {
   Code,
@@ -21,22 +20,19 @@ import {
 } from "./EventCard";
 
 type Props = {
-  event: PorterAppRollbackEvent;
-  gitCommitUrl: string;
-  displayCommitSha: string;
+  imageTag: string;
+  rollbackTargetVersionNumber: number;
+  gitRepoName?: string;
 };
 
 const RollbackEventCard: React.FC<Props> = ({
-  event,
-  gitCommitUrl,
-  displayCommitSha,
+  imageTag,
+  gitRepoName,
+  rollbackTargetVersionNumber,
 }) => {
   const renderStatusText = (): JSX.Element => {
     const color = getStatusColor("SUCCESS");
-    const text =
-      (gitCommitUrl && displayCommitSha) || event.metadata.image_tag
-        ? "Rolled back to"
-        : "Rolled back";
+    const text = imageTag ? "Rolled back to" : "Rolled back";
     return <Text color={color}>{text}</Text>;
   };
 
@@ -46,35 +42,46 @@ const RollbackEventCard: React.FC<Props> = ({
         <Container row>
           <Icon height="13px" src={refresh} />
           <Spacer inline width="10px" />
-          <Text>Application rollback</Text>
+          <Text>Application auto-rollback</Text>
         </Container>
       </Container>
       <Spacer y={0.5} />
-      <Container row spaced>
+      <Container>
+        <Container row>
+          <Text>
+            {`One or more services failed to deploy, so Porter automatically
+            triggered a rollback to ${
+              rollbackTargetVersionNumber
+                ? `version ${rollbackTargetVersionNumber}`
+                : "the previous successful deploy"
+            }.`}
+          </Text>
+        </Container>
+        <Spacer y={0.5} />
         <Container row>
           <Icon height="12px" src={getStatusIcon("SUCCESS")} />
           <Spacer inline width="10px" />
           {renderStatusText()}
           <Spacer inline x={0.5} />
-          {gitCommitUrl && displayCommitSha ? (
+          {gitRepoName ? (
             <>
               <ImageTagContainer>
                 <Link
-                  to={gitCommitUrl}
+                  to={`https://www.github.com/${gitRepoName}/commit/${imageTag}`}
                   target="_blank"
                   showTargetBlankIcon={false}
                 >
                   <CommitIcon src={pull_request_icon} />
-                  <Code>{displayCommitSha}</Code>
+                  <Code>{imageTag}</Code>
                 </Link>
               </ImageTagContainer>
             </>
-          ) : event.metadata.image_tag ? (
+          ) : imageTag ? (
             <>
               <ImageTagContainer hoverable={false}>
                 <TagContainer>
                   <CommitIcon src={tag_icon} />
-                  <Code>{event.metadata.image_tag}</Code>
+                  <Code>{imageTag}</Code>
                 </TagContainer>
               </ImageTagContainer>
             </>

@@ -8,7 +8,6 @@ import { type PorterAppEvent } from "../types";
 import BuildEventCard from "./BuildEventCard";
 import DeployEventCard from "./DeployEventCard";
 import PreDeployEventCard from "./PreDeployEventCard";
-import RollbackEventCard from "./RollbackEventCard";
 
 type Props = {
   event: PorterAppEvent;
@@ -131,13 +130,7 @@ const EventCard: React.FC<Props> = ({
         displayCommitSha={displayCommitSha}
       />
     ))
-    .with({ type: "AUTO_ROLLBACK" }, (ev) => (
-      <RollbackEventCard
-        event={ev}
-        gitCommitUrl={gitCommitUrl}
-        displayCommitSha={displayCommitSha}
-      />
-    ))
+    .with({ type: "AUTO_ROLLBACK" }, () => null)
     .exhaustive();
 };
 

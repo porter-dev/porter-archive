@@ -504,9 +504,9 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       setClusterVersion(contract.cluster.gkeKind?.clusterVersion);
       let cn = new GKENetwork({
         cidrRange: contract.cluster.gkeKind?.clusterNetworking?.cidrRange || defaultClusterNetworking.cidrRange,
-        controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
-        podCidr: defaultClusterNetworking.podCidr,
-        serviceCidr: defaultClusterNetworking.serviceCidr,
+        controlPlaneCidr: contract.cluster.gkeKind?.clusterNetworking?.controlPlaneCidr || defaultClusterNetworking.controlPlaneCidr,
+        podCidr: contract.cluster.gkeKind?.clusterNetworking?.podCidr || defaultClusterNetworking.podCidr,
+        serviceCidr: contract.cluster.gkeKind?.clusterNetworking?.serviceCidr || defaultClusterNetworking.serviceCidr,
       })
       setClusterNetworking(cn);
     }
@@ -537,9 +537,9 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           value: new GKEPreflightValues({
             network: new GKENetwork({
               cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
-              controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
-              podCidr: defaultClusterNetworking.podCidr,
-              serviceCidr: defaultClusterNetworking.serviceCidr,
+              controlPlaneCidr: clusterNetworking.controlPlaneCidr || defaultClusterNetworking.controlPlaneCidr,
+              podCidr: clusterNetworking.podCidr || defaultClusterNetworking.podCidr,
+              serviceCidr: clusterNetworking.serviceCidr || defaultClusterNetworking.serviceCidr,
             })
           })
         }

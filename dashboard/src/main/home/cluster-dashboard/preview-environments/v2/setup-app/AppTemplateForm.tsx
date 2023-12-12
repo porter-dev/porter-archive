@@ -1,37 +1,38 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { PorterApp } from "@porter-dev/api-contracts";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import _ from "lodash";
 import { FormProvider, useForm } from "react-hook-form";
+import { Redirect, useHistory } from "react-router";
+import styled from "styled-components";
+import { z } from "zod";
 
+import Button from "components/porter/Button";
+import Error from "components/porter/Error";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
+import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
+import EnvSettings from "main/home/app-dashboard/validate-apply/app-settings/EnvSettings";
+import { populatedEnvGroup } from "main/home/app-dashboard/validate-apply/app-settings/types";
+import ServiceList from "main/home/app-dashboard/validate-apply/services-settings/ServiceList";
 import {
-  PorterAppFormData,
-  SourceOptions,
   applyPreviewOverrides,
   clientAppFromProto,
   clientAppToProto,
   porterAppFormValidator,
+  type PorterAppFormData,
+  type SourceOptions,
 } from "lib/porter-apps";
 import {
   defaultSerialized,
   deserializeService,
 } from "lib/porter-apps/services";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import Spacer from "components/porter/Spacer";
-import ServiceList from "main/home/app-dashboard/validate-apply/services-settings/ServiceList";
-import Text from "components/porter/Text";
-import EnvSettings from "main/home/app-dashboard/validate-apply/app-settings/EnvSettings";
+
 import api from "shared/api";
-import { z } from "zod";
-import { populatedEnvGroup } from "main/home/app-dashboard/validate-apply/app-settings/types";
-import { useQuery } from "@tanstack/react-query";
-import { Redirect, useHistory } from "react-router";
-import Button from "components/porter/Button";
-import { useAppValidation } from "lib/hooks/useAppValidation";
-import { PorterApp } from "@porter-dev/api-contracts";
-import axios from "axios";
-import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
-import Error from "components/porter/Error";
-import _ from "lodash";
 import { useClusterResources } from "shared/ClusterResourcesContext";
 
 type Props = {
@@ -42,9 +43,10 @@ type Props = {
       secret_variables: Record<string, string>;
     };
   } | null;
+  onCancel: () => void;
 };
 
-const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
+const AppTemplateForm: React.FC<Props> = ({ existingTemplate, onCancel }) => {
   const history = useHistory();
   const [validatedAppProto, setValidatedAppProto] = useState<PorterApp | null>(
     null
@@ -82,13 +84,13 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
         }
       );
 
-      const { environment_groups } = await z
+      const { environment_groups: envGroups } = await z
         .object({
           environment_groups: z.array(populatedEnvGroup).default([]),
         })
         .parseAsync(res.data);
 
-      return environment_groups;
+      return envGroups;
     }
   );
 
@@ -286,71 +288,91 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
   return (
     <FormProvider {...porterAppFormMethods}>
       <form onSubmit={onSubmit}>
-        <VerticalSteps
-          currentStep={3}
-          steps={[
-            <>
-              <Text size={16}>Application services</Text>
-              <Spacer y={0.5} />
-              <ServiceList
-                addNewText={"Add a new service"}
-                fieldArrayName={"app.services"}
-                internalNetworkingDetails={{
-                  namespace: deploymentTarget.namespace,
-                  appName: porterApp.name,
-                }}
-                allowAddServices={false}
-              />
-            </>,
-            <>
-              <Text size={16}>Environment variables (optional)</Text>
-              <Spacer y={0.5} />
-              <Text color="helper">
-                Specify environment variables shared among all services.
-              </Text>
-              <EnvSettings baseEnvGroups={baseEnvGroups} />
-            </>,
-            <>
-              <Text size={16}>Pre-deploy job (optional)</Text>
-              <Spacer y={0.5} />
-              <Text color="helper">
-                You may add a pre-deploy job to perform an operation before your
-                application services deploy each time, like a database
-                migration.
-              </Text>
-              <Spacer y={0.5} />
-              <ServiceList
-                addNewText={"Add a new pre-deploy job"}
-                prePopulateService={deserializeService({
-                  service: defaultSerialized({
-                    name: "pre-deploy",
-                    type: "predeploy",
-                    defaultCPU: currentClusterResources.defaultCPU,
-                    defaultRAM: currentClusterResources.defaultRAM,
-                  }),
-                })}
-                existingServiceNames={
-                  latestProto.predeploy ? ["pre-deploy"] : []
-                }
-                isPredeploy
-                fieldArrayName={"app.predeploy"}
-              />
-            </>,
-            <Button
-              type="submit"
-              loadingText={"Saving..."}
-              width={"150px"}
-              status={buttonStatus}
-            >
-              {existingTemplate ? "Update Previews" : "Enable Previews"}
-            </Button>,
-          ].filter((x) => x)}
-        />
+        <ScrollableContent>
+          <VerticalSteps
+            currentStep={3}
+            steps={[
+              <>
+                <Text size={16}>App service overrides</Text>
+                <Spacer y={0.25} />
+                <Text color="helper">
+                  Override any default service settings for your app&apos;s
+                  preview environments. Any changes made here will take
+                  precedence over the settings running in production.
+                </Text>
+                <Spacer y={0.5} />
+                <ServiceList
+                  addNewText={"Add a new service"}
+                  fieldArrayName={"app.services"}
+                  internalNetworkingDetails={{
+                    namespace: deploymentTarget.namespace,
+                    appName: porterApp.name,
+                  }}
+                  allowAddServices={false}
+                />
+              </>,
+              <>
+                <Text size={16}>Environment variables (optional)</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  Specify environment variables shared among all services.
+                </Text>
+                <EnvSettings baseEnvGroups={baseEnvGroups} />
+              </>,
+              <>
+                <Text size={16}>Pre-deploy job (optional)</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  You may add a pre-deploy job to perform an operation before
+                  your application services deploy each time, like a database
+                  migration.
+                </Text>
+                <Spacer y={0.5} />
+                <ServiceList
+                  addNewText={"Add a new pre-deploy job"}
+                  prePopulateService={deserializeService({
+                    service: defaultSerialized({
+                      name: "pre-deploy",
+                      type: "predeploy",
+                      defaultCPU: currentClusterResources.defaultCPU,
+                      defaultRAM: currentClusterResources.defaultRAM,
+                    }),
+                  })}
+                  existingServiceNames={
+                    latestProto.predeploy ? ["pre-deploy"] : []
+                  }
+                  isPredeploy
+                  fieldArrayName={"app.predeploy"}
+                />
+              </>,
+            ].filter((x) => x)}
+          />
+        </ScrollableContent>
+        <ButtonContainer>
+          <Button
+            color="#b91133"
+            onClick={() => {
+              onCancel();
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            loadingText={"Saving..."}
+            width={"150px"}
+            status={buttonStatus}
+          >
+            Save Changes
+          </Button>
+        </ButtonContainer>
       </form>
       {showGHAModal && (
         <GithubActionModal
           type="preview"
-          closeModal={() => setShowGHAModal(false)}
+          closeModal={() => {
+            setShowGHAModal(false);
+          }}
           githubAppInstallationID={latestSource.git_repo_id}
           githubRepoOwner={latestSource.git_repo_name.split("/")[0]}
           githubRepoName={latestSource.git_repo_name.split("/")[1]}
@@ -358,8 +380,8 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
           stackName={porterApp.name}
           projectId={projectId}
           clusterId={clusterId}
-          deployPorterApp={() =>
-            createTemplateAndWorkflow({
+          deployPorterApp={async () =>
+            await createTemplateAndWorkflow({
               app: validatedAppProto,
               variables,
               secrets,
@@ -367,6 +389,7 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
           }
           deploymentError={createError}
           porterYamlPath={latestSource.porter_yaml_path}
+          redirectPath={`/preview-environments`}
         />
       )}
     </FormProvider>
@@ -374,3 +397,18 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
 };
 
 export default AppTemplateForm;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  column-gap: 0.5rem;
+`;
+
+const ScrollableContent = styled.div`
+  width: 100%;
+  min-height: 200px;
+  max-height: 575px;
+  overflow-y: auto;
+  padding: 10px;
+  position: relative;
+`;

@@ -1,25 +1,26 @@
 import React, { useContext, useMemo } from "react";
-import { RouteComponentProps, withRouter } from "react-router";
-import styled from "styled-components";
-
-import pull_request from "assets/pull_request_icon.svg";
-
-import Back from "components/porter/Back";
-import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import Spacer from "components/porter/Spacer";
-import AppTemplateForm from "./AppTemplateForm";
-import { LatestRevisionProvider } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
-import { Context } from "shared/Context";
-import api from "shared/api";
+import { withRouter, type RouteComponentProps } from "react-router";
+import styled from "styled-components";
 import { match } from "ts-pattern";
 import { z } from "zod";
-import { PorterApp } from "@porter-dev/api-contracts";
+
 import Loading from "components/Loading";
+import Back from "components/porter/Back";
+import Spacer from "components/porter/Spacer";
+import { LatestRevisionProvider } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 
-type Props = RouteComponentProps & {};
+import api from "shared/api";
+import { Context } from "shared/Context";
+import pull_request from "assets/pull_request_icon.svg";
 
-const SetupApp: React.FC<Props> = ({ location }) => {
+import AppTemplateForm from "./AppTemplateForm";
+
+type Props = RouteComponentProps;
+
+const SetupApp: React.FC<Props> = ({ location, history }) => {
   const { currentCluster, currentProject } = useContext(Context);
   const params = useMemo(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -108,7 +109,14 @@ const SetupApp: React.FC<Props> = ({ location }) => {
             {match(templateRes)
               .with({ status: "loading" }, () => <Loading />)
               .with({ status: "success" }, ({ data }) => {
-                return <AppTemplateForm existingTemplate={data} />;
+                return (
+                  <AppTemplateForm
+                    existingTemplate={data}
+                    onCancel={() => {
+                      history.push(`/apps/${appName}`);
+                    }}
+                  />
+                );
               })
               .otherwise(() => null)}
             <Spacer y={3} />

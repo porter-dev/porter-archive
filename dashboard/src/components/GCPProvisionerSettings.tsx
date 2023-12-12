@@ -384,7 +384,6 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       }),
     });
 
-    console.log(data)
     return data
   }
 
@@ -490,7 +489,6 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   useEffect(() => {
 
     const contract = props.selectedClusterVersion as any;
-    console.log(contract)
     if (contract?.cluster) {
       if (contract.cluster?.gkeKind?.nodePools) {
         contract.cluster?.gkeKind?.nodePools.map((nodePool: any) => {

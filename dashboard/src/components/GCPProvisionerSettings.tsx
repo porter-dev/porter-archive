@@ -94,6 +94,8 @@ const gpuMachineTypeOptions = [
   { value: "n1-standard-8", label: "n1-standard-8" },
   { value: "n1-standard-16", label: "n1-standard-16" },
   { value: "n1-standard-32", label: "n1-standard-32" },
+  { value: "n1-highmem-2", label: "n1-highmem-2" },
+  { value: "n1-highmem-4", label: "n1-highmem-4" },
   { value: "n1-highmem-8", label: "n1-highmem-8" },
   { value: "n1-highmem-16", label: "n1-highmem-16" },
   { value: "n1-highmem-32", label: "n1-highmem-32" },
@@ -371,10 +373,10 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
             clusterVersion: clusterVersion || clusterVersionOptions[0].value,
             region: region,
             network: new GKENetwork({
-              cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
-              controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
-              podCidr: defaultClusterNetworking.podCidr,
-              serviceCidr: defaultClusterNetworking.serviceCidr,
+              cidrRange: clusterNetworking.cidrRange,
+              controlPlaneCidr: clusterNetworking.controlPlaneCidr,
+              podCidr: clusterNetworking.podCidr,
+              serviceCidr: clusterNetworking.serviceCidr,
             }),
             nodePools
           }),
@@ -485,6 +487,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
   }, []);
 
   useEffect(() => {
+
     const contract = props.selectedClusterVersion as any;
     if (contract?.cluster) {
       if (contract.cluster?.gkeKind?.nodePools) {
@@ -500,11 +503,11 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       setClusterName(contract.cluster.gkeKind?.clusterName);
       setRegion(contract.cluster.gkeKind?.region);
       setClusterVersion(contract.cluster.gkeKind?.clusterVersion);
-      let cn = new GKENetwork({
-        cidrRange: contract.cluster.gkeKind?.clusterNetworking?.cidrRange || defaultClusterNetworking.cidrRange,
-        controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
-        podCidr: defaultClusterNetworking.podCidr,
-        serviceCidr: defaultClusterNetworking.serviceCidr,
+      const cn = new GKENetwork({
+        cidrRange: contract.cluster.gkeKind?.network?.cidrRange,
+        controlPlaneCidr: contract.cluster.gkeKind?.network?.controlPlaneCidr,
+        podCidr: contract.cluster.gkeKind?.network?.podCidr,
+        serviceCidr: contract.cluster.gkeKind?.network?.serviceCidr,
       })
       setClusterNetworking(cn);
     }
@@ -526,7 +529,7 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
       setPreflightData(null);
       setPreflightFailed(true)
       setPreflightError("");
-      var data = new PreflightCheckRequest({
+      const data = new PreflightCheckRequest({
         projectId: BigInt(currentProject.id),
         cloudProvider: EnumCloudProvider.GCP,
         cloudProviderCredentialsId: props.credentialId,
@@ -534,10 +537,10 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
           case: "gkePreflightValues",
           value: new GKEPreflightValues({
             network: new GKENetwork({
-              cidrRange: clusterNetworking.cidrRange || defaultClusterNetworking.cidrRange,
-              controlPlaneCidr: defaultClusterNetworking.controlPlaneCidr,
-              podCidr: defaultClusterNetworking.podCidr,
-              serviceCidr: defaultClusterNetworking.serviceCidr,
+              cidrRange: clusterNetworking.cidrRange,
+              controlPlaneCidr: clusterNetworking.controlPlaneCidr,
+              podCidr: clusterNetworking.podCidr,
+              serviceCidr: clusterNetworking.serviceCidr,
             })
           })
         }

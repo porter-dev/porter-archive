@@ -525,7 +525,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     if ((currentProject?.helm_values_enabled ?? false) || user?.isPorterUser) {
       base.push({ label: "Helm Overrides", value: "helm-overrides" });
     }
-    if (user?.isPorterUser) {
+    if ((currentProject?.helm_values_enabled ?? false) || user?.isPorterUser) {
       base.push({ label: "Latest Helm Values", value: "helm-values" });
     }
 

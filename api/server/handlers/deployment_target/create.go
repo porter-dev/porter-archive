@@ -32,7 +32,9 @@ func NewCreateDeploymentTargetHandler(
 
 // CreateDeploymentTargetRequest is the request object for the /deployment-targets POST endpoint
 type CreateDeploymentTargetRequest struct {
+	// Deprecated: use name instead
 	Selector string `json:"selector"`
+	Name     string `json:"name,omitempty"`
 	Preview  bool   `json:"preview"`
 }
 
@@ -61,17 +63,22 @@ func (c *CreateDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	if request.Selector == "" {
+	if request.Selector == "" && request.Name == "" {
 		err := telemetry.Error(ctx, span, nil, "name is required")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
+	name := request.Name
+	if name == "" {
+		name = request.Selector
+	}
+
 	createReq := connect.NewRequest(&porterv1.CreateDeploymentTargetRequest{
 		ProjectId: int64(project.ID),
 		ClusterId: int64(cluster.ID),
-		Name:      request.Selector,
-		Namespace: request.Selector,
+		Name:      name,
+		Namespace: name,
 		IsPreview: request.Preview,
 	})
 

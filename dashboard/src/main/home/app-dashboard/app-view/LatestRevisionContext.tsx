@@ -63,7 +63,7 @@ type LatestRevisionContextType = {
   setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
   latestClientServices: ClientService[];
   loading: boolean;
-  linkToTabGenerator: ({
+  tabUrlGenerator: ({
     tab,
     queryParams,
   }: {
@@ -380,7 +380,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
         latestClientServices,
         appName,
         loading,
-        linkToTabGenerator: ({ tab, queryParams }) =>
+        tabUrlGenerator: ({ tab, queryParams }) =>
           formattedPath({
             currentProject,
             deploymentTarget: currentDeploymentTarget,

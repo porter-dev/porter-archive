@@ -40,7 +40,7 @@ const ServiceNotificationExpandedView: React.FC<Props> = ({
   deploymentTargetId,
   appId,
 }) => {
-  const { linkToTabGenerator } = useLatestRevision();
+  const { tabUrlGenerator } = useLatestRevision();
 
   return (
     <StyledNotificationExpandedView>
@@ -72,7 +72,7 @@ const ServiceNotificationExpandedView: React.FC<Props> = ({
                   style={{ marginTop: "3px", marginLeft: "5px" }}
                 />
                 <Link
-                  to={linkToTabGenerator({
+                  to={tabUrlGenerator({
                     tab: "job-history",
                     queryParams: {
                       service: notification.service.name.value,

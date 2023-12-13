@@ -82,7 +82,7 @@ const DeployEventCard: React.FC<Props> = ({
     latestRevision,
     porterApp,
     latestClientNotifications,
-    linkToTabGenerator,
+    tabUrlGenerator,
   } = useLatestRevision();
 
   const rollbackTargetVersionNumber = useMemo(() => {
@@ -327,7 +327,7 @@ const DeployEventCard: React.FC<Props> = ({
               <Spacer inline x={0.5} />
               <Tag borderColor="#FFBF00">
                 <Link
-                  to={linkToTabGenerator({
+                  to={tabUrlGenerator({
                     tab: "notifications",
                   })}
                   color={"#FFBF00"}

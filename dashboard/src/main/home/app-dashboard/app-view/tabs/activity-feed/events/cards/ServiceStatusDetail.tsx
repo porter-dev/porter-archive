@@ -39,11 +39,8 @@ const ServiceStatusDetail: React.FC<Props> = ({
   revisionId,
   revisionNumber,
 }) => {
-  const {
-    latestClientServices,
-    latestClientNotifications,
-    linkToTabGenerator,
-  } = useLatestRevision();
+  const { latestClientServices, latestClientNotifications, tabUrlGenerator } =
+    useLatestRevision();
   const convertEventStatusToCopy = (status: string): string => {
     switch (status) {
       case "PROGRESSING":
@@ -104,7 +101,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                     <>
                       <Tag borderColor="#FFBF00">
                         <Link
-                          to={linkToTabGenerator({
+                          to={tabUrlGenerator({
                             tab: "notifications",
                             queryParams: {
                               service: key,
@@ -123,7 +120,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                     <>
                       <Tag>
                         <Link
-                          to={linkToTabGenerator({
+                          to={tabUrlGenerator({
                             tab: "logs",
                             queryParams: {
                               version: revisionNumber.toString(),
@@ -138,7 +135,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                       <Spacer inline x={0.5} />
                       <Tag>
                         <Link
-                          to={linkToTabGenerator({
+                          to={tabUrlGenerator({
                             tab: "metrics",
                             queryParams: {
                               service: key,
@@ -155,7 +152,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                     <Tag>
                       <TagIcon src={calendar} style={{ marginTop: "2px" }} />
                       <Link
-                        to={linkToTabGenerator({
+                        to={tabUrlGenerator({
                           tab: "job-history",
                           queryParams: {
                             service: key,

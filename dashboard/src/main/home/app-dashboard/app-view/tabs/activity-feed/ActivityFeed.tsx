@@ -224,7 +224,7 @@ const ActivityFeed: React.FC<Props> = ({
               projectId={projectId}
               clusterId={clusterId}
               appName={appName}
-              linkToTabGenerator={({ tab, queryParams }) =>
+              tabUrlGenerator={({ tab, queryParams }) =>
                 formattedPath({
                   currentProject,
                   deploymentTarget,

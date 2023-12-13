@@ -113,7 +113,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     appEnv,
     setPreviewRevision,
     latestClientNotifications,
-    linkToTabGenerator,
+    tabUrlGenerator,
   } = useLatestRevision();
   const { validateApp, setServiceDeletions } = useAppValidation({
     deploymentTargetID: deploymentTarget.id,
@@ -336,7 +336,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       setPreviewRevision(null);
 
       history.push(
-        linkToTabGenerator({
+        tabUrlGenerator({
           tab: DEFAULT_TAB,
         })
       );
@@ -485,7 +485,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           numNotifications > 0 ? (
             <Tag borderColor={"#FFBF00"}>
               <Link
-                to={linkToTabGenerator({
+                to={tabUrlGenerator({
                   tab: "notifications",
                 })}
                 color={"#FFBF00"}
@@ -626,7 +626,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           currentTab={currentTab}
           setCurrentTab={(tab) => {
             history.push(
-              linkToTabGenerator({
+              tabUrlGenerator({
                 tab,
               })
             );

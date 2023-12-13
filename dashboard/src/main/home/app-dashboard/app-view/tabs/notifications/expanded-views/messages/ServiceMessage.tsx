@@ -8,6 +8,7 @@ import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
+import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import Logs from "main/home/app-dashboard/validate-apply/logs/Logs";
 import { useIntercom } from "lib/hooks/useIntercom";
 import { type ClientService } from "lib/porter-apps/services";
@@ -46,6 +47,8 @@ const ServiceMessage: React.FC<Props> = ({
   showLiveLogs,
 }) => {
   const { showIntercomWithMessage } = useIntercom();
+  const { internalLinkBuilder } = useLatestRevision();
+
   const [logsVisible, setLogsVisible] = useState<boolean>(isFirst);
   const serviceNames = useMemo(() => {
     if (service.config.type === "predeploy") {
@@ -125,7 +128,13 @@ const ServiceMessage: React.FC<Props> = ({
           <Container row>
             <Tag>
               <Link
-                to={`/apps/${appName}/job-history?job_run_id=${message.metadata.job_run_id}&service=${service.name.value}`}
+                to={internalLinkBuilder({
+                  tab: "job-history",
+                  queryParams: {
+                    job_run_id: message.metadata.job_run_id,
+                    service: service.name.value,
+                  },
+                })}
               >
                 <Text size={16}>Job run</Text>
                 <i

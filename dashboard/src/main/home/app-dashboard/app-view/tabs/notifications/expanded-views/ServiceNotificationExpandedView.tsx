@@ -14,6 +14,7 @@ import job from "assets/job.png";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 
+import { useLatestRevision } from "../../../LatestRevisionContext";
 import { isServiceNotification } from "../../activity-feed/events/types";
 import ServiceMessage from "./messages/ServiceMessage";
 import {
@@ -39,6 +40,8 @@ const ServiceNotificationExpandedView: React.FC<Props> = ({
   deploymentTargetId,
   appId,
 }) => {
+  const { internalLinkBuilder } = useLatestRevision();
+
   return (
     <StyledNotificationExpandedView>
       <ExpandedViewContent>
@@ -69,7 +72,12 @@ const ServiceNotificationExpandedView: React.FC<Props> = ({
                   style={{ marginTop: "3px", marginLeft: "5px" }}
                 />
                 <Link
-                  to={`/apps/${appName}/job-history?service=${notification.service.name.value}`}
+                  to={internalLinkBuilder({
+                    tab: "job-history",
+                    queryParams: {
+                      service: notification.service.name.value,
+                    },
+                  })}
                 >
                   <Text size={16}>Job history</Text>
                 </Link>

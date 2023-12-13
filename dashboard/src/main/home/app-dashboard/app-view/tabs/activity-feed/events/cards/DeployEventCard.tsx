@@ -78,8 +78,12 @@ const DeployEventCard: React.FC<Props> = ({
     projectId,
     clusterId,
   });
-  const { latestRevision, porterApp, latestClientNotifications } =
-    useLatestRevision();
+  const {
+    latestRevision,
+    porterApp,
+    latestClientNotifications,
+    internalLinkBuilder,
+  } = useLatestRevision();
 
   const rollbackTargetVersionNumber = useMemo(() => {
     if (
@@ -322,7 +326,12 @@ const DeployEventCard: React.FC<Props> = ({
             <>
               <Spacer inline x={0.5} />
               <Tag borderColor="#FFBF00">
-                <Link to={`/apps/${appName}/notifications`} color={"#FFBF00"}>
+                <Link
+                  to={internalLinkBuilder({
+                    tab: "notifications",
+                  })}
+                  color={"#FFBF00"}
+                >
                   <TagIcon src={alert} />
                   Notifications
                 </Link>
@@ -373,7 +382,6 @@ const DeployEventCard: React.FC<Props> = ({
             serviceDeploymentMetadata={
               event.metadata.service_deployment_metadata
             }
-            appName={appName}
             revisionNumber={revisionIdToNumber[event.metadata.app_revision_id]}
             revisionId={event.metadata.app_revision_id}
           />

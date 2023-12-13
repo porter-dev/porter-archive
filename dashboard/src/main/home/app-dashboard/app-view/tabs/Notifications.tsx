@@ -10,7 +10,7 @@ const Notifications: React.FC = () => {
     clusterId,
     appName,
     porterApp: { id: appId },
-    deploymentTarget: { id: deploymentTargetId },
+    deploymentTarget,
   } = useLatestRevision();
 
   return (
@@ -19,7 +19,7 @@ const Notifications: React.FC = () => {
       projectId={projectId}
       clusterId={clusterId}
       appName={appName}
-      deploymentTargetId={deploymentTargetId}
+      deploymentTarget={deploymentTarget}
       appId={appId}
     />
   );

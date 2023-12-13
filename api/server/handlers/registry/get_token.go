@@ -248,9 +248,24 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	if proj.GetFeatureFlag(models.CapiProvisionerEnabled, c.Config().LaunchDarklyClient) {
+		var registryURL string
+
+		for _, reg := range regs {
+			if strings.Contains(reg.URL, "-docker.pkg.dev") {
+				registryURL = reg.URL
+				break
+			}
+		}
+
+		if registryURL == "" {
+			e := telemetry.Error(ctx, span, err, "no matching registry found")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusNotFound))
+			return
+		}
+
 		regInput := connect.NewRequest(&porterv1.TokenForRegistryRequest{
 			ProjectId:   int64(proj.ID),
-			RegistryUri: regs[0].URL,
+			RegistryUri: registryURL,
 		})
 		regOutput, err := c.Config().ClusterControlPlaneClient.TokenForRegistry(ctx, regInput)
 		if err != nil {

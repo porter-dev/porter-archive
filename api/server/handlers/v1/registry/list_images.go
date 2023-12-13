@@ -77,6 +77,10 @@ func (c *RegistryListImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 	if project.GetFeatureFlag(models.CapiProvisionerEnabled, c.Config().LaunchDarklyClient) {
 		uri := strings.TrimPrefix(regAPI.URL, "https://")
 		splits := strings.Split(uri, ".")
+		if len(splits) < 4 {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("invalid registry url: must be aws")))
+			return
+		}
 		accountID := splits[0]
 		region := splits[3]
 		// nolint:staticcheck // need this deprecated method

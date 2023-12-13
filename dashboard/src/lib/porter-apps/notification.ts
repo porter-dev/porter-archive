@@ -120,28 +120,22 @@ const clientRevisionNotifications = (
   notifications: PorterAppNotification[]
 ): ClientRevisionNotification[] => {
   const revisionNotifications = notifications.filter(isRevisionNotification);
-  const messages = orderNotificationsByTimestamp(revisionNotifications, "asc");
-  if (messages.length === 0) {
-    return [];
-  }
-  const parentMessage = messages[0];
-  const timestamp = parentMessage.timestamp;
-  const id = parentMessage.id;
-  const appRevisionId = parentMessage.app_revision_id;
-  return [
-    {
+
+  return revisionNotifications.map((notification) => {
+    const timestamp = notification.timestamp;
+    const id = notification.id;
+    const appRevisionId = notification.app_revision_id;
+    return {
       scope: "REVISION",
       id,
       timestamp,
-      messages,
+      messages: [notification],
       appRevisionId,
-      isRollbackRelated: messages.some(
-        (m) =>
-          m.error.code === ERROR_CODE_APPLICATION_ROLLBACK ||
-          m.error.code === ERROR_CODE_APPLICATION_ROLLBACK_FAILED
-      ),
-    },
-  ];
+      isRollbackRelated:
+        notification.error.code === ERROR_CODE_APPLICATION_ROLLBACK ||
+        notification.error.code === ERROR_CODE_APPLICATION_ROLLBACK_FAILED,
+    };
+  });
 };
 
 const orderNotificationsByTimestamp = <T extends Array<{ timestamp: string }>>(

@@ -1,23 +1,24 @@
 import React, { useContext, useMemo } from "react";
-import { RouteComponentProps, withRouter } from "react-router";
-import styled from "styled-components";
-
-import pull_request from "assets/pull_request_icon.svg";
-
-import Back from "components/porter/Back";
-import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import Spacer from "components/porter/Spacer";
-import AppTemplateForm from "./AppTemplateForm";
-import { LatestRevisionProvider } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
-import { Context } from "shared/Context";
-import api from "shared/api";
+import { withRouter, type RouteComponentProps } from "react-router";
+import styled from "styled-components";
 import { match } from "ts-pattern";
 import { z } from "zod";
-import { PorterApp } from "@porter-dev/api-contracts";
-import Loading from "components/Loading";
 
-type Props = RouteComponentProps & {};
+import Loading from "components/Loading";
+import Back from "components/porter/Back";
+import Spacer from "components/porter/Spacer";
+import { LatestRevisionProvider } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import pull_request from "assets/pull_request_icon.svg";
+
+import AppTemplateForm from "./AppTemplateForm";
+
+type Props = RouteComponentProps;
 
 const SetupApp: React.FC<Props> = ({ location }) => {
   const { currentCluster, currentProject } = useContext(Context);

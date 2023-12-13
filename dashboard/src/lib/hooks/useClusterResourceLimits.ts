@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Contract,
+  GKENodePoolType,
   LoadBalancerType,
   NodeGroupType,
   NodePoolType,
@@ -78,6 +79,7 @@ export type NodePools = {
   maxInstances: number;
   nodePoolType: string;
   isStateful?: boolean;
+  additionalTaints?: string[];
 };
 
 const clusterNodesValidator = z

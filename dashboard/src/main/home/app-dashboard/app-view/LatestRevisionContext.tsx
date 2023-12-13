@@ -23,6 +23,7 @@ import {
   deserializeNotifications,
   type ClientNotification,
 } from "lib/porter-apps/notification";
+import { formattedPath } from "lib/porter-apps/routing";
 import {
   type ClientService,
   type DetectedServices,
@@ -62,6 +63,13 @@ type LatestRevisionContextType = {
   setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
   latestClientServices: ClientService[];
   loading: boolean;
+  tabUrlGenerator: ({
+    tab,
+    queryParams,
+  }: {
+    tab: string;
+    queryParams?: Record<string, string>;
+  }) => string;
 };
 
 const LatestRevisionContext = createContext<LatestRevisionContextType | null>(
@@ -372,6 +380,14 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
         latestClientServices,
         appName,
         loading,
+        tabUrlGenerator: ({ tab, queryParams }) =>
+          formattedPath({
+            currentProject,
+            deploymentTarget: currentDeploymentTarget,
+            appName,
+            tab,
+            queryParams,
+          }),
       }}
     >
       {children}

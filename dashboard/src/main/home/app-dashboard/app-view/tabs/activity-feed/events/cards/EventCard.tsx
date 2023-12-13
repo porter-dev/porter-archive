@@ -123,7 +123,6 @@ const EventCard: React.FC<Props> = ({
     .with({ type: "PRE_DEPLOY" }, (ev) => (
       <PreDeployEventCard
         event={ev}
-        appName={appName}
         projectId={projectId}
         clusterId={clusterId}
         gitCommitUrl={gitCommitUrl}

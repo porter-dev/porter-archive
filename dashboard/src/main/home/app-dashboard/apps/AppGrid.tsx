@@ -1,27 +1,25 @@
-import React, {useContext, useMemo} from "react";
-import { type AppRevisionWithSource } from "./types";
-import { search } from "shared/search";
-import _ from "lodash";
-import { match } from "ts-pattern";
-import { Link } from "react-router-dom";
-
-import web from "assets/web.png";
-import box from "assets/box.png";
-import time from "assets/time.png";
-import target from "assets/target.svg";
-import notFound from "assets/not-found.png";
-import github from "assets/github.png";
-
-import Fieldset from "components/porter/Fieldset";
-import Container from "components/porter/Container";
-import Text from "components/porter/Text";
-import styled from "styled-components";
+import React, { useContext, useMemo } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
-import Icon from "components/porter/Icon";
+import _ from "lodash";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { match } from "ts-pattern";
+
+import Container from "components/porter/Container";
+import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
-import { readableDate } from "shared/string_utils";
+import Text from "components/porter/Text";
+
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
-import {Context} from "../../../../shared/Context";
+import { search } from "shared/search";
+import { readableDate } from "shared/string_utils";
+import notFound from "assets/not-found.png";
+import target from "assets/target.svg";
+import time from "assets/time.png";
+
+import { Context } from "../../../../shared/Context";
+import { AppIcon, AppSource } from "./AppMeta";
+import { type AppRevisionWithSource } from "./types";
 
 type AppGridProps = {
   apps: AppRevisionWithSource[];
@@ -30,17 +28,10 @@ type AppGridProps = {
   sort: "letter" | "calendar";
 };
 
-const icons = [
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-plain.svg",
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-plain.svg",
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-plain.svg",
-  "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg",
-  web,
-];
-
 const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
   const { currentDeploymentTarget } = useDeploymentTarget();
   const { currentProject } = useContext(Context);
+
   const appsWithProto = useMemo(() => {
     return apps.map((app) => {
       return {
@@ -82,64 +73,6 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
       .exhaustive();
   }, [appsWithProto, searchValue, sort]);
 
-  const renderIcon = (bp: string[], size?: string): JSX.Element => {
-    let src = box;
-    if (bp.length) {
-      const [_, name] = bp[0].split("/");
-      switch (name) {
-        case "ruby":
-          src = icons[0];
-          break;
-        case "nodejs":
-          src = icons[1];
-          break;
-        case "python":
-          src = icons[2];
-          break;
-        case "go":
-          src = icons[3];
-          break;
-        default:
-          break;
-      }
-    }
-    return (
-      <>
-        {size === "larger" ? (
-          <Icon height="16px" src={src} />
-        ) : (
-          <Icon height="18px" src={src} />
-        )}
-      </>
-    );
-  };
-
-  const renderSource = (source: AppRevisionWithSource["source"]): JSX.Element => {
-    return (
-      <>
-        {source.repo_name ? (
-          <Container row>
-            <SmallIcon opacity="0.6" src={github} />
-            <Text truncate={true} size={13} color="#ffffff44">
-              {source.repo_name}
-            </Text>
-          </Container>
-        ) : (
-          <Container row>
-            <SmallIcon
-              opacity="0.7"
-              height="18px"
-              src="https://cdn4.iconfinder.com/data/icons/logos-and-brands/512/97_Docker_logo_logos-512.png"
-            />
-            <Text truncate={true} size={13} color="#ffffff44">
-              {source.image_repo_uri}
-            </Text>
-          </Container>
-        )}
-      </>
-    );
-  };
-
   if (filteredApps.length === 0) {
     return (
       <Fieldset>
@@ -155,39 +88,49 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
     .with("grid", () => (
       <GridList>
         {(filteredApps ?? []).map(
-          ({ app_revision: { proto, updated_at: updatedAt, deployment_target: deploymentTarget }, source }, i) => {
-
+          (
+            {
+              app_revision: {
+                proto,
+                updated_at: updatedAt,
+                deployment_target: deploymentTarget,
+              },
+              source,
+            },
+            i
+          ) => {
             let appLink = `/apps/${proto.name}`;
             if (currentProject?.managed_deployment_targets_enabled) {
-                appLink = `/apps/${proto.name}/activity?target=${deploymentTarget.id}`;
+              appLink = `/apps/${proto.name}/activity?target=${deploymentTarget.id}`;
             }
             if (currentDeploymentTarget?.is_preview) {
-                appLink = `/preview-environments/apps/${proto.name}/activity?target=${currentDeploymentTarget.id}`;
+              appLink = `/preview-environments/apps/${proto.name}/activity?target=${currentDeploymentTarget.id}`;
             }
 
             return (
-              <Link
-                to={appLink}
-                key={i}
-              >
+              <Link to={appLink} key={i}>
                 <Block>
                   <Container row>
-                    {renderIcon(proto.build?.buildpacks ?? [])}
+                    <AppIcon
+                      buildpacks={proto.build?.buildpacks ?? []}
+                      size="larger"
+                    />
                     <Spacer inline width="12px" />
                     <Text size={14}>{proto.name}</Text>
                     <Spacer inline x={2} />
                   </Container>
                   {/** TODO: make the status icon dynamic */}
                   {/* <StatusIcon src={healthy} /> */}
-                  {renderSource(source)}
-                  {currentProject?.managed_deployment_targets_enabled && !currentDeploymentTarget?.is_preview && (
-                    <Container row>
-                      <SmallIcon opacity="0.4" src={target} />
-                      <Text size={13} color="#ffffff44">
-                        {deploymentTarget.name}
-                      </Text>
-                    </Container>
-                  )}
+                  <AppSource source={source} />
+                  {currentProject?.managed_deployment_targets_enabled &&
+                    !currentDeploymentTarget?.is_preview && (
+                      <Container row>
+                        <SmallIcon opacity="0.4" src={target} />
+                        <Text size={13} color="#ffffff44">
+                          {deploymentTarget.name}
+                        </Text>
+                      </Container>
+                    )}
                   <Container row>
                     <SmallIcon opacity="0.4" src={time} />
                     <Text size={13} color="#ffffff44">
@@ -217,7 +160,10 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
                 <Row>
                   <Container row>
                     <Spacer inline width="1px" />
-                    {renderIcon(proto.build?.buildpacks ?? [], "larger")}
+                    <AppIcon
+                      buildpacks={proto.build?.buildpacks ?? []}
+                      size="larger"
+                    />
                     <Spacer inline width="12px" />
                     <Text size={14}>{proto.name}</Text>
                     <Spacer inline x={1} />
@@ -226,7 +172,7 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
                   </Container>
                   <Spacer height="15px" />
                   <Container row>
-                    {renderSource(source)}
+                    <AppSource source={source} />
                     <Spacer inline x={1} />
                     <SmallIcon opacity="0.4" src={time} />
                     <Text size={13} color="#ffffff44">

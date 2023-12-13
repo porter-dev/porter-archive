@@ -148,7 +148,13 @@ func (c *LatestAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 			deploymentTargets[encodedRevision.DeploymentTarget.ID] = deploymentTarget
 		}
 
+		// TODO: move this filtering to CCP
 		if request.IgnorePreviewApps && deploymentTarget.IsPreview {
+			continue
+		}
+
+		// TODO: move this filtering to CCP
+		if cluster.ID != uint(deploymentTarget.ClusterId) {
 			continue
 		}
 

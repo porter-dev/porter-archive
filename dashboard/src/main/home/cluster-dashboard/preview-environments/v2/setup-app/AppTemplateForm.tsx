@@ -1,37 +1,37 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { PorterApp } from "@porter-dev/api-contracts";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import _ from "lodash";
 import { FormProvider, useForm } from "react-hook-form";
+import { Redirect, useHistory } from "react-router";
+import { z } from "zod";
 
+import Button from "components/porter/Button";
+import Error from "components/porter/Error";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
+import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
+import EnvSettings from "main/home/app-dashboard/validate-apply/app-settings/EnvSettings";
+import { populatedEnvGroup } from "main/home/app-dashboard/validate-apply/app-settings/types";
+import ServiceList from "main/home/app-dashboard/validate-apply/services-settings/ServiceList";
 import {
-  PorterAppFormData,
-  SourceOptions,
   applyPreviewOverrides,
   clientAppFromProto,
   clientAppToProto,
   porterAppFormValidator,
+  type PorterAppFormData,
+  type SourceOptions,
 } from "lib/porter-apps";
 import {
   defaultSerialized,
   deserializeService,
 } from "lib/porter-apps/services";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import Spacer from "components/porter/Spacer";
-import ServiceList from "main/home/app-dashboard/validate-apply/services-settings/ServiceList";
-import Text from "components/porter/Text";
-import EnvSettings from "main/home/app-dashboard/validate-apply/app-settings/EnvSettings";
+
 import api from "shared/api";
-import { z } from "zod";
-import { populatedEnvGroup } from "main/home/app-dashboard/validate-apply/app-settings/types";
-import { useQuery } from "@tanstack/react-query";
-import { Redirect, useHistory } from "react-router";
-import Button from "components/porter/Button";
-import { useAppValidation } from "lib/hooks/useAppValidation";
-import { PorterApp } from "@porter-dev/api-contracts";
-import axios from "axios";
-import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
-import Error from "components/porter/Error";
-import _ from "lodash";
 import { useClusterResources } from "shared/ClusterResourcesContext";
 
 type Props = {
@@ -82,13 +82,13 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
         }
       );
 
-      const { environment_groups } = await z
+      const { environment_groups: envGroups } = await z
         .object({
           environment_groups: z.array(populatedEnvGroup).default([]),
         })
         .parseAsync(res.data);
 
-      return environment_groups;
+      return envGroups;
     }
   );
 
@@ -209,7 +209,7 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
         variables,
         secrets,
       });
-      history.push(`/apps/${proto.name}/settings`);
+      history.push(`/preview-environments`);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
         setCreateError(err.response?.data?.error);
@@ -336,21 +336,25 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
                 fieldArrayName={"app.predeploy"}
               />
             </>,
-            <Button
-              type="submit"
-              loadingText={"Saving..."}
-              width={"150px"}
-              status={buttonStatus}
-            >
-              {existingTemplate ? "Update Previews" : "Enable Previews"}
-            </Button>,
+            <>
+              <Button
+                type="submit"
+                loadingText={"Saving..."}
+                width={"150px"}
+                status={buttonStatus}
+              >
+                {existingTemplate ? "Update Previews" : "Enable Previews"}
+              </Button>
+            </>,
           ].filter((x) => x)}
         />
       </form>
       {showGHAModal && (
         <GithubActionModal
           type="preview"
-          closeModal={() => setShowGHAModal(false)}
+          closeModal={() => {
+            setShowGHAModal(false);
+          }}
           githubAppInstallationID={latestSource.git_repo_id}
           githubRepoOwner={latestSource.git_repo_name.split("/")[0]}
           githubRepoName={latestSource.git_repo_name.split("/")[1]}
@@ -358,8 +362,8 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
           stackName={porterApp.name}
           projectId={projectId}
           clusterId={clusterId}
-          deployPorterApp={() =>
-            createTemplateAndWorkflow({
+          deployPorterApp={async () =>
+            await createTemplateAndWorkflow({
               app: validatedAppProto,
               variables,
               secrets,
@@ -367,6 +371,7 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
           }
           deploymentError={createError}
           porterYamlPath={latestSource.porter_yaml_path}
+          redirectPath={"/preview-environments"}
         />
       )}
     </FormProvider>

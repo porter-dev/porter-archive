@@ -74,6 +74,7 @@ func (c *RegistryListImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		nextToken = &request.Next
 	}
 
+	// TODO (POR-2170): remove this once fully migrated, only supported for recently-migrated legacy users with AWS registries
 	if project.GetFeatureFlag(models.CapiProvisionerEnabled, c.Config().LaunchDarklyClient) {
 		uri := strings.TrimPrefix(regAPI.URL, "https://")
 		splits := strings.Split(uri, ".")

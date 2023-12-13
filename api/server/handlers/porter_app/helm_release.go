@@ -85,6 +85,7 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 
 		// TODO (POR-2170): delete these database calls once endpoint is deprecated
 		var revision *models.AppRevision
+		// treat version 0 as latest like helm
 		if version == 0 {
 			revision, err = c.Repo().AppRevision().LatestNumberedAppRevision(project.ID, appInstance.Id)
 			if err != nil {

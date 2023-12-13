@@ -42,7 +42,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
   const {
     latestClientServices,
     latestClientNotifications,
-    internalLinkBuilder,
+    linkToTabGenerator,
   } = useLatestRevision();
   const convertEventStatusToCopy = (status: string): string => {
     switch (status) {
@@ -104,7 +104,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                     <>
                       <Tag borderColor="#FFBF00">
                         <Link
-                          to={internalLinkBuilder({
+                          to={linkToTabGenerator({
                             tab: "notifications",
                             queryParams: {
                               service: key,
@@ -123,7 +123,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                     <>
                       <Tag>
                         <Link
-                          to={internalLinkBuilder({
+                          to={linkToTabGenerator({
                             tab: "logs",
                             queryParams: {
                               version: revisionNumber.toString(),
@@ -138,7 +138,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                       <Spacer inline x={0.5} />
                       <Tag>
                         <Link
-                          to={internalLinkBuilder({
+                          to={linkToTabGenerator({
                             tab: "metrics",
                             queryParams: {
                               service: key,
@@ -155,7 +155,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                     <Tag>
                       <TagIcon src={calendar} style={{ marginTop: "2px" }} />
                       <Link
-                        to={internalLinkBuilder({
+                        to={linkToTabGenerator({
                           tab: "job-history",
                           queryParams: {
                             service: key,

@@ -47,7 +47,7 @@ const PreDeployEventCard: React.FC<Props> = ({
   gitCommitUrl,
   displayCommitSha,
 }) => {
-  const { porterApp, latestClientNotifications, internalLinkBuilder } =
+  const { porterApp, latestClientNotifications, linkToTabGenerator } =
     useLatestRevision();
 
   const renderStatusText = (event: PorterAppPreDeployEvent): JSX.Element => {
@@ -109,7 +109,7 @@ const PreDeployEventCard: React.FC<Props> = ({
           <Spacer inline x={1} />
           <Tag>
             <Link
-              to={internalLinkBuilder({
+              to={linkToTabGenerator({
                 tab: "events",
                 queryParams: {
                   event_id: event.id,
@@ -147,7 +147,7 @@ const PreDeployEventCard: React.FC<Props> = ({
               <Container row>
                 <Tag borderColor="#FFBF00">
                   <Link
-                    to={internalLinkBuilder({
+                    to={linkToTabGenerator({
                       tab: "notifications",
                       queryParams: {},
                     })}

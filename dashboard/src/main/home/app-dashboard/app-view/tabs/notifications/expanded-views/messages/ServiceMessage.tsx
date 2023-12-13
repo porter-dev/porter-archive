@@ -47,7 +47,7 @@ const ServiceMessage: React.FC<Props> = ({
   showLiveLogs,
 }) => {
   const { showIntercomWithMessage } = useIntercom();
-  const { internalLinkBuilder } = useLatestRevision();
+  const { linkToTabGenerator } = useLatestRevision();
 
   const [logsVisible, setLogsVisible] = useState<boolean>(isFirst);
   const serviceNames = useMemo(() => {
@@ -128,7 +128,7 @@ const ServiceMessage: React.FC<Props> = ({
           <Container row>
             <Tag>
               <Link
-                to={internalLinkBuilder({
+                to={linkToTabGenerator({
                   tab: "job-history",
                   queryParams: {
                     job_run_id: message.metadata.job_run_id,

@@ -224,7 +224,7 @@ const ActivityFeed: React.FC<Props> = ({
               projectId={projectId}
               clusterId={clusterId}
               appName={appName}
-              internalLinkBuilder={({ tab, queryParams }) =>
+              linkToTabGenerator={({ tab, queryParams }) =>
                 formattedPath({
                   currentProject,
                   deploymentTarget,

@@ -49,7 +49,7 @@ const BuildEventCard: React.FC<Props> = ({
   displayCommitSha,
   porterApp,
 }) => {
-  const { internalLinkBuilder } = useLatestRevision();
+  const { linkToTabGenerator } = useLatestRevision();
 
   const renderStatusText = (event: PorterAppBuildEvent): JSX.Element => {
     const color = getStatusColor(event.status);
@@ -69,7 +69,7 @@ const BuildEventCard: React.FC<Props> = ({
       <Container row>
         <Tag>
           <Link
-            to={internalLinkBuilder({
+            to={linkToTabGenerator({
               tab: "events",
               queryParams: { event_id: event.id },
             })}

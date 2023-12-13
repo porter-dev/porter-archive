@@ -63,7 +63,7 @@ type LatestRevisionContextType = {
   setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
   latestClientServices: ClientService[];
   loading: boolean;
-  internalLinkBuilder: ({
+  linkToTabGenerator: ({
     tab,
     queryParams,
   }: {
@@ -380,7 +380,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
         latestClientServices,
         appName,
         loading,
-        internalLinkBuilder: ({ tab, queryParams }) =>
+        linkToTabGenerator: ({ tab, queryParams }) =>
           formattedPath({
             currentProject,
             deploymentTarget: currentDeploymentTarget,

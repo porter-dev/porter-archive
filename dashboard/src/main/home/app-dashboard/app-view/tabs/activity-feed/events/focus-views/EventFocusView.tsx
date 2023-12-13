@@ -30,7 +30,7 @@ const EventFocusView: React.FC = () => {
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const eventId = queryParams.get("event_id");
-  const { projectId, clusterId, internalLinkBuilder } = useLatestRevision();
+  const { projectId, clusterId, linkToTabGenerator } = useLatestRevision();
 
   const [event, setEvent] = useState<SupportedEventFocusViewEvent | null>(null);
 
@@ -86,7 +86,7 @@ const EventFocusView: React.FC = () => {
   return (
     <AppearingView>
       <Link
-        to={internalLinkBuilder({
+        to={linkToTabGenerator({
           tab: "activity",
         })}
       >

@@ -31,7 +31,7 @@ const NotificationFeed: React.FC<Props> = ({
   appId,
 }) => {
   const { search } = useLocation();
-  const { internalLinkBuilder } = useLatestRevision();
+  const { linkToTabGenerator } = useLatestRevision();
   const history = useHistory();
   const queryParams = new URLSearchParams(search);
   const notificationId = queryParams.get("notification_id");
@@ -72,7 +72,7 @@ const NotificationFeed: React.FC<Props> = ({
       {selectedNotification ? (
         <>
           <Link
-            to={internalLinkBuilder({
+            to={linkToTabGenerator({
               tab: "notifications",
             })}
           >
@@ -96,7 +96,7 @@ const NotificationFeed: React.FC<Props> = ({
           notifications={notifications}
           onNotificationClick={(notification: ClientNotification) => {
             history.push(
-              internalLinkBuilder({
+              linkToTabGenerator({
                 tab: "notifications",
                 queryParams: {
                   notification_id: notification.id,

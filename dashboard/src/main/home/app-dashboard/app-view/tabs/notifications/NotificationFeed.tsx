@@ -92,6 +92,10 @@ const NotificationFeed: React.FC<Props> = ({
               `/apps/${appName}/notifications?notification_id=${notification.id}`
             );
           }}
+          projectId={projectId}
+          clusterId={clusterId}
+          appName={appName}
+          deploymentTargetId={deploymentTargetId}
         />
       )}
     </StyledNotificationFeed>

@@ -55,6 +55,11 @@ const EventCard: React.FC<Props> = ({
             ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.image_tag}`
             : ""
         )
+        .with({ type: "AUTO_ROLLBACK" }, (event) =>
+          event.metadata.image_tag
+            ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.image_tag}`
+            : ""
+        )
         .exhaustive()
     );
   }, [JSON.stringify(event), porterApp]);
@@ -80,6 +85,9 @@ const EventCard: React.FC<Props> = ({
             : ""
         )
         .with({ type: "DEPLOY" }, (event) =>
+          event.metadata.image_tag ? event.metadata.image_tag.slice(0, 7) : ""
+        )
+        .with({ type: "AUTO_ROLLBACK" }, (event) =>
           event.metadata.image_tag ? event.metadata.image_tag.slice(0, 7) : ""
         )
         .exhaustive()
@@ -122,6 +130,7 @@ const EventCard: React.FC<Props> = ({
         displayCommitSha={displayCommitSha}
       />
     ))
+    .with({ type: "AUTO_ROLLBACK" }, () => null)
     .exhaustive();
 };
 

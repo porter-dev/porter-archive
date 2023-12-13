@@ -6,6 +6,10 @@ import {
   type PorterAppNotification,
 } from "main/home/app-dashboard/app-view/tabs/activity-feed/events/types";
 
+import {
+  ERROR_CODE_APPLICATION_ROLLBACK,
+  ERROR_CODE_APPLICATION_ROLLBACK_FAILED,
+} from "./error";
 import { type ClientService } from "./services";
 
 type BaseClientNotification = {
@@ -23,8 +27,8 @@ export type ClientServiceNotification = BaseClientNotification & {
 
 export type ClientRevisionNotification = BaseClientNotification & {
   scope: "REVISION";
-  isDeployRelated: boolean;
   appRevisionId: string;
+  isRollbackRelated: boolean;
 };
 
 type ClientApplicationNotification = BaseClientNotification & {
@@ -49,14 +53,19 @@ export const isClientRevisionNotification = (
 
 export function deserializeNotifications(
   notifications: PorterAppNotification[],
-  clientServices: ClientService[]
+  latestClientServices: ClientService[],
+  latestRevisionId: string
 ): ClientNotification[] {
   const revisionNotifications = orderNotificationsByTimestamp(
     clientRevisionNotifications(notifications),
     "asc"
   );
   const serviceNotifications = orderNotificationsByTimestamp(
-    clientServiceNotifications(notifications, clientServices),
+    clientServiceNotifications(
+      notifications,
+      latestClientServices,
+      latestRevisionId
+    ),
     "asc"
   );
 
@@ -65,16 +74,19 @@ export function deserializeNotifications(
 
 const clientServiceNotifications = (
   notifications: PorterAppNotification[],
-  clientServices: ClientService[]
+  latestClientServices: ClientService[],
+  latestRevisionId: string
 ): ClientServiceNotification[] => {
-  const serviceNotifications = notifications.filter(isServiceNotification);
+  const serviceNotifications = notifications
+    .filter((n) => n.app_revision_id === latestRevisionId)
+    .filter(isServiceNotification);
 
   const notificationsGroupedByService = _.groupBy(
     serviceNotifications,
     (notification) => notification.metadata.service_name
   );
 
-  return clientServices
+  return latestClientServices
     .filter((svc) => notificationsGroupedByService[svc.name.value] != null)
     .map((svc) => {
       const serviceName = svc.name.value;
@@ -108,24 +120,22 @@ const clientRevisionNotifications = (
   notifications: PorterAppNotification[]
 ): ClientRevisionNotification[] => {
   const revisionNotifications = notifications.filter(isRevisionNotification);
-  const messages = orderNotificationsByTimestamp(revisionNotifications, "asc");
-  if (messages.length === 0) {
-    return [];
-  }
-  const parentMessage = messages[0];
-  const timestamp = parentMessage.timestamp;
-  const id = parentMessage.id;
-  const appRevisionId = parentMessage.app_revision_id;
-  return [
-    {
+
+  return revisionNotifications.map((notification) => {
+    const timestamp = notification.timestamp;
+    const id = notification.id;
+    const appRevisionId = notification.app_revision_id;
+    return {
       scope: "REVISION",
       id,
       timestamp,
-      isDeployRelated: true,
-      messages,
+      messages: [notification],
       appRevisionId,
-    },
-  ];
+      isRollbackRelated:
+        notification.error.code === ERROR_CODE_APPLICATION_ROLLBACK ||
+        notification.error.code === ERROR_CODE_APPLICATION_ROLLBACK_FAILED,
+    };
+  });
 };
 
 const orderNotificationsByTimestamp = <T extends Array<{ timestamp: string }>>(

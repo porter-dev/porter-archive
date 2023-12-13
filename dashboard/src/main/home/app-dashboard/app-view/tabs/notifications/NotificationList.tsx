@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
+import { useRevisionList } from "lib/hooks/useRevisionList";
 import { type ClientNotification } from "lib/porter-apps/notification";
 
 import NotificationTile from "./NotificationTile";
@@ -8,12 +9,26 @@ import NotificationTile from "./NotificationTile";
 type Props = {
   notifications: ClientNotification[];
   onNotificationClick: (notification: ClientNotification) => void;
+  projectId: number;
+  clusterId: number;
+  appName: string;
+  deploymentTargetId: string;
 };
 
 const NotificationList: React.FC<Props> = ({
   notifications,
   onNotificationClick,
+  projectId,
+  clusterId,
+  appName,
+  deploymentTargetId,
 }) => {
+  const { revisionIdToNumber } = useRevisionList({
+    projectId,
+    clusterId,
+    appName,
+    deploymentTargetId,
+  });
   return (
     <StyledNotificationList>
       {notifications.map((notif) => (
@@ -23,6 +38,7 @@ const NotificationList: React.FC<Props> = ({
           onClick={() => {
             onNotificationClick(notif);
           }}
+          revisionIdToNumber={revisionIdToNumber}
         />
       ))}
     </StyledNotificationList>

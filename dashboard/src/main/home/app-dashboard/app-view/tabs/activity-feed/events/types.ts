@@ -20,6 +20,8 @@ const porterAppAppEventMetadataValidator = z.object({
 const porterAppDeployEventMetadataValidator = z.object({
   image_tag: z.string().optional(),
   app_revision_id: z.string(),
+  rollback_target_app_revision_id: z.string().optional(),
+  rollback_target_image_tag: z.string().optional(),
   service_deployment_metadata: z
     .record(
       z.object({
@@ -189,6 +191,15 @@ export const porterAppEventValidator = z.discriminatedUnion("type", [
     porter_app_id: z.number(),
     metadata: porterAppNotificationEventMetadataValidator,
   }),
+  z.object({
+    id: z.string(),
+    created_at: z.string(),
+    updated_at: z.string(),
+    type: z.literal("AUTO_ROLLBACK"),
+    type_external_source: z.string().optional().default(""),
+    porter_app_id: z.number(),
+    metadata: porterAppDeployEventMetadataValidator,
+  }),
 ]);
 
 export const getPorterAppEventsValidator = z
@@ -203,4 +214,7 @@ export type PorterAppPreDeployEvent = PorterAppEvent & { type: "PRE_DEPLOY" };
 export type PorterAppAppEvent = PorterAppEvent & { type: "APP_EVENT" };
 export type PorterAppNotificationEvent = PorterAppEvent & {
   type: "NOTIFICATION";
+};
+export type PorterAppRollbackEvent = PorterAppEvent & {
+  type: "AUTO_ROLLBACK";
 };

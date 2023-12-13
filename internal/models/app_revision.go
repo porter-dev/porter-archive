@@ -45,6 +45,10 @@ const (
 	AppRevisionStatus_DeploymentSuccessful AppRevisionStatus = "DEPLOYMENT_SUCCESSFUL"
 	// AppRevisionStatus_DeploymentFailed is the status for a revision that failed to deploy
 	AppRevisionStatus_DeploymentFailed AppRevisionStatus = "DEPLOYMENT_FAILED"
+	// AppRevisionStatus_RollbackSuccessful is the status for a revision that successfully rolled back
+	AppRevisionStatus_RollbackSuccessful AppRevisionStatus = "ROLLBACK_SUCCESSFUL"
+	// AppRevisionStatus_RollbackFailed is the status for a revision that failed to rollback
+	AppRevisionStatus_RollbackFailed AppRevisionStatus = "ROLLBACK_FAILED"
 	// AppRevisionStatus_ApplyFailed is the status for a revision that failed due to an internal system error
 	AppRevisionStatus_ApplyFailed AppRevisionStatus = "APPLY_FAILED"
 	// AppRevisionStatus_UpdateFailed is the status for a revision that failed due to an internal system error

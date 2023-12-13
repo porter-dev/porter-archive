@@ -34,18 +34,21 @@ jobs:
       - name: Upload binaries
         uses: actions/upload-artifact@v3
         with:
-          path: ./release/linux
-          name: linux-binaries
+          name: go-binaries-cli
+          path: bin/
           retention-days: 1
   run-integration-tests:
     name: run integration tests to test new build
     runs-on: ubuntu-latest
     needs: build-linux
     steps:
-      - name: Porter app run
-        uses: porter-dev/porter-cli-action@v0.1.0
+      - name: Get built CLI
+        uses: actions/download-artifact@v3
         with:
-          command: app run app-integration-tests --job trigger
+          name: go-binaries-cli
+          path: bin/
+      - name: Porter app run
+        run: bin/porter app run app-integration-tests --job trigger
         env:
           PORTER_CLUSTER: "142"
           PORTER_HOST: https://dashboard.internal-tools.porter.run

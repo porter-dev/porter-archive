@@ -24,4 +24,7 @@ type AppTemplate struct {
 	// BaseDeploymentTargetID is the ID of the deployment target that this template is based on
 	// This is used to look up the latest app revision in the base, which will hydrate the template on apply.
 	BaseDeploymentTargetID uuid.UUID `json:"base_deployment_target_id" gorm:"type:uuid;default:00000000-0000-0000-0000-000000000000"`
+
+	// Base64AddonTemplates is an encoded object containing templated addons to deploy alongside the app
+	Base64AddonTemplates string `json:"base64_addon_templates"`
 }

@@ -1,51 +1,50 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PorterApp } from "@porter-dev/api-contracts";
-import { useQuery } from "@tanstack/react-query";
+import { type PorterApp } from "@porter-dev/api-contracts";
 import axios from "axios";
 import _ from "lodash";
 import { FormProvider, useForm } from "react-hook-form";
 import { Redirect, useHistory } from "react-router";
-import { z } from "zod";
+import { match } from "ts-pattern";
 
-import Button from "components/porter/Button";
 import Error from "components/porter/Error";
 import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-import VerticalSteps from "components/porter/VerticalSteps";
+import TabSelector from "components/TabSelector";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import Environment from "main/home/app-dashboard/app-view/tabs/Environment";
 import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
-import EnvSettings from "main/home/app-dashboard/validate-apply/app-settings/EnvSettings";
-import { populatedEnvGroup } from "main/home/app-dashboard/validate-apply/app-settings/types";
-import ServiceList from "main/home/app-dashboard/validate-apply/services-settings/ServiceList";
+import { useAppWithPreviewOverrides } from "lib/hooks/useAppWithPreviewOverrides";
 import {
-  applyPreviewOverrides,
-  clientAppFromProto,
   clientAppToProto,
   porterAppFormValidator,
   type PorterAppFormData,
   type SourceOptions,
 } from "lib/porter-apps";
-import {
-  defaultSerialized,
-  deserializeService,
-} from "lib/porter-apps/services";
 
 import api from "shared/api";
-import { useClusterResources } from "shared/ClusterResourcesContext";
+
+import { type ExistingTemplateWithEnv } from "../types";
+import { ServiceSettings } from "./ServiceSettings";
 
 type Props = {
-  existingTemplate: {
-    template: PorterApp;
-    env: {
-      variables: Record<string, string>;
-      secret_variables: Record<string, string>;
-    };
-  } | null;
+  existingTemplate: ExistingTemplateWithEnv | null;
 };
 
-const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
+const previewEnvSettingsTabs = [
+  "services",
+  "variables",
+  "addons",
+  "required-apps",
+] as const;
+
+type PreviewEnvSettingsTab = (typeof previewEnvSettingsTabs)[number];
+
+export const PreviewAppDataContainer: React.FC<Props> = ({
+  existingTemplate,
+}) => {
   const history = useHistory();
+
+  const [tab, setTab] = useState<PreviewEnvSettingsTab>("services");
   const [validatedAppProto, setValidatedAppProto] = useState<PorterApp | null>(
     null
   );
@@ -58,7 +57,6 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
     variables: {},
     secrets: {},
   });
-  const { currentClusterResources } = useClusterResources();
 
   const {
     porterApp,
@@ -69,28 +67,6 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
     projectId,
     deploymentTarget,
   } = useLatestRevision();
-
-  const { data: baseEnvGroups = [] } = useQuery(
-    ["getAllEnvGroups", projectId, clusterId],
-    async () => {
-      const res = await api.getAllEnvGroups(
-        "<token>",
-        {},
-        {
-          id: projectId,
-          cluster_id: clusterId,
-        }
-      );
-
-      const { environment_groups: envGroups } = await z
-        .object({
-          environment_groups: z.array(populatedEnvGroup).default([]),
-        })
-        .parseAsync(res.data);
-
-      return envGroups;
-    }
-  );
 
   const latestSource: SourceOptions = useMemo(() => {
     if (porterApp.image_repo_uri) {
@@ -113,27 +89,13 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
     };
   }, [porterApp]);
 
-  const withPreviewOverrides = useMemo(() => {
-    return applyPreviewOverrides({
-      app: clientAppFromProto({
-        proto: existingTemplate?.template
-          ? existingTemplate.template
-          : new PorterApp({
-              ...latestProto,
-              envGroups: [],
-            }), // clear out env groups, they won't get added to the template anyways
-        overrides: servicesFromYaml,
-        variables: existingTemplate
-          ? existingTemplate.env.variables
-          : appEnv?.variables,
-        secrets: existingTemplate
-          ? existingTemplate.env.secret_variables
-          : appEnv?.secret_variables,
-        lockServiceDeletions: true,
-      }),
-      overrides: servicesFromYaml?.previews,
-    });
-  }, [latestProto, existingTemplate?.template, appEnv, servicesFromYaml]);
+  const withPreviewOverrides = useAppWithPreviewOverrides({
+    latestApp: latestProto,
+    detectedServices: servicesFromYaml,
+    existingTemplate: existingTemplate?.template,
+    templateEnv: existingTemplate?.env,
+    appEnv,
+  });
 
   const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",
@@ -285,69 +247,40 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
 
   return (
     <FormProvider {...porterAppFormMethods}>
+      <TabSelector
+        noBuffer
+        options={[
+          { label: "App Services", value: "services" },
+          { label: "Environment Variables", value: "variables" },
+          // { label: "Required Apps", value: "required-apps" },
+          // { label: "Add-ons", value: "addons" },
+        ]}
+        currentTab={tab}
+        setCurrentTab={(tab: string) => {
+          if (tab === "services") {
+            setTab("services");
+          } else if (tab === "variables") {
+            setTab("variables");
+          } else if (tab === "required-apps") {
+            setTab("required-apps");
+          } else {
+            setTab("addons");
+          }
+        }}
+      />
+      <Spacer y={1} />
       <form onSubmit={onSubmit}>
-        <VerticalSteps
-          currentStep={3}
-          steps={[
-            <>
-              <Text size={16}>Application services</Text>
-              <Spacer y={0.5} />
-              <ServiceList
-                addNewText={"Add a new service"}
-                fieldArrayName={"app.services"}
-                internalNetworkingDetails={{
-                  namespace: deploymentTarget.namespace,
-                  appName: porterApp.name,
-                }}
-                allowAddServices={false}
-              />
-            </>,
-            <>
-              <Text size={16}>Environment variables (optional)</Text>
-              <Spacer y={0.5} />
-              <Text color="helper">
-                Specify environment variables shared among all services.
-              </Text>
-              <EnvSettings baseEnvGroups={baseEnvGroups} />
-            </>,
-            <>
-              <Text size={16}>Pre-deploy job (optional)</Text>
-              <Spacer y={0.5} />
-              <Text color="helper">
-                You may add a pre-deploy job to perform an operation before your
-                application services deploy each time, like a database
-                migration.
-              </Text>
-              <Spacer y={0.5} />
-              <ServiceList
-                addNewText={"Add a new pre-deploy job"}
-                prePopulateService={deserializeService({
-                  service: defaultSerialized({
-                    name: "pre-deploy",
-                    type: "predeploy",
-                    defaultCPU: currentClusterResources.defaultCPU,
-                    defaultRAM: currentClusterResources.defaultRAM,
-                  }),
-                })}
-                existingServiceNames={
-                  latestProto.predeploy ? ["pre-deploy"] : []
-                }
-                isPredeploy
-                fieldArrayName={"app.predeploy"}
-              />
-            </>,
-            <>
-              <Button
-                type="submit"
-                loadingText={"Saving..."}
-                width={"150px"}
-                status={buttonStatus}
-              >
-                {existingTemplate ? "Update Previews" : "Enable Previews"}
-              </Button>
-            </>,
-          ].filter((x) => x)}
-        />
+        {match(tab)
+          .with("services", () => (
+            <ServiceSettings buttonStatus={buttonStatus} />
+          ))
+          .with("variables", () => (
+            <Environment
+              latestSource={latestSource}
+              buttonStatus={buttonStatus}
+            />
+          ))
+          .otherwise(() => null)}
       </form>
       {showGHAModal && (
         <GithubActionModal
@@ -377,5 +310,3 @@ const AppTemplateForm: React.FC<Props> = ({ existingTemplate }) => {
     </FormProvider>
   );
 };
-
-export default AppTemplateForm;

@@ -1,17 +1,19 @@
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useFormContext } from "react-hook-form";
+import { z } from "zod";
+
+import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import React, { useMemo } from "react";
-import Button from "components/porter/Button";
-import Error from "components/porter/Error";
-import { useFormContext } from "react-hook-form";
-import { PorterAppFormData, SourceOptions } from "lib/porter-apps";
-import { useLatestRevision } from "../LatestRevisionContext";
-import { useQuery } from "@tanstack/react-query";
+import { type PorterAppFormData, type SourceOptions } from "lib/porter-apps";
+
 import api from "shared/api";
-import { z } from "zod";
-import { populatedEnvGroup } from "../../validate-apply/app-settings/types";
+
 import EnvSettings from "../../validate-apply/app-settings/EnvSettings";
-import { ButtonStatus } from "../AppDataContainer";
+import { populatedEnvGroup } from "../../validate-apply/app-settings/types";
+import { type ButtonStatus } from "../AppDataContainer";
+import { useLatestRevision } from "../LatestRevisionContext";
 
 type Props = {
   latestSource: SourceOptions;
@@ -43,13 +45,13 @@ const Environment: React.FC<Props> = ({ latestSource, buttonStatus }) => {
         }
       );
 
-      const { environment_groups } = await z
+      const { environment_groups: envGroups } = await z
         .object({
           environment_groups: z.array(populatedEnvGroup).default([]),
         })
         .parseAsync(res.data);
 
-      return environment_groups;
+      return envGroups;
     }
   );
 
@@ -57,10 +59,13 @@ const Environment: React.FC<Props> = ({ latestSource, buttonStatus }) => {
     <>
       <Text size={16}>Environment variables</Text>
       <Spacer y={0.5} />
-      <Text color="helper">Shared among all services. All non-secret variables are also available at build time.</Text>
+      <Text color="helper">
+        Shared among all services. All non-secret variables are also available
+        at build time.
+      </Text>
       <EnvSettings
         appName={latestProto.name}
-        revision={previewRevision ? previewRevision : latestRevision} // get versions of env groups attached to preview revision if set
+        revision={previewRevision || latestRevision} // get versions of env groups attached to preview revision if set
         baseEnvGroups={baseEnvGroups}
         latestSource={latestSource}
         attachedEnvGroups={attachedEnvGroups}
@@ -70,10 +75,7 @@ const Environment: React.FC<Props> = ({ latestSource, buttonStatus }) => {
         type="submit"
         status={buttonStatus}
         loadingText={"Updating..."}
-        disabled={
-          isSubmitting ||
-          latestRevision.status === "CREATED"
-        }
+        disabled={isSubmitting || latestRevision.status === "CREATED"}
         disabledTooltipMessage="Please wait for the deploy to complete before updating environment variables"
       >
         Update app

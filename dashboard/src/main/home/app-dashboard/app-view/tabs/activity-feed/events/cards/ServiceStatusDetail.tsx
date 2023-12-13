@@ -30,18 +30,17 @@ type Props = {
       type: string;
     }
   >;
-  appName: string;
   revisionId: string;
-  revisionNumber: number;
+  revisionNumber?: number;
 };
 
 const ServiceStatusDetail: React.FC<Props> = ({
   serviceDeploymentMetadata,
-  appName,
   revisionId,
   revisionNumber,
 }) => {
-  const { latestClientServices, latestNotifications } = useLatestRevision();
+  const { latestClientServices, latestClientNotifications, tabUrlGenerator } =
+    useLatestRevision();
   const convertEventStatusToCopy = (status: string): string => {
     switch (status) {
       case "PROGRESSING":
@@ -72,7 +71,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
             service.config.domains.length
               ? service.config.domains[0].name.value
               : "";
-          const notificationsExistForService = latestNotifications
+          const notificationsExistForService = latestClientNotifications
             .filter(isClientServiceNotification)
             .some(
               (n) =>
@@ -102,7 +101,12 @@ const ServiceStatusDetail: React.FC<Props> = ({
                     <>
                       <Tag borderColor="#FFBF00">
                         <Link
-                          to={`/apps/${appName}/notifications?service=${key}`}
+                          to={tabUrlGenerator({
+                            tab: "notifications",
+                            queryParams: {
+                              service: key,
+                            },
+                          })}
                           color={"#FFBF00"}
                         >
                           <TagIcon src={alert} />
@@ -112,11 +116,17 @@ const ServiceStatusDetail: React.FC<Props> = ({
                       <Spacer inline x={0.5} />
                     </>
                   )}
-                  {serviceType !== "job" && (
+                  {serviceType !== "job" && revisionNumber && (
                     <>
                       <Tag>
                         <Link
-                          to={`/apps/${appName}/logs?version=${revisionNumber}&service=${key}`}
+                          to={tabUrlGenerator({
+                            tab: "logs",
+                            queryParams: {
+                              version: revisionNumber.toString(),
+                              service: key,
+                            },
+                          })}
                         >
                           <TagIcon src={document} />
                           Logs
@@ -124,7 +134,14 @@ const ServiceStatusDetail: React.FC<Props> = ({
                       </Tag>
                       <Spacer inline x={0.5} />
                       <Tag>
-                        <Link to={`/apps/${appName}/metrics?service=${key}`}>
+                        <Link
+                          to={tabUrlGenerator({
+                            tab: "metrics",
+                            queryParams: {
+                              service: key,
+                            },
+                          })}
+                        >
                           <TagIcon src={metrics} />
                           Metrics
                         </Link>
@@ -134,7 +151,14 @@ const ServiceStatusDetail: React.FC<Props> = ({
                   {serviceType === "job" && (
                     <Tag>
                       <TagIcon src={calendar} style={{ marginTop: "2px" }} />
-                      <Link to={`/apps/${appName}/job-history?service=${key}`}>
+                      <Link
+                        to={tabUrlGenerator({
+                          tab: "job-history",
+                          queryParams: {
+                            service: key,
+                          },
+                        })}
+                      >
                         History
                       </Link>
                     </Tag>
@@ -148,7 +172,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                           target={"_blank"}
                           showTargetBlankIcon={false}
                         >
-                          <TagIcon src={link} />
+                          <TagIcon src={link} height={"10px"} />
                           External link
                         </Link>
                       </Tag>
@@ -189,7 +213,7 @@ const ServiceStatusTableData = styled.td<{
   ${(props) => props.width && `width: ${props.width};`}
 `;
 
-const TagIcon = styled.img`
-  height: 12px;
+const TagIcon = styled.img<{ height?: string }>`
+  height: ${(props) => props.height ?? "12px"};
   margin-right: 3px;
 `;

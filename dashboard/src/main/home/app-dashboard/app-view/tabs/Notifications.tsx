@@ -5,21 +5,21 @@ import NotificationFeed from "./notifications/NotificationFeed";
 
 const Notifications: React.FC = () => {
   const {
-    latestNotifications,
+    latestClientNotifications,
     projectId,
     clusterId,
     appName,
     porterApp: { id: appId },
-    deploymentTarget: { id: deploymentTargetId },
+    deploymentTarget,
   } = useLatestRevision();
 
   return (
     <NotificationFeed
-      notifications={latestNotifications}
+      notifications={latestClientNotifications}
       projectId={projectId}
       clusterId={clusterId}
       appName={appName}
-      deploymentTargetId={deploymentTargetId}
+      deploymentTarget={deploymentTarget}
       appId={appId}
     />
   );

@@ -112,7 +112,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     servicesFromYaml,
     appEnv,
     setPreviewRevision,
-    latestNotifications,
+    latestClientNotifications,
+    tabUrlGenerator,
   } = useLatestRevision();
   const { validateApp, setServiceDeletions } = useAppValidation({
     deploymentTargetID: deploymentTarget.id,
@@ -335,7 +336,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       setPreviewRevision(null);
 
       history.push(
-        formattedPath(DEFAULT_TAB, deploymentTarget.id, porterAppRecord.name)
+        tabUrlGenerator({
+          tab: DEFAULT_TAB,
+        })
       );
     } catch (err) {
       showIntercomWithMessage({
@@ -472,7 +475,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [isSubmitting, JSON.stringify(errors)]);
 
   const tabs = useMemo(() => {
-    const numNotifications = latestNotifications.length;
+    const numNotifications = latestClientNotifications.length;
 
     const base = [
       {
@@ -482,7 +485,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           numNotifications > 0 ? (
             <Tag borderColor={"#FFBF00"}>
               <Link
-                to={`/apps/${latestProto.name}/notifications`}
+                to={tabUrlGenerator({
+                  tab: "notifications",
+                })}
                 color={"#FFBF00"}
               >
                 <TagIcon src={alert} />
@@ -534,24 +539,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   }, [
     deploymentTarget.is_preview,
     latestProto.build,
-    latestNotifications.length,
+    latestClientNotifications.length,
   ]);
-
-  const formattedPath = (
-    tab: string,
-    deploymentTargetId: string,
-    appName: string
-  ): string => {
-    let path = `/apps/${appName}/${tab}`;
-    if (currentProject?.managed_deployment_targets_enabled) {
-      path = `/apps/${appName}/${tab}?target=${deploymentTargetId}`;
-    }
-    if (deploymentTarget.is_preview) {
-      path = `/preview-environments/apps/${appName}/${tab}?target=${deploymentTargetId}`;
-    }
-
-    return path;
-  };
 
   useEffect(() => {
     const newProto = previewRevision
@@ -637,7 +626,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
           currentTab={currentTab}
           setCurrentTab={(tab) => {
             history.push(
-              formattedPath(tab, deploymentTarget.id, porterAppRecord.name)
+              tabUrlGenerator({
+                tab,
+              })
             );
           }}
         />

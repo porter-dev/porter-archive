@@ -9,6 +9,7 @@ import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import { type PorterAppRecord } from "main/home/app-dashboard/app-view/AppView";
+import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 
 import build from "assets/build.png";
 import document from "assets/document.svg";
@@ -42,13 +43,14 @@ type Props = {
 
 const BuildEventCard: React.FC<Props> = ({
   event,
-  appName,
   projectId,
   clusterId,
   gitCommitUrl,
   displayCommitSha,
   porterApp,
 }) => {
+  const { tabUrlGenerator } = useLatestRevision();
+
   const renderStatusText = (event: PorterAppBuildEvent): JSX.Element => {
     const color = getStatusColor(event.status);
     return (
@@ -62,11 +64,16 @@ const BuildEventCard: React.FC<Props> = ({
     );
   };
 
-  const renderLogsAndRetry = (event: PorterAppBuildEvent): JSX.Element => {
+  const renderLogsAndRetry = (): JSX.Element => {
     return (
       <Container row>
         <Tag>
-          <Link to={`/apps/${appName}/events?event_id=${event.id}`}>
+          <Link
+            to={tabUrlGenerator({
+              tab: "events",
+              queryParams: { event_id: event.id },
+            })}
+          >
             <TagIcon src={document} />
             Logs
           </Link>
@@ -95,9 +102,9 @@ const BuildEventCard: React.FC<Props> = ({
       case "SUCCESS":
         return null;
       case "CANCELED":
-        return renderLogsAndRetry(event);
+        return renderLogsAndRetry();
       case "FAILED":
-        return renderLogsAndRetry(event);
+        return renderLogsAndRetry();
       default:
         return (
           <Container row>

@@ -34,7 +34,6 @@ import {
 
 type Props = {
   event: PorterAppPreDeployEvent;
-  appName: string;
   projectId: number;
   clusterId: number;
   gitCommitUrl: string;
@@ -43,13 +42,13 @@ type Props = {
 
 const PreDeployEventCard: React.FC<Props> = ({
   event,
-  appName,
   projectId,
   clusterId,
   gitCommitUrl,
   displayCommitSha,
 }) => {
-  const { porterApp, latestNotifications } = useLatestRevision();
+  const { porterApp, latestClientNotifications, tabUrlGenerator } =
+    useLatestRevision();
 
   const renderStatusText = (event: PorterAppPreDeployEvent): JSX.Element => {
     const color = getStatusColor(event.status);
@@ -62,7 +61,7 @@ const PreDeployEventCard: React.FC<Props> = ({
   };
 
   const predeployNotificationsExist = useMemo(() => {
-    return latestNotifications
+    return latestClientNotifications
       .filter(isClientServiceNotification)
       .some((notification) => {
         return (
@@ -70,7 +69,7 @@ const PreDeployEventCard: React.FC<Props> = ({
           notification.appRevisionId === event.metadata.app_revision_id
         );
       });
-  }, [JSON.stringify(latestNotifications)]);
+  }, [JSON.stringify(latestClientNotifications)]);
 
   return (
     <StyledEventCard>
@@ -110,7 +109,14 @@ const PreDeployEventCard: React.FC<Props> = ({
           <Spacer inline x={1} />
           <Tag>
             <Link
-              to={`/apps/${appName}/events?event_id=${event.id}&service=predeploy&revision_id=${event.metadata.app_revision_id}`}
+              to={tabUrlGenerator({
+                tab: "events",
+                queryParams: {
+                  event_id: event.id,
+                  service: "predeploy",
+                  revision_id: event.metadata.app_revision_id,
+                },
+              })}
             >
               <TagIcon src={document} />
               Logs
@@ -140,7 +146,13 @@ const PreDeployEventCard: React.FC<Props> = ({
               <Spacer inline x={0.5} />
               <Container row>
                 <Tag borderColor="#FFBF00">
-                  <Link to={`/apps/${appName}/notifications`} color={"#FFBF00"}>
+                  <Link
+                    to={tabUrlGenerator({
+                      tab: "notifications",
+                      queryParams: {},
+                    })}
+                    color={"#FFBF00"}
+                  >
                     <TagIcon src={alert} />
                     Notifications
                   </Link>

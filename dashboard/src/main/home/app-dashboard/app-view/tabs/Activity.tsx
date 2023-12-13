@@ -9,10 +9,10 @@ const Activity: React.FC = () => {
 
   return (
     <ActivityFeed
-      currentProject={projectId}
-      currentCluster={clusterId}
+      projectId={projectId}
+      clusterId={clusterId}
       appName={latestProto.name}
-      deploymentTargetId={deploymentTarget.id}
+      deploymentTarget={deploymentTarget}
     />
   );
 };

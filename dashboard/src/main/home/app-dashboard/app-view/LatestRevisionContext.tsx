@@ -23,6 +23,7 @@ import {
   deserializeNotifications,
   type ClientNotification,
 } from "lib/porter-apps/notification";
+import { formattedPath } from "lib/porter-apps/routing";
 import {
   type ClientService,
   type DetectedServices,
@@ -40,13 +41,17 @@ import {
   type PopulatedEnvGroup,
 } from "../validate-apply/app-settings/types";
 import { porterAppValidator, type PorterAppRecord } from "./AppView";
-import { porterAppNotificationEventMetadataValidator } from "./tabs/activity-feed/events/types";
+import {
+  porterAppNotificationEventMetadataValidator,
+  type PorterAppNotification,
+} from "./tabs/activity-feed/events/types";
 
 type LatestRevisionContextType = {
   porterApp: PorterAppRecord;
   latestRevision: AppRevision;
   latestProto: PorterApp;
-  latestNotifications: ClientNotification[];
+  latestClientNotifications: ClientNotification[];
+  latestSerializedNotifications: PorterAppNotification[];
   servicesFromYaml: DetectedServices | null;
   clusterId: number;
   projectId: number;
@@ -58,6 +63,13 @@ type LatestRevisionContextType = {
   setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
   latestClientServices: ClientService[];
   loading: boolean;
+  tabUrlGenerator: ({
+    tab,
+    queryParams,
+  }: {
+    tab: string;
+    queryParams?: Record<string, string>;
+  }) => string;
 };
 
 const LatestRevisionContext = createContext<LatestRevisionContextType | null>(
@@ -162,7 +174,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
     }
   );
 
-  const { data: { notifications: latestPorterAppNotifications = [] } = {} } =
+  const { data: { notifications: latestSerializedNotifications = [] } = {} } =
     useQuery(
       [
         "appNotifications",
@@ -303,12 +315,17 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
     ].filter(valueExists);
   }, [latestProto, detectedServices]);
 
-  const latestNotifications = useMemo(() => {
+  const latestClientNotifications = useMemo(() => {
+    if (!latestRevision) {
+      return [];
+    }
+
     return deserializeNotifications(
-      latestPorterAppNotifications,
-      latestClientServices
+      latestSerializedNotifications,
+      latestClientServices,
+      latestRevision.id
     );
-  }, [latestPorterAppNotifications, latestClientServices]);
+  }, [latestSerializedNotifications, latestClientServices, latestRevision]);
 
   const loading =
     status === "loading" ||
@@ -349,7 +366,8 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
       value={{
         latestRevision,
         latestProto,
-        latestNotifications,
+        latestClientNotifications,
+        latestSerializedNotifications,
         porterApp,
         clusterId: currentCluster.id,
         projectId: currentProject.id,
@@ -362,6 +380,14 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
         latestClientServices,
         appName,
         loading,
+        tabUrlGenerator: ({ tab, queryParams }) =>
+          formattedPath({
+            currentProject,
+            deploymentTarget: currentDeploymentTarget,
+            appName,
+            tab,
+            queryParams,
+          }),
       }}
     >
       {children}

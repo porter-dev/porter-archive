@@ -37,7 +37,7 @@ type Props = {
 const ServiceStatusDetail: React.FC<Props> = ({
   serviceDeploymentMetadata,
   revisionId,
-  revisionNumber,
+  revisionNumber = 0,
 }) => {
   const { latestClientServices, latestClientNotifications, tabUrlGenerator } =
     useLatestRevision();
@@ -116,7 +116,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                       <Spacer inline x={0.5} />
                     </>
                   )}
-                  {serviceType !== "job" && revisionNumber && (
+                  {serviceType !== "job" && revisionNumber !== 0 && (
                     <>
                       <Tag>
                         <Link

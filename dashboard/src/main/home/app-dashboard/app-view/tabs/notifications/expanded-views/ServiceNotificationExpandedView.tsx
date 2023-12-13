@@ -94,7 +94,6 @@ const ServiceNotificationExpandedView: React.FC<Props> = ({
                 appId={appId}
                 appRevisionId={notification.appRevisionId}
                 showLiveLogs={notification.isDeployRelated}
-                includeServiceNameHeader={false}
               />
             ))}
         </StyledMessageFeed>

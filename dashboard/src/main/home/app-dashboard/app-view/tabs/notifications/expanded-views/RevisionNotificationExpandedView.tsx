@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
@@ -20,7 +21,10 @@ import { feedDate } from "shared/string_utils";
 import { valueExists } from "shared/util";
 import chat from "assets/chat.svg";
 import document from "assets/document.svg";
+import job from "assets/job.png";
 import time from "assets/time.svg";
+import web from "assets/web.png";
+import worker from "assets/worker.png";
 
 import { useLatestRevision } from "../../../LatestRevisionContext";
 import {
@@ -35,6 +39,10 @@ import {
   StyledMessageFeed,
   StyledNotificationExpandedView,
 } from "./NotificationExpandedView";
+import {
+  ServiceNameTag,
+  ServiceTypeIcon,
+} from "./ServiceNotificationExpandedView";
 
 type Props = {
   notification: ClientRevisionNotification;
@@ -214,16 +222,33 @@ const RevisionNotificationExpandedView: React.FC<Props> = ({
               );
             })}
         </StyledMessageFeed>
-        <Spacer y={1} />
+        <Spacer y={0.5} />
         {rollbackClientServiceNotifications.map((notification) => (
           <div key={notification.id}>
+            <Spacer y={0.5} />
+            <Container row>
+              <ServiceNameTag>
+                {match(notification.service.config.type)
+                  .with("web", () => <ServiceTypeIcon src={web} />)
+                  .with("worker", () => <ServiceTypeIcon src={worker} />)
+                  .with("job", () => <ServiceTypeIcon src={job} />)
+                  .with("predeploy", () => <ServiceTypeIcon src={job} />)
+                  .exhaustive()}
+                <Spacer inline x={0.5} />
+                {notification.service.name.value}
+              </ServiceNameTag>
+              <Spacer inline x={0.5} />
+              <Text size={16} color={"#FFBF00"}>
+                failed to deploy
+              </Text>
+            </Container>
             <Spacer y={0.5} />
             <StyledMessageFeed>
               {notification.messages
                 .filter(isServiceNotification)
                 .map((message, i) => (
                   <ServiceMessage
-                    key={i}
+                    key={message.id}
                     isFirst={i === 0}
                     message={message}
                     service={notification.service}
@@ -234,7 +259,6 @@ const RevisionNotificationExpandedView: React.FC<Props> = ({
                     appId={appId}
                     appRevisionId={notification.appRevisionId}
                     showLiveLogs={false} // do not show live logs because the deployment is already rolled back
-                    includeServiceNameHeader={true}
                   />
                 ))}
             </StyledMessageFeed>

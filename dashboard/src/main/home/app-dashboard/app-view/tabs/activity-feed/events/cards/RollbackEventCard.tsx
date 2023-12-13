@@ -30,12 +30,6 @@ const RollbackEventCard: React.FC<Props> = ({
   gitRepoName,
   rollbackTargetVersionNumber,
 }) => {
-  const renderStatusText = (): JSX.Element => {
-    const color = getStatusColor("SUCCESS");
-    const text = imageTag ? "Rolled back to" : "Rolled back";
-    return <Text color={color}>{text}</Text>;
-  };
-
   return (
     <StyledEventCard>
       <Container row spaced>
@@ -61,7 +55,9 @@ const RollbackEventCard: React.FC<Props> = ({
         <Container row>
           <Icon height="12px" src={getStatusIcon("SUCCESS")} />
           <Spacer inline width="10px" />
-          {renderStatusText()}
+          <Text color={getStatusColor("SUCCESS")}>{`Triggered rollback${
+            imageTag ? " to" : ""
+          }`}</Text>
           <Spacer inline x={0.5} />
           {gitRepoName ? (
             <>

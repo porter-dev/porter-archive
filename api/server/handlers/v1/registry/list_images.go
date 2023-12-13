@@ -79,10 +79,12 @@ func (c *RegistryListImagesHandler) ServeHTTP(w http.ResponseWriter, r *http.Req
 		splits := strings.Split(uri, ".")
 		accountID := splits[0]
 		region := splits[3]
+		// nolint:staticcheck // need this deprecated method
 		req := connect.NewRequest(&porterv1.AssumeRoleCredentialsRequest{
 			ProjectId:    int64(regAPI.ProjectID),
 			AwsAccountId: accountID,
 		})
+		// nolint:staticcheck // need this deprecated method
 		creds, err := c.Config().ClusterControlPlaneClient.AssumeRoleCredentials(ctx, req)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))

@@ -668,7 +668,11 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
               featureFlagEnabled={currentProject?.helm_values_enabled ?? false}
             />
           ))
-          .with("helm-values", () => <HelmLatestValuesTab />)
+          .with("helm-values", () => (
+            <HelmLatestValuesTab
+              featureFlagEnabled={currentProject?.helm_values_enabled ?? false}
+            />
+          ))
           .with("notifications", () => <Notifications />)
           .otherwise(() => null)}
         <Spacer y={2} />

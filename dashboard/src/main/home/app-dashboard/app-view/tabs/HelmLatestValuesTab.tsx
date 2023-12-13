@@ -8,7 +8,11 @@ import { Context } from "shared/Context";
 import HelmLatestValues from "../../validate-apply/helm/HelmLatestValues";
 import { useLatestRevision } from "../LatestRevisionContext";
 
-const HelmLatestValuesTab: React.FC = () => {
+type Props = {
+  featureFlagEnabled: boolean;
+};
+
+const HelmLatestValuesTab: React.FC<Props> = ({ featureFlagEnabled }) => {
   const { user } = useContext(Context);
   const { projectId, clusterId, latestProto, deploymentTarget, porterApp } =
     useLatestRevision();
@@ -17,7 +21,7 @@ const HelmLatestValuesTab: React.FC = () => {
 
   return (
     <>
-      {user?.isPorterUser && (
+      {user?.isPorterUser && !featureFlagEnabled && (
         <Text color="helper">
           This tab is only visible to Porter operators.
         </Text>

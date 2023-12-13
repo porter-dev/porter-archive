@@ -8,6 +8,13 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
+
+	"connectrpc.com/connect"
+
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -54,12 +61,6 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-porter-app")
 	defer span.End()
 
-	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
-		err := telemetry.Error(ctx, span, nil, "unable to update app: please upgrade the CLI and try again")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
-		return
-	}
-
 	request := &types.CreatePorterAppRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding request")
@@ -73,6 +74,72 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+
+	// TODO (POR-2170): Deprecate this entire endpoint in favor of v2 endpoints
+	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
+		porterApp, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "porter app not found in cluster")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		appInstance, err := appInstanceFromAppName(ctx, appInstanceFromAppNameInput{
+			ProjectID: project.ID,
+			ClusterID: cluster.ID,
+			AppName:   appName,
+			CCPClient: c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting deployment target id from app name")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		updateAppImageReq := connect.NewRequest(&porterv1.UpdateAppImageRequest{
+			ProjectId:     int64(project.ID),
+			AppName:       appName,
+			RepositoryUrl: request.ImageInfo.Repository,
+			Tag:           request.ImageInfo.Tag,
+			DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+				Id: appInstance.DeploymentTargetId,
+			},
+		})
+
+		appImageResp, err := c.Config().ClusterControlPlaneClient.UpdateAppImage(ctx, updateAppImageReq)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error updating app image")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		if appImageResp == nil || appImageResp.Msg == nil {
+			err := telemetry.Error(ctx, span, errors.New("app image response is nil"), "error updating app image")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		revisionNumber, err := pollForRevisionNumber(ctx, pollForRevisionNumberInput{
+			ProjectID:  project.ID,
+			RevisionID: appImageResp.Msg.RevisionId,
+			CCPClient:  c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error polling for revision number")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		c.WriteResult(w, r, &types.PorterApp{
+			ID:                 porterApp.ID,
+			ProjectID:          project.ID,
+			ClusterID:          cluster.ID,
+			Name:               appName,
+			HelmRevisionNumber: revisionNumber,
+		})
+		return
+	}
+
 	namespace := utils.NamespaceFromPorterAppName(appName)
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "application-name", Value: appName})
 
@@ -510,6 +577,43 @@ func (c *CreatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 
 		c.WriteResult(w, r, updatedPorterApp.ToPorterAppTypeWithRevision(release.Version))
+	}
+}
+
+type pollForRevisionNumberInput struct {
+	ProjectID  uint
+	RevisionID string
+	CCPClient  porterv1connect.ClusterControlPlaneServiceClient
+}
+
+func pollForRevisionNumber(ctx context.Context, input pollForRevisionNumberInput) (int, error) {
+	ctx, span := telemetry.NewSpan(ctx, "poll-for-revision-number")
+	defer span.End()
+
+	startTime := time.Now().UTC()
+
+	for {
+		if time.Now().UTC().After(startTime.Add(2 * time.Minute)) {
+			return 0, telemetry.Error(ctx, span, nil, "timed out waiting for revision number")
+		}
+
+		appRevisionResp, err := input.CCPClient.GetAppRevision(ctx, connect.NewRequest(&porterv1.GetAppRevisionRequest{
+			ProjectId:     int64(input.ProjectID),
+			AppRevisionId: input.RevisionID,
+		}))
+		if err != nil {
+			return 0, telemetry.Error(ctx, span, err, "error getting app revision")
+		}
+
+		if appRevisionResp == nil || appRevisionResp.Msg == nil || appRevisionResp.Msg.AppRevision == nil {
+			return 0, telemetry.Error(ctx, span, err, "app revision resp is nil")
+		}
+
+		if appRevisionResp.Msg.AppRevision.RevisionNumber != 0 {
+			return int(appRevisionResp.Msg.AppRevision.RevisionNumber), nil
+		}
+
+		time.Sleep(2 * time.Second)
 	}
 }
 

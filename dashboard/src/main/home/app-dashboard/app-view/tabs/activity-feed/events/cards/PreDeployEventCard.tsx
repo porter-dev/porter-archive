@@ -49,7 +49,7 @@ const PreDeployEventCard: React.FC<Props> = ({
   gitCommitUrl,
   displayCommitSha,
 }) => {
-  const { porterApp, latestNotifications } = useLatestRevision();
+  const { porterApp, latestClientNotifications } = useLatestRevision();
 
   const renderStatusText = (event: PorterAppPreDeployEvent): JSX.Element => {
     const color = getStatusColor(event.status);
@@ -62,7 +62,7 @@ const PreDeployEventCard: React.FC<Props> = ({
   };
 
   const predeployNotificationsExist = useMemo(() => {
-    return latestNotifications
+    return latestClientNotifications
       .filter(isClientServiceNotification)
       .some((notification) => {
         return (
@@ -70,7 +70,7 @@ const PreDeployEventCard: React.FC<Props> = ({
           notification.appRevisionId === event.metadata.app_revision_id
         );
       });
-  }, [JSON.stringify(latestNotifications)]);
+  }, [JSON.stringify(latestClientNotifications)]);
 
   return (
     <StyledEventCard>

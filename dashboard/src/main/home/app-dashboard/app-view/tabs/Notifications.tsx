@@ -5,7 +5,7 @@ import NotificationFeed from "./notifications/NotificationFeed";
 
 const Notifications: React.FC = () => {
   const {
-    latestNotifications,
+    latestClientNotifications,
     projectId,
     clusterId,
     appName,
@@ -15,7 +15,7 @@ const Notifications: React.FC = () => {
 
   return (
     <NotificationFeed
-      notifications={latestNotifications}
+      notifications={latestClientNotifications}
       projectId={projectId}
       clusterId={clusterId}
       appName={appName}

@@ -41,7 +41,8 @@ const ServiceStatusDetail: React.FC<Props> = ({
   revisionId,
   revisionNumber,
 }) => {
-  const { latestClientServices, latestNotifications } = useLatestRevision();
+  const { latestClientServices, latestClientNotifications } =
+    useLatestRevision();
   const convertEventStatusToCopy = (status: string): string => {
     switch (status) {
       case "PROGRESSING":
@@ -72,7 +73,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
             service.config.domains.length
               ? service.config.domains[0].name.value
               : "";
-          const notificationsExistForService = latestNotifications
+          const notificationsExistForService = latestClientNotifications
             .filter(isClientServiceNotification)
             .some(
               (n) =>
@@ -148,7 +149,7 @@ const ServiceStatusDetail: React.FC<Props> = ({
                           target={"_blank"}
                           showTargetBlankIcon={false}
                         >
-                          <TagIcon src={link} />
+                          <TagIcon src={link} height={"10px"} />
                           External link
                         </Link>
                       </Tag>
@@ -189,7 +190,7 @@ const ServiceStatusTableData = styled.td<{
   ${(props) => props.width && `width: ${props.width};`}
 `;
 
-const TagIcon = styled.img`
-  height: 12px;
+const TagIcon = styled.img<{ height?: string }>`
+  height: ${(props) => props.height ?? "12px"};
   margin-right: 3px;
 `;

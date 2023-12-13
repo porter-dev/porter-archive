@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/porter_app/notifications"
+	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -109,48 +111,115 @@ func (c *AppNotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	currentAppRevisionReq := connect.NewRequest(&porterv1.CurrentAppRevisionRequest{
-		ProjectId: int64(project.ID),
-		AppId:     int64(appId),
-		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
-			Id: request.DeploymentTargetID,
-		},
+	listAppRevisionsReq := connect.NewRequest(&porterv1.ListAppRevisionsRequest{
+		ProjectId:                  int64(project.ID),
+		AppId:                      int64(appId),
+		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{Id: request.DeploymentTargetID},
 	})
 
-	currentAppRevisionResp, err := c.Config().ClusterControlPlaneClient.CurrentAppRevision(ctx, currentAppRevisionReq)
+	listAppRevisionsResp, err := c.Config().ClusterControlPlaneClient.ListAppRevisions(ctx, listAppRevisionsReq)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting current app revision from cluster control plane client")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	if currentAppRevisionResp == nil || currentAppRevisionResp.Msg == nil {
-		err := telemetry.Error(ctx, span, err, "current app revision resp is nil")
+		err = telemetry.Error(ctx, span, err, "error listing app revisions")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	appRevision := currentAppRevisionResp.Msg.AppRevision
-	encodedRevision, err := porter_app.EncodedRevisionFromProto(ctx, appRevision)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error encoding revision from proto")
+	if listAppRevisionsResp == nil || listAppRevisionsResp.Msg == nil {
+		err = telemetry.Error(ctx, span, nil, "list app revisions response is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	appRevisionId := encodedRevision.ID
-	appInstanceId := encodedRevision.AppInstanceID
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "app-revision-id", Value: appRevisionId},
-		telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId},
-	)
-	notificationEvents, err := c.Repo().PorterAppEvent().ReadNotificationsByAppRevisionID(ctx, appInstanceId, appRevisionId)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting notifications from repo")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
+	appRevisionsList := listAppRevisionsResp.Msg.AppRevisions
+
 	latestNotifications := make([]notifications.Notification, 0)
+	encodedRevisions := make([]porter_app.Revision, 0)
+
+	if len(appRevisionsList) > 0 {
+		encodedRevision, err := porter_app.EncodedRevisionFromProto(ctx, appRevisionsList[0])
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting encoded revision from proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		encodedRevisions = append(encodedRevisions, encodedRevision)
+
+		// encode the penultimate revision as well in case it is a rollback
+		if len(appRevisionsList) > 1 {
+			penultimateRevision, err := porter_app.EncodedRevisionFromProto(ctx, appRevisionsList[1])
+			if err != nil {
+				err := telemetry.Error(ctx, span, err, "error getting encoded revision from proto")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
+			encodedRevisions = append(encodedRevisions, penultimateRevision)
+		}
+	}
+
+	if len(encodedRevisions) > 0 {
+		latestNotifications, err = notificationsForRevision(ctx, notificationsForRevisionInput{
+			Revision:                 encodedRevisions[0],
+			PorterAppEventRepository: c.Repo().PorterAppEvent(),
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting notifications for revision")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		// if the penultimate revision is a rollback, get the notifications for that revision as well so we can show the user why the rollback happened
+		if len(encodedRevisions) > 1 && encodedRevisions[1].Status == models.AppRevisionStatus_RollbackSuccessful {
+			rollbackNotifications, err := notificationsForRevision(ctx, notificationsForRevisionInput{
+				Revision:                 encodedRevisions[1],
+				PorterAppEventRepository: c.Repo().PorterAppEvent(),
+			})
+			if err != nil {
+				err := telemetry.Error(ctx, span, err, "error getting notifications for rollback revision")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
+			latestNotifications = append(latestNotifications, rollbackNotifications...)
+		}
+	}
+
+	response := AppNotificationsResponse{
+		Notifications: latestNotifications,
+	}
+
+	c.WriteResult(w, r, response)
+}
+
+type notificationsForRevisionInput struct {
+	Revision                 porter_app.Revision
+	PorterAppEventRepository repository.PorterAppEventRepository
+}
+
+func notificationsForRevision(ctx context.Context, inp notificationsForRevisionInput) ([]notifications.Notification, error) {
+	ctx, span := telemetry.NewSpan(ctx, "notifications-for-revision")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "app-revision-id", Value: inp.Revision.ID},
+		telemetry.AttributeKV{Key: "app-instance-id", Value: inp.Revision.AppInstanceID},
+	)
+
+	notificationList := make([]notifications.Notification, 0)
+
+	if inp.Revision.ID == "" {
+		return notificationList, telemetry.Error(ctx, span, nil, "app revision id is missing")
+	}
+
+	if inp.Revision.AppInstanceID == uuid.Nil {
+		return notificationList, telemetry.Error(ctx, span, nil, "app instance id is missing")
+	}
+
+	appRevisionId := inp.Revision.ID
+	appInstanceId := inp.Revision.AppInstanceID
+
+	notificationEvents, err := inp.PorterAppEventRepository.ReadNotificationsByAppRevisionID(ctx, appInstanceId, appRevisionId)
+	if err != nil {
+		return notificationList, telemetry.Error(ctx, span, err, "error getting notifications from repo")
+	}
 	for _, event := range notificationEvents {
 		notification, err := notifications.NotificationFromPorterAppEvent(event)
 		if err != nil {
@@ -166,12 +235,8 @@ func (c *AppNotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "notification-conversion-error", Value: "old-notification-format"})
 			continue
 		}
-		latestNotifications = append(latestNotifications, *notification)
+		notificationList = append(notificationList, *notification)
 	}
 
-	response := AppNotificationsResponse{
-		Notifications: latestNotifications,
-	}
-
-	c.WriteResult(w, r, response)
+	return notificationList, nil
 }

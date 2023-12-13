@@ -48,6 +48,7 @@ type Repository interface {
 	PorterApp() PorterAppRepository
 	PorterAppEvent() PorterAppEventRepository
 	DeploymentTarget() DeploymentTargetRepository
+	AppRevision() AppRevisionRepository
 	AppTemplate() AppTemplateRepository
 	GithubWebhook() GithubWebhookRepository
 }

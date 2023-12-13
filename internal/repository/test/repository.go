@@ -52,6 +52,7 @@ type TestRepository struct {
 	porterApp                 repository.PorterAppRepository
 	porterAppEvent            repository.PorterAppEventRepository
 	deploymentTarget          repository.DeploymentTargetRepository
+	appRevision               repository.AppRevisionRepository
 	appTemplate               repository.AppTemplateRepository
 	githubWebhook             repository.GithubWebhookRepository
 }
@@ -245,6 +246,11 @@ func (t *TestRepository) DeploymentTarget() repository.DeploymentTargetRepositor
 	return t.deploymentTarget
 }
 
+// AppRevision returns a test AppRevisionRepository
+func (t *TestRepository) AppRevision() repository.AppRevisionRepository {
+	return t.appRevision
+}
+
 // AppTemplate returns a test AppTemplateRepository
 func (t *TestRepository) AppTemplate() repository.AppTemplateRepository {
 	return t.appTemplate
@@ -306,6 +312,7 @@ func NewRepository(canQuery bool, failingMethods ...string) repository.Repositor
 		porterApp:                 NewPorterAppRepository(canQuery, failingMethods...),
 		porterAppEvent:            NewPorterAppEventRepository(canQuery),
 		deploymentTarget:          NewDeploymentTargetRepository(),
+		appRevision:               NewAppRevisionRepository(),
 		appTemplate:               NewAppTemplateRepository(),
 		githubWebhook:             NewGithubWebhookRepository(),
 	}

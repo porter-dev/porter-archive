@@ -15,22 +15,26 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// ListAwsResponse describes an inbound cloud provider request
+// ListAwsResponse describes an outbound response for listing aws accounts on
+// a given project.
+//
+// The shape of the object is "generic" as there will be similar endpoints in
+// the future for other cloud providers.
 type ListAwsResponse struct {
-	// CloudProviderID is the cloud provider id
+	// CloudProviderID is the cloud provider id - for AWS, this is an account
 	CloudProviderID string `json:"cloud_provider_id"`
 
 	// ProjectID is the project the account is associated with
 	ProjectID uint `json:"project_id"`
 }
 
-// ListAwsHandler is a struct for handling an account request
+// ListAwsHandler is a struct for handling an aws cloud provider list request
 type ListAwsHandler struct {
 	handlers.PorterHandlerWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewListAwsHandler constructs a account ListAwsHandler
+// NewListAwsHandler constructs a ListAwsHandler
 func NewListAwsHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
@@ -41,9 +45,9 @@ func NewListAwsHandler(
 	}
 }
 
-// ServeHTTP returns a list of ListAWSResponse objects
+// ServeHTTP returns a list of AWS Accounts
 //
-// todo: Move this logic down into CCP. Implemented here until a pattern is formed.
+// todo: Move this logic down into CCP
 func (c *ListAwsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-cloud-provider-list-aws")
 	defer span.End()

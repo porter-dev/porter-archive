@@ -19,3 +19,7 @@ API_SERVER=http://localhost:8080
 # TRUST_ARN is used with the cloudformation pack, to allow supporting multiple AWS accounts as management accounts. Change MY_AWS_DEV_ACCOUNT_ID to your AWS developer account ID
 
 TRUST_ARN=arn:aws:iam::MY_AWS_DEV_ACCOUNT_ID:role/CAPIManagement
+
+# ACK_AUTH is used to control the cloudformation template that is run on provisioning. This can be deprecated, when we enable ack by default
+
+ACK_AUTH=true

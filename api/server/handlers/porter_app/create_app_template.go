@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"net/http"
-	"time"
 
+	"connectrpc.com/connect"
 	"github.com/google/uuid"
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
@@ -41,18 +41,25 @@ func NewCreateAppTemplateHandler(
 	}
 }
 
+// Base64AddonWithEnvVars is a struct that contains a base64 encoded addon proto and its env vars
+// These env vars will be used to create an env group that is attached to the addon
+type Base64AddonWithEnvVars struct {
+	Base64Addon string            `json:"base64_addon"`
+	Variables   map[string]string `json:"variables"`
+	Secrets     map[string]string `json:"secrets"`
+}
+
 // CreateAppTemplateRequest is the request object for the /app-template POST endpoint
 type CreateAppTemplateRequest struct {
-	B64AppProto            string            `json:"b64_app_proto"`
-	Variables              map[string]string `json:"variables"`
-	Secrets                map[string]string `json:"secrets"`
-	BaseDeploymentTargetID string            `json:"base_deployment_target_id"`
+	B64AppProto            string                   `json:"b64_app_proto"`
+	Variables              map[string]string        `json:"variables"`
+	Secrets                map[string]string        `json:"secrets"`
+	BaseDeploymentTargetID string                   `json:"base_deployment_target_id"`
+	Addons                 []Base64AddonWithEnvVars `json:"addons"`
 }
 
 // CreateAppTemplateResponse is the response object for the /app-template POST endpoint
-type CreateAppTemplateResponse struct {
-	AppTemplateID string `json:"app_template_id"`
-}
+type CreateAppTemplateResponse struct{}
 
 // ServeHTTP creates or updates an app template for a given porter app
 func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -108,55 +115,6 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	porterApps, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(project.ID, appName)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting porter app from repo")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if len(porterApps) == 0 {
-		err := telemetry.Error(ctx, span, err, "no porter apps returned")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if len(porterApps) > 1 {
-		err := telemetry.Error(ctx, span, err, "multiple porter apps returned; unable to determine which one to use")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	if porterApps[0].ID == 0 {
-		err := telemetry.Error(ctx, span, err, "porter app id is missing")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "porter-app-id", Value: porterApps[0].ID})
-
-	var appTemplate *models.AppTemplate
-
-	existingAppTemplate, err := c.Repo().AppTemplate().AppTemplateByPorterAppID(
-		project.ID,
-		porterApps[0].ID,
-	)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error checking for existing app template")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	if existingAppTemplate.ID != uuid.Nil {
-		appTemplate = existingAppTemplate
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "update-app-template", Value: true})
-	}
-	if appTemplate == nil {
-		appTemplate = &models.AppTemplate{
-			ProjectID:   int(project.ID),
-			PorterAppID: int(porterApps[0].ID),
-		}
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "update-app-template", Value: false})
-	}
-
 	protoWithoutDefaultAppEnvGroups, err := filterDefaultAppEnvGroups(ctx, request.B64AppProto, agent)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error filtering default app env groups")
@@ -164,59 +122,53 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	appTemplate.Base64App = protoWithoutDefaultAppEnvGroups
-	appTemplate.BaseDeploymentTargetID = baseDeploymentTarget
-
-	updatedAppTemplate, err := c.Repo().AppTemplate().CreateAppTemplate(appTemplate)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error creating app template")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	if updatedAppTemplate == nil {
-		err := telemetry.Error(ctx, span, err, "updated app template is nil")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-	if updatedAppTemplate.ID == uuid.Nil {
-		err := telemetry.Error(ctx, span, err, "updated app template id is nil")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	previewTemplateEnvName, err := porter_app.AppTemplateEnvGroupName(ctx, appName, cluster.ID, c.Repo().PorterApp())
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to get app template env group name")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	envGroup, err := environment_groups.LatestBaseEnvironmentGroup(ctx, agent, previewTemplateEnvName)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to get latest base environment group")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	if envGroup.Name == "" {
-		envGroup = environment_groups.EnvironmentGroup{
-			Name:         previewTemplateEnvName,
-			CreatedAtUTC: time.Now().UTC(),
+	var addonTemplates []*porterv1.AddonWithEnvVars
+	for _, addon := range request.Addons {
+		decoded, err := base64.StdEncoding.DecodeString(addon.Base64Addon)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error decoding base64 addon")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
 		}
-	}
-	envGroup.Variables = request.Variables
-	envGroup.SecretVariables = request.Secrets
 
-	additionalEnvGroupLabels := map[string]string{
-		LabelKey_AppName: appName,
-		environment_groups.LabelKey_DefaultAppEnvironment: "true",
-		LabelKey_PorterManaged:                            "true",
+		addonProto := &porterv1.Addon{}
+		err = helpers.UnmarshalContractObject(decoded, addonProto)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error unmarshalling addon proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		addonTemplates = append(addonTemplates, &porterv1.AddonWithEnvVars{
+			Addon: addonProto,
+			EnvVars: &porterv1.EnvGroupVariables{
+				Normal: addon.Variables,
+				Secret: addon.Secrets,
+			},
+		})
 	}
 
-	err = environment_groups.CreateOrUpdateBaseEnvironmentGroup(ctx, agent, envGroup, additionalEnvGroupLabels)
+	updateAppTemplateReq := connect.NewRequest(&porterv1.UpdateAppTemplateRequest{
+		ProjectId:   int64(project.ID),
+		AppName:     appName,
+		AppTemplate: protoWithoutDefaultAppEnvGroups,
+		AppEnv: &porterv1.EnvGroupVariables{
+			Normal: request.Variables,
+			Secret: request.Secrets,
+		},
+		AddonTemplates:         addonTemplates,
+		BaseDeploymentTargetId: baseDeploymentTarget.String(),
+	})
+
+	updateAppTemplateRes, err := c.Config().ClusterControlPlaneClient.UpdateAppTemplate(ctx, updateAppTemplateReq)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to create or update base environment group")
+		err := telemetry.Error(ctx, span, err, "error updating app template")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	if updateAppTemplateRes == nil || updateAppTemplateRes.Msg == nil {
+		err := telemetry.Error(ctx, span, err, "error updating app template")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
@@ -238,9 +190,7 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	res := &CreateAppTemplateResponse{
-		AppTemplateID: updatedAppTemplate.ID.String(),
-	}
+	res := &CreateAppTemplateResponse{}
 
 	c.WriteResult(w, r, res)
 }
@@ -248,35 +198,34 @@ func (c *CreateAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 // filterDefaultAppEnvGroups filters out any default app env groups found when creating an app template
 // app templates are based on the latest version of a given app, so it is possible for this env group to be included
 // however, the app template will get its own default env group when used to deploy to a preview environment
-func filterDefaultAppEnvGroups(ctx context.Context, b64AppProto string, agent *kubernetes.Agent) (string, error) {
+func filterDefaultAppEnvGroups(ctx context.Context, b64AppProto string, agent *kubernetes.Agent) (*porterv1.PorterApp, error) {
 	ctx, span := telemetry.NewSpan(ctx, "filter-default-app-env-groups")
 	defer span.End()
 
-	var finalAppProto string
+	appProto := &porterv1.PorterApp{}
 
 	if b64AppProto == "" {
-		return finalAppProto, telemetry.Error(ctx, span, nil, "b64 app proto is empty")
+		return appProto, telemetry.Error(ctx, span, nil, "b64 app proto is empty")
 	}
 	if agent == nil {
-		return finalAppProto, telemetry.Error(ctx, span, nil, "agent is nil")
+		return appProto, telemetry.Error(ctx, span, nil, "agent is nil")
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(b64AppProto)
 	if err != nil {
-		return finalAppProto, telemetry.Error(ctx, span, err, "error decoding base app")
+		return appProto, telemetry.Error(ctx, span, err, "error decoding base app")
 	}
 
-	appProto := &porterv1.PorterApp{}
 	err = helpers.UnmarshalContractObject(decoded, appProto)
 	if err != nil {
-		return finalAppProto, telemetry.Error(ctx, span, err, "error unmarshalling app proto")
+		return appProto, telemetry.Error(ctx, span, err, "error unmarshalling app proto")
 	}
 
 	filteredEnvGroups := []*porterv1.EnvGroup{}
 	for _, envGroup := range appProto.EnvGroups {
 		baseEnvGroup, err := environment_groups.LatestBaseEnvironmentGroup(ctx, agent, envGroup.Name)
 		if err != nil {
-			return finalAppProto, telemetry.Error(ctx, span, err, "unable to get latest base environment group")
+			return appProto, telemetry.Error(ctx, span, err, "unable to get latest base environment group")
 		}
 		if baseEnvGroup.DefaultAppEnvironment {
 			continue
@@ -287,12 +236,5 @@ func filterDefaultAppEnvGroups(ctx context.Context, b64AppProto string, agent *k
 
 	appProto.EnvGroups = filteredEnvGroups
 
-	encoded, err := helpers.MarshalContractObject(ctx, appProto)
-	if err != nil {
-		return finalAppProto, telemetry.Error(ctx, span, err, "error marshalling app proto")
-	}
-
-	finalAppProto = base64.StdEncoding.EncodeToString(encoded)
-
-	return finalAppProto, nil
+	return appProto, nil
 }

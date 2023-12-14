@@ -1,13 +1,12 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import _ from "lodash";
-import AnimateHeight, { type Height } from "react-animate-height";
 import { type UseFieldArrayUpdate } from "react-hook-form";
 import styled, { keyframes } from "styled-components";
 import { match } from "ts-pattern";
 
 import Spacer from "components/porter/Spacer";
 import { type PorterAppVersionStatus } from "lib/hooks/useAppStatus";
-import useResizeObserver from "lib/hooks/useResizeObserver";
 import { type PorterAppFormData } from "lib/porter-apps";
 import { type ClientService } from "lib/porter-apps/services";
 
@@ -54,28 +53,6 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   clusterIngressIp,
   showDisableTls,
 }) => {
-  const [height, setHeight] = useState<Height>(service.expanded ? "auto" : 0);
-
-  // onResize is called when the height of the service container changes
-  // used to set the height of the AnimateHeight component on tab swtich
-  const onResize = useCallback(
-    (elt: HTMLDivElement) => {
-      if (elt.clientHeight === 0) {
-        return;
-      }
-
-      setHeight(elt.clientHeight ?? "auto");
-    },
-    [setHeight]
-  );
-  const ref = useResizeObserver(onResize);
-
-  useEffect(() => {
-    if (!service.expanded) {
-      setHeight(0);
-    }
-  }, [service.expanded]);
-
   const renderTabs = (service: ClientService): JSX.Element => {
     return match(service)
       .with({ config: { type: "web" } }, (svc) => (
@@ -176,21 +153,39 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           </ActionButton>
         )}
       </ServiceHeader>
-      <AnimateHeight
-        height={height}
-        contentRef={ref}
-        contentClassName="auto-content"
-        duration={300}
-      >
-        {height !== 0 && (
+      <AnimatePresence>
+        {service.expanded && (
           <StyledSourceBox
+            key={service.name.value}
+            initial={{
+              height: 0,
+            }}
+            animate={{
+              height: "auto",
+              transition: {
+                duration: 0.3,
+              },
+            }}
+            exit={{
+              height: 0,
+              transition: {
+                duration: 0.3,
+              },
+            }}
             showExpanded={service.expanded}
             hasFooter={status != null}
           >
-            {renderTabs(service)}
+            <div
+              style={{
+                padding: "14px 25px 30px",
+                border: "1px solid #494b4f",
+              }}
+            >
+              {renderTabs(service)}
+            </div>
           </StyledSourceBox>
         )}
-      </AnimateHeight>
+      </AnimatePresence>
       {status && (
         <ServiceStatusFooter
           serviceName={service.name.value}
@@ -210,17 +205,14 @@ const ServiceTitle = styled.div`
   align-items: center;
 `;
 
-const StyledSourceBox = styled.div<{
+const StyledSourceBox = styled(motion.div)<{
   showExpanded?: boolean;
   hasFooter?: boolean;
 }>`
-  width: 100%;
+  overflow: hidden;
   color: #ffffff;
-  padding: 14px 25px 30px;
-  position: relative;
   font-size: 13px;
   background: ${(props) => props.theme.fg};
-  border: 1px solid #494b4f;
   border-top: 0;
   border-bottom-left-radius: ${(props) => (props.hasFooter ? "0" : "5px")};
   border-bottom-right-radius: ${(props) => (props.hasFooter ? "0" : "5px")};
@@ -276,7 +268,7 @@ const ServiceHeader = styled.div<{
     border-radius: 20px;
     margin-left: -10px;
     transform: ${(props: { showExpanded?: boolean }) =>
-    props.showExpanded ? "" : "rotate(-90deg)"};
+      props.showExpanded ? "" : "rotate(-90deg)"};
   }
 `;
 

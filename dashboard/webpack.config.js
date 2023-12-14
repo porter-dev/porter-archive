@@ -5,8 +5,8 @@ const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin"
 
 const dotenv = require("dotenv");
 
-const BundleAnalyzerPlugin = require("webpack-bundle-analyzer")
-  .BundleAnalyzerPlugin;
+const BundleAnalyzerPlugin =
+  require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 
 const TerserPlugin = require("terser-webpack-plugin");
 
@@ -86,6 +86,11 @@ module.exports = () => {
               },
             },
           ],
+        },
+        {
+          test: /\.mjs/,
+          include: /node_modules/,
+          type: "javascript/auto",
         },
         {
           enforce: "pre",

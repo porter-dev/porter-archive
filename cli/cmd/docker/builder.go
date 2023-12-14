@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,7 +38,9 @@ type BuildOpts struct {
 	LogFile *os.File
 }
 
-// BuildLocal
+// BuildLocal builds the image via docker
+// If the DOCKER_BUILDKIT environment variable is set, builds will switch to
+// using the docker binary directly (with buildkit enabled)
 func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 	if os.Getenv("DOCKER_BUILDKIT") == "1" {
 		return buildLocalWithBuildkit(ctx, *opts)
@@ -178,6 +181,7 @@ func AddDockerfileToBuildContext(dockerfileCtx io.ReadCloser, buildCtx io.ReadCl
 }
 
 func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
+	fmt.Println("Triggering build via buildkit")
 	if _, err := exec.LookPath("docker"); err != nil {
 		return fmt.Errorf("unable to find docker binary in PATH for buildkit build: %w", err)
 	}
@@ -203,12 +207,35 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 		extraDockerArgs = parsedFields
 	}
 
+	cacheFrom := fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag)
+	cacheTo := ""
+	if ok, _ := isRunningInGithubActions(); ok && os.Getenv("BUILDKIT_CACHE_EXPORTER") == "gha" {
+		fmt.Println("Github Actions environment detected, switching to the GitHub Actions cache exporter")
+		cacheFrom = "type=gha"
+		cacheTo = "type=gha"
+
+		// CacheMode is set separately to avoid cases where builds may timeout for
+		// dockerfiles with many layers.
+		// See https://github.com/moby/buildkit/issues/2276 for details.
+		cacheMode := os.Getenv("BUILDKIT_CACHE_MODE")
+		if cacheMode == "min" || cacheMode == "max" {
+			fmt.Printf("Setting GHA cache mode to %s\n", cacheMode)
+			cacheTo = fmt.Sprintf("type=gha,mode=%s", cacheMode)
+		} else if cacheMode != "" {
+			return errors.New("error while parsing buildkit environment variables: BUILDKIT_CACHE_MODE set to invalid value, valid values: min, max")
+		}
+	}
+
 	commandArgs := []string{
 		"build",
 		"-f", dockerfileName,
 		"--tag", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
-		"--cache-from", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag),
+		"--cache-from", cacheFrom,
 	}
+	if cacheTo != "" {
+		commandArgs = append(commandArgs, "--cache-to", cacheTo)
+	}
+
 	for key, val := range opts.Env {
 		commandArgs = append(commandArgs, "--build-arg", fmt.Sprintf("%s=%s", key, val))
 	}
@@ -312,4 +339,34 @@ func sliceContainsString(haystack []string, needle string) bool {
 	}
 
 	return false
+}
+
+// isRunningInGithubActions detects if the environment is a github actions
+// runner environment by validating certain environment variables and then
+// making a call to the Github api to verify the run itself.
+func isRunningInGithubActions() (bool, error) {
+	for _, key := range []string{"CI", "GITHUB_RUN_ID", "GITHUB_TOKEN", "GITHUB_REPOSITORY"} {
+		if key == "" {
+			return false, nil
+		}
+	}
+
+	url := fmt.Sprintf("https://api.github.com/repos/%s/actions/runs/%s", os.Getenv("GITHUB_REPOSITORY"), os.Getenv("GITHUB_RUN_ID"))
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err == nil {
+		return false, err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("GITHUB_TOKEN")))
+
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close() //nolint:errcheck
+
+	return resp.StatusCode == http.StatusOK, nil
 }

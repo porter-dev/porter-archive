@@ -98,6 +98,7 @@ export const clientAppValidator = z.object({
     .default([]),
   build: buildValidator,
   helmOverrides: z.string().optional(),
+  requiredApps: z.object({ name: z.string() }).array().default([]),
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 
@@ -316,6 +317,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           efsStorage: new EFS({
             enabled: app.efsStorage.enabled,
           }),
+          requiredApps: app.requiredApps.map((app) => ({
+            name: app.name,
+          })),
         })
     )
     .with(
@@ -339,6 +343,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           efsStorage: new EFS({
             enabled: app.efsStorage.enabled,
           }),
+          requiredApps: app.requiredApps.map((app) => ({
+            name: app.name,
+          })),
         })
     )
     .exhaustive();
@@ -486,6 +493,9 @@ export function clientAppFromProto({
       efsStorage: new EFS({
         enabled: proto.efsStorage?.enabled ?? false,
       }),
+      requiredApps: proto.requiredApps.map((app) => ({
+        name: app.name,
+      })),
     };
   }
 
@@ -525,6 +535,9 @@ export function clientAppFromProto({
     },
     helmOverrides,
     efsStorage: { enabled: proto.efsStorage?.enabled ?? false },
+    requiredApps: proto.requiredApps.map((app) => ({
+      name: app.name,
+    })),
   };
 }
 

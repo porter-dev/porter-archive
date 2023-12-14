@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type PorterApp } from "@porter-dev/api-contracts";
 import axios from "axios";
@@ -22,8 +28,10 @@ import {
 } from "lib/porter-apps";
 
 import api from "shared/api";
+import { Context } from "shared/Context";
 
 import { type ExistingTemplateWithEnv } from "../types";
+import { RequiredApps } from "./RequiredApps";
 import { ServiceSettings } from "./ServiceSettings";
 
 type Props = {
@@ -43,6 +51,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
   existingTemplate,
 }) => {
   const history = useHistory();
+  const { currentProject } = useContext(Context);
 
   const [tab, setTab] = useState<PreviewEnvSettingsTab>("services");
   const [validatedAppProto, setValidatedAppProto] = useState<PorterApp | null>(
@@ -252,8 +261,12 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
         options={[
           { label: "App Services", value: "services" },
           { label: "Environment Variables", value: "variables" },
-          // { label: "Required Apps", value: "required-apps" },
-          // { label: "Add-ons", value: "addons" },
+          ...(currentProject?.beta_features_enabled
+            ? [
+                { label: "Required Apps", value: "required-apps" },
+                // { label: "Add-ons", value: "addons" },
+              ]
+            : []),
         ]}
         currentTab={tab}
         setCurrentTab={(tab: string) => {
@@ -279,6 +292,9 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
               latestSource={latestSource}
               buttonStatus={buttonStatus}
             />
+          ))
+          .with("required-apps", () => (
+            <RequiredApps buttonStatus={buttonStatus} />
           ))
           .otherwise(() => null)}
       </form>

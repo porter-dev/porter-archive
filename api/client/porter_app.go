@@ -656,8 +656,12 @@ func (c *Client) PorterYamlV2Pods(
 	ctx context.Context,
 	projectID, clusterID uint,
 	porterAppName string,
-	req *types.PorterYamlV2PodsRequest,
+	deploymentTargetName string,
 ) (*types.GetReleaseAllPodsResponse, error) {
+	req := &porter_app.PodStatusRequest{
+		DeploymentTargetName: deploymentTargetName,
+	}
+
 	resp := &types.GetReleaseAllPodsResponse{}
 
 	err := c.getRequest(
@@ -677,11 +681,11 @@ func (c *Client) PorterYamlV2Pods(
 func (c *Client) UpdateImage(
 	ctx context.Context,
 	projectID, clusterID uint,
-	appName, deploymentTargetId, tag string,
+	appName, deploymentTargetName, tag string,
 ) (*porter_app.UpdateImageResponse, error) {
 	req := &porter_app.UpdateImageRequest{
-		Tag:                tag,
-		DeploymentTargetId: deploymentTargetId,
+		Tag:                  tag,
+		DeploymentTargetName: deploymentTargetName,
 	}
 
 	resp := &porter_app.UpdateImageResponse{}

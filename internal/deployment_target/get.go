@@ -11,10 +11,11 @@ import (
 
 // DeploymentTargetDetailsInput is the input to the DeploymentTargetDetails function
 type DeploymentTargetDetailsInput struct {
-	ProjectID          int64
-	ClusterID          int64
-	DeploymentTargetID string
-	CCPClient          porterv1connect.ClusterControlPlaneServiceClient
+	ProjectID            int64
+	ClusterID            int64
+	DeploymentTargetID   string
+	DeploymentTargetName string
+	CCPClient            porterv1connect.ClusterControlPlaneServiceClient
 }
 
 // DeploymentTarget is a struct representing the unique cluster, namespace pair for a deployment target
@@ -40,16 +41,16 @@ func DeploymentTargetDetails(ctx context.Context, inp DeploymentTargetDetailsInp
 	if inp.ProjectID == 0 {
 		return deploymentTarget, telemetry.Error(ctx, span, nil, "project id is empty")
 	}
-	if inp.DeploymentTargetID == "" {
-		return deploymentTarget, telemetry.Error(ctx, span, nil, "deployment target id is empty")
-	}
 	if inp.CCPClient == nil {
 		return deploymentTarget, telemetry.Error(ctx, span, nil, "cluster control plane client is nil")
 	}
 
 	deploymentTargetDetailsReq := connect.NewRequest(&porterv1.DeploymentTargetDetailsRequest{
-		ProjectId:          inp.ProjectID,
-		DeploymentTargetId: inp.DeploymentTargetID,
+		ProjectId: inp.ProjectID,
+		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+			Id:   inp.DeploymentTargetID,
+			Name: inp.DeploymentTargetName,
+		},
 	})
 
 	deploymentTargetDetailsResp, err := inp.CCPClient.DeploymentTargetDetails(ctx, deploymentTargetDetailsReq)
@@ -67,7 +68,7 @@ func DeploymentTargetDetails(ctx context.Context, inp DeploymentTargetDetailsInp
 	}
 
 	deploymentTarget = DeploymentTarget{
-		ID:        inp.DeploymentTargetID,
+		ID:        target.Id,
 		Name:      target.Name,
 		Namespace: target.Namespace,
 		ClusterID: target.ClusterId,

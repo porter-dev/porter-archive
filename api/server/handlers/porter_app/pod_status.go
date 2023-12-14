@@ -37,8 +37,9 @@ func NewPodStatusHandler(
 
 // PodStatusRequest is the expected format for a request body on GET /apps/pods
 type PodStatusRequest struct {
-	DeploymentTargetID string `schema:"deployment_target_id"`
-	ServiceName        string `schema:"service"`
+	DeploymentTargetName string `schema:"deployment_target_name"`
+	DeploymentTargetID   string `schema:"deployment_target_id"`
+	ServiceName          string `schema:"service"`
 }
 
 func (c *PodStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -62,20 +63,19 @@ func (c *PodStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName}, telemetry.AttributeKV{Key: "app-name", Value: appName})
-
-	if request.DeploymentTargetID == "" {
-		err := telemetry.Error(ctx, span, nil, "must provide deployment target id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName},
+		telemetry.AttributeKV{Key: "app-name", Value: appName},
+		telemetry.AttributeKV{Key: "input-deployment-target-id", Value: request.DeploymentTargetID},
+		telemetry.AttributeKV{Key: "input-deployment-target-name", Value: request.DeploymentTargetName},
+	)
 
 	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
-		ProjectID:          int64(project.ID),
-		ClusterID:          int64(cluster.ID),
-		DeploymentTargetID: request.DeploymentTargetID,
-		CCPClient:          c.Config().ClusterControlPlaneClient,
+		ProjectID:            int64(project.ID),
+		ClusterID:            int64(cluster.ID),
+		DeploymentTargetID:   request.DeploymentTargetID,
+		DeploymentTargetName: request.DeploymentTargetName,
+		CCPClient:            c.Config().ClusterControlPlaneClient,
 	})
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting deployment target details")
@@ -84,7 +84,10 @@ func (c *PodStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	namespace := deploymentTarget.Namespace
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: namespace})
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "namespace", Value: namespace},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTarget.ID},
+	)
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
@@ -97,9 +100,9 @@ func (c *PodStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var selectors string
 	if request.ServiceName == "" {
-		selectors = fmt.Sprintf("porter.run/deployment-target-id=%s,porter.run/app-name=%s", request.DeploymentTargetID, appName)
+		selectors = fmt.Sprintf("porter.run/deployment-target-id=%s,porter.run/app-name=%s", deploymentTarget.ID, appName)
 	} else {
-		selectors = fmt.Sprintf("porter.run/service-name=%s,porter.run/deployment-target-id=%s,porter.run/app-name=%s", request.ServiceName, request.DeploymentTargetID, appName)
+		selectors = fmt.Sprintf("porter.run/service-name=%s,porter.run/deployment-target-id=%s,porter.run/app-name=%s", deploymentTarget.ID, request.DeploymentTargetID, appName)
 	}
 	podsList, err := agent.GetPodsByLabel(selectors, namespace)
 	if err != nil {

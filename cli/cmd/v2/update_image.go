@@ -9,21 +9,16 @@ import (
 )
 
 // UpdateImage updates the image of an application
-func UpdateImage(ctx context.Context, tag string, client api.Client, projectId, clusterId uint, appName string) (string, error) {
-	targetResp, err := client.DefaultDeploymentTarget(ctx, projectId, clusterId)
-	if err != nil {
-		return "", fmt.Errorf("error calling default deployment target endpoint: %w", err)
-	}
-
-	if targetResp.DeploymentTargetID == "" {
-		return "", errors.New("deployment target id is empty")
+func UpdateImage(ctx context.Context, tag string, client api.Client, projectId, clusterId uint, appName string, deploymentTargetName string) (string, error) {
+	if deploymentTargetName == "" {
+		return "", errors.New("please provide a deployment target")
 	}
 
 	if tag == "" {
 		tag = "latest"
 	}
 
-	resp, err := client.UpdateImage(ctx, projectId, clusterId, appName, targetResp.DeploymentTargetID, tag)
+	resp, err := client.UpdateImage(ctx, projectId, clusterId, appName, deploymentTargetName, tag)
 	if err != nil {
 		return "", fmt.Errorf("unable to update image: %w", err)
 	}

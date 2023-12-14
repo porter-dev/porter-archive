@@ -543,6 +543,28 @@ func (c *Client) GetBuildEnv(
 	return resp, err
 }
 
+// GetAppEnvVariables returns all env variables for a given app
+func (c *Client) GetAppEnvVariables(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string,
+) (*porter_app.AppEnvVariablesResponse, error) {
+	resp := &porter_app.AppEnvVariablesResponse{}
+
+	req := &porter_app.AppEnvVariablesRequest{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/env-variables",
+			projectID, clusterID, appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 // GetBuildFromRevision returns the build environment for a given app proto
 func (c *Client) GetBuildFromRevision(
 	ctx context.Context,

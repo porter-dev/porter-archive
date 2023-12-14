@@ -48,6 +48,7 @@ func RegisterCommands() (*cobra.Command, error) {
 	rootCmd.AddCommand(registerCommand_Stack(cliConf))
 	rootCmd.AddCommand(registerCommand_Update(cliConf))
 	rootCmd.AddCommand(registerCommand_Version(cliConf))
+	rootCmd.AddCommand(registerCommand_Env(cliConf))
 	return rootCmd, nil
 }
 

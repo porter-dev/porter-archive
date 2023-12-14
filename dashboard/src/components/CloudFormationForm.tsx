@@ -222,7 +222,10 @@ const CloudFormationForm: React.FC<Props> = ({
     setCurrentStep(3)
     const externalId = getExternalId();
     let trustArn = process.env.TRUST_ARN ? process.env.TRUST_ARN : "arn:aws:iam::108458755588:role/CAPIManagement";
-    const cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`
+    let cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`
+    if (currentProject.aws_ack_auth_enabled === true) {
+      cloudformation_url = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-access-policy.json&stackName=PorterRole&param_TrustArnParameter=${trustArn}`
+    }
     markStepStarted({ step: "aws-cloudformation-redirect-success", account_id: AWSAccountID, cloudformation_url, external_id: externalId })
     window.open(cloudformation_url, "_blank")
     setHasClickedCloudformationButton(true);

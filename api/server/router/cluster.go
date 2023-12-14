@@ -1722,6 +1722,35 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/environment-groups/{env_group_name}/latest
+	getLatestEnvironmentGroupVariablesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/environment-groups/{%s}/latest", relPath, types.URLParamEnvGroupName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	getLatestEnvironmentGroupVariablesHandler := environment_groups.NewLatestEnvGroupVariablesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getLatestEnvironmentGroupVariablesEndpoint,
+		Handler:  getLatestEnvironmentGroupVariablesHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/environment-groups/update-linked-apps
 	updateLinkedAppsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

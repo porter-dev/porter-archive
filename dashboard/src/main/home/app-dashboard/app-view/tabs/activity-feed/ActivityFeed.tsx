@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import _ from "lodash";
@@ -11,26 +11,30 @@ import Fieldset from "components/porter/Fieldset";
 import Pagination from "components/porter/Pagination";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { type DeploymentTarget } from "lib/hooks/useDeploymentTarget";
+import { formattedPath } from "lib/porter-apps/routing";
 
 import api from "shared/api";
+import { Context } from "shared/Context";
 import { feedDate } from "shared/string_utils";
+
 import EventCard from "./events/cards/EventCard";
 import { porterAppEventValidator, type PorterAppEvent } from "./events/types";
 
 type Props = {
   appName: string;
-  currentProject: number;
-  currentCluster: number;
-  deploymentTargetId: string;
+  projectId: number;
+  clusterId: number;
+  deploymentTarget: DeploymentTarget;
 };
 
 const EVENTS_POLL_INTERVAL = 5000; // poll every 5 seconds
 
 const ActivityFeed: React.FC<Props> = ({
   appName,
-  deploymentTargetId,
-  currentCluster,
-  currentProject,
+  deploymentTarget,
+  clusterId,
+  projectId,
 }) => {
   const [events, setEvents] = useState<PorterAppEvent[] | undefined>(undefined);
   const [page, setPage] = useState<number>(1);
@@ -40,22 +44,24 @@ const ActivityFeed: React.FC<Props> = ({
   );
   const [isPorterAgentInstalling, setIsPorterAgentInstalling] = useState(false);
 
+  const { currentProject } = useContext(Context);
+
   const {
     data: eventFetchData,
     isLoading: isEventFetchLoading,
     isRefetching,
   } = useQuery(
-    ["appEvents", deploymentTargetId, page],
+    ["appEvents", deploymentTarget.id, page],
     async () => {
       const res = await api.appEvents(
         "<token>",
         {
-          deployment_target_id: deploymentTargetId,
+          deployment_target_id: deploymentTarget.id,
           page,
         },
         {
-          cluster_id: currentCluster,
-          project_id: currentProject,
+          cluster_id: clusterId,
+          project_id: projectId,
           porter_app_name: appName,
         }
       );
@@ -95,12 +101,12 @@ const ActivityFeed: React.FC<Props> = ({
 
   const { data: porterAgentCheck, isLoading: porterAgentCheckLoading } =
     useQuery(
-      ["detectPorterAgent", currentProject, currentCluster],
+      ["detectPorterAgent", projectId, clusterId],
       async () => {
         const res = await api.detectPorterAgent(
           "<token>",
           {},
-          { project_id: currentProject, cluster_id: currentCluster }
+          { project_id: projectId, cluster_id: clusterId }
         );
         // response will either have version key if porter agent found, or error key if not
         const parsed = await z
@@ -131,7 +137,7 @@ const ActivityFeed: React.FC<Props> = ({
       await api.installPorterAgent(
         "<token>",
         {},
-        { project_id: currentProject, cluster_id: currentCluster }
+        { project_id: projectId, cluster_id: clusterId }
       );
       window.location.reload();
     } catch (err) {
@@ -211,13 +217,22 @@ const ActivityFeed: React.FC<Props> = ({
               <Text>{feedDate(event.created_at).split(", ")[1]}</Text>
             </Time>
             <EventCard
-              deploymentTargetId={deploymentTargetId}
+              deploymentTargetId={deploymentTarget.id}
               event={event}
               key={i}
               isLatestDeployEvent={i === getLatestDeployEventIndex()}
-              projectId={currentProject}
-              clusterId={currentCluster}
+              projectId={projectId}
+              clusterId={clusterId}
               appName={appName}
+              tabUrlGenerator={({ tab, queryParams }) =>
+                formattedPath({
+                  currentProject,
+                  deploymentTarget,
+                  tab,
+                  appName,
+                  queryParams,
+                })
+              }
             />
           </EventWrapper>
         );

@@ -83,12 +83,23 @@ func (c *PorterAppHelmReleaseGetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 			return
 		}
 
-		// TODO (POR-2170): remove this database call once endpoint is deprecated
-		revision, err := c.Repo().AppRevision().AppRevisionByInstanceIDAndRevisionNumber(project.ID, appInstance.Id, version)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error getting app revision by instance id and revision number")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
+		// TODO (POR-2170): delete these database calls once endpoint is deprecated
+		var revision *models.AppRevision
+		// treat version 0 as latest like helm
+		if version == 0 {
+			revision, err = c.Repo().AppRevision().LatestNumberedAppRevision(project.ID, appInstance.Id)
+			if err != nil {
+				err := telemetry.Error(ctx, span, err, "error getting latest numbered app revision")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
+		} else {
+			revision, err = c.Repo().AppRevision().AppRevisionByInstanceIDAndRevisionNumber(project.ID, appInstance.Id, version)
+			if err != nil {
+				err := telemetry.Error(ctx, span, err, "error getting app revision by instance id and revision number")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
 		}
 
 		if revision == nil {

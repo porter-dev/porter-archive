@@ -30,18 +30,16 @@ type Props = {
       type: string;
     }
   >;
-  appName: string;
   revisionId: string;
-  revisionNumber: number;
+  revisionNumber?: number;
 };
 
 const ServiceStatusDetail: React.FC<Props> = ({
   serviceDeploymentMetadata,
-  appName,
   revisionId,
-  revisionNumber,
+  revisionNumber = 0,
 }) => {
-  const { latestClientServices, latestClientNotifications } =
+  const { latestClientServices, latestClientNotifications, tabUrlGenerator } =
     useLatestRevision();
   const convertEventStatusToCopy = (status: string): string => {
     switch (status) {
@@ -103,7 +101,12 @@ const ServiceStatusDetail: React.FC<Props> = ({
                     <>
                       <Tag borderColor="#FFBF00">
                         <Link
-                          to={`/apps/${appName}/notifications?service=${key}`}
+                          to={tabUrlGenerator({
+                            tab: "notifications",
+                            queryParams: {
+                              service: key,
+                            },
+                          })}
                           color={"#FFBF00"}
                         >
                           <TagIcon src={alert} />
@@ -113,11 +116,17 @@ const ServiceStatusDetail: React.FC<Props> = ({
                       <Spacer inline x={0.5} />
                     </>
                   )}
-                  {serviceType !== "job" && (
+                  {serviceType !== "job" && revisionNumber !== 0 && (
                     <>
                       <Tag>
                         <Link
-                          to={`/apps/${appName}/logs?version=${revisionNumber}&service=${key}`}
+                          to={tabUrlGenerator({
+                            tab: "logs",
+                            queryParams: {
+                              version: revisionNumber.toString(),
+                              service: key,
+                            },
+                          })}
                         >
                           <TagIcon src={document} />
                           Logs
@@ -125,7 +134,14 @@ const ServiceStatusDetail: React.FC<Props> = ({
                       </Tag>
                       <Spacer inline x={0.5} />
                       <Tag>
-                        <Link to={`/apps/${appName}/metrics?service=${key}`}>
+                        <Link
+                          to={tabUrlGenerator({
+                            tab: "metrics",
+                            queryParams: {
+                              service: key,
+                            },
+                          })}
+                        >
                           <TagIcon src={metrics} />
                           Metrics
                         </Link>
@@ -135,7 +151,14 @@ const ServiceStatusDetail: React.FC<Props> = ({
                   {serviceType === "job" && (
                     <Tag>
                       <TagIcon src={calendar} style={{ marginTop: "2px" }} />
-                      <Link to={`/apps/${appName}/job-history?service=${key}`}>
+                      <Link
+                        to={tabUrlGenerator({
+                          tab: "job-history",
+                          queryParams: {
+                            service: key,
+                          },
+                        })}
+                      >
                         History
                       </Link>
                     </Tag>

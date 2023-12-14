@@ -1,107 +1,119 @@
-import Loading from "components/Loading";
-import Spacer from "components/porter/Spacer";
 import React, { useEffect, useState } from "react";
-import api from "shared/api";
+import { useQuery } from "@tanstack/react-query";
+import _ from "lodash";
+import { useLocation } from "react-router";
 import styled from "styled-components";
+import { match } from "ts-pattern";
+
+import Loading from "components/Loading";
 import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
+import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+
+import api from "shared/api";
+
+import {
+  porterAppEventValidator,
+  type PorterAppBuildEvent,
+  type PorterAppPreDeployEvent,
+} from "../types";
 import BuildEventFocusView from "./BuildEventFocusView";
 import PreDeployEventFocusView from "./PredeployEventFocusView";
-import _ from "lodash";
-import { type PorterAppBuildEvent, type PorterAppPreDeployEvent, porterAppEventValidator } from "../types";
-import { useLocation } from "react-router";
-import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import { useQuery } from "@tanstack/react-query";
-import { match } from "ts-pattern";
 
 const EVENT_POLL_INTERVAL = 5000; // poll every 5 seconds
 
-type SupportedEventFocusViewEvent = PorterAppBuildEvent | PorterAppPreDeployEvent;
+type SupportedEventFocusViewEvent =
+  | PorterAppBuildEvent
+  | PorterAppPreDeployEvent;
 
-const EventFocusView: React.FC = ({ }) => {
-    const { search } = useLocation();
-    const queryParams = new URLSearchParams(search);
-    const eventId = queryParams.get("event_id");
-    const { projectId, clusterId, latestProto } = useLatestRevision();
+const EventFocusView: React.FC = () => {
+  const { search } = useLocation();
+  const queryParams = new URLSearchParams(search);
+  const eventId = queryParams.get("event_id");
+  const { projectId, clusterId, tabUrlGenerator } = useLatestRevision();
 
-    const [event, setEvent] = useState<SupportedEventFocusViewEvent | null>(null);
+  const [event, setEvent] = useState<SupportedEventFocusViewEvent | null>(null);
 
-    const { data } = useQuery(
-        [
-            "getPorterAppEvent",
-            projectId,
-            clusterId,
-            eventId,
-            event,
-        ],
-        async () => {
-            if (eventId == null || eventId === "") {
-                return null;
-            }
-            const eventResp = await api.getPorterAppEvent(
-                "<token>",
-                {},
-                {
-                    project_id: projectId,
-                    cluster_id: clusterId,
-                    event_id: eventId,
-                }
-            );
-            return porterAppEventValidator.parse(eventResp.data.event);
-        },
+  const { data } = useQuery(
+    ["getPorterAppEvent", projectId, clusterId, eventId, event],
+    async () => {
+      if (eventId == null || eventId === "") {
+        return null;
+      }
+      const eventResp = await api.getPorterAppEvent(
+        "<token>",
+        {},
         {
-            // last condition checks if the event is done running; then we stop refetching
-            enabled: eventId != null && eventId !== "" && !(event?.metadata.end_time != null),
-            refetchInterval: EVENT_POLL_INTERVAL,
+          project_id: projectId,
+          cluster_id: clusterId,
+          event_id: eventId,
         }
-    );
-
-    useEffect(() => {
-        if (data != null && (data.type === "BUILD" || data.type === "PRE_DEPLOY")) {
-            setEvent(data);
-        }
-    }, [data]);
-
-    const getEventFocusView = () => {
-        return match(event)
-            .with({ type: "BUILD" }, (ev) => <BuildEventFocusView event={ev} />)
-            .with({ type: "PRE_DEPLOY" }, (ev) => <PreDeployEventFocusView event={ev} />)
-            .with(null, () => {
-                if (eventId != null && eventId !== "") {
-                    return <Loading />;
-                } else {
-                    return <div>Event not found</div>;
-                }
-            })
-            .exhaustive();
+      );
+      return porterAppEventValidator.parse(eventResp.data.event);
+    },
+    {
+      // last condition checks if the event is done running; then we stop refetching
+      enabled:
+        eventId != null &&
+        eventId !== "" &&
+        !(event?.metadata.end_time != null),
+      refetchInterval: EVENT_POLL_INTERVAL,
     }
+  );
 
-    return (
-        <AppearingView>
-            <Link to={`/apps/${latestProto.name}/activity`}>
-                <BackButton>
-                    <i className="material-icons">keyboard_backspace</i>
-                    Activity feed
-                </BackButton>
-            </Link>
-            <Spacer y={0.5} />
-            {getEventFocusView()}
-        </AppearingView>
-    );
+  useEffect(() => {
+    if (data != null && (data.type === "BUILD" || data.type === "PRE_DEPLOY")) {
+      setEvent(data);
+    }
+  }, [data]);
+
+  const getEventFocusView = (): JSX.Element => {
+    return match(event)
+      .with({ type: "BUILD" }, (ev) => <BuildEventFocusView event={ev} />)
+      .with({ type: "PRE_DEPLOY" }, (ev) => (
+        <PreDeployEventFocusView event={ev} />
+      ))
+      .with(null, () => {
+        if (eventId != null && eventId !== "") {
+          return <Loading />;
+        } else {
+          return <div>Event not found</div>;
+        }
+      })
+      .exhaustive();
+  };
+
+  return (
+    <AppearingView>
+      <Link
+        to={tabUrlGenerator({
+          tab: "activity",
+        })}
+      >
+        <BackButton>
+          <i className="material-icons">keyboard_backspace</i>
+          Activity feed
+        </BackButton>
+      </Link>
+      <Spacer y={0.5} />
+      {getEventFocusView()}
+    </AppearingView>
+  );
 };
 
 export default EventFocusView;
 
 export const AppearingView = styled.div`
-    width: 100%;
-    animation: fadeIn 0.3s 0s;
-    @keyframes fadeIn {
+  width: 100%;
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
     from {
-        opacity: 0;
+      opacity: 0;
     }
     to {
-        opacity: 1;
+      opacity: 1;
     }
-    }
+  }
 `;
 
 const BackButton = styled.div`

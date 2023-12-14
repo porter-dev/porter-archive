@@ -27,3 +27,14 @@ func (repo *AppRevisionRepository) AppRevisionByInstanceIDAndRevisionNumber(proj
 
 	return AppRevision, nil
 }
+
+// LatestNumberedAppRevision finds the latest numbered app revision
+func (repo *AppRevisionRepository) LatestNumberedAppRevision(projectID uint, appInstanceId string) (*models.AppRevision, error) {
+	AppRevision := &models.AppRevision{}
+
+	if err := repo.db.Where("project_id = ? AND app_instance_id = ?", projectID, appInstanceId).Order("revision_number DESC").Limit(1).Find(&AppRevision).Error; err != nil {
+		return nil, err
+	}
+
+	return AppRevision, nil
+}

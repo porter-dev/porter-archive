@@ -40,6 +40,7 @@ var (
 	appInteractive   bool
 	appContainerName string
 	appTag           string
+	deploymentTarget string
 	appCpuMilli      int
 	appMemoryMi      int
 	jobName          string
@@ -57,6 +58,14 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		Use:   "app",
 		Short: "Runs a command for your application.",
 	}
+
+	appCmd.PersistentFlags().StringVarP(
+		&deploymentTarget,
+		"target",
+		"x",
+		"default",
+		"the deployment target for the app, default is \"default\"",
+	)
 
 	// appRunCmd represents the "porter app run" subcommand
 	appRunCmd := &cobra.Command{
@@ -238,7 +247,7 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 	// updated exec args includes launcher command prepended if needed, otherwise it is the same as execArgs
 	var updatedExecArgs []string
 	if project.ValidateApplyV2 {
-		podsSimple, updatedExecArgs, namespace, err = getPodsFromV2PorterYaml(ctx, execArgs, client, cliConfig, args[0])
+		podsSimple, updatedExecArgs, namespace, err = getPodsFromV2PorterYaml(ctx, execArgs, client, cliConfig, args[0], deploymentTarget)
 		if err != nil {
 			return err
 		}
@@ -553,23 +562,12 @@ func appGetPodsV1PorterYaml(ctx context.Context, cliConfig config.CLIConfig, cli
 	return res, containerHasLauncherStartCommand, nil
 }
 
-func appGetPodsV2PorterYaml(ctx context.Context, cliConfig config.CLIConfig, client api.Client, porterAppName string) ([]appPodSimple, string, bool, error) {
+func appGetPodsV2PorterYaml(ctx context.Context, cliConfig config.CLIConfig, client api.Client, porterAppName string, deploymentTargetName string) ([]appPodSimple, string, bool, error) {
 	pID := cliConfig.Project
 	cID := cliConfig.Cluster
 	var containerHasLauncherStartCommand bool
 
-	targetResp, err := client.DefaultDeploymentTarget(ctx, pID, cID)
-	if err != nil {
-		return nil, "", containerHasLauncherStartCommand, fmt.Errorf("error calling default deployment target endpoint: %w", err)
-	}
-
-	if targetResp.DeploymentTargetID == "" {
-		return nil, "", containerHasLauncherStartCommand, errors.New("deployment target id is empty")
-	}
-
-	resp, err := client.PorterYamlV2Pods(ctx, pID, cID, porterAppName, &types.PorterYamlV2PodsRequest{
-		DeploymentTargetID: targetResp.DeploymentTargetID,
-	})
+	resp, err := client.PorterYamlV2Pods(ctx, pID, cID, porterAppName, deploymentTargetName)
 	if err != nil {
 		return nil, "", containerHasLauncherStartCommand, err
 	}
@@ -1215,7 +1213,7 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 	}
 
 	if project.ValidateApplyV2 {
-		tag, err := v2.UpdateImage(ctx, appTag, client, cliConf.Project, cliConf.Cluster, args[0])
+		tag, err := v2.UpdateImage(ctx, appTag, client, cliConf.Project, cliConf.Cluster, args[0], deploymentTarget)
 		if err != nil {
 			return fmt.Errorf("error updating tag: %w", err)
 		}
@@ -1276,8 +1274,8 @@ func getPodsFromV1PorterYaml(ctx context.Context, execArgs []string, client api.
 	return podsSimple, execArgs, nil
 }
 
-func getPodsFromV2PorterYaml(ctx context.Context, execArgs []string, client api.Client, cliConfig config.CLIConfig, porterAppName string) ([]appPodSimple, []string, string, error) {
-	podsSimple, namespace, containerHasLauncherStartCommand, err := appGetPodsV2PorterYaml(ctx, cliConfig, client, porterAppName)
+func getPodsFromV2PorterYaml(ctx context.Context, execArgs []string, client api.Client, cliConfig config.CLIConfig, porterAppName string, deploymentTargetName string) ([]appPodSimple, []string, string, error) {
+	podsSimple, namespace, containerHasLauncherStartCommand, err := appGetPodsV2PorterYaml(ctx, cliConfig, client, porterAppName, deploymentTargetName)
 	if err != nil {
 		return nil, nil, "", fmt.Errorf("could not retrieve list of pods: %w", err)
 	}

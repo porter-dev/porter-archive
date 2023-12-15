@@ -39,7 +39,7 @@ export const PostgresTabs: React.FC<Props> = ({ index }) => {
   const password = watch(`addons.${index}.config.password`);
 
   const databaseURL = useMemo(() => {
-    if (!username || !password) {
+    if (!username || !password || !name.value) {
       return "";
     }
 
@@ -77,7 +77,7 @@ export const PostgresTabs: React.FC<Props> = ({ index }) => {
               {...register(`addons.${index}.config.password`)}
             />
             <Spacer y={1} />
-            {name && username && password && (
+            {databaseURL && (
               <>
                 <Text color="helper">Internal Database URL:</Text>
                 <Spacer y={0.5} />

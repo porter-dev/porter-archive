@@ -162,9 +162,7 @@ export const useAppStatus = ({
             )} ${pluralize(
               "is",
               pendingInstances.length
-            )} in a pending state at Version ${
-              revisionStatus.revision_number
-            }.`,
+            )} in a pending state at Version ${revisionStatus.revision_number}`,
             crashLoopReason: "",
             restartCount: _.maxBy(pendingInstances, "restart_count")
               ?.restart_count,

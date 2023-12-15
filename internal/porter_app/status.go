@@ -168,6 +168,10 @@ func revisionStatusFromPods(ctx context.Context, inp revisionStatusFromPodsInput
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "revision-id", Value: revisionId})
 			return revisionStatusList, telemetry.Error(ctx, span, err, "error getting revision number from revision id")
 		}
+		// no number for this revision yet, so skip it from reporting
+		if revisionNumber == 0 {
+			continue
+		}
 		revisionStatus := RevisionStatus{
 			RevisionID:         revisionId,
 			RevisionNumber:     revisionNumber,
@@ -221,9 +225,6 @@ func instanceStatusFromPod(ctx context.Context, inp instanceStatusFromPodInput) 
 	}
 
 	if appContainerStatus.State.Waiting != nil && appContainerStatus.State.Waiting.Reason == CrashLoopBackOff {
-		instanceStatus.Status = InstanceStatusDescriptor_Failed
-	}
-	if appContainerStatus.State.Terminated != nil {
 		instanceStatus.Status = InstanceStatusDescriptor_Failed
 	}
 

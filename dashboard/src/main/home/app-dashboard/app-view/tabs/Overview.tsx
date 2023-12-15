@@ -38,7 +38,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
   const { serviceVersionStatus } = useAppStatus({
     projectId,
     clusterId,
-    serviceNames: Object.keys(latestProto.services),
+    serviceNames: latestProto.serviceList.map((s) => s.name),
     deploymentTargetId: deploymentTarget.id,
     appName: latestProto.name,
   });
@@ -71,7 +71,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
       <ServiceList
         addNewText={"Add a new service"}
         fieldArrayName={"app.services"}
-        existingServiceNames={Object.keys(latestProto.services)}
+        existingServiceNames={latestProto.serviceList.map((s) => s.name)}
         serviceVersionStatus={serviceVersionStatus}
         internalNetworkingDetails={{
           namespace: deploymentTarget.namespace,

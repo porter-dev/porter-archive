@@ -39,7 +39,7 @@ type AppStatusRequest struct {
 }
 
 func (c *AppStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-app-logs")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-app-status")
 	defer span.End()
 
 	safeRW := ctx.Value(types.RequestCtxWebsocketKey).(*websocket.WebsocketSafeReadWriter)

@@ -1171,7 +1171,7 @@ func getPorterAppRoutes(
 		},
 	)
 
-	appPodStatusHandler := porter_app.NewPodStatusHandler(
+	appPodStatusHandler := porter_app.NewServiceStatusHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

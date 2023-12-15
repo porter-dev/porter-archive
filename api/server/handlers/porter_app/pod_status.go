@@ -1,9 +1,10 @@
 package porter_app
 
 import (
-	"fmt"
 	"net/http"
 
+	"connectrpc.com/connect"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -13,39 +14,44 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/deployment_target"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
-	v1 "k8s.io/api/core/v1"
 )
 
-// PodStatusHandler is the handler for GET /apps/pods
-type PodStatusHandler struct {
+// ServiceStatusHandler is the handler for GET /apps/pods
+type ServiceStatusHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewPodStatusHandler returns a new PodStatusHandler
-func NewPodStatusHandler(
+// NewServiceStatusHandler returns a new ServiceStatusHandler
+func NewServiceStatusHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *PodStatusHandler {
-	return &PodStatusHandler{
+) *ServiceStatusHandler {
+	return &ServiceStatusHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-// PodStatusRequest is the expected format for a request body on GET /apps/pods
-type PodStatusRequest struct {
+// ServiceStatusRequest is the expected format for a request body on GET /apps/pods
+type ServiceStatusRequest struct {
 	DeploymentTargetID string `schema:"deployment_target_id"`
 	ServiceName        string `schema:"service"`
 }
 
-func (c *PodStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// ServiceStatusResponse is the expected format for a response body on GET /apps/pods
+type ServiceStatusResponse struct {
+	Status porter_app.ServiceStatus `json:"status"`
+}
+
+func (c *ServiceStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-pod-status")
 	defer span.End()
 
-	request := &PodStatusRequest{}
+	request := &ServiceStatusRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "invalid request")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -86,29 +92,84 @@ func (c *PodStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	namespace := deploymentTarget.Namespace
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: namespace})
 
+	app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error reading porter app by name")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+	if app == nil || app.ID == 0 {
+		err = telemetry.Error(ctx, span, nil, "app with name does not exist in project")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-id", Value: app.ID})
+
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "unable to get agent")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-
-	pods := []v1.Pod{}
-
-	var selectors string
-	if request.ServiceName == "" {
-		selectors = fmt.Sprintf("porter.run/deployment-target-id=%s,porter.run/app-name=%s", request.DeploymentTargetID, appName)
-	} else {
-		selectors = fmt.Sprintf("porter.run/service-name=%s,porter.run/deployment-target-id=%s,porter.run/app-name=%s", request.ServiceName, request.DeploymentTargetID, appName)
-	}
-	podsList, err := agent.GetPodsByLabel(selectors, namespace)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "unable to get pods by label")
+	if agent == nil {
+		err = telemetry.Error(ctx, span, nil, "agent is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	pods = append(pods, podsList.Items...)
+	listAppRevisionsReq := connect.NewRequest(&porterv1.ListAppRevisionsRequest{
+		ProjectId:          int64(project.ID),
+		AppId:              int64(app.ID),
+		DeploymentTargetId: request.DeploymentTargetID,
+	})
 
-	c.WriteResult(w, r, pods)
+	listAppRevisionsResp, err := c.Config().ClusterControlPlaneClient.ListAppRevisions(ctx, listAppRevisionsReq)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error listing app revisions")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	if listAppRevisionsResp == nil || listAppRevisionsResp.Msg == nil {
+		err = telemetry.Error(ctx, span, nil, "list app revisions response is nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	appRevisions := listAppRevisionsResp.Msg.AppRevisions
+	if appRevisions == nil {
+		appRevisions = []*porterv1.AppRevision{}
+	}
+
+	var revisions []porter_app.Revision
+	for _, revision := range appRevisions {
+		encodedRevision, err := porter_app.EncodedRevisionFromProto(ctx, revision)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting encoded revision from proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		revisions = append(revisions, encodedRevision)
+	}
+
+	serviceStatus, err := porter_app.GetServiceStatus(ctx, porter_app.GetServiceStatusInput{
+		DeploymentTarget: deploymentTarget,
+		Agent:            *agent,
+		AppName:          appName,
+		ServiceName:      request.ServiceName,
+		AppRevisions:     revisions,
+	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting service status")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	res := ServiceStatusResponse{
+		Status: serviceStatus,
+	}
+
+	c.WriteResult(w, r, res)
 }

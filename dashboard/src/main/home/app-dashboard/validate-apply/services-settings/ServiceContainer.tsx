@@ -6,7 +6,7 @@ import styled, { keyframes } from "styled-components";
 import { match } from "ts-pattern";
 
 import Spacer from "components/porter/Spacer";
-import { type PorterAppVersionStatus } from "lib/hooks/useAppStatus";
+import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
 import useResizeObserver from "lib/hooks/useResizeObserver";
 import { type PorterAppFormData } from "lib/porter-apps";
 import { type ClientService } from "lib/porter-apps/services";
@@ -29,7 +29,7 @@ type ServiceProps = {
     "app.services" | "app.predeploy"
   >;
   remove: (index: number) => void;
-  status?: PorterAppVersionStatus[];
+  status?: ClientServiceStatus[];
   maxCPU: number;
   maxRAM: number;
   clusterContainsGPUNodes: boolean;
@@ -276,7 +276,7 @@ const ServiceHeader = styled.div<{
     border-radius: 20px;
     margin-left: -10px;
     transform: ${(props: { showExpanded?: boolean }) =>
-    props.showExpanded ? "" : "rotate(-90deg)"};
+      props.showExpanded ? "" : "rotate(-90deg)"};
   }
 `;
 

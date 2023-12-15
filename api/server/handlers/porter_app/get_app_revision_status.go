@@ -37,7 +37,7 @@ func NewGetAppRevisionStatusHandler(
 
 // GetAppRevisionStatusResponse represents the response from the /apps/{porter_app_name}/revisions/{app_revision_id}/status endpoint
 type GetAppRevisionStatusResponse struct {
-	AppRevisionStatus porter_app.RevisionStatus `json:"app_revision_status"`
+	AppRevisionStatus porter_app.RevisionProgress `json:"app_revision_status"`
 }
 
 // GetAppRevisionStatusHandler returns the status of an app revision
@@ -71,7 +71,7 @@ func (c *GetAppRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	revisionStatus := porter_app.RevisionStatus{
+	revisionStatus := porter_app.RevisionProgress{
 		PredeployStarted:     ccpResp.Msg.PredeployStarted,
 		PredeploySuccessful:  ccpResp.Msg.PredeploySuccessful,
 		PredeployFailed:      ccpResp.Msg.PredeployFailed,

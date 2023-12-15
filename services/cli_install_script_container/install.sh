@@ -15,7 +15,13 @@ download_and_install() {
     echo "[INFO] Since the Porter CLI gets installed in /usr/local/bin, you may be asked to input your password."
     echo "[INFO] Please make sure /usr/local/bin is included in your PATH."
 
-    curl -L https://github.com/porter-dev/porter/releases/download/{{ .TagName }}/porter_{{ .TagName }}_${osname}_x86_64.zip --output porter.zip
+    porter_version="{{ .TagName }}"
+    if [[ -n "$PORTER_VERSION" ]]; then
+        echo "[INFO] Using $PORTER_VERSION override instead of $porter_version"
+        porter_version="$PORTER_VERSION"
+    fi
+
+    curl -L "https://github.com/porter-dev/porter/releases/download/${porter_version}/porter_${porter_version}_${osname}_x86_64.zip" --output porter.zip
     unzip -o -a porter.zip
     rm porter.zip
 

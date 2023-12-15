@@ -981,6 +981,11 @@ const createAppTemplate = baseApi<
     variables: Record<string, string>;
     secrets: Record<string, string>;
     base_deployment_target_id: string;
+    addons?: Array<{
+      base64_addon: string;
+      variables: Record<string, string>;
+      secrets: Record<string, string>;
+    }>
   },
   {
     project_id: number;

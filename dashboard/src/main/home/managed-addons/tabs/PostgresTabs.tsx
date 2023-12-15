@@ -44,7 +44,7 @@ export const PostgresTabs: React.FC<Props> = ({ index }) => {
     }
 
     return `postgresql://${username}:${password}@${name.value}-postgres:5432/postgres`;
-  }, [username, password]);
+  }, [username, password, name.value]);
 
   return (
     <>

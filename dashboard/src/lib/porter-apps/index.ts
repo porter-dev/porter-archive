@@ -102,14 +102,15 @@ export const clientAppValidator = z.object({
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 
+export const basePorterAppFormValidator = z.object({
+  app: clientAppValidator,
+  source: sourceValidator,
+  deletions: deletionValidator,
+  redeployOnSave: z.boolean().default(false),
+});
+
 // porterAppFormValidator is used to validate inputs when creating + updating an app
-export const porterAppFormValidator = z
-  .object({
-    app: clientAppValidator,
-    source: sourceValidator,
-    deletions: deletionValidator,
-    redeployOnSave: z.boolean().default(false),
-  })
+export const porterAppFormValidator = basePorterAppFormValidator
   .refine(
     ({ app }) => {
       if (app.predeploy?.[0]?.run) {

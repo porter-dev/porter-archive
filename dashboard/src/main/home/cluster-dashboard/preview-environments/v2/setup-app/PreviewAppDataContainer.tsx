@@ -12,6 +12,7 @@ import _ from "lodash";
 import { FormProvider, useForm } from "react-hook-form";
 import { Redirect, useHistory } from "react-router";
 import { match } from "ts-pattern";
+import { z } from "zod";
 
 import Error from "components/porter/Error";
 import Spacer from "components/porter/Spacer";
@@ -19,11 +20,11 @@ import TabSelector from "components/TabSelector";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import Environment from "main/home/app-dashboard/app-view/tabs/Environment";
 import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
+import { clientAddonToProto, clientAddonValidator } from "lib/addons";
 import { useAppWithPreviewOverrides } from "lib/hooks/useAppWithPreviewOverrides";
 import {
+  basePorterAppFormValidator,
   clientAppToProto,
-  porterAppFormValidator,
-  type PorterAppFormData,
   type SourceOptions,
 } from "lib/porter-apps";
 
@@ -31,6 +32,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 
 import { type ExistingTemplateWithEnv } from "../types";
+import { Addons } from "./Addons";
 import { RequiredApps } from "./RequiredApps";
 import { ServiceSettings } from "./ServiceSettings";
 
@@ -46,6 +48,17 @@ const previewEnvSettingsTabs = [
 ] as const;
 
 type PreviewEnvSettingsTab = (typeof previewEnvSettingsTabs)[number];
+
+const appTemplateClientValidator = basePorterAppFormValidator.extend({
+  addons: z.array(clientAddonValidator).default([]),
+});
+export type AppTemplateFormData = z.infer<typeof appTemplateClientValidator>;
+
+type EncodedAddonWithEnv = {
+  base64_addon: string;
+  variables: Record<string, string>;
+  secrets: Record<string, string>;
+};
 
 export const PreviewAppDataContainer: React.FC<Props> = ({
   existingTemplate,
@@ -66,6 +79,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
     variables: {},
     secrets: {},
   });
+  const [encodedAddons, setEncodedAddons] = useState<EncodedAddonWithEnv[]>([]);
 
   const {
     porterApp,
@@ -106,9 +120,9 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
     appEnv,
   });
 
-  const porterAppFormMethods = useForm<PorterAppFormData>({
+  const porterAppFormMethods = useForm<AppTemplateFormData>({
     reValidateMode: "onSubmit",
-    resolver: zodResolver(porterAppFormValidator),
+    resolver: zodResolver(appTemplateClientValidator),
     defaultValues: {
       app: withPreviewOverrides,
       source: latestSource,
@@ -153,6 +167,28 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
       const proto = clientAppToProto(data);
       setValidatedAppProto(proto);
 
+      const addons = data.addons.map((addon) => {
+        const variables = match(addon.config.type)
+          .with("postgres", () => ({
+            POSTGRESQL_USERNAME: addon.config.username,
+          }))
+          .otherwise(() => ({}));
+        const secrets = match(addon.config.type)
+          .with("postgres", () => ({
+            POSTGRESQL_PASSWORD: addon.config.password,
+          }))
+          .otherwise(() => ({}));
+
+        const proto = clientAddonToProto(addon);
+
+        return {
+          base64_addon: btoa(proto.toJsonString()),
+          variables,
+          secrets,
+        };
+      });
+      setEncodedAddons(addons);
+
       const { env } = data.app;
       const variables = env
         .filter((e) => !e.hidden && !e.deleted)
@@ -179,6 +215,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
         app: proto,
         variables,
         secrets,
+        addons,
       });
       history.push(`/preview-environments`);
     } catch (err) {
@@ -197,10 +234,12 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
       app,
       variables,
       secrets,
+      addons = [],
     }: {
       app: PorterApp | null;
       variables: Record<string, string>;
       secrets: Record<string, string>;
+      addons?: EncodedAddonWithEnv[];
     }) => {
       try {
         if (!app) {
@@ -214,6 +253,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
             variables,
             secrets,
             base_deployment_target_id: deploymentTarget.id,
+            addons,
           },
           {
             project_id: projectId,
@@ -264,7 +304,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
           ...(currentProject?.beta_features_enabled
             ? [
                 { label: "Required Apps", value: "required-apps" },
-                // { label: "Add-ons", value: "addons" },
+                { label: "Add-ons", value: "addons" },
               ]
             : []),
         ]}
@@ -296,7 +336,8 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
           .with("required-apps", () => (
             <RequiredApps buttonStatus={buttonStatus} />
           ))
-          .otherwise(() => null)}
+          .with("addons", () => <Addons buttonStatus={buttonStatus} />)
+          .exhaustive()}
       </form>
       {showGHAModal && (
         <GithubActionModal
@@ -316,6 +357,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
               app: validatedAppProto,
               variables,
               secrets,
+              addons: encodedAddons,
             })
           }
           deploymentError={createError}

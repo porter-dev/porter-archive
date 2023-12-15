@@ -543,6 +543,28 @@ func (c *Client) GetBuildEnv(
 	return resp, err
 }
 
+// GetAppEnvVariables returns all env variables for a given app
+func (c *Client) GetAppEnvVariables(
+	ctx context.Context,
+	projectID uint, clusterID uint,
+	appName string,
+) (*porter_app.AppEnvVariablesResponse, error) {
+	resp := &porter_app.AppEnvVariablesResponse{}
+
+	req := &porter_app.AppEnvVariablesRequest{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/env-variables",
+			projectID, clusterID, appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 // GetBuildFromRevision returns the build environment for a given app proto
 func (c *Client) GetBuildFromRevision(
 	ctx context.Context,
@@ -634,8 +656,12 @@ func (c *Client) PorterYamlV2Pods(
 	ctx context.Context,
 	projectID, clusterID uint,
 	porterAppName string,
-	req *types.PorterYamlV2PodsRequest,
+	deploymentTargetName string,
 ) (*types.GetReleaseAllPodsResponse, error) {
+	req := &porter_app.PodStatusRequest{
+		DeploymentTargetName: deploymentTargetName,
+	}
+
 	resp := &types.GetReleaseAllPodsResponse{}
 
 	err := c.getRequest(
@@ -655,11 +681,11 @@ func (c *Client) PorterYamlV2Pods(
 func (c *Client) UpdateImage(
 	ctx context.Context,
 	projectID, clusterID uint,
-	appName, deploymentTargetId, tag string,
+	appName, deploymentTargetName, tag string,
 ) (*porter_app.UpdateImageResponse, error) {
 	req := &porter_app.UpdateImageRequest{
-		Tag:                tag,
-		DeploymentTargetId: deploymentTargetId,
+		Tag:                  tag,
+		DeploymentTargetName: deploymentTargetName,
 	}
 
 	resp := &porter_app.UpdateImageResponse{}

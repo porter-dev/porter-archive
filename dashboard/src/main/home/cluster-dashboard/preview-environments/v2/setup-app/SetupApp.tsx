@@ -16,7 +16,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import pull_request from "assets/pull_request_icon.svg";
 
-import AppTemplateForm from "./AppTemplateForm";
+import { PreviewAppDataContainer } from "./PreviewAppDataContainer";
 
 type Props = RouteComponentProps;
 
@@ -109,7 +109,7 @@ const SetupApp: React.FC<Props> = ({ location }) => {
             {match(templateRes)
               .with({ status: "loading" }, () => <Loading />)
               .with({ status: "success" }, ({ data }) => {
-                return <AppTemplateForm existingTemplate={data} />;
+                return <PreviewAppDataContainer existingTemplate={data} />;
               })
               .otherwise(() => null)}
             <Spacer y={3} />

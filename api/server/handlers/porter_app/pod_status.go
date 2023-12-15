@@ -68,20 +68,19 @@ func (c *ServiceStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName}, telemetry.AttributeKV{Key: "app-name", Value: appName})
-
-	if request.DeploymentTargetID == "" {
-		err := telemetry.Error(ctx, span, nil, "must provide deployment target id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName},
+		telemetry.AttributeKV{Key: "app-name", Value: appName},
+		telemetry.AttributeKV{Key: "input-deployment-target-id", Value: request.DeploymentTargetID},
+		telemetry.AttributeKV{Key: "input-deployment-target-name", Value: request.DeploymentTargetName},
+	)
 
 	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
-		ProjectID:          int64(project.ID),
-		ClusterID:          int64(cluster.ID),
-		DeploymentTargetID: request.DeploymentTargetID,
-		CCPClient:          c.Config().ClusterControlPlaneClient,
+		ProjectID:            int64(project.ID),
+		ClusterID:            int64(cluster.ID),
+		DeploymentTargetID:   request.DeploymentTargetID,
+		DeploymentTargetName: request.DeploymentTargetName,
+		CCPClient:            c.Config().ClusterControlPlaneClient,
 	})
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting deployment target details")
@@ -90,7 +89,10 @@ func (c *ServiceStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	namespace := deploymentTarget.Namespace
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: namespace})
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "namespace", Value: namespace},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTarget.ID},
+	)
 
 	app, err := c.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
 	if err != nil {

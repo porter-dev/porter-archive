@@ -72,15 +72,13 @@ func (c *ServiceStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName},
 		telemetry.AttributeKV{Key: "app-name", Value: appName},
 		telemetry.AttributeKV{Key: "input-deployment-target-id", Value: request.DeploymentTargetID},
-		telemetry.AttributeKV{Key: "input-deployment-target-name", Value: request.DeploymentTargetName},
 	)
 
 	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
-		ProjectID:            int64(project.ID),
-		ClusterID:            int64(cluster.ID),
-		DeploymentTargetID:   request.DeploymentTargetID,
-		DeploymentTargetName: request.DeploymentTargetName,
-		CCPClient:            c.Config().ClusterControlPlaneClient,
+		ProjectID:          int64(project.ID),
+		ClusterID:          int64(cluster.ID),
+		DeploymentTargetID: request.DeploymentTargetID,
+		CCPClient:          c.Config().ClusterControlPlaneClient,
 	})
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error getting deployment target details")

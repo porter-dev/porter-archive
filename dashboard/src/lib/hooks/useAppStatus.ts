@@ -91,7 +91,7 @@ export const useAppStatus = ({
 
   const updatePods = async (serviceName: string): Promise<void> => {
     try {
-      const res = await api.appPodStatus(
+      const res = await api.appServiceStatus(
         "<token>",
         {
           deployment_target_id: deploymentTargetId,

@@ -63,3 +63,47 @@ export function clientAddonToProto(addon: ClientAddon): Addon {
 
   return proto;
 }
+
+export function clientAddonFromProto(args: {
+  addon: Addon;
+  variables: Record<string, string>;
+  secrets: Record<string, string>;
+}): ClientAddon {
+  const addon = args.addon;
+  const variables = args.variables;
+  const secrets = args.secrets;
+
+  if (!addon.config.case) {
+    throw new Error("Addon type is unspecified");
+  }
+
+  const config = match(addon.config)
+    .with({ case: "postgres" }, (data) => ({
+      type: "postgres" as const,
+      cpuCores: {
+        readOnly: false,
+        value: data.value.cpuCores,
+      },
+      ramMegabytes: {
+        readOnly: false,
+        value: data.value.ramMegabytes,
+      },
+      storageGigabytes: {
+        readOnly: false,
+        value: data.value.storageGigabytes,
+      },
+      username: variables.POSTGRESQL_USERNAME,
+      password: secrets.POSTGRESQL_PASSWORD,
+    }))
+    .exhaustive();
+
+  const clientAddon = clientAddonValidator.parse({
+    name: { readOnly: false, value: addon.name },
+    envGroups: addon.envGroups.map((envGroup) => ({
+      value: envGroup.name,
+    })),
+    config,
+  });
+
+  return clientAddon;
+}

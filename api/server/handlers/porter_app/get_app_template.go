@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"context"
 	"encoding/base64"
 	"net/http"
 
@@ -40,6 +41,8 @@ type GetAppTemplateResponse struct {
 	TemplateB64AppProto string `json:"template_b64_app_proto"`
 	// AppEnv is the base set of environment variables that will be used in subsequent preview deploys
 	AppEnv environment_groups.EnvironmentGroup `json:"app_env"`
+	// Addons is a list of encoded addons that will be used alongside the app template
+	Addons []Base64AddonWithEnvVars `json:"addons"`
 }
 
 // ServeHTTP creates or updates an app template for a given porter app
@@ -123,10 +126,31 @@ func (c *GetAppTemplateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		SecretVariables: ccpResp.Msg.AppEnv.Secret,
 	}
 
+	addons := encodedAddonsWithEnvFromProto(ctx, ccpResp.Msg.AddonTemplates)
+
 	res := &GetAppTemplateResponse{
 		TemplateB64AppProto: encoded,
 		AppEnv:              appEnv,
+		Addons:              addons,
 	}
 
 	c.WriteResult(w, r, res)
+}
+
+func encodedAddonsWithEnvFromProto(ctx context.Context, addons []*porterv1.AddonWithEnvVars) []Base64AddonWithEnvVars {
+	var res []Base64AddonWithEnvVars
+
+	for _, addon := range addons {
+		by, _ := helpers.MarshalContractObject(ctx, addon.Addon)
+
+		encoded := base64.StdEncoding.EncodeToString(by)
+
+		res = append(res, Base64AddonWithEnvVars{
+			Base64Addon: encoded,
+			Variables:   addon.EnvVars.Normal,
+			Secrets:     addon.EnvVars.Secret,
+		})
+	}
+
+	return res
 }

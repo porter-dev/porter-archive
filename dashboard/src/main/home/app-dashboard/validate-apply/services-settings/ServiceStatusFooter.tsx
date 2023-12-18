@@ -8,8 +8,12 @@ import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
+import { isClientServiceNotification } from "lib/porter-apps/notification";
+
+import alert from "assets/alert-warning.svg";
 
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import TriggerJobButton from "../jobs/TriggerJobButton";
@@ -25,8 +29,15 @@ const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
   isJob,
 }) => {
   const [expanded, setExpanded] = useState<boolean>(false);
-  const { latestProto, projectId, clusterId, deploymentTarget, appName } =
-    useLatestRevision();
+  const {
+    latestProto,
+    projectId,
+    clusterId,
+    deploymentTarget,
+    appName,
+    latestClientNotifications,
+    tabUrlGenerator,
+  } = useLatestRevision();
   const [height, setHeight] = useState<Height>(0);
 
   if (isJob) {
@@ -63,6 +74,9 @@ const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
   return (
     <>
       {status.map((versionStatus, i) => {
+        const versionNotifications = latestClientNotifications
+          .filter(isClientServiceNotification)
+          .filter((n) => n.appRevisionId === versionStatus.revisionId);
         return (
           <div key={i}>
             <StyledStatusFooterTop expanded={expanded}>
@@ -113,11 +127,26 @@ const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
                     );
                   })
                   .exhaustive()}
-                {(versionStatus.restartCount ?? 0) > 0 && (
-                  <Text color="helper">
-                    Restarts: {versionStatus.restartCount}
-                  </Text>
-                )}
+                <Container row style={{ gap: "10px" }}>
+                  {(versionStatus.restartCount ?? 0) > 0 && (
+                    <Text color="helper">
+                      Restarts: {versionStatus.restartCount}
+                    </Text>
+                  )}
+                  {versionNotifications.length > 0 && (
+                    <Tag borderColor="#FFBF00">
+                      <Link
+                        to={tabUrlGenerator({
+                          tab: "notifications",
+                        })}
+                        color={"#FFBF00"}
+                      >
+                        <TagIcon src={alert} />
+                        Notifications
+                      </Link>
+                    </Tag>
+                  )}
+                </Container>
               </StyledContainer>
             </StyledStatusFooterTop>
             {versionStatus.crashLoopReason && (
@@ -235,4 +264,9 @@ const StyledContainer = styled.div<{
   justify-content: ${(props) =>
     props.spaced ? "space-between" : "flex-start"};
   width: 100%;
+`;
+
+const TagIcon = styled.img`
+  height: 12px;
+  margin-right: 3px;
 `;

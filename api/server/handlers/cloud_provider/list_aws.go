@@ -55,40 +55,21 @@ func (c *ListAwsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	res := []ListAwsResponse{}
-	if project.GetFeatureFlag(models.CapiProvisionerEnabled, c.Config().LaunchDarklyClient) {
-		dblinks, err := c.Repo().AWSAssumeRoleChainer().List(ctx, project.ID)
-		if err != nil {
-			e := fmt.Errorf("unable to find assume role chain links: %w", err)
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
-			return
-		}
-
-		for _, link := range dblinks {
-			b, err := arn.Parse(link.TargetARN)
-			if err != nil {
-				e := fmt.Errorf("unable to parse target arn: %w", err)
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
-				return
-			}
-
-			res = append(res, ListAwsResponse{
-				CloudProviderID: b.AccountID,
-				ProjectID:       uint(link.ProjectID),
-			})
-		}
-		c.WriteResult(w, r, res)
-		w.WriteHeader(http.StatusOK)
+	if !project.GetFeatureFlag(models.CapiProvisionerEnabled, c.Config().LaunchDarklyClient) {
+		e := fmt.Errorf("listing cloud providers not available on non-capi clusters")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
 
-	awsInts, err := c.Repo().AWSIntegration().ListAWSIntegrationsByProjectID(project.ID)
+	dblinks, err := c.Repo().AWSAssumeRoleChainer().List(ctx, project.ID)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		e := fmt.Errorf("unable to find assume role chain links: %w", err)
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
 		return
 	}
 
-	for _, awsInt := range awsInts {
-		b, err := arn.Parse(awsInt.AWSArn)
+	for _, link := range dblinks {
+		b, err := arn.Parse(link.TargetARN)
 		if err != nil {
 			e := fmt.Errorf("unable to parse target arn: %w", err)
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
@@ -97,9 +78,10 @@ func (c *ListAwsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		res = append(res, ListAwsResponse{
 			CloudProviderID: b.AccountID,
-			ProjectID:       awsInt.ProjectID,
+			ProjectID:       uint(link.ProjectID),
 		})
 	}
-
 	c.WriteResult(w, r, res)
+	w.WriteHeader(http.StatusOK)
+	return
 }

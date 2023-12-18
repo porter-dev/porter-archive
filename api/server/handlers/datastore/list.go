@@ -16,9 +16,9 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// ListRequest is a struct that represents the various filter options used for
+// ListDatastoresRequest is a struct that represents the various filter options used for
 // retrieving the datastores
-type ListRequest struct {
+type ListDatastoresRequest struct {
 	// Name is the name of the datastore to filter by
 	Name string `schema:"name"`
 
@@ -32,8 +32,8 @@ type ListRequest struct {
 	IncludeMetadata bool `schema:"include_metadata"`
 }
 
-// ListResponseEntry describes an outbound datastores response entry
-type ListResponseEntry struct {
+// ListDatastoresResponseEntry describes an outbound datastores response entry
+type ListDatastoresResponseEntry struct {
 	// Name is the name of the datastore
 	Name string `json:"name"`
 
@@ -50,31 +50,32 @@ type ListResponseEntry struct {
 	Status string `json:"status,omitempty"`
 }
 
-// ListHandler is a struct for handling datastore status requests
-type ListHandler struct {
+// ListDatastoresHandler is a struct for handling datastore status requests
+type ListDatastoresHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewListHandler constructs a datastore ListHandler
-func NewListHandler(
+// NewListDatastoresHandler constructs a datastore ListHandler
+func NewListDatastoresHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *ListHandler {
-	return &ListHandler{
+) *ListDatastoresHandler {
+	return &ListDatastoresHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-func (h *ListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// ServeHTTP returns a list of datastores associated with the specified project/cloud-provider
+func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-datastore-list")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	request := &ListRequest{}
+	request := &ListDatastoresRequest{}
 	if ok := h.DecodeAndValidate(w, r, request); !ok {
 		return
 	}
@@ -144,9 +145,9 @@ func (h *ListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response := []ListResponseEntry{}
+		response := []ListDatastoresResponseEntry{}
 		for _, datastore := range resp.Msg.Datastores {
-			response = append(response, ListResponseEntry{
+			response = append(response, ListDatastoresResponseEntry{
 				Name:     datastore.Name,
 				Type:     datastore.Type.Enum().String(),
 				Metadata: datastore.Metadata,

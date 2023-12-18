@@ -74,7 +74,7 @@ func getDatastoreRoutes(
 		},
 	)
 
-	listHandler := datastore.NewListHandler(
+	listHandler := datastore.NewListDatastoresHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
@@ -102,7 +102,7 @@ func getDatastoreRoutes(
 		},
 	)
 
-	getHandler := datastore.NewListHandler(
+	getHandler := datastore.NewListDatastoresHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

@@ -71,7 +71,7 @@ func (c *ServiceStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName},
 		telemetry.AttributeKV{Key: "app-name", Value: appName},
-		telemetry.AttributeKV{Key: "input-deployment-target-id", Value: request.DeploymentTargetID},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
 	)
 
 	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{

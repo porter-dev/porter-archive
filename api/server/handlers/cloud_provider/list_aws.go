@@ -83,5 +83,4 @@ func (c *ListAwsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	c.WriteResult(w, r, res)
 	w.WriteHeader(http.StatusOK)
-	return
 }

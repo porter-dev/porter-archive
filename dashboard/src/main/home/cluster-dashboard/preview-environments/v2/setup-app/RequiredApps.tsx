@@ -139,23 +139,33 @@ export const RequiredApps: React.FC<Props> = ({ buttonStatus }) => {
 
   const remainingApps = useMemo(() => {
     return apps.filter((a) => a.source.name !== porterApp.name);
-  }, [apps, porterApp]);
+  }, [apps, porterApp, fields.length]);
 
   return (
     <div>
       <Text size={16}>Required Apps</Text>
       <Spacer y={0.5} />
       <RequiredAppList>
-        {remainingApps.map((ra, i) => (
-          <RequiredAppRow
-            idx={i}
-            key={ra.source.name}
-            app={ra}
-            selected={fields.some((f) => f.name === ra.source.name)}
-            append={append}
-            remove={remove}
-          />
-        ))}
+        {remainingApps.map((ra) => {
+          const selectedAppIdx = fields.findIndex(
+            (f) => f.name === ra.source.name
+          );
+
+          return (
+            <RequiredAppRow
+              idx={selectedAppIdx}
+              key={
+                selectedAppIdx !== -1
+                  ? fields[selectedAppIdx].id
+                  : ra.source.name
+              }
+              app={ra}
+              append={append}
+              remove={remove}
+              selected={selectedAppIdx !== -1}
+            />
+          );
+        })}
       </RequiredAppList>
       <Spacer y={0.75} />
       <Button

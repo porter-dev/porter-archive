@@ -20,7 +20,11 @@ import TabSelector from "components/TabSelector";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import Environment from "main/home/app-dashboard/app-view/tabs/Environment";
 import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
-import { clientAddonToProto, clientAddonValidator } from "lib/addons";
+import {
+  clientAddonFromProto,
+  clientAddonToProto,
+  clientAddonValidator,
+} from "lib/addons";
 import { useAppWithPreviewOverrides } from "lib/hooks/useAppWithPreviewOverrides";
 import {
   basePorterAppFormValidator,
@@ -115,10 +119,26 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
   const withPreviewOverrides = useAppWithPreviewOverrides({
     latestApp: latestProto,
     detectedServices: servicesFromYaml,
-    existingTemplate: existingTemplate?.template,
-    templateEnv: existingTemplate?.env,
+    existingTemplate: existingTemplate?.template_b64_app_proto,
+    templateEnv: existingTemplate?.app_env,
     appEnv,
   });
+
+  const existingAddonsWithEnv = useMemo(() => {
+    if (!existingTemplate) {
+      return [];
+    }
+
+    const existingAddons = existingTemplate.addons.map((addon) =>
+      clientAddonFromProto({
+        addon: addon.addon,
+        variables: addon.variables,
+        secrets: addon.secrets,
+      })
+    );
+
+    return existingAddons;
+  }, [existingTemplate?.addons]);
 
   const porterAppFormMethods = useForm<AppTemplateFormData>({
     reValidateMode: "onSubmit",
@@ -131,6 +151,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
         envGroupNames: [],
         predeploy: [],
       },
+      addons: [],
     },
   });
 
@@ -287,8 +308,9 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
         envGroupNames: [],
         predeploy: [],
       },
+      addons: existingAddonsWithEnv,
     });
-  }, [withPreviewOverrides, latestSource]);
+  }, [withPreviewOverrides, latestSource, existingAddonsWithEnv]);
 
   if (latestSource.type !== "github") {
     return <Redirect to={`/apps/${porterApp.name}`} />;

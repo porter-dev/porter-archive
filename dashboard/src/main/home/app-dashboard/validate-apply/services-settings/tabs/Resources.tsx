@@ -222,7 +222,8 @@ const Resources: React.FC<ResourcesProps> = ({
         )}
       />
 
-      {(currentCluster?.cloud_provider === "AWS" || currentCluster?.cloud_provider === "GCP") &&
+      {(currentCluster?.cloud_provider === "AWS" ||
+        currentCluster?.cloud_provider === "GCP") &&
         currentProject?.gpu_enabled && (
           <>
             <Spacer y={1} />
@@ -334,7 +335,7 @@ const Resources: React.FC<ResourcesProps> = ({
               {...register(`app.services.${index}.instances.value`)}
             />
             <Spacer y={1} />
-            {!clusterContainsGPUNodes && (
+            {!service.gpu.enabled.value && (
               <>
                 <Text>
                   Autoscaling

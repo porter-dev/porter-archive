@@ -13,10 +13,14 @@ import (
 )
 
 const (
+	// LabelKey_DeploymentTargetID is the label key for the deployment target id
 	LabelKey_DeploymentTargetID = "porter.run/deployment-target-id"
-	LabelKey_AppName            = "porter.run/app-name"
-	LabelKey_ServiceName        = "porter.run/service-name"
-	LabelKey_AppRevisionID      = "porter.run/app-revision-id"
+	// LabelKey_AppName is the label key for the app name
+	LabelKey_AppName = "porter.run/app-name"
+	// LabelKey_ServiceName is the label key for the service name
+	LabelKey_ServiceName = "porter.run/service-name"
+	// LabelKey_AppRevisionID is the label key for the app revision id
+	LabelKey_AppRevisionID = "porter.run/app-revision-id"
 )
 
 // ServiceStatus describes the status of a service of a porter app

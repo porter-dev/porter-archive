@@ -8,7 +8,7 @@ import { PorterAppFormData } from "lib/porter-apps";
 import { ControlledInput } from "components/porter/ControlledInput";
 import CopyToClipboard from "components/CopyToClipboard";
 import copy from "assets/copy-left.svg";
-import {dnsRecordString} from "../../../../../../utils/ip";
+import {dnsRecordString} from "utils/ip";
 
 interface Props {
   index: number;

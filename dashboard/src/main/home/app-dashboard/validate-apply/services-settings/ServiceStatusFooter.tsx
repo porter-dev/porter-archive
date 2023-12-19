@@ -1,140 +1,166 @@
 import React, { useState } from "react";
-import styled from "styled-components";
-
-import Text from "components/porter/Text";
-import Container from "components/porter/Container";
-import Button from "components/porter/Button";
-
-import AnimateHeight, { type Height } from "react-animate-height";
 import _ from "lodash";
-import Link from "components/porter/Link";
-import { type PorterAppVersionStatus } from "lib/hooks/useAppStatus";
+import AnimateHeight, { type Height } from "react-animate-height";
+import styled from "styled-components";
 import { match } from "ts-pattern";
+
+import Button from "components/porter/Button";
+import Container from "components/porter/Container";
+import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
+import Text from "components/porter/Text";
+import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
+import { isClientServiceNotification } from "lib/porter-apps/notification";
+
+import alert from "assets/alert-warning.svg";
+
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import TriggerJobButton from "../jobs/TriggerJobButton";
-import Spacer from "components/porter/Spacer";
 
 type ServiceStatusFooterProps = {
-    serviceName: string;
-    status: PorterAppVersionStatus[];
-    isJob: boolean,
-}
+  serviceName: string;
+  status: ClientServiceStatus[];
+  isJob: boolean;
+};
 const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
-    serviceName,
-    status,
-    isJob
+  serviceName,
+  status,
+  isJob,
 }) => {
-    const [expanded, setExpanded] = useState<boolean>(false);
-    const { latestProto, projectId, clusterId, deploymentTarget, appName } = useLatestRevision();
-    const [height, setHeight] = useState<Height>(0);
+  const [expanded, setExpanded] = useState<boolean>(false);
+  const {
+    latestProto,
+    projectId,
+    clusterId,
+    deploymentTarget,
+    appName,
+    latestClientNotifications,
+    tabUrlGenerator,
+  } = useLatestRevision();
+  const [height, setHeight] = useState<Height>(0);
 
-    if (isJob) {
+  if (isJob) {
+    return (
+      <StyledStatusFooter>
+        <Container row>
+          <Link
+            to={`/apps/${latestProto.name}/job-history?service=${serviceName}`}
+          >
+            <Button
+              onClick={() => {}}
+              height="30px"
+              width="87px"
+              color="#ffffff11"
+              withBorder
+            >
+              <I className="material-icons">open_in_new</I>
+              History
+            </Button>
+          </Link>
+          <Spacer inline x={1} />
+          <TriggerJobButton
+            projectId={projectId}
+            clusterId={clusterId}
+            appName={appName}
+            jobName={serviceName}
+            deploymentTargetId={deploymentTarget.id}
+          />
+        </Container>
+      </StyledStatusFooter>
+    );
+  }
+
+  return (
+    <>
+      {status.map((versionStatus, i) => {
+        const versionNotifications = latestClientNotifications
+          .filter(isClientServiceNotification)
+          .filter((n) => n.appRevisionId === versionStatus.revisionId);
         return (
-            <StyledStatusFooter>
-
-                <Container row>
-                    {/*
-            <Mi className="material-icons">check</Mi>
-            <Text color="helper">
-              Last run succeeded at 12:39 PM on 4/13/23
-            </Text>
-            */}
-                    <Link to={`/apps/${latestProto.name}/job-history?service=${serviceName}`}>
-                        <Button
-                            onClick={() => { }}
-                            height="30px"
-                            width="87px"
+          <div key={i}>
+            <StyledStatusFooterTop expanded={expanded}>
+              <StyledContainer row spaced>
+                {match(versionStatus)
+                  .with({ status: "failing" }, (vs) => {
+                    return (
+                      <>
+                        <Running>
+                          <StatusDot color="#ff0000" />
+                          <Text color="helper">{vs.message}</Text>
+                        </Running>
+                        {vs.crashLoopReason && (
+                          <Button
+                            onClick={() => {
+                              expanded ? setHeight(0) : setHeight(122);
+                              setExpanded(!expanded);
+                            }}
+                            height="20px"
                             color="#ffffff11"
                             withBorder
-                        >
-                            <I className="material-icons">open_in_new</I>
-                            History
-                        </Button>
-                    </Link>
-                    <Spacer inline x={1}/>
-                    <TriggerJobButton projectId={projectId} clusterId={clusterId} appName={appName} jobName={serviceName} deploymentTargetId={deploymentTarget.id} />
-                </Container>
-
-            </StyledStatusFooter>
-        );
-    }
-
-    return (
-        <>
-            {status.map((versionStatus, i) => {
-                return (
-                    <div key={i}>
-                        <StyledStatusFooterTop expanded={expanded}>
-                            <StyledContainer row spaced>
-                                {match(versionStatus)
-                                    .with({ status: "failing" }, (vs) => {
-                                        return (
-                                            <>
-                                                <Running>
-                                                    <StatusDot color="#ff0000" />
-                                                    <Text color="helper">
-                                                        {vs.message}
-                                                    </Text>
-                                                </Running>
-                                                {vs.crashLoopReason &&
-                                                    <Button
-                                                        onClick={() => {
-                                                            expanded ? setHeight(0) : setHeight(122);
-                                                            setExpanded(!expanded);
-                                                        }}
-                                                        height="20px"
-                                                        color="#ffffff11"
-                                                        withBorder
-                                                    >
-                                                        {expanded ? (
-                                                            <I className="material-icons">arrow_drop_up</I>
-                                                        ) : (
-                                                            <I className="material-icons">arrow_drop_down</I>
-                                                        )}
-                                                        <Text color="helper">See failure reason</Text>
-                                                    </Button>
-                                                }
-                                            </>
-                                        )
-                                    })
-                                    .with({ status: "spinningDown" }, (vs) => {
-                                        return (
-                                            <Running>
-                                                <StatusDot color="#FFA500" />
-                                                <Text color="helper">
-                                                    {vs.message}
-                                                </Text>
-                                            </Running>
-                                        )
-                                    })
-                                    .with({ status: "running" }, (vs) => {
-                                        return (
-                                            <Running>
-                                                <StatusDot />
-                                                <Text color="helper">
-                                                    {vs.message}
-                                                </Text>
-                                            </Running>
-                                        )
-                                    })
-                                    .exhaustive()
-                                }
-                            </StyledContainer>
-                        </StyledStatusFooterTop>
-                        {versionStatus.crashLoopReason && (
-                            <AnimateHeight height={height}>
-                                <StyledStatusFooter>
-                                    <Message>
-                                        {versionStatus.crashLoopReason}
-                                    </Message>
-                                </StyledStatusFooter>
-                            </AnimateHeight>
+                          >
+                            {expanded ? (
+                              <I className="material-icons">arrow_drop_up</I>
+                            ) : (
+                              <I className="material-icons">arrow_drop_down</I>
+                            )}
+                            <Text color="helper">See failure reason</Text>
+                          </Button>
                         )}
-                    </div>
-                );
-            })}
-        </>
-    );
+                      </>
+                    );
+                  })
+                  .with({ status: "spinningDown" }, (vs) => {
+                    return (
+                      <Running>
+                        <StatusDot color="#FFA500" />
+                        <Text color="helper">{vs.message}</Text>
+                      </Running>
+                    );
+                  })
+                  .with({ status: "running" }, (vs) => {
+                    return (
+                      <Running>
+                        <StatusDot />
+                        <Text color="helper">{vs.message}</Text>
+                      </Running>
+                    );
+                  })
+                  .exhaustive()}
+                <Container row style={{ gap: "10px" }}>
+                  {(versionStatus.restartCount ?? 0) > 0 && (
+                    <Text color="helper">
+                      Restarts: {versionStatus.restartCount}
+                    </Text>
+                  )}
+                  {versionNotifications.length > 0 && (
+                    <Tag borderColor="#FFBF00">
+                      <Link
+                        to={tabUrlGenerator({
+                          tab: "notifications",
+                        })}
+                        color={"#FFBF00"}
+                      >
+                        <TagIcon src={alert} />
+                        Notifications
+                      </Link>
+                    </Tag>
+                  )}
+                </Container>
+              </StyledContainer>
+            </StyledStatusFooterTop>
+            {versionStatus.crashLoopReason && (
+              <AnimateHeight height={height}>
+                <StyledStatusFooter>
+                  <Message>{versionStatus.crashLoopReason}</Message>
+                </StyledStatusFooter>
+              </AnimateHeight>
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
 };
 
 export default ServiceStatusFooter;
@@ -168,32 +194,9 @@ const StatusDot = styled.div<{ color?: string }>`
   }
 `;
 
-const Mi = styled.i`
-  font-size: 16px;
-  margin-right: 7px;
-  margin-top: -1px;
-  color: rgb(56, 168, 138);
-`;
-
 const I = styled.i`
   font-size: 14px;
   margin-right: 5px;
-`;
-
-const StatusCircle = styled.div<{
-    percentage?: any;
-    dashed?: boolean;
-}>`
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  margin-right: 10px;
-  background: conic-gradient(
-    from 0deg,
-    #ffffff33 ${(props) => props.percentage},
-    #ffffffaa 0% ${(props) => props.percentage}
-  );
-  border: ${(props) => (props.dashed ? "1px dashed #ffffff55" : "none")};
 `;
 
 const Running = styled.div`
@@ -224,8 +227,8 @@ const StyledStatusFooter = styled.div`
   }
 `;
 
-const StyledStatusFooterTop = styled(StyledStatusFooter) <{
-    expanded: boolean;
+const StyledStatusFooterTop = styled(StyledStatusFooter)<{
+  expanded: boolean;
 }>`
   height: 40px;
   border-bottom: ${({ expanded }) => expanded && "0px"};
@@ -253,12 +256,17 @@ const Message = styled.div`
 `;
 
 const StyledContainer = styled.div<{
-    row: boolean;
-    spaced: boolean;
+  row: boolean;
+  spaced: boolean;
 }>`
   display: ${(props) => (props.row ? "flex" : "block")};
   align-items: center;
   justify-content: ${(props) =>
-        props.spaced ? "space-between" : "flex-start"};
+    props.spaced ? "space-between" : "flex-start"};
   width: 100%;
+`;
+
+const TagIcon = styled.img`
+  height: 12px;
+  margin-right: 3px;
 `;

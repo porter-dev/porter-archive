@@ -41,8 +41,8 @@ type Revision struct {
 	AppInstanceID uuid.UUID `json:"app_instance_id"`
 }
 
-// RevisionStatus describes the status of a revision
-type RevisionStatus struct {
+// RevisionProgress describes the progress of a revision in its lifecycle
+type RevisionProgress struct {
 	// PredeployStarted is true if the predeploy process has started
 	PredeployStarted bool `json:"predeploy_started"`
 	// PredeploySuccessful is true if the predeploy process has completed successfully

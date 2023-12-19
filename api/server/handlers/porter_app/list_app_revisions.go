@@ -100,7 +100,7 @@ func (c *ListAppRevisionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		DeploymentTargetId: request.DeploymentTargetID,
 	})
 
-	listAppRevisionsResp, err := c.Config().ClusterControlPlaneClient.ListAppRevisions(r.Context(), listAppRevisionsReq)
+	listAppRevisionsResp, err := c.Config().ClusterControlPlaneClient.ListAppRevisions(ctx, listAppRevisionsReq)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error listing app revisions")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

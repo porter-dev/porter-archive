@@ -1,10 +1,8 @@
 import React, { useContext, useMemo } from "react";
-import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-import { z } from "zod";
 
 import Loading from "components/Loading";
 import Back from "components/porter/Back";
@@ -16,6 +14,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import pull_request from "assets/pull_request_icon.svg";
 
+import { existingTemplateWithEnvValidator } from "../types";
 import { PreviewAppDataContainer } from "./PreviewAppDataContainer";
 
 type Props = RouteComponentProps;
@@ -57,27 +56,11 @@ const SetupApp: React.FC<Props> = ({ location }) => {
           }
         );
 
-        const data = await z
-          .object({
-            template_b64_app_proto: z.string(),
-            app_env: z.object({
-              variables: z.record(z.string()).default({}),
-              secret_variables: z.record(z.string()).default({}),
-            }),
-          })
-          .parseAsync(res.data);
-
-        const template = PorterApp.fromJsonString(
-          atob(data.template_b64_app_proto),
-          {
-            ignoreUnknownFields: true,
-          }
+        const template = await existingTemplateWithEnvValidator.parseAsync(
+          res.data
         );
 
-        return {
-          template,
-          env: data.app_env,
-        };
+        return template;
       } catch (err) {
         return null;
       }

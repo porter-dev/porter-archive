@@ -1,215 +1,201 @@
+import { useEffect, useState } from "react";
 import _ from "lodash";
-import { useEffect, useMemo, useState } from "react";
+import pluralize from "pluralize";
+import z from "zod";
+
 import api from "shared/api";
-import { NewWebsocketOptions, useWebsockets } from "shared/hooks/useWebsockets";
-import { useRevisionList } from "./useRevisionList";
+import {
+  useWebsockets,
+  type NewWebsocketOptions,
+} from "shared/hooks/useWebsockets";
 import { valueExists } from "shared/util";
 
-export type PorterAppVersionStatus = {
-    status: 'running' | 'spinningDown' | 'failing';
-    message: string;
-    crashLoopReason: string;
-}
+export type ClientServiceStatus = {
+  status: "running" | "spinningDown" | "failing";
+  message: string;
+  crashLoopReason: string;
+  restartCount?: number;
+  revisionId: string;
+};
 
-type ClientPod = {
-    revisionId: string,
-    helmRevision: string,
-    crashLoopReason: string,
-    isFailing: boolean,
-    replicaSetName: string,
-}
+const serviceStatusValidator = z.object({
+  service_name: z.string(),
+  revision_status_list: z.array(
+    z.object({
+      revision_id: z.string(),
+      revision_number: z.number(),
+      instance_status_list: z.array(
+        z.object({
+          status: z.union([
+            z.literal("PENDING"),
+            z.literal("RUNNING"),
+            z.literal("FAILED"),
+          ]),
+          restart_count: z.number(),
+          creation_timestamp: z.string(),
+        })
+      ),
+    })
+  ),
+});
+type SerializedServiceStatus = z.infer<typeof serviceStatusValidator>;
 
-export const useAppStatus = (
-    {
-        projectId,
-        clusterId,
-        serviceNames,
-        deploymentTargetId,
-        appName,
-        kind = "pod",
-    }: {
-        projectId: number,
-        clusterId: number,
-        serviceNames: string[],
-        deploymentTargetId: string,
-        appName: string,
-        kind?: string,
-    }
-) => {
-    const [servicePodMap, setServicePodMap] = useState<Record<string, ClientPod[]>>({});
+export const useAppStatus = ({
+  projectId,
+  clusterId,
+  serviceNames,
+  deploymentTargetId,
+  appName,
+  kind = "pod",
+}: {
+  projectId: number;
+  clusterId: number;
+  serviceNames: string[];
+  deploymentTargetId: string;
+  appName: string;
+  kind?: string;
+}): { serviceVersionStatus: Record<string, ClientServiceStatus[]> } => {
+  const [serviceStatusMap, setServiceStatusMap] = useState<
+    Record<string, SerializedServiceStatus>
+  >({});
 
-    const { revisionIdToNumber } = useRevisionList({ appName, deploymentTargetId, projectId, clusterId });
+  const { newWebsocket, openWebsocket, closeAllWebsockets, closeWebsocket } =
+    useWebsockets();
 
-    const {
-        newWebsocket,
-        openWebsocket,
-        closeAllWebsockets,
-        closeWebsocket,
-    } = useWebsockets();
+  const setupWebsocket = (serviceName: string): void => {
+    const selectors = `porter.run/service-name=${serviceName},porter.run/deployment-target-id=${deploymentTargetId}`;
+    const apiEndpoint = `/api/projects/${projectId}/clusters/${clusterId}/apps/${kind}/status?selectors=${selectors}`;
+    const websocketKey = `${serviceName}-${Math.random()
+      .toString(36)
+      .substring(2, 15)}`;
 
-    const setupWebsocket = (
-        serviceName: string,
-    ) => {
-        const selectors = `porter.run/service-name=${serviceName},porter.run/deployment-target-id=${deploymentTargetId}`;
-        const apiEndpoint = `/api/projects/${projectId}/clusters/${clusterId}/apps/${kind}/status?selectors=${selectors}`;
-        const websocketKey = `${serviceName}-${Math.random().toString(36).substring(2, 15)}`
-
-        const options: NewWebsocketOptions = {};
-        options.onopen = () => {
-            // console.log("opening status websocket for service: " + serviceName)
-        };
-
-        options.onmessage = async (evt: MessageEvent) => {
-            await updatePods(serviceName);
-        };
-
-        options.onclose = () => {
-            // console.log("closing status websocket for service: " + serviceName)
-        };
-
-        options.onerror = (err: ErrorEvent) => {
-            closeWebsocket(websocketKey);
-        };
-
-        newWebsocket(websocketKey, apiEndpoint, options);
-        openWebsocket(websocketKey);
+    const options: NewWebsocketOptions = {};
+    options.onopen = () => {
+      // console.log("opening status websocket for service: " + serviceName)
     };
 
-    const updatePods = async (serviceName: string) => {
-        try {
-            const res = await api.appPodStatus(
-                "<token>",
-                {
-                    deployment_target_id: deploymentTargetId,
-                    service: serviceName,
-                },
-                {
-                    project_id: projectId,
-                    cluster_id: clusterId,
-                    app_name: appName,
-                }
-            );
-            // TODO: type the response
-            const data = res?.data as any[];
-            let newPods = data
-                // Parse only data that we need
-                .map((pod: any) => {
-                    const replicaSetName =
-                        Array.isArray(pod?.metadata?.ownerReferences) &&
-                        pod?.metadata?.ownerReferences[0]?.name;
-                    const containerStatus =
-                        Array.isArray(pod?.status?.containerStatuses) &&
-                        pod?.status?.containerStatuses[0];
+    options.onmessage = async () => {
+      void updatePods(serviceName);
+    };
 
-                    // const restartCount = containerStatus
-                    //     ? containerStatus.restartCount
-                    //     : "N/A";
+    options.onclose = () => {
+      // console.log("closing status websocket for service: " + serviceName)
+    };
 
-                    // const podAge = timeFormat("%H:%M:%S %b %d, '%y")(
-                    //     new Date(pod?.metadata?.creationTimestamp)
-                    // );
+    options.onerror = () => {
+      closeWebsocket(websocketKey);
+    };
 
-                    const isFailing = containerStatus?.state?.waiting?.reason === "CrashLoopBackOff" ?? false;
-                    const crashLoopReason = containerStatus?.lastState?.terminated?.message ?? "";
+    newWebsocket(websocketKey, apiEndpoint, options);
+    openWebsocket(websocketKey);
+  };
 
-                    return {
-                        // namespace: pod?.metadata?.namespace,
-                        // name: pod?.metadata?.name,
-                        // phase: pod?.status?.phase,
-                        // status: pod?.status,
-                        // restartCount,
-                        // containerStatus,
-                        // podAge: pod?.metadata?.creationTimestamp ? podAge : "N/A",
-                        replicaSetName,
-                        revisionId: pod?.metadata?.labels?.["porter.run/app-revision-id"],
-                        helmRevision: pod?.metadata?.annotations?.["helm.sh/revision"] || "N/A",
-                        crashLoopReason,
-                        isFailing
-                    };
-                });
-            setServicePodMap((prevState) => ({
-                ...prevState,
-                [serviceName]: newPods,
-            }));
-        } catch (error) {
-            // TODO: handle error
+  const updatePods = async (serviceName: string): Promise<void> => {
+    try {
+      const res = await api.appServiceStatus(
+        "<token>",
+        {
+          deployment_target_id: deploymentTargetId,
+          service: serviceName,
+        },
+        {
+          project_id: projectId,
+          cluster_id: clusterId,
+          app_name: appName,
         }
-    };
+      );
 
-    useEffect(() => {
-        Promise.all(serviceNames.map(updatePods));
-        for (let serviceName of serviceNames) {
-            setupWebsocket(serviceName);
-        }
-        return () => closeAllWebsockets();
-    }, [projectId, clusterId, deploymentTargetId, appName]);
+      const data = await z
+        .object({ status: serviceStatusValidator })
+        .parseAsync(res.data);
+      setServiceStatusMap((prevState) => ({
+        ...prevState,
+        [serviceName]: data.status,
+      }));
+    } catch (error) {}
+  };
 
-    const processReplicaSetArray = (replicaSetArray: ClientPod[][]): PorterAppVersionStatus[] => {
-        return replicaSetArray.map((replicaSet, i) => {
-            let status: 'running' | 'failing' | 'spinningDown' = "running";
-            let message = "";
-
-            const version = revisionIdToNumber[replicaSet[0].revisionId];
-
-            if (!version) {
-                return undefined;
-            }
-
-            if (replicaSet.some((r) => r.crashLoopReason !== "") || replicaSet.some((r) => r.isFailing)) {
-                status = "failing";
-                message = `${replicaSet.length} instance${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
-                    } failing to run Version ${version}`;
-            } else if (
-                // last check ensures that we don't say 'spinning down' unless there exists a version status above it
-                i > 0 && replicaSetArray[i - 1].every(p => !p.isFailing) && revisionIdToNumber[replicaSetArray[i - 1][0].revisionId] != null
-            ) {
-                status = "spinningDown";
-                message = `${replicaSet.length} instance${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
-                    } still running at Version ${version}. Attempting to spin down...`;
-            } else {
-                status = "running";
-                message = `${replicaSet.length} instance${replicaSet.length === 1 ? "" : "s"} ${replicaSet.length === 1 ? "is" : "are"
-                    } running at Version ${version}`;
-            }
-
-            const crashLoopReason =
-                replicaSet.find((r) => r.crashLoopReason !== "")?.crashLoopReason || "";
-
-            return {
-                status,
-                message,
-                crashLoopReason,
-            };
-        }).filter(valueExists);
+  useEffect(() => {
+    void Promise.all(serviceNames.map(updatePods));
+    for (const serviceName of serviceNames) {
+      setupWebsocket(serviceName);
     }
-
-    const serviceVersionStatus: Record<string, PorterAppVersionStatus[]> = useMemo(() => {
-        const serviceReplicaSetMap = Object.fromEntries(Object.keys(servicePodMap).map((serviceName) => {
-            const pods = servicePodMap[serviceName];
-            const replicaSetMap = _.sortBy(pods, ["helmRevision"])
-                .reverse()
-                .reduce<ClientPod[][]>(function (
-                    prev,
-                    currentPod,
-                    i
-                ) {
-                    if (
-                        !i ||
-                        prev[prev.length - 1][0].replicaSetName !== currentPod.replicaSetName
-                    ) {
-                        return prev.concat([[currentPod]]);
-                    }
-                    prev[prev.length - 1].push(currentPod);
-                    return prev;
-                }, []);
-
-            return [serviceName, processReplicaSetArray(replicaSetMap)];
-        }));
-
-        return serviceReplicaSetMap;
-    }, [JSON.stringify(servicePodMap), JSON.stringify(revisionIdToNumber)]);
-
-    return {
-        serviceVersionStatus,
+    return () => {
+      closeAllWebsockets();
     };
+  }, [projectId, clusterId, deploymentTargetId, appName]);
+
+  const deserializeServiceStatus = (
+    serviceStatus: SerializedServiceStatus
+  ): ClientServiceStatus[] => {
+    return serviceStatus.revision_status_list
+      .sort((a, b) => b.revision_number - a.revision_number)
+      .flatMap((revisionStatus) => {
+        const instancesByStatus = _.groupBy(
+          revisionStatus.instance_status_list,
+          (instance) => instance.status
+        );
+        const runningInstances = instancesByStatus.RUNNING || [];
+        const pendingInstances = instancesByStatus.PENDING || [];
+        const failedInstances = instancesByStatus.FAILED || [];
+        const versionStatuses: ClientServiceStatus[] = [];
+
+        if (runningInstances.length > 0) {
+          versionStatuses.push({
+            status: "running",
+            message: `${runningInstances.length} ${pluralize(
+              "instance",
+              runningInstances.length
+            )} ${pluralize("is", runningInstances.length)} running at Version ${
+              revisionStatus.revision_number
+            }`,
+            crashLoopReason: "",
+            restartCount: _.maxBy(runningInstances, "restart_count")
+              ?.restart_count,
+            revisionId: revisionStatus.revision_id,
+          });
+        }
+        if (pendingInstances.length > 0) {
+          versionStatuses.push({
+            status: "spinningDown",
+            message: `${pendingInstances.length} ${pluralize(
+              "instance",
+              pendingInstances.length
+            )} ${pluralize(
+              "is",
+              pendingInstances.length
+            )} in a pending state at Version ${revisionStatus.revision_number}`,
+            crashLoopReason: "",
+            restartCount: _.maxBy(pendingInstances, "restart_count")
+              ?.restart_count,
+            revisionId: revisionStatus.revision_id,
+          });
+        }
+        if (failedInstances.length > 0) {
+          versionStatuses.push({
+            status: "failing",
+            message: `${failedInstances.length} ${pluralize(
+              "instance",
+              failedInstances.length
+            )} ${pluralize(
+              "is",
+              failedInstances.length
+            )} failing to run Version ${revisionStatus.revision_number}`,
+            crashLoopReason: "",
+            restartCount: _.maxBy(failedInstances, "restart_count")
+              ?.restart_count,
+            revisionId: revisionStatus.revision_id,
+          });
+        }
+        return versionStatuses;
+      })
+      .filter(valueExists);
+  };
+
+  return {
+    serviceVersionStatus: _.mapValues(
+      serviceStatusMap,
+      deserializeServiceStatus
+    ),
+  };
 };

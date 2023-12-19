@@ -89,7 +89,7 @@ const NotificationTile: React.FC<Props> = ({
               </Tag>
             </Container>
           )}
-          {matchingVersionNumber && (
+          {matchingVersionNumber !== 0 && (
             <Container row style={{ width: "200px" }}>
               <Tag hoverable={false}>
                 <Text>{`Version ${matchingVersionNumber}`}</Text>

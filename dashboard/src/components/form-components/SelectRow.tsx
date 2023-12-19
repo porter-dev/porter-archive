@@ -4,7 +4,7 @@ import styled from "styled-components";
 import Selector, { SelectorPropsType } from "../Selector";
 
 type PropsType<T> = {
-  label?: string;
+  label: string;
   value: T;
   setActiveValue: (x: T) => void;
   options: { value: T; label: string }[];
@@ -23,7 +23,7 @@ export default function SelectRow<T>(props: PropsType<T>) {
   return (
     <StyledSelectRow displayFlex={props.displayFlex}>
       <Wrapper>
-        {props.label ? <Label displayFlex={props.displayFlex}>{props.label}</Label> : null}
+        <Label displayFlex={props.displayFlex}>{props.label}</Label>
         {props.doc ? (
           <a href={props.doc} target="_blank">
             <i className="material-icons">help_outline</i>

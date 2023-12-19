@@ -363,7 +363,6 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
           <Spacer inline x={0.2} />
           <Label>Azure Tier</Label>
         </div>
-        <Spacer y={0.5} />
         <SelectRow
           options={skuTierOptions}
           width="350px"

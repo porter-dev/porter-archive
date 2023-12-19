@@ -137,13 +137,8 @@ func (c *ServiceStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	appRevisions := listAppRevisionsResp.Msg.AppRevisions
-	if appRevisions == nil {
-		appRevisions = []*porterv1.AppRevision{}
-	}
-
 	var revisions []porter_app.Revision
-	for _, revision := range appRevisions {
+	for _, revision := range listAppRevisionsResp.Msg.AppRevisions {
 		encodedRevision, err := porter_app.EncodedRevisionFromProto(ctx, revision)
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "error getting encoded revision from proto")

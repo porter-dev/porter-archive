@@ -26,11 +26,7 @@ const serviceStatusValidator = z.object({
       revision_number: z.number(),
       instance_status_list: z.array(
         z.object({
-          status: z.union([
-            z.literal("PENDING"),
-            z.literal("RUNNING"),
-            z.literal("FAILED"),
-          ]),
+          status: z.enum(["PENDING", "RUNNING", "FAILED"]),
           restart_count: z.number(),
           creation_timestamp: z.string(),
         })

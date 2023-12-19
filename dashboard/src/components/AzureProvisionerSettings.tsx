@@ -349,7 +349,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
         <SelectRow
           options={AzureLocationOptions}
           width="350px"
-          disabled={isReadOnly}
+          disabled={props.clusterId ? props.clusterId !== 0 : false}
           value={azureLocation}
           scrollBuffer={true}
           dropdownMaxHeight="240px"

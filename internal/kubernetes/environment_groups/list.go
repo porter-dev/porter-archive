@@ -162,10 +162,8 @@ func listEnvironmentGroups(ctx context.Context, a *kubernetes.Agent, listOpts ..
 			}
 		}
 
-		fmt.Printf("excludeDefaultAddonEnvironmentGroups: %v\n", opts.excludeDefaultAddonEnvironmentGroups)
 		if opts.excludeDefaultAddonEnvironmentGroups {
 			value := cm.Labels[LabelKey_DefaultAddonEnvironment]
-			fmt.Printf("value: %v\n", value)
 			if value == "true" {
 				continue // do not include default addon environment groups
 			}

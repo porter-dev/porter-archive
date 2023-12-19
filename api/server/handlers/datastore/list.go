@@ -32,12 +32,14 @@ type ListDatastoresRequest struct {
 	IncludeMetadata bool `schema:"include_metadata"`
 }
 
+// ListDatastoresResponse describes the list datastores response body
 type ListDatastoresResponse struct {
-	Datastores []ListDatastoresResponseEntry `json:"datastores"`
+	// Datastores is a list of datastore entries for the http reponse
+	Datastores []DatastoresResponseEntry `json:"datastores"`
 }
 
-// ListDatastoresResponseEntry describes an outbound datastores response entry
-type ListDatastoresResponseEntry struct {
+// DatastoresResponseEntry describes an outbound datastores response entry
+type DatastoresResponseEntry struct {
 	// Name is the name of the datastore
 	Name string `json:"name"`
 
@@ -158,10 +160,10 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	response := ListDatastoresResponse{
-		Datastores: []ListDatastoresResponseEntry{},
+		Datastores: []DatastoresResponseEntry{},
 	}
 	for _, datastore := range resp.Msg.Datastores {
-		response.Datastores = append(response.Datastores, ListDatastoresResponseEntry{
+		response.Datastores = append(response.Datastores, DatastoresResponseEntry{
 			Name:     datastore.Name,
 			Type:     datastore.Type.Enum().String(),
 			Metadata: datastore.Metadata,

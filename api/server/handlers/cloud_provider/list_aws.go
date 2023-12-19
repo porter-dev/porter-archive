@@ -14,7 +14,10 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// ListAwsAccountsResponse describes an outbound response for listing aws accounts on
+// a given project.
 type ListAwsAccountsResponse struct {
+	// Accounts is a list of aws account objects
 	Accounts []AwsAccount `json:"accounts"`
 }
 

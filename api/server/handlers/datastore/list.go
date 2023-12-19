@@ -34,7 +34,7 @@ type ListDatastoresRequest struct {
 
 // ListDatastoresResponse describes the list datastores response body
 type ListDatastoresResponse struct {
-	// Datastores is a list of datastore entries for the http reponse
+	// Datastores is a list of datastore entries for the http response
 	Datastores []DatastoresResponseEntry `json:"datastores"`
 }
 

@@ -8,7 +8,7 @@ export const isIP = (value: string): boolean => {
     return parsed.success;
 };
 
-export const dnsRecordString = (value: string): string => {
+export const dnsRecordType = (value: string): string => {
     if (isIP(value)) {
        return "an A record"
     } else {

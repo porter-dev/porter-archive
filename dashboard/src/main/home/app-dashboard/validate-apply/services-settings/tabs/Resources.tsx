@@ -222,7 +222,8 @@ const Resources: React.FC<ResourcesProps> = ({
         )}
       />
 
-      {(currentCluster?.cloud_provider === "AWS" || currentCluster?.cloud_provider === "GCP") &&
+      {(currentCluster?.cloud_provider === "AWS" ||
+        currentCluster?.cloud_provider === "GCP") &&
         currentProject?.gpu_enabled && (
           <>
             <Spacer y={1} />
@@ -334,44 +335,42 @@ const Resources: React.FC<ResourcesProps> = ({
               {...register(`app.services.${index}.instances.value`)}
             />
             <Spacer y={1} />
-            {!clusterContainsGPUNodes && (
-              <>
-                <Text>
-                  Autoscaling
-                  <a
-                    href="https://docs.porter.run/configure/autoscaling"
-                    target="_blank"
-                    rel="noreferrer"
+            <>
+              <Text>
+                Autoscaling
+                <a
+                  href="https://docs.porter.run/configure/autoscaling"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  &nbsp;(?)
+                </a>
+              </Text>
+              <Spacer y={0.5} />
+              <Controller
+                name={`app.services.${index}.config.autoscaling.enabled`}
+                control={control}
+                render={({ field: { value, onChange } }) => (
+                  <Checkbox
+                    checked={value.value}
+                    toggleChecked={() => {
+                      onChange({
+                        ...value,
+                        value: !value.value,
+                      });
+                    }}
+                    disabled={value.readOnly}
+                    disabledTooltip={
+                      "You may only edit this field in your porter.yaml."
+                    }
                   >
-                    &nbsp;(?)
-                  </a>
-                </Text>
-                <Spacer y={0.5} />
-                <Controller
-                  name={`app.services.${index}.config.autoscaling.enabled`}
-                  control={control}
-                  render={({ field: { value, onChange } }) => (
-                    <Checkbox
-                      checked={value.value}
-                      toggleChecked={() => {
-                        onChange({
-                          ...value,
-                          value: !value.value,
-                        });
-                      }}
-                      disabled={value.readOnly}
-                      disabledTooltip={
-                        "You may only edit this field in your porter.yaml."
-                      }
-                    >
-                      <Text color="helper">
-                        Enable autoscaling (overrides instances)
-                      </Text>
-                    </Checkbox>
-                  )}
-                />
-              </>
-            )}
+                    <Text color="helper">
+                      Enable autoscaling (overrides instances)
+                    </Text>
+                  </Checkbox>
+                )}
+              />
+            </>
             {autoscalingEnabled.value && (
               <>
                 <Spacer y={1} />

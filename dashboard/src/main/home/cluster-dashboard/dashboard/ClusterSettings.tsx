@@ -10,6 +10,7 @@ import Loading from "components/Loading";
 import CopyToClipboard from "components/CopyToClipboard";
 import { DetailedIngressError } from "shared/types";
 import { RouteComponentProps } from "react-router";
+import {dnsRecordString, isIP} from "../../../../utils/ip";
 
 type Props = RouteComponentProps & {
   ingressIp: string;
@@ -271,7 +272,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
         <div>
           <Heading>Configure Custom Domain</Heading>
           <Helper>
-            To configure custom domains for your apps, add a CNAME record
+            To configure custom domains for your apps, add {dnsRecordString(ingressIp)} record
             pointing to the following Ingress IP:
           </Helper>
           <CopyToClipboard

@@ -8,6 +8,7 @@ import { PorterAppFormData } from "lib/porter-apps";
 import { ControlledInput } from "components/porter/ControlledInput";
 import CopyToClipboard from "components/CopyToClipboard";
 import copy from "assets/copy-left.svg";
+import {dnsRecordString} from "../../../../../../utils/ip";
 
 interface Props {
   index: number;
@@ -91,7 +92,7 @@ const CustomDomains: React.FC<Props> = ({
         <>
           <Spacer y={0.5} />
           <div style={{width: "550px"}}>
-            <Text color="helper">To configure a custom domain, you must add a CNAME record pointing to the following Ingress IP for your cluster: </Text>
+            <Text color="helper">To configure a custom domain, you must add {dnsRecordString(clusterIngressIp)} pointing to the following Ingress IP for your cluster: </Text>
           </div>
           <Spacer y={0.5} />
           <IdContainer>

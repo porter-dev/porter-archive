@@ -32,6 +32,10 @@ type ListDatastoresRequest struct {
 	IncludeMetadata bool `schema:"include_metadata"`
 }
 
+type ListDatastoresResponse struct {
+	Datastores []ListDatastoresResponseEntry `json:"datastores"`
+}
+
 // ListDatastoresResponseEntry describes an outbound datastores response entry
 type ListDatastoresResponseEntry struct {
 	// Name is the name of the datastore
@@ -97,19 +101,19 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cloud-provider-id", Value: cloudProviderID})
 
 	datastoreType := porterv1.EnumDatastore_ENUM_DATASTORE_UNSPECIFIED
-	if request.Type != "" {
-		switch request.Type {
-		case "elasticache-redis":
-			datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_ELASTICACHE_REDIS
-		case "rds-postgresql":
-			datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_RDS_POSTGRESQL
-		case "rds-postgresql-aurora":
-			datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_RDS_AURORA_POSTGRESQL
-		default:
-			err := telemetry.Error(ctx, span, err, "invalid datastore type specified")
-			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
+	switch request.Type {
+	case "elasticache-redis":
+		datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_ELASTICACHE_REDIS
+	case "rds-postgresql":
+		datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_RDS_POSTGRESQL
+	case "rds-postgresql-aurora":
+		datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_RDS_AURORA_POSTGRESQL
+	case "":
+		datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_UNSPECIFIED
+	default:
+		err := telemetry.Error(ctx, span, err, "invalid datastore type specified")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
 	}
 
 	telemetry.WithAttributes(span,
@@ -119,46 +123,51 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		telemetry.AttributeKV{Key: "include-metadata", Value: request.IncludeMetadata},
 	)
 
+	var cloudProvider porterv1.EnumCloudProvider
 	switch cloudProviderType {
 	case "aws":
-		message := porterv1.ListDatastoresRequest{
-			ProjectId:              int64(project.ID),
-			CloudProvider:          porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS,
-			CloudProviderAccountId: cloudProviderID,
-			Name:                   request.Name,
-			IncludeEnvGroup:        request.IncludeEnvGroup,
-			IncludeMetadata:        request.IncludeMetadata,
-		}
-		if datastoreType != porterv1.EnumDatastore_ENUM_DATASTORE_UNSPECIFIED {
-			message.Type = &datastoreType
-		}
-		req := connect.NewRequest(&message)
-		resp, err := h.Config().ClusterControlPlaneClient.ListDatastores(ctx, req)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error listing datastores from ccp")
-			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-		if resp.Msg == nil {
-			err := telemetry.Error(ctx, span, err, "missing response message from ccp")
-			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		response := []ListDatastoresResponseEntry{}
-		for _, datastore := range resp.Msg.Datastores {
-			response = append(response, ListDatastoresResponseEntry{
-				Name:     datastore.Name,
-				Type:     datastore.Type.Enum().String(),
-				Metadata: datastore.Metadata,
-				Env:      datastore.Env,
-			})
-		}
-
-		h.WriteResult(w, r, response)
+		cloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS
 	default:
 		err := telemetry.Error(ctx, span, nil, "unsupported cloud provider")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+
+	message := porterv1.ListDatastoresRequest{
+		ProjectId:              int64(project.ID),
+		CloudProvider:          cloudProvider,
+		CloudProviderAccountId: cloudProviderID,
+		Name:                   request.Name,
+		IncludeEnvGroup:        request.IncludeEnvGroup,
+		IncludeMetadata:        request.IncludeMetadata,
+	}
+	if datastoreType != porterv1.EnumDatastore_ENUM_DATASTORE_UNSPECIFIED {
+		message.Type = &datastoreType
+	}
+	req := connect.NewRequest(&message)
+	resp, ccpErr := h.Config().ClusterControlPlaneClient.ListDatastores(ctx, req)
+	if ccpErr != nil {
+		err := telemetry.Error(ctx, span, ccpErr, "error listing datastores from ccp")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+	if resp.Msg == nil {
+		err := telemetry.Error(ctx, span, err, "missing response message from ccp")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	response := ListDatastoresResponse{
+		Datastores: []ListDatastoresResponseEntry{},
+	}
+	for _, datastore := range resp.Msg.Datastores {
+		response.Datastores = append(response.Datastores, ListDatastoresResponseEntry{
+			Name:     datastore.Name,
+			Type:     datastore.Type.Enum().String(),
+			Metadata: datastore.Metadata,
+			Env:      datastore.Env,
+		})
+	}
+
+	h.WriteResult(w, r, response)
 }

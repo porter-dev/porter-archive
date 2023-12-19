@@ -1,7 +1,6 @@
 package cloud_provider
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -15,12 +14,16 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// ListAwsResponse describes an outbound response for listing aws accounts on
+type ListAwsAccountsResponse struct {
+	Accounts []AwsAccount `json:"accounts"`
+}
+
+// AwsAccount describes an outbound response for listing aws accounts on
 // a given project.
 //
 // The shape of the object is "generic" as there will be similar endpoints in
 // the future for other cloud providers.
-type ListAwsResponse struct {
+type AwsAccount struct {
 	// CloudProviderID is the cloud provider id - for AWS, this is an account
 	CloudProviderID string `json:"cloud_provider_id"`
 
@@ -28,18 +31,18 @@ type ListAwsResponse struct {
 	ProjectID uint `json:"project_id"`
 }
 
-// ListAwsHandler is a struct for handling an aws cloud provider list request
-type ListAwsHandler struct {
+// ListAwsAccountsHandler is a struct for handling an aws cloud provider list request
+type ListAwsAccountsHandler struct {
 	handlers.PorterHandlerWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewListAwsHandler constructs a ListAwsHandler
-func NewListAwsHandler(
+// NewListAwsAccountsHandler constructs a ListAwsAccountsHandler
+func NewListAwsAccountsHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *ListAwsHandler {
-	return &ListAwsHandler{
+) *ListAwsAccountsHandler {
+	return &ListAwsAccountsHandler{
 		PorterHandlerWriter:   handlers.NewDefaultPorterHandler(config, nil, writer),
 		KubernetesAgentGetter: authz.NewOutOfClusterAgentGetter(config),
 	}
@@ -48,39 +51,41 @@ func NewListAwsHandler(
 // ServeHTTP returns a list of AWS Accounts
 //
 // todo: Move this logic down into CCP
-func (c *ListAwsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *ListAwsAccountsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-cloud-provider-list-aws")
 	defer span.End()
 
-	project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	res := []ListAwsResponse{}
+	res := ListAwsAccountsResponse{
+		Accounts: []AwsAccount{},
+	}
 	if !project.GetFeatureFlag(models.CapiProvisionerEnabled, c.Config().LaunchDarklyClient) {
-		e := fmt.Errorf("listing cloud providers not available on non-capi clusters")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+		err := telemetry.Error(ctx, span, nil, "listing cloud providers not available on non-capi clusters")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
 	dblinks, err := c.Repo().AWSAssumeRoleChainer().List(ctx, project.ID)
 	if err != nil {
-		e := fmt.Errorf("unable to find assume role chain links: %w", err)
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+		err := telemetry.Error(ctx, span, err, "unable to find assume role chain links")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	for _, link := range dblinks {
-		b, err := arn.Parse(link.TargetARN)
+		targetArn, err := arn.Parse(link.TargetARN)
 		if err != nil {
-			e := fmt.Errorf("unable to parse target arn: %w", err)
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "err-target-arn", Value: link.TargetARN})
+			err := telemetry.Error(ctx, span, err, "unable to parse target arn")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
-		res = append(res, ListAwsResponse{
-			CloudProviderID: b.AccountID,
+		res.Accounts = append(res.Accounts, AwsAccount{
+			CloudProviderID: targetArn.AccountID,
 			ProjectID:       uint(link.ProjectID),
 		})
 	}
 	c.WriteResult(w, r, res)
-	w.WriteHeader(http.StatusOK)
 }

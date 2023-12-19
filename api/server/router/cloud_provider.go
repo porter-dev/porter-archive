@@ -73,7 +73,7 @@ func getCloudProviderRoutes(
 		},
 	)
 
-	listAwsHandler := cloud_provider.NewListAwsHandler(
+	listAwsHandler := cloud_provider.NewListAwsAccountsHandler(
 		config,
 		factory.GetResultWriter(),
 	)

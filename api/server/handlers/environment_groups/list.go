@@ -157,7 +157,9 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 			}
 
 			for _, app := range appsLinkedToEnvGroupResp.Msg.LinkedApps {
-				linkedApplications = append(linkedApplications, app.Name)
+				if app != nil {
+					linkedApplications = append(linkedApplications, app.Name)
+				}
 			}
 		}
 

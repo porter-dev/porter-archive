@@ -24,6 +24,11 @@ import { pushFiltered } from "shared/routing";
 import { type ClusterType } from "shared/types";
 import dotVertical from "assets/dot-vertical.svg";
 
+import {
+  AzureLocationOptions,
+  azureSupportedMachineTypes,
+  type MachineTypeOption,
+} from "./azureUtils";
 import InputRow from "./form-components/InputRow";
 import Button from "./porter/Button";
 import Error from "./porter/Error";
@@ -33,33 +38,6 @@ import Spacer from "./porter/Spacer";
 import Step from "./porter/Step";
 import Text from "./porter/Text";
 
-const locationOptions = [
-  { value: "eastus", label: "East US" },
-  { value: "eastus2", label: "East US 2" },
-  { value: "westus2", label: "West US 2" },
-  { value: "westus3", label: "West US 3" },
-  { value: "centralus", label: "Central US" },
-  { value: "southcentralus", label: "South Central US" },
-  { value: "australiaeast", label: "Australia East" },
-  { value: "brazilsouth", label: "Brazil South" },
-  { value: "centralindia", label: "Central India" },
-  { value: "southcentralus", label: "South Central US" },
-  { value: "eastasia", label: "East Asia" },
-  { value: "francecentral", label: "France Central" },
-  { value: "northeurope", label: "North Europe" },
-  { value: "norwayeast", label: "Norway East" },
-  { value: "swedencentral", label: "Sweden Central" },
-  { value: "switzerlandnorth", label: "Switzerland North" },
-  { value: "uksouth", label: "UK South" },
-  { value: "westeurope", label: "West Europe" },
-];
-
-const machineTypeOptions = [
-  { value: "Standard_B2als_v2", label: "Standard_B2als_v2" },
-  { value: "Standard_A2_v2", label: "Standard_A2_v2" },
-  { value: "Standard_A4_v2", label: "Standard_A4_v2" },
-];
-
 const skuTierOptions = [
   { value: AksSkuTier.FREE, label: "Free" },
   {
@@ -68,10 +46,7 @@ const skuTierOptions = [
   },
 ];
 
-const clusterVersionOptions = [
-  { value: "v1.27.3", label: "v1.27" },
-  { value: "v1.24.9", label: "v1.24" },
-];
+const clusterVersionOptions = [{ value: "v1.27.3", label: "v1.27" }];
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
@@ -106,8 +81,18 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
+  const [
+    regionFilteredMachineTypeOptions,
+    setRegionFilteredMachineTypeOptions,
+  ] = useState<MachineTypeOption[]>(azureSupportedMachineTypes(azureLocation));
 
   const { showIntercomWithMessage } = useIntercom();
+
+  useEffect(() => {
+    setRegionFilteredMachineTypeOptions(
+      azureSupportedMachineTypes(azureLocation)
+    );
+  }, [azureLocation]);
 
   const markStepStarted = async (
     step: string,
@@ -358,57 +343,13 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
     }
   }, [props.selectedClusterVersion]);
 
-  const renderForm = () => {
-    // Render simplified form if initial create
-    if (!props.clusterId) {
-      return (
-        <>
-          <Text size={16}>Select an Azure location and tier</Text>
-          <Spacer y={1} />
-          <Text color="helper">
-            Porter will automatically provision your infrastructure with the
-            specified configuration.
-          </Text>
-          <Spacer height="10px" />
-          <SelectRow
-            options={locationOptions}
-            width="350px"
-            disabled={isReadOnly}
-            value={azureLocation}
-            scrollBuffer={true}
-            dropdownMaxHeight="240px"
-            setActiveValue={setAzureLocation}
-            label="📍 Azure location"
-          />
-          <Spacer y={0.75} />
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <Spacer inline x={0.05} />
-            <Icon src={dotVertical} height={"15px"} />
-            <Spacer inline x={0.1} />
-            <Label>Azure Tier</Label>
-          </div>
-          <SelectRow
-            options={skuTierOptions}
-            width="350px"
-            disabled={isReadOnly}
-            value={skuTier}
-            scrollBuffer={true}
-            dropdownMaxHeight="240px"
-            setActiveValue={setSkuTier}
-          />
-        </>
-      );
-    }
-
-    // If settings, update full form
+  const renderSimpleSettings = (): JSX.Element => {
     return (
       <>
-        <Heading isAtTop>AKS configuration</Heading>
-        <Spacer y={0.75} />
         <SelectRow
-          options={locationOptions}
+          options={AzureLocationOptions}
           width="350px"
-          disabled={isReadOnly || true}
+          disabled={props.clusterId ? props.clusterId !== 0 : false}
           value={azureLocation}
           scrollBuffer={true}
           dropdownMaxHeight="240px"
@@ -419,7 +360,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
         <div style={{ display: "flex", alignItems: "center" }}>
           <Spacer inline x={0.05} />
           <Icon src={dotVertical} height={"15px"} />
-          <Spacer inline x={0.1} />
+          <Spacer inline x={0.2} />
           <Label>Azure Tier</Label>
         </div>
         <SelectRow
@@ -431,25 +372,32 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
           dropdownMaxHeight="240px"
           setActiveValue={setSkuTier}
         />
-        {user?.isPorterUser && (
-          <Heading>
-            <ExpandHeader
-              onClick={() => {
-                setIsExpanded(!isExpanded);
-              }}
-              isExpanded={isExpanded}
-            >
-              <i className="material-icons">arrow_drop_down</i>
-              Advanced settings
-            </ExpandHeader>
-          </Heading>
-        )}
+      </>
+    );
+  };
+
+  const renderAdvancedSettings = (): JSX.Element => {
+    return (
+      <>
+        <Heading>
+          <ExpandHeader
+            onClick={() => {
+              setIsExpanded(!isExpanded);
+            }}
+            isExpanded={isExpanded}
+          >
+            <i className="material-icons">arrow_drop_down</i>
+            Advanced settings
+          </ExpandHeader>
+        </Heading>
+        <Spacer y={0.5} />
+
         {isExpanded && (
           <>
             <SelectRow
               options={clusterVersionOptions}
               width="350px"
-              disabled={isReadOnly}
+              disabled={true}
               value={clusterVersion}
               scrollBuffer={true}
               dropdownMaxHeight="240px"
@@ -458,9 +406,9 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
             />
             <Spacer y={0.75} />
             <SelectRow
-              options={machineTypeOptions}
+              options={regionFilteredMachineTypeOptions}
               width="350px"
-              disabled={isReadOnly}
+              disabled={true}
               value={machineType}
               scrollBuffer={true}
               dropdownMaxHeight="240px"
@@ -481,7 +429,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
             <InputRow
               width="350px"
               type="string"
-              disabled={isReadOnly}
+              disabled={true}
               value={cidrRange}
               setValue={(x: string) => {
                 setCidrRange(x);
@@ -491,6 +439,34 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
             />
           </>
         )}
+      </>
+    );
+  };
+
+  const renderForm = () => {
+    // Render simplified form if initial create
+    if (!props.clusterId) {
+      return (
+        <>
+          <Text size={16}>Select an Azure location and tier</Text>
+          <Spacer y={1} />
+          <Text color="helper">
+            Porter will automatically provision your infrastructure with the
+            specified configuration.
+          </Text>
+          <Spacer height="10px" />
+          {renderSimpleSettings()}
+        </>
+      );
+    }
+
+    // If settings, update full form
+    return (
+      <>
+        <Heading isAtTop>AKS configuration</Heading>
+        <Spacer y={0.75} />
+        {renderSimpleSettings()}
+        {renderAdvancedSettings()}
       </>
     );
   };

@@ -57,8 +57,6 @@ func (c *LatestAddonsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
-		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
 		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
 	)
 

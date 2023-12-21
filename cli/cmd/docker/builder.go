@@ -211,7 +211,7 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 	cacheTo := ""
 	ok, ghaErr := isRunningInGithubActions()
 	if ghaErr != nil {
-		fmt.Printf("Github Actions environment error: %s\n", err.Error())
+		fmt.Printf("Github Actions environment error: %s\n", ghaErr.Error())
 	}
 		
 	if ok && os.Getenv("BUILDKIT_CACHE_EXPORTER") == "gha" {

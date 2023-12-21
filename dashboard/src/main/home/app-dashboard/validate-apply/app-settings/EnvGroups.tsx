@@ -1,20 +1,20 @@
 import React, { useMemo, useState } from "react";
-import styled from "styled-components";
 import { useFieldArray, useFormContext } from "react-hook-form";
+import styled from "styled-components";
+import { type IterableElement } from "type-fest";
 
-import sliders from "assets/sliders.svg";
-import doppler from "assets/doppler.png";
-
+import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type PorterAppFormData } from "lib/porter-apps";
-import ExpandableEnvGroup from "./ExpandableEnvGroup";
-import { type PopulatedEnvGroup } from "./types";
 
 import { valueExists } from "shared/util";
+import doppler from "assets/doppler.png";
+import sliders from "assets/sliders.svg";
+
 import EnvGroupModal from "./EnvGroupModal";
-import { type IterableElement } from "type-fest";
-import Icon from "components/porter/Icon";
+import ExpandableEnvGroup from "./ExpandableEnvGroup";
+import { type PopulatedEnvGroup } from "./types";
 
 type Props = {
   baseEnvGroups?: PopulatedEnvGroup[];
@@ -26,10 +26,13 @@ const EnvGroups: React.FC<Props> = ({
   attachedEnvGroups = [],
 }) => {
   const [showEnvModal, setShowEnvModal] = useState(false);
-  const [hovered, setHovered] = useState(false);
 
   const { control } = useFormContext<PorterAppFormData>();
-  const { append, remove, fields: envGroups } = useFieldArray({
+  const {
+    append,
+    remove,
+    fields: envGroups,
+  } = useFieldArray({
     control,
     name: "app.envGroups",
   });
@@ -41,8 +44,6 @@ const EnvGroups: React.FC<Props> = ({
     control,
     name: "deletions.envGroupNames",
   });
-
-  const maxEnvGroupsReached = envGroups.length >= 4;
 
   const populatedEnvWithFallback = useMemo(() => {
     return envGroups
@@ -102,20 +103,14 @@ const EnvGroups: React.FC<Props> = ({
 
   return (
     <div>
-      <TooltipWrapper
-        onMouseOver={() => { setHovered(true); }}
-        onMouseOut={() => { setHovered(false); }}
+      <LoadButton
+        disabled={false}
+        onClick={() => {
+          setShowEnvModal(true);
+        }}
       >
-        <LoadButton
-          disabled={maxEnvGroupsReached}
-          onClick={() => { !maxEnvGroupsReached && setShowEnvModal(true); }}
-        >
-          <img src={sliders} /> Load from Env Group
-        </LoadButton>
-        <TooltipText visible={maxEnvGroupsReached && hovered}>
-          Max 3 Env Groups allowed
-        </TooltipText>
-      </TooltipWrapper>
+        <img src={sliders} /> Load from Env Group
+      </LoadButton>
       {populatedEnvWithFallback.length > 0 && (
         <>
           <Spacer y={0.5} />
@@ -127,7 +122,9 @@ const EnvGroups: React.FC<Props> = ({
                 index={index}
                 envGroup={envGroup}
                 remove={onRemove}
-                icon={<Icon src={envGroup.type === "doppler" ? doppler : sliders} />}
+                icon={
+                  <Icon src={envGroup.type === "doppler" ? doppler : sliders} />
+                }
               />
             );
           })}
@@ -171,7 +168,7 @@ const AddRowButton = styled.div`
   }
 `;
 
-const LoadButton = styled(AddRowButton) <{ disabled?: boolean }>`
+const LoadButton = styled(AddRowButton)<{ disabled?: boolean }>`
   background: ${(props) => (props.disabled ? "#aaaaaa55" : "none")};
   border: 1px solid ${(props) => (props.disabled ? "#aaaaaa55" : "#ffffff55")};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
@@ -191,26 +188,4 @@ const LoadButton = styled(AddRowButton) <{ disabled?: boolean }>`
     margin-right: 12px;
     opacity: ${(props) => (props.disabled ? "0.5" : "1")};
   }
-`;
-
-const TooltipWrapper = styled.div`
-  position: relative;
-  display: inline-block;
-`;
-
-const TooltipText = styled.span<{ visible: boolean }>`
-  visibility: ${(props) => (props.visible ? "visible" : "hidden")};
-  width: 240px;
-  color: #fff;
-  text-align: center;
-  padding: 5px 0;
-  border-radius: 6px;
-  position: absolute;
-  z-index: 1;
-  bottom: 100%;
-  left: 50%;
-  margin-left: -120px;
-  opacity: ${(props) => (props.visible ? "1" : "0")};
-  transition: opacity 0.3s;
-  font-size: 12px;
 `;

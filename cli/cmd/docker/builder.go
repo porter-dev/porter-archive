@@ -209,7 +209,12 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 
 	cacheFrom := fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag)
 	cacheTo := ""
-	if ok, _ := isRunningInGithubActions(); ok && os.Getenv("BUILDKIT_CACHE_EXPORTER") == "gha" {
+	ok, ghaErr := isRunningInGithubActions()
+	if ghaErr != nil {
+		fmt.Printf("Github Actions environment error: %s\n", err.Error())
+	}
+		
+	if ok && os.Getenv("BUILDKIT_CACHE_EXPORTER") == "gha" {
 		fmt.Println("Github Actions environment detected, switching to the GitHub Actions cache exporter")
 		cacheFrom = "type=gha"
 		cacheTo = "type=gha"
@@ -368,5 +373,6 @@ func isRunningInGithubActions() (bool, error) {
 	}
 	defer resp.Body.Close() //nolint:errcheck
 
+	fmt.Println("%d\n", resp.StatusCode)
 	return resp.StatusCode == http.StatusOK, nil
 }

@@ -9,6 +9,7 @@ import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { type ClientAddon } from "lib/addons";
 
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 import { search } from "shared/search";
@@ -18,17 +19,25 @@ import target from "assets/target.svg";
 import time from "assets/time.png";
 
 import { Context } from "../../../../shared/Context";
+import { Addon } from "./Addon";
 import { AppIcon, AppSource } from "./AppMeta";
 import { type AppRevisionWithSource } from "./types";
 
 type AppGridProps = {
   apps: AppRevisionWithSource[];
+  addons: ClientAddon[];
   searchValue: string;
   view: "grid" | "list";
   sort: "letter" | "calendar";
 };
 
-const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
+const AppGrid: React.FC<AppGridProps> = ({
+  apps,
+  addons,
+  searchValue,
+  view,
+  sort,
+}) => {
   const { currentDeploymentTarget } = useDeploymentTarget();
   const { currentProject } = useContext(Context);
 
@@ -142,6 +151,9 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
             );
           }
         )}
+        {addons.map((a) => {
+          return <Addon addon={a} view={view} key={a.name.value} />;
+        })}
       </GridList>
     ))
     .with("list", () => (
@@ -184,6 +196,9 @@ const AppGrid: React.FC<AppGridProps> = ({ apps, searchValue, view, sort }) => {
             );
           }
         )}
+        {addons.map((a) => {
+          return <Addon addon={a} view={view} key={a.name.value} />;
+        })}
       </List>
     ))
     .exhaustive();
@@ -204,20 +219,22 @@ const GridList = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 `;
 
-const Block = styled.div`
+export const Block = styled.div<{ locked?: boolean }>`
   height: 150px;
   flex-direction: column;
   display: flex;
   justify-content: space-between;
-  cursor: pointer;
+  cursor: ${(props) => (props.locked ? "default" : "pointer")};
   padding: 20px;
   color: ${(props) => props.theme.text.primary};
   position: relative;
   border-radius: 5px;
-  background: ${(props) => props.theme.clickable.bg};
+  background: ${(props) =>
+    props.locked ? props.theme.fg : props.theme.clickable.bg};
   border: 1px solid #494b4f;
+
   :hover {
-    border: 1px solid #7a7b80;
+    border: ${(props) => (props.locked ? "" : `1px solid #7a7b80`)};
   }
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {
@@ -234,12 +251,13 @@ const List = styled.div`
   overflow: hidden;
 `;
 
-const Row = styled.div<{ isAtBottom?: boolean }>`
-  cursor: pointer;
+export const Row = styled.div<{ isAtBottom?: boolean; locked?: boolean }>`
+  cursor: ${(props) => (props.locked ? "default" : "pointer")};
   padding: 15px;
   border-bottom: ${(props) =>
     props.isAtBottom ? "none" : "1px solid #494b4f"};
-  background: ${(props) => props.theme.clickable.bg};
+  background: ${(props) =>
+    props.locked ? props.theme.fg : props.theme.clickable.bg};
   position: relative;
   border: 1px solid #494b4f;
   border-radius: 5px;

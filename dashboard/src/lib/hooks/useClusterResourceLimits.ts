@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   Contract,
-  GKENodePoolType,
   LoadBalancerType,
   NodeGroupType,
   NodePoolType,
@@ -11,7 +10,10 @@ import convert from "convert";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
-import { AWS_INSTANCE_LIMITS } from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
+import {
+  AWS_INSTANCE_LIMITS,
+  AZURE_INSTANCE_LIMITS,
+} from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
 
 import api from "shared/api";
 
@@ -108,6 +110,24 @@ const clusterNodesValidator = z
       return defaultResources;
     }
     const instanceType = data.labels["beta.kubernetes.io/instance-type"];
+
+    if (!instanceType) {
+      return defaultResources;
+    }
+
+    // Azure instance types are all prefixed with "Standard_"
+    if (instanceType.startsWith("Standard_")) {
+      if (AZURE_INSTANCE_LIMITS[instanceType]) {
+        const { vCPU, RAM } = AZURE_INSTANCE_LIMITS[instanceType];
+        return {
+          maxCPU: vCPU,
+          maxRAM: RAM,
+          azureType: instanceType,
+        };
+      } else {
+        return defaultResources;
+      }
+    }
 
     let parsedType;
     if (instanceType && instanceType.includes(".")) {

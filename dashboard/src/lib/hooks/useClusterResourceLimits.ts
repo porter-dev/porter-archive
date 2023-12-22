@@ -115,7 +115,7 @@ const clusterNodesValidator = z
       return defaultResources;
     }
 
-    // Azure instance types are formatted as with
+    // Azure instance types are all prefixed with "Standard_"
     if (instanceType.startsWith("Standard_")) {
       if (AZURE_INSTANCE_LIMITS[instanceType]) {
         const { vCPU, RAM } = AZURE_INSTANCE_LIMITS[instanceType];

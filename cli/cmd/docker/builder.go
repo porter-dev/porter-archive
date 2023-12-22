@@ -373,6 +373,6 @@ func isRunningInGithubActions() (bool, error) {
 	}
 	defer resp.Body.Close() //nolint:errcheck
 
-	fmt.Println("%d\n", resp.StatusCode)
+	fmt.Printf("%d\n", resp.StatusCode)
 	return resp.StatusCode == http.StatusOK, nil
 }

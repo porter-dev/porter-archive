@@ -273,6 +273,8 @@ func appRevisionStatusFromProto(status string) (models.AppRevisionStatus, error)
 		appRevisionStatus = models.AppRevisionStatus_DeploymentSuccessful
 	case string(models.AppRevisionStatus_DeploymentFailed):
 		appRevisionStatus = models.AppRevisionStatus_DeploymentFailed
+	case string(models.AppRevisionStatus_DeploymentSuperseded):
+		appRevisionStatus = models.AppRevisionStatus_DeploymentSuperseded
 	case string(models.AppRevisionStatus_RollbackSuccessful):
 		appRevisionStatus = models.AppRevisionStatus_RollbackSuccessful
 	case string(models.AppRevisionStatus_RollbackFailed):

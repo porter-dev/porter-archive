@@ -230,9 +230,6 @@ const ActionButton = styled.button`
   border-radius: 50%;
   cursor: pointer;
   color: #aaaabb;
-  :hover {
-    color: white;
-  }
 
   > span {
     font-size: 20px;
@@ -257,6 +254,9 @@ const ServiceHeader = styled.div<{
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;
+    ${ActionButton} {
+      color: white;
+    }
   }
 
   border-bottom-left-radius: ${(props) => (props.bordersRounded ? "" : "0")};

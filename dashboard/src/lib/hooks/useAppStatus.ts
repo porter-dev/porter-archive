@@ -14,8 +14,9 @@ export type ClientServiceStatus = {
   status: "running" | "spinningDown" | "failing";
   message: string;
   crashLoopReason: string;
-  restartCount?: number;
+  restartCount: number;
   revisionId: string;
+  revisionNumber: number;
 };
 
 const serviceStatusValidator = z.object({
@@ -146,9 +147,10 @@ export const useAppStatus = ({
               revisionStatus.revision_number
             }`,
             crashLoopReason: "",
-            restartCount: _.maxBy(runningInstances, "restart_count")
-              ?.restart_count,
+            restartCount:
+              _.maxBy(runningInstances, "restart_count")?.restart_count ?? 0,
             revisionId: revisionStatus.revision_id,
+            revisionNumber: revisionStatus.revision_number,
           });
         }
         if (pendingInstances.length > 0) {
@@ -162,9 +164,10 @@ export const useAppStatus = ({
               pendingInstances.length
             )} in a pending state at Version ${revisionStatus.revision_number}`,
             crashLoopReason: "",
-            restartCount: _.maxBy(pendingInstances, "restart_count")
-              ?.restart_count,
+            restartCount:
+              _.maxBy(pendingInstances, "restart_count")?.restart_count ?? 0,
             revisionId: revisionStatus.revision_id,
+            revisionNumber: revisionStatus.revision_number,
           });
         }
         if (failedInstances.length > 0) {
@@ -178,9 +181,10 @@ export const useAppStatus = ({
               failedInstances.length
             )} failing to run Version ${revisionStatus.revision_number}`,
             crashLoopReason: "",
-            restartCount: _.maxBy(failedInstances, "restart_count")
-              ?.restart_count,
+            restartCount:
+              _.maxBy(failedInstances, "restart_count")?.restart_count ?? 0,
             revisionId: revisionStatus.revision_id,
+            revisionNumber: revisionStatus.revision_number,
           });
         }
         return versionStatuses;

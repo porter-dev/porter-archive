@@ -9,6 +9,7 @@ import Loading from "components/Loading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Error from "components/porter/Error";
+import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import ToggleRow from "components/porter/ToggleRow";
@@ -17,6 +18,8 @@ import SOC2Checks from "components/SOC2Checks";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import sparkle from "assets/sparkle.svg";
+
+import DonutChart from "./DonutChart";
 
 type Props = {
   credentialId: string;
@@ -337,14 +340,18 @@ const Compliance: React.FC<Props> = (props) => {
   return (
     <StyledCompliance>
       <Spacer y={1} />
-      <Container row>
-        <Text size={16}>SOC 2 compliance</Text>
-        <Spacer inline x={1} />
-        <NewBadge>
-          <img src={sparkle} />
-          New
-        </NewBadge>
-      </Container>
+      <Fieldset>
+        <Container row>
+          <Text size={16}>SOC 2 Compliance Dashboard</Text>
+          <Spacer inline x={1} />
+          <NewBadge>
+            <img src={sparkle} />
+            New
+          </NewBadge>
+        </Container>
+        <Spacer y={1} />
+        <DonutChart data={soc2Data} />
+      </Fieldset>
 
       <SOC2Checks
         enableAll={soc2Enabled}

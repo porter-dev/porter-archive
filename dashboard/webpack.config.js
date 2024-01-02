@@ -88,7 +88,7 @@ module.exports = () => {
           ],
         },
         {
-          test: /\.mjs/,
+          test: /\.(mjs|js)$/,
           include: /node_modules/,
           type: "javascript/auto",
         },

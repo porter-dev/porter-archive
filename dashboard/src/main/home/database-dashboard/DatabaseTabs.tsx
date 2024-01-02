@@ -1,17 +1,13 @@
-import { useQueryClient } from "@tanstack/react-query";
 import React, {
-  useContext,
   useMemo
 } from "react";
 import { useHistory } from "react-router";
-import styled from "styled-components";
 import { match } from "ts-pattern";
 
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 
 
-import { Context } from "shared/Context";
 
 
 import EnvTab from "./tabs/DatabaseEnvTab";
@@ -33,17 +29,13 @@ type ValidTab = (typeof validTabs)[number];
 type DbTabProps = {
   tabParam?: string;
   dbData: any;
-  goBack: string;
 };
 
 // todo(ianedwards): refactor button to use more predictable state
 export type ButtonStatus = "" | "loading" | JSX.Element | "success";
 
-const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, dbData, goBack }) => {
+const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, dbData }) => {
   const history = useHistory();
-  const queryClient = useQueryClient();
-
-  const { currentProject, user } = useContext(Context);
 
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
@@ -55,7 +47,6 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, dbData, goBack }) => {
 
   const tabs = useMemo(() => {
     const base = [
-      // { label: "Metrics", value: "metrics" },
       { label: "Connection Info", value: "environment" },
     ];
     base.push({ label: "Settings", value: "settings" });
@@ -79,7 +70,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, dbData, goBack }) => {
         .with("environment", () => (
           <EnvTab envData={dbData?.env} connectionString={dbData.connection_string} />
         ))
-        .with("settings", () => <Settings dbData={dbData} goBack={goBack} />)
+        .with("settings", () => <Settings dbData={dbData} />)
         .with("metrics", () => <MetricsTab />)
 
         .otherwise(() => null)}
@@ -89,9 +80,3 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, dbData, goBack }) => {
 };
 
 export default DatabaseTabs;
-
-const TagIcon = styled.img`
-  height: 13px;
-  margin-right: 3px;
-  margin-top: 1px;
-`;

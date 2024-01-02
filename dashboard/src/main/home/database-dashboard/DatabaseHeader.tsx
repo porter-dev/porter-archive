@@ -1,20 +1,19 @@
 import React from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
-
-import Container from "components/porter/Container";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
-
-import awsRDS from "assets/amazon-rds.png";
-import awsElastiCache from "assets/aws-elasticache.png";
-import copy from "assets/copy-left.svg";
-import database from "assets/database.svg";
-import CopyToClipboard from "components/CopyToClipboard";
 
 import TitleSection from "components/TitleSection";
 import Banner from "components/porter/Banner";
 import Fieldset from "components/porter/Fieldset";
-import { withRouter, type RouteComponentProps } from "react-router";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+
+import DatabaseHeaderItem from "./DatabaseHeaderItem";
+
+import awsRDS from "assets/amazon-rds.png";
+import awsElastiCache from "assets/aws-elasticache.png";
+import database from "assets/database.svg";
+
 
 // Buildpack icons
 type Props = RouteComponentProps & {
@@ -73,21 +72,7 @@ const DatabaseHeader: React.FC<Props> = ({ dbData }) => {
 
         <GridList>
 
-          {dbData?.metadata.map((item, index) => (
-            <>
-              <Container column>
-                <Text size={12}>{item.name}</Text>
-
-                <Container row>
-                  <Text title={item.value} color="helper" size={10}>{truncateText(item.value, 42)}</Text>
-                  <CopyToClipboard text={item.value.toString()}>
-                    <CopyIcon src={copy} alt="copy" />
-                  </CopyToClipboard>
-                </Container>
-              </Container>
-
-            </>
-          ))}
+          {dbData?.metadata.map((item, index) => <DatabaseHeaderItem item={item} key={index}></DatabaseHeaderItem>)}
         </GridList>
 
 

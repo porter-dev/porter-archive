@@ -33,7 +33,7 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
         backgroundColor: ["green", "red", "orange"],
         borderColor: ["green", "red", "orange"],
         borderWidth: 2,
-        hoverBorderColor: "#2e3032",
+        hoverBorderColor: "#171b21",
         hoverBorderWidth: 2,
       },
     ],

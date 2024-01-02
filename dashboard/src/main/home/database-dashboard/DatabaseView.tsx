@@ -1,28 +1,13 @@
-import _ from "lodash";
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
-import awsRDS from "assets/amazon-rds.png";
-import awsElastiCache from "assets/aws-elasticache.png";
-import database from "assets/database.svg";
-import notFound from "assets/not-found.png";
-
-import { Context } from "shared/Context";
-import { search } from "shared/search";
-import { AddonCard } from "shared/types";
-
+import Loading from "components/Loading";
 import Back from "components/porter/Back";
-import Fieldset from "components/porter/Fieldset";
-import Text from "components/porter/Text";
-import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
-import Link from "components/porter/Link";
 import { withRouter, type RouteComponentProps } from "react-router";
 import { z } from "zod";
 import DatabaseHeader from "./DatabaseHeader";
 import DatabaseTabs from "./DatabaseTabs";
-import Loading from "components/Loading";
 
 
 type Props = RouteComponentProps;

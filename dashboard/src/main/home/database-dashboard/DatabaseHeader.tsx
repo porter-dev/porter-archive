@@ -1,24 +1,20 @@
-import React, { useMemo } from "react";
-import { type PorterApp } from "@porter-dev/api-contracts";
+import React from "react";
 import styled from "styled-components";
 
 import Container from "components/porter/Container";
-import Icon from "components/porter/Icon";
-import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { prefixSubdomain } from "lib/porter-apps/services";
 
 import awsRDS from "assets/amazon-rds.png";
 import awsElastiCache from "assets/aws-elasticache.png";
+import copy from "assets/copy-left.svg";
 import database from "assets/database.svg";
 import CopyToClipboard from "components/CopyToClipboard";
-import copy from "assets/copy-left.svg"
 
+import TitleSection from "components/TitleSection";
+import Banner from "components/porter/Banner";
 import Fieldset from "components/porter/Fieldset";
 import { withRouter, type RouteComponentProps } from "react-router";
-import Banner from "components/porter/Banner";
-import TitleSection from "components/TitleSection";
 
 // Buildpack icons
 type Props = RouteComponentProps & {

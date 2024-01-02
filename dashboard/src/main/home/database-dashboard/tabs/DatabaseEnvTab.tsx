@@ -1,15 +1,11 @@
-import KeyValueArray from "components/form-components/KeyValueArray";
-import EnvGroupArray from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
-import React, { useEffect, useState } from "react";
-import styled, { keyframes } from "styled-components";
-import key from "assets/key.svg";
-import TitleSection from "components/TitleSection";
-import Spacer from "components/porter/Spacer";
-import DynamicLink from "components/DynamicLink";
-import Text from "components/porter/Text";
-import Icon from "components/porter/Icon";
+import copy from "assets/copy-left.svg";
 import CopyToClipboard from "components/CopyToClipboard";
-import copy from "assets/copy-left.svg"
+import DynamicLink from "components/DynamicLink";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import EnvGroupArray from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
+import React from "react";
+import styled, { keyframes } from "styled-components";
 
 type Props = {
     envData: any;

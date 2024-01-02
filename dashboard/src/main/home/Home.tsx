@@ -1,14 +1,14 @@
-import React, { useEffect, useState, useContext, useRef } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 import styled, { ThemeProvider } from "styled-components";
-import { createPortal } from "react-dom";
 
 import api from "shared/api";
-import midnight from "shared/themes/midnight";
-import standard from "shared/themes/standard";
 import { Context } from "shared/Context";
 import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
-import { ClusterType, ProjectType, ProjectListType } from "shared/types";
+import midnight from "shared/themes/midnight";
+import standard from "shared/themes/standard";
+import { ClusterType, ProjectListType, ProjectType } from "shared/types";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
@@ -17,38 +17,38 @@ import Dashboard from "./dashboard/Dashboard";
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 
+import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
+import AppDashboard from "./app-dashboard/AppDashboard";
+import CreateDatabase from "./database-dashboard/CreateDatabase";
+import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
 import Navbar from "./navbar/Navbar";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
-import AppDashboard from "./app-dashboard/AppDashboard";
-import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
-import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
-import CreateDatabase from "./database-dashboard/CreateDatabase";
 
-import { fakeGuardedRoute } from "shared/auth/RouteGuard";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import discordLogo from "../../assets/discord.svg";
-import Onboarding from "./onboarding/Onboarding";
-import ModalHandler from "./ModalHandler";
-import { NewProjectFC } from "./new-project/NewProject";
-import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
-import { overrideInfraTabEnabled } from "utils/infrastructure";
 import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
-import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
-import Modal from "components/porter/Modal";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
 import Button from "components/porter/Button";
-import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
-import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
-import CreateApp from "./app-dashboard/create-app/CreateApp";
+import Modal from "components/porter/Modal";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { fakeGuardedRoute } from "shared/auth/RouteGuard";
+import ClusterResourcesProvider from "shared/ClusterResourcesContext";
+import DeploymentTargetProvider from "shared/DeploymentTargetContext";
+import { overrideInfraTabEnabled } from "utils/infrastructure";
+import discordLogo from "../../assets/discord.svg";
+import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
 import AppView from "./app-dashboard/app-view/AppView";
 import Apps from "./app-dashboard/apps/Apps";
-import DeploymentTargetProvider from "shared/DeploymentTargetContext";
+import CreateApp from "./app-dashboard/create-app/CreateApp";
+import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
+import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
 import PreviewEnvs from "./cluster-dashboard/preview-environments/v2/PreviewEnvs";
 import SetupApp from "./cluster-dashboard/preview-environments/v2/setup-app/SetupApp";
-import ClusterResourcesProvider from "shared/ClusterResourcesContext";
 import DatabaseView from "./database-dashboard/DatabaseView";
+import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
+import ModalHandler from "./ModalHandler";
+import { NewProjectFC } from "./new-project/NewProject";
+import Onboarding from "./onboarding/Onboarding";
 
 
 // Guarded components

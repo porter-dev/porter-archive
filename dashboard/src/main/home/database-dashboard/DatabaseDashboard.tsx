@@ -33,10 +33,10 @@ import Toggle from "components/porter/Toggle";
 import { Link } from "react-router-dom";
 import { readableDate } from "shared/string_utils";
 
+import loading from "assets/loading.gif";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import loading from "assets/loading.gif";
 
 type Props = {};
 

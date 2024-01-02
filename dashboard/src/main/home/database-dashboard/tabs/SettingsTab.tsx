@@ -1,7 +1,7 @@
 import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";

@@ -1,10 +1,9 @@
+import EnvEditorModal from "main/home/modals/EnvEditorModal";
+import Modal from "main/home/modals/Modal";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import Modal from "main/home/modals/Modal";
-import EnvEditorModal from "main/home/modals/EnvEditorModal";
 
 import upload from "assets/upload.svg";
-import { MultiLineInput } from "components/porter-form/field-components/KeyValueArray";
 import { dotenv_parse } from "shared/string_utils";
 
 export type KeyValueType = {

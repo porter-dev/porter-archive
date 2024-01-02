@@ -1,35 +1,21 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { PorterApp } from "@porter-dev/api-contracts";
 import { useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
-import _ from "lodash";
-import AnimateHeight from "react-animate-height";
-import { FormProvider, useForm } from "react-hook-form";
+import React, {
+  useContext,
+  useMemo
+} from "react";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-import { z } from "zod";
 
-import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
 import TabSelector from "components/TabSelector";
 
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-import alert from "assets/alert-warning.svg";
 
 
-import MetricsTab from "./tabs/MetricsTab";
 import EnvTab from "./tabs/DatabaseEnvTab";
+import MetricsTab from "./tabs/MetricsTab";
 import Settings from "./tabs/SettingsTab";
 
 // commented out tabs are not yet implemented

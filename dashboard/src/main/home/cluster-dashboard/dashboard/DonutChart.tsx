@@ -12,7 +12,6 @@ type DonutChartProps = {
 };
 
 const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
-  const [displayText, setDisplayText] = useState("");
   const [chartDataValues, setChartDataValues] = useState([0, 0, 0]);
 
   useEffect(() => {
@@ -23,11 +22,6 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
       counts[status.toUpperCase()]++;
     });
 
-    setDisplayText(
-      `${counts.ENABLED} / ${
-        Object.values(data.soc2_checks).length
-      } checks enabled`
-    );
     setChartDataValues([counts.ENABLED, counts.DISABLED, counts.PENDING]);
   }, [data]); // Dependency array ensures this runs only when `data` changes
 
@@ -58,7 +52,35 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
         hoverOffset: 8,
       },
     },
+    responsive: true,
     maintainAspectRatio: false,
+  };
+
+  const textCenter = {
+    id: "textCenter",
+    afterDatasetsDraw: (chart: unknown) => {
+      const { ctx, data } = chart;
+      ctx.save();
+      ctx.font = "15px sans-serif";
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      // Calculate the total
+      const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+
+      // Coordinates for the text
+      const x = chart.getDatasetMeta(0).data[0].x;
+      const y = chart.getDatasetMeta(0).data[0].y;
+
+      // Draw the first line of text
+      ctx.fillText(`${data.datasets[0].data[0]} / ${total}`, x, y - 10); // Adjust Y position as needed
+
+      // Draw the second line of text
+      ctx.fillText(`checks enabled`, x, y + 10); // Adjust Y position as needed
+
+      ctx.restore();
+    },
   };
 
   const CustomLegend = (): JSX.Element => (
@@ -92,18 +114,10 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
 
   return (
     <>
+      <Spacer y={0.5} />
       <Container row>
         <div style={{ width: "300px", height: "300px" }}>
-          <div
-            style={{
-              marginBottom: "20px",
-              textAlign: "center",
-              fontWeight: "bold",
-            }}
-          >
-            {displayText}
-          </div>
-          <Doughnut data={chartData} options={options} />
+          <Doughnut data={chartData} options={options} plugins={[textCenter]} />
         </div>
         <Spacer inline x={1} />
         <CustomLegend />

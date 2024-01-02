@@ -27,6 +27,7 @@ import { type PorterAppDeployEvent } from "../types";
 import { getDuration, getStatusColor, getStatusIcon } from "../utils";
 import { CommitIcon, ImageTagContainer, StyledEventCard } from "./EventCard";
 import { RevertModal } from "./RevertModal";
+import RollbackEventCard from "./RollbackEventCard";
 import ServiceStatusDetail from "./ServiceStatusDetail";
 
 type Props = {
@@ -56,8 +57,19 @@ const DeployEventCard: React.FC<Props> = ({
     id: string;
   } | null>(null);
   const [isReverting, setIsReverting] = useState(false);
+
+  const deployEventIncludesRollback = useMemo(() => {
+    return (
+      event.metadata.rollback_target_app_revision_id != null &&
+      event.metadata.rollback_target_image_tag != null
+    );
+  }, [
+    event.metadata.rollback_target_app_revision_id,
+    event.metadata.rollback_target_image_tag,
+  ]);
+
   const [serviceStatusVisible, setServiceStatusVisible] = useState(
-    showServiceStatusDetail
+    showServiceStatusDetail || deployEventIncludesRollback
   );
 
   const { revisionIdToNumber, numberToRevisionId } = useRevisionList({
@@ -66,8 +78,22 @@ const DeployEventCard: React.FC<Props> = ({
     projectId,
     clusterId,
   });
-  const { latestRevision, porterApp, latestNotifications } =
-    useLatestRevision();
+  const {
+    latestRevision,
+    porterApp,
+    latestClientNotifications,
+    tabUrlGenerator,
+  } = useLatestRevision();
+
+  const rollbackTargetVersionNumber = useMemo(() => {
+    if (
+      event.metadata.rollback_target_app_revision_id == null ||
+      !revisionIdToNumber[event.metadata.rollback_target_app_revision_id]
+    ) {
+      return 0;
+    }
+    return revisionIdToNumber[event.metadata.rollback_target_app_revision_id];
+  }, [JSON.stringify(revisionIdToNumber)]);
 
   const isRevertable = useMemo(() => {
     const latestRevisionNumber = revisionIdToNumber[latestRevision.id];
@@ -99,10 +125,10 @@ const DeployEventCard: React.FC<Props> = ({
   ]);
 
   const revisionNotificationsExist = useMemo(() => {
-    return latestNotifications
+    return latestClientNotifications
       .filter(isClientRevisionNotification)
       .some((n) => n.appRevisionId === event.metadata.app_revision_id);
-  }, [JSON.stringify(latestNotifications)]);
+  }, [JSON.stringify(latestClientNotifications)]);
 
   const onRevert = useCallback(async (id: string) => {
     try {
@@ -300,7 +326,12 @@ const DeployEventCard: React.FC<Props> = ({
             <>
               <Spacer inline x={0.5} />
               <Tag borderColor="#FFBF00">
-                <Link to={`/apps/${appName}/notifications`} color={"#FFBF00"}>
+                <Link
+                  to={tabUrlGenerator({
+                    tab: "notifications",
+                  })}
+                  color={"#FFBF00"}
+                >
                   <TagIcon src={alert} />
                   Notifications
                 </Link>
@@ -351,12 +382,22 @@ const DeployEventCard: React.FC<Props> = ({
             serviceDeploymentMetadata={
               event.metadata.service_deployment_metadata
             }
-            appName={appName}
             revisionNumber={revisionIdToNumber[event.metadata.app_revision_id]}
             revisionId={event.metadata.app_revision_id}
           />
         </AnimateHeight>
       )}
+      {event.metadata.rollback_target_app_revision_id &&
+        event.metadata.rollback_target_image_tag && (
+          <>
+            <Spacer y={0.5} />
+            <RollbackEventCard
+              imageTag={event.metadata.rollback_target_image_tag}
+              gitRepoName={porterApp.repo_name}
+              rollbackTargetVersionNumber={rollbackTargetVersionNumber}
+            />
+          </>
+        )}
       {revertData && (
         <RevertModal
           closeModal={() => {

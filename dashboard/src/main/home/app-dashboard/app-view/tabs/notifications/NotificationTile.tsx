@@ -6,7 +6,9 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
+import { ERROR_CODE_TO_SUMMARY } from "lib/porter-apps/error";
 import {
+  isClientRevisionNotification,
   isClientServiceNotification,
   type ClientNotification,
 } from "lib/porter-apps/notification";
@@ -19,13 +21,32 @@ import worker from "assets/worker.png";
 type Props = {
   notification: ClientNotification;
   onClick: () => void;
+  revisionIdToNumber: Record<string, number>;
 };
 
-const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
+const NotificationTile: React.FC<Props> = ({
+  notification,
+  onClick,
+  revisionIdToNumber,
+}) => {
+  const matchingVersionNumber = useMemo(() => {
+    if (
+      (isClientRevisionNotification(notification) ||
+        isClientServiceNotification(notification)) &&
+      revisionIdToNumber[notification.appRevisionId]
+    ) {
+      return revisionIdToNumber[notification.appRevisionId];
+    }
+    return 0;
+  }, [JSON.stringify(notification), JSON.stringify(revisionIdToNumber)]);
+
   const summary = useMemo(() => {
     return match(notification)
       .with({ scope: "REVISION" }, () => {
-        return "The latest version failed to deploy";
+        return notification.messages.length &&
+          ERROR_CODE_TO_SUMMARY[notification.messages[0].error.code]
+          ? ERROR_CODE_TO_SUMMARY[notification.messages[0].error.code]
+          : "The latest version failed to deploy";
       })
       .with({ scope: "SERVICE" }, (n) => {
         return n.isDeployRelated
@@ -53,20 +74,29 @@ const NotificationTile: React.FC<Props> = ({ notification, onClick }) => {
           <Text color="helper">{feedDate(notification.timestamp)}</Text>
         </Container>
         <Spacer inline x={0.5} />
-        {isClientServiceNotification(notification) && (
-          <Container row style={{ width: "200px" }}>
-            <Tag>
-              {match(notification.service.config.type)
-                .with("web", () => <ServiceTypeIcon src={web} />)
-                .with("worker", () => <ServiceTypeIcon src={worker} />)
-                .with("job", () => <ServiceTypeIcon src={job} />)
-                .with("predeploy", () => <ServiceTypeIcon src={job} />)
-                .exhaustive()}
-              <Spacer inline x={0.5} />
-              <Text>{notification.service.name.value}</Text>
-            </Tag>
-          </Container>
-        )}
+        <Container row style={{ gap: "10px" }}>
+          {isClientServiceNotification(notification) && (
+            <Container row>
+              <Tag hoverable={false}>
+                {match(notification.service.config.type)
+                  .with("web", () => <ServiceTypeIcon src={web} />)
+                  .with("worker", () => <ServiceTypeIcon src={worker} />)
+                  .with("job", () => <ServiceTypeIcon src={job} />)
+                  .with("predeploy", () => <ServiceTypeIcon src={job} />)
+                  .exhaustive()}
+                <Spacer inline x={0.5} />
+                <Text>{notification.service.name.value}</Text>
+              </Tag>
+            </Container>
+          )}
+          {matchingVersionNumber !== 0 && (
+            <Container row style={{ width: "200px" }}>
+              <Tag hoverable={false}>
+                <Text>{`Version ${matchingVersionNumber}`}</Text>
+              </Tag>
+            </Container>
+          )}
+        </Container>
       </Container>
       <Container row style={{ paddingRight: "10px" }}>
         <StatusDot color={"#FFBF00"} />

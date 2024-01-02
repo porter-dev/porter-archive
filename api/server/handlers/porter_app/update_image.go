@@ -36,9 +36,10 @@ func NewUpdateImageHandler(
 
 // UpdateImageRequest is the request object for the /apps/{porter_app_name}/update-image endpoint
 type UpdateImageRequest struct {
-	DeploymentTargetId string `json:"deployment_target_id"`
-	Repository         string `json:"repository"`
-	Tag                string `json:"tag"`
+	DeploymentTargetId   string `json:"deployment_target_id"`
+	DeploymentTargetName string `json:"deployment_target_name"`
+	Repository           string `json:"repository"`
+	Tag                  string `json:"tag"`
 }
 
 // UpdateImageResponse is the response object for the /apps/{porter_app_name}/update-image endpoint
@@ -74,12 +75,22 @@ func (c *UpdateImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetId},
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: request.DeploymentTargetName},
+		telemetry.AttributeKV{Key: "repository", Value: request.Repository},
+		telemetry.AttributeKV{Key: "tag", Value: request.Tag},
+	)
+
 	updateImageReq := connect.NewRequest(&porterv1.UpdateAppImageRequest{
-		ProjectId:          int64(project.ID),
-		DeploymentTargetId: request.DeploymentTargetId,
-		RepositoryUrl:      request.Repository,
-		Tag:                request.Tag,
-		AppName:            appName,
+		ProjectId:     int64(project.ID),
+		RepositoryUrl: request.Repository,
+		Tag:           request.Tag,
+		AppName:       appName,
+		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+			Id:   request.DeploymentTargetId,
+			Name: request.DeploymentTargetName,
+		},
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.UpdateAppImage(ctx, updateImageReq)
 	if err != nil {

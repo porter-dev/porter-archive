@@ -81,10 +81,11 @@ export function useDefaultDeploymentTarget(): {
 export function useDeploymentTargetList(input: { preview: boolean }): {
   deploymentTargetList: DeploymentTarget[];
   isDeploymentTargetListLoading: boolean;
+  refetchDeploymentTargetList: () => void;
 } {
   const { currentProject, currentCluster } = useContext(Context);
 
-  const { data = [], isLoading } = useQuery(
+  const { data = [], isLoading, refetch } = useQuery(
     [
       "listDeploymentTargets",
       currentProject?.id,
@@ -123,5 +124,6 @@ export function useDeploymentTargetList(input: { preview: boolean }): {
   return {
     deploymentTargetList: data,
     isDeploymentTargetListLoading: isLoading,
+    refetchDeploymentTargetList: refetch,
   };
 }

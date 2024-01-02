@@ -22,15 +22,17 @@ export const appRevisionValidator = z.object({
     "DEPLOYMENT_PROGRESSING",
     "DEPLOYMENT_SUCCESSFUL",
     "DEPLOYMENT_FAILED",
+    "DEPLOYMENT_SUPERSEDED",
+    "ROLLBACK_SUCCESSFUL",
+    "ROLLBACK_FAILED",
+    "ROLLBACK_SKIPPED",
   ]),
   b64_app_proto: z.string(),
   revision_number: z.number(),
-  deployment_target: z.object(
-{
-        id: z.string(),
-        name: z.string()
-      }
-  ),
+  deployment_target: z.object({
+    id: z.string(),
+    name: z.string(),
+  }),
   id: z.string(),
   created_at: z.string(),
   updated_at: z.string(),

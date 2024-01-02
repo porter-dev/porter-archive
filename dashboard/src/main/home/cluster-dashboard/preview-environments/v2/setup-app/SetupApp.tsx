@@ -1,23 +1,23 @@
 import React, { useContext, useMemo } from "react";
-import { RouteComponentProps, withRouter } from "react-router";
+import { useQuery } from "@tanstack/react-query";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
+import Loading from "components/Loading";
+import Back from "components/porter/Back";
+import Spacer from "components/porter/Spacer";
+import { LatestRevisionProvider } from "main/home/app-dashboard/app-view/LatestRevisionContext";
+import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
 import pull_request from "assets/pull_request_icon.svg";
 
-import Back from "components/porter/Back";
-import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import Spacer from "components/porter/Spacer";
-import AppTemplateForm from "./AppTemplateForm";
-import { LatestRevisionProvider } from "main/home/app-dashboard/app-view/LatestRevisionContext";
-import { useQuery } from "@tanstack/react-query";
-import { Context } from "shared/Context";
-import api from "shared/api";
-import { match } from "ts-pattern";
-import { z } from "zod";
-import { PorterApp } from "@porter-dev/api-contracts";
-import Loading from "components/Loading";
+import { existingTemplateWithEnvValidator } from "../types";
+import { PreviewAppDataContainer } from "./PreviewAppDataContainer";
 
-type Props = RouteComponentProps & {};
+type Props = RouteComponentProps;
 
 const SetupApp: React.FC<Props> = ({ location }) => {
   const { currentCluster, currentProject } = useContext(Context);
@@ -56,27 +56,11 @@ const SetupApp: React.FC<Props> = ({ location }) => {
           }
         );
 
-        const data = await z
-          .object({
-            template_b64_app_proto: z.string(),
-            app_env: z.object({
-              variables: z.record(z.string()).default({}),
-              secret_variables: z.record(z.string()).default({}),
-            }),
-          })
-          .parseAsync(res.data);
-
-        const template = PorterApp.fromJsonString(
-          atob(data.template_b64_app_proto),
-          {
-            ignoreUnknownFields: true,
-          }
+        const template = await existingTemplateWithEnvValidator.parseAsync(
+          res.data
         );
 
-        return {
-          template,
-          env: data.app_env,
-        };
+        return template;
       } catch (err) {
         return null;
       }
@@ -108,7 +92,7 @@ const SetupApp: React.FC<Props> = ({ location }) => {
             {match(templateRes)
               .with({ status: "loading" }, () => <Loading />)
               .with({ status: "success" }, ({ data }) => {
-                return <AppTemplateForm existingTemplate={data} />;
+                return <PreviewAppDataContainer existingTemplate={data} />;
               })
               .otherwise(() => null)}
             <Spacer y={3} />

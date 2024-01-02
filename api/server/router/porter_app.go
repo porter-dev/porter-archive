@@ -140,6 +140,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/pods -> cluster.NewPodStatusHandler
+	appPodStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/pods", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appPodStatusHandler := porter_app.NewPodStatusHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appPodStatusEndpoint,
+		Handler:  appPodStatusHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/applications/{name}/releases/{version}/pods/all -> porter_app.NewPorterAppPodsGetHandler
 	getPorterAppPodsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -601,6 +630,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/env-variables -> porter_app.AppEnvVariablesHandler
+	appEnvVariablesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/env-variables", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appEnvVariablesHandler := porter_app.NewAppEnvVariablesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appEnvVariablesEndpoint,
+		Handler:  appEnvVariablesHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id}/yaml -> porter_app.NewPorterYAMLFromRevisionHandler
 	porterYAMLFromRevision := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -830,6 +888,35 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: currentAppRevisionEndpoint,
 		Handler:  currentAppRevisionHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/notifications -> porter_app.NewAppNotificationsHandler
+	appNotificationsEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/notifications", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appNotificationsHandler := porter_app.NewAppNotificationsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appNotificationsEndpoint,
+		Handler:  appNotificationsHandler,
 		Router:   r,
 	})
 
@@ -1125,14 +1212,14 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/pods -> cluster.NewPodStatusHandler
-	appPodStatusEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/service_status -> cluster.NewAppServiceStatusHandler
+	appServiceStatusEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}/pods", relPathV2, types.URLParamPorterAppName),
+				RelativePath: fmt.Sprintf("%s/{%s}/service_status", relPathV2, types.URLParamPorterAppName),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -1142,15 +1229,15 @@ func getPorterAppRoutes(
 		},
 	)
 
-	appPodStatusHandler := porter_app.NewPodStatusHandler(
+	appServiceStatusHandler := porter_app.NewServiceStatusHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: appPodStatusEndpoint,
-		Handler:  appPodStatusHandler,
+		Endpoint: appServiceStatusEndpoint,
+		Handler:  appServiceStatusHandler,
 		Router:   r,
 	})
 

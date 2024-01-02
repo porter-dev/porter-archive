@@ -6,8 +6,10 @@ import Fieldset from "components/porter/Fieldset";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { type DeploymentTarget } from "lib/hooks/useDeploymentTarget";
 import { type ClientNotification } from "lib/porter-apps/notification";
 
+import { useLatestRevision } from "../../LatestRevisionContext";
 import NotificationExpandedView from "./expanded-views/NotificationExpandedView";
 import NotificationList from "./NotificationList";
 
@@ -16,7 +18,7 @@ type Props = {
   projectId: number;
   clusterId: number;
   appName: string;
-  deploymentTargetId: string;
+  deploymentTarget: DeploymentTarget;
   appId: number;
 };
 
@@ -25,10 +27,11 @@ const NotificationFeed: React.FC<Props> = ({
   projectId,
   clusterId,
   appName,
-  deploymentTargetId,
+  deploymentTarget,
   appId,
 }) => {
   const { search } = useLocation();
+  const { tabUrlGenerator } = useLatestRevision();
   const history = useHistory();
   const queryParams = new URLSearchParams(search);
   const notificationId = queryParams.get("notification_id");
@@ -68,7 +71,11 @@ const NotificationFeed: React.FC<Props> = ({
     <StyledNotificationFeed>
       {selectedNotification ? (
         <>
-          <Link to={`/apps/${appName}/notifications`}>
+          <Link
+            to={tabUrlGenerator({
+              tab: "notifications",
+            })}
+          >
             <BackButton>
               <i className="material-icons">keyboard_backspace</i>
               Notifications
@@ -80,7 +87,7 @@ const NotificationFeed: React.FC<Props> = ({
             projectId={projectId}
             clusterId={clusterId}
             appName={appName}
-            deploymentTargetId={deploymentTargetId}
+            deploymentTargetId={deploymentTarget.id}
             appId={appId}
           />
         </>
@@ -89,9 +96,18 @@ const NotificationFeed: React.FC<Props> = ({
           notifications={notifications}
           onNotificationClick={(notification: ClientNotification) => {
             history.push(
-              `/apps/${appName}/notifications?notification_id=${notification.id}`
+              tabUrlGenerator({
+                tab: "notifications",
+                queryParams: {
+                  notification_id: notification.id,
+                },
+              })
             );
           }}
+          projectId={projectId}
+          clusterId={clusterId}
+          appName={appName}
+          deploymentTargetId={deploymentTarget.id}
         />
       )}
     </StyledNotificationFeed>

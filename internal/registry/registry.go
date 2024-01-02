@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -1143,16 +1144,12 @@ func (r *Registry) ListImages(
 
 func (r *Registry) GetECRPaginatedImages(
 	repoName string,
-	repo repository.Repository,
 	maxResults int64,
 	nextToken *string,
+	aws *ints.AWSIntegration,
 ) ([]*ptypes.Image, *string, error) {
-	aws, err := repo.AWSIntegration().ReadAWSIntegration(
-		r.ProjectID,
-		r.AWSIntegrationID,
-	)
-	if err != nil {
-		return nil, nil, err
+	if aws == nil {
+		return nil, nil, errors.New("aws integration is nil")
 	}
 
 	sess, err := aws.GetSession()

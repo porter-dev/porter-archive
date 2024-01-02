@@ -13,7 +13,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/porter-dev/porter/internal/porter_app"
-	"github.com/porter-dev/porter/internal/porter_app/notifications"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -51,8 +50,6 @@ type LatestAppRevisionRequest struct {
 type LatestAppRevisionResponse struct {
 	// AppRevision is the latest revision for the app
 	AppRevision porter_app.Revision `json:"app_revision"`
-	// Notifications are the notifications associated with the app revision
-	Notifications []notifications.Notification `json:"notifications"`
 }
 
 // ServeHTTP translates the request into a CurrentAppRevision grpc request, forwards to the cluster control plane, and returns the response.
@@ -152,34 +149,9 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		telemetry.AttributeKV{Key: "app-revision-id", Value: appRevisionId},
 		telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId},
 	)
-	notificationEvents, err := c.Repo().PorterAppEvent().ReadNotificationsByAppRevisionID(ctx, appInstanceId, appRevisionId)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting notifications from repo")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-	latestNotifications := make([]notifications.Notification, 0)
-	for _, event := range notificationEvents {
-		notification, err := notifications.NotificationFromPorterAppEvent(event)
-		if err != nil {
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "notification-conversion-error", Value: err.Error()})
-			continue
-		}
-		if notification == nil {
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "notification-conversion-error", Value: "notification is nil"})
-			continue
-		}
-		// TODO: remove this check once this attribute is not found in the span for >30 days
-		if notification.Scope == "" {
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "notification-conversion-error", Value: "old-notification-format"})
-			continue
-		}
-		latestNotifications = append(latestNotifications, *notification)
-	}
 
 	response := LatestAppRevisionResponse{
-		AppRevision:   encodedRevision,
-		Notifications: latestNotifications,
+		AppRevision: encodedRevision,
 	}
 
 	c.WriteResult(w, r, response)

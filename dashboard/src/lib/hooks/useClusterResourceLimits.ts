@@ -10,7 +10,10 @@ import convert from "convert";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
-import { AWS_INSTANCE_LIMITS } from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
+import {
+  AWS_INSTANCE_LIMITS,
+  AZURE_INSTANCE_LIMITS,
+} from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
 
 import api from "shared/api";
 
@@ -78,6 +81,7 @@ export type NodePools = {
   maxInstances: number;
   nodePoolType: string;
   isStateful?: boolean;
+  additionalTaints?: string[];
 };
 
 const clusterNodesValidator = z
@@ -106,13 +110,45 @@ const clusterNodesValidator = z
       return defaultResources;
     }
     const instanceType = data.labels["beta.kubernetes.io/instance-type"];
-    const res = z
-      .tuple([z.string(), z.string()])
-      .safeParse(instanceType?.split("."));
-    if (!res.success) {
+
+    if (!instanceType) {
       return defaultResources;
     }
-    const [instanceClass, instanceSize] = res.data;
+
+    // Azure instance types are all prefixed with "Standard_"
+    if (instanceType.startsWith("Standard_")) {
+      if (AZURE_INSTANCE_LIMITS[instanceType]) {
+        const { vCPU, RAM } = AZURE_INSTANCE_LIMITS[instanceType];
+        return {
+          maxCPU: vCPU,
+          maxRAM: RAM,
+          azureType: instanceType,
+        };
+      } else {
+        return defaultResources;
+      }
+    }
+
+    let parsedType;
+    if (instanceType && instanceType.includes(".")) {
+      parsedType = z
+        .tuple([z.string(), z.string()])
+        .safeParse(instanceType.split("."));
+    } else if (instanceType && instanceType.includes("-")) {
+      const [instanceClass, ...instanceSizeParts] = instanceType.split("-");
+      const instanceSize = instanceSizeParts.join("-");
+      parsedType = z
+        .tuple([z.string(), z.string()])
+        .safeParse([instanceClass, instanceSize]);
+    } else {
+      return defaultResources; // Return defaults if instanceType format is not recognized
+    }
+
+    if (!parsedType.success) {
+      return defaultResources;
+    }
+
+    const [instanceClass, instanceSize] = parsedType.data;
     if (AWS_INSTANCE_LIMITS[instanceClass]?.[instanceSize]) {
       const { vCPU, RAM } = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
       return {

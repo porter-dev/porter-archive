@@ -19,7 +19,6 @@ import document from "assets/document.svg";
 import DeleteApplicationModal from "../../expanded-app/DeleteApplicationModal";
 import { useLatestRevision } from "../LatestRevisionContext";
 import ExportAppModal from "./ExportAppModal";
-import PreviewEnvironmentSettings from "./preview-environments/PreviewEnvironmentSettings";
 
 const Settings: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -27,7 +26,7 @@ const Settings: React.FC = () => {
   const history = useHistory();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const { porterApp, clusterId, projectId, latestProto } = useLatestRevision();
+  const { porterApp, clusterId, projectId } = useLatestRevision();
   const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
   const { control } = useFormContext<PorterAppFormData>();
@@ -147,10 +146,6 @@ const Settings: React.FC = () => {
 
   return (
     <StyledSettingsTab>
-      {currentProject?.preview_envs_enabled && !!latestProto.build ? (
-        <PreviewEnvironmentSettings />
-      ) : null}
-
       {currentCluster?.cloud_provider === "AWS" &&
         currentProject?.efs_enabled && (
           <>

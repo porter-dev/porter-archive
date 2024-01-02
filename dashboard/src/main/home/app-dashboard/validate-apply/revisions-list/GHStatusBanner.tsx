@@ -81,7 +81,6 @@ const GHStatusBanner: React.FC = () => {
           "IMAGE_AVAILABLE",
           "DEPLOYMENT_PROGRESSING",
           "DEPLOYMENT_SUCCESSFUL",
-          "DEPLOYMENT_FAILED",
           () => true
         )
         .otherwise(() => false)

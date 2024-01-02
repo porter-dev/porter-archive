@@ -98,17 +98,19 @@ export const clientAppValidator = z.object({
     .default([]),
   build: buildValidator,
   helmOverrides: z.string().optional(),
+  requiredApps: z.object({ name: z.string() }).array().default([]),
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 
+export const basePorterAppFormValidator = z.object({
+  app: clientAppValidator,
+  source: sourceValidator,
+  deletions: deletionValidator,
+  redeployOnSave: z.boolean().default(false),
+});
+
 // porterAppFormValidator is used to validate inputs when creating + updating an app
-export const porterAppFormValidator = z
-  .object({
-    app: clientAppValidator,
-    source: sourceValidator,
-    deletions: deletionValidator,
-    redeployOnSave: z.boolean().default(false),
-  })
+export const porterAppFormValidator = basePorterAppFormValidator
   .refine(
     ({ app }) => {
       if (app.predeploy?.[0]?.run) {
@@ -308,14 +310,17 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           build: clientBuildToProto(app.build),
           ...(predeploy && {
             predeploy: serviceProto(serializeService(predeploy)),
-            helmOverrides:
-              app.helmOverrides != null
-                ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
-                : undefined,
           }),
+          helmOverrides:
+            app.helmOverrides != null
+              ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
+              : undefined,
           efsStorage: new EFS({
             enabled: app.efsStorage.enabled,
           }),
+          requiredApps: app.requiredApps.map((app) => ({
+            name: app.name,
+          })),
         })
     )
     .with(
@@ -339,6 +344,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           efsStorage: new EFS({
             enabled: app.efsStorage.enabled,
           }),
+          requiredApps: app.requiredApps.map((app) => ({
+            name: app.name,
+          })),
         })
     )
     .exhaustive();
@@ -486,6 +494,9 @@ export function clientAppFromProto({
       efsStorage: new EFS({
         enabled: proto.efsStorage?.enabled ?? false,
       }),
+      requiredApps: proto.requiredApps.map((app) => ({
+        name: app.name,
+      })),
     };
   }
 
@@ -525,6 +536,9 @@ export function clientAppFromProto({
     },
     helmOverrides,
     efsStorage: { enabled: proto.efsStorage?.enabled ?? false },
+    requiredApps: proto.requiredApps.map((app) => ({
+      name: app.name,
+    })),
   };
 }
 

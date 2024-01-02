@@ -62,7 +62,7 @@ const ProjectButton: React.FC<PropsType> = (props) => {
 
         {(user.isPorterUser && currentProject.simplified_view_enabled) ?
           <Tooltip
-            content={`Porter Apps ${currentProject.validate_apply_v2 ? "V2" : "V1"}`}
+            content={`Porter Apps ${currentProject.validate_apply_v2 ? currentProject.beta_features_enabled ? "V2 (Update)" : "V2 (Apply)" : "V1"}`}
             position="right"
           >
             <MainSelector

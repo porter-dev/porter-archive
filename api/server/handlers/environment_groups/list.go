@@ -5,6 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"connectrpc.com/connect"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
+
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -75,7 +78,7 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	allEnvGroupVersions, err := environmentgroups.ListEnvironmentGroups(ctx, agent, environmentgroups.WithNamespace(environmentgroups.Namespace_EnvironmentGroups), environmentgroups.WithoutDefaultAppEnvironmentGroups())
+	allEnvGroupVersions, err := environmentgroups.ListEnvironmentGroups(ctx, agent, environmentgroups.WithNamespace(environmentgroups.Namespace_EnvironmentGroups), environmentgroups.WithoutDefaultAppEnvironmentGroups(), environmentgroups.WithoutDefaultAddonEnvironmentGroups())
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "unable to list all environment groups")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -134,15 +137,29 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 				linkedApplications = append(linkedApplications, porterAppName)
 			}
 		} else {
-			applications, err := environmentgroups.LinkedApplications(ctx, agent, latestVersion.Name, false)
+			appsLinkedToEnvGroupReq := connect.NewRequest(&porterv1.AppsLinkedToEnvGroupRequest{
+				ProjectId:     int64(project.ID),
+				ClusterId:     int64(cluster.ID),
+				EnvGroupName:  envGroupName,
+				IgnorePreview: true,
+			})
+
+			appsLinkedToEnvGroupResp, err := c.Config().ClusterControlPlaneClient.AppsLinkedToEnvGroup(ctx, appsLinkedToEnvGroupReq)
 			if err != nil {
 				err = telemetry.Error(ctx, span, err, "unable to get linked applications")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
+			if appsLinkedToEnvGroupResp == nil || appsLinkedToEnvGroupResp.Msg == nil {
+				err = telemetry.Error(ctx, span, err, "ccp resp is nil")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+				return
+			}
 
-			for _, app := range applications {
-				linkedApplications = append(linkedApplications, app.Name)
+			for _, app := range appsLinkedToEnvGroupResp.Msg.LinkedApps {
+				if app != nil {
+					linkedApplications = append(linkedApplications, app.Name)
+				}
 			}
 		}
 

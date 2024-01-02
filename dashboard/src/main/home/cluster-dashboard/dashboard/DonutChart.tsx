@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ArcElement, CategoryScale, Chart, Legend, Tooltip } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
 
@@ -12,7 +12,10 @@ type DonutChartProps = {
 };
 
 const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
-  const countStatusTypes = (): number[] => {
+  const [displayText, setDisplayText] = useState("");
+  const [chartDataValues, setChartDataValues] = useState([0, 0, 0]);
+
+  useEffect(() => {
     const counts = { ENABLED: 0, DISABLED: 0, PENDING: 0 };
 
     Object.values(data.soc2_checks).forEach((check) => {
@@ -20,37 +23,19 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
       counts[status.toUpperCase()]++;
     });
 
-    return [counts.ENABLED, counts.DISABLED, counts.PENDING];
-  };
-
-  const enabledCount = countStatusTypes()[0];
-  const totalCount = Object.values(data.soc2_checks).length;
-  const displayText = `${enabledCount}/${totalCount} checks enabled`;
-
-  const centerTextPlugin = {
-    id: "centerTextPlugin",
-    afterDraw: (chart) => {
-      const ctx = chart.ctx;
-      const { width, height } = chart;
-      const fontSize = (height / 280).toFixed(2);
-      ctx.font = `${fontSize}em sans-serif`;
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "#ffffff";
-
-      const textX = Math.round(
-        (width - ctx.measureText(displayText).width) / 2
-      );
-      const textY = height / 2;
-
-      ctx.fillText(displayText, textX, textY);
-    },
-  };
+    setDisplayText(
+      `${counts.ENABLED} / ${
+        Object.values(data.soc2_checks).length
+      } checks enabled`
+    );
+    setChartDataValues([counts.ENABLED, counts.DISABLED, counts.PENDING]);
+  }, [data]); // Dependency array ensures this runs only when `data` changes
 
   const chartData = {
     labels: ["Enabled", "Disabled", "Pending"],
     datasets: [
       {
-        data: countStatusTypes(),
+        data: chartDataValues,
         backgroundColor: ["green", "red", "orange"],
         borderColor: ["green", "red", "orange"],
         borderWidth: 2,
@@ -64,7 +49,6 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
     plugins: {
       legend: false,
       tooltip: {},
-      centerTextPlugin: {},
     },
     elements: {
       arc: {
@@ -76,8 +60,6 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
     },
     maintainAspectRatio: false,
   };
-
-  Chart.register(centerTextPlugin);
 
   const CustomLegend = (): JSX.Element => (
     <div
@@ -112,6 +94,15 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
     <>
       <Container row>
         <div style={{ width: "300px", height: "300px" }}>
+          <div
+            style={{
+              marginBottom: "20px",
+              textAlign: "center",
+              fontWeight: "bold",
+            }}
+          >
+            {displayText}
+          </div>
           <Doughnut data={chartData} options={options} />
         </div>
         <Spacer inline x={1} />

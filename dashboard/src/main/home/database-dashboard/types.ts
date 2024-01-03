@@ -10,17 +10,20 @@ export const datastoreEnvValidator = z.object({
 
 export type DatastoreEnvWithSource = z.infer<typeof datastoreEnvValidator>;
 
+export const datastoreMetadataValidator = z.object({
+  name: z.string(),
+  value: z.string().default(""),
+});
+
+export type DatastoreMetadataWithSource = z.infer<
+  typeof datastoreMetadataValidator
+>;
+
 export const datastoreValidator = z.object({
   name: z.string(),
   type: z.string(),
   status: z.string().optional(),
-  metadata: z
-    .object({
-      name: z.string(),
-      value: z.string().default(""),
-    })
-    .array()
-    .optional(),
+  metadata: datastoreMetadataValidator.array().optional(),
   env: datastoreEnvValidator.optional(),
   connection_string: z.string().optional(),
 });

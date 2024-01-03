@@ -18,7 +18,10 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
     const counts = { ENABLED: 0, DISABLED: 0, PENDING: 0 };
 
     Object.values(data.soc2_checks).forEach((check) => {
-      const status = check.status || "DISABLED";
+      let status = check.status || "DISABLED";
+      if (status.includes("PENDING")) {
+        status = "PENDING";
+      }
       counts[status.toUpperCase()]++;
     });
 
@@ -30,11 +33,13 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
     datasets: [
       {
         data: chartDataValues,
-        backgroundColor: ["green", "red", "orange"],
-        borderColor: ["green", "red", "orange"],
-        borderWidth: 1,
+        backgroundColor: ["#1dbf1d", "#e34040", "rgb(255, 205, 86)"],
+        borderColor: "#171b21",
+        borderWidth: 2,
         hoverBorderColor: "#171b21",
-        hoverBorderWidth: 1,
+        hoverBorderWidth: 3,
+        borderJoinStyle: "round",
+        hoverBorderJoinStyle: "bevel",
       },
     ],
   };
@@ -46,11 +51,10 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
     },
     elements: {
       arc: {
-        borderWidth: 1,
+        borderWidth: 3,
         borderColor: "#fff",
         borderAlign: "inner",
-        hoverOffset: 4,
-        borderJoinStyle: "round",
+        hoverOffset: 1,
       },
     },
     responsive: true,

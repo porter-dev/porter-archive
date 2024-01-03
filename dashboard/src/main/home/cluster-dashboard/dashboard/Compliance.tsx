@@ -270,7 +270,7 @@ const Compliance: React.FC<Props> = (props) => {
   const determineStatus = (enabled: boolean): string => {
     if (enabled) {
       if (currentCluster?.status === "UPDATING") {
-        return "PENDING";
+        return "PENDING_ENABLED";
       } else return "ENABLED";
     }
     return "";

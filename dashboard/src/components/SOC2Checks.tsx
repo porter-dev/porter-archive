@@ -44,10 +44,10 @@ const SOC2Checks: React.FC<Props> = ({
         acc[key] = {
           ...soc2Checks[key],
           status: soc2Checks[key].enabled
-            ? soc2Checks[key].status === "PENDING"
-              ? "PENDING"
+            ? soc2Checks[key].status === "PENDING_ENABLED"
+              ? "PENDING_ENABLED"
               : "ENABLED"
-            : "PENDING",
+            : "PENDING_ENABLED",
         };
         return acc;
       }, {});
@@ -61,8 +61,8 @@ const SOC2Checks: React.FC<Props> = ({
           ...soc2Checks[key],
           status: !soc2Checks[key].enabled
             ? ""
-            : soc2Checks[key].status === "PENDING"
-            ? "PENDING"
+            : soc2Checks[key].status === "PENDING_ENABLED"
+            ? "PENDING_ENABLED"
             : "ENABLED",
         };
         return acc;
@@ -88,6 +88,21 @@ const SOC2Checks: React.FC<Props> = ({
       }
     };
 
+    const determineStatus = (currentStatus: string): string => {
+      if (currentStatus === "ENABLED") {
+        return "PENDING_DISABLED";
+      }
+      if (currentStatus === "PENDING_DISABLED") {
+        return "ENABLED";
+      }
+      if (currentStatus === "PENDING_ENABLED") {
+        return "";
+      }
+      if (currentStatus === "") {
+        return "PENDING_ENABLED";
+      }
+    };
+
     const handleEnable = (): void => {
       setSoc2Data((prev) => ({
         ...prev,
@@ -96,11 +111,7 @@ const SOC2Checks: React.FC<Props> = ({
           [checkKey]: {
             ...prev.soc2_checks[checkKey],
             enabled: !prev.soc2_checks[checkKey].enabled,
-            status: !prev.soc2_checks[checkKey].enabled
-              ? "PENDING"
-              : !prev.soc2_checks[checkKey].enabled
-              ? "ENABLED"
-              : "",
+            status: determineStatus(prev.soc2_checks[checkKey].status),
           },
         },
       }));
@@ -114,9 +125,11 @@ const SOC2Checks: React.FC<Props> = ({
           {status === "LOADING" && (
             <Loading offset="0px" width="20px" height="20px" />
           )}
-          {status === "PENDING" && <StatusIcon src={pending} />}
+          {status === "PENDING_ENABLED" && <StatusIcon src={pending} />}
           {status === "ENABLED" && <StatusIcon src={healthy} />}
-          {status === "" && <StatusIcon height="10px" src={failure} />}
+          {(status === "" || status === "PENDING_DISABLED") && (
+            <StatusIcon height="10px" src={failure} />
+          )}
           <Spacer inline x={1} />
           <Text style={{ marginLeft: "10px", flex: 1 }}>{checkLabel}</Text>
           {enabled && (
@@ -152,7 +165,9 @@ const SOC2Checks: React.FC<Props> = ({
                     disabled={
                       readOnly ||
                       enableAll ||
-                      (enabled && checkData?.locked && status !== "PENDING")
+                      (enabled &&
+                        checkData?.locked &&
+                        status !== "PENDING_ENABLED")
                     }
                     disabledTooltip={
                       readOnly

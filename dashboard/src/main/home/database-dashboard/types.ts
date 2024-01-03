@@ -22,10 +22,10 @@ export type DatastoreMetadataWithSource = z.infer<
 export const datastoreValidator = z.object({
   name: z.string(),
   type: z.string(),
-  status: z.string().optional(),
-  metadata: datastoreMetadataValidator.array().optional(),
+  status: z.string().default(""),
+  metadata: datastoreMetadataValidator.array().default([]),
   env: datastoreEnvValidator.optional(),
-  connection_string: z.string().optional(),
+  connection_string: z.string().default(""),
 });
 
 export type DatastoreWithSource = z.infer<typeof datastoreValidator>;

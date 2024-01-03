@@ -1,6 +1,7 @@
 package datastore
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -38,7 +39,7 @@ func NewDeleteDatastoreHandler(
 }
 
 func (h *DeleteDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-datastore-status")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-datastore-delete")
 	defer span.End()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
@@ -54,41 +55,65 @@ func (h *DeleteDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		telemetry.AttributeKV{Key: "datastore-type", Value: request.Type},
 	)
 
-	clusters, err := h.Repo().Cluster().ListClustersByProjectID(project.ID)
+	cluster, err := h.getClusterForDatastore(ctx, r, project.ID, request.Name)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to get project clusters")
+		err = telemetry.Error(ctx, span, err, "unable to find datastore on any associated cluster")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	println("cluster length", len(clusters))
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID})
+
+	helmAgent, err := h.GetHelmAgent(ctx, r, cluster, "ack-system")
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "unable to get helm client for cluster")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	_, err = helmAgent.GetRelease(ctx, request.Name, 0, false)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "unable to get helm release")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	_, err = helmAgent.UninstallChart(ctx, request.Name)
+	if err != nil {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID})
+		err := telemetry.Error(ctx, span, err, "unable to uninstall chart")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	// if the release was deleted by helm without error, mark it as accepted
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (h *DeleteDatastoreHandler) getClusterForDatastore(ctx context.Context, r *http.Request, projectID uint, datastoreName string) (*models.Cluster, error) {
+	ctx, span := telemetry.NewSpan(ctx, "get-cluster-for-datastore")
+
+	if r == nil {
+		return nil, telemetry.Error(ctx, span, nil, "missing http request object")
+	}
+
+	clusters, err := h.Repo().Cluster().ListClustersByProjectID(projectID)
+	if err != nil {
+		return nil, telemetry.Error(ctx, span, err, "unable to get project clusters")
+	}
+
 	for _, cluster := range clusters {
 		helmAgent, err := h.GetHelmAgent(ctx, r, cluster, "ack-system")
 		if err != nil {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID})
-			err := telemetry.Error(ctx, span, err, "unable to helm client for cluster")
-			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
+			return nil, telemetry.Error(ctx, span, err, "unable to get helm client for cluster")
 		}
 
-		_, err = helmAgent.GetRelease(ctx, request.Name, 0, false)
-		if err != nil {
-			continue
+		_, err = helmAgent.GetRelease(ctx, datastoreName, 0, false)
+		if err == nil {
+			return cluster, nil
 		}
-
-		_, err = helmAgent.UninstallChart(ctx, request.Name)
-		if err != nil {
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID})
-			err := telemetry.Error(ctx, span, err, "unable to uninstall chart")
-			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		// if the release was deleted by helm without error, mark it as accepted
-		w.WriteHeader(http.StatusAccepted)
-		return
 	}
 
-	err = telemetry.Error(ctx, span, nil, "unable to find datastore on any associated cluster")
-	h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
+	return nil, telemetry.Error(ctx, span, nil, "unable to find datastore on any associated cluster")
 }

@@ -8,42 +8,39 @@ export const datastoreEnvValidator = z.object({
   version: z.number(),
 });
 
-export type DatastoreEnvWithSource = z.infer<
-  typeof datastoreEnvValidator
->;
+export type DatastoreEnvWithSource = z.infer<typeof datastoreEnvValidator>;
 
 export const datastoreValidator = z.object({
   name: z.string(),
   type: z.string(),
   status: z.string().optional(),
-  metadata: z.object({
-    name: z.string(),
-    value: z.string(),
-  }).array().optional(),
+  metadata: z
+    .object({
+      name: z.string(),
+      value: z.string().default(""),
+    })
+    .array()
+    .optional(),
   env: datastoreEnvValidator.optional(),
   connection_string: z.string().optional(),
 });
 
-export type DatastoreWithSource = z.infer<
-  typeof datastoreValidator
->;
+export type DatastoreWithSource = z.infer<typeof datastoreValidator>;
 
 export const datastoreListResponseValidator = z.object({
-  datastores: datastoreValidator.array()
-})
+  datastores: datastoreValidator.array(),
+});
 
 export const cloudProviderValidator = z.object({
   cloud_provider_id: z.string(),
   project_id: z.number(),
 });
 
-export type CloudProviderWithSource = z.infer<
-  typeof cloudProviderValidator
->;
+export type CloudProviderWithSource = z.infer<typeof cloudProviderValidator>;
 
 export const cloudProviderListResponseValidator = z.object({
-  accounts: cloudProviderValidator.array()
-})
+  accounts: cloudProviderValidator.array(),
+});
 
 export const cloudProviderDatastoreSchema = z.object({
   project_id: z.number(),
@@ -52,4 +49,6 @@ export const cloudProviderDatastoreSchema = z.object({
   datastore: datastoreValidator,
 });
 
-export type CloudProviderDatastore = z.infer<typeof cloudProviderDatastoreSchema>;
+export type CloudProviderDatastore = z.infer<
+  typeof cloudProviderDatastoreSchema
+>;

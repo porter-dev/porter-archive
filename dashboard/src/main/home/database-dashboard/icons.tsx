@@ -10,9 +10,5 @@ export const datastoreIcons: Record<string, string> = {
 };
 
 export const getDatastoreIcon = (datastoreType: string): string => {
-  if (Object.prototype.hasOwnProperty.call(datastoreIcons, datastoreType)) {
-    return datastoreIcons[datastoreType];
-  }
-
-  return awsRDS;
+  return datastoreIcons[datastoreType] ?? awsRDS;
 };

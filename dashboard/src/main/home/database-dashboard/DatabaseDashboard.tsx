@@ -1,220 +1,179 @@
+import React, { useContext, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
-import calendar from "assets/calendar-number.svg";
-import database from "assets/database.svg";
-import grid from "assets/grid.png";
-import list from "assets/list.png";
-import notFound from "assets/not-found.png";
-import healthy from "assets/status-healthy.png";
-import time from "assets/time.png";
-import letter from "assets/vector.svg";
-
-import { Context } from "shared/Context";
-import api from "shared/api";
-import { hardcodedIcons } from "shared/hardcodedNameDict";
-import { search } from "shared/search";
-
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import Loading from "components/Loading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Fieldset from "components/porter/Fieldset";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
-import { Link } from "react-router-dom";
-import { readableDate } from "shared/string_utils";
-
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { search } from "shared/search";
+import database from "assets/database.svg";
+import grid from "assets/grid.png";
+import list from "assets/list.png";
 import loading from "assets/loading.gif";
+import notFound from "assets/not-found.png";
+import healthy from "assets/status-healthy.png";
 
-type Props = {};
+import { getDatastoreIcon } from "./icons";
+import {
+  cloudProviderListResponseValidator,
+  datastoreListResponseValidator,
+  type CloudProviderDatastore,
+  type CloudProviderWithSource,
+} from "./types";
+import { datastoreField } from "./utils";
 
-const templateWhitelist = [
-  "elasticache-redis",
-  "rds-postgresql",
-  "rds-postgresql-aurora",
-];
+type Props = {
+  projectId: number;
+};
 
-const Apps: React.FC<Props> = ({
-}) => {
-  const { currentProject, currentCluster } = useContext(Context);
+const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
+  const { currentCluster } = useContext(Context);
 
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [sort, setSort] = useState<"calendar" | "letter">("calendar");
 
-  // Placeholder (replace w useQuery)
-  const [databases, setDatabases] = useState([]);
-  const [status, setStatus] = useState("");
-  const [databaseStatuses, setDatabaseStatuses] = useState({});
+  const { data: cloudProviderResponse } = useQuery(
+    ["cloudProviders", projectId],
+    async () => {
+      const response = await api.getAwsCloudProviders(
+        "<token>",
+        {},
+        {
+          project_id: projectId,
+        }
+      );
+
+      const results = await cloudProviderListResponseValidator.parseAsync(
+        response.data
+      );
+      return results;
+    },
+    {
+      enabled: !!projectId,
+    }
+  );
+
+  const cloudProviders = cloudProviderResponse?.accounts;
+
+  const { data: datastores, isFetched: isLoaded } = useQuery(
+    [projectId],
+    async () => {
+      if (cloudProviders === undefined) {
+        return;
+      }
+
+      const results = await Promise.all(
+        cloudProviders.map(
+          async (
+            cloudProvider: CloudProviderWithSource
+          ): Promise<CloudProviderDatastore[]> => {
+            const response = await api.getDatastores(
+              "<token>",
+              {},
+              {
+                project_id: cloudProvider.project_id,
+                cloud_provider_name: "aws",
+                cloud_provider_id: cloudProvider.cloud_provider_id,
+                include_metadata: true,
+              }
+            );
+
+            const results = await datastoreListResponseValidator.parseAsync(
+              response.data
+            );
+            return results.datastores.map(
+              (datastore): CloudProviderDatastore => {
+                return {
+                  cloud_provider_name: "aws",
+                  cloud_provider_id: cloudProvider.cloud_provider_id,
+                  datastore,
+                  project_id: cloudProvider.project_id,
+                };
+              }
+            );
+          }
+        )
+      );
+
+      if (results.length === 0) {
+        return;
+      }
+
+      return results.flat(1);
+    },
+    {
+      enabled: !!cloudProviders,
+      refetchInterval: 10000,
+      refetchOnWindowFocus: false,
+    }
+  );
 
   const filteredDatabases = useMemo(() => {
     const filteredBySearch = search(
-      databases ?? [],
+      datastores === undefined ? [] : datastores,
       searchValue,
       {
-        keys: ["name", "chart.metadata.name"],
+        keys: ["name"],
         isCaseSensitive: false,
       }
     );
 
-    return _.sortBy(filteredBySearch);
-  }, [databases, searchValue]);
+    return _.sortBy(filteredBySearch, ["name"]);
+  }, [datastores, searchValue]);
 
-  const updateDatabaseStatuses = async (): Promise<void> => {
-    const newStatuses = {};
-    for (const db of filteredDatabases) {
-      try {
-        if (databaseStatuses[db.name] !== "available") {
-          console.log(db)
-          const statusRes = await api.getDatabaseStatus("<token>", {
-            name: db.name,
-            type: db.chart.metadata.name
-          }, {
-            project_id: currentProject?.id ?? 0,
-            cluster_id: currentCluster?.id ?? 0,
-          });
-          if (statusRes.data.status === "available") {
-            newStatuses[db.name] = statusRes.data.status;
-          }
-          else {
-            newStatuses[db.name] = "updating";
-          }
-        }// Assuming status is returned in this field
-      } catch (err) {
-        console.error("Error fetching database status for", db.name, err);
-        newStatuses[db.name] = "error"; // Or some error state
-      }
-
-    }
-    setDatabaseStatuses(newStatuses);
-  };
-
-
-  const getExpandedChartLinkURL = useCallback((x: any) => {
-    const params = new Proxy(new URLSearchParams(window.location.search), {
-      get: (searchParams, prop: string) => searchParams.get(prop),
-    });
-    const cluster = currentCluster?.name;
-    const route = `/applications/${cluster}/${x.namespace}/${x.name}`;
-    const newParams = {
-      // @ts-ignore
-      project_id: params.project_id,
-      closeChartRedirectUrl: '/databases',
-    };
-    const newURLSearchParams = new URLSearchParams(
-      _.omitBy(newParams, _.isNil)
-    );
-    return `${route}?${newURLSearchParams.toString()}`;
-  }, [currentCluster]);
-
-  const getAddOns = async () => {
-    try {
-      setStatus("loading");
-      const res = await api.getCharts(
-        "<token>",
-        {
-          limit: 50,
-          skip: 0,
-          byDate: false,
-          statusFilter: [
-            "deployed",
-            "uninstalled",
-            "pending",
-            "pending-install",
-            "pending-upgrade",
-            "pending-rollback",
-            "failed",
-          ],
-        },
-        {
-          id: currentProject?.id || -1,
-          cluster_id: currentCluster?.id || -1,
-          namespace: "ack-system",
-        }
-      );
-      setStatus("complete");
-      const charts = res.data || [];
-      const filtered = charts.filter((app: any) => {
-        return (
-          templateWhitelist.includes(app.chart.metadata.name)
-        );
-      });
-      setDatabases(filtered);
-    } catch (err) {
-      setStatus("error");
-    };
-  };
-
-  useEffect(() => {
-    // Call once when the component mounts
-    void updateDatabaseStatuses();
-
-    // Set up the interval for polling every 5 minutes
-    const intervalId = setInterval(() => {
-      void updateDatabaseStatuses();
-    }, 60000); // 60000 milliseconds = 5 minutes
-
-    // Clear interval on component unmount
-    return () => clearInterval(intervalId);
-  }, [filteredDatabases]);
-
-  useEffect(() => {
-    // currentCluster sometimes returns as -1 and passes null check
-
-    if (currentProject?.id >= 0 && currentCluster?.id >= 0) {
-      getAddOns();
-    }
-  }, [currentCluster, currentProject]);
-
-  const renderStatusIcon = (dbName: string): JSX.Element => {
-    const status: string = databaseStatuses[dbName];
+  const renderStatusIcon = (status: string): JSX.Element => {
     switch (status) {
       case "available":
         return <StatusIcon src={healthy} />;
       case "":
         return <></>;
       case "error":
-        return <StatusText>
-          <StatusWrapper success={false}>
-            <Loading src={loading} />
-            {"Creating database"}
-          </StatusWrapper>
-        </StatusText>
+        return (
+          <StatusText>
+            <StatusWrapper success={false}>
+              <Status src={loading} />
+              {"Creating database"}
+            </StatusWrapper>
+          </StatusText>
+        );
       case "updating":
-        return <StatusText>
-          <StatusWrapper success={false}>
-            <Loading src={loading} />
-            {"Creating database"}
-          </StatusWrapper>
-        </StatusText>
+        return (
+          <StatusText>
+            <StatusWrapper success={false}>
+              <Status src={loading} />
+              {"Creating database"}
+            </StatusWrapper>
+          </StatusText>
+        );
       default:
         return <></>;
     }
   };
 
-
-  const renderContents = () => {
+  const renderContents = (): JSX.Element => {
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
     }
 
-    if (status === "loading") {
+    if (datastores === undefined || !isLoaded) {
       return <Loading offset="-150px" />;
     }
 
-    if (databases.length === 0) {
+    if (datastores.length === 0) {
       return (
         <DashboardPlaceholder>
           <Text size={16}>No databases have been created yet</Text>
@@ -225,7 +184,8 @@ const Apps: React.FC<Props> = ({
           <PorterLink to="/databases/new/database">
             <Button
               onClick={async () =>
-                console.log() // TODO: add analytics
+                // TODO: add analytics
+                true
               }
               height="35px"
               alt
@@ -251,21 +211,6 @@ const Apps: React.FC<Props> = ({
             placeholder="Search databases . . ."
             width="100%"
           />
-          <Spacer inline x={2} />
-          <Toggle
-            items={[
-              { label: <ToggleIcon src={calendar} />, value: "calendar" },
-              { label: <ToggleIcon src={letter} />, value: "letter" },
-            ]}
-            active={sort}
-            setActive={(x) => {
-              if (x === "calendar") {
-                setSort("calendar");
-              } else {
-                setSort("letter");
-              }
-            }}
-          />
           <Spacer inline x={1} />
 
           <Toggle
@@ -287,7 +232,8 @@ const Apps: React.FC<Props> = ({
           <PorterLink to="/databases/new/database">
             <Button
               onClick={async () =>
-                console.log() // TODO: add analytics
+                // TODO: add analytics
+                true
               }
               height="30px"
               width="140px"
@@ -305,60 +251,63 @@ const Apps: React.FC<Props> = ({
               <Text color="helper">No matching databases were found.</Text>
             </Container>
           </Fieldset>
-        ) : (status === "loading" ? <Loading offset="-150px" /> : view === "grid" ? (
+        ) : !isLoaded ? (
+          <Loading offset="-150px" />
+        ) : view === "grid" ? (
           <GridList>
-            {(filteredDatabases ?? []).map((app: any, i: number) => {
-              return (
-                <Block to={getExpandedChartLinkURL(app)} key={i}>
-                  <Container row>
-                    <Icon
-                      src={
-                        hardcodedIcons[app.chart.metadata.name] ||
-                        app.chart.metadata.icon
-                      }
-                    />
-                    <Text size={14}>{app.name}</Text>
-                    <Spacer inline x={2} />
-                  </Container>
-                  {renderStatusIcon(app.name)}
-                  <Container row>
-                    <SmallIcon opacity="0.4" src={time} />
-                    <Text size={13} color="#ffffff44">
-                      {readableDate(app.info.last_deployed)}
-                    </Text>
-                  </Container>
-                </Block>
-              );
-            })}
+            {(filteredDatabases ?? []).map(
+              (entry: CloudProviderDatastore, i: number) => {
+                return (
+                  <Link
+                    to={`/databases/${entry.project_id}/${entry.cloud_provider_name}/${entry.cloud_provider_id}/${entry.datastore.name}/`}
+                    key={i}
+                  >
+                    <Block>
+                      <Container row>
+                        <Icon src={getDatastoreIcon(entry.datastore.type)} />
+                        <Text size={14}>{entry.datastore.name}</Text>
+                        <Spacer inline x={2} />
+                      </Container>
+                      {renderStatusIcon(
+                        datastoreField(entry.datastore, "status")
+                      )}
+                      <Container row>
+                        <Text size={13} color="#ffffff44">
+                          {datastoreField(entry.datastore, "engine")}
+                        </Text>
+                      </Container>
+                    </Block>
+                  </Link>
+                );
+              }
+            )}
           </GridList>
         ) : (
           <List>
-            {(filteredDatabases ?? []).map((app: any, i: number) => {
-              return (
-                <Row to={getExpandedChartLinkURL(app)} key={i}>
-                  <Container row>
-                    <MidIcon
-                      src={
-                        hardcodedIcons[app.chart.metadata.name] ||
-                        app.chart.metadata.icon
-                      }
-                    />
-                    <Text size={14}>{app.name}</Text>
-                    <Spacer inline x={1} />
-                    <MidIcon src={healthy} height="16px" />
-                  </Container>
-                  <Spacer height="15px" />
-                  <Container row>
-                    <SmallIcon opacity="0.4" src={time} />
-                    <Text size={13} color="#ffffff44">
-                      {readableDate(app.info.last_deployed)}
-                    </Text>
-                  </Container>
-                </Row>
-              );
-            })}
+            {(filteredDatabases ?? []).map(
+              (entry: CloudProviderDatastore, i: number) => {
+                return (
+                  <Row
+                    to={`/databases/${entry.project_id}/${entry.cloud_provider_name}/${entry.cloud_provider_id}/${entry.datastore.name}/`}
+                    key={i}
+                  >
+                    <Container row>
+                      <MidIcon src={getDatastoreIcon(entry.datastore.type)} />
+                      <Text size={14}>{entry.datastore.name}</Text>
+                      <Spacer inline x={1} />
+                      <MidIcon src={healthy} height="16px" />
+                    </Container>
+                    <Spacer height="15px" />
+                    <Container row>
+                      <Text size={13} color="#ffffff44">
+                        {datastoreField(entry.datastore, "engine")}
+                      </Text>
+                    </Container>
+                  </Row>
+                );
+              }
+            )}
           </List>
-        )
         )}
       </>
     );
@@ -378,108 +327,102 @@ const Apps: React.FC<Props> = ({
   );
 };
 
-export default Apps;
+export default DatabaseDashboard;
 
 const MidIcon = styled.img<{ height?: string }>`
-          height: ${props => props.height || "18px"};
-          margin-right: 11px;
-          `;
+  height: ${(props) => props.height || "18px"};
+  margin-right: 11px;
+`;
 
-const Row = styled(Link) <{ isAtBottom?: boolean }>`
-            cursor: pointer;
-            display: block;
-            padding: 15px;
-            border-bottom: ${props => props.isAtBottom ? "none" : "1px solid #494b4f"};
-            background: ${props => props.theme.clickable.bg};
-            position: relative;
-            border: 1px solid #494b4f;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            animation: fadeIn 0.3s 0s;
-            `;
+const Row = styled(Link)<{ isAtBottom?: boolean }>`
+  cursor: pointer;
+  display: block;
+  padding: 15px;
+  border-bottom: ${(props) =>
+    props.isAtBottom ? "none" : "1px solid #494b4f"};
+  background: ${(props) => props.theme.clickable.bg};
+  position: relative;
+  border: 1px solid #494b4f;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  animation: fadeIn 0.3s 0s;
+`;
 
 const List = styled.div`
-            overflow: hidden;
-            `;
-
-const SmallIcon = styled.img<{ opacity?: string }>`
-              margin-left: 2px;
-              height: 14px;
-              opacity: ${props => props.opacity || 1};
-              margin-right: 10px;
-              `;
+  overflow: hidden;
+`;
 
 const StatusIcon = styled.img`
-              position: absolute;
-              top: 20px;
-              right: 20px;
-              height: 18px;
-              `;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  height: 18px;
+`;
 
 const Icon = styled.img`
-              height: 20px;
-              margin-right: 13px;
-              `;
+  height: 20px;
+  margin-right: 13px;
+`;
 
-const Block = styled(Link)`
-              height: 110px;
-              flex-direction: column;
-              display: flex;
-              justify-content: space-between;
-              cursor: pointer;
-              padding: 20px;
-              color: ${props => props.theme.text.primary};
-              position: relative;
-              border-radius: 5px;
-              background: ${props => props.theme.clickable.bg};
-              border: 1px solid #494b4f;
-              :hover {
-                border: 1px solid #7a7b80;
+const Block = styled.div`
+  height: 110px;
+  flex-direction: column;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 20px;
+  color: ${(props) => props.theme.text.primary};
+  position: relative;
+  border-radius: 5px;
+  background: ${(props) => props.theme.clickable.bg};
+  border: 1px solid #494b4f;
+  :hover {
+    border: 1px solid #7a7b80;
   }
 
-              animation: fadeIn 0.3s 0s;
-              @keyframes fadeIn {
-                from {
-                opacity: 0;
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
     }
-              to {
-                opacity: 1;
+    to {
+      opacity: 1;
     }
   }
-              `;
+`;
 
 const GridList = styled.div`
-              display: grid;
-              grid-column-gap: 25px;
-              grid-row-gap: 25px;
-              grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-              `;
+  display: grid;
+  grid-column-gap: 25px;
+  grid-row-gap: 25px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+`;
 
 const PlaceholderIcon = styled.img`
-              height: 13px;
-              margin-right: 12px;
-              opacity: 0.65;
-              `;
+  height: 13px;
+  margin-right: 12px;
+  opacity: 0.65;
+`;
 
 const ToggleIcon = styled.img`
-              height: 12px;
-              margin: 0 5px;
-              min-width: 12px;
-              `;
+  height: 12px;
+  margin: 0 5px;
+  min-width: 12px;
+`;
 
 const I = styled.i`
-              color: white;
-              font-size: 14px;
-              display: flex;
-              align-items: center;
-              margin-right: 5px;
-              justify-content: center;
-              `;
+  color: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin-right: 5px;
+  justify-content: center;
+`;
 
 const StyledAppDashboard = styled.div`
-              width: 100%;
-              height: 100%;
-              `;
+  width: 100%;
+  height: 100%;
+`;
 
 const StatusText = styled.div`
   position: absolute;
@@ -509,7 +452,7 @@ const StatusWrapper = styled.div<{
     color: ${(props) => (props.success ? "#4797ff" : "#fcba03")};
   }
 `;
-const Loading = styled.img`
+const Status = styled.img`
   width: 15px;
   height: 15px;
   margin-right: 9px;

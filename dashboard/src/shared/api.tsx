@@ -2674,6 +2674,18 @@ const provisionDatabase = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/provision/rds`
 );
 
+const getAwsCloudProviders = baseApi<
+  {},
+  {
+    project_id: number;
+  }
+>(
+  "GET",
+  ({ project_id }) => {
+    return `/api/projects/${project_id}/cloud-providers/aws`;
+  }
+);
+
 const getDatabases = baseApi<
   {},
   {
@@ -2685,6 +2697,43 @@ const getDatabases = baseApi<
   ({ project_id, cluster_id }) =>
     `/api/projects/${project_id}/clusters/${cluster_id}/databases`
 );
+
+const getDatastores = baseApi<
+  {},
+  {
+    project_id: number;
+    cloud_provider_name: string;
+    cloud_provider_id: string;
+    datastore_name?: string;
+    datastore_type?: string;
+    include_env_group?: boolean;
+    include_metadata?: boolean;
+  }
+>(
+  "GET",
+  ({ project_id, cloud_provider_name, cloud_provider_id, datastore_name, datastore_type, include_env_group, include_metadata }) => {
+    const queryParams = new URLSearchParams();
+
+    if (datastore_name) {
+      queryParams.set("name", datastore_name);
+    }
+
+    if (datastore_type) {
+      queryParams.set("type", datastore_type);
+    }
+
+    if (include_env_group) {
+      queryParams.set("include_env_group", "true");
+    }
+
+    if (include_metadata) {
+      queryParams.set("include_metadata", "true");
+    }
+
+    return `/api/projects/${project_id}/cloud-providers/${cloud_provider_name}/${cloud_provider_id}/datastores?${queryParams.toString()}`;
+  }
+);
+
 const getPreviousLogsForContainer = baseApi<
   {
     container_name: string;
@@ -3537,7 +3586,9 @@ export default {
   provisionDatabase,
   preflightCheck,
   requestQuotaIncrease,
+  getAwsCloudProviders,
   getDatabases,
+  getDatastores,
   getPreviousLogsForContainer,
   upgradePorterAgent,
   deletePRDeployment,

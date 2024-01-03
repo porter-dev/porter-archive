@@ -85,10 +85,26 @@ func (c *ListAwsAccountsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
-		res.Accounts = append(res.Accounts, AwsAccount{
+		account := AwsAccount{
 			CloudProviderID: targetArn.AccountID,
 			ProjectID:       uint(link.ProjectID),
-		})
+		}
+		if contains(res.Accounts, account) {
+			continue
+		}
+
+		res.Accounts = append(res.Accounts, account)
 	}
 	c.WriteResult(w, r, res)
+}
+
+// contains will check if the list of AwsAccounts contains the specified account
+// TODO: replace this with an upgrade to Go 1.21 in favor of slices.Contains()
+func contains(s []AwsAccount, e AwsAccount) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }

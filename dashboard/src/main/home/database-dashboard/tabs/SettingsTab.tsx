@@ -1,70 +1,85 @@
+import React, { useContext } from "react";
+import { useHistory, useLocation } from "react-router";
+import styled from "styled-components";
+
 import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import React, { useContext } from "react";
-import { useHistory, useLocation } from "react-router";
+
+import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
-import styled from "styled-components";
 
-import { DatastoreWithSource } from "../types";
+import { CloudProviderDatastore } from "../types";
 
 type Props = {
-    dbData: DatastoreWithSource
+  item: CloudProviderDatastore
 };
 
-const SettingsTab: React.FC<Props> = ({ dbData
-}) => {
-    const {
-        setCurrentError,
-        setCurrentOverlay,
-    } = useContext(Context);
-    const history = useHistory();
-    const location = useLocation();
-    const handleUninstallChart = async (): Promise<void> => {
-        setCurrentOverlay(null);
-        try {
-            console.log("Delete Chart");
-            ;
-        } catch (error) {
-            console.log(error);
-            setCurrentError("Couldn't uninstall chart, please try again");
+const SettingsTab: React.FC<Props> = ({ item }) => {
+  const {
+    setCurrentError,
+    setCurrentOverlay,
+  } = useContext(Context);
+  const history = useHistory();
+  const location = useLocation();
+  const handleDeletionSubmit = async (): Promise<void> => {
+    if (setCurrentOverlay === undefined || setCurrentError === undefined) {
+      return;
+    }
+
+    setCurrentOverlay(null);
+    try {
+      await api.deleteDatastore(
+        "<token>",
+        {
+          name: item.datastore.name,
+          type: item.datastore.type,
+        },
+        {
+          project_id: item.project_id,
+          cloud_provider_name: item.cloud_provider_name,
+          cloud_provider_id: item.cloud_provider_id,
         }
-        pushFiltered(
-            {
-                history,
-                location,
-            },
-            `/databases`,
-            []
-        );
-
-    };
-
-
-    return (
-        <StyledTemplateComponent>
-            <Text size={16}>Delete &quot;{dbData?.name}&quot;</Text>
-            <Spacer y={0.5} />
-            <Text color="helper">
-                Delete this database and all of its resources.
-            </Text>
-            <Spacer y={0.5} />
-            <Button
-                color="#b91133"
-                onClick={() => {
-                    setCurrentOverlay({
-                        message: `Are you sure you want to delete ${dbData?.name}?`,
-                        onYes: handleUninstallChart,
-                        onNo: () => setCurrentOverlay(null),
-                    });
-
-                }}
-            >
-                Delete {dbData?.name}
-            </Button>
-        </StyledTemplateComponent>
+      );
+    } catch (error) {
+      setCurrentError("Couldn't uninstall database, please try again");
+    }
+    pushFiltered(
+      {
+        history,
+        location,
+      },
+      `/databases`,
+      []
     );
+  };
+
+  const handleDeletionClick = async (): Promise<void> => {
+    if (setCurrentOverlay === undefined) {
+      return;
+    }
+
+    setCurrentOverlay({
+      message: `Are you sure you want to delete ${item.datastore.name}?`,
+      onYes: handleDeletionSubmit,
+      onNo: () => setCurrentOverlay(null),
+    });
+  }
+
+  return (
+    <StyledTemplateComponent>
+      <Text size={16}>Delete &quot;{item.datastore.name}&quot;</Text>
+      <Spacer y={0.5} />
+      <Text color="helper">
+        Delete this database and all of its resources.
+      </Text>
+      <Spacer y={0.5} />
+      <Button color="#b91133" onClick={handleDeletionClick}>
+        Delete {item.datastore.name}
+      </Button>
+    </StyledTemplateComponent>
+  );
 };
 
 export default SettingsTab;

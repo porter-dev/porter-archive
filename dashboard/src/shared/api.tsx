@@ -2734,6 +2734,22 @@ const getDatastores = baseApi<
   }
 );
 
+const deleteDatastore = baseApi<
+  {
+    name: string;
+    type: string;
+  },
+  {
+    project_id: number;
+    cloud_provider_name: string;
+    cloud_provider_id: string;
+  }
+>(
+  "DELETE",
+  ({ project_id, cloud_provider_name, cloud_provider_id }) =>
+    `/api/projects/${project_id}/cloud-providers/${cloud_provider_name}/${cloud_provider_id}/datastores`
+);
+
 const getPreviousLogsForContainer = baseApi<
   {
     container_name: string;
@@ -3589,6 +3605,7 @@ export default {
   getAwsCloudProviders,
   getDatabases,
   getDatastores,
+  deleteDatastore,
   getPreviousLogsForContainer,
   upgradePorterAgent,
   deletePRDeployment,

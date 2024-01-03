@@ -69,7 +69,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, item }) => {
         .with("environment", () => (
           <DatabaseEnvTab envData={item.datastore.env} />
         ))
-        .with("settings", () => <SettingsTab dbData={item.datastore} />)
+        .with("settings", () => <SettingsTab item={item} />)
         .with("metrics", () => <MetricsTab />)
 
         .otherwise(() => null)}

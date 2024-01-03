@@ -69,15 +69,17 @@ const SettingsTab: React.FC<Props> = ({ item }) => {
 
   return (
     <StyledTemplateComponent>
-      <Text size={16}>Delete &quot;{item.datastore.name}&quot;</Text>
-      <Spacer y={0.5} />
-      <Text color="helper">
-        Delete this database and all of its resources.
-      </Text>
-      <Spacer y={0.5} />
-      <Button color="#b91133" onClick={handleDeletionClick}>
-        Delete {item.datastore.name}
-      </Button>
+      <InnerWrapper>
+        <Text size={16}>Delete &quot;{item.datastore.name}&quot;</Text>
+        <Spacer y={0.5} />
+        <Text color="helper">
+          Delete this database and all of its resources.
+        </Text>
+        <Spacer y={0.5} />
+        <Button color="#b91133" onClick={handleDeletionClick}>
+          Delete {item.datastore.name}
+        </Button>
+      </InnerWrapper>
     </StyledTemplateComponent>
   );
 };
@@ -95,4 +97,17 @@ animation: fadeIn 0.3s 0s;
     opacity: 1;
   }
 }
+`;
+
+const InnerWrapper = styled.div<{ full?: boolean }>`
+  width: 100%;
+  height: ${(props) => (props.full ? "100%" : "calc(100% - 65px)")};
+  padding: 30px;
+  padding-bottom: 15px;
+  position: relative;
+  overflow: auto;
+  margin-bottom: 30px;
+  border-radius: 5px;
+  background: ${(props) => props.theme.fg};
+  border: 1px solid #494b4f;
 `;

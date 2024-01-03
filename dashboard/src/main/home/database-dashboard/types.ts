@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const datastoreEnvValidator = z.object({
   name: z.string(),
-  linked_applications: z.string().optional().array().default([]),
+  linked_applications: z.string().array().default([]),
   secret_variables: z.record(z.string()).default({}),
   variables: z.record(z.string()).default({}),
   version: z.number(),

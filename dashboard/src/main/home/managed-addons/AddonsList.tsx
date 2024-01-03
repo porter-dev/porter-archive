@@ -21,6 +21,7 @@ import { type AppTemplateFormData } from "main/home/cluster-dashboard/preview-en
 import { defaultClientAddon } from "lib/addons";
 
 import postgresql from "assets/postgresql.svg";
+import redis from "assets/redis.svg";
 
 import { AddonListRow } from "./AddonListRow";
 
@@ -32,7 +33,7 @@ const addAddonFormValidator = z.object({
     .regex(/^[a-z0-9-]+$/, {
       message: 'Lowercase letters, numbers, and " - " only.',
     }),
-  type: z.enum(["postgres"]),
+  type: z.enum(["postgres", "redis"]),
 });
 type AddAddonFormValues = z.infer<typeof addAddonFormValidator>;
 
@@ -80,7 +81,7 @@ export const AddonsList: React.FC = () => {
   }, [fields]);
 
   const onSubmit = handleSubmit((data) => {
-    const baseAddon = defaultClientAddon();
+    const baseAddon = defaultClientAddon(data.type);
     append({
       ...baseAddon,
       name: {
@@ -106,19 +107,15 @@ export const AddonsList: React.FC = () => {
           />
         ))}
       </AddonsContainer>
-      {fields.length === 0 && (
-        <>
-          <AddAddonButton
-            onClick={() => {
-              setShowAddAddonModal(true);
-            }}
-          >
-            <I className="material-icons add-icon">add</I>
-            Include add-on in preview environments
-          </AddAddonButton>
-          <Spacer y={0.5} />
-        </>
-      )}
+      <AddAddonButton
+        onClick={() => {
+          setShowAddAddonModal(true);
+        }}
+      >
+        <I className="material-icons add-icon">add</I>
+        Include add-on in preview environments
+      </AddAddonButton>
+      <Spacer y={0.5} />
       {showAddAddonModal && (
         <Modal
           closeModal={() => {
@@ -134,6 +131,7 @@ export const AddonsList: React.FC = () => {
             <AddonIcon>
               {match(addonType)
                 .with("postgres", () => <img src={postgresql} />)
+                .with("redis", () => <img src={redis} />)
                 .exhaustive()}
             </AddonIcon>
             <Controller
@@ -146,7 +144,10 @@ export const AddonsList: React.FC = () => {
                   setValue={(value: string) => {
                     onChange(value);
                   }}
-                  options={[{ label: "Postgres", value: "postgres" }]}
+                  options={[
+                    { label: "Postgres", value: "postgres" },
+                    { label: "Redis", value: "redis" },
+                  ]}
                 />
               )}
             />

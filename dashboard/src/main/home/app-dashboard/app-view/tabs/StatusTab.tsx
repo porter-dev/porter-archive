@@ -40,6 +40,7 @@ const StatusTab: React.FC = () => {
     return (
       <ServiceVersionContainer>
         {Object.keys(appServiceStatus)
+          .sort()
           .map((serviceName) => {
             const serviceStatus = appServiceStatus[serviceName];
             const clientService = latestClientServices.find(

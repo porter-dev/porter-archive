@@ -31,6 +31,7 @@ const ServiceVersionInstanceStatus: React.FC<Props> = ({
         </InstanceTooltip>
       }
       containerWidth="100%"
+      tooltipContentWidth="300px"
     >
       <Tab selected={false} isLast={isLast} onClick={() => ({})}>
         <GutterContainer>

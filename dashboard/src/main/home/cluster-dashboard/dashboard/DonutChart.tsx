@@ -4,131 +4,132 @@ import { Doughnut } from "react-chartjs-2";
 
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
+import { type Soc2Check } from "shared/types";
 
 Chart.register(ArcElement, Tooltip, Legend, CategoryScale);
 
 type DonutChartProps = {
-  data: unknown;
+    data: Soc2Check;
 };
 
 const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
-  const [chartDataValues, setChartDataValues] = useState([0, 0, 0]);
+    const [chartDataValues, setChartDataValues] = useState([0, 0, 0]);
 
-  useEffect(() => {
-    const counts = { ENABLED: 0, DISABLED: 0, PENDING: 0 };
+    useEffect(() => {
+        const counts = { ENABLED: 0, DISABLED: 0, PENDING: 0 };
 
-    Object.values(data.soc2_checks).forEach((check) => {
-      let status = check.status || "DISABLED";
-      if (status.includes("PENDING")) {
-        status = "PENDING";
-      }
-      counts[status.toUpperCase()]++;
-    });
+        Object.values(data.soc2_checks).forEach((check) => {
+            let status = check.status || "DISABLED";
+            if (status.includes("PENDING")) {
+                status = "PENDING";
+            }
+            counts[status.toUpperCase()]++;
+        });
 
-    setChartDataValues([counts.ENABLED, counts.DISABLED, counts.PENDING]);
-  }, [data]); // Dependency array ensures this runs only when `data` changes
+        setChartDataValues([counts.ENABLED, counts.DISABLED, counts.PENDING]);
+    }, [data]); // Dependency array ensures this runs only when `data` changes
 
-  const chartData = {
-    labels: ["Enabled", "Disabled", "Pending"],
-    datasets: [
-      {
-        data: chartDataValues,
-        backgroundColor: ["#5eaa7d", "#e34040", "rgb(255, 205, 86)"],
-        borderColor: "#171b21",
-        borderWidth: 2,
-        hoverBorderColor: "#171b21",
-        hoverBorderWidth: 3,
-        borderJoinStyle: "round",
-        hoverBorderJoinStyle: "bevel",
-      },
-    ],
-  };
+    const chartData = {
+        labels: ["Enabled", "Disabled", "Pending"],
+        datasets: [
+            {
+                data: chartDataValues,
+                backgroundColor: ["#5eaa7d", "#e34040", "rgb(255, 205, 86)"],
+                borderColor: "#171b21",
+                borderWidth: 2,
+                hoverBorderColor: "#171b21",
+                hoverBorderWidth: 3,
+                borderJoinStyle: "round",
+                hoverBorderJoinStyle: "bevel",
+            },
+        ],
+    };
 
-  const options = {
-    plugins: {
-      legend: false,
-      tooltip: {},
-    },
-    elements: {
-      arc: {
-        borderWidth: 3,
-        borderColor: "#fff",
-        borderAlign: "inner",
-        hoverOffset: 1,
-      },
-    },
-    responsive: true,
-    maintainAspectRatio: false,
-  };
+    const options = {
+        plugins: {
+            legend: false,
+            tooltip: {},
+        },
+        elements: {
+            arc: {
+                borderWidth: 3,
+                borderColor: "#fff",
+                borderAlign: "inner",
+                hoverOffset: 1,
+            },
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+    };
 
-  const textCenter = {
-    id: "textCenter",
-    afterDatasetsDraw: (chart: unknown) => {
-      const { ctx, data } = chart;
-      ctx.save();
-      ctx.font = "15px sans-serif";
-      ctx.fillStyle = "#fff";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
+    const textCenter = {
+        id: "textCenter",
+        afterDatasetsDraw: (chart: unknown) => {
+            const { ctx, data } = chart;
+            ctx.save();
+            ctx.font = "15px sans-serif";
+            ctx.fillStyle = "#fff";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
 
-      // Calculate the total
-      const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+            // Calculate the total
+            const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
 
-      // Coordinates for the text
-      const x = chart.getDatasetMeta(0).data[0].x;
-      const y = chart.getDatasetMeta(0).data[0].y;
+            // Coordinates for the text
+            const x = chart.getDatasetMeta(0).data[0].x;
+            const y = chart.getDatasetMeta(0).data[0].y;
 
-      // Draw the first line of text
-      ctx.fillText(`${data.datasets[0].data[0]} / ${total}`, x, y - 10); // Adjust Y position as needed
+            // Draw the first line of text
+            ctx.fillText(`${data.datasets[0].data[0]} / ${total}`, x, y - 10); // Adjust Y position as needed
 
-      // Draw the second line of text
-      ctx.fillText(`checks enabled`, x, y + 10); // Adjust Y position as needed
+            // Draw the second line of text
+            ctx.fillText(`checks enabled`, x, y + 10); // Adjust Y position as needed
 
-      ctx.restore();
-    },
-  };
+            ctx.restore();
+        },
+    };
 
-  const CustomLegend = (): JSX.Element => (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "start",
-      }}
-    >
-      {chartData.datasets[0].backgroundColor.map((color, index) => (
+    const CustomLegend = (): JSX.Element => (
         <div
-          key={index}
-          style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}
-        >
-          <span
             style={{
-              backgroundColor: color,
-              width: "12px",
-              height: "12px",
-              display: "inline-block",
-              marginRight: "8px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "start",
             }}
-          ></span>
-          {chartData.labels[index]}
+        >
+            {chartData.datasets[0].backgroundColor.map((color, index) => (
+                <div
+                    key={index}
+                    style={{ display: "flex", alignItems: "center", marginBottom: "4px" }}
+                >
+                    <span
+                        style={{
+                            backgroundColor: color,
+                            width: "12px",
+                            height: "12px",
+                            display: "inline-block",
+                            marginRight: "8px",
+                        }}
+                    ></span>
+                    {chartData.labels[index]}
+                </div>
+            ))}
         </div>
-      ))}
-    </div>
-  );
+    );
 
-  return (
-    <>
-      <Spacer y={0.5} />
-      <Container row>
-        <div style={{ width: "300px", height: "300px" }}>
-          <Doughnut data={chartData} options={options} plugins={[textCenter]} />
-        </div>
-        <Spacer inline x={1} />
-        <CustomLegend />
-      </Container>
-    </>
-  );
+    return (
+        <>
+            <Spacer y={0.5} />
+            <Container row>
+                <div style={{ width: "300px", height: "300px" }}>
+                    <Doughnut data={chartData} options={options} plugins={[textCenter]} />
+                </div>
+                <Spacer inline x={1} />
+                <CustomLegend />
+            </Container>
+        </>
+    );
 };
 
 export default DonutChart;

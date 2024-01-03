@@ -14,12 +14,13 @@ import Link from "./porter/Link";
 import Spacer from "./porter/Spacer";
 import Text from "./porter/Text";
 import ToggleRow from "./porter/ToggleRow";
+import { type Soc2Data, type Soc2Check } from "shared/types";
 
 type Props = RouteComponentProps & {
-  soc2Data: unknown;
+  soc2Data: Soc2Check;
   error?: string;
   enableAll: boolean;
-  setSoc2Data: (x: unknown) => void;
+  setSoc2Data: (x: Soc2Check) => void;
   readOnly: boolean;
 };
 type ItemProps = RouteComponentProps & {
@@ -51,7 +52,7 @@ const SOC2Checks: React.FC<Props> = ({
         };
         return acc;
       }, {});
-      setSoc2Data((prev) => ({
+      setSoc2Data((prev: Soc2Data) => ({
         ...prev,
         soc2_checks: newSOC2Checks,
       }));
@@ -62,12 +63,12 @@ const SOC2Checks: React.FC<Props> = ({
           status: !soc2Checks[key].enabled
             ? ""
             : soc2Checks[key].status === "PENDING_ENABLED"
-            ? "PENDING_ENABLED"
-            : "ENABLED",
+              ? "PENDING_ENABLED"
+              : "ENABLED",
         };
         return acc;
       }, {});
-      setSoc2Data((prev) => ({
+      setSoc2Data((prev: Soc2Data) => ({
         ...prev,
         soc2_checks: newSOC2Checks,
       }));
@@ -173,8 +174,8 @@ const SOC2Checks: React.FC<Props> = ({
                       readOnly
                         ? "Wait for provisioning to complete before editing this field."
                         : enableAll
-                        ? "Global SOC 2 setting must be disabled to toggle this"
-                        : checkData?.disabledTooltip
+                          ? "Global SOC 2 setting must be disabled to toggle this"
+                          : checkData?.disabledTooltip
                     }
                   >
                     <Container row>
@@ -255,7 +256,7 @@ const CheckItemContainer = styled.div`
     props.isExpanded
       ? "2px solid #3a48ca"
       : "1px solid " +
-        props.theme.border}; // Thicker and blue border if expanded
+      props.theme.border}; // Thicker and blue border if expanded
   border-radius: 5px;
   font-size: 13px;
   width: 100%;

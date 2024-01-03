@@ -20,6 +20,7 @@ import { Context } from "shared/Context";
 import sparkle from "assets/sparkle.svg";
 
 import DonutChart from "./DonutChart";
+import { Soc2Data } from "shared/types";
 
 type Props = {
   credentialId: string;
@@ -39,7 +40,7 @@ type Props = {
 //   "disabledTooltip": "display if message is disabled",
 //  "hideToggle": true (if you want to hide the toggle
 // }
-const soc2DataDefault = {
+const soc2DataDefault: Soc2Data = {
   soc2_checks: {
     "Public SSH Access": {
       message:
@@ -260,7 +261,7 @@ const Compliance: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const isUserProvisioning = useMemo(() => {
@@ -309,7 +310,7 @@ const Compliance: React.FC<Props> = (props) => {
             },
             "Enhanced Image Vulnerability Scanning": {
               ...prevSoc2Data.soc2_checks[
-                "Enhanced Image Vulnerability Scanning"
+              "Enhanced Image Vulnerability Scanning"
               ],
               enabled: eksValues.enableEcrScanning,
               status: determineStatus(eksValues.enableEcrScanning),
@@ -320,8 +321,8 @@ const Compliance: React.FC<Props> = (props) => {
 
       setSoc2Enabled(
         cloudTrailEnabled &&
-          eksValues.enableKmsEncryption &&
-          eksValues.enableEcrScanning
+        eksValues.enableKmsEncryption &&
+        eksValues.enableEcrScanning
       );
     }
   }, [props.selectedClusterVersion]);
@@ -333,7 +334,7 @@ const Compliance: React.FC<Props> = (props) => {
 
     setIsReadOnly(
       currentCluster.status === "UPDATING" ||
-        currentCluster.status === "UPDATING_UNAVAILABLE"
+      currentCluster.status === "UPDATING_UNAVAILABLE"
     );
   }, []);
 

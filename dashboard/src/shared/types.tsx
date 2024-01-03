@@ -710,3 +710,19 @@ export type ClusterState = {
   gpuMinInstances: number;
   gpuMaxInstances: number;
 };
+
+export type Soc2Check = {
+  message: string;
+  enabled: boolean;
+  hideToggle?: boolean;
+  status: string;
+  disabledTooltip?: string;
+  link?: string;
+  locked?: boolean;
+  enabledField?: string;
+  info?: string;
+};
+
+export type Soc2Data = {
+  soc2_checks: Record<string, Soc2Check>;
+};

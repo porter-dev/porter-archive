@@ -7,10 +7,9 @@ import { match } from "ts-pattern";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 
+import { CloudProviderDatastore } from "./types";
 
-
-
-import EnvTab from "./tabs/DatabaseEnvTab";
+import DatabaseEnvTab from "./tabs/DatabaseEnvTab";
 import MetricsTab from "./tabs/MetricsTab";
 import Settings from "./tabs/SettingsTab";
 
@@ -23,18 +22,18 @@ const validTabs = [
   "environment",
   "settings",
 ] as const;
-const DEFAULT_TAB = "metrics";
+const DEFAULT_TAB = "environment";
 type ValidTab = (typeof validTabs)[number];
 
 type DbTabProps = {
   tabParam?: string;
-  dbData: any;
+  item: CloudProviderDatastore;
 };
 
 // todo(ianedwards): refactor button to use more predictable state
 export type ButtonStatus = "" | "loading" | JSX.Element | "success";
 
-const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, dbData }) => {
+const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, item }) => {
   const history = useHistory();
 
   const currentTab = useMemo(() => {
@@ -63,14 +62,14 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, dbData }) => {
         currentTab={currentTab}
         setCurrentTab={(tab) => {
           history.push(
-            `/databases/dashboard/${dbData?.type}/${dbData?.name}/${tab}`
+            `/databases/${item.project_id}/${item.cloud_provider_name}/${item.cloud_provider_id}/${item.datastore.name}/${tab}`
           );
         }} /><Spacer y={1} />
       {match(currentTab)
         .with("environment", () => (
-          <EnvTab envData={dbData?.env} connectionString={dbData.connection_string} />
+          <DatabaseEnvTab envData={item.datastore.env} />
         ))
-        .with("settings", () => <Settings dbData={dbData} />)
+        .with("settings", () => <Settings dbData={item.datastore} />)
         .with("metrics", () => <MetricsTab />)
 
         .otherwise(() => null)}

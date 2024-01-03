@@ -1,14 +1,18 @@
-import copy from "assets/copy-left.svg";
+import React from "react";
+import styled, { keyframes } from "styled-components";
+
 import CopyToClipboard from "components/CopyToClipboard";
 import DynamicLink from "components/DynamicLink";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+
 import EnvGroupArray from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
-import React from "react";
-import styled, { keyframes } from "styled-components";
+import { DatastoreEnvWithSource } from "../types";
+
+import copy from "assets/copy-left.svg";
 
 type Props = {
-    envData: any;
+    envData: DatastoreEnvWithSource;
     connectionString?: string;
 };
 
@@ -20,7 +24,7 @@ export type KeyValueType = {
     deleted: boolean;
 };
 
-const EnvTab: React.FC<Props> = ({ envData, connectionString
+const DatabaseEnvTab: React.FC<Props> = ({ envData, connectionString
 }) => {
 
     const setKeys = (): KeyValueType[] => {
@@ -85,9 +89,9 @@ const EnvTab: React.FC<Props> = ({ envData, connectionString
                 <><Text size={16}> Linked Applications</Text><Spacer y={.5} /></>
             }
 
-            {envData?.linked_applications.map((appName: string) => {
+            {envData?.linked_applications.map((appName: string, i: number) => {
                 return (
-                    <StyledCard>
+                    <StyledCard key={i}>
                         <Flex>
                             <ContentContainer>
                                 <EventInformation>
@@ -112,7 +116,7 @@ const EnvTab: React.FC<Props> = ({ envData, connectionString
     );
 };
 
-export default EnvTab;
+export default DatabaseEnvTab;
 
 const StyledTemplateComponent = styled.div`
 width: 100%;
@@ -125,26 +129,6 @@ animation: fadeIn 0.3s 0s;
     opacity: 1;
   }
 }
-`;
-
-const InnerWrapper = styled.div<{ full?: boolean }>`
-width: 100%;
-height: ${(props) => (props.full ? "100%" : "calc(100% - 65px)")};
-padding: 30px;
-padding-bottom: 15px;
-position: relative;
-overflow: auto;
-margin-bottom: 30px;
-border-radius: 5px;
-background: ${(props) => props.theme.fg};
-border: 1px solid #494b4f;
-`;
-
-const TabWrapper = styled.div`
-height: 100%;
-width: 100%;
-padding-bottom: 10px;
-overflow: hidden;
 `;
 
 const fadeIn = keyframes`
@@ -226,7 +210,6 @@ const ActionButton = styled(DynamicLink)`
   }
 `;
 
-
 const IdContainer = styled.div`
     color: #aaaabb;
     border-radius: 5px;
@@ -239,13 +222,6 @@ const IdContainer = styled.div`
     border: 1px solid ${({ theme }) => theme.border};
     margin-bottom: 10px;
 `;
-
-// const BoxContainer = styled.div`
-// color: #aaaabb;
-// border-radius: 5px;
-// background: ${({ theme }) => theme.fg}};
-// border: 1px solid ${({ theme }) => theme.border};
-// `;
 
 const ConnectionContainer = styled.div`
   padding: 5px;

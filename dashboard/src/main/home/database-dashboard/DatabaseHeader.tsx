@@ -8,52 +8,51 @@ import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 
+import { datastoreIcons } from "./icons";
+import { DatastoreWithSource } from "./types";
+
 import DatabaseHeaderItem from "./DatabaseHeaderItem";
 
-import awsRDS from "assets/amazon-rds.png";
-import awsElastiCache from "assets/aws-elasticache.png";
-import database from "assets/database.svg";
 
 
 // Buildpack icons
 type Props = RouteComponentProps & {
-  dbData: any
+  datastore: DatastoreWithSource
 }
 export const HELLO_PORTER_PLACEHOLDER_TAG = "porter-initial-image";
 
-const DatabaseHeader: React.FC<Props> = ({ dbData }) => {
 
-  const truncateText = (text: string, length: number): string => {
-    if (text.length <= length) {
-      return text;
-    }
-    return `${text.substring(0, length)}...`;
-  };
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case "rds":
-        return awsRDS;
-      case "elasticache-redis":
-        return awsElastiCache;
-      default:
-        return database;
-    }
+const datastoreField = (datastore: DatastoreWithSource, field: string): string => {
+  if (datastore.metadata?.length === 0) {
+    return "";
   }
 
+  const properties = datastore.metadata?.filter((metadata) => metadata.name === field)
+  if (properties === undefined || properties.length === 0) {
+    return ""
+  }
+
+  if (properties.length === 0) {
+    return ""
+  }
+
+  return properties[0].value
+};
+
+const DatabaseHeader: React.FC<Props> = ({ datastore }) => {
 
   return (
     <>
       <TitleSection
-        icon={getIcon(dbData?.type)}
+        icon={datastoreIcons[datastore.type]}
         iconWidth="33px"
       >
-        {dbData?.name}
+        {datastore.name}
       </TitleSection>
       <Spacer y={1} />
 
       {
-        dbData?.status !== "available" && <>
+        datastoreField(datastore, "status") !== "available" && <>
           <Banner>
             <BannerContents>
               <b>Database is being created</b>
@@ -70,10 +69,11 @@ const DatabaseHeader: React.FC<Props> = ({ dbData }) => {
         <Text size={12}>Database details: </Text>
         <Spacer y={.5} />
 
-        <GridList>
-
-          {dbData?.metadata.map((item, index) => <DatabaseHeaderItem item={item} key={index}></DatabaseHeaderItem>)}
-        </GridList>
+        {
+          datastore.metadata !== undefined && datastore.metadata?.length > 0 && <GridList>
+            {datastore.metadata?.map((item, index) => <DatabaseHeaderItem item={item} key={index}></DatabaseHeaderItem>)}
+          </GridList>
+        }
 
 
       </Fieldset>
@@ -83,14 +83,6 @@ const DatabaseHeader: React.FC<Props> = ({ dbData }) => {
 
 export default withRouter(DatabaseHeader);
 
-
-const CopyIcon = styled.img`
-      cursor: pointer;
-      margin-left: 5px;
-      margin-right: 5px;
-      width: 10px;
-      height: 10px;
-      `;
 const GridList = styled.div`
       display: grid;
       grid-column-gap: 25px;

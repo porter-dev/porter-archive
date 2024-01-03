@@ -462,14 +462,14 @@ const Home: React.FC<Props> = (props) => {
                 <Route path="/databases/new">
                   <CreateDatabase />
                 </Route>
-                <Route path="/databases/dashboard/:type/:appName/:tab">
+                <Route path="/databases/:projectId/:cloudProviderName/:cloudProviderId/:datastoreName/:tab">
                   <DatabaseView />
                 </Route>
-                <Route path="/databases/dashboard/:type/:appName">
+                <Route path="/databases/:projectId/:cloudProviderName/:cloudProviderId/:datastoreName">
                   <DatabaseView />
                 </Route>
                 <Route path="/databases">
-                  <DatabaseDashboard />
+                  <DatabaseDashboard projectId={currentProject?.id} />
                 </Route>
 
                 <Route path="/addons/new">

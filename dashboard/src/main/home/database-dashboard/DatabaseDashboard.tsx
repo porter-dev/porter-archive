@@ -1,185 +1,145 @@
+import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
 import React, {
-  useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
+  useState
 } from "react";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
-
-import calendar from "assets/calendar-number.svg";
-import database from "assets/database.svg";
-import grid from "assets/grid.png";
-import list from "assets/list.png";
-import notFound from "assets/not-found.png";
-import healthy from "assets/status-healthy.png";
-import time from "assets/time.png";
-import letter from "assets/vector.svg";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
-import { hardcodedIcons } from "shared/hardcodedNameDict";
 import { search } from "shared/search";
 
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import Loading from "components/Loading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Fieldset from "components/porter/Fieldset";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
-import { Link } from "react-router-dom";
-import { readableDate } from "shared/string_utils";
-
-import loading from "assets/loading.gif";
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 
-type Props = {};
+import { datastoreIcons } from "./icons";
+import { CloudProviderDatastore, CloudProviderWithSource, DatastoreWithSource, cloudProviderListResponseValidator, datastoreListResponseValidator } from "./types";
 
-const templateWhitelist = [
-  "elasticache-redis",
-  "rds-postgresql",
-  "rds-postgresql-aurora",
-];
+import database from "assets/database.svg";
+import grid from "assets/grid.png";
+import list from "assets/list.png";
+import loading from "assets/loading.gif";
+import notFound from "assets/not-found.png";
+import healthy from "assets/status-healthy.png";
 
-const Apps: React.FC<Props> = ({
-}) => {
-  const { currentProject, currentCluster } = useContext(Context);
+type Props = {
+  projectId: number;
+};
+
+const datastoreField = (datastore: DatastoreWithSource, field: string): string => {
+  if (datastore.metadata?.length === 0) {
+    return "";
+  }
+
+  const properties = datastore.metadata?.filter((metadata) => metadata.name === field)
+  if (properties === undefined || properties.length === 0) {
+    return ""
+  }
+
+  if (properties.length === 0) {
+    return ""
+  }
+
+  return properties[0].value
+};
+
+const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
+  const { currentCluster } = useContext(Context);
 
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [sort, setSort] = useState<"calendar" | "letter">("calendar");
 
-  // Placeholder (replace w useQuery)
-  const [databases, setDatabases] = useState([]);
-  const [status, setStatus] = useState("");
-  const [databaseStatuses, setDatabaseStatuses] = useState({});
+  const { data: cloudProviderResponse } = useQuery(
+    ["cloudProviders", projectId],
+    async () => {
+      const response = await api.getAwsCloudProviders(
+        "<token>",
+        {},
+        {
+          project_id: projectId
+        }
+      )
+
+      const results = await cloudProviderListResponseValidator.parseAsync(response.data);
+      return results;
+    },
+    {
+      enabled: !!projectId,
+    }
+  )
+
+  const cloudProviders = cloudProviderResponse?.accounts
+
+  const { data: datastores, isFetched: isLoaded } = useQuery(
+    [projectId],
+    async () => {
+      if (cloudProviders === undefined) {
+        return;
+      }
+
+      const results = await Promise.all(cloudProviders.map(async (cloudProvider: CloudProviderWithSource): Promise<CloudProviderDatastore[]> => {
+        const response = await api.getDatastores(
+          "<token>",
+          {},
+          {
+            project_id: cloudProvider.project_id,
+            cloud_provider_name: "aws",
+            cloud_provider_id: cloudProvider.cloud_provider_id,
+            include_metadata: true,
+          }
+        );
+
+        const results = await datastoreListResponseValidator.parseAsync(response.data);
+        return results.datastores.map((datastore): CloudProviderDatastore => {
+          return {
+            cloud_provider_name: "aws",
+            cloud_provider_id: cloudProvider.cloud_provider_id,
+            datastore: datastore,
+            project_id: cloudProvider.project_id,
+          }
+        })
+      }));
+
+      if (results.length === 0) {
+        return;
+      }
+
+      return results.flat(1);
+    },
+    {
+      enabled: !!cloudProviders,
+      refetchInterval: 10000,
+      refetchOnWindowFocus: false,
+    }
+  );
 
   const filteredDatabases = useMemo(() => {
     const filteredBySearch = search(
-      databases ?? [],
+      datastores === undefined ? [] : datastores,
       searchValue,
       {
-        keys: ["name", "chart.metadata.name"],
+        keys: ["name"],
         isCaseSensitive: false,
       }
     );
 
-    return _.sortBy(filteredBySearch);
-  }, [databases, searchValue]);
+    return _.sortBy(filteredBySearch, ["name"]);
+  }, [datastores, searchValue]);
 
-  const updateDatabaseStatuses = async (): Promise<void> => {
-    const newStatuses = {};
-    for (const db of filteredDatabases) {
-      try {
-        if (databaseStatuses[db.name] !== "available") {
-          console.log(db)
-          const statusRes = await api.getDatabaseStatus("<token>", {
-            name: db.name,
-            type: db.chart.metadata.name
-          }, {
-            project_id: currentProject?.id ?? 0,
-            cluster_id: currentCluster?.id ?? 0,
-          });
-          if (statusRes.data.status === "available") {
-            newStatuses[db.name] = statusRes.data.status;
-          }
-          else {
-            newStatuses[db.name] = "updating";
-          }
-        }// Assuming status is returned in this field
-      } catch (err) {
-        console.error("Error fetching database status for", db.name, err);
-        newStatuses[db.name] = "error"; // Or some error state
-      }
-
-    }
-    setDatabaseStatuses(newStatuses);
-  };
-
-
-  const getExpandedChartLinkURL = useCallback((x: any) => {
-    const params = new Proxy(new URLSearchParams(window.location.search), {
-      get: (searchParams, prop: string) => searchParams.get(prop),
-    });
-    const cluster = currentCluster?.name;
-    const route = `/applications/${cluster}/${x.namespace}/${x.name}`;
-    const newParams = {
-      // @ts-ignore
-      project_id: params.project_id,
-      closeChartRedirectUrl: '/databases',
-    };
-    const newURLSearchParams = new URLSearchParams(
-      _.omitBy(newParams, _.isNil)
-    );
-    return `${route}?${newURLSearchParams.toString()}`;
-  }, [currentCluster]);
-
-  const getAddOns = async () => {
-    try {
-      setStatus("loading");
-      const res = await api.getCharts(
-        "<token>",
-        {
-          limit: 50,
-          skip: 0,
-          byDate: false,
-          statusFilter: [
-            "deployed",
-            "uninstalled",
-            "pending",
-            "pending-install",
-            "pending-upgrade",
-            "pending-rollback",
-            "failed",
-          ],
-        },
-        {
-          id: currentProject?.id || -1,
-          cluster_id: currentCluster?.id || -1,
-          namespace: "ack-system",
-        }
-      );
-      setStatus("complete");
-      const charts = res.data || [];
-      const filtered = charts.filter((app: any) => {
-        return (
-          templateWhitelist.includes(app.chart.metadata.name)
-        );
-      });
-      setDatabases(filtered);
-    } catch (err) {
-      setStatus("error");
-    };
-  };
-
-  useEffect(() => {
-    // Call once when the component mounts
-    void updateDatabaseStatuses();
-
-    // Set up the interval for polling every 5 minutes
-    const intervalId = setInterval(() => {
-      void updateDatabaseStatuses();
-    }, 60000); // 60000 milliseconds = 5 minutes
-
-    // Clear interval on component unmount
-    return () => clearInterval(intervalId);
-  }, [filteredDatabases]);
-
-  useEffect(() => {
-    // currentCluster sometimes returns as -1 and passes null check
-
-    if (currentProject?.id >= 0 && currentCluster?.id >= 0) {
-      getAddOns();
-    }
-  }, [currentCluster, currentProject]);
-
-  const renderStatusIcon = (dbName: string): JSX.Element => {
-    const status: string = databaseStatuses[dbName];
+  const renderStatusIcon = (status: string): JSX.Element => {
     switch (status) {
       case "available":
         return <StatusIcon src={healthy} />;
@@ -188,14 +148,14 @@ const Apps: React.FC<Props> = ({
       case "error":
         return <StatusText>
           <StatusWrapper success={false}>
-            <Loading src={loading} />
+            <Status src={loading} />
             {"Creating database"}
           </StatusWrapper>
         </StatusText>
       case "updating":
         return <StatusText>
           <StatusWrapper success={false}>
-            <Loading src={loading} />
+            <Status src={loading} />
             {"Creating database"}
           </StatusWrapper>
         </StatusText>
@@ -204,17 +164,16 @@ const Apps: React.FC<Props> = ({
     }
   };
 
-
   const renderContents = () => {
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
     }
 
-    if (status === "loading") {
+    if (datastores === undefined || !isLoaded) {
       return <Loading offset="-150px" />;
     }
 
-    if (databases.length === 0) {
+    if (datastores.length === 0) {
       return (
         <DashboardPlaceholder>
           <Text size={16}>No databases have been created yet</Text>
@@ -250,21 +209,6 @@ const Apps: React.FC<Props> = ({
             }}
             placeholder="Search databases . . ."
             width="100%"
-          />
-          <Spacer inline x={2} />
-          <Toggle
-            items={[
-              { label: <ToggleIcon src={calendar} />, value: "calendar" },
-              { label: <ToggleIcon src={letter} />, value: "letter" },
-            ]}
-            active={sort}
-            setActive={(x) => {
-              if (x === "calendar") {
-                setSort("calendar");
-              } else {
-                setSort("letter");
-              }
-            }}
           />
           <Spacer inline x={1} />
 
@@ -305,27 +249,26 @@ const Apps: React.FC<Props> = ({
               <Text color="helper">No matching databases were found.</Text>
             </Container>
           </Fieldset>
-        ) : (status === "loading" ? <Loading offset="-150px" /> : view === "grid" ? (
+        ) : (!isLoaded ? <Loading offset="-150px" /> : view === "grid" ? (
           <GridList>
-            {(filteredDatabases ?? []).map((app: any, i: number) => {
+            {(filteredDatabases ?? []).map((entry: CloudProviderDatastore, i: number) => {
               return (
-                <Link to={`databases/dashboard/${app.chart.metadata.name}/${app.name}`} key={i}>
+                <Link to={`/databases/${entry.project_id}/${entry.cloud_provider_name}/${entry.cloud_provider_id}/${entry.datastore.name}/`} key={i}>
                   <Block>
                     <Container row>
                       <Icon
                         src={
-                          hardcodedIcons[app.chart.metadata.name] ||
-                          app.chart.metadata.icon
+                          datastoreIcons[entry.datastore.type] ||
+                          entry.datastore.type
                         }
                       />
-                      <Text size={14}>{app.name}</Text>
+                      <Text size={14}>{entry.datastore.name}</Text>
                       <Spacer inline x={2} />
                     </Container>
-                    {renderStatusIcon(app.name)}
+                    {renderStatusIcon(datastoreField(entry.datastore, "status"))}
                     <Container row>
-                      <SmallIcon opacity="0.4" src={time} />
                       <Text size={13} color="#ffffff44">
-                        {readableDate(app.info.last_deployed)}
+                        {datastoreField(entry.datastore, "engine")}
                       </Text>
                     </Container>
                   </Block>
@@ -335,25 +278,24 @@ const Apps: React.FC<Props> = ({
           </GridList>
         ) : (
           <List>
-            {(filteredDatabases ?? []).map((app: any, i: number) => {
+            {(filteredDatabases ?? []).map((entry: CloudProviderDatastore, i: number) => {
               return (
-                <Row to={`/databases/dashboard/${app.chart.metadata.name}/${app.name}/`} key={i}>
+                <Row to={`/databases/${entry.project_id}/${entry.cloud_provider_name}/${entry.cloud_provider_id}/${entry.datastore.name}/`} key={i}>
                   <Container row>
                     <MidIcon
                       src={
-                        hardcodedIcons[app.chart.metadata.name] ||
-                        app.chart.metadata.icon
+                        datastoreIcons[entry.datastore.type] ||
+                        entry.datastore.type
                       }
                     />
-                    <Text size={14}>{app.name}</Text>
+                    <Text size={14}>{entry.datastore.name}</Text>
                     <Spacer inline x={1} />
                     <MidIcon src={healthy} height="16px" />
                   </Container>
                   <Spacer height="15px" />
                   <Container row>
-                    <SmallIcon opacity="0.4" src={time} />
                     <Text size={13} color="#ffffff44">
-                      {readableDate(app.info.last_deployed)}
+                      {datastoreField(entry.datastore, "engine")}
                     </Text>
                   </Container>
                 </Row>
@@ -380,7 +322,7 @@ const Apps: React.FC<Props> = ({
   );
 };
 
-export default Apps;
+export default DatabaseDashboard;
 
 const MidIcon = styled.img<{ height?: string }>`
           height: ${props => props.height || "18px"};
@@ -403,13 +345,6 @@ const Row = styled(Link) <{ isAtBottom?: boolean }>`
 const List = styled.div`
             overflow: hidden;
             `;
-
-const SmallIcon = styled.img<{ opacity?: string }>`
-              margin-left: 2px;
-              height: 14px;
-              opacity: ${props => props.opacity || 1};
-              margin-right: 10px;
-              `;
 
 const StatusIcon = styled.img`
               position: absolute;
@@ -511,7 +446,7 @@ const StatusWrapper = styled.div<{
     color: ${(props) => (props.success ? "#4797ff" : "#fcba03")};
   }
 `;
-const Loading = styled.img`
+const Status = styled.img`
   width: 15px;
   height: 15px;
   margin-right: 9px;

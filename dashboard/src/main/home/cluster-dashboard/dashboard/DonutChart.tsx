@@ -32,9 +32,9 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
         data: chartDataValues,
         backgroundColor: ["green", "red", "orange"],
         borderColor: ["green", "red", "orange"],
-        borderWidth: 2,
+        borderWidth: 1,
         hoverBorderColor: "#171b21",
-        hoverBorderWidth: 2,
+        hoverBorderWidth: 1,
       },
     ],
   };
@@ -46,10 +46,11 @@ const DonutChart: React.FC<DonutChartProps> = ({ data }) => {
     },
     elements: {
       arc: {
-        borderWidth: 2,
+        borderWidth: 1,
         borderColor: "#fff",
         borderAlign: "inner",
-        hoverOffset: 8,
+        hoverOffset: 4,
+        borderJoinStyle: "round",
       },
     },
     responsive: true,

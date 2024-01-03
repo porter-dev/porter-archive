@@ -11,7 +11,7 @@ import { CloudProviderDatastore } from "./types";
 
 import DatabaseEnvTab from "./tabs/DatabaseEnvTab";
 import MetricsTab from "./tabs/MetricsTab";
-import Settings from "./tabs/SettingsTab";
+import SettingsTab from "./tabs/SettingsTab";
 
 // commented out tabs are not yet implemented
 // will be included as support is available based on data from app revisions rather than helm releases
@@ -69,7 +69,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam, item }) => {
         .with("environment", () => (
           <DatabaseEnvTab envData={item.datastore.env} />
         ))
-        .with("settings", () => <Settings dbData={item.datastore} />)
+        .with("settings", () => <SettingsTab dbData={item.datastore} />)
         .with("metrics", () => <MetricsTab />)
 
         .otherwise(() => null)}

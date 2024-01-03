@@ -6,6 +6,7 @@ type InstanceDetails = {
 };
 
 type InstanceTypes = Record<string, Record<string, InstanceDetails>>;
+type AzureInstanceTypes = Record<string, InstanceDetails>;
 
 // use values from AWS as base constant, convert to MB
 export const AWS_INSTANCE_LIMITS: InstanceTypes = Object.freeze({
@@ -119,4 +120,16 @@ export const AWS_INSTANCE_LIMITS: InstanceTypes = Object.freeze({
     "standard-22": { vCPU: 22, RAM: 88 },
     "standard-44": { vCPU: 44, RAM: 176 },
   },
+});
+
+// use values from Azure as base constant, convert to MB
+export const AZURE_INSTANCE_LIMITS: AzureInstanceTypes = Object.freeze({
+  Standard_B2als_v2: { vCPU: 2, RAM: 4 },
+  Standard_B2as_v2: { vCPU: 2, RAM: 8 },
+  Standard_B4als_v2: { vCPU: 4, RAM: 8 },
+  Standard_A2_v2: { vCPU: 2, RAM: 4 },
+  Standard_A4_v2: { vCPU: 4, RAM: 8 },
+  Standard_DS1_v2: { vCPU: 1, RAM: 3.5 },
+  Standard_DS2_v2: { vCPU: 2, RAM: 7 },
+  Standard_D2ads_v5: { vCPU: 2, RAM: 8 },
 });

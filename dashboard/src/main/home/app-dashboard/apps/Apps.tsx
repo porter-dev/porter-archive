@@ -1,5 +1,6 @@
-import React, { useCallback, useContext, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useCallback, useContext, useMemo, useState } from "react";
+import { Addon } from "@porter-dev/api-contracts/src/porter/v1/addons_pb";
+import { useQueries } from "@tanstack/react-query";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
@@ -16,6 +17,7 @@ import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import DeleteEnvModal from "main/home/cluster-dashboard/preview-environments/v2/DeleteEnvModal";
+import { clientAddonFromProto, type ClientAddon } from "lib/addons";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 
 import api from "shared/api";
@@ -31,6 +33,12 @@ import web from "assets/web.png";
 import AppGrid from "./AppGrid";
 import { appRevisionWithSourceValidator } from "./types";
 
+export type ClientAddonWithEnv = {
+  addon: ClientAddon;
+  variables: Record<string, string>;
+  secrets: Record<string, string>;
+};
+
 const Apps: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
@@ -43,53 +51,111 @@ const Apps: React.FC = () => {
   const [showDeleteEnvModal, setShowDeleteEnvModal] = useState(false);
   const [envDeleting, setEnvDeleting] = useState(false);
 
-  const { data: apps = [], status } = useQuery(
-    [
-      "getLatestAppRevisions",
+  const [{ data: apps = [], status }, { data: addons = [] }] = useQueries({
+    queries: [
       {
-        cluster_id: currentCluster?.id,
-        project_id: currentProject?.id,
-        deployment_target_id: currentDeploymentTarget?.id,
+        queryKey: [
+          "getLatestAppRevisions",
+          {
+            cluster_id: currentCluster?.id,
+            project_id: currentProject?.id,
+            deployment_target_id: currentDeploymentTarget?.id,
+          },
+        ],
+        queryFn: async () => {
+          if (
+            !currentCluster ||
+            !currentProject ||
+            currentCluster.id === -1 ||
+            currentProject.id === -1 ||
+            !currentDeploymentTarget
+          ) {
+            return;
+          }
+
+          const res = await api.getLatestAppRevisions(
+            "<token>",
+            {
+              deployment_target_id:
+                currentProject.managed_deployment_targets_enabled &&
+                !currentDeploymentTarget.is_preview
+                  ? undefined
+                  : currentDeploymentTarget.id,
+              ignore_preview_apps: !currentDeploymentTarget.is_preview,
+            },
+            { cluster_id: currentCluster.id, project_id: currentProject.id }
+          );
+
+          const apps = await z
+            .object({
+              app_revisions: z.array(appRevisionWithSourceValidator),
+            })
+            .parseAsync(res.data);
+
+          return apps.app_revisions;
+        },
+        enabled:
+          !!currentCluster && !!currentProject && !!currentDeploymentTarget,
+        refetchInterval: 5000,
+        refetchOnWindowFocus: false,
+      },
+      {
+        queryKey: [
+          "listLatestAddons",
+          {
+            cluster_id: currentCluster?.id,
+            project_id: currentProject?.id,
+            deployment_target_id: currentDeploymentTarget?.id,
+          },
+        ],
+        queryFn: async () => {
+          if (
+            !currentCluster ||
+            !currentProject ||
+            currentCluster.id === -1 ||
+            currentProject.id === -1 ||
+            !currentDeploymentTarget
+          ) {
+            return;
+          }
+
+          const res = await api.listLatestAddons(
+            "<token>",
+            {
+              deployment_target_id: currentDeploymentTarget.id,
+            },
+            { clusterId: currentCluster.id, projectId: currentProject.id }
+          );
+
+          const parsed = await z
+            .object({
+              base64_addons: z.array(z.string()),
+            })
+            .parseAsync(res.data);
+
+          return parsed.base64_addons;
+        },
+        enabled:
+          !!currentCluster &&
+          !!currentProject &&
+          !!currentDeploymentTarget &&
+          currentDeploymentTarget.is_preview,
+        refetchOnWindowFocus: false,
       },
     ],
-    async () => {
-      if (
-        !currentCluster ||
-        !currentProject ||
-        currentCluster.id === -1 ||
-        currentProject.id === -1 ||
-        !currentDeploymentTarget
-      ) {
-        return;
-      }
+  });
 
-      const res = await api.getLatestAppRevisions(
-        "<token>",
-        {
-          deployment_target_id:
-            currentProject.managed_deployment_targets_enabled &&
-            !currentDeploymentTarget.is_preview
-              ? undefined
-              : currentDeploymentTarget.id,
-          ignore_preview_apps: !currentDeploymentTarget.is_preview,
-        },
-        { cluster_id: currentCluster.id, project_id: currentProject.id }
-      );
+  const clientAddons: ClientAddon[] = useMemo(() => {
+    return addons.map((a) => {
+      const proto = Addon.fromJsonString(atob(a), {
+        ignoreUnknownFields: true,
+      });
 
-      const apps = await z
-        .object({
-          app_revisions: z.array(appRevisionWithSourceValidator),
-        })
-        .parseAsync(res.data);
-
-      return apps.app_revisions;
-    },
-    {
-      refetchOnWindowFocus: false,
-      enabled:
-        !!currentCluster && !!currentProject && !!currentDeploymentTarget,
-    }
-  );
+      return clientAddonFromProto({
+        addon: proto,
+      });
+    });
+  }, [addons]);
 
   const deletePreviewEnv = useCallback(async () => {
     try {
@@ -256,6 +322,7 @@ const Apps: React.FC = () => {
         <Spacer y={1} />
         <AppGrid
           apps={apps}
+          addons={clientAddons}
           sort={sort}
           view={view}
           searchValue={searchValue}

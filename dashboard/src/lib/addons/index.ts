@@ -64,15 +64,15 @@ export function clientAddonToProto(addon: ClientAddon): Addon {
   return proto;
 }
 
-export function clientAddonFromProto(args: {
+export function clientAddonFromProto({
+  addon,
+  variables = {},
+  secrets = {},
+}: {
   addon: Addon;
-  variables: Record<string, string>;
-  secrets: Record<string, string>;
+  variables?: Record<string, string>;
+  secrets?: Record<string, string>;
 }): ClientAddon {
-  const addon = args.addon;
-  const variables = args.variables;
-  const secrets = args.secrets;
-
   if (!addon.config.case) {
     throw new Error("Addon type is unspecified");
   }

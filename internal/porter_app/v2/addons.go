@@ -29,6 +29,13 @@ func ProtoFromAddon(ctx context.Context, addon Addon) (*porterv1.Addon, error) {
 		addonProto.Config = &porterv1.Addon_Postgres{
 			Postgres: postgres,
 		}
+	case porterv1.AddonType_ADDON_TYPE_REDIS:
+		addonProto.Type = addonType
+		redis := redisConfigProtoFromAddon(addon)
+
+		addonProto.Config = &porterv1.Addon_Redis{
+			Redis: redis,
+		}
 	default:
 		return addonProto, telemetry.Error(ctx, span, nil, "specified addon type not supported")
 	}
@@ -56,6 +63,8 @@ func addonEnumProtoFromType(ctx context.Context, addonType string) (porterv1.Add
 	switch addonType {
 	case "postgres":
 		addonTypeEnum = porterv1.AddonType_ADDON_TYPE_POSTGRES
+	case "redis":
+		addonTypeEnum = porterv1.AddonType_ADDON_TYPE_REDIS
 	default:
 		return addonTypeEnum, telemetry.Error(ctx, span, nil, "invalid addon type")
 	}
@@ -65,6 +74,14 @@ func addonEnumProtoFromType(ctx context.Context, addonType string) (porterv1.Add
 
 func postgresConfigProtoFromAddon(addon Addon) *porterv1.Postgres {
 	return &porterv1.Postgres{
+		RamMegabytes:     int32(addon.RamMegabytes),
+		CpuCores:         addon.CpuCores,
+		StorageGigabytes: int32(addon.StorageGigabytes),
+	}
+}
+
+func redisConfigProtoFromAddon(addon Addon) *porterv1.Redis {
+	return &porterv1.Redis{
 		RamMegabytes:     int32(addon.RamMegabytes),
 		CpuCores:         addon.CpuCores,
 		StorageGigabytes: int32(addon.StorageGigabytes),

@@ -11,7 +11,7 @@
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "removeComments": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "strict": true,
     "skipLibCheck": true
   },

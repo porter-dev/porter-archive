@@ -27,7 +27,7 @@ import loading from "assets/loading.gif";
 import notFound from "assets/not-found.png";
 import healthy from "assets/status-healthy.png";
 
-import { datastoreIcons } from "./icons";
+import { getDatastoreIcon } from "./icons";
 import {
   cloudProviderListResponseValidator,
   datastoreListResponseValidator,
@@ -264,12 +264,7 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
                   >
                     <Block>
                       <Container row>
-                        <Icon
-                          src={
-                            datastoreIcons[entry.datastore.type] ||
-                            entry.datastore.type
-                          }
-                        />
+                        <Icon src={getDatastoreIcon(entry.datastore.type)} />
                         <Text size={14}>{entry.datastore.name}</Text>
                         <Spacer inline x={2} />
                       </Container>
@@ -297,12 +292,7 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
                     key={i}
                   >
                     <Container row>
-                      <MidIcon
-                        src={
-                          datastoreIcons[entry.datastore.type] ||
-                          entry.datastore.type
-                        }
-                      />
+                      <MidIcon src={getDatastoreIcon(entry.datastore.type)} />
                       <Text size={14}>{entry.datastore.name}</Text>
                       <Spacer inline x={1} />
                       <MidIcon src={healthy} height="16px" />

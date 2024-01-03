@@ -8,7 +8,7 @@ import Text from "components/porter/Text";
 import TitleSection from "components/TitleSection";
 
 import DatabaseHeaderItem from "./DatabaseHeaderItem";
-import { datastoreIcons } from "./icons";
+import { getDatastoreIcon } from "./icons";
 import { type DatastoreWithSource } from "./types";
 import { datastoreField } from "./utils";
 
@@ -19,7 +19,7 @@ type Props = {
 const DatabaseHeader: React.FC<Props> = ({ datastore }) => {
   return (
     <>
-      <TitleSection icon={datastoreIcons[datastore.type]} iconWidth="33px">
+      <TitleSection icon={getDatastoreIcon(datastore.type)} iconWidth="33px">
         {datastore.name}
       </TitleSection>
       <Spacer y={1} />

@@ -6,7 +6,7 @@ import styled, { keyframes } from "styled-components";
 import { match } from "ts-pattern";
 
 import Spacer from "components/porter/Spacer";
-import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
+import { type ClientServiceVersionInstanceStatus } from "lib/hooks/useAppStatus";
 import { type PorterAppFormData } from "lib/porter-apps";
 import { type ClientService } from "lib/porter-apps/services";
 
@@ -28,7 +28,7 @@ type ServiceProps = {
     "app.services" | "app.predeploy"
   >;
   remove: (index: number) => void;
-  status?: ClientServiceStatus[];
+  status?: ClientServiceVersionInstanceStatus[];
   maxCPU: number;
   maxRAM: number;
   clusterContainsGPUNodes: boolean;

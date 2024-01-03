@@ -16,7 +16,7 @@ import Modal from "components/porter/Modal";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
+import { type ClientServiceVersionInstanceStatus } from "lib/hooks/useAppStatus";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
   defaultSerialized,
@@ -50,7 +50,7 @@ type ServiceListProps = {
   isPredeploy?: boolean;
   existingServiceNames?: string[];
   fieldArrayName: "app.services" | "app.predeploy";
-  serviceVersionStatus?: Record<string, ClientServiceStatus[]>;
+  serviceVersionStatus?: Record<string, ClientServiceVersionInstanceStatus[]>;
   internalNetworkingDetails?: {
     namespace: string;
     appName: string;

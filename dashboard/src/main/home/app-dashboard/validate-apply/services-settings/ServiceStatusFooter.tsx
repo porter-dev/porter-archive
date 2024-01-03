@@ -10,7 +10,7 @@ import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
-import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
+import { type ClientServiceVersionInstanceStatus } from "lib/hooks/useAppStatus";
 import { isClientServiceNotification } from "lib/porter-apps/notification";
 
 import alert from "assets/alert-warning.svg";
@@ -20,7 +20,7 @@ import TriggerJobButton from "../jobs/TriggerJobButton";
 
 type ServiceStatusFooterProps = {
   serviceName: string;
-  status: ClientServiceStatus[];
+  status: ClientServiceVersionInstanceStatus[];
   isJob: boolean;
 };
 const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
@@ -110,7 +110,7 @@ const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
                       </>
                     );
                   })
-                  .with({ status: "spinningDown" }, (vs) => {
+                  .with({ status: "pending" }, (vs) => {
                     return (
                       <Running>
                         <StatusDot color="#FFA500" />

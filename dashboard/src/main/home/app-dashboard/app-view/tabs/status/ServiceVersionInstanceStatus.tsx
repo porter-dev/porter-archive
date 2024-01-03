@@ -1,45 +1,67 @@
 import React from "react";
+import dayjs from "dayjs";
 import styled from "styled-components";
 
 import Tooltip from "components/porter/Tooltip";
-import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
+import {
+  statusColor,
+  type ClientServiceVersionInstanceStatus,
+} from "lib/hooks/useAppStatus";
 
 type Props = {
-  serviceVersionStatus: ClientServiceStatus;
+  serviceVersionInstanceStatus: ClientServiceVersionInstanceStatus;
+  isLast: boolean;
 };
 const ServiceVersionInstanceStatus: React.FC<Props> = ({
-  serviceVersionStatus,
+  serviceVersionInstanceStatus,
+  isLast,
 }) => {
   return (
-    <Tab selected={true} onClick={() => ({})}>
-      <Gutter>
-        <Rail />
-        <Circle />
-        <Rail lastTab={false} />
-      </Gutter>
-      <Tooltip
-        content={
-          <InstanceTooltip>
-            Version: {serviceVersionStatus.revisionNumber}
-            <Grey>Restart count: {serviceVersionStatus.restartCount}</Grey>
-            <Grey>Created on: 3 days</Grey>
-            {serviceVersionStatus.status === "failing" ? (
-              <FailedStatusContainer>
-                <Grey>
-                  Failure Reason: {serviceVersionStatus.crashLoopReason}
-                </Grey>
-              </FailedStatusContainer>
-            ) : null}
-          </InstanceTooltip>
-        }
-      >
-        <Name>Version: {serviceVersionStatus.revisionNumber}</Name>
-      </Tooltip>
-      <InstanceStatus>
-        <StatusColor status={"running"} />
-        {serviceVersionStatus.status}
-      </InstanceStatus>
-    </Tab>
+    <Tooltip
+      backgroundColor=""
+      content={
+        <InstanceTooltip>
+          {serviceVersionInstanceStatus.name}
+          <Grey>
+            Restart count: {serviceVersionInstanceStatus.restartCount}
+          </Grey>
+          <Grey>{`Created: ${dayjs(
+            serviceVersionInstanceStatus.creationTimestamp
+          ).format("MMM D, YYYY HH:mm:ss")}`}</Grey>
+        </InstanceTooltip>
+      }
+      containerWidth="100%"
+    >
+      <Tab selected={false} isLast={isLast} onClick={() => ({})}>
+        <GutterContainer>
+          <Gutter>
+            <Rail />
+            <Circle />
+            <Rail lastTab={isLast} />
+          </Gutter>
+        </GutterContainer>
+
+        <TooltipContainer>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              width: "100%",
+              justifyContent: "space-between",
+            }}
+          >
+            <Name>
+              <Code>{serviceVersionInstanceStatus.name}</Code>
+            </Name>
+            <InstanceStatus>
+              <StatusColor
+                color={statusColor(serviceVersionInstanceStatus.status)}
+              />
+            </InstanceStatus>
+          </div>
+        </TooltipContainer>
+      </Tab>
+    </Tooltip>
   );
 };
 
@@ -50,11 +72,11 @@ const Grey = styled.div`
   color: #aaaabb;
 `;
 
-const FailedStatusContainer = styled.div`
+const GutterContainer = styled.div``;
+const TooltipContainer = styled.div`
+  display: flex;
   width: 100%;
-  border: 1px solid hsl(0deg, 100%, 30%);
-  padding: 5px;
-  margin-block: 5px;
+  height: 100%;
 `;
 
 const InstanceTooltip = styled.div`
@@ -89,26 +111,19 @@ const InstanceTooltip = styled.div`
   }
 `;
 
-const Tab = styled.div`
+const Tab = styled.div<{ selected: boolean; isLast: boolean }>`
   width: 100%;
-  height: 50px;
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  color: ${(props: { selected: boolean }) =>
-    props.selected ? "white" : "#ffffff66"};
   background: ${(props: { selected: boolean }) =>
     props.selected ? "#ffffff18" : ""};
   font-size: 13px;
   padding: 20px 19px 20px 42px;
   text-shadow: 0px 0px 8px none;
   overflow: visible;
-  cursor: pointer;
-  :hover {
-    color: white;
-    background: #ffffff18;
-  }
+  border: 1px solid #494b4f;
+  border-bottom: ${(props) => (props.isLast ? "1px solid #494b4f" : "none")};
 `;
 
 const Rail = styled.div`
@@ -143,7 +158,6 @@ const InstanceStatus = styled.div`
   font-size: 12px;
   text-transform: capitalize;
   margin-left: 5px;
-  justify-content: flex-end;
   align-items: center;
   font-family: "Work Sans", sans-serif;
   color: #aaaabb;
@@ -168,20 +182,15 @@ const Name = styled.div`
   -webkit-line-clamp: 2;
 `;
 
-const StatusColor = styled.div`
+const StatusColor = styled.div<{ color: string }>`
   margin-left: 12px;
   width: 8px;
   min-width: 8px;
   height: 8px;
-  background: ${(props: { status: string }) =>
-    props.status === "running" ||
-    props.status === "Ready" ||
-    props.status === "Completed"
-      ? "#4797ff"
-      : props.status === "failed" || props.status === "FailedValidation"
-      ? "#ed5f85"
-      : props.status === "completed"
-      ? "#00d12a"
-      : "#f5cb42"};
+  background: ${({ color }) => color};
   border-radius: 20px;
+`;
+
+const Code = styled.span`
+  font-family: monospace;
 `;

@@ -9,6 +9,7 @@ import Loading from "components/Loading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Error from "components/porter/Error";
+import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import ToggleRow from "components/porter/ToggleRow";
@@ -17,6 +18,9 @@ import SOC2Checks from "components/SOC2Checks";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import sparkle from "assets/sparkle.svg";
+
+import DonutChart from "./DonutChart";
+import { Soc2Data } from "shared/types";
 
 type Props = {
   credentialId: string;
@@ -36,7 +40,7 @@ type Props = {
 //   "disabledTooltip": "display if message is disabled",
 //  "hideToggle": true (if you want to hide the toggle
 // }
-const soc2DataDefault = {
+const soc2DataDefault: Soc2Data = {
   soc2_checks: {
     "Public SSH Access": {
       message:
@@ -257,7 +261,7 @@ const Compliance: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const isUserProvisioning = useMemo(() => {
@@ -267,7 +271,7 @@ const Compliance: React.FC<Props> = (props) => {
   const determineStatus = (enabled: boolean): string => {
     if (enabled) {
       if (currentCluster?.status === "UPDATING") {
-        return "PENDING";
+        return "PENDING_ENABLED";
       } else return "ENABLED";
     }
     return "";
@@ -306,7 +310,7 @@ const Compliance: React.FC<Props> = (props) => {
             },
             "Enhanced Image Vulnerability Scanning": {
               ...prevSoc2Data.soc2_checks[
-                "Enhanced Image Vulnerability Scanning"
+              "Enhanced Image Vulnerability Scanning"
               ],
               enabled: eksValues.enableEcrScanning,
               status: determineStatus(eksValues.enableEcrScanning),
@@ -317,8 +321,8 @@ const Compliance: React.FC<Props> = (props) => {
 
       setSoc2Enabled(
         cloudTrailEnabled &&
-          eksValues.enableKmsEncryption &&
-          eksValues.enableEcrScanning
+        eksValues.enableKmsEncryption &&
+        eksValues.enableEcrScanning
       );
     }
   }, [props.selectedClusterVersion]);
@@ -330,21 +334,25 @@ const Compliance: React.FC<Props> = (props) => {
 
     setIsReadOnly(
       currentCluster.status === "UPDATING" ||
-        currentCluster.status === "UPDATING_UNAVAILABLE"
+      currentCluster.status === "UPDATING_UNAVAILABLE"
     );
   }, []);
 
   return (
     <StyledCompliance>
       <Spacer y={1} />
-      <Container row>
-        <Text size={16}>SOC 2 compliance</Text>
-        <Spacer inline x={1} />
-        <NewBadge>
-          <img src={sparkle} />
-          New
-        </NewBadge>
-      </Container>
+      <Fieldset>
+        <Container row>
+          <Text size={16}>SOC 2 Compliance Dashboard</Text>
+          <Spacer inline x={1} />
+          <NewBadge>
+            <img src={sparkle} />
+            New
+          </NewBadge>
+        </Container>
+        <Spacer y={1} />
+        <DonutChart data={soc2Data} />
+      </Fieldset>
 
       <SOC2Checks
         enableAll={soc2Enabled}

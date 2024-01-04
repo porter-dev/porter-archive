@@ -7,7 +7,6 @@ import { match } from "ts-pattern";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Link from "components/porter/Link";
-import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
@@ -15,61 +14,17 @@ import { isClientServiceNotification } from "lib/porter-apps/notification";
 
 import alert from "assets/alert-warning.svg";
 
-import { useLatestRevision } from "../../app-view/LatestRevisionContext";
-import TriggerJobButton from "../jobs/TriggerJobButton";
+import { useLatestRevision } from "../../../app-view/LatestRevisionContext";
 
 type ServiceStatusFooterProps = {
-  serviceName: string;
   status: ClientServiceStatus[];
-  isJob: boolean;
 };
 const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
-  serviceName,
   status,
-  isJob,
 }) => {
   const [expanded, setExpanded] = useState<boolean>(false);
-  const {
-    latestProto,
-    projectId,
-    clusterId,
-    deploymentTarget,
-    appName,
-    latestClientNotifications,
-    tabUrlGenerator,
-  } = useLatestRevision();
+  const { latestClientNotifications, tabUrlGenerator } = useLatestRevision();
   const [height, setHeight] = useState<Height>(0);
-
-  if (isJob) {
-    return (
-      <StyledStatusFooter>
-        <Container row>
-          <Link
-            to={`/apps/${latestProto.name}/job-history?service=${serviceName}`}
-          >
-            <Button
-              onClick={() => {}}
-              height="30px"
-              width="87px"
-              color="#ffffff11"
-              withBorder
-            >
-              <I className="material-icons">open_in_new</I>
-              History
-            </Button>
-          </Link>
-          <Spacer inline x={1} />
-          <TriggerJobButton
-            projectId={projectId}
-            clusterId={clusterId}
-            appName={appName}
-            jobName={serviceName}
-            deploymentTargetId={deploymentTarget.id}
-          />
-        </Container>
-      </StyledStatusFooter>
-    );
-  }
 
   return (
     <>

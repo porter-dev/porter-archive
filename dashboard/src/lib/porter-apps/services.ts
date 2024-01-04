@@ -39,6 +39,25 @@ export type DetectedServices = {
 };
 type ClientServiceType = "web" | "worker" | "job" | "predeploy";
 
+type ClientWebService = ClientService & { config: ClientWebConfig };
+export const isClientWebService = (
+  service: ClientService
+): service is ClientWebService => {
+  return service.config.type === "web";
+};
+type ClientWorkerService = ClientService & { config: ClientWorkerConfig };
+export const isClientWorkerService = (
+  service: ClientService
+): service is ClientWorkerService => {
+  return service.config.type === "worker";
+};
+type ClientJobService = ClientService & { config: ClientJobConfig };
+export const isClientJobService = (
+  service: ClientService
+): service is ClientJobService => {
+  return service.config.type === "job";
+};
+
 const webConfigValidator = z.object({
   type: z.literal("web"),
   autoscaling: autoscalingValidator.optional(),

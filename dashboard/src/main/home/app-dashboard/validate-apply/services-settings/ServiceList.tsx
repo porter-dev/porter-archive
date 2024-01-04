@@ -238,6 +238,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 internalNetworkingDetails={internalNetworkingDetails}
                 clusterIngressIp={clusterIngressIp}
                 showDisableTls={loadBalancerType === "ALB"}
+                existingServiceNames={existingServiceNames}
               />
             ) : null;
           })}

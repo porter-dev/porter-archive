@@ -177,6 +177,26 @@ func (c *Client) ParseYAML(
 	return resp, err
 }
 
+// GetAppManifests returns the manifests for a given app based on the latest successful app revision
+func (c *Client) GetAppManifests(
+	ctx context.Context,
+	projectID, clusterID uint,
+	appName string,
+) (*porter_app.GetAppManifestsResponse, error) {
+	resp := &porter_app.GetAppManifestsResponse{}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/manifests",
+			projectID, clusterID, appName,
+		),
+		nil,
+		resp,
+	)
+
+	return resp, err
+}
+
 // ValidatePorterAppInput is the input struct to ValidatePorterApp
 type ValidatePorterAppInput struct {
 	ProjectID          uint

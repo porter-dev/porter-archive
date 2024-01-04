@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -129,6 +130,17 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 	}
 	appCmd.AddCommand(appRollbackCmd)
 
+	// appManifestsCmd represents the "porter app manifest" subcommand
+	appManifestsCmd := &cobra.Command{
+		Use:   "manifests [application]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Prints the manifests for an application.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return checkLoginAndRunWithConfig(cmd, cliConf, args, appManifests)
+		},
+	}
+	appCmd.AddCommand(appManifestsCmd)
+
 	return appCmd
 }
 
@@ -186,6 +198,30 @@ func appRunFlags(appRunCmd *cobra.Command) {
 		"",
 		"name of the job to run (will run the job as defined instead of the provided command, and returns the job run id without waiting for the job to complete or displaying logs)",
 	)
+}
+
+func appManifests(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
+	appName := args[0]
+	if appName == "" {
+		return fmt.Errorf("app name must be specified")
+	}
+
+	manifest, err := client.GetAppManifests(ctx, cliConfig.Project, cliConfig.Cluster, appName)
+	if err != nil {
+		return fmt.Errorf("failed to get app manifest: %w", err)
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(manifest.Base64Manifests)
+	if err != nil {
+		return fmt.Errorf("failed to decode app manifest: %w", err)
+	}
+
+	_, err = os.Stdout.WriteString(string(decoded))
+	if err != nil {
+		return fmt.Errorf("failed to write app manifest: %w", err)
+	}
+
+	return nil
 }
 
 func appRollback(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {

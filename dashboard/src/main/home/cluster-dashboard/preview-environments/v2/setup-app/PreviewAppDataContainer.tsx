@@ -189,16 +189,22 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
       setValidatedAppProto(proto);
 
       const addons = data.addons.map((addon) => {
-        const variables = match(addon.config.type)
-          .with("postgres", () => ({
-            POSTGRESQL_USERNAME: addon.config.username,
+        const variables = match(addon.config)
+          .with({ type: "postgres" }, (conf) => ({
+            POSTGRESQL_USERNAME: conf.username,
           }))
-          .otherwise(() => ({}));
-        const secrets = match(addon.config.type)
-          .with("postgres", () => ({
-            POSTGRESQL_PASSWORD: addon.config.password,
+          .with({ type: "redis" }, (conf) => ({
+            REDIS_PASSWORD: conf.password,
           }))
-          .otherwise(() => ({}));
+          .exhaustive();
+        const secrets = match(addon.config)
+          .with({ type: "postgres" }, (conf) => ({
+            POSTGRESQL_PASSWORD: conf.password,
+          }))
+          .with({ type: "redis" }, (conf) => ({
+            REDIS_PASSWORD: conf.password,
+          }))
+          .exhaustive();
 
         const proto = clientAddonToProto(addon);
 

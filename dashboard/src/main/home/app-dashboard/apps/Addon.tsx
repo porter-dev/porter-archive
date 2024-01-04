@@ -12,6 +12,7 @@ import { type ClientAddon } from "lib/addons";
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 import copy from "assets/copy-left.svg";
 import postgresql from "assets/postgresql.svg";
+import redis from "assets/redis.svg";
 
 import { Block, Row } from "./AppGrid";
 
@@ -27,15 +28,26 @@ export const Addon: React.FC<AddonProps> = ({ addon, view }) => {
     if (!currentDeploymentTarget) return "";
     if (!addon.name.value) return "";
 
-    return `${addon.name.value}-postgres.${currentDeploymentTarget.namespace}.svc.cluster.local:5432`;
+    const port = match(addon.config.type)
+      .with("postgres", () => 5432)
+      .with("redis", () => 6379)
+      .exhaustive();
+
+    return `${addon.name.value}-${addon.config.type}.${currentDeploymentTarget.namespace}.svc.cluster.local:${port}`;
   }, [currentDeploymentTarget, addon.name.value]);
+
+  const renderIcon = (type: ClientAddon["config"]["type"]): JSX.Element =>
+    match(type)
+      .with("postgres", () => <Icon height="16px" src={postgresql} />)
+      .with("redis", () => <Icon height="16px" src={redis} />)
+      .exhaustive();
 
   return match(view)
     .with("grid", () => (
       <Block locked>
         <Container row>
           <Spacer inline width="1px" />
-          <Icon height="16px" src={postgresql} />
+          {renderIcon(addon.config.type)}
           <Spacer inline width="12px" />
           <Text size={14}>{addon.name.value}</Text>
           <Spacer inline x={2} />
@@ -60,7 +72,7 @@ export const Addon: React.FC<AddonProps> = ({ addon, view }) => {
       <Row locked>
         <Container row>
           <Spacer inline width="1px" />
-          <Icon height="16px" src={postgresql} />
+          {renderIcon(addon.config.type)}
           <Spacer inline width="12px" />
           <Text size={14}>{addon.name.value}</Text>
           <Spacer inline x={1} />

@@ -8,9 +8,10 @@ import { z } from "zod";
 import { serviceStringValidator } from "lib/porter-apps/values";
 
 import { defaultPostgresAddon, postgresConfigValidator } from "./postgres";
+import { redisConfigValidator } from "./redis";
 
 export const clientAddonValidator = z.object({
-  expanded: z.boolean().default(true),
+  expanded: z.boolean().default(false),
   canDelete: z.boolean().default(true),
   name: z.object({
     readOnly: z.boolean(),
@@ -23,20 +24,40 @@ export const clientAddonValidator = z.object({
       }),
   }),
   envGroups: z.array(serviceStringValidator).default([]),
-  config: z.discriminatedUnion("type", [postgresConfigValidator]),
+  config: z.discriminatedUnion("type", [
+    postgresConfigValidator,
+    redisConfigValidator,
+  ]),
 });
 export type ClientAddon = z.infer<typeof clientAddonValidator>;
 
-export function defaultClientAddon(): ClientAddon {
-  return clientAddonValidator.parse({
-    name: { readOnly: false, value: "addon" },
-    config: defaultPostgresAddon(),
-  });
+export function defaultClientAddon(
+  type: ClientAddon["config"]["type"]
+): ClientAddon {
+  return match(type)
+    .with("postgres", () =>
+      clientAddonValidator.parse({
+        expanded: true,
+        name: { readOnly: false, value: "addon" },
+        config: defaultPostgresAddon(),
+      })
+    )
+    .with("redis", () =>
+      clientAddonValidator.parse({
+        expanded: true,
+        name: { readOnly: false, value: "addon" },
+        config: redisConfigValidator.parse({
+          type: "redis",
+        }),
+      })
+    )
+    .exhaustive();
 }
 
 function addonTypeEnumProto(type: ClientAddon["config"]["type"]): AddonType {
   return match(type)
     .with("postgres", () => AddonType.POSTGRES)
+    .with("redis", () => AddonType.REDIS)
     .exhaustive();
 }
 
@@ -49,6 +70,14 @@ export function clientAddonToProto(addon: ClientAddon): Addon {
         storageGigabytes: data.storageGigabytes.value,
       },
       case: "postgres" as const,
+    }))
+    .with({ type: "redis" }, (data) => ({
+      value: {
+        cpuCores: data.cpuCores.value,
+        ramMegabytes: data.ramMegabytes.value,
+        storageGigabytes: data.storageGigabytes.value,
+      },
+      case: "redis" as const,
     }))
     .exhaustive();
 
@@ -94,6 +123,22 @@ export function clientAddonFromProto({
       },
       username: variables.POSTGRESQL_USERNAME,
       password: secrets.POSTGRESQL_PASSWORD,
+    }))
+    .with({ case: "redis" }, (data) => ({
+      type: "redis" as const,
+      cpuCores: {
+        readOnly: false,
+        value: data.value.cpuCores,
+      },
+      ramMegabytes: {
+        readOnly: false,
+        value: data.value.ramMegabytes,
+      },
+      storageGigabytes: {
+        readOnly: false,
+        value: data.value.storageGigabytes,
+      },
+      password: secrets.REDIS_PASSWORD,
     }))
     .exhaustive();
 

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
+import { emailRegex } from "shared/regex";
 import { type Soc2Data } from "shared/types";
 import styled from "styled-components";
-import Text from "./porter/Text";
-import Input from "./porter/Input";
-import { emailRegex } from "shared/regex";
-import Spacer from "./porter/Spacer";
 import Button from "./porter/Button";
+import Input from "./porter/Input";
+import Spacer from "./porter/Spacer";
+import Text from "./porter/Text";
 
 type Props = {
   enabled: boolean;

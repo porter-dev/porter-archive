@@ -1,7 +1,7 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
 import type { JsonValue } from "@bufbuild/protobuf";
 import { Cluster, Contract, EKS, EKSLogging } from "@porter-dev/api-contracts";
 import axios from "axios";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
@@ -15,12 +15,12 @@ import Text from "components/porter/Text";
 import ToggleRow from "components/porter/ToggleRow";
 import SOC2Checks from "components/SOC2Checks";
 
+import sparkle from "assets/sparkle.svg";
 import api from "shared/api";
 import { Context } from "shared/Context";
-import sparkle from "assets/sparkle.svg";
 
-import DonutChart from "./DonutChart";
 import { Soc2Data } from "shared/types";
+import DonutChart from "./DonutChart";
 
 type Props = {
   credentialId: string;
@@ -84,7 +84,7 @@ const soc2DataDefault: Soc2Data = {
       enabled: false,
       info: "",
       status: "",
-      email: ["portersupport@gmail.com"], // this is a special case for email
+      email: [], // this is a special case for email
     },
   },
 };

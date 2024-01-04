@@ -15,12 +15,14 @@ import Spacer from "./porter/Spacer";
 import Text from "./porter/Text";
 import ToggleRow from "./porter/ToggleRow";
 import { type Soc2Data, type Soc2Check } from "shared/types";
+import SOC2EmailComponent from "./SOC2EmailComponent";
+
 
 type Props = RouteComponentProps & {
-  soc2Data: Soc2Check;
+  soc2Data: Soc2Data;
   error?: string;
   enableAll: boolean;
-  setSoc2Data: (x: Soc2Check) => void;
+  setSoc2Data: (x: Soc2Data) => void;
   readOnly: boolean;
 };
 type ItemProps = RouteComponentProps & {
@@ -76,8 +78,8 @@ const SOC2Checks: React.FC<Props> = ({
   }, [enableAll]);
 
   const Soc2Item: React.FC<ItemProps> = ({ checkKey, checkLabel }) => {
-    const checkData = soc2Data?.soc2_checks?.[checkKey];
-    const hasMessage = checkData?.message;
+    const checkData: Soc2Check = soc2Data?.soc2_checks?.[checkKey];
+    const hasMessage: S = checkData?.message;
     const enabled = checkData?.enabled;
     const status = checkData?.status;
 
@@ -196,6 +198,18 @@ const SOC2Checks: React.FC<Props> = ({
                     </Link>
                   )}
                 </Container>
+                {
+                  (checkData.email && (checkData.enabled || enableAll)) &&
+                  <>
+                    <Spacer y={1} />
+                    <SOC2EmailComponent
+                      emails={checkData.email}
+                      enabled={checkData.enabled}
+                      setSoc2Data={setSoc2Data}
+                      soc2CheckKey={checkKey}
+                    />
+                  </>
+                }
                 <Spacer y={0.5} />
               </>
             )}

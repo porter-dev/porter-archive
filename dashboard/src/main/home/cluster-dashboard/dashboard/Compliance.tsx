@@ -46,7 +46,9 @@ const soc2DataDefault: Soc2Data = {
       message:
         "Porter-provisioned instances do not allow remote SSH access. Users are not allowed to invoke commands directly on the host, and all commands are invoked via the EKS Control Plane.",
       enabled: true,
-      hideToggle: true,
+      locked: true,
+      disabledTooltip:
+        "Enabled by default by Porter",
       status: "ENABLED",
     },
     "Cluster Secret Encryption": {
@@ -73,6 +75,15 @@ const soc2DataDefault: Soc2Data = {
       enabled: false,
       info: "",
       status: "",
+    },
+    "Enable CloudWatch Alarms": {
+      message:
+        "Enter Email List",
+      link: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
+      enabled: false,
+      info: "",
+      status: "",
+      email: ["example@porter.run"], // this is a special case for email
     },
   },
 };
@@ -236,11 +247,23 @@ const Compliance: React.FC<Props> = (props) => {
     return "";
   };
 
+  // function to check if any fields are missing
+  const missingFields = (): boolean => {
+    const checks = soc2Data.soc2_checks;
+    for (const key in checks) {
+      if ((checks[key].enabled || soc2Enabled) && checks[key].email?.length === 0) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const isDisabled = (): boolean | undefined => {
     return (
       isUserProvisioning ||
       isClicked ||
       (currentCluster && !currentProject?.enable_reprovision)
+      || missingFields()
     );
   };
 
@@ -366,6 +389,9 @@ const Compliance: React.FC<Props> = (props) => {
           disabled={isDisabled() ?? isLoading}
           onClick={applySettings}
           status={getStatus()}
+          disabledTooltipMessage={
+            "Missing fields. Please fill out all required fields to enable SOC 2 compliance."
+          }
         >
           Save settings
         </Button>

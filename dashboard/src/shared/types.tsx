@@ -739,6 +739,7 @@ export type Soc2Check = {
   locked?: boolean;
   enabledField?: string;
   info?: string;
+  email?: string[];
 };
 
 export type Soc2Data = {

@@ -8,14 +8,18 @@ import { match } from "ts-pattern";
 import Spacer from "components/porter/Spacer";
 import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
 import { type PorterAppFormData } from "lib/porter-apps";
-import { type ClientService } from "lib/porter-apps/services";
+import {
+  isClientJobService,
+  type ClientService,
+} from "lib/porter-apps/services";
 
 import chip from "assets/computer-chip.svg";
 import job from "assets/job.png";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 
-import ServiceStatusFooter from "./ServiceStatusFooter";
+import JobFooter from "./footers/JobFooter";
+import ServiceStatusFooter from "./footers/ServiceStatusFooter";
 import JobTabs from "./tabs/JobTabs";
 import WebTabs from "./tabs/WebTabs";
 import WorkerTabs from "./tabs/WorkerTabs";
@@ -38,6 +42,7 @@ type ServiceProps = {
   };
   clusterIngressIp: string;
   showDisableTls: boolean;
+  existingServiceNames: string[];
 };
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -52,6 +57,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   internalNetworkingDetails,
   clusterIngressIp,
   showDisableTls,
+  existingServiceNames,
 }) => {
   const renderTabs = (service: ClientService): JSX.Element => {
     return match(service)
@@ -186,13 +192,14 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           </StyledSourceBox>
         )}
       </AnimatePresence>
-      {status && (
-        <ServiceStatusFooter
-          serviceName={service.name.value}
-          isJob={service.config.type === "job"}
-          status={status}
-        />
+      {!isClientJobService(service) && status && (
+        <ServiceStatusFooter status={status} />
       )}
+      {isClientJobService(service) &&
+        // make sure that this service is in a created revision before showing the job footer - cannot view history / run jobs that are not deployed
+        existingServiceNames.includes(service.name.value) && (
+          <JobFooter jobName={service.name.value} />
+        )}
       <Spacer y={0.5} />
     </>
   );

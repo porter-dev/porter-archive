@@ -9,6 +9,8 @@ import { type PorterAppFormData } from "lib/porter-apps";
 import {
   defaultSerialized,
   deserializeService,
+  isClientWebService,
+  isClientWorkerService,
 } from "lib/porter-apps/services";
 
 import { useClusterResources } from "shared/ClusterResourcesContext";
@@ -33,12 +35,15 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
     projectId,
     clusterId,
     deploymentTarget,
+    latestClientServices,
   } = useLatestRevision();
 
   const { serviceVersionStatus } = useAppStatus({
     projectId,
     clusterId,
-    serviceNames: latestProto.serviceList.map((s) => s.name),
+    services: latestClientServices.filter(
+      (s) => isClientWebService(s) || isClientWorkerService(s) // we only care about the pod status of web and workers
+    ),
     deploymentTargetId: deploymentTarget.id,
     appName: latestProto.name,
   });

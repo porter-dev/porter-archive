@@ -62,7 +62,7 @@ type ListDatastoresHandler struct {
 	authz.KubernetesAgentGetter
 }
 
-// NewListDatastoresHandler constructs a datastore ListHandler
+// NewListDatastoresHandler constructs a datastore ListDatastoresHandler
 func NewListDatastoresHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

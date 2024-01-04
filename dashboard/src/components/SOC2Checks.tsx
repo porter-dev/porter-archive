@@ -221,9 +221,6 @@ const SOC2Checks: React.FC<Props> = ({
   return (
     <>
       <>
-        {/* <Fieldset>
-        <DonutChart soc2Data={soc2Data} />
-      </Fieldset> */}
         <Spacer y={1} />
         <AppearingDiv>
           {Array.from(combinedKeys).map((checkKey) => (

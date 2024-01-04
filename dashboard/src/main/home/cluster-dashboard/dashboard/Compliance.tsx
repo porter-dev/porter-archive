@@ -39,6 +39,7 @@ type Props = {
 //   "locked":(true if unmutable field like KMS),
 //   "disabledTooltip": "display if message is disabled",
 //  "hideToggle": true (if you want to hide the toggle
+//  "email": ["example@porter"] (if you want to add an email field to pass in)
 // }
 const soc2DataDefault: Soc2Data = {
   soc2_checks: {
@@ -76,15 +77,15 @@ const soc2DataDefault: Soc2Data = {
       info: "",
       status: "",
     },
-    "Enable CloudWatch Alarms": {
-      message:
-        "Enter Email List",
-      link: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
-      enabled: false,
-      info: "",
-      status: "",
-      email: ["example@porter.run"], // this is a special case for email
-    },
+    // "Enable CloudWatch Alarms": {
+    //   message:
+    //     "Enter Email List",
+    //   link: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
+    //   enabled: false,
+    //   info: "",
+    //   status: "",
+    //   email: [""], // this is a special case for email
+    // },
   },
 };
 
@@ -171,6 +172,7 @@ const Compliance: React.FC<Props> = (props) => {
       soc2Data.soc2_checks["Cluster Secret Encryption"].enabled;
     const ecrScanningEnabled =
       soc2Data.soc2_checks["Enhanced Image Vulnerability Scanning"].enabled;
+    //pass in cloudwatch emails here to cluster contract to be saved 
 
     const contractData = JSON.parse(atob(base64Contract));
     const latestCluster: Cluster = Cluster.fromJson(contractData.cluster, {
@@ -338,6 +340,12 @@ const Compliance: React.FC<Props> = (props) => {
               enabled: eksValues.enableEcrScanning,
               status: determineStatus(eksValues.enableEcrScanning),
             },
+            // set Cloudwatch Fields here example: 
+            // "Enable CloudWatch Alarms": {
+            //   ...prevSoc2Data.soc2_checks["Enable CloudWatch Alarms"],
+            //   enabled: eksValues.enableCloudwatchAlarms,
+            //   status: determineStatus(eksValues.enableCloudwatchAlarms),
+            //   email: eksValues.cloudwatchEmails,
           },
         };
       });

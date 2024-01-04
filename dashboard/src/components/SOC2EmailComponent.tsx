@@ -74,10 +74,10 @@ const SOC2EmailComponent: React.FC<Props> = ({ emails, setSoc2Data, soc2CheckKey
       </div>
       <Spacer y={1} />
       <div>
-        {emails.length > 0 && <Text>Subscribers: </Text>}
+        {emails.length > 0 && <Text color="helper">Subscribers: </Text>}
         {emails.map((email, index) => (
           <EmailItem key={index}>
-            <Text color="helper" size={13}>{email}</Text>
+            <Text size={13}>{email}</Text>
             <DeleteButton onClick={() => deleteEmail(email)}>
               <i className="material-icons">delete</i>
             </DeleteButton>
@@ -121,5 +121,6 @@ const EmailItem = styled.div`
   padding: 2px;
   margin-bottom: 5px;
   border-radius: 4px;
+  max-width: 38%;
 
 `;

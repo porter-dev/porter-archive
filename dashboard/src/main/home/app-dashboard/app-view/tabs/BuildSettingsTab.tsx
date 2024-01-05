@@ -1,13 +1,14 @@
-import React, { useMemo } from "react";
-import RepoSettings from "../../create-app/RepoSettings";
+import React from "react";
 import { useFormContext } from "react-hook-form";
-import { PorterAppFormData } from "lib/porter-apps";
-import { useLatestRevision } from "../LatestRevisionContext";
-import Spacer from "components/porter/Spacer";
-import Button from "components/porter/Button";
-import Error from "components/porter/Error";
 import { match } from "ts-pattern";
-import { ButtonStatus } from "../AppDataContainer";
+
+import Spacer from "components/porter/Spacer";
+import { type PorterAppFormData } from "lib/porter-apps";
+
+import RepoSettings from "../../create-app/RepoSettings";
+import { type ButtonStatus } from "../AppDataContainer";
+import AppSaveButton from "../AppSaveButton";
+import { useLatestRevision } from "../LatestRevisionContext";
 
 type Props = {
   buttonStatus: ButtonStatus;
@@ -16,7 +17,7 @@ type Props = {
 const BuildSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
   const {
     watch,
-    formState: { isSubmitting, errors },
+    formState: { isSubmitting },
   } = useFormContext<PorterAppFormData>();
   const { projectId, latestRevision } = useLatestRevision();
 
@@ -35,17 +36,11 @@ const BuildSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
               appExists
             />
             <Spacer y={1} />
-            <Button
-              type="submit"
+            <AppSaveButton
               status={buttonStatus}
-              disabled={
-                isSubmitting ||
-                latestRevision.status === "CREATED"
-              }
+              isDisabled={isSubmitting || latestRevision.status === "CREATED"}
               disabledTooltipMessage="Please wait for the build to complete before updating build settings"
-            >
-              Save build settings
-            </Button>
+            />
           </>
         ))
         .otherwise(() => null)}

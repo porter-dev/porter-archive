@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useFormContext } from "react-hook-form";
 import { z } from "zod";
 
-import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type PorterAppFormData, type SourceOptions } from "lib/porter-apps";
@@ -13,6 +12,7 @@ import api from "shared/api";
 import EnvSettings from "../../validate-apply/app-settings/EnvSettings";
 import { populatedEnvGroup } from "../../validate-apply/app-settings/types";
 import { type ButtonStatus } from "../AppDataContainer";
+import AppSaveButton from "../AppSaveButton";
 import { useLatestRevision } from "../LatestRevisionContext";
 
 type Props = {
@@ -71,15 +71,11 @@ const Environment: React.FC<Props> = ({ latestSource, buttonStatus }) => {
         attachedEnvGroups={attachedEnvGroups}
       />
       <Spacer y={0.5} />
-      <Button
-        type="submit"
+      <AppSaveButton
         status={buttonStatus}
-        loadingText={"Updating..."}
-        disabled={isSubmitting || latestRevision.status === "CREATED"}
+        isDisabled={isSubmitting || latestRevision.status === "CREATED"}
         disabledTooltipMessage="Please wait for the deploy to complete before updating environment variables"
-      >
-        Update app
-      </Button>
+      />
     </>
   );
 };

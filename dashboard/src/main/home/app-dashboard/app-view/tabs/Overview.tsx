@@ -1,7 +1,6 @@
 import React from "react";
 import { useFormContext } from "react-hook-form";
 
-import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { useAppStatus } from "lib/hooks/useAppStatus";
@@ -17,6 +16,7 @@ import { useClusterResources } from "shared/ClusterResourcesContext";
 
 import ServiceList from "../../validate-apply/services-settings/ServiceList";
 import { type ButtonStatus } from "../AppDataContainer";
+import AppSaveButton from "../AppSaveButton";
 import { useLatestRevision } from "../LatestRevisionContext";
 
 type Props = {
@@ -84,15 +84,13 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
         }}
       />
       <Spacer y={0.75} />
-      <Button
-        type="submit"
+      <AppSaveButton
         status={buttonStatus}
-        loadingText={"Updating..."}
-        disabled={formState.isSubmitting || latestRevision.status === "CREATED"}
+        isDisabled={
+          formState.isSubmitting || latestRevision.status === "CREATED"
+        }
         disabledTooltipMessage="Please wait for the deploy to complete before updating services"
-      >
-        Update app
-      </Button>
+      />
     </>
   );
 };

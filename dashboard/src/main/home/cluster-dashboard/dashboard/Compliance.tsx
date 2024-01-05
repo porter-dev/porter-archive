@@ -77,15 +77,15 @@ const soc2DataDefault: Soc2Data = {
       info: "",
       status: "",
     },
-    // "Enable CloudWatch Alarms": {
-    //   message:
-    //     "Enter Email List",
-    //   link: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
-    //   enabled: false,
-    //   info: "",
-    //   status: "",
-    //   email: [""], // this is a special case for email
-    // },
+    "Enable CloudWatch Alarms": {
+      message:
+        "Enter Email List",
+      link: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
+      enabled: false,
+      info: "",
+      status: "",
+      email: ["portersupport@gmail.com"], // this is a special case for email
+    },
   },
 };
 

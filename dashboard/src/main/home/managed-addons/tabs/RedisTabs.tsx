@@ -20,12 +20,12 @@ type Props = {
   index: number;
   addon: ClientAddon & {
     config: {
-      type: "postgres";
+      type: "redis";
     };
   };
 };
 
-export const PostgresTabs: React.FC<Props> = ({ index }) => {
+export const RedisTabs: React.FC<Props> = ({ index }) => {
   const { register, control, watch } = useFormContext<AppTemplateFormData>();
   const {
     currentClusterResources: { maxCPU, maxRAM },
@@ -36,16 +36,15 @@ export const PostgresTabs: React.FC<Props> = ({ index }) => {
   );
 
   const name = watch(`addons.${index}.name`);
-  const username = watch(`addons.${index}.config.username`);
   const password = watch(`addons.${index}.config.password`);
 
-  const databaseURL = useMemo(() => {
-    if (!username || !password || !name.value) {
+  const redisURL = useMemo(() => {
+    if (!password || !name.value) {
       return "";
     }
 
-    return `postgresql://${username}:${password}@${name.value}-postgres:5432/postgres`;
-  }, [username, password, name.value]);
+    return `redis://:${password}@${name.value}-redis:6379`;
+  }, [password, name.value]);
 
   return (
     <>
@@ -61,16 +60,7 @@ export const PostgresTabs: React.FC<Props> = ({ index }) => {
       {match(currentTab)
         .with("credentials", () => (
           <>
-            <Text color="helper">Postgres Username</Text>
-            <Spacer y={0.25} />
-            <ControlledInput
-              type="text"
-              placeholder="postgres"
-              width="300px"
-              {...register(`addons.${index}.config.username`)}
-            />
-            <Spacer y={1} />
-            <Text color="helper">Postgres Password</Text>
+            <Text color="helper">Redis Password</Text>
             <Spacer y={0.25} />
             <ControlledInput
               type="text"
@@ -78,14 +68,14 @@ export const PostgresTabs: React.FC<Props> = ({ index }) => {
               {...register(`addons.${index}.config.password`)}
             />
             <Spacer y={1} />
-            {databaseURL && (
+            {redisURL && (
               <>
-                <Text color="helper">Internal Database URL:</Text>
+                <Text color="helper">Internal Redis URL:</Text>
                 <Spacer y={0.5} />
                 <IdContainer>
-                  <Code>{databaseURL}</Code>
+                  <Code>{redisURL}</Code>
                   <CopyContainer>
-                    <CopyToClipboard text={databaseURL}>
+                    <CopyToClipboard text={redisURL}>
                       <CopyIcon src={copy} alt="copy" />
                     </CopyToClipboard>
                   </CopyContainer>

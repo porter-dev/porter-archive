@@ -139,7 +139,6 @@ const Compliance: React.FC<Props> = (props) => {
       );
 
       const contract = createContract(result.base64_contract);
-
       await api.createContract("<token>", contract, {
         project_id: currentProject.id,
       });
@@ -207,7 +206,7 @@ const Compliance: React.FC<Props> = (props) => {
           }),
           cloudwatchAlarm: new CloudwatchAlarm({
             enable: soc2Enabled || snsMonitoringEnabled || false,
-            emails: snsMonitoringEmails || [""],
+            emails: snsMonitoringEmails || [],
           }),
         }),
         case: "eksKind" as const,
@@ -360,7 +359,7 @@ const Compliance: React.FC<Props> = (props) => {
               status: determineStatus(
                 eksValues.cloudwatchAlarm?.enable || false
               ),
-              email: eksValues.cloudwatchAlarm?.emails,
+              email: eksValues.cloudwatchAlarm?.emails || [],
             },
           },
         };
@@ -368,8 +367,9 @@ const Compliance: React.FC<Props> = (props) => {
 
       setSoc2Enabled(
         cloudTrailEnabled &&
-        eksValues.enableKmsEncryption &&
-        eksValues.enableEcrScanning
+          eksValues.enableKmsEncryption &&
+          eksValues.enableEcrScanning &&
+          (eksValues.cloudwatchAlarm?.enable || false)
       );
     }
   }, [props.selectedClusterVersion]);

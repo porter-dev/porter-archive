@@ -88,15 +88,17 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
             await api
               .getClusters("<token>", {}, { id: currentProject?.id })
               .then(async (res) => {
-                const clusters = res.data;
-                if (clusters.length === 0 || !currentProject.multi_cluster) {
-                  setCurrentCluster(NilCluster);
-                  await api.saveOnboardingState(
-                    "<token>",
-                    { current_step: "connect_source" },
-                    { project_id: currentProject.id }
-                  );
-                  window.location.reload();
+                if (res.data) {
+                  const clusters = res.data;
+                  if (clusters.length === 0 || !currentProject.multi_cluster) {
+                    setCurrentCluster(NilCluster);
+                    await api.saveOnboardingState(
+                      "<token>",
+                      { current_step: "connect_source" },
+                      { project_id: currentProject.id }
+                    );
+                    window.location.reload();
+                  }
                 }
               });
           }

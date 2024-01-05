@@ -18,9 +18,7 @@ import { match } from "ts-pattern";
 import { z } from "zod";
 
 import Banner from "components/porter/Banner";
-import Button from "components/porter/Button";
 import { Error as ErrorComponent } from "components/porter/Error";
-import Icon from "components/porter/Icon";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
@@ -42,8 +40,8 @@ import {
 import api from "shared/api";
 import { Context } from "shared/Context";
 import alert from "assets/alert-warning.svg";
-import save from "assets/save-01.svg";
 
+import AppSaveButton from "./AppSaveButton";
 import ConfirmRedeployModal from "./ConfirmRedeployModal";
 import { GithubErrorBanner } from "./GithubErrorBanner";
 import { useLatestRevision } from "./LatestRevisionContext";
@@ -594,19 +592,15 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
             type="warning"
             suffix={
               <>
-                <Button
-                  type="submit"
-                  loadingText={"Updating..."}
+                <AppSaveButton
                   height={"10px"}
                   status={isSubmitting ? "loading" : ""}
-                  disabled={isSubmitting || latestRevision.status === "CREATED"}
+                  isDisabled={
+                    isSubmitting || latestRevision.status === "CREATED"
+                  }
                   disabledTooltipMessage="Please wait for the deploy to complete before updating the app"
                   disabledTooltipPosition="bottom"
-                >
-                  <Icon src={save} height={"13px"} />
-                  <Spacer inline x={0.5} />
-                  Save as latest version
-                </Button>
+                />
               </>
             }
           >

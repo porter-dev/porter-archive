@@ -1,3 +1,4 @@
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import type { JsonValue } from "@bufbuild/protobuf";
 import {
   CloudwatchAlarm,
@@ -7,7 +8,6 @@ import {
   EKSLogging,
 } from "@porter-dev/api-contracts";
 import axios from "axios";
-import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
@@ -21,10 +21,10 @@ import Text from "components/porter/Text";
 import ToggleRow from "components/porter/ToggleRow";
 import SOC2Checks from "components/SOC2Checks";
 
-import sparkle from "assets/sparkle.svg";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { type Soc2Data } from "shared/types";
+import sparkle from "assets/sparkle.svg";
 
 import DonutChart from "./DonutChart";
 
@@ -299,7 +299,7 @@ const Compliance: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const isUserProvisioning = useMemo(() => {
@@ -348,7 +348,7 @@ const Compliance: React.FC<Props> = (props) => {
             },
             "Enhanced Image Vulnerability Scanning": {
               ...prevSoc2Data.soc2_checks[
-              "Enhanced Image Vulnerability Scanning"
+                "Enhanced Image Vulnerability Scanning"
               ],
               enabled: eksValues.enableEcrScanning,
               status: determineStatus(eksValues.enableEcrScanning),
@@ -365,12 +365,12 @@ const Compliance: React.FC<Props> = (props) => {
         };
       });
 
-      // if new control is added add its individual enabled field to align with the enabled field here 
+      // if new control is added add its individual enabled field to align with the enabled field here
       setSoc2Enabled(
         cloudTrailEnabled &&
-        eksValues.enableKmsEncryption &&
-        eksValues.enableEcrScanning &&
-        (eksValues.cloudwatchAlarm?.enable)
+          eksValues.enableKmsEncryption &&
+          eksValues.enableEcrScanning &&
+          (eksValues.cloudwatchAlarm?.enable || false)
       );
     }
   }, [props.selectedClusterVersion]);
@@ -382,7 +382,7 @@ const Compliance: React.FC<Props> = (props) => {
 
     setIsReadOnly(
       currentCluster.status === "UPDATING" ||
-      currentCluster.status === "UPDATING_UNAVAILABLE"
+        currentCluster.status === "UPDATING_UNAVAILABLE"
     );
   }, []);
 

@@ -10,6 +10,7 @@ import { OFState } from "main/home/onboarding/state";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
+import { NilCluster } from "shared/types";
 import close from "assets/close.png";
 
 import { Onboarding as OnboardingSaveType } from "../onboarding/types";
@@ -87,17 +88,15 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
             await api
               .getClusters("<token>", {}, { id: currentProject?.id })
               .then(async (res) => {
-                if (res.data) {
-                  const clusters = res.data;
-                  if (clusters.length == 0 || !currentProject.multi_cluster) {
-                    setCurrentCluster(null);
-                    await api.saveOnboardingState(
-                      "<token>",
-                      { current_step: "connect_source" },
-                      { project_id: currentProject.id }
-                    );
-                    window.location.reload();
-                  }
+                const clusters = res.data;
+                if (clusters.length === 0 || !currentProject.multi_cluster) {
+                  setCurrentCluster(NilCluster);
+                  await api.saveOnboardingState(
+                    "<token>",
+                    { current_step: "connect_source" },
+                    { project_id: currentProject.id }
+                  );
+                  window.location.reload();
                 }
               });
           }

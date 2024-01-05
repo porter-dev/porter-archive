@@ -2,6 +2,7 @@ import React, { Component } from "react";
 
 import { pushQueryParams } from "shared/routing";
 import {
+  NilCluster,
   type CapabilityType,
   type ClusterType,
   type ContextProps,
@@ -99,15 +100,7 @@ class ContextProvider extends Component<PropsType, StateType> {
     setCurrentError: (currentError: string) => {
       this.setState({ currentError });
     },
-    currentCluster: {
-      id: -1,
-      name: "",
-      server: "",
-      service_account_id: -1,
-      infra_id: -1,
-      service: "",
-      agent_integration_enabled: false,
-    },
+    currentCluster: NilCluster,
     setCurrentCluster: (currentCluster: ClusterType, callback?: any) => {
       localStorage.setItem(
         this.state.currentProject.id + "-cluster",

@@ -16,6 +16,24 @@ export type ClusterType = {
   gpuCluster?: boolean;
 };
 
+export const NilCluster: ClusterType = {
+  id: -1,
+  name: "",
+  server: "",
+  service_account_id: -1,
+  infra_id: -1,
+  service: "",
+  agent_integration_enabled: false,
+  aws_cluster_id: "",
+  aws_integration_id: 0,
+  cloud_provider: "",
+  cloud_provider_credential_identifier: "",
+  gpuCluster: false,
+  preview_envs_enabled: false,
+  status: "",
+  vanity_name: "",
+};
+
 export type AddonCard = {
   id: string;
   icon: string;

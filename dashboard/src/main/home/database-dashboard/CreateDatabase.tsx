@@ -51,21 +51,13 @@ const CreateDatabase: React.FC = () => {
                         !disabled && setSelectedTemplate(template);
                       }}
                     >
-                      <div
-                        style={{
-                          display: "inline-flex",
-                          marginTop: "50px",
-                          justifyContent: "center",
-                          alignItems: "center",
-                        }}
-                      >
+                      <TemplateHeader>
                         <Icon src={icon} />
                         <Spacer inline x={0.5} />
                         <TemplateTitle>{name}</TemplateTitle>
                         <Spacer inline x={0.5} />
                         <Tag hoverable={false}>{engine.displayName}</Tag>
-                      </div>
-                      <Spacer y={0.5} />
+                      </TemplateHeader>
                       <Spacer y={0.5} />
                       <TemplateDescription>{description}</TemplateDescription>
                       <Spacer y={0.5} />
@@ -108,6 +100,13 @@ const TemplateDescription = styled.div`
   line-height: 1.4;
   font-size: 14px;
   text-align: center;
+`;
+
+const TemplateHeader = styled.div`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 50px;
 `;
 
 const TemplateTitle = styled.div`
@@ -155,5 +154,4 @@ const TemplateListWrapper = styled.div`
   grid-column-gap: 30px;
   grid-row-gap: 30px;
   grid-template-columns: repeat(2, 1fr);
-  padding: 0px 60px;
 `;

@@ -260,7 +260,7 @@ class Sidebar extends Component<PropsType, StateType> {
             {currentProject.preview_envs_enabled && (
               <NavButton path="/preview-environments">
                 <Img src={pr_icon} />
-                Preview environments
+                Preview apps
               </NavButton>
             )}
 
@@ -327,7 +327,7 @@ class Sidebar extends Component<PropsType, StateType> {
             {currentProject.preview_envs_enabled && (
               <NavButton path="/preview-environments">
                 <Img src={pr_icon} />
-                Preview environments
+                Preview apps
               </NavButton>
             )}
 

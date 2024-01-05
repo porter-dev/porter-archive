@@ -9,12 +9,12 @@ import {
 import styled from "styled-components";
 import { z } from "zod";
 
-import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type ButtonStatus } from "main/home/app-dashboard/app-view/AppDataContainer";
+import AppSaveButton from "main/home/app-dashboard/app-view/AppSaveButton";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import { AppIcon, AppSource } from "main/home/app-dashboard/apps/AppMeta";
 import {
@@ -145,6 +145,12 @@ export const RequiredApps: React.FC<Props> = ({ buttonStatus }) => {
     <div>
       <Text size={16}>Required Apps</Text>
       <Spacer y={0.5} />
+      <Text color="helper">
+        Apps from other repositories that should be deployed alongside previews
+        of {porterApp.name}. Any selected app will be a copy of the main app
+        running on the cluster.
+      </Text>
+      <Spacer y={0.5} />
       <RequiredAppList>
         {remainingApps.map((ra) => {
           const selectedAppIdx = fields.findIndex(
@@ -168,14 +174,12 @@ export const RequiredApps: React.FC<Props> = ({ buttonStatus }) => {
         })}
       </RequiredAppList>
       <Spacer y={0.75} />
-      <Button
-        type="submit"
+      <AppSaveButton
         status={buttonStatus}
-        loadingText={"Updating..."}
-        disabled={isSubmitting}
-      >
-        Update app
-      </Button>
+        isDisabled={isSubmitting}
+        disabledTooltipMessage={"Please fill out all required fields"}
+        disabledTooltipPosition={"top"}
+      />
     </div>
   );
 };

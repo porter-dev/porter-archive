@@ -1,5 +1,11 @@
 import type { JsonValue } from "@bufbuild/protobuf";
-import { Cluster, Contract, EKS, EKSLogging } from "@porter-dev/api-contracts";
+import {
+  CloudwatchAlarm,
+  Cluster,
+  Contract,
+  EKS,
+  EKSLogging,
+} from "@porter-dev/api-contracts";
 import axios from "axios";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
@@ -18,8 +24,8 @@ import SOC2Checks from "components/SOC2Checks";
 import sparkle from "assets/sparkle.svg";
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { type Soc2Data } from "shared/types";
 
-import { Soc2Data } from "shared/types";
 import DonutChart from "./DonutChart";
 
 type Props = {
@@ -48,8 +54,7 @@ const soc2DataDefault: Soc2Data = {
         "Porter-provisioned instances do not allow remote SSH access. Users are not allowed to invoke commands directly on the host, and all commands are invoked via the EKS Control Plane.",
       enabled: true,
       locked: true,
-      disabledTooltip:
-        "Enabled by default by Porter",
+      disabledTooltip: "Enabled by default by Porter",
       status: "ENABLED",
     },
     "Cluster Secret Encryption": {
@@ -77,10 +82,9 @@ const soc2DataDefault: Soc2Data = {
       info: "",
       status: "",
     },
-    "Enable CloudWatch Alarms": {
+    "Cloudwatch Alarm Creation": {
       message:
-        "Enter Email List",
-      link: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
+        "AWS Cloudwatch Alarms will be created for various components in your infrastructure provisioned by Porter. Alarm notifications will be sent on behalf of Porter via an AWS SNS Topic to the provided email addresses. Email addresses must be manually confirmed in the respective inboxes before notifications will be sent.",
       enabled: false,
       info: "",
       status: "",
@@ -172,7 +176,11 @@ const Compliance: React.FC<Props> = (props) => {
       soc2Data.soc2_checks["Cluster Secret Encryption"].enabled;
     const ecrScanningEnabled =
       soc2Data.soc2_checks["Enhanced Image Vulnerability Scanning"].enabled;
-    //pass in cloudwatch emails here to cluster contract to be saved 
+    const snsMonitoringEnabled =
+      soc2Data.soc2_checks["Cloudwatch Alarm Creation"].enabled;
+    const snsMonitoringEmails =
+      soc2Data.soc2_checks["Cloudwatch Alarm Creation"].email;
+    // pass in cloudwatch emails here to cluster contract to be saved
 
     const contractData = JSON.parse(atob(base64Contract));
     const latestCluster: Cluster = Cluster.fromJson(contractData.cluster, {
@@ -197,6 +205,10 @@ const Compliance: React.FC<Props> = (props) => {
             enableControllerManagerLogs:
               soc2Enabled || cloudTrailEnabled || false,
             enableSchedulerLogs: soc2Enabled || cloudTrailEnabled || false,
+          }),
+          cloudwatchAlarm: new CloudwatchAlarm({
+            enable: soc2Enabled || snsMonitoringEnabled || false,
+            emails: snsMonitoringEmails || [""],
           }),
         }),
         case: "eksKind" as const,
@@ -253,7 +265,10 @@ const Compliance: React.FC<Props> = (props) => {
   const missingFields = (): boolean => {
     const checks = soc2Data.soc2_checks;
     for (const key in checks) {
-      if ((checks[key].enabled || soc2Enabled) && checks[key].email?.length === 0) {
+      if (
+        (checks[key].enabled || soc2Enabled) &&
+        checks[key].email?.length === 0
+      ) {
         return true;
       }
     }
@@ -264,8 +279,8 @@ const Compliance: React.FC<Props> = (props) => {
     return (
       isUserProvisioning ||
       isClicked ||
-      (currentCluster && !currentProject?.enable_reprovision)
-      || missingFields()
+      (currentCluster && !currentProject?.enable_reprovision) ||
+      missingFields()
     );
   };
 
@@ -286,7 +301,7 @@ const Compliance: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const isUserProvisioning = useMemo(() => {
@@ -335,25 +350,27 @@ const Compliance: React.FC<Props> = (props) => {
             },
             "Enhanced Image Vulnerability Scanning": {
               ...prevSoc2Data.soc2_checks[
-              "Enhanced Image Vulnerability Scanning"
+                "Enhanced Image Vulnerability Scanning"
               ],
               enabled: eksValues.enableEcrScanning,
               status: determineStatus(eksValues.enableEcrScanning),
             },
-            // set Cloudwatch Fields here example: 
-            // "Enable CloudWatch Alarms": {
-            //   ...prevSoc2Data.soc2_checks["Enable CloudWatch Alarms"],
-            //   enabled: eksValues.enableCloudwatchAlarms,
-            //   status: determineStatus(eksValues.enableCloudwatchAlarms),
-            //   email: eksValues.cloudwatchEmails,
+            "Cloudwatch Alarm Creation": {
+              ...prevSoc2Data.soc2_checks["Cloudwatch Alarm Creation"],
+              enabled: eksValues.cloudwatchAlarm?.enable || false,
+              status: determineStatus(
+                eksValues.cloudwatchAlarm?.enable || false
+              ),
+              email: eksValues.cloudwatchAlarm?.emails,
+            },
           },
         };
       });
 
       setSoc2Enabled(
         cloudTrailEnabled &&
-        eksValues.enableKmsEncryption &&
-        eksValues.enableEcrScanning
+          eksValues.enableKmsEncryption &&
+          eksValues.enableEcrScanning
       );
     }
   }, [props.selectedClusterVersion]);
@@ -365,7 +382,7 @@ const Compliance: React.FC<Props> = (props) => {
 
     setIsReadOnly(
       currentCluster.status === "UPDATING" ||
-      currentCluster.status === "UPDATING_UNAVAILABLE"
+        currentCluster.status === "UPDATING_UNAVAILABLE"
     );
   }, []);
 

@@ -1,15 +1,15 @@
 import React, { Component } from "react";
 
+import { pushQueryParams } from "shared/routing";
 import {
-  CapabilityType,
-  ClusterType,
-  ContextProps,
-  ProjectListType,
-  ProjectType,
-  UsageData,
+  type CapabilityType,
+  type ClusterType,
+  type ContextProps,
+  type ProjectListType,
+  type ProjectType,
+  type UsageData,
 } from "shared/types";
 
-import { pushQueryParams } from "shared/routing";
 import api from "./api";
 
 const Context = React.createContext<Partial<ContextProps>>(null);
@@ -24,7 +24,7 @@ type PropsType = {
 
 type StateType = GlobalContextType;
 
-export interface GlobalContextType {
+export type GlobalContextType = {
   currentModal: string;
   currentModalData: any;
   setCurrentModal: (currentModal: string, currentModalData?: any) => void;
@@ -71,7 +71,7 @@ export interface GlobalContextType {
   setFeaturePreview: (featurePreview: boolean) => void;
   soc2Data: any;
   setSoc2Data: (x: any) => void;
-}
+};
 
 /**
  * Component managing a universal (application-wide) data store.
@@ -92,7 +92,9 @@ class ContextProvider extends Component<PropsType, StateType> {
       this.setState({ currentModal, currentModalData });
     },
     currentOverlay: null,
-    setCurrentOverlay: (x: any) => this.setState({ currentOverlay: x }),
+    setCurrentOverlay: (x: any) => {
+      this.setState({ currentOverlay: x });
+    },
     currentError: null,
     setCurrentError: (currentError: string) => {
       this.setState({ currentError });
@@ -112,7 +114,7 @@ class ContextProvider extends Component<PropsType, StateType> {
         JSON.stringify(currentCluster)
       );
       this.setState({ currentCluster }, () => {
-        callback && callback();
+        callback?.();
       });
       if (window.intercomSettings) {
         window.intercomSettings["Cluster ID"] = currentCluster.id;
@@ -129,7 +131,7 @@ class ContextProvider extends Component<PropsType, StateType> {
         localStorage.removeItem("currentProject");
       }
       this.setState({ currentProject }, () => {
-        callback && callback();
+        callback?.();
       });
       if (window.intercomSettings) {
         window.intercomSettings["Project ID"] = currentProject.id;
@@ -223,39 +225,44 @@ class ContextProvider extends Component<PropsType, StateType> {
       this.setState({ featurePreview });
     },
     soc2Data: {
-      "preflight_checks": {
+      preflight_checks: {
         "Public SSH Access": {
-          "message": "Porter-provisioned instances do not allow remote SSH access. Users are not allowed to invoke commands directly on the host, and all commands are invoked via the EKS Control Plane.",
-          "enabled": true,
-          "hideToggle": true,
-          "status": "ENABLED"
+          message:
+            "Porter-provisioned instances do not allow remote SSH access. Users are not allowed to invoke commands directly on the host, and all commands are invoked via the EKS Control Plane.",
+          enabled: true,
+          hideToggle: true,
+          status: "ENABLED",
         },
         "Cluster Secret Encryption": {
-          "message": "Cluster secrets can be encrypted using an AWS KMS Key. Secrets will be encrypted at rest, and encryption cannot be disabled for secrets.",
-          "enabled": false,
-          "disabledTooltip": "Enable KMS encryption for the cluster to enable SOC 2 compliance.",
-          "link": "https://aws.amazon.com/about-aws/whats-new/2020/03/amazon-eks-adds-envelope-encryption-for-secrets-with-aws-kms/",
-          "locked": true,
-          "status": "",
+          message:
+            "Cluster secrets can be encrypted using an AWS KMS Key. Secrets will be encrypted at rest, and encryption cannot be disabled for secrets.",
+          enabled: false,
+          disabledTooltip:
+            "Enable KMS encryption for the cluster to enable SOC 2 compliance.",
+          link: "https://aws.amazon.com/about-aws/whats-new/2020/03/amazon-eks-adds-envelope-encryption-for-secrets-with-aws-kms/",
+          locked: true,
+          status: "",
         },
         "Control Plane Log Retention": {
-          "message": "EKS Control Plane logs are by default available for a minimal amount of time, typically 1 hour or less. EKS CloudTrail Forwarding automatically sends control plane logs to CloudTrail for longer retention and later inspection.",
-          "enabled": false,
-          "enabledField": "Retain CloudTrail logs for 365 days",
-          "status": "",
+          message:
+            "EKS Control Plane logs are by default available for a minimal amount of time, typically 1 hour or less. EKS CloudTrail Forwarding automatically sends control plane logs to CloudTrail for longer retention and later inspection.",
+          enabled: false,
+          enabledField: "Retain CloudTrail logs for 365 days",
+          status: "",
         },
         "Enhanced Image Vulnerability Scanning": {
-          "message": "AWS ECR scans for CVEs from the open-source Clair database on push image push. Enhanced scanning provides continuous, automated scans against images as new vulnerabilities appear.",
-          "link": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
-          "enabled": false,
-          "info": "",
-          "status": ""
+          message:
+            "AWS ECR scans for CVEs from the open-source Clair database on push image push. Enhanced scanning provides continuous, automated scans against images as new vulnerabilities appear.",
+          link: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
+          enabled: false,
+          info: "",
+          status: "",
         },
-      }
+      },
     },
     setSoc2Data: (soc2Data) => {
       localStorage.setItem("soc2Data", JSON.stringify(soc2Data));
-    }
+    },
   };
 
   render() {

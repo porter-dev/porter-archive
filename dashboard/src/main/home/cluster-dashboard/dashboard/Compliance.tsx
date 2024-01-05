@@ -180,7 +180,6 @@ const Compliance: React.FC<Props> = (props) => {
       soc2Data.soc2_checks["Cloudwatch Alarm Creation"].enabled;
     const snsMonitoringEmails =
       soc2Data.soc2_checks["Cloudwatch Alarm Creation"].email;
-    // pass in cloudwatch emails here to cluster contract to be saved
 
     const contractData = JSON.parse(atob(base64Contract));
     const latestCluster: Cluster = Cluster.fromJson(contractData.cluster, {

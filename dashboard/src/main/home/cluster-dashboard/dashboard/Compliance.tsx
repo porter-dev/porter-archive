@@ -365,11 +365,12 @@ const Compliance: React.FC<Props> = (props) => {
         };
       });
 
+      // if new control is added add its individual enabled field to align with the enabled field here 
       setSoc2Enabled(
         cloudTrailEnabled &&
-          eksValues.enableKmsEncryption &&
-          eksValues.enableEcrScanning &&
-          (eksValues.cloudwatchAlarm?.enable || false)
+        eksValues.enableKmsEncryption &&
+        eksValues.enableEcrScanning &&
+        (eksValues.cloudwatchAlarm?.enable)
       );
     }
   }, [props.selectedClusterVersion]);

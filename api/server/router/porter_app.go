@@ -647,7 +647,7 @@ func getPorterAppRoutes(
 		},
 	)
 
-	getAppManifestsHandler := porter_app.NewGetAppManifestsHandler(
+	getAppManifestsHandler := porter_app.NewAppManifestsHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

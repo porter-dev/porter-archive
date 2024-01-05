@@ -134,7 +134,7 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 	appManifestsCmd := &cobra.Command{
 		Use:   "manifests [application]",
 		Args:  cobra.MinimumNArgs(1),
-		Short: "Prints the manifests for an application.",
+		Short: "Prints the kubernetes manifests for an application.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return checkLoginAndRunWithConfig(cmd, cliConf, args, appManifests)
 		},

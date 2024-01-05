@@ -182,8 +182,8 @@ func (c *Client) GetAppManifests(
 	ctx context.Context,
 	projectID, clusterID uint,
 	appName string,
-) (*porter_app.GetAppManifestsResponse, error) {
-	resp := &porter_app.GetAppManifestsResponse{}
+) (*porter_app.AppManifestsResponse, error) {
+	resp := &porter_app.AppManifestsResponse{}
 
 	err := c.getRequest(
 		fmt.Sprintf(

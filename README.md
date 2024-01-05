@@ -51,7 +51,7 @@ For those who are familiar with Kubernetes and Helm:
 
 ## Docs
 
-Below are instructions for a quickstart. For full documentation, please visit our [official Docs.](https://docs.getporter.dev)
+Below are instructions for a quickstart. For full documentation, please visit our [official Docs.](https://docs.porter.run/)
 
 ## Getting Started
 

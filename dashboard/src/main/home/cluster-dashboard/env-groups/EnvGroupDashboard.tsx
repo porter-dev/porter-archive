@@ -17,6 +17,7 @@ import { getQueryParam, pushQueryParams, pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Spacer from "components/porter/Spacer";
+import ClusterDeletingPlaceHolder from "components/ClusterDeletingPlaceholder";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -79,6 +80,9 @@ const EnvGroupDashboard = (props: PropsType) => {
   };
 
   const renderBody = () => {
+    if (props.currentCluster.status === "DELETING") {
+      return <ClusterDeletingPlaceHolder />
+    }
     if (props.currentCluster.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />
     }

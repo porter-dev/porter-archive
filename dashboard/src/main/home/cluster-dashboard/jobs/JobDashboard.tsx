@@ -20,6 +20,7 @@ import LastRunStatusSelector from "../LastRunStatusSelector";
 import JobRunTable from "../chart/JobRunTable";
 import ChartList from "../chart/ChartList";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import ClusterDeletingPlaceholder from "components/ClusterDeletingPlaceholder";
 
 type Props = RouteComponentProps & WithAuthProps & {
   currentView: PorterUrl;
@@ -49,6 +50,12 @@ const JobDashboard: React.FC<Props> = ({
         description="Scripts and tasks that run once or on a repeating interval."
         disableLineBreak
       />
+      {
+        currentCluster?.status === "DELETING"
+        && (
+          <ClusterDeletingPlaceholder />
+        )
+      }
       {currentCluster.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (

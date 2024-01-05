@@ -34,6 +34,7 @@ import { Link } from "react-router-dom";
 import Fieldset from "components/porter/Fieldset";
 import Select from "components/porter/Select";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import ClusterDeletingPlaceholder from "components/ClusterDeletingPlaceholder";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import { useAuthState } from "main/auth/context";
 
@@ -155,124 +156,132 @@ const AddOnDashboard: React.FC<Props> = ({
         description="Add-ons and supporting workloads for this project."
         disableLineBreak
       />
-      {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
-        <ClusterProvisioningPlaceholder />
-      ) : (
+      {
+        currentCluster?.status === "DELETING" ?
+          <ClusterDeletingPlaceholder /> :
 
-        (addOns.length === 0 || (filteredAddOns.length === 0 && searchValue === "")) ? (
+          currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
+            <ClusterProvisioningPlaceholder />
+          ) : (
 
-          isLoading ?
-            (<Loading offset="-150px" />) : (
-              <DashboardPlaceholder>
-                <Text size={16}>
-                  No add-ons have been deployed yet
-                </Text>
-                <Spacer y={0.5} />
-                <Text color={"helper"}>
-                  Deploy from our suite of curated add-ons.
-                </Text>
-                <Spacer y={1} />
-                <Link to="/addons/new">
-                  <Button alt onClick={() => { }} height="35px" >
-                    Deploy add-ons <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
-                  </Button>
-                </Link>
-              </DashboardPlaceholder>
-            )
-        ) : (
-          <>
-            <Container row spaced>
-              <SearchBar
-                value={searchValue}
-                setValue={setSearchValue}
-                placeholder="Search add-ons . . ."
-                width="100%"
-              />
-              <Spacer inline x={2} />
-              <Toggle
-                items={[
-                  { label: <ToggleIcon src={grid} />, value: "grid" },
-                  { label: <ToggleIcon src={list} />, value: "list" },
-                ]}
-                active={view}
-                setActive={setView}
-              />
-              <Spacer inline x={2} />
-              <Link to="/addons/new">
-                <Button onClick={() => { }} height="30px" width="130px">
-                  <I className="material-icons">add</I> New add-on
-                </Button>
-              </Link>
-            </Container>
-            <Spacer y={1} />
+            (addOns.length === 0 || (filteredAddOns.length === 0 && searchValue === "")) ? (
 
-            {filteredAddOns.length === 0 ? (
-              <Fieldset>
-                <Container row>
-                  <PlaceholderIcon src={notFound} />
-                  <Text color="helper">{searchValue === "" ? "No add-ons have been deployed yet." : "No matching add-ons were found."}</Text>
-                </Container>
-              </Fieldset>
-            ) : (isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
-              <GridList>
-                {(filteredAddOns ?? []).map((app: any, i: number) => {
-                  return (
-                    <Block to={getExpandedChartLinkURL(app)} key={i}>
-                      <Container row>
-                        <Icon
-                          src={
-                            hardcodedIcons[app.chart.metadata.name] ||
-                            app.chart.metadata.icon
-                          }
-                        />
-                        <Text size={14}>{app.name}</Text>
-                        <Spacer inline x={2} />
-                      </Container>
-                      <StatusIcon src={healthy} />
-                      <Container row>
-                        <SmallIcon opacity="0.4" src={time} />
-                        <Text size={13} color="#ffffff44">
-                          {readableDate(app.info.last_deployed)}
-                        </Text>
-                      </Container>
-                    </Block>
-                  );
-                })}
-              </GridList>
+              isLoading ?
+                (<Loading offset="-150px" />) : (
+                  <DashboardPlaceholder>
+                    <Text size={16}>
+                      No add-ons have been deployed yet
+                    </Text>
+                    <Spacer y={0.5} />
+                    <Text color={"helper"}>
+                      Deploy from our suite of curated add-ons.
+                    </Text>
+                    <Spacer y={1} />
+                    <Link to="/addons/new">
+                      <Button alt onClick={() => { }} height="35px" >
+                        Deploy add-ons <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
+                      </Button>
+                    </Link>
+                  </DashboardPlaceholder>
+                )
             ) : (
-              <List>
-                {(filteredAddOns ?? []).map((app: any, i: number) => {
-                  return (
-                    <Row to={getExpandedChartLinkURL(app)} key={i}>
-                      <Container row>
-                        <MidIcon
-                          src={
-                            hardcodedIcons[app.chart.metadata.name] ||
-                            app.chart.metadata.icon
-                          }
-                        />
-                        <Text size={14}>{app.name}</Text>
-                        <Spacer inline x={1} />
-                        <MidIcon src={healthy} height="16px" />
-                      </Container>
-                      <Spacer height="15px" />
-                      <Container row>
-                        <SmallIcon opacity="0.4" src={time} />
-                        <Text size={13} color="#ffffff44">
-                          {readableDate(app.info.last_deployed)}
-                        </Text>
-                      </Container>
-                    </Row>
-                  );
-                })}
-              </List>
-            )
-            )}
-          </>
-        ))}
+              <>
+                <Container row spaced>
+                  <SearchBar
+                    value={searchValue}
+                    setValue={setSearchValue}
+                    placeholder="Search add-ons . . ."
+                    width="100%"
+                  />
+                  <Spacer inline x={2} />
+                  <Toggle
+                    items={[
+                      { label: <ToggleIcon src={grid} />, value: "grid" },
+                      { label: <ToggleIcon src={list} />, value: "list" },
+                    ]}
+                    active={view}
+                    setActive={setView}
+                  />
+                  <Spacer inline x={2} />
+                  <Link to="/addons/new">
+                    <Button onClick={() => { }} height="30px" width="130px">
+                      <I className="material-icons">add</I> New add-on
+                    </Button>
+                  </Link>
+                </Container>
+                <Spacer y={1} />
+
+                {filteredAddOns.length === 0 ? (
+                  <Fieldset>
+                    <Container row>
+                      <PlaceholderIcon src={notFound} />
+                      <Text color="helper">{searchValue === "" ? "No add-ons have been deployed yet." : "No matching add-ons were found."}</Text>
+                    </Container>
+                  </Fieldset>
+                ) : (isLoading ? <Loading offset="-150px" /> : view === "grid" ? (
+                  <GridList>
+                    {(filteredAddOns ?? []).map((app: any, i: number) => {
+                      return (
+                        <Block to={getExpandedChartLinkURL(app)} key={i}>
+                          <Container row>
+                            <Icon
+                              src={
+                                hardcodedIcons[app.chart.metadata.name] ||
+                                app.chart.metadata.icon
+                              }
+                            />
+                            <Text size={14}>{app.name}</Text>
+                            <Spacer inline x={2} />
+                          </Container>
+                          <StatusIcon src={healthy} />
+                          <Container row>
+                            <SmallIcon opacity="0.4" src={time} />
+                            <Text size={13} color="#ffffff44">
+                              {readableDate(app.info.last_deployed)}
+                            </Text>
+                          </Container>
+                        </Block>
+                      );
+                    })}
+                  </GridList>
+                ) : (
+                  <List>
+                    {(filteredAddOns ?? []).map((app: any, i: number) => {
+                      return (
+                        <Row to={getExpandedChartLinkURL(app)} key={i}>
+                          <Container row>
+                            <MidIcon
+                              src={
+                                hardcodedIcons[app.chart.metadata.name] ||
+                                app.chart.metadata.icon
+                              }
+                            />
+                            <Text size={14}>{app.name}</Text>
+                            <Spacer inline x={1} />
+                            <MidIcon src={healthy} height="16px" />
+                          </Container>
+                          <Spacer height="15px" />
+                          <Container row>
+                            <SmallIcon opacity="0.4" src={time} />
+                            <Text size={13} color="#ffffff44">
+                              {readableDate(app.info.last_deployed)}
+                            </Text>
+                          </Container>
+                        </Row>
+                      );
+                    })}
+                  </List>
+                )
+                )}
+              </>
+            ))
+      }
+
+
       <Spacer y={5} />
     </StyledAppDashboard >
   );
+
 };
 
 export default AddOnDashboard;

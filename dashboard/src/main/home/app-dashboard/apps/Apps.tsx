@@ -32,6 +32,7 @@ import web from "assets/web.png";
 
 import AppGrid from "./AppGrid";
 import { appRevisionWithSourceValidator } from "./types";
+import ClusterDeletingPlaceholder from "components/ClusterDeletingPlaceholder";
 
 export type ClientAddonWithEnv = {
   addon: ClientAddon;
@@ -78,7 +79,7 @@ const Apps: React.FC = () => {
             {
               deployment_target_id:
                 currentProject.managed_deployment_targets_enabled &&
-                !currentDeploymentTarget.is_preview
+                  !currentDeploymentTarget.is_preview
                   ? undefined
                   : currentDeploymentTarget.id,
               ignore_preview_apps: !currentDeploymentTarget.is_preview,
@@ -192,6 +193,9 @@ const Apps: React.FC = () => {
   const renderContents = (): JSX.Element => {
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
+    }
+    if (currentCluster?.status === "DELETING") {
+      return <ClusterDeletingPlaceholder />;
     }
 
     if (

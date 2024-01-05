@@ -20,6 +20,7 @@ import ChartList from "../chart/ChartList";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import SortSelector from "../SortSelector";
 import Spacer from "components/porter/Spacer";
+import ClusterDeletingPlaceholder from "components/ClusterDeletingPlaceholder";
 
 type Props = RouteComponentProps & WithAuthProps & {
   currentView: PorterUrl;
@@ -55,6 +56,12 @@ const AppDashboard: React.FC<Props> = ({
         description="Continuously running web services, workers, and add-ons."
         disableLineBreak
       />
+      {
+        currentCluster?.status === "DELETING"
+        && (
+          <ClusterDeletingPlaceholder />
+        )
+      }
       {currentCluster.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (

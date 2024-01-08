@@ -34,7 +34,7 @@ const CreateEnvGroup = ({ goBack, currentCluster }: PropsType) => {
     const isEnvGroupNameInvalid =
       !isAlphanumeric(envGroupName) ||
       envGroupName === '' ||
-      envGroupName.length > 15;
+      envGroupName.length > 60;
 
     const isAnyEnvVariableBlank = envVariables.some(
       (envVar) => !envVar.key.trim() || !envVar.value.trim()

@@ -26,6 +26,7 @@ const gpuMachineTypeOptions = [
 
   { value: "g4dn.xlarge", label: "g4dn.xlarge" },
   { value: "g4dn.2xlarge", label: "g4dn.2xlarge" },
+  { value: "p4d.24xlarge", label: "p4d.24xlarge" },
 ];
 
 

@@ -38,14 +38,14 @@ export function defaultClientAddon(
     .with("postgres", () =>
       clientAddonValidator.parse({
         expanded: true,
-        name: { readOnly: false, value: "addon" },
+        name: { readOnly: false, value: "postgres" },
         config: defaultPostgresAddon(),
       })
     )
     .with("redis", () =>
       clientAddonValidator.parse({
         expanded: true,
-        name: { readOnly: false, value: "addon" },
+        name: { readOnly: false, value: "redis" },
         config: redisConfigValidator.parse({
           type: "redis",
         }),

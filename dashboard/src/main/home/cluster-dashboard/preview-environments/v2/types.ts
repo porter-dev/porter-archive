@@ -20,15 +20,18 @@ export const existingTemplateWithEnvValidator = z.object({
         secrets: z.record(z.string()).default({}),
       })
     )
+    .nullable()
     .transform((addons) =>
-      addons.map((a) => {
-        return {
-          ...a,
-          addon: Addon.fromJsonString(atob(a.base64_addon), {
-            ignoreUnknownFields: true,
-          }),
-        };
-      })
+      addons
+        ? addons.map((a) => {
+            return {
+              ...a,
+              addon: Addon.fromJsonString(atob(a.base64_addon), {
+                ignoreUnknownFields: true,
+              }),
+            };
+          })
+        : []
     ),
 });
 

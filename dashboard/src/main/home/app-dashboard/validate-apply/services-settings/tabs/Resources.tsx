@@ -35,12 +35,14 @@ type ResourcesProps = {
   service: ClientService;
   isPredeploy?: boolean;
   clusterContainsGPUNodes: boolean;
+  maxGPU: number;
 };
 
 const Resources: React.FC<ResourcesProps> = ({
   index,
   maxCPU,
   maxRAM,
+  maxGPU,
   service,
   clusterContainsGPUNodes,
   isPredeploy = false,
@@ -73,6 +75,11 @@ const Resources: React.FC<ResourcesProps> = ({
     readOnly: false,
     value: 0,
   });
+  const gpu = watch(`app.services.${index}.gpu.enabled`, {
+    readOnly: false,
+    value: false,
+  });
+
 
   return (
     <>
@@ -259,6 +266,7 @@ const Resources: React.FC<ResourcesProps> = ({
                         <span>Enable GPU</span>
                       </>
                     </Text>
+
                     {!clusterContainsGPUNodes && (
                       <>
                         <Spacer inline x={1} />
@@ -295,6 +303,36 @@ const Resources: React.FC<ResourcesProps> = ({
                 </>
               )}
             />
+            {
+              (maxGPU > 1 && gpu.value) &&
+              <Controller
+                name={`app.services.${index}.gpu`}
+                control={control}
+                render={({ field: { value, onChange } }) => (
+                  <InputSlider
+                    label="GPU"
+                    unit=""
+                    min={0}
+                    max={maxGPU}
+                    value={value?.gpuCoresNvidia.value ?? "1"}
+                    disabled={value?.readOnly}
+                    width="300px"
+                    setValue={(e) => {
+                      onChange({
+                        ...value,
+                        gpuCoresNvidia: {
+                          ...value.gpuCoresNvidia,
+                          value: e,
+                        },
+                      });
+                    }}
+                    disabledTooltip={"You may only edit this field in your porter.yaml."
+                    }
+                  />
+                )}
+              />
+
+            }
             {currentCluster.status === "UPDATING" &&
               !clusterContainsGPUNodes && (
                 <CheckItemContainer>

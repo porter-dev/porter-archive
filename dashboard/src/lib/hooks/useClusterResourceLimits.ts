@@ -176,6 +176,7 @@ export const useClusterResourceLimits = ({
   defaultCPU: number;
   defaultRAM: number;
   clusterContainsGPUNodes: boolean;
+  maxGPU: number;
   clusterIngressIp: string;
   loadBalancerType: ClientLoadBalancerType;
 } => {
@@ -183,6 +184,7 @@ export const useClusterResourceLimits = ({
   const LARGE_INSTANCE_UPPER_BOUND = 0.9;
   const DEFAULT_MULTIPLIER = 0.125;
   const [clusterContainsGPUNodes, setClusterContainsGPUNodes] = useState(false);
+  const [maxGPU, setMaxGPU] = useState(1);
   const [maxCPU, setMaxCPU] = useState(
     AWS_INSTANCE_LIMITS[DEFAULT_INSTANCE_CLASS][DEFAULT_INSTANCE_SIZE].vCPU *
       SMALL_INSTANCE_UPPER_BOUND
@@ -345,9 +347,11 @@ export const useClusterResourceLimits = ({
           return c.kindValues.value.nodeGroups.some(
             (ng) =>
               (ng.nodeGroupType === NodeGroupType.CUSTOM &&
-                ng.instanceType.includes("g4dn")) ||
+                (ng.instanceType.includes("g4dn") ||
+                  ng.instanceType.includes("t3"))) ||
               (ng.nodeGroupType === NodeGroupType.APPLICATION &&
-                ng.instanceType.includes("g4dn"))
+                (ng.instanceType.includes("g4dn") ||
+                  ng.instanceType.includes("t3")))
           );
         })
         .with({ kindValues: { case: "gkeKind" } }, (c) => {
@@ -385,6 +389,7 @@ export const useClusterResourceLimits = ({
     defaultCPU,
     defaultRAM,
     clusterContainsGPUNodes,
+    maxGPU,
     clusterIngressIp,
     loadBalancerType,
   };

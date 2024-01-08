@@ -15,6 +15,7 @@ export type ClusterResources = {
   clusterContainsGPUNodes: boolean;
   clusterIngressIp: string;
   loadBalancerType: ClientLoadBalancerType;
+  maxGPU: number;
 };
 
 export const ClusterResourcesContext = createContext<{
@@ -45,6 +46,7 @@ const ClusterResourcesProvider = ({
     maxRAM,
     defaultCPU,
     defaultRAM,
+    maxGPU,
     clusterContainsGPUNodes,
     clusterIngressIp,
     loadBalancerType,
@@ -62,6 +64,7 @@ const ClusterResourcesProvider = ({
           maxRAM,
           defaultCPU,
           defaultRAM,
+          maxGPU,
           clusterContainsGPUNodes,
           clusterIngressIp,
           loadBalancerType,

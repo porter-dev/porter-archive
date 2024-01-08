@@ -299,7 +299,7 @@ const Compliance: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const isUserProvisioning = useMemo(() => {
@@ -348,7 +348,7 @@ const Compliance: React.FC<Props> = (props) => {
             },
             "Enhanced Image Vulnerability Scanning": {
               ...prevSoc2Data.soc2_checks[
-                "Enhanced Image Vulnerability Scanning"
+              "Enhanced Image Vulnerability Scanning"
               ],
               enabled: eksValues.enableEcrScanning,
               status: determineStatus(eksValues.enableEcrScanning),
@@ -368,9 +368,9 @@ const Compliance: React.FC<Props> = (props) => {
       // if new control is added add its individual enabled field to align with the enabled field here
       setSoc2Enabled(
         cloudTrailEnabled &&
-          eksValues.enableKmsEncryption &&
-          eksValues.enableEcrScanning &&
-          (eksValues.cloudwatchAlarm?.enable || false)
+        eksValues.enableKmsEncryption &&
+        eksValues.enableEcrScanning &&
+        (eksValues.cloudwatchAlarm?.enable || false)
       );
     }
   }, [props.selectedClusterVersion]);
@@ -382,7 +382,7 @@ const Compliance: React.FC<Props> = (props) => {
 
     setIsReadOnly(
       currentCluster.status === "UPDATING" ||
-        currentCluster.status === "UPDATING_UNAVAILABLE"
+      currentCluster.status === "UPDATING_UNAVAILABLE"
     );
   }, []);
 

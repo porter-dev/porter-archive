@@ -13,6 +13,7 @@ import { z } from "zod";
 import {
   AWS_INSTANCE_LIMITS,
   AZURE_INSTANCE_LIMITS,
+  GPU_INSTANCE_LIMIT,
 } from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
 
 import api from "shared/api";
@@ -342,16 +343,71 @@ export const useClusterResourceLimits = ({
 
   useEffect(() => {
     if (contract) {
+      const maxGPU: number = match(contract)
+        .with({ kindValues: { case: "eksKind" } }, (c) => {
+          return c.kindValues.value.nodeGroups.some((ng) => {
+            if (
+              ng.nodeGroupType === NodeGroupType.CUSTOM ||
+              ng.nodeGroupType === NodeGroupType.APPLICATION
+            ) {
+              const instanceType = ng.instanceType;
+              let parsedType;
+              if (instanceType && instanceType.includes(".")) {
+                parsedType = z
+                  .tuple([z.string(), z.string()])
+                  .safeParse(instanceType.split("."));
+              } else if (instanceType && instanceType.includes("-")) {
+                const [instanceClass, ...instanceSizeParts] =
+                  instanceType.split("-");
+                const instanceSize = instanceSizeParts.join("-");
+                parsedType = z
+                  .tuple([z.string(), z.string()])
+                  .safeParse([instanceClass, instanceSize]);
+              }
+              const [instanceClass, instanceSize] = parsedType.data;
+              const { GPU } = GPU_INSTANCE_LIMIT[instanceClass][instanceSize];
+              return GPU;
+            } else return 1;
+          });
+        })
+        .with({ kindValues: { case: "gkeKind" } }, (c) => {
+          return c.kindValues.value.nodePools.some((ng) => {
+            if (
+              ng.nodeGroupType === NodeGroupType.CUSTOM ||
+              ng.nodeGroupType === NodeGroupType.APPLICATION
+            ) {
+              const instanceType = ng.instanceType;
+              let parsedType;
+              if (instanceType && instanceType.includes(".")) {
+                parsedType = z
+                  .tuple([z.string(), z.string()])
+                  .safeParse(instanceType.split("."));
+              } else if (instanceType && instanceType.includes("-")) {
+                const [instanceClass, ...instanceSizeParts] =
+                  instanceType.split("-");
+                const instanceSize = instanceSizeParts.join("-");
+                parsedType = z
+                  .tuple([z.string(), z.string()])
+                  .safeParse([instanceClass, instanceSize]);
+              }
+              const [instanceClass, instanceSize] = parsedType.data;
+              const { GPU } = GPU_INSTANCE_LIMIT[instanceClass][instanceSize];
+              return GPU;
+            } else return 1;
+          });
+        })
+        .otherwise(() => 1);
+
       const containsCustomNodeGroup = match(contract)
         .with({ kindValues: { case: "eksKind" } }, (c) => {
           return c.kindValues.value.nodeGroups.some(
             (ng) =>
               (ng.nodeGroupType === NodeGroupType.CUSTOM &&
                 (ng.instanceType.includes("g4dn") ||
-                  ng.instanceType.includes("t3"))) ||
+                  ng.instanceType.includes("p4d"))) ||
               (ng.nodeGroupType === NodeGroupType.APPLICATION &&
                 (ng.instanceType.includes("g4dn") ||
-                  ng.instanceType.includes("t3")))
+                  ng.instanceType.includes("p4d")))
           );
         })
         .with({ kindValues: { case: "gkeKind" } }, (c) => {
@@ -378,6 +434,7 @@ export const useClusterResourceLimits = ({
         })
         .otherwise(() => "UNSPECIFIED");
 
+      setMaxGPU(maxGPU);
       setClusterContainsGPUNodes(containsCustomNodeGroup);
       setLoadBalancerType(loadBalancerType);
     }

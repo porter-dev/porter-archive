@@ -80,7 +80,6 @@ const Resources: React.FC<ResourcesProps> = ({
     value: false,
   });
 
-
   return (
     <>
       <Spacer y={1} />
@@ -303,32 +302,37 @@ const Resources: React.FC<ResourcesProps> = ({
                 </>
               )}
             />
-            {
-              (maxGPU > 1 && gpu.value) &&
-              <><Spacer y={1} /><Controller
-                name={`app.services.${index}.gpu`}
-                control={control}
-                render={({ field: { value, onChange } }) => (
-                  <InputSlider
-                    label="GPU"
-                    unit=""
-                    min={0}
-                    max={maxGPU}
-                    value={value?.gpuCoresNvidia.value ?? "1"}
-                    disabled={value?.readOnly}
-                    setValue={(e) => {
-                      onChange({
-                        ...value,
-                        gpuCoresNvidia: {
-                          ...value.gpuCoresNvidia,
-                          value: e,
-                        },
-                      });
-                    }}
-                    disabledTooltip={"You may only edit this field in your porter.yaml."} />
-                )} /></>
-
-            }
+            {maxGPU > 1 && gpu.value && (
+              <>
+                <Spacer y={1} />
+                <Controller
+                  name={`app.services.${index}.gpu`}
+                  control={control}
+                  render={({ field: { value, onChange } }) => (
+                    <InputSlider
+                      label="GPU"
+                      unit=""
+                      min={0}
+                      max={maxGPU}
+                      value={value?.gpuCoresNvidia.value ?? "1"}
+                      disabled={value?.readOnly}
+                      setValue={(e) => {
+                        onChange({
+                          ...value,
+                          gpuCoresNvidia: {
+                            ...value.gpuCoresNvidia,
+                            value: e,
+                          },
+                        });
+                      }}
+                      disabledTooltip={
+                        "You may only edit this field in your porter.yaml."
+                      }
+                    />
+                  )}
+                />
+              </>
+            )}
             {currentCluster.status === "UPDATING" &&
               !clusterContainsGPUNodes && (
                 <CheckItemContainer>

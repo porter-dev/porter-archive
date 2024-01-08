@@ -121,15 +121,13 @@ const clusterNodesValidator = z
     }
 
     // update resource limits to the custom GPU limits
-    if (workloadKind === "custom") {
-      if (GPU_INSTANCE_LIMIT[instanceType]) {
-        const { vCPU, RAM, GPU } = GPU_INSTANCE_LIMIT[instanceType];
-        return {
-          maxCPU: vCPU,
-          maxRAM: RAM,
-          maxGPU: GPU,
-        };
-      }
+    if (workloadKind === "custom" && GPU_INSTANCE_LIMIT[instanceType]) {
+      const { vCPU, RAM, GPU } = GPU_INSTANCE_LIMIT[instanceType];
+      return {
+        maxCPU: vCPU,
+        maxRAM: RAM,
+        maxGPU: GPU,
+      };
     }
     // Azure instance types are all prefixed with "Standard_"
     if (instanceType.startsWith("Standard_")) {
@@ -166,14 +164,13 @@ const clusterNodesValidator = z
     }
 
     const [instanceClass, instanceSize] = parsedType.data;
-    console.log(instanceClass, instanceSize);
     if (AWS_INSTANCE_LIMITS[instanceClass]?.[instanceSize]) {
       const { vCPU, RAM, GPU } =
         AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
       return {
         maxCPU: vCPU,
         maxRAM: RAM,
-        maxGPU: GPU || 1,
+        maxGPU: GPU,
         instanceClass,
         instanceSize,
       };

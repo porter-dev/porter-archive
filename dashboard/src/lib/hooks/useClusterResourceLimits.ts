@@ -170,7 +170,7 @@ const clusterNodesValidator = z
       return {
         maxCPU: vCPU,
         maxRAM: RAM,
-        maxGPU: GPU,
+        maxGPU: GPU || 1,
         instanceClass,
         instanceSize,
       };

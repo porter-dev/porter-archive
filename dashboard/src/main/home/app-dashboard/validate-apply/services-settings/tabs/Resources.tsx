@@ -305,7 +305,7 @@ const Resources: React.FC<ResourcesProps> = ({
             />
             {
               (maxGPU > 1 && gpu.value) &&
-              <Controller
+              <><Spacer y={1} /><Controller
                 name={`app.services.${index}.gpu`}
                 control={control}
                 render={({ field: { value, onChange } }) => (
@@ -316,7 +316,6 @@ const Resources: React.FC<ResourcesProps> = ({
                     max={maxGPU}
                     value={value?.gpuCoresNvidia.value ?? "1"}
                     disabled={value?.readOnly}
-                    width="300px"
                     setValue={(e) => {
                       onChange({
                         ...value,
@@ -326,11 +325,8 @@ const Resources: React.FC<ResourcesProps> = ({
                         },
                       });
                     }}
-                    disabledTooltip={"You may only edit this field in your porter.yaml."
-                    }
-                  />
-                )}
-              />
+                    disabledTooltip={"You may only edit this field in your porter.yaml."} />
+                )} /></>
 
             }
             {currentCluster.status === "UPDATING" &&

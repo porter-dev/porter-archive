@@ -100,6 +100,7 @@ const clusterNodesValidator = z
         AWS_INSTANCE_LIMITS[DEFAULT_INSTANCE_CLASS][DEFAULT_INSTANCE_SIZE].vCPU,
       maxRAM:
         AWS_INSTANCE_LIMITS[DEFAULT_INSTANCE_CLASS][DEFAULT_INSTANCE_SIZE].RAM,
+      maxGPU: 1,
       instanceClass: DEFAULT_INSTANCE_CLASS,
       instanceSize: DEFAULT_INSTANCE_SIZE,
     };
@@ -107,7 +108,10 @@ const clusterNodesValidator = z
       return defaultResources;
     }
     const workloadKind = data.labels["porter.run/workload-kind"];
-    if (!workloadKind || workloadKind !== "application") {
+    if (
+      !workloadKind ||
+      (workloadKind !== "application" && workloadKind !== "custom")
+    ) {
       return defaultResources;
     }
     const instanceType = data.labels["beta.kubernetes.io/instance-type"];
@@ -116,6 +120,17 @@ const clusterNodesValidator = z
       return defaultResources;
     }
 
+    // update resource limits to the custom GPU limits
+    if (workloadKind === "custom") {
+      if (GPU_INSTANCE_LIMIT[instanceType]) {
+        const { vCPU, RAM, GPU } = GPU_INSTANCE_LIMIT[instanceType];
+        return {
+          maxCPU: vCPU,
+          maxRAM: RAM,
+          maxGPU: GPU,
+        };
+      }
+    }
     // Azure instance types are all prefixed with "Standard_"
     if (instanceType.startsWith("Standard_")) {
       if (AZURE_INSTANCE_LIMITS[instanceType]) {
@@ -123,6 +138,7 @@ const clusterNodesValidator = z
         return {
           maxCPU: vCPU,
           maxRAM: RAM,
+          maxGPU: 1,
           azureType: instanceType,
         };
       } else {
@@ -150,11 +166,14 @@ const clusterNodesValidator = z
     }
 
     const [instanceClass, instanceSize] = parsedType.data;
+    console.log(instanceClass, instanceSize);
     if (AWS_INSTANCE_LIMITS[instanceClass]?.[instanceSize]) {
-      const { vCPU, RAM } = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
+      const { vCPU, RAM, GPU } =
+        AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
       return {
         maxCPU: vCPU,
         maxRAM: RAM,
+        maxGPU: GPU || 1,
         instanceClass,
         instanceSize,
       };
@@ -290,6 +309,9 @@ export const useClusterResourceLimits = ({
         const maxRAM = data.reduce((acc, curr) => {
           return Math.max(acc, curr.maxRAM);
         }, 0);
+        const maxGPU = data.reduce((acc, curr) => {
+          return Math.max(acc, curr.maxGPU);
+        }, 0);
         let maxMultiplier = SMALL_INSTANCE_UPPER_BOUND;
         // if the instance type has more than 4 GB ram, we use 90% of the ram/cpu
         // otherwise, we use 75%
@@ -304,6 +326,7 @@ export const useClusterResourceLimits = ({
           100;
         setMaxCPU(newMaxCPU);
         setMaxRAM(newMaxRAM);
+        setMaxGPU(maxGPU);
         setDefaultCPU(Number((newMaxCPU * DEFAULT_MULTIPLIER).toFixed(2)));
         setDefaultRAM(Number((newMaxRAM * DEFAULT_MULTIPLIER).toFixed(0)));
       }
@@ -343,61 +366,6 @@ export const useClusterResourceLimits = ({
 
   useEffect(() => {
     if (contract) {
-      const maxGPU: number = match(contract)
-        .with({ kindValues: { case: "eksKind" } }, (c) => {
-          return c.kindValues.value.nodeGroups.some((ng) => {
-            if (
-              ng.nodeGroupType === NodeGroupType.CUSTOM ||
-              ng.nodeGroupType === NodeGroupType.APPLICATION
-            ) {
-              const instanceType = ng.instanceType;
-              let parsedType;
-              if (instanceType && instanceType.includes(".")) {
-                parsedType = z
-                  .tuple([z.string(), z.string()])
-                  .safeParse(instanceType.split("."));
-              } else if (instanceType && instanceType.includes("-")) {
-                const [instanceClass, ...instanceSizeParts] =
-                  instanceType.split("-");
-                const instanceSize = instanceSizeParts.join("-");
-                parsedType = z
-                  .tuple([z.string(), z.string()])
-                  .safeParse([instanceClass, instanceSize]);
-              }
-              const [instanceClass, instanceSize] = parsedType.data;
-              const { GPU } = GPU_INSTANCE_LIMIT[instanceClass][instanceSize];
-              return GPU;
-            } else return 1;
-          });
-        })
-        .with({ kindValues: { case: "gkeKind" } }, (c) => {
-          return c.kindValues.value.nodePools.some((ng) => {
-            if (
-              ng.nodeGroupType === NodeGroupType.CUSTOM ||
-              ng.nodeGroupType === NodeGroupType.APPLICATION
-            ) {
-              const instanceType = ng.instanceType;
-              let parsedType;
-              if (instanceType && instanceType.includes(".")) {
-                parsedType = z
-                  .tuple([z.string(), z.string()])
-                  .safeParse(instanceType.split("."));
-              } else if (instanceType && instanceType.includes("-")) {
-                const [instanceClass, ...instanceSizeParts] =
-                  instanceType.split("-");
-                const instanceSize = instanceSizeParts.join("-");
-                parsedType = z
-                  .tuple([z.string(), z.string()])
-                  .safeParse([instanceClass, instanceSize]);
-              }
-              const [instanceClass, instanceSize] = parsedType.data;
-              const { GPU } = GPU_INSTANCE_LIMIT[instanceClass][instanceSize];
-              return GPU;
-            } else return 1;
-          });
-        })
-        .otherwise(() => 1);
-
       const containsCustomNodeGroup = match(contract)
         .with({ kindValues: { case: "eksKind" } }, (c) => {
           return c.kindValues.value.nodeGroups.some(
@@ -434,7 +402,8 @@ export const useClusterResourceLimits = ({
         })
         .otherwise(() => "UNSPECIFIED");
 
-      setMaxGPU(maxGPU);
+      // console.log(gpu);
+      // setMaxGPU(gpu);
       setClusterContainsGPUNodes(containsCustomNodeGroup);
       setLoadBalancerType(loadBalancerType);
     }

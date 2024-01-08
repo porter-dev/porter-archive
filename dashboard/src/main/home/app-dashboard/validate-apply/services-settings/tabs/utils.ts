@@ -136,9 +136,9 @@ export const AZURE_INSTANCE_LIMITS: AzureInstanceTypes = Object.freeze({
 });
 
 export const GPU_INSTANCE_LIMIT: InstanceTypes = Object.freeze({
-  g4d: {
-    xlarge: { vCPU: 2, RAM: 4, GPU: 1 },
-    "2xlarge": { vCPU: 2, RAM: 4, GPU: 1 },
+  g4dn: {
+    xlarge: { vCPU: 4, RAM: 16, GPU: 1 },
+    "2xlarge": { vCPU: 8, RAM: 32, GPU: 1 },
   },
   p4d: {
     "24xlarge": { vCPU: 96, RAM: 1152, GPU: 8 },

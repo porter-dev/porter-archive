@@ -1,62 +1,55 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  Route,
-  Switch,
-  withRouter,
-  type RouteComponentProps,
-} from "react-router";
+import { Route, RouteComponentProps, Switch, withRouter } from "react-router";
 import styled, { ThemeProvider } from "styled-components";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { PorterUrl, pushFiltered, pushQueryParams } from "shared/routing";
+import midnight from "shared/themes/midnight";
+import standard from "shared/themes/standard";
+import { ClusterType, ProjectListType, ProjectType } from "shared/types";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
+import DashboardRouter from "./cluster-dashboard/DashboardRouter";
+import Dashboard from "./dashboard/Dashboard";
+import Integrations from "./integrations/Integrations";
+import LaunchWrapper from "./launch/LaunchWrapper";
+
+import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
+import AppDashboard from "./app-dashboard/AppDashboard";
+import CreateDatabase from "./database-dashboard/CreateDatabase";
+import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
+import Navbar from "./navbar/Navbar";
+import ProjectSettings from "./project-settings/ProjectSettings";
+import Sidebar from "./sidebar/Sidebar";
+
 import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
 import Button from "components/porter/Button";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-
-import api from "shared/api";
-import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { fakeGuardedRoute } from "shared/auth/RouteGuard";
 import ClusterResourcesProvider from "shared/ClusterResourcesContext";
-import { Context } from "shared/Context";
 import DeploymentTargetProvider from "shared/DeploymentTargetContext";
-import { pushFiltered, pushQueryParams, type PorterUrl } from "shared/routing";
-import midnight from "shared/themes/midnight";
-import standard from "shared/themes/standard";
-import {
-  type ClusterType,
-  type ProjectListType,
-  type ProjectType,
-} from "shared/types";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
-
 import discordLogo from "../../assets/discord.svg";
-import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
 import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
 import AppView from "./app-dashboard/app-view/AppView";
-import AppDashboard from "./app-dashboard/AppDashboard";
 import Apps from "./app-dashboard/apps/Apps";
 import CreateApp from "./app-dashboard/create-app/CreateApp";
 import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
 import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
-import DashboardRouter from "./cluster-dashboard/DashboardRouter";
 import PreviewEnvs from "./cluster-dashboard/preview-environments/v2/PreviewEnvs";
 import SetupApp from "./cluster-dashboard/preview-environments/v2/setup-app/SetupApp";
-import Dashboard from "./dashboard/Dashboard";
-import CreateDatabase from "./database-dashboard/CreateDatabase";
-import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
 import DatabaseView from "./database-dashboard/DatabaseView";
 import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
-import Integrations from "./integrations/Integrations";
-import LaunchWrapper from "./launch/LaunchWrapper";
 import ModalHandler from "./ModalHandler";
-import Navbar from "./navbar/Navbar";
 import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
-import ProjectSettings from "./project-settings/ProjectSettings";
-import Sidebar from "./sidebar/Sidebar";
+
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -132,10 +125,10 @@ const Home: React.FC<Props> = (props) => {
   };
 
   const getProjects = async (id?: number) => {
-    const { currentProject } = props;
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const projectId = urlParams.get("project_id");
+    let { currentProject } = props;
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+    let projectId = urlParams.get("project_id");
     if (!projectId && currentProject?.id) {
       pushQueryParams(props, { project_id: currentProject.id.toString() });
     }
@@ -163,7 +156,7 @@ const Home: React.FC<Props> = (props) => {
         }
 
         const project = await api
-          .getProject("<token>", {}, { id })
+          .getProject("<token>", {}, { id: id })
           .then((res) => res.data as ProjectType);
 
         setCurrentProject(project);
@@ -207,24 +200,24 @@ const Home: React.FC<Props> = (props) => {
       } else {
         setHasFinishedOnboarding(true);
       }
-    } catch (error) {}
+    } catch (error) { }
   };
 
   useEffect(() => {
     checkOnboarding();
     checkIfCanCreateProject();
-    const { match } = props;
+    let { match } = props;
 
     // Handle redirect from DO
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
 
-    const err = urlParams.get("error");
+    let err = urlParams.get("error");
     if (err) {
       setCurrentError(err);
     }
 
-    const defaultProjectId = parseInt(urlParams.get("project_id"));
+    let defaultProjectId = parseInt(urlParams.get("project_id"));
 
     setGhRedirect(urlParams.get("gh_oauth") !== null);
     urlParams.delete("gh_oauth");
@@ -297,9 +290,9 @@ const Home: React.FC<Props> = (props) => {
   }, [props.currentProject?.id]);
 
   useEffect(() => {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const err = urlParams.get("error");
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+    let err = urlParams.get("error");
     if (
       !hasFinishedOnboarding &&
       props.history.location.pathname &&
@@ -335,9 +328,7 @@ const Home: React.FC<Props> = (props) => {
 
       setProjects(projectList);
       if (!projectList.length) {
-        setCurrentProject(null, () => {
-          redirectToNewProject();
-        });
+        setCurrentProject(null, () => redirectToNewProject());
       } else {
         const project = await api
           .getProject("<token>", {}, { id: projectList[0].id })
@@ -371,18 +362,18 @@ const Home: React.FC<Props> = (props) => {
 
     try {
       const res = await api.getClusters<
-        Array<{
+        {
           infra_id?: number;
           name: string;
-        }>
+        }[]
       >("<token>", {}, { id: currentProject?.id });
 
-      const destroyInfraPromises = res.data.map(async (cluster) => {
+      const destroyInfraPromises = res.data.map((cluster) => {
         if (!cluster.infra_id) {
           return undefined;
         }
 
-        return await api.destroyInfra(
+        return api.destroyInfra(
           "<token>",
           {},
           { project_id: currentProject.id, infra_id: cluster.infra_id }
@@ -427,10 +418,7 @@ const Home: React.FC<Props> = (props) => {
                 setRefreshClusters={setForceRefreshClusters}
               />
             ) : (
-              <DiscordButton
-                href="https://discord.gg/34n7NN7FJ7"
-                target="_blank"
-              >
+              <DiscordButton href="https://discord.gg/34n7NN7FJ7" target="_blank">
                 <Icon src={discordLogo} />
                 Join Our Discord
               </DiscordButton>
@@ -509,17 +497,17 @@ const Home: React.FC<Props> = (props) => {
                   overrideInfraTabEnabled({
                     projectID: currentProject?.id,
                   })) && (
-                  <Route
-                    path="/infrastructure"
-                    render={() => {
-                      return (
-                        <DashboardWrapper>
-                          <InfrastructureRouter />
-                        </DashboardWrapper>
-                      );
-                    }}
-                  />
-                )}
+                    <Route
+                      path="/infrastructure"
+                      render={() => {
+                        return (
+                          <DashboardWrapper>
+                            <InfrastructureRouter />
+                          </DashboardWrapper>
+                        );
+                      }}
+                    />
+                  )}
                 <Route
                   path="/dashboard"
                   render={() => {
@@ -548,7 +536,7 @@ const Home: React.FC<Props> = (props) => {
                   render={() => {
                     if (currentCluster?.id === -1) {
                       return <Loading />;
-                    } else if (!currentCluster?.name) {
+                    } else if (!currentCluster || !currentCluster.name) {
                       return (
                         <DashboardWrapper>
                           <NoClusterPlaceHolder></NoClusterPlaceHolder>
@@ -576,7 +564,7 @@ const Home: React.FC<Props> = (props) => {
                   render={() => <GuardedProjectSettings />}
                 />
                 {currentProject?.validate_apply_v2 &&
-                currentProject.preview_envs_enabled ? (
+                  currentProject.preview_envs_enabled ? (
                   <>
                     <Route exact path="/preview-environments/configure">
                       <SetupApp />
@@ -610,9 +598,7 @@ const Home: React.FC<Props> = (props) => {
                     : ""
                 }
                 onYes={handleDelete}
-                onNo={() => {
-                  setCurrentModal(null, null);
-                }}
+                onNo={() => setCurrentModal(null, null)}
               />,
               document.body
             )}
@@ -623,14 +609,14 @@ const Home: React.FC<Props> = (props) => {
                 </Text>
                 <Spacer y={1} />
                 <Text color="helper">
-                  Your account email does not match the email associated with
-                  this project invite. Please log out and sign up again with the
+                  Your account email does not match the email associated with this
+                  project invite. Please log out and sign up again with the
                   correct email using the invite link.
                 </Text>
                 <Spacer y={1} />
                 <Text color="helper">
-                  You should reach out to the person who sent you the invite
-                  link to get the correct email.
+                  You should reach out to the person who sent you the invite link
+                  to get the correct email.
                 </Text>
                 <Spacer y={1} />
                 <Button onClick={props.logOut}>Log out</Button>
@@ -699,9 +685,7 @@ const DiscordButton = styled.a`
   border-radius: 3px;
   color: #ffffff44;
   height: 40px;
-  font-family:
-    Work Sans,
-    sans-serif;
+  font-family: Work Sans, sans-serif;
   font-size: 14px;
   font-weight: bold;
   cursor: pointer;

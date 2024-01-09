@@ -129,7 +129,7 @@ const AppGrid: React.FC<AppGridProps> = ({
                       size="larger"
                     />
                     <Spacer inline width="12px" />
-                    <Text size={14}>{source.name}</Text>
+                    <Text size={14}>{proto.name}</Text>
                     <Spacer inline x={2} />
                   </Container>
                   {/** TODO: make the status icon dynamic */}

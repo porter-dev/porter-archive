@@ -16,6 +16,12 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import {
+  cloudProviderListResponseValidator,
+  datastoreListResponseValidator,
+  type CloudProviderDatastore,
+  type CloudProviderWithSource,
+} from "lib/databases/types";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -28,12 +34,6 @@ import notFound from "assets/not-found.png";
 import healthy from "assets/status-healthy.png";
 
 import { getDatastoreIcon } from "./icons";
-import {
-  cloudProviderListResponseValidator,
-  datastoreListResponseValidator,
-  type CloudProviderDatastore,
-  type CloudProviderWithSource,
-} from "./types";
 import { datastoreField } from "./utils";
 
 type Props = {

@@ -1,6 +1,3 @@
-import awsRDS from "assets/amazon-rds.png";
-import awsElastiCache from "assets/aws-elasticache.png";
-
 import {
   DATABASE_ENGINE_MEMCACHED,
   DATABASE_ENGINE_POSTGRES,
@@ -9,7 +6,10 @@ import {
   DATABASE_TYPE_ELASTICACHE,
   DATABASE_TYPE_RDS,
   type DatabaseTemplate,
-} from "./types";
+} from "lib/databases/types";
+
+import awsRDS from "assets/amazon-rds.png";
+import awsElastiCache from "assets/aws-elasticache.png";
 
 export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
   Object.freeze({

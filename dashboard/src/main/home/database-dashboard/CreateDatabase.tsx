@@ -9,6 +9,14 @@ import Back from "components/porter/Back";
 import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
+import {
+  DATABASE_ENGINE_POSTGRES,
+  DATABASE_ENGINE_REDIS,
+  DATABASE_TYPE_AURORA,
+  DATABASE_TYPE_ELASTICACHE,
+  DATABASE_TYPE_RDS,
+  type DatabaseTemplate,
+} from "lib/databases/types";
 
 import database from "assets/database.svg";
 
@@ -17,14 +25,6 @@ import { SUPPORTED_DATABASE_TEMPLATES } from "./constants";
 import DatabaseFormAuroraPostgres from "./forms/DatabaseFormAuroraPostgres";
 import DatabaseFormElasticacheRedis from "./forms/DatabaseFormElasticacheRedis";
 import DatabaseFormRDSPostgres from "./forms/DatabaseFormRDSPostgres";
-import {
-  DATABASE_ENGINE_POSTGRES,
-  DATABASE_ENGINE_REDIS,
-  DATABASE_TYPE_AURORA,
-  DATABASE_TYPE_ELASTICACHE,
-  DATABASE_TYPE_RDS,
-  type DatabaseTemplate,
-} from "./types";
 
 type Props = RouteComponentProps;
 const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {

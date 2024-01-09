@@ -9,10 +9,9 @@ import Error from "components/porter/Error";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
+import { type DbFormData } from "lib/databases/types";
 import { useDatabase } from "lib/hooks/useDatabase";
 import { useIntercom } from "lib/hooks/useIntercom";
-
-import { type DbFormData } from "./types";
 
 type Props = RouteComponentProps & {
   steps: React.ReactNode[];

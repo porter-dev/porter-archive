@@ -10,18 +10,13 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
 
-import { CloudProviderDatastore } from "../types";
+import { useDatabaseContext } from "../DatabaseContextProvider";
 
-type Props = {
-  item: CloudProviderDatastore
-};
-
-const SettingsTab: React.FC<Props> = ({ item }) => {
-  const {
-    setCurrentError,
-    setCurrentOverlay,
-  } = useContext(Context);
+const SettingsTab: React.FC = () => {
+  const { setCurrentError, setCurrentOverlay } = useContext(Context);
   const history = useHistory();
+  const { datastore, projectId, cloudProviderId, cloudProviderName } =
+    useDatabaseContext();
   const location = useLocation();
   const handleDeletionSubmit = async (): Promise<void> => {
     if (setCurrentOverlay === undefined || setCurrentError === undefined) {
@@ -33,13 +28,13 @@ const SettingsTab: React.FC<Props> = ({ item }) => {
       await api.deleteDatastore(
         "<token>",
         {
-          name: item.datastore.name,
-          type: item.datastore.type,
+          name: datastore.name,
+          type: datastore.type,
         },
         {
-          project_id: item.project_id,
-          cloud_provider_name: item.cloud_provider_name,
-          cloud_provider_id: item.cloud_provider_id,
+          project_id: projectId,
+          cloud_provider_name: cloudProviderName,
+          cloud_provider_id: cloudProviderId,
         }
       );
     } catch (error) {
@@ -61,23 +56,25 @@ const SettingsTab: React.FC<Props> = ({ item }) => {
     }
 
     setCurrentOverlay({
-      message: `Are you sure you want to delete ${item.datastore.name}?`,
+      message: `Are you sure you want to delete ${datastore.name}?`,
       onYes: handleDeletionSubmit,
-      onNo: () => setCurrentOverlay(null),
+      onNo: () => {
+        setCurrentOverlay(null);
+      },
     });
-  }
+  };
 
   return (
     <StyledTemplateComponent>
       <InnerWrapper>
-        <Text size={16}>Delete &quot;{item.datastore.name}&quot;</Text>
+        <Text size={16}>Delete &quot;{datastore.name}&quot;</Text>
         <Spacer y={0.5} />
         <Text color="helper">
           Delete this database and all of its resources.
         </Text>
         <Spacer y={0.5} />
         <Button color="#b91133" onClick={handleDeletionClick}>
-          Delete {item.datastore.name}
+          Delete {datastore.name}
         </Button>
       </InnerWrapper>
     </StyledTemplateComponent>
@@ -87,16 +84,16 @@ const SettingsTab: React.FC<Props> = ({ item }) => {
 export default SettingsTab;
 
 const StyledTemplateComponent = styled.div`
-width: 100%;
-animation: fadeIn 0.3s 0s;
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+  width: 100%;
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
-  to {
-    opacity: 1;
-  }
-}
 `;
 
 const InnerWrapper = styled.div<{ full?: boolean }>`

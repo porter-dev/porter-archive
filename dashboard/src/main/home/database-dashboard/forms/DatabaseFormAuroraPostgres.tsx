@@ -13,10 +13,15 @@ import Error from "components/porter/Error";
 import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import {
+  dbFormValidator,
+  type DatabaseTemplate,
+  type DbFormData,
+  type ResourceOption,
+} from "lib/databases/types";
 
 import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
 import Resources from "../tabs/Resources";
-import { type DatabaseTemplate } from "../types";
 import DatabaseForm, {
   AppearingErrorContainer,
   Blur,
@@ -27,7 +32,6 @@ import DatabaseForm, {
   RevealButton,
   StyledConfigureTemplate,
 } from "./DatabaseForm";
-import { dbFormValidator, type DbFormData, type ResourceOption } from "./types";
 
 type Props = RouteComponentProps & {
   template: DatabaseTemplate;

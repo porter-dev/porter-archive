@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { type ResourceOption } from "./forms/types";
+
 export const datastoreEnvValidator = z.object({
   name: z.string(),
   linked_applications: z.string().array().default([]),
@@ -88,4 +90,6 @@ export type DatabaseTemplate = {
   name: string;
   description: string;
   disabled: boolean;
+  instanceTiers: ResourceOption[];
+  formTitle: string;
 };

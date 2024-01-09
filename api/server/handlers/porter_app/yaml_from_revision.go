@@ -194,11 +194,11 @@ type formatDefaultEnvGroupInput struct {
 	PorterAppRepository       repository.PorterAppRepository
 }
 
-func defaultEnvGroup(ctx context.Context, input formatDefaultEnvGroupInput) (map[string]string, string, error) {
+func defaultEnvGroup(ctx context.Context, input formatDefaultEnvGroupInput) ([]v2.EnvVariableDefinition, string, error) {
 	ctx, span := telemetry.NewSpan(ctx, "format-default-env-group")
 	defer span.End()
 
-	env := map[string]string{}
+	var env []v2.EnvVariableDefinition
 
 	revision, err := porter_app.GetAppRevision(ctx, porter_app.GetAppRevisionInput{
 		AppRevisionID: input.AppRevisionID,
@@ -243,10 +243,46 @@ func defaultEnvGroup(ctx context.Context, input formatDefaultEnvGroupInput) (map
 	}
 
 	for key, val := range revisionWithEnv.Env.Variables {
-		env[key] = val
+		env = append(env, v2.EnvVariableDefinition{
+			Key:    key,
+			Source: v2.EnvVariableSource_Value,
+			Value: v2.EnvValueOptional{
+				Value: val,
+				IsSet: true,
+			},
+		})
 	}
 	for key, val := range revisionWithEnv.Env.SecretVariables {
-		env[key] = val
+		env = append(env, v2.EnvVariableDefinition{
+			Key:    key,
+			Source: v2.EnvVariableSource_Value,
+			Value: v2.EnvValueOptional{
+				Value: val,
+				IsSet: true,
+			},
+		})
+	}
+
+	for _, ev := range appProto.Env {
+		if ev.Source == porterv1.EnvVariableSource_ENV_VARIABLE_SOURCE_FROM_APP {
+			fromAppProto := ev.GetFromApp()
+			if fromAppProto == nil {
+				continue
+			}
+
+			fromApp, err := v2.EnvVarFromAppFromProto(fromAppProto)
+			if err != nil {
+				return env, "", telemetry.Error(ctx, span, err, "error converting env var from app to proto")
+			}
+
+			envVar := v2.EnvVariableDefinition{
+				Key:     ev.Key,
+				Source:  v2.EnvVariableSource_FromApp,
+				FromApp: fromApp,
+			}
+
+			env = append(env, envVar)
+		}
 	}
 
 	return env, revisionWithEnv.Env.Name, nil
@@ -280,11 +316,13 @@ func formatForExport(app v2.PorterApp, appRootDomain string) v2.PorterApp {
 	}
 
 	// remove env secrets from env
-	for key, val := range app.Env {
-		if val == "********" {
-			delete(app.Env, key)
+	var filtered []v2.EnvVariableDefinition
+	for _, ev := range app.Env {
+		if ev.Value.Value != "********" {
+			filtered = append(filtered, ev)
 		}
 	}
+	app.Env = filtered
 
 	// don't show env group versions
 	for i := range app.EnvGroups {

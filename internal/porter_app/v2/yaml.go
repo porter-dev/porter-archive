@@ -98,12 +98,12 @@ const (
 
 // PorterApp represents all the possible fields in a Porter YAML file
 type PorterApp struct {
-	Version  string            `yaml:"version,omitempty"`
-	Name     string            `yaml:"name"`
-	Services []Service         `yaml:"services"`
-	Image    *Image            `yaml:"image,omitempty"`
-	Build    *Build            `yaml:"build,omitempty"`
-	Env      map[string]string `yaml:"env,omitempty"`
+	Version  string    `yaml:"version,omitempty"`
+	Name     string    `yaml:"name"`
+	Services []Service `yaml:"services"`
+	Image    *Image    `yaml:"image,omitempty"`
+	Build    *Build    `yaml:"build,omitempty"`
+	Env      Env       `yaml:"env,omitempty"`
 
 	Predeploy    *Service      `yaml:"predeploy,omitempty"`
 	EnvGroups    []string      `yaml:"envGroups,omitempty"`
@@ -299,7 +299,42 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		})
 	}
 
-	return appProto, porterApp.Env, nil
+	envMap := make(map[string]string)
+	var envVariables []*porterv1.EnvVariable
+
+	for _, envVar := range porterApp.Env {
+		switch envVar.Source {
+		case EnvVariableSource_Value:
+			if !envVar.Value.IsSet {
+				return appProto, nil, telemetry.Error(ctx, span, nil, "no value set for env variable")
+			}
+
+			envMap[envVar.Key] = envVar.Value.Value
+		case EnvVariableSource_FromApp:
+			if !envVar.FromApp.IsSet {
+				return appProto, nil, telemetry.Error(ctx, span, nil, "no value set for env variable")
+			}
+
+			fromApp, err := EnvVarFromAppToProto(envVar.FromApp.Value)
+			if err != nil {
+				return appProto, nil, telemetry.Error(ctx, span, err, "error converting env variable from app to proto")
+			}
+
+			envVariables = append(envVariables, &porterv1.EnvVariable{
+				Key:    envVar.Key,
+				Source: porterv1.EnvVariableSource_ENV_VARIABLE_SOURCE_FROM_APP,
+				Definition: &porterv1.EnvVariable_FromApp{
+					FromApp: fromApp,
+				},
+			})
+		default:
+			return appProto, nil, telemetry.Error(ctx, span, nil, "invalid definition for env variable")
+		}
+	}
+
+	appProto.Env = envVariables
+
+	return appProto, envMap, nil
 }
 
 func protoEnumFromType(name string, service Service) porterv1.ServiceType {

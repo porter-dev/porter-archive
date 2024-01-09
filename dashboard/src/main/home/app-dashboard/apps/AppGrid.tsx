@@ -242,7 +242,7 @@ export const Block = styled.div<{ locked?: boolean; appId?: string }>`
 
     ::after {
       content: ${(props) =>
-        props.locked || !props.appId ? "''" : `"App Id: ${props.appId}"`};
+    props.locked || !props.appId ? "''" : `"AppID: ${props.appId}"`};
       position: absolute;
       top: 2px;
       right: 2px;

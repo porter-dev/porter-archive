@@ -36,7 +36,8 @@ const HIDDEN_CHARTS = [
   "rds-chart",
   "rds-postgresql",
   "rds-postgresql-aurora",
-  "postgresql-managed"
+  "postgresql-managed",
+  "redis-managed",
 ];
 
 //For Charts that don't exist locally we need to add them in manually

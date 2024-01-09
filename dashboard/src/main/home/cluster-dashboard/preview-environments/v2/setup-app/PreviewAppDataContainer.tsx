@@ -332,7 +332,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
           ...(currentProject?.beta_features_enabled
             ? [
                 { label: "Required Apps", value: "required-apps" },
-                { label: "Add-ons", value: "addons" },
+                // { label: "Add-ons", value: "addons" },
               ]
             : []),
         ]}

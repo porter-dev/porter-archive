@@ -246,7 +246,7 @@ export const Block = styled.div<{ locked?: boolean; appId?: string }>`
       position: absolute;
       top: 2px;
       right: 2px;
-      background: #ffffff44;
+      background:  ${(props) => props.appId && `#ffffff44`};
       opacity: 0.3;
       padding: 5px;
       border-radius: 4px;

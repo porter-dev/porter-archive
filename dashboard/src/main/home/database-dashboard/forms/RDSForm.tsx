@@ -1,316 +1,210 @@
-import React, { useEffect, useState, useContext } from "react";
-import styled from "styled-components";
+import React, { useEffect, useMemo, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
 import _ from "lodash";
-import { v4 as uuidv4 } from 'uuid';
-
-import { hardcodedIcons } from "shared/hardcodedNameDict";
-import { Context } from "shared/Context";
-import api from "shared/api";
-import { pushFiltered } from "shared/routing";
+import { FormProvider, useForm } from "react-hook-form";
+import { withRouter, type RouteComponentProps } from "react-router";
+import styled, { keyframes } from "styled-components";
+import { v4 as uuidv4 } from "uuid";
 
 import Back from "components/porter/Back";
-import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import Input from "components/porter/Input";
-import VerticalSteps from "components/porter/VerticalSteps";
 import Button from "components/porter/Button";
-import { RouteComponentProps, withRouter } from "react-router";
+import { ControlledInput } from "components/porter/ControlledInput";
 import Error from "components/porter/Error";
-import Fieldset from "components/porter/Fieldset";
-import Container from "components/porter/Container";
-import ClickToCopy from "components/porter/ClickToCopy";
-import { RdsFormValues } from "./types";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import VerticalSteps from "components/porter/VerticalSteps";
+import { useDatabase } from "lib/hooks/useDatabase";
+import { useIntercom } from "lib/hooks/useIntercom";
+
+import awsRDS from "assets/amazon-rds.png";
+
+import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
+import { SUPPORTED_DATABASE_TEMPLATES } from "../constants";
+import Resources from "../tabs/Resources";
+import {
+  DATABASE_ENGINE_POSTGRES,
+  DATABASE_TYPE_RDS,
+  type DatabaseTemplate,
+} from "../types";
+import { dbFormValidator, type DbFormData } from "./types";
 
 type Props = RouteComponentProps & {
-  currentTemplate: any;
-  goBack: () => void;
-  repoURL: string | undefined;
+  template: DatabaseTemplate;
 };
 
-const RDSForm: React.FC<Props> = ({
-  currentTemplate,
-  goBack,
-  repoURL,
-  ...props
-}) => {
-  const { currentCluster, currentProject } = useContext(Context);
+const RDSForm: React.FC<Props> = ({ history, template }) => {
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [name, setName] = useState<string>("");
-  const [buttonStatus, setButtonStatus] = useState<string>("");
-  const [credentialsSaved, setCredentialsSaved] = useState<boolean>(false);
-  const [dbName, setDbName] = useState<string>("postgres");
-  const [dbPassword, setDbPassword] = useState<string>(uuidv4());
-  const [dbUsername, setDbUsername] = useState<string>("postgres");
-  const [storage, setStorage] = useState<number>(0);
-  const [tier, setTier] = useState<string>("");
-  const [hidePassword, setHidePassword] = useState<boolean>(true);
+  const [isCreating, setIsCreating] = useState<boolean>(false);
+
+  const { createDatabase } = useDatabase();
+  const { showIntercomWithMessage } = useIntercom();
+
+  const dbForm = useForm<DbFormData>({
+    resolver: zodResolver(dbFormValidator),
+    reValidateMode: "onSubmit",
+    defaultValues: {
+      config: {
+        type: "rds-postgres",
+        databaseName: "postgres",
+        masterUsername: "postgres",
+        masterUserPassword: uuidv4(),
+      },
+    },
+  });
+
+  const {
+    setValue,
+    formState: { isSubmitting: isValidating, errors },
+    handleSubmit,
+    register,
+    watch,
+    setError,
+    clearErrors,
+  } = dbForm;
+
+  const watchName = watch("name", "");
+  const watchTier = watch("config.instanceClass", "unspecified");
+
+  const onSubmit = handleSubmit(async (data) => {
+    setIsCreating(true);
+    clearErrors();
+    try {
+      await createDatabase(data);
+      history.push(`/databases`);
+    } catch (err) {
+      const errorMessage =
+        axios.isAxiosError(err) && err.response?.data?.error
+          ? err.response.data.error
+          : "An error occurred while creating your database. Please try again.";
+      setError("root", { message: errorMessage });
+      showIntercomWithMessage({
+        message: "I am having trouble creating a database.",
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  });
+
+  const submitBtnStatus = useMemo(() => {
+    if (isValidating || isCreating) {
+      return "loading";
+    }
+
+    if (Object.keys(errors).length) {
+      return <Error message={"Please address errors and resubmit."} />;
+    }
+
+    return "";
+  }, [isValidating, errors]);
 
   useEffect(() => {
-    if (currentStep === 1) {
-      setCurrentStep(3);
+    let newStep = 0;
+    if (watchName) {
+      newStep = 1;
     }
-  }, [tier]);
-
-  const waitForHelmRelease = () => {
-    setTimeout(() => {
-      api.getChart(
-        "<token>",
-        {},
-        {
-          id: currentProject?.id || -1,
-          namespace: "ack-system",
-          cluster_id: currentCluster?.id || -1,
-          name,
-          revision: 0,
-        }
-      )
-        .then((res) => {
-          if (res?.data?.version) {
-            setButtonStatus("success");
-            pushFiltered(props, "/databases", ["project_id"], {
-              cluster: currentCluster?.name,
-            });
-          } else {
-            waitForHelmRelease();
-          }
-        })
-        .catch((err) => {
-          waitForHelmRelease();
-        });
-    }, 500);
-  };
-
-  const deploy = async (wildcard?: any) => {
-    setButtonStatus("loading");
-
-    let values: { config: RdsFormValues } = {
-      config: {
-        name: name,
-        databaseName: dbName,
-        masterUsername: dbUsername,
-        masterUserPassword: dbPassword,
-        allocatedStorage: storage,
-        instanceClass: tier,
-      }
+    if (watchTier !== "unspecified") {
+      newStep = 2;
     }
-
-    api
-      .deployAddon(
-        "<token>",
-        {
-          template_name: "rds-postgresql",
-          template_version: "latest",
-          values: values,
-          name,
-        },
-        {
-          id: currentProject?.id || -1,
-          cluster_id: currentCluster?.id || -1,
-          namespace: "ack-system",
-          repo_url: repoURL,
-        }
-      )
-      .then((_) => {
-        window.analytics?.track("Deployed RDS", {
-          name,
-          namespace: "ack-system",
-          values: values,
-        });
-        waitForHelmRelease();
-      })
-      .catch((err) => {
-        let parsedErr = err?.response?.data?.error;
-        err = parsedErr || err.message || JSON.stringify(err);
-        setButtonStatus(err);
-        window.analytics?.track("Failed to Deploy RDS", {
-          name,
-          namespace: "ack-system",
-          values: values,
-          error: err,
-        });
-        return;
-      });
-  };
-
-  const getStatus = () => {
-    if (!buttonStatus) {
-      return;
-    }
-    if (buttonStatus === "loading" || buttonStatus === "success") {
-      return buttonStatus;
-    } else {
-      return (
-        <Error message={buttonStatus} />
-      );
-    }
-  };
+    setCurrentStep(Math.max(newStep, currentStep));
+  }, [watchName, watchTier]);
 
   return (
     <CenterWrapper>
       <Div>
         <StyledConfigureTemplate>
-          <Back onClick={goBack} />
+          <Back
+            onClick={() => {
+              history.push(`/databases/new`);
+            }}
+          />
           <DashboardHeader
-            prefix={
-              <Icon 
-                src={hardcodedIcons[currentTemplate.name] || currentTemplate.icon}
-              />
-            }
-            title="Create an RDS PostgreSQL instance"
+            prefix={<Icon src={template.icon} />}
+            title={template.formTitle}
             capitalize={false}
             disableLineBreak
           />
           <DarkMatter />
-          <VerticalSteps
-            currentStep={currentStep}
-            steps={[
-              <>
-                <Text size={16}>Database name</Text>
-                <Spacer y={0.5} />
-                <Text color="helper">
-                  Lowercase letters, numbers, and "-" only.
-                </Text>
-                <Spacer height="20px" />
-                <Input
-                  placeholder="ex: academic-sophon"
-                  value={name}
-                  width="300px"
-                  setValue={(e) => {
-                    if (e) {
-                      credentialsSaved ? setCurrentStep(2) : setCurrentStep(1);
-                    } else {
-                      setCurrentStep(0);
-                    }
-                    setName(e);
-                  }}
-                />
-              </>,
-              <>
-                <Text size={16}>Database resources</Text>
-                <Spacer y={0.5} />
-                <Text color="helper">
-                  Specify your database CPU, RAM, and storage.
-                </Text>
-                <Spacer y={.5} />
-                <Text>
-                  Select an instance tier:
-                </Text>
-                <Spacer height="20px" />
-                <ResourceOption
-                  selected={tier === "db.t4g.small"}
-                  onClick={() => {
-                    setStorage(30);
-                    setTier("db.t4g.small");
-                  }}
-                >
-                  <Container row>
-                    <Text>Small</Text>
-                    <Spacer inline width="5px" />
-                    <Text color="helper">- 2 CPU, 2 GB RAM</Text>
-                  </Container>
-                  <StorageTag>30 GB Storage</StorageTag>
-                </ResourceOption>
-                <Spacer height="15px" />
-                <ResourceOption
-                  selected={tier === "db.t4g.medium"}
-                  onClick={() => {
-                    setStorage(100);
-                    setTier("db.t4g.medium");
-                  }}
-                >
-                  <Container row>
-                    <Text>Medium</Text>
-                    <Spacer inline width="5px" />
-                    <Text color="helper">- 2 CPU, 4 GB RAM</Text>
-                  </Container>
-                  <StorageTag>100 GB Storage</StorageTag>
-                </ResourceOption>
-                <Spacer height="15px" />
-                <ResourceOption
-                  selected={tier === "db.t4g.large"}
-                  onClick={() => {
-                    setStorage(256);
-                    setTier("db.t4g.large");
-                  }}
-                >
-                  <Container row>
-                    <Text>Large</Text>
-                    <Spacer inline width="5px" />
-                    <Text color="helper">- 2 CPU, 8 GB RAM</Text>
-                  </Container>
-                  <StorageTag>256 GB Storage</StorageTag>
-                </ResourceOption>
-              </>,
-              <>
-                <Text size={16}>Database credentials</Text>
-                <Spacer y={0.5} />
-                <Text color="helper">
-                  These credentials never leave your own cloud environment. You will be able to automatically import these credentials from any app.
-                </Text>
-                <Spacer height="20px" />
-                <Fieldset>
-                  <Text>Postgres DB name</Text>
-                  <Spacer y={0.5} />
-                  <Text
-                    additionalStyles="font-family: monospace;"
-                    color="helper"
-                  >
-                    {dbName}
-                  </Text>
-                  <Spacer y={1} />
-                  <Text>Postgres username</Text>
-                  <Spacer y={0.5} />
-                  <Text
-                    additionalStyles="font-family: monospace;"
-                    color="helper"
-                  >
-                    {dbUsername}
-                  </Text>
-                  <Spacer y={1} />
-                  <Text>Postgres password</Text>
-                  <Spacer y={0.5} />
-                  <Container row>
-                    {hidePassword ? (
-                      <>
-                        <Blur>{dbPassword}</Blur>
-                        <Spacer inline width="10px" />
-                        <RevealButton
-                          onClick={() => setHidePassword(false)}
-                        >
-                          Reveal
-                        </RevealButton>
-                      </>
-                    ) : (
-                      <>
-                        <ClickToCopy color="helper">
-                          {dbPassword}
-                        </ClickToCopy>
-                        <Spacer inline width="10px" />
-                        <RevealButton
-                          onClick={() => setHidePassword(true)}
-                        >
-                          Hide
-                        </RevealButton>
-                      </>
+          <FormProvider {...dbForm}>
+            <form onSubmit={onSubmit}>
+              <VerticalSteps
+                currentStep={currentStep}
+                steps={[
+                  <>
+                    <Text size={16}>Specify database name</Text>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      Lowercase letters, numbers, and &quot;-&quot; only.
+                    </Text>
+                    <Spacer height="20px" />
+                    <ControlledInput
+                      placeholder="ex: academic-sophon-db"
+                      type="text"
+                      width="300px"
+                      error={errors.name?.message}
+                      {...register("name")}
+                    />
+                  </>,
+                  <>
+                    <Text size={16}>Specify database resources</Text>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      {template.engine.name === "redis"
+                        ? "Specify your database CPU and RAM."
+                        : "Specify your database CPU, RAM, and storage."}
+                    </Text>
+                    {errors.config?.instanceClass?.message && (
+                      <AppearingErrorContainer>
+                        <Spacer y={0.5} />
+                        <Error message={errors.config.instanceClass.message} />
+                      </AppearingErrorContainer>
                     )}
-                  </Container>
-                </Fieldset>
-              </>,
-              <>
-                <Text size={16}>Provision a database</Text>
-                <Spacer y={0.5} />
-                <Button
-                  onClick={deploy}
-                  disabled={buttonStatus === "loading"}
-                  status={getStatus()}
-                >
-                  Create database
-                </Button>
-              </>
-            ]}
-          />
-          <Spacer height="80px" />
+                    <Spacer y={0.5} />
+                    <Text>Select an instance tier:</Text>
+                    <Spacer height="20px" />
+                    <Resources
+                      options={template.instanceTiers}
+                      selected={watchTier}
+                      onSelect={(option) => {
+                        setValue("config.instanceClass", option.tier);
+                        setValue(
+                          "config.allocatedStorageGigabytes",
+                          option.storageGigabytes
+                        );
+                      }}
+                      highlight={
+                        template.engine.name === "redis" ? "ram" : "storage"
+                      }
+                    />
+                  </>,
+                  <>
+                    <Text size={16}>Create database instance</Text>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      Connection credentials will be available once the database
+                      is created.
+                    </Text>
+                    <Spacer y={0.5} />
+                    <Button
+                      type="submit"
+                      status={submitBtnStatus}
+                      loadingText={"Creating..."}
+                      disabled={isCreating}
+                    >
+                      Create
+                    </Button>
+                    {errors.root?.message && (
+                      <AppearingErrorContainer>
+                        <Spacer y={0.5} />
+                        <Error message={errors.root.message} />
+                      </AppearingErrorContainer>
+                    )}
+                  </>,
+                ]}
+              />
+              <Spacer height="80px" />
+            </form>
+          </FormProvider>
         </StyledConfigureTemplate>
       </Div>
     </CenterWrapper>
@@ -318,53 +212,6 @@ const RDSForm: React.FC<Props> = ({
 };
 
 export default withRouter(RDSForm);
-
-const RevealButton = styled.div`
-  background: ${props => props.theme.fg};
-  padding: 5px 10px;
-  border-radius: 5px;
-  border: 1px solid #494b4f;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  :hover {
-    filter: brightness(120%);
-  }
-`;
-
-const Blur = styled.div`
-  filter: blur(5px);
-  -webkit-filter: blur(5px);
-  position: relative;
-  margin-left: -5px;
-  font-family: monospace;
-`;
-
-const StorageTag = styled.div`
-  background: #202227;
-  color: #aaaabb;
-  border-radius: 5px;
-  padding: 5px 10px;
-  font-size: 13px;
-  margin-left: 5px;
-`;
-
-const ResourceOption = styled.div<{ selected?: boolean }>`
-  background: ${(props) => props.theme.clickable.bg};
-  border: 1px solid ${props => props.selected ? "#ffffff" : props.theme.border};
-  width: 350px;
-  padding: 10px 15px;
-  border-radius: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  :hover {
-    border: 1px solid #ffffff;
-  }
-`;
 
 const Div = styled.div`
   width: 100%;
@@ -403,4 +250,20 @@ const Icon = styled.img`
 
 const StyledConfigureTemplate = styled.div`
   height: 100%;
+`;
+
+const floatIn = keyframes`
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+`;
+
+const AppearingErrorContainer = styled.div`
+  animation: ${floatIn} 0.5s;
+  animation-fill-mode: forwards;
 `;

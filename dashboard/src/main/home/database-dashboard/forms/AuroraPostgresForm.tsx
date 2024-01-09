@@ -1,26 +1,27 @@
-import React, { useEffect, useState, useContext } from "react";
-import styled from "styled-components";
+import React, { useContext, useEffect, useState } from "react";
 import _ from "lodash";
-import { v4 as uuidv4 } from 'uuid';
-
-import { hardcodedIcons } from "shared/hardcodedNameDict";
-import { Context } from "shared/Context";
-import api from "shared/api";
-import { pushFiltered } from "shared/routing";
+import { withRouter, type RouteComponentProps } from "react-router";
+import styled from "styled-components";
+import { v4 as uuidv4 } from "uuid";
 
 import Back from "components/porter/Back";
-import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import Input from "components/porter/Input";
-import VerticalSteps from "components/porter/VerticalSteps";
 import Button from "components/porter/Button";
-import { RouteComponentProps, withRouter } from "react-router";
+import ClickToCopy from "components/porter/ClickToCopy";
+import Container from "components/porter/Container";
 import Error from "components/porter/Error";
 import Fieldset from "components/porter/Fieldset";
-import Container from "components/porter/Container";
-import ClickToCopy from "components/porter/ClickToCopy";
-import { AuroraPostgresFormValues } from "./types";
+import Input from "components/porter/Input";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import VerticalSteps from "components/porter/VerticalSteps";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { hardcodedIcons } from "shared/hardcodedNameDict";
+import { pushFiltered } from "shared/routing";
+
+import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
+import { type AuroraPostgresFormValues } from "./types";
 
 type Props = RouteComponentProps & {
   currentTemplate: any;
@@ -54,17 +55,18 @@ const AuroraPostgresForm: React.FC<Props> = ({
 
   const waitForHelmRelease = () => {
     setTimeout(() => {
-      api.getChart(
-        "<token>",
-        {},
-        {
-          id: currentProject?.id || -1,
-          namespace: "ack-system",
-          cluster_id: currentCluster?.id || -1,
-          name,
-          revision: 0,
-        }
-      )
+      api
+        .getChart(
+          "<token>",
+          {},
+          {
+            id: currentProject?.id || -1,
+            namespace: "ack-system",
+            cluster_id: currentCluster?.id || -1,
+            name,
+            revision: 0,
+          }
+        )
         .then((res) => {
           if (res?.data?.version) {
             setButtonStatus("success");
@@ -86,14 +88,14 @@ const AuroraPostgresForm: React.FC<Props> = ({
 
     const values: { config: AuroraPostgresFormValues } = {
       config: {
-        name: name,
+        name,
         databaseName: dbName,
         masterUsername: dbUsername,
         masterUserPassword: dbPassword,
         allocatedStorage: storage,
         instanceClass: tier,
-      }
-    }
+      },
+    };
 
     api
       .deployAddon(
@@ -115,10 +117,9 @@ const AuroraPostgresForm: React.FC<Props> = ({
         waitForHelmRelease();
       })
       .catch((err) => {
-        let parsedErr = err?.response?.data?.error;
+        const parsedErr = err?.response?.data?.error;
         err = parsedErr || err.message || JSON.stringify(err);
         setButtonStatus(err);
-        return;
       });
   };
 
@@ -129,9 +130,7 @@ const AuroraPostgresForm: React.FC<Props> = ({
     if (buttonStatus === "loading" || buttonStatus === "success") {
       return buttonStatus;
     } else {
-      return (
-        <Error message={buttonStatus} />
-      );
+      return <Error message={buttonStatus} />;
     }
   };
 
@@ -142,8 +141,10 @@ const AuroraPostgresForm: React.FC<Props> = ({
           <Back onClick={goBack} />
           <DashboardHeader
             prefix={
-              <Icon 
-                src={hardcodedIcons[currentTemplate.name] || currentTemplate.icon}
+              <Icon
+                src={
+                  hardcodedIcons[currentTemplate.name] || currentTemplate.icon
+                }
               />
             }
             title="Create an Aurora PostgreSQL instance"
@@ -181,10 +182,8 @@ const AuroraPostgresForm: React.FC<Props> = ({
                 <Text color="helper">
                   Specify your database CPU, RAM, and storage.
                 </Text>
-                <Spacer y={.5} />
-                <Text>
-                  Select an instance tier:
-                </Text>
+                <Spacer y={0.5} />
+                <Text>Select an instance tier:</Text>
                 <Spacer height="20px" />
                 <ResourceOption
                   selected={tier === "db.t4g.medium"}
@@ -220,7 +219,9 @@ const AuroraPostgresForm: React.FC<Props> = ({
                 <Text size={16}>Database credentials</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
-                  These credentials never leave your own cloud environment. You will be able to automatically import these credentials from any app.
+                  These credentials never leave your own cloud environment. You
+                  will be able to automatically import these credentials from
+                  any app.
                 </Text>
                 <Spacer height="20px" />
                 <Fieldset>
@@ -250,19 +251,21 @@ const AuroraPostgresForm: React.FC<Props> = ({
                         <Blur>{dbPassword}</Blur>
                         <Spacer inline width="10px" />
                         <RevealButton
-                          onClick={() => setHidePassword(false)}
+                          onClick={() => {
+                            setHidePassword(false);
+                          }}
                         >
                           Reveal
                         </RevealButton>
                       </>
                     ) : (
                       <>
-                        <ClickToCopy color="helper">
-                          {dbPassword}
-                        </ClickToCopy>
+                        <ClickToCopy color="helper">{dbPassword}</ClickToCopy>
                         <Spacer inline width="10px" />
                         <RevealButton
-                          onClick={() => setHidePassword(true)}
+                          onClick={() => {
+                            setHidePassword(true);
+                          }}
                         >
                           Hide
                         </RevealButton>
@@ -281,7 +284,7 @@ const AuroraPostgresForm: React.FC<Props> = ({
                 >
                   Create database
                 </Button>
-              </>
+              </>,
             ]}
           />
           <Spacer height="80px" />
@@ -294,7 +297,7 @@ const AuroraPostgresForm: React.FC<Props> = ({
 export default withRouter(AuroraPostgresForm);
 
 const RevealButton = styled.div`
-  background: ${props => props.theme.fg};
+  background: ${(props) => props.theme.fg};
   padding: 5px 10px;
   border-radius: 5px;
   border: 1px solid #494b4f;
@@ -327,7 +330,8 @@ const StorageTag = styled.div`
 
 const ResourceOption = styled.div<{ selected?: boolean }>`
   background: ${(props) => props.theme.clickable.bg};
-  border: 1px solid ${props => props.selected ? "#ffffff" : props.theme.border};
+  border: 1px solid
+    ${(props) => (props.selected ? "#ffffff" : props.theme.border)};
   width: 350px;
   padding: 10px 15px;
   border-radius: 5px;

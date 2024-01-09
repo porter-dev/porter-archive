@@ -15,19 +15,12 @@ import RDSForm from "./RDSForm";
 
 type Props = {
   template: DatabaseTemplate;
-  onFormExit: () => void;
 };
-const DatabaseForm: React.FC<Props> = ({ template, onFormExit }) => {
+const DatabaseForm: React.FC<Props> = ({ template }) => {
   const { capabilities } = useContext(Context);
 
   return match(template)
-    .with({ type: DATABASE_TYPE_RDS }, () => (
-      <RDSForm
-        currentTemplate={template}
-        goBack={onFormExit}
-        repoURL={capabilities?.default_addon_helm_repo_url}
-      />
-    ))
+    .with({ type: DATABASE_TYPE_RDS }, () => <RDSForm />)
     .with({ type: DATABASE_TYPE_AURORA }, () => (
       <AuroraPostgresForm
         currentTemplate={template}

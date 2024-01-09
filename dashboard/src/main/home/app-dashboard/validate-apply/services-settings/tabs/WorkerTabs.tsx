@@ -18,6 +18,7 @@ type Props = {
   };
   maxRAM: number;
   maxCPU: number;
+  maxGPU: number;
   clusterContainsGPUNodes: boolean;
 };
 
@@ -26,6 +27,7 @@ const WorkerTabs: React.FC<Props> = ({
   service,
   maxCPU,
   maxRAM,
+  maxGPU,
   clusterContainsGPUNodes,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<
@@ -51,6 +53,7 @@ const WorkerTabs: React.FC<Props> = ({
             maxCPU={maxCPU}
             maxRAM={maxRAM}
             service={service}
+            maxGPU={maxGPU}
             clusterContainsGPUNodes={clusterContainsGPUNodes}
           />
         ))

@@ -13,6 +13,7 @@ import { z } from "zod";
 import {
   AWS_INSTANCE_LIMITS,
   AZURE_INSTANCE_LIMITS,
+  GPU_INSTANCE_LIMIT,
 } from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
 
 import api from "shared/api";
@@ -99,6 +100,7 @@ const clusterNodesValidator = z
         AWS_INSTANCE_LIMITS[DEFAULT_INSTANCE_CLASS][DEFAULT_INSTANCE_SIZE].vCPU,
       maxRAM:
         AWS_INSTANCE_LIMITS[DEFAULT_INSTANCE_CLASS][DEFAULT_INSTANCE_SIZE].RAM,
+      maxGPU: 1,
       instanceClass: DEFAULT_INSTANCE_CLASS,
       instanceSize: DEFAULT_INSTANCE_SIZE,
     };
@@ -106,7 +108,10 @@ const clusterNodesValidator = z
       return defaultResources;
     }
     const workloadKind = data.labels["porter.run/workload-kind"];
-    if (!workloadKind || workloadKind !== "application") {
+    if (
+      !workloadKind ||
+      (workloadKind !== "application" && workloadKind !== "custom")
+    ) {
       return defaultResources;
     }
     const instanceType = data.labels["beta.kubernetes.io/instance-type"];
@@ -115,6 +120,15 @@ const clusterNodesValidator = z
       return defaultResources;
     }
 
+    // update resource limits to the custom GPU limits
+    if (workloadKind === "custom" && GPU_INSTANCE_LIMIT[instanceType]) {
+      const { vCPU, RAM, GPU } = GPU_INSTANCE_LIMIT[instanceType];
+      return {
+        maxCPU: vCPU,
+        maxRAM: RAM,
+        maxGPU: GPU,
+      };
+    }
     // Azure instance types are all prefixed with "Standard_"
     if (instanceType.startsWith("Standard_")) {
       if (AZURE_INSTANCE_LIMITS[instanceType]) {
@@ -122,6 +136,7 @@ const clusterNodesValidator = z
         return {
           maxCPU: vCPU,
           maxRAM: RAM,
+          maxGPU: 1,
           azureType: instanceType,
         };
       } else {
@@ -150,10 +165,12 @@ const clusterNodesValidator = z
 
     const [instanceClass, instanceSize] = parsedType.data;
     if (AWS_INSTANCE_LIMITS[instanceClass]?.[instanceSize]) {
-      const { vCPU, RAM } = AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
+      const { vCPU, RAM, GPU } =
+        AWS_INSTANCE_LIMITS[instanceClass][instanceSize];
       return {
         maxCPU: vCPU,
         maxRAM: RAM,
+        maxGPU: GPU || 1,
         instanceClass,
         instanceSize,
       };
@@ -176,6 +193,7 @@ export const useClusterResourceLimits = ({
   defaultCPU: number;
   defaultRAM: number;
   clusterContainsGPUNodes: boolean;
+  maxGPU: number;
   clusterIngressIp: string;
   loadBalancerType: ClientLoadBalancerType;
 } => {
@@ -183,6 +201,7 @@ export const useClusterResourceLimits = ({
   const LARGE_INSTANCE_UPPER_BOUND = 0.9;
   const DEFAULT_MULTIPLIER = 0.125;
   const [clusterContainsGPUNodes, setClusterContainsGPUNodes] = useState(false);
+  const [maxGPU, setMaxGPU] = useState(1);
   const [maxCPU, setMaxCPU] = useState(
     AWS_INSTANCE_LIMITS[DEFAULT_INSTANCE_CLASS][DEFAULT_INSTANCE_SIZE].vCPU *
       SMALL_INSTANCE_UPPER_BOUND
@@ -287,6 +306,9 @@ export const useClusterResourceLimits = ({
         const maxRAM = data.reduce((acc, curr) => {
           return Math.max(acc, curr.maxRAM);
         }, 0);
+        const maxGPU = data.reduce((acc, curr) => {
+          return Math.max(acc, curr.maxGPU);
+        }, 0);
         let maxMultiplier = SMALL_INSTANCE_UPPER_BOUND;
         // if the instance type has more than 4 GB ram, we use 90% of the ram/cpu
         // otherwise, we use 75%
@@ -301,6 +323,7 @@ export const useClusterResourceLimits = ({
           100;
         setMaxCPU(newMaxCPU);
         setMaxRAM(newMaxRAM);
+        setMaxGPU(maxGPU);
         setDefaultCPU(Number((newMaxCPU * DEFAULT_MULTIPLIER).toFixed(2)));
         setDefaultRAM(Number((newMaxRAM * DEFAULT_MULTIPLIER).toFixed(0)));
       }
@@ -345,9 +368,11 @@ export const useClusterResourceLimits = ({
           return c.kindValues.value.nodeGroups.some(
             (ng) =>
               (ng.nodeGroupType === NodeGroupType.CUSTOM &&
-                ng.instanceType.includes("g4dn")) ||
+                (ng.instanceType.includes("g4dn") ||
+                  ng.instanceType.includes("p4d"))) ||
               (ng.nodeGroupType === NodeGroupType.APPLICATION &&
-                ng.instanceType.includes("g4dn"))
+                (ng.instanceType.includes("g4dn") ||
+                  ng.instanceType.includes("p4d")))
           );
         })
         .with({ kindValues: { case: "gkeKind" } }, (c) => {
@@ -374,6 +399,8 @@ export const useClusterResourceLimits = ({
         })
         .otherwise(() => "UNSPECIFIED");
 
+      // console.log(gpu);
+      // setMaxGPU(gpu);
       setClusterContainsGPUNodes(containsCustomNodeGroup);
       setLoadBalancerType(loadBalancerType);
     }
@@ -385,6 +412,7 @@ export const useClusterResourceLimits = ({
     defaultCPU,
     defaultRAM,
     clusterContainsGPUNodes,
+    maxGPU,
     clusterIngressIp,
     loadBalancerType,
   };

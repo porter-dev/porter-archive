@@ -38,6 +38,7 @@ const AppGrid: React.FC<AppGridProps> = ({
   view,
   sort,
 }) => {
+  const { user } = useContext(Context);
   const { currentDeploymentTarget } = useDeploymentTarget();
   const { currentProject } = useContext(Context);
 
@@ -118,7 +119,10 @@ const AppGrid: React.FC<AppGridProps> = ({
 
             return (
               <Link to={appLink} key={i}>
-                <Block>
+                <Block
+                  locked={false}
+                  appId={user.isPorterUser ? source.id : ""}
+                >
                   <Container row>
                     <AppIcon
                       buildpacks={proto.build?.buildpacks ?? []}
@@ -219,7 +223,7 @@ const GridList = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 `;
 
-export const Block = styled.div<{ locked?: boolean }>`
+export const Block = styled.div<{ locked?: boolean; appId?: string }>`
   height: 150px;
   flex-direction: column;
   display: flex;
@@ -235,7 +239,21 @@ export const Block = styled.div<{ locked?: boolean }>`
 
   :hover {
     border: ${(props) => (props.locked ? "" : `1px solid #7a7b80`)};
+
+    ::after {
+      content: ${(props) =>
+    props.locked || !props.appId ? "''" : `"AppID: ${props.appId}"`};
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background:  ${(props) => props.appId && `#ffffff44`};
+      opacity: 0.3;
+      padding: 5px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
   }
+
   animation: fadeIn 0.3s 0s;
   @keyframes fadeIn {
     from {
@@ -246,7 +264,6 @@ export const Block = styled.div<{ locked?: boolean }>`
     }
   }
 `;
-
 const List = styled.div`
   overflow: hidden;
 `;

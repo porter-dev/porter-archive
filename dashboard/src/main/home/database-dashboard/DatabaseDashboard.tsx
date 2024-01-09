@@ -181,7 +181,7 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
 
           <Text color={"helper"}>Get started by creating a database.</Text>
           <Spacer y={1} />
-          <PorterLink to="/databases/new/database">
+          <PorterLink to="/databases/new">
             <Button
               onClick={async () =>
                 // TODO: add analytics
@@ -229,7 +229,7 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
           />
 
           <Spacer inline x={2} />
-          <PorterLink to="/databases/new/database">
+          <PorterLink to="/databases/new">
             <Button
               onClick={async () =>
                 // TODO: add analytics

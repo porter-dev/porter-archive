@@ -12,8 +12,8 @@ type DatabaseHook = {
 const clientDbToValues = (
   values: DbFormData
 ): { values: object; templateName: string } => {
-  return match(values.config.type)
-    .with("rds-postgres", () => ({
+  return match(values)
+    .with({ config: { type: "rds-postgres" } }, (values) => ({
       values: {
         config: {
           name: values.name,
@@ -26,7 +26,32 @@ const clientDbToValues = (
       },
       templateName: "rds-postgresql",
     }))
-    .otherwise(() => ({ values: {}, templateName: "" }));
+    .with({ config: { type: "rds-postgresql-aurora" } }, (values) => ({
+      values: {
+        config: {
+          name: values.name,
+          databaseName: values.config.databaseName,
+          masterUsername: values.config.masterUsername,
+          masterUserPassword: values.config.masterUserPassword,
+          allocatedStorage: values.config.allocatedStorageGigabytes,
+          instanceClass: values.config.instanceClass,
+        },
+      },
+      templateName: "rds-postgresql-aurora",
+    }))
+    .with({ config: { type: "elasticache-redis" } }, (values) => ({
+      values: {
+        config: {
+          name: values.name,
+          databaseName: values.config.databaseName,
+          masterUsername: values.config.masterUsername,
+          masterUserPassword: values.config.masterUserPassword,
+          instanceClass: values.config.instanceClass,
+        },
+      },
+      templateName: "elasticache-redis",
+    }))
+    .exhaustive();
 };
 
 export const useDatabase = (): DatabaseHook => {

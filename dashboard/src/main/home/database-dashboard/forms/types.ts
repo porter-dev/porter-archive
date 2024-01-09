@@ -35,17 +35,67 @@ const rdsPostgresConfigValidator = z.object({
     .refine((val) => val !== "unspecified", {
       message: "Instance class is required",
     }),
-  databaseName: z.string().nonempty("Database name is required"),
-  masterUsername: z.string(),
-  masterUserPassword: z
-    .string()
-    .nonempty("Master password is required")
-    .default(""),
   allocatedStorageGigabytes: z
     .number()
     .int()
     .positive("Allocated storage must be a positive integer")
     .default(30),
+  // the following three are not yet specified by the user during creation - only parsed from the backend after the form is submitted
+  databaseName: z
+    .string()
+    .nonempty("Database name is required")
+    .default("postgres"),
+  masterUsername: z
+    .string()
+    .nonempty("Master username is required")
+    .default("postgres"),
+  masterUserPassword: z
+    .string()
+    .nonempty("Master password is required")
+    .default(""),
+});
+
+const auroraPostgresConfigValidator = z.object({
+  type: z.literal("rds-postgresql-aurora"),
+  instanceClass: instanceTierValidator
+    .default("unspecified")
+    .refine((val) => val !== "unspecified", {
+      message: "Instance class is required",
+    }),
+  allocatedStorageGigabytes: z
+    .number()
+    .int()
+    .positive("Allocated storage must be a positive integer")
+    .default(30),
+  // the following three are not yet specified by the user during creation - only parsed from the backend after the form is submitted
+  databaseName: z.string().nonempty("Database name is required").default(""),
+  masterUsername: z
+    .string()
+    .nonempty("Master username is required")
+    .default(""),
+  masterUserPassword: z
+    .string()
+    .nonempty("Master password is required")
+    .default(""),
+});
+
+const elasticacheRedisConfigValidator = z.object({
+  type: z.literal("elasticache-redis"),
+  instanceClass: instanceTierValidator
+    .default("unspecified")
+    .refine((val) => val !== "unspecified", {
+      message: "Instance class is required",
+    }),
+  // the following three are not yet specified by the user during creation - only parsed from the backend after the form is submitted
+  databaseName: z.string().nonempty("Database name is required").default(""),
+  masterUsername: z
+    .string()
+    .nonempty("Master username is required")
+    .default(""),
+  masterUserPassword: z
+    .string()
+    .nonempty("Master password is required")
+    .default(""),
 });
 
 export const dbFormValidator = z.object({
@@ -55,7 +105,11 @@ export const dbFormValidator = z.object({
     .regex(/^[a-z0-9-]+$/, {
       message: "Lowercase letters, numbers, and “-” only.",
     }),
-  config: z.discriminatedUnion("type", [rdsPostgresConfigValidator]),
+  config: z.discriminatedUnion("type", [
+    rdsPostgresConfigValidator,
+    auroraPostgresConfigValidator,
+    elasticacheRedisConfigValidator,
+  ]),
 });
 export type DbFormData = z.infer<typeof dbFormValidator>;
 

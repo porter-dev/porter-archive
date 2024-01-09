@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import _ from "lodash";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 import { z } from "zod";
 
 import Back from "components/porter/Back";
@@ -13,14 +14,22 @@ import database from "assets/database.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import { SUPPORTED_DATABASE_TEMPLATES } from "./constants";
-import DatabaseForm from "./forms/DatabaseForm";
-import RDSForm from "./forms/RDSForm";
-import { type DatabaseTemplate } from "./types";
+import DatabaseFormAuroraPostgres from "./forms/DatabaseFormAuroraPostgres";
+import DatabaseFormElasticacheRedis from "./forms/DatabaseFormElasticacheRedis";
+import DatabaseFormRDSPostgres from "./forms/DatabaseFormRDSPostgres";
+import {
+  DATABASE_ENGINE_POSTGRES,
+  DATABASE_ENGINE_REDIS,
+  DATABASE_TYPE_AURORA,
+  DATABASE_TYPE_ELASTICACHE,
+  DATABASE_TYPE_RDS,
+  type DatabaseTemplate,
+} from "./types";
 
 type Props = RouteComponentProps;
-const CreateDatabase: React.FC<Props> = ({ history, match }) => {
+const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
   const templateMatch: DatabaseTemplate | undefined = useMemo(() => {
-    const { params } = match;
+    const { params } = queryMatch;
     const validParams = z
       .object({
         type: z.string(),
@@ -38,53 +47,66 @@ const CreateDatabase: React.FC<Props> = ({ history, match }) => {
         t.type === validParams.data.type &&
         t.engine.name === validParams.data.engine
     );
-  }, [match]);
+  }, [queryMatch]);
 
   return (
     <StyledTemplateComponent>
-      {templateMatch ? (
-        <RDSForm template={templateMatch} />
-      ) : (
-        <>
-          <Back to="/databases" />
-          <DashboardHeader
-            image={database}
-            title="Create a new database"
-            capitalize={false}
-            disableLineBreak
-          />
-          <Text size={15}>Production datastores</Text>
-          <Spacer y={0.5} />
-          <Text color="helper">Fully-managed production-ready datastores.</Text>
-          <Spacer y={0.5} />
-          <TemplateListWrapper>
-            {SUPPORTED_DATABASE_TEMPLATES.map((template) => {
-              const { name, icon, description, disabled, engine, type } =
-                template;
-              return (
-                <TemplateBlock
-                  disabled={disabled}
-                  key={name}
-                  onClick={() => {
-                    history.push(`/databases/new/${type}/${engine.name}`);
-                  }}
-                >
-                  <TemplateHeader>
-                    <Icon src={icon} />
-                    <Spacer inline x={0.5} />
-                    <TemplateTitle>{name}</TemplateTitle>
-                    <Spacer inline x={0.5} />
-                    <Tag hoverable={false}>{engine.displayName}</Tag>
-                  </TemplateHeader>
-                  <Spacer y={0.5} />
-                  <TemplateDescription>{description}</TemplateDescription>
-                  <Spacer y={0.5} />
-                </TemplateBlock>
-              );
-            })}
-          </TemplateListWrapper>
-        </>
-      )}
+      {match(templateMatch)
+        .with(
+          { type: DATABASE_TYPE_RDS, engine: DATABASE_ENGINE_POSTGRES },
+          (t) => <DatabaseFormRDSPostgres template={t} />
+        )
+        .with(
+          { type: DATABASE_TYPE_AURORA, engine: DATABASE_ENGINE_POSTGRES },
+          (t) => <DatabaseFormAuroraPostgres template={t} />
+        )
+        .with(
+          { type: DATABASE_TYPE_ELASTICACHE, engine: DATABASE_ENGINE_REDIS },
+          (t) => <DatabaseFormElasticacheRedis template={t} />
+        )
+        .otherwise(() => (
+          <>
+            <Back to="/databases" />
+            <DashboardHeader
+              image={database}
+              title="Create a new database"
+              capitalize={false}
+              disableLineBreak
+            />
+            <Text size={15}>Production datastores</Text>
+            <Spacer y={0.5} />
+            <Text color="helper">
+              Fully-managed production-ready datastores.
+            </Text>
+            <Spacer y={0.5} />
+            <TemplateListWrapper>
+              {SUPPORTED_DATABASE_TEMPLATES.map((template) => {
+                const { name, icon, description, disabled, engine, type } =
+                  template;
+                return (
+                  <TemplateBlock
+                    disabled={disabled}
+                    key={`${name}-${engine.name}`}
+                    onClick={() => {
+                      history.push(`/databases/new/${type}/${engine.name}`);
+                    }}
+                  >
+                    <TemplateHeader>
+                      <Icon src={icon} />
+                      <Spacer inline x={0.5} />
+                      <TemplateTitle>{name}</TemplateTitle>
+                      <Spacer inline x={0.5} />
+                      <Tag hoverable={false}>{engine.displayName}</Tag>
+                    </TemplateHeader>
+                    <Spacer y={0.5} />
+                    <TemplateDescription>{description}</TemplateDescription>
+                    <Spacer y={0.5} />
+                  </TemplateBlock>
+                );
+              })}
+            </TemplateListWrapper>
+          </>
+        ))}
     </StyledTemplateComponent>
   );
 };

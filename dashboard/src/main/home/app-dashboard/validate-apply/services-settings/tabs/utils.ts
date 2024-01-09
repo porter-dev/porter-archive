@@ -3,6 +3,7 @@ export const MILI_TO_CORE = 1000;
 type InstanceDetails = {
   vCPU: number;
   RAM: number;
+  GPU?: number;
 };
 
 type InstanceTypes = Record<string, Record<string, InstanceDetails>>;
@@ -132,4 +133,30 @@ export const AZURE_INSTANCE_LIMITS: AzureInstanceTypes = Object.freeze({
   Standard_DS1_v2: { vCPU: 1, RAM: 3.5 },
   Standard_DS2_v2: { vCPU: 2, RAM: 7 },
   Standard_D2ads_v5: { vCPU: 2, RAM: 8 },
+});
+
+export const GPU_INSTANCE_LIMIT: InstanceTypes = Object.freeze({
+  g4dn: {
+    xlarge: { vCPU: 4, RAM: 16, GPU: 1 },
+    "2xlarge": { vCPU: 8, RAM: 32, GPU: 1 },
+  },
+  p4d: {
+    "24xlarge": { vCPU: 96, RAM: 1152, GPU: 8 },
+  },
+  n1: {
+    "standard-1": { vCPU: 1, RAM: 3.75, GPU: 1 },
+    "standard-2": { vCPU: 2, RAM: 7.5, GPU: 1 },
+    "standard-4": { vCPU: 4, RAM: 15, GPU: 1 },
+    "standard-8": { vCPU: 8, RAM: 30, GPU: 1 },
+    "standard-16": { vCPU: 16, RAM: 60, GPU: 1 },
+    "standard-32": { vCPU: 32, RAM: 120, GPU: 1 },
+    "high-mem-2": { vCPU: 2, RAM: 13, GPU: 1 },
+    "high-mem-4": { vCPU: 4, RAM: 26, GPU: 1 },
+    "high-mem-8": { vCPU: 8, RAM: 52, GPU: 1 },
+    "high-mem-16": { vCPU: 16, RAM: 104, GPU: 1 },
+    "high-mem-32": { vCPU: 32, RAM: 208, GPU: 1 },
+    "high-cpu-8": { vCPU: 2, RAM: 1.8, GPU: 1 },
+    "high-cpu-16": { vCPU: 4, RAM: 3.6, GPU: 1 },
+    "high-cpu-32": { vCPU: 8, RAM: 7.2, GPU: 1 },
+  },
 });

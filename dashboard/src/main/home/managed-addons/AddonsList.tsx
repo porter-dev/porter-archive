@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Controller,
@@ -12,7 +12,6 @@ import { z } from "zod";
 
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
 import Modal from "components/porter/Modal";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
@@ -26,13 +25,6 @@ import redis from "assets/redis.svg";
 import { AddonListRow } from "./AddonListRow";
 
 const addAddonFormValidator = z.object({
-  name: z
-    .string()
-    .min(1, { message: "A service name is required" })
-    .max(30)
-    .regex(/^[a-z0-9-]+$/, {
-      message: 'Lowercase letters, numbers, and " - " only.',
-    }),
   type: z.enum(["postgres", "redis"]),
 });
 type AddAddonFormValues = z.infer<typeof addAddonFormValidator>;
@@ -43,25 +35,14 @@ export const AddonsList: React.FC = () => {
   const { control: appTemplateControl } = useFormContext<AppTemplateFormData>();
 
   // add addon modal form
-  const {
-    register,
-    watch,
-    control,
-    reset,
-    handleSubmit,
-    formState: { errors },
-    setError,
-    clearErrors,
-  } = useForm<AddAddonFormValues>({
+  const { watch, control, reset, handleSubmit } = useForm<AddAddonFormValues>({
     reValidateMode: "onChange",
     resolver: zodResolver(addAddonFormValidator),
     defaultValues: {
-      name: "",
       type: "postgres",
     },
   });
 
-  const addonName = watch("name");
   const addonType = watch("type");
 
   const { append, update, remove, fields } = useFieldArray({
@@ -69,26 +50,9 @@ export const AddonsList: React.FC = () => {
     name: "addons",
   });
 
-  useEffect(() => {
-    const existingAddonNames = fields.map((f) => f.name);
-    if (existingAddonNames.some((n) => n.value === addonName)) {
-      setError("name", {
-        message: "Addon name must be unique",
-      });
-    } else {
-      clearErrors("name");
-    }
-  }, [fields]);
-
   const onSubmit = handleSubmit((data) => {
     const baseAddon = defaultClientAddon(data.type);
-    append({
-      ...baseAddon,
-      name: {
-        value: data.name,
-        readOnly: false,
-      },
-    });
+    append(baseAddon);
 
     reset();
     setShowAddAddonModal(false);
@@ -153,22 +117,8 @@ export const AddonsList: React.FC = () => {
             />
           </Container>
           <Spacer y={1} />
-          <Text color="helper">Name this service:</Text>
-          <Spacer y={0.5} />
-          <ControlledInput
-            type="text"
-            placeholder="ex: my-postgres"
-            width="100%"
-            error={errors.name?.message}
-            {...register("name")}
-          />
-          <Spacer y={1} />
-          <Button
-            type="button"
-            onClick={onSubmit}
-            disabled={!!errors.name?.message}
-          >
-            <I className="material-icons">add</I> Add service
+          <Button type="button" onClick={onSubmit}>
+            <I className="material-icons">add</I> Add
           </Button>
         </Modal>
       )}

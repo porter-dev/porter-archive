@@ -1,18 +1,19 @@
 import React, { Component } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
-import close from "assets/close.png";
+
+import ConfirmOverlay from "components/ConfirmOverlay";
+import InputRow from "components/form-components/InputRow";
+import SaveButton from "components/SaveButton";
+import { OFState } from "main/home/onboarding/state";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { pushFiltered } from "shared/routing";
-import { OFState } from "main/home/onboarding/state";
-import { Onboarding as OnboardingSaveType } from "../onboarding/types"
+import { NilCluster } from "shared/types";
+import close from "assets/close.png";
 
-
-import SaveButton from "components/SaveButton";
-import InputRow from "components/form-components/InputRow";
-import ConfirmOverlay from "components/ConfirmOverlay";
-import { RouteComponentProps, withRouter } from "react-router";
+import { Onboarding as OnboardingSaveType } from "../onboarding/types";
 
 type PropsType = RouteComponentProps & {
   setRefreshClusters: (x: boolean) => void;
@@ -37,7 +38,7 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
   };
 
   handleDelete = async () => {
-    let { currentProject, currentCluster, setCurrentCluster } = this.context;
+    const { currentProject, currentCluster, setCurrentCluster } = this.context;
     this.setState({ status: "loading" });
 
     await api.updateOnboardingStep(
@@ -65,7 +66,6 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
             tab: "overview",
           });
 
-
           // Handle destroying infra we've provisioned
           api
             .destroyInfra(
@@ -76,9 +76,12 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
                 infra_id: currentCluster.infra_id,
               }
             )
-            .then(() =>
-              console.log("destroyed provisioned infra:", currentCluster.infra_id)
-            )
+            .then(() => {
+              console.log(
+                "destroyed provisioned infra:",
+                currentCluster.infra_id
+              );
+            })
             .catch(console.log);
 
           if (currentProject.simplified_view_enabled) {
@@ -86,9 +89,9 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
               .getClusters("<token>", {}, { id: currentProject?.id })
               .then(async (res) => {
                 if (res.data) {
-                  let clusters = res.data;
-                  if (clusters.length == 0 || !currentProject.multi_cluster) {
-                    setCurrentCluster(null)
+                  const clusters = res.data;
+                  if (clusters.length === 0 || !currentProject.multi_cluster) {
+                    setCurrentCluster(NilCluster);
                     await api.saveOnboardingState(
                       "<token>",
                       { current_step: "connect_source" },
@@ -96,9 +99,8 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
                     );
                     window.location.reload();
                   }
-
                 }
-              })
+              });
           }
           return;
         }
@@ -141,7 +143,9 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
             disabled={true}
             type="string"
             value={this.state.clusterName}
-            setValue={(x: string) => this.setState({ clusterName: x })}
+            setValue={(x: string) => {
+              this.setState({ clusterName: x });
+            }}
             placeholder="ex: perspective-vortex"
             width="490px"
           />
@@ -159,7 +163,9 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
         <SaveButton
           text="Delete cluster"
           color="#b91133"
-          onClick={() => this.setState({ showDeleteOverlay: true })}
+          onClick={() => {
+            this.setState({ showDeleteOverlay: true });
+          }}
           status={this.state.status}
         />
 
@@ -167,7 +173,9 @@ class UpdateClusterModal extends Component<PropsType, StateType> {
           show={this.state.showDeleteOverlay}
           message={`Are you sure you want to delete this cluster?`}
           onYes={this.handleDelete}
-          onNo={() => this.setState({ showDeleteOverlay: false })}
+          onNo={() => {
+            this.setState({ showDeleteOverlay: false });
+          }}
         />
       </>
     );

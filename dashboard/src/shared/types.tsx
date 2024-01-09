@@ -14,7 +14,25 @@ export type ClusterType = {
   status?: string;
   cloud_provider: string;
   gpuCluster?: boolean;
-}
+};
+
+export const NilCluster: ClusterType = {
+  id: -1,
+  name: "",
+  server: "",
+  service_account_id: -1,
+  infra_id: -1,
+  service: "",
+  agent_integration_enabled: false,
+  aws_cluster_id: "",
+  aws_integration_id: 0,
+  cloud_provider: "",
+  cloud_provider_credential_identifier: "",
+  gpuCluster: false,
+  preview_envs_enabled: false,
+  status: "",
+  vanity_name: "",
+};
 
 export type AddonCard = {
   id: string;
@@ -34,7 +52,7 @@ export type DetailedIngressError = {
 };
 export type Annotations = {
   category: string;
-}
+};
 
 export type ChartType = {
   stack_id: string;
@@ -251,15 +269,15 @@ export type FormElement = {
 export type RepoType = {
   FullName: string;
 } & (
-    | {
+  | {
       Kind: "github";
       GHRepoID: number;
     }
-    | {
+  | {
       Kind: "gitlab";
       GitIntegrationId: number;
     }
-  );
+);
 
 export type FileType = {
   path: string;
@@ -335,15 +353,15 @@ export type ActionConfigType = {
   image_repo_uri: string;
   dockerfile_path?: string;
 } & (
-    | {
+  | {
       kind: "gitlab";
       gitlab_integration_id: number;
     }
-    | {
+  | {
       kind: "github";
       git_repo_id: number;
     }
-  );
+);
 
 export type GithubActionConfigType = ActionConfigType & {
   kind: "github";

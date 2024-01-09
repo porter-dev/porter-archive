@@ -42,15 +42,15 @@ const PreviewEnvs: React.FC = () => {
     <StyledAppDashboard>
       <DashboardHeader
         image={PullRequestIcon}
-        title="Preview Environments"
-        description="Preview environments are created for each pull request. They are automatically deleted when the pull request is closed."
+        title="Preview Apps"
+        description="Preview apps are created for each pull request. They are automatically deleted when the pull request is closed."
         disableLineBreak
       />
       <TabSelector
         noBuffer
         options={[
-          { label: "Environments", value: "environments" },
-          { label: "Settings", value: "config" },
+          { label: "Existing Previews", value: "environments" },
+          { label: "Preview Templates", value: "config" },
         ]}
         currentTab={tab}
         setCurrentTab={(tab: string) => {

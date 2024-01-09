@@ -78,6 +78,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
     currentClusterResources: {
       maxCPU,
       maxRAM,
+      maxGPU,
       clusterContainsGPUNodes,
       clusterIngressIp,
       defaultCPU,
@@ -234,6 +235,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 status={serviceVersionStatus?.[svc.name.value]}
                 maxCPU={maxCPU}
                 maxRAM={maxRAM}
+                maxGPU={maxGPU}
                 clusterContainsGPUNodes={clusterContainsGPUNodes}
                 internalNetworkingDetails={internalNetworkingDetails}
                 clusterIngressIp={clusterIngressIp}

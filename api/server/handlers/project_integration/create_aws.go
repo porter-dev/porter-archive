@@ -2,6 +2,7 @@ package project_integration
 
 import (
 	"net/http"
+	"strings"
 
 	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
@@ -74,8 +75,8 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			// This is required since the same AWS account can be used across multiple projects. In order to change the external ID for a project,
 			// the user must then have access to all projects that use that AWS account.
 			// If we ever do a higher abstraction about porter projects, then we can tie the ability to access a cloud provider account to that higher abstraction.
-
-			awsAccountId := ""
+			awsAccountIdPrefix := strings.TrimPrefix(request.TargetArn, "arn:aws:iam::")
+			awsAccountId := strings.TrimPrefix(awsAccountIdPrefix, ":role/porter-manager")
 			roles, err := p.Repo().AWSAssumeRoleChainer().ListByAwsAccountId(ctx, awsAccountId)
 			if err != nil {
 				err = telemetry.Error(ctx, span, err, "error listing assume role chains")

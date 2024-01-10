@@ -21,7 +21,7 @@ func (cr AWSAssumeRoleChain) List(ctx context.Context, projectID uint) ([]*model
 	return nil, errors.New("not implemented")
 }
 
-// List returns a list of aws assume role chains for a given project, removing any chain links owned by Porter
+// ListByAwsAccountId ...
 func (cr AWSAssumeRoleChain) ListByAwsAccountId(ctx context.Context, targetAwsAccountId string) ([]*models.AWSAssumeRoleChain, error) {
 	return nil, errors.New("not implemented")
 }

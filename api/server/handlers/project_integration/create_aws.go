@@ -77,7 +77,7 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			// If we ever do a higher abstraction about porter projects, then we can tie the ability to access a cloud provider account to that higher abstraction.
 			awsAccountIdPrefix := strings.TrimPrefix(request.TargetArn, "arn:aws:iam::")
 			awsAccountId := strings.TrimSuffix(awsAccountIdPrefix, ":role/porter-manager")
-			roles, err := p.Repo().AWSAssumeRoleChainer().ListByAwsAccountId(ctx, awsAccountId)
+			assumeRoles, err := p.Repo().AWSAssumeRoleChainer().ListByAwsAccountId(ctx, awsAccountId)
 			if err != nil {
 				err = telemetry.Error(ctx, span, err, "error listing assume role chains")
 				p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError, "error listing assume role chains"))
@@ -85,7 +85,7 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 
 			requiredProjects := make(map[int]bool)
-			for _, role := range roles {
+			for _, role := range assumeRoles {
 				requiredProjects[role.ProjectID] = false
 			}
 

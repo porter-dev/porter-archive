@@ -35,17 +35,19 @@ import (
 )
 
 var (
-	appNamespace                string
-	appVerbose                  bool
+	appContainerName            string
+	appCpuMilli                 int
 	appExistingPod              bool
 	appInteractive              bool
-	appContainerName            string
-	appTag                      string
-	deploymentTarget            string
-	appCpuMilli                 int
 	appMemoryMi                 int
+	appNamespace                string
+	appTag                      string
+	appVerbose                  bool
+	appWait                     bool
+	deploymentTarget            string
 	jobName                     string
 	waitForSuccessfulDeployment bool
+	waitForSuccessfulUpdate     bool
 )
 
 const (
@@ -177,6 +179,13 @@ func appRunFlags(appRunCmd *cobra.Command) {
 		"whether to run in interactive mode (default false)",
 	)
 
+	appRunCmd.PersistentFlags().BoolVar(
+		&appWait,
+		"wait",
+		false,
+		"whether to wait for the command to complete before exiting for non-interactive mode (default false)",
+	)
+
 	appRunCmd.PersistentFlags().IntVarP(
 		&appCpuMilli,
 		"cpu",
@@ -267,10 +276,11 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 		}
 
 		return v2.RunAppJob(ctx, v2.RunAppJobInput{
-			CLIConfig: cliConfig,
-			Client:    client,
-			AppName:   args[0],
-			JobName:   jobName,
+			CLIConfig:   cliConfig,
+			Client:      client,
+			AppName:     args[0],
+			JobName:     jobName,
+			WaitForExit: appWait,
 		})
 	}
 

@@ -1705,5 +1705,34 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{app_name}/run-status -> porter_app.NewAppRunStatusHandler
+	appRunStatusEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/run-status", relPathV2, types.URLParamPorterAppName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appRunStatusHandler := porter_app.NewAppRunStatusHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appRunStatusEndpoint,
+		Handler:  appRunStatusHandler,
+		Router:   r,
+	})
+
 	return routes, newPath
 }

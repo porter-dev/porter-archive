@@ -821,3 +821,34 @@ func (c *Client) RunAppJob(
 
 	return resp, err
 }
+
+// RunAppJobStatus gets the status for a job app run
+func (c *Client) RunAppJobStatus(
+	ctx context.Context,
+	projectID, clusterID uint,
+	appName string, jobName string,
+	deploymentTargetID string,
+	jobRunID string,
+	deploymentTargetNamespace string,
+) (*porter_app.AppRunStatusResponse, error) {
+	resp := &porter_app.AppRunStatusResponse{}
+
+	req := &porter_app.AppRunStatusRequest{
+		JobRunID:           jobRunID,
+		ServiceName:        jobName,
+		DeploymentTargetID: deploymentTargetID,
+		Namespace:          deploymentTargetNamespace,
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/run-status",
+			projectID, clusterID,
+			appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}

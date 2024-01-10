@@ -102,9 +102,10 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			for _, required := range requiredProjects {
+			for proj, required := range requiredProjects {
 				if !required {
 					err = telemetry.Error(ctx, span, err, "user does not have access to all projects that use this AWS account")
+					telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "missing-project", Value: proj})
 					p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden, "user does not have access to all projects that use this AWS account"))
 					return
 				}

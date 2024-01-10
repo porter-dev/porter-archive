@@ -20,6 +20,7 @@ type Props = {
   };
   maxRAM: number;
   maxCPU: number;
+  maxGPU: number;
   clusterContainsGPUNodes: boolean;
   internalNetworkingDetails: {
     namespace: string;
@@ -34,6 +35,7 @@ const WebTabs: React.FC<Props> = ({
   service,
   maxRAM,
   maxCPU,
+  maxGPU,
   clusterContainsGPUNodes,
   internalNetworkingDetails,
   clusterIngressIp,
@@ -71,6 +73,7 @@ const WebTabs: React.FC<Props> = ({
             index={index}
             maxCPU={maxCPU}
             maxRAM={maxRAM}
+            maxGPU={maxGPU}
             clusterContainsGPUNodes={clusterContainsGPUNodes}
             service={service}
           />

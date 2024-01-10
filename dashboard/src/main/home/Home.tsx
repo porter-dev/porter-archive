@@ -459,6 +459,9 @@ const Home: React.FC<Props> = (props) => {
                   )}
                 </Route>
 
+                <Route path="/databases/new/:type/:engine">
+                  <CreateDatabase />
+                </Route>
                 <Route path="/databases/new">
                   <CreateDatabase />
                 </Route>

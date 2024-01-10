@@ -35,6 +35,7 @@ type ServiceProps = {
   status?: ClientServiceStatus[];
   maxCPU: number;
   maxRAM: number;
+  maxGPU: number;
   clusterContainsGPUNodes: boolean;
   internalNetworkingDetails: {
     namespace: string;
@@ -53,6 +54,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   status,
   maxCPU,
   maxRAM,
+  maxGPU,
   clusterContainsGPUNodes,
   internalNetworkingDetails,
   clusterIngressIp,
@@ -67,6 +69,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           service={svc}
           maxCPU={maxCPU}
           maxRAM={maxRAM}
+          maxGPU={maxGPU}
           clusterContainsGPUNodes={clusterContainsGPUNodes}
           internalNetworkingDetails={internalNetworkingDetails}
           clusterIngressIp={clusterIngressIp}
@@ -79,6 +82,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           service={svc}
           maxCPU={maxCPU}
           maxRAM={maxRAM}
+          maxGPU={maxGPU}
           clusterContainsGPUNodes={clusterContainsGPUNodes}
         />
       ))
@@ -88,6 +92,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           service={svc}
           maxCPU={maxCPU}
           maxRAM={maxRAM}
+          maxGPU={maxGPU}
           clusterContainsGPUNodes={clusterContainsGPUNodes}
         />
       ))
@@ -97,6 +102,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           service={svc}
           maxCPU={maxCPU}
           maxRAM={maxRAM}
+          maxGPU={maxGPU}
           clusterContainsGPUNodes={clusterContainsGPUNodes}
           isPredeploy
         />
@@ -212,7 +218,7 @@ const ServiceTitle = styled.div`
   align-items: center;
 `;
 
-const StyledSourceBox = styled(motion.div)<{
+const StyledSourceBox = styled(motion.div) <{
   showExpanded?: boolean;
   hasFooter?: boolean;
 }>`
@@ -275,7 +281,7 @@ const ServiceHeader = styled.div<{
     border-radius: 20px;
     margin-left: -10px;
     transform: ${(props: { showExpanded?: boolean }) =>
-      props.showExpanded ? "" : "rotate(-90deg)"};
+    props.showExpanded ? "" : "rotate(-90deg)"};
   }
 `;
 

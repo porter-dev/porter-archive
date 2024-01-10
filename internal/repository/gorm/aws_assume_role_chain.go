@@ -47,3 +47,21 @@ func (cr AWSAssumeRoleChain) List(ctx context.Context, projectID uint) ([]*model
 
 	return confs, nil
 }
+
+// ListByAwsAccountId returns a list of aws assume role chains where the target arn is owned by the supplied AWS account ID.
+func (cr AWSAssumeRoleChain) ListByAwsAccountId(ctx context.Context, awsAccountID string) ([]*models.AWSAssumeRoleChain, error) {
+	var confs []*models.AWSAssumeRoleChain
+	if awsAccountID == "" {
+		return nil, errors.New("must provide an AWS account ID")
+	}
+	if len(awsAccountID) != 12 {
+		return nil, errors.New("must provide a valid AWS account ID")
+	}
+
+	tx := cr.db.Where("target_arn like ?", fmt.Sprintf("arn:aws:iam::%s:role/porter-manager", awsAccountID)).Find(&confs)
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	return nil, nil
+}

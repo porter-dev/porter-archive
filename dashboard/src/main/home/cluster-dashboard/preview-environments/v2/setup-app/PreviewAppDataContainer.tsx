@@ -10,7 +10,7 @@ import { type PorterApp } from "@porter-dev/api-contracts";
 import axios from "axios";
 import _ from "lodash";
 import { FormProvider, useForm } from "react-hook-form";
-import { Redirect, useHistory } from "react-router";
+import { useHistory } from "react-router";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
@@ -233,7 +233,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
         }, {});
       setFinalizedAppEnv({ variables, secrets });
 
-      if (!existingTemplate) {
+      if (latestSource.type === "github" && !existingTemplate) {
         setShowGHAModal(true);
         return;
       }
@@ -317,10 +317,6 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
       addons: existingAddonsWithEnv,
     });
   }, [withPreviewOverrides, latestSource, existingAddonsWithEnv]);
-
-  if (latestSource.type !== "github") {
-    return <Redirect to={`/apps/${porterApp.name}`} />;
-  }
 
   return (
     <FormProvider {...porterAppFormMethods}>

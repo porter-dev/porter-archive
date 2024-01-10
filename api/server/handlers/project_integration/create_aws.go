@@ -76,7 +76,7 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			// the user must then have access to all projects that use that AWS account.
 			// If we ever do a higher abstraction about porter projects, then we can tie the ability to access a cloud provider account to that higher abstraction.
 			awsAccountIdPrefix := strings.TrimPrefix(request.TargetArn, "arn:aws:iam::")
-			awsAccountId := strings.TrimPrefix(awsAccountIdPrefix, ":role/porter-manager")
+			awsAccountId := strings.TrimSuffix(awsAccountIdPrefix, ":role/porter-manager")
 			roles, err := p.Repo().AWSAssumeRoleChainer().ListByAwsAccountId(ctx, awsAccountId)
 			if err != nil {
 				err = telemetry.Error(ctx, span, err, "error listing assume role chains")

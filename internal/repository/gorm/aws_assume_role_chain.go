@@ -55,13 +55,14 @@ func (cr AWSAssumeRoleChain) ListByAwsAccountId(ctx context.Context, awsAccountI
 		return nil, errors.New("must provide an AWS account ID")
 	}
 	if len(awsAccountID) != 12 {
-		return nil, errors.New("must provide a valid AWS account ID")
+		return nil, fmt.Errorf("must provide a valid AWS account ID: %s", awsAccountID)
 	}
 
-	tx := cr.db.Where("target_arn like ?", fmt.Sprintf("arn:aws:iam::%s:role/porter-manager", awsAccountID)).Find(&confs)
+	targetArn := fmt.Sprintf("arn:aws:iam::%s:role/porter-manager", awsAccountID)
+	tx := cr.db.Where("target_arn = ?", targetArn).Find(&confs)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}
 
-	return nil, nil
+	return confs, nil
 }

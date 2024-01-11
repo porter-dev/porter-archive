@@ -1,13 +1,13 @@
 import { useCallback, useContext } from "react";
 import { match } from "ts-pattern";
 
-import { type DbFormData } from "main/home/database-dashboard/forms/types";
+import { type DbFormData } from "lib/databases/types";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
 
 type DatabaseHook = {
-  createDatabase: (values: DbFormData) => Promise<void>;
+  create: (values: DbFormData) => Promise<void>;
 };
 const clientDbToValues = (
   values: DbFormData
@@ -54,10 +54,10 @@ const clientDbToValues = (
     .exhaustive();
 };
 
-export const useDatabase = (): DatabaseHook => {
+export const useDatabaseMethods = (): DatabaseHook => {
   const { capabilities, currentProject, currentCluster } = useContext(Context);
 
-  const createDatabase = useCallback(
+  const create = useCallback(
     async (data: DbFormData): Promise<void> => {
       const { values, templateName } = clientDbToValues(data);
       const name = data.name;
@@ -81,5 +81,5 @@ export const useDatabase = (): DatabaseHook => {
     [currentProject, currentCluster, capabilities]
   );
 
-  return { createDatabase };
+  return { create };
 };

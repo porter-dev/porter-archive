@@ -2734,6 +2734,18 @@ const getDatastores = baseApi<
   }
 );
 
+const listDatastores = baseApi<
+  {},
+  {
+    project_id: number;
+  }
+>(
+  "GET",
+  ({ project_id }) => {
+    return `/api/projects/${project_id}/datastores`;
+  }
+);
+
 const deleteDatastore = baseApi<
   {
     name: string;
@@ -3605,6 +3617,7 @@ export default {
   getAwsCloudProviders,
   getDatabases,
   getDatastores,
+  listDatastores,
   deleteDatastore,
   getPreviousLogsForContainer,
   upgradePorterAgent,

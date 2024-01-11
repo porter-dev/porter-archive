@@ -10,7 +10,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import { type DbFormData } from "lib/databases/types";
-import { useDatabase } from "lib/hooks/useDatabase";
+import { useDatabaseMethods } from "lib/hooks/useDatabaseMethods";
 import { useIntercom } from "lib/hooks/useIntercom";
 
 type Props = RouteComponentProps & {
@@ -26,7 +26,7 @@ const DatabaseForm: React.FC<Props> = ({
   history,
 }) => {
   const [isCreating, setIsCreating] = useState<boolean>(false);
-  const { createDatabase } = useDatabase();
+  const { create: createDatabase } = useDatabaseMethods();
   const { showIntercomWithMessage } = useIntercom();
 
   const {

@@ -1,12 +1,15 @@
 package datastore
 
 import (
+	"context"
 	"net/http"
 
 	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
+	"github.com/porter-dev/api-contracts/generated/go/porter/v1/porterv1connect"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/handlers/cloud_provider"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -35,11 +38,11 @@ type ListDatastoresRequest struct {
 // ListDatastoresResponse describes the list datastores response body
 type ListDatastoresResponse struct {
 	// Datastores is a list of datastore entries for the http response
-	Datastores []DatastoresResponseEntry `json:"datastores"`
+	Datastores []Datastore `json:"datastores"`
 }
 
-// DatastoresResponseEntry describes an outbound datastores response entry
-type DatastoresResponseEntry struct {
+// Datastore describes an outbound datastores response entry
+type Datastore struct {
 	// Name is the name of the datastore
 	Name string `json:"name"`
 
@@ -56,7 +59,7 @@ type DatastoresResponseEntry struct {
 	Status string `json:"status,omitempty"`
 }
 
-// ListDatastoresHandler is a struct for handling datastore status requests
+// ListDatastoresHandler is a struct for handling list datastores requests
 type ListDatastoresHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
@@ -86,17 +89,17 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	cloudProviderType, err := requestutils.GetURLParamString(r, types.URLParamCloudProviderType)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error parsing cloud provider type")
+	cloudProviderType, reqErr := requestutils.GetURLParamString(r, types.URLParamCloudProviderType)
+	if reqErr != nil {
+		err := telemetry.Error(ctx, span, reqErr, "error parsing cloud provider type")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cloud-provider-type", Value: cloudProviderType})
 
-	cloudProviderID, err := requestutils.GetURLParamString(r, types.URLParamCloudProviderID)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error parsing cloud provider id")
+	cloudProviderID, reqErr := requestutils.GetURLParamString(r, types.URLParamCloudProviderID)
+	if reqErr != nil {
+		err := telemetry.Error(ctx, span, reqErr, "error parsing cloud provider id")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
@@ -113,17 +116,10 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	case "":
 		datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_UNSPECIFIED
 	default:
-		err := telemetry.Error(ctx, span, err, "invalid datastore type specified")
+		err := telemetry.Error(ctx, span, nil, "invalid datastore type specified")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "datastore-name", Value: request.Name},
-		telemetry.AttributeKV{Key: "datastore-type", Value: request.Type},
-		telemetry.AttributeKV{Key: "include-env-group", Value: request.IncludeEnvGroup},
-		telemetry.AttributeKV{Key: "include-metadata", Value: request.IncludeMetadata},
-	)
 
 	var cloudProvider porterv1.EnumCloudProvider
 	switch cloudProviderType {
@@ -135,35 +131,103 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	message := porterv1.ListDatastoresRequest{
-		ProjectId:              int64(project.ID),
-		CloudProvider:          cloudProvider,
-		CloudProviderAccountId: cloudProviderID,
-		Name:                   request.Name,
-		IncludeEnvGroup:        request.IncludeEnvGroup,
-		IncludeMetadata:        request.IncludeMetadata,
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "datastore-name", Value: request.Name},
+		telemetry.AttributeKV{Key: "datastore-type", Value: request.Type},
+		telemetry.AttributeKV{Key: "include-env-group", Value: request.IncludeEnvGroup},
+		telemetry.AttributeKV{Key: "include-metadata", Value: request.IncludeMetadata},
+		telemetry.AttributeKV{Key: "cloud-provider-type", Value: int(cloudProvider)},
+		telemetry.AttributeKV{Key: "cloud-provider-id", Value: cloudProviderID},
+	)
+
+	response := ListDatastoresResponse{
+		Datastores: []Datastore{},
 	}
-	if datastoreType != porterv1.EnumDatastore_ENUM_DATASTORE_UNSPECIFIED {
-		message.Type = &datastoreType
-	}
-	req := connect.NewRequest(&message)
-	resp, ccpErr := h.Config().ClusterControlPlaneClient.ListDatastores(ctx, req)
-	if ccpErr != nil {
-		err := telemetry.Error(ctx, span, ccpErr, "error listing datastores from ccp")
-		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-	if resp.Msg == nil {
-		err := telemetry.Error(ctx, span, err, "missing response message from ccp")
+
+	datastores, err := Datastores(ctx, DatastoresInput{
+		ProjectID:       project.ID,
+		Name:            request.Name,
+		Type:            datastoreType,
+		IncludeEnvGroup: request.IncludeEnvGroup,
+		IncludeMetadata: request.IncludeMetadata,
+		CloudProvider: cloud_provider.CloudProvider{
+			Type:      cloudProvider,
+			AccountID: cloudProviderID,
+		},
+		CCPClient: h.Config().ClusterControlPlaneClient,
+	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error listing datastores")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	response := ListDatastoresResponse{
-		Datastores: []DatastoresResponseEntry{},
+	response.Datastores = datastores
+
+	h.WriteResult(w, r, response)
+}
+
+// DatastoresInput is the input to the Datastores function
+type DatastoresInput struct {
+	ProjectID       uint
+	CloudProvider   cloud_provider.CloudProvider
+	Name            string
+	Type            porterv1.EnumDatastore
+	IncludeEnvGroup bool
+	IncludeMetadata bool
+
+	CCPClient porterv1connect.ClusterControlPlaneServiceClient
+}
+
+// Datastores returns a list of datastores associated with the specified project/cloud-provider
+func Datastores(ctx context.Context, inp DatastoresInput) ([]Datastore, error) {
+	ctx, span := telemetry.NewSpan(ctx, "datastores-for-cloud-provider")
+	defer span.End()
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "datastore-name", Value: inp.Name},
+		telemetry.AttributeKV{Key: "datastore-type", Value: int(inp.Type)},
+		telemetry.AttributeKV{Key: "include-env-group", Value: inp.IncludeEnvGroup},
+		telemetry.AttributeKV{Key: "include-metadata", Value: inp.IncludeMetadata},
+		telemetry.AttributeKV{Key: "cloud-provider-type", Value: int(inp.CloudProvider.Type)},
+		telemetry.AttributeKV{Key: "cloud-provider-id", Value: inp.CloudProvider.AccountID},
+		telemetry.AttributeKV{Key: "project-id", Value: inp.ProjectID},
+	)
+
+	datastores := []Datastore{}
+
+	if inp.ProjectID == 0 {
+		return datastores, telemetry.Error(ctx, span, nil, "project id must be specified")
 	}
+	if inp.CloudProvider.Type == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_UNSPECIFIED {
+		return datastores, telemetry.Error(ctx, span, nil, "cloud provider type must be specified")
+	}
+	if inp.CloudProvider.AccountID == "" {
+		return datastores, telemetry.Error(ctx, span, nil, "cloud provider account id must be specified")
+	}
+
+	message := porterv1.ListDatastoresRequest{
+		ProjectId:              int64(inp.ProjectID),
+		CloudProvider:          inp.CloudProvider.Type,
+		CloudProviderAccountId: inp.CloudProvider.AccountID,
+		Name:                   inp.Name,
+		IncludeEnvGroup:        inp.IncludeEnvGroup,
+		IncludeMetadata:        inp.IncludeMetadata,
+	}
+	if inp.Type != porterv1.EnumDatastore_ENUM_DATASTORE_UNSPECIFIED {
+		message.Type = &inp.Type
+	}
+	req := connect.NewRequest(&message)
+	resp, ccpErr := inp.CCPClient.ListDatastores(ctx, req)
+	if ccpErr != nil {
+		return datastores, telemetry.Error(ctx, span, ccpErr, "error listing datastores from ccp")
+	}
+	if resp.Msg == nil {
+		return datastores, telemetry.Error(ctx, span, nil, "missing response message from ccp")
+	}
+
 	for _, datastore := range resp.Msg.Datastores {
-		response.Datastores = append(response.Datastores, DatastoresResponseEntry{
+		datastores = append(datastores, Datastore{
 			Name:     datastore.Name,
 			Type:     datastore.Type.Enum().String(),
 			Metadata: datastore.Metadata,
@@ -171,5 +235,5 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		})
 	}
 
-	h.WriteResult(w, r, response)
+	return datastores, nil
 }

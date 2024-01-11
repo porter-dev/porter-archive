@@ -70,7 +70,7 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
       newStep = 1;
     }
     if (watchTier !== "unspecified") {
-      newStep = 2;
+      newStep = 3;
     }
     setCurrentStep(Math.max(newStep, currentStep));
   }, [watchName, watchTier]);

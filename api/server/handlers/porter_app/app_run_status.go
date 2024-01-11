@@ -155,14 +155,16 @@ func (c *AppRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "pod-count", Value: len(podsList.Items)})
+
 	if len(podsList.Items) == 0 {
-		err := telemetry.Error(ctx, span, err, fmt.Sprintf("no matching jobs found for specified job id: %s", labelSelector))
+		err := telemetry.Error(ctx, span, err, "no matching jobs found for specified job id")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
 		return
 	}
 
 	if len(podsList.Items) != 1 {
-		err := telemetry.Error(ctx, span, err, fmt.Sprintf("too many pods found for specified job id: %d", len(podsList.Items)))
+		err := telemetry.Error(ctx, span, err, "too many pods found for specified job id")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

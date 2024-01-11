@@ -51,7 +51,7 @@ const (
 type GetAppRevisionStatusResponse struct {
 	AppRevisionStatus porter_app.RevisionProgress `json:"app_revision_status"`
 	// HighLevelStatus is a high level status that can be used to determine whether the revisions is progressing, successful or failed
-	HighLevelStatus HighLevelStatus `json:"high_level_status"`
+	HighLevelStatus HighLevelStatus `json:"status"`
 }
 
 // GetAppRevisionStatusHandler returns the status of an app revision

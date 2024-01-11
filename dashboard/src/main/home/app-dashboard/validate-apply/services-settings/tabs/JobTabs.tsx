@@ -24,6 +24,7 @@ type Props = {
   maxRAM: number;
   maxCPU: number;
   clusterContainsGPUNodes: boolean;
+  maxGPU: number;
   isPredeploy?: boolean;
 };
 
@@ -33,6 +34,7 @@ const JobTabs: React.FC<Props> = ({
   maxRAM,
   clusterContainsGPUNodes,
   maxCPU,
+  maxGPU,
   isPredeploy,
 }) => {
   const { control, register } = useFormContext<PorterAppFormData>();
@@ -42,14 +44,14 @@ const JobTabs: React.FC<Props> = ({
 
   const tabs = isPredeploy
     ? [
-        { label: "Main", value: "main" as const },
-        { label: "Resources", value: "resources" as const },
-      ]
+      { label: "Main", value: "main" as const },
+      { label: "Resources", value: "resources" as const },
+    ]
     : [
-        { label: "Main", value: "main" as const },
-        { label: "Resources", value: "resources" as const },
-        { label: "Advanced", value: "advanced" as const },
-      ];
+      { label: "Main", value: "main" as const },
+      { label: "Resources", value: "resources" as const },
+      { label: "Advanced", value: "advanced" as const },
+    ];
 
   return (
     <>
@@ -67,6 +69,7 @@ const JobTabs: React.FC<Props> = ({
             index={index}
             maxCPU={maxCPU}
             maxRAM={maxRAM}
+            maxGPU={maxGPU}
             clusterContainsGPUNodes={clusterContainsGPUNodes}
             service={service}
             isPredeploy={isPredeploy}

@@ -104,7 +104,7 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 		}
 
 		switch statusResp.Status {
-		case porter_app.JobStatus_Pending:
+		case porter_app.RunAppJobStatus_Pending:
 			print(".")
 			time.Sleep(WaitIntervalInSeconds)
 		case porter_app.RunAppJobStatus_Running:

@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import _ from "lodash";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled, { keyframes } from "styled-components";
@@ -10,16 +11,19 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import { type DbFormData } from "lib/databases/types";
+import { useDatabaseList } from "lib/hooks/useDatabaseList";
 import { useDatabaseMethods } from "lib/hooks/useDatabaseMethods";
 import { useIntercom } from "lib/hooks/useIntercom";
 
 type Props = RouteComponentProps & {
+  dbName: string;
   steps: React.ReactNode[];
   currentStep: number;
   form: UseFormReturn<DbFormData>;
 };
 
 const DatabaseForm: React.FC<Props> = ({
+  dbName,
   steps,
   currentStep,
   form,
@@ -35,6 +39,21 @@ const DatabaseForm: React.FC<Props> = ({
     setError,
     clearErrors,
   } = form;
+
+  const { datastores: existingDatabases } = useDatabaseList();
+  useEffect(() => {
+    const isNameTaken = _.some(existingDatabases, (db) => {
+      return db.name === dbName;
+    });
+
+    if (isNameTaken) {
+      setError("name", {
+        message: "A database with this name already exists",
+      });
+    } else {
+      setError("name", {});
+    }
+  }, [dbName, existingDatabases]);
 
   const submitBtnStatus = useMemo(() => {
     if (isValidating || isCreating) {

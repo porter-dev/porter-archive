@@ -96,6 +96,7 @@ const DatabaseFormAuroraPostgres: React.FC<Props> = ({ history, template }) => {
           />
           <DarkMatter />
           <DatabaseForm
+            dbName={watchName}
             steps={[
               <>
                 <Text size={16}>Specify database name</Text>

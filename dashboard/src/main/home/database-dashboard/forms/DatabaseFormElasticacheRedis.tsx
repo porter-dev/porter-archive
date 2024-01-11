@@ -97,6 +97,7 @@ const DatabaseFormElasticacheRedis: React.FC<Props> = ({
           />
           <DarkMatter />
           <DatabaseForm
+            dbName={watchName}
             steps={[
               <>
                 <Text size={16}>Specify database name</Text>

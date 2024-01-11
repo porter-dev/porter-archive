@@ -19,7 +19,6 @@ import {
   type DbFormData,
   type ResourceOption,
 } from "lib/databases/types";
-import { useDatabaseList } from "lib/hooks/useDatabaseList";
 
 import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
 import Resources from "../tabs/Resources";
@@ -60,27 +59,10 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
     formState: { errors },
     register,
     watch,
-    setError,
   } = dbForm;
 
   const watchName = watch("name", "");
   const watchTier = watch("config.instanceClass", "unspecified");
-
-  const { datastores: existingDatabases } = useDatabaseList();
-  useEffect(() => {
-    const name = watchName;
-    const isNameTaken = _.some(existingDatabases, (db) => {
-      return db.name === name;
-    });
-
-    if (isNameTaken) {
-      setError("name", {
-        message: "A database with this name already exists",
-      });
-    } else {
-      setError("name", {});
-    }
-  }, [watchName, existingDatabases]);
 
   const watchDbName = watch("config.databaseName");
   const watchDbUsername = watch("config.masterUsername");
@@ -114,6 +96,7 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
           />
           <DarkMatter />
           <DatabaseForm
+            dbName={watchName}
             steps={[
               <>
                 <Text size={16}>Specify database name</Text>

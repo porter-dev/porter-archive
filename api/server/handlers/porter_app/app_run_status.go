@@ -178,7 +178,7 @@ func (c *AppRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	case corev1.PodFailed:
 		status = PodStatus_Failed
 	default:
-		err := telemetry.Error(ctx, span, err, "unknown status for job")
+		err := telemetry.Error(ctx, span, nil, "unknown status for job")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

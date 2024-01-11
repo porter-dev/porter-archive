@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -39,14 +40,14 @@ func NewAppRunStatusHandler(
 
 // AppRunStatusRequest is the request object for the /apps/{porter_app_name}/run-status endpoint
 type AppRunStatusRequest struct {
+	// DeploymentTargetID is the id of the deployment target the job was run against
+	DeploymentTargetID string `json:"deployment_target_id"`
+
 	// JobRunID is the UID returned from the /apps/{porter_app_name}/run endpoint
 	JobRunID string `json:"job_id"`
 
 	// ServiceName is the name of the app service that was triggered
 	ServiceName string `json:"service_name"`
-
-	// DeploymentTargetID is the id of the deployment target the job was run against
-	DeploymentTargetID string `json:"deployment_target_id"`
 
 	// Namespace is the namespace in which the job was deployed
 	Namespace string `json:"namespace"`
@@ -133,40 +134,103 @@ func (c *AppRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
 
-	agent, err := c.GetAgent(r, cluster, "")
+	status, err := c.getJobStatus(ctx, getJobStatusInput{
+		AppName:            appName,
+		Cluster:            cluster,
+		DeploymentTargetID: request.DeploymentTargetID,
+		HttpRequest:        r,
+		JobRunID:           request.JobRunID,
+		Namespace:          request.Namespace,
+		ServiceName:        request.ServiceName,
+	})
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "unable to get agent")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		err := telemetry.Error(ctx, span, err, "error getting job status")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
+	}
+
+	response := AppRunStatusResponse{
+		Status: status,
+	}
+
+	c.WriteResult(w, r, response)
+}
+
+type getJobStatusInput struct {
+	// AppName is the name of the app associated with the job
+	AppName string
+
+	// Cluster is a cluster against which to retrieve a helm agent for
+	Cluster *models.Cluster
+
+	// DeploymentTargetID is the id of the deployment target the job was run against
+	DeploymentTargetID string
+
+	// HttpRequest is an HTTP Request object to retrieve a helm agent from
+	HttpRequest *http.Request
+
+	// JobRunID is the UID returned from the /apps/{porter_app_name}/run endpoint
+	JobRunID string
+
+	// Namespace is the namespace in which the job was deployed
+	Namespace string
+
+	// ServiceName is the name of the app service that was triggered
+	ServiceName string
+}
+
+func (c *AppRunStatusHandler) getJobStatus(ctx context.Context, input getJobStatusInput) (PodStatus, error) {
+	ctx, span := telemetry.NewSpan(ctx, "serve-app-run-status")
+	defer span.End()
+
+	if input.AppName != "" {
+		return PodStatus_Unknown, telemetry.Error(ctx, span, nil, "missing app name in input")
+	}
+	if input.Cluster != nil {
+		return PodStatus_Unknown, telemetry.Error(ctx, span, nil, "missing cluster in input")
+	}
+	if input.DeploymentTargetID != "" {
+		return PodStatus_Unknown, telemetry.Error(ctx, span, nil, "missing deployment target id in input")
+	}
+	if input.HttpRequest != nil {
+		return PodStatus_Unknown, telemetry.Error(ctx, span, nil, "missing http request in input")
+	}
+	if input.JobRunID != "" {
+		return PodStatus_Unknown, telemetry.Error(ctx, span, nil, "missing job run id in input")
+	}
+	if input.Namespace != "" {
+		return PodStatus_Unknown, telemetry.Error(ctx, span, nil, "missing namespace in input")
+	}
+	if input.ServiceName != "" {
+		return PodStatus_Unknown, telemetry.Error(ctx, span, nil, "missing service name in input")
+	}
+
+	agent, err := c.GetAgent(input.HttpRequest, input.Cluster, "")
+	if err != nil {
+		return PodStatus_Unknown, telemetry.Error(ctx, span, err, "unable to get agent")
 	}
 
 	selectors := []string{
-		fmt.Sprintf("batch.kubernetes.io/controller-uid=%s", request.JobRunID),
-		fmt.Sprintf("porter.run/app-name=%s", appName),
-		fmt.Sprintf("porter.run/deployment-target-id=%s", request.DeploymentTargetID),
-		fmt.Sprintf("porter.run/service-name=%s", request.ServiceName),
+		fmt.Sprintf("batch.kubernetes.io/controller-uid=%s", input.JobRunID),
+		fmt.Sprintf("porter.run/app-name=%s", input.AppName),
+		fmt.Sprintf("porter.run/deployment-target-id=%s", input.DeploymentTargetID),
+		fmt.Sprintf("porter.run/service-name=%s", input.ServiceName),
 	}
 	labelSelector := strings.Join(selectors, ",")
 
-	podsList, err := agent.GetPodsByLabel(labelSelector, request.Namespace)
+	podsList, err := agent.GetPodsByLabel(labelSelector, input.Namespace)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting jobs from cluster")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
+		return PodStatus_Unknown, telemetry.Error(ctx, span, err, "error getting jobs from cluster")
 	}
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "pod-count", Value: len(podsList.Items)})
 
 	if len(podsList.Items) == 0 {
-		err := telemetry.Error(ctx, span, err, "no matching jobs found for specified job id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
-		return
+		return PodStatus_Unknown, telemetry.Error(ctx, span, err, "no matching jobs found for specified job id")
 	}
 
 	if len(podsList.Items) != 1 {
-		err := telemetry.Error(ctx, span, err, "too many pods found for specified job id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
+		return PodStatus_Unknown, telemetry.Error(ctx, span, err, "too many pods found for specified job id")
 	}
 
 	var status PodStatus
@@ -180,14 +244,8 @@ func (c *AppRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	case corev1.PodFailed:
 		status = PodStatus_Failed
 	default:
-		err := telemetry.Error(ctx, span, nil, "unknown status for job")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
+		return PodStatus_Unknown, telemetry.Error(ctx, span, nil, "unknown status for job")
 	}
 
-	response := AppRunStatusResponse{
-		Status: status,
-	}
-
-	c.WriteResult(w, r, response)
+	return status, nil
 }

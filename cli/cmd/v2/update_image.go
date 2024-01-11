@@ -64,35 +64,36 @@ func UpdateImage(ctx context.Context, input UpdateImageInput) error {
 
 	color.New(color.FgBlue).Printf("Waiting %d minutes for update to complete\n", timeoutMinutes) // nolint:errcheck,gosec
 
-	var terminalStatus porter_app.HighLevelStatus
+	var status porter_app.HighLevelStatus
 
 	for time.Now().Before(deadline) {
-		status, err := input.Client.GetRevisionStatus(ctx, input.ProjectID, input.ClusterID, input.AppName, resp.RevisionID)
+		statusResp, err := input.Client.GetRevisionStatus(ctx, input.ProjectID, input.ClusterID, input.AppName, resp.RevisionID)
 		if err != nil {
 			return fmt.Errorf("error getting app revision status: %w", err)
 		}
 
-		if status == nil {
+		if statusResp == nil {
 			return errors.New("unable to determine status of app revision")
 		}
 
-		if status.HighLevelStatus != porter_app.HighLevelStatus_Progressing {
-			terminalStatus = status.HighLevelStatus
+		status = statusResp.HighLevelStatus
+
+		if status != porter_app.HighLevelStatus_Progressing {
 			break
 		}
 
 		time.Sleep(DefaultRetryFrequencySeconds * time.Second)
 	}
 
-	switch terminalStatus {
+	switch status {
+	case porter_app.HighLevelStatus_Progressing:
+		return fmt.Errorf("timeout exceeded")
 	case porter_app.HighLevelStatus_Successful:
 		_, _ = color.New(color.FgGreen).Printf("Update completed successfully\n") // nolint:errcheck,gosec
 		return nil
 	case porter_app.HighLevelStatus_Failed:
 		return fmt.Errorf("update failed: check dashboard for details")
 	default:
-		return fmt.Errorf("received unknown status: %s", terminalStatus)
+		return fmt.Errorf("received unknown status: %s", status)
 	}
-
-	return fmt.Errorf("timeout exceeded")
 }

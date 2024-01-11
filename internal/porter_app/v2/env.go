@@ -77,7 +77,8 @@ func (e *Env) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	for key, value := range asMap {
 		*e = append(*e, EnvVariableDefinition{
-			Key: key,
+			Key:    key,
+			Source: EnvVariableSource_Value,
 			Value: EnvValueOptional{
 				Value: value,
 				IsSet: true,

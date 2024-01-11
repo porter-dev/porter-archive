@@ -24,6 +24,9 @@ type UpdateImageInput struct {
 	Client                  api.Client
 }
 
+// DefaultWaitTimeout is the default timeout for waiting for an update-image to complete
+const DefaultWaitTimeout = 10
+
 // UpdateImage updates the image of an application
 func UpdateImage(ctx context.Context, input UpdateImageInput) error {
 	if input.DeploymentTargetName == "" {
@@ -51,7 +54,7 @@ func UpdateImage(ctx context.Context, input UpdateImageInput) error {
 		return nil
 	}
 
-	timeoutMinutes := 10
+	timeoutMinutes := DefaultWaitTimeout
 	timeout := time.Duration(timeoutMinutes) * time.Minute
 	deadline := time.Now().Add(timeout)
 

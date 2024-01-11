@@ -183,25 +183,25 @@ func (c *RunAppJobStatusHandler) getJobStatus(ctx context.Context, input getJobS
 	ctx, span := telemetry.NewSpan(ctx, "get-job-status")
 	defer span.End()
 
-	if input.AppName != "" {
+	if input.AppName == "" {
 		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing app name in input")
 	}
-	if input.Cluster != nil {
+	if input.Cluster == nil {
 		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing cluster in input")
 	}
-	if input.DeploymentTargetID != "" {
+	if input.DeploymentTargetID == "" {
 		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing deployment target id in input")
 	}
-	if input.HttpRequest != nil {
+	if input.HttpRequest == nil {
 		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing http request in input")
 	}
-	if input.JobRunID != "" {
+	if input.JobRunID == "" {
 		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing job run id in input")
 	}
-	if input.Namespace != "" {
+	if input.Namespace == "" {
 		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing namespace in input")
 	}
-	if input.ServiceName != "" {
+	if input.ServiceName == "" {
 		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing service name in input")
 	}
 

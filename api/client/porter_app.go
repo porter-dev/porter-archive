@@ -822,29 +822,36 @@ func (c *Client) RunAppJob(
 	return resp, err
 }
 
+// RunAppJobStatusInput contains all the information necessary to check the status of a job
+type RunAppJobStatusInput struct {
+	ProjectID                 uint
+	ClusterID                 uint
+	AppName                   string
+	JobName                   string
+	DeploymentTargetID        string
+	JobRunID                  string
+	DeploymentTargetNamespace string
+}
+
 // RunAppJobStatus gets the status for a job app run
 func (c *Client) RunAppJobStatus(
 	ctx context.Context,
-	projectID, clusterID uint,
-	appName string, jobName string,
-	deploymentTargetID string,
-	jobRunID string,
-	deploymentTargetNamespace string,
+	input RunAppJobStatusInput,
 ) (*porter_app.AppRunStatusResponse, error) {
 	resp := &porter_app.AppRunStatusResponse{}
 
 	req := &porter_app.AppRunStatusRequest{
-		JobRunID:           jobRunID,
-		ServiceName:        jobName,
-		DeploymentTargetID: deploymentTargetID,
-		Namespace:          deploymentTargetNamespace,
+		JobRunID:           input.JobRunID,
+		ServiceName:        input.JobName,
+		DeploymentTargetID: input.DeploymentTargetID,
+		Namespace:          input.DeploymentTargetNamespace,
 	}
 
 	err := c.getRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/%s/run-status",
-			projectID, clusterID,
-			appName,
+			input.ProjectID, input.ClusterID,
+			input.AppName,
 		),
 		req,
 		resp,

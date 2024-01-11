@@ -86,8 +86,19 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 
 	color.New(color.FgBlue).Printf("Waiting %d seconds for job to complete\n", timeoutSeconds) // nolint:errcheck,gosec
 	time.Sleep(2 * time.Second)
+
+	input := api.RunAppJobStatusInput{
+		ProjectID:                 inp.CLIConfig.Project,
+		ClusterID:                 inp.CLIConfig.Cluster,
+		AppName:                   inp.AppName,
+		JobName:                   inp.JobName,
+		DeploymentTargetID:        targetResp.DeploymentTargetID,
+		JobRunID:                  resp.JobRunID,
+		DeploymentTargetNamespace: targetResp.Namespace,
+	}
+
 	for time.Now().Before(deadline) {
-		statusResp, err := inp.Client.RunAppJobStatus(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.AppName, inp.JobName, targetResp.DeploymentTargetID, resp.JobRunID, targetResp.Namespace)
+		statusResp, err := inp.Client.RunAppJobStatus(ctx, input)
 		if err != nil {
 			return fmt.Errorf("unable to get job status: %w", err)
 		}

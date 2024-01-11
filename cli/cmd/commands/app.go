@@ -35,16 +35,17 @@ import (
 )
 
 var (
-	appNamespace     string
-	appVerbose       bool
-	appExistingPod   bool
-	appInteractive   bool
-	appContainerName string
-	appTag           string
-	deploymentTarget string
-	appCpuMilli      int
-	appMemoryMi      int
-	jobName          string
+	appNamespace            string
+	appVerbose              bool
+	appExistingPod          bool
+	appInteractive          bool
+	appContainerName        string
+	appTag                  string
+	deploymentTarget        string
+	appCpuMilli             int
+	appMemoryMi             int
+	jobName                 string
+	waitForSuccessfulUpdate bool
 )
 
 const (
@@ -109,6 +110,14 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 			}
 		},
 	}
+
+	appUpdateTagCmd.PersistentFlags().BoolVarP(
+		&waitForSuccessfulUpdate,
+		"wait",
+		"w",
+		false,
+		"set this to wait and be notified when an update is successful, otherwise time out",
+	)
 
 	appUpdateTagCmd.PersistentFlags().StringVarP(
 		&appTag,
@@ -1249,11 +1258,18 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 	}
 
 	if project.ValidateApplyV2 {
-		tag, err := v2.UpdateImage(ctx, appTag, client, cliConf.Project, cliConf.Cluster, args[0], deploymentTarget)
+		err := v2.UpdateImage(ctx, v2.UpdateImageInput{
+			ProjectID:               cliConf.Project,
+			ClusterID:               cliConf.Cluster,
+			AppName:                 args[0],
+			DeploymentTargetName:    deploymentTarget,
+			Tag:                     appTag,
+			WaitForSuccessfulUpdate: waitForSuccessfulUpdate,
+			Client:                  client,
+		})
 		if err != nil {
 			return fmt.Errorf("error updating tag: %w", err)
 		}
-		_, _ = color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], tag)
 		return nil
 	} else {
 		namespace := fmt.Sprintf("porter-stack-%s", args[0])

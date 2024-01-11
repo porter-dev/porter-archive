@@ -24,8 +24,12 @@ type UpdateImageInput struct {
 	Client                  api.Client
 }
 
-// DefaultWaitTimeout is the default timeout for waiting for an update-image to complete
-const DefaultWaitTimeout = 10
+// DefaultWaitTimeoutMinutes is the default timeout for waiting for an update-image to complete
+const (
+	DefaultWaitTimeoutMinutes = 10
+	// DefaultRetryFrequencySeconds is the default frequency for checking the status of an update-image
+	DefaultRetryFrequencySeconds = 10
+)
 
 // UpdateImage updates the image of an application
 func UpdateImage(ctx context.Context, input UpdateImageInput) error {
@@ -54,12 +58,14 @@ func UpdateImage(ctx context.Context, input UpdateImageInput) error {
 		return nil
 	}
 
-	timeoutMinutes := DefaultWaitTimeout
+	timeoutMinutes := DefaultWaitTimeoutMinutes
 	timeout := time.Duration(timeoutMinutes) * time.Minute
 	deadline := time.Now().Add(timeout)
 
 	color.New(color.FgBlue).Printf("Waiting %d minutes for update to complete\n", timeoutMinutes) // nolint:errcheck,gosec
-	time.Sleep(2 * time.Second)
+
+	var terminalStatus porter_app.HighLevelStatus
+
 	for time.Now().Before(deadline) {
 		status, err := input.Client.GetRevisionStatus(ctx, input.ProjectID, input.ClusterID, input.AppName, resp.RevisionID)
 		if err != nil {
@@ -70,19 +76,22 @@ func UpdateImage(ctx context.Context, input UpdateImageInput) error {
 			return errors.New("unable to determine status of app revision")
 		}
 
-		switch status.HighLevelStatus {
-		case porter_app.HighLevelStatus_Successful:
-			_, _ = color.New(color.FgGreen).Printf("Update completed successfully\n") // nolint:errcheck,gosec
-			return nil
-		case porter_app.HighLevelStatus_Failed:
-			return fmt.Errorf("update failed: check dashboard for details")
-		case porter_app.HighLevelStatus_Progressing:
-			// do nothing
-		default:
-			return fmt.Errorf("received unknown status: %s", status.HighLevelStatus)
+		if status.HighLevelStatus != porter_app.HighLevelStatus_Progressing {
+			terminalStatus = status.HighLevelStatus
+			break
 		}
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(DefaultRetryFrequencySeconds * time.Second)
+	}
+
+	switch terminalStatus {
+	case porter_app.HighLevelStatus_Successful:
+		_, _ = color.New(color.FgGreen).Printf("Update completed successfully\n") // nolint:errcheck,gosec
+		return nil
+	case porter_app.HighLevelStatus_Failed:
+		return fmt.Errorf("update failed: check dashboard for details")
+	default:
+		return fmt.Errorf("received unknown status: %s", terminalStatus)
 	}
 
 	return fmt.Errorf("timeout exceeded")

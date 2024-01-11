@@ -159,7 +159,7 @@ func (def *EnvVariableDefinition) UnmarshalYAML(unmarshal func(interface{}) erro
 
 			value, err := fromAppValue(raw.From.Value)
 			if err != nil {
-				return err
+				return fmt.Errorf("unknown app value provided: %w", err)
 			}
 
 			def.FromApp = EnvVariableFromAppOptional{

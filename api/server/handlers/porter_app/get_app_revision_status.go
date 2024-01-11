@@ -35,9 +35,23 @@ func NewGetAppRevisionStatusHandler(
 	}
 }
 
+// HighLevelStatus is a high level status that can be used to determine whether the revisions is progressing, successful or failed
+type HighLevelStatus string
+
+const (
+	// HighLevelStatus_Progressing indicates that the revision is still in progress
+	HighLevelStatus_Progressing HighLevelStatus = "progressing"
+	// HighLevelStatus_Successful indicates that the revision has completed successfully
+	HighLevelStatus_Successful HighLevelStatus = "successful"
+	// HighLevelStatus_Failed indicates that the revision has failed
+	HighLevelStatus_Failed HighLevelStatus = "failed"
+)
+
 // GetAppRevisionStatusResponse represents the response from the /apps/{porter_app_name}/revisions/{app_revision_id}/status endpoint
 type GetAppRevisionStatusResponse struct {
 	AppRevisionStatus porter_app.RevisionProgress `json:"app_revision_status"`
+	// HighLevelStatus is a high level status that can be used to determine whether the revisions is progressing, successful or failed
+	HighLevelStatus HighLevelStatus `json:"high_level_status"`
 }
 
 // GetAppRevisionStatusHandler returns the status of an app revision
@@ -84,8 +98,22 @@ func (c *GetAppRevisionStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		IsInTerminalStatus:   ccpResp.Msg.IsInTerminalStatus,
 	}
 
+	statusTransform := map[porterv1.EnumAppRevisionStatus]HighLevelStatus{
+		porterv1.EnumAppRevisionStatus_ENUM_APP_REVISION_STATUS_PROGRESSING: HighLevelStatus_Progressing,
+		porterv1.EnumAppRevisionStatus_ENUM_APP_REVISION_STATUS_SUCCESSFUL:  HighLevelStatus_Successful,
+		porterv1.EnumAppRevisionStatus_ENUM_APP_REVISION_STATUS_FAILED:      HighLevelStatus_Failed,
+	}
+
+	status, ok := statusTransform[ccpResp.Msg.Status]
+	if !ok {
+		err = telemetry.Error(ctx, span, nil, "unsupported revision status status")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	res := &GetAppRevisionStatusResponse{
 		AppRevisionStatus: revisionStatus,
+		HighLevelStatus:   status,
 	}
 
 	c.WriteResult(w, r, res)

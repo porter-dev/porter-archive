@@ -229,7 +229,7 @@ func runJob(ctx context.Context, authRes *types.GetAuthenticatedUserResponse, cl
 
 	color.New(color.FgGreen).Printf("Running job %s in namespace %s\n", name, namespace)
 
-	waitForSuccessfulDeploy = true
+	waitForSuccessfulUpdate = true
 
 	updateAgent := &deploy.DeployAgent{
 		App:    name,

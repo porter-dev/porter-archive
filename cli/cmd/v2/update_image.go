@@ -24,8 +24,8 @@ type UpdateImageInput struct {
 	Client                  api.Client
 }
 
-// DefaultWaitTimeoutMinutes is the default timeout for waiting for an update-image to complete
 const (
+	// DefaultWaitTimeoutMinutes is the default timeout for waiting for an update-image to complete
 	DefaultWaitTimeoutMinutes = 10
 	// DefaultRetryFrequencySeconds is the default frequency for checking the status of an update-image
 	DefaultRetryFrequencySeconds = 10

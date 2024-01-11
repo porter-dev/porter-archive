@@ -69,7 +69,7 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 		return fmt.Errorf("unable to unmarshal app for revision: %w", err)
 	}
 
-	var timeoutSeconds int64
+	timeoutSeconds := 1800 * time.Second
 	for _, service := range app.ServiceList {
 		if inp.JobName != service.Name {
 			continue
@@ -78,13 +78,12 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 			return fmt.Errorf("error getting job timeout")
 		}
 
-		timeoutSeconds = service.GetJobConfig().TimeoutSeconds
+		timeoutSeconds = time.Duration(service.GetJobConfig().TimeoutSeconds) * time.Second
 	}
 
-	timeout := time.Duration(timeoutSeconds) * time.Second
-	deadline := time.Now().Add(timeout)
+	deadline := time.Now().Add(timeoutSeconds)
 
-	color.New(color.FgBlue).Printf("Waiting %d seconds for job to complete\n", timeoutSeconds) // nolint:errcheck,gosec
+	color.New(color.FgBlue).Printf("Waiting %.f seconds for job to complete\n", timeoutSeconds.Seconds()) // nolint:errcheck,gosec
 	time.Sleep(2 * time.Second)
 
 	input := api.RunAppJobStatusInput{

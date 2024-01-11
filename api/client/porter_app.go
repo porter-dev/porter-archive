@@ -801,10 +801,10 @@ func (c *Client) RunAppJob(
 	projectID, clusterID uint,
 	appName string, jobName string,
 	deploymentTargetID string,
-) (*porter_app.AppRunResponse, error) {
-	resp := &porter_app.AppRunResponse{}
+) (*porter_app.RunAppJobResponse, error) {
+	resp := &porter_app.RunAppJobResponse{}
 
-	req := &porter_app.AppRunRequest{
+	req := &porter_app.RunAppJobRequest{
 		ServiceName:        jobName,
 		DeploymentTargetID: deploymentTargetID,
 	}
@@ -850,10 +850,10 @@ type RunAppJobStatusInput struct {
 func (c *Client) RunAppJobStatus(
 	ctx context.Context,
 	input RunAppJobStatusInput,
-) (*porter_app.AppRunStatusResponse, error) {
-	resp := &porter_app.AppRunStatusResponse{}
+) (*porter_app.RunAppJobStatusResponse, error) {
+	resp := &porter_app.RunAppJobStatusResponse{}
 
-	req := &porter_app.AppRunStatusRequest{
+	req := &porter_app.RunAppJobStatusRequest{
 		DeploymentTargetID: input.DeploymentTargetID,
 		JobRunID:           input.JobRunID,
 		Namespace:          input.DeploymentTargetNamespace,

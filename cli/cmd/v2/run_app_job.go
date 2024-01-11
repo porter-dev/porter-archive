@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 )
 
+// WaitIntervalInSeconds is the amount of time to wait when polling for job status
 const WaitIntervalInSeconds = 30 * time.Second
 
 // RunAppJobInput is the input for the RunAppJob function
@@ -103,19 +104,19 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 		}
 
 		switch statusResp.Status {
-		case porter_app.PodStatus_Pending:
+		case porter_app.RunAppJobStatus_Pending:
 			print(".")
 			time.Sleep(WaitIntervalInSeconds)
-		case porter_app.PodStatus_Running:
+		case porter_app.RunAppJobStatus_Running:
 			print(".")
 			time.Sleep(WaitIntervalInSeconds)
-		case porter_app.PodStatus_Succeeded:
+		case porter_app.RunAppJobStatus_Succeeded:
 			print("\n")
 			color.New(color.FgGreen).Println("Job completed successfully") // nolint:errcheck,gosec
 			return nil
-		case porter_app.PodStatus_Failed:
+		case porter_app.RunAppJobStatus_Failed:
 			return fmt.Errorf("job exited with non-zero exit code: %w", err)
-		case porter_app.PodStatus_Unknown:
+		case porter_app.RunAppJobStatus_Unknown:
 			return fmt.Errorf("unknown job status: %w", err)
 		}
 	}

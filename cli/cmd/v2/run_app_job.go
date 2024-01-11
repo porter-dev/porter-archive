@@ -39,12 +39,12 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 		return fmt.Errorf("error calling default deployment target endpoint: %w", err)
 	}
 
-	currentAppRevisionResp, err := inp.Client.CurrentAppRevision(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.AppName, targetResp.DeploymentTargetID)
+	currentAppRevisionResp, err := inp.Client.CurrentAppRevision(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.AppName, targetResp.DeploymentTargetID) // nolint:staticcheck
 	if err != nil {
 		return fmt.Errorf("error getting current app revision: %w", err)
 	}
 
-	resp, err := inp.Client.RunAppJob(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.AppName, inp.JobName, targetResp.DeploymentTargetID)
+	resp, err := inp.Client.RunAppJob(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.AppName, inp.JobName, targetResp.DeploymentTargetID) // nolint:staticcheck
 	if err != nil {
 		return fmt.Errorf("unable to run job: %w", err)
 	}
@@ -90,7 +90,7 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 	input := api.RunAppJobStatusInput{
 		AppName:                   inp.AppName,
 		ClusterID:                 inp.CLIConfig.Cluster,
-		DeploymentTargetID:        targetResp.DeploymentTargetID,
+		DeploymentTargetID:        targetResp.DeploymentTargetID, // nolint:staticcheck
 		DeploymentTargetNamespace: targetResp.Namespace,
 		ServiceName:               inp.JobName,
 		JobRunID:                  resp.JobRunID,
@@ -104,7 +104,7 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 		}
 
 		switch statusResp.Status {
-		case porter_app.RunAppJobStatus_Pending:
+		case porter_app.JobStatus_Pending:
 			print(".")
 			time.Sleep(WaitIntervalInSeconds)
 		case porter_app.RunAppJobStatus_Running:

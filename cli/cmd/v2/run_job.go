@@ -15,6 +15,8 @@ import (
 	"github.com/porter-dev/porter/cli/cmd/config"
 )
 
+const WaitIntervalInSeconds = 30 * time.Second
+
 // RunAppJobInput is the input for the RunAppJob function
 type RunAppJobInput struct {
 	// CLIConfig is the CLI configuration
@@ -93,10 +95,10 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 		switch statusResp.Status {
 		case porter_app.PodStatus_Pending:
 			print(".")
-			time.Sleep(30 * time.Second)
+			time.Sleep(WaitIntervalInSeconds)
 		case porter_app.PodStatus_Running:
 			print(".")
-			time.Sleep(30 * time.Second)
+			time.Sleep(WaitIntervalInSeconds)
 		case porter_app.PodStatus_Succeeded:
 			print("\n")
 			color.New(color.FgGreen).Println("Job completed successfully") // nolint:errcheck,gosec

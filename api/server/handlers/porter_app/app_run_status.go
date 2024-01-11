@@ -110,7 +110,7 @@ func (c *AppRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "service-name", Value: request.JobRunID})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "job-run-id", Value: request.JobRunID})
 
 	if request.Namespace == "" {
 		err := telemetry.Error(ctx, span, nil, "namespace is required")

@@ -1,15 +1,17 @@
 import React, { useState } from "react";
+import _ from "lodash";
 import styled from "styled-components";
+
+import Loading from "components/Loading";
+import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import SearchBar from "components/SearchBar";
 
 import { integrationList } from "shared/common";
 import addCircle from "assets/add-circle.png";
-import Loading from "components/Loading";
-import { ImageType } from "./types";
-import SearchBar from "components/SearchBar";
-import Link from "components/porter/Link";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import _ from "lodash";
+
+import { type ImageType } from "./types";
 
 type Props = {
   loading: boolean;
@@ -17,58 +19,64 @@ type Props = {
   setSelectedImage: (x: ImageType) => void;
 };
 
-const ImageList: React.FC<Props> = ({
-  setSelectedImage,
-  loading,
-  images,
-}) => {
+const ImageList: React.FC<Props> = ({ setSelectedImage, loading, images }) => {
   const [searchFilter, setSearchFilter] = useState<string>("");
 
-  const renderImageList = () => {
+  const renderImageList = (): JSX.Element => {
     if (loading) {
       return (
         <LoadingWrapper>
-          <Loading message={"Loading all images linked to your project"}/>
+          <Loading message={"Loading all images linked to your project"} />
         </LoadingWrapper>
       );
     } else if (images.length === 0 && !searchFilter) {
-      return <LoadingWrapper>
-        <Text color="helper">No linked images found.</Text>
-        <Spacer y={0.5} />
-        <div>
-          <Link to={"/integrations/registry"}>Configure linked image registries</Link>, or provide the URL of a public image (e.g. "nginx") to continue.
-        </div>
-      </LoadingWrapper>;
+      return (
+        <LoadingWrapper>
+          <Text color="helper">No linked images found.</Text>
+          <Spacer y={0.5} />
+          <div>
+            <Link to={"/integrations/registry"}>
+              Configure linked image registries
+            </Link>
+            , or provide the URL of a public image (e.g. &ldquo;nginx&rdquo;) to
+            continue.
+          </div>
+        </LoadingWrapper>
+      );
     }
 
     const sortedImages = searchFilter
       ? images
-        .filter((img) =>
-          img.uri.toLowerCase().includes(searchFilter.toLowerCase())
-        )
-        .sort((a, b) => {
-          const aIndex = a.uri.toLowerCase().indexOf(searchFilter.toLowerCase());
-          const bIndex = b.uri.toLowerCase().indexOf(searchFilter.toLowerCase());
-          return aIndex - bIndex;
-        })
+          .filter((img) =>
+            img.uri.toLowerCase().includes(searchFilter.toLowerCase())
+          )
+          .sort((a, b) => {
+            const aIndex = a.uri
+              .toLowerCase()
+              .indexOf(searchFilter.toLowerCase());
+            const bIndex = b.uri
+              .toLowerCase()
+              .indexOf(searchFilter.toLowerCase());
+            return aIndex - bIndex;
+          })
       : images.sort((a, b) => {
-        const mostRecentTagA = _.maxBy(a.artifacts, (artifact) => {
-          return new Date(artifact.updated_at ?? "").getTime();
+          const mostRecentTagA = _.maxBy(a.artifacts, (artifact) => {
+            return new Date(artifact.updated_at ?? "").getTime();
+          });
+          const mostRecentTagB = _.maxBy(b.artifacts, (artifact) => {
+            return new Date(artifact.updated_at ?? "").getTime();
+          });
+          if (!mostRecentTagA) {
+            return 1;
+          }
+          if (!mostRecentTagB) {
+            return -1;
+          }
+          return (
+            new Date(mostRecentTagB.updated_at ?? "").getTime() -
+            new Date(mostRecentTagA.updated_at ?? "").getTime()
+          );
         });
-        const mostRecentTagB = _.maxBy(b.artifacts, (artifact) => {
-          return new Date(artifact.updated_at ?? "").getTime();
-        });
-        if (!mostRecentTagA) {
-          return 1;
-        }
-        if (!mostRecentTagB) {
-          return -1;
-        }
-        return (
-          new Date(mostRecentTagB.updated_at ?? "").getTime() -
-          new Date(mostRecentTagA.updated_at ?? "").getTime()
-        );
-      });
 
     const imageCards = sortedImages.map((image: ImageType, i: number) => {
       return (
@@ -78,12 +86,15 @@ const ImageList: React.FC<Props> = ({
             setSelectedImage(image);
           }}
         >
-          <img src={integrationList["dockerhub"].icon} />
+          <img src={integrationList.dockerhub.icon} />
           {image.uri}
         </ImageItem>
       );
     });
-    if (searchFilter !== "" && !images.some((image) => image.uri === searchFilter)) {
+    if (
+      searchFilter !== "" &&
+      !images.some((image) => image.uri === searchFilter)
+    ) {
       imageCards.push(
         <ImageItem
           key={images.length}
@@ -95,11 +106,11 @@ const ImageList: React.FC<Props> = ({
           }}
         >
           <img src={addCircle} />
-          {`Use image URL: \"${searchFilter}\"`}
+          {`Use image URL: "${searchFilter}"`}
         </ImageItem>
       );
     }
-    return imageCards;
+    return <>{imageCards}</>;
   };
 
   return (
@@ -109,9 +120,7 @@ const ImageList: React.FC<Props> = ({
         disabled={loading}
         prompt={"Search images..."}
       />
-      <ExpandedWrapper>
-        {renderImageList()}
-      </ExpandedWrapper>
+      <ExpandedWrapper>{renderImageList()}</ExpandedWrapper>
     </>
   );
 };
@@ -165,5 +174,3 @@ const ExpandedWrapper = styled.div`
   background: #ffffff11;
   overflow-y: auto;
 `;
-
-

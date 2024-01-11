@@ -824,13 +824,26 @@ func (c *Client) RunAppJob(
 
 // RunAppJobStatusInput contains all the information necessary to check the status of a job
 type RunAppJobStatusInput struct {
-	ProjectID                 uint
-	ClusterID                 uint
-	AppName                   string
-	JobName                   string
-	DeploymentTargetID        string
-	JobRunID                  string
+	// AppName is the name of the app associated with the job
+	AppName string
+
+	// Cluster is the id of the cluster against which to retrieve a helm agent for
+	ClusterID uint
+
+	// DeploymentTargetID is the id of the deployment target the job was run against
+	DeploymentTargetID string
+
+	// DeploymentTargetNamespace is the namespace in which the job was deployed
 	DeploymentTargetNamespace string
+
+	// ServiceName is the name of the app service that was triggered
+	ServiceName string
+
+	// JobRunID is the UID returned from the /apps/{porter_app_name}/run endpoint
+	JobRunID string
+
+	// ProjectID is the project in which the cluster exists
+	ProjectID uint
 }
 
 // RunAppJobStatus gets the status for a job app run
@@ -841,10 +854,10 @@ func (c *Client) RunAppJobStatus(
 	resp := &porter_app.AppRunStatusResponse{}
 
 	req := &porter_app.AppRunStatusRequest{
-		JobRunID:           input.JobRunID,
-		ServiceName:        input.JobName,
 		DeploymentTargetID: input.DeploymentTargetID,
+		JobRunID:           input.JobRunID,
 		Namespace:          input.DeploymentTargetNamespace,
+		ServiceName:        input.ServiceName,
 	}
 
 	err := c.getRequest(

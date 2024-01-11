@@ -87,13 +87,13 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 	time.Sleep(2 * time.Second)
 
 	input := api.RunAppJobStatusInput{
-		ProjectID:                 inp.CLIConfig.Project,
-		ClusterID:                 inp.CLIConfig.Cluster,
 		AppName:                   inp.AppName,
-		JobName:                   inp.JobName,
+		ClusterID:                 inp.CLIConfig.Cluster,
 		DeploymentTargetID:        targetResp.DeploymentTargetID,
-		JobRunID:                  resp.JobRunID,
 		DeploymentTargetNamespace: targetResp.Namespace,
+		ServiceName:               inp.JobName,
+		JobRunID:                  resp.JobRunID,
+		ProjectID:                 inp.CLIConfig.Project,
 	}
 
 	for time.Now().Before(deadline) {

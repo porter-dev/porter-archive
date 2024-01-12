@@ -70,7 +70,7 @@ func runKubectl(ctx context.Context, _ *types.GetAuthenticatedUserResponse, clie
 
 	err = execCommand.Run()
 	if err != nil {
-		return fmt.Errorf("error running helm: %w", err)
+		return fmt.Errorf("error running kubectl: %w", err)
 	}
 
 	return nil

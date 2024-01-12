@@ -108,7 +108,7 @@ applying a configuration:
 	applyCmd.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
 	applyCmd.PersistentFlags().BoolVarP(&previewApply, "preview", "p", false, "apply as preview environment based on current git branch")
 	applyCmd.PersistentFlags().BoolVarP(
-		&waitForSuccessfulDeployment,
+		&appWait,
 		"wait",
 		"w",
 		false,
@@ -148,7 +148,7 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 			PorterYamlPath:              porterYAML,
 			AppName:                     appName,
 			PreviewApply:                previewApply,
-			WaitForSuccessfulDeployment: waitForSuccessfulDeployment,
+			WaitForSuccessfulDeployment: appWait,
 		}
 		err := v2.Apply(ctx, inp)
 		if err != nil {

@@ -186,6 +186,16 @@ func (c *PorterYAMLFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http
 	})
 	app.Services = sortedServices
 
+	servicesWithDomainsSorted := app.Services
+	for i := range servicesWithDomainsSorted {
+		sortedDomains := servicesWithDomainsSorted[i].Domains
+		sort.Slice(sortedDomains, func(i, j int) bool {
+			return sortedDomains[i].Name < sortedDomains[j].Name
+		})
+		servicesWithDomainsSorted[i].Domains = sortedDomains
+	}
+	app.Services = servicesWithDomainsSorted
+
 	// sort env variables by key
 	sortedEnv := app.Env
 	sort.Slice(sortedEnv, func(i, j int) bool {

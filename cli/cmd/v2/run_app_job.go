@@ -11,12 +11,12 @@ import (
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	api "github.com/porter-dev/porter/api/client"
-	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/cli/cmd/config"
+	porter_app_internal "github.com/porter-dev/porter/internal/porter_app"
 )
 
 // WaitIntervalInSeconds is the amount of time to wait when polling for job status
-const WaitIntervalInSeconds = 30 * time.Second
+const WaitIntervalInSeconds = 5 * time.Second
 
 // RunAppJobInput is the input for the RunAppJob function
 type RunAppJobInput struct {
@@ -104,19 +104,19 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 		}
 
 		switch statusResp.Status {
-		case porter_app.AppJobRunStatus_Pending:
+		case porter_app_internal.InstanceStatusDescriptor_Pending:
 			print(".")
 			time.Sleep(WaitIntervalInSeconds)
-		case porter_app.AppJobRunStatus_Running:
+		case porter_app_internal.InstanceStatusDescriptor_Running:
 			print(".")
 			time.Sleep(WaitIntervalInSeconds)
-		case porter_app.AppJobRunStatus_Succeeded:
+		case porter_app_internal.InstanceStatusDescriptor_Succeeded:
 			print("\n")
 			color.New(color.FgGreen).Println("Job completed successfully") // nolint:errcheck,gosec
 			return nil
-		case porter_app.AppJobRunStatus_Failed:
+		case porter_app_internal.InstanceStatusDescriptor_Failed:
 			return fmt.Errorf("job exited with non-zero exit code: %w", err)
-		case porter_app.AppJobRunStatus_Unknown:
+		case porter_app_internal.InstanceStatusDescriptor_Unknown:
 			return fmt.Errorf("unknown job status: %w", err)
 		}
 	}

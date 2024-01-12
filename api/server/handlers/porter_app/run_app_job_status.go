@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
+	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -18,7 +19,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	corev1 "k8s.io/api/core/v1"
 )
 
 // AppJobRunStatusHandler handles requests to the /apps/{porter_app_name}/run-status endpoint
@@ -56,33 +56,8 @@ type AppJobRunStatusRequest struct {
 
 // AppJobRunStatusResponse is the response object for the /apps/{porter_app_name}/run-status endpoint
 type AppJobRunStatusResponse struct {
-	Status AppJobRunStatus `json:"job_run_id"`
+	Status porter_app.InstanceStatusDescriptor `json:"status"`
 }
-
-// AppJobRunStatus is a status of a pod
-// +enum
-type AppJobRunStatus string
-
-// These are the valid statuses of pods, ported from the Kubernetes api.
-const (
-	// AppJobRunStatus_Pending means the pod has been accepted by the system, but one or more of the containers
-	// has not been started. This includes time before being bound to a node, as well as time spent
-	// pulling images onto the host.
-	AppJobRunStatus_Pending AppJobRunStatus = "Pending"
-	// AppJobRunStatus_Running means the pod has been bound to a node and all of the containers have been started.
-	// At least one container is still running or is in the process of being restarted.
-	AppJobRunStatus_Running AppJobRunStatus = "Running"
-	// AppJobRunStatus_Succeeded means that all containers in the pod have voluntarily terminated
-	// with a container exit code of 0, and the system is not going to restart any of these containers.
-	AppJobRunStatus_Succeeded AppJobRunStatus = "Succeeded"
-	// AppJobRunStatus_Failed means that all containers in the pod have terminated, and at least one container has
-	// terminated in a failure (exited with a non-zero exit code or was stopped by the system).
-	AppJobRunStatus_Failed AppJobRunStatus = "Failed"
-	// AppJobRunStatus_Unknown means that for some reason the state of the pod could not be obtained, typically due
-	// to an error in communicating with the host of the pod.
-	// Deprecated: It isn't being set since 2015 (74da3b14b0c0f658b3bb8d2def5094686d0e9095)
-	AppJobRunStatus_Unknown AppJobRunStatus = "Unknown"
-)
 
 // ServeHTTP gets the status of a one-off command in the same environment as the provided service, app and deployment target
 func (c *AppJobRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -189,24 +164,24 @@ type getJobStatusInput struct {
 	ServiceName string
 }
 
-func (c *AppJobRunStatusHandler) getJobStatus(ctx context.Context, input getJobStatusInput) (AppJobRunStatus, error) {
+func (c *AppJobRunStatusHandler) getJobStatus(ctx context.Context, input getJobStatusInput) (porter_app.InstanceStatusDescriptor, error) {
 	ctx, span := telemetry.NewSpan(ctx, "get-job-status")
 	defer span.End()
 
 	if input.AppName == "" {
-		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, nil, "missing app name in input")
+		return porter_app.InstanceStatusDescriptor_Unknown, telemetry.Error(ctx, span, nil, "missing app name in input")
 	}
 	if input.DeploymentTargetID == "" {
-		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, nil, "missing deployment target id in input")
+		return porter_app.InstanceStatusDescriptor_Unknown, telemetry.Error(ctx, span, nil, "missing deployment target id in input")
 	}
 	if input.JobRunID == "" {
-		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, nil, "missing job run id in input")
+		return porter_app.InstanceStatusDescriptor_Unknown, telemetry.Error(ctx, span, nil, "missing job run id in input")
 	}
 	if input.Namespace == "" {
-		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, nil, "missing namespace in input")
+		return porter_app.InstanceStatusDescriptor_Unknown, telemetry.Error(ctx, span, nil, "missing namespace in input")
 	}
 	if input.ServiceName == "" {
-		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, nil, "missing service name in input")
+		return porter_app.InstanceStatusDescriptor_Unknown, telemetry.Error(ctx, span, nil, "missing service name in input")
 	}
 
 	selectors := []string{
@@ -219,32 +194,31 @@ func (c *AppJobRunStatusHandler) getJobStatus(ctx context.Context, input getJobS
 
 	podsList, err := input.ClusterK8sAgent.GetPodsByLabel(labelSelector, input.Namespace)
 	if err != nil {
-		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, err, "error getting jobs from cluster")
+		return porter_app.InstanceStatusDescriptor_Unknown, telemetry.Error(ctx, span, err, "error getting jobs from cluster")
 	}
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "pod-count", Value: len(podsList.Items)})
 
 	if len(podsList.Items) == 0 {
-		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, err, "no matching jobs found for specified job id")
+		return porter_app.InstanceStatusDescriptor_Unknown, telemetry.Error(ctx, span, err, "no matching jobs found for specified job id")
 	}
 
 	if len(podsList.Items) != 1 {
-		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, err, "too many pods found for specified job id")
+		return porter_app.InstanceStatusDescriptor_Unknown, telemetry.Error(ctx, span, err, "too many pods found for specified job id")
 	}
 
-	var status AppJobRunStatus
-	switch podsList.Items[0].Status.Phase {
-	case corev1.PodPending:
-		status = AppJobRunStatus_Pending
-	case corev1.PodRunning:
-		status = AppJobRunStatus_Running
-	case corev1.PodSucceeded:
-		status = AppJobRunStatus_Succeeded
-	case corev1.PodFailed:
-		status = AppJobRunStatus_Failed
-	default:
-		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, nil, "unknown status for job")
+	status, err := porter_app.InstanceStatusFromPod(ctx, porter_app.InstanceStatusFromPodInput{
+		Pod:         podsList.Items[0],
+		AppName:     input.AppName,
+		ServiceName: input.ServiceName,
+	})
+	if err != nil {
+		return porter_app.InstanceStatusDescriptor_Unknown, telemetry.Error(ctx, span, err, "unable to fetch instance status from job pod")
 	}
 
-	return status, nil
+	if status.Status == porter_app.InstanceStatusDescriptor_Unknown {
+		return porter_app.InstanceStatusDescriptor_Unknown, telemetry.Error(ctx, span, nil, "unknown status for job")
+	}
+
+	return status.Status, nil
 }

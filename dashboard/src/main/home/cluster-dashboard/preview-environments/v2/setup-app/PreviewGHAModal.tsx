@@ -7,6 +7,7 @@ import styled from "styled-components";
 import { z } from "zod";
 
 import Button from "components/porter/Button";
+import Checkbox from "components/porter/Checkbox";
 import Error from "components/porter/Error";
 import ExpandableSection from "components/porter/ExpandableSection";
 import Input from "components/porter/Input";
@@ -55,6 +56,7 @@ export const PreviewGHAModal: React.FC<PreviewGHAModalProps> = ({
     latestSource.type === "github" ? "confirm" : "repo"
   );
   const [showFileSelector, setShowFileSelector] = useState<boolean>(false);
+  const [changePorterYamlPath, setChangePorterYamlPath] = useState(false);
 
   const history = useHistory();
   const queryClient = useQueryClient();
@@ -119,6 +121,15 @@ export const PreviewGHAModal: React.FC<PreviewGHAModalProps> = ({
       await savePreviewConfig();
 
       if (openPRChoice === "skip") {
+        await queryClient.invalidateQueries([
+          "getAppTemplate",
+          projectId,
+          clusterId,
+          appName,
+        ]);
+
+        history.push("/preview-environments");
+
         return;
       }
 
@@ -189,44 +200,59 @@ export const PreviewGHAModal: React.FC<PreviewGHAModalProps> = ({
 
     return (
       <div style={{ height: "400px", overflowY: "auto" }}>
-        <Text color="helper">
-          Path to <Code>porter.yaml</Code> from repository root:
-        </Text>
-        <Spacer y={0.5} />
-        <div
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowFileSelector(true);
+        <Checkbox
+          checked={changePorterYamlPath}
+          toggleChecked={() => {
+            setChangePorterYamlPath((prev) => !prev);
           }}
         >
-          <Input
-            placeholder="ex: ./subdirectory/porter.yaml"
-            value={yamlPath}
-            width="100%"
-            setValue={() => {}}
-            hideCursor={true}
-          />
-        </div>
-        {Boolean(repoId && name && showFileSelector) && (
-          <Controller
-            name="porterYamlPath"
-            control={control}
-            render={({ field: { onChange } }) => (
-              <FileSelector
-                projectId={projectId}
-                repoId={repoId}
-                repoOwner={owner}
-                repoName={name}
-                branch={selectedBranch}
-                onFileSelect={(path: string) => {
-                  onChange(`./${path}`);
-                  setShowFileSelector(false);
-                }}
-                isFileSelectable={(path: string) => path.endsWith(".yaml")}
-                headerText={"Select your porter.yaml:"}
+          <Text size={14} additionalStyles="margin-top: 1px;">
+            Set new porter.yaml filepath
+          </Text>
+        </Checkbox>
+        <Spacer y={0.5} />
+        {changePorterYamlPath && (
+          <>
+            <Text color="helper">
+              Path to <Code>porter.yaml</Code> from repository root:
+            </Text>
+            <Spacer y={0.5} />
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowFileSelector(true);
+              }}
+            >
+              <Input
+                placeholder="ex: ./subdirectory/porter.yaml"
+                value={yamlPath}
+                width="100%"
+                setValue={() => {}}
+                hideCursor={true}
+              />
+            </div>
+            {Boolean(repoId && name && showFileSelector) && (
+              <Controller
+                name="porterYamlPath"
+                control={control}
+                render={({ field: { onChange } }) => (
+                  <FileSelector
+                    projectId={projectId}
+                    repoId={repoId}
+                    repoOwner={owner}
+                    repoName={name}
+                    branch={selectedBranch}
+                    onFileSelect={(path: string) => {
+                      onChange(`./${path}`);
+                      setShowFileSelector(false);
+                    }}
+                    isFileSelectable={(path: string) => path.endsWith(".yaml")}
+                    headerText={"Select your porter.yaml:"}
+                  />
+                )}
               />
             )}
-          />
+          </>
         )}
         <ExpandableSection
           noWrapper

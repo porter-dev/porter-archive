@@ -46,6 +46,7 @@ type UpdateImageRequest struct {
 type UpdateImageResponse struct {
 	Repository string `json:"repository"`
 	Tag        string `json:"tag"`
+	RevisionID string `json:"revision_id"`
 }
 
 func (c *UpdateImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -102,6 +103,7 @@ func (c *UpdateImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res := &UpdateImageResponse{
 		Repository: ccpResp.Msg.RepositoryUrl,
 		Tag:        ccpResp.Msg.Tag,
+		RevisionID: ccpResp.Msg.RevisionId,
 	}
 
 	c.WriteResult(w, r, res)

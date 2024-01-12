@@ -18,6 +18,7 @@ const (
 	DefaultRetryFrequencySeconds = 10
 )
 
+// WaitForAppRevisionStatusInput is the input for the WaitForAppRevisionStatus function
 type WaitForAppRevisionStatusInput struct {
 	ProjectID  uint
 	ClusterID  uint
@@ -26,12 +27,13 @@ type WaitForAppRevisionStatusInput struct {
 	Client     api.Client
 }
 
+// WaitForAppRevisionStatus waits for an app revision to complete
 func WaitForAppRevisionStatus(ctx context.Context, input WaitForAppRevisionStatusInput) error {
 	timeoutMinutes := DefaultWaitTimeoutMinutes
 	timeout := time.Duration(timeoutMinutes) * time.Minute
 	deadline := time.Now().Add(timeout)
 
-	color.New(color.FgBlue).Printf("Waiting %d minutes for update to complete\n", timeoutMinutes) // nolint:errcheck,gosec
+	color.New(color.FgBlue).Printf("Waiting up to %d minutes for all services to deploy\n", timeoutMinutes) // nolint:errcheck,gosec
 
 	var status porter_app.HighLevelStatus
 
@@ -58,7 +60,7 @@ func WaitForAppRevisionStatus(ctx context.Context, input WaitForAppRevisionStatu
 	case porter_app.HighLevelStatus_Progressing:
 		return fmt.Errorf("timeout exceeded")
 	case porter_app.HighLevelStatus_Successful:
-		_, _ = color.New(color.FgGreen).Printf("Update completed successfully\n") // nolint:errcheck,gosec
+		_, _ = color.New(color.FgGreen).Printf("All services deployed successfully\n") // nolint:errcheck,gosec
 		return nil
 	case porter_app.HighLevelStatus_Failed:
 		return fmt.Errorf("update failed: check dashboard for details")

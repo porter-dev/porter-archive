@@ -1276,6 +1276,7 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 				ClusterID:  cliConf.Cluster,
 				AppName:    args[0],
 				RevisionID: revisionId,
+				Client:     client,
 			})
 		}
 		return nil

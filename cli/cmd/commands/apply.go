@@ -159,6 +159,7 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 				ClusterID:  cliConfig.Cluster,
 				AppName:    appName,
 				RevisionID: revisionId,
+				Client:     client,
 			})
 		}
 		return nil

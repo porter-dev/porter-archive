@@ -33,8 +33,8 @@ type UpdateInput struct {
 	AppName string
 	// PreviewApply is true when Update should create a new deployment target matching current git branch and apply to that target
 	PreviewApply bool
-	// WaitForSuccessfulUpdate is true when Update should wait for the revision deployment to complete (all services deployed successfully)
-	WaitForSuccessfulUpdate bool
+	// WaitForSuccessfulDeployment is true when Update should wait for the revision deployment to complete (all services deployed successfully)
+	WaitForSuccessfulDeployment bool
 }
 
 // Update implements the functionality of the `porter apply` command for validate apply v2 projects
@@ -260,7 +260,7 @@ func Update(ctx context.Context, inp UpdateInput) error {
 
 	color.New(color.FgGreen).Printf("Successfully applied new revision %s\n", updateResp.AppRevisionId) // nolint:errcheck,gosec
 
-	if inp.WaitForSuccessfulUpdate {
+	if inp.WaitForSuccessfulDeployment {
 		return waitForAppRevisionStatus(ctx, waitForAppRevisionStatusInput{
 			ProjectID:  cliConf.Project,
 			ClusterID:  cliConf.Cluster,

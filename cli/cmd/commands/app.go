@@ -35,17 +35,17 @@ import (
 )
 
 var (
-	appNamespace            string
-	appVerbose              bool
-	appExistingPod          bool
-	appInteractive          bool
-	appContainerName        string
-	appTag                  string
-	deploymentTarget        string
-	appCpuMilli             int
-	appMemoryMi             int
-	jobName                 string
-	waitForSuccessfulUpdate bool
+	appNamespace                string
+	appVerbose                  bool
+	appExistingPod              bool
+	appInteractive              bool
+	appContainerName            string
+	appTag                      string
+	deploymentTarget            string
+	appCpuMilli                 int
+	appMemoryMi                 int
+	jobName                     string
+	waitForSuccessfulDeployment bool
 )
 
 const (
@@ -112,7 +112,7 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 	}
 
 	appUpdateTagCmd.PersistentFlags().BoolVarP(
-		&waitForSuccessfulUpdate,
+		&waitForSuccessfulDeployment,
 		"wait",
 		"w",
 		false,
@@ -1259,12 +1259,13 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 
 	if project.ValidateApplyV2 {
 		err := v2.UpdateImage(ctx, v2.UpdateImageInput{
-			ProjectID:            cliConf.Project,
-			ClusterID:            cliConf.Cluster,
-			AppName:              args[0],
-			DeploymentTargetName: deploymentTarget,
-			Tag:                  appTag,
-			Client:               client,
+			ProjectID:                   cliConf.Project,
+			ClusterID:                   cliConf.Cluster,
+			AppName:                     args[0],
+			DeploymentTargetName:        deploymentTarget,
+			Tag:                         appTag,
+			Client:                      client,
+			WaitForSuccessfulDeployment: waitForSuccessfulDeployment,
 		})
 		if err != nil {
 			return fmt.Errorf("error updating tag: %w", err)

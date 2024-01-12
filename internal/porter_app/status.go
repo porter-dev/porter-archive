@@ -191,12 +191,14 @@ func revisionStatusFromPods(ctx context.Context, inp revisionStatusFromPodsInput
 	return revisionStatusList, nil
 }
 
+// InstanceStatusFromPodInput contains all the data necessary to get the status of the primary service container from a pod
 type InstanceStatusFromPodInput struct {
 	Pod         v1.Pod
 	AppName     string
 	ServiceName string
 }
 
+// InstanceStatusFromPodInput gets the status of the primary service container from a pod
 func InstanceStatusFromPod(ctx context.Context, inp InstanceStatusFromPodInput) (InstanceStatus, error) {
 	ctx, span := telemetry.NewSpan(ctx, "instance-status-from-pod")
 	defer span.End()

@@ -171,8 +171,14 @@ func (c *PorterYAMLFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http
 	// sort services by name
 	sortedServices := app.Services
 	sort.Slice(sortedServices, func(i, j int) bool {
-		serviceTypeSortPriorityA := serviceTypeSortPriority[sortedServices[i].Type]
-		serviceTypeSortPriorityB := serviceTypeSortPriority[sortedServices[j].Type]
+		serviceTypeSortPriorityA, ok := serviceTypeSortPriority[sortedServices[i].Type]
+		if !ok {
+			return false
+		}
+		serviceTypeSortPriorityB, ok := serviceTypeSortPriority[sortedServices[j].Type]
+		if !ok {
+			return false
+		}
 		if serviceTypeSortPriorityA != serviceTypeSortPriorityB {
 			return serviceTypeSortPriorityA < serviceTypeSortPriorityB
 		}

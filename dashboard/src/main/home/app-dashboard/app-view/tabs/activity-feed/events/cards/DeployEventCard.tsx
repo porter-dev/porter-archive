@@ -30,6 +30,8 @@ import { RevertModal } from "./RevertModal";
 import RollbackEventCard from "./RollbackEventCard";
 import ServiceStatusDetail from "./ServiceStatusDetail";
 
+const MAX_DISPLAYED_SERVICE_STATUSES = 10;
+
 type Props = {
   event: PorterAppDeployEvent;
   appName: string;
@@ -69,7 +71,9 @@ const DeployEventCard: React.FC<Props> = ({
   ]);
 
   const [serviceStatusVisible, setServiceStatusVisible] = useState(
-    showServiceStatusDetail || deployEventIncludesRollback
+    (showServiceStatusDetail || deployEventIncludesRollback) &&
+      Object.keys(event.metadata.service_deployment_metadata ?? {}).length <=
+        MAX_DISPLAYED_SERVICE_STATUSES
   );
 
   const { revisionIdToNumber, numberToRevisionId } = useRevisionList({

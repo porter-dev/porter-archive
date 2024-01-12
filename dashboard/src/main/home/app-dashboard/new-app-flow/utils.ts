@@ -53,17 +53,23 @@ jobs:
         PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}`;
 };
 
-export const getPreviewGithubAction = (
-  projectID: number,
-  clusterId: number,
-  stackName: string,
-  branchName: string,
-  porterYamlPath: string = "porter.yaml"
-) => {
+export const getPreviewGithubAction = ({
+  projectId,
+  clusterId,
+  appName,
+  branch,
+  porterYamlPath = "porter.yaml",
+}: {
+  projectId: number;
+  clusterId: number;
+  appName: string;
+  branch: string;
+  porterYamlPath?: string;
+}) => {
   return `"on":
   pull_request:
     branches:
-    - ${branchName}
+    - ${branch}
     types:
     - opened
     - synchronize
@@ -89,9 +95,9 @@ jobs:
       env:
         PORTER_CLUSTER: ${clusterId}
         PORTER_HOST: https://dashboard.getporter.dev
-        PORTER_PROJECT: ${projectID}
-        PORTER_STACK_NAME: ${stackName}
+        PORTER_PROJECT: ${projectId}
+        PORTER_STACK_NAME: ${appName}
         PORTER_TAG: \${{ steps.vars.outputs.sha_short }}
-        PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectID}_${clusterId} }}
+        PORTER_TOKEN: \${{ secrets.PORTER_STACK_${projectId}_${clusterId} }}
         PORTER_PR_NUMBER: \${{ github.event.number }}`;
 };

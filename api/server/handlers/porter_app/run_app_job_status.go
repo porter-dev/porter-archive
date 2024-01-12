@@ -9,6 +9,7 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 
+	"github.com/porter-dev/porter/internal/kubernetes"
 	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -134,11 +135,23 @@ func (c *RunAppJobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
 
+	agent, err := c.GetAgent(r, cluster, "")
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "unable to get kubernetes agent")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	if agent == nil {
+		err := telemetry.Error(ctx, span, nil, "no kubernetes agent returned")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	status, err := c.getJobStatus(ctx, getJobStatusInput{
 		AppName:            appName,
-		Cluster:            cluster,
 		DeploymentTargetID: request.DeploymentTargetID,
-		HttpRequest:        r,
+		ClusterK8sAgent:    *agent,
 		JobRunID:           request.JobRunID,
 		Namespace:          request.Namespace,
 		ServiceName:        request.ServiceName,
@@ -160,14 +173,11 @@ type getJobStatusInput struct {
 	// AppName is the name of the app associated with the job
 	AppName string
 
-	// Cluster is a cluster against which to retrieve a helm agent for
-	Cluster *models.Cluster
-
 	// DeploymentTargetID is the id of the deployment target the job was run against
 	DeploymentTargetID string
 
-	// HttpRequest is an HTTP Request object to retrieve a helm agent from
-	HttpRequest *http.Request
+	// ClusterK8sAgent is a kubernetes agent
+	ClusterK8sAgent kubernetes.Agent
 
 	// JobRunID is the UID returned from the /apps/{porter_app_name}/run endpoint
 	JobRunID string
@@ -186,14 +196,8 @@ func (c *RunAppJobStatusHandler) getJobStatus(ctx context.Context, input getJobS
 	if input.AppName == "" {
 		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing app name in input")
 	}
-	if input.Cluster == nil {
-		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing cluster in input")
-	}
 	if input.DeploymentTargetID == "" {
 		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing deployment target id in input")
-	}
-	if input.HttpRequest == nil {
-		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing http request in input")
 	}
 	if input.JobRunID == "" {
 		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing job run id in input")
@@ -205,11 +209,6 @@ func (c *RunAppJobStatusHandler) getJobStatus(ctx context.Context, input getJobS
 		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing service name in input")
 	}
 
-	agent, err := c.GetAgent(input.HttpRequest, input.Cluster, "")
-	if err != nil {
-		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, err, "unable to get agent")
-	}
-
 	selectors := []string{
 		fmt.Sprintf("batch.kubernetes.io/controller-uid=%s", input.JobRunID),
 		fmt.Sprintf("porter.run/app-name=%s", input.AppName),
@@ -218,7 +217,7 @@ func (c *RunAppJobStatusHandler) getJobStatus(ctx context.Context, input getJobS
 	}
 	labelSelector := strings.Join(selectors, ",")
 
-	podsList, err := agent.GetPodsByLabel(labelSelector, input.Namespace)
+	podsList, err := input.ClusterK8sAgent.GetPodsByLabel(labelSelector, input.Namespace)
 	if err != nil {
 		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, err, "error getting jobs from cluster")
 	}

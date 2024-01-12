@@ -18,8 +18,8 @@ const (
 	DefaultRetryFrequencySeconds = 10
 )
 
-// WaitForAppRevisionStatusInput is the input for the WaitForAppRevisionStatus function
-type WaitForAppRevisionStatusInput struct {
+// waitForAppRevisionStatusInput is the input for the WaitForAppRevisionStatus function
+type waitForAppRevisionStatusInput struct {
 	ProjectID  uint
 	ClusterID  uint
 	AppName    string
@@ -27,8 +27,8 @@ type WaitForAppRevisionStatusInput struct {
 	Client     api.Client
 }
 
-// WaitForAppRevisionStatus waits for an app revision to complete
-func WaitForAppRevisionStatus(ctx context.Context, input WaitForAppRevisionStatusInput) error {
+// waitForAppRevisionStatus waits for an app revision to complete
+func waitForAppRevisionStatus(ctx context.Context, input waitForAppRevisionStatusInput) error {
 	timeoutMinutes := DefaultWaitTimeoutMinutes
 	timeout := time.Duration(timeoutMinutes) * time.Minute
 	deadline := time.Now().Add(timeout)

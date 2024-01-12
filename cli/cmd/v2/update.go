@@ -33,10 +33,12 @@ type UpdateInput struct {
 	AppName string
 	// PreviewApply is true when Update should create a new deployment target matching current git branch and apply to that target
 	PreviewApply bool
+	// WaitForSuccessfulUpdate is true when Update should wait for the revision deployment to complete (all services deployed successfully)
+	WaitForSuccessfulUpdate bool
 }
 
 // Update implements the functionality of the `porter apply` command for validate apply v2 projects
-func Update(ctx context.Context, inp UpdateInput) (string, error) {
+func Update(ctx context.Context, inp UpdateInput) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -56,7 +58,7 @@ func Update(ctx context.Context, inp UpdateInput) (string, error) {
 
 	deploymentTargetID, err := deploymentTargetFromConfig(ctx, client, cliConf.Project, cliConf.Cluster, inp.PreviewApply)
 	if err != nil {
-		return "", fmt.Errorf("error getting deployment target from config: %w", err)
+		return fmt.Errorf("error getting deployment target from config: %w", err)
 	}
 
 	var prNumber int
@@ -64,7 +66,7 @@ func Update(ctx context.Context, inp UpdateInput) (string, error) {
 	if prNumberEnv != "" {
 		prNumber, err = strconv.Atoi(prNumberEnv)
 		if err != nil {
-			return "", fmt.Errorf("error parsing PORTER_PR_NUMBER to int: %w", err)
+			return fmt.Errorf("error parsing PORTER_PR_NUMBER to int: %w", err)
 		}
 	}
 
@@ -74,7 +76,7 @@ func Update(ctx context.Context, inp UpdateInput) (string, error) {
 		_, err := os.Stat(filepath.Clean(inp.PorterYamlPath))
 		if err != nil {
 			if !os.IsNotExist(err) {
-				return "", fmt.Errorf("error checking if porter yaml exists at path %s: %w", inp.PorterYamlPath, err)
+				return fmt.Errorf("error checking if porter yaml exists at path %s: %w", inp.PorterYamlPath, err)
 			}
 			// If a path was specified but the file does not exist, we will not immediately error out.
 			// This supports users migrated from v1 who use a workflow file that always specifies a porter yaml path
@@ -87,7 +89,7 @@ func Update(ctx context.Context, inp UpdateInput) (string, error) {
 	if porterYamlExists {
 		porterYaml, err := os.ReadFile(filepath.Clean(inp.PorterYamlPath))
 		if err != nil {
-			return "", fmt.Errorf("could not read porter yaml file: %w", err)
+			return fmt.Errorf("could not read porter yaml file: %w", err)
 		}
 
 		b64YAML = base64.StdEncoding.EncodeToString(porterYaml)
@@ -97,7 +99,7 @@ func Update(ctx context.Context, inp UpdateInput) (string, error) {
 	commitSHA := commitSHAFromEnv()
 	gitSource, err := gitSourceFromEnv()
 	if err != nil {
-		return "", fmt.Errorf("error getting git source from env: %w", err)
+		return fmt.Errorf("error getting git source from env: %w", err)
 	}
 
 	updateInput := api.UpdateAppInput{
@@ -112,18 +114,18 @@ func Update(ctx context.Context, inp UpdateInput) (string, error) {
 
 	updateResp, err := client.UpdateApp(ctx, updateInput)
 	if err != nil {
-		return "", fmt.Errorf("error calling update app endpoint: %w", err)
+		return fmt.Errorf("error calling update app endpoint: %w", err)
 	}
 
 	if updateResp.AppRevisionId == "" {
-		return "", errors.New("app revision id is empty")
+		return errors.New("app revision id is empty")
 	}
 
 	appName := updateResp.AppName
 
 	buildSettings, err := client.GetBuildFromRevision(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
 	if err != nil {
-		return "", fmt.Errorf("error getting build from revision: %w", err)
+		return fmt.Errorf("error getting build from revision: %w", err)
 	}
 
 	if buildSettings != nil && buildSettings.Build.Method != "" {
@@ -159,7 +161,7 @@ func Update(ctx context.Context, inp UpdateInput) (string, error) {
 		}()
 
 		if commitSHA == "" {
-			return "", errors.New("build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI")
+			return errors.New("build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI")
 		}
 
 		color.New(color.FgGreen).Printf("Building new image with tag %s...\n", commitSHA) // nolint:errcheck,gosec
@@ -174,20 +176,20 @@ func Update(ctx context.Context, inp UpdateInput) (string, error) {
 		})
 		if err != nil {
 			buildError = fmt.Errorf("error creating build input from build settings: %w", err)
-			return "", buildError
+			return buildError
 		}
 
 		buildOutput := build(ctx, client, buildInput)
 		if buildOutput.Error != nil {
 			buildError = fmt.Errorf("error building app: %w", buildOutput.Error)
 			buildLogs = buildOutput.Logs
-			return "", buildError
+			return buildError
 		}
 
 		_, err = client.UpdateRevisionStatus(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId, models.AppRevisionStatus_BuildSuccessful)
 		if err != nil {
 			buildError = fmt.Errorf("error updating revision status post build: %w", err)
-			return "", buildError
+			return buildError
 		}
 
 		color.New(color.FgGreen).Printf("Successfully built image (tag: %s)\n", commitSHA) // nolint:errcheck,gosec
@@ -204,16 +206,16 @@ func Update(ctx context.Context, inp UpdateInput) (string, error) {
 
 	for {
 		if time.Since(now) > checkDeployTimeout {
-			return "", errors.New("timed out waiting for app to deploy")
+			return errors.New("timed out waiting for app to deploy")
 		}
 
 		status, err := client.GetRevisionStatus(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
 		if err != nil {
-			return "", fmt.Errorf("error getting app revision status: %w", err)
+			return fmt.Errorf("error getting app revision status: %w", err)
 		}
 
 		if status == nil {
-			return "", errors.New("unable to determine status of app revision")
+			return errors.New("unable to determine status of app revision")
 		}
 
 		if status.AppRevisionStatus.IsInTerminalStatus {
@@ -242,22 +244,33 @@ func Update(ctx context.Context, inp UpdateInput) (string, error) {
 
 	status, err := client.GetRevisionStatus(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
 	if err != nil {
-		return "", fmt.Errorf("error getting app revision status: %w", err)
+		return fmt.Errorf("error getting app revision status: %w", err)
 	}
 
 	if status == nil {
-		return "", errors.New("unable to determine status of app revision")
+		return errors.New("unable to determine status of app revision")
 	}
 
 	if status.AppRevisionStatus.InstallFailed {
-		return "", errors.New("app failed to deploy")
+		return errors.New("app failed to deploy")
 	}
 	if status.AppRevisionStatus.PredeployFailed {
-		return "", errors.New("predeploy failed for new revision")
+		return errors.New("predeploy failed for new revision")
 	}
 
 	color.New(color.FgGreen).Printf("Successfully applied new revision %s\n", updateResp.AppRevisionId) // nolint:errcheck,gosec
-	return updateResp.AppRevisionId, nil
+
+	if inp.WaitForSuccessfulUpdate {
+		return waitForAppRevisionStatus(ctx, waitForAppRevisionStatusInput{
+			ProjectID:  cliConf.Project,
+			ClusterID:  cliConf.Cluster,
+			AppName:    appName,
+			RevisionID: updateResp.AppRevisionId,
+			Client:     client,
+		})
+	}
+
+	return nil
 }
 
 // checkDeployTimeout is the timeout for checking if an app has been deployed

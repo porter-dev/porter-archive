@@ -20,7 +20,7 @@ func UpdateFull(ctx context.Context, cliConf config.CLIConfig, client api.Client
 		AppName:        appName,
 	}
 
-	_, err := Apply(ctx, inp)
+	err := Apply(ctx, inp)
 	if err != nil {
 		return err
 	}

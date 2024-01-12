@@ -149,18 +149,9 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 			AppName:        appName,
 			PreviewApply:   previewApply,
 		}
-		revisionId, err := v2.Apply(ctx, inp)
+		err := v2.Apply(ctx, inp)
 		if err != nil {
 			return err
-		}
-		if waitForSuccessfulUpdate {
-			return v2.WaitForAppRevisionStatus(ctx, v2.WaitForAppRevisionStatusInput{
-				ProjectID:  cliConfig.Project,
-				ClusterID:  cliConfig.Cluster,
-				AppName:    appName,
-				RevisionID: revisionId,
-				Client:     client,
-			})
 		}
 		return nil
 	}

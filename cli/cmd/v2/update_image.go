@@ -12,18 +12,19 @@ import (
 
 // UpdateImageInput is the input for the UpdateImage function
 type UpdateImageInput struct {
-	ProjectID            uint
-	ClusterID            uint
-	AppName              string
-	DeploymentTargetName string
-	Tag                  string
-	Client               api.Client
+	ProjectID               uint
+	ClusterID               uint
+	AppName                 string
+	DeploymentTargetName    string
+	Tag                     string
+	Client                  api.Client
+	WaitForSuccessfulUpdate bool
 }
 
 // UpdateImage updates the image of an application
-func UpdateImage(ctx context.Context, input UpdateImageInput) (string, error) {
+func UpdateImage(ctx context.Context, input UpdateImageInput) error {
 	if input.DeploymentTargetName == "" {
-		return "", errors.New("please provide a deployment target")
+		return errors.New("please provide a deployment target")
 	}
 
 	tag := input.Tag
@@ -33,11 +34,21 @@ func UpdateImage(ctx context.Context, input UpdateImageInput) (string, error) {
 
 	resp, err := input.Client.UpdateImage(ctx, input.ProjectID, input.ClusterID, input.AppName, input.DeploymentTargetName, tag)
 	if err != nil {
-		return "", fmt.Errorf("unable to update image: %w", err)
+		return fmt.Errorf("unable to update image: %w", err)
 	}
 
 	triggeredBackgroundColor := color.FgGreen
 
 	_, _ = color.New(triggeredBackgroundColor).Printf("Updated application %s to use tag \"%s\"\n", input.AppName, tag)
-	return resp.RevisionID, nil
+
+	if input.WaitForSuccessfulUpdate {
+		return waitForAppRevisionStatus(ctx, waitForAppRevisionStatusInput{
+			ProjectID:  input.ProjectID,
+			ClusterID:  input.ClusterID,
+			AppName:    input.AppName,
+			RevisionID: resp.RevisionID,
+			Client:     input.Client,
+		})
+	}
+	return nil
 }

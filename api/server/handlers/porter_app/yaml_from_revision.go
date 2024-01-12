@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -166,6 +167,25 @@ func (c *PorterYAMLFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http
 	if request.ShouldFormatForExport {
 		app = formatForExport(app, c.Config().ServerConf.AppRootDomain)
 	}
+
+	// sort services by name
+	sortedServices := app.Services
+	sort.Slice(sortedServices, func(i, j int) bool {
+		serviceTypeSortPriorityA := serviceTypeSortPriority[sortedServices[i].Type]
+		serviceTypeSortPriorityB := serviceTypeSortPriority[sortedServices[j].Type]
+		if serviceTypeSortPriorityA != serviceTypeSortPriorityB {
+			return serviceTypeSortPriorityA < serviceTypeSortPriorityB
+		}
+		return sortedServices[i].Name < sortedServices[j].Name
+	})
+	app.Services = sortedServices
+
+	// sort env variables by key
+	sortedEnv := app.Env
+	sort.Slice(sortedEnv, func(i, j int) bool {
+		return sortedEnv[i].Key < sortedEnv[j].Key
+	})
+	app.Env = sortedEnv
 
 	porterYAMLString, err := yaml.Marshal(app)
 	if err != nil {
@@ -442,4 +462,10 @@ func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 	}
 
 	return app
+}
+
+var serviceTypeSortPriority = map[v2.ServiceType]int{
+	v2.ServiceType_Web:    0,
+	v2.ServiceType_Worker: 1,
+	v2.ServiceType_Job:    2,
 }

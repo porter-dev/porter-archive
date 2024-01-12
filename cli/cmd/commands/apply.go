@@ -107,6 +107,13 @@ applying a configuration:
 
 	applyCmd.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
 	applyCmd.PersistentFlags().BoolVarP(&previewApply, "preview", "p", false, "apply as preview environment based on current git branch")
+	applyCmd.PersistentFlags().BoolVarP(
+		&waitForSuccessfulDeployment,
+		"wait",
+		"w",
+		false,
+		"set this to wait and be notified when an apply is successful, otherwise time out",
+	)
 	applyCmd.MarkFlagRequired("file")
 
 	return applyCmd
@@ -136,13 +143,14 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 		}
 
 		inp := v2.ApplyInput{
-			CLIConfig:      cliConfig,
-			Client:         client,
-			PorterYamlPath: porterYAML,
-			AppName:        appName,
-			PreviewApply:   previewApply,
+			CLIConfig:                   cliConfig,
+			Client:                      client,
+			PorterYamlPath:              porterYAML,
+			AppName:                     appName,
+			PreviewApply:                previewApply,
+			WaitForSuccessfulDeployment: waitForSuccessfulDeployment,
 		}
-		err = v2.Apply(ctx, inp)
+		err := v2.Apply(ctx, inp)
 		if err != nil {
 			return err
 		}

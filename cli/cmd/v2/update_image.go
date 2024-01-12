@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
-
-	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 
 	"github.com/fatih/color"
 
@@ -15,21 +12,14 @@ import (
 
 // UpdateImageInput is the input for the UpdateImage function
 type UpdateImageInput struct {
-	ProjectID               uint
-	ClusterID               uint
-	AppName                 string
-	DeploymentTargetName    string
-	Tag                     string
-	WaitForSuccessfulUpdate bool
-	Client                  api.Client
+	ProjectID                   uint
+	ClusterID                   uint
+	AppName                     string
+	DeploymentTargetName        string
+	Tag                         string
+	Client                      api.Client
+	WaitForSuccessfulDeployment bool
 }
-
-const (
-	// DefaultWaitTimeoutMinutes is the default timeout for waiting for an update-image to complete
-	DefaultWaitTimeoutMinutes = 10
-	// DefaultRetryFrequencySeconds is the default frequency for checking the status of an update-image
-	DefaultRetryFrequencySeconds = 10
-)
 
 // UpdateImage updates the image of an application
 func UpdateImage(ctx context.Context, input UpdateImageInput) error {
@@ -48,52 +38,17 @@ func UpdateImage(ctx context.Context, input UpdateImageInput) error {
 	}
 
 	triggeredBackgroundColor := color.FgGreen
-	if input.WaitForSuccessfulUpdate {
-		triggeredBackgroundColor = color.FgBlue
-	}
 
 	_, _ = color.New(triggeredBackgroundColor).Printf("Updated application %s to use tag \"%s\"\n", input.AppName, tag)
 
-	if !input.WaitForSuccessfulUpdate {
-		return nil
+	if input.WaitForSuccessfulDeployment {
+		return waitForAppRevisionStatus(ctx, waitForAppRevisionStatusInput{
+			ProjectID:  input.ProjectID,
+			ClusterID:  input.ClusterID,
+			AppName:    input.AppName,
+			RevisionID: resp.RevisionID,
+			Client:     input.Client,
+		})
 	}
-
-	timeoutMinutes := DefaultWaitTimeoutMinutes
-	timeout := time.Duration(timeoutMinutes) * time.Minute
-	deadline := time.Now().Add(timeout)
-
-	color.New(color.FgBlue).Printf("Waiting %d minutes for update to complete\n", timeoutMinutes) // nolint:errcheck,gosec
-
-	var status porter_app.HighLevelStatus
-
-	for time.Now().Before(deadline) {
-		statusResp, err := input.Client.GetRevisionStatus(ctx, input.ProjectID, input.ClusterID, input.AppName, resp.RevisionID)
-		if err != nil {
-			return fmt.Errorf("error getting app revision status: %w", err)
-		}
-
-		if statusResp == nil {
-			return errors.New("unable to determine status of app revision")
-		}
-
-		status = statusResp.HighLevelStatus
-
-		if status != porter_app.HighLevelStatus_Progressing {
-			break
-		}
-
-		time.Sleep(DefaultRetryFrequencySeconds * time.Second)
-	}
-
-	switch status {
-	case porter_app.HighLevelStatus_Progressing:
-		return fmt.Errorf("timeout exceeded")
-	case porter_app.HighLevelStatus_Successful:
-		_, _ = color.New(color.FgGreen).Printf("Update completed successfully\n") // nolint:errcheck,gosec
-		return nil
-	case porter_app.HighLevelStatus_Failed:
-		return fmt.Errorf("update failed: check dashboard for details")
-	default:
-		return fmt.Errorf("received unknown status: %s", status)
-	}
+	return nil
 }

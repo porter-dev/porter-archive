@@ -1258,7 +1258,7 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 	}
 
 	if project.ValidateApplyV2 {
-		err := v2.UpdateImage(ctx, v2.UpdateImageInput{
+		revisionId, err := v2.UpdateImage(ctx, v2.UpdateImageInput{
 			ProjectID:               cliConf.Project,
 			ClusterID:               cliConf.Cluster,
 			AppName:                 args[0],
@@ -1269,6 +1269,14 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 		})
 		if err != nil {
 			return fmt.Errorf("error updating tag: %w", err)
+		}
+		if waitForSuccessfulUpdate {
+			return v2.WaitForAppRevisionStatus(ctx, v2.WaitForAppRevisionStatusInput{
+				ProjectID:  cliConf.Project,
+				ClusterID:  cliConf.Cluster,
+				AppName:    args[0],
+				RevisionID: revisionId,
+			})
 		}
 		return nil
 	} else {

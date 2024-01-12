@@ -19,7 +19,6 @@ import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import Environment from "main/home/app-dashboard/app-view/tabs/Environment";
-import GithubActionModal from "main/home/app-dashboard/new-app-flow/GithubActionModal";
 import {
   clientAddonFromProto,
   clientAddonToProto,
@@ -37,6 +36,7 @@ import { Context } from "shared/Context";
 
 import { type ExistingTemplateWithEnv } from "../types";
 import { Addons } from "./Addons";
+import { PreviewGHAModal } from "./PreviewGHAModal";
 import { RequiredApps } from "./RequiredApps";
 import { ServiceSettings } from "./ServiceSettings";
 
@@ -233,7 +233,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
         }, {});
       setFinalizedAppEnv({ variables, secrets });
 
-      if (latestSource.type === "github" && !existingTemplate) {
+      if (!existingTemplate) {
         setShowGHAModal(true);
         return;
       }
@@ -328,7 +328,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
           ...(currentProject?.beta_features_enabled
             ? [
                 { label: "Required Apps", value: "required-apps" },
-                // { label: "Add-ons", value: "addons" },
+                { label: "Add-ons", value: "addons" },
               ]
             : []),
         ]}
@@ -364,19 +364,15 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
           .exhaustive()}
       </form>
       {showGHAModal && (
-        <GithubActionModal
-          type="preview"
-          closeModal={() => {
-            setShowGHAModal(false);
-          }}
-          githubAppInstallationID={latestSource.git_repo_id}
-          githubRepoOwner={latestSource.git_repo_name.split("/")[0]}
-          githubRepoName={latestSource.git_repo_name.split("/")[1]}
-          branch={latestSource.git_branch}
-          stackName={porterApp.name}
+        <PreviewGHAModal
           projectId={projectId}
           clusterId={clusterId}
-          deployPorterApp={async () =>
+          onClose={() => {
+            setShowGHAModal(false);
+          }}
+          latestSource={latestSource}
+          appName={porterApp.name}
+          savePreviewConfig={async () =>
             await createTemplateAndWorkflow({
               app: validatedAppProto,
               variables,
@@ -384,9 +380,7 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
               addons: encodedAddons,
             })
           }
-          deploymentError={createError}
-          porterYamlPath={latestSource.porter_yaml_path}
-          redirectPath={"/preview-environments"}
+          error={createError}
         />
       )}
     </FormProvider>

@@ -1259,13 +1259,12 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 
 	if project.ValidateApplyV2 {
 		revisionId, err := v2.UpdateImage(ctx, v2.UpdateImageInput{
-			ProjectID:               cliConf.Project,
-			ClusterID:               cliConf.Cluster,
-			AppName:                 args[0],
-			DeploymentTargetName:    deploymentTarget,
-			Tag:                     appTag,
-			WaitForSuccessfulUpdate: waitForSuccessfulUpdate,
-			Client:                  client,
+			ProjectID:            cliConf.Project,
+			ClusterID:            cliConf.Cluster,
+			AppName:              args[0],
+			DeploymentTargetName: deploymentTarget,
+			Tag:                  appTag,
+			Client:               client,
 		})
 		if err != nil {
 			return fmt.Errorf("error updating tag: %w", err)

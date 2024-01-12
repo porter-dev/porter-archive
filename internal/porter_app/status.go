@@ -198,7 +198,7 @@ type InstanceStatusFromPodInput struct {
 	ServiceName string
 }
 
-// InstanceStatusFromPodInput gets the status of the primary service container from a pod
+// InstanceStatusFromPod gets the status of the primary service container from a pod
 func InstanceStatusFromPod(ctx context.Context, inp InstanceStatusFromPodInput) (InstanceStatus, error) {
 	ctx, span := telemetry.NewSpan(ctx, "instance-status-from-pod")
 	defer span.End()

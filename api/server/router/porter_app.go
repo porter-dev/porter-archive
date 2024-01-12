@@ -1705,8 +1705,8 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{app_name}/run-status -> porter_app.NewRunAppJobStatusHandler
-	runAppJobStatusEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{app_name}/run-status -> porter_app.NewAppJobRunStatusHandler
+	appJobRunStatusEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
@@ -1722,15 +1722,15 @@ func getPorterAppRoutes(
 		},
 	)
 
-	runAppJobStatusHandler := porter_app.NewRunAppJobStatusHandler(
+	appJobRunStatusHandler := porter_app.NewAppJobRunStatusHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: runAppJobStatusEndpoint,
-		Handler:  runAppJobStatusHandler,
+		Endpoint: appJobRunStatusEndpoint,
+		Handler:  appJobRunStatusHandler,
 		Router:   r,
 	})
 

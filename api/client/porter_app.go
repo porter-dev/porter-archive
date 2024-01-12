@@ -850,10 +850,10 @@ type RunAppJobStatusInput struct {
 func (c *Client) RunAppJobStatus(
 	ctx context.Context,
 	input RunAppJobStatusInput,
-) (*porter_app.RunAppJobStatusResponse, error) {
-	resp := &porter_app.RunAppJobStatusResponse{}
+) (*porter_app.AppJobRunStatusResponse, error) {
+	resp := &porter_app.AppJobRunStatusResponse{}
 
-	req := &porter_app.RunAppJobStatusRequest{
+	req := &porter_app.AppJobRunStatusRequest{
 		DeploymentTargetID: input.DeploymentTargetID,
 		JobRunID:           input.JobRunID,
 		Namespace:          input.DeploymentTargetNamespace,

@@ -21,26 +21,26 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// RunAppJobStatusHandler handles requests to the /apps/{porter_app_name}/run-status endpoint
-type RunAppJobStatusHandler struct {
+// AppJobRunStatusHandler handles requests to the /apps/{porter_app_name}/run-status endpoint
+type AppJobRunStatusHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewRunAppJobStatusHandler returns a new AppRunJobStatusHandler
-func NewRunAppJobStatusHandler(
+// NewAppJobRunStatusHandler returns a new AppRunJobStatusHandler
+func NewAppJobRunStatusHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *RunAppJobStatusHandler {
-	return &RunAppJobStatusHandler{
+) *AppJobRunStatusHandler {
+	return &AppJobRunStatusHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-// RunAppJobStatusRequest is the request object for the /apps/{porter_app_name}/run-status endpoint
-type RunAppJobStatusRequest struct {
+// AppJobRunStatusRequest is the request object for the /apps/{porter_app_name}/run-status endpoint
+type AppJobRunStatusRequest struct {
 	// DeploymentTargetID is the id of the deployment target the job was run against
 	DeploymentTargetID string `json:"deployment_target_id"`
 
@@ -54,38 +54,38 @@ type RunAppJobStatusRequest struct {
 	Namespace string `json:"namespace"`
 }
 
-// RunAppJobStatusResponse is the response object for the /apps/{porter_app_name}/run-status endpoint
-type RunAppJobStatusResponse struct {
-	Status RunAppJobStatus `json:"job_run_id"`
+// AppJobRunStatusResponse is the response object for the /apps/{porter_app_name}/run-status endpoint
+type AppJobRunStatusResponse struct {
+	Status AppJobRunStatus `json:"job_run_id"`
 }
 
-// RunAppJobStatus is a status of a pod
+// AppJobRunStatus is a status of a pod
 // +enum
-type RunAppJobStatus string
+type AppJobRunStatus string
 
 // These are the valid statuses of pods, ported from the Kubernetes api.
 const (
-	// RunAppJobStatus_Pending means the pod has been accepted by the system, but one or more of the containers
+	// AppJobRunStatus_Pending means the pod has been accepted by the system, but one or more of the containers
 	// has not been started. This includes time before being bound to a node, as well as time spent
 	// pulling images onto the host.
-	RunAppJobStatus_Pending RunAppJobStatus = "Pending"
-	// RunAppJobStatus_Running means the pod has been bound to a node and all of the containers have been started.
+	AppJobRunStatus_Pending AppJobRunStatus = "Pending"
+	// AppJobRunStatus_Running means the pod has been bound to a node and all of the containers have been started.
 	// At least one container is still running or is in the process of being restarted.
-	RunAppJobStatus_Running RunAppJobStatus = "Running"
-	// RunAppJobStatus_Succeeded means that all containers in the pod have voluntarily terminated
+	AppJobRunStatus_Running AppJobRunStatus = "Running"
+	// AppJobRunStatus_Succeeded means that all containers in the pod have voluntarily terminated
 	// with a container exit code of 0, and the system is not going to restart any of these containers.
-	RunAppJobStatus_Succeeded RunAppJobStatus = "Succeeded"
-	// RunAppJobStatus_Failed means that all containers in the pod have terminated, and at least one container has
+	AppJobRunStatus_Succeeded AppJobRunStatus = "Succeeded"
+	// AppJobRunStatus_Failed means that all containers in the pod have terminated, and at least one container has
 	// terminated in a failure (exited with a non-zero exit code or was stopped by the system).
-	RunAppJobStatus_Failed RunAppJobStatus = "Failed"
-	// RunAppJobStatus_Unknown means that for some reason the state of the pod could not be obtained, typically due
+	AppJobRunStatus_Failed AppJobRunStatus = "Failed"
+	// AppJobRunStatus_Unknown means that for some reason the state of the pod could not be obtained, typically due
 	// to an error in communicating with the host of the pod.
 	// Deprecated: It isn't being set since 2015 (74da3b14b0c0f658b3bb8d2def5094686d0e9095)
-	RunAppJobStatus_Unknown RunAppJobStatus = "Unknown"
+	AppJobRunStatus_Unknown AppJobRunStatus = "Unknown"
 )
 
 // ServeHTTP gets the status of a one-off command in the same environment as the provided service, app and deployment target
-func (c *RunAppJobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *AppJobRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-app-job-run-status")
 	defer span.End()
 
@@ -100,7 +100,7 @@ func (c *RunAppJobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
 
-	request := &RunAppJobStatusRequest{}
+	request := &AppJobRunStatusRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding request")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -162,7 +162,7 @@ func (c *RunAppJobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	response := RunAppJobStatusResponse{
+	response := AppJobRunStatusResponse{
 		Status: status,
 	}
 
@@ -189,24 +189,24 @@ type getJobStatusInput struct {
 	ServiceName string
 }
 
-func (c *RunAppJobStatusHandler) getJobStatus(ctx context.Context, input getJobStatusInput) (RunAppJobStatus, error) {
+func (c *AppJobRunStatusHandler) getJobStatus(ctx context.Context, input getJobStatusInput) (AppJobRunStatus, error) {
 	ctx, span := telemetry.NewSpan(ctx, "get-job-status")
 	defer span.End()
 
 	if input.AppName == "" {
-		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing app name in input")
+		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, nil, "missing app name in input")
 	}
 	if input.DeploymentTargetID == "" {
-		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing deployment target id in input")
+		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, nil, "missing deployment target id in input")
 	}
 	if input.JobRunID == "" {
-		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing job run id in input")
+		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, nil, "missing job run id in input")
 	}
 	if input.Namespace == "" {
-		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing namespace in input")
+		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, nil, "missing namespace in input")
 	}
 	if input.ServiceName == "" {
-		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "missing service name in input")
+		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, nil, "missing service name in input")
 	}
 
 	selectors := []string{
@@ -219,31 +219,31 @@ func (c *RunAppJobStatusHandler) getJobStatus(ctx context.Context, input getJobS
 
 	podsList, err := input.ClusterK8sAgent.GetPodsByLabel(labelSelector, input.Namespace)
 	if err != nil {
-		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, err, "error getting jobs from cluster")
+		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, err, "error getting jobs from cluster")
 	}
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "pod-count", Value: len(podsList.Items)})
 
 	if len(podsList.Items) == 0 {
-		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, err, "no matching jobs found for specified job id")
+		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, err, "no matching jobs found for specified job id")
 	}
 
 	if len(podsList.Items) != 1 {
-		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, err, "too many pods found for specified job id")
+		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, err, "too many pods found for specified job id")
 	}
 
-	var status RunAppJobStatus
+	var status AppJobRunStatus
 	switch podsList.Items[0].Status.Phase {
 	case corev1.PodPending:
-		status = RunAppJobStatus_Pending
+		status = AppJobRunStatus_Pending
 	case corev1.PodRunning:
-		status = RunAppJobStatus_Running
+		status = AppJobRunStatus_Running
 	case corev1.PodSucceeded:
-		status = RunAppJobStatus_Succeeded
+		status = AppJobRunStatus_Succeeded
 	case corev1.PodFailed:
-		status = RunAppJobStatus_Failed
+		status = AppJobRunStatus_Failed
 	default:
-		return RunAppJobStatus_Unknown, telemetry.Error(ctx, span, nil, "unknown status for job")
+		return AppJobRunStatus_Unknown, telemetry.Error(ctx, span, nil, "unknown status for job")
 	}
 
 	return status, nil

@@ -104,19 +104,19 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 		}
 
 		switch statusResp.Status {
-		case porter_app.RunAppJobStatus_Pending:
+		case porter_app.AppJobRunStatus_Pending:
 			print(".")
 			time.Sleep(WaitIntervalInSeconds)
-		case porter_app.RunAppJobStatus_Running:
+		case porter_app.AppJobRunStatus_Running:
 			print(".")
 			time.Sleep(WaitIntervalInSeconds)
-		case porter_app.RunAppJobStatus_Succeeded:
+		case porter_app.AppJobRunStatus_Succeeded:
 			print("\n")
 			color.New(color.FgGreen).Println("Job completed successfully") // nolint:errcheck,gosec
 			return nil
-		case porter_app.RunAppJobStatus_Failed:
+		case porter_app.AppJobRunStatus_Failed:
 			return fmt.Errorf("job exited with non-zero exit code: %w", err)
-		case porter_app.RunAppJobStatus_Unknown:
+		case porter_app.AppJobRunStatus_Unknown:
 			return fmt.Errorf("unknown job status: %w", err)
 		}
 	}

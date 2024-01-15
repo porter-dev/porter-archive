@@ -1131,18 +1131,8 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
                     }
                   >
                     <Text color="helper">
-                      Install AWS GuardDuty agent on this cluster (see details
-                      to fully enable)
+                      Install AWS GuardDuty agent on this cluster
                     </Text>
-                    <Spacer x={0.5} inline />
-                    <Tooltip
-                      content={
-                        "In addition to installing the agent, you must enable GuardDuty through your AWS Console and enable EKS Protection in the EKS Protection tab of the GuardDuty console."
-                      }
-                      position="right"
-                    >
-                      <Icon src={info} />
-                    </Tooltip>
                   </Checkbox>
                 </FlexCenter>
                 <Spacer y={1} />

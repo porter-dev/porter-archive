@@ -90,6 +90,14 @@ const soc2DataDefault: Soc2Data = {
       status: "",
       email: [], // this is a special case for email
     },
+    "Intrusion Detection": {
+      message:
+        "Amazon GuardDuty is a threat detection service offered by AWS that continuously monitors and analyzes your AWS account for malicious activity and unauthorized behavior. By leveraging machine learning, anomaly detection, and threat intelligence, GuardDuty provides real-time alerts, helping you proactively identify and respond to security threats, ultimately enhancing the overall security posture of your AWS environment.",
+      link: "https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html",
+      enabled: false,
+      info: "",
+      status: "",
+    },
   },
 };
 
@@ -179,6 +187,7 @@ const Compliance: React.FC<Props> = (props) => {
       soc2Data.soc2_checks["Cloudwatch Alarm Creation"].enabled;
     const snsMonitoringEmails =
       soc2Data.soc2_checks["Cloudwatch Alarm Creation"].email;
+    const enableGuardDuty = soc2Data.soc2_checks["Intrusion Detection"].enabled;
 
     const contractData = JSON.parse(atob(base64Contract));
     const latestCluster: Cluster = Cluster.fromJson(contractData.cluster, {
@@ -195,6 +204,8 @@ const Compliance: React.FC<Props> = (props) => {
             ecrScanningEnabled ||
             value.enableEcrScanning ||
             false,
+          enableGuardDuty:
+            soc2Enabled || enableGuardDuty || value.enableGuardDuty || false,
           logging: new EKSLogging({
             enableApiServerLogs: soc2Enabled || cloudTrailEnabled || false,
             enableAuditLogs: soc2Enabled || cloudTrailEnabled || false,
@@ -360,6 +371,11 @@ const Compliance: React.FC<Props> = (props) => {
                 eksValues.cloudwatchAlarm?.enable || false
               ),
               email: eksValues.cloudwatchAlarm?.emails || [],
+            },
+            "Intrusion Detection": {
+              ...prevSoc2Data.soc2_checks["Intrusion Detection"],
+              enabled: eksValues.enableGuardDuty,
+              status: determineStatus(eksValues.enableGuardDuty),
             },
           },
         };

@@ -104,6 +104,7 @@ const machineTypeOptions = [
   { value: "r6i.32xlarge", label: "r6i.32xlarge" },
   { value: "m5n.large", label: "m5n.large" },
   { value: "m5n.xlarge", label: "m5n.xlarge" },
+  { value: "m5n.2xlarge", label: "m5n.2xlarge" },
   { value: "m7a.medium", label: "m7a.medium" },
   { value: "m7a.large", label: "m7a.large" },
   { value: "m7a.xlarge", label: "m7a.xlarge" },

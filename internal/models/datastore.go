@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// Datastore is a database model that represents a Porter-provisioned datastore
 type Datastore struct {
 	gorm.Model
 

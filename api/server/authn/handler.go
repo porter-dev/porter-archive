@@ -82,9 +82,9 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cancelTokens := func(lastIssueTime time.Time, email string, authn *AuthN, session *sessions.Session) bool {
+	cancelTokens := func(lastIssueTime time.Time, cancelEmail string, authn *AuthN, session *sessions.Session) bool {
 		if email, ok := session.Values["email"]; ok {
-			if email.(string) == email {
+			if email.(string) == cancelEmail {
 				timeAsUTC := lastIssueTime.UTC()
 				sess, _ := authn.config.Repo.Session().SelectSession(&models.Session{Key: session.ID})
 				if sess.CreatedAt.UTC().Before(timeAsUTC) {

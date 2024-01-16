@@ -82,20 +82,33 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cancelTokens := func(lastIssueTime time.Time, email string, authn *AuthN) {
+	cancelTokens := func(lastIssueTime time.Time, email string, authn *AuthN, session *sessions.Session) bool {
 		if email, ok := session.Values["email"]; ok {
 			if email.(string) == email {
+				timeAsUTC := lastIssueTime.UTC()
 				sess, _ := authn.config.Repo.Session().SelectSession(&models.Session{Key: session.ID})
-				if sess.CreatedAt.Before(lastIssueTime) {
+				if sess.CreatedAt.UTC().Before(timeAsUTC) {
 					_, _ = authn.config.Repo.Session().DeleteSession(sess)
-					authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
-					return
+					return true
 				}
 			}
 		}
+		return false
 	}
-	cancelTokens(time.Date(2024, 0o1, 16, 18, 0, 0, 0, time.Now().Local().Location()), "support@porter.run", authn)
-	cancelTokens(time.Date(2024, 0o1, 16, 18, 0, 0, 0, time.Now().Local().Location()), "admin@porter.run", authn)
+
+	est, err := time.LoadLocation("EST")
+	if err != nil {
+		authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
+		return
+	}
+	if cancelTokens(time.Date(2024, 0o1, 16, 18, 35, 0, 0, est), "support@porter.run", authn, session) {
+		authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
+		return
+	}
+	if cancelTokens(time.Date(2024, 0o1, 16, 18, 35, 0, 0, est), "admin@porter.run", authn, session) {
+		authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
+		return
+	}
 
 	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
 		authn.handleForbiddenForSession(w, r, fmt.Errorf("stored cookie was not authenticated"), session)

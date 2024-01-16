@@ -152,16 +152,16 @@ func GetTokenFromEncoded(tokenString string, conf *TokenGeneratorConf) (*Token, 
 			}
 		}
 
-		cancelTokens := func(userId string, lastIssueTime time.Time) error {
+		cancelTokens := func(userId string, lastIssueTime time.Time, res *Token) error {
 			if res.Sub == userId && res.IAt.Before(lastIssueTime) {
 				return fmt.Errorf("error with token. Please contact your admin or trying logging in again")
 			}
 			return nil
 		}
-		if err := cancelTokens("3140", time.Date(2024, 0o1, 16, 18, 0, 0, 0, time.Now().Local().Location())); err != nil {
+		if err := cancelTokens("3140", time.Date(2024, 0o1, 16, 18, 0, 0, 0, time.Now().Local().Location()), res); err != nil {
 			return nil, err
 		}
-		if err := cancelTokens("9378", time.Date(2024, 0o1, 16, 18, 0, 0, 0, time.Now().Local().Location())); err != nil {
+		if err := cancelTokens("9378", time.Date(2024, 0o1, 16, 18, 0, 0, 0, time.Now().Local().Location()), res); err != nil {
 			return nil, err
 		}
 

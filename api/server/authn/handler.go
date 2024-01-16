@@ -82,7 +82,7 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cancelTokens := func(lastIssueTime time.Time, email string) {
+	cancelTokens := func(lastIssueTime time.Time, email string, authn *AuthN) {
 		if email, ok := session.Values["email"]; ok {
 			if email.(string) == email {
 				sess, _ := authn.config.Repo.Session().SelectSession(&models.Session{Key: session.ID})
@@ -94,8 +94,8 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	cancelTokens(time.Date(2024, 0o1, 16, 18, 0, 0, 0, time.Now().Local().Location()), "support@porter.run")
-	cancelTokens(time.Date(2024, 0o1, 16, 18, 0, 0, 0, time.Now().Local().Location()), "admin@porter.run")
+	cancelTokens(time.Date(2024, 0o1, 16, 18, 0, 0, 0, time.Now().Local().Location()), "support@porter.run", authn)
+	cancelTokens(time.Date(2024, 0o1, 16, 18, 0, 0, 0, time.Now().Local().Location()), "admin@porter.run", authn)
 
 	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
 		authn.handleForbiddenForSession(w, r, fmt.Errorf("stored cookie was not authenticated"), session)

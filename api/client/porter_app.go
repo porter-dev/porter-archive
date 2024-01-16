@@ -801,10 +801,10 @@ func (c *Client) RunAppJob(
 	projectID, clusterID uint,
 	appName string, jobName string,
 	deploymentTargetID string,
-) (*porter_app.AppRunResponse, error) {
-	resp := &porter_app.AppRunResponse{}
+) (*porter_app.RunAppJobResponse, error) {
+	resp := &porter_app.RunAppJobResponse{}
 
-	req := &porter_app.AppRunRequest{
+	req := &porter_app.RunAppJobRequest{
 		ServiceName:        jobName,
 		DeploymentTargetID: deploymentTargetID,
 	}
@@ -814,6 +814,57 @@ func (c *Client) RunAppJob(
 			"/projects/%d/clusters/%d/apps/%s/run",
 			projectID, clusterID,
 			appName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// RunAppJobStatusInput contains all the information necessary to check the status of a job
+type RunAppJobStatusInput struct {
+	// AppName is the name of the app associated with the job
+	AppName string
+
+	// Cluster is the id of the cluster against which to retrieve a helm agent for
+	ClusterID uint
+
+	// DeploymentTargetID is the id of the deployment target the job was run against
+	DeploymentTargetID string
+
+	// DeploymentTargetNamespace is the namespace in which the job was deployed
+	DeploymentTargetNamespace string
+
+	// ServiceName is the name of the app service that was triggered
+	ServiceName string
+
+	// JobRunID is the UID returned from the /apps/{porter_app_name}/run endpoint
+	JobRunID string
+
+	// ProjectID is the project in which the cluster exists
+	ProjectID uint
+}
+
+// RunAppJobStatus gets the status for a job app run
+func (c *Client) RunAppJobStatus(
+	ctx context.Context,
+	input RunAppJobStatusInput,
+) (*porter_app.AppJobRunStatusResponse, error) {
+	resp := &porter_app.AppJobRunStatusResponse{}
+
+	req := &porter_app.AppJobRunStatusRequest{
+		DeploymentTargetID: input.DeploymentTargetID,
+		JobRunID:           input.JobRunID,
+		Namespace:          input.DeploymentTargetNamespace,
+		ServiceName:        input.ServiceName,
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/run-status",
+			input.ProjectID, input.ClusterID,
+			input.AppName,
 		),
 		req,
 		resp,

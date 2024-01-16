@@ -20,38 +20,38 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-// AppRunHandler handles requests to the /apps/{porter_app_name}/run endpoint
-type AppRunHandler struct {
+// RunAppJobHandler handles requests to the /apps/{porter_app_name}/run endpoint
+type RunAppJobHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewAppRunHandler returns a new AppRunHandler
-func NewAppRunHandler(
+// NewRunAppJobHandler returns a new AppJobRunHandler
+func NewRunAppJobHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *AppRunHandler {
-	return &AppRunHandler{
+) *RunAppJobHandler {
+	return &RunAppJobHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-// AppRunRequest is the request object for the /apps/{porter_app_name}/run endpoint
-type AppRunRequest struct {
+// RunAppJobRequest is the request object for the /apps/{porter_app_name}/run endpoint
+type RunAppJobRequest struct {
 	ServiceName        string `json:"service_name"`
 	DeploymentTargetID string `json:"deployment_target_id"`
 }
 
-// AppRunResponse is the response object for the /apps/{porter_app_name}/run endpoint
-type AppRunResponse struct {
+// RunAppJobResponse is the response object for the /apps/{porter_app_name}/run endpoint
+type RunAppJobResponse struct {
 	JobRunID string `json:"job_run_id"`
 }
 
 // ServeHTTP runs a one-off command in the same environment as the provided service, app and deployment target
-func (c *AppRunHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-app-run")
+func (c *RunAppJobHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-app-job-run")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
@@ -65,7 +65,7 @@ func (c *AppRunHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: appName})
 
-	request := &AppRunRequest{}
+	request := &RunAppJobRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding request")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -109,7 +109,7 @@ func (c *AppRunHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := AppRunResponse{
+	response := RunAppJobResponse{
 		JobRunID: serviceResp.Msg.JobRunId,
 	}
 

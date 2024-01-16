@@ -35,6 +35,8 @@ type ApplyInput struct {
 	AppName string
 	// PreviewApply is true when Apply should create a new deployment target matching current git branch and apply to that target
 	PreviewApply bool
+	// WaitForSuccessfulDeployment is true when Apply should wait for the update to complete before returning
+	WaitForSuccessfulDeployment bool
 }
 
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
@@ -362,6 +364,16 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	})
 
 	color.New(color.FgGreen).Printf("Successfully applied new revision %s for app %s\n", applyResp.AppRevisionId, appName) // nolint:errcheck,gosec
+
+	if inp.WaitForSuccessfulDeployment {
+		return waitForAppRevisionStatus(ctx, waitForAppRevisionStatusInput{
+			ProjectID:  cliConf.Project,
+			ClusterID:  cliConf.Cluster,
+			AppName:    appName,
+			RevisionID: applyResp.AppRevisionId,
+			Client:     client,
+		})
+	}
 	return nil
 }
 

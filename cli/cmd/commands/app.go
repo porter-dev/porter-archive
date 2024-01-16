@@ -35,15 +35,16 @@ import (
 )
 
 var (
-	appNamespace     string
-	appVerbose       bool
+	appContainerName string
+	appCpuMilli      int
 	appExistingPod   bool
 	appInteractive   bool
-	appContainerName string
-	appTag           string
-	deploymentTarget string
-	appCpuMilli      int
 	appMemoryMi      int
+	appNamespace     string
+	appTag           string
+	appVerbose       bool
+	appWait          bool
+	deploymentTarget string
 	jobName          string
 )
 
@@ -110,6 +111,14 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		},
 	}
 
+	appUpdateTagCmd.PersistentFlags().BoolVarP(
+		&appWait,
+		"wait",
+		"w",
+		false,
+		"set this to wait and be notified when an update is successful, otherwise time out",
+	)
+
 	appUpdateTagCmd.PersistentFlags().StringVarP(
 		&appTag,
 		"tag",
@@ -166,6 +175,13 @@ func appRunFlags(appRunCmd *cobra.Command) {
 		"interactive",
 		false,
 		"whether to run in interactive mode (default false)",
+	)
+
+	appRunCmd.PersistentFlags().BoolVar(
+		&appWait,
+		"wait",
+		false,
+		"whether to wait for the command to complete before exiting for non-interactive mode (default false)",
 	)
 
 	appRunCmd.PersistentFlags().IntVarP(
@@ -258,10 +274,11 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 		}
 
 		return v2.RunAppJob(ctx, v2.RunAppJobInput{
-			CLIConfig: cliConfig,
-			Client:    client,
-			AppName:   args[0],
-			JobName:   jobName,
+			CLIConfig:   cliConfig,
+			Client:      client,
+			AppName:     args[0],
+			JobName:     jobName,
+			WaitForExit: appWait,
 		})
 	}
 
@@ -1249,11 +1266,18 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 	}
 
 	if project.ValidateApplyV2 {
-		tag, err := v2.UpdateImage(ctx, appTag, client, cliConf.Project, cliConf.Cluster, args[0], deploymentTarget)
+		err := v2.UpdateImage(ctx, v2.UpdateImageInput{
+			ProjectID:                   cliConf.Project,
+			ClusterID:                   cliConf.Cluster,
+			AppName:                     args[0],
+			DeploymentTargetName:        deploymentTarget,
+			Tag:                         appTag,
+			Client:                      client,
+			WaitForSuccessfulDeployment: appWait,
+		})
 		if err != nil {
 			return fmt.Errorf("error updating tag: %w", err)
 		}
-		_, _ = color.New(color.FgGreen).Printf("Successfully updated application %s to use tag \"%s\"\n", args[0], tag)
 		return nil
 	} else {
 		namespace := fmt.Sprintf("porter-stack-%s", args[0])

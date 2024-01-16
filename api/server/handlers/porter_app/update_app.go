@@ -53,6 +53,8 @@ type UpdateAppRequest struct {
 	Deletions Deletions `json:"deletions"`
 	// CommitSHA is the commit sha of the git commit that triggered this update, indicating a source change and triggering a build
 	CommitSHA string `json:"commit_sha"`
+	// ImageTagOverride is the image tag to override the image tag in the porter.yaml (it will override the image tag in the porter.yaml if specified)
+	ImageTagOverride string `json:"image_tag_override"`
 	// PorterYAMLPath is the path to the porter yaml file in the git repo
 	PorterYAMLPath string `json:"porter_yaml_path"`
 	// AppRevisionID is the ID of the revision to perform follow up actions on after the initial apply
@@ -227,6 +229,13 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if request.ImageTagOverride != "" {
+		if appProto.Image == nil {
+			appProto.Image = &porterv1.AppImage{}
+		}
+		appProto.Image.Tag = request.ImageTagOverride
+	}
+
 	updateReq := connect.NewRequest(&porterv1.UpdateAppRequest{
 		ProjectId: int64(project.ID),
 		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
@@ -245,10 +254,10 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			EnvGroupNames:    request.Deletions.EnvGroupNames,
 			ServiceDeletions: serviceDeletions,
 		},
-		AppOverrides:  overrides,
-		CommitSha:     request.CommitSHA,
-		IsEnvOverride: request.IsEnvOverride,
-		Addons:        addons,
+		AppOverrides:   overrides,
+		CommitSha:      request.CommitSHA,
+		IsEnvOverride:  request.IsEnvOverride,
+		Addons:         addons,
 		AddonOverrides: addonOverrides,
 	})
 

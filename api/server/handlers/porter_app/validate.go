@@ -58,6 +58,7 @@ type ValidatePorterAppRequest struct {
 	Base64AppOverrides string    `json:"b64_app_overrides"`
 	DeploymentTargetId string    `json:"deployment_target_id"`
 	CommitSHA          string    `json:"commit_sha"`
+	ImageTagOverride   string    `json:"image_tag_override"`
 	Deletions          Deletions `json:"deletions"`
 }
 
@@ -160,6 +161,13 @@ func (c *ValidatePorterAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 				IngressAnnotations: v.IngressAnnotationKeys,
 			}
 		}
+	}
+
+	if request.ImageTagOverride != "" {
+		if appProto.Image == nil {
+			appProto.Image = &porterv1.AppImage{}
+		}
+		appProto.Image.Tag = request.ImageTagOverride
 	}
 
 	validateReq := connect.NewRequest(&porterv1.ValidatePorterAppRequest{

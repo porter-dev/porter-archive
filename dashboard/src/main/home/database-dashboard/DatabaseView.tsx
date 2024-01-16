@@ -18,8 +18,6 @@ const DatabaseView: React.FC<Props> = ({ match }) => {
     const validParams = z
       .object({
         tab: z.string().optional(),
-        cloudProviderName: z.string().optional(),
-        cloudProviderId: z.string().optional(),
         datastoreName: z.string().optional(),
       })
       .safeParse(params);
@@ -34,11 +32,7 @@ const DatabaseView: React.FC<Props> = ({ match }) => {
   }, [match]);
 
   return (
-    <DatabaseContextProvider
-      cloudProviderName={params.cloudProviderName}
-      cloudProviderId={params.cloudProviderId}
-      datastoreName={params.datastoreName}
-    >
+    <DatabaseContextProvider datastoreName={params.datastoreName}>
       <StyledExpandedDB>
         <Back to="/databases" />
         <DatabaseHeader />

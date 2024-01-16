@@ -18,8 +18,6 @@ import notFound from "assets/not-found.png";
 
 type DatabaseContextType = {
   datastore: ClientDatastore;
-  cloudProviderId: string;
-  cloudProviderName: string;
   projectId: number;
 };
 
@@ -37,28 +35,16 @@ export const useDatabaseContext = (): DatabaseContextType => {
 
 type DatabaseContextProviderProps = {
   datastoreName?: string;
-  cloudProviderId?: string;
-  cloudProviderName?: string;
   children: JSX.Element;
 };
 export const DatabaseContextProvider: React.FC<
   DatabaseContextProviderProps
-> = ({ datastoreName, cloudProviderId, cloudProviderName, children }) => {
+> = ({ datastoreName, children }) => {
   const { currentProject } = useContext(Context);
   const paramsExist =
-    !!datastoreName &&
-    !!cloudProviderId &&
-    !!cloudProviderName &&
-    !!currentProject &&
-    currentProject.id !== -1;
+    !!datastoreName && !!currentProject && currentProject.id !== -1;
   const { data: datastore, status } = useQuery(
-    [
-      "getDatastore",
-      cloudProviderId,
-      cloudProviderName,
-      datastoreName,
-      currentProject?.id,
-    ],
+    ["getDatastore", datastoreName, currentProject?.id],
     async () => {
       if (!paramsExist) {
         return;
@@ -114,8 +100,6 @@ export const DatabaseContextProvider: React.FC<
     <DatabaseContext.Provider
       value={{
         datastore,
-        cloudProviderId,
-        cloudProviderName,
         projectId: currentProject.id,
       }}
     >

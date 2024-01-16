@@ -79,33 +79,6 @@ func (c *ListAwsAccountsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// dblinks, err := c.Repo().AWSAssumeRoleChainer().List(ctx, project.ID)
-	// if err != nil {
-	// 	err := telemetry.Error(ctx, span, err, "unable to find assume role chain links")
-	// 	c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-	// 	return
-	// }
-
-	// for _, link := range dblinks {
-	// 	targetArn, err := arn.Parse(link.TargetARN)
-	// 	if err != nil {
-	// 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "err-target-arn", Value: link.TargetARN})
-	// 		err := telemetry.Error(ctx, span, err, "unable to parse target arn")
-	// 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-	// 		return
-	// 	}
-
-	// 	account := AwsAccount{
-	// 		CloudProviderID: targetArn.AccountID,
-	// 		ProjectID:       uint(link.ProjectID),
-	// 	}
-	// 	if contains(res.Accounts, account) {
-	// 		continue
-	// 	}
-
-	// 	res.Accounts = append(res.Accounts, account)
-	// }
-
 	accounts, err := AwsAccounts(ctx, AwsAccountsInput{
 		ProjectID:                    project.ID,
 		AWSAssumeRoleChainRepository: c.Repo().AWSAssumeRoleChainer(),

@@ -30,8 +30,7 @@ export type ButtonStatus = "" | "loading" | JSX.Element | "success";
 
 const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
   const history = useHistory();
-  const { datastore, projectId, cloudProviderName, cloudProviderId } =
-    useDatabaseContext();
+  const { datastore } = useDatabaseContext();
 
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
@@ -54,9 +53,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
         options={tabs}
         currentTab={currentTab}
         setCurrentTab={(tab) => {
-          history.push(
-            `/databases/${projectId}/${cloudProviderName}/${cloudProviderId}/${datastore.name}/${tab}`
-          );
+          history.push(`/databases/${datastore.name}/${tab}`);
         }}
       />
       <Spacer y={1} />

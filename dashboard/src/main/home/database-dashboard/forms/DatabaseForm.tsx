@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import axios from "axios";
 import _ from "lodash";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
@@ -16,14 +16,12 @@ import { useDatabaseMethods } from "lib/hooks/useDatabaseMethods";
 import { useIntercom } from "lib/hooks/useIntercom";
 
 type Props = RouteComponentProps & {
-  dbName: string;
   steps: React.ReactNode[];
   currentStep: number;
   form: UseFormReturn<DbFormData>;
 };
 
 const DatabaseForm: React.FC<Props> = ({
-  dbName,
   steps,
   currentStep,
   form,
@@ -34,34 +32,23 @@ const DatabaseForm: React.FC<Props> = ({
   const { showIntercomWithMessage } = useIntercom();
 
   const {
-    formState: { isSubmitting, errors },
+    formState: { isSubmitting },
     handleSubmit,
-    setError,
-    clearErrors,
   } = form;
 
   const { datastores: existingDatabases } = useDatabaseList();
-  useEffect(() => {
-    const isNameTaken = _.some(existingDatabases, (db) => {
-      return db.name === dbName;
-    });
-
-    if (isNameTaken) {
-      setError("name", {
-        message: "A database with this name already exists",
-      });
-    } else if (errors.name) {
-      console.log("hello world");
-      clearErrors("name");
-    }
-  }, [dbName, JSON.stringify(existingDatabases), errors]);
 
   const onSubmit = handleSubmit(async (data) => {
     setSubmitErrorMessage("");
+    if (existingDatabases.some((db) => db.name === data.name)) {
+      setSubmitErrorMessage(
+        "A database with this name already exists. Please choose a different name."
+      );
+      return;
+    }
     try {
-      setSubmitErrorMessage("hello world");
-      // await createDatabase(data);
-      // history.push(`/databases`);
+      await createDatabase(data);
+      history.push(`/databases`);
     } catch (err) {
       const errorMessage =
         axios.isAxiosError(err) && err.response?.data?.error
@@ -74,16 +61,15 @@ const DatabaseForm: React.FC<Props> = ({
     }
   });
 
-  const submitButtonDisabledTooltipMessage = useMemo(() => {
-    console.log("errors", errors);
-    if (Object.keys(errors).length > 0) {
-      return "Please fix errors and resubmit.";
-    }
+  const submitButtonStatus = useMemo(() => {
     if (isSubmitting) {
-      return "Please wait for the create to finish.";
+      return "loading";
+    }
+    if (submitErrorMessage) {
+      return <Error message={submitErrorMessage} />;
     }
     return undefined;
-  }, [errors, isSubmitting]);
+  }, [isSubmitting, submitErrorMessage]);
 
   return (
     <FormProvider {...form}>
@@ -97,19 +83,12 @@ const DatabaseForm: React.FC<Props> = ({
               <Spacer y={0.5} />
               <Button
                 type="submit"
-                status={isSubmitting ? "loading" : ""}
+                status={submitButtonStatus}
                 loadingText={"Creating..."}
-                disabled={isSubmitting || Object.keys(errors).length > 0}
-                disabledTooltipMessage={submitButtonDisabledTooltipMessage}
+                disabled={isSubmitting}
               >
                 Create
               </Button>
-              {submitErrorMessage && (
-                <AppearingErrorContainer>
-                  <Spacer y={0.5} />
-                  <Error message={submitErrorMessage} />
-                </AppearingErrorContainer>
-              )}
             </>,
           ]}
         />

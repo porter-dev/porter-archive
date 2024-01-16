@@ -1,5 +1,4 @@
 import React, { useContext, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
@@ -16,16 +15,9 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import {
-  cloudProviderListResponseValidator,
-  datastoreListResponseValidator,
-  type ClientDatastore,
-  type CloudProviderDatastore,
-  type CloudProviderWithSource,
-} from "lib/databases/types";
+import { type ClientDatastore } from "lib/databases/types";
 import { useDatabaseList } from "lib/hooks/useDatabaseList";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 import { search } from "shared/search";
 import database from "assets/database.svg";
@@ -51,14 +43,10 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
   const { datastores, isLoading } = useDatabaseList();
 
   const filteredDatabases = useMemo(() => {
-    const filteredBySearch = search(
-      datastores === undefined ? [] : datastores,
-      searchValue,
-      {
-        keys: ["name"],
-        isCaseSensitive: false,
-      }
-    );
+    const filteredBySearch = search(datastores, searchValue, {
+      keys: ["name"],
+      isCaseSensitive: false,
+    });
 
     return _.sortBy(filteredBySearch, ["name"]);
   }, [datastores, searchValue]);
@@ -186,7 +174,7 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
             {(filteredDatabases ?? []).map(
               (datastore: ClientDatastore, i: number) => {
                 return (
-                  <Link to={`/databases/${projectId}/""/""/""/`} key={i}>
+                  <Link to={`/databases/${datastore.name}`} key={i}>
                     <Block>
                       <Container row>
                         <Icon src={getDatastoreIcon(datastore.type)} />

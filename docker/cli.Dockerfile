@@ -30,7 +30,15 @@ RUN make build-cli
 # Deployment environment
 # ----------------------
 FROM ubuntu:latest
-RUN apt-get update && apt-get install -y ca-certificates
+
+ENV KUBE_VERSION="v1.29.0"
+ENV HELM_VERSION="v3.13.3"
+
+RUN apt-get update -y && \
+    apt-get install -y openssl ca-certificates wget apt-utils && \
+    wget -q https://storage.googleapis.com/kubernetes-release/release/${KUBE_VERSION}/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl && \
+    chmod +x /usr/local/bin/kubectl && \
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
 COPY --from=build-go /porter/bin/porter .
 

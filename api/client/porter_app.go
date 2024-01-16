@@ -206,6 +206,7 @@ type ValidatePorterAppInput struct {
 	Base64AppOverrides string
 	DeploymentTarget   string
 	CommitSHA          string
+	ImageTagOverride   string
 }
 
 // ValidatePorterApp takes in a base64 encoded app definition that is potentially partial and returns a complete definition
@@ -222,6 +223,7 @@ func (c *Client) ValidatePorterApp(
 		Base64AppOverrides: inp.Base64AppOverrides,
 		DeploymentTargetId: inp.DeploymentTarget,
 		CommitSHA:          inp.CommitSHA,
+		ImageTagOverride:   inp.ImageTagOverride,
 	}
 
 	err := c.postRequest(
@@ -287,6 +289,7 @@ type UpdateAppInput struct {
 	ProjectID          uint
 	ClusterID          uint
 	Name               string
+	ImageTagOverride   string
 	GitSource          porter_app.GitSource
 	DeploymentTargetId string
 	CommitSHA          string
@@ -308,6 +311,7 @@ func (c *Client) UpdateApp(
 		GitSource:          inp.GitSource,
 		DeploymentTargetId: inp.DeploymentTargetId,
 		CommitSHA:          inp.CommitSHA,
+		ImageTagOverride:   inp.ImageTagOverride,
 		AppRevisionID:      inp.AppRevisionID,
 		Base64AppProto:     inp.Base64AppProto,
 		Base64PorterYAML:   inp.Base64PorterYAML,

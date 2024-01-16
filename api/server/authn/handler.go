@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -80,6 +81,21 @@ func (authn *AuthN) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		authn.sendForbiddenError(err, w, r)
 		return
 	}
+
+	cancelTokens := func(lastIssueTime time.Time, email string) {
+		if email, ok := session.Values["email"]; ok {
+			if email.(string) == email {
+				sess, _ := authn.config.Repo.Session().SelectSession(&models.Session{Key: session.ID})
+				if sess.CreatedAt.Before(lastIssueTime) {
+					_, _ = authn.config.Repo.Session().DeleteSession(sess)
+					authn.handleForbiddenForSession(w, r, fmt.Errorf("error, contact admin"), session)
+					return
+				}
+			}
+		}
+	}
+	cancelTokens(time.Date(2024, 0o1, 16, 18, 0, 0, 0, time.Now().Local().Location()), "support@porter.run")
+	cancelTokens(time.Date(2024, 0o1, 16, 18, 0, 0, 0, time.Now().Local().Location()), "admin@porter.run")
 
 	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
 		authn.handleForbiddenForSession(w, r, fmt.Errorf("stored cookie was not authenticated"), session)

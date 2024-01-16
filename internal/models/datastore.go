@@ -23,4 +23,10 @@ type Datastore struct {
 
 	// CloudProviderID is the ID of the cloud provider account that the datastore belongs to. In the case of AWS, this is the AWS account ID.
 	CloudProviderID string `json:"cloud_provider_id"`
+
+	// Type is the type of datastore. Accepted values: [RDS, ELASTICACHE]
+	Type string `json:"type"`
+
+	// Engine is the engine of the datastore. Accepted values: [POSTGRES, AURORA-POSTGRES, REDIS]
+	Engine string `json:"engine"`
 }

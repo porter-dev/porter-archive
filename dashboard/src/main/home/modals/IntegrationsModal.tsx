@@ -54,7 +54,6 @@ export default class IntegrationsModal extends Component<PropsType, StateType> {
   renderIntegrationsCatalog = () => {
     if (this.context.currentModalData) {
       const { setCurrentIntegration } = this.context.currentModalData;
-      console.log(this.state.integrations, this.context.currentCluster);
       return this.state.integrations.map((integration: any, i: number) => {
         const icon = integrationList[integration.service]?.icon;
         const disabled =

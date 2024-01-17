@@ -9,6 +9,7 @@ type Props = {
   additionalStyles?: string;
   truncate?: boolean;
   onClick?: () => void;
+  style?: React.CSSProperties;
 };
 
 const Text: React.FC<Props> = ({
@@ -19,6 +20,7 @@ const Text: React.FC<Props> = ({
   additionalStyles,
   truncate, // added this
   onClick,
+  style,
 }) => {
   const getColor = () => {
     switch (color) {
@@ -39,6 +41,7 @@ const Text: React.FC<Props> = ({
       additionalStyles={additionalStyles}
       truncate={truncate}
       onClick={onClick}
+      style={style}
     >
       {children}
     </StyledText>

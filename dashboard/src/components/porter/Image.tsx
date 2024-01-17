@@ -6,6 +6,7 @@ type Props = {
   size?: number;
   opacity?: number;
   additionalStyles?: string;
+  style?: React.CSSProperties;
 };
 
 const Icon: React.FC<Props> = ({
@@ -13,6 +14,7 @@ const Icon: React.FC<Props> = ({
   size,
   opacity,
   additionalStyles,
+  style,
 }) => {
   return (
     <StyledIcon
@@ -20,6 +22,7 @@ const Icon: React.FC<Props> = ({
       size={size}
       opacity={opacity}
       additionalStyles={additionalStyles}
+      style={style}
     />
   );
 };

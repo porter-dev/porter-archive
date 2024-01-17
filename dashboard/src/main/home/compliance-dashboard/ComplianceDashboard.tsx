@@ -27,6 +27,74 @@ type Props = {
   projectId: number;
 };
 
+const dummyChecks = [
+  {
+    status: "not-applicable",
+    name: "Application changes reviewed",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+  {
+    status: "not-applicable",
+    name: "AWS accounts deprovisioned when employees leave",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+  {
+    status: "not-applicable",
+    name: "AWS accounts reviewed",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+  {
+    status: "passing",
+    name: "CloudTrail enabled",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+  {
+    status: "not-applicable",
+    name: "Company has a version control system",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+  {
+    status: "not-applicable",
+    name: "Critical vulnerabilities identified in packages are addressed (AWS Container)",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+  {
+    status: "not-applicable",
+    name: "Critical vulnerabilities identified in packages are addressed (AWS Inspector)",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+  {
+    status: "action-required",
+    name: "Database IO monitored (AWS)",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+  {
+    status: "passing",
+    name: "CloudTrail enabled",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+  {
+    status: "not-applicable",
+    name: "Company has a version control system",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+  {
+    status: "not-applicable",
+    name: "Critical vulnerabilities identified in packages are addressed (AWS Container)",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+  {
+    status: "not-applicable",
+    name: "Critical vulnerabilities identified in packages are addressed (AWS Inspector)",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+  {
+    status: "action-required",
+    name: "Database IO monitored (AWS)",
+    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+  },
+];
+
 const ComplianceDashboard: React.FC<Props> = () => {
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -121,6 +189,10 @@ const ComplianceDashboard: React.FC<Props> = () => {
 
       <Banner type="warning">
         Action is required to pass additional controls.
+        <Spacer inline x={.5} />
+        <Text style={{ textDecoration: "underline", cursor: "pointer" }}>
+          Enable Porter SOC 2 infrastructure controls
+        </Text>
       </Banner>
 
       <Spacer y={1} />
@@ -182,6 +254,52 @@ const ComplianceDashboard: React.FC<Props> = () => {
           <Text size={18}>25</Text>
         </PanelFilter>
       </Container>
+
+      <Spacer y={1.5} />
+
+      {dummyChecks.map((check, i) => {
+        return (
+          <>
+            <Container row key={i}>
+              <Container style={{ width: "170px" }}>
+                {check.status === "passing" && <Image src={greenCheck} size={10} />}
+                {check.status === "action-required" && (
+                  <Image src={actionRequired} size={14} style={{ marginBottom: "-2px" }} />
+                )}
+                {check.status === "not-applicable" && (
+                  <Image src={notApplicable} size={14} style={{ marginBottom: "-2px" }} />
+                )}
+                <Spacer inline x={.7} />
+                {check.status === "passing" && <Text color="helper">Passing</Text>}
+                {check.status === "action-required" && <Text color="helper">Action required</Text>}
+                {check.status === "not-applicable" && <Text color="#494B4F">Not applicable</Text>}
+              </Container>
+              <Text
+                color={check.status === "not-applicable" ? "#494B4F" : ""}
+                style={{ 
+                  marginBottom: "-1px",
+                  cursor: "pointer",
+                }}
+                additionalStyles=":hover { text-decoration: underline }"
+                onClick={() => {
+                  window.open(check.link, "_blank");
+                }}
+              >
+                {check.name}
+                <Spacer inline x={.5} />
+                <Image 
+                  src={linkExternal}
+                  opacity={check.status === "not-applicable" ? 0.25 : 1}
+                  size={12}
+                  additionalStyles="margin-bottom: -2px"
+                />
+              </Text>
+            </Container>
+            <Spacer y={1} />
+          </>
+        );
+      })}
+      <Spacer y={2} />
     </StyledComplianceDashboard>
   );
 };

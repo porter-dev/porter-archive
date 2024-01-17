@@ -2774,19 +2774,15 @@ const updateDatastore = baseApi<
 );
 
 const deleteDatastore = baseApi<
-  {
-    name: string;
-    type: string;
-  },
+  {},
   {
     project_id: number;
-    cloud_provider_name: string;
-    cloud_provider_id: string;
+    datastore_name: string;
   }
 >(
   "DELETE",
-  ({ project_id, cloud_provider_name, cloud_provider_id }) =>
-    `/api/projects/${project_id}/cloud-providers/${cloud_provider_name}/${cloud_provider_id}/datastores`
+  ({ project_id, datastore_name }) =>
+    `/api/projects/${project_id}/datastores/${datastore_name}`
 );
 
 const getPreviousLogsForContainer = baseApi<

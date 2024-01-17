@@ -106,3 +106,23 @@ func (repo *DatastoreRepository) ListByProjectID(ctx context.Context, projectId 
 
 	return datastores, nil
 }
+
+// Delete deletes a datastore by id
+func (repo *DatastoreRepository) Delete(ctx context.Context, datastore *models.Datastore) (*models.Datastore, error) {
+	ctx, span := telemetry.NewSpan(ctx, "gorm-delete-datastore")
+	defer span.End()
+
+	if datastore == nil {
+		return nil, telemetry.Error(ctx, span, nil, "datastore is nil")
+	}
+
+	if datastore.ID == uuid.Nil {
+		return nil, telemetry.Error(ctx, span, nil, "datastore id is nil")
+	}
+
+	if err := repo.db.Delete(&datastore).Error; err != nil {
+		return nil, telemetry.Error(ctx, span, err, "error deleting datastore")
+	}
+
+	return datastore, nil
+}

@@ -527,6 +527,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// DELETE /api/projects/{project_id}/datastores/{datastore_name} -> cloud_provider.NewDeleteDatastoreHandler
+	deleteDatastoreEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/datastores/{%s}", relPath, types.URLParamDatastoreName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	deleteDatastoreHandler := datastore.NewDeleteDatastoreHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteDatastoreEndpoint,
+		Handler:  deleteDatastoreHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/roles -> project.NewRoleUpdateHandler
 	updateRoleEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

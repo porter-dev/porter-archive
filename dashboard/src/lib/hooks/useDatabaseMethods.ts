@@ -8,6 +8,7 @@ import { Context } from "shared/Context";
 
 type DatabaseHook = {
   create: (values: DbFormData) => Promise<void>;
+  deleteDatastore: (name: string) => Promise<void>;
 };
 type CreateDatastoreInput = {
   name: string;
@@ -74,7 +75,7 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
 };
 
 export const useDatabaseMethods = (): DatabaseHook => {
-  const { capabilities, currentProject } = useContext(Context);
+  const { currentProject } = useContext(Context);
 
   const create = useCallback(
     async (data: DbFormData): Promise<void> => {
@@ -92,13 +93,31 @@ export const useDatabaseMethods = (): DatabaseHook => {
           values: createDatastoreInput.values,
         },
         {
-          project_id: currentProject?.id || -1,
+          project_id: currentProject.id,
           cluster_id: data.clusterId,
         }
       );
     },
-    [currentProject, capabilities]
+    [currentProject]
   );
 
-  return { create };
+  const deleteDatastore = useCallback(
+    async (name: string): Promise<void> => {
+      if (!currentProject?.id || currentProject.id === -1) {
+        return;
+      }
+
+      await api.deleteDatastore(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          datastore_name: name,
+        }
+      );
+    },
+    [currentProject]
+  );
+
+  return { create, deleteDatastore };
 };

@@ -32,3 +32,8 @@ func (repo *DatastoreRepository) Insert(ctx context.Context, datastore *models.D
 func (repo *DatastoreRepository) ListByProjectID(ctx context.Context, projectID uint) ([]*models.Datastore, error) {
 	return nil, errors.New("cannot read database")
 }
+
+// Delete deletes a datastore by id
+func (repo *DatastoreRepository) Delete(ctx context.Context, datastore *models.Datastore) (*models.Datastore, error) {
+	return nil, errors.New("cannot write database")
+}

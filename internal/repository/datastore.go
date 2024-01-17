@@ -14,4 +14,6 @@ type DatastoreRepository interface {
 	Insert(ctx context.Context, datastore *models.Datastore) (*models.Datastore, error)
 	// ListByProjectID retrieves a list of datastores by project id
 	ListByProjectID(ctx context.Context, projectID uint) ([]*models.Datastore, error)
+	// Delete deletes a datastore by id
+	Delete(ctx context.Context, datastore *models.Datastore) (*models.Datastore, error)
 }

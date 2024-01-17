@@ -1,7 +1,6 @@
 package datastore
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -102,7 +101,6 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-	fmt.Printf("here are the datastores: %+v\n", datastores)
 	if len(datastores) == 0 {
 		err = telemetry.Error(ctx, span, nil, "datastore not found")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))

@@ -1,53 +1,33 @@
 import React, { useContext } from "react";
-import { useHistory, useLocation } from "react-router";
+import { useHistory } from "react-router";
 import styled from "styled-components";
 
 import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { useDatabaseMethods } from "lib/hooks/useDatabaseMethods";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
-import { pushFiltered } from "shared/routing";
 
 import { useDatabaseContext } from "../DatabaseContextProvider";
 
 const SettingsTab: React.FC = () => {
-  const { setCurrentError, setCurrentOverlay } = useContext(Context);
+  const { setCurrentOverlay } = useContext(Context);
   const history = useHistory();
-  const { datastore, projectId, cloudProviderId, cloudProviderName } =
-    useDatabaseContext();
-  const location = useLocation();
+  const { datastore } = useDatabaseContext();
+  const { deleteDatastore } = useDatabaseMethods();
   const handleDeletionSubmit = async (): Promise<void> => {
-    if (setCurrentOverlay === undefined || setCurrentError === undefined) {
+    if (setCurrentOverlay == null) {
       return;
     }
 
-    setCurrentOverlay(null);
     try {
-      await api.deleteDatastore(
-        "<token>",
-        {
-          name: datastore.name,
-          type: datastore.type,
-        },
-        {
-          project_id: projectId,
-          cloud_provider_name: cloudProviderName,
-          cloud_provider_id: cloudProviderId,
-        }
-      );
+      await deleteDatastore(datastore.name);
+      setCurrentOverlay(null);
+      history.push("/databases");
     } catch (error) {
-      setCurrentError("Couldn't uninstall database, please try again");
+      // todo: handle error
     }
-    pushFiltered(
-      {
-        history,
-        location,
-      },
-      `/databases`,
-      []
-    );
   };
 
   const handleDeletionClick = async (): Promise<void> => {

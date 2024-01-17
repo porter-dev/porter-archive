@@ -90,7 +90,7 @@ func getDeployStackStep(
 		path = "porter.yaml"
 	}
 
-	command := fmt.Sprintf("porter apply -f %s", path)
+	command := fmt.Sprintf("exec porter apply -f %s", path)
 	if preview {
 		command = fmt.Sprintf("%s --preview", command)
 	}

@@ -1,10 +1,12 @@
 import React, { Component } from "react";
 import styled from "styled-components";
-import close from "assets/close.png";
 
-import { Context } from "shared/Context";
+import Tooltip from "components/porter/Tooltip";
+
 import api from "shared/api";
 import { integrationList } from "shared/common";
+import { Context } from "shared/Context";
+import close from "assets/close.png";
 
 type PropsType = {};
 
@@ -18,40 +20,74 @@ export default class IntegrationsModal extends Component<PropsType, StateType> {
   };
 
   componentDidMount() {
-    let { category } = this.context.currentModalData;
+    const { category } = this.context.currentModalData;
     if (category === "kubernetes") {
       api
         .getClusterIntegrations("<token>", {}, {})
-        .then((res) => this.setState({ integrations: res.data }))
-        .catch((err) => console.log(err));
+        .then((res) => {
+          this.setState({ integrations: res.data });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     } else if (category === "registry") {
       api
         .getRegistryIntegrations("<token>", {}, {})
-        .then((res) => this.setState({ integrations: res.data }))
-        .catch((err) => console.log(err));
+        .then((res) => {
+          this.setState({ integrations: res.data });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     } else {
       api
         .getRepoIntegrations("<token>", {}, {})
-        .then((res) => this.setState({ integrations: res.data }))
-        .catch((err) => console.log(err));
+        .then((res) => {
+          this.setState({ integrations: res.data });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     }
   }
 
   renderIntegrationsCatalog = () => {
     if (this.context.currentModalData) {
-      let { setCurrentIntegration } = this.context.currentModalData;
+      const { setCurrentIntegration } = this.context.currentModalData;
+      console.log(this.state.integrations, this.context.currentCluster);
       return this.state.integrations.map((integration: any, i: number) => {
-        let icon =
-          integrationList[integration.service] &&
-          integrationList[integration.service].icon;
-        let disabled =
+        const icon = integrationList[integration.service]?.icon;
+        const disabled =
           integration.service === "kube" || integration.service === "dockerhub";
+        const sameCloudProvider =
+          this.context.currentCluster.cloud_provider.toLowerCase() ===
+          integration.auth_mechanism;
 
         if (!disabled) {
-          return (
-            <IntegrationOption
+          return !sameCloudProvider ? (
+            <Tooltip
               key={i}
-              disabled={disabled}
+              content="Must be on the same cloud provider as your current cluster"
+              position="bottom"
+            >
+              <IntegrationOption
+                disabled={
+                  this.context.currentCluster.cloud_provider.toLowerCase() !==
+                  integration.auth_mechanism
+                }
+                onClick={() => {
+                  if (!disabled) {
+                    setCurrentIntegration(integration.service);
+                    this.context.setCurrentModal(null, null);
+                  }
+                }}
+              >
+                <Icon src={icon && icon} />
+                <Label>{integrationList[integration.service].label}</Label>
+              </IntegrationOption>
+            </Tooltip>
+          ) : (
+            <IntegrationOption
               onClick={() => {
                 if (!disabled) {
                   setCurrentIntegration(integration.service);
@@ -93,7 +129,7 @@ const Icon = styled.img`
   margin-right: 15px;
 `;
 
-const IntegrationOption = styled.div`
+const IntegrationOption = styled.button`
   height: 60px;
   user-select: none;
   width: 100%;
@@ -117,6 +153,8 @@ const IntegrationsCatalog = styled.div`
   background: #ffffff11;
   height: calc(100% - 100px);
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 `;
 
 const Subtitle = styled.div`

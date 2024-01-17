@@ -24,6 +24,7 @@ import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
 import Navbar from "./navbar/Navbar";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
+import ComplianceDashboard from "./compliance-dashboard/ComplianceDashboard";
 
 import NoClusterPlaceHolder from "components/NoClusterPlaceHolder";
 import Button from "components/porter/Button";
@@ -473,6 +474,10 @@ const Home: React.FC<Props> = (props) => {
                 </Route>
                 <Route path="/databases">
                   <DatabaseDashboard projectId={currentProject?.id} />
+                </Route>
+
+                <Route path="/compliance">
+                  <ComplianceDashboard />
                 </Route>
 
                 <Route path="/addons/new">

@@ -12,6 +12,7 @@ import addOns from "assets/add-ons.svg";
 import database from "assets/database.svg";
 import collapseSidebar from "assets/collapse-sidebar.svg";
 import pr_icon from "assets/pull_request_icon.svg";
+import compliance from "assets/compliance.svg";
 
 import { Context } from "shared/Context";
 
@@ -133,7 +134,8 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={rocket} />
             Launch
           </NavButton>
-          {currentProject &&
+          {
+            currentProject &&
             currentProject.managed_infra_enabled &&
             (user?.isPorterUser ||
               overrideInfraTabEnabled({ projectID: currentProject.id })) && (
@@ -141,7 +143,8 @@ class Sidebar extends Component<PropsType, StateType> {
                 <i className="material-icons">build_circle</i>
                 Infrastructure
               </NavButton>
-            )}
+            )
+          }
           {this.props.isAuthorized("integrations", "", [
             "get",
             "create",
@@ -328,6 +331,15 @@ class Sidebar extends Component<PropsType, StateType> {
               <NavButton path="/preview-environments">
                 <Img src={pr_icon} />
                 Preview apps
+              </NavButton>
+            )}
+
+            {currentProject?.soc2_controls_enabled && (
+              <NavButton 
+                path="/compliance"
+              >
+                <Img src={compliance} />
+                Compliance
               </NavButton>
             )}
 

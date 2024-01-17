@@ -199,7 +199,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         )}
       </AnimatePresence>
       {!isClientJobService(service) && status && (
-        <ServiceStatusFooter status={status} />
+        <ServiceStatusFooter status={status} name={service.name.value} />
       )}
       {isClientJobService(service) &&
         // make sure that this service is in a created revision before showing the job footer - cannot view history / run jobs that are not deployed
@@ -218,7 +218,7 @@ const ServiceTitle = styled.div`
   align-items: center;
 `;
 
-const StyledSourceBox = styled(motion.div) <{
+const StyledSourceBox = styled(motion.div)<{
   showExpanded?: boolean;
   hasFooter?: boolean;
 }>`
@@ -281,7 +281,7 @@ const ServiceHeader = styled.div<{
     border-radius: 20px;
     margin-left: -10px;
     transform: ${(props: { showExpanded?: boolean }) =>
-    props.showExpanded ? "" : "rotate(-90deg)"};
+      props.showExpanded ? "" : "rotate(-90deg)"};
   }
 `;
 

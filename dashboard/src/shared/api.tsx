@@ -2752,8 +2752,8 @@ const listDatastores = baseApi<
 const updateDatastore = baseApi<
   {
     name: string;
-    type: string;
-    engine: string;
+    type: "RDS" | "ELASTICACHE";
+    engine: "POSTGRES" | "AURORA-POSTGRES" | "REDIS";
     values: any;
   },
   { project_id: number; cluster_id: number }

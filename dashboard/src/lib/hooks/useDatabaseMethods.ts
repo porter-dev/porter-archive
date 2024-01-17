@@ -9,48 +9,67 @@ import { Context } from "shared/Context";
 type DatabaseHook = {
   create: (values: DbFormData) => Promise<void>;
 };
-const clientDbToValues = (
-  values: DbFormData
-): { values: object; templateName: string } => {
+type CreateDatastoreInput = {
+  name: string;
+  type: "RDS" | "ELASTICACHE";
+  engine: "POSTGRES" | "AURORA-POSTGRES" | "REDIS";
+  values: object;
+};
+const clientDbToValues = (values: DbFormData): CreateDatastoreInput => {
   return match(values)
-    .with({ config: { type: "rds-postgres" } }, (values) => ({
-      values: {
-        config: {
-          name: values.name,
-          databaseName: values.config.databaseName,
-          masterUsername: values.config.masterUsername,
-          masterUserPassword: values.config.masterUserPassword,
-          allocatedStorage: values.config.allocatedStorageGigabytes,
-          instanceClass: values.config.instanceClass,
+    .with(
+      { config: { type: "rds-postgres" } },
+      (values): CreateDatastoreInput => ({
+        name: values.name,
+        values: {
+          config: {
+            name: values.name,
+            databaseName: values.config.databaseName,
+            masterUsername: values.config.masterUsername,
+            masterUserPassword: values.config.masterUserPassword,
+            allocatedStorage: values.config.allocatedStorageGigabytes,
+            instanceClass: values.config.instanceClass,
+          },
         },
-      },
-      templateName: "rds-postgresql",
-    }))
-    .with({ config: { type: "rds-postgresql-aurora" } }, (values) => ({
-      values: {
-        config: {
-          name: values.name,
-          databaseName: values.config.databaseName,
-          masterUsername: values.config.masterUsername,
-          masterUserPassword: values.config.masterUserPassword,
-          allocatedStorage: values.config.allocatedStorageGigabytes,
-          instanceClass: values.config.instanceClass,
+        type: "RDS",
+        engine: "POSTGRES",
+      })
+    )
+    .with(
+      { config: { type: "rds-postgresql-aurora" } },
+      (values): CreateDatastoreInput => ({
+        name: values.name,
+        values: {
+          config: {
+            name: values.name,
+            databaseName: values.config.databaseName,
+            masterUsername: values.config.masterUsername,
+            masterUserPassword: values.config.masterUserPassword,
+            allocatedStorage: values.config.allocatedStorageGigabytes,
+            instanceClass: values.config.instanceClass,
+          },
         },
-      },
-      templateName: "rds-postgresql-aurora",
-    }))
-    .with({ config: { type: "elasticache-redis" } }, (values) => ({
-      values: {
-        config: {
-          name: values.name,
-          databaseName: values.config.databaseName,
-          masterUsername: values.config.masterUsername,
-          masterUserPassword: values.config.masterUserPassword,
-          instanceClass: values.config.instanceClass,
+        type: "RDS",
+        engine: "AURORA-POSTGRES",
+      })
+    )
+    .with(
+      { config: { type: "elasticache-redis" } },
+      (values): CreateDatastoreInput => ({
+        name: values.name,
+        values: {
+          config: {
+            name: values.name,
+            databaseName: values.config.databaseName,
+            masterUsername: values.config.masterUsername,
+            masterUserPassword: values.config.masterUserPassword,
+            instanceClass: values.config.instanceClass,
+          },
         },
-      },
-      templateName: "elasticache-redis",
-    }))
+        type: "ELASTICACHE",
+        engine: "REDIS",
+      })
+    )
     .exhaustive();
 };
 
@@ -59,16 +78,15 @@ export const useDatabaseMethods = (): DatabaseHook => {
 
   const create = useCallback(
     async (data: DbFormData): Promise<void> => {
-      const { values, templateName } = clientDbToValues(data);
-      const name = data.name;
+      const createDatastoreInput = clientDbToValues(data);
 
       await api.updateDatastore(
         "<token>",
         {
-          name,
-          engine: "",
-          type: "",
-          values,
+          name: createDatastoreInput.name,
+          type: createDatastoreInput.type,
+          engine: createDatastoreInput.engine,
+          values: createDatastoreInput.values,
         },
         {
           project_id: currentProject?.id || -1,

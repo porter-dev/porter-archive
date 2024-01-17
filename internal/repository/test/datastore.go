@@ -18,10 +18,12 @@ func NewDatastoreRepository() repository.DatastoreRepository {
 	return &DatastoreRepository{canQuery: false}
 }
 
+// GetByProjectIDAndName retrieves a datastore by project id and name
 func (repo *DatastoreRepository) GetByProjectIDAndName(ctx context.Context, projectID uint, name string) (*models.Datastore, error) {
 	return nil, errors.New("cannot read database")
 }
 
+// Insert inserts a datastore into the database
 func (repo *DatastoreRepository) Insert(ctx context.Context, datastore *models.Datastore) (*models.Datastore, error) {
 	return nil, errors.New("cannot write database")
 }

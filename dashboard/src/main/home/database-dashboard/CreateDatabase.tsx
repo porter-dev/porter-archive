@@ -96,8 +96,9 @@ const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
                       <Spacer inline x={0.5} />
                       <TemplateTitle>{name}</TemplateTitle>
                       <Spacer inline x={0.5} />
-                      <Tag hoverable={false}>{engine.displayName}</Tag>
                     </TemplateHeader>
+                    <Spacer y={0.5} />
+                    <Tag hoverable={false}>{engine.displayName}</Tag>
                     <Spacer y={0.5} />
                     <TemplateDescription>{description}</TemplateDescription>
                     <Spacer y={0.5} />

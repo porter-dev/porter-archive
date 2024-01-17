@@ -67,7 +67,7 @@ export const DATABASE_ENGINE_POSTGRES = {
   displayName: "PostgreSQL",
 };
 export const DATABASE_ENGINE_AURORA_POSTGRES = {
-  name: "AURORA_POSTGRES" as const,
+  name: "AURORA-POSTGRES" as const,
   displayName: "Aurora PostgreSQL",
 };
 export const DATABASE_ENGINE_REDIS = {

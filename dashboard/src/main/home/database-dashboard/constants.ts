@@ -19,6 +19,14 @@ export const getTemplateIcon = (type: string, engine: string): string => {
   return template ? template.icon : awsRDS;
 };
 
+export const getTemplateEngineDisplayName = (engine: string): string => {
+  const template = SUPPORTED_DATABASE_TEMPLATES.find(
+    (t) => t.engine.name === engine
+  );
+
+  return template ? template.engine.displayName : "";
+};
+
 export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
   Object.freeze({
     name: "Amazon RDS",

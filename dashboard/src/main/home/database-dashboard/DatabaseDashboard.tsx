@@ -12,6 +12,7 @@ import Fieldset from "components/porter/Fieldset";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
@@ -27,7 +28,7 @@ import loading from "assets/loading.gif";
 import notFound from "assets/not-found.png";
 import healthy from "assets/status-healthy.png";
 
-import { getTemplateIcon } from "./constants";
+import { getTemplateEngineDisplayName, getTemplateIcon } from "./constants";
 import { datastoreField } from "./utils";
 
 const DatabaseDashboard: React.FC = () => {
@@ -169,24 +170,27 @@ const DatabaseDashboard: React.FC = () => {
           <GridList>
             {(filteredDatabases ?? []).map(
               (datastore: ClientDatastore, i: number) => {
+                const templateIcon = getTemplateIcon(
+                  datastore.type,
+                  datastore.engine
+                );
+                // const templateDisplayName = getTemplateEngineDisplayName(
+                //   datastore.engine
+                // );
                 return (
                   <Link to={`/databases/${datastore.name}`} key={i}>
                     <Block>
-                      <Container row>
-                        <Icon
-                          src={getTemplateIcon(
-                            datastore.type,
-                            datastore.engine
-                          )}
-                        />
-                        <Text size={14}>{datastore.name}</Text>
-                        <Spacer inline x={2} />
-                      </Container>
-                      {renderStatusIcon(datastoreField(datastore, "status"))}
-                      <Container row>
-                        <Text size={13} color="#ffffff44">
-                          {datastore.engine}
-                        </Text>
+                      <Container row spaced>
+                        <Container row>
+                          <Icon src={templateIcon} />
+                          <Text size={14}>{datastore.name}</Text>
+                        </Container>
+                        {/* {templateDisplayName && (
+                          <Container row>
+                            <Spacer inline x={0.5} />
+                            <Tag hoverable={false}>{templateDisplayName}</Tag>
+                          </Container>
+                        )} */}
                       </Container>
                     </Block>
                   </Link>
@@ -198,22 +202,30 @@ const DatabaseDashboard: React.FC = () => {
           <List>
             {(filteredDatabases ?? []).map(
               (datastore: ClientDatastore, i: number) => {
+                const templateIcon = getTemplateIcon(
+                  datastore.type,
+                  datastore.engine
+                );
+                // const templateDisplayName = getTemplateEngineDisplayName(
+                //   datastore.engine
+                // );
                 return (
                   <Row to={`/databases/${datastore.name}`} key={i}>
                     <Container row>
-                      <MidIcon
-                        src={getTemplateIcon(datastore.type, datastore.engine)}
-                      />
+                      <MidIcon src={templateIcon} />
                       <Text size={14}>{datastore.name}</Text>
                       <Spacer inline x={1} />
                       <MidIcon src={healthy} height="16px" />
                     </Container>
                     <Spacer height="15px" />
-                    <Container row>
-                      <Text size={13} color="#ffffff44">
-                        {datastoreField(datastore, "engine")}
-                      </Text>
-                    </Container>
+                    {/* <Container row>
+                      {templateDisplayName && (
+                        <>
+                          <Spacer inline x={0.5} />
+                          <Tag hoverable={false}>{templateDisplayName}</Tag>
+                        </>
+                      )}
+                    </Container> */}
                   </Row>
                 );
               }

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import _ from "lodash";
+import _, { set } from "lodash";
 import styled from "styled-components";
 
 import Spacer from "components/porter/Spacer";
@@ -12,6 +12,12 @@ import Text from "components/porter/Text";
 import Select from "components/porter/Select";
 import Image from "components/porter/Image";
 import Banner from "components/porter/Banner";
+import Modal from "components/porter/Modal";
+import ExpandableSection from "components/porter/ExpandableSection";
+import Fieldset from "components/porter/Fieldset";
+import Link from "components/porter/Link";
+import Input from "components/porter/Input";
+import Button from "components/porter/Button";
 
 import framework from "assets/framework.svg";
 import typeSvg from "assets/type.svg";
@@ -20,8 +26,9 @@ import aws from "assets/aws.png";
 import vanta from "assets/vanta.svg";
 import linkExternal from "assets/link-external.svg";
 import greenCheck from "assets/green-check.svg";
-import actionRequired from "assets/warning.svg";
+import warning from "assets/warning.svg";
 import notApplicable from "assets/not-applicable.svg";
+import loading from "assets/loading.gif";
 
 type Props = {
   projectId: number;
@@ -96,7 +103,23 @@ const dummyChecks = [
 ];
 
 const ComplianceDashboard: React.FC<Props> = () => {
+  const [actionRequired, setActionRequired] = useState(true); // TODO: replace with actual data
+  const [provisioningError, setProvisioningError] = useState(""); // TODO: replace with actual data
+  const [provisioningStatus, setProvisioningStatus] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [confirmCost, setConfirmCost] = useState("");
+  const [showCostConsentModal, setShowCostConsentModal] = useState(false);
+
+  // TODO: implement
+  const updateInfrastructure = (): void => {
+    setProvisioningError("");
+    setProvisioningStatus("pending");
+
+    setTimeout(() => {
+      setProvisioningStatus("failed");
+      setProvisioningError("Error: Some step failed");
+    }, 2000);
+  };
 
   return (
     <StyledComplianceDashboard>
@@ -187,15 +210,56 @@ const ComplianceDashboard: React.FC<Props> = () => {
 
       <Spacer y={1} />
 
-      <Banner type="warning">
-        Action is required to pass additional controls.
-        <Spacer inline x={.5} />
-        <Text style={{ textDecoration: "underline", cursor: "pointer" }}>
-          Enable Porter SOC 2 infrastructure controls
-        </Text>
-      </Banner>
-
-      <Spacer y={1} />
+      {
+        actionRequired &&
+        provisioningStatus !== "pending" &&
+        provisioningStatus !== "failed" && (
+          <>
+            <Banner type="warning">
+              Action is required to pass additional controls.
+              <Spacer inline x={.5} />
+              <Text
+                style={{
+                  textDecoration: "underline",
+                  cursor: "pointer"
+                }}
+                onClick={() => {
+                  setShowCostConsentModal(true);
+                }}
+              >
+                Enable SOC 2 infrastructure controls
+              </Text>
+            </Banner>
+            <Spacer y={1} />
+          </>
+        )
+      }
+      {provisioningStatus === "pending" && (
+        <>
+          <Banner icon={<Image src={loading} style={{ height: "16px", width: "16px" }} />}>
+            SOC 2 infrastructure controls are being enabled. Note: This may take up to 30 minutes.
+          </Banner>
+          <Spacer y={1} />
+        </>
+      )}
+      {provisioningError && (
+        <>
+          <Banner type="error">
+            {provisioningError}
+            <Spacer inline x={.5} />
+            <Text
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer"
+              }}
+              onClick={updateInfrastructure}
+            >
+              Retry update
+            </Text>
+          </Banner>
+          <Spacer y={1} />
+        </>
+      )}
 
       <Container row>
         <PanelFilter
@@ -231,7 +295,7 @@ const ComplianceDashboard: React.FC<Props> = () => {
           }}
         >
           <Container row>
-            <Image src={actionRequired} size={12} />
+            <Image src={warning} size={12} />
             <Spacer inline x={.5} />
             <Text color="helper">Action required</Text>
           </Container>
@@ -264,7 +328,7 @@ const ComplianceDashboard: React.FC<Props> = () => {
               <Container style={{ width: "170px" }}>
                 {check.status === "passing" && <Image src={greenCheck} size={10} />}
                 {check.status === "action-required" && (
-                  <Image src={actionRequired} size={14} style={{ marginBottom: "-2px" }} />
+                  <Image src={warning} size={14} style={{ marginBottom: "-2px" }} />
                 )}
                 {check.status === "not-applicable" && (
                   <Image src={notApplicable} size={14} style={{ marginBottom: "-2px" }} />
@@ -300,11 +364,82 @@ const ComplianceDashboard: React.FC<Props> = () => {
         );
       })}
       <Spacer y={2} />
+
+      {showCostConsentModal && (
+        <Modal closeModal={() => { setShowCostConsentModal(false) }}>
+          <Text size={16}>SOC 2 cost consent (TODO)</Text>
+          <Spacer height="15px" />
+          <Text color="helper">
+            Porter will create the underlying infrastructure in your own AWS
+            account. You will be separately charged by AWS for this
+            infrastructure. The cost for this base infrastructure is as follows:
+          </Text>
+          <Spacer y={1} />
+          <ExpandableSection
+            noWrapper
+            expandText="[+] Show details"
+            collapseText="[-] Hide details"
+            Header={<Text size={20} weight={600}>$224.58 / mo</Text>}
+            ExpandedSection={
+              <>
+                <Spacer height="15px" />
+                <Fieldset background="#1b1d2688">
+                  • Amazon Elastic Kubernetes Service (EKS) = $73/mo
+                  <Spacer height="15px" />
+                  • Amazon EC2:
+                  <Spacer height="15px" />
+                  <Tab />+ System workloads: t3.medium instance (2) = $60.74/mo
+                  <Spacer height="15px" />
+                  <Tab />+ Monitoring workloads: t3.large instance (1) = $60.74/mo
+                  <Spacer height="15px" />
+                  <Tab />+ Application workloads: t3.medium instance (1) =
+                  $30.1/mo
+                </Fieldset>
+              </>
+            }
+          />
+          <Spacer y={1} />
+          <Text color="helper">
+            The base AWS infrastructure covers up to 2 vCPU and 4GB of RAM.
+            Separate from the AWS cost, Porter charges based on your resource
+            usage.
+          </Text>
+          <Spacer inline width="5px" />
+          <Spacer y={0.5} />
+          <Link hasunderline to="https://porter.run/pricing" target="_blank">
+            Learn more about our pricing.
+          </Link>
+          <Spacer y={1} />
+          <Input
+            placeholder="224.58"
+            value={confirmCost}
+            setValue={setConfirmCost}
+            width="100%"
+            height="40px"
+          />
+          <Spacer y={1} />
+          <Button
+            disabled={confirmCost !== "224.58"}
+            onClick={() => {
+              setConfirmCost("");
+              updateInfrastructure();
+              setShowCostConsentModal(false);
+            }}
+          >
+            Enable SOC 2 infra controls
+          </Button>
+        </Modal>
+      )}
     </StyledComplianceDashboard>
   );
 };
 
 export default ComplianceDashboard;
+
+const Tab = styled.span`
+  margin-left: 20px;
+  height: 1px;
+`;
 
 const PanelFilter = styled.div<{ isActive: boolean }>`
   display: flex;

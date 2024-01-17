@@ -32,6 +32,7 @@ import Fieldset from "components/porter/Fieldset";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Icon from "components/porter/Icon";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import ClusterDeletingPlaceholder from "components/ClusterDeletingPlaceholder";
 
 type Props = {};
 
@@ -213,6 +214,12 @@ const AppDashboard: React.FC<Props> = ({ }) => {
         description="Web services, workers, and jobs for this project."
         disableLineBreak
       />
+      {
+        currentCluster?.status === "DELETING"
+        && (
+          <ClusterDeletingPlaceholder />
+        )
+      }
       {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (

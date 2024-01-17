@@ -35,6 +35,7 @@ import {
   type CloudProviderWithSource,
 } from "./types";
 import { datastoreField } from "./utils";
+import ClusterDeletingPlaceHolder from "components/ClusterDeletingPlaceholder";
 
 type Props = {
   projectId: number;
@@ -165,6 +166,9 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
   };
 
   const renderContents = (): JSX.Element => {
+    if (currentCluster?.status === "DELETING") {
+      return <ClusterDeletingPlaceHolder />;
+    }
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
     }
@@ -334,7 +338,7 @@ const MidIcon = styled.img<{ height?: string }>`
   margin-right: 11px;
 `;
 
-const Row = styled(Link)<{ isAtBottom?: boolean }>`
+const Row = styled(Link) <{ isAtBottom?: boolean }>`
   cursor: pointer;
   display: block;
   padding: 15px;

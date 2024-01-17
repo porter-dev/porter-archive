@@ -5,6 +5,7 @@ import (
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
+	"k8s.io/utils/pointer"
 
 	"connectrpc.com/connect"
 
@@ -42,6 +43,10 @@ func NewRunAppJobHandler(
 type RunAppJobRequest struct {
 	ServiceName        string `json:"service_name"`
 	DeploymentTargetID string `json:"deployment_target_id"`
+	// Optional field to override the default run command for the job
+	RunCommand string `json:"run_command"`
+	// Image is an optional field to override the image used for the job
+	Image Image `json:"image,omitempty"`
 }
 
 // RunAppJobResponse is the response object for the /apps/{porter_app_name}/run endpoint
@@ -86,11 +91,30 @@ func (c *RunAppJobHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
 
+	var commandOptional *string
+	if request.RunCommand != "" {
+		commandOptional = pointer.String(request.RunCommand)
+	}
+
+	var imageOverrideOptional *porterv1.AppImage
+	if request.Image.Repository != "" || request.Image.Tag != "" {
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "image-override-repo", Value: request.Image.Repository},
+			telemetry.AttributeKV{Key: "image-override-tag", Value: request.Image.Tag},
+		)
+
+		imageOverrideOptional = &porterv1.AppImage{
+			Repository: request.Image.Repository,
+			Tag:        request.Image.Tag,
+		}
+	}
+
 	manualServiceRunReq := connect.NewRequest(&porterv1.ManualServiceRunRequest{
 		ProjectId:   int64(project.ID),
 		AppName:     appName,
 		ServiceName: request.ServiceName,
-		Command:     nil, // use default command for job
+		Command:     commandOptional,
+		Image:       imageOverrideOptional,
 		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
 			Id: request.DeploymentTargetID,
 		},

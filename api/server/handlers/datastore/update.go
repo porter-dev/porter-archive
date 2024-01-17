@@ -23,7 +23,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// UpdateDatastoreHandler is a struct for updating datastores
+// UpdateDatastoreHandler is a struct for updating datastores.
+// Currently, this is expected to used once (on create) and then not again, however the 'update' terminology was proactively used
+// so we can reuse this handler when we support updates in the future.
 type UpdateDatastoreHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
@@ -41,6 +43,7 @@ func NewUpdateDatastoreHandler(
 	}
 }
 
+// UpdateDatastoreRequest is the expected format of the request body
 type UpdateDatastoreRequest struct {
 	Name   string                 `json:"name"`
 	Type   string                 `json:"type"`
@@ -69,7 +72,6 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		telemetry.AttributeKV{Key: "engine", Value: request.Engine},
 	)
 
-	// add record to db
 	record, err := datastore.CreateOrGetDatastoreRecord(ctx, datastore.CreateOrGetDatastoreRecordInput{
 		ProjectID:           project.ID,
 		ClusterID:           cluster.ID,
@@ -85,7 +87,7 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// install datastore
+	// TODO: replace this with ccp call
 	err = h.InstallDatastore(ctx, InstallDatastoreInput{
 		Name:    record.Name,
 		Type:    record.Type,
@@ -99,10 +101,11 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// return success
+	// TODO: create an API-level representation of the db model rather than returning the model directly
 	h.WriteResult(w, r, record)
 }
 
+// InstallDatastoreInput is the input type for InstallDatastore
 type InstallDatastoreInput struct {
 	Name    string
 	Type    string
@@ -111,6 +114,7 @@ type InstallDatastoreInput struct {
 	Request *http.Request
 }
 
+// InstallDatastore installs a datastore by helm installing a template with the provided values
 func (h *UpdateDatastoreHandler) InstallDatastore(ctx context.Context, inp InstallDatastoreInput) error {
 	ctx, span := telemetry.NewSpan(ctx, "datastore-install")
 	defer span.End()
@@ -240,7 +244,6 @@ func (h *UpdateDatastoreHandler) scaleAckChartDeployment(ctx context.Context, ch
 	defer span.End()
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "namespace", Value: release.Namespace_ACKSystem},
 		telemetry.AttributeKV{Key: "chart-name", Value: chart},
 	)
 

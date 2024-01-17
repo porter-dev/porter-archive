@@ -1,6 +1,12 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import type { JsonValue } from "@bufbuild/protobuf";
-import { Cluster, Contract, EKS, EKSLogging } from "@porter-dev/api-contracts";
+import {
+  CloudwatchAlarm,
+  Cluster,
+  Contract,
+  EKS,
+  EKSLogging,
+} from "@porter-dev/api-contracts";
 import axios from "axios";
 import styled from "styled-components";
 import { match } from "ts-pattern";
@@ -17,10 +23,10 @@ import SOC2Checks from "components/SOC2Checks";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { type Soc2Data } from "shared/types";
 import sparkle from "assets/sparkle.svg";
 
 import DonutChart from "./DonutChart";
-import { Soc2Data } from "shared/types";
 
 type Props = {
   credentialId: string;
@@ -39,6 +45,7 @@ type Props = {
 //   "locked":(true if unmutable field like KMS),
 //   "disabledTooltip": "display if message is disabled",
 //  "hideToggle": true (if you want to hide the toggle
+//  "email": ["example@porter"] (if you want to add an email field to pass in)
 // }
 const soc2DataDefault: Soc2Data = {
   soc2_checks: {
@@ -46,7 +53,8 @@ const soc2DataDefault: Soc2Data = {
       message:
         "Porter-provisioned instances do not allow remote SSH access. Users are not allowed to invoke commands directly on the host, and all commands are invoked via the EKS Control Plane.",
       enabled: true,
-      hideToggle: true,
+      locked: true,
+      disabledTooltip: "Enabled by default by Porter",
       status: "ENABLED",
     },
     "Cluster Secret Encryption": {
@@ -70,6 +78,22 @@ const soc2DataDefault: Soc2Data = {
       message:
         "AWS ECR scans for CVEs from the open-source Clair database on push image push. Enhanced scanning provides continuous, automated scans against images as new vulnerabilities appear.",
       link: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
+      enabled: false,
+      info: "",
+      status: "",
+    },
+    "Cloudwatch Alarm Creation": {
+      message:
+        "AWS Cloudwatch Alarms will be created for various components in your infrastructure provisioned by Porter. Alarm notifications will be sent on behalf of Porter via an AWS SNS Topic to the provided email addresses. Email addresses must be manually confirmed in the respective inboxes before notifications will be sent.",
+      enabled: false,
+      info: "",
+      status: "",
+      email: [], // this is a special case for email
+    },
+    "Intrusion Detection": {
+      message:
+        "Amazon GuardDuty is a threat detection service offered by AWS that continuously monitors and analyzes your AWS account for malicious activity and unauthorized behavior. By leveraging machine learning, anomaly detection, and threat intelligence, GuardDuty provides real-time alerts, helping you proactively identify and respond to security threats, ultimately enhancing the overall security posture of your AWS environment.",
+      link: "https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html",
       enabled: false,
       info: "",
       status: "",
@@ -123,7 +147,6 @@ const Compliance: React.FC<Props> = (props) => {
       );
 
       const contract = createContract(result.base64_contract);
-
       await api.createContract("<token>", contract, {
         project_id: currentProject.id,
       });
@@ -160,6 +183,11 @@ const Compliance: React.FC<Props> = (props) => {
       soc2Data.soc2_checks["Cluster Secret Encryption"].enabled;
     const ecrScanningEnabled =
       soc2Data.soc2_checks["Enhanced Image Vulnerability Scanning"].enabled;
+    const snsMonitoringEnabled =
+      soc2Data.soc2_checks["Cloudwatch Alarm Creation"].enabled;
+    const snsMonitoringEmails =
+      soc2Data.soc2_checks["Cloudwatch Alarm Creation"].email;
+    const enableGuardDuty = soc2Data.soc2_checks["Intrusion Detection"].enabled;
 
     const contractData = JSON.parse(atob(base64Contract));
     const latestCluster: Cluster = Cluster.fromJson(contractData.cluster, {
@@ -176,6 +204,8 @@ const Compliance: React.FC<Props> = (props) => {
             ecrScanningEnabled ||
             value.enableEcrScanning ||
             false,
+          enableGuardDuty:
+            soc2Enabled || enableGuardDuty || value.enableGuardDuty || false,
           logging: new EKSLogging({
             enableApiServerLogs: soc2Enabled || cloudTrailEnabled || false,
             enableAuditLogs: soc2Enabled || cloudTrailEnabled || false,
@@ -184,6 +214,10 @@ const Compliance: React.FC<Props> = (props) => {
             enableControllerManagerLogs:
               soc2Enabled || cloudTrailEnabled || false,
             enableSchedulerLogs: soc2Enabled || cloudTrailEnabled || false,
+          }),
+          cloudwatchAlarm: new CloudwatchAlarm({
+            enable: soc2Enabled || snsMonitoringEnabled || false,
+            emails: snsMonitoringEmails || [],
           }),
         }),
         case: "eksKind" as const,
@@ -236,11 +270,26 @@ const Compliance: React.FC<Props> = (props) => {
     return "";
   };
 
+  // function to check if any fields are missing
+  const missingFields = (): boolean => {
+    const checks = soc2Data.soc2_checks;
+    for (const key in checks) {
+      if (
+        (checks[key].enabled || soc2Enabled) &&
+        checks[key].email?.length === 0
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const isDisabled = (): boolean | undefined => {
     return (
       isUserProvisioning ||
       isClicked ||
-      (currentCluster && !currentProject?.enable_reprovision)
+      (currentCluster && !currentProject?.enable_reprovision) ||
+      missingFields()
     );
   };
 
@@ -261,7 +310,7 @@ const Compliance: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const isUserProvisioning = useMemo(() => {
@@ -310,19 +359,34 @@ const Compliance: React.FC<Props> = (props) => {
             },
             "Enhanced Image Vulnerability Scanning": {
               ...prevSoc2Data.soc2_checks[
-              "Enhanced Image Vulnerability Scanning"
+                "Enhanced Image Vulnerability Scanning"
               ],
               enabled: eksValues.enableEcrScanning,
               status: determineStatus(eksValues.enableEcrScanning),
+            },
+            "Cloudwatch Alarm Creation": {
+              ...prevSoc2Data.soc2_checks["Cloudwatch Alarm Creation"],
+              enabled: eksValues.cloudwatchAlarm?.enable || false,
+              status: determineStatus(
+                eksValues.cloudwatchAlarm?.enable || false
+              ),
+              email: eksValues.cloudwatchAlarm?.emails || [],
+            },
+            "Intrusion Detection": {
+              ...prevSoc2Data.soc2_checks["Intrusion Detection"],
+              enabled: eksValues.enableGuardDuty,
+              status: determineStatus(eksValues.enableGuardDuty),
             },
           },
         };
       });
 
+      // if new control is added add its individual enabled field to align with the enabled field here
       setSoc2Enabled(
         cloudTrailEnabled &&
-        eksValues.enableKmsEncryption &&
-        eksValues.enableEcrScanning
+          eksValues.enableKmsEncryption &&
+          eksValues.enableEcrScanning &&
+          (eksValues.cloudwatchAlarm?.enable || false)
       );
     }
   }, [props.selectedClusterVersion]);
@@ -334,7 +398,7 @@ const Compliance: React.FC<Props> = (props) => {
 
     setIsReadOnly(
       currentCluster.status === "UPDATING" ||
-      currentCluster.status === "UPDATING_UNAVAILABLE"
+        currentCluster.status === "UPDATING_UNAVAILABLE"
     );
   }, []);
 
@@ -366,6 +430,9 @@ const Compliance: React.FC<Props> = (props) => {
           disabled={isDisabled() ?? isLoading}
           onClick={applySettings}
           status={getStatus()}
+          disabledTooltipMessage={
+            "Missing fields. Please fill out all required fields to enable SOC 2 compliance."
+          }
         >
           Save settings
         </Button>

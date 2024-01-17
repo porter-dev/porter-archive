@@ -429,8 +429,6 @@ export type ContextProps = {
   setEnableGitlab: (enableGitlab: boolean) => void;
   shouldRefreshClusters: boolean;
   setShouldRefreshClusters: (shouldRefreshClusters: boolean) => void;
-  soc2Data: any;
-  setSoc2Data: (x: any) => void;
 };
 
 export enum JobStatusType {
@@ -739,6 +737,7 @@ export type Soc2Check = {
   locked?: boolean;
   enabledField?: string;
   info?: string;
+  email?: string[];
 };
 
 export type Soc2Data = {

@@ -4,6 +4,7 @@ import styled from "styled-components";
 
 import Container from "components/porter/Container";
 
+import { type Soc2Check, type Soc2Data } from "shared/types";
 import external_link from "assets/external-link.svg";
 import failure from "assets/failure.svg";
 import pending from "assets/pending.svg";
@@ -14,13 +15,13 @@ import Link from "./porter/Link";
 import Spacer from "./porter/Spacer";
 import Text from "./porter/Text";
 import ToggleRow from "./porter/ToggleRow";
-import { type Soc2Data, type Soc2Check } from "shared/types";
+import SOC2EmailComponent from "./SOC2EmailComponent";
 
 type Props = RouteComponentProps & {
-  soc2Data: Soc2Check;
+  soc2Data: Soc2Data;
   error?: string;
   enableAll: boolean;
-  setSoc2Data: (x: Soc2Check) => void;
+  setSoc2Data: (x: Soc2Data) => void;
   readOnly: boolean;
 };
 type ItemProps = RouteComponentProps & {
@@ -63,8 +64,8 @@ const SOC2Checks: React.FC<Props> = ({
           status: !soc2Checks[key].enabled
             ? ""
             : soc2Checks[key].status === "PENDING_ENABLED"
-              ? "PENDING_ENABLED"
-              : "ENABLED",
+            ? "PENDING_ENABLED"
+            : "ENABLED",
         };
         return acc;
       }, {});
@@ -76,8 +77,8 @@ const SOC2Checks: React.FC<Props> = ({
   }, [enableAll]);
 
   const Soc2Item: React.FC<ItemProps> = ({ checkKey, checkLabel }) => {
-    const checkData = soc2Data?.soc2_checks?.[checkKey];
-    const hasMessage = checkData?.message;
+    const checkData: Soc2Check = soc2Data?.soc2_checks?.[checkKey];
+    const hasMessage: S = checkData?.message;
     const enabled = checkData?.enabled;
     const status = checkData?.status;
 
@@ -174,8 +175,8 @@ const SOC2Checks: React.FC<Props> = ({
                       readOnly
                         ? "Wait for provisioning to complete before editing this field."
                         : enableAll
-                          ? "Global SOC 2 setting must be disabled to toggle this"
-                          : checkData?.disabledTooltip
+                        ? "Global SOC 2 setting must be disabled to toggle this"
+                        : checkData?.disabledTooltip
                     }
                   >
                     <Container row>
@@ -196,6 +197,17 @@ const SOC2Checks: React.FC<Props> = ({
                     </Link>
                   )}
                 </Container>
+                {checkData.email && (checkData.enabled || enableAll) && (
+                  <>
+                    <Spacer y={1} />
+                    <SOC2EmailComponent
+                      emails={checkData.email}
+                      enabled={checkData.enabled}
+                      setSoc2Data={setSoc2Data}
+                      soc2CheckKey={checkKey}
+                    />
+                  </>
+                )}
                 <Spacer y={0.5} />
               </>
             )}
@@ -207,9 +219,6 @@ const SOC2Checks: React.FC<Props> = ({
   return (
     <>
       <>
-        {/* <Fieldset>
-        <DonutChart soc2Data={soc2Data} />
-      </Fieldset> */}
         <Spacer y={1} />
         <AppearingDiv>
           {Array.from(combinedKeys).map((checkKey) => (
@@ -256,7 +265,7 @@ const CheckItemContainer = styled.div`
     props.isExpanded
       ? "2px solid #3a48ca"
       : "1px solid " +
-      props.theme.border}; // Thicker and blue border if expanded
+        props.theme.border}; // Thicker and blue border if expanded
   border-radius: 5px;
   font-size: 13px;
   width: 100%;

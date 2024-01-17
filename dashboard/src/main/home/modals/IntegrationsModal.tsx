@@ -66,7 +66,7 @@ export default class IntegrationsModal extends Component<PropsType, StateType> {
           return !sameCloudProvider ? (
             <Tooltip
               key={i}
-              content="Must be on the same cloud provider as your current cluster"
+              content="Registries must be on the same cloud provider as your provisioned cluster"
               position="bottom"
             >
               <IntegrationOption

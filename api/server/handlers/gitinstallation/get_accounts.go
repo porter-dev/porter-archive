@@ -2,7 +2,6 @@ package gitinstallation
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"sort"
 	"time"
@@ -75,8 +74,6 @@ func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
 func (c *GetGithubAppAccountsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-github-app-accounts")
 	defer span.End()
-
-	fmt.Println("dgtown")
 
 	r = r.Clone(ctx)
 

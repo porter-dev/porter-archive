@@ -8,7 +8,6 @@ import { v4 as uuidv4 } from "uuid";
 import Back from "components/porter/Back";
 import ClickToCopy from "components/porter/ClickToCopy";
 import Container from "components/porter/Container";
-import { ControlledInput } from "components/porter/ControlledInput";
 import Error from "components/porter/Error";
 import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
@@ -60,7 +59,6 @@ const DatabaseFormElasticacheRedis: React.FC<Props> = ({
   const {
     setValue,
     formState: { errors },
-    register,
     watch,
   } = dbForm;
 
@@ -99,24 +97,9 @@ const DatabaseFormElasticacheRedis: React.FC<Props> = ({
           <DatabaseForm
             steps={[
               <>
-                <Text size={16}>Specify database name</Text>
+                <Text size={16}>Specify resources</Text>
                 <Spacer y={0.5} />
-                <Text color="helper">
-                  Lowercase letters, numbers, and &quot;-&quot; only.
-                </Text>
-                <Spacer height="20px" />
-                <ControlledInput
-                  placeholder="ex: academic-sophon-db"
-                  type="text"
-                  width="300px"
-                  error={errors.name?.message}
-                  {...register("name")}
-                />
-              </>,
-              <>
-                <Text size={16}>Specify database resources</Text>
-                <Spacer y={0.5} />
-                <Text color="helper">Specify your database CPU and RAM.</Text>
+                <Text color="helper">Specify your datastore CPU and RAM.</Text>
                 {errors.config?.instanceClass?.message && (
                   <AppearingErrorContainer>
                     <Spacer y={0.5} />
@@ -140,7 +123,7 @@ const DatabaseFormElasticacheRedis: React.FC<Props> = ({
                 />
               </>,
               <>
-                <Text size={16}>Database credentials</Text>
+                <Text size={16}>View credentials</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
                   These credentials never leave your own cloud environment. You

@@ -186,6 +186,7 @@ export const dbFormValidator = z.object({
     auroraPostgresConfigValidator,
     elasticacheRedisConfigValidator,
   ]),
+  clusterId: z.number(),
 });
 export type DbFormData = z.infer<typeof dbFormValidator>;
 

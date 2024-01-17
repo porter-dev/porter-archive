@@ -499,6 +499,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/datastores -> datastore.NewGetDatastoreHandler
+	getDatastoreEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/datastores/{%s}", relPath, types.URLParamDatastoreName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getDatastoreHandler := datastore.NewGetDatastoreHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getDatastoreEndpoint,
+		Handler:  getDatastoreHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/roles -> project.NewRoleUpdateHandler
 	updateRoleEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

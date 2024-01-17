@@ -13,7 +13,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
-	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -59,110 +58,70 @@ type Datastore struct {
 	Status string `json:"status,omitempty"`
 }
 
-// ListDatastoresHandler is a struct for handling list datastores requests
-type ListDatastoresHandler struct {
+// ListAllDatastoresForProjectHandler is a struct for listing all datastores for a given project
+type ListAllDatastoresForProjectHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewListDatastoresHandler constructs a datastore ListDatastoresHandler
-func NewListDatastoresHandler(
+// NewListAllDatastoresForProjectHandler constructs a datastore ListAllDatastoresForProjectHandler
+func NewListAllDatastoresForProjectHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *ListDatastoresHandler {
-	return &ListDatastoresHandler{
+) *ListAllDatastoresForProjectHandler {
+	return &ListAllDatastoresForProjectHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-// ServeHTTP returns a list of datastores associated with the specified project/cloud-provider
-func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-datastore-list")
+// ServeHTTP returns a list of datastores associated with the specified project
+func (h *ListAllDatastoresForProjectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-all-datastores-for-project")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	request := &ListDatastoresRequest{}
-	if ok := h.DecodeAndValidate(w, r, request); !ok {
-		return
-	}
-
-	cloudProviderType, reqErr := requestutils.GetURLParamString(r, types.URLParamCloudProviderType)
-	if reqErr != nil {
-		err := telemetry.Error(ctx, span, reqErr, "error parsing cloud provider type")
-		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cloud-provider-type", Value: cloudProviderType})
-
-	cloudProviderID, reqErr := requestutils.GetURLParamString(r, types.URLParamCloudProviderID)
-	if reqErr != nil {
-		err := telemetry.Error(ctx, span, reqErr, "error parsing cloud provider id")
-		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cloud-provider-id", Value: cloudProviderID})
-
-	datastoreType := porterv1.EnumDatastore_ENUM_DATASTORE_UNSPECIFIED
-	switch request.Type {
-	case "elasticache-redis":
-		datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_ELASTICACHE_REDIS
-	case "rds-postgresql":
-		datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_RDS_POSTGRESQL
-	case "rds-postgresql-aurora":
-		datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_RDS_AURORA_POSTGRESQL
-	case "":
-		datastoreType = porterv1.EnumDatastore_ENUM_DATASTORE_UNSPECIFIED
-	default:
-		err := telemetry.Error(ctx, span, nil, "invalid datastore type specified")
-		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	var cloudProvider porterv1.EnumCloudProvider
-	switch cloudProviderType {
-	case "aws":
-		cloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS
-	default:
-		err := telemetry.Error(ctx, span, nil, "unsupported cloud provider")
-		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "datastore-name", Value: request.Name},
-		telemetry.AttributeKV{Key: "datastore-type", Value: request.Type},
-		telemetry.AttributeKV{Key: "include-env-group", Value: request.IncludeEnvGroup},
-		telemetry.AttributeKV{Key: "include-metadata", Value: request.IncludeMetadata},
-		telemetry.AttributeKV{Key: "cloud-provider-type", Value: int(cloudProvider)},
-		telemetry.AttributeKV{Key: "cloud-provider-id", Value: cloudProviderID},
-	)
-
-	response := ListDatastoresResponse{
-		Datastores: []Datastore{},
-	}
-
-	datastores, err := Datastores(ctx, DatastoresInput{
-		ProjectID:       project.ID,
-		Name:            request.Name,
-		Type:            datastoreType,
-		IncludeEnvGroup: request.IncludeEnvGroup,
-		IncludeMetadata: request.IncludeMetadata,
-		CloudProvider: cloud_provider.CloudProvider{
-			Type:      cloudProvider,
-			AccountID: cloudProviderID,
-		},
-		CCPClient: h.Config().ClusterControlPlaneClient,
+	// TODO: replace everything below with a single ccp call.
+	// Currently we are required to retrieve and send account ids to ccp because of the way the ccp endpoint is implemented,
+	// but we should really just send a project id and let ccp do the rest.
+	cloudProviders, err := cloud_provider.AwsAccounts(ctx, cloud_provider.AwsAccountsInput{
+		ProjectID:                    project.ID,
+		AWSAssumeRoleChainRepository: h.Repo().AWSAssumeRoleChainer(),
 	})
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error listing datastores")
+		err := telemetry.Error(ctx, span, err, "error getting cloud providers")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	response.Datastores = datastores
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "num-cloud-providers", Value: len(cloudProviders)})
+
+	allDatastores := []Datastore{}
+
+	for _, cloudProvider := range cloudProviders {
+		datastoresForCloudProvider, err := Datastores(ctx, DatastoresInput{
+			ProjectID:       project.ID,
+			CloudProvider:   cloudProvider,
+			IncludeMetadata: true,
+			CCPClient:       h.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			telemetry.WithAttributes(span,
+				telemetry.AttributeKV{Key: "cloud-provider-id", Value: cloudProvider.AccountID},
+				telemetry.AttributeKV{Key: "cloud-provider-type", Value: int(cloudProvider.Type)},
+			)
+			err := telemetry.Error(ctx, span, err, "error getting datastores")
+			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		allDatastores = append(allDatastores, datastoresForCloudProvider...)
+	}
+
+	response := ListDatastoresResponse{
+		Datastores: allDatastores,
+	}
 
 	h.WriteResult(w, r, response)
 }

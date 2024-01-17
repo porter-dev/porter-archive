@@ -465,10 +465,10 @@ const Home: React.FC<Props> = (props) => {
                 <Route path="/databases/new">
                   <CreateDatabase />
                 </Route>
-                <Route path="/databases/:databaseName/:tab">
+                <Route path="/databases/:datastoreName/:tab">
                   <DatabaseView />
                 </Route>
-                <Route path="/databases/:databaseName">
+                <Route path="/databases/:datastoreName">
                   <DatabaseView />
                 </Route>
                 <Route path="/databases">

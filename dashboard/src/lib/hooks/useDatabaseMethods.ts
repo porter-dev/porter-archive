@@ -74,10 +74,13 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
 };
 
 export const useDatabaseMethods = (): DatabaseHook => {
-  const { capabilities, currentProject, currentCluster } = useContext(Context);
+  const { capabilities, currentProject } = useContext(Context);
 
   const create = useCallback(
     async (data: DbFormData): Promise<void> => {
+      if (!currentProject?.id || currentProject.id === -1) {
+        return;
+      }
       const createDatastoreInput = clientDbToCreateInput(data);
 
       await api.updateDatastore(
@@ -90,11 +93,11 @@ export const useDatabaseMethods = (): DatabaseHook => {
         },
         {
           project_id: currentProject?.id || -1,
-          cluster_id: currentCluster?.id || -1,
+          cluster_id: data.clusterId,
         }
       );
     },
-    [currentProject, currentCluster, capabilities]
+    [currentProject, capabilities]
   );
 
   return { create };

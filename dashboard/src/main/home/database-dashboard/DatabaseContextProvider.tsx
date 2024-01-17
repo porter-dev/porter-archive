@@ -1,16 +1,14 @@
 import React, { createContext, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 import styled from "styled-components";
+import { z } from "zod";
 
 import Loading from "components/Loading";
 import Container from "components/porter/Container";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import {
-  datastoreListResponseValidator,
-  type ClientDatastore,
-} from "lib/databases/types";
+import { datastoreValidator, type ClientDatastore } from "lib/databases/types";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -49,27 +47,19 @@ export const DatabaseContextProvider: React.FC<
       if (!paramsExist) {
         return;
       }
-      const response = await api.getDatastores(
+      const response = await api.getDatastore(
         "<token>",
         {},
         {
           project_id: currentProject.id,
-          cloud_provider_id: cloudProviderId,
-          cloud_provider_name: cloudProviderName,
           datastore_name: datastoreName,
-          include_env_group: true,
-          include_metadata: true,
         }
       );
 
-      const results = await datastoreListResponseValidator.parseAsync(
-        response.data
-      );
-      if (results.datastores.length !== 1) {
-        return;
-      }
-
-      return results.datastores[0];
+      const results = await z
+        .object({ datastore: datastoreValidator })
+        .parseAsync(response.data);
+      return results.datastore;
     },
     {
       enabled: paramsExist,

@@ -2749,6 +2749,16 @@ const listDatastores = baseApi<
   return `/api/projects/${project_id}/datastores`;
 });
 
+const getDatastore = baseApi<
+  {},
+  {
+    project_id: number;
+    datastore_name: string;
+  }
+>("GET", ({ project_id, datastore_name }) => {
+  return `/api/projects/${project_id}/datastores/${datastore_name}`;
+});
+
 const updateDatastore = baseApi<
   {
     name: string;
@@ -3635,6 +3645,7 @@ export default {
   getDatabases,
   getDatastores,
   listDatastores,
+  getDatastore,
   updateDatastore,
   deleteDatastore,
   getPreviousLogsForContainer,

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import _ from "lodash";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
@@ -6,14 +6,19 @@ import { withRouter, type RouteComponentProps } from "react-router";
 import styled, { keyframes } from "styled-components";
 
 import Button from "components/porter/Button";
+import { ControlledInput } from "components/porter/ControlledInput";
 import Error from "components/porter/Error";
+import Selector from "components/porter/Selector";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import { type DbFormData } from "lib/databases/types";
+import { useClusterList } from "lib/hooks/useClusterList";
 import { useDatabaseList } from "lib/hooks/useDatabaseList";
 import { useDatabaseMethods } from "lib/hooks/useDatabaseMethods";
 import { useIntercom } from "lib/hooks/useIntercom";
+
+import { Context } from "shared/Context";
 
 type Props = RouteComponentProps & {
   steps: React.ReactNode[];
@@ -30,13 +35,20 @@ const DatabaseForm: React.FC<Props> = ({
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string>("");
   const { create: createDatabase } = useDatabaseMethods();
   const { showIntercomWithMessage } = useIntercom();
+  const { clusters } = useClusterList();
+  const { currentProject } = useContext(Context);
 
   const {
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors, isValidating },
     handleSubmit,
+    register,
+    setValue,
+    watch,
   } = form;
 
   const { datastores: existingDatabases } = useDatabaseList();
+
+  const chosenClusterId = watch("clusterId", 0);
 
   const onSubmit = handleSubmit(async (data) => {
     setSubmitErrorMessage("");
@@ -62,14 +74,20 @@ const DatabaseForm: React.FC<Props> = ({
   });
 
   const submitButtonStatus = useMemo(() => {
-    if (isSubmitting) {
+    if (isSubmitting || isValidating) {
       return "loading";
     }
     if (submitErrorMessage) {
       return <Error message={submitErrorMessage} />;
     }
     return undefined;
-  }, [isSubmitting, submitErrorMessage]);
+  }, [isSubmitting, submitErrorMessage, isValidating]);
+
+  useEffect(() => {
+    if (clusters.length > 0) {
+      setValue("clusterId", clusters[0].id);
+    }
+  }, [JSON.stringify(clusters)]);
 
   return (
     <FormProvider {...form}>
@@ -77,15 +95,48 @@ const DatabaseForm: React.FC<Props> = ({
         <VerticalSteps
           currentStep={currentStep}
           steps={[
+            <>
+              <Text size={16}>Specify name</Text>
+              <Spacer y={0.5} />
+              <Text color="helper">
+                Lowercase letters, numbers, and &quot;-&quot; only.
+              </Text>
+              <Spacer height="20px" />
+              <ControlledInput
+                placeholder="ex: academic-sophon-db"
+                type="text"
+                width="300px"
+                error={errors.name?.message}
+                {...register("name")}
+              />
+              {currentProject?.multi_cluster && (
+                <>
+                  <Spacer y={1} />
+                  <Selector<string>
+                    activeValue={chosenClusterId.toString()}
+                    width="300px"
+                    options={clusters.map((c) => ({
+                      value: c.id.toString(),
+                      label: c.vanity_name,
+                      key: c.id.toString(),
+                    }))}
+                    setActiveValue={(value: string) => {
+                      setValue("clusterId", parseInt(value));
+                    }}
+                    label={"Cluster"}
+                  />
+                </>
+              )}
+            </>,
             ...steps,
             <>
-              <Text size={16}>Create database instance</Text>
+              <Text size={16}>Create datastore instance</Text>
               <Spacer y={0.5} />
               <Button
                 type="submit"
                 status={submitButtonStatus}
                 loadingText={"Creating..."}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isValidating}
               >
                 Create
               </Button>

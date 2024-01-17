@@ -3,6 +3,8 @@ package gitinstallation
 import (
 	"net/http"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -30,15 +32,20 @@ func NewGithubAppWebhookHandler(
 }
 
 func (c *GithubAppWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-new-github-app-webhook")
+	defer span.End()
+
 	payload, err := github.ValidatePayload(r, []byte(c.Config().GithubAppConf.WebhookSecret))
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error validating payload")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
 	event, err := github.ParseWebHook(github.WebHookType(r), payload)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error parsing webhook")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
@@ -54,19 +61,23 @@ func (c *GithubAppWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 					InstallationID: *e.Installation.ID,
 				})
 				if err != nil {
-					c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+					err = telemetry.Error(ctx, span, err, "error creating github app installation")
+					c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+					return
 				}
 
 				return
 			} else if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				err = telemetry.Error(ctx, span, err, "error reading github app installation")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 		}
 		if *e.Action == "deleted" {
 			err := c.Repo().GithubAppInstallation().DeleteGithubAppInstallationByAccountID(*e.Installation.Account.ID)
 			if err != nil {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				err = telemetry.Error(ctx, span, err, "error deleting github app installation")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 		}

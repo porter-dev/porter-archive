@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import _ from "lodash";
 import styled from "styled-components";
 
@@ -11,6 +11,7 @@ import Container from "components/porter/Container";
 import Text from "components/porter/Text";
 import Select from "components/porter/Select";
 import Image from "components/porter/Image";
+import Banner from "components/porter/Banner";
 
 import framework from "assets/framework.svg";
 import typeSvg from "assets/type.svg";
@@ -18,12 +19,17 @@ import provider from "assets/provider.svg";
 import aws from "assets/aws.png";
 import vanta from "assets/vanta.svg";
 import linkExternal from "assets/link-external.svg";
+import greenCheck from "assets/green-check.svg";
+import actionRequired from "assets/warning.svg";
+import notApplicable from "assets/not-applicable.svg";
 
 type Props = {
   projectId: number;
 };
 
 const ComplianceDashboard: React.FC<Props> = () => {
+  const [statusFilter, setStatusFilter] = useState("all");
+
   return (
     <StyledComplianceDashboard>
       <DashboardHeader
@@ -92,7 +98,9 @@ const ComplianceDashboard: React.FC<Props> = () => {
           }
         />
       </Container>
+
       <Spacer y={1} />
+
       <Container row>
         <Image src={vanta} size={25} />
         <Spacer inline x={1} />
@@ -108,11 +116,91 @@ const ComplianceDashboard: React.FC<Props> = () => {
           <Image src={linkExternal} size={16} additionalStyles="margin-bottom: -2px"/>
         </Text>
       </Container>
+
+      <Spacer y={1} />
+
+      <Banner type="warning">
+        Action is required to pass additional controls.
+      </Banner>
+
+      <Spacer y={1} />
+
+      <Container row>
+        <PanelFilter
+          isActive={statusFilter === "all"}
+          onClick={() => {
+            setStatusFilter("all");
+          }}
+        >
+          <Text color="helper">All</Text>
+          <Spacer y={.2} />
+          <Text size={18}>45</Text>
+        </PanelFilter>
+        <Spacer inline x={1.5} />
+        <PanelFilter
+          isActive={statusFilter === "passing"}
+          onClick={() => {
+            setStatusFilter("passing");
+          }}
+        >
+          <Container row>
+            <Image src={greenCheck} size={10} />
+            <Spacer inline x={.5} />
+            <Text color="helper">Passing</Text>
+          </Container>
+          <Spacer y={.2} />
+          <Text size={18}>3</Text>
+        </PanelFilter>
+        <Spacer inline x={1.5} />
+        <PanelFilter
+          isActive={statusFilter === "action-required"}
+          onClick={() => {
+            setStatusFilter("action-required");
+          }}
+        >
+          <Container row>
+            <Image src={actionRequired} size={12} />
+            <Spacer inline x={.5} />
+            <Text color="helper">Action required</Text>
+          </Container>
+          <Spacer y={.2} />
+          <Text size={18}>17</Text>
+        </PanelFilter>
+        <Spacer inline x={1.5} />
+        <PanelFilter
+          isActive={statusFilter === "not-applicable"}
+          onClick={() => {
+            setStatusFilter("not-applicable");
+          }}
+        >
+          <Container row>
+            <Image src={notApplicable} size={12} />
+            <Spacer inline x={.5} />
+            <Text color="helper">Not applicable</Text>
+          </Container>
+          <Spacer y={.2} />
+          <Text size={18}>25</Text>
+        </PanelFilter>
+      </Container>
     </StyledComplianceDashboard>
   );
 };
 
 export default ComplianceDashboard;
+
+const PanelFilter = styled.div<{ isActive: boolean }>`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 10px 15px;
+  cursor: pointer;
+  border-radius: 5px;
+  background: ${(props) => props.theme.clickable.bg};
+  border: 1px solid ${(props) => props.isActive ? "#fefefe" : "#494b4f"};
+  :hover {
+    ${(props) => !props.isActive && "border: 1px solid #7a7b80;"}
+  }
+`;
 
 const StyledComplianceDashboard = styled.div`
   width: 100%;

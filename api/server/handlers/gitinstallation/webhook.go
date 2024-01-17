@@ -35,6 +35,8 @@ func (c *GithubAppWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-new-github-app-webhook")
 	defer span.End()
 
+	r = r.Clone(ctx)
+
 	payload, err := github.ValidatePayload(r, []byte(c.Config().GithubAppConf.WebhookSecret))
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error validating payload")

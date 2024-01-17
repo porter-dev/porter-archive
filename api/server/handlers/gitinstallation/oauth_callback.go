@@ -36,6 +36,8 @@ func (c *GithubAppOAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-github-app-oauth-callback")
 	defer span.End()
 
+	r = r.Clone(ctx)
+
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "user-id", Value: user.ID})

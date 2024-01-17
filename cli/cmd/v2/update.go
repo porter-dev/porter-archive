@@ -31,6 +31,8 @@ type UpdateInput struct {
 	PorterYamlPath string
 	// AppName is the name of the app
 	AppName string
+	// ImageTagOverride is the image tag to use for the app revision
+	ImageTagOverride string
 	// PreviewApply is true when Update should create a new deployment target matching current git branch and apply to that target
 	PreviewApply bool
 	// WaitForSuccessfulDeployment is true when Update should wait for the revision deployment to complete (all services deployed successfully)
@@ -106,10 +108,11 @@ func Update(ctx context.Context, inp UpdateInput) error {
 		ProjectID:          cliConf.Project,
 		ClusterID:          cliConf.Cluster,
 		Name:               inp.AppName,
+		ImageTagOverride:   inp.ImageTagOverride,
 		GitSource:          gitSource,
 		DeploymentTargetId: deploymentTargetID,
-		Base64PorterYAML:   b64YAML,
 		CommitSHA:          commitSHA,
+		Base64PorterYAML:   b64YAML,
 	}
 
 	updateResp, err := client.UpdateApp(ctx, updateInput)

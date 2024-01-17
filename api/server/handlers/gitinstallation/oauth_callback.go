@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -31,21 +33,32 @@ func NewGithubAppOAuthCallbackHandler(
 }
 
 func (c *GithubAppOAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-github-app-oauth-callback")
+	defer span.End()
+
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "user-id", Value: user.ID})
 
 	session, err := c.Config().Store.Get(r, c.Config().ServerConf.CookieName)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error getting session")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	token, err := c.Config().GithubAppConf.Exchange(oauth2.NoContext, r.URL.Query().Get("code"))
-
 	if err != nil || !token.Valid() {
+		telemetry.WithAttributes(span,
+			telemetry.AttributeKV{Key: "token-valid", Value: token.Valid()},
+			telemetry.AttributeKV{Key: "token-error", Value: err.Error()},
+		)
 		if redirectStr, ok := session.Values["redirect_uri"].(string); ok && redirectStr != "" {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "redirect-uri", Value: redirectStr})
 			// attempt to parse the redirect uri, if it fails just redirect to dashboard
 			redirectURI, err := url.Parse(redirectStr)
 			if err != nil {
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "redirect-uri-parse-error", Value: err.Error()})
 				http.Redirect(w, r, "/dashboard", 302)
 			}
 
@@ -69,16 +82,17 @@ func (c *GithubAppOAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http
 	oauthInt, err = c.Repo().GithubAppOAuthIntegration().CreateGithubAppOAuthIntegration(oauthInt)
 
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error creating github app oauth integration")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	user.GithubAppIntegrationID = oauthInt.ID
 
 	user, err = c.Repo().User().UpdateUser(user)
-
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error updating user")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -89,9 +103,11 @@ func (c *GithubAppOAuthCallbackHandler) ServeHTTP(w http.ResponseWriter, r *http
 	))
 
 	if redirectStr, ok := session.Values["redirect_uri"].(string); ok && redirectStr != "" {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "redirect-uri", Value: redirectStr})
 		// attempt to parse the redirect uri, if it fails just redirect to dashboard
 		redirectURI, err := url.Parse(redirectStr)
 		if err != nil {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "redirect-uri-parse-error", Value: err.Error()})
 			http.Redirect(w, r, "/dashboard", 302)
 		}
 

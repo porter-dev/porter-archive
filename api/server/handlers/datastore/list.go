@@ -58,27 +58,27 @@ type Datastore struct {
 	Status string `json:"status,omitempty"`
 }
 
-// ListAllDatastoresForProjectHandler is a struct for listing all datastores for a given project
-type ListAllDatastoresForProjectHandler struct {
+// ListDatastoresHandler is a struct for listing all datastores for a given project
+type ListDatastoresHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewListAllDatastoresForProjectHandler constructs a datastore ListAllDatastoresForProjectHandler
-func NewListAllDatastoresForProjectHandler(
+// NewListDatastoresHandler constructs a datastore ListDatastoresHandler
+func NewListDatastoresHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *ListAllDatastoresForProjectHandler {
-	return &ListAllDatastoresForProjectHandler{
+) *ListDatastoresHandler {
+	return &ListDatastoresHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
 // ServeHTTP returns a list of datastores associated with the specified project
-func (h *ListAllDatastoresForProjectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-all-datastores-for-project")
+func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-list-datastores")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)

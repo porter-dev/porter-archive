@@ -472,7 +472,7 @@ const Home: React.FC<Props> = (props) => {
                   <DatabaseView />
                 </Route>
                 <Route path="/databases">
-                  <DatabaseDashboard projectId={currentProject?.id} />
+                  <DatabaseDashboard />
                 </Route>
                 <Route path="/addons/new">
                   <NewAddOnFlow />

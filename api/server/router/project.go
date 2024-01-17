@@ -487,7 +487,7 @@ func getProjectRoutes(
 		},
 	)
 
-	listDatastoresHandler := datastore.NewListAllDatastoresForProjectHandler(
+	listDatastoresHandler := datastore.NewListDatastoresHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

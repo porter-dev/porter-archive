@@ -30,11 +30,7 @@ import healthy from "assets/status-healthy.png";
 import { getDatastoreIcon } from "./icons";
 import { datastoreField } from "./utils";
 
-type Props = {
-  projectId: number;
-};
-
-const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
+const DatabaseDashboard: React.FC = () => {
   const { currentCluster } = useContext(Context);
 
   const [searchValue, setSearchValue] = useState("");
@@ -198,7 +194,7 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
             {(filteredDatabases ?? []).map(
               (datastore: ClientDatastore, i: number) => {
                 return (
-                  <Row to={`/databases/${projectId}/""/""/""/`} key={i}>
+                  <Row to={`/databases/${datastore.name}`} key={i}>
                     <Container row>
                       <MidIcon src={getDatastoreIcon(datastore.type)} />
                       <Text size={14}>{datastore.name}</Text>

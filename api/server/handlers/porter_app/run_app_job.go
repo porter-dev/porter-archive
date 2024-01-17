@@ -5,7 +5,6 @@ import (
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
-	"k8s.io/utils/pointer"
 
 	"connectrpc.com/connect"
 
@@ -93,16 +92,15 @@ func (c *RunAppJobHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var commandOptional *string
 	if request.RunCommand != "" {
-		commandOptional = pointer.String(request.RunCommand)
+		commandOptional = &request.RunCommand
 	}
 
 	var imageOverrideOptional *porterv1.AppImage
-	if request.Image.Repository != "" || request.Image.Tag != "" {
+	if request.Image.Tag != "" {
 		telemetry.WithAttributes(span,
 			telemetry.AttributeKV{Key: "image-override-repo", Value: request.Image.Repository},
 			telemetry.AttributeKV{Key: "image-override-tag", Value: request.Image.Tag},
 		)
-
 		imageOverrideOptional = &porterv1.AppImage{
 			Repository: request.Image.Repository,
 			Tag:        request.Image.Tag,

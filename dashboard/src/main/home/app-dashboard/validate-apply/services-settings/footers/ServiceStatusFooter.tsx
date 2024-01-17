@@ -18,9 +18,11 @@ import { useLatestRevision } from "../../../app-view/LatestRevisionContext";
 
 type ServiceStatusFooterProps = {
   status: ClientServiceStatus[];
+  name: string;
 };
 const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
   status,
+  name,
 }) => {
   const [expanded, setExpanded] = useState<boolean>(false);
   const { latestClientNotifications, tabUrlGenerator } = useLatestRevision();
@@ -31,7 +33,8 @@ const ServiceStatusFooter: React.FC<ServiceStatusFooterProps> = ({
       {status.map((versionStatus, i) => {
         const versionNotifications = latestClientNotifications
           .filter(isClientServiceNotification)
-          .filter((n) => n.appRevisionId === versionStatus.revisionId);
+          .filter((n) => n.appRevisionId === versionStatus.revisionId)
+          .filter((n) => n.service.name.value === name);
         return (
           <div key={i}>
             <StyledStatusFooterTop expanded={expanded}>

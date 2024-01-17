@@ -33,6 +33,8 @@ type ApplyInput struct {
 	PorterYamlPath string
 	// AppName is the name of the app
 	AppName string
+	// ImageTagOverride is the image tag to use for the app
+	ImageTagOverride string
 	// PreviewApply is true when Apply should create a new deployment target matching current git branch and apply to that target
 	PreviewApply bool
 	// WaitForSuccessfulDeployment is true when Apply should wait for the update to complete before returning
@@ -165,6 +167,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		Base64AppOverrides: b64AppOverrides,
 		DeploymentTarget:   deploymentTargetID,
 		CommitSHA:          commitSHA,
+		ImageTagOverride:   inp.ImageTagOverride,
 	})
 	if err != nil {
 		return fmt.Errorf("error calling validate endpoint: %w", err)

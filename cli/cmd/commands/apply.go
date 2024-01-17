@@ -40,8 +40,9 @@ import (
 )
 
 var (
-	porterYAML   string
-	previewApply bool
+	porterYAML       string
+	previewApply     bool
+	imageTagOverride string
 )
 
 func registerCommand_Apply(cliConf config.CLIConfig) *cobra.Command {
@@ -107,6 +108,7 @@ applying a configuration:
 
 	applyCmd.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
 	applyCmd.PersistentFlags().BoolVarP(&previewApply, "preview", "p", false, "apply as preview environment based on current git branch")
+	applyCmd.PersistentFlags().StringVar(&imageTagOverride, "tag", "", "set the image tag used for the application (overrides field in yaml)")
 	applyCmd.PersistentFlags().BoolVarP(
 		&appWait,
 		"wait",
@@ -147,6 +149,7 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 			Client:                      client,
 			PorterYamlPath:              porterYAML,
 			AppName:                     appName,
+			ImageTagOverride:            imageTagOverride,
 			PreviewApply:                previewApply,
 			WaitForSuccessfulDeployment: appWait,
 		}

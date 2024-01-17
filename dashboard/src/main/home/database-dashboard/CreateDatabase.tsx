@@ -10,9 +10,9 @@ import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import {
+  DATABASE_ENGINE_AURORA_POSTGRES,
   DATABASE_ENGINE_POSTGRES,
   DATABASE_ENGINE_REDIS,
-  DATABASE_TYPE_AURORA,
   DATABASE_TYPE_ELASTICACHE,
   DATABASE_TYPE_RDS,
   type DatabaseTemplate,
@@ -57,7 +57,7 @@ const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
           (t) => <DatabaseFormRDSPostgres template={t} />
         )
         .with(
-          { type: DATABASE_TYPE_AURORA, engine: DATABASE_ENGINE_POSTGRES },
+          { type: DATABASE_TYPE_RDS, engine: DATABASE_ENGINE_AURORA_POSTGRES },
           (t) => <DatabaseFormAuroraPostgres template={t} />
         )
         .with(

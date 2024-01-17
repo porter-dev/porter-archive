@@ -112,7 +112,11 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-	resp.Datastore = datastores[0]
+	datastore := datastores[0]
+	datastore.Type = datastoreRecord.Type
+	datastore.Engine = datastoreRecord.Engine
+
+	resp.Datastore = datastore
 
 	c.WriteResult(w, r, resp)
 }

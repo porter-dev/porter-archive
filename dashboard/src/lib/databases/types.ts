@@ -22,6 +22,7 @@ export type DatastoreMetadataWithSource = z.infer<
 export const datastoreValidator = z.object({
   name: z.string(),
   type: z.string(),
+  engine: z.string(),
   status: z.string().default(""),
   metadata: datastoreMetadataValidator.array().default([]),
   env: datastoreEnvValidator.optional(),
@@ -58,28 +59,31 @@ export type CloudProviderDatastore = z.infer<
 
 export type DatabaseEngine =
   | typeof DATABASE_ENGINE_POSTGRES
+  | typeof DATABASE_ENGINE_AURORA_POSTGRES
   | typeof DATABASE_ENGINE_REDIS
   | typeof DATABASE_ENGINE_MEMCACHED;
 export const DATABASE_ENGINE_POSTGRES = {
-  name: "postgres" as const,
+  name: "POSTGRES" as const,
   displayName: "PostgreSQL",
 };
+export const DATABASE_ENGINE_AURORA_POSTGRES = {
+  name: "AURORA_POSTGRES" as const,
+  displayName: "Aurora PostgreSQL",
+};
 export const DATABASE_ENGINE_REDIS = {
-  name: "redis" as const,
+  name: "REDIS" as const,
   displayName: "Redis",
 };
 export const DATABASE_ENGINE_MEMCACHED = {
-  name: "memcached" as const,
+  name: "MEMCACHED" as const,
   displayName: "Memcached",
 };
 
 export type DatabaseType =
   | typeof DATABASE_TYPE_RDS
-  | typeof DATABASE_TYPE_AURORA
   | typeof DATABASE_TYPE_ELASTICACHE;
-export const DATABASE_TYPE_RDS = "rds" as const;
-export const DATABASE_TYPE_AURORA = "aurora" as const;
-export const DATABASE_TYPE_ELASTICACHE = "elasticache" as const;
+export const DATABASE_TYPE_RDS = "RDS" as const;
+export const DATABASE_TYPE_ELASTICACHE = "ELASTICACHE" as const;
 
 export type DatabaseTemplate = {
   type: DatabaseType;

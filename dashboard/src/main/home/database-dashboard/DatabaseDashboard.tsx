@@ -27,7 +27,7 @@ import loading from "assets/loading.gif";
 import notFound from "assets/not-found.png";
 import healthy from "assets/status-healthy.png";
 
-import { getDatastoreIcon } from "./icons";
+import { getTemplateIcon } from "./constants";
 import { datastoreField } from "./utils";
 
 const DatabaseDashboard: React.FC = () => {
@@ -173,14 +173,19 @@ const DatabaseDashboard: React.FC = () => {
                   <Link to={`/databases/${datastore.name}`} key={i}>
                     <Block>
                       <Container row>
-                        <Icon src={getDatastoreIcon(datastore.type)} />
+                        <Icon
+                          src={getTemplateIcon(
+                            datastore.type,
+                            datastore.engine
+                          )}
+                        />
                         <Text size={14}>{datastore.name}</Text>
                         <Spacer inline x={2} />
                       </Container>
                       {renderStatusIcon(datastoreField(datastore, "status"))}
                       <Container row>
                         <Text size={13} color="#ffffff44">
-                          {datastoreField(datastore, "engine")}
+                          {datastore.engine}
                         </Text>
                       </Container>
                     </Block>
@@ -196,7 +201,9 @@ const DatabaseDashboard: React.FC = () => {
                 return (
                   <Row to={`/databases/${datastore.name}`} key={i}>
                     <Container row>
-                      <MidIcon src={getDatastoreIcon(datastore.type)} />
+                      <MidIcon
+                        src={getTemplateIcon(datastore.type, datastore.engine)}
+                      />
                       <Text size={14}>{datastore.name}</Text>
                       <Spacer inline x={1} />
                       <MidIcon src={healthy} height="16px" />

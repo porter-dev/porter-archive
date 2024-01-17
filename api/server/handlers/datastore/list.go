@@ -48,6 +48,9 @@ type Datastore struct {
 	// Type is the type of the datastore
 	Type string `json:"type"`
 
+	// Engine is the engine of the datastore
+	Engine string `json:"engine,omitempty"`
+
 	// Env is the env group for the datastore
 	Env *porterv1.EnvGroup `json:"env,omitempty"`
 
@@ -83,47 +86,27 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	// TODO: replace everything below with a single ccp call.
-	// Currently we are required to retrieve and send account ids to ccp because of the way the ccp endpoint is implemented,
-	// but we should really just send a project id and let ccp do the rest.
-	cloudProviders, err := cloud_provider.AwsAccounts(ctx, cloud_provider.AwsAccountsInput{
-		ProjectID:                    project.ID,
-		AWSAssumeRoleChainRepository: h.Repo().AWSAssumeRoleChainer(),
-	})
+	resp := ListDatastoresResponse{}
+	datastoreList := []Datastore{}
+
+	datastores, err := h.Repo().Datastore().ListByProjectID(ctx, project.ID)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting cloud providers")
+		err := telemetry.Error(ctx, span, err, "error getting datastores")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "num-cloud-providers", Value: len(cloudProviders)})
-
-	allDatastores := []Datastore{}
-
-	for _, cloudProvider := range cloudProviders {
-		datastoresForCloudProvider, err := Datastores(ctx, DatastoresInput{
-			ProjectID:       project.ID,
-			CloudProvider:   cloudProvider,
-			IncludeMetadata: true,
-			CCPClient:       h.Config().ClusterControlPlaneClient,
+	for _, datastore := range datastores {
+		datastoreList = append(datastoreList, Datastore{
+			Name:   datastore.Name,
+			Type:   datastore.Type,
+			Engine: datastore.Engine,
 		})
-		if err != nil {
-			telemetry.WithAttributes(span,
-				telemetry.AttributeKV{Key: "cloud-provider-id", Value: cloudProvider.AccountID},
-				telemetry.AttributeKV{Key: "cloud-provider-type", Value: int(cloudProvider.Type)},
-			)
-			err := telemetry.Error(ctx, span, err, "error getting datastores")
-			h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-		allDatastores = append(allDatastores, datastoresForCloudProvider...)
 	}
 
-	response := ListDatastoresResponse{
-		Datastores: allDatastores,
-	}
+	resp.Datastores = datastoreList
 
-	h.WriteResult(w, r, response)
+	h.WriteResult(w, r, resp)
 }
 
 // DatastoresInput is the input to the Datastores function

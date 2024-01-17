@@ -15,7 +15,7 @@ type CreateDatastoreInput = {
   engine: "POSTGRES" | "AURORA-POSTGRES" | "REDIS";
   values: object;
 };
-const clientDbToValues = (values: DbFormData): CreateDatastoreInput => {
+const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
   return match(values)
     .with(
       { config: { type: "rds-postgres" } },
@@ -78,7 +78,7 @@ export const useDatabaseMethods = (): DatabaseHook => {
 
   const create = useCallback(
     async (data: DbFormData): Promise<void> => {
-      const createDatastoreInput = clientDbToValues(data);
+      const createDatastoreInput = clientDbToCreateInput(data);
 
       await api.updateDatastore(
         "<token>",

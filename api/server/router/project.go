@@ -8,6 +8,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/api_token"
 	"github.com/porter-dev/porter/api/server/handlers/billing"
 	"github.com/porter-dev/porter/api/server/handlers/cluster"
+	"github.com/porter-dev/porter/api/server/handlers/datastore"
 	"github.com/porter-dev/porter/api/server/handlers/gitinstallation"
 	"github.com/porter-dev/porter/api/server/handlers/helmrepo"
 	"github.com/porter-dev/porter/api/server/handlers/infra"
@@ -470,7 +471,7 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/datastores -> project.NewListAllDatastoresForProjectHandler
+	// GET /api/projects/{project_id}/datastores -> datastore.NewListAllDatastoresForProjectHandler
 	listDatastoresEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbList,
@@ -486,7 +487,7 @@ func getProjectRoutes(
 		},
 	)
 
-	listDatastoresHandler := project.NewListAllDatastoresForProjectHandler(
+	listDatastoresHandler := datastore.NewListAllDatastoresForProjectHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

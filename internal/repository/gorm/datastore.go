@@ -89,3 +89,20 @@ func (repo *DatastoreRepository) GetByProjectIDAndName(ctx context.Context, proj
 
 	return datastore, nil
 }
+
+// ListByProjectID returns a list of datastores by project ID
+func (repo *DatastoreRepository) ListByProjectID(ctx context.Context, projectId uint) ([]*models.Datastore, error) {
+	ctx, span := telemetry.NewSpan(ctx, "gorm-list-datastores")
+	defer span.End()
+
+	if projectId == 0 {
+		return nil, telemetry.Error(ctx, span, nil, "project id is 0")
+	}
+
+	datastores := []*models.Datastore{}
+	if err := repo.db.Where("project_id = ?", projectId).Find(&datastores).Error; err != nil {
+		return nil, telemetry.Error(ctx, span, err, "error finding datastores")
+	}
+
+	return datastores, nil
+}

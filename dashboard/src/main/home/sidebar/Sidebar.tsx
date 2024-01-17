@@ -20,9 +20,9 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Clusters from "./Clusters";
 import ProjectSectionContainer from "./ProjectSectionContainer";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 import { getQueryParam, pushFiltered } from "shared/routing";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import SidebarLink from "./SidebarLink";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
 import ClusterListContainer from "./ClusterListContainer";
@@ -42,7 +42,7 @@ type StateType = {
   pressingCtrl: boolean;
   showTooltip: boolean;
   forceCloseDrawer: boolean;
-  showLinkTooltip: { [linkKey: string]: boolean };
+  showLinkTooltip: Record<string, boolean>;
 };
 
 class Sidebar extends Component<PropsType, StateType> {
@@ -113,8 +113,8 @@ class Sidebar extends Component<PropsType, StateType> {
   };
 
   renderProjectContents = () => {
-    let { currentView } = this.props;
-    let {
+    const { currentView } = this.props;
+    const {
       currentProject,
       user,
       currentCluster,
@@ -133,8 +133,7 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={rocket} />
             Launch
           </NavButton>
-          {currentProject &&
-            currentProject.managed_infra_enabled &&
+          {currentProject?.managed_infra_enabled &&
             (user?.isPorterUser ||
               overrideInfraTabEnabled({ projectID: currentProject.id })) && (
               <NavButton path={"/infrastructure"}>
@@ -205,6 +204,15 @@ class Sidebar extends Component<PropsType, StateType> {
                   Integrations
                 </NavButton>
               )}
+            {currentProject.db_enabled && (
+              <NavButton
+                path="/databases"
+                active={window.location.pathname.startsWith("/apps")}
+              >
+                <Img src={database} />
+                Databases
+              </NavButton>
+            )}
             {currentCluster && (
               <>
                 <Spacer y={0.5} />
@@ -218,15 +226,6 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={applications} />
               Applications
             </NavButton>
-            {currentProject.db_enabled && (
-              <NavButton
-                path="/databases"
-                active={window.location.pathname.startsWith("/apps")}
-              >
-                <Img src={database} />
-                Databases
-              </NavButton>
-            )}
             <NavButton
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}

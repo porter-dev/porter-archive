@@ -41,8 +41,8 @@ func (repo *DatastoreRepository) Insert(ctx context.Context, datastore *models.D
 		return nil, telemetry.Error(ctx, span, nil, "cloud provider is empty")
 	}
 
-	if datastore.CloudProviderID == "" {
-		return nil, telemetry.Error(ctx, span, nil, "cloud provider id is empty")
+	if datastore.CloudProviderCredentialIdentifier == "" {
+		return nil, telemetry.Error(ctx, span, nil, "cloud provider credential identifier is empty")
 	}
 
 	if datastore.Type == "" {

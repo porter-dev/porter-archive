@@ -62,19 +62,17 @@ export const useDatabaseMethods = (): DatabaseHook => {
       const { values, templateName } = clientDbToValues(data);
       const name = data.name;
 
-      await api.deployAddon(
+      await api.updateDatastore(
         "<token>",
         {
-          template_name: templateName,
-          template_version: "latest",
-          values,
           name,
+          engine: "",
+          type: "",
+          values,
         },
         {
-          id: currentProject?.id || -1,
+          project_id: currentProject?.id || -1,
           cluster_id: currentCluster?.id || -1,
-          namespace: "ack-system",
-          repo_url: capabilities?.default_addon_helm_repo_url,
         }
       );
     },

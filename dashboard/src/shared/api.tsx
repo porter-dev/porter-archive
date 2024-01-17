@@ -1246,15 +1246,16 @@ const getAppTemplate = baseApi<
 });
 
 const listLatestAddons = baseApi<
-{
-  deployment_target_id?: string;
-},
-{
-  projectId: number;
-  clusterId: number;
-}>("GET", ({ projectId, clusterId }) => {
+  {
+    deployment_target_id?: string;
+  },
+  {
+    projectId: number;
+    clusterId: number;
+  }
+>("GET", ({ projectId, clusterId }) => {
   return `/api/projects/${projectId}/clusters/${clusterId}/addons/latest`;
-})
+});
 
 const getGitlabProcfileContents = baseApi<
   {
@@ -2679,12 +2680,9 @@ const getAwsCloudProviders = baseApi<
   {
     project_id: number;
   }
->(
-  "GET",
-  ({ project_id }) => {
-    return `/api/projects/${project_id}/cloud-providers/aws`;
-  }
-);
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/cloud-providers/aws`;
+});
 
 const getDatabases = baseApi<
   {},
@@ -2711,7 +2709,15 @@ const getDatastores = baseApi<
   }
 >(
   "GET",
-  ({ project_id, cloud_provider_name, cloud_provider_id, datastore_name, datastore_type, include_env_group, include_metadata }) => {
+  ({
+    project_id,
+    cloud_provider_name,
+    cloud_provider_id,
+    datastore_name,
+    datastore_type,
+    include_env_group,
+    include_metadata,
+  }) => {
     const queryParams = new URLSearchParams();
 
     if (datastore_name) {
@@ -2739,11 +2745,22 @@ const listDatastores = baseApi<
   {
     project_id: number;
   }
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/datastores`;
+});
+
+const updateDatastore = baseApi<
+  {
+    name: string;
+    type: string;
+    engine: string;
+    values: any;
+  },
+  { project_id: number; cluster_id: number }
 >(
-  "GET",
-  ({ project_id }) => {
-    return `/api/projects/${project_id}/datastores`;
-  }
+  "POST",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/datastores`
 );
 
 const deleteDatastore = baseApi<
@@ -3618,6 +3635,7 @@ export default {
   getDatabases,
   getDatastores,
   listDatastores,
+  updateDatastore,
   deleteDatastore,
   getPreviousLogsForContainer,
   upgradePorterAgent,

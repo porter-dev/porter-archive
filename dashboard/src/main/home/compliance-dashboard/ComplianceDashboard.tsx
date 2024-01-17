@@ -29,6 +29,7 @@ import greenCheck from "assets/green-check.svg";
 import warning from "assets/warning.svg";
 import notApplicable from "assets/not-applicable.svg";
 import loading from "assets/loading.gif";
+import refresh from "assets/refresh.png";
 
 type Props = {
   projectId: number;
@@ -109,6 +110,10 @@ const ComplianceDashboard: React.FC<Props> = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [confirmCost, setConfirmCost] = useState("");
   const [showCostConsentModal, setShowCostConsentModal] = useState(false);
+  const [showExpandedErrorModal, setShowExpandedErrorModal] = useState(false);
+  const [expandedCheck, setExpandedCheck] = useState<{ 
+    status: string, name: string, link: string 
+  } | null>(null);
 
   // TODO: implement
   const updateInfrastructure = (): void => {
@@ -246,7 +251,19 @@ const ComplianceDashboard: React.FC<Props> = () => {
         <>
           <Banner type="error">
             {provisioningError}
-            <Spacer inline x={.5} />
+            <Spacer inline x={1} />
+            <Text
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer"
+              }}
+              onClick={() => {
+                setShowExpandedErrorModal(true);
+              }}
+            >
+              Learn more
+            </Text>
+            <Spacer inline x={1} />
             <Text
               style={{
                 textDecoration: "underline",
@@ -254,6 +271,8 @@ const ComplianceDashboard: React.FC<Props> = () => {
               }}
               onClick={updateInfrastructure}
             >
+              <Image src={refresh} size={12} style={{ marginBottom: "-2px" }} />
+              <Spacer inline x={.5} />
               Retry update
             </Text>
           </Banner>
@@ -325,17 +344,28 @@ const ComplianceDashboard: React.FC<Props> = () => {
         return (
           <>
             <Container row key={i}>
-              <Container style={{ width: "170px" }}>
+              <Container style={{ width: "200px" }} row>
                 {check.status === "passing" && <Image src={greenCheck} size={10} />}
                 {check.status === "action-required" && (
-                  <Image src={warning} size={14} style={{ marginBottom: "-2px" }} />
+                  <Image src={warning} size={14} />
                 )}
                 {check.status === "not-applicable" && (
-                  <Image src={notApplicable} size={14} style={{ marginBottom: "-2px" }} />
+                  <Image src={notApplicable} size={14} />
                 )}
                 <Spacer inline x={.7} />
                 {check.status === "passing" && <Text color="helper">Passing</Text>}
-                {check.status === "action-required" && <Text color="helper">Action required</Text>}
+                {check.status === "action-required" && (
+                  <ActionRequired>
+                    <Text color="helper">Action required</Text>
+                    <Spacer inline x={.5} />
+                    <i 
+                      className="material-icons-outlined"
+                      onClick={() => { setExpandedCheck(check) }}
+                    >
+                      help_outline
+                    </i>
+                  </ActionRequired>
+                )}
                 {check.status === "not-applicable" && <Text color="#494B4F">Not applicable</Text>}
               </Container>
               <Text
@@ -363,8 +393,37 @@ const ComplianceDashboard: React.FC<Props> = () => {
           </>
         );
       })}
+
       <Spacer y={2} />
 
+      {showExpandedErrorModal && (
+        <Modal closeModal={() => { setShowExpandedErrorModal(false) }}>
+          <Container row>
+            <Text size={16}>
+              Error enabling AWS SOC 2 controls
+            </Text>
+          </Container>
+          <Spacer y={.7} />
+          <Text color="helper">
+            {provisioningError}
+          </Text>
+        </Modal>
+      )}
+      {expandedCheck && (
+        <Modal closeModal={() => { setExpandedCheck(null) }}>
+          <Container row>
+            <Image src={warning} size={16} />
+            <Spacer inline x={.7} />
+            <Text size={16}>
+              Action required for "{expandedCheck.name}"
+            </Text>
+          </Container>
+          <Spacer y={.7} />
+          <Text color="helper">
+            Porter is unable to automatically resolve this control. Please follow xyz instructions in order to xyz.
+          </Text>
+        </Modal>
+      )}
       {showCostConsentModal && (
         <Modal closeModal={() => { setShowCostConsentModal(false) }}>
           <Text size={16}>SOC 2 cost consent (TODO)</Text>
@@ -435,6 +494,19 @@ const ComplianceDashboard: React.FC<Props> = () => {
 };
 
 export default ComplianceDashboard;
+
+const ActionRequired = styled.div`
+  > i {
+    font-size: 15px;
+    color: #aaaabb;
+    cursor: pointer;
+    :hover {
+      color: #ffffff;
+    }
+  }
+  display: flex;
+  align-items: center;
+`;
 
 const Tab = styled.span`
   margin-left: 20px;

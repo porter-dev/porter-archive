@@ -36,10 +36,11 @@ runs:
       shell: bash
       id: vars
       run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    - name: Setup porter
+      uses: porter-dev/setup-porter@v0.1.0
     - name: Deploy stack
-      uses: porter-dev/porter-cli-action@v0.1.0
-      with:
-        command: apply
+      timeout-minutes: 30
+      run: exec porter apply
       env:
         PORTER_CLUSTER: "${{ inputs.cluster }}"
         PORTER_HOST: "${{ inputs.host }}"

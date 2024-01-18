@@ -37,7 +37,6 @@ const EngineTag: React.FC<Props> = ({ engine, heightPixels = 13 }) => {
 
 export default EngineTag;
 
-// create an icon container that is a div which aligns the image inside vertically
 const IconContainer = styled.div`
   display: flex;
   align-items: center;

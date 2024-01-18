@@ -8,11 +8,7 @@ import Text from "components/porter/Text";
 import { useDatabaseContext } from "../DatabaseContextProvider";
 import DatabaseHeaderItem from "../DatabaseHeaderItem";
 
-type Props = {
-  // Define the props for your component here
-};
-
-const ConfigurationTab: React.FC<Props> = () => {
+const ConfigurationTab: React.FC = () => {
   const { datastore } = useDatabaseContext();
   return (
     <Fieldset>

@@ -38,7 +38,6 @@ export const useDatabaseList = (): DatabaseListType => {
     },
     {
       enabled: !!currentProject?.id && currentProject.id !== -1,
-      refetchInterval: 10000,
       refetchOnWindowFocus: false,
     }
   );

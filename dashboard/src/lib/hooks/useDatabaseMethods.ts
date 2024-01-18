@@ -1,4 +1,5 @@
 import { useCallback, useContext } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { match } from "ts-pattern";
 
 import { type DbFormData } from "lib/databases/types";
@@ -77,6 +78,8 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
 export const useDatabaseMethods = (): DatabaseHook => {
   const { currentProject } = useContext(Context);
 
+  const queryClient = useQueryClient();
+
   const create = useCallback(
     async (data: DbFormData): Promise<void> => {
       if (!currentProject?.id || currentProject.id === -1) {
@@ -97,6 +100,8 @@ export const useDatabaseMethods = (): DatabaseHook => {
           cluster_id: data.clusterId,
         }
       );
+
+      await queryClient.invalidateQueries({ queryKey: ["listDatastores"] });
     },
     [currentProject]
   );
@@ -115,6 +120,8 @@ export const useDatabaseMethods = (): DatabaseHook => {
           datastore_name: name,
         }
       );
+
+      await queryClient.invalidateQueries({ queryKey: ["listDatastores"] });
     },
     [currentProject]
   );

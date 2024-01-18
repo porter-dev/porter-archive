@@ -9,16 +9,16 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// DeleteDatastoreRecordInput is the input type for DeleteDatastoreRecord
-type DeleteDatastoreRecordInput struct {
+// DeleteRecordInput is the input type for DeleteDatastoreRecord
+type DeleteRecordInput struct {
 	ProjectID uint
 	Name      string
 
 	DatastoreRepository repository.DatastoreRepository
 }
 
-// DeleteDatastoreRecord deletes a datastore record by name
-func DeleteDatastoreRecord(ctx context.Context, inp DeleteDatastoreRecordInput) (*models.Datastore, error) {
+// DeleteRecord deletes a datastore record by name
+func DeleteRecord(ctx context.Context, inp DeleteRecordInput) (*models.Datastore, error) {
 	ctx, span := telemetry.NewSpan(ctx, "delete-datastore-record")
 	defer span.End()
 

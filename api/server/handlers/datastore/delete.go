@@ -48,7 +48,7 @@ func (h *DeleteDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "datastore-name", Value: datastoreName})
 
-	datastore, err := datastore.DeleteDatastoreRecord(ctx, datastore.DeleteDatastoreRecordInput{
+	datastore, err := datastore.DeleteRecord(ctx, datastore.DeleteRecordInput{
 		ProjectID:           project.ID,
 		Name:                datastoreName,
 		DatastoreRepository: h.Repo().Datastore(),

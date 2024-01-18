@@ -72,7 +72,7 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		telemetry.AttributeKV{Key: "engine", Value: request.Engine},
 	)
 
-	record, err := datastore.CreateOrGetDatastoreRecord(ctx, datastore.CreateOrGetDatastoreRecordInput{
+	record, err := datastore.CreateOrGetRecord(ctx, datastore.CreateOrGetRecordInput{
 		ProjectID:           project.ID,
 		ClusterID:           cluster.ID,
 		Name:                request.Name,

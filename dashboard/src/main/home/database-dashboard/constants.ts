@@ -5,30 +5,11 @@ import {
   DATABASE_ENGINE_REDIS,
   DATABASE_TYPE_ELASTICACHE,
   DATABASE_TYPE_RDS,
-  type DatabaseEngine,
   type DatabaseTemplate,
 } from "lib/databases/types";
 
 import awsRDS from "assets/amazon-rds.png";
 import awsElastiCache from "assets/aws-elasticache.png";
-
-export const getTemplateIcon = (type: string, engine: string): string => {
-  const template = SUPPORTED_DATABASE_TEMPLATES.find(
-    (t) => t.type === type && t.engine.name === engine
-  );
-
-  return template ? template.icon : awsRDS;
-};
-
-export const getTemplateEngine = (
-  engine: string
-): DatabaseEngine | undefined => {
-  const template = SUPPORTED_DATABASE_TEMPLATES.find(
-    (t) => t.engine.name === engine
-  );
-
-  return template?.engine;
-};
 
 export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
   Object.freeze({

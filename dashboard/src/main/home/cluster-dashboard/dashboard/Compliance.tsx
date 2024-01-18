@@ -17,10 +17,10 @@ import SOC2Checks from "components/SOC2Checks";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { type Soc2Data } from "shared/types";
 import sparkle from "assets/sparkle.svg";
 
 import DonutChart from "./DonutChart";
-import { Soc2Data } from "shared/types";
 
 type Props = {
   credentialId: string;
@@ -68,7 +68,7 @@ const soc2DataDefault: Soc2Data = {
     },
     "Enhanced Image Vulnerability Scanning": {
       message:
-        "AWS ECR scans for CVEs from the open-source Clair database on push image push. Enhanced scanning provides continuous, automated scans against images as new vulnerabilities appear.",
+        "AWS ECR scans for CVEs from the open-source Clair database on image push. Enhanced scanning provides continuous, automated scans against images as new vulnerabilities appear.",
       link: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
       enabled: false,
       info: "",
@@ -261,7 +261,7 @@ const Compliance: React.FC<Props> = (props) => {
           project_id: currentProject ? currentProject.id : 0,
         }
       );
-    } catch (err) { }
+    } catch (err) {}
   };
 
   const isUserProvisioning = useMemo(() => {
@@ -310,7 +310,7 @@ const Compliance: React.FC<Props> = (props) => {
             },
             "Enhanced Image Vulnerability Scanning": {
               ...prevSoc2Data.soc2_checks[
-              "Enhanced Image Vulnerability Scanning"
+                "Enhanced Image Vulnerability Scanning"
               ],
               enabled: eksValues.enableEcrScanning,
               status: determineStatus(eksValues.enableEcrScanning),
@@ -321,8 +321,8 @@ const Compliance: React.FC<Props> = (props) => {
 
       setSoc2Enabled(
         cloudTrailEnabled &&
-        eksValues.enableKmsEncryption &&
-        eksValues.enableEcrScanning
+          eksValues.enableKmsEncryption &&
+          eksValues.enableEcrScanning
       );
     }
   }, [props.selectedClusterVersion]);
@@ -334,7 +334,7 @@ const Compliance: React.FC<Props> = (props) => {
 
     setIsReadOnly(
       currentCluster.status === "UPDATING" ||
-      currentCluster.status === "UPDATING_UNAVAILABLE"
+        currentCluster.status === "UPDATING_UNAVAILABLE"
     );
   }, []);
 

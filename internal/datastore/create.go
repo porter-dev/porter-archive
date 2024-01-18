@@ -9,8 +9,8 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// CreateOrGetDatastoreRecordInput is the input type for CreateOrGetDatastoreRecord
-type CreateOrGetDatastoreRecordInput struct {
+// CreateOrGetRecordInput is the input type for CreateOrGetDatastoreRecord
+type CreateOrGetRecordInput struct {
 	ProjectID uint
 	ClusterID uint
 	Name      string
@@ -21,8 +21,8 @@ type CreateOrGetDatastoreRecordInput struct {
 	ClusterRepository   repository.ClusterRepository
 }
 
-// CreateOrGetDatastoreRecord creates a datastore record if it does not exist, or returns the existing one if it does
-func CreateOrGetDatastoreRecord(ctx context.Context, inp CreateOrGetDatastoreRecordInput) (*models.Datastore, error) {
+// CreateOrGetRecord creates a datastore record if it does not exist, or returns the existing one if it does
+func CreateOrGetRecord(ctx context.Context, inp CreateOrGetRecordInput) (*models.Datastore, error) {
 	ctx, span := telemetry.NewSpan(ctx, "create-or-get-datastore-record")
 	defer span.End()
 

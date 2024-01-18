@@ -1,5 +1,4 @@
 import React, { useContext, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
@@ -13,11 +12,13 @@ import Fieldset from "components/porter/Fieldset";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import { type ClientDatastore } from "lib/databases/types";
+import { useDatabaseList } from "lib/hooks/useDatabaseList";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 import { search } from "shared/search";
 import database from "assets/database.svg";
@@ -27,110 +28,21 @@ import loading from "assets/loading.gif";
 import notFound from "assets/not-found.png";
 import healthy from "assets/status-healthy.png";
 
-import { getDatastoreIcon } from "./icons";
-import {
-  cloudProviderListResponseValidator,
-  datastoreListResponseValidator,
-  type CloudProviderDatastore,
-  type CloudProviderWithSource,
-} from "./types";
-import { datastoreField } from "./utils";
+import { getTemplateEngineDisplayName, getTemplateIcon } from "./constants";
 
-type Props = {
-  projectId: number;
-};
-
-const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
+const DatabaseDashboard: React.FC = () => {
   const { currentCluster } = useContext(Context);
 
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  const { data: cloudProviderResponse } = useQuery(
-    ["cloudProviders", projectId],
-    async () => {
-      const response = await api.getAwsCloudProviders(
-        "<token>",
-        {},
-        {
-          project_id: projectId,
-        }
-      );
-
-      const results = await cloudProviderListResponseValidator.parseAsync(
-        response.data
-      );
-      return results;
-    },
-    {
-      enabled: !!projectId,
-    }
-  );
-
-  const cloudProviders = cloudProviderResponse?.accounts;
-
-  const { data: datastores, isFetched: isLoaded } = useQuery(
-    [projectId],
-    async () => {
-      if (cloudProviders === undefined) {
-        return;
-      }
-
-      const results = await Promise.all(
-        cloudProviders.map(
-          async (
-            cloudProvider: CloudProviderWithSource
-          ): Promise<CloudProviderDatastore[]> => {
-            const response = await api.getDatastores(
-              "<token>",
-              {},
-              {
-                project_id: cloudProvider.project_id,
-                cloud_provider_name: "aws",
-                cloud_provider_id: cloudProvider.cloud_provider_id,
-                include_metadata: true,
-              }
-            );
-
-            const results = await datastoreListResponseValidator.parseAsync(
-              response.data
-            );
-            return results.datastores.map(
-              (datastore): CloudProviderDatastore => {
-                return {
-                  cloud_provider_name: "aws",
-                  cloud_provider_id: cloudProvider.cloud_provider_id,
-                  datastore,
-                  project_id: cloudProvider.project_id,
-                };
-              }
-            );
-          }
-        )
-      );
-
-      if (results.length === 0) {
-        return;
-      }
-
-      return results.flat(1);
-    },
-    {
-      enabled: !!cloudProviders,
-      refetchInterval: 10000,
-      refetchOnWindowFocus: false,
-    }
-  );
+  const { datastores, isLoading } = useDatabaseList();
 
   const filteredDatabases = useMemo(() => {
-    const filteredBySearch = search(
-      datastores === undefined ? [] : datastores,
-      searchValue,
-      {
-        keys: ["name"],
-        isCaseSensitive: false,
-      }
-    );
+    const filteredBySearch = search(datastores, searchValue, {
+      keys: ["name"],
+      isCaseSensitive: false,
+    });
 
     return _.sortBy(filteredBySearch, ["name"]);
   }, [datastores, searchValue]);
@@ -169,7 +81,7 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
       return <ClusterProvisioningPlaceholder />;
     }
 
-    if (datastores === undefined || !isLoaded) {
+    if (datastores === undefined || isLoading) {
       return <Loading offset="-150px" />;
     }
 
@@ -251,31 +163,39 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
               <Text color="helper">No matching databases were found.</Text>
             </Container>
           </Fieldset>
-        ) : !isLoaded ? (
+        ) : isLoading ? (
           <Loading offset="-150px" />
         ) : view === "grid" ? (
           <GridList>
             {(filteredDatabases ?? []).map(
-              (entry: CloudProviderDatastore, i: number) => {
+              (datastore: ClientDatastore, i: number) => {
+                const templateIcon = getTemplateIcon(
+                  datastore.type,
+                  datastore.engine
+                );
+                const templateDisplayName = getTemplateEngineDisplayName(
+                  datastore.engine
+                );
                 return (
-                  <Link
-                    to={`/databases/${entry.project_id}/${entry.cloud_provider_name}/${entry.cloud_provider_id}/${entry.datastore.name}/`}
-                    key={i}
-                  >
+                  <Link to={`/databases/${datastore.name}`} key={i}>
                     <Block>
-                      <Container row>
-                        <Icon src={getDatastoreIcon(entry.datastore.type)} />
-                        <Text size={14}>{entry.datastore.name}</Text>
-                        <Spacer inline x={2} />
+                      <Container row spaced>
+                        <Container row>
+                          <Icon src={templateIcon} />
+                          <Text size={14}>{datastore.name}</Text>
+                        </Container>
+                        <MidIcon src={healthy} height="16px" />
                       </Container>
-                      {renderStatusIcon(
-                        datastoreField(entry.datastore, "status")
+                      {templateDisplayName && (
+                        <>
+                          <Spacer y={1} />
+                          <Container row>
+                            <Tag hoverable={false}>
+                              <Text size={13}>{templateDisplayName}</Text>
+                            </Tag>
+                          </Container>
+                        </>
                       )}
-                      <Container row>
-                        <Text size={13} color="#ffffff44">
-                          {datastoreField(entry.datastore, "engine")}
-                        </Text>
-                      </Container>
                     </Block>
                   </Link>
                 );
@@ -285,23 +205,32 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
         ) : (
           <List>
             {(filteredDatabases ?? []).map(
-              (entry: CloudProviderDatastore, i: number) => {
+              (datastore: ClientDatastore, i: number) => {
+                const templateIcon = getTemplateIcon(
+                  datastore.type,
+                  datastore.engine
+                );
+                const templateDisplayName = getTemplateEngineDisplayName(
+                  datastore.engine
+                );
                 return (
-                  <Row
-                    to={`/databases/${entry.project_id}/${entry.cloud_provider_name}/${entry.cloud_provider_id}/${entry.datastore.name}/`}
-                    key={i}
-                  >
+                  <Row to={`/databases/${datastore.name}`} key={i}>
                     <Container row>
-                      <MidIcon src={getDatastoreIcon(entry.datastore.type)} />
-                      <Text size={14}>{entry.datastore.name}</Text>
+                      <MidIcon src={templateIcon} />
+                      <Text size={14}>{datastore.name}</Text>
                       <Spacer inline x={1} />
                       <MidIcon src={healthy} height="16px" />
                     </Container>
                     <Spacer height="15px" />
                     <Container row>
-                      <Text size={13} color="#ffffff44">
-                        {datastoreField(entry.datastore, "engine")}
-                      </Text>
+                      {templateDisplayName && (
+                        <>
+                          <Spacer inline x={0.5} />
+                          <Tag hoverable={false}>
+                            <Text size={13}>{templateDisplayName}</Text>
+                          </Tag>
+                        </>
+                      )}
                     </Container>
                   </Row>
                 );
@@ -365,7 +294,7 @@ const Icon = styled.img`
 `;
 
 const Block = styled.div`
-  height: 110px;
+  height: 120px;
   flex-direction: column;
   display: flex;
   justify-content: space-between;

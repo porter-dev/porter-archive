@@ -7,16 +7,13 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import TitleSection from "components/TitleSection";
 
+import { useDatabaseContext } from "./DatabaseContextProvider";
 import DatabaseHeaderItem from "./DatabaseHeaderItem";
 import { getDatastoreIcon } from "./icons";
-import { type DatastoreWithSource } from "./types";
 import { datastoreField } from "./utils";
 
-type Props = {
-  datastore: DatastoreWithSource;
-};
-
-const DatabaseHeader: React.FC<Props> = ({ datastore }) => {
+const DatabaseHeader: React.FC = () => {
+  const { datastore } = useDatabaseContext();
   return (
     <>
       <TitleSection icon={getDatastoreIcon(datastore.type)} iconWidth="33px">

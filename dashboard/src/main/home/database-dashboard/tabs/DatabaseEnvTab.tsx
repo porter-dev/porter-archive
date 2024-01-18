@@ -5,12 +5,12 @@ import CopyToClipboard from "components/CopyToClipboard";
 import Helper from "components/form-components/Helper";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-
 import EnvGroupArray from "main/home/cluster-dashboard/env-groups/EnvGroupArray";
-import { DatastoreEnvWithSource } from "../types";
-import DatabaseLinkedApp from "./DatabaseLinkedApp";
+import { type DatastoreEnvWithSource } from "lib/databases/types";
 
 import copy from "assets/copy-left.svg";
+
+import DatabaseLinkedApp from "./DatabaseLinkedApp";
 
 type Props = {
   envData: DatastoreEnvWithSource;
@@ -25,9 +25,7 @@ export type KeyValueType = {
   deleted: boolean;
 };
 
-const DatabaseEnvTab: React.FC<Props> = ({ envData, connectionString
-}) => {
-
+const DatabaseEnvTab: React.FC<Props> = ({ envData, connectionString }) => {
   const setKeys = (): KeyValueType[] => {
     const keys: KeyValueType[] = [];
     if (envData != null) {
@@ -41,61 +39,68 @@ const DatabaseEnvTab: React.FC<Props> = ({ envData, connectionString
       });
     }
 
-    return (keys)
-  }
+    return keys;
+  };
 
   const renderLinkedApplications = (): JSX.Element => {
     if (envData.linked_applications.length === 0) {
-      return <InnerWrapper>
-        <Text size={16}> Linked Applications</Text><Spacer y={.5} />
-        <Helper>
-          No applications are linked to the &quot;{envData.name}&quot; env group.
-        </Helper>
-      </InnerWrapper>;
+      return (
+        <InnerWrapper>
+          <Text size={16}> Linked Applications</Text>
+          <Spacer y={0.5} />
+          <Helper>
+            No applications are linked to the &quot;{envData.name}&quot; env
+            group.
+          </Helper>
+        </InnerWrapper>
+      );
     }
 
-    return <InnerWrapper>
-      <Text size={16}> Linked Applications</Text><Spacer y={.5} />
-      {envData.linked_applications.map((appName, index) => <DatabaseLinkedApp appName={appName} key={index}></DatabaseLinkedApp>)}
-    </InnerWrapper>;
-  }
+    return (
+      <InnerWrapper>
+        <Text size={16}> Linked Applications</Text>
+        <Spacer y={0.5} />
+        {envData.linked_applications.map((appName, index) => (
+          <DatabaseLinkedApp appName={appName} key={index}></DatabaseLinkedApp>
+        ))}
+      </InnerWrapper>
+    );
+  };
 
   return (
     <StyledTemplateComponent>
       <InnerWrapper>
         <Text size={16}>Environment Variables</Text>
         <Helper>
-          These environment variables are available to your applications once the &quot;{envData.name}&quot; env group is linked to your app.
+          These environment variables are available to your applications once
+          the &quot;{envData.name}&quot; env group is linked to your app.
         </Helper>
         <EnvGroupArray
-            values={setKeys()}
-            setValues={(_: any) => {}}
-            fileUpload={true}
-            secretOption={true}
-            disabled={
-                true
-            }
+          values={setKeys()}
+          setValues={(_) => {}}
+          fileUpload={true}
+          secretOption={true}
+          disabled={true}
         />
       </InnerWrapper>
-      {
-        connectionString &&
-          <InnerWrapper>
-            <Text size={16}>Connection String</Text>
-            <Spacer y={.5} />
-            <IdContainer>
-              <ConnectionContainer>
-                <IconWithName>Connection String: </IconWithName>
-                <CopyContainer>
-                  <IdText> {connectionString}</IdText>
-                  <CopyToClipboard text={connectionString.toString()}>
-                    <CopyIcon src={copy} alt="copy" />
-                  </CopyToClipboard>
-                </CopyContainer>
-              </ConnectionContainer>
-            </IdContainer>
-            <Spacer y={1} />
-          </InnerWrapper>
-      }
+      {connectionString && (
+        <InnerWrapper>
+          <Text size={16}>Connection String</Text>
+          <Spacer y={0.5} />
+          <IdContainer>
+            <ConnectionContainer>
+              <IconWithName>Connection String: </IconWithName>
+              <CopyContainer>
+                <IdText> {connectionString}</IdText>
+                <CopyToClipboard text={connectionString.toString()}>
+                  <CopyIcon src={copy} alt="copy" />
+                </CopyToClipboard>
+              </CopyContainer>
+            </ConnectionContainer>
+          </IdContainer>
+          <Spacer y={1} />
+        </InnerWrapper>
+      )}
 
       {renderLinkedApplications()}
     </StyledTemplateComponent>
@@ -105,29 +110,29 @@ const DatabaseEnvTab: React.FC<Props> = ({ envData, connectionString
 export default DatabaseEnvTab;
 
 const StyledTemplateComponent = styled.div`
-width: 100%;
-animation: fadeIn 0.3s 0s;
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+  width: 100%;
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
-  to {
-    opacity: 1;
-  }
-}
 `;
 
 const IdContainer = styled.div`
-    color: #aaaabb;
-    border-radius: 5px;
-    padding: 5px;
-    padding-left: 10px;
-    display: block;
-    width: 100%;
-    border-radius: 5px;
-    background: ${(props) => props.theme.fg};
-    border: 1px solid ${({ theme }) => theme.border};
-    margin-bottom: 10px;
+  color: #aaaabb;
+  border-radius: 5px;
+  padding: 5px;
+  padding-left: 10px;
+  display: block;
+  width: 100%;
+  border-radius: 5px;
+  background: ${(props) => props.theme.fg};
+  border: 1px solid ${({ theme }) => theme.border};
+  margin-bottom: 10px;
 `;
 
 const ConnectionContainer = styled.div`

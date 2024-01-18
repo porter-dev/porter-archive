@@ -56,6 +56,9 @@ func (c *AttachEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "env-group-name", Value: request.EnvGroupName})
 
+	usingUpdateLogic := project.GetFeatureFlag(models.BetaFeaturesEnabled, c.Config().LaunchDarklyClient)
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "using-update-logic", Value: usingUpdateLogic})
+
 	if request.EnvGroupName == "" {
 		err := telemetry.Error(ctx, span, nil, "env group name cannot be empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -72,7 +75,7 @@ func (c *AttachEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		}
 
 		// TODO: delete second branch once all projects are on update flow
-		if project.GetFeatureFlag(models.BetaFeaturesEnabled, c.Config().LaunchDarklyClient) {
+		if usingUpdateLogic {
 			updateReq := connect.NewRequest(&porterv1.UpdateAppRequest{
 				ProjectId: int64(project.ID),
 				DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{

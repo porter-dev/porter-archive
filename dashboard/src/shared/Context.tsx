@@ -245,7 +245,7 @@ class ContextProvider extends Component<PropsType, StateType> {
         },
         "Enhanced Image Vulnerability Scanning": {
           message:
-            "AWS ECR scans for CVEs from the open-source Clair database on push image push. Enhanced scanning provides continuous, automated scans against images as new vulnerabilities appear.",
+            "AWS ECR scans for CVEs from the open-source Clair database on image push. Enhanced scanning provides continuous, automated scans against images as new vulnerabilities appear.",
           link: "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
           enabled: false,
           info: "",

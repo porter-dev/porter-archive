@@ -35,6 +35,7 @@ type AwsAccount struct {
 	ProjectID uint `json:"project_id"`
 }
 
+// CloudProvider is an abstraction for a cloud provider
 type CloudProvider struct {
 	// Type is the type of the cloud provider
 	Type porterv1.EnumCloudProvider `json:"type"`

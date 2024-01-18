@@ -42,6 +42,11 @@ func NewGetDatastoreHandler(
 	}
 }
 
+const (
+	// SupportedDatastoreCloudProvider_AWS is the AWS cloud provider
+	SupportedDatastoreCloudProvider_AWS string = "AWS"
+)
+
 // ServeHTTP retrieves the datastore in the given project
 func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-datastore")
@@ -71,11 +76,10 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if datastoreRecord.CloudProvider != "AWS" {
+	if datastoreRecord.CloudProvider != SupportedDatastoreCloudProvider_AWS {
 		err = telemetry.Error(ctx, span, nil, "unsupported datastore cloud provider")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
-
 	}
 
 	awsArn, err := arn.Parse(datastoreRecord.CloudProviderCredentialIdentifier)

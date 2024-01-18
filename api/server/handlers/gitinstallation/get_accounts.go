@@ -6,6 +6,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/porter-dev/porter/internal/telemetry"
+
 	"github.com/google/go-github/v41/github"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -70,9 +72,15 @@ func (c *GetGithubAppAccountsHandler) getOrgList(ctx context.Context,
 }
 
 func (c *GetGithubAppAccountsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-github-app-accounts")
+	defer span.End()
+
+	r = r.Clone(ctx)
+
 	tok, err := GetGithubAppOauthTokenFromRequest(c.Config(), r)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
+		err = telemetry.Error(ctx, span, err, "error getting github app oauth token from request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 		return
 	}
 
@@ -82,7 +90,7 @@ func (c *GetGithubAppAccountsHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	resultChannel := make(chan *github.Organization, 10)
 	errChan := make(chan error)
 
-	ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	go c.getOrgList(ctx, client, resultChannel, errChan)
@@ -99,7 +107,8 @@ resultOrErrorReader:
 			}
 		case err, ok := <-errChan:
 			if ok {
-				c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+				err = telemetry.Error(ctx, span, err, "error getting org list")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			} else {
 				// nothing in error, must be a close event
@@ -110,7 +119,8 @@ resultOrErrorReader:
 
 	authUser, _, err := client.Users.Get(r.Context(), "")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error getting authenticated user")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
@@ -120,7 +130,8 @@ resultOrErrorReader:
 	installation, err := c.Repo().GithubAppInstallation().ReadGithubAppInstallationByAccountID(*authUser.ID)
 
 	if err != nil && err != gorm.ErrRecordNotFound {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		err = telemetry.Error(ctx, span, err, "error reading github app installation")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

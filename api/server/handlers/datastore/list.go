@@ -3,6 +3,7 @@ package datastore
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
@@ -59,6 +60,9 @@ type Datastore struct {
 
 	// Status is the status of the datastore
 	Status string `json:"status,omitempty"`
+
+	// CreatedAtUTC is the time the datastore was created in UTC
+	CreatedAtUTC time.Time `json:"created_at"`
 }
 
 // ListDatastoresHandler is a struct for listing all datastores for a given project
@@ -98,9 +102,10 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	for _, datastore := range datastores {
 		datastoreList = append(datastoreList, Datastore{
-			Name:   datastore.Name,
-			Type:   datastore.Type,
-			Engine: datastore.Engine,
+			Name:         datastore.Name,
+			Type:         datastore.Type,
+			Engine:       datastore.Engine,
+			CreatedAtUTC: datastore.CreatedAt,
 		})
 	}
 

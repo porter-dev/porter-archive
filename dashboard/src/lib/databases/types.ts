@@ -23,6 +23,7 @@ export const datastoreValidator = z.object({
   name: z.string(),
   type: z.string(),
   engine: z.string(),
+  created_at: z.string().default(""),
   status: z.string().default(""),
   metadata: datastoreMetadataValidator.array().default([]),
   env: datastoreEnvValidator.optional(),

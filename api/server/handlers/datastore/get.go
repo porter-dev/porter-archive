@@ -119,6 +119,7 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	datastore := datastores[0]
 	datastore.Type = datastoreRecord.Type
 	datastore.Engine = datastoreRecord.Engine
+	datastore.CreatedAtUTC = datastoreRecord.CreatedAt
 
 	resp.Datastore = datastore
 

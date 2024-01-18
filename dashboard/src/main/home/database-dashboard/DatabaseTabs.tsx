@@ -45,8 +45,8 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
   const tabs = useMemo(() => {
     return [
       { label: "Connection Info", value: "environment" },
-      { label: "Settings", value: "settings" },
       { label: "Configuration", value: "configuration" },
+      { label: "Settings", value: "settings" },
     ];
   }, []);
 

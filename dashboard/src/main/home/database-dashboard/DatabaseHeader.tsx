@@ -1,12 +1,14 @@
 import React, { useMemo } from "react";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import Banner from "components/porter/Banner";
 import Container from "components/porter/Container";
+import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
+import StatusDot from "components/porter/StatusDot";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
-import TitleSection from "components/TitleSection";
 
 import { readableDate } from "shared/string_utils";
 
@@ -23,24 +25,44 @@ const DatabaseHeader: React.FC = () => {
   }, [datastore.engine]);
   return (
     <>
-      <TitleSection icon={getDatastoreIcon(datastore.type)} iconWidth="33px">
-        {datastore.name}
-        <Spacer inline x={1} />
-        <Container row>
-          <Tag hoverable={false}>
-            <Text size={13}>{templateDisplayName}</Text>
-          </Tag>
+      <Container row style={{ width: "100%" }}>
+        <Container row spaced style={{ width: "100%" }}>
+          <Container row>
+            <Icon src={getDatastoreIcon(datastore.type)} height={"25px"} />
+            <Spacer inline x={1} />
+            <Text size={21}>{datastore.name}</Text>
+            <Spacer inline x={1} />
+            <Container row>
+              <Tag hoverable={false}>
+                <Text size={13}>{templateDisplayName}</Text>
+              </Tag>
+            </Container>
+          </Container>
+          {match(datastoreField(datastore, "status"))
+            .with("available", () => (
+              <Container row>
+                <StatusDot status={"available"} heightPixels={11} />
+                Available
+              </Container>
+            ))
+            .with("pending", () => (
+              <Container row>
+                <StatusDot status={"pending"} heightPixels={11} />
+                Pending
+              </Container>
+            ))
+            .otherwise(() => null)}
         </Container>
-      </TitleSection>
-      <Spacer y={1} />
-      <LatestDeployContainer>
+      </Container>
+      <Spacer y={0.5} />
+      <CreatedAtContainer>
         <div style={{ flexShrink: 0 }}>
           <Text color="#aaaabb66">
             Created {readableDate(datastore.created_at)}
           </Text>
         </div>
         <Spacer y={0.5} />
-      </LatestDeployContainer>
+      </CreatedAtContainer>
       {datastoreField(datastore, "status") !== "available" && (
         <>
           <Spacer y={1} />
@@ -65,7 +87,7 @@ const BannerContents = styled.div`
   row-gap: 0.5rem;
 `;
 
-const LatestDeployContainer = styled.div`
+const CreatedAtContainer = styled.div`
   display: inline-flex;
   column-gap: 6px;
 `;

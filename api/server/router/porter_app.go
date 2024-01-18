@@ -804,6 +804,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/attach-env-group -> porter_app.NewAttachEnvGroupHandler
+	attachEnvGroupEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/attach-env-group", relPathV2),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	attachEnvGroupHandler := porter_app.NewAttachEnvGroupHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: attachEnvGroupEndpoint,
+		Handler:  attachEnvGroupHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/rollback -> porter_app.NewRollbackAppRevisionHandler
 	rollbackAppRevisionEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

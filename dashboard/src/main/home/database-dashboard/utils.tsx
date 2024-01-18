@@ -1,7 +1,7 @@
-import { type ClientDatastore } from "lib/databases/types";
+import { type SerializedDatastore } from "lib/databases/types";
 
 export const datastoreField = (
-  datastore: ClientDatastore,
+  datastore: SerializedDatastore,
   field: string
 ): string => {
   if (datastore.metadata?.length === 0) {

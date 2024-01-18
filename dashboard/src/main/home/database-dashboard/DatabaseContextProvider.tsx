@@ -14,6 +14,8 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import notFound from "assets/not-found.png";
 
+import { SUPPORTED_DATABASE_TEMPLATES } from "./constants";
+
 type DatabaseContextType = {
   datastore: ClientDatastore;
   projectId: number;
@@ -59,7 +61,21 @@ export const DatabaseContextProvider: React.FC<
       const results = await z
         .object({ datastore: datastoreValidator })
         .parseAsync(response.data);
-      return results.datastore;
+
+      const datastore = results.datastore;
+      const matchingTemplate = SUPPORTED_DATABASE_TEMPLATES.find(
+        (t) => t.type === datastore.type && t.engine.name === datastore.engine
+      );
+
+      // this datastore is a type we do not recognize
+      if (!matchingTemplate) {
+        return;
+      }
+
+      return {
+        ...results.datastore,
+        template: matchingTemplate,
+      };
     },
     {
       enabled: paramsExist,

@@ -6,6 +6,7 @@ import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 
 import { useDatabaseContext } from "./DatabaseContextProvider";
+import ConfigurationTab from "./tabs/ConfigurationTab";
 import DatabaseEnvTab from "./tabs/DatabaseEnvTab";
 import MetricsTab from "./tabs/MetricsTab";
 import SettingsTab from "./tabs/SettingsTab";
@@ -16,6 +17,7 @@ const validTabs = [
   "metrics",
   // "debug",
   "environment",
+  "configuration",
   "settings",
 ] as const;
 const DEFAULT_TAB = "environment";
@@ -41,9 +43,11 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
   }, [tabParam]);
 
   const tabs = useMemo(() => {
-    const base = [{ label: "Connection Info", value: "environment" }];
-    base.push({ label: "Settings", value: "settings" });
-    return base;
+    return [
+      { label: "Connection Info", value: "environment" },
+      { label: "Configuration", value: "configuration" },
+      { label: "Settings", value: "settings" },
+    ];
   }, []);
 
   return (
@@ -61,7 +65,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
         .with("environment", () => <DatabaseEnvTab envData={datastore.env} />)
         .with("settings", () => <SettingsTab />)
         .with("metrics", () => <MetricsTab />)
-
+        .with("configuration", () => <ConfigurationTab />)
         .otherwise(() => null)}
       <Spacer y={2} />
     </>

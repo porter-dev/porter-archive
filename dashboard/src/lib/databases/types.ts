@@ -23,13 +23,18 @@ export const datastoreValidator = z.object({
   name: z.string(),
   type: z.string(),
   engine: z.string(),
+  created_at: z.string().default(""),
   status: z.string().default(""),
   metadata: datastoreMetadataValidator.array().default([]),
   env: datastoreEnvValidator.optional(),
   connection_string: z.string().default(""),
 });
 
-export type ClientDatastore = z.infer<typeof datastoreValidator>;
+export type SerializedDatastore = z.infer<typeof datastoreValidator>;
+
+export type ClientDatastore = SerializedDatastore & {
+  template: DatabaseTemplate;
+};
 
 export const datastoreListResponseValidator = z.object({
   datastores: datastoreValidator.array(),

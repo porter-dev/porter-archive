@@ -5,6 +5,7 @@ import {
   DATABASE_ENGINE_REDIS,
   DATABASE_TYPE_ELASTICACHE,
   DATABASE_TYPE_RDS,
+  type DatabaseEngine,
   type DatabaseTemplate,
 } from "lib/databases/types";
 
@@ -19,12 +20,14 @@ export const getTemplateIcon = (type: string, engine: string): string => {
   return template ? template.icon : awsRDS;
 };
 
-export const getTemplateEngineDisplayName = (engine: string): string => {
+export const getTemplateEngine = (
+  engine: string
+): DatabaseEngine | undefined => {
   const template = SUPPORTED_DATABASE_TEMPLATES.find(
     (t) => t.engine.name === engine
   );
 
-  return template ? template.engine.displayName : "";
+  return template?.engine;
 };
 
 export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [

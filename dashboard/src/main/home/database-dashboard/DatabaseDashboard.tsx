@@ -12,7 +12,6 @@ import Fieldset from "components/porter/Fieldset";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
@@ -21,14 +20,15 @@ import { useDatabaseList } from "lib/hooks/useDatabaseList";
 
 import { Context } from "shared/Context";
 import { search } from "shared/search";
+import { readableDate } from "shared/string_utils";
 import database from "assets/database.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
-import loading from "assets/loading.gif";
 import notFound from "assets/not-found.png";
 import healthy from "assets/status-healthy.png";
+import time from "assets/time.png";
 
-import { getTemplateEngineDisplayName, getTemplateIcon } from "./constants";
+import EngineTag from "./tags/EngineTag";
 
 const DatabaseDashboard: React.FC = () => {
   const { currentCluster } = useContext(Context);
@@ -46,35 +46,6 @@ const DatabaseDashboard: React.FC = () => {
 
     return _.sortBy(filteredBySearch, ["name"]);
   }, [datastores, searchValue]);
-
-  const renderStatusIcon = (status: string): JSX.Element => {
-    switch (status) {
-      case "available":
-        return <StatusIcon src={healthy} />;
-      case "":
-        return <></>;
-      case "error":
-        return (
-          <StatusText>
-            <StatusWrapper success={false}>
-              <Status src={loading} />
-              {"Creating database"}
-            </StatusWrapper>
-          </StatusText>
-        );
-      case "updating":
-        return (
-          <StatusText>
-            <StatusWrapper success={false}>
-              <Status src={loading} />
-              {"Creating database"}
-            </StatusWrapper>
-          </StatusText>
-        );
-      default:
-        return <></>;
-    }
-  };
 
   const renderContents = (): JSX.Element => {
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
@@ -169,33 +140,25 @@ const DatabaseDashboard: React.FC = () => {
           <GridList>
             {(filteredDatabases ?? []).map(
               (datastore: ClientDatastore, i: number) => {
-                const templateIcon = getTemplateIcon(
-                  datastore.type,
-                  datastore.engine
-                );
-                const templateDisplayName = getTemplateEngineDisplayName(
-                  datastore.engine
-                );
                 return (
                   <Link to={`/databases/${datastore.name}`} key={i}>
                     <Block>
                       <Container row spaced>
                         <Container row>
-                          <Icon src={templateIcon} />
+                          <Icon src={datastore.template.icon} />
                           <Text size={14}>{datastore.name}</Text>
                         </Container>
                         <MidIcon src={healthy} height="16px" />
                       </Container>
-                      {templateDisplayName && (
-                        <>
-                          <Spacer y={1} />
-                          <Container row>
-                            <Tag hoverable={false}>
-                              <Text size={13}>{templateDisplayName}</Text>
-                            </Tag>
-                          </Container>
-                        </>
-                      )}
+                      <Container row>
+                        <EngineTag engine={datastore.template.engine} />
+                      </Container>
+                      <Container row>
+                        <SmallIcon opacity="0.4" src={time} />
+                        <Text size={13} color="#ffffff44">
+                          {readableDate(datastore.created_at)}
+                        </Text>
+                      </Container>
                     </Block>
                   </Link>
                 );
@@ -206,31 +169,25 @@ const DatabaseDashboard: React.FC = () => {
           <List>
             {(filteredDatabases ?? []).map(
               (datastore: ClientDatastore, i: number) => {
-                const templateIcon = getTemplateIcon(
-                  datastore.type,
-                  datastore.engine
-                );
-                const templateDisplayName = getTemplateEngineDisplayName(
-                  datastore.engine
-                );
                 return (
                   <Row to={`/databases/${datastore.name}`} key={i}>
-                    <Container row>
-                      <MidIcon src={templateIcon} />
-                      <Text size={14}>{datastore.name}</Text>
-                      <Spacer inline x={1} />
+                    <Container row spaced>
+                      <Container row>
+                        <MidIcon src={datastore.template.icon} />
+                        <Text size={14}>{datastore.name}</Text>
+                      </Container>
                       <MidIcon src={healthy} height="16px" />
                     </Container>
-                    <Spacer height="15px" />
+                    <Spacer y={0.5} />
                     <Container row>
-                      {templateDisplayName && (
-                        <>
-                          <Spacer inline x={0.5} />
-                          <Tag hoverable={false}>
-                            <Text size={13}>{templateDisplayName}</Text>
-                          </Tag>
-                        </>
-                      )}
+                      <EngineTag engine={datastore.template.engine} />
+                      <Spacer inline x={1} />
+                      <Container>
+                        <SmallIcon opacity="0.4" src={time} />
+                        <Text size={13} color="#ffffff44">
+                          {readableDate(datastore.created_at)}
+                        </Text>
+                      </Container>
                     </Container>
                   </Row>
                 );
@@ -281,20 +238,13 @@ const List = styled.div`
   overflow: hidden;
 `;
 
-const StatusIcon = styled.img`
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  height: 18px;
-`;
-
 const Icon = styled.img`
   height: 20px;
   margin-right: 13px;
 `;
 
 const Block = styled.div`
-  height: 120px;
+  height: 150px;
   flex-direction: column;
   display: flex;
   justify-content: space-between;
@@ -353,37 +303,10 @@ const StyledAppDashboard = styled.div`
   height: 100%;
 `;
 
-const StatusText = styled.div`
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const StatusWrapper = styled.div<{
-  success?: boolean;
-}>`
-  display: flex;
-  line-height: 1.5;
-  align-items: center;
-  font-family: "Work Sans", sans-serif;
-  font-size: 13px;
-  color: #ffffff55;
-  margin-left: 15px;
-  text-overflow: ellipsis;
-  animation-fill-mode: forwards;
-  > i {
-    font-size: 18px;
-    margin-right: 10px;
-    float: left;
-    color: ${(props) => (props.success ? "#4797ff" : "#fcba03")};
-  }
-`;
-const Status = styled.img`
-  width: 15px;
-  height: 15px;
-  margin-right: 9px;
-  margin-bottom: 0px;
+const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
+  margin-left: 2px;
+  height: ${(props) => props.height || "14px"};
+  opacity: ${(props) => props.opacity || 1};
+  filter: grayscale(100%);
+  margin-right: 10px;
 `;

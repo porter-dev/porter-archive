@@ -30,7 +30,11 @@ export const datastoreValidator = z.object({
   connection_string: z.string().default(""),
 });
 
-export type ClientDatastore = z.infer<typeof datastoreValidator>;
+export type SerializedDatastore = z.infer<typeof datastoreValidator>;
+
+export type ClientDatastore = SerializedDatastore & {
+  template: DatabaseTemplate;
+};
 
 export const datastoreListResponseValidator = z.object({
   datastores: datastoreValidator.array(),

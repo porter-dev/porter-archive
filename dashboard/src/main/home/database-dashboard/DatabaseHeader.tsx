@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
@@ -7,22 +7,18 @@ import Container from "components/porter/Container";
 import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
-import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 
 import { readableDate } from "shared/string_utils";
 
-import { getTemplateEngineDisplayName } from "./constants";
 import { useDatabaseContext } from "./DatabaseContextProvider";
 import { getDatastoreIcon } from "./icons";
+import EngineTag from "./tags/EngineTag";
 import { datastoreField } from "./utils";
 
 const DatabaseHeader: React.FC = () => {
   const { datastore } = useDatabaseContext();
 
-  const templateDisplayName = useMemo(() => {
-    return getTemplateEngineDisplayName(datastore.engine);
-  }, [datastore.engine]);
   return (
     <>
       <Container row style={{ width: "100%" }}>
@@ -33,25 +29,20 @@ const DatabaseHeader: React.FC = () => {
             <Text size={21}>{datastore.name}</Text>
             <Spacer inline x={1} />
             <Container row>
-              <Tag hoverable={false}>
-                <Text size={13}>{templateDisplayName}</Text>
-              </Tag>
+              <EngineTag engine={datastore.template.engine} heightPixels={15} />
             </Container>
           </Container>
           {match(datastoreField(datastore, "status"))
             .with("available", () => (
               <Container row>
                 <StatusDot status={"available"} heightPixels={11} />
-                Available
               </Container>
             ))
-            .with("pending", () => (
+            .otherwise(() => (
               <Container row>
                 <StatusDot status={"pending"} heightPixels={11} />
-                Pending
               </Container>
-            ))
-            .otherwise(() => null)}
+            ))}
         </Container>
       </Container>
       <Spacer y={0.5} />
@@ -72,7 +63,6 @@ const DatabaseHeader: React.FC = () => {
             </BannerContents>
             <Spacer inline width="5px" />
           </Banner>
-          <Spacer y={1} />
         </>
       )}
     </>

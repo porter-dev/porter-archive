@@ -90,6 +90,7 @@ func (c *AttachEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 			_, err = c.Config().ClusterControlPlaneClient.UpdateApp(ctx, updateReq)
 			if err != nil {
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
 				err := telemetry.Error(ctx, span, err, "error calling ccp update app")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
@@ -109,23 +110,27 @@ func (c *AttachEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			})
 			ccpResp, err := c.Config().ClusterControlPlaneClient.ValidatePorterApp(ctx, validateReq)
 			if err != nil {
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
 				err := telemetry.Error(ctx, span, err, "error calling ccp validate porter app")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 
 			if ccpResp == nil {
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
 				err := telemetry.Error(ctx, span, err, "ccp resp is nil")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 			if ccpResp.Msg == nil {
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
 				err := telemetry.Error(ctx, span, err, "ccp resp msg is nil")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
 			}
 
 			if ccpResp.Msg.App == nil {
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
 				err := telemetry.Error(ctx, span, err, "ccp resp app is nil")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return
@@ -138,6 +143,7 @@ func (c *AttachEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			})
 			_, err = c.Config().ClusterControlPlaneClient.ApplyPorterApp(ctx, applyReq)
 			if err != nil {
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
 				err := telemetry.Error(ctx, span, err, "error calling ccp apply porter app")
 				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 				return

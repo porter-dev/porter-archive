@@ -29,7 +29,6 @@ import notFound from "assets/not-found.png";
 import healthy from "assets/status-healthy.png";
 
 import { getTemplateEngineDisplayName, getTemplateIcon } from "./constants";
-import { datastoreField } from "./utils";
 
 const DatabaseDashboard: React.FC = () => {
   const { currentCluster } = useContext(Context);
@@ -174,9 +173,9 @@ const DatabaseDashboard: React.FC = () => {
                   datastore.type,
                   datastore.engine
                 );
-                // const templateDisplayName = getTemplateEngineDisplayName(
-                //   datastore.engine
-                // );
+                const templateDisplayName = getTemplateEngineDisplayName(
+                  datastore.engine
+                );
                 return (
                   <Link to={`/databases/${datastore.name}`} key={i}>
                     <Block>
@@ -185,13 +184,18 @@ const DatabaseDashboard: React.FC = () => {
                           <Icon src={templateIcon} />
                           <Text size={14}>{datastore.name}</Text>
                         </Container>
-                        {/* {templateDisplayName && (
-                          <Container row>
-                            <Spacer inline x={0.5} />
-                            <Tag hoverable={false}>{templateDisplayName}</Tag>
-                          </Container>
-                        )} */}
+                        <MidIcon src={healthy} height="16px" />
                       </Container>
+                      {templateDisplayName && (
+                        <>
+                          <Spacer y={1} />
+                          <Container row>
+                            <Tag hoverable={false}>
+                              <Text size={13}>{templateDisplayName}</Text>
+                            </Tag>
+                          </Container>
+                        </>
+                      )}
                     </Block>
                   </Link>
                 );
@@ -206,9 +210,9 @@ const DatabaseDashboard: React.FC = () => {
                   datastore.type,
                   datastore.engine
                 );
-                // const templateDisplayName = getTemplateEngineDisplayName(
-                //   datastore.engine
-                // );
+                const templateDisplayName = getTemplateEngineDisplayName(
+                  datastore.engine
+                );
                 return (
                   <Row to={`/databases/${datastore.name}`} key={i}>
                     <Container row>
@@ -218,14 +222,16 @@ const DatabaseDashboard: React.FC = () => {
                       <MidIcon src={healthy} height="16px" />
                     </Container>
                     <Spacer height="15px" />
-                    {/* <Container row>
+                    <Container row>
                       {templateDisplayName && (
                         <>
                           <Spacer inline x={0.5} />
-                          <Tag hoverable={false}>{templateDisplayName}</Tag>
+                          <Tag hoverable={false}>
+                            <Text size={13}>{templateDisplayName}</Text>
+                          </Tag>
                         </>
                       )}
-                    </Container> */}
+                    </Container>
                   </Row>
                 );
               }
@@ -288,7 +294,7 @@ const Icon = styled.img`
 `;
 
 const Block = styled.div`
-  height: 110px;
+  height: 120px;
   flex-direction: column;
   display: flex;
   justify-content: space-between;

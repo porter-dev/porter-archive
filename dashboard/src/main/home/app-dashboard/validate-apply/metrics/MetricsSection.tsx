@@ -126,9 +126,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
       }
     }
 
-    if (isHpaEnabled) {
-      metricTypes.push("hpa_replicas");
-    }
+    metricTypes.push("replicas");
 
     return [serviceName, serviceKind, metricTypes, isHpaEnabled];
   }, [selectedFilterValues.service_name]);
@@ -269,7 +267,7 @@ const MetricsSection: React.FunctionComponent<PropsType> = ({
               aggregatedData: allPodsAggregatedData,
               hpaData,
             }))
-            .with("hpa_replicas", () => ({
+            .with("replicas", () => ({
               type: metricType,
               label: "Number of replicas",
               data,

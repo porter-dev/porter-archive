@@ -7,20 +7,19 @@ import TabSelector from "components/TabSelector";
 
 import { useDatabaseContext } from "./DatabaseContextProvider";
 import ConfigurationTab from "./tabs/ConfigurationTab";
+import ConnectedAppsTab from "./tabs/ConnectedAppsTab";
 import DatabaseEnvTab from "./tabs/DatabaseEnvTab";
 import MetricsTab from "./tabs/MetricsTab";
 import SettingsTab from "./tabs/SettingsTab";
 
-// commented out tabs are not yet implemented
-// will be included as support is available based on data from app revisions rather than helm releases
 const validTabs = [
   "metrics",
-  // "debug",
-  "environment",
+  "credentials",
   "configuration",
   "settings",
+  "connected-apps",
 ] as const;
-const DEFAULT_TAB = "environment";
+const DEFAULT_TAB = "connected-apps";
 type ValidTab = (typeof validTabs)[number];
 
 type DbTabProps = {
@@ -44,7 +43,8 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
 
   const tabs = useMemo(() => {
     return [
-      { label: "Connection Info", value: "environment" },
+      { label: "Connected Apps", value: "connected-apps" },
+      { label: "Credentials", value: "credentials" },
       { label: "Configuration", value: "configuration" },
       { label: "Settings", value: "settings" },
     ];
@@ -62,10 +62,11 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
       />
       <Spacer y={1} />
       {match(currentTab)
-        .with("environment", () => <DatabaseEnvTab envData={datastore.env} />)
+        .with("credentials", () => <DatabaseEnvTab envData={datastore.env} />)
         .with("settings", () => <SettingsTab />)
         .with("metrics", () => <MetricsTab />)
         .with("configuration", () => <ConfigurationTab />)
+        .with("connected-apps", () => <ConnectedAppsTab />)
         .otherwise(() => null)}
       <Spacer y={2} />
     </>

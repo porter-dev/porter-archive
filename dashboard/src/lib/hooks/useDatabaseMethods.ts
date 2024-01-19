@@ -10,6 +10,15 @@ import { Context } from "shared/Context";
 type DatabaseHook = {
   create: (values: DbFormData) => Promise<void>;
   deleteDatastore: (name: string) => Promise<void>;
+  attachDatastoreToAppInstances: ({
+    name,
+    appInstanceIds,
+    clusterId,
+  }: {
+    name: string;
+    appInstanceIds: string[];
+    clusterId: number;
+  }) => Promise<void>;
 };
 type CreateDatastoreInput = {
   name: string;
@@ -76,7 +85,7 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
 };
 
 export const useDatabaseMethods = (): DatabaseHook => {
-  const { currentProject } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
 
   const queryClient = useQueryClient();
 
@@ -126,5 +135,41 @@ export const useDatabaseMethods = (): DatabaseHook => {
     [currentProject]
   );
 
-  return { create, deleteDatastore };
+  const attachDatastoreToAppInstances = useCallback(
+    async ({
+      name,
+      appInstanceIds,
+    }: {
+      name: string;
+      appInstanceIds: string[];
+    }): Promise<void> => {
+      if (
+        !currentProject?.id ||
+        currentProject.id === -1 ||
+        !currentCluster?.id ||
+        currentCluster.id === -1
+      ) {
+        return;
+      }
+
+      await api.attachEnvGroup(
+        "<token>",
+        {
+          app_instance_ids: appInstanceIds,
+          env_group_name: name,
+        },
+        {
+          project_id: currentProject.id,
+          // NB: this endpoint does not actually use the cluster id, because the app instance id is used
+          // to deploy in its correct deployment target.
+          cluster_id: currentCluster.id,
+        }
+      );
+
+      await queryClient.invalidateQueries({ queryKey: ["getDatastore"] });
+    },
+    [currentProject, currentCluster]
+  );
+
+  return { create, deleteDatastore, attachDatastoreToAppInstances };
 };

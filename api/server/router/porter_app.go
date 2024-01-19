@@ -1065,7 +1065,7 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/revisions -> porter_app.NewCurrentAppRevisionHandler
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/revisions -> porter_app.NewLatestAppRevisionsHandler
 	latestAppRevisionsEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,

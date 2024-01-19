@@ -584,6 +584,16 @@ const createProject = baseApi<{ name: string }, {}>("POST", (pathParams) => {
   return `/api/projects`;
 });
 
+const connectProjectToCluster = baseApi<
+{}, 
+{
+  id: number;
+}>("POST", (pathParams) => {
+  const { id } = pathParams;
+
+  return `/api/projects/${id}/connect`;
+});
+
 const createSubdomain = baseApi<
   {},
   {
@@ -3407,6 +3417,7 @@ export default {
   createPasswordResetVerify,
   createPasswordResetFinalize,
   createProject,
+  connectProjectToCluster,
   // ------------ PORTER APP -----------
   getPorterApps,
   getPorterApp,

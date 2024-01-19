@@ -101,7 +101,23 @@ export const NewProjectFC = () => {
       setCurrentProject(project);
       setButtonStatus("successful");
       trackCreateNewProject();
-      pushFiltered("/onboarding", []);
+      
+      if (project?.sandbox_enabled) {
+        await api.connectProjectToCluster(
+          "<token>",
+          {},
+          { id: project.id }
+        )
+        .then(() => {
+          pushFiltered("/apps", []);
+        })
+        .catch((err) => {
+          console.log(err)
+        })
+
+      } else {
+        pushFiltered("/onboarding", []);
+      }
     } catch (error) {
       setButtonStatus("Couldn't create project, try again.");
       console.log(error);

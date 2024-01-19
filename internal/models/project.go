@@ -195,6 +195,8 @@ type Project struct {
 	// Deprecated: use p.GetFeatureFlag(EnableReprovision, *features.Client) instead
 
 	EnableReprovision bool `gorm:"default:false"`
+
+	EnableSandbox bool `gorm:"default:false"`
 }
 
 // GetFeatureFlag calls launchdarkly for the specified flag

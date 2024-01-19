@@ -50,6 +50,7 @@ type Project struct {
 	StacksEnabled                   bool    `json:"stacks_enabled"`
 	ValidateApplyV2                 bool    `json:"validate_apply_v2"`
 	ManagedDeploymentTargetsEnabled bool    `json:"managed_deployment_targets_enabled"`
+	SandboxEnabled                  bool    `json:"sandbox_enabled"`
 }
 
 // FeatureFlags is a struct that contains old feature flag representations

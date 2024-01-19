@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,8 +38,17 @@ type BuildOpts struct {
 	LogFile *os.File
 }
 
-// BuildLocal
+// BuildLocal builds a Dockerfile using the local Docker daemon.
 func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
+	if opts == nil {
+		return errors.New("build opts cannot be nil")
+	}
+	if opts.UseCache {
+		err = a.PullImage(ctx, fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag))
+		if err != nil {
+			log.Printf("unable to pull image. Continuing with build: %v", err)
+		}
+	}
 	if os.Getenv("DOCKER_BUILDKIT") == "1" {
 		return buildLocalWithBuildkit(ctx, *opts)
 	}

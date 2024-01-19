@@ -218,15 +218,15 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={applications} />
               Applications
             </NavButton>
-            {currentProject.db_enabled && (
-              <NavButton
-                path="/databases"
-                active={window.location.pathname.startsWith("/apps")}
-              >
-                <Img src={database} />
-                Databases
-              </NavButton>
-            )}
+            {/* {currentProject.db_enabled && ( */}
+            <NavButton
+              path="/databases"
+              active={window.location.pathname.startsWith("/apps")}
+            >
+              <Img src={database} />
+              Databases
+            </NavButton>
+            {/* )} */}
             <NavButton
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}

@@ -37,6 +37,8 @@ type UpdateInput struct {
 	PreviewApply bool
 	// WaitForSuccessfulDeployment is true when Update should wait for the revision deployment to complete (all services deployed successfully)
 	WaitForSuccessfulDeployment bool
+	// PullImageBeforeBuild will attempt to pull the image before building if true
+	PullImageBeforeBuild bool
 }
 
 // Update implements the functionality of the `porter apply` command for validate apply v2 projects
@@ -170,12 +172,13 @@ func Update(ctx context.Context, inp UpdateInput) error {
 		color.New(color.FgGreen).Printf("Building new image with tag %s...\n", commitSHA) // nolint:errcheck,gosec
 
 		buildInput, err := buildInputFromBuildSettings(buildInputFromBuildSettingsInput{
-			projectID: cliConf.Project,
-			appName:   appName,
-			commitSHA: commitSHA,
-			image:     buildSettings.Image,
-			build:     buildSettings.Build,
-			buildEnv:  buildSettings.BuildEnvVariables,
+			projectID:            cliConf.Project,
+			appName:              appName,
+			commitSHA:            commitSHA,
+			image:                buildSettings.Image,
+			build:                buildSettings.Build,
+			buildEnv:             buildSettings.BuildEnvVariables,
+			pullImageBeforeBuild: inp.PullImageBeforeBuild,
 		})
 		if err != nil {
 			buildError = fmt.Errorf("error creating build input from build settings: %w", err)
@@ -302,12 +305,13 @@ func gitSourceFromEnv() (porter_app.GitSource, error) {
 }
 
 type buildInputFromBuildSettingsInput struct {
-	projectID uint
-	appName   string
-	commitSHA string
-	image     porter_app.Image
-	build     porter_app.BuildSettings
-	buildEnv  map[string]string
+	projectID            uint
+	appName              string
+	commitSHA            string
+	image                porter_app.Image
+	build                porter_app.BuildSettings
+	buildEnv             map[string]string
+	pullImageBeforeBuild bool
 }
 
 func buildInputFromBuildSettings(inp buildInputFromBuildSettingsInput) (buildInput, error) {

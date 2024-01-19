@@ -5,6 +5,16 @@ import (
 	"gorm.io/gorm"
 )
 
+// DatastoreStatus is the status of an app revision
+type DatastoreStatus string
+
+const (
+	// DatastoreStatus_Creating is the status for a datastore that is being created
+	DatastoreStatus_Creating DatastoreStatus = "CREATING"
+	// DatastoreStatus_Available is the status for a datastore that is available
+	DatastoreStatus_Available DatastoreStatus = "AVAILABLE"
+)
+
 // Datastore is a database model that represents a Porter-provisioned datastore
 type Datastore struct {
 	gorm.Model
@@ -33,5 +43,5 @@ type Datastore struct {
 	Engine string `json:"engine"`
 
 	// Status describes the status of a datastore
-	Status string `json:"status"`
+	Status DatastoreStatus `json:"status"`
 }

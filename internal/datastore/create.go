@@ -68,6 +68,7 @@ func CreateOrGetRecord(ctx context.Context, inp CreateOrGetRecordInput) (*models
 		Engine:                            inp.Engine,
 		CloudProvider:                     cluster.CloudProvider,
 		CloudProviderCredentialIdentifier: cluster.CloudProviderCredentialIdentifier,
+		Status:                            models.DatastoreStatus_Creating,
 	}
 
 	datastore, err = inp.DatastoreRepository.Insert(ctx, datastoreToSave)

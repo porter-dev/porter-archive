@@ -46,7 +46,7 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 	if opts.UseCache {
 		err = a.PullImage(ctx, fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag))
 		if err != nil {
-			log.Printf("unable to pull image. Continuing with build: %v", err)
+			log.Printf("unable to pull image. Continuing with build: %s", err.Error())
 		}
 	}
 	if os.Getenv("DOCKER_BUILDKIT") == "1" {

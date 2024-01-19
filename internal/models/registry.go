@@ -25,11 +25,10 @@ type Registry struct {
 	// The infra id, if registry was provisioned with Porter
 	InfraID uint `json:"infra_id"`
 
-	// CloudProvider is the cloud provider that hosts the Kubernetes Cluster. Accepted values: [AWS, GCP, AZURE]
+	// CloudProvider is the cloud provider that hosts the registry. Accepted values: [AWS, GCP, AZURE]
 	CloudProvider string `json:"cloud_provider" gorm:"default:''"`
 
-	// CloudProviderCredentialIdentifier is a reference to find the credentials required for access the cluster's API.
-	// This was likely the credential that was used to create the cluster.
+	// CloudProviderCredentialIdentifier is a reference to find the credentials required for access the registry's API.
 	// For AWS EKS clusters, this will be an ARN for the final target role in the assume role chain.
 	CloudProviderCredentialIdentifier string `json:"cloud_provider_credential_identifier" gorm:"default:''"`
 

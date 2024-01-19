@@ -893,6 +893,18 @@ const parsePorterYaml = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/parse`;
 });
 
+const attachEnvGroup = baseApi<
+  {
+    env_group_name: string;
+    app_instance_ids: string[];
+  },
+  { project_id: number; cluster_id: number }
+>(
+  "POST",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/apps/attach-env-group`
+);
+
 const getDefaultDeploymentTarget = baseApi<
   {},
   {
@@ -3537,6 +3549,7 @@ export default {
   getProcfileContents,
   getPorterYamlContents,
   parsePorterYaml,
+  attachEnvGroup,
   getDefaultDeploymentTarget,
   deleteDeploymentTarget,
   getBranchHead,

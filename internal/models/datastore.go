@@ -13,10 +13,10 @@ type Datastore struct {
 	ID uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
 
 	// ProjectID is the ID of the project that the datastore belongs to
-	ProjectID uint
+	ProjectID uint `json:"project_id"`
 
 	// Name is the name of the datastore
-	Name string
+	Name string `json:"name"`
 
 	// CloudProvider is the cloud provider that hosts the Kubernetes Cluster. Accepted values: [AWS, GCP, AZURE]
 	CloudProvider string `json:"cloud_provider"`
@@ -31,4 +31,7 @@ type Datastore struct {
 
 	// Engine is the engine of the datastore. Accepted values: [POSTGRES, AURORA-POSTGRES, REDIS]
 	Engine string `json:"engine"`
+
+	// Status describes the status of a datastore
+	Status string `json:"status"`
 }

@@ -38,7 +38,7 @@ type BuildOpts struct {
 	LogFile *os.File
 }
 
-// BuildLocal builds a Dockerfile using the local Docker daemon.
+// BuildLocal builds a Dockerfile using the local Docker daemon
 func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 	if opts == nil {
 		return errors.New("build opts cannot be nil")

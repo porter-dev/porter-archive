@@ -1,17 +1,18 @@
-import * as stats from "simple-statistics";
 import _ from "lodash";
+import * as stats from "simple-statistics";
+
 import {
-  GenericMetricResponse,
-  MetricsCPUDataResponse,
-  MetricsMemoryDataResponse,
-  MetricsNetworkDataResponse,
-  MetricsNGINXErrorsDataResponse,
-  MetricsNGINXStatusDataResponse,
-  AvailableMetrics,
-  MetricsHpaReplicasDataResponse,
-  MetricsNGINXLatencyDataResponse,
-  NormalizedMetricsData,
-  NormalizedNginxStatusMetricsData,
+  type AvailableMetrics,
+  type GenericMetricResponse,
+  type MetricsCPUDataResponse,
+  type MetricsHpaReplicasDataResponse,
+  type MetricsMemoryDataResponse,
+  type MetricsNetworkDataResponse,
+  type MetricsNGINXErrorsDataResponse,
+  type MetricsNGINXLatencyDataResponse,
+  type MetricsNGINXStatusDataResponse,
+  type NormalizedMetricsData,
+  type NormalizedNginxStatusMetricsData,
 } from "./types";
 
 /**
@@ -61,7 +62,7 @@ export class MetricNormalizer {
       return this.parseNGINXStatusMetrics(this.metric_results);
     }
 
-    return []
+    return [];
   }
 
   getAggregatedData(): Record<string, NormalizedMetricsData[]> {

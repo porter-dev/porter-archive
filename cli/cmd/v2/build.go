@@ -38,6 +38,8 @@ type buildInput struct {
 	// CurrentImageTag is used in docker build to cache from
 	CurrentImageTag string
 	RepositoryURL   string
+	// PullImageBeforeBuild is used to pull the docker image before building
+	PullImageBeforeBuild bool
 
 	Env map[string]string
 }
@@ -112,6 +114,7 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 			IsDockerfileInCtx: isDockerfileInCtx,
 			Env:               inp.Env,
 			LogFile:           logFile,
+			UseCache:          inp.PullImageBeforeBuild,
 		}
 
 		err = dockerAgent.BuildLocal(

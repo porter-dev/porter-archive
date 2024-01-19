@@ -43,6 +43,8 @@ var (
 	porterYAML       string
 	previewApply     bool
 	imageTagOverride string
+	// pullImageBeforeBuild is a flag that determines whether to pull the docker image from a repo before building
+	pullImageBeforeBuild bool
 )
 
 func registerCommand_Apply(cliConf config.CLIConfig) *cobra.Command {
@@ -108,6 +110,7 @@ applying a configuration:
 
 	applyCmd.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
 	applyCmd.PersistentFlags().BoolVarP(&previewApply, "preview", "p", false, "apply as preview environment based on current git branch")
+	applyCmd.PersistentFlags().BoolVar(&pullImageBeforeBuild, "pull-before-build", false, "attempt to pull image from registry before building")
 	applyCmd.PersistentFlags().StringVar(&imageTagOverride, "tag", "", "set the image tag used for the application (overrides field in yaml)")
 	applyCmd.PersistentFlags().BoolVarP(
 		&appWait,
@@ -152,6 +155,7 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 			ImageTagOverride:            imageTagOverride,
 			PreviewApply:                previewApply,
 			WaitForSuccessfulDeployment: appWait,
+			PullImageBeforeBuild:        pullImageBeforeBuild,
 		}
 		err := v2.Apply(ctx, inp)
 		if err != nil {

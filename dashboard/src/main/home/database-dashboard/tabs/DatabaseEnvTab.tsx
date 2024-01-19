@@ -10,8 +10,6 @@ import { type DatastoreEnvWithSource } from "lib/databases/types";
 
 import copy from "assets/copy-left.svg";
 
-import DatabaseLinkedApp from "./DatabaseLinkedApp";
-
 type Props = {
   envData: DatastoreEnvWithSource;
   connectionString?: string;
@@ -42,31 +40,6 @@ const DatabaseEnvTab: React.FC<Props> = ({ envData, connectionString }) => {
     return keys;
   };
 
-  const renderLinkedApplications = (): JSX.Element => {
-    if (envData.linked_applications.length === 0) {
-      return (
-        <InnerWrapper>
-          <Text size={16}> Linked Applications</Text>
-          <Spacer y={0.5} />
-          <Helper>
-            No applications are linked to the &quot;{envData.name}&quot; env
-            group.
-          </Helper>
-        </InnerWrapper>
-      );
-    }
-
-    return (
-      <InnerWrapper>
-        <Text size={16}> Linked Applications</Text>
-        <Spacer y={0.5} />
-        {envData.linked_applications.map((appName, index) => (
-          <DatabaseLinkedApp appName={appName} key={index}></DatabaseLinkedApp>
-        ))}
-      </InnerWrapper>
-    );
-  };
-
   return (
     <StyledTemplateComponent>
       <InnerWrapper>
@@ -79,7 +52,7 @@ const DatabaseEnvTab: React.FC<Props> = ({ envData, connectionString }) => {
           values={setKeys()}
           setValues={(_) => {}}
           fileUpload={true}
-          secretOption={true}
+          secretOption={false}
           disabled={true}
         />
       </InnerWrapper>
@@ -101,8 +74,6 @@ const DatabaseEnvTab: React.FC<Props> = ({ envData, connectionString }) => {
           <Spacer y={1} />
         </InnerWrapper>
       )}
-
-      {renderLinkedApplications()}
     </StyledTemplateComponent>
   );
 };

@@ -20,7 +20,7 @@ import {
 } from "lib/databases/types";
 
 import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
-import Resources from "../tabs/Resources";
+import Resources from "../shared/Resources";
 import DatabaseForm, {
   AppearingErrorContainer,
   Blur,

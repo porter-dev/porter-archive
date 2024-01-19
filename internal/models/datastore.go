@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// Datastore is the status of an app revision
+// DatastoreStatus is the status of an app revision
 type DatastoreStatus string
 
 const (

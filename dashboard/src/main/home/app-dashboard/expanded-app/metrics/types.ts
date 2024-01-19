@@ -9,7 +9,8 @@ export type MetricType =
   | "network"
   | "nginx:status"
   | "nginx:errors"
-  | "hpa_replicas";
+  | "hpa_replicas"
+  | "replicas";
 export type Metric = {
   type: MetricType;
   label: string;

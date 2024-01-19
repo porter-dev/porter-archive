@@ -1,5 +1,4 @@
 import React, { useContext, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import _ from "lodash";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
@@ -13,163 +12,48 @@ import Fieldset from "components/porter/Fieldset";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
+import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import { type ClientDatastore } from "lib/databases/types";
+import { useDatabaseList } from "lib/hooks/useDatabaseList";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
 import { search } from "shared/search";
+import { readableDate } from "shared/string_utils";
 import database from "assets/database.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
-import loading from "assets/loading.gif";
 import notFound from "assets/not-found.png";
 import healthy from "assets/status-healthy.png";
+import time from "assets/time.png";
 
-import { getDatastoreIcon } from "./icons";
-import {
-  cloudProviderListResponseValidator,
-  datastoreListResponseValidator,
-  type CloudProviderDatastore,
-  type CloudProviderWithSource,
-} from "./types";
-import { datastoreField } from "./utils";
+import EngineTag from "./tags/EngineTag";
 
-type Props = {
-  projectId: number;
-};
-
-const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
+const DatabaseDashboard: React.FC = () => {
   const { currentCluster } = useContext(Context);
 
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  const { data: cloudProviderResponse } = useQuery(
-    ["cloudProviders", projectId],
-    async () => {
-      const response = await api.getAwsCloudProviders(
-        "<token>",
-        {},
-        {
-          project_id: projectId,
-        }
-      );
-
-      const results = await cloudProviderListResponseValidator.parseAsync(
-        response.data
-      );
-      return results;
-    },
-    {
-      enabled: !!projectId,
-    }
-  );
-
-  const cloudProviders = cloudProviderResponse?.accounts;
-
-  const { data: datastores, isFetched: isLoaded } = useQuery(
-    [projectId],
-    async () => {
-      if (cloudProviders === undefined) {
-        return;
-      }
-
-      const results = await Promise.all(
-        cloudProviders.map(
-          async (
-            cloudProvider: CloudProviderWithSource
-          ): Promise<CloudProviderDatastore[]> => {
-            const response = await api.getDatastores(
-              "<token>",
-              {},
-              {
-                project_id: cloudProvider.project_id,
-                cloud_provider_name: "aws",
-                cloud_provider_id: cloudProvider.cloud_provider_id,
-                include_metadata: true,
-              }
-            );
-
-            const results = await datastoreListResponseValidator.parseAsync(
-              response.data
-            );
-            return results.datastores.map(
-              (datastore): CloudProviderDatastore => {
-                return {
-                  cloud_provider_name: "aws",
-                  cloud_provider_id: cloudProvider.cloud_provider_id,
-                  datastore,
-                  project_id: cloudProvider.project_id,
-                };
-              }
-            );
-          }
-        )
-      );
-
-      if (results.length === 0) {
-        return;
-      }
-
-      return results.flat(1);
-    },
-    {
-      enabled: !!cloudProviders,
-      refetchInterval: 10000,
-      refetchOnWindowFocus: false,
-    }
-  );
+  const { datastores, isLoading } = useDatabaseList();
 
   const filteredDatabases = useMemo(() => {
-    const filteredBySearch = search(
-      datastores === undefined ? [] : datastores,
-      searchValue,
-      {
-        keys: ["name"],
-        isCaseSensitive: false,
-      }
-    );
+    const filteredBySearch = search(datastores, searchValue, {
+      keys: ["name"],
+      isCaseSensitive: false,
+    });
 
     return _.sortBy(filteredBySearch, ["name"]);
   }, [datastores, searchValue]);
-
-  const renderStatusIcon = (status: string): JSX.Element => {
-    switch (status) {
-      case "available":
-        return <StatusIcon src={healthy} />;
-      case "":
-        return <></>;
-      case "error":
-        return (
-          <StatusText>
-            <StatusWrapper success={false}>
-              <Status src={loading} />
-              {"Creating database"}
-            </StatusWrapper>
-          </StatusText>
-        );
-      case "updating":
-        return (
-          <StatusText>
-            <StatusWrapper success={false}>
-              <Status src={loading} />
-              {"Creating database"}
-            </StatusWrapper>
-          </StatusText>
-        );
-      default:
-        return <></>;
-    }
-  };
 
   const renderContents = (): JSX.Element => {
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
     }
 
-    if (datastores === undefined || !isLoaded) {
+    if (datastores === undefined || isLoading) {
       return <Loading offset="-150px" />;
     }
 
@@ -251,29 +135,29 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
               <Text color="helper">No matching databases were found.</Text>
             </Container>
           </Fieldset>
-        ) : !isLoaded ? (
+        ) : isLoading ? (
           <Loading offset="-150px" />
         ) : view === "grid" ? (
           <GridList>
             {(filteredDatabases ?? []).map(
-              (entry: CloudProviderDatastore, i: number) => {
+              (datastore: ClientDatastore, i: number) => {
                 return (
-                  <Link
-                    to={`/databases/${entry.project_id}/${entry.cloud_provider_name}/${entry.cloud_provider_id}/${entry.datastore.name}/`}
-                    key={i}
-                  >
+                  <Link to={`/databases/${datastore.name}`} key={i}>
                     <Block>
-                      <Container row>
-                        <Icon src={getDatastoreIcon(entry.datastore.type)} />
-                        <Text size={14}>{entry.datastore.name}</Text>
-                        <Spacer inline x={2} />
+                      <Container row spaced>
+                        <Container row>
+                          <Icon src={datastore.template.icon} />
+                          <Text size={14}>{datastore.name}</Text>
+                        </Container>
+                        <MidIcon src={healthy} height="16px" />
                       </Container>
-                      {renderStatusIcon(
-                        datastoreField(entry.datastore, "status")
-                      )}
                       <Container row>
+                        <EngineTag engine={datastore.template.engine} />
+                      </Container>
+                      <Container row>
+                        <SmallIcon opacity="0.4" src={time} />
                         <Text size={13} color="#ffffff44">
-                          {datastoreField(entry.datastore, "engine")}
+                          {readableDate(datastore.created_at)}
                         </Text>
                       </Container>
                     </Block>
@@ -285,23 +169,26 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
         ) : (
           <List>
             {(filteredDatabases ?? []).map(
-              (entry: CloudProviderDatastore, i: number) => {
+              (datastore: ClientDatastore, i: number) => {
                 return (
-                  <Row
-                    to={`/databases/${entry.project_id}/${entry.cloud_provider_name}/${entry.cloud_provider_id}/${entry.datastore.name}/`}
-                    key={i}
-                  >
-                    <Container row>
-                      <MidIcon src={getDatastoreIcon(entry.datastore.type)} />
-                      <Text size={14}>{entry.datastore.name}</Text>
-                      <Spacer inline x={1} />
+                  <Row to={`/databases/${datastore.name}`} key={i}>
+                    <Container row spaced>
+                      <Container row>
+                        <MidIcon src={datastore.template.icon} />
+                        <Text size={14}>{datastore.name}</Text>
+                      </Container>
                       <MidIcon src={healthy} height="16px" />
                     </Container>
-                    <Spacer height="15px" />
+                    <Spacer y={0.5} />
                     <Container row>
-                      <Text size={13} color="#ffffff44">
-                        {datastoreField(entry.datastore, "engine")}
-                      </Text>
+                      <EngineTag engine={datastore.template.engine} />
+                      <Spacer inline x={1} />
+                      <Container>
+                        <SmallIcon opacity="0.4" src={time} />
+                        <Text size={13} color="#ffffff44">
+                          {readableDate(datastore.created_at)}
+                        </Text>
+                      </Container>
                     </Container>
                   </Row>
                 );
@@ -352,20 +239,13 @@ const List = styled.div`
   overflow: hidden;
 `;
 
-const StatusIcon = styled.img`
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  height: 18px;
-`;
-
 const Icon = styled.img`
   height: 20px;
   margin-right: 13px;
 `;
 
 const Block = styled.div`
-  height: 110px;
+  height: 150px;
   flex-direction: column;
   display: flex;
   justify-content: space-between;
@@ -424,37 +304,10 @@ const StyledAppDashboard = styled.div`
   height: 100%;
 `;
 
-const StatusText = styled.div`
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const StatusWrapper = styled.div<{
-  success?: boolean;
-}>`
-  display: flex;
-  line-height: 1.5;
-  align-items: center;
-  font-family: "Work Sans", sans-serif;
-  font-size: 13px;
-  color: #ffffff55;
-  margin-left: 15px;
-  text-overflow: ellipsis;
-  animation-fill-mode: forwards;
-  > i {
-    font-size: 18px;
-    margin-right: 10px;
-    float: left;
-    color: ${(props) => (props.success ? "#4797ff" : "#fcba03")};
-  }
-`;
-const Status = styled.img`
-  width: 15px;
-  height: 15px;
-  margin-right: 9px;
-  margin-bottom: 0px;
+const SmallIcon = styled.img<{ opacity?: string; height?: string }>`
+  margin-left: 2px;
+  height: ${(props) => props.height || "14px"};
+  opacity: ${(props) => props.opacity || 1};
+  filter: grayscale(100%);
+  margin-right: 10px;
 `;

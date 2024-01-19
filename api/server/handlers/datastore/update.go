@@ -72,7 +72,7 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		telemetry.AttributeKV{Key: "engine", Value: request.Engine},
 	)
 
-	record, err := datastore.CreateOrGetDatastoreRecord(ctx, datastore.CreateOrGetDatastoreRecordInput{
+	record, err := datastore.CreateOrGetRecord(ctx, datastore.CreateOrGetRecordInput{
 		ProjectID:           project.ID,
 		ClusterID:           cluster.ID,
 		Name:                request.Name,
@@ -193,7 +193,7 @@ func (h *UpdateDatastoreHandler) getVPCConfig(ctx context.Context, templateName 
 	)
 
 	vpcConfig := map[string]any{}
-	if cluster.CloudProvider != "AWS" {
+	if cluster.CloudProvider != SupportedDatastoreCloudProvider_AWS {
 		return vpcConfig, nil
 	}
 
@@ -278,7 +278,7 @@ func (h *UpdateDatastoreHandler) performAddonPreinstall(ctx context.Context, r *
 		telemetry.AttributeKV{Key: "cloud-provider", Value: cluster.CloudProvider},
 	)
 
-	if cluster.CloudProvider != "AWS" {
+	if cluster.CloudProvider != SupportedDatastoreCloudProvider_AWS {
 		return nil
 	}
 

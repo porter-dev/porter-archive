@@ -234,6 +234,8 @@ func QueryPrometheus(
 		}
 
 		query = createHPACurrentReplicasQuery(metricName, opts.Name, opts.Namespace, appLabel, hpaMetricName)
+	} else if opts.Metric == "replicas" {
+		query = fmt.Sprintf(`kube_deployment_status_replicas{deployment="%s"}`, opts.Name)
 	}
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "query", Value: query})
@@ -362,6 +364,8 @@ func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, er
 				singletonResult.Replicas = values[1]
 			} else if metric == "nginx:latency" || metric == "nginx:latency-histogram" {
 				singletonResult.Latency = values[1]
+			} else if metric == "replicas" {
+				singletonResult.Replicas = values[1]
 			}
 
 			singletonResults = append(singletonResults, *singletonResult)

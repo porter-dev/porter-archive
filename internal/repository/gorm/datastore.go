@@ -89,3 +89,40 @@ func (repo *DatastoreRepository) GetByProjectIDAndName(ctx context.Context, proj
 
 	return datastore, nil
 }
+
+// ListByProjectID returns a list of datastores by project ID
+func (repo *DatastoreRepository) ListByProjectID(ctx context.Context, projectId uint) ([]*models.Datastore, error) {
+	ctx, span := telemetry.NewSpan(ctx, "gorm-list-datastores")
+	defer span.End()
+
+	if projectId == 0 {
+		return nil, telemetry.Error(ctx, span, nil, "project id is 0")
+	}
+
+	datastores := []*models.Datastore{}
+	if err := repo.db.Where("project_id = ?", projectId).Find(&datastores).Error; err != nil {
+		return nil, telemetry.Error(ctx, span, err, "error finding datastores")
+	}
+
+	return datastores, nil
+}
+
+// Delete deletes a datastore by id
+func (repo *DatastoreRepository) Delete(ctx context.Context, datastore *models.Datastore) (*models.Datastore, error) {
+	ctx, span := telemetry.NewSpan(ctx, "gorm-delete-datastore")
+	defer span.End()
+
+	if datastore == nil {
+		return nil, telemetry.Error(ctx, span, nil, "datastore is nil")
+	}
+
+	if datastore.ID == uuid.Nil {
+		return nil, telemetry.Error(ctx, span, nil, "datastore id is nil")
+	}
+
+	if err := repo.db.Delete(&datastore).Error; err != nil {
+		return nil, telemetry.Error(ctx, span, err, "error deleting datastore")
+	}
+
+	return datastore, nil
+}

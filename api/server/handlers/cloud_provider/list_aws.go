@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws/arn"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -32,6 +33,14 @@ type AwsAccount struct {
 
 	// ProjectID is the project the account is associated with
 	ProjectID uint `json:"project_id"`
+}
+
+// CloudProvider is an abstraction for a cloud provider
+type CloudProvider struct {
+	// Type is the type of the cloud provider
+	Type porterv1.EnumCloudProvider `json:"type"`
+	// AccountID is the ID of the cloud provider account
+	AccountID string `json:"account_id"`
 }
 
 // ListAwsAccountsHandler is a struct for handling an aws cloud provider list request

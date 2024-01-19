@@ -111,7 +111,6 @@ const ConnectAppsModal: React.FC<Props> = ({ closeModal, apps, onSubmit }) => {
       </Text>
       <Spacer y={0.5} />
       <Button
-        loadingText={"Saving..."}
         disabled={selectedAppInstanceIds.length === 0 || isSubmitting}
         onClick={submit}
         status={submitButtonStatus}

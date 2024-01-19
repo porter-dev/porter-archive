@@ -79,8 +79,7 @@ export const DatabaseContextProvider: React.FC<
     },
     {
       enabled: paramsExist,
-      refetchInterval: 5000,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
     }
   );
   if (status === "loading" || !paramsExist) {

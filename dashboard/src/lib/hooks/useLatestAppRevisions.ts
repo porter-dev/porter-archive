@@ -54,6 +54,6 @@ export const useLatestAppRevisions = ({
     }
   );
   return {
-    revisions: apps ?? [],
+    revisions: apps,
   };
 };

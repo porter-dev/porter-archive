@@ -5,12 +5,12 @@ import {
   type AvailableMetrics,
   type GenericMetricResponse,
   type MetricsCPUDataResponse,
-  type MetricsHpaReplicasDataResponse,
   type MetricsMemoryDataResponse,
   type MetricsNetworkDataResponse,
   type MetricsNGINXErrorsDataResponse,
   type MetricsNGINXLatencyDataResponse,
   type MetricsNGINXStatusDataResponse,
+  type MetricsReplicasDataResponse,
   type NormalizedMetricsData,
   type NormalizedNginxStatusMetricsData,
 } from "./types";
@@ -163,9 +163,7 @@ export class MetricNormalizer {
     });
   }
 
-  private parseHpaReplicaMetrics(
-    arr: MetricsHpaReplicasDataResponse["results"]
-  ) {
+  private parseHpaReplicaMetrics(arr: MetricsReplicasDataResponse["results"]) {
     return arr.map((d) => {
       return {
         date: d.date,

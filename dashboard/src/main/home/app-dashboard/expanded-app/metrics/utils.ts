@@ -5,12 +5,12 @@ import {
   type AvailableMetrics,
   type GenericMetricResponse,
   type MetricsCPUDataResponse,
-  type MetricsHpaReplicasDataResponse,
   type MetricsMemoryDataResponse,
   type MetricsNetworkDataResponse,
   type MetricsNGINXErrorsDataResponse,
   type MetricsNGINXLatencyDataResponse,
   type MetricsNGINXStatusDataResponse,
+  type MetricsReplicasDataResponse,
   type NormalizedMetricsData,
   type NormalizedNginxStatusMetricsData,
 } from "main/home/cluster-dashboard/expanded-chart/metrics/types";
@@ -148,8 +148,9 @@ export class MetricNormalizer {
     ) {
       return this.parseNGINXLatencyMetrics(this.metric_results);
     }
-    if (this.kind.includes("hpa_replicas")) {
-      return this.parseHpaReplicaMetrics(this.metric_results);
+    // covers replicas and hpa_replicas
+    if (this.kind.includes("replicas")) {
+      return this.parseReplicaMetrics(this.metric_results);
     }
     return [];
   }
@@ -265,9 +266,7 @@ export class MetricNormalizer {
     });
   }
 
-  private parseHpaReplicaMetrics(
-    arr: MetricsHpaReplicasDataResponse["results"]
-  ) {
+  private parseReplicaMetrics(arr: MetricsReplicasDataResponse["results"]) {
     return arr.map((d) => {
       return {
         date: d.date,

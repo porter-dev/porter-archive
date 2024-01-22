@@ -26,7 +26,6 @@ import database from "assets/database.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
-import healthy from "assets/status-healthy.png";
 import time from "assets/time.png";
 
 import EngineTag from "./tags/EngineTag";
@@ -141,8 +140,6 @@ const DatabaseDashboard: React.FC = () => {
           <GridList>
             {(filteredDatabases ?? []).map(
               (datastore: ClientDatastore, i: number) => {
-                const status =
-                  datastore.status === "AVAILABLE" ? "available" : "pending";
                 return (
                   <Link to={`/databases/${datastore.name}`} key={i}>
                     <Block>
@@ -151,7 +148,14 @@ const DatabaseDashboard: React.FC = () => {
                           <Icon src={datastore.template.icon} />
                           <Text size={14}>{datastore.name}</Text>
                         </Container>
-                        <StatusDot status={status} heightPixels={9} />
+                        <StatusDot
+                          status={
+                            datastore.status === "AVAILABLE"
+                              ? "available"
+                              : "pending"
+                          }
+                          heightPixels={9}
+                        />
                       </Container>
                       <Container row>
                         <EngineTag engine={datastore.template.engine} />
@@ -179,7 +183,14 @@ const DatabaseDashboard: React.FC = () => {
                         <MidIcon src={datastore.template.icon} />
                         <Text size={14}>{datastore.name}</Text>
                       </Container>
-                      <MidIcon src={healthy} height="16px" />
+                      <StatusDot
+                        status={
+                          datastore.status === "AVAILABLE"
+                            ? "available"
+                            : "pending"
+                        }
+                        heightPixels={9}
+                      />
                     </Container>
                     <Spacer y={0.5} />
                     <Container row>

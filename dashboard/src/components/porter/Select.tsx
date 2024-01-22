@@ -1,9 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
+import arrow from "assets/arrow-down.svg";
+import Container from "./Container";
 
 type Props = {
   width?: string;
-  options: { label: string; value: string }[];
+  options: Array<{ 
+    label: string;
+    value: string;
+    icon?: HTMLImageElement | string;
+    disabled?: boolean;
+  }>;
   label?: string | React.ReactNode;
   labelColor?: string;
   height?: string;
@@ -12,6 +19,7 @@ type Props = {
   disabled?: boolean;
   value?: string;
   setValue?: (value: string) => void;
+  prefix?: React.ReactNode;
 };
 
 const Select: React.FC<Props> = ({
@@ -25,12 +33,30 @@ const Select: React.FC<Props> = ({
   disabled,
   value,
   setValue,
+  prefix,
 }) => {
+  const prefixRef = useRef<HTMLDivElement>(null);
+
   return (
     <Block width={width}>
       {label && <Label color={labelColor}>{label}</Label>}
       <SelectWrapper>
-        <i className="material-icons">arrow_drop_down</i>
+        <AbsoluteWrapper>
+        <Prefix>{prefix}</Prefix>
+        <Bar />
+        {options.map((option) => {
+          if (option.value === value) {
+            return (
+              <Container key={1} row>
+                {option.icon && <Img src={option?.icon} />}
+                {option.label}
+              </Container>
+            )
+          }
+          return null;
+        })}
+        <img src={arrow} />
+        </AbsoluteWrapper>
         <StyledSelect
           onChange={(e) => {
             setValue(e.target.value);
@@ -43,7 +69,7 @@ const Select: React.FC<Props> = ({
         >
           {options.map((option, i) => {
             return (
-              <option value={option.value} key={i}>
+              <option value={option.value} key={i} disabled={option.disabled}>
                 {option.label}
               </option>
             );
@@ -62,6 +88,43 @@ const Select: React.FC<Props> = ({
 };
 
 export default Select;
+
+const Img = styled.img`
+  height: 16px;
+  margin-right: 10px;
+`;
+
+const AbsoluteWrapper = styled.div`
+  position: absolute;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  > img {
+    width: 8px;
+    position: absolute;
+    right: 10px;
+    top: calc(50% - 3px);
+    z-index: -1;
+  }
+`;
+
+const Bar = styled.div`
+  width: 1px;
+  height: 15px;
+  background: #494b4f;
+  margin-left: 9px;
+  margin-right: 11px;
+`;
+
+const Prefix = styled.div`
+  margin-left: 10px;
+  font-size: 13px;
+  color: #aaaabb;
+  display: flex;
+  align-items: center;
+  z-index: -1;
+`;
 
 const Block = styled.div<{
   width: string;
@@ -92,26 +155,28 @@ const Error = styled.div`
 
 const SelectWrapper = styled.div`
   position: relative;
-  background: #26292e;
-  z-index: 0;
-  border-radius: 5px;
-  overflow: hidden;
-  > i {
-    font-size: 18px;
-    position: absolute;
-    right: 7px;
-    top: calc(50% - 9px);
-    z-index: -1;
+  background: ${(props) => props.theme.fg};
+  border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#494b4f")};
+  :hover {
+    border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#7a7b80")};
   }
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
+  font-size: 13px;
+  overflow: hidden;
 `;
 
 const StyledSelect = styled.select<{
   width: string;
   height: string;
   hasError: boolean;
+  paddingLeft: number;
 }>`
   height: ${(props) => props.height || "35px"};
   padding: 5px 10px;
+  padding-left: ${(props) => props.paddingLeft}px;
   width: ${(props) => props.width || "200px"};
   color: #ffffff;
   font-size: 13px;
@@ -121,9 +186,6 @@ const StyledSelect = styled.select<{
   background: none;
   appearance: none;
   overflow: hidden;
+  opacity: 0;
   z-index: 1;
-  border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#494b4f")};
-  :hover {
-    border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#7a7b80")};
-  }
 `;

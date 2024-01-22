@@ -5,9 +5,11 @@ type Props = {
   size?: number;
   color?: string;
   weight?: number;
-  children: any;
+  children: React.ReactNode;
   additionalStyles?: string;
   truncate?: boolean;
+  onClick?: () => void;
+  style?: React.CSSProperties;
 };
 
 const Text: React.FC<Props> = ({
@@ -16,7 +18,9 @@ const Text: React.FC<Props> = ({
   color,
   children,
   additionalStyles,
-  truncate // added this
+  truncate, // added this
+  onClick,
+  style,
 }) => {
   const getColor = () => {
     switch (color) {
@@ -36,6 +40,8 @@ const Text: React.FC<Props> = ({
       weight={weight}
       additionalStyles={additionalStyles}
       truncate={truncate}
+      onClick={onClick}
+      style={style}
     >
       {children}
     </StyledText>

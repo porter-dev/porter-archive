@@ -43,7 +43,7 @@ const DatastoreProvisioningIndicator: React.FC = () => {
       title={title}
       titleDescriptor={titleDescriptor}
       subtitle={
-        "Setup can take up to 10 minutes. You can close this window and come back later."
+        "Setup can take up to 20 minutes. You can close this window and come back later."
       }
       percentCompleted={percentCompleted}
     />

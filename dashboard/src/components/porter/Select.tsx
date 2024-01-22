@@ -42,8 +42,12 @@ const Select: React.FC<Props> = ({
       {label && <Label color={labelColor}>{label}</Label>}
       <SelectWrapper>
         <AbsoluteWrapper>
-          <Prefix>{prefix}</Prefix>
-          <Bar />
+          {prefix && (
+            <>
+              <Prefix>{prefix}</Prefix>
+              <Bar />
+            </>
+          )}
           {options.map((option) => {
             if (option.value === value) {
               return (

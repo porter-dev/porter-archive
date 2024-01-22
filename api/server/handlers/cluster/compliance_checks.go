@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -92,8 +91,6 @@ func (c *ListComplianceChecksHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	fmt.Printf("check groups: %v\n", ccpResp.Msg.CheckGroups)
-
 	cgs, err := compliance.CheckGroupsFromProto(ctx, ccpResp.Msg.CheckGroups)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error converting compliance check groups from proto")
@@ -101,8 +98,6 @@ func (c *ListComplianceChecksHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "num-check-groups", Value: len(cgs)})
-
-	fmt.Printf("vendor checks: %v\n", ccpResp.Msg.VendorChecks)
 
 	vendorChecks, err := compliance.VendorCheckGroupsFromProto(ctx, ccpResp.Msg.VendorChecks)
 	if err != nil {

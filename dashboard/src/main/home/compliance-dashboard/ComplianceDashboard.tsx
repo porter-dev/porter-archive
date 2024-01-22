@@ -1,131 +1,121 @@
-import React, { useState } from "react";
-import _, { set } from "lodash";
+import React, { Fragment, useContext, useMemo, useState } from "react";
+import { Contract, EKS, EKSLogging } from "@porter-dev/api-contracts";
+import { useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
-import Spacer from "components/porter/Spacer";
-import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-
-import compliance from "assets/compliance.svg";
-import Container from "components/porter/Container";
-
-import Text from "components/porter/Text";
-import Select from "components/porter/Select";
-import Image from "components/porter/Image";
 import Banner from "components/porter/Banner";
-import Modal from "components/porter/Modal";
+import Button from "components/porter/Button";
+import Container from "components/porter/Container";
 import ExpandableSection from "components/porter/ExpandableSection";
 import Fieldset from "components/porter/Fieldset";
-import Link from "components/porter/Link";
+import Image from "components/porter/Image";
 import Input from "components/porter/Input";
-import Button from "components/porter/Button";
+import Link from "components/porter/Link";
+import Modal from "components/porter/Modal";
+import Select from "components/porter/Select";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import {
+  useComplianceChecks,
+  type VendorCheck,
+} from "lib/hooks/useComplianceChecks";
 
-import framework from "assets/framework.svg";
-import typeSvg from "assets/type.svg";
-import provider from "assets/provider.svg";
+import api from "shared/api";
+import { Context } from "shared/Context";
 import aws from "assets/aws.png";
-import vanta from "assets/vanta.svg";
-import linkExternal from "assets/link-external.svg";
+import compliance from "assets/compliance.svg";
+import framework from "assets/framework.svg";
 import greenCheck from "assets/green-check.svg";
-import warning from "assets/warning.svg";
-import notApplicable from "assets/not-applicable.svg";
+import linkExternal from "assets/link-external.svg";
 import loading from "assets/loading.gif";
+import notApplicable from "assets/not-applicable.svg";
+import provider from "assets/provider.svg";
 import refresh from "assets/refresh.png";
+import typeSvg from "assets/type.svg";
+import vanta from "assets/vanta.svg";
+import warning from "assets/warning.svg";
 
-type Props = {
-  projectId: number;
-};
+const ComplianceDashboard: React.FC = () => {
+  const { currentProject, currentCluster } = useContext(Context);
+  const queryClient = useQueryClient();
 
-const dummyChecks = [
-  {
-    status: "not-applicable",
-    name: "Application changes reviewed",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-  {
-    status: "not-applicable",
-    name: "AWS accounts deprovisioned when employees leave",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-  {
-    status: "not-applicable",
-    name: "AWS accounts reviewed",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-  {
-    status: "passing",
-    name: "CloudTrail enabled",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-  {
-    status: "not-applicable",
-    name: "Company has a version control system",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-  {
-    status: "not-applicable",
-    name: "Critical vulnerabilities identified in packages are addressed (AWS Container)",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-  {
-    status: "not-applicable",
-    name: "Critical vulnerabilities identified in packages are addressed (AWS Inspector)",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-  {
-    status: "action-required",
-    name: "Database IO monitored (AWS)",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-  {
-    status: "passing",
-    name: "CloudTrail enabled",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-  {
-    status: "not-applicable",
-    name: "Company has a version control system",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-  {
-    status: "not-applicable",
-    name: "Critical vulnerabilities identified in packages are addressed (AWS Container)",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-  {
-    status: "not-applicable",
-    name: "Critical vulnerabilities identified in packages are addressed (AWS Inspector)",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-  {
-    status: "action-required",
-    name: "Database IO monitored (AWS)",
-    link: "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-  },
-];
-
-const ComplianceDashboard: React.FC<Props> = () => {
-  const [actionRequired, setActionRequired] = useState(true); // TODO: replace with actual data
-  const [provisioningError, setProvisioningError] = useState(""); // TODO: replace with actual data
-  const [provisioningStatus, setProvisioningStatus] = useState("");
+  const [updateLoading, setUpdateLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [confirmCost, setConfirmCost] = useState("");
   const [showCostConsentModal, setShowCostConsentModal] = useState(false);
   const [showExpandedErrorModal, setShowExpandedErrorModal] = useState(false);
-  const [expandedCheck, setExpandedCheck] = useState<{ 
-    status: string, name: string, link: string 
-  } | null>(null);
+  const [expandedCheck, setExpandedCheck] = useState<VendorCheck | null>(null);
 
-  // TODO: implement
-  const updateInfrastructure = (): void => {
-    setProvisioningError("");
-    setProvisioningStatus("pending");
+  const { vendorChecks, actionRequired, provisioningStatus, latestContract } =
+    useComplianceChecks();
 
-    setTimeout(() => {
-      setProvisioningStatus("failed");
-      setProvisioningError("Error: Some step failed");
-    }, 2000);
+  const contractProto = useMemo(() => {
+    if (!latestContract) {
+      return null;
+    }
+
+    return Contract.fromJsonString(atob(latestContract?.base64_contract), {
+      ignoreUnknownFields: true,
+    });
+  }, [latestContract?.base64_contract]);
+
+  const updateContractWithSOC2 = async (): Promise<void> => {
+    try {
+      if (!contractProto || !currentProject) {
+        return;
+      }
+
+      setUpdateLoading(true);
+
+      if (!contractProto.cluster) {
+        return;
+      }
+
+      const updatedKindValues = match(contractProto.cluster.kindValues)
+        .with({ case: "eksKind" }, ({ value }) => ({
+          case: "eksKind" as const,
+          value: new EKS({
+            ...value,
+            enableKmsEncryption: true,
+            enableEcrScanning: true,
+            logging: new EKSLogging({
+              enableApiServerLogs: true,
+              enableAuditLogs: true,
+              enableAuthenticatorLogs: true,
+              enableCloudwatchLogsToS3: true,
+              enableControllerManagerLogs: true,
+              enableSchedulerLogs: true,
+            }),
+          }),
+        }))
+        .otherwise((kind) => kind);
+
+      const updatedContract = new Contract({
+        ...contractProto,
+        cluster: {
+          ...contractProto.cluster,
+          kindValues: updatedKindValues,
+          isSoc2Compliant: true,
+        },
+      });
+
+      await api.createContract("<token>", updatedContract, {
+        project_id: currentProject.id,
+      });
+
+      await queryClient.invalidateQueries([
+        currentProject?.id,
+        currentCluster?.id,
+        "getContracts",
+      ]);
+    } catch (err) {
+    } finally {
+      setUpdateLoading(false);
+      setShowCostConsentModal(false);
+    }
   };
-
   return (
     <StyledComplianceDashboard>
       <DashboardHeader
@@ -142,9 +132,7 @@ const ComplianceDashboard: React.FC<Props> = () => {
           ]}
           width="200px"
           value={"soc-2"}
-          setValue={() => {
-          }
-          }
+          setValue={() => {}}
           prefix={
             <Container row>
               <Image src={framework} size={15} opacity={0.6} />
@@ -157,14 +145,16 @@ const ComplianceDashboard: React.FC<Props> = () => {
         <Select
           options={[
             { value: "aws", label: "AWS", icon: aws },
-            { value: "gcp", label: "Google Cloud (coming soon)", disabled: true },
+            {
+              value: "gcp",
+              label: "Google Cloud (coming soon)",
+              disabled: true,
+            },
             { value: "azure", label: "Azure (coming soon)", disabled: true },
           ]}
           width="180px"
           value={"aws"}
-          setValue={() => {
-          }
-          }
+          setValue={() => {}}
           prefix={
             <Container row>
               <Image src={typeSvg} size={15} opacity={0.6} />
@@ -178,17 +168,19 @@ const ComplianceDashboard: React.FC<Props> = () => {
           options={[
             { value: "vanta", label: "Vanta", icon: vanta },
             { value: "drata", label: "Drata (coming soon)", disabled: true },
-            { value: "oneleet", label: "Oneleet (coming soon)", disabled: true },
+            {
+              value: "oneleet",
+              label: "Oneleet (coming soon)",
+              disabled: true,
+            },
           ]}
           width="200px"
           value={"vanta"}
-          setValue={() => {
-          }
-          }
+          setValue={() => {}}
           prefix={
             <Container row>
-              <Image src={provider} size={15} opacity={.6} />
-              <Spacer inline x={.5} />
+              <Image src={provider} size={15} opacity={0.6} />
+              <Spacer inline x={0.5} />
               Provider
             </Container>
           }
@@ -200,62 +192,71 @@ const ComplianceDashboard: React.FC<Props> = () => {
       <Container row>
         <Image src={vanta} size={25} />
         <Spacer inline x={1} />
-        <Text 
+        <Text
           size={21}
           additionalStyles=":hover { text-decoration: underline } cursor: pointer;"
           onClick={() => {
-            window.open("https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST", "_blank")
+            window.open(
+              "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
+              "_blank"
+            );
           }}
         >
           AWS SOC 2 Controls (Vanta)
-          <Spacer inline x={.5} />
-          <Image src={linkExternal} size={16} additionalStyles="margin-bottom: -2px"/>
+          <Spacer inline x={0.5} />
+          <Image
+            src={linkExternal}
+            size={16}
+            additionalStyles="margin-bottom: -2px"
+          />
         </Text>
       </Container>
 
       <Spacer y={1} />
 
-      {
-        actionRequired &&
-        provisioningStatus !== "pending" &&
-        provisioningStatus !== "failed" && (
-          <>
-            <Banner type="warning">
-              Action is required to pass additional controls.
-              <Spacer inline x={.5} />
-              <Text
-                style={{
-                  textDecoration: "underline",
-                  cursor: "pointer"
-                }}
-                onClick={() => {
-                  setShowCostConsentModal(true);
-                }}
-              >
-                Enable SOC 2 infrastructure controls
-              </Text>
-            </Banner>
-            <Spacer y={1} />
-          </>
-        )
-      }
-      {provisioningStatus === "pending" && (
+      {provisioningStatus.state === "pending" || updateLoading ? (
         <>
-          <Banner icon={<Image src={loading} style={{ height: "16px", width: "16px" }} />}>
-            SOC 2 infrastructure controls are being enabled. Note: This may take up to 30 minutes.
+          <Banner
+            icon={
+              <Image src={loading} style={{ height: "16px", width: "16px" }} />
+            }
+          >
+            SOC 2 infrastructure controls are being enabled. Note: This may take
+            up to 30 minutes.
           </Banner>
           <Spacer y={1} />
         </>
-      )}
-      {provisioningError && (
+      ) : !contractProto?.cluster?.isSoc2Compliant &&
+        actionRequired &&
+        provisioningStatus.state === "success" ? (
+        <>
+          <Banner type="warning">
+            Action is required to pass additional controls.
+            <Spacer inline x={0.5} />
+            <Text
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                setShowCostConsentModal(true);
+              }}
+            >
+              Enable SOC 2 infrastructure controls
+            </Text>
+          </Banner>
+          <Spacer y={1} />
+        </>
+      ) : contractProto?.cluster?.isSoc2Compliant &&
+        provisioningStatus.state === "failed" ? (
         <>
           <Banner type="error">
-            {provisioningError}
+            An error occurred while applying updates to your infrastructure.
             <Spacer inline x={1} />
             <Text
               style={{
                 textDecoration: "underline",
-                cursor: "pointer"
+                cursor: "pointer",
               }}
               onClick={() => {
                 setShowExpandedErrorModal(true);
@@ -267,18 +268,20 @@ const ComplianceDashboard: React.FC<Props> = () => {
             <Text
               style={{
                 textDecoration: "underline",
-                cursor: "pointer"
+                cursor: "pointer",
               }}
-              onClick={updateInfrastructure}
+              onClick={() => {
+                void updateContractWithSOC2();
+              }}
             >
               <Image src={refresh} size={12} style={{ marginBottom: "-2px" }} />
-              <Spacer inline x={.5} />
+              <Spacer inline x={0.5} />
               Retry update
             </Text>
           </Banner>
           <Spacer y={1} />
         </>
-      )}
+      ) : null}
 
       <Container row>
         <PanelFilter
@@ -288,7 +291,7 @@ const ComplianceDashboard: React.FC<Props> = () => {
           }}
         >
           <Text color="helper">All</Text>
-          <Spacer y={.2} />
+          <Spacer y={0.2} />
           <Text size={18}>45</Text>
         </PanelFilter>
         <Spacer inline x={1.5} />
@@ -300,10 +303,10 @@ const ComplianceDashboard: React.FC<Props> = () => {
         >
           <Container row>
             <Image src={greenCheck} size={10} />
-            <Spacer inline x={.5} />
+            <Spacer inline x={0.5} />
             <Text color="helper">Passing</Text>
           </Container>
-          <Spacer y={.2} />
+          <Spacer y={0.2} />
           <Text size={18}>3</Text>
         </PanelFilter>
         <Spacer inline x={1.5} />
@@ -315,10 +318,10 @@ const ComplianceDashboard: React.FC<Props> = () => {
         >
           <Container row>
             <Image src={warning} size={12} />
-            <Spacer inline x={.5} />
+            <Spacer inline x={0.5} />
             <Text color="helper">Action required</Text>
           </Container>
-          <Spacer y={.2} />
+          <Spacer y={0.2} />
           <Text size={18}>17</Text>
         </PanelFilter>
         <Spacer inline x={1.5} />
@@ -330,47 +333,55 @@ const ComplianceDashboard: React.FC<Props> = () => {
         >
           <Container row>
             <Image src={notApplicable} size={12} />
-            <Spacer inline x={.5} />
+            <Spacer inline x={0.5} />
             <Text color="helper">Not applicable</Text>
           </Container>
-          <Spacer y={.2} />
+          <Spacer y={0.2} />
           <Text size={18}>25</Text>
         </PanelFilter>
       </Container>
 
       <Spacer y={1.5} />
 
-      {dummyChecks.map((check, i) => {
+      {vendorChecks.map((check, i) => {
         return (
-          <>
-            <Container row key={i}>
+          <Fragment key={`${check.check}-${i}`}>
+            <Container row>
               <Container style={{ width: "200px" }} row>
-                {check.status === "passing" && <Image src={greenCheck} size={10} />}
-                {check.status === "action-required" && (
+                {check.status === "passed" && (
+                  <Image src={greenCheck} size={10} />
+                )}
+                {check.status === "failing" && (
                   <Image src={warning} size={14} />
                 )}
-                {check.status === "not-applicable" && (
+                {check.status === "not_applicable" && (
                   <Image src={notApplicable} size={14} />
                 )}
-                <Spacer inline x={.7} />
-                {check.status === "passing" && <Text color="helper">Passing</Text>}
-                {check.status === "action-required" && (
+                <Spacer inline x={0.7} />
+                {check.status === "passed" && (
+                  <Text color="helper">Passing</Text>
+                )}
+                {check.status === "failing" && (
                   <ActionRequired>
                     <Text color="helper">Action required</Text>
-                    <Spacer inline x={.5} />
-                    <i 
+                    <Spacer inline x={0.5} />
+                    <i
                       className="material-icons-outlined"
-                      onClick={() => { setExpandedCheck(check) }}
+                      onClick={() => {
+                        setExpandedCheck(check);
+                      }}
                     >
                       help_outline
                     </i>
                   </ActionRequired>
                 )}
-                {check.status === "not-applicable" && <Text color="#494B4F">Not applicable</Text>}
+                {check.status === "not_applicable" && (
+                  <Text color="#494B4F">Not applicable</Text>
+                )}
               </Container>
               <Text
-                color={check.status === "not-applicable" ? "#494B4F" : ""}
-                style={{ 
+                color={check.status === "not_applicable" ? "#494B4F" : ""}
+                style={{
                   marginBottom: "-1px",
                   cursor: "pointer",
                 }}
@@ -379,53 +390,62 @@ const ComplianceDashboard: React.FC<Props> = () => {
                   window.open(check.link, "_blank");
                 }}
               >
-                {check.name}
-                <Spacer inline x={.5} />
-                <Image 
+                {check.check}
+                <Spacer inline x={0.5} />
+                <Image
                   src={linkExternal}
-                  opacity={check.status === "not-applicable" ? 0.25 : 1}
+                  opacity={check.status === "not_applicable" ? 0.25 : 1}
                   size={12}
                   additionalStyles="margin-bottom: -2px"
                 />
               </Text>
             </Container>
             <Spacer y={1} />
-          </>
+          </Fragment>
         );
       })}
 
       <Spacer y={2} />
 
       {showExpandedErrorModal && (
-        <Modal closeModal={() => { setShowExpandedErrorModal(false) }}>
+        <Modal
+          closeModal={() => {
+            setShowExpandedErrorModal(false);
+          }}
+        >
           <Container row>
-            <Text size={16}>
-              Error enabling AWS SOC 2 controls
-            </Text>
+            <Text size={16}>Error enabling AWS SOC 2 controls</Text>
           </Container>
-          <Spacer y={.7} />
-          <Text color="helper">
-            {provisioningError}
-          </Text>
+          <Spacer y={0.7} />
+          <Text color="helper">{provisioningStatus.message}</Text>
         </Modal>
       )}
       {expandedCheck && (
-        <Modal closeModal={() => { setExpandedCheck(null) }}>
+        <Modal
+          closeModal={() => {
+            setExpandedCheck(null);
+          }}
+        >
           <Container row>
             <Image src={warning} size={16} />
-            <Spacer inline x={.7} />
+            <Spacer inline x={0.7} />
             <Text size={16}>
-              Action required for "{expandedCheck.name}"
+              Action required for &ldquo;{expandedCheck.check}&rdquo;
             </Text>
           </Container>
-          <Spacer y={.7} />
+          <Spacer y={0.7} />
           <Text color="helper">
-            Porter is unable to automatically resolve this control. Please follow xyz instructions in order to xyz.
+            Porter is unable to automatically resolve this control. Please
+            follow xyz instructions in order to xyz.
           </Text>
         </Modal>
       )}
       {showCostConsentModal && (
-        <Modal closeModal={() => { setShowCostConsentModal(false) }}>
+        <Modal
+          closeModal={() => {
+            setShowCostConsentModal(false);
+          }}
+        >
           <Text size={16}>SOC 2 cost consent (TODO)</Text>
           <Spacer height="15px" />
           <Text color="helper">
@@ -438,7 +458,11 @@ const ComplianceDashboard: React.FC<Props> = () => {
             noWrapper
             expandText="[+] Show details"
             collapseText="[-] Hide details"
-            Header={<Text size={20} weight={600}>$224.58 / mo</Text>}
+            Header={
+              <Text size={20} weight={600}>
+                $224.58 / mo
+              </Text>
+            }
             ExpandedSection={
               <>
                 <Spacer height="15px" />
@@ -449,7 +473,8 @@ const ComplianceDashboard: React.FC<Props> = () => {
                   <Spacer height="15px" />
                   <Tab />+ System workloads: t3.medium instance (2) = $60.74/mo
                   <Spacer height="15px" />
-                  <Tab />+ Monitoring workloads: t3.large instance (1) = $60.74/mo
+                  <Tab />+ Monitoring workloads: t3.large instance (1) =
+                  $60.74/mo
                   <Spacer height="15px" />
                   <Tab />+ Application workloads: t3.medium instance (1) =
                   $30.1/mo
@@ -478,12 +503,12 @@ const ComplianceDashboard: React.FC<Props> = () => {
           />
           <Spacer y={1} />
           <Button
-            disabled={confirmCost !== "224.58"}
+            disabled={confirmCost !== "224.58" || !latestContract}
             onClick={() => {
               setConfirmCost("");
-              updateInfrastructure();
-              setShowCostConsentModal(false);
+              void updateContractWithSOC2();
             }}
+            status={updateLoading ? "loading" : undefined}
           >
             Enable SOC 2 infra controls
           </Button>
@@ -521,7 +546,7 @@ const PanelFilter = styled.div<{ isActive: boolean }>`
   cursor: pointer;
   border-radius: 5px;
   background: ${(props) => props.theme.clickable.bg};
-  border: 1px solid ${(props) => props.isActive ? "#fefefe" : "#494b4f"};
+  border: 1px solid ${(props) => (props.isActive ? "#fefefe" : "#494b4f")};
   :hover {
     ${(props) => !props.isActive && "border: 1px solid #7a7b80;"}
   }

@@ -39,6 +39,8 @@ type ApplyInput struct {
 	PreviewApply bool
 	// WaitForSuccessfulDeployment is true when Apply should wait for the update to complete before returning
 	WaitForSuccessfulDeployment bool
+	// PullImageBeforeBuild will attempt to pull the image before building if true
+	PullImageBeforeBuild bool
 }
 
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects

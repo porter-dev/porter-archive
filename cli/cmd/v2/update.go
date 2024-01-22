@@ -331,16 +331,17 @@ func buildInputFromBuildSettings(inp buildInputFromBuildSettingsInput) (buildInp
 	}
 
 	return buildInput{
-		ProjectID:       inp.projectID,
-		AppName:         inp.appName,
-		BuildContext:    inp.build.Context,
-		Dockerfile:      inp.build.Dockerfile,
-		BuildMethod:     inp.build.Method,
-		Builder:         inp.build.Builder,
-		BuildPacks:      inp.build.Buildpacks,
-		ImageTag:        inp.commitSHA,
-		RepositoryURL:   inp.image.Repository,
-		CurrentImageTag: inp.image.Tag,
-		Env:             inp.buildEnv,
+		ProjectID:            inp.projectID,
+		AppName:              inp.appName,
+		BuildContext:         inp.build.Context,
+		Dockerfile:           inp.build.Dockerfile,
+		BuildMethod:          inp.build.Method,
+		Builder:              inp.build.Builder,
+		BuildPacks:           inp.build.Buildpacks,
+		ImageTag:             inp.commitSHA,
+		RepositoryURL:        inp.image.Repository,
+		CurrentImageTag:      inp.image.Tag,
+		Env:                  inp.buildEnv,
+		PullImageBeforeBuild: inp.pullImageBeforeBuild,
 	}, nil
 }

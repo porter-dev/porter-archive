@@ -42,6 +42,7 @@ type ListComplianceChecksResponse struct {
 	VendorChecks []compliance.VendorComplianceCheck `json:"vendor_checks,omitempty"`
 }
 
+// ServeHTTP retrieves the evaluated compliance checks for a cluster
 func (c *ListComplianceChecksHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-compliance-checks")
 	defer span.End()

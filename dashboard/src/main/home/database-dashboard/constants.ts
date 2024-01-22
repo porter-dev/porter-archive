@@ -1,15 +1,15 @@
-import awsRDS from "assets/amazon-rds.png";
-import awsElastiCache from "assets/aws-elasticache.png";
-
 import {
+  DATABASE_ENGINE_AURORA_POSTGRES,
   DATABASE_ENGINE_MEMCACHED,
   DATABASE_ENGINE_POSTGRES,
   DATABASE_ENGINE_REDIS,
-  DATABASE_TYPE_AURORA,
   DATABASE_TYPE_ELASTICACHE,
   DATABASE_TYPE_RDS,
   type DatabaseTemplate,
-} from "./types";
+} from "lib/databases/types";
+
+import awsRDS from "assets/amazon-rds.png";
+import awsElastiCache from "assets/aws-elasticache.png";
 
 export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
   Object.freeze({
@@ -47,8 +47,8 @@ export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
   }),
   Object.freeze({
     name: "Amazon Aurora",
-    type: DATABASE_TYPE_AURORA,
-    engine: DATABASE_ENGINE_POSTGRES,
+    type: DATABASE_TYPE_RDS,
+    engine: DATABASE_ENGINE_AURORA_POSTGRES,
     icon: awsRDS as string,
     description:
       "Amazon Aurora PostgreSQL is an ACID–compliant relational database engine that combines the speed, reliability, and manageability of Amazon Aurora with the simplicity and cost-effectiveness of open-source databases.",

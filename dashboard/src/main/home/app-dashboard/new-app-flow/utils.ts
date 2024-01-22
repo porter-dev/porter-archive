@@ -43,7 +43,7 @@ jobs:
       uses: porter-dev/setup-porter@v0.1.0
     - name: Deploy stack
       timeout-minutes: 30
-      run: porter apply -f ${porterYamlPath}
+      run: exec porter apply -f ${porterYamlPath}
       env:
         PORTER_CLUSTER: ${clusterId}
         PORTER_HOST: https://dashboard.getporter.dev
@@ -91,7 +91,7 @@ jobs:
       uses: porter-dev/setup-porter@v0.1.0
     - name: Build and deploy preview environment
       timeout-minutes: 30
-      run: porter apply -f ${porterYamlPath} --preview
+      run: exec porter apply -f ${porterYamlPath} --preview
       env:
         PORTER_CLUSTER: ${clusterId}
         PORTER_HOST: https://dashboard.getporter.dev

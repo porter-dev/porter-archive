@@ -4,10 +4,9 @@ import styled from "styled-components";
 import CopyToClipboard from "components/CopyToClipboard";
 import Container from "components/porter/Container";
 import Text from "components/porter/Text";
+import { type DatastoreMetadataWithSource } from "lib/databases/types";
 
 import copy from "assets/copy-left.svg";
-
-import { type DatastoreMetadataWithSource } from "./types";
 
 type DatabaseHeaderItemProps = {
   item: DatastoreMetadataWithSource;

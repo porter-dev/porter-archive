@@ -16,6 +16,7 @@ export type PorterUrl =
   | "preview-environments"
   | "apps"
   | "addons"
+  | "compliance"
   | "stacks";
 
 export const PorterUrls = [
@@ -34,6 +35,7 @@ export const PorterUrls = [
   "preview-environments",
   "apps",
   "addons",
+  "compliance",
   "stacks",
 ];
 

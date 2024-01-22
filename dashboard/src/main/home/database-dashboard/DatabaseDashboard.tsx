@@ -43,7 +43,7 @@ const DatabaseDashboard: React.FC = () => {
     "all"
   );
   const [engineFilter, setEngineFilter] = useState<
-    "all" | "POSTGRES" | "AURORA_POSTGRES" | "REDIS"
+    "all" | "POSTGRES" | "AURORA-POSTGRES" | "REDIS"
   >("all");
 
   const { datastores, isLoading } = useDatabaseList();
@@ -161,7 +161,7 @@ const DatabaseDashboard: React.FC = () => {
                 icon: getEngineIcon("POSTGRES"),
               },
               {
-                value: "AURORA_POSTGRES",
+                value: "AURORA-POSTGRES",
                 label: "Aurora PostgreSQL",
                 icon: getEngineIcon("POSTGRES"),
               },
@@ -178,7 +178,7 @@ const DatabaseDashboard: React.FC = () => {
               if (
                 value === "all" ||
                 value === "POSTGRES" ||
-                value === "AURORA_POSTGRES" ||
+                value === "AURORA-POSTGRES" ||
                 value === "REDIS"
               ) {
                 setEngineFilter(value);

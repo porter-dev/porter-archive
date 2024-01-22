@@ -24,10 +24,18 @@ export const datastoreValidator = z.object({
   type: z.string(),
   engine: z.string(),
   created_at: z.string().default(""),
-  status: z.string().default(""),
   metadata: datastoreMetadataValidator.array().default([]),
   env: datastoreEnvValidator.optional(),
   connection_string: z.string().default(""),
+  status: z.enum([
+    "",
+    "CREATING",
+    "CONFIGURING_LOG_EXPORTS",
+    "MODIFYING",
+    "CONFIGURING_ENHANCED_MONITORING",
+    "BACKING_UP",
+    "AVAILABLE",
+  ]),
 });
 
 export type SerializedDatastore = z.infer<typeof datastoreValidator>;
@@ -90,6 +98,35 @@ export type DatabaseType =
 export const DATABASE_TYPE_RDS = "RDS" as const;
 export const DATABASE_TYPE_ELASTICACHE = "ELASTICACHE" as const;
 
+export type DatabaseState = {
+  state: z.infer<typeof datastoreValidator>["status"];
+  displayName: string;
+};
+export const DATABASE_STATE_CREATING = {
+  state: "CREATING" as const,
+  displayName: "Creating",
+};
+export const DATABASE_STATE_CONFIGURING_LOG_EXPORTS = {
+  state: "CONFIGURING_LOG_EXPORTS" as const,
+  displayName: "Configuring log exports",
+};
+export const DATABASE_STATE_MODIFYING = {
+  state: "MODIFYING" as const,
+  displayName: "Modifying",
+};
+export const DATABASE_STATE_CONFIGURING_ENHANCED_MONITORING = {
+  state: "CONFIGURING_ENHANCED_MONITORING" as const,
+  displayName: "Configuring enhanced monitoring",
+};
+export const DATABASE_STATE_BACKING_UP = {
+  state: "BACKING_UP" as const,
+  displayName: "Backing up",
+};
+export const DATABASE_STATE_AVAILABLE = {
+  state: "AVAILABLE" as const,
+  displayName: "Finishing provision",
+};
+
 export type DatabaseTemplate = {
   type: DatabaseType;
   engine: DatabaseEngine;
@@ -99,6 +136,7 @@ export type DatabaseTemplate = {
   disabled: boolean;
   instanceTiers: ResourceOption[];
   formTitle: string;
+  creationStateProgression: DatabaseState[];
 };
 
 const instanceTierValidator = z.enum([

@@ -60,7 +60,7 @@ const DatabaseForm: React.FC<Props> = ({
     }
     try {
       await createDatabase(data);
-      history.push(`/databases`);
+      history.push(`/databases/${data.name}`);
     } catch (err) {
       const errorMessage =
         axios.isAxiosError(err) && err.response?.data?.error

@@ -3,6 +3,12 @@ import {
   DATABASE_ENGINE_MEMCACHED,
   DATABASE_ENGINE_POSTGRES,
   DATABASE_ENGINE_REDIS,
+  DATABASE_STATE_AVAILABLE,
+  DATABASE_STATE_BACKING_UP,
+  DATABASE_STATE_CONFIGURING_ENHANCED_MONITORING,
+  DATABASE_STATE_CONFIGURING_LOG_EXPORTS,
+  DATABASE_STATE_CREATING,
+  DATABASE_STATE_MODIFYING,
   DATABASE_TYPE_ELASTICACHE,
   DATABASE_TYPE_RDS,
   type DatabaseTemplate,
@@ -44,6 +50,14 @@ export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
       },
     ],
     formTitle: "Create an RDS PostgreSQL instance",
+    creationStateProgression: [
+      DATABASE_STATE_CREATING,
+      DATABASE_STATE_CONFIGURING_LOG_EXPORTS,
+      DATABASE_STATE_MODIFYING,
+      DATABASE_STATE_CONFIGURING_ENHANCED_MONITORING,
+      DATABASE_STATE_BACKING_UP,
+      DATABASE_STATE_AVAILABLE,
+    ],
   }),
   Object.freeze({
     name: "Amazon Aurora",
@@ -70,6 +84,10 @@ export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
       },
     ],
     formTitle: "Create an Aurora PostgreSQL instance",
+    creationStateProgression: [
+      DATABASE_STATE_CREATING,
+      DATABASE_STATE_AVAILABLE,
+    ],
   }),
   Object.freeze({
     name: "Amazon ElastiCache",
@@ -110,6 +128,11 @@ export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
       },
     ],
     formTitle: "Create an ElastiCache Redis instance",
+    creationStateProgression: [
+      DATABASE_STATE_CREATING,
+      DATABASE_STATE_MODIFYING,
+      DATABASE_STATE_AVAILABLE,
+    ],
   }),
   Object.freeze({
     name: "Amazon ElastiCache",
@@ -121,5 +144,6 @@ export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
     disabled: true,
     instanceTiers: [],
     formTitle: "Create an ElastiCache Memcached instance",
+    creationStateProgression: [],
   }),
 ];

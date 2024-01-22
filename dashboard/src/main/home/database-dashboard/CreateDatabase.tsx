@@ -7,7 +7,6 @@ import { z } from "zod";
 
 import Back from "components/porter/Back";
 import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import {
   DATABASE_ENGINE_AURORA_POSTGRES,
@@ -25,6 +24,7 @@ import { SUPPORTED_DATABASE_TEMPLATES } from "./constants";
 import DatabaseFormAuroraPostgres from "./forms/DatabaseFormAuroraPostgres";
 import DatabaseFormElasticacheRedis from "./forms/DatabaseFormElasticacheRedis";
 import DatabaseFormRDSPostgres from "./forms/DatabaseFormRDSPostgres";
+import EngineTag from "./tags/EngineTag";
 
 type Props = RouteComponentProps;
 const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
@@ -98,7 +98,7 @@ const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
                       <Spacer inline x={0.5} />
                     </TemplateHeader>
                     <Spacer y={0.5} />
-                    <Tag hoverable={false}>{engine.displayName}</Tag>
+                    <EngineTag engine={engine} />
                     <Spacer y={0.5} />
                     <TemplateDescription>{description}</TemplateDescription>
                     <Spacer y={0.5} />

@@ -25,7 +25,6 @@ const StyledStatusDot = styled.div<{ color: string; height: number }>`
   max-width: ${(props) => props.height}px;
   height: ${(props) => props.height}px;
   border-radius: 50%;
-  margin-right: 10px;
   background: ${(props) => props.color};
 
   box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);

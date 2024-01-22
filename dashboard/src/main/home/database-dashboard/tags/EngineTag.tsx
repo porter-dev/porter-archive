@@ -27,6 +27,9 @@ const EngineTag: React.FC<Props> = ({ engine, heightPixels = 13 }) => {
           .with({ name: "REDIS" }, () => (
             <Icon src={redis} height={`${heightPixels}px`} />
           ))
+          .with({ name: "AURORA-POSTGRES" }, () => (
+            <Icon src={postgresql} height={`${heightPixels}px`} />
+          ))
           .otherwise(() => null)}
       </IconContainer>
       <Spacer inline x={0.5} />

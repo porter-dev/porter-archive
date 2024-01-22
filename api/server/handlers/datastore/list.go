@@ -16,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -59,7 +60,7 @@ type Datastore struct {
 	Metadata []*porterv1.DatastoreMetadata `json:"metadata,omitempty"`
 
 	// Status is the status of the datastore
-	Status string `json:"status,omitempty"`
+	Status string `json:"status"`
 
 	// CreatedAtUTC is the time the datastore was created in UTC
 	CreatedAtUTC time.Time `json:"created_at"`
@@ -106,6 +107,7 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			Type:         datastore.Type,
 			Engine:       datastore.Engine,
 			CreatedAtUTC: datastore.CreatedAt,
+			Status:       string(datastore.Status),
 		})
 	}
 
@@ -123,7 +125,8 @@ type DatastoresInput struct {
 	IncludeEnvGroup bool
 	IncludeMetadata bool
 
-	CCPClient porterv1connect.ClusterControlPlaneServiceClient
+	CCPClient           porterv1connect.ClusterControlPlaneServiceClient
+	DatastoreRepository repository.DatastoreRepository
 }
 
 // Datastores returns a list of datastores associated with the specified project/cloud-provider
@@ -174,12 +177,24 @@ func Datastores(ctx context.Context, inp DatastoresInput) ([]Datastore, error) {
 	}
 
 	for _, datastore := range resp.Msg.Datastores {
-		datastores = append(datastores, Datastore{
+		encodedDatastore := Datastore{
 			Name:     datastore.Name,
-			Type:     datastore.Type.Enum().String(),
 			Metadata: datastore.Metadata,
 			Env:      datastore.Env,
-		})
+		}
+
+		datastoreRecord, err := inp.DatastoreRepository.GetByProjectIDAndName(ctx, inp.ProjectID, datastore.Name)
+		if err != nil {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "err-datastore-name", Value: datastore.Name})
+			return datastores, telemetry.Error(ctx, span, err, "datastore record not found")
+		}
+
+		encodedDatastore.CreatedAtUTC = datastoreRecord.CreatedAt
+		encodedDatastore.Type = datastoreRecord.Type
+		encodedDatastore.Engine = datastoreRecord.Engine
+		encodedDatastore.Status = string(datastoreRecord.Status)
+
+		datastores = append(datastores, encodedDatastore)
 	}
 
 	return datastores, nil

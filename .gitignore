@@ -18,7 +18,7 @@ openapi.yaml
 .idea
 portercli
 local
-
+go.work.sum
 
 vendor
 **/*.env

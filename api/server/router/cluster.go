@@ -319,6 +319,35 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/compliance/checks -> cluster.NewListComplianceChecksHandler
+	listComplianceChecksEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/compliance/checks",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	listComplianceChecksHandler := cluster.NewListComplianceChecksHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listComplianceChecksEndpoint,
+		Handler:  listComplianceChecksHandler,
+		Router:   r,
+	})
+
 	if config.ServerConf.GithubIncomingWebhookSecret != "" {
 
 		// GET /api/projects/{project_id}/clusters/{cluster_id}/environments -> environment.NewListEnvironmentHandler

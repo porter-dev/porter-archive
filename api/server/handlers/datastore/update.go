@@ -72,6 +72,20 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		telemetry.AttributeKV{Key: "engine", Value: request.Engine},
 	)
 
+	// TODO: replace this with ccp call
+	err := h.InstallDatastore(ctx, InstallDatastoreInput{
+		Name:    request.Name,
+		Type:    request.Type,
+		Engine:  request.Engine,
+		Values:  request.Values,
+		Request: r,
+	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error installing datastore")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	record, err := datastore.CreateOrGetRecord(ctx, datastore.CreateOrGetRecordInput{
 		ProjectID:           project.ID,
 		ClusterID:           cluster.ID,
@@ -83,20 +97,6 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	})
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error retrieving datastore record")
-		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	// TODO: replace this with ccp call
-	err = h.InstallDatastore(ctx, InstallDatastoreInput{
-		Name:    record.Name,
-		Type:    record.Type,
-		Engine:  record.Engine,
-		Values:  request.Values,
-		Request: r,
-	})
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error installing datastore")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

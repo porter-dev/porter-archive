@@ -2,7 +2,6 @@ import React from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Banner from "components/porter/Banner";
 import Container from "components/porter/Container";
 import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
@@ -54,28 +53,11 @@ const DatabaseHeader: React.FC = () => {
         </div>
         <Spacer y={0.5} />
       </CreatedAtContainer>
-      {datastoreField(datastore, "status") !== "available" && (
-        <>
-          <Spacer y={1} />
-          <Banner>
-            <BannerContents>
-              <b>Database is being created</b>
-            </BannerContents>
-            <Spacer inline width="5px" />
-          </Banner>
-        </>
-      )}
     </>
   );
 };
 
 export default DatabaseHeader;
-
-const BannerContents = styled.div`
-  display: flex;
-  flex-direction: column;
-  row-gap: 0.5rem;
-`;
 
 const CreatedAtContainer = styled.div`
   display: inline-flex;

@@ -12,7 +12,7 @@ import Fieldset from "components/porter/Fieldset";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
+import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
@@ -141,6 +141,8 @@ const DatabaseDashboard: React.FC = () => {
           <GridList>
             {(filteredDatabases ?? []).map(
               (datastore: ClientDatastore, i: number) => {
+                const status =
+                  datastore.status === "AVAILABLE" ? "available" : "pending";
                 return (
                   <Link to={`/databases/${datastore.name}`} key={i}>
                     <Block>
@@ -149,7 +151,7 @@ const DatabaseDashboard: React.FC = () => {
                           <Icon src={datastore.template.icon} />
                           <Text size={14}>{datastore.name}</Text>
                         </Container>
-                        <MidIcon src={healthy} height="16px" />
+                        <StatusDot status={status} heightPixels={9} />
                       </Container>
                       <Container row>
                         <EngineTag engine={datastore.template.engine} />

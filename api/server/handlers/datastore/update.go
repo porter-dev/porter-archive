@@ -101,6 +101,18 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	updateReq := connect.NewRequest(&porterv1.UpdateDatastoreRequest{
+		ProjectId:   int64(project.ID),
+		DatastoreId: record.ID.String(),
+	})
+
+	_, err = h.Config().ClusterControlPlaneClient.UpdateDatastore(ctx, updateReq)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error calling ccp update datastore")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	// TODO: create an API-level representation of the db model rather than returning the model directly
 	h.WriteResult(w, r, record)
 }

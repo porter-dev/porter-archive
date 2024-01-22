@@ -6,6 +6,7 @@ import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 
 import { useDatabaseContext } from "./DatabaseContextProvider";
+import DatastoreProvisioningIndicator from "./DatastoreProvisioningIndicator";
 import ConfigurationTab from "./tabs/ConfigurationTab";
 import ConnectedAppsTab from "./tabs/ConnectedAppsTab";
 import DatabaseEnvTab from "./tabs/DatabaseEnvTab";
@@ -49,6 +50,10 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
       { label: "Settings", value: "settings" },
     ];
   }, []);
+
+  if (datastore.status !== "AVAILABLE") {
+    return <DatastoreProvisioningIndicator />;
+  }
 
   return (
     <>

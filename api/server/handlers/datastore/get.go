@@ -95,10 +95,11 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			AccountID: awsArn.AccountID,
 			Type:      porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS,
 		},
-		Name:            datastoreName,
-		IncludeEnvGroup: true,
-		IncludeMetadata: true,
-		CCPClient:       c.Config().ClusterControlPlaneClient,
+		Name:                datastoreName,
+		IncludeEnvGroup:     true,
+		IncludeMetadata:     true,
+		CCPClient:           c.Config().ClusterControlPlaneClient,
+		DatastoreRepository: c.Repo().Datastore(),
 	})
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error getting datastore")
@@ -117,9 +118,6 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	datastore := datastores[0]
-	datastore.Type = datastoreRecord.Type
-	datastore.Engine = datastoreRecord.Engine
-	datastore.CreatedAtUTC = datastoreRecord.CreatedAt
 
 	resp.Datastore = datastore
 

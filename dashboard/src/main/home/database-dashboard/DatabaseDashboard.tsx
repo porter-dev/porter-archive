@@ -9,8 +9,10 @@ import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Fieldset from "components/porter/Fieldset";
+import Image from "components/porter/Image";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
+import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
@@ -22,12 +24,14 @@ import { useDatabaseList } from "lib/hooks/useDatabaseList";
 import { Context } from "shared/Context";
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
+import engine from "assets/computer-chip.svg";
 import database from "assets/database.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
 import time from "assets/time.png";
 
+import { getDatastoreIcon, getEngineIcon } from "./icons";
 import EngineTag from "./tags/EngineTag";
 
 const DatabaseDashboard: React.FC = () => {
@@ -35,6 +39,12 @@ const DatabaseDashboard: React.FC = () => {
 
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [typeFilter, setTypeFilter] = useState<"all" | "RDS" | "ELASTICACHE">(
+    "all"
+  );
+  const [engineFilter, setEngineFilter] = useState<
+    "all" | "POSTGRES" | "AURORA-POSTGRES" | "REDIS"
+  >("all");
 
   const { datastores, isLoading } = useDatabaseList();
 
@@ -44,8 +54,28 @@ const DatabaseDashboard: React.FC = () => {
       isCaseSensitive: false,
     });
 
-    return _.sortBy(filteredBySearch, ["name"]);
-  }, [datastores, searchValue]);
+    const sortedFilteredBySearch = _.sortBy(filteredBySearch, ["name"]);
+
+    const filteredByDatastoreType = sortedFilteredBySearch.filter(
+      (datastore: ClientDatastore) => {
+        if (typeFilter === "all") {
+          return true;
+        }
+        return datastore.type === typeFilter;
+      }
+    );
+
+    const filteredByEngine = filteredByDatastoreType.filter(
+      (datastore: ClientDatastore) => {
+        if (engineFilter === "all") {
+          return true;
+        }
+        return datastore.template.engine.name === engineFilter;
+      }
+    );
+
+    return filteredByEngine;
+  }, [datastores, searchValue, typeFilter, engineFilter]);
 
   const renderContents = (): JSX.Element => {
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
@@ -86,6 +116,83 @@ const DatabaseDashboard: React.FC = () => {
     return (
       <>
         <Container row spaced>
+          <Select
+            options={[
+              { value: "all", label: "All" },
+              {
+                value: "RDS",
+                label: "RDS",
+                icon: getDatastoreIcon("RDS"),
+              },
+              {
+                value: "ELASTICACHE",
+                label: "Elasticache",
+                icon: getDatastoreIcon("ELASTICACHE"),
+              },
+            ]}
+            width="210px"
+            height="29px"
+            value={typeFilter}
+            setValue={(value) => {
+              if (
+                value === "all" ||
+                value === "RDS" ||
+                value === "ELASTICACHE"
+              ) {
+                setTypeFilter(value);
+                setEngineFilter("all");
+              }
+            }}
+            prefix={
+              <Container row>
+                <Image src={database} size={15} opacity={0.6} />
+                <Spacer inline x={0.5} />
+                Type
+              </Container>
+            }
+          />
+          <Spacer inline x={1} />
+          <Select
+            options={[
+              { value: "all", label: "All" },
+              {
+                value: "POSTGRES",
+                label: "PostgreSQL",
+                icon: getEngineIcon("POSTGRES"),
+              },
+              {
+                value: "AURORA-POSTGRES",
+                label: "Aurora PostgreSQL",
+                icon: getEngineIcon("POSTGRES"),
+              },
+              {
+                value: "REDIS",
+                label: "Redis",
+                icon: getEngineIcon("REDIS"),
+              },
+            ]}
+            width="270px"
+            height="29px"
+            value={engineFilter}
+            setValue={(value) => {
+              if (
+                value === "all" ||
+                value === "POSTGRES" ||
+                value === "AURORA-POSTGRES" ||
+                value === "REDIS"
+              ) {
+                setEngineFilter(value);
+              }
+            }}
+            prefix={
+              <Container row>
+                <Image src={engine} size={15} opacity={0.6} />
+                <Spacer inline x={0.5} />
+                Engine
+              </Container>
+            }
+          />
+          <Spacer inline x={2} />
           <SearchBar
             value={searchValue}
             setValue={(x) => {
@@ -119,9 +226,9 @@ const DatabaseDashboard: React.FC = () => {
                 true
               }
               height="30px"
-              width="140px"
+              width="70px"
             >
-              <I className="material-icons">add</I> New database
+              <I className="material-icons">add</I> New
             </Button>
           </PorterLink>
         </Container>
@@ -131,7 +238,9 @@ const DatabaseDashboard: React.FC = () => {
           <Fieldset>
             <Container row>
               <PlaceholderIcon src={notFound} />
-              <Text color="helper">No matching databases were found.</Text>
+              <Text color="helper">
+                No databases matching filters were found.
+              </Text>
             </Container>
           </Fieldset>
         ) : isLoading ? (

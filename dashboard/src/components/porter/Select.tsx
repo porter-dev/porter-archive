@@ -1,14 +1,16 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import styled from "styled-components";
+
 import arrow from "assets/arrow-down.svg";
+
 import Container from "./Container";
 
 type Props = {
   width?: string;
-  options: Array<{ 
+  options: Array<{
     label: string;
     value: string;
-    icon?: HTMLImageElement | string;
+    icon?: string;
     disabled?: boolean;
   }>;
   label?: string | React.ReactNode;
@@ -23,48 +25,46 @@ type Props = {
 };
 
 const Select: React.FC<Props> = ({
-  width,
   options,
   label,
   labelColor,
-  height,
   error,
   children,
   disabled,
   value,
   setValue,
   prefix,
+  width = "200px",
+  height = "35px",
 }) => {
-  const prefixRef = useRef<HTMLDivElement>(null);
-
   return (
     <Block width={width}>
       {label && <Label color={labelColor}>{label}</Label>}
       <SelectWrapper>
         <AbsoluteWrapper>
-        <Prefix>{prefix}</Prefix>
-        <Bar />
-        {options.map((option) => {
-          if (option.value === value) {
-            return (
-              <Container key={1} row>
-                {option.icon && <Img src={option?.icon} />}
-                {option.label}
-              </Container>
-            )
-          }
-          return null;
-        })}
-        <img src={arrow} />
+          <Prefix>{prefix}</Prefix>
+          <Bar />
+          {options.map((option) => {
+            if (option.value === value) {
+              return (
+                <Container key={1} row>
+                  {option.icon && <Img src={option?.icon} />}
+                  {option.label}
+                </Container>
+              );
+            }
+            return null;
+          })}
+          <img src={arrow} />
         </AbsoluteWrapper>
         <StyledSelect
           onChange={(e) => {
-            setValue(e.target.value);
+            setValue?.(e.target.value);
           }}
           width={width}
           height={height}
           hasError={(error && true) || error === ""}
-          disabled={disabled ? disabled : false}
+          disabled={disabled || false}
           value={value}
         >
           {options.map((option, i) => {
@@ -134,9 +134,9 @@ const Block = styled.div<{
   width: ${(props) => props.width || "200px"};
 `;
 
-const Label = styled.div<{color?: string}>`
+const Label = styled.div<{ color?: string }>`
   font-size: 13px;
-  color: ${({color = "#aaaabb"}) => color};
+  color: ${({ color = "#aaaabb" }) => color};
   margin-bottom: 10px;
 `;
 
@@ -156,9 +156,9 @@ const Error = styled.div`
 const SelectWrapper = styled.div`
   position: relative;
   background: ${(props) => props.theme.fg};
-  border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#494b4f")};
+  border: 1px solid #494b4f;
   :hover {
-    border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#7a7b80")};
+    border: 1px solid #7a7b80;
   }
   z-index: 0;
   display: flex;
@@ -172,12 +172,10 @@ const StyledSelect = styled.select<{
   width: string;
   height: string;
   hasError: boolean;
-  paddingLeft: number;
 }>`
-  height: ${(props) => props.height || "35px"};
+  height: ${(props) => props.height};
   padding: 5px 10px;
-  padding-left: ${(props) => props.paddingLeft}px;
-  width: ${(props) => props.width || "200px"};
+  width: ${(props) => props.width};
   color: #ffffff;
   font-size: 13px;
   outline: none;

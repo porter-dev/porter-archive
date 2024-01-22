@@ -21,8 +21,8 @@ export type DatastoreMetadataWithSource = z.infer<
 
 export const datastoreValidator = z.object({
   name: z.string(),
-  type: z.string(),
-  engine: z.string(),
+  type: z.enum(["RDS", "ELASTICACHE"]),
+  engine: z.enum(["POSTGRES", "AURORA-POSTGRES", "REDIS", "MEMCACHED"]),
   created_at: z.string().default(""),
   metadata: datastoreMetadataValidator.array().default([]),
   env: datastoreEnvValidator.optional(),
@@ -70,11 +70,10 @@ export type CloudProviderDatastore = z.infer<
   typeof cloudProviderDatastoreSchema
 >;
 
-export type DatabaseEngine =
-  | typeof DATABASE_ENGINE_POSTGRES
-  | typeof DATABASE_ENGINE_AURORA_POSTGRES
-  | typeof DATABASE_ENGINE_REDIS
-  | typeof DATABASE_ENGINE_MEMCACHED;
+export type DatabaseEngine = {
+  name: z.infer<typeof datastoreValidator>["engine"];
+  displayName: string;
+};
 export const DATABASE_ENGINE_POSTGRES = {
   name: "POSTGRES" as const,
   displayName: "PostgreSQL",
@@ -92,9 +91,7 @@ export const DATABASE_ENGINE_MEMCACHED = {
   displayName: "Memcached",
 };
 
-export type DatabaseType =
-  | typeof DATABASE_TYPE_RDS
-  | typeof DATABASE_TYPE_ELASTICACHE;
+export type DatabaseType = z.infer<typeof datastoreValidator>["type"];
 export const DATABASE_TYPE_RDS = "RDS" as const;
 export const DATABASE_TYPE_ELASTICACHE = "ELASTICACHE" as const;
 
@@ -102,28 +99,28 @@ export type DatabaseState = {
   state: z.infer<typeof datastoreValidator>["status"];
   displayName: string;
 };
-export const DATABASE_STATE_CREATING = {
-  state: "CREATING" as const,
+export const DATABASE_STATE_CREATING: DatabaseState = {
+  state: "CREATING",
   displayName: "Creating",
 };
-export const DATABASE_STATE_CONFIGURING_LOG_EXPORTS = {
-  state: "CONFIGURING_LOG_EXPORTS" as const,
+export const DATABASE_STATE_CONFIGURING_LOG_EXPORTS: DatabaseState = {
+  state: "CONFIGURING_LOG_EXPORTS",
   displayName: "Configuring log exports",
 };
-export const DATABASE_STATE_MODIFYING = {
-  state: "MODIFYING" as const,
+export const DATABASE_STATE_MODIFYING: DatabaseState = {
+  state: "MODIFYING",
   displayName: "Modifying",
 };
-export const DATABASE_STATE_CONFIGURING_ENHANCED_MONITORING = {
-  state: "CONFIGURING_ENHANCED_MONITORING" as const,
+export const DATABASE_STATE_CONFIGURING_ENHANCED_MONITORING: DatabaseState = {
+  state: "CONFIGURING_ENHANCED_MONITORING",
   displayName: "Configuring enhanced monitoring",
 };
-export const DATABASE_STATE_BACKING_UP = {
-  state: "BACKING_UP" as const,
+export const DATABASE_STATE_BACKING_UP: DatabaseState = {
+  state: "BACKING_UP",
   displayName: "Backing up",
 };
-export const DATABASE_STATE_AVAILABLE = {
-  state: "AVAILABLE" as const,
+export const DATABASE_STATE_AVAILABLE: DatabaseState = {
+  state: "AVAILABLE",
   displayName: "Finishing provision",
 };
 

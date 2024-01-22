@@ -34,7 +34,7 @@ const StyledIcon = styled.img<{
   opacity?: number;
   additionalStyles?: string;
 }>`
-  height: ${props => props.size || 20}px;
-  opacity: ${props => props.opacity || 1};
-  ${props => props.additionalStyles ? props.additionalStyles : ""}
+  height: ${(props) => props.size || 20}px;
+  opacity: ${(props) => props.opacity || 1};
+  ${(props) => (props.additionalStyles ? props.additionalStyles : "")}
 `;

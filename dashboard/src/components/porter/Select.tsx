@@ -4,6 +4,7 @@ import styled from "styled-components";
 import arrow from "assets/arrow-down.svg";
 
 import Container from "./Container";
+import Spacer from "./Spacer";
 
 type Props = {
   width?: string;
@@ -42,6 +43,7 @@ const Select: React.FC<Props> = ({
       {label && <Label color={labelColor}>{label}</Label>}
       <SelectWrapper>
         <AbsoluteWrapper>
+          <Spacer inline width="10px" />
           {prefix && (
             <>
               <Prefix>{prefix}</Prefix>
@@ -122,7 +124,6 @@ const Bar = styled.div`
 `;
 
 const Prefix = styled.div`
-  margin-left: 10px;
   font-size: 13px;
   color: #aaaabb;
   display: flex;

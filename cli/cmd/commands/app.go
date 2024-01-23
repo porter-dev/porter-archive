@@ -35,17 +35,17 @@ import (
 )
 
 var (
-	appContainerName string
-	appCpuMilli      int
-	appExistingPod   bool
-	appInteractive   bool
-	appMemoryMi      int
-	appNamespace     string
-	appTag           string
-	appVerbose       bool
-	appWait          bool
-	deploymentTarget string
-	jobName          string
+	appContainerName     string
+	appCpuMilli          int
+	appExistingPod       bool
+	appInteractive       bool
+	appMemoryMi          int
+	appNamespace         string
+	appTag               string
+	appVerbose           bool
+	appWait              bool
+	deploymentTargetName string
+	jobName              string
 )
 
 const (
@@ -62,11 +62,11 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 	}
 
 	appCmd.PersistentFlags().StringVarP(
-		&deploymentTarget,
+		&deploymentTargetName,
 		"target",
 		"x",
-		"default",
-		"the deployment target for the app, default is \"default\"",
+		"",
+		"the name of the deployment target for the app",
 	)
 
 	// appRunCmd represents the "porter app run" subcommand
@@ -274,11 +274,12 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 		}
 
 		return v2.RunAppJob(ctx, v2.RunAppJobInput{
-			CLIConfig:   cliConfig,
-			Client:      client,
-			AppName:     args[0],
-			JobName:     jobName,
-			WaitForExit: appWait,
+			CLIConfig:            cliConfig,
+			Client:               client,
+			DeploymentTargetName: deploymentTargetName,
+			AppName:              args[0],
+			JobName:              jobName,
+			WaitForExit:          appWait,
 		})
 	}
 
@@ -300,7 +301,7 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 	// updated exec args includes launcher command prepended if needed, otherwise it is the same as execArgs
 	var updatedExecArgs []string
 	if project.ValidateApplyV2 {
-		podsSimple, updatedExecArgs, namespace, err = getPodsFromV2PorterYaml(ctx, execArgs, client, cliConfig, args[0], deploymentTarget)
+		podsSimple, updatedExecArgs, namespace, err = getPodsFromV2PorterYaml(ctx, execArgs, client, cliConfig, args[0], deploymentTargetName)
 		if err != nil {
 			return err
 		}
@@ -1271,7 +1272,7 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 			ProjectID:                   cliConf.Project,
 			ClusterID:                   cliConf.Cluster,
 			AppName:                     args[0],
-			DeploymentTargetName:        deploymentTarget,
+			DeploymentTargetName:        deploymentTargetName,
 			Tag:                         appTag,
 			Client:                      client,
 			WaitForSuccessfulDeployment: appWait,

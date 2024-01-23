@@ -6,6 +6,10 @@ import (
 	"net/http"
 	"strings"
 
+	"connectrpc.com/connect"
+
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
+
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 
@@ -44,14 +48,14 @@ type AppJobRunStatusRequest struct {
 	// DeploymentTargetID is the id of the deployment target the job was run against
 	DeploymentTargetID string `json:"deployment_target_id"`
 
+	// DeploymentTargetName is the name of the deployment target the job was run against
+	DeploymentTargetName string `json:"deployment_target_name"`
+
 	// JobRunID is the UID returned from the /apps/{porter_app_name}/run endpoint
 	JobRunID string `json:"job_id"`
 
 	// ServiceName is the name of the app service that was triggered
 	ServiceName string `json:"service_name"`
-
-	// Namespace is the namespace in which the job was deployed
-	Namespace string `json:"namespace"`
 }
 
 // AppJobRunStatusResponse is the response object for the /apps/{porter_app_name}/run-status endpoint
@@ -64,6 +68,7 @@ func (c *AppJobRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-app-job-run-status")
 	defer span.End()
 
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	cluster, _ := r.Context().Value(types.ClusterScope).(*models.Cluster)
 
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
@@ -89,13 +94,6 @@ func (c *AppJobRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "job-run-id", Value: request.JobRunID})
 
-	if request.Namespace == "" {
-		err := telemetry.Error(ctx, span, nil, "namespace is required")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: request.Namespace})
-
 	if request.ServiceName == "" {
 		err := telemetry.Error(ctx, span, nil, "service name is required")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -103,12 +101,45 @@ func (c *AppJobRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName})
 
-	if request.DeploymentTargetID == "" {
-		err := telemetry.Error(ctx, span, nil, "deployment target id is required")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+	deploymentTargetName := request.DeploymentTargetName
+	if request.DeploymentTargetName == "" && request.DeploymentTargetID == "" {
+		defaultDeploymentTarget, err := defaultDeploymentTarget(ctx, defaultDeploymentTargetInput{
+			ProjectID:                 project.ID,
+			ClusterID:                 cluster.ID,
+			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting default deployment target")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		deploymentTargetName = defaultDeploymentTarget.Name
+	}
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: deploymentTargetName},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+	)
+
+	details, err := c.Config().ClusterControlPlaneClient.DeploymentTargetDetails(ctx, connect.NewRequest(&porterv1.DeploymentTargetDetailsRequest{
+		ProjectId: int64(project.ID),
+		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+			Id:   request.DeploymentTargetID,
+			Name: deploymentTargetName,
+		},
+	}))
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting deployment target details")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
+
+	if details == nil || details.Msg == nil || details.Msg.DeploymentTarget == nil {
+		err := telemetry.Error(ctx, span, err, "deployment target details are nil")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	namespace := details.Msg.DeploymentTarget.Namespace
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
@@ -125,10 +156,10 @@ func (c *AppJobRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	status, err := c.getJobStatus(ctx, getJobStatusInput{
 		AppName:            appName,
-		DeploymentTargetID: request.DeploymentTargetID,
+		DeploymentTargetID: details.Msg.DeploymentTarget.Id,
 		ClusterK8sAgent:    *agent,
 		JobRunID:           request.JobRunID,
-		Namespace:          request.Namespace,
+		Namespace:          namespace,
 		ServiceName:        request.ServiceName,
 	})
 	if err != nil {

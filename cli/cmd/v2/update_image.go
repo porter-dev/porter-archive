@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -23,10 +22,6 @@ type UpdateImageInput struct {
 
 // UpdateImage updates the image of an application
 func UpdateImage(ctx context.Context, input UpdateImageInput) error {
-	if input.DeploymentTargetName == "" {
-		return errors.New("please provide a deployment target")
-	}
-
 	tag := input.Tag
 	if tag == "" {
 		tag = "latest"

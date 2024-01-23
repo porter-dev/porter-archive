@@ -266,10 +266,7 @@ func datastoreConnect(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 		Name(pod.Name).
 		SubResource("portforward")
 
-	color.New(color.FgGreen).Println("Secure tunnel setup complete! While the tunnel is running, you can connect to your datastore using the following credentials:")
-
-	printDatastoreCredentials(datastoreType, port, datastoreCredential)
-	fmt.Println()
+	printDatastoreConnectionInformation(datastoreType, port, datastoreCredential)
 
 	color.New(color.FgGreen).Println("Starting proxy...[CTRL-C to exit]")
 	return forwardPorts("POST", req.URL(), config.RestConf, []string{fmt.Sprintf("%d:%d", port, datastoreCredential.Port)}, stopChannel, readyChannel)
@@ -393,7 +390,9 @@ func datastoreCredential(inp datastoreCredentialInput) (types.DatastoreCredentia
 	return credential, nil
 }
 
-func printDatastoreCredentials(datastoreType types.DatastoreType, port int, credential types.DatastoreCredential) {
+func printDatastoreConnectionInformation(datastoreType types.DatastoreType, port int, credential types.DatastoreCredential) {
+	color.New(color.FgGreen).Println("Secure tunnel setup complete! While the tunnel is running, you can connect to your datastore using the following credentials:")
+
 	switch datastoreType {
 	case types.DatastoreType_ElastiCache:
 		fmt.Printf(" Host: 127.0.0.1\n")
@@ -411,4 +410,5 @@ func printDatastoreCredentials(datastoreType types.DatastoreType, port int, cred
 		color.New(color.FgGreen).Println("For example, you can connect to your datastore using the following command:")
 		fmt.Printf(" PGPASSWORD=%s psql -h 127.0.0.1 -p %d -U %s -d %s\n", credential.Password, port, credential.Username, credential.DatabaseName)
 	}
+	fmt.Println()
 }

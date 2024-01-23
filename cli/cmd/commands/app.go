@@ -509,6 +509,7 @@ func appGetEphemeralPods(ctx context.Context, namespace string, clientset *kuber
 	return podNames, nil
 }
 
+// KubernetesSharedConfig allows for interacting with a kubernetes cluster
 type KubernetesSharedConfig struct {
 	Client     api.Client
 	RestConf   *rest.Config

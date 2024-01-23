@@ -31,11 +31,16 @@ import (
 var port int
 
 const (
+	// Namespace_PorterEnvGroup is the namespace for porter env groups
 	Namespace_PorterEnvGroup = "porter-env-group"
-	Namespace_Default        = "default"
-	LabelKey_Datastore       = "porter.run/environment-group-datastore"
-	DatabaseName             = "postgres"
-	Address_Localhost        = "localhost"
+	// Namespace_Default is the default namespace
+	Namespace_Default = "default"
+	// LabelKey_Datastore is the label key for datastore crds
+	LabelKey_Datastore = "porter.run/environment-group-datastore"
+	// DatabaseName is the default database name
+	DatabaseName = "postgres"
+	// Address_Localhost is the localhost address
+	Address_Localhost = "localhost"
 )
 
 func registerCommand_Datastore(cliConf config.CLIConfig) *cobra.Command {
@@ -107,7 +112,7 @@ func datastoreConnect(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	}
 
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-	s.Color("cyan")
+	s.Color("cyan") // nolint:errcheck
 	s.Suffix = fmt.Sprintf(" Retrieving datastore named %s in project %d...", datastoreName, projectId)
 	s.Start()
 	datastoreResp, err := client.GetDatastore(ctx, projectId, datastoreName)
@@ -223,7 +228,7 @@ func datastoreConnect(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	}
 
 	s = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-	s.Color("cyan")
+	s.Color("cyan") // nolint:errcheck
 	s.Suffix = " Creating secure tunnel to datastore..."
 
 	s.Start()
@@ -233,15 +238,15 @@ func datastoreConnect(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	}
 	s.Stop()
 
-	defer appDeletePod(ctx, config, proxyPod.Name, Namespace_Default)
+	defer appDeletePod(ctx, config, proxyPod.Name, Namespace_Default) //nolint:errcheck
 
 	s = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-	s.Color("green")
+	s.Color("green") // nolint:errcheck
 	s.Suffix = " Waiting for secure tunnel to datastore to be ready..."
 
 	s.Start()
 	if err = appWaitForPod(ctx, config, proxyPod); err != nil {
-		color.New(color.FgRed).Println("error occurred while waiting for secure tunnel to be ready")
+		color.New(color.FgRed).Println("error occurred while waiting for secure tunnel to be ready") // nolint:errcheck
 		return err
 	}
 	s.Stop()
@@ -268,7 +273,7 @@ func datastoreConnect(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 
 	printDatastoreConnectionInformation(datastoreType, port, datastoreCredential)
 
-	color.New(color.FgGreen).Println("Starting proxy...[CTRL-C to exit]")
+	color.New(color.FgGreen).Println("Starting proxy...[CTRL-C to exit]") // nolint:errcheck
 	return forwardPorts("POST", req.URL(), config.RestConf, []string{fmt.Sprintf("%d:%d", port, datastoreCredential.Port)}, stopChannel, readyChannel)
 }
 
@@ -391,7 +396,7 @@ func datastoreCredential(inp datastoreCredentialInput) (types.DatastoreCredentia
 }
 
 func printDatastoreConnectionInformation(datastoreType types.DatastoreType, port int, credential types.DatastoreCredential) {
-	color.New(color.FgGreen).Println("Secure tunnel setup complete! While the tunnel is running, you can connect to your datastore using the following credentials:")
+	color.New(color.FgGreen).Println("Secure tunnel setup complete! While the tunnel is running, you can connect to your datastore using the following credentials:") //nolint:errcheck,gosec
 
 	switch datastoreType {
 	case types.DatastoreType_ElastiCache:
@@ -399,7 +404,7 @@ func printDatastoreConnectionInformation(datastoreType types.DatastoreType, port
 		fmt.Printf(" Port: %d\n", port)
 		fmt.Printf(" Password: %s\n", credential.Password)
 		fmt.Println()
-		color.New(color.FgGreen).Println("For example, you can connect to your datastore using the following command:")
+		color.New(color.FgGreen).Println("For example, you can connect to your datastore using the following command:") //nolint:errcheck,gosec
 		fmt.Printf(" redis-cli -p %d -a %s --tls\n", port, credential.Password)
 	case types.DatastoreType_RDS:
 		fmt.Printf(" Host: 127.0.0.1\n")
@@ -407,7 +412,7 @@ func printDatastoreConnectionInformation(datastoreType types.DatastoreType, port
 		fmt.Printf(" Database name: %s\n", credential.DatabaseName)
 		fmt.Printf(" Username: %s\n", credential.Username)
 		fmt.Printf(" Password: %s\n", credential.Password)
-		color.New(color.FgGreen).Println("For example, you can connect to your datastore using the following command:")
+		color.New(color.FgGreen).Println("For example, you can connect to your datastore using the following command:") //nolint:errcheck,gosec
 		fmt.Printf(" PGPASSWORD=%s psql -h 127.0.0.1 -p %d -U %s -d %s\n", credential.Password, port, credential.Username, credential.DatabaseName)
 	}
 	fmt.Println()

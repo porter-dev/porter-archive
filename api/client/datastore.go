@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
+// GetDatastore gets a datastore by name for a project
 func (c *Client) GetDatastore(
 	ctx context.Context,
 	projectID uint,

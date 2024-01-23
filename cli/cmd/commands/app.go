@@ -66,7 +66,7 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		"target",
 		"x",
 		"",
-		"the deployment target name for the app",
+		"the name of the deployment target for the app",
 	)
 
 	// appRunCmd represents the "porter app run" subcommand

@@ -27,7 +27,7 @@ func UpdateImage(ctx context.Context, input UpdateImageInput) error {
 		tag = "latest"
 	}
 
-	resp, err := input.Client.UpdateImage(ctx, input.ProjectID, input.ClusterID, input.AppName, deploymentTargetName, tag)
+	resp, err := input.Client.UpdateImage(ctx, input.ProjectID, input.ClusterID, input.AppName, input.DeploymentTargetName, tag)
 	if err != nil {
 		return fmt.Errorf("unable to update image: %w", err)
 	}

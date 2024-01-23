@@ -273,8 +273,6 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 		return fmt.Errorf("could not resolve deployment target: %w", err)
 	}
 
-	fmt.Println("deploymentTargetName: ", deploymentTargetName)
-
 	if jobName != "" {
 		if !ff.ValidateApplyV2Enabled {
 			return fmt.Errorf("job flag is not supported on this project")

@@ -355,12 +355,12 @@ func (c *Client) DefaultDeploymentTarget(
 func (c *Client) CurrentAppRevision(
 	ctx context.Context,
 	projectID uint, clusterID uint,
-	appName string, deploymentTarget string,
+	appName string, deploymentTargetName string,
 ) (*porter_app.LatestAppRevisionResponse, error) {
 	resp := &porter_app.LatestAppRevisionResponse{}
 
 	req := &porter_app.LatestAppRevisionRequest{
-		DeploymentTargetID: deploymentTarget,
+		DeploymentTargetName: deploymentTargetName,
 	}
 
 	err := c.getRequest(
@@ -804,13 +804,13 @@ func (c *Client) RunAppJob(
 	ctx context.Context,
 	projectID, clusterID uint,
 	appName string, jobName string,
-	deploymentTargetID string,
+	deploymentTargetName string,
 ) (*porter_app.RunAppJobResponse, error) {
 	resp := &porter_app.RunAppJobResponse{}
 
 	req := &porter_app.RunAppJobRequest{
-		ServiceName:        jobName,
-		DeploymentTargetID: deploymentTargetID,
+		ServiceName:          jobName,
+		DeploymentTargetName: deploymentTargetName,
 	}
 
 	err := c.postRequest(
@@ -837,9 +837,6 @@ type RunAppJobStatusInput struct {
 	// DeploymentTargetID is the id of the deployment target the job was run against
 	DeploymentTargetID string
 
-	// DeploymentTargetNamespace is the namespace in which the job was deployed
-	DeploymentTargetNamespace string
-
 	// ServiceName is the name of the app service that was triggered
 	ServiceName string
 
@@ -860,7 +857,6 @@ func (c *Client) RunAppJobStatus(
 	req := &porter_app.AppJobRunStatusRequest{
 		DeploymentTargetID: input.DeploymentTargetID,
 		JobRunID:           input.JobRunID,
-		Namespace:          input.DeploymentTargetNamespace,
 		ServiceName:        input.ServiceName,
 	}
 

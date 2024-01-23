@@ -10,8 +10,6 @@ import (
 
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 
-	"github.com/google/uuid"
-
 	"github.com/porter-dev/porter/internal/porter_app"
 	"github.com/porter-dev/porter/internal/telemetry"
 
@@ -43,7 +41,8 @@ func NewLatestAppRevisionHandler(
 
 // LatestAppRevisionRequest is the request object for the /apps/{porter_app_name}/latest endpoint
 type LatestAppRevisionRequest struct {
-	DeploymentTargetID string `schema:"deployment_target_id"`
+	DeploymentTargetID   string `schema:"deployment_target_id"`
+	DeploymentTargetName string `schema:"deployment_target_name"`
 }
 
 // LatestAppRevisionResponse is the response object for the /apps/{porter_app_name}/latest endpoint
@@ -82,13 +81,10 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	_, err := uuid.Parse(request.DeploymentTargetID)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error parsing deployment target id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: request.DeploymentTargetName},
+	)
 
 	porterApps, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(project.ID, appName)
 	if err != nil {
@@ -117,9 +113,12 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	}
 
 	currentAppRevisionReq := connect.NewRequest(&porterv1.CurrentAppRevisionRequest{
-		ProjectId:          int64(project.ID),
-		AppId:              int64(appId),
-		DeploymentTargetId: request.DeploymentTargetID,
+		ProjectId: int64(project.ID),
+		AppId:     int64(appId),
+		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+			Id:   request.DeploymentTargetID,
+			Name: request.DeploymentTargetName,
+		},
 	})
 
 	currentAppRevisionResp, err := c.Config().ClusterControlPlaneClient.CurrentAppRevision(ctx, currentAppRevisionReq)

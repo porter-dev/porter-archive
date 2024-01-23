@@ -24,6 +24,8 @@ type RunAppJobInput struct {
 	CLIConfig config.CLIConfig
 	// Client is the Porter API client
 	Client api.Client
+	// DeploymentTargetName is the name of deployment target to run the job on
+	DeploymentTargetName string
 
 	AppName string
 	JobName string
@@ -34,17 +36,12 @@ type RunAppJobInput struct {
 
 // RunAppJob triggers a job run for an app and returns without waiting for the job to complete
 func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
-	targetResp, err := inp.Client.DefaultDeploymentTarget(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster)
-	if err != nil {
-		return fmt.Errorf("error calling default deployment target endpoint: %w", err)
-	}
-
-	currentAppRevisionResp, err := inp.Client.CurrentAppRevision(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.AppName, targetResp.DeploymentTargetID) // nolint:staticcheck
+	currentAppRevisionResp, err := inp.Client.CurrentAppRevision(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.AppName, inp.DeploymentTargetName) // nolint:staticcheck
 	if err != nil {
 		return fmt.Errorf("error getting current app revision: %w", err)
 	}
 
-	resp, err := inp.Client.RunAppJob(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.AppName, inp.JobName, targetResp.DeploymentTargetID) // nolint:staticcheck
+	resp, err := inp.Client.RunAppJob(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.AppName, inp.JobName, inp.DeploymentTargetName) // nolint:staticcheck
 	if err != nil {
 		return fmt.Errorf("unable to run job: %w", err)
 	}
@@ -88,13 +85,12 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 	time.Sleep(2 * time.Second)
 
 	input := api.RunAppJobStatusInput{
-		AppName:                   inp.AppName,
-		ClusterID:                 inp.CLIConfig.Cluster,
-		DeploymentTargetID:        targetResp.DeploymentTargetID, // nolint:staticcheck
-		DeploymentTargetNamespace: targetResp.Namespace,
-		ServiceName:               inp.JobName,
-		JobRunID:                  resp.JobRunID,
-		ProjectID:                 inp.CLIConfig.Project,
+		AppName:            inp.AppName,
+		ClusterID:          inp.CLIConfig.Cluster,
+		DeploymentTargetID: inp.DeploymentTargetName,
+		ServiceName:        inp.JobName,
+		JobRunID:           resp.JobRunID,
+		ProjectID:          inp.CLIConfig.Project,
 	}
 
 	for time.Now().Before(deadline) {

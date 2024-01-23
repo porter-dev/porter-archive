@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -23,8 +22,9 @@ type UpdateImageInput struct {
 
 // UpdateImage updates the image of an application
 func UpdateImage(ctx context.Context, input UpdateImageInput) error {
-	if input.DeploymentTargetName == "" {
-		return errors.New("please provide a deployment target")
+	deploymentTargetName, err := ResolveDeploymentTargetNameFromFlag(ctx, input.Client, input.ProjectID, input.ClusterID, input.DeploymentTargetName)
+	if err != nil {
+		return err
 	}
 
 	tag := input.Tag
@@ -32,7 +32,7 @@ func UpdateImage(ctx context.Context, input UpdateImageInput) error {
 		tag = "latest"
 	}
 
-	resp, err := input.Client.UpdateImage(ctx, input.ProjectID, input.ClusterID, input.AppName, input.DeploymentTargetName, tag)
+	resp, err := input.Client.UpdateImage(ctx, input.ProjectID, input.ClusterID, input.AppName, deploymentTargetName, tag)
 	if err != nil {
 		return fmt.Errorf("unable to update image: %w", err)
 	}

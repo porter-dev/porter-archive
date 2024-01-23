@@ -65,8 +65,8 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		&deploymentTarget,
 		"target",
 		"x",
-		"default",
-		"the deployment target for the app, default is \"default\"",
+		"",
+		"the deployment target name for the app",
 	)
 
 	// appRunCmd represents the "porter app run" subcommand
@@ -268,17 +268,25 @@ func appRollback(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cli
 }
 
 func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, ff config.FeatureFlags, _ *cobra.Command, args []string) error {
+	deploymentTargetName, err := v2.ResolveDeploymentTargetNameFromFlag(ctx, client, cliConfig.Project, cliConfig.Cluster, deploymentTarget)
+	if err != nil {
+		return fmt.Errorf("could not resolve deployment target: %w", err)
+	}
+
+	fmt.Println("deploymentTargetName: ", deploymentTargetName)
+
 	if jobName != "" {
 		if !ff.ValidateApplyV2Enabled {
 			return fmt.Errorf("job flag is not supported on this project")
 		}
 
 		return v2.RunAppJob(ctx, v2.RunAppJobInput{
-			CLIConfig:   cliConfig,
-			Client:      client,
-			AppName:     args[0],
-			JobName:     jobName,
-			WaitForExit: appWait,
+			CLIConfig:            cliConfig,
+			Client:               client,
+			DeploymentTargetName: deploymentTargetName,
+			AppName:              args[0],
+			JobName:              jobName,
+			WaitForExit:          appWait,
 		})
 	}
 
@@ -300,7 +308,7 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 	// updated exec args includes launcher command prepended if needed, otherwise it is the same as execArgs
 	var updatedExecArgs []string
 	if project.ValidateApplyV2 {
-		podsSimple, updatedExecArgs, namespace, err = getPodsFromV2PorterYaml(ctx, execArgs, client, cliConfig, args[0], deploymentTarget)
+		podsSimple, updatedExecArgs, namespace, err = getPodsFromV2PorterYaml(ctx, execArgs, client, cliConfig, args[0], deploymentTargetName)
 		if err != nil {
 			return err
 		}

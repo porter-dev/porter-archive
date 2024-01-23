@@ -36,7 +36,7 @@ func NewUpdateImageHandler(
 
 // UpdateImageRequest is the request object for the /apps/{porter_app_name}/update-image endpoint
 type UpdateImageRequest struct {
-	DeploymentTargetId   string `json:"deployment_target_id"`
+	DeploymentTargetID   string `json:"deployment_target_id"`
 	DeploymentTargetName string `json:"deployment_target_name"`
 	Repository           string `json:"repository"`
 	Tag                  string `json:"tag"`
@@ -54,6 +54,7 @@ func (c *UpdateImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
@@ -77,10 +78,28 @@ func (c *UpdateImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetId},
-		telemetry.AttributeKV{Key: "deployment-target-name", Value: request.DeploymentTargetName},
 		telemetry.AttributeKV{Key: "repository", Value: request.Repository},
 		telemetry.AttributeKV{Key: "tag", Value: request.Tag},
+	)
+
+	deploymentTargetName := request.DeploymentTargetName
+	if request.DeploymentTargetName == "" && request.DeploymentTargetID == "" {
+		defaultDeploymentTarget, err := defaultDeploymentTarget(ctx, defaultDeploymentTargetInput{
+			ProjectID:                 project.ID,
+			ClusterID:                 cluster.ID,
+			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting default deployment target")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		deploymentTargetName = defaultDeploymentTarget.Name
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: request.DeploymentTargetName},
 	)
 
 	updateImageReq := connect.NewRequest(&porterv1.UpdateAppImageRequest{
@@ -89,8 +108,8 @@ func (c *UpdateImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Tag:           request.Tag,
 		AppName:       appName,
 		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
-			Id:   request.DeploymentTargetId,
-			Name: request.DeploymentTargetName,
+			Id:   request.DeploymentTargetID,
+			Name: deploymentTargetName,
 		},
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.UpdateAppImage(ctx, updateImageReq)

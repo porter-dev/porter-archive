@@ -40,8 +40,11 @@ func NewRunAppJobHandler(
 
 // RunAppJobRequest is the request object for the /apps/{porter_app_name}/run endpoint
 type RunAppJobRequest struct {
-	ServiceName        string `json:"service_name"`
+	ServiceName string `json:"service_name"`
+	// DeploymentTargetID is the id of the deployment target the job should be run against. One of DeploymentTargetID or DeploymentTargetName is required
 	DeploymentTargetID string `json:"deployment_target_id"`
+	// DeploymentTargetName is the name of the deployment target the job should be run against. One of DeploymentTargetID or DeploymentTargetName is required
+	DeploymentTargetName string `json:"deployment_target_name"`
 	// Optional field to override the default run command for the job
 	RunCommand string `json:"run_command"`
 	// Image is an optional field to override the image used for the job
@@ -59,6 +62,7 @@ func (c *RunAppJobHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
@@ -83,12 +87,24 @@ func (c *RunAppJobHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName})
 
-	if request.DeploymentTargetID == "" {
-		err := telemetry.Error(ctx, span, nil, "deployment target id is required")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
+	deploymentTargetName := request.DeploymentTargetName
+	if request.DeploymentTargetName == "" && request.DeploymentTargetID == "" {
+		defaultDeploymentTarget, err := defaultDeploymentTarget(ctx, defaultDeploymentTargetInput{
+			ProjectID:                 project.ID,
+			ClusterID:                 cluster.ID,
+			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting default deployment target")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		deploymentTargetName = defaultDeploymentTarget.Name
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: deploymentTargetName},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+	)
 
 	var commandOptional *string
 	if request.RunCommand != "" {
@@ -114,7 +130,8 @@ func (c *RunAppJobHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Command:     commandOptional,
 		Image:       imageOverrideOptional,
 		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
-			Id: request.DeploymentTargetID,
+			Id:   request.DeploymentTargetID,
+			Name: deploymentTargetName,
 		},
 	})
 

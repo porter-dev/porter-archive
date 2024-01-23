@@ -230,7 +230,13 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 			return err
 		}
 
-		currentAppRevisionResp, err := client.CurrentAppRevision(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID)
+		currentAppRevisionResp, err := client.CurrentAppRevision(ctx, api.CurrentAppRevisionInput{
+			ProjectID:            cliConf.Project,
+			ClusterID:            cliConf.Cluster,
+			AppName:              appName,
+			DeploymentTargetName: "",
+			DeploymentTargetID:   deploymentTargetID,
+		})
 		if err != nil {
 			err := fmt.Errorf("error getting current app revision: %w", err)
 			reportBuildFailureInput.buildError = err

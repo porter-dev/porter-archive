@@ -81,9 +81,23 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	deploymentTargetName := request.DeploymentTargetName
+	if request.DeploymentTargetName == "" && request.DeploymentTargetID == "" {
+		defaultDeploymentTarget, err := DefaultDeploymentTarget(ctx, DefaultDeploymentTargetInput{
+			ProjectID:                 project.ID,
+			ClusterID:                 cluster.ID,
+			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting default deployment target")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		deploymentTargetName = defaultDeploymentTarget.Name
+	}
 	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: deploymentTargetName},
 		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
-		telemetry.AttributeKV{Key: "deployment-target-name", Value: request.DeploymentTargetName},
 	)
 
 	porterApps, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(project.ID, appName)
@@ -117,7 +131,7 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		AppId:     int64(appId),
 		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
 			Id:   request.DeploymentTargetID,
-			Name: request.DeploymentTargetName,
+			Name: deploymentTargetName,
 		},
 	})
 

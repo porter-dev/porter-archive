@@ -23,14 +23,9 @@ type RollbackInput struct {
 
 // Rollback deploys the previous successful revision of an app
 func Rollback(ctx context.Context, inp RollbackInput) error {
-	deploymentTargetName, err := ResolveDeploymentTargetNameFromFlag(ctx, inp.Client, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.DeploymentTargetName)
-	if err != nil {
-		return err
-	}
-
 	color.New(color.FgGreen).Printf("Rolling back to last deployed revision ...\n") // nolint:errcheck,gosec
 
-	rollbackResp, err := inp.Client.RollbackRevision(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.AppName, deploymentTargetName)
+	rollbackResp, err := inp.Client.RollbackRevision(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.AppName, inp.DeploymentTargetName)
 	if err != nil {
 		return fmt.Errorf("error calling rollback revision endpoint: %w", err)
 	}

@@ -62,6 +62,7 @@ func (c *RunAppJobHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
 	appName, reqErr := requestutils.GetURLParamString(r, types.URLParamPorterAppName)
 	if reqErr != nil {
@@ -85,6 +86,25 @@ func (c *RunAppJobHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName})
+
+	deploymentTargetName := request.DeploymentTargetName
+	if request.DeploymentTargetName == "" && request.DeploymentTargetID == "" {
+		defaultDeploymentTarget, err := DefaultDeploymentTarget(ctx, DefaultDeploymentTargetInput{
+			ProjectID:                 project.ID,
+			ClusterID:                 cluster.ID,
+			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting default deployment target")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		deploymentTargetName = defaultDeploymentTarget.Name
+	}
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: deploymentTargetName},
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+	)
 
 	var commandOptional *string
 	if request.RunCommand != "" {
@@ -111,7 +131,7 @@ func (c *RunAppJobHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Image:       imageOverrideOptional,
 		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
 			Id:   request.DeploymentTargetID,
-			Name: request.DeploymentTargetName,
+			Name: deploymentTargetName,
 		},
 	})
 

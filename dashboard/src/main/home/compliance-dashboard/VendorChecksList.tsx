@@ -1,5 +1,6 @@
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useMemo, useState } from "react";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import Container from "components/porter/Container";
 import Image from "components/porter/Image";
@@ -16,11 +17,13 @@ import warning from "assets/warning.svg";
 import { useCompliance } from "./ComplianceContext";
 import { type VendorCheck } from "./types";
 
+type Filter = "all" | "passing" | "action-required" | "not-applicable";
+
 export const VendorChecksList: React.FC = () => {
   const { vendorChecks, latestContractProto } = useCompliance();
   const { showIntercomWithMessage } = useIntercom();
 
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<Filter>("all");
   const [expandedCheck, setExpandedCheck] = useState<VendorCheck | null>(null);
 
   const renderExpandedCheckText = (): JSX.Element | null => {
@@ -47,6 +50,51 @@ export const VendorChecksList: React.FC = () => {
     );
   };
 
+  // show actionRequired, then passed, then notApplicable
+  const sortedChecks = useMemo(() => {
+    const failingChecks = vendorChecks.filter(
+      (check) => check.status === "failing"
+    );
+    const passingChecks = vendorChecks.filter(
+      (check) => check.status === "passed"
+    );
+    const notApplicableChecks = vendorChecks.filter(
+      (check) => check.status === "not_applicable"
+    );
+
+    return match(statusFilter)
+      .with("all", () => [
+        ...failingChecks,
+        ...passingChecks,
+        ...notApplicableChecks,
+      ])
+      .with("passing", () => passingChecks)
+      .with("action-required", () => failingChecks)
+      .with("not-applicable", () => notApplicableChecks)
+      .exhaustive();
+  }, [vendorChecks, statusFilter]);
+
+  const numberOfChecksPerStatus = useMemo(() => {
+    return vendorChecks.reduce(
+      (acc, check) => {
+        if (check.status === "passed") {
+          acc.passing += 1;
+        } else if (check.status === "failing") {
+          acc.failing += 1;
+        } else if (check.status === "not_applicable") {
+          acc.notApplicable += 1;
+        }
+
+        return acc;
+      },
+      {
+        passing: 0,
+        failing: 0,
+        notApplicable: 0,
+      }
+    );
+  }, [vendorChecks]);
+
   return (
     <>
       <Container row>
@@ -58,7 +106,7 @@ export const VendorChecksList: React.FC = () => {
         >
           <Text color="helper">All</Text>
           <Spacer y={0.2} />
-          <Text size={18}>45</Text>
+          <Text size={18}>{vendorChecks.length}</Text>
         </PanelFilter>
         <Spacer inline x={1.5} />
         <PanelFilter
@@ -73,7 +121,7 @@ export const VendorChecksList: React.FC = () => {
             <Text color="helper">Passing</Text>
           </Container>
           <Spacer y={0.2} />
-          <Text size={18}>3</Text>
+          <Text size={18}>{numberOfChecksPerStatus.passing}</Text>
         </PanelFilter>
         <Spacer inline x={1.5} />
         <PanelFilter
@@ -88,7 +136,7 @@ export const VendorChecksList: React.FC = () => {
             <Text color="helper">Action required</Text>
           </Container>
           <Spacer y={0.2} />
-          <Text size={18}>17</Text>
+          <Text size={18}>{numberOfChecksPerStatus.failing}</Text>
         </PanelFilter>
         <Spacer inline x={1.5} />
         <PanelFilter
@@ -103,13 +151,13 @@ export const VendorChecksList: React.FC = () => {
             <Text color="helper">Not applicable</Text>
           </Container>
           <Spacer y={0.2} />
-          <Text size={18}>25</Text>
+          <Text size={18}>{numberOfChecksPerStatus.notApplicable}</Text>
         </PanelFilter>
       </Container>
 
       <Spacer y={1.5} />
 
-      {vendorChecks.map((check, i) => {
+      {sortedChecks.map((check, i) => {
         return (
           <Fragment key={`${check.check}-${i}`}>
             <Container row>

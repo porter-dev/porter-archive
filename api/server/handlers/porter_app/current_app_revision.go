@@ -41,8 +41,8 @@ func NewLatestAppRevisionHandler(
 
 // LatestAppRevisionRequest is the request object for the /apps/{porter_app_name}/latest endpoint
 type LatestAppRevisionRequest struct {
-	DeploymentTargetID   string `schema:"deployment_target_id"`
-	DeploymentTargetName string `schema:"deployment_target_name"`
+	DeploymentTargetID   string `schema:"deployment_target_id,omitempty"`
+	DeploymentTargetName string `schema:"deployment_target_name,omitempty"`
 }
 
 // LatestAppRevisionResponse is the response object for the /apps/{porter_app_name}/latest endpoint

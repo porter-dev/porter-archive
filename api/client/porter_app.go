@@ -351,22 +351,33 @@ func (c *Client) DefaultDeploymentTarget(
 	return resp, err
 }
 
+// CurrentAppRevisionInput is the input struct to CurrentAppRevision
+type CurrentAppRevisionInput struct {
+	ProjectID uint
+	ClusterID uint
+	AppName   string
+	// DeploymentTargetName is the name of the deployment target to get the current app revision for. One of this or DeploymentTargetID must be set.
+	DeploymentTargetName string
+	// DeploymentTargetID is the id of the deployment target to get the current app revision for. One of this or DeploymentTargetName must be set.
+	DeploymentTargetID string
+}
+
 // CurrentAppRevision returns the currently deployed app revision for a given project, app name and deployment target
 func (c *Client) CurrentAppRevision(
 	ctx context.Context,
-	projectID uint, clusterID uint,
-	appName string, deploymentTargetName string,
+	input CurrentAppRevisionInput,
 ) (*porter_app.LatestAppRevisionResponse, error) {
 	resp := &porter_app.LatestAppRevisionResponse{}
 
 	req := &porter_app.LatestAppRevisionRequest{
-		DeploymentTargetName: deploymentTargetName,
+		DeploymentTargetName: input.DeploymentTargetName,
+		DeploymentTargetID:   input.DeploymentTargetID,
 	}
 
 	err := c.getRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/%s/latest",
-			projectID, clusterID, appName,
+			input.ProjectID, input.ClusterID, input.AppName,
 		),
 		req,
 		resp,
@@ -834,8 +845,8 @@ type RunAppJobStatusInput struct {
 	// Cluster is the id of the cluster against which to retrieve a helm agent for
 	ClusterID uint
 
-	// DeploymentTargetID is the id of the deployment target the job was run against
-	DeploymentTargetID string
+	// DeploymentTargetName is the id of the deployment target the job was run against
+	DeploymentTargetName string
 
 	// ServiceName is the name of the app service that was triggered
 	ServiceName string
@@ -855,9 +866,9 @@ func (c *Client) RunAppJobStatus(
 	resp := &porter_app.AppJobRunStatusResponse{}
 
 	req := &porter_app.AppJobRunStatusRequest{
-		DeploymentTargetID: input.DeploymentTargetID,
-		JobRunID:           input.JobRunID,
-		ServiceName:        input.ServiceName,
+		DeploymentTargetName: input.DeploymentTargetName,
+		JobRunID:             input.JobRunID,
+		ServiceName:          input.ServiceName,
 	}
 
 	err := c.getRequest(

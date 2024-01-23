@@ -48,6 +48,9 @@ type AppJobRunStatusRequest struct {
 	// DeploymentTargetID is the id of the deployment target the job was run against
 	DeploymentTargetID string `json:"deployment_target_id"`
 
+	// DeploymentTargetName is the name of the deployment target the job was run against
+	DeploymentTargetName string `json:"deployment_target_name"`
+
 	// JobRunID is the UID returned from the /apps/{porter_app_name}/run endpoint
 	JobRunID string `json:"job_id"`
 
@@ -98,17 +101,16 @@ func (c *AppJobRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "service-name", Value: request.ServiceName})
 
-	if request.DeploymentTargetID == "" {
-		err := telemetry.Error(ctx, span, nil, "deployment target id is required")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID})
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: request.DeploymentTargetName},
+	)
 
 	details, err := c.Config().ClusterControlPlaneClient.DeploymentTargetDetails(ctx, connect.NewRequest(&porterv1.DeploymentTargetDetailsRequest{
 		ProjectId: int64(project.ID),
 		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
-			Id: request.DeploymentTargetID,
+			Id:   request.DeploymentTargetID,
+			Name: request.DeploymentTargetName,
 		},
 	}))
 	if err != nil {
@@ -140,7 +142,7 @@ func (c *AppJobRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	status, err := c.getJobStatus(ctx, getJobStatusInput{
 		AppName:            appName,
-		DeploymentTargetID: request.DeploymentTargetID,
+		DeploymentTargetID: details.Msg.DeploymentTarget.Id,
 		ClusterK8sAgent:    *agent,
 		JobRunID:           request.JobRunID,
 		Namespace:          namespace,

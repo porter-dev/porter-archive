@@ -36,7 +36,13 @@ type RunAppJobInput struct {
 
 // RunAppJob triggers a job run for an app and returns without waiting for the job to complete
 func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
-	currentAppRevisionResp, err := inp.Client.CurrentAppRevision(ctx, inp.CLIConfig.Project, inp.CLIConfig.Cluster, inp.AppName, inp.DeploymentTargetName) // nolint:staticcheck
+	currentAppRevisionResp, err := inp.Client.CurrentAppRevision(ctx, api.CurrentAppRevisionInput{
+		ProjectID:            inp.CLIConfig.Project,
+		ClusterID:            inp.CLIConfig.Cluster,
+		AppName:              inp.AppName,
+		DeploymentTargetName: inp.DeploymentTargetName,
+		DeploymentTargetID:   "",
+	})
 	if err != nil {
 		return fmt.Errorf("error getting current app revision: %w", err)
 	}
@@ -85,12 +91,12 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 	time.Sleep(2 * time.Second)
 
 	input := api.RunAppJobStatusInput{
-		AppName:            inp.AppName,
-		ClusterID:          inp.CLIConfig.Cluster,
-		DeploymentTargetID: inp.DeploymentTargetName,
-		ServiceName:        inp.JobName,
-		JobRunID:           resp.JobRunID,
-		ProjectID:          inp.CLIConfig.Project,
+		AppName:              inp.AppName,
+		ClusterID:            inp.CLIConfig.Cluster,
+		DeploymentTargetName: inp.DeploymentTargetName,
+		ServiceName:          inp.JobName,
+		JobRunID:             resp.JobRunID,
+		ProjectID:            inp.CLIConfig.Project,
 	}
 
 	for time.Now().Before(deadline) {

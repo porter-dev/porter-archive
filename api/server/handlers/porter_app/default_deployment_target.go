@@ -68,7 +68,7 @@ func (c *DefaultDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID},
 	)
 
-	defaultDeploymentTarget, err := DefaultDeploymentTarget(ctx, DefaultDeploymentTargetInput{
+	defaultDeploymentTarget, err := defaultDeploymentTarget(ctx, defaultDeploymentTargetInput{
 		ProjectID:                 project.ID,
 		ClusterID:                 cluster.ID,
 		ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
@@ -87,13 +87,13 @@ func (c *DefaultDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	c.WriteResult(w, r, response)
 }
 
-type DefaultDeploymentTargetInput struct {
+type defaultDeploymentTargetInput struct {
 	ProjectID                 uint
 	ClusterID                 uint
 	ClusterControlPlaneClient porterv1connect.ClusterControlPlaneServiceClient
 }
 
-func DefaultDeploymentTarget(ctx context.Context, input DefaultDeploymentTargetInput) (types.DeploymentTarget, error) {
+func defaultDeploymentTarget(ctx context.Context, input defaultDeploymentTargetInput) (types.DeploymentTarget, error) {
 	ctx, span := telemetry.NewSpan(ctx, "default-deployment-target")
 	defer span.End()
 

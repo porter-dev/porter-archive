@@ -103,7 +103,7 @@ func (c *AppJobRunStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 
 	deploymentTargetName := request.DeploymentTargetName
 	if request.DeploymentTargetName == "" && request.DeploymentTargetID == "" {
-		defaultDeploymentTarget, err := DefaultDeploymentTarget(ctx, DefaultDeploymentTargetInput{
+		defaultDeploymentTarget, err := defaultDeploymentTarget(ctx, defaultDeploymentTargetInput{
 			ProjectID:                 project.ID,
 			ClusterID:                 cluster.ID,
 			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,

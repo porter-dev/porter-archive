@@ -112,7 +112,7 @@ func datastoreConnect(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	}
 
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-	s.Color("cyan") // nolint:errcheck
+	s.Color("cyan") // nolint:errcheck,gosec
 	s.Suffix = fmt.Sprintf(" Retrieving datastore named %s in project %d...", datastoreName, projectId)
 	s.Start()
 	datastoreResp, err := client.GetDatastore(ctx, projectId, datastoreName)
@@ -228,7 +228,7 @@ func datastoreConnect(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	}
 
 	s = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-	s.Color("cyan") // nolint:errcheck
+	s.Color("cyan") // nolint:errcheck,gosec
 	s.Suffix = " Creating secure tunnel to datastore..."
 
 	s.Start()
@@ -241,7 +241,7 @@ func datastoreConnect(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 	defer appDeletePod(ctx, config, proxyPod.Name, Namespace_Default) //nolint:errcheck
 
 	s = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
-	s.Color("green") // nolint:errcheck
+	s.Color("green") // nolint:errcheck,gosec
 	s.Suffix = " Waiting for secure tunnel to datastore to be ready..."
 
 	s.Start()

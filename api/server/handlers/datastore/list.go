@@ -64,6 +64,12 @@ type Datastore struct {
 
 	// CreatedAtUTC is the time the datastore was created in UTC
 	CreatedAtUTC time.Time `json:"created_at"`
+
+	// CloudProvider is the cloud provider associated with the datastore
+	CloudProvider string `json:"cloud_provider"`
+
+	// CloudProviderCredentialIdentifier is the cloud provider credential identifier associated with the datastore
+	CloudProviderCredentialIdentifier string `json:"cloud_provider_credential_identifier"`
 }
 
 // ListDatastoresHandler is a struct for listing all datastores for a given project
@@ -177,24 +183,23 @@ func Datastores(ctx context.Context, inp DatastoresInput) ([]Datastore, error) {
 	}
 
 	for _, datastore := range resp.Msg.Datastores {
-		encodedDatastore := Datastore{
-			Name:     datastore.Name,
-			Metadata: datastore.Metadata,
-			Env:      datastore.Env,
-		}
-
 		datastoreRecord, err := inp.DatastoreRepository.GetByProjectIDAndName(ctx, inp.ProjectID, datastore.Name)
 		if err != nil {
 			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "err-datastore-name", Value: datastore.Name})
 			return datastores, telemetry.Error(ctx, span, err, "datastore record not found")
 		}
 
-		encodedDatastore.CreatedAtUTC = datastoreRecord.CreatedAt
-		encodedDatastore.Type = datastoreRecord.Type
-		encodedDatastore.Engine = datastoreRecord.Engine
-		encodedDatastore.Status = string(datastoreRecord.Status)
-
-		datastores = append(datastores, encodedDatastore)
+		datastores = append(datastores, Datastore{
+			Name:                              datastore.Name,
+			Type:                              datastoreRecord.Type,
+			Engine:                            datastoreRecord.Engine,
+			CreatedAtUTC:                      datastoreRecord.CreatedAt,
+			Status:                            string(datastoreRecord.Status),
+			Metadata:                          datastore.Metadata,
+			Env:                               datastore.Env,
+			CloudProvider:                     datastoreRecord.CloudProvider,
+			CloudProviderCredentialIdentifier: datastoreRecord.CloudProviderCredentialIdentifier,
+		})
 	}
 
 	return datastores, nil

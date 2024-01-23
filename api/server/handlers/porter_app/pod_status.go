@@ -70,11 +70,31 @@ func (c *PodStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		telemetry.AttributeKV{Key: "input-deployment-target-name", Value: request.DeploymentTargetName},
 	)
 
+	deploymentTargetName := request.DeploymentTargetName
+	if request.DeploymentTargetName == "" && request.DeploymentTargetID == "" {
+		defaultDeploymentTarget, err := DefaultDeploymentTarget(ctx, DefaultDeploymentTargetInput{
+			ProjectID:                 project.ID,
+			ClusterID:                 cluster.ID,
+			ClusterControlPlaneClient: c.Config().ClusterControlPlaneClient,
+		})
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error getting default deployment target")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		deploymentTargetName = defaultDeploymentTarget.Name
+	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: request.DeploymentTargetName},
+	)
+
 	deploymentTarget, err := deployment_target.DeploymentTargetDetails(ctx, deployment_target.DeploymentTargetDetailsInput{
 		ProjectID:            int64(project.ID),
 		ClusterID:            int64(cluster.ID),
 		DeploymentTargetID:   request.DeploymentTargetID,
-		DeploymentTargetName: request.DeploymentTargetName,
+		DeploymentTargetName: deploymentTargetName,
 		CCPClient:            c.Config().ClusterControlPlaneClient,
 	})
 	if err != nil {

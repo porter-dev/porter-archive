@@ -107,11 +107,6 @@ func (c *RollbackAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		telemetry.AttributeKV{Key: "deployment-target-name", Value: request.DeploymentTargetName},
 	)
 
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
-		telemetry.AttributeKV{Key: "deployment-target-name", Value: request.DeploymentTargetName},
-	)
-
 	rollbackReq := connect.NewRequest(&porterv1.RollbackRevisionRequest{
 		ProjectId: int64(project.ID),
 		AppId:     int64(app.ID),

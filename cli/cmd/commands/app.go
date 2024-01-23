@@ -35,17 +35,17 @@ import (
 )
 
 var (
-	appContainerName string
-	appCpuMilli      int
-	appExistingPod   bool
-	appInteractive   bool
-	appMemoryMi      int
-	appNamespace     string
-	appTag           string
-	appVerbose       bool
-	appWait          bool
-	deploymentTarget string
-	jobName          string
+	appContainerName     string
+	appCpuMilli          int
+	appExistingPod       bool
+	appInteractive       bool
+	appMemoryMi          int
+	appNamespace         string
+	appTag               string
+	appVerbose           bool
+	appWait              bool
+	deploymentTargetName string
+	jobName              string
 )
 
 const (
@@ -62,7 +62,7 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 	}
 
 	appCmd.PersistentFlags().StringVarP(
-		&deploymentTarget,
+		&deploymentTargetName,
 		"target",
 		"x",
 		"",
@@ -268,11 +268,6 @@ func appRollback(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cli
 }
 
 func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, ff config.FeatureFlags, _ *cobra.Command, args []string) error {
-	deploymentTargetName, err := v2.ResolveDeploymentTargetNameFromFlag(ctx, client, cliConfig.Project, cliConfig.Cluster, deploymentTarget)
-	if err != nil {
-		return fmt.Errorf("could not resolve deployment target: %w", err)
-	}
-
 	if jobName != "" {
 		if !ff.ValidateApplyV2Enabled {
 			return fmt.Errorf("job flag is not supported on this project")
@@ -1276,7 +1271,7 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 			ProjectID:                   cliConf.Project,
 			ClusterID:                   cliConf.Cluster,
 			AppName:                     args[0],
-			DeploymentTargetName:        deploymentTarget,
+			DeploymentTargetName:        deploymentTargetName,
 			Tag:                         appTag,
 			Client:                      client,
 			WaitForSuccessfulDeployment: appWait,

@@ -22,11 +22,6 @@ type UpdateImageInput struct {
 
 // UpdateImage updates the image of an application
 func UpdateImage(ctx context.Context, input UpdateImageInput) error {
-	deploymentTargetName, err := ResolveDeploymentTargetNameFromFlag(ctx, input.Client, input.ProjectID, input.ClusterID, input.DeploymentTargetName)
-	if err != nil {
-		return err
-	}
-
 	tag := input.Tag
 	if tag == "" {
 		tag = "latest"

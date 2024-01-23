@@ -6,6 +6,7 @@ import Image from "components/porter/Image";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { useIntercom } from "lib/hooks/useIntercom";
 
 import greenCheck from "assets/green-check.svg";
 import linkExternal from "assets/link-external.svg";
@@ -16,10 +17,35 @@ import { useCompliance } from "./ComplianceContext";
 import { type VendorCheck } from "./types";
 
 export const VendorChecksList: React.FC = () => {
-  const { vendorChecks } = useCompliance();
+  const { vendorChecks, latestContractProto } = useCompliance();
+  const { showIntercomWithMessage } = useIntercom();
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [expandedCheck, setExpandedCheck] = useState<VendorCheck | null>(null);
+
+  const renderExpandedCheckText = (): JSX.Element | null => {
+    if (!expandedCheck) {
+      return null;
+    }
+
+    if (!latestContractProto?.cluster?.isSoc2Compliant) {
+      return (
+        <Text color="helper">
+          SOC-2 compliance is not enabled for this cluster. Re-provisioning your
+          infrastructure above will enable necessary security controls to ensure
+          compliance.
+        </Text>
+      );
+    }
+
+    return (
+      <Text color="helper">
+        {expandedCheck.reason.length
+          ? expandedCheck.reason
+          : "An error occurred during provisioning that is causing this check to be unfulfilled. Please attempt to re-provision or contact support@porter.run if the error persists."}
+      </Text>
+    );
+  };
 
   return (
     <>
@@ -148,6 +174,9 @@ export const VendorChecksList: React.FC = () => {
       {expandedCheck && (
         <Modal
           closeModal={() => {
+            showIntercomWithMessage({
+              message: "I am running into an issue enabling SOC-2 compliance.",
+            });
             setExpandedCheck(null);
           }}
         >
@@ -159,11 +188,7 @@ export const VendorChecksList: React.FC = () => {
             </Text>
           </Container>
           <Spacer y={0.7} />
-          <Text color="helper">
-            {expandedCheck.reason.length
-              ? expandedCheck.reason
-              : "An error occurred during provisioning that is causing for this check to not be fulfilled. Please attempt to re-provision or contract support@porter.run if the error persists."}
-          </Text>
+          {renderExpandedCheckText()}
         </Modal>
       )}
     </>

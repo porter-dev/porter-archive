@@ -7,6 +7,7 @@ import (
 	api "github.com/porter-dev/porter/api/client"
 )
 
+// ResolveDeploymentTargetNameFromFlag is a helper function for resolving the deployment target name from the flag, or defaulting to the default deployment target for the cluster
 func ResolveDeploymentTargetNameFromFlag(ctx context.Context, client api.Client, projectID uint, clusterID uint, flaggedDeploymentTargetName string) (string, error) {
 	targetID := flaggedDeploymentTargetName
 	if targetID == "" {

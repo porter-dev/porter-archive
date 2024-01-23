@@ -1171,8 +1171,8 @@ func checkDeploymentStatus(ctx context.Context, client api.Client, cliConfig con
 	}
 
 	for time.Now().Before(timeWait) {
-		// refresh the client every 10 minutes
-		if time.Now().After(prevRefresh.Add(10 * time.Minute)) {
+		// refresh the client every 2 minutes, as the kubeconfig has a minimum TTL of 5 minutes
+		if time.Now().After(prevRefresh.Add(2 * time.Minute)) {
 			err = sharedConf.setSharedConfig(ctx)
 
 			if err != nil {

@@ -408,7 +408,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
             <SelectRow
               options={regionFilteredMachineTypeOptions}
               width="350px"
-              disabled={true}
+              disabled={isReadOnly}
               value={machineType}
               scrollBuffer={true}
               dropdownMaxHeight="240px"

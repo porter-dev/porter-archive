@@ -62,6 +62,7 @@ export const SOC2CostConsent: React.FC<Props> = ({
       <Button
         onClick={() => {
           void updateContractWithSOC2();
+          setShowCostConsentModal(false);
         }}
         status={updateInProgress ? "loading" : undefined}
         disabled={updateInProgress}

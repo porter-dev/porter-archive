@@ -38,6 +38,8 @@ export const azureSupportedMachineTypes = (
 
 // Retrieve updated list of supported regions by running the following command: az vm list-skus --all --output table | grep <INSTANCE_TYPE> | grep 1,2,3 | grep None | awk '{print "\047" tolower($2) "\047"}' | paste -s -d, -
 // last updated 12/19/2020
+//
+// NOTE: Any new instance types must be added to the cluster-control-plane preflight checks until we are able to dynamically handle new instances.
 const AzureMachineTypeOptions: MachineTypeOption[] = [
   {
     value: "Standard_B2als_v2",

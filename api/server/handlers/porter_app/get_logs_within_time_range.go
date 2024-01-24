@@ -144,7 +144,7 @@ func (c *GetLogsWithinTimeRangeHandler) ServeHTTP(w http.ResponseWriter, r *http
 		SearchParam: request.SearchParam,
 	}
 
-	logs, err := porter_agent.GetHistoricalLogs(agent.Clientset, agentSvc, logRequest)
+	logs, err := porter_agent.GetHistoricalLogs(ctx, agent.Clientset, agentSvc, logRequest)
 	if err != nil {
 		_ = telemetry.Error(ctx, span, err, "unable to get logs")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("unable to get logs for pod selector %s", podSelector), http.StatusInternalServerError))

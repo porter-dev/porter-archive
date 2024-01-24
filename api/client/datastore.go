@@ -7,20 +7,21 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
-// GetDatastore gets a datastore by name for a project
-func (c *Client) GetDatastore(
+// CreateDatastoreProxy creates a proxy to connect to a datastore
+func (c *Client) CreateDatastoreProxy(
 	ctx context.Context,
 	projectID uint,
 	datastoreName string,
-) (*types.GetDatastoreResponse, error) {
-	resp := &types.GetDatastoreResponse{}
+	req *types.CreateDatastoreProxyRequest,
+) (*types.CreateDatastoreProxyResponse, error) {
+	resp := &types.CreateDatastoreProxyResponse{}
 
-	err := c.getRequest(
+	err := c.postRequest(
 		fmt.Sprintf(
-			"/projects/%d/datastores/%s",
+			"/projects/%d/datastores/%s/create-proxy",
 			projectID, datastoreName,
 		),
-		nil,
+		req,
 		resp,
 	)
 

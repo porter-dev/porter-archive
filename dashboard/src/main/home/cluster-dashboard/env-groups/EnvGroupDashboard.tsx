@@ -211,7 +211,7 @@ const EnvGroupDashboard: React.FC<Props> = (props) => {
                         <Button onClick={() => {
                           setCreateEnvMode(!createEnvMode);
                         }}>
-                          <i className="material-icons">add</i> Create env group
+                          <I className="material-icons">add</I> Create env group
                         </Button>
                       )}
                     </Flex>
@@ -263,6 +263,15 @@ const EnvGroupDashboard: React.FC<Props> = (props) => {
 };
 
 export default withRouter(withAuth(EnvGroupDashboard));
+
+const I = styled.i`
+  color: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin-right: 5px;
+  justify-content: center;
+`;
 
 const LoadingWrapper = styled.div`
   padding-top: 100px;

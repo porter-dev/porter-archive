@@ -157,8 +157,7 @@ const GithubActionModal: React.FC<Props> = ({
           <Select
             options={[
               {
-                label:
-                  "I authorize Porter to open a PR on my behalf (recommended)",
+                label: "I authorize Porter to open a PR on my behalf (recommended)",
                 value: "open_pr",
               },
               {
@@ -166,6 +165,7 @@ const GithubActionModal: React.FC<Props> = ({
                 value: "copy",
               },
             ]}
+            value={choice}
             setValue={(x: string) => {
               setChoice(x as Choice);
             }}

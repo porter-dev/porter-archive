@@ -273,8 +273,6 @@ const Apps: React.FC = () => {
                 setSort("letter");
               }
             }}
-            inactiveColor={"#ffffff11"}
-            activeColor={"transparent"}
           />
           <Spacer inline x={1} />
           <Toggle
@@ -290,8 +288,6 @@ const Apps: React.FC = () => {
                 setView("list");
               }
             }}
-            inactiveColor={"#ffffff11"}
-            activeColor={"transparent"}
           />
           <Spacer inline x={2} />
           {currentDeploymentTarget?.is_preview ? (

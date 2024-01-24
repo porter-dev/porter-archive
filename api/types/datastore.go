@@ -13,6 +13,7 @@ const (
 // CreateDatastoreProxyRequest is the request body for the create datastore proxy endpoint
 type CreateDatastoreProxyRequest struct{}
 
+// CreateDatastoreProxyResponse is the response body for the create datastore proxy endpoint
 type CreateDatastoreProxyResponse struct {
 	// PodName is the name of the pod that was created
 	PodName string `json:"pod_name"`

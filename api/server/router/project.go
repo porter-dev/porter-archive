@@ -528,7 +528,7 @@ func getProjectRoutes(
 	})
 
 	// POST /api/projects/{project_id}/datastores/{datastore_name}/create-proxy -> cluster.NewCreateDatastoreProxyHandler
-	createDatastoryProxyEndpoint := factory.NewAPIEndpoint(
+	createDatastoreProxyEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
 			Method: types.HTTPVerbPost,
@@ -551,7 +551,7 @@ func getProjectRoutes(
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: createDatastoryProxyEndpoint,
+		Endpoint: createDatastoreProxyEndpoint,
 		Handler:  createDatastoreProxyHandler,
 		Router:   r,
 	})

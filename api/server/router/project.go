@@ -1005,20 +1005,24 @@ func getProjectRoutes(
 	// 	Router:   r,
 	// })
 
-	// POST /api/projects/connect -> project.NewProjectConnectHandler
+	// POST /api/projects/{project_id}/connect -> project.NewProjectConnectHandler
 	connectEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/projects/connect",
+				RelativePath: relPath + "/connect",
 			},
-			Scopes: []types.PermissionScope{types.UserScope},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.SettingsScope,
+			},
 		},
 	)
 
-	createHandler := project.NewProjectConnectHandler(
+	connectHandler := project.NewProjectConnectHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

@@ -1,8 +1,7 @@
 package project
 
 import (
-	"net/http"
-
+	"fmt"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -11,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	"net/http"
 )
 
 type ProjectCreateHandler struct {
@@ -57,10 +57,15 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	step := types.StepConnectSource
+	if p.Config().EnableSandbox {
+		step = types.StepCleanUp
+	}
+
 	// create onboarding flow set to the first step. Read in env var
 	_, err = p.Repo().Onboarding().CreateProjectOnboarding(&models.Onboarding{
 		ProjectID:   proj.ID,
-		CurrentStep: types.StepConnectSource,
+		CurrentStep: step,
 	})
 
 	if err != nil {

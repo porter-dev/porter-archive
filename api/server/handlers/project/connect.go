@@ -1,6 +1,7 @@
 package project
 
 import (
+	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"net/http"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type ProjectConnectHandler struct {
@@ -28,6 +30,9 @@ func NewProjectConnectHandler(
 }
 
 func (p *ProjectConnectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "connect-project-to-hosted")
+	defer span.End()
+
 	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
@@ -41,7 +46,13 @@ func (p *ProjectConnectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	p.WriteResult(w, r, resp.ClusterID)
+	if resp == nil || resp.Msg == nil {
+		err = telemetry.Error(ctx, span, nil, "connect to hosted response is nil")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	p.WriteResult(w, r, resp.Msg.ClusterId)
 
 	p.Config().AnalyticsClient.Track(analytics.ProjectConnectTrack(&analytics.ProjectCreateDeleteTrackOpts{
 		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),

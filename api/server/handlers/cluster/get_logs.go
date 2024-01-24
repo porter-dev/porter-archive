@@ -63,14 +63,14 @@ func (c *GetLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// get agent service
 	agentSvc, err := porter_agent.GetAgentService(agent.Clientset)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to get agent service")
+		err = telemetry.Error(ctx, span, err, "unable to get agent service")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	logs, err := porter_agent.GetHistoricalLogs(ctx, agent.Clientset, agentSvc, request)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to get historical logs")
+		err = telemetry.Error(ctx, span, err, "unable to get historical logs")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

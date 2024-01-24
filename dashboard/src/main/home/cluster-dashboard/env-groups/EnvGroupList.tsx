@@ -11,6 +11,11 @@ import { getQueryParam, pushQueryParams } from "shared/routing";
 import { RouteComponentProps, withRouter } from "react-router";
 
 import Placeholder from "components/Placeholder";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import Text from "components/porter/Text";
+import Spacer from "components/porter/Spacer";
+import Link from "components/porter/Link";
+import Button from "components/porter/Button";
 
 type Props = RouteComponentProps & {
   currentCluster: ClusterType;
@@ -132,10 +137,23 @@ const EnvGroupList: React.FunctionComponent<Props> = (props) => {
       );
     } else if (!envGroups || envGroups.length === 0) {
       return (
-        <Placeholder height="370px">
-          <i className="material-icons">category</i>
-          No environment groups found with the given filters.
-        </Placeholder>
+        <DashboardPlaceholder>
+          <Text size={16}>No environment groups found</Text>
+          <Spacer y={0.5} />
+          <Text color={"helper"}>Get started by creating an environment group.</Text>
+          <Spacer y={1} />
+          <Link to="/env-groups/new">
+            <Button
+              height="35px"
+              alt
+            >
+              Create environment group <Spacer inline x={1} />{" "}
+              <i className="material-icons" style={{ fontSize: "18px" }}>
+                east
+              </i>
+            </Button>
+          </Link>
+        </DashboardPlaceholder>
       );
     }
 

@@ -53,7 +53,6 @@ const Item = styled.div<{ active: boolean; activeColor?: string; inactiveColor?:
   cursor: pointer;
   justify-content: center;
   padding: 10px;
-  opacity: ${(props) => props.active ? "1" : "0.4"};
   background: ${(props) =>
     props.active ? props.activeColor ?? "#ffffff11" : props.inactiveColor ?? "transparent"};
 `;

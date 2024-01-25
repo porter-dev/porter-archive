@@ -73,6 +73,12 @@ export const contractValidator = z.object({
         message: z.string().optional(),
       }),
     ])
-    .nullable(),
+    .nullable()
+    .or(
+      z.object({}).transform(() => ({
+        code: "SUCCESS",
+        message: "",
+      }))
+    ),
 });
 export type APIContract = z.infer<typeof contractValidator>;

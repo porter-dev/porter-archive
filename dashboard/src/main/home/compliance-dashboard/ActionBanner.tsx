@@ -27,17 +27,18 @@ export const ActionBanner: React.FC<ActionBannerProps> = ({
   } = useCompliance();
 
   const provisioningStatus = useMemo(() => {
-    if (!latestContractDB || latestContractDB.condition === "") {
+    if (latestContractDB?.condition === "") {
       return {
         state: "pending" as const,
-        message: latestContractDB?.condition_metadata?.message ?? "",
+        message: latestContractDB.condition_metadata?.message ?? "",
       };
     }
 
-    if (latestContractDB.condition === "SUCCESS") {
+    // show no banner if latest contract is success or if there is no latest contract
+    if (!latestContractDB || latestContractDB?.condition === "SUCCESS") {
       return {
         state: "success" as const,
-        message: latestContractDB.condition_metadata?.message ?? "",
+        message: latestContractDB?.condition_metadata?.message ?? "",
       };
     }
 

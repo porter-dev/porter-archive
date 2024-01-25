@@ -5,17 +5,17 @@ import styled from "styled-components";
 import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { useDatabaseMethods } from "lib/hooks/useDatabaseMethods";
+import { useDatastoreMethods } from "lib/hooks/useDatabaseMethods";
 
 import { Context } from "shared/Context";
 
-import { useDatabaseContext } from "../DatabaseContextProvider";
+import { useDatastoreContext } from "../DatabaseContextProvider";
 
 const SettingsTab: React.FC = () => {
   const { setCurrentOverlay } = useContext(Context);
   const history = useHistory();
-  const { datastore } = useDatabaseContext();
-  const { deleteDatastore } = useDatabaseMethods();
+  const { datastore } = useDatastoreContext();
+  const { deleteDatastore } = useDatastoreMethods();
   const handleDeletionSubmit = async (): Promise<void> => {
     if (setCurrentOverlay == null) {
       return;
@@ -24,7 +24,7 @@ const SettingsTab: React.FC = () => {
     try {
       await deleteDatastore(datastore.name);
       setCurrentOverlay(null);
-      history.push("/databases");
+      history.push("/datastores");
     } catch (error) {
       // todo: handle error
     }
@@ -50,7 +50,7 @@ const SettingsTab: React.FC = () => {
         <Text size={16}>Delete &quot;{datastore.name}&quot;</Text>
         <Spacer y={0.5} />
         <Text color="helper">
-          Delete this database and all of its resources.
+          Delete this datastore and all of its resources.
         </Text>
         <Spacer y={0.5} />
         <Button color="#b91133" onClick={handleDeletionClick}>

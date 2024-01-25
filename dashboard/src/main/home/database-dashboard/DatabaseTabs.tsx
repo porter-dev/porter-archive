@@ -5,11 +5,11 @@ import { match } from "ts-pattern";
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 
-import { useDatabaseContext } from "./DatabaseContextProvider";
+import { useDatastoreContext } from "./DatabaseContextProvider";
 import DatastoreProvisioningIndicator from "./DatastoreProvisioningIndicator";
 import ConfigurationTab from "./tabs/ConfigurationTab";
 import ConnectedAppsTab from "./tabs/ConnectedAppsTab";
-import DatabaseEnvTab from "./tabs/DatabaseEnvTab";
+import CredentialsTab from "./tabs/CredentialsTab";
 import MetricsTab from "./tabs/MetricsTab";
 import SettingsTab from "./tabs/SettingsTab";
 
@@ -20,7 +20,7 @@ const validTabs = [
   "settings",
   "connected-apps",
 ] as const;
-const DEFAULT_TAB = "connected-apps";
+const DEFAULT_TAB = "credentials";
 type ValidTab = (typeof validTabs)[number];
 
 type DbTabProps = {
@@ -32,7 +32,7 @@ export type ButtonStatus = "" | "loading" | JSX.Element | "success";
 
 const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
   const history = useHistory();
-  const { datastore } = useDatabaseContext();
+  const { datastore } = useDatastoreContext();
 
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
@@ -44,8 +44,8 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
 
   const tabs = useMemo(() => {
     return [
-      { label: "Connected Apps", value: "connected-apps" },
       { label: "Credentials", value: "credentials" },
+      { label: "Connected Apps", value: "connected-apps" },
       { label: "Configuration", value: "configuration" },
       { label: "Settings", value: "settings" },
     ];
@@ -62,12 +62,12 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
         options={tabs}
         currentTab={currentTab}
         setCurrentTab={(tab) => {
-          history.push(`/databases/${datastore.name}/${tab}`);
+          history.push(`/datastores/${datastore.name}/${tab}`);
         }}
       />
       <Spacer y={1} />
       {match(currentTab)
-        .with("credentials", () => <DatabaseEnvTab envData={datastore.env} />)
+        .with("credentials", () => <CredentialsTab />)
         .with("settings", () => <SettingsTab />)
         .with("metrics", () => <MetricsTab />)
         .with("configuration", () => <ConfigurationTab />)

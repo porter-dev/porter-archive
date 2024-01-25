@@ -353,6 +353,7 @@ const Register: React.FC<Props> = ({
               width="100%"
               options={referralOptions}
               setValue={setChosenReferralOption}
+              value={chosenReferralOption}
             />
             {chosenReferralOption === "Other" && (
               <>

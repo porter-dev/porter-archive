@@ -31,3 +31,8 @@ func (repo *DeploymentTargetRepository) List(projectID uint, clusterID uint, pre
 func (repo *DeploymentTargetRepository) CreateDeploymentTarget(deploymentTarget *models.DeploymentTarget) (*models.DeploymentTarget, error) {
 	return nil, errors.New("cannot write database")
 }
+
+// DeploymentTarget finds a deployment target by its id if a uuid is provided or by name
+func (repo *DeploymentTargetRepository) DeploymentTarget(projectID uint, deploymentTargetIdentifier string) (*models.DeploymentTarget, error) {
+	return nil, errors.New("cannot read database")
+}

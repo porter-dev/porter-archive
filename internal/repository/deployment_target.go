@@ -12,4 +12,6 @@ type DeploymentTargetRepository interface {
 	List(projectID uint, clusterID uint, preview bool) ([]*models.DeploymentTarget, error)
 	// CreateDeploymentTarget creates a new deployment target
 	CreateDeploymentTarget(deploymentTarget *models.DeploymentTarget) (*models.DeploymentTarget, error)
+	// DeploymentTarget retrieves a deployment target by its id if a uuid is provided or by name
+	DeploymentTarget(projectID uint, deploymentTargetIdentifier string) (*models.DeploymentTarget, error)
 }

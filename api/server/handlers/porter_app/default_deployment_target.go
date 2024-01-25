@@ -130,15 +130,15 @@ func defaultDeploymentTarget(ctx context.Context, input defaultDeploymentTargetI
 	}
 
 	defaultDeploymentTarget = types.DeploymentTarget{
-		ID:        id,
-		ProjectID: uint(deploymentTargetProto.ProjectId),
-		ClusterID: uint(deploymentTargetProto.ClusterId),
-		Name:      deploymentTargetProto.Name,
-		Namespace: deploymentTargetProto.Namespace,
-		IsPreview: deploymentTargetProto.IsPreview,
-		IsDefault: deploymentTargetProto.IsDefault,
-		CreatedAt: time.Time{}, // not provided by default deployment target response
-		UpdatedAt: time.Time{}, // not provided by default deployment target response
+		ID:           id,
+		ProjectID:    uint(deploymentTargetProto.ProjectId),
+		ClusterID:    uint(deploymentTargetProto.ClusterId),
+		Name:         deploymentTargetProto.Name,
+		Namespace:    deploymentTargetProto.Namespace,
+		IsPreview:    deploymentTargetProto.IsPreview,
+		IsDefault:    deploymentTargetProto.IsDefault,
+		CreatedAtUTC: time.Time{}, // not provided by default deployment target response
+		UpdatedAtUTC: time.Time{}, // not provided by default deployment target response
 	}
 
 	return defaultDeploymentTarget, nil

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
-import placeholder from "assets/placeholder.png";
+import placeholder from "assets/placeholder.svg";
 
 type Props = {
   children: React.ReactNode;
@@ -42,4 +42,13 @@ const StyledDashboardPlaceholder = styled.div<{
   border-radius: 10px;
   position: relative;
   overflow: hidden;
+  animation: fadeIn 0.5s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 `;

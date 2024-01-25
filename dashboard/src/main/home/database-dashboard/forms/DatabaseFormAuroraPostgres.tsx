@@ -14,7 +14,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
   dbFormValidator,
-  type DatabaseTemplate,
+  type DatastoreTemplate,
   type DbFormData,
   type ResourceOption,
 } from "lib/databases/types";
@@ -33,7 +33,7 @@ import DatabaseForm, {
 } from "./DatabaseForm";
 
 type Props = RouteComponentProps & {
-  template: DatabaseTemplate;
+  template: DatastoreTemplate;
 };
 
 const DatabaseFormAuroraPostgres: React.FC<Props> = ({ history, template }) => {
@@ -83,7 +83,7 @@ const DatabaseFormAuroraPostgres: React.FC<Props> = ({ history, template }) => {
         <StyledConfigureTemplate>
           <Back
             onClick={() => {
-              history.push(`/databases/new`);
+              history.push(`/datastores/new`);
             }}
           />
           <DashboardHeader

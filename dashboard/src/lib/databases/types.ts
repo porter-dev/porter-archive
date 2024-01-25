@@ -41,99 +41,77 @@ export const datastoreValidator = z.object({
 export type SerializedDatastore = z.infer<typeof datastoreValidator>;
 
 export type ClientDatastore = SerializedDatastore & {
-  template: DatabaseTemplate;
+  template: DatastoreTemplate;
 };
 
 export const datastoreListResponseValidator = z.object({
   datastores: datastoreValidator.array(),
 });
 
-export const cloudProviderValidator = z.object({
-  cloud_provider_id: z.string(),
-  project_id: z.number(),
-});
-
-export type CloudProviderWithSource = z.infer<typeof cloudProviderValidator>;
-
-export const cloudProviderListResponseValidator = z.object({
-  accounts: cloudProviderValidator.array(),
-});
-
-export const cloudProviderDatastoreSchema = z.object({
-  project_id: z.number(),
-  cloud_provider_name: z.string(),
-  cloud_provider_id: z.string(),
-  datastore: datastoreValidator,
-});
-
-export type CloudProviderDatastore = z.infer<
-  typeof cloudProviderDatastoreSchema
->;
-
-export type DatabaseEngine = {
+export type DatastoreEngine = {
   name: z.infer<typeof datastoreValidator>["engine"];
   displayName: string;
 };
-export const DATABASE_ENGINE_POSTGRES = {
+export const DATASTORE_ENGINE_POSTGRES = {
   name: "POSTGRES" as const,
   displayName: "PostgreSQL",
 };
-export const DATABASE_ENGINE_AURORA_POSTGRES = {
+export const DATASTORE_ENGINE_AURORA_POSTGRES = {
   name: "AURORA-POSTGRES" as const,
   displayName: "Aurora PostgreSQL",
 };
-export const DATABASE_ENGINE_REDIS = {
+export const DATASTORE_ENGINE_REDIS = {
   name: "REDIS" as const,
   displayName: "Redis",
 };
-export const DATABASE_ENGINE_MEMCACHED = {
+export const DATASTORE_ENGINE_MEMCACHED = {
   name: "MEMCACHED" as const,
   displayName: "Memcached",
 };
 
-export type DatabaseType = z.infer<typeof datastoreValidator>["type"];
-export const DATABASE_TYPE_RDS = "RDS" as const;
-export const DATABASE_TYPE_ELASTICACHE = "ELASTICACHE" as const;
+export type DatastoreType = z.infer<typeof datastoreValidator>["type"];
+export const DATASTORE_TYPE_RDS = "RDS" as const;
+export const DATASTORE_TYPE_ELASTICACHE = "ELASTICACHE" as const;
 
-export type DatabaseState = {
+export type DatastoreState = {
   state: z.infer<typeof datastoreValidator>["status"];
   displayName: string;
 };
-export const DATABASE_STATE_CREATING: DatabaseState = {
+export const DATASTORE_STATE_CREATING: DatastoreState = {
   state: "CREATING",
   displayName: "Creating",
 };
-export const DATABASE_STATE_CONFIGURING_LOG_EXPORTS: DatabaseState = {
+export const DATASTORE_STATE_CONFIGURING_LOG_EXPORTS: DatastoreState = {
   state: "CONFIGURING_LOG_EXPORTS",
   displayName: "Configuring log exports",
 };
-export const DATABASE_STATE_MODIFYING: DatabaseState = {
+export const DATASTORE_STATE_MODIFYING: DatastoreState = {
   state: "MODIFYING",
   displayName: "Modifying",
 };
-export const DATABASE_STATE_CONFIGURING_ENHANCED_MONITORING: DatabaseState = {
+export const DATASTORE_STATE_CONFIGURING_ENHANCED_MONITORING: DatastoreState = {
   state: "CONFIGURING_ENHANCED_MONITORING",
   displayName: "Configuring enhanced monitoring",
 };
-export const DATABASE_STATE_BACKING_UP: DatabaseState = {
+export const DATASTORE_STATE_BACKING_UP: DatastoreState = {
   state: "BACKING_UP",
   displayName: "Backing up",
 };
-export const DATABASE_STATE_AVAILABLE: DatabaseState = {
+export const DATASTORE_STATE_AVAILABLE: DatastoreState = {
   state: "AVAILABLE",
   displayName: "Finishing provision",
 };
 
-export type DatabaseTemplate = {
-  type: DatabaseType;
-  engine: DatabaseEngine;
+export type DatastoreTemplate = {
+  type: DatastoreType;
+  engine: DatastoreEngine;
   icon: string;
   name: string;
   description: string;
   disabled: boolean;
   instanceTiers: ResourceOption[];
   formTitle: string;
-  creationStateProgression: DatabaseState[];
+  creationStateProgression: DatastoreState[];
 };
 
 const instanceTierValidator = z.enum([

@@ -14,8 +14,8 @@ import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import { type DbFormData } from "lib/databases/types";
 import { useClusterList } from "lib/hooks/useClusterList";
-import { useDatabaseList } from "lib/hooks/useDatabaseList";
-import { useDatabaseMethods } from "lib/hooks/useDatabaseMethods";
+import { useDatastoreList } from "lib/hooks/useDatabaseList";
+import { useDatastoreMethods } from "lib/hooks/useDatabaseMethods";
 import { useIntercom } from "lib/hooks/useIntercom";
 
 import { Context } from "shared/Context";
@@ -33,7 +33,7 @@ const DatabaseForm: React.FC<Props> = ({
   history,
 }) => {
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string>("");
-  const { create: createDatabase } = useDatabaseMethods();
+  const { create: createDatastore } = useDatastoreMethods();
   const { showIntercomWithMessage } = useIntercom();
   const { clusters } = useClusterList();
   const { currentProject } = useContext(Context);
@@ -46,29 +46,29 @@ const DatabaseForm: React.FC<Props> = ({
     watch,
   } = form;
 
-  const { datastores: existingDatabases } = useDatabaseList();
+  const { datastores: existingDatastores } = useDatastoreList();
 
   const chosenClusterId = watch("clusterId", 0);
 
   const onSubmit = handleSubmit(async (data) => {
     setSubmitErrorMessage("");
-    if (existingDatabases.some((db) => db.name === data.name)) {
+    if (existingDatastores.some((db) => db.name === data.name)) {
       setSubmitErrorMessage(
-        "A database with this name already exists. Please choose a different name."
+        "A datastore with this name already exists. Please choose a different name."
       );
       return;
     }
     try {
-      await createDatabase(data);
-      history.push(`/databases/${data.name}`);
+      await createDatastore(data);
+      history.push(`/datastores/${data.name}`);
     } catch (err) {
       const errorMessage =
         axios.isAxiosError(err) && err.response?.data?.error
           ? err.response.data.error
-          : "An error occurred while creating your database. Please try again.";
+          : "An error occurred while creating your datastore. Please try again.";
       setSubmitErrorMessage(errorMessage);
       showIntercomWithMessage({
-        message: "I am having trouble creating a database.",
+        message: "I am having trouble creating a datastore.",
       });
     }
   });

@@ -9,8 +9,14 @@ export const clusterValidator = z.object({
   id: z.number(),
   name: z.string(),
   vanity_name: z.string(),
+  cloud_provider: z.enum(["AWS", "GCP", "AZURE"]),
 });
 export type Cluster = z.infer<typeof clusterValidator>;
+export const isAWSCluster = (
+  cluster: Cluster
+): cluster is Cluster & { cloud_provider: "AWS" } => {
+  return cluster.cloud_provider === "AWS";
+};
 
 type TUseClusterList = {
   clusters: Array<z.infer<typeof clusterValidator>>;

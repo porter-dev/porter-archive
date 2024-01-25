@@ -170,20 +170,24 @@ func datastoreConnect(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 func printDatastoreConnectionInformation(datastoreType string, port int, credential types.DatastoreCredential) {
 	color.New(color.FgGreen).Println("Secure tunnel setup complete! While the tunnel is running, you can connect to your datastore using the following credentials:") //nolint:errcheck,gosec
 
+	fmt.Printf(" Host: 127.0.0.1\n")
+	fmt.Printf(" Port: %d\n", port)
+	if credential.DatabaseName != "" {
+		fmt.Printf(" Database name: %s\n", credential.DatabaseName)
+	}
+	if credential.Username != "" {
+		fmt.Printf(" Username: %s\n", credential.Username)
+	}
+	if credential.Password != "" {
+		fmt.Printf(" Password: %s\n", credential.Password)
+	}
 	switch datastoreType {
 	case string(types.DatastoreType_ElastiCache):
-		fmt.Printf(" Host: 127.0.0.1\n")
-		fmt.Printf(" Port: %d\n", port)
-		fmt.Printf(" Password: %s\n", credential.Password)
 		fmt.Println()
 		color.New(color.FgGreen).Println("For example, you can connect to your datastore using the following command:") //nolint:errcheck,gosec
 		fmt.Printf(" redis-cli -p %d -a %s --tls\n", port, credential.Password)
 	case string(types.DatastoreType_RDS):
-		fmt.Printf(" Host: 127.0.0.1\n")
-		fmt.Printf(" Port: %d\n", port)
-		fmt.Printf(" Database name: %s\n", credential.DatabaseName)
-		fmt.Printf(" Username: %s\n", credential.Username)
-		fmt.Printf(" Password: %s\n", credential.Password)
+		fmt.Println()
 		color.New(color.FgGreen).Println("For example, you can connect to your datastore using the following command:") //nolint:errcheck,gosec
 		fmt.Printf(" PGPASSWORD=%s psql -h 127.0.0.1 -p %d -U %s -d %s\n", credential.Password, port, credential.Username, credential.DatabaseName)
 	}

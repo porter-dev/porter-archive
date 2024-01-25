@@ -42,6 +42,27 @@ func (repo *DeploymentTargetRepository) List(projectID uint, clusterID uint, pre
 	return deploymentTargets, nil
 }
 
+// DeploymentTarget finds all deployment targets for a given project
+func (repo *DeploymentTargetRepository) DeploymentTarget(projectID uint, deploymentTargetIdentifier string) (*models.DeploymentTarget, error) {
+	if deploymentTargetIdentifier == "" {
+		return nil, errors.New("deployment target identifier is empty")
+	}
+
+	whereArg := "project_id = ? AND id = ?"
+
+	_, err := uuid.Parse(deploymentTargetIdentifier)
+	if err != nil {
+		whereArg = "project_id = ? AND vanity_name = ?"
+	}
+
+	deploymentTarget := &models.DeploymentTarget{}
+	if err := repo.db.Where(whereArg, projectID, deploymentTargetIdentifier).Find(deploymentTarget).Error; err != nil {
+		return nil, err
+	}
+
+	return deploymentTarget, nil
+}
+
 // CreateDeploymentTarget creates a new deployment target
 func (repo *DeploymentTargetRepository) CreateDeploymentTarget(deploymentTarget *models.DeploymentTarget) (*models.DeploymentTarget, error) {
 	if deploymentTarget == nil {

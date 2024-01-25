@@ -12,10 +12,10 @@ type DeploymentTarget struct {
 	ProjectID uint      `json:"project_id"`
 	ClusterID uint      `json:"cluster_id"`
 
-	Name      string    `json:"name"`
-	Namespace string    `json:"namespace"`
-	IsPreview bool      `json:"is_preview"`
-	IsDefault bool      `json:"is_default"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Name         string    `json:"name"`
+	Namespace    string    `json:"namespace"`
+	IsPreview    bool      `json:"is_preview"`
+	IsDefault    bool      `json:"is_default"`
+	CreatedAtUTC time.Time `json:"created_at"`
+	UpdatedAtUTC time.Time `json:"updated_at"`
 }

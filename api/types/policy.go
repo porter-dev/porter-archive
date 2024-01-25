@@ -8,6 +8,7 @@ const (
 	UserScope                PermissionScope = "user"
 	ProjectScope             PermissionScope = "project"
 	ClusterScope             PermissionScope = "cluster"
+	DeploymentTargetScope    PermissionScope = "target"
 	RegistryScope            PermissionScope = "registry"
 	InviteScope              PermissionScope = "invite"
 	HelmRepoScope            PermissionScope = "helm_repo"

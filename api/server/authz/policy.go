@@ -122,6 +122,8 @@ func getRequestActionForEndpoint(
 			resource.UInt, reqErr = requestutils.GetURLParamUint(r, types.URLParamProjectID)
 		case types.ClusterScope:
 			resource.UInt, reqErr = requestutils.GetURLParamUint(r, types.URLParamClusterID)
+		case types.DeploymentTargetScope:
+			resource.Name, reqErr = requestutils.GetURLParamString(r, types.URLParamDeploymentTargetIdentifier)
 		case types.RegistryScope:
 			resource.UInt, reqErr = requestutils.GetURLParamUint(r, types.URLParamRegistryID)
 		case types.HelmRepoScope:

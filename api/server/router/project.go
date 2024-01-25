@@ -527,6 +527,35 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// POST /api/projects/{project_id}/datastores/{datastore_name}/create-proxy -> cluster.NewCreateDatastoreProxyHandler
+	createDatastoreProxyEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/datastores/{%s}/create-proxy", relPath, types.URLParamDatastoreName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	createDatastoreProxyHandler := datastore.NewCreateDatastoreProxyHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createDatastoreProxyEndpoint,
+		Handler:  createDatastoreProxyHandler,
+		Router:   r,
+	})
+
 	// DELETE /api/projects/{project_id}/datastores/{datastore_name} -> cloud_provider.NewDeleteDatastoreHandler
 	deleteDatastoreEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

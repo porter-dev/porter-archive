@@ -380,7 +380,7 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 		selectedContainerName = selectedContainer
 	}
 
-	config := &AppPorterRunSharedConfig{
+	config := &KubernetesSharedConfig{
 		Client:    client,
 		CLIConfig: cliConfig,
 	}
@@ -422,7 +422,7 @@ func getImageNameFromPod(ctx context.Context, clientset *kubernetes.Clientset, n
 }
 
 func appCleanup(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, _ []string) error {
-	config := &AppPorterRunSharedConfig{
+	config := &KubernetesSharedConfig{
 		Client:    client,
 		CLIConfig: cliConfig,
 	}
@@ -510,7 +510,8 @@ func appGetEphemeralPods(ctx context.Context, namespace string, clientset *kuber
 	return podNames, nil
 }
 
-type AppPorterRunSharedConfig struct {
+// KubernetesSharedConfig allows for interacting with a kubernetes cluster
+type KubernetesSharedConfig struct {
 	Client     api.Client
 	RestConf   *rest.Config
 	Clientset  *kubernetes.Clientset
@@ -518,7 +519,7 @@ type AppPorterRunSharedConfig struct {
 	CLIConfig  config.CLIConfig
 }
 
-func (p *AppPorterRunSharedConfig) setSharedConfig(ctx context.Context) error {
+func (p *KubernetesSharedConfig) setSharedConfig(ctx context.Context) error {
 	pID := p.CLIConfig.Project
 	cID := p.CLIConfig.Cluster
 
@@ -663,7 +664,7 @@ func appGetPodsV2PorterYaml(ctx context.Context, cliConfig config.CLIConfig, cli
 	return res, namespace, containerHasLauncherStartCommand, nil
 }
 
-func appExecuteRun(config *AppPorterRunSharedConfig, namespace, name, container string, args []string) error {
+func appExecuteRun(config *KubernetesSharedConfig, namespace, name, container string, args []string) error {
 	req := config.RestClient.Post().
 		Resource("pods").
 		Name(name).
@@ -703,7 +704,7 @@ func appExecuteRun(config *AppPorterRunSharedConfig, namespace, name, container 
 	})
 }
 
-func appExecuteRunEphemeral(ctx context.Context, config *AppPorterRunSharedConfig, namespace, name, container string, args []string) error {
+func appExecuteRunEphemeral(ctx context.Context, config *KubernetesSharedConfig, namespace, name, container string, args []string) error {
 	existing, err := appGetExistingPod(ctx, config, name, namespace)
 	if err != nil {
 		return err
@@ -796,7 +797,7 @@ func appExecuteRunEphemeral(ctx context.Context, config *AppPorterRunSharedConfi
 	return err
 }
 
-func appCheckForPodDeletionCronJob(ctx context.Context, config *AppPorterRunSharedConfig) error {
+func appCheckForPodDeletionCronJob(ctx context.Context, config *KubernetesSharedConfig) error {
 	// try and create the cron job and all of the other required resources as necessary,
 	// starting with the service account, then role and then a role binding
 
@@ -886,7 +887,7 @@ func appCheckForPodDeletionCronJob(ctx context.Context, config *AppPorterRunShar
 	return nil
 }
 
-func appCheckForServiceAccount(ctx context.Context, config *AppPorterRunSharedConfig) error {
+func appCheckForServiceAccount(ctx context.Context, config *KubernetesSharedConfig) error {
 	namespaces, err := config.Clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
@@ -935,7 +936,7 @@ func appCheckForServiceAccount(ctx context.Context, config *AppPorterRunSharedCo
 	return nil
 }
 
-func appCheckForClusterRole(ctx context.Context, config *AppPorterRunSharedConfig) error {
+func appCheckForClusterRole(ctx context.Context, config *KubernetesSharedConfig) error {
 	roles, err := config.Clientset.RbacV1().ClusterRoles().List(
 		ctx, metav1.ListOptions{},
 	)
@@ -976,7 +977,7 @@ func appCheckForClusterRole(ctx context.Context, config *AppPorterRunSharedConfi
 	return nil
 }
 
-func appCheckForRoleBinding(ctx context.Context, config *AppPorterRunSharedConfig) error {
+func appCheckForRoleBinding(ctx context.Context, config *KubernetesSharedConfig) error {
 	bindings, err := config.Clientset.RbacV1().ClusterRoleBindings().List(
 		ctx, metav1.ListOptions{},
 	)
@@ -1018,7 +1019,7 @@ func appCheckForRoleBinding(ctx context.Context, config *AppPorterRunSharedConfi
 	return nil
 }
 
-func appWaitForPod(ctx context.Context, config *AppPorterRunSharedConfig, pod *v1.Pod) error {
+func appWaitForPod(ctx context.Context, config *KubernetesSharedConfig, pod *v1.Pod) error {
 	var (
 		w   watch.Interface
 		err error
@@ -1082,7 +1083,7 @@ func appIsPodExited(pod *v1.Pod) bool {
 	return pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed
 }
 
-func appHandlePodAttachError(ctx context.Context, err error, config *AppPorterRunSharedConfig, namespace, podName, container string) error {
+func appHandlePodAttachError(ctx context.Context, err error, config *KubernetesSharedConfig, namespace, podName, container string) error {
 	if appVerbose {
 		color.New(color.FgYellow).Fprintf(os.Stderr, "Error: %s\n", err)
 	}
@@ -1098,7 +1099,7 @@ func appHandlePodAttachError(ctx context.Context, err error, config *AppPorterRu
 	return err
 }
 
-func appPipePodLogsToStdout(ctx context.Context, config *AppPorterRunSharedConfig, namespace, name, container string, follow bool) (int64, error) {
+func appPipePodLogsToStdout(ctx context.Context, config *KubernetesSharedConfig, namespace, name, container string, follow bool) (int64, error) {
 	podLogOpts := v1.PodLogOptions{
 		Container: container,
 		Follow:    follow,
@@ -1118,7 +1119,7 @@ func appPipePodLogsToStdout(ctx context.Context, config *AppPorterRunSharedConfi
 	return io.Copy(os.Stdout, podLogs)
 }
 
-func appPipeEventsToStdout(ctx context.Context, config *AppPorterRunSharedConfig, namespace, name, _ string, _ bool) error {
+func appPipeEventsToStdout(ctx context.Context, config *KubernetesSharedConfig, namespace, name, _ string, _ bool) error {
 	// update the config in case the operation has taken longer than token expiry time
 	config.setSharedConfig(ctx) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
@@ -1140,7 +1141,7 @@ func appPipeEventsToStdout(ctx context.Context, config *AppPorterRunSharedConfig
 	return nil
 }
 
-func appGetExistingPod(ctx context.Context, config *AppPorterRunSharedConfig, name, namespace string) (*v1.Pod, error) {
+func appGetExistingPod(ctx context.Context, config *KubernetesSharedConfig, name, namespace string) (*v1.Pod, error) {
 	return config.Clientset.CoreV1().Pods(namespace).Get(
 		ctx,
 		name,
@@ -1148,7 +1149,7 @@ func appGetExistingPod(ctx context.Context, config *AppPorterRunSharedConfig, na
 	)
 }
 
-func appDeletePod(ctx context.Context, config *AppPorterRunSharedConfig, name, namespace string) error {
+func appDeletePod(ctx context.Context, config *KubernetesSharedConfig, name, namespace string) error {
 	// update the config in case the operation has taken longer than token expiry time
 	config.setSharedConfig(ctx) //nolint:errcheck,gosec // do not want to change logic of CLI. New linter error
 
@@ -1169,7 +1170,7 @@ func appDeletePod(ctx context.Context, config *AppPorterRunSharedConfig, name, n
 
 func appCreateEphemeralPodFromExisting(
 	ctx context.Context,
-	config *AppPorterRunSharedConfig,
+	config *KubernetesSharedConfig,
 	existing *v1.Pod,
 	container string,
 	args []string,

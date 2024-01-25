@@ -32,6 +32,7 @@ export const PorterUrls = [
   "jobs",
   "onboarding",
   "databases",
+  "datastores",
   "preview-environments",
   "apps",
   "addons",

@@ -6,7 +6,7 @@ import { z } from "zod";
 import Back from "components/porter/Back";
 import Spacer from "components/porter/Spacer";
 
-import { DatabaseContextProvider } from "./DatabaseContextProvider";
+import { DatastoreContextProvider } from "./DatabaseContextProvider";
 import DatabaseHeader from "./DatabaseHeader";
 import DatabaseTabs from "./DatabaseTabs";
 
@@ -32,14 +32,14 @@ const DatabaseView: React.FC<Props> = ({ match }) => {
   }, [match]);
 
   return (
-    <DatabaseContextProvider datastoreName={params.datastoreName}>
+    <DatastoreContextProvider datastoreName={params.datastoreName}>
       <StyledExpandedDB>
-        <Back to="/databases" />
+        <Back to="/datastores" />
         <DatabaseHeader />
         <Spacer y={1} />
         <DatabaseTabs tabParam={params.tab} />
       </StyledExpandedDB>
-    </DatabaseContextProvider>
+    </DatastoreContextProvider>
   );
 };
 

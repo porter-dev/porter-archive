@@ -1,9 +1,9 @@
 import {
-  DATABASE_ENGINE_AURORA_POSTGRES,
-  DATABASE_ENGINE_POSTGRES,
-  DATABASE_ENGINE_REDIS,
-  DATABASE_TYPE_ELASTICACHE,
-  DATABASE_TYPE_RDS,
+  DATASTORE_ENGINE_AURORA_POSTGRES,
+  DATASTORE_ENGINE_POSTGRES,
+  DATASTORE_ENGINE_REDIS,
+  DATASTORE_TYPE_ELASTICACHE,
+  DATASTORE_TYPE_RDS,
 } from "lib/databases/types";
 
 import awsRDS from "assets/amazon-rds.png";
@@ -14,14 +14,14 @@ import postgresql from "assets/postgresql.svg";
 import redis from "assets/redis.svg";
 
 const datastoreIcons: Record<string, string> = {
-  [DATABASE_TYPE_ELASTICACHE]: awsElasticache,
-  [DATABASE_TYPE_RDS]: awsRDS,
+  [DATASTORE_TYPE_ELASTICACHE]: awsElasticache,
+  [DATASTORE_TYPE_RDS]: awsRDS,
 };
 
 const engineIcons: Record<string, string> = {
-  [DATABASE_ENGINE_POSTGRES.name]: postgresql,
-  [DATABASE_ENGINE_AURORA_POSTGRES.name]: postgresql,
-  [DATABASE_ENGINE_REDIS.name]: redis,
+  [DATASTORE_ENGINE_POSTGRES.name]: postgresql,
+  [DATASTORE_ENGINE_AURORA_POSTGRES.name]: postgresql,
+  [DATASTORE_ENGINE_REDIS.name]: redis,
 };
 
 export const getDatastoreIcon = (datastoreType: string): string => {

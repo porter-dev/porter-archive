@@ -7,26 +7,26 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import SelectableAppList from "main/home/app-dashboard/apps/SelectableAppList";
-import { useDatabaseMethods } from "lib/hooks/useDatabaseMethods";
+import { useDatastoreMethods } from "lib/hooks/useDatabaseMethods";
 import { useLatestAppRevisions } from "lib/hooks/useLatestAppRevisions";
 
 import { Context } from "shared/Context";
 
-import { useDatabaseContext } from "../DatabaseContextProvider";
+import { useDatastoreContext } from "../DatabaseContextProvider";
 import ConnectAppsModal from "../shared/ConnectAppsModal";
 
 const ConnectedAppsTab: React.FC = () => {
   const [showConnectAppsModal, setShowConnectAppsModal] = useState(false);
-  const { projectId, datastore } = useDatabaseContext();
+  const { projectId, datastore } = useDatastoreContext();
   // NB: the cluster id here is coming from the global context, but really it should be coming from
-  // the database context. However, we do not currently have a way to relate db to the cluster it lives in.
+  // the datastore context. However, we do not currently have a way to relate db to the cluster it lives in.
   // This will be a bug for multi-cluster projects.
   const { currentCluster: { id: clusterId = 0 } = {} } = useContext(Context);
   const { revisions } = useLatestAppRevisions({
     projectId,
     clusterId,
   });
-  const { attachDatastoreToAppInstances } = useDatabaseMethods();
+  const { attachDatastoreToAppInstances } = useDatastoreMethods();
   const history = useHistory();
 
   const { connectedApps, remainingApps } = useMemo(() => {
@@ -49,12 +49,7 @@ const ConnectedAppsTab: React.FC = () => {
       <Container row>
         <Text size={16}>Connected Apps</Text>
       </Container>
-      <Spacer y={0.5} />
-      <Text color="helper">
-        Credentials for this datastore are injected as environment variables to
-        connected apps.
-      </Text>
-      <Spacer y={0.5} />
+      <Spacer y={0.25} />
       <SelectableAppList
         appListItems={connectedApps.map((ra) => ({
           app: ra,
@@ -66,7 +61,7 @@ const ConnectedAppsTab: React.FC = () => {
           },
         }))}
       />
-      <Spacer y={0.5} />
+      <Spacer y={0.25} />
       <AddAddonButton
         onClick={() => {
           setShowConnectAppsModal(true);

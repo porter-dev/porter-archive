@@ -19,11 +19,11 @@ import (
 
 // Credential has all information about connecting to a datastore
 type Credential struct {
-	Host         string
-	Port         int
-	Username     string
-	Password     string
-	DatabaseName string
+	Host         string `json:"host"`
+	Port         int    `json:"port"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	DatabaseName string `json:"database_name"`
 }
 
 // CreateDatastoreProxyResponse is the response body for the create datastore proxy endpoint

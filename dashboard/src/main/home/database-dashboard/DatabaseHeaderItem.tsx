@@ -34,7 +34,7 @@ const DatabaseHeaderItem: React.FC<DatabaseHeaderItemProps> = ({ item }) => {
       <Text size={12}>{titleizeText(item.name)}</Text>
 
       <Container row>
-        <Text title={item.value} color="helper" size={10}>
+        <Text color="helper" size={10}>
           {truncateText(item.value, 42)}
         </Text>
         <CopyToClipboard text={item.value.toString()}>

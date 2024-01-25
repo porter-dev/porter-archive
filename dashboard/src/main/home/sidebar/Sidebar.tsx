@@ -208,11 +208,11 @@ class Sidebar extends Component<PropsType, StateType> {
               )}
             {currentProject.db_enabled && (
               <NavButton
-                path="/databases"
+                path="/datastores"
                 active={window.location.pathname.startsWith("/apps")}
               >
                 <Img src={database} />
-                Databases
+                Datastores
               </NavButton>
             )}
             {currentCluster && (
@@ -288,11 +288,11 @@ class Sidebar extends Component<PropsType, StateType> {
             </NavButton>
             {currentProject.db_enabled && (
               <NavButton
-                path="/databases"
+                path="/datastores"
                 active={window.location.pathname.startsWith("/apps")}
               >
                 <Img src={database} />
-                Databases
+                Datastores
               </NavButton>
             )}
             <NavButton

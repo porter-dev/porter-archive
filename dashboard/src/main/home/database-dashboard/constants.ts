@@ -1,27 +1,27 @@
 import {
-  DATABASE_ENGINE_AURORA_POSTGRES,
-  DATABASE_ENGINE_MEMCACHED,
-  DATABASE_ENGINE_POSTGRES,
-  DATABASE_ENGINE_REDIS,
-  DATABASE_STATE_AVAILABLE,
-  DATABASE_STATE_BACKING_UP,
-  DATABASE_STATE_CONFIGURING_ENHANCED_MONITORING,
-  DATABASE_STATE_CONFIGURING_LOG_EXPORTS,
-  DATABASE_STATE_CREATING,
-  DATABASE_STATE_MODIFYING,
-  DATABASE_TYPE_ELASTICACHE,
-  DATABASE_TYPE_RDS,
-  type DatabaseTemplate,
+  DATASTORE_ENGINE_AURORA_POSTGRES,
+  DATASTORE_ENGINE_MEMCACHED,
+  DATASTORE_ENGINE_POSTGRES,
+  DATASTORE_ENGINE_REDIS,
+  DATASTORE_STATE_AVAILABLE,
+  DATASTORE_STATE_BACKING_UP,
+  DATASTORE_STATE_CONFIGURING_ENHANCED_MONITORING,
+  DATASTORE_STATE_CONFIGURING_LOG_EXPORTS,
+  DATASTORE_STATE_CREATING,
+  DATASTORE_STATE_MODIFYING,
+  DATASTORE_TYPE_ELASTICACHE,
+  DATASTORE_TYPE_RDS,
+  type DatastoreTemplate,
 } from "lib/databases/types";
 
 import awsRDS from "assets/amazon-rds.png";
 import awsElastiCache from "assets/aws-elasticache.png";
 
-export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
+export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
   Object.freeze({
     name: "Amazon RDS",
-    type: DATABASE_TYPE_RDS,
-    engine: DATABASE_ENGINE_POSTGRES,
+    type: DATASTORE_TYPE_RDS,
+    engine: DATASTORE_ENGINE_POSTGRES,
     icon: awsRDS as string,
     description:
       "Amazon Relational Database Service (RDS) is a web service that makes it easier to set up, operate, and scale a relational database in the cloud.",
@@ -51,18 +51,18 @@ export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
     ],
     formTitle: "Create an RDS PostgreSQL instance",
     creationStateProgression: [
-      DATABASE_STATE_CREATING,
-      DATABASE_STATE_CONFIGURING_LOG_EXPORTS,
-      DATABASE_STATE_MODIFYING,
-      DATABASE_STATE_CONFIGURING_ENHANCED_MONITORING,
-      DATABASE_STATE_BACKING_UP,
-      DATABASE_STATE_AVAILABLE,
+      DATASTORE_STATE_CREATING,
+      DATASTORE_STATE_CONFIGURING_LOG_EXPORTS,
+      DATASTORE_STATE_MODIFYING,
+      DATASTORE_STATE_CONFIGURING_ENHANCED_MONITORING,
+      DATASTORE_STATE_BACKING_UP,
+      DATASTORE_STATE_AVAILABLE,
     ],
   }),
   Object.freeze({
     name: "Amazon Aurora",
-    type: DATABASE_TYPE_RDS,
-    engine: DATABASE_ENGINE_AURORA_POSTGRES,
+    type: DATASTORE_TYPE_RDS,
+    engine: DATASTORE_ENGINE_AURORA_POSTGRES,
     icon: awsRDS as string,
     description:
       "Amazon Aurora PostgreSQL is an ACID–compliant relational database engine that combines the speed, reliability, and manageability of Amazon Aurora with the simplicity and cost-effectiveness of open-source databases.",
@@ -85,14 +85,14 @@ export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
     ],
     formTitle: "Create an Aurora PostgreSQL instance",
     creationStateProgression: [
-      DATABASE_STATE_CREATING,
-      DATABASE_STATE_AVAILABLE,
+      DATASTORE_STATE_CREATING,
+      DATASTORE_STATE_AVAILABLE,
     ],
   }),
   Object.freeze({
     name: "Amazon ElastiCache",
-    type: DATABASE_TYPE_ELASTICACHE,
-    engine: DATABASE_ENGINE_REDIS,
+    type: DATASTORE_TYPE_ELASTICACHE,
+    engine: DATASTORE_ENGINE_REDIS,
     icon: awsElastiCache as string,
     description:
       "Amazon ElastiCache is a web service that makes it easy to deploy, operate, and scale an in-memory data store or cache in the cloud.",
@@ -129,15 +129,15 @@ export const SUPPORTED_DATABASE_TEMPLATES: DatabaseTemplate[] = [
     ],
     formTitle: "Create an ElastiCache Redis instance",
     creationStateProgression: [
-      DATABASE_STATE_CREATING,
-      DATABASE_STATE_MODIFYING,
-      DATABASE_STATE_AVAILABLE,
+      DATASTORE_STATE_CREATING,
+      DATASTORE_STATE_MODIFYING,
+      DATASTORE_STATE_AVAILABLE,
     ],
   }),
   Object.freeze({
     name: "Amazon ElastiCache",
-    type: DATABASE_TYPE_ELASTICACHE,
-    engine: DATABASE_ENGINE_MEMCACHED,
+    type: DATASTORE_TYPE_ELASTICACHE,
+    engine: DATASTORE_ENGINE_MEMCACHED,
     icon: awsElastiCache as string,
     description:
       "Currently unavailable. Please contact support@porter.run for more details.",

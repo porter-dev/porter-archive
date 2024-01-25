@@ -92,7 +92,10 @@ const CredentialsTab: React.FC = () => {
       <Spacer y={0.5} />
       <Text color="helper">
         If you have the{" "}
-        <Link to="https://docs.porter.run/cli/installation" target="_blank">
+        <Link
+          to="https://docs.porter.run/standard/cli/command-reference/porter-datastore-connect"
+          target="_blank"
+        >
           <Text>Porter CLI</Text>
         </Link>{" "}
         installed, you can connect to this datastore locally by running the

@@ -1,12 +1,10 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import sliders from "assets/env-groups.svg";
 
 import { Context } from "shared/Context";
-import api from "shared/api";
-
-import { type ClusterType } from "shared/types";
+import { ClusterType } from "shared/types";
 
 import DashboardHeader from "../DashboardHeader";
 import { NamespaceSelector } from "../NamespaceSelector";
@@ -14,41 +12,63 @@ import SortSelector from "../SortSelector";
 import EnvGroupList from "./EnvGroupList";
 import CreateEnvGroup from "./CreateEnvGroup";
 import ExpandedEnvGroup from "./ExpandedEnvGroup";
-import { withRouter, type RouteComponentProps } from "react-router";
-import { getQueryParam, pushQueryParams } from "shared/routing";
-import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { RouteComponentProps, withRouter } from "react-router";
+import { getQueryParam, pushQueryParams, pushFiltered } from "shared/routing";
+import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Spacer from "components/porter/Spacer";
-import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Text from "components/porter/Text";
-import Link from "components/porter/Link";
-import Button from "components/porter/Button";
 
-type Props = RouteComponentProps & WithAuthProps;
+type PropsType = RouteComponentProps &
+  WithAuthProps & {
+    currentCluster: ClusterType;
+  };
 
-const EnvGroupDashboard: React.FC<Props> = (props) => {
-  const { currentProject, currentCluster } = useContext(Context);
-  const [expand, setExpand] = useState<boolean>(false);
-  const [update, setUpdate] = useState<any[]>([]);
-  const [namespace, setNamespace] = useState<string>("");
-  const [expandedEnvGroup, setExpandedEnvGroup] = useState<any>(null);
-  const [createEnvMode, setCreateEnvMode] = useState<boolean>(false);
-  const [sortType, setSortType] = useState<string>(
-    localStorage.getItem("SortType") || "Newest"
-  );
-  const [envGroups, setEnvGroups] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [hasError, setHasError] = useState<boolean>(false);
-  
-  useEffect(() => {
+type StateType = {
+  expand: boolean;
+  update: any[];
+  sortType: string;
+  expandedEnvGroup: any;
+  namespace: string;
+  createEnvMode: boolean;
+};
+
+const EnvGroupDashboard = (props: PropsType) => {
+  const [state, setState] = useState<StateType>({
+    expand: false,
+    update: [] as any[],
+    namespace: null as string,
+    expandedEnvGroup: null as any,
+    createEnvMode: false,
+    sortType: localStorage.getItem("SortType")
+      ? localStorage.getItem("SortType")
+      : "Newest",
+  });
+
+  const { currentProject } = useContext(Context);
+
+  const setNamespace = (namespace: string) => {
+    setState((state) => ({ ...state, namespace }));
     pushQueryParams(props, {
-      namespace: currentProject?.simplified_view_enabled ? ("porter-env-group") : (namespace ?? "ALL"),
-    })
-  }, [namespace]);
+      namespace: currentProject.simplified_view_enabled ? ("porter-env-group") : (namespace ?? "ALL"),
+    });
+  };
 
-  const closeExpanded = (): void => {
+  const setSortType = (sortType: string) => {
+    setState((state) => ({ ...state, sortType }));
+  };
+
+  const toggleCreateEnvMode = () => {
+    setState((state) => ({
+      ...state,
+      createEnvMode: !state.createEnvMode,
+    }));
+  };
+
+  const setExpandedEnvGroup = (envGroup: any | null) => {
+    setState((state) => ({ ...state, expandedEnvGroup: envGroup }));
+  };
+
+  const closeExpanded = () => {
     pushQueryParams(props, {}, ["selected_env_group"]);
     const redirectUrlOnClose = getQueryParam(props, "redirect_url");
     if (redirectUrlOnClose) {
@@ -58,101 +78,17 @@ const EnvGroupDashboard: React.FC<Props> = (props) => {
     setExpandedEnvGroup(null);
   };
 
-  const updateEnvGroups = async () => {
-    try {
-      let envGroups: any[] = []
-      if (currentProject?.simplified_view_enabled) {
-        envGroups = await api
-          .getAllEnvGroups(
-            "<token>",
-            {},
-            {
-              id: currentProject.id,
-              cluster_id: currentCluster?.id || -1,
-            }
-          )
-          .then((res: any) => {
-            return res.data?.environment_groups;
-          });
-      } else {
-        envGroups = await api.listEnvGroups(
-          "<token>",
-          {},
-          {
-            id: currentProject?.id || -1,
-            namespace,
-            cluster_id: currentCluster?.id || -1,
-          }
-        )
-        .then((res) => {
-          return res.data;
-        });
-      }
-      const sortedGroups = envGroups;
-      if (sortedGroups) {
-        switch (sortType) {
-          case "Oldest":
-            sortedGroups.sort((a: any, b: any) =>
-              Date.parse(a.created_at) > Date.parse(b.created_at) ? 1 : -1
-            );
-            break;
-          case "Alphabetical":
-            sortedGroups.sort((a: any, b: any) => (a.name > b.name ? 1 : -1));
-            break;
-          default:
-            sortedGroups.sort((a: any, b: any) =>
-              Date.parse(a.created_at) > Date.parse(b.created_at) ? -1 : 1
-            );
-        }
-      }
-      return sortedGroups;
-    } catch (error) {
-      setIsLoading(false);
-      setHasError(true);
-    }
-  };
-
-  useEffect(() => {
-    // Prevents reload when opening ClusterConfigModal
-    (namespace || namespace === "") &&
-      updateEnvGroups().then((envGroups) => {
-        const selectedEnvGroup = getQueryParam(props, "selected_env_group");
-
-        setEnvGroups(envGroups);
-        if (envGroups && envGroups.length > 0) {
-          setHasError(false);
-        }
-        setIsLoading(false);
-
-        if (selectedEnvGroup) {
-          // find env group by selectedEnvGroup
-          const envGroup = envGroups.find(
-            (envGroup: any) => envGroup.name === selectedEnvGroup
-          );
-          if (envGroup) {
-            setExpandedEnvGroup(envGroup);
-          } else {
-            pushQueryParams(props, {}, ["selected_env_group"]);
-          }
-        }
-      });
-  }, [currentCluster, namespace, sortType, createEnvMode]);
-
-  const renderBody = (): React.ReactNode => {
-    if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
+  const renderBody = () => {
+    if (props.currentCluster.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />
     }
 
-    const goBack = (): void => {
-      setCreateEnvMode(false);
-    };
+    const goBack = () =>
+      setState((state) => ({ ...state, createEnvMode: false }));
 
-    if (createEnvMode) {
+    if (state.createEnvMode) {
       return (
-        <CreateEnvGroup 
-          goBack={goBack}
-          currentCluster={currentCluster as ClusterType}
-        />
+        <CreateEnvGroup goBack={goBack} currentCluster={props.currentCluster} />
       );
     } else {
       const isAuthorizedToAdd = props.isAuthorized("env_group", "", [
@@ -162,85 +98,48 @@ const EnvGroupDashboard: React.FC<Props> = (props) => {
 
       return (
         <>
-          {isLoading || (!namespace && namespace !== "") ? (
-            <LoadingWrapper>
-              <Loading />
-            </LoadingWrapper>
-          ) : (
-            hasError ? (
-              <Placeholder height="370px">
-                <i className="material-icons">error</i> Error connecting to cluster.
-              </Placeholder>
-            ) : (
-              !envGroups || envGroups.length === 0 ? (
-                <DashboardPlaceholder>
-                  <Text size={16}>No environment groups found</Text>
-                  <Spacer y={0.5} />
-                  <Text color={"helper"}>Get started by creating an environment group.</Text>
-                  <Spacer y={1} />
-                  <Button
-                    height="35px"
-                    alt
-                    onClick={() => {
-                      setCreateEnvMode(!createEnvMode);
-                    }}
-                  >
-                    Create environment group <Spacer inline x={1} />{" "}
-                    <i className="material-icons" style={{ fontSize: "18px" }}>
-                      east
-                    </i>
-                  </Button>
-                </DashboardPlaceholder>
-              ) : (
-                <>
-                  <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
-                    <SortFilterWrapper>
-                      <SortSelector
-                        currentView="env-groups"
-                        setSortType={setSortType}
-                        sortType={sortType}
-                      />
-                      <Spacer inline width="10px" />
-                      {!currentProject?.simplified_view_enabled && <NamespaceSelector
-                        setNamespace={setNamespace}
-                        namespace={currentProject?.simplified_view_enabled ? "porter-env-group" : namespace}
-                      />}
-                    </SortFilterWrapper>
-                    <Flex>
-                      {isAuthorizedToAdd && (
-                        <Button onClick={() => {
-                          setCreateEnvMode(!createEnvMode);
-                        }}>
-                          <I className="material-icons">add</I> Create env group
-                        </Button>
-                      )}
-                    </Flex>
-                  </ControlRow>
-                  <EnvGroupList
-                    envGroups={envGroups}
-                    currentCluster={currentCluster as ClusterType}
-                    namespace={currentProject?.simplified_view_enabled ? "porter-env-group" : namespace}
-                    sortType={sortType}
-                    setExpandedEnvGroup={setExpandedEnvGroup}
-                  />
-                </>
-              )
-            )
-          )}
+          <ControlRow hasMultipleChilds={isAuthorizedToAdd}>
+            <SortFilterWrapper>
+              <SortSelector
+                currentView="env-groups"
+                setSortType={setSortType}
+                sortType={state.sortType}
+              />
+              <Spacer inline width="10px" />
+              {!currentProject.simplified_view_enabled && <NamespaceSelector
+                setNamespace={setNamespace}
+                namespace={currentProject.simplified_view_enabled ? "porter-env-group" : state.namespace}
+              />}
+            </SortFilterWrapper>
+            <Flex>
+              {isAuthorizedToAdd && (
+                <Button onClick={toggleCreateEnvMode}>
+                  <i className="material-icons">add</i> Create env group
+                </Button>
+              )}
+            </Flex>
+          </ControlRow>
+
+          <EnvGroupList
+            currentCluster={props.currentCluster}
+            namespace={currentProject?.simplified_view_enabled ? "porter-env-group" : state.namespace}
+            sortType={state.sortType}
+            setExpandedEnvGroup={setExpandedEnvGroup}
+          />
         </>
       );
     }
   };
 
-  const renderContents = (): React.ReactNode => {
-    if (expandedEnvGroup) {
+  const renderContents = () => {
+    if (state.expandedEnvGroup) {
       return (
         <ExpandedEnvGroup
           isAuthorized={props.isAuthorized}
-          namespace={currentProject?.simplified_view_enabled ? "porter-env-group" : (expandedEnvGroup?.namespace || namespace)}
-          currentCluster={currentCluster as ClusterType}
-          envGroup={expandedEnvGroup}
-          closeExpanded={closeExpanded}
+          namespace={currentProject?.simplified_view_enabled ? "porter-env-group" : (state.expandedEnvGroup?.namespace || state.namespace)}
+          currentCluster={props.currentCluster}
+          envGroup={state.expandedEnvGroup}
+          closeExpanded={() => closeExpanded()}
         />
       );
     } else {
@@ -263,19 +162,6 @@ const EnvGroupDashboard: React.FC<Props> = (props) => {
 };
 
 export default withRouter(withAuth(EnvGroupDashboard));
-
-const I = styled.i`
-  color: white;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  margin-right: 5px;
-  justify-content: center;
-`;
-
-const LoadingWrapper = styled.div`
-  padding-top: 100px;
-`;
 
 const Flex = styled.div`
   display: flex;
@@ -301,4 +187,46 @@ const ControlRow = styled.div`
   }};
   align-items: center;
   flex-wrap: wrap;
+`;
+
+const Button = styled.div`
+  display: flex;
+  margin-left: 10px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: "Work Sans", sans-serif;
+  border-radius: 5px;
+  color: white;
+  height: 30px;
+  padding: 0 8px;
+  min-width: 155px;
+  padding-right: 13px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "not-allowed" : "pointer"};
+
+  background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "#aaaabbee" : "#616FEEcc"};
+  :hover {
+    background: ${(props: { disabled?: boolean }) =>
+    props.disabled ? "" : "#505edddd"};
+  }
+
+  > i {
+    color: white;
+    width: 18px;
+    height: 18px;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    margin-right: 5px;
+    justify-content: center;
+  }
 `;

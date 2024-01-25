@@ -17,8 +17,6 @@ type NotificationConfig struct {
 
 	LastNotifiedTime time.Time
 	NotifLimit       string
-
-	Config JSONB `json:"config" sql:"type:jsonb" gorm:"type:jsonb"`
 }
 
 func (conf *NotificationConfig) ToNotificationConfigType() *types.NotificationConfig {

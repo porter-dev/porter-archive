@@ -8,7 +8,7 @@ import React, {
 import styled from "styled-components";
 import _ from "lodash";
 
-import addOn from "assets/add-ons.svg";
+import addOnGrad from "assets/add-on-grad.svg";
 import time from "assets/time.png";
 import healthy from "assets/status-healthy.png";
 import grid from "assets/grid.png";
@@ -150,7 +150,7 @@ const AddOnDashboard: React.FC<Props> = ({
   return (
     <StyledAppDashboard>
       <DashboardHeader
-        image={addOn}
+        image={addOnGrad}
         title="Add-ons"
         capitalize={false}
         description="Add-ons and supporting workloads for this project."

@@ -1,7 +1,7 @@
 import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import sliders from "assets/env-groups.svg";
+import envGroupGrad from "assets/env-group-grad.svg";
 
 import { Context } from "shared/Context";
 import { ClusterType } from "shared/types";
@@ -146,7 +146,7 @@ const EnvGroupDashboard = (props: PropsType) => {
       return (
         <>
           <DashboardHeader
-            image={sliders}
+            image={envGroupGrad}
             title="Environment groups"
             description="Groups of environment variables for storing secrets and configuration."
             disableLineBreak

@@ -25,7 +25,7 @@ import { Context } from "shared/Context";
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
 import engine from "assets/computer-chip.svg";
-import database from "assets/database.svg";
+import databaseGrad from "assets/database-grad.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
@@ -145,7 +145,7 @@ const DatabaseDashboard: React.FC = () => {
             }}
             prefix={
               <Container row>
-                <Image src={database} size={15} opacity={0.6} />
+                <Image src={databaseGrad} size={15} opacity={0.6} />
                 <Spacer inline x={0.5} />
                 Type
               </Container>
@@ -325,7 +325,7 @@ const DatabaseDashboard: React.FC = () => {
   return (
     <StyledAppDashboard>
       <DashboardHeader
-        image={database}
+        image={databaseGrad}
         title="Databases"
         description="Storage, caches, and stateful workloads for this project."
         disableLineBreak

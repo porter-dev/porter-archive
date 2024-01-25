@@ -7,7 +7,7 @@ import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import { useDeploymentTargetList } from "lib/hooks/useDeploymentTarget";
 
-import PullRequestIcon from "assets/pull_request_icon.svg";
+import prGrad from "assets/pr-grad.svg";
 
 import DashboardHeader from "../../DashboardHeader";
 import { ConfigurableAppList } from "./ConfigurableAppList";
@@ -41,8 +41,9 @@ const PreviewEnvs: React.FC = () => {
   return (
     <StyledAppDashboard>
       <DashboardHeader
-        image={PullRequestIcon}
+        image={prGrad}
         title="Preview Apps"
+        capitalize={false}
         description="Preview apps are created for each pull request. They are automatically deleted when the pull request is closed."
         disableLineBreak
       />

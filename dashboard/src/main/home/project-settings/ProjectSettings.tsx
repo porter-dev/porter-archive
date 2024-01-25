@@ -2,7 +2,7 @@ import React, { Component, useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import { Context } from "shared/Context";
-import settings from "assets/settings.svg";
+import settingsGrad from "assets/settings-grad.svg";
 
 import InvitePage from "./InviteList";
 import TabRegion from "components/TabRegion";
@@ -238,10 +238,11 @@ function ProjectSettings(props: any) {
   return (
     <StyledProjectSettings>
       <DashboardHeader
-        image={settings}
+        image={settingsGrad}
         title="Project settings"
         description="Configure access permissions and additional project settings."
         disableLineBreak
+        capitalize={false}
       />
       <TabRegion
         currentTab={currentTab}

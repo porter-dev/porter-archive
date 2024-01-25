@@ -28,7 +28,7 @@ import grid from "assets/grid.png";
 import list from "assets/list.png";
 import pull_request from "assets/pull_request_icon.svg";
 import letter from "assets/vector.svg";
-import web from "assets/web.png";
+import applicationGrad from "assets/application-grad.svg";
 
 import AppGrid from "./AppGrid";
 import { appRevisionWithSourceValidator } from "./types";
@@ -335,7 +335,7 @@ const Apps: React.FC = () => {
     <StyledAppDashboard>
       {!currentDeploymentTarget?.is_preview && (
         <DashboardHeader
-          image={web}
+          image={applicationGrad}
           title="Applications"
           description="Web services, workers, and jobs for this project."
           disableLineBreak

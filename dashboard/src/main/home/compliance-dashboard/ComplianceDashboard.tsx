@@ -9,7 +9,7 @@ import Text from "components/porter/Text";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 
 import { Context } from "shared/Context";
-import compliance from "assets/compliance.svg";
+import complianceGrad from "assets/compliance-grad.svg";
 import linkExternal from "assets/link-external.svg";
 import vanta from "assets/vanta.svg";
 
@@ -35,7 +35,7 @@ const ComplianceDashboard: React.FC = () => {
     >
       <StyledComplianceDashboard>
         <DashboardHeader
-          image={compliance}
+          image={complianceGrad}
           title="Compliance"
           description="Configure your Porter infrastructure for various compliance frameworks."
           disableLineBreak

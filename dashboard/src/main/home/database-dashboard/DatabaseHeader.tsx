@@ -10,13 +10,13 @@ import Text from "components/porter/Text";
 
 import { readableDate } from "shared/string_utils";
 
-import { useDatabaseContext } from "./DatabaseContextProvider";
+import { useDatastoreContext } from "./DatabaseContextProvider";
 import { getDatastoreIcon } from "./icons";
 import EngineTag from "./tags/EngineTag";
 import { datastoreField } from "./utils";
 
 const DatabaseHeader: React.FC = () => {
-  const { datastore } = useDatabaseContext();
+  const { datastore } = useDatastoreContext();
 
   return (
     <>

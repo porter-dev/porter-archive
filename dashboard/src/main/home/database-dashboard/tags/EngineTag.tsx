@@ -6,13 +6,13 @@ import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
-import { type DatabaseEngine } from "lib/databases/types";
+import { type DatastoreEngine } from "lib/databases/types";
 
 import postgresql from "assets/postgresql.svg";
 import redis from "assets/redis.svg";
 
 type Props = {
-  engine: DatabaseEngine;
+  engine: DatastoreEngine;
   heightPixels?: number;
 };
 

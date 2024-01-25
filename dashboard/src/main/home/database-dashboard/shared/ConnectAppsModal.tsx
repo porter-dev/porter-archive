@@ -68,7 +68,7 @@ const ConnectAppsModal: React.FC<Props> = ({ closeModal, apps, onSubmit }) => {
       }
       setSubmitErrorMessage(message);
       showIntercomWithMessage({
-        message: "I am having trouble connecting apps to my database.",
+        message: "I am having trouble connecting apps to my datastore.",
       });
     } finally {
       setIsSubmitting(false);

@@ -7,7 +7,7 @@ import { type DbFormData } from "lib/databases/types";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
-type DatabaseHook = {
+type DatastoreHook = {
   create: (values: DbFormData) => Promise<void>;
   deleteDatastore: (name: string) => Promise<void>;
   attachDatastoreToAppInstances: ({
@@ -84,7 +84,7 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
     .exhaustive();
 };
 
-export const useDatabaseMethods = (): DatabaseHook => {
+export const useDatastoreMethods = (): DatastoreHook => {
   const { currentProject, currentCluster } = useContext(Context);
 
   const queryClient = useQueryClient();

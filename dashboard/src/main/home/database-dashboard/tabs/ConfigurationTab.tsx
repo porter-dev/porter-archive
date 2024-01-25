@@ -5,14 +5,14 @@ import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 
-import { useDatabaseContext } from "../DatabaseContextProvider";
+import { useDatastoreContext } from "../DatabaseContextProvider";
 import DatabaseHeaderItem from "../DatabaseHeaderItem";
 
 const ConfigurationTab: React.FC = () => {
-  const { datastore } = useDatabaseContext();
+  const { datastore } = useDatastoreContext();
   return (
     <Fieldset>
-      <Text size={12}>Database details: </Text>
+      <Text size={12}>Datastore details: </Text>
       <Spacer y={0.5} />
 
       {datastore.metadata !== undefined && datastore.metadata?.length > 0 && (

@@ -9,18 +9,18 @@ import Back from "components/porter/Back";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
-  DATABASE_ENGINE_AURORA_POSTGRES,
-  DATABASE_ENGINE_POSTGRES,
-  DATABASE_ENGINE_REDIS,
-  DATABASE_TYPE_ELASTICACHE,
-  DATABASE_TYPE_RDS,
-  type DatabaseTemplate,
+  DATASTORE_ENGINE_AURORA_POSTGRES,
+  DATASTORE_ENGINE_POSTGRES,
+  DATASTORE_ENGINE_REDIS,
+  DATASTORE_TYPE_ELASTICACHE,
+  DATASTORE_TYPE_RDS,
+  type DatastoreTemplate,
 } from "lib/databases/types";
 
 import database from "assets/database.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import { SUPPORTED_DATABASE_TEMPLATES } from "./constants";
+import { SUPPORTED_DATASTORE_TEMPLATES } from "./constants";
 import DatabaseFormAuroraPostgres from "./forms/DatabaseFormAuroraPostgres";
 import DatabaseFormElasticacheRedis from "./forms/DatabaseFormElasticacheRedis";
 import DatabaseFormRDSPostgres from "./forms/DatabaseFormRDSPostgres";
@@ -28,7 +28,7 @@ import EngineTag from "./tags/EngineTag";
 
 type Props = RouteComponentProps;
 const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
-  const templateMatch: DatabaseTemplate | undefined = useMemo(() => {
+  const templateMatch: DatastoreTemplate | undefined = useMemo(() => {
     const { params } = queryMatch;
     const validParams = z
       .object({
@@ -41,7 +41,7 @@ const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
       return undefined;
     }
 
-    return SUPPORTED_DATABASE_TEMPLATES.find(
+    return SUPPORTED_DATASTORE_TEMPLATES.find(
       (t) =>
         !t.disabled &&
         t.type === validParams.data.type &&
@@ -53,23 +53,26 @@ const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
     <StyledTemplateComponent>
       {match(templateMatch)
         .with(
-          { type: DATABASE_TYPE_RDS, engine: DATABASE_ENGINE_POSTGRES },
+          { type: DATASTORE_TYPE_RDS, engine: DATASTORE_ENGINE_POSTGRES },
           (t) => <DatabaseFormRDSPostgres template={t} />
         )
         .with(
-          { type: DATABASE_TYPE_RDS, engine: DATABASE_ENGINE_AURORA_POSTGRES },
+          {
+            type: DATASTORE_TYPE_RDS,
+            engine: DATASTORE_ENGINE_AURORA_POSTGRES,
+          },
           (t) => <DatabaseFormAuroraPostgres template={t} />
         )
         .with(
-          { type: DATABASE_TYPE_ELASTICACHE, engine: DATABASE_ENGINE_REDIS },
+          { type: DATASTORE_TYPE_ELASTICACHE, engine: DATASTORE_ENGINE_REDIS },
           (t) => <DatabaseFormElasticacheRedis template={t} />
         )
         .otherwise(() => (
           <>
-            <Back to="/databases" />
+            <Back to="/datastores" />
             <DashboardHeader
               image={database}
-              title="Create a new database"
+              title="Create a new datastore"
               capitalize={false}
               disableLineBreak
             />
@@ -80,7 +83,7 @@ const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
             </Text>
             <Spacer y={0.5} />
             <TemplateListWrapper>
-              {SUPPORTED_DATABASE_TEMPLATES.map((template) => {
+              {SUPPORTED_DATASTORE_TEMPLATES.map((template) => {
                 const { name, icon, description, disabled, engine, type } =
                   template;
                 return (
@@ -88,7 +91,7 @@ const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
                     disabled={disabled}
                     key={`${name}-${engine.name}`}
                     onClick={() => {
-                      history.push(`/databases/new/${type}/${engine.name}`);
+                      history.push(`/datastores/new/${type}/${engine.name}`);
                     }}
                   >
                     <TemplateHeader>

@@ -472,19 +472,19 @@ const Home: React.FC<Props> = (props) => {
                   )}
                 </Route>
 
-                <Route path="/databases/new/:type/:engine">
+                <Route path="/datastores/new/:type/:engine">
                   <CreateDatabase />
                 </Route>
-                <Route path="/databases/new">
+                <Route path="/datastores/new">
                   <CreateDatabase />
                 </Route>
-                <Route path="/databases/:datastoreName/:tab">
+                <Route path="/datastores/:datastoreName/:tab">
                   <DatabaseView />
                 </Route>
-                <Route path="/databases/:datastoreName">
+                <Route path="/datastores/:datastoreName">
                   <DatabaseView />
                 </Route>
-                <Route path="/databases">
+                <Route path="/datastores">
                   <DatabaseDashboard />
                 </Route>
 
@@ -544,7 +544,7 @@ const Home: React.FC<Props> = (props) => {
                     "/applications",
                     "/jobs",
                     "/env-groups",
-                    "/databases",
+                    "/datastores",
                     ...(!currentProject?.validate_apply_v2
                       ? ["/preview-environments"]
                       : []),

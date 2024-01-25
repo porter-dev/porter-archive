@@ -19,7 +19,7 @@ import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { type ClientDatastore } from "lib/databases/types";
-import { useDatabaseList } from "lib/hooks/useDatabaseList";
+import { useDatastoreList } from "lib/hooks/useDatabaseList";
 
 import { Context } from "shared/Context";
 import { search } from "shared/search";
@@ -46,9 +46,9 @@ const DatabaseDashboard: React.FC = () => {
     "all" | "POSTGRES" | "AURORA-POSTGRES" | "REDIS"
   >("all");
 
-  const { datastores, isLoading } = useDatabaseList();
+  const { datastores, isLoading } = useDatastoreList();
 
-  const filteredDatabases = useMemo(() => {
+  const filteredDatastores = useMemo(() => {
     const filteredBySearch = search(datastores, searchValue, {
       keys: ["name"],
       isCaseSensitive: false,
@@ -89,21 +89,14 @@ const DatabaseDashboard: React.FC = () => {
     if (datastores.length === 0) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>No databases have been created yet</Text>
+          <Text size={16}>No datastores have been created yet</Text>
           <Spacer y={0.5} />
 
-          <Text color={"helper"}>Get started by creating a database.</Text>
+          <Text color={"helper"}>Get started by creating a datastore.</Text>
           <Spacer y={1} />
-          <PorterLink to="/databases/new">
-            <Button
-              onClick={async () =>
-                // TODO: add analytics
-                true
-              }
-              height="35px"
-              alt
-            >
-              Create database <Spacer inline x={1} />{" "}
+          <PorterLink to="/datastores/new">
+            <Button onClick={() => ({})} height="35px" alt>
+              Create datastore <Spacer inline x={1} />{" "}
               <i className="material-icons" style={{ fontSize: "18px" }}>
                 east
               </i>
@@ -198,7 +191,7 @@ const DatabaseDashboard: React.FC = () => {
             setValue={(x) => {
               setSearchValue(x);
             }}
-            placeholder="Search databases . . ."
+            placeholder="Search datastores . . ."
             width="100%"
           />
           <Spacer inline x={1} />
@@ -219,27 +212,20 @@ const DatabaseDashboard: React.FC = () => {
           />
 
           <Spacer inline x={2} />
-          <PorterLink to="/databases/new">
-            <Button
-              onClick={async () =>
-                // TODO: add analytics
-                true
-              }
-              height="30px"
-              width="70px"
-            >
+          <PorterLink to="/datastores/new">
+            <Button onClick={() => ({})} height="30px" width="70px">
               <I className="material-icons">add</I> New
             </Button>
           </PorterLink>
         </Container>
         <Spacer y={1} />
 
-        {filteredDatabases.length === 0 ? (
+        {filteredDatastores.length === 0 ? (
           <Fieldset>
             <Container row>
               <PlaceholderIcon src={notFound} />
               <Text color="helper">
-                No databases matching filters were found.
+                No datastores matching filters were found.
               </Text>
             </Container>
           </Fieldset>
@@ -247,10 +233,10 @@ const DatabaseDashboard: React.FC = () => {
           <Loading offset="-150px" />
         ) : view === "grid" ? (
           <GridList>
-            {(filteredDatabases ?? []).map(
+            {(filteredDatastores ?? []).map(
               (datastore: ClientDatastore, i: number) => {
                 return (
-                  <Link to={`/databases/${datastore.name}`} key={i}>
+                  <Link to={`/datastores/${datastore.name}`} key={i}>
                     <Block>
                       <Container row spaced>
                         <Container row>
@@ -283,10 +269,10 @@ const DatabaseDashboard: React.FC = () => {
           </GridList>
         ) : (
           <List>
-            {(filteredDatabases ?? []).map(
+            {(filteredDatastores ?? []).map(
               (datastore: ClientDatastore, i: number) => {
                 return (
-                  <Row to={`/databases/${datastore.name}`} key={i}>
+                  <Row to={`/datastores/${datastore.name}`} key={i}>
                     <Container row spaced>
                       <Container row>
                         <MidIcon src={datastore.template.icon} />
@@ -326,7 +312,7 @@ const DatabaseDashboard: React.FC = () => {
     <StyledAppDashboard>
       <DashboardHeader
         image={database}
-        title="Databases"
+        title="Datastores"
         description="Storage, caches, and stateful workloads for this project."
         disableLineBreak
       />

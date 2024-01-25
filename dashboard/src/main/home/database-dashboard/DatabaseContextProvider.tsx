@@ -14,31 +14,31 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import notFound from "assets/not-found.png";
 
-import { SUPPORTED_DATABASE_TEMPLATES } from "./constants";
+import { SUPPORTED_DATASTORE_TEMPLATES } from "./constants";
 
-type DatabaseContextType = {
+type DatastoreContextType = {
   datastore: ClientDatastore;
   projectId: number;
 };
 
-const DatabaseContext = createContext<DatabaseContextType | null>(null);
+const DatastoreContext = createContext<DatastoreContextType | null>(null);
 
-export const useDatabaseContext = (): DatabaseContextType => {
-  const ctx = React.useContext(DatabaseContext);
+export const useDatastoreContext = (): DatastoreContextType => {
+  const ctx = React.useContext(DatastoreContext);
   if (!ctx) {
     throw new Error(
-      "useDatabaseContext must be used within a DatabaseContextProvider"
+      "useDatastoreContext must be used within a DatastoreContextProvider"
     );
   }
   return ctx;
 };
 
-type DatabaseContextProviderProps = {
+type DatastoreContextProviderProps = {
   datastoreName?: string;
   children: JSX.Element;
 };
-export const DatabaseContextProvider: React.FC<
-  DatabaseContextProviderProps
+export const DatastoreContextProvider: React.FC<
+  DatastoreContextProviderProps
 > = ({ datastoreName, children }) => {
   const { currentProject } = useContext(Context);
   const paramsExist =
@@ -63,7 +63,7 @@ export const DatabaseContextProvider: React.FC<
         .parseAsync(response.data);
 
       const datastore = results.datastore;
-      const matchingTemplate = SUPPORTED_DATABASE_TEMPLATES.find(
+      const matchingTemplate = SUPPORTED_DATASTORE_TEMPLATES.find(
         (t) => t.type === datastore.type && t.engine.name === datastore.engine
       );
 
@@ -93,24 +93,24 @@ export const DatabaseContextProvider: React.FC<
         <Container row>
           <PlaceholderIcon src={notFound} />
           <Text color="helper">
-            No database matching &quot;{datastoreName}&quot; was found.
+            No datastore matching &quot;{datastoreName}&quot; was found.
           </Text>
         </Container>
         <Spacer y={1} />
-        <Link to="/databases">Return to dashboard</Link>
+        <Link to="/datastores">Return to dashboard</Link>
       </Placeholder>
     );
   }
 
   return (
-    <DatabaseContext.Provider
+    <DatastoreContext.Provider
       value={{
         datastore,
         projectId: currentProject.id,
       }}
     >
       {children}
-    </DatabaseContext.Provider>
+    </DatastoreContext.Provider>
   );
 };
 

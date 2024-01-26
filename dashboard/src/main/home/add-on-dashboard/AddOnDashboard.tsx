@@ -32,7 +32,6 @@ import { readableDate } from "shared/string_utils";
 import Loading from "components/Loading";
 import { Link } from "react-router-dom";
 import Fieldset from "components/porter/Fieldset";
-import Select from "components/porter/Select";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import { useAuthState } from "main/auth/context";

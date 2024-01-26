@@ -38,7 +38,7 @@ import EngineTag from "./tags/EngineTag";
 
 const DatabaseDashboard: React.FC = () => {
   const { currentCluster } = useContext(Context);
-  const { clusters } = useClusterList();
+  const { clusters, isLoading: isLoadingClusters } = useClusterList();
 
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -81,6 +81,10 @@ const DatabaseDashboard: React.FC = () => {
   }, [datastores, searchValue, typeFilter, engineFilter]);
 
   const renderContents = (): JSX.Element => {
+    if (datastores === undefined || isLoading || isLoadingClusters) {
+      return <Loading offset="-150px" />;
+    }
+
     if (clusters.filter(isAWSCluster).length === 0) {
       return (
         <Fieldset>
@@ -105,10 +109,6 @@ const DatabaseDashboard: React.FC = () => {
     }
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
-    }
-
-    if (datastores === undefined || isLoading) {
-      return <Loading offset="-150px" />;
     }
 
     if (datastores.length === 0) {

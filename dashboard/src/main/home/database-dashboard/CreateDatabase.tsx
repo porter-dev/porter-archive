@@ -17,7 +17,7 @@ import {
   type DatastoreTemplate,
 } from "lib/databases/types";
 
-import database from "assets/database.svg";
+import databaseGrad from "assets/database-grad.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import { SUPPORTED_DATASTORE_TEMPLATES } from "./constants";
@@ -71,7 +71,7 @@ const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
           <>
             <Back to="/datastores" />
             <DashboardHeader
-              image={database}
+              image={databaseGrad}
               title="Create a new datastore"
               capitalize={false}
               disableLineBreak

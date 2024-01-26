@@ -27,6 +27,7 @@ import Container from "components/porter/Container";
 import Image from "components/porter/Image";
 
 import sort from "assets/sort.svg";
+import Link from "components/porter/Link";
 
 type Props = RouteComponentProps & WithAuthProps;
 
@@ -168,18 +169,17 @@ const EnvDashboard: React.FC<Props> = (props) => {
                 <Spacer y={0.5} />
                 <Text color={"helper"}>Get started by creating an environment group.</Text>
                 <Spacer y={1} />
-                <Button
-                  height="35px"
-                  alt
-                  onClick={() => {
-                    setCreateEnvMode(!createEnvMode);
-                  }}
-                >
-                  New environment group <Spacer inline x={1} />{" "}
-                  <i className="material-icons" style={{ fontSize: "18px" }}>
-                    east
-                  </i>
-                </Button>
+                <Link to={`/envs/new`}>
+                  <Button
+                    height="35px"
+                    alt
+                  >
+                    Create a new env group <Spacer inline x={1} />{" "}
+                    <i className="material-icons" style={{ fontSize: "18px" }}>
+                      east
+                    </i>
+                  </Button>
+                </Link>
               </DashboardPlaceholder>
             ) : (
               <>

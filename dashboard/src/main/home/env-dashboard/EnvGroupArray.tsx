@@ -6,6 +6,10 @@ import styled from "styled-components";
 import upload from "assets/upload.svg";
 import { dotenv_parse } from "shared/string_utils";
 
+import Button from "components/porter/Button";
+import Image from "components/porter/Image";
+import Spacer from "components/porter/Spacer";
+
 export type KeyValueType = {
   key: string;
   value: string;
@@ -103,94 +107,96 @@ const EnvGroupArray = ({
 
   return (
     <>
-      <StyledInputArray>
-        <Label>{label}</Label>
-        {!!values?.length &&
-          values.map((entry: KeyValueType, i: number) => {
-            if (!entry.deleted) {
-              return (
-                <InputWrapper key={i}>
+      <Label>{label}</Label>
+      {!!values?.length &&
+        values.map((entry: KeyValueType, i: number) => {
+          if (!entry.deleted) {
+            return (
+              <InputWrapper key={i}>
+                <Input
+                  placeholder="ex: key"
+                  width="270px"
+                  value={entry.key}
+                  onChange={(e: any) => {
+                    const _values = [...values];
+                    _values[i].key = e.target.value;
+                    setValues(_values);
+                  }}
+                  disabled={disabled || entry.locked}
+                  spellCheck={false}
+                  override={incorrectRegex(entry.key)}
+                />
+                <Spacer inline width="10px" />
+
+                {entry.hidden ? (
                   <Input
-                    placeholder="ex: key"
+                    placeholder="ex: value"
                     width="270px"
-                    value={entry.key}
+                    value={entry.value}
                     onChange={(e: any) => {
                       const _values = [...values];
-                      _values[i].key = e.target.value;
+                      _values[i].value = e.target.value;
                       setValues(_values);
                     }}
                     disabled={disabled || entry.locked}
+                    type={entry.hidden ? "password" : "text"}
                     spellCheck={false}
                     override={incorrectRegex(entry.key)}
                   />
-                  <Spacer />
-
-                  {entry.hidden ? (
-                    <Input
-                      placeholder="ex: value"
-                      width="270px"
-                      value={entry.value}
-                      onChange={(e: any) => {
+                ) : (
+                  <MultiLineInputer
+                    placeholder={blankValue(entry.value) ? "value cannot be blank" : "ex: value"}
+                    width="270px"
+                    value={entry.value}
+                    onChange={(e: any) => {
+                      const _values = [...values];
+                      _values[i].value = e.target.value;
+                      setValues(_values);
+                    }}
+                    rows={entry.value?.split("\n").length}
+                    disabled={disabled || entry.locked}
+                    spellCheck={false}
+                    override={blankValue(entry.value)}
+                  />
+                )}
+                {secretOption && (
+                  <HideButton
+                    onClick={() => {
+                      if (!entry.locked) {
                         const _values = [...values];
-                        _values[i].value = e.target.value;
+                        _values[i].hidden = !_values[i].hidden;
                         setValues(_values);
-                      }}
-                      disabled={disabled || entry.locked}
-                      type={entry.hidden ? "password" : "text"}
-                      spellCheck={false}
-                      override={incorrectRegex(entry.key)}
-                    />
-                  ) : (
-                    <MultiLineInputer
-                      placeholder={blankValue(entry.value) ? "value cannot be blank" : "ex: value"}
-                      width="270px"
-                      value={entry.value}
-                      onChange={(e: any) => {
-                        const _values = [...values];
-                        _values[i].value = e.target.value;
-                        setValues(_values);
-                      }}
-                      rows={entry.value?.split("\n").length}
-                      disabled={disabled || entry.locked}
-                      spellCheck={false}
-                      override={blankValue(entry.value)}
-                    />
-                  )}
-                  {secretOption && (
-                    <HideButton
-                      onClick={() => {
-                        if (!entry.locked) {
-                          const _values = [...values];
-                          _values[i].hidden = !_values[i].hidden;
-                          setValues(_values);
-                        }
-                      }}
-                      disabled={entry.locked}
-                    >
-                      {entry.hidden ? (
-                        <i className="material-icons">lock</i>
-                      ) : (
-                        <i className="material-icons">lock_open</i>
-                      )}
-                    </HideButton>
-                  )}
+                      }
+                    }}
+                    disabled={entry.locked}
+                  >
+                    {entry.hidden ? (
+                      <i className="material-icons">lock</i>
+                    ) : (
+                      <i className="material-icons">lock_open</i>
+                    )}
+                  </HideButton>
+                )}
 
-                  {!disabled && (
-                    <DeleteButton
-                      onClick={() => {
-                        setValues(values.filter((val, index) => index !== i));
-                      }}
-                    >
-                      <i className="material-icons">cancel</i>
-                    </DeleteButton>
-                  )}
-                </InputWrapper>
-              );
-            }
-          })}
-        {!disabled && (
+                {!disabled && (
+                  <DeleteButton
+                    onClick={() => {
+                      setValues(values.filter((val, index) => index !== i));
+                    }}
+                  >
+                    <i className="material-icons">cancel</i>
+                  </DeleteButton>
+                )}
+              </InputWrapper>
+            );
+          }
+        })}
+      {!disabled && (
+        <>
+          {values.length > 0 && <Spacer y={.5} />}
           <InputWrapper>
-            <AddRowButton
+            <Button
+              alt
               onClick={() => {
                 const _values = [
                   ...values,
@@ -205,21 +211,24 @@ const EnvGroupArray = ({
                 setValues(_values);
               }}
             >
-              <i className="material-icons">add</i> Add Row
-            </AddRowButton>
-            <Spacer />
+              <I className="material-icons">add</I> Add row
+            </Button>
+            <Spacer inline x={.5} />
             {fileUpload && (
-              <UploadButton
+              <Button
+                alt
                 onClick={() => {
                   setShowEditorModal(true);
                 }}
               >
-                <img src={upload} /> Copy from File
-              </UploadButton>
+                <Image size={16} src={upload} />
+                <Spacer inline x={0.5} />
+                Copy from file
+              </Button>
             )}
           </InputWrapper>
-        )}
-      </StyledInputArray>
+        </>
+      )}
       {showEditorModal && (
         <Modal
           onRequestClose={() => { setShowEditorModal(false); }}
@@ -236,56 +245,12 @@ const EnvGroupArray = ({
   );
 };
 
+const I = styled.i`
+  font-size: 16px;
+  margin-right: 7px;
+`;
+
 export default EnvGroupArray;
-const Spacer = styled.div`
-  width: 10px;
-  height: 20px;
-`;
-
-const AddRowButton = styled.div`
-  display: flex;
-  align-items: center;
-  width: 270px;
-  font-size: 13px;
-  color: #aaaabb;
-  height: 32px;
-  border-radius: 3px;
-  cursor: pointer;
-  background: #ffffff11;
-  :hover {
-    background: #ffffff22;
-  }
-
-  > i {
-    color: #ffffff44;
-    font-size: 16px;
-    margin-left: 8px;
-    margin-right: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-`;
-
-const UploadButton = styled(AddRowButton)`
-  background: none;
-  position: relative;
-  border: 1px solid #ffffff55;
-  > i {
-    color: #ffffff44;
-    font-size: 16px;
-    margin-left: 8px;
-    margin-right: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  > img {
-    width: 14px;
-    margin-left: 10px;
-    margin-right: 12px;
-  }
-`;
 
 const DeleteButton = styled.div`
   width: 15px;
@@ -325,18 +290,18 @@ const HideButton = styled(DeleteButton)`
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin-top: 5px;
+  margin-bottom: 5px;
 `;
 const Input = styled.input<InputProps>`
   outline: none;
   border: none;
   margin-bottom: 5px;
   font-size: 13px;
-  background: #ffffff11;
-  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #ffffff55')};
-  border-radius: 3px;
+  background: ${(props) => props.theme.fg};
+  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #494b4f')};
+  border-radius: 5px;
   width: ${(props) => props.width ? props.width : "270px"};
-  color: ${(props) => props.disabled ? "#ffffff44" : "white"};
+  color: ${(props) => props.disabled ? "#ffffff44" : "#fefefe"};
   padding: 5px 10px;
   height: 35px;
 `;
@@ -345,22 +310,17 @@ const Label = styled.div`
   margin-bottom: 10px;
 `;
 
-const StyledInputArray = styled.div`
-  margin-bottom: 15px;
-  margin-top: 10px;
-`;
-
 export const MultiLineInputer = styled.textarea<InputProps>`
   outline: none;
   border: none;
   margin-bottom: 5px;
   font-size: 13px;
-  background: #ffffff11;
-  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #ffffff55')};
-  border-radius: 3px;
+  background: ${(props) => props.theme.fg};
+  border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #494b4f')};
+  border-radius: 5px;
   min-width: ${(props) => (props.width ? props.width : "270px")};
   max-width: ${(props) => (props.width ? props.width : "270px")};
-  color: ${(props) => (props.disabled ? "#ffffff44" : "white")};
+  color: ${(props) => (props.disabled ? "#ffffff44" : "#fefefe")};
   padding: 8px 10px 5px 10px;
   min-height: 35px;
   max-height: 100px;

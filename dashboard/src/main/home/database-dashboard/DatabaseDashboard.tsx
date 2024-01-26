@@ -96,7 +96,7 @@ const DatabaseDashboard: React.FC = () => {
           <Spacer y={1} />
           <PorterLink to="/datastores/new">
             <Button onClick={() => ({})} height="35px" alt>
-              Create datastore <Spacer inline x={1} />{" "}
+              Create a new datastore <Spacer inline x={1} />{" "}
               <i className="material-icons" style={{ fontSize: "18px" }}>
                 east
               </i>

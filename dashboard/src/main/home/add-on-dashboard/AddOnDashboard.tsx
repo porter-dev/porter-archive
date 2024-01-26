@@ -165,7 +165,7 @@ const AddOnDashboard: React.FC<Props> = ({
             (<Loading offset="-150px" />) : (
               <DashboardPlaceholder>
                 <Text size={16}>
-                  No add-ons have been deployed yet
+                  No add-ons have been created yet
                 </Text>
                 <Spacer y={0.5} />
                 <Text color={"helper"}>
@@ -174,7 +174,7 @@ const AddOnDashboard: React.FC<Props> = ({
                 <Spacer y={1} />
                 <Link to="/addons/new">
                   <Button alt onClick={() => { }} height="35px" >
-                    Deploy add-ons <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
+                    Deploy a new add-on <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
                   </Button>
                 </Link>
               </DashboardPlaceholder>

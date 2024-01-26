@@ -204,9 +204,9 @@ const Apps: React.FC = () => {
     if (apps.length === 0) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>No apps have been deployed yet</Text>
+          <Text size={16}>No applications have been created yet</Text>
           <Spacer y={0.5} />
-          <Text color={"helper"}>Get started by deploying your app.</Text>
+          <Text color={"helper"}>Get started by creating an application.</Text>
           <Spacer y={1} />
           <PorterLink to="/apps/new/app">
             <Button
@@ -216,7 +216,7 @@ const Apps: React.FC = () => {
               }}
               height="35px"
             >
-              Deploy app <Spacer inline x={1} />{" "}
+              Create a new application <Spacer inline x={1} />{" "}
               <i className="material-icons" style={{ fontSize: "18px" }}>
                 east
               </i>

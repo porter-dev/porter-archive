@@ -43,7 +43,7 @@ import api from "shared/api";
 import { useClusterResources } from "shared/ClusterResourcesContext";
 import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
-import web from "assets/web.png";
+import applicationGrad from "assets/application-grad.svg";
 
 import CreateDeploymentTargetModal from "components/CreateDeploymentTargetModal";
 import ImageSettings from "../image-settings/ImageSettings";
@@ -225,7 +225,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   }, [defaultDeploymentTarget]);
 
   const resetAllExceptName = (): void => {
-    setIsNameHighlight(true);
 
     // Get the current name value before the reset
     setStep(0);
@@ -432,6 +431,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       setIsNameHighlight(false); // Reset highlight when the name is valid
       setStep((prev) => Math.max(prev, 1));
     } else {
+      setIsNameHighlight(true);
       resetAllExceptName();
     }
 
@@ -589,8 +589,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         <StyledConfigureTemplate>
           <Back to="/apps" />
           <DashboardHeader
-            prefix={<Icon src={web} />}
-            title="Deploy a new application"
+            prefix={<Icon src={applicationGrad} />}
+            title="Create a new application"
             capitalize={false}
             disableLineBreak
           />
@@ -603,7 +603,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                   <>
                     <Text size={16}>Application name</Text>
                     <Spacer y={0.5} />
-                    <Text color={isNameHighlight ? "#FFCC00" : "helper"}>
+                    <Text color={isNameHighlight && porterAppFormMethods.getValues("app.name.value").length > 0 ? "#FFCC00" : "helper"}>
                       Lowercase letters, numbers, and &quot;-&quot; only.
                     </Text>
                     <Spacer y={0.5} />

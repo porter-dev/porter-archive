@@ -49,6 +49,7 @@ const ConnectedAppsTab: React.FC = () => {
       <Container row>
         <Text size={16}>Connected Apps</Text>
       </Container>
+      <Spacer y={0.25} />
       <SelectableAppList
         appListItems={connectedApps.map((ra) => ({
           app: ra,
@@ -60,7 +61,7 @@ const ConnectedAppsTab: React.FC = () => {
           },
         }))}
       />
-      <Spacer y={0.5} />
+      <Spacer y={0.25} />
       <AddAddonButton
         onClick={() => {
           setShowConnectAppsModal(true);

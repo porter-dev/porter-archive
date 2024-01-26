@@ -12,7 +12,7 @@ import copy from "assets/copy-left.svg";
 
 import { useDatastoreContext } from "../DatabaseContextProvider";
 
-const CredentialsTab: React.FC = () => {
+const ConnectTab: React.FC = () => {
   const { datastore } = useDatastoreContext();
 
   const keyValues = useMemo(() => {
@@ -38,7 +38,7 @@ const CredentialsTab: React.FC = () => {
   return (
     <CredentialsTabContainer>
       <Container row>
-        <Text size={16}>Credentials</Text>
+        <Text size={16}>Application connection</Text>
       </Container>
       {keyValues.length !== 0 && (
         <>
@@ -85,18 +85,38 @@ const CredentialsTab: React.FC = () => {
               }
             )}
           </StyledInputArray>
+          <Spacer y={0.5} />
+          <Text color="helper">
+            The datastore client of your application should use these
+            environment variables to create a connection.
+          </Text>
+          {datastore.type === "ELASTICACHE" && (
+            <>
+              <Spacer y={0.5} />
+              <Text color="warner">
+                In order for connection to succeed, your datastore client must
+                connect via SSL.
+              </Text>
+            </>
+          )}
         </>
       )}
+      <Spacer y={1} />
+      <Text size={16}>Local connection</Text>
       <Spacer y={0.5} />
-      <Text size={16}>Connect</Text>
+      <Text color="warner">
+        The credentials above will only work for apps running on your cluster.
+      </Text>
       <Spacer y={0.5} />
       <Text color="helper">
-        If you have the{" "}
-        <Link to="https://docs.porter.run/cli/installation" target="_blank">
+        However, if you have authenticated via the{" "}
+        <Link
+          to="https://docs.porter.run/standard/cli/command-reference/porter-datastore-connect"
+          target="_blank"
+        >
           <Text>Porter CLI</Text>
         </Link>{" "}
-        installed, you can connect to this datastore locally by running the
-        following command:
+        , you can create a secure tunnel to this datastore to connect locally:
       </Text>
       <Spacer y={0.5} />
       <IdContainer>
@@ -111,7 +131,7 @@ const CredentialsTab: React.FC = () => {
   );
 };
 
-export default CredentialsTab;
+export default ConnectTab;
 
 const CredentialsTabContainer = styled.div`
   width: 100%;

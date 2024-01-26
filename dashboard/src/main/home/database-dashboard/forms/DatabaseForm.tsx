@@ -13,7 +13,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import { type DbFormData } from "lib/databases/types";
-import { useClusterList } from "lib/hooks/useClusterList";
+import { isAWSCluster, useClusterList } from "lib/hooks/useClusterList";
 import { useDatastoreList } from "lib/hooks/useDatabaseList";
 import { useDatastoreMethods } from "lib/hooks/useDatabaseMethods";
 import { useIntercom } from "lib/hooks/useIntercom";
@@ -37,6 +37,11 @@ const DatabaseForm: React.FC<Props> = ({
   const { showIntercomWithMessage } = useIntercom();
   const { clusters } = useClusterList();
   const { currentProject } = useContext(Context);
+
+  // only aws clusters supported right now
+  const awsClusters = useMemo(() => {
+    return clusters.filter(isAWSCluster);
+  }, [JSON.stringify(clusters)]);
 
   const {
     formState: { isSubmitting, errors, isValidating },
@@ -84,10 +89,10 @@ const DatabaseForm: React.FC<Props> = ({
   }, [isSubmitting, submitErrorMessage, isValidating]);
 
   useEffect(() => {
-    if (clusters.length > 0) {
-      setValue("clusterId", clusters[0].id);
+    if (awsClusters.length > 0) {
+      setValue("clusterId", awsClusters[0].id);
     }
-  }, [JSON.stringify(clusters)]);
+  }, [JSON.stringify(awsClusters)]);
 
   return (
     <FormProvider {...form}>
@@ -115,7 +120,7 @@ const DatabaseForm: React.FC<Props> = ({
                   <Selector<string>
                     activeValue={chosenClusterId.toString()}
                     width="300px"
-                    options={clusters.map((c) => ({
+                    options={awsClusters.map((c) => ({
                       value: c.id.toString(),
                       label: c.vanity_name,
                       key: c.id.toString(),

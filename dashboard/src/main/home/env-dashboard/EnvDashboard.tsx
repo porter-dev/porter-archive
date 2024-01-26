@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
-import sliders from "assets/env-groups.svg";
+import envGroupGrad from "assets/env-group-grad.svg";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
@@ -238,7 +238,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
       return (
         <DashboardWrapper>
           <DashboardHeader
-            image={sliders}
+            image={envGroupGrad}
             title="Environment groups"
             description="Groups of environment variables for storing secrets and configuration."
             disableLineBreak

@@ -9,18 +9,18 @@ import { useDatastoreContext } from "./DatabaseContextProvider";
 import DatastoreProvisioningIndicator from "./DatastoreProvisioningIndicator";
 import ConfigurationTab from "./tabs/ConfigurationTab";
 import ConnectedAppsTab from "./tabs/ConnectedAppsTab";
-import CredentialsTab from "./tabs/CredentialsTab";
+import ConnectTab from "./tabs/ConnectTab";
 import MetricsTab from "./tabs/MetricsTab";
 import SettingsTab from "./tabs/SettingsTab";
 
 const validTabs = [
   "metrics",
-  "credentials",
+  "connect",
   "configuration",
   "settings",
   "connected-apps",
 ] as const;
-const DEFAULT_TAB = "credentials";
+const DEFAULT_TAB = "connect";
 type ValidTab = (typeof validTabs)[number];
 
 type DbTabProps = {
@@ -44,7 +44,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
 
   const tabs = useMemo(() => {
     return [
-      { label: "Credentials", value: "credentials" },
+      { label: "Connect", value: "connect" },
       { label: "Connected Apps", value: "connected-apps" },
       { label: "Configuration", value: "configuration" },
       { label: "Settings", value: "settings" },
@@ -67,7 +67,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
       />
       <Spacer y={1} />
       {match(currentTab)
-        .with("credentials", () => <CredentialsTab />)
+        .with("connect", () => <ConnectTab />)
         .with("settings", () => <SettingsTab />)
         .with("metrics", () => <MetricsTab />)
         .with("configuration", () => <ConfigurationTab />)

@@ -138,6 +138,7 @@ func (repo *ProjectRepository) DeleteProjectRole(projID, userID uint) (*models.R
 	return role, nil
 }
 
+// DeleteRolesForProject deletes all roles for a project
 func (repo *ProjectRepository) DeleteRolesForProject(projID uint) error {
 	if projID == 0 {
 		return errors.New("must provide a project ID")
@@ -150,7 +151,8 @@ func (repo *ProjectRepository) DeleteRolesForProject(projID uint) error {
 	}
 
 	for _, role := range roles {
-		if err := repo.db.Delete(&role).Error; err != nil {
+		r := role
+		if err := repo.db.Delete(&r).Error; err != nil {
 			return err
 		}
 	}

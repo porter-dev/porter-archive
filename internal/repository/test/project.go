@@ -224,6 +224,6 @@ func (repo *ProjectRepository) DeleteProjectRole(projID, userID uint) (*models.R
 }
 
 // DeleteRolesForProject deletes all roles for a project
-func DeleteRolesForProject(projID uint) error {
+func (repo *ProjectRepository) DeleteRolesForProject(projID uint) error {
 	return errors.New("unimplemented")
 }

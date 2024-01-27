@@ -1,7 +1,7 @@
 
 > 📘
 >
-> **Note:** this functionality was introduced in [Porter release 0.3.0](https://docs.getporter.dev/changelog/v030-tuesday-18-may-2021). By default, all charts deployed before this release were versioned with `v0.1.0`. If you experience any issues upgrading from `v0.1.0`, it is recommended that you **re-deploy the service with the latest version from the Launch tab**.
+> **Note:** this functionality was introduced in [Porter release 0.3.0](https://docs.porter.run/changelog/v030-tuesday-18-may-2021). By default, all charts deployed before this release were versioned with `v0.1.0`. If you experience any issues upgrading from `v0.1.0`, it is recommended that you **re-deploy the service with the latest version from the Launch tab**.
 
 
 # Deploying a Specific Template Version

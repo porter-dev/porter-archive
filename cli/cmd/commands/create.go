@@ -51,7 +51,7 @@ To modify the default configuration of the application, you can pass a values.ya
 
 To read more about the configuration options, go here:
 
-https://docs.getporter.dev/docs/deploying-from-the-cli#common-configuration-options
+https://docs.porter.run/docs/deploying-from-the-cli#common-configuration-options
 
 This command will automatically build from a local path, and will create a new Docker image in your
 default Docker registry. The path can be configured via the --path flag. For example:

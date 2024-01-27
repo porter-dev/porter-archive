@@ -291,6 +291,8 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		StacksEnabled:                   p.GetFeatureFlag(StacksEnabled, launchDarklyClient),
 		ValidateApplyV2:                 p.GetFeatureFlag(ValidateApplyV2, launchDarklyClient),
 		ManagedDeploymentTargetsEnabled: p.GetFeatureFlag(ManagedDeploymentTargetsEnabled, launchDarklyClient),
+
+		SandboxEnabled: p.EnableSandbox,
 	}
 }
 

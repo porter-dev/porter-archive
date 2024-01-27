@@ -113,9 +113,6 @@ type Config struct {
 	// EnableCAPIProvisioner enables CAPI Provisioner, which requires config for ClusterControlPlaneClient and NATS, if set to true
 	EnableCAPIProvisioner bool
 
-	// EnableSandbox instructs the Porter API server to talk to endpoints written for the Porter Sandbox.
-	EnableSandbox bool
-
 	TelemetryConfig telemetry.TracerConfig
 }
 

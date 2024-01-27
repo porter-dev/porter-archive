@@ -101,9 +101,8 @@ export const NewProjectFC = () => {
       setCurrentProject(project);
       setButtonStatus("successful");
       trackCreateNewProject();
-      
-      if (true) {
-        console.log('enabling sandbox')
+      console.log("proj", project)
+      if (project?.sandbox_enabled) {
         await api.connectProjectToCluster(
           "<token>",
           {},

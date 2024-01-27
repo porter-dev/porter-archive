@@ -46,7 +46,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		HelmValuesEnabled:      false,
 		MultiCluster:           false,
 		EnableReprovision:      false,
-		EnableSandbox:          p.Config().EnableSandbox,
+		EnableSandbox:          p.Config().ServerConf.EnableSandbox,
 	}
 
 	var err error
@@ -58,7 +58,8 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	step := types.StepConnectSource
-	if p.Config().EnableSandbox {
+
+	if p.Config().ServerConf.EnableSandbox {
 		step = types.StepCleanUp
 	}
 

@@ -122,7 +122,7 @@ export default class ResetPasswordInit extends Component<PropsType, StateType> {
         <Footer>
           © 2021 Porter Technologies Inc. •
           <Link
-            href="https://docs.getporter.dev/docs/terms-of-service"
+            href="https://docs.porter.run/docs/terms-of-service"
             target="_blank"
           >
             Terms & Privacy

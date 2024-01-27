@@ -143,7 +143,7 @@ const ClusterSettings: React.FC<Props> = (props) => {
       console. Instructions to properly delete all resources can be found
       <a
         target="none"
-        href="https://docs.getporter.dev/docs/deleting-dangling-resources"
+        href="https://docs.porter.run/docs/deleting-dangling-resources"
       >
         {" "}
         here

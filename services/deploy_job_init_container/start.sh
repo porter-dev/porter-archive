@@ -12,6 +12,6 @@ select the Actions tab.
 -------------------------------------------------------------------
 -------------------------------------------------------------------
 For more information, visit:
-https://docs.getporter.dev/docs/setting-up-cicd-1
+https://docs.porter.run/docs/setting-up-cicd-1
 -------------------------------------------------------------------
 EOF

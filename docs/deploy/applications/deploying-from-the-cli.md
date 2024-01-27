@@ -39,7 +39,7 @@ The default behavior of `porter create` is to use the local filesystem to build,
 porter create web --app web-test
 ```
 
-Porter will look for a `Dockerfile` located at the root of the current directory. If a `Dockerfile` is found, Porter will use the default Docker container registry linked to the Porter project to deploy the application. If a `Dockerfile` is not found, Porter will use a [Cloud-Native Buildpack](https://docs.getporter.dev/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks) to build your application. 
+Porter will look for a `Dockerfile` located at the root of the current directory. If a `Dockerfile` is found, Porter will use the default Docker container registry linked to the Porter project to deploy the application. If a `Dockerfile` is not found, Porter will use a [Cloud-Native Buildpack](https://docs.porter.run/docs/auto-deploy-requirements#auto-build-with-cloud-native-buildpacks) to build your application. 
 
 To point to a Dockerfile, you should pass the **relative path** to the Dockerfile from the root directory of the source code:
 
@@ -65,7 +65,7 @@ If your local branch is set to track changes from an upstream remote branch, Por
 
 ## Deploying from a Docker Registry 
 
-The CLI also supports deploying directly from a Docker image which is hosted on a [connected Docker registry](https://docs.getporter.dev/docs/linking-an-existing-docker-container-registry). Simply specify `--source registry` and the application image via the `--image` tag:
+The CLI also supports deploying directly from a Docker image which is hosted on a [connected Docker registry](https://docs.porter.run/docs/linking-an-existing-docker-container-registry). Simply specify `--source registry` and the application image via the `--image` tag:
 
 ```sh
 porter create web --app web-test --source registry --image gcr.io/snowflake-12345/web-test:latest

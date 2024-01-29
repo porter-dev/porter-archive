@@ -357,7 +357,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       new EKSNodeGroup({
         instanceType: "t3.large",
         minInstances: 1,
-        maxInstances: 1,
+        maxInstances: 5,
         nodeGroupType: NodeGroupType.MONITORING,
         isStateful: true,
         additionalPolicies: clusterState.additionalNodePolicies,

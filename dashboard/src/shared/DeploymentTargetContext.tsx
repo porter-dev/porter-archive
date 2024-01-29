@@ -9,11 +9,8 @@ import {
   type DeploymentTarget,
 } from "lib/hooks/useDeploymentTarget";
 
-import { OFState } from "../main/home/onboarding/state";
 import api from "./api";
 import { Context } from "./Context";
-import { pushFiltered } from "./routing";
-import type { ClusterType } from "./types";
 
 export const DeploymentTargetContext = createContext<{
   currentDeploymentTarget: DeploymentTarget | null;

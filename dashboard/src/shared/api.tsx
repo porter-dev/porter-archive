@@ -1239,11 +1239,10 @@ const getDeploymentTarget = baseApi<
   {},
   {
     project_id: number;
-    cluster_id: number;
     deployment_target_id: string;
   }
->("GET", ({ project_id, cluster_id, deployment_target_id }) => {
-  return `/api/projects/${project_id}/clusters/${cluster_id}/deployment-targets/${deployment_target_id}`;
+>("GET", ({ project_id, deployment_target_id }) => {
+  return `/api/projects/${project_id}/targets/${deployment_target_id}`;
 });
 
 const getAppTemplate = baseApi<

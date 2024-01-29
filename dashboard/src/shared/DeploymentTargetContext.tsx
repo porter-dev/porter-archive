@@ -9,8 +9,11 @@ import {
   type DeploymentTarget,
 } from "lib/hooks/useDeploymentTarget";
 
+import { OFState } from "../main/home/onboarding/state";
 import api from "./api";
 import { Context } from "./Context";
+import { pushFiltered } from "./routing";
+import type { ClusterType } from "./types";
 
 export const DeploymentTargetContext = createContext<{
   currentDeploymentTarget: DeploymentTarget | null;
@@ -34,7 +37,8 @@ const DeploymentTargetProvider = ({
   children: JSX.Element;
 }): JSX.Element => {
   const { search } = useLocation();
-  const { currentCluster, currentProject } = useContext(Context);
+  const { currentProject, currentCluster, setCurrentCluster } =
+    useContext(Context);
   const queryParams = new URLSearchParams(search);
 
   const deploymentTargetID = queryParams.get("target");
@@ -45,13 +49,12 @@ const DeploymentTargetProvider = ({
     [
       "getDeploymentTarget",
       {
-        cluster_id: currentCluster?.id,
         project_id: currentProject?.id,
         deployment_target_id: deploymentTargetID,
       },
     ],
     async () => {
-      if (!currentCluster || !currentProject || !deploymentTargetID) {
+      if (!currentProject || !deploymentTargetID) {
         return;
       }
       const res = await api.getDeploymentTarget(
@@ -59,7 +62,6 @@ const DeploymentTargetProvider = ({
         {},
         {
           project_id: currentProject.id,
-          cluster_id: currentCluster.id,
           deployment_target_id: deploymentTargetID,
         }
       );
@@ -71,7 +73,7 @@ const DeploymentTargetProvider = ({
       return deploymentTarget.deployment_target;
     },
     {
-      enabled: !!currentCluster && !!currentProject && !!deploymentTargetID,
+      enabled: !!currentProject && !!deploymentTargetID,
     }
   );
 
@@ -100,6 +102,29 @@ const DeploymentTargetProvider = ({
     deploymentTargetFromIdParam,
     status,
   ]);
+
+  if (
+    deploymentTarget &&
+    currentProject &&
+    currentCluster &&
+    deploymentTarget.cluster_id !== currentCluster.id
+  ) {
+    api
+      .getCluster(
+        "<token>",
+        {},
+        {
+          project_id: currentProject.id,
+          cluster_id: deploymentTarget.cluster_id,
+        }
+      )
+      .then(({ data }) => {
+        if (data) {
+          setCurrentCluster(data);
+        }
+      })
+      .catch(() => {});
+  }
 
   return (
     <DeploymentTargetContext.Provider

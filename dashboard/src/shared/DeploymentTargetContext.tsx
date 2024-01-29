@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "react-router";
 import { z } from "zod";
@@ -11,6 +11,7 @@ import {
 
 import api from "./api";
 import { Context } from "./Context";
+import { clusterValidator } from "./types";
 
 export const DeploymentTargetContext = createContext<{
   currentDeploymentTarget: DeploymentTarget | null;
@@ -100,28 +101,41 @@ const DeploymentTargetProvider = ({
     status,
   ]);
 
-  if (
-    deploymentTarget &&
-    currentProject &&
-    currentCluster &&
-    deploymentTarget.cluster_id !== currentCluster.id
-  ) {
-    api
-      .getCluster(
+  const { data: cluster, isSuccess } = useQuery(
+    [
+      "getCluster",
+      {
+        project_id: currentProject?.id,
+        cluster_id: deploymentTarget?.cluster_id,
+      },
+    ],
+    async () => {
+      if (!currentProject || !deploymentTarget) {
+        return;
+      }
+      const { data } = await api.getCluster(
         "<token>",
         {},
         {
           project_id: currentProject.id,
-          cluster_id: deploymentTarget.cluster_id,
+          cluster_id: deploymentTarget?.cluster_id,
         }
-      )
-      .then(({ data }) => {
-        if (data) {
-          setCurrentCluster(data);
-        }
-      })
-      .catch(() => {});
-  }
+      );
+
+      const cluster = await clusterValidator.parseAsync(data);
+
+      return cluster;
+    },
+    {
+      enabled: !!currentProject && !!deploymentTargetID,
+    }
+  );
+
+  useEffect(() => {
+    if (isSuccess && cluster.id !== currentCluster?.id) {
+      setCurrentCluster(cluster);
+    }
+  }, [isSuccess, cluster, setCurrentCluster]);
 
   return (
     <DeploymentTargetContext.Provider

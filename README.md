@@ -57,6 +57,6 @@ Below are instructions for a quickstart. For full documentation, please visit ou
 
 1. Sign up and log into [Porter Dashboard](https://dashboard.getporter.dev).
 
-2. Create a Project and [put in your cloud provider credentials](https://docs.getporter.dev/docs/getting-started-with-porter-on-aws). Porter will automatically provision a Kubernetes cluster in your own cloud. It is also possible to [link up an existing Kubernetes cluster.](https://docs.getporter.dev/docs/cli-documentation#connecting-to-an-existing-cluster)
+2. Create a Project and [put in your cloud provider credentials](https://docs.porter.run/docs/getting-started-with-porter-on-aws). Porter will automatically provision a Kubernetes cluster in your own cloud. It is also possible to [link up an existing Kubernetes cluster.](https://docs.porter.run/docs/cli-documentation#connecting-to-an-existing-cluster)
 
-3. 🚀 Deploy your applications from a [git repository](https://docs.getporter.dev/docs/applications) or [Docker image registry](https://docs.getporter.dev/docs/cli-documentation#porter-docker-configure).
+3. 🚀 Deploy your applications from a [git repository](https://docs.porter.run/docs/applications) or [Docker image registry](https://docs.porter.run/docs/cli-documentation#porter-docker-configure).

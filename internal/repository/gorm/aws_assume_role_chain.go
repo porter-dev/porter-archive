@@ -66,3 +66,25 @@ func (cr AWSAssumeRoleChain) ListByAwsAccountId(ctx context.Context, awsAccountI
 
 	return confs, nil
 }
+
+// Delete deletes an AWS assume role chain by project ID
+func (cr AWSAssumeRoleChain) Delete(ctx context.Context, projectID uint) error {
+	if projectID == 0 {
+		return errors.New("must provide a project ID")
+	}
+
+	var confs []*models.AWSAssumeRoleChain
+	tx := cr.db.Where("project_id = ?", projectID).Find(&confs)
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	for _, conf := range confs {
+		tx := cr.db.Delete(conf)
+		if tx.Error != nil {
+			return tx.Error
+		}
+	}
+
+	return nil
+}

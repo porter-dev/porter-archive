@@ -2,7 +2,7 @@ Porter lets you deploy a service from a public or private Docker image registry.
 
 > 📘 Prerequisites
 >
-> - A public Docker image or private container registry linked to Porter. See how to [link a registry to Porter]((https://docs.getporter.dev/docs/linking-an-existing-docker-container-registry))
+> - A public Docker image or private container registry linked to Porter. See how to [link a registry to Porter]((https://docs.porter.run/docs/linking-an-existing-docker-container-registry))
 > - A Kubernetes cluster connected to Porter (linked by default if you provisioned through Porter). 
 >
 > **Note:** If you didn't provision through Porter, you can still [link an existing cluster](). 
@@ -11,7 +11,7 @@ Let's get started!
 
 1. On the Porter dashboard, navigate to the **Launch** tab in the sidebar and select **Web Service** -> **Launch Template**.
 
-2. Select the **Docker Registry** option. If you have not linked a registry, you can do so from the **Integrations** tab ([learn more](https://docs.getporter.dev/docs/linking-an-existing-docker-container-registry)). 
+2. Select the **Docker Registry** option. If you have not linked a registry, you can do so from the **Integrations** tab ([learn more](https://docs.porter.run/docs/linking-an-existing-docker-container-registry)). 
 
 3. Indicate the image repo and image tag you would like to use.
 

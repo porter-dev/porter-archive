@@ -4,7 +4,7 @@ While it requires a few additional steps, it is possible to run Porter locally. 
 
 To run the Porter binary, follow these steps: 
 
-1. [Install our CLI](https://docs.getporter.dev/docs/cli-documentation#installation)
+1. [Install our CLI](https://docs.porter.run/docs/cli-documentation#installation)
 
 2. Run `porter server start`. This will spin up a local Porter instance on port 8080.
 

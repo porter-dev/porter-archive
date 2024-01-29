@@ -1,11 +1,6 @@
 import React, { useMemo } from "react";
-import { match } from "ts-pattern";
 
 import StatusBar from "components/porter/StatusBar";
-import {
-  DATASTORE_TYPE_ELASTICACHE,
-  DATASTORE_TYPE_RDS,
-} from "lib/databases/types";
 
 import { useDatastoreContext } from "./DatabaseContextProvider";
 
@@ -21,13 +16,7 @@ const DatastoreProvisioningIndicator: React.FC = () => {
       stepsCompleted === -1
         ? 0
         : (stepsCompleted / creationSteps.length) * 100.0;
-    const title = match(datastore.template)
-      .with({ type: DATASTORE_TYPE_RDS }, () => "RDS provisioning status")
-      .with(
-        { type: DATASTORE_TYPE_ELASTICACHE },
-        () => "Elasticache provisioning status"
-      )
-      .exhaustive();
+    const title = `${datastore.template.type.displayName} provisioning status`;
     const stateMatch = datastore.template.creationStateProgression.find(
       (s) => s.state === datastore.status
     );

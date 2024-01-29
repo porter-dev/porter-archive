@@ -1,9 +1,8 @@
 import React, { useMemo } from "react";
 import _ from "lodash";
-import { withRouter, type RouteComponentProps } from "react-router";
+import { useHistory, useLocation, withRouter } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-import { z } from "zod";
 
 import Back from "components/porter/Back";
 import Spacer from "components/porter/Spacer";
@@ -26,28 +25,19 @@ import DatabaseFormElasticacheRedis from "./forms/DatabaseFormElasticacheRedis";
 import DatabaseFormRDSPostgres from "./forms/DatabaseFormRDSPostgres";
 import EngineTag from "./tags/EngineTag";
 
-type Props = RouteComponentProps;
-const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
+const CreateDatabase: React.FC = () => {
+  const { search } = useLocation();
+  const history = useHistory();
+  const queryParams = new URLSearchParams(search);
+
   const templateMatch: DatastoreTemplate | undefined = useMemo(() => {
-    const { params } = queryMatch;
-    const validParams = z
-      .object({
-        type: z.string(),
-        engine: z.string(),
-      })
-      .safeParse(params);
-
-    if (!validParams.success) {
-      return undefined;
-    }
-
     return SUPPORTED_DATASTORE_TEMPLATES.find(
       (t) =>
         !t.disabled &&
-        t.type === validParams.data.type &&
-        t.engine.name === validParams.data.engine
+        t.type.name === queryParams.get("type") &&
+        t.engine.name === queryParams.get("engine")
     );
-  }, [queryMatch]);
+  }, [queryParams]);
 
   return (
     <StyledTemplateComponent>
@@ -91,7 +81,9 @@ const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
                     disabled={disabled}
                     key={`${name}-${engine.name}`}
                     onClick={() => {
-                      history.push(`/datastores/new/${type}/${engine.name}`);
+                      history.push(
+                        `/datastores/new?type=${type.name}&engine=${engine.name}`
+                      );
                     }}
                   >
                     <TemplateHeader>

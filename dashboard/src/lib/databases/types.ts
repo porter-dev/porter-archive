@@ -69,9 +69,18 @@ export const DATASTORE_ENGINE_MEMCACHED = {
   displayName: "Memcached",
 };
 
-export type DatastoreType = z.infer<typeof datastoreValidator>["type"];
-export const DATASTORE_TYPE_RDS = "RDS" as const;
-export const DATASTORE_TYPE_ELASTICACHE = "ELASTICACHE" as const;
+export type DatastoreType = {
+  name: z.infer<typeof datastoreValidator>["type"];
+  displayName: string;
+};
+export const DATASTORE_TYPE_RDS: DatastoreType = {
+  name: "RDS" as const,
+  displayName: "RDS",
+};
+export const DATASTORE_TYPE_ELASTICACHE: DatastoreType = {
+  name: "ELASTICACHE" as const,
+  displayName: "ElastiCache",
+};
 
 export type DatastoreState = {
   state: z.infer<typeof datastoreValidator>["status"];

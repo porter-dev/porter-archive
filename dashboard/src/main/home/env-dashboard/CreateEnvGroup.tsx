@@ -61,9 +61,13 @@ const CreateEnvGroup: React.FC = () => {
     void validateName();
   }, [name, trigger]);
 
+  useEffect(() => {
+    console.log(envVariables)
+  }, [envVariables, trigger]);
+
   const onSubmit = handleSubmit(async (data) => {
     console.log("hello??")
-    console.log(data)
+    console.log(envVariables)
   });
 
   return (
@@ -84,7 +88,7 @@ const CreateEnvGroup: React.FC = () => {
                 currentStep={step}
                 steps={[
                   <>
-                    <Text size={16}>Env group name</Text>
+                    <Text size={16}>Environment group name</Text>
                     <Spacer y={0.5} />
                     <Text color="helper">
                       Lowercase letters, numbers, and &quot;-&quot; only.

@@ -81,9 +81,10 @@ const CreateDatabase: React.FC = () => {
                     disabled={disabled}
                     key={`${name}-${engine.name}`}
                     onClick={() => {
-                      history.push(
-                        `/datastores/new?type=${type.name}&engine=${engine.name}`
-                      );
+                      const query = new URLSearchParams();
+                      query.set("type", type.name);
+                      query.set("engine", engine.name);
+                      history.push(`/datastores/new?${query.toString()}`);
                     }}
                   >
                     <TemplateHeader>

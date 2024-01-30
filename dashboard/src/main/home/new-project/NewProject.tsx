@@ -108,16 +108,18 @@ export const NewProjectFC = () => {
           { id: project.id }
         )
         .then(() => {
+          setButtonStatus("successful");
           pushFiltered("/apps", []);
         })
         .catch((err) => {
+          setButtonStatus("Couldn't create project, try again.");
           console.log(err)
         })
 
       } else {
+        setButtonStatus("successful");
         pushFiltered("/onboarding", []);
       }
-      setButtonStatus("successful");
     } catch (error) {
       setButtonStatus("Couldn't create project, try again.");
       console.log(error);

@@ -90,7 +90,7 @@ const ConnectTab: React.FC = () => {
             The datastore client of your application should use these
             environment variables to create a connection.
           </Text>
-          {datastore.type === "ELASTICACHE" && (
+          {datastore.template.type.name === "ELASTICACHE" && (
             <>
               <Spacer y={0.5} />
               <Text color="warner">

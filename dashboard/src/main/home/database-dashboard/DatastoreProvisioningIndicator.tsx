@@ -15,20 +15,16 @@ const DatastoreProvisioningIndicator: React.FC = () => {
       const deletionSteps = datastore.template.deletionStateProgression.map(
         (s) => s.state
       );
-      const steps =
-        creationSteps.find((s) => s === datastore.status) != null
-          ? creationSteps
-          : deletionSteps;
-      const stateMatch =
-        creationSteps.find((s) => s === datastore.status) != null
-          ? datastore.template.creationStateProgression.find(
-              (s) => s.state === datastore.status
-            )
-          : datastore.template.deletionStateProgression.find(
-              (s) => s.state === datastore.status
-            );
       const isCreating =
         creationSteps.find((s) => s === datastore.status) != null;
+      const steps = isCreating ? creationSteps : deletionSteps;
+      const stateMatch = isCreating
+        ? datastore.template.creationStateProgression.find(
+            (s) => s.state === datastore.status
+          )
+        : datastore.template.deletionStateProgression.find(
+            (s) => s.state === datastore.status
+          );
 
       const stepsCompleted = steps.indexOf(datastore.status) + 1;
       const percentCompleted =

@@ -1,3 +1,24 @@
+import { z } from "zod"
+
+export const clusterValidator = z.object({
+  id: z.number(),
+  name: z.string(),
+  vanity_name: z.string().optional(),
+  server: z.string(),
+  service_account_id: z.number().optional(),
+  agent_integration_enabled: z.boolean().optional(),
+  infra_id: z.number().optional(),
+  service: z.string().optional(),
+  aws_integration_id: z.number().optional(),
+  aws_cluster_id: z.string().optional(),
+  preview_envs_enabled: z.boolean().optional(),
+  cloud_provider_credential_identifier: z.string().optional(),
+  status: z.string().optional(),
+  cloud_provider: z.string(),
+  gpuCluster: z.boolean().optional()
+})
+
+
 export type ClusterType = {
   id: number;
   name: string;

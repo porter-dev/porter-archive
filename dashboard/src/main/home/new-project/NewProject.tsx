@@ -99,7 +99,6 @@ export const NewProjectFC = () => {
         .then((res) => res.data as ProjectListType[]);
       setProjects(projectList);
       setCurrentProject(project);
-      setButtonStatus("successful");
       trackCreateNewProject();
       console.log("proj", project)
       if (project?.sandbox_enabled) {
@@ -118,6 +117,7 @@ export const NewProjectFC = () => {
       } else {
         pushFiltered("/onboarding", []);
       }
+      setButtonStatus("successful");
     } catch (error) {
       setButtonStatus("Couldn't create project, try again.");
       console.log(error);

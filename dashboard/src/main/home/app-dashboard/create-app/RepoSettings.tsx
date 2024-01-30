@@ -82,7 +82,7 @@ const RepoSettings: React.FC<Props> = ({
     }
 
     const item = branchContents.find((item) =>
-      item.path.toLowerCase().includes("dockerfile") && item.type === "file"
+      item.path.includes("Dockerfile") && item.type === "file"
     );
     if (item) {
       setValue("app.build.dockerfile", item.path.startsWith("./") || item.path.startsWith("/") ? item.path : `./${item.path}`);

@@ -7,33 +7,50 @@ import { useDatastoreContext } from "./DatabaseContextProvider";
 const DatastoreProvisioningIndicator: React.FC = () => {
   const { datastore } = useDatastoreContext();
 
-  const { percentCompleted, title, titleDescriptor } = useMemo(() => {
-    const creationSteps = datastore.template.creationStateProgression.map(
-      (s) => s.state
-    );
-    const stepsCompleted = creationSteps.indexOf(datastore.status) + 1;
-    const percentCompleted =
-      stepsCompleted === -1
-        ? 0
-        : (stepsCompleted / creationSteps.length) * 100.0;
-    const title = `${datastore.template.type.displayName} provisioning status`;
-    const stateMatch = datastore.template.creationStateProgression.find(
-      (s) => s.state === datastore.status
-    );
-    const titleDescriptor = stateMatch
-      ? `${stateMatch.displayName}...`
-      : undefined;
-    return { percentCompleted, title, titleDescriptor };
-  }, [datastore]);
+  const { percentCompleted, title, titleDescriptor, isCreating } =
+    useMemo(() => {
+      const creationSteps = datastore.template.creationStateProgression.map(
+        (s) => s.state
+      );
+      const deletionSteps = datastore.template.deletionStateProgression.map(
+        (s) => s.state
+      );
+      const steps =
+        creationSteps.find((s) => s === datastore.status) != null
+          ? creationSteps
+          : deletionSteps;
+      const stateMatch =
+        creationSteps.find((s) => s === datastore.status) != null
+          ? datastore.template.creationStateProgression.find(
+              (s) => s.state === datastore.status
+            )
+          : datastore.template.deletionStateProgression.find(
+              (s) => s.state === datastore.status
+            );
+      const isCreating =
+        creationSteps.find((s) => s === datastore.status) != null;
+
+      const stepsCompleted = steps.indexOf(datastore.status) + 1;
+      const percentCompleted =
+        stepsCompleted === -1 ? 0 : (stepsCompleted / steps.length) * 100.0;
+      const title = `${datastore.template.type.displayName} ${
+        isCreating ? "provisioning" : "deletion"
+      } status`;
+
+      const titleDescriptor = stateMatch
+        ? `${stateMatch.displayName}...`
+        : undefined;
+      return { percentCompleted, title, titleDescriptor, isCreating };
+    }, [datastore]);
 
   return (
     <StatusBar
       icon={datastore.template.icon}
       title={title}
       titleDescriptor={titleDescriptor}
-      subtitle={
-        "Setup can take up to 20 minutes. You can close this window and come back later."
-      }
+      subtitle={`${
+        isCreating ? "Setup" : "Deletion"
+      } can take up to 20 minutes. You can close this window and come back later.`}
       percentCompleted={percentCompleted}
     />
   );

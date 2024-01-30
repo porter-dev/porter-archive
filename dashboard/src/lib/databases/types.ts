@@ -35,6 +35,11 @@ export const datastoreValidator = z.object({
     "CONFIGURING_ENHANCED_MONITORING",
     "BACKING_UP",
     "AVAILABLE",
+    "AWAITING_DELETION",
+    "DELETING_REPLICATION_GROUP",
+    "DELETING_PARAMETER_GROUP",
+    "DELETING_RECORD",
+    "DELETED",
   ]),
 });
 
@@ -110,6 +115,26 @@ export const DATASTORE_STATE_AVAILABLE: DatastoreState = {
   state: "AVAILABLE",
   displayName: "Finishing provision",
 };
+export const DATASTORE_STATE_AWAITING_DELETION: DatastoreState = {
+  state: "AWAITING_DELETION",
+  displayName: "Awaiting deletion",
+};
+export const DATASTORE_STATE_DELETING_REPLICATION_GROUP: DatastoreState = {
+  state: "DELETING_REPLICATION_GROUP",
+  displayName: "Deleting replication group",
+};
+export const DATASTORE_STATE_DELETING_PARAMETER_GROUP: DatastoreState = {
+  state: "DELETING_PARAMETER_GROUP",
+  displayName: "Deleting parameter group",
+};
+export const DATASTORE_STATE_DELETING_RECORD: DatastoreState = {
+  state: "DELETING_RECORD",
+  displayName: "Deleting all resources",
+};
+export const DATASTORE_STATE_DELETED: DatastoreState = {
+  state: "DELETED",
+  displayName: "Wrapping up",
+};
 
 export type DatastoreTemplate = {
   type: DatastoreType;
@@ -121,6 +146,7 @@ export type DatastoreTemplate = {
   instanceTiers: ResourceOption[];
   formTitle: string;
   creationStateProgression: DatastoreState[];
+  deletionStateProgression: DatastoreState[];
 };
 
 const instanceTierValidator = z.enum([

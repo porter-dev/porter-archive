@@ -791,7 +791,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
               label="CIDR range for Kubernetes internal services"
               placeholder="ex: 172.20.0.0/16"
             />
-            {currentProject && false && (
+            {currentProject && (
               <>
                 <Spacer y={1} />
                 <Checkbox

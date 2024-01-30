@@ -133,6 +133,7 @@ const EnvGroupArray = ({
                     placeholder="ex: value"
                     width="270px"
                     value={entry.value}
+                    flex
                     onChange={(e: any) => {
                       const _values = [...values];
                       _values[i].value = e.target.value;
@@ -292,8 +293,10 @@ const InputWrapper = styled.div`
   align-items: center;
   margin-bottom: 5px;
 `;
-const Input = styled.input<InputProps>`
+const Input = styled.input<{ flex?: boolean }>`
   outline: none;
+  display: ${(props) => (props.flex ? "flex" : "block")};
+  ${(props) => (props.flex && 'flex: 1;')}
   border: none;
   margin-bottom: 5px;
   font-size: 13px;
@@ -313,13 +316,13 @@ const Label = styled.div`
 export const MultiLineInputer = styled.textarea<InputProps>`
   outline: none;
   border: none;
+  display: flex;
+  flex: 1;
   margin-bottom: 5px;
   font-size: 13px;
   background: ${(props) => props.theme.fg};
   border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #494b4f')};
   border-radius: 5px;
-  min-width: ${(props) => (props.width ? props.width : "270px")};
-  max-width: ${(props) => (props.width ? props.width : "270px")};
   color: ${(props) => (props.disabled ? "#ffffff44" : "#fefefe")};
   padding: 8px 10px 5px 10px;
   min-height: 35px;

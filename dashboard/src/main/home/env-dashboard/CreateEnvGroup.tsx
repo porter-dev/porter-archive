@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import styled from 'styled-components';
-import api from 'shared/api';
-
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
+import { withRouter, type RouteComponentProps } from "react-router";
 
+import api from 'shared/api';
 import { Context } from 'shared/Context';
 
 import envGrad from 'assets/env-group-grad.svg';
 
+import Error from "components/porter/Error";
 import Back from "components/porter/Back";
 import DashboardHeader from '../cluster-dashboard/DashboardHeader';
 import VerticalSteps from 'components/porter/VerticalSteps';
@@ -17,7 +18,8 @@ import Text from 'components/porter/Text';
 import Spacer from 'components/porter/Spacer';
 import { ControlledInput } from 'components/porter/ControlledInput';
 import Button from 'components/porter/Button';
-import EnvGroupArray from './EnvGroupArray';
+import EnvGroupArray, { type KeyValueType } from './EnvGroupArray';
+import axios from 'axios';
 
 const envGroupFormValidator = z.object({
   name: z
@@ -27,54 +29,169 @@ const envGroupFormValidator = z.object({
     .regex(/^[a-z0-9-]+$/, {
       message: 'Lowercase letters, numbers, and " - " only.',
     }),
-  value: z.number().default(1),
+  envVariables: z
+    .array(
+      z.object({
+        key: z.string().min(1, { message: "Key cannot be empty" }),
+        value: z.string().min(1, { message: "Value cannot be empty" }),
+        deleted: z.boolean(),
+        hidden: z.boolean(),
+        locked: z.boolean(),
+      })
+    )
+    .min(1, { message: "At least one environment variable is required" })
 });
+
 type EnvGroupFormData = z.infer<typeof envGroupFormValidator>;
 
-const CreateEnvGroup: React.FC = () => {
+const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
+  const { currentProject, currentCluster } = useContext(Context);
+
   const envGroupFormMethods = useForm<EnvGroupFormData>({
     resolver: zodResolver(envGroupFormValidator),
     reValidateMode: "onSubmit",
   });
+
   const { 
+    formState: { isValidating, isSubmitting, errors },
     register,
     watch,
     trigger,
     handleSubmit,
-    formState: { errors },
+    setValue,
   } = envGroupFormMethods;
 
+  const [submitErrorMessage, setSubmitErrorMessage] = useState<string>("");
   const [step, setStep] = React.useState(0);
   const name = watch("name");
-
-  const [envVariables, setEnvVariables] = useState<any[]>([]);
+  const envVariables = watch("envVariables");
 
   useEffect(() => {
-    const validateName = async (): Promise<void> => {
+    setValue("envVariables", [
+      {
+        key: "",
+        value: "",
+        hidden: false,
+        locked: false,
+        deleted: false,
+      }
+    ])
+  }, []);
+
+  useEffect(() => {
+    const validate = async (): Promise<void> => {
       const isNameValid = await trigger("name");
-      if (isNameValid) {
-        setStep((prev) => Math.max(prev, 1));
+      const isEnvVariablesValid = await trigger("envVariables");
+      if (isNameValid && isEnvVariablesValid) {
+        setStep(2);
+      } else if (isNameValid) {
+        setStep(1);
       } else {
         setStep(0);
       }
     };
-    void validateName();
-  }, [name, trigger]);
-
-  useEffect(() => {
-    console.log(envVariables)
-  }, [envVariables, trigger]);
+    void validate();
+  }, [name, envVariables]);
 
   const onSubmit = handleSubmit(async (data) => {
-    console.log("hello??")
-    console.log(envVariables)
+    setSubmitErrorMessage("");
+    const apiEnvVariables: Record<string, string> = {};
+    const secretEnvVariables: Record<string, string> = {};
+    const envVariable = data.envVariables;
+    try {
+
+      // Create env group namespace if it doesn't exist
+      const res = await api.getNamespaces(
+        "<token>",
+        {},
+        {
+          id: currentProject?.id ?? -1,
+          cluster_id: currentCluster?.id ?? -1,
+        }
+      );
+      const namespaceExists = res.data.some((n: { name: string }) => n.name === "porter-env-group");
+      if (!namespaceExists) {
+        await api.createNamespace(
+          "<token>",
+          {
+            name: "porter-env-group",
+          },
+          {
+            id: currentProject?.id ?? -1,
+            cluster_id: currentCluster?.id ?? -1,
+          }
+        );
+      }
+
+      // Old env var create logic
+      envVariable
+        .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
+          // remove any collisions that are marked as deleted and are duplicates
+          const numCollisions = self.reduce((n, _envVar: KeyValueType) => {
+            return n + (_envVar.key === envVar.key ? 1 : 0);
+          }, 0);
+
+          if (numCollisions === 1) {
+            return true;
+          } else {
+            return (
+              index ===
+              self.findIndex(
+                (_envVar: KeyValueType) =>
+                  _envVar.key === envVar.key && !_envVar.deleted
+              )
+            );
+          }
+        })
+        .forEach((envVar: KeyValueType) => {
+          if (!envVar.deleted) {
+            if (envVar.hidden) {
+              secretEnvVariables[envVar.key] = envVar.value;
+            } else {
+              apiEnvVariables[envVar.key] = envVar.value;
+            }
+          }
+        });
+
+      await api
+        .createEnvironmentGroups(
+          "<token>",
+          {
+            name: data.name,
+            variables: apiEnvVariables,
+            secret_variables: secretEnvVariables,
+          },
+          {
+            id: currentProject?.id ?? -1,
+            cluster_id: currentCluster?.id ?? -1,
+          }
+        )
+        
+      history.push(`/envs`);
+    } catch (err) {
+      const errorMessage =
+        axios.isAxiosError(err) && err.response?.data?.error
+          ? err.response.data.error
+          : "An error occurred while creating your env group. Please try again.";
+      setSubmitErrorMessage(errorMessage);
+    }
   });
+
+  const submitButtonStatus = useMemo(() => {
+    if (isSubmitting || isValidating) {
+      return "loading";
+    }
+    if (submitErrorMessage) {
+      return <Error message={submitErrorMessage} />;
+    }
+    return undefined;
+  }, [isSubmitting, submitErrorMessage, isValidating]);
 
   return (
     <CenterWrapper>
       <Div>
         <StyledConfigureTemplate>
-          <Back to="/env" />
+          <Back to="/envs" />
           <DashboardHeader
             prefix={<Icon src={envGrad} />}
             title="Create a new env group"
@@ -111,7 +228,9 @@ const CreateEnvGroup: React.FC = () => {
                     <Spacer height="15px" />
                     <EnvGroupArray
                       values={envVariables}
-                      setValues={setEnvVariables}
+                      setValues={(x) => {
+                        setValue("envVariables", x);
+                      }}
                       fileUpload={true}
                       secretOption={true}
                     />
@@ -119,6 +238,7 @@ const CreateEnvGroup: React.FC = () => {
                   <Button
                     key={2}
                     type="submit"
+                    status={submitButtonStatus}
                     loadingText="Creating env group . . ."
                     width="120px"
                   >
@@ -135,7 +255,7 @@ const CreateEnvGroup: React.FC = () => {
   );
 }
 
-export default CreateEnvGroup;
+export default withRouter(CreateEnvGroup);
 
 const Icon = styled.img`
   margin-right: 15px;

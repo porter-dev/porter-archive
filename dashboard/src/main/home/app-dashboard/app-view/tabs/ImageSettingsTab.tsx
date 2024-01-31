@@ -26,7 +26,7 @@ const ImageSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
     formState: { isSubmitting },
     setValue,
   } = useFormContext<PorterAppFormData>();
-  const { projectId, latestRevision, latestProto } = useLatestRevision();
+  const { projectId, latestProto } = useLatestRevision();
 
   const source = watch("source");
 
@@ -54,10 +54,7 @@ const ImageSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
         <AppSaveButton
           status={buttonStatus}
           isDisabled={
-            isSubmitting ||
-            latestRevision.status === "CREATED" ||
-            !source.image?.repository ||
-            !source.image?.tag
+            isSubmitting || !source.image?.repository || !source.image?.tag
           }
           disabledTooltipMessage="Please wait for the deploy to complete before updating image settings"
         />

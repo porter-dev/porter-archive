@@ -31,7 +31,6 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
   const {
     porterApp,
     latestProto,
-    latestRevision,
     projectId,
     clusterId,
     deploymentTarget,
@@ -86,9 +85,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
       <Spacer y={0.75} />
       <AppSaveButton
         status={buttonStatus}
-        isDisabled={
-          formState.isSubmitting || latestRevision.status === "CREATED"
-        }
+        isDisabled={formState.isSubmitting}
         disabledTooltipMessage="Please wait for the deploy to complete before updating services"
       />
     </>

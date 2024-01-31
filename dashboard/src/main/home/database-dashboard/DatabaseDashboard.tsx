@@ -225,7 +225,7 @@ const DatabaseDashboard: React.FC = () => {
             <Container row>
               <PlaceholderIcon src={notFound} />
               <Text color="helper">
-                No datastores matching filters were found.
+                No matching datastores were found.
               </Text>
             </Container>
           </Fieldset>

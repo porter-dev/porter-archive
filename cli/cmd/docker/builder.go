@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -238,6 +239,8 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 		stdoutWriters = append(stdoutWriters, opts.LogFile)
 		stderrWriters = append(stderrWriters, opts.LogFile)
 	}
+
+	fmt.Println("Running build command: docker", strings.Join(commandArgs, " "))
 
 	// #nosec G204 - The command is meant to be variable
 	cmd := exec.CommandContext(ctx, "docker", commandArgs...)

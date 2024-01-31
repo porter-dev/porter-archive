@@ -218,7 +218,7 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 		"build",
 		"-f", dockerfileName,
 		"--tag", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
-		"--cache-from", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag),
+		"--cache-from", fmt.Sprintf("type=registry,ref=%s:%s", opts.ImageRepo, opts.CurrentTag),
 	}
 	for key, val := range opts.Env {
 		commandArgs = append(commandArgs, "--build-arg", fmt.Sprintf("%s=%s", key, val))

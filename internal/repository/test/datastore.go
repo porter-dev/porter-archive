@@ -37,3 +37,8 @@ func (repo *DatastoreRepository) ListByProjectID(ctx context.Context, projectID 
 func (repo *DatastoreRepository) Delete(ctx context.Context, datastore *models.Datastore) (*models.Datastore, error) {
 	return nil, errors.New("cannot write database")
 }
+
+// UpdateStatus updates the status of a datastore
+func (repo *DatastoreRepository) UpdateStatus(ctx context.Context, datastore *models.Datastore, status models.DatastoreStatus) (*models.Datastore, error) {
+	return nil, errors.New("cannot write database")
+}

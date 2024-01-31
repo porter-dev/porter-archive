@@ -4,8 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { SUPPORTED_DATASTORE_TEMPLATES } from "main/home/database-dashboard/constants";
 import {
   datastoreListResponseValidator,
-  type DatastoreTemplate,
-  type SerializedDatastore,
+  type ClientDatastore,
 } from "lib/databases/types";
 
 import api from "shared/api";
@@ -13,13 +12,13 @@ import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 
 type DatastoreListType = {
-  datastores: Array<SerializedDatastore & { template: DatastoreTemplate }>;
+  datastores: ClientDatastore[];
   isLoading: boolean;
 };
 export const useDatastoreList = (): DatastoreListType => {
   const { currentProject } = useContext(Context);
 
-  const { data: datastores, isLoading: isLoadingDatastores } = useQuery(
+  const { data: datastores = [], isLoading: isLoadingDatastores } = useQuery(
     ["listDatastores"],
     async () => {
       if (!currentProject?.id || currentProject.id === -1) {
@@ -40,7 +39,7 @@ export const useDatastoreList = (): DatastoreListType => {
       return parsed.datastores
         .map((d) => {
           const template = SUPPORTED_DATASTORE_TEMPLATES.find(
-            (t) => t.type === d.type && t.engine.name === d.engine
+            (t) => t.type.name === d.type && t.engine.name === d.engine
           );
 
           // filter out this datastore if it is a type we do not recognize
@@ -55,7 +54,7 @@ export const useDatastoreList = (): DatastoreListType => {
   );
 
   return {
-    datastores: datastores ?? [],
+    datastores,
     isLoading: isLoadingDatastores,
   };
 };

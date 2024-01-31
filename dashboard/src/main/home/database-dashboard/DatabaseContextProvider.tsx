@@ -64,7 +64,8 @@ export const DatastoreContextProvider: React.FC<
 
       const datastore = results.datastore;
       const matchingTemplate = SUPPORTED_DATASTORE_TEMPLATES.find(
-        (t) => t.type === datastore.type && t.engine.name === datastore.engine
+        (t) =>
+          t.type.name === datastore.type && t.engine.name === datastore.engine
       );
 
       // this datastore is a type we do not recognize

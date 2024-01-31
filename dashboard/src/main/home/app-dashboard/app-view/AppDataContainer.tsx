@@ -595,9 +595,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
                 <AppSaveButton
                   height={"10px"}
                   status={isSubmitting ? "loading" : ""}
-                  isDisabled={
-                    isSubmitting || latestRevision.status === "CREATED"
-                  }
+                  isDisabled={isSubmitting}
                   disabledTooltipMessage="Please wait for the deploy to complete before updating the app"
                   disabledTooltipPosition="bottom"
                 />

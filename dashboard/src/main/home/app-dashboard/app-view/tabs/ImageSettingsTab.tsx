@@ -50,7 +50,7 @@ const ImageSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
             setValue("source.image", { repository: "", tag: "" });
           }}
         />
-        <Spacer y={1} />
+        <Spacer y={1.4} />
         <AppSaveButton
           status={buttonStatus}
           isDisabled={

@@ -481,7 +481,7 @@ const Home: React.FC<Props> = (props) => {
                 <Route path="/envs/:envGroupName/:tab">
                   <ExpandedEnv />
                 </Route>
-                <Route path="/envs/:envGroup">
+                <Route path="/envs/:envGroupName">
                   <ExpandedEnv />
                 </Route>
                 <Route path="/envs">

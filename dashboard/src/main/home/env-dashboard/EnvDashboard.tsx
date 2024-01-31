@@ -1,39 +1,31 @@
 import React, { useContext, useEffect, useState, useMemo } from "react";
 import _ from "lodash";
 import styled from "styled-components";
-
-import envGroupGrad from "assets/env-group-grad.svg";
+import { Link } from "react-router-dom";
+import { withRouter, type RouteComponentProps } from "react-router";
 
 import { Context } from "shared/Context";
 import api from "shared/api";
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
 import time from "assets/time.png";
 import key from "assets/key.svg";
+import envGroupGrad from "assets/env-group-grad.svg";
 
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import EnvGroupList from "./EnvGroupList";
-import CreateEnvGroup from "./CreateEnvGroup";
-import ExpandedEnvGroup from "./ExpandedEnvGroup";
-import { withRouter, type RouteComponentProps } from "react-router";
-import { getQueryParam, pushQueryParams } from "shared/routing";
-import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Spacer from "components/porter/Spacer";
 import Loading from "components/Loading";
-import Placeholder from "components/Placeholder";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Text from "components/porter/Text";
 import Button from "components/porter/Button";
-import Select from "components/porter/Select";
 import Container from "components/porter/Container";
 import Image from "components/porter/Image";
-
-import { Link } from "react-router-dom";
 import SearchBar from "components/porter/SearchBar";
 import Toggle from "components/porter/Toggle";
 import Fieldset from "components/porter/Fieldset";
@@ -192,7 +184,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
             {(filteredEnvGroups ?? []).map(
               (envGroup, i: number) => {
                 return (
-                    <Block to="/ok" key={i}>
+                    <Block to={`/envs/${envGroup.name}`} key={i}>
                       <Container row>
                         <Image src={key} size={20} />
                         <Spacer inline x={.7} />
@@ -214,7 +206,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
           <List>
             {(filteredEnvGroups ?? []).map((envGroup: any, i: number) => {
               return (
-                <Row to="/todo" key={i}>
+                <Row to={`/envs/${envGroup.name}`} key={i}>
                   <Container row>
                     <Image src={key} />
                     <Spacer inline x={.7} />

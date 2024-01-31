@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import styled from 'styled-components';
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 import { withRouter, type RouteComponentProps } from "react-router";
 
 import api from 'shared/api';
 import { Context } from 'shared/Context';
+import { type EnvGroupFormData, envGroupFormValidator } from 'lib/env-groups/types';
 
 import envGrad from 'assets/env-group-grad.svg';
 
@@ -20,29 +20,6 @@ import { ControlledInput } from 'components/porter/ControlledInput';
 import Button from 'components/porter/Button';
 import EnvGroupArray, { type KeyValueType } from './EnvGroupArray';
 import axios from 'axios';
-
-const envGroupFormValidator = z.object({
-  name: z
-    .string()
-    .min(1, { message: "A service name is required" })
-    .max(30)
-    .regex(/^[a-z0-9-]+$/, {
-      message: 'Lowercase letters, numbers, and " - " only.',
-    }),
-  envVariables: z
-    .array(
-      z.object({
-        key: z.string().min(1, { message: "Key cannot be empty" }),
-        value: z.string().min(1, { message: "Value cannot be empty" }),
-        deleted: z.boolean(),
-        hidden: z.boolean(),
-        locked: z.boolean(),
-      })
-    )
-    .min(1, { message: "At least one environment variable is required" })
-});
-
-type EnvGroupFormData = z.infer<typeof envGroupFormValidator>;
 
 const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -153,19 +130,18 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
           }
         });
 
-      await api
-        .createEnvironmentGroups(
-          "<token>",
-          {
-            name: data.name,
-            variables: apiEnvVariables,
-            secret_variables: secretEnvVariables,
-          },
-          {
-            id: currentProject?.id ?? -1,
-            cluster_id: currentCluster?.id ?? -1,
-          }
-        )
+      await api.createEnvironmentGroups(
+        "<token>",
+        {
+          name: data.name,
+          variables: apiEnvVariables,
+          secret_variables: secretEnvVariables,
+        },
+        {
+          id: currentProject?.id ?? -1,
+          cluster_id: currentCluster?.id ?? -1,
+        }
+      )
         
       history.push(`/envs`);
     } catch (err) {

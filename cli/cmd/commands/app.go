@@ -343,17 +343,8 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 
 	var selectedContainerName string
 
-	if len(selectedPod.ContainerNames) == 0 {
-		return fmt.Errorf("At least one container must exist in the selected pod.")
-	} else if len(selectedPod.ContainerNames) == 1 {
-		if appContainerName != "" && appContainerName != selectedPod.ContainerNames[0] {
-			return fmt.Errorf("provided container %s does not exist in pod %s", appContainerName, selectedPod.Name)
-		}
-
-		selectedContainerName = selectedPod.ContainerNames[0]
-	}
-
-	if appContainerName != "" && selectedContainerName == "" {
+	// if --container is provided, check whether the provided container exists in the pod.
+	if appContainerName != "" {
 		// check if provided container name exists in the pod
 		for _, name := range selectedPod.ContainerNames {
 			if name == appContainerName {
@@ -367,17 +358,10 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 		}
 	}
 
-	if selectedContainerName == "" {
-		if !appInteractive {
-			return fmt.Errorf("container name must be specified using the --container flag when not using interactive mode")
-		}
-
-		selectedContainer, err := utils.PromptSelect("Select the container:", selectedPod.ContainerNames)
-		if err != nil {
-			return err
-		}
-
-		selectedContainerName = selectedContainer
+	if len(selectedPod.ContainerNames) == 0 {
+		return fmt.Errorf("At least one container must exist in the selected pod.")
+	} else if len(selectedPod.ContainerNames) >= 1 {
+		selectedContainerName = selectedPod.ContainerNames[0]
 	}
 
 	config := &KubernetesSharedConfig{

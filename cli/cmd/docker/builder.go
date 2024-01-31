@@ -214,6 +214,7 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 	}
 
 	commandArgs := []string{
+		"buildx",
 		"build",
 		"-f", dockerfileName,
 		"--tag", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),

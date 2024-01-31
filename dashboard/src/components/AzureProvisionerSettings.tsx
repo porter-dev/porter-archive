@@ -31,6 +31,7 @@ import {
 } from "./azureUtils";
 import InputRow from "./form-components/InputRow";
 import Button from "./porter/Button";
+import Checkbox from "./porter/Checkbox";
 import Error from "./porter/Error";
 import Icon from "./porter/Icon";
 import Link from "./porter/Link";
@@ -78,6 +79,9 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [clusterVersion, setClusterVersion] = useState("v1.27.3");
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [skuTier, setSkuTier] = useState(AksSkuTier.FREE);
+  const [rbacEnabled, setRbacEnabled] = useState(false);
+  const [containerInsightsEnabled, setContainerInsightsEnabled] =
+    useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorDetails, setErrorDetails] = useState<string>("");
   const [isClicked, setIsClicked] = useState(false);
@@ -225,6 +229,8 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
               }),
             ],
             skuTier,
+            enableRbac: rbacEnabled,
+            enableContainerInsights: containerInsightsEnabled,
           }),
         },
       }),
@@ -340,6 +346,8 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       if (aksValues.skuTier !== AksSkuTier.UNSPECIFIED) {
         setSkuTier(aksValues.skuTier);
       }
+      setRbacEnabled(aksValues.enableRbac);
+      setContainerInsightsEnabled(aksValues.enableContainerInsights);
     }
   }, [props.selectedClusterVersion]);
 
@@ -437,6 +445,31 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
               label="VPC CIDR range"
               placeholder="ex: 10.78.0.0/16"
             />
+            <Checkbox
+              checked={containerInsightsEnabled}
+              disabled={isReadOnly}
+              toggleChecked={() => {
+                setContainerInsightsEnabled(!containerInsightsEnabled);
+              }}
+              disabledTooltip={
+                "Wait for provisioning to complete before editing this field."
+              }
+            >
+              <Text color="helper">Enable Azure Container Insights</Text>
+            </Checkbox>
+            <Spacer y={0.25} />
+            <Checkbox
+              checked={rbacEnabled}
+              disabled={isReadOnly}
+              toggleChecked={() => {
+                setRbacEnabled(!rbacEnabled);
+              }}
+              disabledTooltip={
+                "Wait for provisioning to complete before editing this field."
+              }
+            >
+              <Text color="helper">Enable Azure RBAC</Text>
+            </Checkbox>
           </>
         )}
       </>

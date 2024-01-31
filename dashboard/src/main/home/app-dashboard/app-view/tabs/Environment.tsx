@@ -73,7 +73,7 @@ const Environment: React.FC<Props> = ({ latestSource, buttonStatus }) => {
       <Spacer y={0.5} />
       <AppSaveButton
         status={buttonStatus}
-        isDisabled={isSubmitting || latestRevision.status === "CREATED"}
+        isDisabled={isSubmitting}
         disabledTooltipMessage="Please wait for the deploy to complete before updating environment variables"
       />
     </>

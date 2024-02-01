@@ -61,6 +61,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
           cluster_id: currentCluster?.id ?? -1,
         }
       );
+      console.log(res.data.environment_groups)
       setEnvGroups(res.data.environment_groups);
       setIsLoading(false);
     } catch (err) {
@@ -71,7 +72,9 @@ const EnvDashboard: React.FC<Props> = (props) => {
 
   useEffect(() => {
     setIsLoading(true);
-    void updateEnvGroups();
+    if ((currentProject?.id ?? -1) > -1 && (currentCluster?.id ?? -1) > -1) {
+      void updateEnvGroups();
+    }
   }, [currentProject, currentCluster]);
 
   const renderContents = (): React.ReactNode => {

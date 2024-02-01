@@ -20,6 +20,7 @@ import Link from "components/porter/Link";
 import TabSelector from "components/TabSelector";
 import EnvVarsTab from "./tabs/EnvVarsTab";
 import SettingsTab from "./tabs/SettingsTab";
+import SyncedAppsTab from "./tabs/SyncedAppsTab";
 
 const getReadableDate = (s: string): string => {
   const ts = new Date(s);
@@ -130,7 +131,7 @@ const ExpandedEnv: React.FC = () => {
           <Spacer y={1} />
           {match(tab)
             .with("env-vars", () => <EnvVarsTab envGroup={envGroup} />)
-            .with("synced-apps", () => <div>go</div>)
+            .with("synced-apps", () => <SyncedAppsTab />)
             .with("settings", () => <SettingsTab envGroup={envGroup} />)
             .otherwise(() => null)}
           <Spacer y={2} />

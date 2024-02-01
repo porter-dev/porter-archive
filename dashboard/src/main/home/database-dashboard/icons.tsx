@@ -14,8 +14,8 @@ import postgresql from "assets/postgresql.svg";
 import redis from "assets/redis.svg";
 
 const datastoreIcons: Record<string, string> = {
-  [DATASTORE_TYPE_ELASTICACHE]: awsElasticache,
-  [DATASTORE_TYPE_RDS]: awsRDS,
+  [DATASTORE_TYPE_ELASTICACHE.name]: awsElasticache,
+  [DATASTORE_TYPE_RDS.name]: awsRDS,
 };
 
 const engineIcons: Record<string, string> = {

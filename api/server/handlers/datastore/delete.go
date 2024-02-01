@@ -4,6 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	"connectrpc.com/connect"
+	"github.com/google/uuid"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/handlers/release"
@@ -12,7 +15,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/datastore"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
@@ -48,27 +50,34 @@ func (h *DeleteDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "datastore-name", Value: datastoreName})
 
-	datastore, err := datastore.DeleteRecord(ctx, datastore.DeleteRecordInput{
-		ProjectID:           project.ID,
-		Name:                datastoreName,
-		DatastoreRepository: h.Repo().Datastore(),
-	})
+	datastoreRecord, err := h.Repo().Datastore().GetByProjectIDAndName(ctx, project.ID, datastoreName)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error deleting datastore record")
+		err = telemetry.Error(ctx, span, err, "datastore record not found")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	// TODO: replace this with a CCP call
-	err = h.UninstallDatastore(ctx, UninstallDatastoreInput{
-		ProjectID:                         project.ID,
-		Name:                              datastoreName,
-		CloudProvider:                     datastore.CloudProvider,
-		CloudProviderCredentialIdentifier: datastore.CloudProviderCredentialIdentifier,
-		Request:                           r,
-	})
+	if datastoreRecord == nil || datastoreRecord.ID == uuid.Nil {
+		err = telemetry.Error(ctx, span, nil, "datastore record does not exist")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
+		return
+	}
+
+	_, err = h.Repo().Datastore().UpdateStatus(ctx, datastoreRecord, models.DatastoreStatus_AwaitingDeletion)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error uninstalling datastore")
+		err = telemetry.Error(ctx, span, err, "error updating datastore status")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	updateReq := connect.NewRequest(&porterv1.UpdateDatastoreRequest{
+		ProjectId:   int64(project.ID),
+		DatastoreId: datastoreRecord.ID.String(),
+	})
+
+	_, err = h.Config().ClusterControlPlaneClient.UpdateDatastore(ctx, updateReq)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error calling ccp update datastore")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}

@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -214,10 +215,11 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 	}
 
 	commandArgs := []string{
+		"buildx",
 		"build",
 		"-f", dockerfileName,
 		"--tag", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.Tag),
-		"--cache-from", fmt.Sprintf("%s:%s", opts.ImageRepo, opts.CurrentTag),
+		"--cache-from", fmt.Sprintf("type=registry,ref=%s:%s", opts.ImageRepo, opts.CurrentTag),
 	}
 	for key, val := range opts.Env {
 		commandArgs = append(commandArgs, "--build-arg", fmt.Sprintf("%s=%s", key, val))
@@ -237,6 +239,8 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 		stdoutWriters = append(stdoutWriters, opts.LogFile)
 		stderrWriters = append(stderrWriters, opts.LogFile)
 	}
+
+	fmt.Println("Running build command: docker", strings.Join(commandArgs, " "))
 
 	// #nosec G204 - The command is meant to be variable
 	cmd := exec.CommandContext(ctx, "docker", commandArgs...)

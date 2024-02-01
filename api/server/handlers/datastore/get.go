@@ -76,6 +76,14 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	datastore := Datastore{
+		Name:         datastoreRecord.Name,
+		Type:         datastoreRecord.Type,
+		Engine:       datastoreRecord.Engine,
+		CreatedAtUTC: datastoreRecord.CreatedAt,
+		Status:       string(datastoreRecord.Status),
+	}
+
 	if datastoreRecord.CloudProvider != SupportedDatastoreCloudProvider_AWS {
 		err = telemetry.Error(ctx, span, nil, "unsupported datastore cloud provider")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -101,23 +109,11 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		CCPClient:           c.Config().ClusterControlPlaneClient,
 		DatastoreRepository: c.Repo().Datastore(),
 	})
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error getting datastore")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
+	if err == nil && len(datastores) == 1 {
+		ds := datastores[0]
+		datastore.Env = ds.Env
+		datastore.Metadata = ds.Metadata
 	}
-	if len(datastores) == 0 {
-		err = telemetry.Error(ctx, span, nil, "datastore not found")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
-		return
-	}
-	if len(datastores) > 1 {
-		err = telemetry.Error(ctx, span, nil, "unexpected number of datastores found matching name")
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "datastore-count", Value: len(datastores)})
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-	datastore := datastores[0]
 
 	resp.Datastore = datastore
 

@@ -16,4 +16,6 @@ type DatastoreRepository interface {
 	ListByProjectID(ctx context.Context, projectID uint) ([]*models.Datastore, error)
 	// Delete deletes a datastore by id
 	Delete(ctx context.Context, datastore *models.Datastore) (*models.Datastore, error)
+	// UpdateStatus updates the status of a datastore
+	UpdateStatus(ctx context.Context, datastore *models.Datastore, status models.DatastoreStatus) (*models.Datastore, error)
 }

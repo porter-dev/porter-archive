@@ -72,7 +72,7 @@ const DockerfileSettings: React.FC<Props> = ({
                             repoName={repoName} 
                             branch={branch}
                             onFileSelect={(path: string) => onChange(`./${path}`)} 
-                            isFileSelectable={(path: string) => path.includes("Dockerfile")}
+                            isFileSelectable={(path: string) => path.toLowerCase().includes("dockerfile")}
                             headerText={"Select your Dockerfile:"}
                         />
                     </div>}

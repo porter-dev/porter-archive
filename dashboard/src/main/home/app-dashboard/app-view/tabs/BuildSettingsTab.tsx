@@ -19,7 +19,7 @@ const BuildSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
     watch,
     formState: { isSubmitting },
   } = useFormContext<PorterAppFormData>();
-  const { projectId, latestRevision } = useLatestRevision();
+  const { projectId } = useLatestRevision();
 
   const build = watch("app.build");
   const source = watch("source");
@@ -38,7 +38,7 @@ const BuildSettingsTab: React.FC<Props> = ({ buttonStatus }) => {
             <Spacer y={1} />
             <AppSaveButton
               status={buttonStatus}
-              isDisabled={isSubmitting || latestRevision.status === "CREATED"}
+              isDisabled={isSubmitting}
               disabledTooltipMessage="Please wait for the build to complete before updating build settings"
             />
           </>

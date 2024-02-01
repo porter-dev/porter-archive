@@ -71,7 +71,7 @@ export const ActionBanner: React.FC<ActionBannerProps> = ({
   // check if provisioning error is due to compliance update
   const provisioningErrorWithComplianceEnabled = useMemo(() => {
     return (
-      provisioningStatus.state === "compliance_error" &&
+      provisioningStatus.state === "failed" &&
       latestContractProto?.cluster?.isSoc2Compliant
     );
   }, [provisioningStatus.state, latestContractProto?.toJsonString()]);

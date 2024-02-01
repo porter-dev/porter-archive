@@ -170,6 +170,7 @@ const GithubActionModal: React.FC<Props> = ({
               setChoice(x as Choice);
             }}
             width="100%"
+            value={choice}
           />
           <Spacer y={1} />
           <Button

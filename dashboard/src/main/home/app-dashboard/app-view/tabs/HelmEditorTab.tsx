@@ -26,14 +26,8 @@ const HelmEditorTab: React.FC<Props> = ({
   } = useFormContext<PorterAppFormData>();
 
   const overrides = watch("app.helmOverrides");
-  const {
-    projectId,
-    clusterId,
-    latestProto,
-    deploymentTarget,
-    porterApp,
-    latestRevision,
-  } = useLatestRevision();
+  const { projectId, clusterId, latestProto, deploymentTarget, porterApp } =
+    useLatestRevision();
 
   const appName = latestProto.name;
 
@@ -60,9 +54,7 @@ const HelmEditorTab: React.FC<Props> = ({
       <Spacer y={1} />
       <AppSaveButton
         status={buttonStatus}
-        isDisabled={
-          isSubmitting || latestRevision.status === "CREATED" || error !== ""
-        }
+        isDisabled={isSubmitting || error !== ""}
         disabledTooltipMessage={
           error !== ""
             ? "Error parsing yaml"

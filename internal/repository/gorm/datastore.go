@@ -126,3 +126,30 @@ func (repo *DatastoreRepository) Delete(ctx context.Context, datastore *models.D
 
 	return datastore, nil
 }
+
+// UpdateStatus updates the status of a datastore
+func (repo *DatastoreRepository) UpdateStatus(ctx context.Context, datastore *models.Datastore, status models.DatastoreStatus) (*models.Datastore, error) {
+	ctx, span := telemetry.NewSpan(ctx, "gorm-update-datastore-status")
+	defer span.End()
+
+	if datastore == nil {
+		return nil, telemetry.Error(ctx, span, nil, "datastore is nil")
+	}
+
+	if datastore.ID == uuid.Nil {
+		return nil, telemetry.Error(ctx, span, nil, "datastore id is nil")
+	}
+
+	if status == "" {
+		return nil, telemetry.Error(ctx, span, nil, "status is empty")
+	}
+
+	datastore.Status = status
+	datastore.UpdatedAt = time.Now().UTC()
+
+	if err := repo.db.Save(datastore).Error; err != nil {
+		return nil, telemetry.Error(ctx, span, err, "error updating datastore status")
+	}
+
+	return datastore, nil
+}

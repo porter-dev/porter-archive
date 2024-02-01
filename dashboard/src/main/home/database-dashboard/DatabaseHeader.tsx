@@ -13,7 +13,6 @@ import { readableDate } from "shared/string_utils";
 import { useDatastoreContext } from "./DatabaseContextProvider";
 import { getDatastoreIcon } from "./icons";
 import EngineTag from "./tags/EngineTag";
-import { datastoreField } from "./utils";
 
 const DatabaseHeader: React.FC = () => {
   const { datastore } = useDatastoreContext();
@@ -31,8 +30,8 @@ const DatabaseHeader: React.FC = () => {
               <EngineTag engine={datastore.template.engine} heightPixels={15} />
             </Container>
           </Container>
-          {match(datastoreField(datastore, "status"))
-            .with("available", () => (
+          {match(datastore.status)
+            .with("AVAILABLE", () => (
               <Container row>
                 <StatusDot status={"available"} heightPixels={11} />
               </Container>

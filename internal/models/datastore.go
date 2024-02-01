@@ -13,6 +13,8 @@ const (
 	DatastoreStatus_Creating DatastoreStatus = "CREATING"
 	// DatastoreStatus_Available is the status for a datastore that is available
 	DatastoreStatus_Available DatastoreStatus = "AVAILABLE"
+	// DatastoreStatus_AwaitingDeletion is the status for a datastore that is awaiting deletion
+	DatastoreStatus_AwaitingDeletion DatastoreStatus = "AWAITING_DELETION"
 )
 
 // Datastore is a database model that represents a Porter-provisioned datastore

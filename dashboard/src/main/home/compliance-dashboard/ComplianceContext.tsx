@@ -158,6 +158,7 @@ export const ProjectComplianceProvider: React.FC<
         clusterId,
         "getContracts",
       ]);
+    } catch (err) {
     } finally {
       setUpdateInProgress(false);
     }

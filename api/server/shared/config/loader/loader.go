@@ -262,8 +262,8 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			},
 			BaseURL: sc.ServerURL,
 		})
+		res.Logger.Info().Msg("Created Slack client")
 	}
-	res.Logger.Info().Msg("Created Slack client")
 
 	res.WSUpgrader = &websocket.Upgrader{
 		WSUpgrader: &gorillaws.Upgrader{

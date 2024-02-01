@@ -130,7 +130,7 @@ export const useDatastoreMethods = (): DatastoreHook => {
         }
       );
 
-      await queryClient.invalidateQueries({ queryKey: ["listDatastores"] });
+      await queryClient.invalidateQueries({ queryKey: ["getDatastore"] });
     },
     [currentProject]
   );

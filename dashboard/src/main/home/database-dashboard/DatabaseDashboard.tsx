@@ -13,12 +13,14 @@ import Image from "components/porter/Image";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
 import Select from "components/porter/Select";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { type ClientDatastore } from "lib/databases/types";
+import { isAWSCluster, useClusterList } from "lib/hooks/useClusterList";
 import { useDatastoreList } from "lib/hooks/useDatabaseList";
 
 import { Context } from "shared/Context";
@@ -36,6 +38,7 @@ import EngineTag from "./tags/EngineTag";
 
 const DatabaseDashboard: React.FC = () => {
   const { currentCluster } = useContext(Context);
+  const { clusters, isLoading: isLoadingClusters } = useClusterList();
 
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -78,12 +81,34 @@ const DatabaseDashboard: React.FC = () => {
   }, [datastores, searchValue, typeFilter, engineFilter]);
 
   const renderContents = (): JSX.Element => {
-    if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
-      return <ClusterProvisioningPlaceholder />;
+    if (datastores === undefined || isLoading || isLoadingClusters) {
+      return <Loading offset="-150px" />;
     }
 
-    if (datastores === undefined || isLoading) {
-      return <Loading offset="-150px" />;
+    if (clusters.filter(isAWSCluster).length === 0) {
+      return (
+        <Fieldset>
+          <Text size={16}>Datastores are not supported for this project.</Text>
+          <Spacer y={0.5} />
+          <Text color="helper">
+            Datastores are only supported for projects with a provisioned AWS
+            cluster.
+          </Text>
+          <Spacer y={0.5} />
+          <Text color="helper">
+            To get started with datastores, you will need to create an AWS
+            cluster. Contact our team if you are interested in enabling
+            multi-cluster support.
+          </Text>
+          <Spacer y={0.5} />
+          <ShowIntercomButton
+            message={`I would like to enable multi-cluster support for my project.`}
+          />
+        </Fieldset>
+      );
+    }
+    if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
+      return <ClusterProvisioningPlaceholder />;
     }
 
     if (datastores.length === 0) {

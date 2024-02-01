@@ -40,7 +40,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
     setFailedContractId("");
     setProvisionFailureReason("");
     data.sort((a: any, b: any) => {
-      return Date.parse(a.CreatedAt) > Date.parse(b.CreatedAt) ? -1 : 1;
+      return Date.parse(a.created_at) > Date.parse(b.created_at) ? -1 : 1;
     });
     let activeCandidate;
     if (data[0].condition !== "SUCCESS") {
@@ -143,7 +143,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
           selected={selectedId === i}
         >
           <Td>{versions.length - i}</Td>
-          <Td>{readableDate(version.CreatedAt)}</Td>
+          <Td>{readableDate(version.created_at)}</Td>
           {/*
           <Td>
             <RollbackButton
@@ -180,7 +180,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
             </Flex>
           )}
         </Td>
-        <Td>{readableDate(pendingContract.CreatedAt)}</Td>
+        <Td>{readableDate(pendingContract.created_at)}</Td>
         {failedContractId && (
           <DeleteButton>
             <div onClick={() => { setShowConfirmOverlay(true); }}>

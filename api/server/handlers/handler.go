@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+
+	"github.com/porter-dev/porter/internal/telemetry"
 
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
@@ -18,6 +21,7 @@ type PorterHandler interface {
 	HandleAPIError(w http.ResponseWriter, r *http.Request, err apierrors.RequestError)
 	HandleAPIErrorNoWrite(w http.ResponseWriter, r *http.Request, err apierrors.RequestError)
 	PopulateOAuthSession(
+		ctx context.Context,
 		w http.ResponseWriter,
 		r *http.Request,
 		state string,
@@ -89,6 +93,7 @@ func IgnoreAPIError(w http.ResponseWriter, r *http.Request, err apierrors.Reques
 }
 
 func (d *DefaultPorterHandler) PopulateOAuthSession(
+	ctx context.Context,
 	w http.ResponseWriter,
 	r *http.Request,
 	state string,
@@ -96,9 +101,12 @@ func (d *DefaultPorterHandler) PopulateOAuthSession(
 	integrationClient types.OAuthIntegrationClient,
 	integrationID uint,
 ) error {
+	ctx, span := telemetry.NewSpan(ctx, "handler-populate-oauth-session")
+	defer span.End()
+
 	session, err := d.Config().Store.Get(r, d.Config().ServerConf.CookieName)
 	if err != nil {
-		return err
+		return telemetry.Error(ctx, span, err, "could not get session")
 	}
 
 	// need state parameter to validate when redirected
@@ -111,9 +119,8 @@ func (d *DefaultPorterHandler) PopulateOAuthSession(
 
 	if isProject {
 		project, _ := r.Context().Value(types.ProjectScope).(*models.Project)
-
 		if project == nil {
-			return fmt.Errorf("could not read project")
+			return telemetry.Error(ctx, span, nil, "could not read project")
 		}
 
 		session.Values["project_id"] = project.ID
@@ -121,9 +128,8 @@ func (d *DefaultPorterHandler) PopulateOAuthSession(
 
 	if isUser {
 		user, _ := r.Context().Value(types.UserScope).(*models.User)
-
 		if user == nil {
-			return fmt.Errorf("could not read user")
+			return telemetry.Error(ctx, span, nil, "could not read user")
 		}
 
 		session.Values["user_id"] = user.ID
@@ -135,7 +141,7 @@ func (d *DefaultPorterHandler) PopulateOAuthSession(
 	}
 
 	if err := session.Save(r, w); err != nil {
-		return err
+		return telemetry.Error(ctx, span, err, "could not save session")
 	}
 
 	return nil

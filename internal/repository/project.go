@@ -19,4 +19,5 @@ type ProjectRepository interface {
 	ListProjectsByUserID(userID uint) ([]*models.Project, error)
 	DeleteProject(project *models.Project) (*models.Project, error)
 	DeleteProjectRole(projID, userID uint) (*models.Role, error)
+	DeleteRolesForProject(projID uint) error
 }

@@ -179,7 +179,7 @@ export const ExpandedEnvGroupFC = ({
     // apply v2 already supplies the full env group
     if (currentProject?.validate_apply_v2) {
       updateEnvGroup(envGroup);
-    } else if (!currentProject?.simplified_view_enabled) {
+    } else if (currentProject?.simplified_view_enabled) {
       try {
         const populatedEnvGroup = await api
           .getAllEnvGroups(

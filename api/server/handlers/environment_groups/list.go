@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 
 	"github.com/porter-dev/porter/api/server/authz"
@@ -71,6 +72,43 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "env-group-type", Value: request.Type})
 
+	if project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
+		listEnvGroupsReq := connect.NewRequest(&porterv1.ListEnvGroupsRequest{
+			ProjectId:      int64(project.ID),
+			ClusterId:      int64(cluster.ID),
+			IncludeSecrets: false,
+		})
+
+		listEnvGroupResp, err := c.Config().ClusterControlPlaneClient.ListEnvGroups(ctx, listEnvGroupsReq)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "unable to get linked applications")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		if listEnvGroupResp == nil || listEnvGroupResp.Msg == nil {
+			err = telemetry.Error(ctx, span, err, "ccp resp is nil")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		var envGroups []EnvironmentGroupListItem
+		for _, envGroup := range listEnvGroupResp.Msg.EnvGroups {
+			envGroups = append(envGroups, EnvironmentGroupListItem{
+				Name:               envGroup.Name,
+				Type:               translateProtoTypeToEnvGroupType[envGroup.Type],
+				LatestVersion:      int(envGroup.Version),
+				Variables:          envGroup.Variables,
+				SecretVariables:    envGroup.SecretVariables,
+				CreatedAtUTC:       envGroup.CreatedAt.AsTime(),
+				LinkedApplications: envGroup.LinkedApplications,
+			})
+		}
+
+		// return early for cleaner change
+		c.WriteResult(w, r, ListEnvironmentGroupsResponse{EnvironmentGroups: envGroups})
+		return
+	}
+
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "unable to connect to cluster")
@@ -115,52 +153,25 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		}
 
 		var linkedApplications []string
-		if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
-			applications, err := environmentgroups.LinkedApplications(ctx, agent, latestVersion.Name, true)
-			if err != nil {
-				err = telemetry.Error(ctx, span, err, "unable to get linked applications")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
+		applications, err := environmentgroups.LinkedApplications(ctx, agent, latestVersion.Name, true)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "unable to get linked applications")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
 
-			applicationSetForEnvGroup := make(map[string]struct{})
-			for _, app := range applications {
-				if app.Namespace == "" {
-					continue
-				}
-				if _, ok := applicationSetForEnvGroup[app.Namespace]; !ok {
-					applicationSetForEnvGroup[app.Namespace] = struct{}{}
-				}
+		applicationSetForEnvGroup := make(map[string]struct{})
+		for _, app := range applications {
+			if app.Namespace == "" {
+				continue
 			}
-			for appNamespace := range applicationSetForEnvGroup {
-				porterAppName := strings.TrimPrefix(appNamespace, "porter-stack-")
-				linkedApplications = append(linkedApplications, porterAppName)
+			if _, ok := applicationSetForEnvGroup[app.Namespace]; !ok {
+				applicationSetForEnvGroup[app.Namespace] = struct{}{}
 			}
-		} else {
-			appsLinkedToEnvGroupReq := connect.NewRequest(&porterv1.AppsLinkedToEnvGroupRequest{
-				ProjectId:     int64(project.ID),
-				ClusterId:     int64(cluster.ID),
-				EnvGroupName:  envGroupName,
-				IgnorePreview: true,
-			})
-
-			appsLinkedToEnvGroupResp, err := c.Config().ClusterControlPlaneClient.AppsLinkedToEnvGroup(ctx, appsLinkedToEnvGroupReq)
-			if err != nil {
-				err = telemetry.Error(ctx, span, err, "unable to get linked applications")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
-			if appsLinkedToEnvGroupResp == nil || appsLinkedToEnvGroupResp.Msg == nil {
-				err = telemetry.Error(ctx, span, err, "ccp resp is nil")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
-
-			for _, app := range appsLinkedToEnvGroupResp.Msg.LinkedApps {
-				if app != nil {
-					linkedApplications = append(linkedApplications, app.Name)
-				}
-			}
+		}
+		for appNamespace := range applicationSetForEnvGroup {
+			porterAppName := strings.TrimPrefix(appNamespace, "porter-stack-")
+			linkedApplications = append(linkedApplications, porterAppName)
 		}
 
 		secrets := make(map[string]string)
@@ -179,4 +190,9 @@ func (c *ListEnvironmentGroupsHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	}
 
 	c.WriteResult(w, r, ListEnvironmentGroupsResponse{EnvironmentGroups: envGroups})
+}
+
+var translateProtoTypeToEnvGroupType = map[porterv1.EnumEnvGroupProviderType]string{
+	porterv1.EnumEnvGroupProviderType_ENUM_ENV_GROUP_PROVIDER_TYPE_DOPPLER: "doppler",
+	porterv1.EnumEnvGroupProviderType_ENUM_ENV_GROUP_PROVIDER_TYPE_PORTER:  "porter",
 }

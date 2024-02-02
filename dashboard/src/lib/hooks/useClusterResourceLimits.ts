@@ -12,11 +12,12 @@ import { z } from "zod";
 
 import {
   AWS_INSTANCE_LIMITS,
-  AZURE_INSTANCE_LIMITS,
   GPU_INSTANCE_LIMIT,
 } from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
 
 import api from "shared/api";
+
+import { azureMachineTypeDetails } from "components/azureUtils";
 
 const DEFAULT_INSTANCE_CLASS = "t3";
 const DEFAULT_INSTANCE_SIZE = "medium";
@@ -131,12 +132,13 @@ const clusterNodesValidator = z
     }
     // Azure instance types are all prefixed with "Standard_"
     if (instanceType.startsWith("Standard_")) {
-      if (AZURE_INSTANCE_LIMITS[instanceType]) {
-        const { vCPU, RAM } = AZURE_INSTANCE_LIMITS[instanceType];
+      const azureMachineType = azureMachineTypeDetails(instanceType);
+      if (azureMachineType) {
+        const { vCPU, RAM, GPU } = azureMachineType.resources;
         return {
           maxCPU: vCPU,
           maxRAM: RAM,
-          maxGPU: 1,
+          maxGPU: GPU,
           azureType: instanceType,
         };
       } else {
@@ -382,6 +384,11 @@ export const useClusterResourceLimits = ({
                 ng.instanceType.includes("n1")) ||
               (ng.nodePoolType === NodePoolType.APPLICATION &&
                 ng.instanceType.includes("n1"))
+          );
+        })
+        .with({ kindValues: { case: "aksKind" } }, (c) => {
+          return c.kindValues.value.nodePools.some(
+            (ng) => ng.nodePoolType === NodePoolType.CUSTOM
           );
         })
         .otherwise(() => false);

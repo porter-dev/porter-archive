@@ -25,15 +25,32 @@ export const AzureLocationOptions = [
 export type MachineTypeOption = {
   value: string;
   label: string;
+  resources: { vCPU: number; RAM: number; GPU?: number };
   supportedRegions: Set<string>;
 };
 
 export const azureSupportedMachineTypes = (
-  region: string
+  region: string,
+  gpu?: boolean
 ): MachineTypeOption[] => {
-  return AzureMachineTypeOptions.filter((option) =>
-    option.supportedRegions.has(region)
+  return AzureMachineTypeOptions.filter(
+    (option) =>
+      option.supportedRegions.has(region) && !!option.resources.GPU === !!gpu
   );
+};
+
+export const azureMachineTypeDetails = (
+  type: string
+): MachineTypeOption | undefined => {
+  const matches = AzureMachineTypeOptions.filter(
+    (option) => option.value === type
+  );
+
+  if (matches.length === 0) {
+    return undefined;
+  }
+
+  return matches[0];
 };
 
 // Retrieve updated list of supported regions by running the following command: az vm list-skus --all --output table | grep <INSTANCE_TYPE> | grep 1,2,3 | grep None | awk '{print "\047" tolower($2) "\047"}' | paste -s -d, -
@@ -44,6 +61,7 @@ const AzureMachineTypeOptions: MachineTypeOption[] = [
   {
     value: "Standard_B2als_v2",
     label: "Standard_B2als_v2",
+    resources: { vCPU: 2, RAM: 4 },
     supportedRegions: new Set<string>([
       "australiaeast",
       "brazilsouth",
@@ -71,6 +89,7 @@ const AzureMachineTypeOptions: MachineTypeOption[] = [
   {
     value: "Standard_B2as_v2",
     label: "Standard_B2as_v2",
+    resources: { vCPU: 2, RAM: 8 },
     supportedRegions: new Set<string>([
       "australiaeast",
       "brazilsouth",
@@ -98,6 +117,7 @@ const AzureMachineTypeOptions: MachineTypeOption[] = [
   {
     value: "Standard_A2_v2",
     label: "Standard_A2_v2",
+    resources: { vCPU: 2, RAM: 4 },
     supportedRegions: new Set<string>([
       "australiaeast",
       "canadacentral",
@@ -122,6 +142,7 @@ const AzureMachineTypeOptions: MachineTypeOption[] = [
   {
     value: "Standard_A4_v2",
     label: "Standard_A4_v2",
+    resources: { vCPU: 4, RAM: 8 },
     supportedRegions: new Set<string>([
       "australiaeast",
       "canadacentral",
@@ -146,6 +167,7 @@ const AzureMachineTypeOptions: MachineTypeOption[] = [
   {
     value: "Standard_DS1_v2",
     label: "Standard_DS1_v2",
+    resources: { vCPU: 1, RAM: 3.5 },
     supportedRegions: new Set<string>([
       "australiaeast",
       "canadacentral",
@@ -170,6 +192,7 @@ const AzureMachineTypeOptions: MachineTypeOption[] = [
   {
     value: "Standard_DS2_v2",
     label: "Standard_DS2_v2",
+    resources: { vCPU: 2, RAM: 7 },
     supportedRegions: new Set<string>([
       "australiaeast",
       "canadacentral",
@@ -202,6 +225,7 @@ const AzureMachineTypeOptions: MachineTypeOption[] = [
   {
     value: "Standard_D2ads_v5",
     label: "Standard_D2ads_v5",
+    resources: { vCPU: 2, RAM: 8 },
     supportedRegions: new Set<string>([
       "australiaeast",
       "canadacentral",
@@ -221,6 +245,7 @@ const AzureMachineTypeOptions: MachineTypeOption[] = [
   {
     value: "Standard_B4als_v2",
     label: "Standard_B4als_v2",
+    resources: { vCPU: 4, RAM: 8 },
     supportedRegions: new Set<string>([
       "australiaeast",
       "brazilsouth",
@@ -243,6 +268,78 @@ const AzureMachineTypeOptions: MachineTypeOption[] = [
       "westeurope",
       "westus2",
       "westus3",
+    ]),
+  },
+  {
+    value: "Standard_NC4as_T4_v3",
+    label: "Standard_NC4as_T4_v3",
+    resources: { vCPU: 4, RAM: 28, GPU: 1 },
+    supportedRegions: new Set<string>([
+      "australiaeast",
+      "centralindia",
+      "eastus",
+      "eastus2",
+      "japaneast",
+      "northeurope",
+      "southcentralus",
+      "southeastasia",
+      "uksouth",
+      "westeurope",
+      "westus2",
+    ]),
+  },
+  {
+    value: "Standard_NC8as_T4_v3",
+    label: "Standard_NC8as_T4_v3",
+    resources: { vCPU: 8, RAM: 56, GPU: 1 },
+    supportedRegions: new Set<string>([
+      "australiaeast",
+      "centralindia",
+      "eastus",
+      "eastus2",
+      "japaneast",
+      "northeurope",
+      "southcentralus",
+      "southeastasia",
+      "uksouth",
+      "westeurope",
+      "westus2",
+    ]),
+  },
+  {
+    value: "Standard_NC16as_T4_v3",
+    label: "Standard_NC16as_T4_v3",
+    resources: { vCPU: 16, RAM: 110, GPU: 1 },
+    supportedRegions: new Set<string>([
+      "australiaeast",
+      "centralindia",
+      "eastus",
+      "eastus2",
+      "japaneast",
+      "northeurope",
+      "southcentralus",
+      "southeastasia",
+      "uksouth",
+      "westeurope",
+      "westus2",
+    ]),
+  },
+  {
+    value: "Standard_NC64as_T4_v3",
+    label: "Standard_NC64as_T4_v3",
+    resources: { vCPU: 64, RAM: 440, GPU: 4 },
+    supportedRegions: new Set<string>([
+      "australiaeast",
+      "centralindia",
+      "eastus",
+      "eastus2",
+      "japaneast",
+      "northeurope",
+      "southcentralus",
+      "southeastasia",
+      "uksouth",
+      "westeurope",
+      "westus2",
     ]),
   },
 ];

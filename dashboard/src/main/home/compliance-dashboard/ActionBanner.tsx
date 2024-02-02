@@ -1,5 +1,6 @@
 import React, { useMemo, type Dispatch, type SetStateAction } from "react";
 import { useHistory } from "react-router";
+import { match } from "ts-pattern";
 
 import Banner from "components/porter/Banner";
 import Image from "components/porter/Image";
@@ -20,10 +21,11 @@ export const ActionBanner: React.FC<ActionBannerProps> = ({
 }) => {
   const history = useHistory();
   const {
+    profile,
     updateInProgress,
     latestContractDB,
     latestContractProto,
-    updateContractWithSOC2,
+    updateContractWithProfile,
   } = useCompliance();
 
   const provisioningStatus = useMemo(() => {
@@ -60,21 +62,30 @@ export const ActionBanner: React.FC<ActionBannerProps> = ({
     return provisioningStatus.state === "pending" || updateInProgress;
   }, [provisioningStatus.state, updateInProgress]);
 
+  const complianceEnabled = match(profile)
+    .with("soc2", () => latestContractProto?.complianceProfiles?.soc2)
+    .with("hipaa", () => latestContractProto?.complianceProfiles?.hipaa)
+    .exhaustive();
+
   // check if compliance has not been enable or if not all checks have passed
   const actionRequredWithoutProvisioningError = useMemo(() => {
     return (
-      provisioningStatus.state === "compliance_error" ||
-      !latestContractProto?.cluster?.isSoc2Compliant
+      provisioningStatus.state === "compliance_error" || !complianceEnabled
     );
-  }, [provisioningStatus.state, latestContractProto?.toJsonString()]);
+  }, [
+    provisioningStatus.state,
+    latestContractProto?.toJsonString(),
+    complianceEnabled,
+  ]);
 
   // check if provisioning error is due to compliance update
   const provisioningErrorWithComplianceEnabled = useMemo(() => {
-    return (
-      provisioningStatus.state === "failed" &&
-      latestContractProto?.cluster?.isSoc2Compliant
-    );
-  }, [provisioningStatus.state, latestContractProto?.toJsonString()]);
+    return provisioningStatus.state === "failed" && complianceEnabled;
+  }, [
+    provisioningStatus.state,
+    latestContractProto?.toJsonString(),
+    complianceEnabled,
+  ]);
 
   if (isInfraPending) {
     return (
@@ -83,8 +94,8 @@ export const ActionBanner: React.FC<ActionBannerProps> = ({
           <Image src={loading_img} style={{ height: "16px", width: "16px" }} />
         }
       >
-        SOC 2 infrastructure controls are being enabled. Note: This may take up
-        to 30 minutes.
+        Infrastructure controls are being enabled. Note: This may take up to 30
+        minutes.
       </Banner>
     );
   }
@@ -101,7 +112,7 @@ export const ActionBanner: React.FC<ActionBannerProps> = ({
               cursor: "pointer",
             }}
             onClick={() => {
-              void updateContractWithSOC2();
+              void updateContractWithProfile();
             }}
           >
             Re-run infrastructure controls
@@ -116,7 +127,8 @@ export const ActionBanner: React.FC<ActionBannerProps> = ({
               setShowCostConsentModal(true);
             }}
           >
-            Enable SOC 2 infrastructure controls
+            Enable {profile === "soc2" ? "SOC2" : "HIPAA"} infrastructure
+            controls
           </Text>
         )}
       </Banner>
@@ -146,7 +158,7 @@ export const ActionBanner: React.FC<ActionBannerProps> = ({
             cursor: "pointer",
           }}
           onClick={() => {
-            void updateContractWithSOC2();
+            void updateContractWithProfile();
           }}
         >
           <Image src={refresh} size={12} style={{ marginBottom: "-2px" }} />

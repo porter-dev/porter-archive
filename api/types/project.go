@@ -22,6 +22,7 @@ type ProjectList struct {
 	FullAddOns             bool   `json:"full_add_ons"`
 	EnableReprovision      bool   `json:"enable_reprovision"`
 	ValidateApplyV2        bool   `json:"validate_apply_v2"`
+	SandboxEnabled         bool   `json:"sandbox_enabled"`
 }
 
 // Project type for entries in api responses for everything other than `GET /projects`

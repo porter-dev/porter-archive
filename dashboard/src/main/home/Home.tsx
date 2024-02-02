@@ -10,6 +10,8 @@ import midnight from "shared/themes/midnight";
 import standard from "shared/themes/standard";
 import { ClusterType, ProjectListType, ProjectType } from "shared/types";
 
+import warning from "assets/warning.png";
+
 import ConfirmOverlay from "components/ConfirmOverlay";
 import Loading from "components/Loading";
 import DashboardRouter from "./cluster-dashboard/DashboardRouter";
@@ -49,7 +51,6 @@ import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
 import ModalHandler from "./ModalHandler";
 import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
-
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -104,6 +105,13 @@ const Home: React.FC<Props> = (props) => {
   const [forceSidebar, setForceSidebar] = useState(true);
   const [theme, setTheme] = useState(standard);
   const [showWrongEmailModal, setShowWrongEmailModal] = useState(false);
+  const [isHosted, setIsHosted] = useState(false);
+
+  useEffect(() => {
+    if (currentProject?.sandbox_enabled) {
+      setIsHosted(true);
+    }
+  }, [currentProject]);
 
   const redirectToNewProject = () => {
     pushFiltered(props, "/new-project", ["project_id"]);
@@ -395,7 +403,13 @@ const Home: React.FC<Props> = (props) => {
     >
       <ClusterResourcesProvider>
         <DeploymentTargetProvider>
-          <StyledHome>
+          {isHosted && (
+            <GlobalBanner>
+              <img src={warning} />
+              No Porter Cloud access code is registered for this project. All resources will be automatically deleted after one week. 
+            </GlobalBanner>
+          )}
+          <StyledHome isHosted={isHosted}>
             <ModalHandler setRefreshClusters={setForceRefreshClusters} />
             {currentOverlay &&
               createPortal(
@@ -631,6 +645,26 @@ const Home: React.FC<Props> = (props) => {
 
 export default withRouter(withAuth(Home));
 
+const GlobalBanner = styled.div`
+  width: 100vw;
+  z-index: 999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 35px;
+  background: #263061;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-family: "Work Sans", sans-serif;
+  
+  > img {
+    height: 18px;
+    margin-right: 10px;
+  }
+`;
+
 const ViewWrapper = styled.div`
   height: 100%;
   width: 100vw;
@@ -649,11 +683,11 @@ const DashboardWrapper = styled.div`
   height: fit-content;
 `;
 
-const StyledHome = styled.div`
+const StyledHome = styled.div<{ isHosted: boolean }>`
   width: 100vw;
   height: 100vh;
   position: fixed;
-  top: 0;
+  top: ${(props) => (props.isHosted ? "35px" : "0")};
   left: 0;
   margin: 0;
   user-select: none;

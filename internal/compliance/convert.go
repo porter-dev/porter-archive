@@ -59,6 +59,16 @@ const (
 	Vendor_Vanta Vendor = "vanta"
 )
 
+// Profile is used to indicate which compliance profile the compliance check results are from
+type Profile string
+
+const (
+	// Profile_SOC2 is used to indicate that the check results are for the SOC2 compliance profile
+	Profile_SOC2 Profile = "soc2"
+	// Profile_HIPAA is used to indicate that the check results are for the HIPAA compliance profile
+	Profile_HIPAA Profile = "hipaa"
+)
+
 // CheckGroupsFromProto converts the compliance check group proto to the internal representation
 func CheckGroupsFromProto(ctx context.Context, checkGroups []*porterv1.ContractComplianceCheckGroup) ([]CheckGroup, error) {
 	ctx, span := telemetry.NewSpan(ctx, "compliance-checks-from-proto")

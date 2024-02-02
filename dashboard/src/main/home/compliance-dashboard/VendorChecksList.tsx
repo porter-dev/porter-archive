@@ -20,7 +20,7 @@ import { type VendorCheck } from "./types";
 type Filter = "all" | "passing" | "action-required" | "not-applicable";
 
 export const VendorChecksList: React.FC = () => {
-  const { vendorChecks, latestContractProto } = useCompliance();
+  const { profile, vendorChecks, latestContractProto } = useCompliance();
   const { showIntercomWithMessage } = useIntercom();
 
   const [statusFilter, setStatusFilter] = useState<Filter>("all");
@@ -31,10 +31,22 @@ export const VendorChecksList: React.FC = () => {
       return null;
     }
 
-    if (!latestContractProto?.cluster?.isSoc2Compliant) {
+    if (profile === "soc2" && !latestContractProto?.complianceProfiles?.soc2) {
       return (
         <Text color="helper">
           SOC-2 compliance is not enabled for this cluster. Re-provisioning your
+          infrastructure above will enable necessary security controls to ensure
+          compliance.
+        </Text>
+      );
+    }
+    if (
+      profile === "hipaa" &&
+      !latestContractProto?.complianceProfiles?.hipaa
+    ) {
+      return (
+        <Text color="helper">
+          HIPAA compliance is not enabled for this cluster. Re-provisioning your
           infrastructure above will enable necessary security controls to ensure
           compliance.
         </Text>

@@ -1,5 +1,17 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
-import { Contract, EKS, EKSLogging } from "@porter-dev/api-contracts";
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
+import {
+  ComplianceProfile,
+  Contract,
+  EKS,
+  EKSLogging,
+} from "@porter-dev/api-contracts";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { match } from "ts-pattern";
 import { z } from "zod";
@@ -15,6 +27,8 @@ import {
   type VendorCheck,
 } from "./types";
 
+type ComplianceProfileType = "soc2" | "hipaa";
+
 type ProjectComplianceContextType = {
   projectId: number;
   clusterId: number;
@@ -25,7 +39,9 @@ type ProjectComplianceContextType = {
   checksLoading: boolean;
   contractLoading: boolean;
   updateInProgress: boolean;
-  updateContractWithSOC2: () => Promise<void>;
+  profile: ComplianceProfileType;
+  setProfile: Dispatch<SetStateAction<ComplianceProfileType>>;
+  updateContractWithProfile: () => Promise<void>;
 };
 
 const ProjectComplianceContext =
@@ -52,6 +68,7 @@ export const ProjectComplianceProvider: React.FC<
 > = ({ projectId, clusterId, children }) => {
   const queryClient = useQueryClient();
   const [updateInProgress, setUpdateInProgress] = useState(false);
+  const [profile, setProfile] = useState<ComplianceProfileType>("soc2");
 
   const { data: baseContract, isLoading: contractLoading } = useQuery(
     [projectId, clusterId, "getContracts"],
@@ -80,13 +97,14 @@ export const ProjectComplianceProvider: React.FC<
         projectId,
         clusterId,
         condition: baseContract?.condition ?? "",
+        profile,
         name: "getComplianceChecks",
       },
     ],
     async () => {
       const res = await api.getComplianceChecks(
         "<token>",
-        { vendor: "vanta" },
+        { vendor: "vanta", profile },
         { projectId, clusterId }
       );
 
@@ -114,7 +132,7 @@ export const ProjectComplianceProvider: React.FC<
     });
   }, [baseContract?.base64_contract]);
 
-  const updateContractWithSOC2 = async (): Promise<void> => {
+  const updateContractWithProfile = async (): Promise<void> => {
     try {
       setUpdateInProgress(true);
 
@@ -141,6 +159,12 @@ export const ProjectComplianceProvider: React.FC<
         }))
         .otherwise((kind) => kind);
 
+      const complianceProfiles = new ComplianceProfile({
+        ...latestContract.complianceProfiles,
+        ...(profile === "soc2" && { soc2: true }),
+        ...(profile === "hipaa" && { hipaa: true }),
+      });
+
       const updatedContract = new Contract({
         ...latestContract,
         cluster: {
@@ -148,6 +172,7 @@ export const ProjectComplianceProvider: React.FC<
           kindValues: updatedKindValues,
           isSoc2Compliant: true,
         },
+        complianceProfiles,
       });
 
       await api.createContract("<token>", updatedContract, {
@@ -176,7 +201,9 @@ export const ProjectComplianceProvider: React.FC<
         checksLoading,
         contractLoading,
         updateInProgress,
-        updateContractWithSOC2,
+        profile,
+        setProfile,
+        updateContractWithProfile,
       }}
     >
       {children}

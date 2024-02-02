@@ -228,130 +228,128 @@ const Resources: React.FC<ResourcesProps> = ({
         )}
       />
 
-      {(currentCluster?.cloud_provider === "AWS" ||
-        currentCluster?.cloud_provider === "GCP") &&
-        currentProject?.gpu_enabled && (
-          <>
-            <Spacer y={1} />
-            <Controller
-              name={`app.services.${index}.gpu`}
-              control={control}
-              render={({ field: { value, onChange } }) => (
-                <>
-                  <Container row>
-                    <Switch
-                      size="small"
-                      color="primary"
-                      checked={value.enabled.value}
-                      disabled={!clusterContainsGPUNodes}
-                      onChange={() => {
-                        onChange({
-                          ...value,
-                          enabled: {
-                            ...value.enabled,
-                            value: !value.enabled.value,
-                          },
-                          gpuCoresNvidia: {
-                            ...value.gpuCoresNvidia,
-                            value: value.enabled.value ? 0 : 1,
-                          },
-                        });
-                      }}
-                      inputProps={{ "aria-label": "controlled" }}
-                    />
-                    <Spacer inline x={0.5} />
-                    <Text>
-                      <>
-                        <span>Enable GPU</span>
-                      </>
-                    </Text>
-
-                    {!clusterContainsGPUNodes && (
-                      <>
-                        <Spacer inline x={1} />
-                        <Text color="helper">
-                          You cluster has no GPU nodes available.
-                        </Text>
-                        <Spacer inline x={0.5} />
-                        {currentCluster.status !== "UPDATING" && (
-                          <Tag>
-                            <Link
-                              onClick={() => {
-                                setClusterModalVisible(true);
-                              }}
-                            >
-                              <TagIcon src={addCircle} />
-                              Add GPU nodes
-                            </Link>
-                          </Tag>
-                        )}
-                      </>
-                    )}
-                  </Container>
-
-                  <Spacer y={0.5} />
-                  {clusterModalVisible && (
-                    <ProvisionClusterModal
-                      closeModal={() => {
-                        setClusterModalVisible(false);
-                      }}
-                      gpuModal={true}
-                      gcp={currentCluster?.cloud_provider === "GCP"}
-                    />
-                  )}
-                </>
-              )}
-            />
-            {maxGPU > 1 && gpu.value && (
+      {currentProject?.gpu_enabled && (
+        <>
+          <Spacer y={1} />
+          <Controller
+            name={`app.services.${index}.gpu`}
+            control={control}
+            render={({ field: { value, onChange } }) => (
               <>
-                <Spacer y={1} />
-                <Controller
-                  name={`app.services.${index}.gpu`}
-                  control={control}
-                  render={({ field: { value, onChange } }) => (
-                    <InputSlider
-                      label="GPU"
-                      unit=""
-                      min={0}
-                      max={maxGPU}
-                      value={value?.gpuCoresNvidia.value ?? "1"}
-                      disabled={value?.readOnly}
-                      setValue={(e) => {
-                        onChange({
-                          ...value,
-                          gpuCoresNvidia: {
-                            ...value.gpuCoresNvidia,
-                            value: e,
-                          },
-                        });
-                      }}
-                      disabledTooltip={
-                        "You may only edit this field in your porter.yaml."
-                      }
-                    />
+                <Container row>
+                  <Switch
+                    size="small"
+                    color="primary"
+                    checked={value.enabled.value}
+                    disabled={!clusterContainsGPUNodes}
+                    onChange={() => {
+                      onChange({
+                        ...value,
+                        enabled: {
+                          ...value.enabled,
+                          value: !value.enabled.value,
+                        },
+                        gpuCoresNvidia: {
+                          ...value.gpuCoresNvidia,
+                          value: value.enabled.value ? 0 : 1,
+                        },
+                      });
+                    }}
+                    inputProps={{ "aria-label": "controlled" }}
+                  />
+                  <Spacer inline x={0.5} />
+                  <Text>
+                    <>
+                      <span>Enable GPU</span>
+                    </>
+                  </Text>
+
+                  {!clusterContainsGPUNodes && (
+                    <>
+                      <Spacer inline x={1} />
+                      <Text color="helper">
+                        Your cluster has no GPU nodes available.
+                      </Text>
+                      <Spacer inline x={0.5} />
+                      {currentCluster.status !== "UPDATING" && (
+                        <Tag>
+                          <Link
+                            onClick={() => {
+                              setClusterModalVisible(true);
+                            }}
+                          >
+                            <TagIcon src={addCircle} />
+                            Add GPU nodes
+                          </Link>
+                        </Tag>
+                      )}
+                    </>
                   )}
-                />
+                </Container>
+
+                <Spacer y={0.5} />
+                {clusterModalVisible && (
+                  <ProvisionClusterModal
+                    closeModal={() => {
+                      setClusterModalVisible(false);
+                    }}
+                    gpuModal={true}
+                    gcp={currentCluster?.cloud_provider === "GCP"}
+                    azure={currentCluster?.cloud_provider === "Azure"}
+                  />
+                )}
               </>
             )}
-            {currentCluster.status === "UPDATING" &&
-              !clusterContainsGPUNodes && (
-                <CheckItemContainer>
-                  <CheckItemTop>
-                    <Loading offset="0px" width="20px" height="20px" />
-                    <Spacer inline x={1} />
-                    <Text>{"Cluster is updating..."}</Text>
-                    <Spacer inline x={1} />
-                    <Tag>
-                      <Link to={`/cluster-dashboard`}>
-                        <TagIcon src={infra} />
-                        View Status
-                      </Link>
-                    </Tag>
-                  </CheckItemTop>
-                </CheckItemContainer>
-              )}
-          </>
-        )}
+          />
+          {maxGPU > 1 && gpu.value && (
+            <>
+              <Spacer y={1} />
+              <Controller
+                name={`app.services.${index}.gpu`}
+                control={control}
+                render={({ field: { value, onChange } }) => (
+                  <InputSlider
+                    label="GPU"
+                    unit=""
+                    min={0}
+                    max={maxGPU}
+                    value={value?.gpuCoresNvidia.value ?? "1"}
+                    disabled={value?.readOnly}
+                    setValue={(e) => {
+                      onChange({
+                        ...value,
+                        gpuCoresNvidia: {
+                          ...value.gpuCoresNvidia,
+                          value: e,
+                        },
+                      });
+                    }}
+                    disabledTooltip={
+                      "You may only edit this field in your porter.yaml."
+                    }
+                  />
+                )}
+              />
+            </>
+          )}
+          {currentCluster.status === "UPDATING" && !clusterContainsGPUNodes && (
+            <CheckItemContainer>
+              <CheckItemTop>
+                <Loading offset="0px" width="20px" height="20px" />
+                <Spacer inline x={1} />
+                <Text>{"Cluster is updating..."}</Text>
+                <Spacer inline x={1} />
+                <Tag>
+                  <Link to={`/cluster-dashboard`}>
+                    <TagIcon src={infra} />
+                    View Status
+                  </Link>
+                </Tag>
+              </CheckItemTop>
+            </CheckItemContainer>
+          )}
+        </>
+      )}
       {match(service.config)
         .with({ type: "job" }, () => null)
         .with({ type: "predeploy" }, () => null)

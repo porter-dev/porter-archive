@@ -41,7 +41,7 @@ type Props = {
 };
 
 const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
-  const { currentCluster } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
 
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
@@ -167,6 +167,32 @@ const DatabaseDashboard: React.FC<Props> = ({ projectId }) => {
   const renderContents = (): JSX.Element => {
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
+    }
+
+    if (currentProject?.sandbox_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>Databases are not enabled for sandbox users</Text>
+          <Spacer y={0.5} />
+
+          <Text color={"helper"}>
+            Eject to your own cloud account to enable managed databases.
+          </Text>
+        </DashboardPlaceholder>
+      );
+    }
+
+    if (!currentProject?.db_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>Databases are not enabled for this project</Text>
+          <Spacer y={0.5} />
+
+          <Text color={"helper"}>
+            Reach out to support@porter.run to enable managed databases on your project.
+          </Text>
+        </DashboardPlaceholder>
+      );
     }
 
     if (datastores === undefined || !isLoaded) {

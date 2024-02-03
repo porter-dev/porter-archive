@@ -608,7 +608,7 @@ func (r *Registry) GetACRCredentials(repo repository.Repository) (string, string
 
 	// if the passwords and name aren't set, generate them
 	if az.ACRTokenName == "" || len(az.ACRPassword1) == 0 {
-		az.ACRTokenName = "porter-acr-token"
+		az.ACRTokenName = fmt.Sprintf("porter-acr-token-%s", az.ACRName)
 
 		// create an acr repo token
 		cred, err := azidentity.NewClientSecretCredential(az.AzureTenantID, az.AzureClientID, string(az.ServicePrincipalSecret), nil)
@@ -641,7 +641,7 @@ func (r *Registry) GetACRCredentials(repo repository.Repository) (string, string
 			context.Background(),
 			az.ACRResourceGroupName,
 			az.ACRName,
-			"porter-acr-token",
+			az.ACRTokenName,
 			armcontainerregistry.Token{
 				Properties: &armcontainerregistry.TokenProperties{
 					ScopeMapID: smRes.ID,

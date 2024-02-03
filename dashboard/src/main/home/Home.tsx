@@ -105,13 +105,6 @@ const Home: React.FC<Props> = (props) => {
   const [forceSidebar, setForceSidebar] = useState(true);
   const [theme, setTheme] = useState(standard);
   const [showWrongEmailModal, setShowWrongEmailModal] = useState(false);
-  const [isHosted, setIsHosted] = useState(false);
-
-  useEffect(() => {
-    if (currentProject?.sandbox_enabled) {
-      setIsHosted(true);
-    }
-  }, [currentProject]);
 
   const redirectToNewProject = () => {
     pushFiltered(props, "/new-project", ["project_id"]);
@@ -403,13 +396,13 @@ const Home: React.FC<Props> = (props) => {
     >
       <ClusterResourcesProvider>
         <DeploymentTargetProvider>
-          {isHosted && (
+          {currentProject?.sandbox_enabled && (
             <GlobalBanner>
               <img src={warning} />
               Your project is currently in Sandbox mode. All resources will be automatically deleted after one week.
             </GlobalBanner>
           )}
-          <StyledHome isHosted={isHosted}>
+          <StyledHome isHosted={currentProject?.sandbox_enabled ?? false}>
             <ModalHandler setRefreshClusters={setForceRefreshClusters} />
             {currentOverlay &&
               createPortal(

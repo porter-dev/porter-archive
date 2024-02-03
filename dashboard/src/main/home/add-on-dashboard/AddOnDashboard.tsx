@@ -159,8 +159,16 @@ const AddOnDashboard: React.FC<Props> = ({
       {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
         <ClusterProvisioningPlaceholder />
       ) : (
-
-        (addOns.length === 0 || (filteredAddOns.length === 0 && searchValue === "")) ? (
+        currentProject?.sandbox_enabled ? (
+          <DashboardPlaceholder>
+            <Text size={16}>Add-ons are not enabled for sandbox users</Text>
+            <Spacer y={0.5} />
+  
+            <Text color={"helper"}>
+              Eject to your own cloud account to enable Porter add-ons.
+            </Text>
+          </DashboardPlaceholder>
+        ) : (addOns.length === 0 || (filteredAddOns.length === 0 && searchValue === "")) ? (
 
           isLoading ?
             (<Loading offset="-150px" />) : (

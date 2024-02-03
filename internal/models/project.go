@@ -292,8 +292,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		ValidateApplyV2:                 p.GetFeatureFlag(ValidateApplyV2, launchDarklyClient),
 		ManagedDeploymentTargetsEnabled: p.GetFeatureFlag(ManagedDeploymentTargetsEnabled, launchDarklyClient),
 
-		// ret2
-		SandboxEnabled: true,
+		SandboxEnabled: p.EnableSandbox,
 	}
 }
 
@@ -328,9 +327,6 @@ func (p *Project) ToProjectListType() *types.ProjectList {
 		EnableReprovision:      p.EnableReprovision,
 		ValidateApplyV2:        p.ValidateApplyV2,
 		FullAddOns:             p.FullAddOns,
-
-		// ret 2
-		SandboxEnabled: true,
 	}
 }
 

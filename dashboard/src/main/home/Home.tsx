@@ -406,7 +406,7 @@ const Home: React.FC<Props> = (props) => {
           {isHosted && (
             <GlobalBanner>
               <img src={warning} />
-              No Porter Cloud access code is registered for this project. All resources will be automatically deleted after one week. 
+              Your project is currently in Sandbox mode. All resources will be automatically deleted after one week.
             </GlobalBanner>
           )}
           <StyledHome isHosted={isHosted}>

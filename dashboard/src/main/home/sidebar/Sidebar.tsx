@@ -12,6 +12,7 @@ import addOns from "assets/add-ons.svg";
 import database from "assets/database.svg";
 import collapseSidebar from "assets/collapse-sidebar.svg";
 import pr_icon from "assets/pull_request_icon.svg";
+import lock from "assets/lock.svg";
 
 import { Context } from "shared/Context";
 
@@ -285,21 +286,25 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={applications} />
               Applications
             </NavButton>
-            {currentProject.db_enabled && (
-              <NavButton
-                path="/databases"
-                active={window.location.pathname.startsWith("/apps")}
-              >
-                <Img src={database} />
-                Databases
-              </NavButton>
-            )}
+            <NavButton
+              path="/databases"
+              active={window.location.pathname.startsWith("/apps")}
+            >
+              <Img src={database} />
+              Databases
+              {(currentProject.sandbox_enabled || !currentProject.db_enabled) && (
+                <Image src={lock} />
+              )}
+            </NavButton>
             <NavButton
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}
             >
               <Img src={addOns} />
               Add-ons
+              {currentProject.sandbox_enabled && (
+                <Image src={lock} />
+              )}
             </NavButton>
             <NavButton
               path="/env-groups"
@@ -307,6 +312,9 @@ class Sidebar extends Component<PropsType, StateType> {
             >
               <Img src={sliders} />
               Env groups
+              {currentProject.sandbox_enabled && (
+                <Image src={lock} />
+              )}
             </NavButton>
             {this.props.isAuthorized("settings", "", [
               "get",
@@ -321,10 +329,13 @@ class Sidebar extends Component<PropsType, StateType> {
                 >
                   <Img src={infra} />
                   Infrastructure
+                  {currentProject.sandbox_enabled && (
+                    <Image src={lock} />
+                  )}
                 </NavButton>
               )}
-
-            {currentProject.preview_envs_enabled && (
+            
+            {(currentProject.preview_envs_enabled) && (
               <NavButton path="/preview-environments">
                 <Img src={pr_icon} />
                 Preview apps
@@ -396,6 +407,11 @@ class Sidebar extends Component<PropsType, StateType> {
 Sidebar.contextType = Context;
 
 export default withRouter(withAuth(Sidebar));
+
+const Image = styled.img`
+  height: 15px;
+  margin-left: 15px;
+`;
 
 const ScrollWrapper = styled.div`
   overflow-y: auto;

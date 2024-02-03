@@ -23,6 +23,8 @@ import Metrics from "./Metrics";
 import { NamespaceList } from "./NamespaceList";
 import NodeList from "./NodeList";
 import ProvisionerStatus from "./ProvisionerStatus";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import Text from "components/porter/Text";
 
 type TabEnum =
   | "nodes"
@@ -218,7 +220,18 @@ export const Dashboard: React.FunctionComponent = () => {
   }, [context.currentCluster]);
 
   const renderContents = () => {
-    if (context.currentProject?.capi_provisioner_enabled) {
+    if (context.currentProject?.sandbox_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>Infrastructure settings are not enabled for sandbox users</Text>
+          <Spacer y={0.5} />
+
+          <Text color={"helper"}>
+            Eject to your own cloud account to enable managed infrastructure.
+          </Text>
+        </DashboardPlaceholder>
+      );
+    } else if (context.currentProject?.capi_provisioner_enabled) {
       return (
         <>
           <ClusterRevisionSelector

@@ -347,6 +347,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
             repository: src.image.repository,
             tag: src.image.tag,
           },
+          ...(predeploy && {
+            predeploy: serviceProto(serializeService(predeploy)),
+          }),
           helmOverrides:
             app.helmOverrides != null
               ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })

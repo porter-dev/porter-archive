@@ -367,9 +367,3 @@ func webConfigProtoFromConfig(service Service) (*porterv1.WebServiceConfig, erro
 
 	return webConfig, nil
 }
-
-var serviceTypeSortPriority = map[string]int{
-	"web":    0,
-	"worker": 1,
-	"job":    2,
-}

@@ -17,8 +17,8 @@ import pre_deploy from "assets/pre_deploy.png";
 import pull_request_icon from "assets/pull_request_icon.svg";
 import refresh from "assets/refresh.png";
 import run_for from "assets/run_for.png";
+import tag_icon from "assets/tag.png";
 
-import tag_icon from "../../../../../../../../assets/tag.png";
 import { type PorterAppPreDeployEvent } from "../types";
 import {
   getDuration,

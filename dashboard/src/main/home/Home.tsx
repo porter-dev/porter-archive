@@ -30,7 +30,6 @@ import {
   type ProjectListType,
   type ProjectType,
 } from "shared/types";
-import { overrideInfraTabEnabled } from "utils/infrastructure";
 
 import discordLogo from "../../assets/discord.svg";
 import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
@@ -49,7 +48,6 @@ import Dashboard from "./dashboard/Dashboard";
 import CreateDatabase from "./database-dashboard/CreateDatabase";
 import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
 import DatabaseView from "./database-dashboard/DatabaseView";
-import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 import ModalHandler from "./ModalHandler";
@@ -510,21 +508,12 @@ const Home: React.FC<Props> = (props) => {
                     return <Onboarding />;
                   }}
                 />
-                {(user?.isPorterUser ||
-                  overrideInfraTabEnabled({
-                    projectID: currentProject?.id,
-                  })) && (
-                  <Route
-                    path="/infrastructure"
-                    render={() => {
-                      return (
-                        <DashboardWrapper>
-                          <InfrastructureRouter />
-                        </DashboardWrapper>
-                      );
-                    }}
-                  />
-                )}
+                <Route
+                  path="/infrastructure"
+                  render={() => {
+                    return <div>hello world</div>;
+                  }}
+                />
                 <Route
                   path="/dashboard"
                   render={() => {

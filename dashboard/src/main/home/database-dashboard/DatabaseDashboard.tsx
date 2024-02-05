@@ -20,7 +20,7 @@ import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { type ClientDatastore } from "lib/databases/types";
-import { isAWSCluster, useClusterList } from "lib/hooks/useClusterList";
+import { isAWSCluster, useClusterList } from "lib/hooks/useCluster";
 import { useDatastoreList } from "lib/hooks/useDatabaseList";
 
 import { Context } from "shared/Context";

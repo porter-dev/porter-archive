@@ -14,7 +14,6 @@ import { createPortal } from "react-dom";
 import ConfirmOverlay from "components/ConfirmOverlay";
 
 type Props = {
-  selectedClusterVersion: any;
   setSelectedClusterVersion: any;
   setShowProvisionerStatus: any;
   setProvisionFailureReason: any;
@@ -22,7 +21,6 @@ type Props = {
 };
 
 const ClusterRevisionSelector: React.FC<Props> = ({
-  selectedClusterVersion,
   setSelectedClusterVersion,
   setShowProvisionerStatus,
   setProvisionFailureReason,
@@ -97,19 +95,6 @@ const ClusterRevisionSelector: React.FC<Props> = ({
     updateContracts();
   }, [currentCluster]);
 
-  const createContract = () => {
-    if (false) {
-      api
-        .createContract("<token>", selectedClusterVersion, {
-          project_id: currentProject.id,
-        })
-        .then(() => { })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
-  };
-
   const deleteContract = () => {
     api
       .deleteContract(
@@ -143,7 +128,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
           selected={selectedId === i}
         >
           <Td>{versions.length - i}</Td>
-          <Td>{readableDate(version.CreatedAt)}</Td>
+          <Td>{readableDate(version.created_at)}</Td>
           {/*
           <Td>
             <RollbackButton
@@ -180,7 +165,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
             </Flex>
           )}
         </Td>
-        <Td>{readableDate(pendingContract.CreatedAt)}</Td>
+        <Td>{readableDate(pendingContract.created_at)}</Td>
         {failedContractId && (
           <DeleteButton>
             <div onClick={() => { setShowConfirmOverlay(true); }}>
@@ -188,16 +173,6 @@ const ClusterRevisionSelector: React.FC<Props> = ({
             </div>
           </DeleteButton>
         )}
-        {/*
-        <Td>
-          <RollbackButton
-            disabled={i === 0}
-            onClick={createContract}
-          >
-            {i === 0 ? "Current" : "Revert"}
-          </RollbackButton>
-        </Td>
-        */}
       </Tr>
     );
   };

@@ -13,7 +13,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import { type DbFormData } from "lib/databases/types";
-import { isAWSCluster, useClusterList } from "lib/hooks/useClusterList";
+import { isAWSCluster, useClusterList } from "lib/hooks/useCluster";
 import { useDatastoreList } from "lib/hooks/useDatabaseList";
 import { useDatastoreMethods } from "lib/hooks/useDatabaseMethods";
 import { useIntercom } from "lib/hooks/useIntercom";

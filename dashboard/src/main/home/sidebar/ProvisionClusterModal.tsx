@@ -66,7 +66,6 @@ const ProvisionClusterModal: React.FC<Props> = ({
           {gpuModal ? (
             <>
               <ClusterRevisionSelector
-                selectedClusterVersion={selectedClusterVersion}
                 setSelectedClusterVersion={setSelectedClusterVersion}
                 setShowProvisionerStatus={setShowProvisionerStatus}
                 setProvisionFailureReason={setProvisionFailureReason}

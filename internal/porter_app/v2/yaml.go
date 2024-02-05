@@ -109,6 +109,7 @@ type PorterApp struct {
 	EnvGroups    []string      `yaml:"envGroups,omitempty"`
 	EfsStorage   *EfsStorage   `yaml:"efsStorage,omitempty"`
 	RequiredApps []RequiredApp `yaml:"requiredApps,omitempty"`
+	AutoRollback *AutoRollback `yaml:"autoRollback,omitempty"`
 }
 
 // PorterAppWithAddons is the definition of a porter app in a Porter YAML file with addons
@@ -141,6 +142,11 @@ type RequiredApp struct {
 
 // EfsStorage represents the EFS storage settings for a Porter app
 type EfsStorage struct {
+	Enabled bool `yaml:"enabled"`
+}
+
+// AutoRollback represents the auto rollback settings for a Porter app
+type AutoRollback struct {
 	Enabled bool `yaml:"enabled"`
 }
 
@@ -238,8 +244,6 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		}
 	}
 
-	// service map is only needed for backwards compatibility at this time
-	serviceMap := make(map[string]*porterv1.Service)
 	var services []*porterv1.Service
 
 	for _, service := range porterApp.Services {
@@ -254,10 +258,8 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 		}
 
 		services = append(services, serviceProto)
-		serviceMap[service.Name] = serviceProto
 	}
 	appProto.ServiceList = services
-	appProto.Services = serviceMap // nolint:staticcheck // temporarily using deprecated field for backwards compatibility
 
 	if porterApp.Predeploy != nil {
 		predeployProto, err := serviceProtoFromConfig(*porterApp.Predeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
@@ -277,6 +279,12 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 	if porterApp.EfsStorage != nil {
 		appProto.EfsStorage = &porterv1.EFS{
 			Enabled: porterApp.EfsStorage.Enabled,
+		}
+	}
+
+	if porterApp.AutoRollback != nil {
+		appProto.AutoRollback = &porterv1.AutoRollback{
+			Enabled: porterApp.AutoRollback.Enabled,
 		}
 	}
 
@@ -524,6 +532,12 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 	if appProto.EfsStorage != nil {
 		porterApp.EfsStorage = &EfsStorage{
 			Enabled: appProto.EfsStorage.Enabled,
+		}
+	}
+
+	if appProto.AutoRollback != nil {
+		porterApp.AutoRollback = &AutoRollback{
+			Enabled: appProto.AutoRollback.Enabled,
 		}
 	}
 

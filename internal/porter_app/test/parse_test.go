@@ -210,8 +210,8 @@ var result_nobuild = &porterv1.PorterApp{
 			Enabled:        false,
 			GpuCoresNvidia: 0,
 		},
-		Config:         &porterv1.Service_JobConfig{},
-		Type:           3,
+		Config: &porterv1.Service_JobConfig{},
+		Type:   3,
 	},
 	Image: &porterv1.AppImage{
 		Repository: "nginx",
@@ -294,35 +294,6 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 	},
 	ServiceList: []*porterv1.Service{
 		{
-			Name:           "example-job",
-			RunOptional:    pointer.String("echo 'hello world'"),
-			CpuCores:       0.1,
-			RamMegabytes:   256,
-			GpuCoresNvidia: 0,
-			Config: &porterv1.Service_JobConfig{
-				JobConfig: &porterv1.JobServiceConfig{
-					AllowConcurrentOptional: &trueBool,
-					Cron:                    "*/10 * * * *",
-				},
-			},
-			Type: 3,
-		},
-		{
-			Name:              "example-wkr",
-			RunOptional:       pointer.String("echo 'work'"),
-			InstancesOptional: &oneInt32,
-			Port:              80,
-			CpuCores:          0.1,
-			RamMegabytes:      256,
-			GpuCoresNvidia:    0,
-			Config: &porterv1.Service_WorkerConfig{
-				WorkerConfig: &porterv1.WorkerServiceConfig{
-					Autoscaling: nil,
-				},
-			},
-			Type: 2,
-		},
-		{
 			Name:              "example-web",
 			RunOptional:       pointer.String("node index.js"),
 			InstancesOptional: &zeroInt32,
@@ -355,6 +326,35 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 				},
 			},
 			Type: 1,
+		},
+		{
+			Name:              "example-wkr",
+			RunOptional:       pointer.String("echo 'work'"),
+			InstancesOptional: &oneInt32,
+			Port:              80,
+			CpuCores:          0.1,
+			RamMegabytes:      256,
+			GpuCoresNvidia:    0,
+			Config: &porterv1.Service_WorkerConfig{
+				WorkerConfig: &porterv1.WorkerServiceConfig{
+					Autoscaling: nil,
+				},
+			},
+			Type: 2,
+		},
+		{
+			Name:           "example-job",
+			RunOptional:    pointer.String("echo 'hello world'"),
+			CpuCores:       0.1,
+			RamMegabytes:   256,
+			GpuCoresNvidia: 0,
+			Config: &porterv1.Service_JobConfig{
+				JobConfig: &porterv1.JobServiceConfig{
+					AllowConcurrentOptional: &trueBool,
+					Cron:                    "*/10 * * * *",
+				},
+			},
+			Type: 3,
 		},
 	},
 	Predeploy: &porterv1.Service{

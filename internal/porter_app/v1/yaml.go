@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -84,9 +85,20 @@ func AppProtoFromYaml(ctx context.Context, porterYamlBytes []byte) (*porterv1.Po
 		}
 		serviceProto.Name = name
 
-		serviceList = append(serviceList, serviceProto)
 		serviceMap[name] = serviceProto
 	}
+
+	for _, service := range serviceMap {
+		serviceList = append(serviceList, service)
+	}
+
+	sort.Slice(serviceList, func(i, j int) bool {
+		if serviceList[i].Type != serviceList[j].Type {
+			return serviceList[i].Type < serviceList[j].Type
+		}
+		return serviceList[i].Name < serviceList[j].Name
+	})
+
 	appProto.ServiceList = serviceList
 	appProto.Services = serviceMap // nolint:staticcheck // temporarily using deprecated field for backwards compatibility
 

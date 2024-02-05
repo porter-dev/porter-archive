@@ -1045,6 +1045,7 @@ const updateApp = baseApi<
         }
       >;
     };
+    with_predeploy?: boolean;
   },
   {
     project_id: number;

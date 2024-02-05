@@ -333,6 +333,7 @@ export type ProjectType = {
   validate_apply_v2: boolean;
   managed_deployment_targets_enabled: boolean;
   aws_ack_auth_enabled: boolean;
+  sandbox_enabled: boolean;
   roles: Array<{
     id: number;
     kind: string;

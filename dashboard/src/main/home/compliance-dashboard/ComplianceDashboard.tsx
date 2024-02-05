@@ -14,6 +14,8 @@ import { ConfigSelectors } from "./ConfigSelectors";
 import { ProfileHeader } from "./ProfileHeader";
 import { SOC2CostConsent } from "./SOC2CostConsent";
 import { VendorChecksList } from "./VendorChecksList";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import Text from "components/porter/Text";
 
 const ComplianceDashboard: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -38,6 +40,24 @@ const ComplianceDashboard: React.FC = () => {
         />
         {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
           <ClusterProvisioningPlaceholder />
+        ) : currentProject?.sandbox_enabled ? (
+          <DashboardPlaceholder>
+            <Text size={16}>Compliance is not enabled for sandbox users</Text>
+            <Spacer y={0.5} />
+  
+            <Text color={"helper"}>
+              Eject to your own cloud account to enable the Compliance dashboard.
+            </Text>
+          </DashboardPlaceholder>
+        ) : !currentProject?.soc2_controls_enabled ? (
+          <DashboardPlaceholder>
+            <Text size={16}>Compliance is not enabled for this project</Text>
+            <Spacer y={0.5} />
+  
+            <Text color={"helper"}>
+              Reach out to support@porter.run to enable the Compliance dashboard on your project.
+            </Text>
+          </DashboardPlaceholder>
         ) : (
           <>
             <ConfigSelectors />

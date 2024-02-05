@@ -37,7 +37,7 @@ import { getDatastoreIcon, getEngineIcon } from "./icons";
 import EngineTag from "./tags/EngineTag";
 
 const DatabaseDashboard: React.FC = () => {
-  const { currentCluster } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const { clusters, isLoading: isLoadingClusters } = useClusterList();
 
   const [searchValue, setSearchValue] = useState("");
@@ -109,6 +109,32 @@ const DatabaseDashboard: React.FC = () => {
     }
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
+    }
+
+    if (currentProject?.sandbox_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>Databases are not enabled for sandbox users</Text>
+          <Spacer y={0.5} />
+
+          <Text color={"helper"}>
+            Eject to your own cloud account to enable managed databases.
+          </Text>
+        </DashboardPlaceholder>
+      );
+    }
+
+    if (!currentProject?.db_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>Databases are not enabled for this project</Text>
+          <Spacer y={0.5} />
+
+          <Text color={"helper"}>
+            Reach out to support@porter.run to enable managed databases on your project.
+          </Text>
+        </DashboardPlaceholder>
+      );
     }
 
     if (datastores.length === 0) {

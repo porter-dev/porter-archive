@@ -27,6 +27,8 @@ import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import SidebarLink from "./SidebarLink";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
 import ClusterListContainer from "./ClusterListContainer";
+import lock from "assets/lock.svg";
+import Image from "components/porter/Image";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -286,15 +288,19 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={applications} />
               Applications
             </NavButton>
-            {currentProject.db_enabled && (
-              <NavButton
-                path="/datastores"
-                active={window.location.pathname.startsWith("/apps")}
-              >
-                <Img src={database} />
-                Datastores
-              </NavButton>
-            )}
+            <NavButton
+              path="/datastores"
+              active={window.location.pathname.startsWith("/apps")}
+            >
+              <Img src={database} />
+              Datastores
+              {(currentProject.sandbox_enabled || !currentProject.db_enabled) && (
+                <Container row>
+                  <Spacer inline width="15px" />
+                  <Image size={15} src={lock} />
+                </Container>
+              )}
+            </NavButton>
             <NavButton
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}
@@ -325,21 +331,29 @@ class Sidebar extends Component<PropsType, StateType> {
                 </NavButton>
               )}
 
-            {currentProject.preview_envs_enabled && (
-              <NavButton path="/preview-environments">
-                <Img src={pr_icon} />
-                Preview apps
-              </NavButton>
+            <NavButton path="/preview-environments">
+              <Img src={pr_icon} />
+              Preview apps
+              {(currentProject.sandbox_enabled || !currentProject.preview_envs_enabled) && (
+              <Container row>
+                <Spacer inline width="15px" />
+                <Image size={15} src={lock} />
+              </Container>
             )}
+            </NavButton>
 
-            {currentProject?.soc2_controls_enabled && (
-              <NavButton 
-                path="/compliance"
-              >
-                <Img src={compliance} />
-                Compliance
-              </NavButton>
-            )}
+            <NavButton 
+              path="/compliance"
+            >
+              <Img src={compliance} />
+              Compliance
+              {(currentProject.sandbox_enabled || !currentProject.soc2_controls_enabled) && (
+                <Container row>
+                  <Spacer inline width="15px" />
+                  <Image size={15} src={lock} />
+                </Container>
+              )}
+            </NavButton>
 
             {this.props.isAuthorized("integrations", "", [
               "get",

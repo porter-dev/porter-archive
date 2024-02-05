@@ -580,8 +580,7 @@ const Home: React.FC<Props> = (props) => {
                   path={"/project-settings"}
                   render={() => <GuardedProjectSettings />}
                 />
-                {currentProject?.validate_apply_v2 &&
-                currentProject.preview_envs_enabled ? (
+                {currentProject?.validate_apply_v2 && (
                   <>
                     <Route exact path="/preview-environments/configure">
                       <SetupApp />
@@ -602,7 +601,7 @@ const Home: React.FC<Props> = (props) => {
                       <PreviewEnvs />
                     </Route>
                   </>
-                ) : null}
+                )}
                 <Route path={"*"} render={() => <LaunchWrapper />} />
               </Switch>
             </ViewWrapper>

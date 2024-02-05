@@ -3,7 +3,6 @@ package prometheus
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -269,7 +268,7 @@ func QueryPrometheus(
 		return nil, telemetry.Error(ctx, span, err, "failed to get raw query")
 	}
 
-	parsedQuery, err := parseQuery(rawQuery, opts.Metric)
+	parsedQuery, err := parseQuery(ctx, rawQuery, opts.Metric)
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "failed to parse query")
 	}
@@ -322,16 +321,19 @@ type promParsedSingletonQuery struct {
 	Results []promParsedSingletonQueryResult `json:"results"`
 }
 
-func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, error) {
+func parseQuery(ctx context.Context, rawQuery []byte, metric string) ([]*promParsedSingletonQuery, error) {
+	ctx, span := telemetry.NewSpan(ctx, "parse-query")
+	defer span.End()
+
 	if metric == "nginx:status" {
-		return parseNginxStatusQuery(rawQuery)
+		return parseNginxStatusQuery(ctx, rawQuery)
 	}
 
 	rawQueryObj := &promRawQuery{}
 
 	err := json.Unmarshal(rawQuery, rawQueryObj)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "failed to unmarshal raw query")
 	}
 
 	res := make([]*promParsedSingletonQuery, 0)
@@ -379,12 +381,15 @@ func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, er
 	return res, nil
 }
 
-func parseNginxStatusQuery(rawQuery []byte) ([]*promParsedSingletonQuery, error) {
+func parseNginxStatusQuery(ctx context.Context, rawQuery []byte) ([]*promParsedSingletonQuery, error) {
+	ctx, span := telemetry.NewSpan(ctx, "parse-nginx-status-query")
+	defer span.End()
+
 	rawQueryObj := &promRawQuery{}
 
 	err := json.Unmarshal(rawQuery, rawQueryObj)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "failed to unmarshal raw query")
 	}
 
 	singletonResultsByDate := make(map[string]*promParsedSingletonQueryResult, 0)
@@ -413,7 +418,8 @@ func parseNginxStatusQuery(rawQuery []byte) ([]*promParsedSingletonQuery, error)
 			case "5xx":
 				singletonResultsByDate[dateKey].StatusCode5xx = values[1]
 			default:
-				return nil, errors.New("invalid nginx status code")
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "status-code", Value: result.Metric.StatusCode})
+				return nil, telemetry.Error(ctx, span, nil, "unknown status code")
 			}
 		}
 	}

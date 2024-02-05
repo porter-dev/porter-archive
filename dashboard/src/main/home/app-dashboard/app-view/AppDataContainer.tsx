@@ -239,7 +239,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         await api.updateApp(
           "<token>",
           {
-            b64_app_proto: btoa(validatedAppProto.toJsonString()),
+            b64_app_proto: btoa(
+              validatedAppProto.toJsonString({ emitDefaultValues: true })
+            ),
             deployment_target_id: deploymentTarget.id,
             variables,
             secrets,

@@ -102,6 +102,7 @@ const PreviewEnvs: React.FC = () => {
       <DashboardHeader
         image={PullRequestIcon}
         title="Preview apps"
+        capitalize={false}
         description="Preview apps are created for each pull request. They are automatically deleted when the pull request is closed."
         disableLineBreak
       />

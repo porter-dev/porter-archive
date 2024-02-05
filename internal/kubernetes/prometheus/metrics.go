@@ -309,6 +309,7 @@ type promParsedSingletonQueryResult struct {
 	Bytes         interface{} `json:"bytes,omitempty"`
 	ErrorPct      interface{} `json:"error_pct,omitempty"`
 	Latency       interface{} `json:"latency,omitempty"`
+	StatusCode0xx interface{} `json:"0xx,omitempty"`
 	StatusCode1xx interface{} `json:"1xx,omitempty"`
 	StatusCode2xx interface{} `json:"2xx,omitempty"`
 	StatusCode3xx interface{} `json:"3xx,omitempty"`
@@ -407,6 +408,8 @@ func parseNginxStatusQuery(ctx context.Context, rawQuery []byte) ([]*promParsedS
 			}
 
 			switch result.Metric.StatusCode {
+			case "0xx":
+				singletonResultsByDate[dateKey].StatusCode0xx = values[1]
 			case "1xx":
 				singletonResultsByDate[dateKey].StatusCode1xx = values[1]
 			case "2xx":

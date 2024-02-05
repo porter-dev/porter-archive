@@ -33,7 +33,8 @@ func NewListComplianceChecksHandler(
 
 // ListComplianceChecksRequest is the expected format for a request to /compliance/checks
 type ListComplianceChecksRequest struct {
-	Vendor compliance.Vendor `schema:"vendor"`
+	Vendor  compliance.Vendor  `schema:"vendor"`
+	Profile compliance.Profile `schema:"profile"`
 }
 
 // ListComplianceChecksResponse is the expected format for a response from /compliance/checks
@@ -69,10 +70,25 @@ func (c *ListComplianceChecksHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		}
 	}
 
+	var profile porterv1.EnumComplianceProfile
+	if request.Profile != "" {
+		switch request.Profile {
+		case compliance.Profile_SOC2:
+			profile = porterv1.EnumComplianceProfile_ENUM_COMPLIANCE_PROFILE_SOC2
+		case compliance.Profile_HIPAA:
+			profile = porterv1.EnumComplianceProfile_ENUM_COMPLIANCE_PROFILE_HIPAA
+		default:
+			err := telemetry.Error(ctx, span, nil, "invalid profile")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+	}
+
 	req := connect.NewRequest(&porterv1.ContractComplianceChecksRequest{
 		ProjectId: int64(project.ID),
 		ClusterId: int64(cluster.ID),
 		Vendor:    vendor,
+		Profile:   profile,
 	})
 
 	ccpResp, err := c.Config().ClusterControlPlaneClient.ContractComplianceChecks(ctx, req)

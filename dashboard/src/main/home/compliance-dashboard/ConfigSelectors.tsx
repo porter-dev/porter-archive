@@ -11,22 +11,30 @@ import provider from "assets/provider.svg";
 import typeSvg from "assets/type.svg";
 import vanta from "assets/vanta.svg";
 
+import { useCompliance } from "./ComplianceContext";
+
 export const ConfigSelectors: React.FC = () => {
-  // to be made selectable with state living in context
+  const { profile, setProfile } = useCompliance();
   return (
     <Container row>
       <Select
         options={[
-          { value: "soc-2", label: "SOC 2" },
+          { value: "soc2", label: "SOC 2" },
           {
             value: "hipaa",
-            label: "HIPAA (request access)",
-            disabled: true,
+            label: "HIPAA",
           },
         ]}
         width="200px"
-        value={"soc-2"}
-        setValue={() => {}}
+        value={profile}
+        setValue={(value) => {
+          if (value === "soc2") {
+            setProfile("soc2");
+            return;
+          }
+
+          setProfile("hipaa");
+        }}
         prefix={
           <Container row>
             <Image src={framework} size={15} opacity={0.6} />

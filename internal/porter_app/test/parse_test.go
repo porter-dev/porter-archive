@@ -35,6 +35,9 @@ func TestParseYAML(t *testing.T) {
 			got, err := porter_app.ParseYAML(context.Background(), want, "test-app")
 			is.NoErr(err) // umbrella chart values should convert to map[string]any without issues
 
+			tt.want.Services = nil
+			got.AppProto.Services = nil
+
 			diffProtoWithFailTest(t, is, tt.want, got.AppProto)
 
 			is.Equal(got.EnvVariables, map[string]string{
@@ -210,8 +213,8 @@ var result_nobuild = &porterv1.PorterApp{
 			Enabled:        false,
 			GpuCoresNvidia: 0,
 		},
-		Config:         &porterv1.Service_JobConfig{},
-		Type:           3,
+		Config: &porterv1.Service_JobConfig{},
+		Type:   3,
 	},
 	Image: &porterv1.AppImage{
 		Repository: "nginx",

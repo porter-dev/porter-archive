@@ -139,18 +139,6 @@ export const AWS_INSTANCE_LIMITS: InstanceTypes = Object.freeze({
   },
 });
 
-// use values from Azure as base constant, convert to MB
-export const AZURE_INSTANCE_LIMITS: AzureInstanceTypes = Object.freeze({
-  Standard_B2als_v2: { vCPU: 2, RAM: 4 },
-  Standard_B2as_v2: { vCPU: 2, RAM: 8 },
-  Standard_B4als_v2: { vCPU: 4, RAM: 8 },
-  Standard_A2_v2: { vCPU: 2, RAM: 4 },
-  Standard_A4_v2: { vCPU: 4, RAM: 8 },
-  Standard_DS1_v2: { vCPU: 1, RAM: 3.5 },
-  Standard_DS2_v2: { vCPU: 2, RAM: 7 },
-  Standard_D2ads_v5: { vCPU: 2, RAM: 8 },
-});
-
 export const GPU_INSTANCE_LIMIT: InstanceTypes = Object.freeze({
   g4dn: {
     xlarge: { vCPU: 4, RAM: 16, GPU: 1 },

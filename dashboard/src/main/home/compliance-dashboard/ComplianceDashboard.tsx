@@ -2,22 +2,21 @@ import React, { useContext, useState } from "react";
 import styled from "styled-components";
 
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import Container from "components/porter/Container";
-import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 
 import { Context } from "shared/Context";
 import complianceGrad from "assets/compliance-grad.svg";
-import linkExternal from "assets/link-external.svg";
-import vanta from "assets/vanta.svg";
 
 import { ActionBanner } from "./ActionBanner";
 import { ProjectComplianceProvider } from "./ComplianceContext";
 import { ConfigSelectors } from "./ConfigSelectors";
+import { ProfileHeader } from "./ProfileHeader";
 import { SOC2CostConsent } from "./SOC2CostConsent";
 import { VendorChecksList } from "./VendorChecksList";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import Text from "components/porter/Text";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 
 const ComplianceDashboard: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -42,33 +41,44 @@ const ComplianceDashboard: React.FC = () => {
         />
         {currentCluster?.status === "UPDATING_UNAVAILABLE" ? (
           <ClusterProvisioningPlaceholder />
+        ) : currentProject?.sandbox_enabled ? (
+          <DashboardPlaceholder>
+            <Text size={16}>Compliance is not enabled for sandbox users</Text>
+            <Spacer y={0.5} />
+            <Text color={"helper"}>
+              Eject to your own cloud account to enable the Compliance dashboard.
+            </Text>
+            <Spacer y={1} />
+            <ShowIntercomButton
+              alt
+              message="I would like to eject to my own cloud account"
+              height="35px"
+            >
+              Request ejection
+            </ShowIntercomButton>
+          </DashboardPlaceholder>
+        ) : !currentProject?.soc2_controls_enabled ? (
+          <DashboardPlaceholder>
+            <Text size={16}>Compliance is not enabled for this project</Text>
+            <Spacer y={0.5} />
+            <Text color={"helper"}>
+            Reach out to the Porter team to enable the compliance dashboard on your project.
+            </Text>
+            <Spacer y={1} />
+            <ShowIntercomButton
+              alt
+              message="I would like to enable the compliance dashboard on my project"
+              height="35px"
+            >
+              Request to enable
+            </ShowIntercomButton>
+          </DashboardPlaceholder>
         ) : (
           <>
             <ConfigSelectors />
             <Spacer y={1} />
-            <Container row>
-              <Image src={vanta} size={25} />
-              <Spacer inline x={1} />
-              <Text
-                size={21}
-                additionalStyles=":hover { text-decoration: underline } cursor: pointer;"
-                onClick={() => {
-                  window.open(
-                    "https://app.vanta.com/tests?framework=soc2&service=aws&taskType=TEST",
-                    "_blank"
-                  );
-                }}
-              >
-                AWS SOC 2 Controls (Vanta)
-                <Spacer inline x={0.5} />
-                <Image
-                  src={linkExternal}
-                  size={16}
-                  additionalStyles="margin-bottom: -2px"
-                />
-              </Text>
-            </Container>
 
+            <ProfileHeader />
             <Spacer y={1} />
 
             <ActionBanner setShowCostConsentModal={setShowCostConsentModal} />

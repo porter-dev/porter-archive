@@ -9,6 +9,7 @@ import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
 
+import CreateDeploymentTargetModal from "components/CreateDeploymentTargetModal";
 import Back from "components/porter/Back";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
@@ -45,7 +46,6 @@ import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 import applicationGrad from "assets/application-grad.svg";
 
-import CreateDeploymentTargetModal from "components/CreateDeploymentTargetModal";
 import ImageSettings from "../image-settings/ImageSettings";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import SourceSelector from "../new-app-flow/SourceSelector";
@@ -344,7 +344,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             "<token>",
             {
               deployment_target_id: deploymentTargetID,
-              b64_app_proto: btoa(app.toJsonString()),
+              b64_app_proto: btoa(
+                app.toJsonString({
+                  emitDefaultValues: true,
+                })
+              ),
               secrets,
               variables,
               is_env_override: true,

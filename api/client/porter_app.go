@@ -297,6 +297,7 @@ type UpdateAppInput struct {
 	Base64AppProto     string
 	Base64PorterYAML   string
 	IsEnvOverride      bool
+	WithPredeploy      bool
 }
 
 // UpdateApp updates a porter app
@@ -316,6 +317,7 @@ func (c *Client) UpdateApp(
 		Base64AppProto:     inp.Base64AppProto,
 		Base64PorterYAML:   inp.Base64PorterYAML,
 		IsEnvOverride:      inp.IsEnvOverride,
+		WithPredeploy:      inp.WithPredeploy,
 	}
 
 	err := c.postRequest(

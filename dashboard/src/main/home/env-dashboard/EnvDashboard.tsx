@@ -57,14 +57,15 @@ const EnvDashboard: React.FC<Props> = (props) => {
         "<token>",
         {},
         {
-          id: currentProject?.id ?? -1,
-          cluster_id: currentCluster?.id ?? -1,
+          id: currentProject?.id,
+          cluster_id: currentCluster?.id,
         }
       );
-      console.log(res.data.environment_groups)
+      console.log("huh fuck", res.data.environment_groups)
       setEnvGroups(res.data.environment_groups);
       setIsLoading(false);
     } catch (err) {
+      console.log("i hate it here")
       setHasError(true);
       setIsLoading(false);
     }

@@ -17,6 +17,7 @@ import pre_deploy from "assets/pre_deploy.png";
 import pull_request_icon from "assets/pull_request_icon.svg";
 import refresh from "assets/refresh.png";
 import run_for from "assets/run_for.png";
+import tag_icon from "assets/tag.png";
 
 import { type PorterAppPreDeployEvent } from "../types";
 import {
@@ -30,6 +31,7 @@ import {
   CommitIcon,
   ImageTagContainer,
   StyledEventCard,
+  TagContainer,
 } from "./EventCard";
 
 type Props = {
@@ -78,7 +80,7 @@ const PreDeployEventCard: React.FC<Props> = ({
           <Icon height="16px" src={pre_deploy} />
           <Spacer inline width="10px" />
           <Text>Application pre-deploy</Text>
-          {gitCommitUrl && displayCommitSha && (
+          {gitCommitUrl && displayCommitSha ? (
             <>
               <Spacer inline x={0.5} />
               <ImageTagContainer>
@@ -92,7 +94,17 @@ const PreDeployEventCard: React.FC<Props> = ({
                 </Link>
               </ImageTagContainer>
             </>
-          )}
+          ) : event.metadata.image_tag ? (
+            <>
+              <Spacer inline x={0.5} />
+              <ImageTagContainer hoverable={false}>
+                <TagContainer>
+                  <CommitIcon src={tag_icon} />
+                  <Code>{event.metadata.image_tag}</Code>
+                </TagContainer>
+              </ImageTagContainer>
+            </>
+          ) : null}
         </Container>
         <Container row>
           <Icon height="14px" src={run_for} />
@@ -122,7 +134,8 @@ const PreDeployEventCard: React.FC<Props> = ({
               Logs
             </Link>
           </Tag>
-          {event.status !== "SUCCESS" && (
+          {/* retry is not supported for docker predeploy atm */}
+          {event.status !== "SUCCESS" && gitCommitUrl && (
             <>
               <Spacer inline x={0.5} />
               <Tag>

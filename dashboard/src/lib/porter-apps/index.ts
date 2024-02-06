@@ -1,4 +1,5 @@
 import {
+  AutoRollback,
   Build,
   EFS,
   HelmOverrides,
@@ -99,6 +100,12 @@ export const clientAppValidator = z.object({
   build: buildValidator,
   helmOverrides: z.string().optional(),
   requiredApps: z.object({ name: z.string() }).array().default([]),
+  autoRollback: z
+    .object({
+      enabled: z.boolean(),
+      readOnly: z.boolean().optional(),
+    })
+    .default({ enabled: false, readOnly: false }),
 });
 export type ClientPorterApp = z.infer<typeof clientAppValidator>;
 
@@ -321,6 +328,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           requiredApps: app.requiredApps.map((app) => ({
             name: app.name,
           })),
+          autoRollback: new AutoRollback({
+            enabled: app.autoRollback.enabled,
+          }),
         })
     )
     .with(
@@ -337,6 +347,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
             repository: src.image.repository,
             tag: src.image.tag,
           },
+          ...(predeploy && {
+            predeploy: serviceProto(serializeService(predeploy)),
+          }),
           helmOverrides:
             app.helmOverrides != null
               ? new HelmOverrides({ b64Values: btoa(app.helmOverrides) })
@@ -347,6 +360,9 @@ export function clientAppToProto(data: PorterAppFormData): PorterApp {
           requiredApps: app.requiredApps.map((app) => ({
             name: app.name,
           })),
+          autoRollback: new AutoRollback({
+            enabled: app.autoRollback.enabled,
+          }),
         })
     )
     .exhaustive();
@@ -497,6 +513,10 @@ export function clientAppFromProto({
       requiredApps: proto.requiredApps.map((app) => ({
         name: app.name,
       })),
+      autoRollback: {
+        enabled: proto.autoRollback?.enabled ?? true, // enabled by default if not found in proto
+        readOnly: false, // TODO: detect autorollback from porter.yaml
+      },
     };
   }
 
@@ -539,6 +559,10 @@ export function clientAppFromProto({
     requiredApps: proto.requiredApps.map((app) => ({
       name: app.name,
     })),
+    autoRollback: {
+      enabled: proto.autoRollback?.enabled ?? true, // enabled by default if not found in proto
+      readOnly: false, // TODO: detect autorollback from porter.yaml
+    },
   };
 }
 

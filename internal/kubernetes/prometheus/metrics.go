@@ -23,14 +23,14 @@ type GetPodMetricsRequest struct {
 
 // GetPrometheusService returns the prometheus service name. The prometheus-community/prometheus chart @ v15.5.3 uses non-FQDN labels, unlike v22.6.2. This function checks for both labels.
 func GetPrometheusService(clientset kubernetes.Interface) (*v1.Service, bool, error) {
-	redundantServices, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
+	redundantServices, err := clientset.CoreV1().Services("monitoring").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app=prometheus,component=server,heritage=Helm",
 	})
 	if err != nil {
 		return nil, false, err
 	}
 
-	upgradedServices, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
+	upgradedServices, err := clientset.CoreV1().Services("monitoring").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/component=server,app.kubernetes.io/instance=prometheus,app.kubernetes.io/managed-by=Helm",
 	})
 	if err != nil {

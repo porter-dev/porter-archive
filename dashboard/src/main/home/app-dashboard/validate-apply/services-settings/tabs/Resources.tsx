@@ -90,7 +90,7 @@ const Resources: React.FC<ResourcesProps> = ({
             : `app.services.${index}.smartOptimization`
         }
         control={control}
-        render={({ field: { value, onChange } }) => (
+        render={({ field: { value, onChange } }) => currentProject?.sandbox_enabled ? (<div></div>) : (
           <SmartOptHeader>
             <StyledIcon
               className="material-icons"
@@ -156,8 +156,8 @@ const Resources: React.FC<ResourcesProps> = ({
           <IntelligentSlider
             label="CPUs: "
             unit="Cores"
-            min={0.01}
-            max={maxCPU}
+            min={0.05}
+            max={currentProject?.sandbox_enabled ? 0.2 : maxCPU}
             color={"#3f51b5"}
             value={value.value.toString()}
             setValue={(e) => {
@@ -176,12 +176,12 @@ const Resources: React.FC<ResourcesProps> = ({
                 value: e,
               });
             }}
-            step={0.1}
+            step={0.05}
             disabled={value.readOnly}
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
-            isSmartOptimizationOn={smartOpt?.value ?? false}
+            isSmartOptimizationOn={!currentProject?.sandbox_enabled && (smartOpt?.value ?? false)}
             decimalsToRoundTo={2}
           />
         )}
@@ -198,8 +198,8 @@ const Resources: React.FC<ResourcesProps> = ({
           <IntelligentSlider
             label="RAM: "
             unit="MB"
-            min={1}
-            max={maxRAM}
+            min={10}
+            max={currentProject?.sandbox_enabled ? 256 : maxRAM}
             color={"#3f51b5"}
             value={value.value.toString()}
             setValue={(e) => {
@@ -223,7 +223,7 @@ const Resources: React.FC<ResourcesProps> = ({
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
-            isSmartOptimizationOn={smartOpt?.value ?? false}
+            isSmartOptimizationOn={!currentProject?.sandbox_enabled && (smartOpt?.value ?? false)}
           />
         )}
       />

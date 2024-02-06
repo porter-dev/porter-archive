@@ -47,7 +47,7 @@ const WebTabs: React.FC<Props> = ({
   nodeCount,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<string>("main");
-  const { currentCluster } = useContext(Context);
+  const { currentCluster, currentProject } = useContext(Context);
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
   const smartLimitRAM = (maxRAM - RESOURCE_ALLOCATION_RAM) * UPPER_BOUND_SMART
   const smartLimitCPU = (maxCPU - (RESOURCE_ALLOCATION_RAM * maxCPU / maxRAM)) * UPPER_BOUND_SMART

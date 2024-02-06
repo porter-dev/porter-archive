@@ -16,6 +16,7 @@ import { Context } from "shared/Context";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Text from "components/porter/Text";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 
 const tabs = ["environments", "config"] as const;
 export type ValidTab = (typeof tabs)[number];
@@ -53,23 +54,37 @@ const PreviewEnvs: React.FC = () => {
         <DashboardPlaceholder>
           <Text size={16}>Preview apps are not enabled for sandbox users</Text>
           <Spacer y={0.5} />
-
           <Text color={"helper"}>
             Eject to your own cloud account to enable preview apps.
           </Text>
+          <Spacer y={1} />
+            <ShowIntercomButton
+              alt
+              message="I would like to eject to my own cloud account"
+              height="35px"
+            >
+              Request ejection
+            </ShowIntercomButton>
         </DashboardPlaceholder>
       );
     }
 
-    if (!currentProject?.db_enabled) {
+    if (!currentProject?.preview_envs_enabled) {
       return (
         <DashboardPlaceholder>
           <Text size={16}>Preview apps are not enabled for this project</Text>
           <Spacer y={0.5} />
-
           <Text color={"helper"}>
-            Reach out to support@porter.run to enable preview apps on your project.
+            Reach out to the Porter team to enable preview apps on your project.
           </Text>
+          <Spacer y={1} />
+          <ShowIntercomButton
+            alt
+            message="I would like to enable preview apps on my project"
+            height="35px"
+          >
+            Request to enable
+          </ShowIntercomButton>
         </DashboardPlaceholder>
       );
     }

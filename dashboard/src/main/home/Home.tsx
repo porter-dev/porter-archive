@@ -32,6 +32,7 @@ import {
 } from "shared/types";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
 
+import warning from "../../assets/warning.svg";
 import discordLogo from "../../assets/discord.svg";
 import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
 import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
@@ -670,7 +671,7 @@ const GlobalBanner = styled.div`
   font-family: "Work Sans", sans-serif;
   
   > img {
-    height: 18px;
+    height: 16px;
     margin-right: 10px;
   }
 `;

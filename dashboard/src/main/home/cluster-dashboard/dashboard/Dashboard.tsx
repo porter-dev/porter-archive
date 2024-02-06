@@ -24,6 +24,7 @@ import NodeList from "./NodeList";
 import ProvisionerStatus from "./ProvisionerStatus";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Text from "components/porter/Text";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 
 type TabEnum =
   | "nodes"
@@ -187,10 +188,17 @@ export const Dashboard: React.FunctionComponent = () => {
         <DashboardPlaceholder>
           <Text size={16}>Infrastructure settings are not enabled for sandbox users</Text>
           <Spacer y={0.5} />
-
           <Text color={"helper"}>
             Eject to your own cloud account to enable managed infrastructure.
           </Text>
+          <Spacer y={1} />
+          <ShowIntercomButton
+            alt
+            message="I would like to eject to my own cloud account"
+            height="35px"
+          >
+            Request ejection
+          </ShowIntercomButton>
         </DashboardPlaceholder>
       );
     } else if (context.currentProject?.capi_provisioner_enabled) {

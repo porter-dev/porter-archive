@@ -36,6 +36,7 @@ import Select from "components/porter/Select";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import { useAuthState } from "main/auth/context";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 
 type Props = {
 };
@@ -163,10 +164,17 @@ const AddOnDashboard: React.FC<Props> = ({
           <DashboardPlaceholder>
             <Text size={16}>Add-ons are not enabled for sandbox users</Text>
             <Spacer y={0.5} />
-  
             <Text color={"helper"}>
               Eject to your own cloud account to enable Porter add-ons.
             </Text>
+            <Spacer y={1} />
+            <ShowIntercomButton
+              alt
+              message="I would like to eject to my own cloud account"
+              height="35px"
+            >
+              Request ejection
+            </ShowIntercomButton>
           </DashboardPlaceholder>
         ) : (addOns.length === 0 || (filteredAddOns.length === 0 && searchValue === "")) ? (
 

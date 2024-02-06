@@ -307,7 +307,10 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={addOns} />
               Add-ons
               {currentProject.sandbox_enabled && (
-                <Image src={lock} />
+                <Container row>
+                  <Spacer inline width="15px" />
+                  <Image size={15} src={lock} />
+                </Container>
               )}
             </NavButton>
             <NavButton
@@ -317,7 +320,10 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={sliders} />
               Env groups
               {currentProject.sandbox_enabled && (
-                <Image src={lock} />
+                <Container row>
+                  <Spacer inline width="15px" />
+                  <Image size={15} src={lock} />
+                </Container>
               )}
             </NavButton>
             {this.props.isAuthorized("settings", "", [
@@ -334,7 +340,10 @@ class Sidebar extends Component<PropsType, StateType> {
                   <Img src={infra} />
                   Infrastructure
                   {currentProject.sandbox_enabled && (
-                    <Image src={lock} />
+                    <Container row>
+                      <Spacer inline width="15px" />
+                      <Image size={15} src={lock} />
+                    </Container>
                   )}
                 </NavButton>
               )}

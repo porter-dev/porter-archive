@@ -18,7 +18,6 @@ import DashboardHeader from "../DashboardHeader";
 import ClusterRevisionSelector from "./ClusterRevisionSelector";
 import ClusterSettings from "./ClusterSettings";
 import ClusterSettingsModal from "./ClusterSettingsModal";
-import Compliance from "./Compliance";
 import Metrics from "./Metrics";
 import { NamespaceList } from "./NamespaceList";
 import NodeList from "./NodeList";
@@ -32,27 +31,12 @@ type TabEnum =
   | "namespaces"
   | "metrics"
   | "incidents"
-  | "compliance"
   | "configuration";
 
-var tabOptions: {
+const tabOptions: Array<{
   label: string;
   value: TabEnum;
-}[] = [{ label: "Additional settings", value: "settings" }];
-
-const COMPLIANCE_SUPPORTED_PROVIDERS = ["AWS"];
-
-const showComplianceTab = (
-  capi_provisioner_enabled: boolean,
-  soc2_controls_enabled: boolean,
-  cloud_provider: string
-): boolean => {
-  return (
-    capi_provisioner_enabled &&
-    soc2_controls_enabled &&
-    COMPLIANCE_SUPPORTED_PROVIDERS.includes(cloud_provider)
-  );
-};
+}> = [{ label: "Additional settings", value: "settings" }];
 
 export const Dashboard: React.FunctionComponent = () => {
   const [currentTab, setCurrentTab] = useState<TabEnum>("settings");
@@ -82,16 +66,6 @@ export const Dashboard: React.FunctionComponent = () => {
         return <Metrics />;
       case "namespaces":
         return <NamespaceList />;
-      case "compliance":
-        return selectedClusterVersion ? (
-          <Compliance
-            provisionerError={provisionFailureReason}
-            selectedClusterVersion={selectedClusterVersion}
-            credentialId={
-              context.currentCluster.cloud_provider_credential_identifier
-            }
-          />
-        ) : null;
       case "configuration":
         return (
           <>
@@ -134,7 +108,6 @@ export const Dashboard: React.FunctionComponent = () => {
   };
 
   useEffect(() => {
-    ``;
     if (
       context.currentCluster.status !== "UPDATING_UNAVAILABLE" &&
       !tabOptions.find((tab) => tab.value === "nodes")
@@ -144,17 +117,6 @@ export const Dashboard: React.FunctionComponent = () => {
         tabOptions.unshift({ label: "Metrics", value: "metrics" });
         tabOptions.unshift({ label: "Nodes", value: "nodes" });
       }
-    }
-
-    if (
-      showComplianceTab(
-        context.currentProject?.capi_provisioner_enabled,
-        context.currentProject?.soc2_controls_enabled,
-        context.currentCluster.cloud_provider
-      ) &&
-      !tabOptions.find((tab) => tab.value === "compliance")
-    ) {
-      tabOptions.unshift({ value: "compliance", label: "Compliance" });
     }
 
     if (
@@ -253,7 +215,9 @@ export const Dashboard: React.FunctionComponent = () => {
           <TabSelector
             options={currentTabOptions}
             currentTab={currentTab}
-            setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+            setCurrentTab={(value: TabEnum) => {
+              setCurrentTab(value);
+            }}
           />
           {renderTab()}
         </>
@@ -264,7 +228,9 @@ export const Dashboard: React.FunctionComponent = () => {
           <TabSelector
             options={currentTabOptions}
             currentTab={currentTab}
-            setCurrentTab={(value: TabEnum) => setCurrentTab(value)}
+            setCurrentTab={(value: TabEnum) => {
+              setCurrentTab(value);
+            }}
           />
           {renderTab()}
         </>

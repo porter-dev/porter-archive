@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/telemetry"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -242,10 +243,14 @@ func ListIncidentEvents(
 }
 
 func GetHistoricalLogs(
+	ctx context.Context,
 	clientset kubernetes.Interface,
 	service *v1.Service,
 	req *types.GetLogRequest,
 ) (*types.GetLogResponse, error) {
+	ctx, span := telemetry.NewSpan(ctx, "agent-get-historical-logs")
+	defer span.End()
+
 	vals := make(map[string]string)
 
 	if req.Limit != 0 {
@@ -255,7 +260,7 @@ func GetHistoricalLogs(
 	if req.StartRange != nil {
 		startVal, err := req.StartRange.MarshalText()
 		if err != nil {
-			return nil, err
+			return nil, telemetry.Error(ctx, span, err, "unable to marshal start range")
 		}
 
 		vals["start_range"] = string(startVal)
@@ -294,16 +299,16 @@ func GetHistoricalLogs(
 		vals,
 	)
 
-	rawQuery, err := resp.DoRaw(context.Background())
+	rawQuery, err := resp.DoRaw(ctx)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "unable to do get raw response")
 	}
 
 	logsResp := &types.GetLogResponse{}
 
 	err = json.Unmarshal(rawQuery, logsResp)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "unable to unmarshal logs response")
 	}
 
 	return logsResp, nil

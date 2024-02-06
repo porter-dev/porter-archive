@@ -24,7 +24,7 @@ const ConfirmRedeployModal: React.FC<Props> = ({
   buildIsDirty,
 }) => {
   const { setValue } = useFormContext<PorterAppFormData>();
-  const { latestRevision } = useLatestRevision();
+  const { latestRevision, porterApp } = useLatestRevision();
   const message = useMemo(() => {
     if (buildIsDirty) {
       return "A change to your application's build settings has been detected. Confirming this change will trigger a rerun of your application's CI pipeline.";
@@ -33,7 +33,12 @@ const ConfirmRedeployModal: React.FC<Props> = ({
       return "Your application's build previously failed. Confirming this change will trigger a rerun of your application's CI pipeline.";
     }
     if (latestRevision.status === "PREDEPLOY_FAILED") {
-      return "Your application's predeploy previously failed. Confirming this change will trigger a rerun of your application's CI pipeline.";
+      return (
+        "Your application's predeploy previously failed. " +
+        (porterApp.git_branch
+          ? "Confirming this change will trigger a rerun of your application's CI pipeline."
+          : " Confirming this change will trigger a rerun of the predeploy job.")
+      );
     }
   }, [latestRevision, buildIsDirty]);
 

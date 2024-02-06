@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -44,6 +45,9 @@ type APIContractRevision struct {
 	// 	]
 	// }
 	ConditionMetadata JSONB `json:"condition_metadata" sql:"type:jsonb" gorm:"type:jsonb"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // TableName overrides the table name

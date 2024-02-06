@@ -6,19 +6,20 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
+	"syscall"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
+
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 
 	"github.com/cli/cli/git"
 
-	"github.com/fatih/color"
-	"github.com/porter-dev/api-contracts/generated/go/helpers"
-	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/cli/cmd/config"
 )
@@ -39,24 +40,30 @@ type ApplyInput struct {
 	PreviewApply bool
 	// WaitForSuccessfulDeployment is true when Apply should wait for the update to complete before returning
 	WaitForSuccessfulDeployment bool
+	// PullImageBeforeBuild will attempt to pull the image before building if true
+	PullImageBeforeBuild bool
+	// WithPredeploy is true when Apply should run the predeploy step
+	WithPredeploy bool
 }
 
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
 func Apply(ctx context.Context, inp ApplyInput) error {
-	const forceBuild = true
-	var b64AppProto string
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	go func() {
+		termChan := make(chan os.Signal, 1)
+		signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
+		select {
+		case <-termChan:
+			color.New(color.FgYellow).Printf("Shutdown signal received, cancelling processes\n") // nolint:errcheck,gosec
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
 
 	cliConf := inp.CLIConfig
 	client := inp.Client
-
-	useNewApplyResp, err := client.UseNewApplyLogic(ctx, cliConf.Project, cliConf.Cluster)
-	if err != nil {
-		return fmt.Errorf("error checking if project uses new apply logic: %w", err)
-	}
-
-	if useNewApplyResp.UseNewApplyLogic {
-		return Update(ctx, UpdateInput(inp))
-	}
 
 	deploymentTargetID, err := deploymentTargetFromConfig(ctx, client, cliConf.Project, cliConf.Cluster, inp.PreviewApply)
 	if err != nil {
@@ -87,296 +94,194 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		}
 	}
 
-	// overrides incorporated into the app contract baed on the deployment target
-	var overrides *porter_app.EncodedAppWithEnv
-
-	// env variables and secrets to be passed to the apply endpoint
-	var envVariables map[string]string
-	var envSecrets map[string]string
-
-	appName := inp.AppName
+	var b64YAML string
 	if porterYamlExists {
 		porterYaml, err := os.ReadFile(filepath.Clean(inp.PorterYamlPath))
 		if err != nil {
 			return fmt.Errorf("could not read porter yaml file: %w", err)
 		}
 
-		b64YAML := base64.StdEncoding.EncodeToString(porterYaml)
-
-		// last argument is passed to accommodate users with v1 porter yamls
-		parseResp, err := client.ParseYAML(ctx, cliConf.Project, cliConf.Cluster, b64YAML, appName)
-		if err != nil {
-			return fmt.Errorf("error calling parse yaml endpoint: %w", err)
-		}
-
-		if parseResp.B64AppProto == "" {
-			return errors.New("b64 app proto is empty")
-		}
-		b64AppProto = parseResp.B64AppProto
-
-		overrides = parseResp.PreviewApp
-		envVariables = parseResp.EnvVariables
-		envSecrets = parseResp.EnvSecrets
-
-		// override app name if provided
-		appName, err = appNameFromB64AppProto(parseResp.B64AppProto)
-		if err != nil {
-			return fmt.Errorf("error getting app name from porter.yaml: %w", err)
-		}
-
-		// we only need to create the app if a porter yaml is provided (otherwise it must already exist)
-		createPorterAppDBEntryInp, err := createPorterAppDbEntryInputFromProtoAndEnv(parseResp.B64AppProto)
-		if err != nil {
-			return fmt.Errorf("unable to form porter app creation input from yaml: %w", err)
-		}
-
-		createPorterAppDBEntryInp.DeploymentTargetID = deploymentTargetID
-
-		err = client.CreatePorterAppDBEntry(ctx, cliConf.Project, cliConf.Cluster, createPorterAppDBEntryInp)
-		if err != nil {
-			if err.Error() == porter_app.ErrMissingSourceType.Error() {
-				return fmt.Errorf("cannot find existing Porter app with name %s and no build or image settings were specified in porter.yaml", appName)
-			}
-			return fmt.Errorf("unable to create porter app from yaml: %w", err)
-		}
-
-		color.New(color.FgGreen).Printf("Successfully parsed Porter YAML: applying app \"%s\"\n", appName) // nolint:errcheck,gosec
-	}
-
-	// b64AppOverrides is the base64-encoded app proto with preview environment specific overrides and env groups
-	var b64AppOverrides string
-
-	if inp.PreviewApply && overrides != nil {
-		b64AppOverrides = overrides.B64AppProto
-
-		previewEnvVariables := overrides.EnvVariables
-		envVariables = mergeEnvVariables(envVariables, previewEnvVariables)
-	}
-
-	if appName == "" {
-		return errors.New("App name is empty.  Please provide a Porter YAML file specifying the name of the app or set the PORTER_APP_NAME environment variable.")
+		b64YAML = base64.StdEncoding.EncodeToString(porterYaml)
+		color.New(color.FgGreen).Printf("Using Porter YAML at path: %s\n", inp.PorterYamlPath) // nolint:errcheck,gosec
 	}
 
 	commitSHA := commitSHAFromEnv()
+	gitSource, err := gitSourceFromEnv()
+	if err != nil {
+		return fmt.Errorf("error getting git source from env: %w", err)
+	}
 
-	validateResp, err := client.ValidatePorterApp(ctx, api.ValidatePorterAppInput{
+	updateInput := api.UpdateAppInput{
 		ProjectID:          cliConf.Project,
 		ClusterID:          cliConf.Cluster,
-		AppName:            appName,
-		Base64AppProto:     b64AppProto,
-		Base64AppOverrides: b64AppOverrides,
-		DeploymentTarget:   deploymentTargetID,
-		CommitSHA:          commitSHA,
+		Name:               inp.AppName,
 		ImageTagOverride:   inp.ImageTagOverride,
-	})
+		GitSource:          gitSource,
+		DeploymentTargetId: deploymentTargetID,
+		CommitSHA:          commitSHA,
+		Base64PorterYAML:   b64YAML,
+		WithPredeploy:      inp.WithPredeploy,
+	}
+
+	updateResp, err := client.UpdateApp(ctx, updateInput)
 	if err != nil {
-		return fmt.Errorf("error calling validate endpoint: %w", err)
+		return fmt.Errorf("error calling update app endpoint: %w", err)
 	}
 
-	if validateResp.ValidatedBase64AppProto == "" {
-		return errors.New("validated b64 app proto is empty")
-	}
-	base64AppProto := validateResp.ValidatedBase64AppProto
-
-	applyInput := api.ApplyPorterAppInput{
-		ProjectID:        cliConf.Project,
-		ClusterID:        cliConf.Cluster,
-		Base64AppProto:   base64AppProto,
-		DeploymentTarget: deploymentTargetID,
-		ForceBuild:       forceBuild,
-		Variables:        envVariables,
-		Secrets:          envSecrets,
-	}
-
-	applyResp, err := client.ApplyPorterApp(ctx, applyInput)
-	if err != nil {
-		return fmt.Errorf("error calling apply endpoint: %w", err)
-	}
-
-	if applyResp.AppRevisionId == "" {
+	if updateResp.AppRevisionId == "" {
 		return errors.New("app revision id is empty")
 	}
 
-	if applyResp.CLIAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_BUILD {
-		color.New(color.FgGreen).Printf("Building new image...\n") // nolint:errcheck,gosec
+	appName := updateResp.AppName
 
+	buildSettings, err := client.GetBuildFromRevision(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
+	if err != nil {
+		return fmt.Errorf("error getting build from revision: %w", err)
+	}
+
+	if buildSettings != nil && buildSettings.Build.Method != "" {
 		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, commitSHA)
 
-		reportBuildFailureInput := reportBuildFailureInput{
-			client:             client,
-			appName:            appName,
-			cliConf:            cliConf,
-			deploymentTargetID: deploymentTargetID,
-			appRevisionID:      applyResp.AppRevisionId,
-			eventID:            eventID,
-			commitSHA:          commitSHA,
-			prNumber:           prNumber,
-		}
+		var buildFinished bool
+		var buildError error
+		var buildLogs string
+
+		defer func() {
+			if buildError != nil && !errors.Is(buildError, context.Canceled) {
+				reportBuildFailureInput := reportBuildFailureInput{
+					client:             client,
+					appName:            appName,
+					cliConf:            cliConf,
+					deploymentTargetID: deploymentTargetID,
+					appRevisionID:      updateResp.AppRevisionId,
+					eventID:            eventID,
+					commitSHA:          commitSHA,
+					prNumber:           prNumber,
+					buildError:         buildError,
+					buildLogs:          buildLogs,
+				}
+				_ = reportBuildFailure(ctx, reportBuildFailureInput)
+				return
+			}
+			if !buildFinished {
+				buildMetadata := make(map[string]interface{})
+				buildMetadata["end_time"] = time.Now().UTC()
+				_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_Build, eventID, types.PorterAppEventStatus_Canceled, buildMetadata)
+				return
+			}
+		}()
 
 		if commitSHA == "" {
-			err := errors.New("Build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI.")
-			reportBuildFailureInput.buildError = err
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
+			return errors.New("build is required but commit SHA cannot be identified. Please set the PORTER_COMMIT_SHA environment variable or run apply in git repository with access to the git CLI")
 		}
 
-		buildSettings, err := buildSettingsFromBase64AppProto(base64AppProto)
+		color.New(color.FgGreen).Printf("Building new image with tag %s...\n", commitSHA) // nolint:errcheck,gosec
+
+		buildInput, err := buildInputFromBuildSettings(buildInputFromBuildSettingsInput{
+			projectID:            cliConf.Project,
+			appName:              appName,
+			commitSHA:            commitSHA,
+			image:                buildSettings.Image,
+			build:                buildSettings.Build,
+			buildEnv:             buildSettings.BuildEnvVariables,
+			pullImageBeforeBuild: inp.PullImageBeforeBuild,
+		})
 		if err != nil {
-			err := fmt.Errorf("error getting build settings from base64 app proto: %w", err)
-			reportBuildFailureInput.buildError = err
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
+			buildError = fmt.Errorf("error creating build input from build settings: %w", err)
+			return buildError
 		}
 
-		currentAppRevisionResp, err := client.CurrentAppRevision(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetID)
-		if err != nil {
-			err := fmt.Errorf("error getting current app revision: %w", err)
-			reportBuildFailureInput.buildError = err
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
-		}
-
-		if currentAppRevisionResp == nil {
-			err := errors.New("current app revision is nil")
-			reportBuildFailureInput.buildError = err
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
-		}
-
-		appRevision := currentAppRevisionResp.AppRevision
-		if appRevision.B64AppProto == "" {
-			err := errors.New("current app revision b64 app proto is empty")
-			reportBuildFailureInput.buildError = err
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
-		}
-
-		currentImageTag, err := imageTagFromBase64AppProto(appRevision.B64AppProto)
-		if err != nil {
-			err := fmt.Errorf("error getting image tag from current app revision: %w", err)
-			reportBuildFailureInput.buildError = err
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
-		}
-
-		buildSettings.CurrentImageTag = currentImageTag
-		buildSettings.ProjectID = cliConf.Project
-
-		buildEnv, err := client.GetBuildEnv(ctx, cliConf.Project, cliConf.Cluster, appName, appRevision.ID)
-		if err != nil {
-			err := fmt.Errorf("error getting build env: %w", err)
-			reportBuildFailureInput.buildError = err
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
-		}
-		buildSettings.Env = buildEnv.BuildEnvVariables
-
-		buildOutput := build(ctx, client, buildSettings)
+		buildOutput := build(ctx, client, buildInput)
 		if buildOutput.Error != nil {
-			err := fmt.Errorf("error building app: %w", buildOutput.Error)
-			reportBuildFailureInput.buildLogs = buildOutput.Logs
-			reportBuildFailureInput.buildError = buildOutput.Error
-			_ = reportBuildFailure(ctx, reportBuildFailureInput)
-			return err
+			buildError = fmt.Errorf("error building app: %w", buildOutput.Error)
+			buildLogs = buildOutput.Logs
+			return buildError
 		}
 
-		color.New(color.FgGreen).Printf("Successfully built image (tag: %s)\n", buildSettings.ImageTag) // nolint:errcheck,gosec
+		_, err = client.UpdateRevisionStatus(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId, models.AppRevisionStatus_BuildSuccessful)
+		if err != nil {
+			buildError = fmt.Errorf("error updating revision status post build: %w", err)
+			return buildError
+		}
+
+		color.New(color.FgGreen).Printf("Successfully built image (tag: %s)\n", commitSHA) // nolint:errcheck,gosec
 
 		buildMetadata := make(map[string]interface{})
 		buildMetadata["end_time"] = time.Now().UTC()
 		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_Build, eventID, types.PorterAppEventStatus_Success, buildMetadata)
-
-		applyInput = api.ApplyPorterAppInput{
-			ProjectID:     cliConf.Project,
-			ClusterID:     cliConf.Cluster,
-			AppRevisionID: applyResp.AppRevisionId,
-			ForceBuild:    !forceBuild,
-		}
-
-		applyResp, err = client.ApplyPorterApp(ctx, applyInput)
-		if err != nil {
-			return fmt.Errorf("apply error post-build: %w", err)
-		}
+		buildFinished = true
 	}
 
-	color.New(color.FgGreen).Printf("Image tag exists in repository\n") // nolint:errcheck,gosec
+	color.New(color.FgGreen).Printf("Deploying new revision %s for app %s...\n", updateResp.AppRevisionId, appName) // nolint:errcheck,gosec
 
-	if applyResp.CLIAction == porterv1.EnumCLIAction_ENUM_CLI_ACTION_TRACK_PREDEPLOY {
-		color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec
+	now := time.Now().UTC()
 
-		now := time.Now().UTC()
-		eventID, _ := createPredeployEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, now, applyResp.AppRevisionId, commitSHA)
-		metadata := make(map[string]interface{})
-		eventStatus := types.PorterAppEventStatus_Success
-		for {
-			if time.Since(now) > checkPredeployTimeout {
-				eventStatus = types.PorterAppEventStatus_Failed
-				metadata["end_time"] = time.Now().UTC()
-				_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
-
-				return errors.New("timed out waiting for predeploy to complete")
-			}
-
-			predeployStatusResp, err := client.PredeployStatus(ctx, cliConf.Project, cliConf.Cluster, appName, applyResp.AppRevisionId)
-			if err != nil {
-				eventStatus = types.PorterAppEventStatus_Failed
-				metadata["end_time"] = time.Now().UTC()
-				_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
-
-				return fmt.Errorf("error calling predeploy status endpoint: %w", err)
-			}
-
-			if predeployStatusResp.Status == porter_app.PredeployStatus_Failed {
-				eventStatus = types.PorterAppEventStatus_Failed
-				break
-			}
-			if predeployStatusResp.Status == porter_app.PredeployStatus_Successful {
-				break
-			}
-
-			time.Sleep(checkPredeployFrequency)
+	for {
+		if time.Since(now) > checkDeployTimeout {
+			return errors.New("timed out waiting for app to deploy")
 		}
 
-		metadata["end_time"] = time.Now().UTC()
-		_ = updateExistingEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, types.PorterAppEventType_PreDeploy, eventID, eventStatus, metadata)
-
-		applyInput = api.ApplyPorterAppInput{
-			ProjectID:     cliConf.Project,
-			ClusterID:     cliConf.Cluster,
-			AppRevisionID: applyResp.AppRevisionId,
-			ForceBuild:    !forceBuild,
-		}
-
-		applyResp, err = client.ApplyPorterApp(ctx, applyInput)
+		status, err := client.GetRevisionStatus(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
 		if err != nil {
-			return fmt.Errorf("apply error post-predeploy: %w", err)
+			return fmt.Errorf("error getting app revision status: %w", err)
 		}
-	}
 
-	if applyResp.CLIAction != porterv1.EnumCLIAction_ENUM_CLI_ACTION_NONE {
-		return fmt.Errorf("unexpected CLI action: %s", applyResp.CLIAction)
+		if status == nil {
+			return errors.New("unable to determine status of app revision")
+		}
+
+		if status.AppRevisionStatus.IsInTerminalStatus {
+			break
+		}
+
+		if status.AppRevisionStatus.PredeployStarted {
+			color.New(color.FgGreen).Printf("Waiting for predeploy to complete...\n") // nolint:errcheck,gosec
+		}
+
+		if status.AppRevisionStatus.InstallStarted {
+			color.New(color.FgGreen).Printf("Waiting for deploy to complete...\n") // nolint:errcheck,gosec
+		}
+
+		time.Sleep(checkDeployFrequency)
 	}
 
 	_, _ = client.ReportRevisionStatus(ctx, api.ReportRevisionStatusInput{
 		ProjectID:     cliConf.Project,
 		ClusterID:     cliConf.Cluster,
 		AppName:       appName,
-		AppRevisionID: applyResp.AppRevisionId,
+		AppRevisionID: updateResp.AppRevisionId,
 		PRNumber:      prNumber,
 		CommitSHA:     commitSHA,
 	})
 
-	color.New(color.FgGreen).Printf("Successfully applied new revision %s for app %s\n", applyResp.AppRevisionId, appName) // nolint:errcheck,gosec
+	status, err := client.GetRevisionStatus(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
+	if err != nil {
+		return fmt.Errorf("error getting app revision status: %w", err)
+	}
+
+	if status == nil {
+		return errors.New("unable to determine status of app revision")
+	}
+
+	if status.AppRevisionStatus.InstallFailed {
+		return errors.New("app failed to deploy")
+	}
+	if status.AppRevisionStatus.PredeployFailed {
+		return errors.New("predeploy failed for new revision")
+	}
+
+	color.New(color.FgGreen).Printf("Successfully applied new revision %s\n", updateResp.AppRevisionId) // nolint:errcheck,gosec
 
 	if inp.WaitForSuccessfulDeployment {
 		return waitForAppRevisionStatus(ctx, waitForAppRevisionStatusInput{
 			ProjectID:  cliConf.Project,
 			ClusterID:  cliConf.Cluster,
 			AppName:    appName,
-			RevisionID: applyResp.AppRevisionId,
+			RevisionID: updateResp.AppRevisionId,
 			Client:     client,
 		})
 	}
+
 	return nil
 }
 
@@ -391,112 +296,6 @@ func commitSHAFromEnv() string {
 	}
 
 	return commitSHA
-}
-
-// checkPredeployTimeout is the maximum amount of time the CLI will wait for a predeploy to complete before calling apply again
-const checkPredeployTimeout = 60 * time.Minute
-
-// checkPredeployFrequency is the frequency at which the CLI will check the status of a predeploy
-const checkPredeployFrequency = 10 * time.Second
-
-func appNameFromB64AppProto(base64AppProto string) (string, error) {
-	decoded, err := base64.StdEncoding.DecodeString(base64AppProto)
-	if err != nil {
-		return "", fmt.Errorf("unable to decode base64 app for revision: %w", err)
-	}
-
-	app := &porterv1.PorterApp{}
-	err = helpers.UnmarshalContractObject(decoded, app)
-	if err != nil {
-		return "", fmt.Errorf("unable to unmarshal app for revision: %w", err)
-	}
-
-	if app.Name == "" {
-		return "", fmt.Errorf("app does not contain name")
-	}
-	return app.Name, nil
-}
-
-func createPorterAppDbEntryInputFromProtoAndEnv(base64AppProto string) (api.CreatePorterAppDBEntryInput, error) {
-	var input api.CreatePorterAppDBEntryInput
-
-	decoded, err := base64.StdEncoding.DecodeString(base64AppProto)
-	if err != nil {
-		return input, fmt.Errorf("unable to decode base64 app for revision: %w", err)
-	}
-
-	app := &porterv1.PorterApp{}
-	err = helpers.UnmarshalContractObject(decoded, app)
-	if err != nil {
-		return input, fmt.Errorf("unable to unmarshal app for revision: %w", err)
-	}
-
-	if app.Name == "" {
-		return input, fmt.Errorf("app does not contain name")
-	}
-	input.AppName = app.Name
-
-	if app.Build != nil {
-		if os.Getenv("GITHUB_REPOSITORY_ID") == "" {
-			input.Local = true
-			return input, nil
-		}
-		gitRepoId, err := strconv.Atoi(os.Getenv("GITHUB_REPOSITORY_ID"))
-		if err != nil {
-			return input, fmt.Errorf("unable to parse GITHUB_REPOSITORY_ID to int: %w", err)
-		}
-		input.GitRepoID = uint(gitRepoId)
-		input.GitRepoName = os.Getenv("GITHUB_REPOSITORY")
-		input.GitBranch = os.Getenv("GITHUB_REF_NAME")
-		input.PorterYamlPath = "porter.yaml"
-		return input, nil
-	}
-
-	if app.Image != nil {
-		input.ImageRepository = app.Image.Repository
-		input.ImageTag = app.Image.Tag
-		return input, nil
-	}
-
-	return input, nil
-}
-
-func buildSettingsFromBase64AppProto(base64AppProto string) (buildInput, error) {
-	var buildSettings buildInput
-
-	decoded, err := base64.StdEncoding.DecodeString(base64AppProto)
-	if err != nil {
-		return buildSettings, fmt.Errorf("unable to decode base64 app for revision: %w", err)
-	}
-
-	app := &porterv1.PorterApp{}
-	err = helpers.UnmarshalContractObject(decoded, app)
-	if err != nil {
-		return buildSettings, fmt.Errorf("unable to unmarshal app for revision: %w", err)
-	}
-
-	if app.Name == "" {
-		return buildSettings, fmt.Errorf("app does not contain name")
-	}
-
-	if app.Build == nil {
-		return buildSettings, fmt.Errorf("app does not contain build settings")
-	}
-
-	if app.Image == nil {
-		return buildSettings, fmt.Errorf("app does not contain image settings")
-	}
-
-	return buildInput{
-		AppName:       app.Name,
-		BuildContext:  app.Build.Context,
-		Dockerfile:    app.Build.Dockerfile,
-		BuildMethod:   app.Build.Method,
-		Builder:       app.Build.Builder,
-		BuildPacks:    app.Build.Buildpacks,
-		ImageTag:      app.Image.Tag,
-		RepositoryURL: app.Image.Repository,
-	}, nil
 }
 
 func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectID, clusterID uint, previewApply bool) (string, error) {
@@ -543,45 +342,6 @@ func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectI
 	}
 
 	return deploymentTargetID, nil
-}
-
-func imageTagFromBase64AppProto(base64AppProto string) (string, error) {
-	var image string
-
-	decoded, err := base64.StdEncoding.DecodeString(base64AppProto)
-	if err != nil {
-		return image, fmt.Errorf("unable to decode base64 app for revision: %w", err)
-	}
-
-	app := &porterv1.PorterApp{}
-	err = helpers.UnmarshalContractObject(decoded, app)
-	if err != nil {
-		return image, fmt.Errorf("unable to unmarshal app for revision: %w", err)
-	}
-
-	if app.Image == nil {
-		return image, fmt.Errorf("app does not contain image settings")
-	}
-
-	if app.Image.Tag == "" {
-		return image, fmt.Errorf("app does not contain image tag")
-	}
-
-	return app.Image.Tag, nil
-}
-
-func mergeEnvVariables(currentEnv, previousEnv map[string]string) map[string]string {
-	env := make(map[string]string)
-
-	for k, v := range previousEnv {
-		env[k] = v
-	}
-
-	for k, v := range currentEnv {
-		env[k] = v
-	}
-
-	return env
 }
 
 type reportBuildFailureInput struct {
@@ -632,4 +392,71 @@ func reportBuildFailure(ctx context.Context, inp reportBuildFailureInput) error 
 	}
 
 	return nil
+}
+
+// checkDeployTimeout is the timeout for checking if an app has been deployed
+const checkDeployTimeout = 15 * time.Minute
+
+// checkDeployFrequency is the frequency for checking if an app has been deployed
+const checkDeployFrequency = 10 * time.Second
+
+func gitSourceFromEnv() (porter_app.GitSource, error) {
+	var source porter_app.GitSource
+
+	var repoID uint
+	if os.Getenv("GITHUB_REPOSITORY_ID") != "" {
+		id, err := strconv.Atoi(os.Getenv("GITHUB_REPOSITORY_ID"))
+		if err != nil {
+			return source, fmt.Errorf("unable to parse GITHUB_REPOSITORY_ID to int: %w", err)
+		}
+		repoID = uint(id)
+	}
+
+	return porter_app.GitSource{
+		GitBranch:   os.Getenv("GITHUB_REF_NAME"),
+		GitRepoID:   repoID,
+		GitRepoName: os.Getenv("GITHUB_REPOSITORY"),
+	}, nil
+}
+
+type buildInputFromBuildSettingsInput struct {
+	projectID            uint
+	appName              string
+	commitSHA            string
+	image                porter_app.Image
+	build                porter_app.BuildSettings
+	buildEnv             map[string]string
+	pullImageBeforeBuild bool
+}
+
+func buildInputFromBuildSettings(inp buildInputFromBuildSettingsInput) (buildInput, error) {
+	var buildSettings buildInput
+
+	if inp.appName == "" {
+		return buildSettings, errors.New("app name is empty")
+	}
+	if inp.image.Repository == "" {
+		return buildSettings, errors.New("image repository is empty")
+	}
+	if inp.build.Method == "" {
+		return buildSettings, errors.New("build method is empty")
+	}
+	if inp.commitSHA == "" {
+		return buildSettings, errors.New("commit SHA is empty")
+	}
+
+	return buildInput{
+		ProjectID:            inp.projectID,
+		AppName:              inp.appName,
+		BuildContext:         inp.build.Context,
+		Dockerfile:           inp.build.Dockerfile,
+		BuildMethod:          inp.build.Method,
+		Builder:              inp.build.Builder,
+		BuildPacks:           inp.build.Buildpacks,
+		ImageTag:             inp.commitSHA,
+		RepositoryURL:        inp.image.Repository,
+		CurrentImageTag:      inp.image.Tag,
+		Env:                  inp.buildEnv,
+		PullImageBeforeBuild: inp.pullImageBeforeBuild,
+	}, nil
 }

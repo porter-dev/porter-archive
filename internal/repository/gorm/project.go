@@ -1,6 +1,8 @@
 package gorm
 
 import (
+	"errors"
+
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"gorm.io/gorm"
@@ -134,4 +136,26 @@ func (repo *ProjectRepository) DeleteProjectRole(projID, userID uint) (*models.R
 	}
 
 	return role, nil
+}
+
+// DeleteRolesForProject deletes all roles for a project
+func (repo *ProjectRepository) DeleteRolesForProject(projID uint) error {
+	if projID == 0 {
+		return errors.New("must provide a project ID")
+	}
+
+	var roles []models.Role
+
+	if err := repo.db.Where("project_id = ?", projID).Find(&roles).Error; err != nil {
+		return err
+	}
+
+	for _, role := range roles {
+		r := role
+		if err := repo.db.Delete(&r).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

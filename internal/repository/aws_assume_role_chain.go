@@ -14,4 +14,6 @@ type AWSAssumeRoleChainer interface {
 	List(ctx context.Context, projectID uint) ([]*models.AWSAssumeRoleChain, error)
 	// ListByAwsAccountId returns the final hops in an assume role chain, where the ARN accounts match the supplied AWS account ID
 	ListByAwsAccountId(ctx context.Context, targetAwsAccountId string) ([]*models.AWSAssumeRoleChain, error)
+	// Delete deletes an AWS assume role chain by project ID
+	Delete(ctx context.Context, projectID uint) error
 }

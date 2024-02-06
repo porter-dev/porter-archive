@@ -4,21 +4,20 @@ import (
 	"context"
 	"net/http"
 
+	"connectrpc.com/connect"
+	"github.com/google/uuid"
+	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
+	"github.com/porter-dev/porter/api/server/handlers/release"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
-
-// DeleteRequest describes an inbound datastore deletion request
-type DeleteRequest struct {
-	Type string `json:"type" form:"required"`
-	Name string `json:"name" form:"required"`
-}
 
 // DeleteDatastoreHandler is a struct for handling datastore deletion requests
 type DeleteDatastoreHandler struct {
@@ -39,49 +38,46 @@ func NewDeleteDatastoreHandler(
 }
 
 func (h *DeleteDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-datastore-delete")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-delete-datastore")
 	defer span.End()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	request := &StatusRequest{}
-	if ok := h.DecodeAndValidate(w, r, request); !ok {
-		err := telemetry.Error(ctx, span, nil, "error decoding request")
+	datastoreName, reqErr := requestutils.GetURLParamString(r, types.URLParamDatastoreName)
+	if reqErr != nil {
+		err := telemetry.Error(ctx, span, nil, "error parsing datastore name")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "datastore-name", Value: datastoreName})
 
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "datastore-name", Value: request.Name},
-		telemetry.AttributeKV{Key: "datastore-type", Value: request.Type},
-	)
-
-	cluster, err := h.getClusterForDatastore(ctx, r, project.ID, request.Name)
+	datastoreRecord, err := h.Repo().Datastore().GetByProjectIDAndName(ctx, project.ID, datastoreName)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "unable to find datastore on any associated cluster")
+		err = telemetry.Error(ctx, span, err, "datastore record not found")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID})
+	if datastoreRecord == nil || datastoreRecord.ID == uuid.Nil {
+		err = telemetry.Error(ctx, span, nil, "datastore record does not exist")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
+		return
+	}
 
-	helmAgent, err := h.GetHelmAgent(ctx, r, cluster, "ack-system")
+	_, err = h.Repo().Datastore().UpdateStatus(ctx, datastoreRecord, models.DatastoreStatus_AwaitingDeletion)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to get helm client for cluster")
+		err = telemetry.Error(ctx, span, err, "error updating datastore status")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	_, err = helmAgent.GetRelease(ctx, request.Name, 0, false)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to get helm release")
-		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
+	updateReq := connect.NewRequest(&porterv1.UpdateDatastoreRequest{
+		ProjectId:   int64(project.ID),
+		DatastoreId: datastoreRecord.ID.String(),
+	})
 
-	_, err = helmAgent.UninstallChart(ctx, request.Name)
+	_, err = h.Config().ClusterControlPlaneClient.UpdateDatastore(ctx, updateReq)
 	if err != nil {
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID})
-		err := telemetry.Error(ctx, span, err, "unable to uninstall chart")
+		err := telemetry.Error(ctx, span, err, "error calling ccp update datastore")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
@@ -90,30 +86,54 @@ func (h *DeleteDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusAccepted)
 }
 
-func (h *DeleteDatastoreHandler) getClusterForDatastore(ctx context.Context, r *http.Request, projectID uint, datastoreName string) (*models.Cluster, error) {
-	ctx, span := telemetry.NewSpan(ctx, "get-cluster-for-datastore")
+// UninstallDatastoreInput is the input type for UninstallDatastore
+type UninstallDatastoreInput struct {
+	ProjectID                         uint
+	Name                              string
+	CloudProvider                     string
+	CloudProviderCredentialIdentifier string
+	Request                           *http.Request
+}
 
-	if r == nil {
-		return nil, telemetry.Error(ctx, span, nil, "missing http request object")
-	}
+// UninstallDatastore uninstalls a datastore from a cluster
+func (h *DeleteDatastoreHandler) UninstallDatastore(ctx context.Context, inp UninstallDatastoreInput) error {
+	ctx, span := telemetry.NewSpan(ctx, "uninstall-datastore")
+	defer span.End()
 
-	clusters, err := h.Repo().Cluster().ListClustersByProjectID(projectID)
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: inp.ProjectID},
+		telemetry.AttributeKV{Key: "name", Value: inp.Name},
+		telemetry.AttributeKV{Key: "cloud-provider", Value: inp.CloudProvider},
+		telemetry.AttributeKV{Key: "cloud-provider-credential-identifier", Value: inp.CloudProviderCredentialIdentifier},
+	)
+
+	var datastoreCluster *models.Cluster
+	clusters, err := h.Repo().Cluster().ListClustersByProjectID(inp.ProjectID)
 	if err != nil {
-		return nil, telemetry.Error(ctx, span, err, "unable to get project clusters")
+		return telemetry.Error(ctx, span, err, "unable to get project clusters")
 	}
 
 	for _, cluster := range clusters {
-		helmAgent, err := h.GetHelmAgent(ctx, r, cluster, "ack-system")
-		if err != nil {
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cluster-id", Value: cluster.ID})
-			return nil, telemetry.Error(ctx, span, err, "unable to get helm client for cluster")
-		}
-
-		_, err = helmAgent.GetRelease(ctx, datastoreName, 0, false)
-		if err == nil {
-			return cluster, nil
+		if cluster.CloudProvider == inp.CloudProvider && cluster.CloudProviderCredentialIdentifier == inp.CloudProviderCredentialIdentifier {
+			datastoreCluster = cluster
 		}
 	}
 
-	return nil, telemetry.Error(ctx, span, nil, "unable to find datastore on any associated cluster")
+	if datastoreCluster == nil {
+		return telemetry.Error(ctx, span, nil, "unable to find datastore cluster")
+	}
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "cluster-id", Value: datastoreCluster.ID})
+
+	helmAgent, err := h.GetHelmAgent(ctx, inp.Request, datastoreCluster, release.Namespace_ACKSystem)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "unable to get helm client for cluster")
+	}
+
+	_, err = helmAgent.UninstallChart(ctx, inp.Name)
+	if err != nil {
+		return telemetry.Error(ctx, span, err, "unable to uninstall chart")
+	}
+
+	return nil
 }

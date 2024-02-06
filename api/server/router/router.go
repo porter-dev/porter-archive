@@ -36,7 +36,8 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 	stackRegisterer := NewPorterAppScopedRegisterer()
 	addonRegisterer := NewAddonScopedRegisterer()
 	deploymentTargetRegisterer := NewDeploymentTargetScopedRegisterer()
-	clusterRegisterer := NewClusterScopedRegisterer(namespaceRegisterer, clusterIntegrationRegisterer, stackRegisterer, deploymentTargetRegisterer, addonRegisterer)
+	legacyDeploymentTargetRegisterer := NewLegacyDeploymentTargetScopedRegisterer()
+	clusterRegisterer := NewClusterScopedRegisterer(namespaceRegisterer, clusterIntegrationRegisterer, stackRegisterer, legacyDeploymentTargetRegisterer, addonRegisterer)
 	infraRegisterer := NewInfraScopedRegisterer()
 	gitInstallationRegisterer := NewGitInstallationScopedRegisterer()
 	registryRegisterer := NewRegistryScopedRegisterer()
@@ -56,6 +57,7 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		projectIntegrationRegisterer,
 		projectOAuthRegisterer,
 		slackIntegrationRegisterer,
+		deploymentTargetRegisterer,
 	)
 	statusRegisterer := NewStatusScopedRegisterer()
 
@@ -201,6 +203,10 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 	// after authorization. Each subsequent http.Handler can lookup the cluster in context.
 	clusterFactory := authz.NewClusterScopedFactory(config)
 
+	// Create a new "deployment-target-scoped" factory which will create a new deployment-target-scoped request
+	// after authorization. Each subsequent http.Handler can lookup the deployment target in context.
+	deploymentTargetFactory := authz.NewDeploymentTargetScopedFactory(config)
+
 	// Create a new "namespace-scoped" factory which will create a new namespace-scoped request
 	// after authorization. Each subsequent http.Handler can lookup the namespace in context.
 	namespaceFactory := authz.NewNamespaceScopedFactory(config)
@@ -273,6 +279,8 @@ func registerRoutes(config *config.Config, routes []*router.Route) {
 				atomicGroup.Use(projFactory.Middleware)
 			case types.ClusterScope:
 				atomicGroup.Use(clusterFactory.Middleware)
+			case types.DeploymentTargetScope:
+				atomicGroup.Use(deploymentTargetFactory.Middleware)
 			case types.NamespaceScope:
 				atomicGroup.Use(namespaceFactory.Middleware)
 			case types.HelmRepoScope:

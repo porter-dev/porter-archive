@@ -1,11 +1,11 @@
-You can create one-time jobs or cron jobs on Porter, which can be linked [from your Github repo](https://docs.getporter.dev/docs/applications) or [from an existing Docker image registry](https://docs.getporter.dev/docs/deploying-from-docker-image-registry). Cron jobs are meant to run on a schedule using a specified [cron expression](https://en.wikipedia.org/wiki/Cron#CRON_expression), while one-time jobs are meant to be triggered manually. Here are some use-cases for each type of job:
+You can create one-time jobs or cron jobs on Porter, which can be linked [from your Github repo](https://docs.porter.run/docs/applications) or [from an existing Docker image registry](https://docs.porter.run/docs/deploying-from-docker-image-registry). Cron jobs are meant to run on a schedule using a specified [cron expression](https://en.wikipedia.org/wiki/Cron#CRON_expression), while one-time jobs are meant to be triggered manually. Here are some use-cases for each type of job:
 
 - Run one-time jobs for database migration scripts, data processing, or generally scripts that are designed to run to completion on an unpredictable schedule
 - Run cron jobs for tasks that should run on a specified schedule, such as scraping data at a specified interval, cleaning up rows in a database, taking backups of a DB, or sending batch notifications at a specified time every day
 
 # Deploying a One-Time Job
 
-To deploy a one-time job on Porter, head to the "Launch" tab and select the "Jobs" template. From this template, you can connect your source ([Github repo](https://docs.getporter.dev/docs/applications) or [Docker image registry](https://docs.getporter.dev/docs/deploying-from-docker-image-registry)), specify the job command, and add environment variables. For example, to create a job that simply prints to the console from an environment variable, we can create a job with the following configuration:
+To deploy a one-time job on Porter, head to the "Launch" tab and select the "Jobs" template. From this template, you can connect your source ([Github repo](https://docs.porter.run/docs/applications) or [Docker image registry](https://docs.porter.run/docs/deploying-from-docker-image-registry)), specify the job command, and add environment variables. For example, to create a job that simply prints to the console from an environment variable, we can create a job with the following configuration:
 
 ![One-time job](https://files.readme.io/f566850-Screen_Shot_2021-04-16_at_2.54.35_PM.png "Screen Shot 2021-04-16 at 2.54.35 PM.png")
 
@@ -19,7 +19,7 @@ To re-run the job, simply click the "Rerun job" button in the bottom right corne
 
 > 📘
 >
-> **Note:** as an alternative to one-time jobs, you can also run a command using [remote execution](https://docs.getporter.dev/docs/cli-documentation#remote-execution) from the CLI. This is simpler to do, but lacks the benefit of getting the history of jobs along with logs and status for each job.
+> **Note:** as an alternative to one-time jobs, you can also run a command using [remote execution](https://docs.porter.run/docs/cli-documentation#remote-execution) from the CLI. This is simpler to do, but lacks the benefit of getting the history of jobs along with logs and status for each job.
 
 ## Running One-Time Jobs from Github Repositories
 

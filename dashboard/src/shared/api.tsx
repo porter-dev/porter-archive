@@ -903,6 +903,18 @@ const parsePorterYaml = baseApi<
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/parse`;
 });
 
+const attachEnvGroup = baseApi<
+  {
+    env_group_name: string;
+    app_instance_ids: string[];
+  },
+  { project_id: number; cluster_id: number }
+>(
+  "POST",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/apps/attach-env-group`
+);
+
 const getDefaultDeploymentTarget = baseApi<
   {},
   {
@@ -1043,6 +1055,7 @@ const updateApp = baseApi<
         }
       >;
     };
+    with_predeploy?: boolean;
   },
   {
     project_id: number;
@@ -1237,11 +1250,10 @@ const getDeploymentTarget = baseApi<
   {},
   {
     project_id: number;
-    cluster_id: number;
     deployment_target_id: string;
   }
->("GET", ({ project_id, cluster_id, deployment_target_id }) => {
-  return `/api/projects/${project_id}/clusters/${cluster_id}/deployment-targets/${deployment_target_id}`;
+>("GET", ({ project_id, deployment_target_id }) => {
+  return `/api/projects/${project_id}/targets/${deployment_target_id}`;
 });
 
 const getAppTemplate = baseApi<
@@ -1256,15 +1268,16 @@ const getAppTemplate = baseApi<
 });
 
 const listLatestAddons = baseApi<
-{
-  deployment_target_id?: string;
-},
-{
-  projectId: number;
-  clusterId: number;
-}>("GET", ({ projectId, clusterId }) => {
+  {
+    deployment_target_id?: string;
+  },
+  {
+    projectId: number;
+    clusterId: number;
+  }
+>("GET", ({ projectId, clusterId }) => {
   return `/api/projects/${projectId}/clusters/${clusterId}/addons/latest`;
-})
+});
 
 const getGitlabProcfileContents = baseApi<
   {
@@ -1561,6 +1574,13 @@ const getClusterState = baseApi<{}, { project_id: number; cluster_id: number }>(
     return `/api/projects/${project_id}/clusters/${cluster_id}/state`;
   }
 );
+
+const getComplianceChecks = baseApi<
+  { vendor: "vanta", profile: "soc2" | "hipaa" },
+  { projectId: number; clusterId: number }
+>("GET", ({ projectId, clusterId }) => {
+  return `/api/projects/${projectId}/clusters/${clusterId}/compliance/checks`;
+});
 
 const provisionInfra = baseApi<
   {
@@ -2689,12 +2709,9 @@ const getAwsCloudProviders = baseApi<
   {
     project_id: number;
   }
->(
-  "GET",
-  ({ project_id }) => {
-    return `/api/projects/${project_id}/cloud-providers/aws`;
-  }
-);
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/cloud-providers/aws`;
+});
 
 const getDatabases = baseApi<
   {},
@@ -2721,7 +2738,15 @@ const getDatastores = baseApi<
   }
 >(
   "GET",
-  ({ project_id, cloud_provider_name, cloud_provider_id, datastore_name, datastore_type, include_env_group, include_metadata }) => {
+  ({
+    project_id,
+    cloud_provider_name,
+    cloud_provider_id,
+    datastore_name,
+    datastore_type,
+    include_env_group,
+    include_metadata,
+  }) => {
     const queryParams = new URLSearchParams();
 
     if (datastore_name) {
@@ -2744,20 +2769,49 @@ const getDatastores = baseApi<
   }
 );
 
-const deleteDatastore = baseApi<
-  {
-    name: string;
-    type: string;
-  },
+const listDatastores = baseApi<
+  {},
   {
     project_id: number;
-    cloud_provider_name: string;
-    cloud_provider_id: string;
+  }
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/datastores`;
+});
+
+const getDatastore = baseApi<
+  {},
+  {
+    project_id: number;
+    datastore_name: string;
+  }
+>("GET", ({ project_id, datastore_name }) => {
+  return `/api/projects/${project_id}/datastores/${datastore_name}`;
+});
+
+const updateDatastore = baseApi<
+  {
+    name: string;
+    type: "RDS" | "ELASTICACHE";
+    engine: "POSTGRES" | "AURORA-POSTGRES" | "REDIS";
+    values: any;
+  },
+  { project_id: number; cluster_id: number }
+>(
+  "POST",
+  ({ project_id, cluster_id }) =>
+    `/api/projects/${project_id}/clusters/${cluster_id}/datastores`
+);
+
+const deleteDatastore = baseApi<
+  {},
+  {
+    project_id: number;
+    datastore_name: string;
   }
 >(
   "DELETE",
-  ({ project_id, cloud_provider_name, cloud_provider_id }) =>
-    `/api/projects/${project_id}/cloud-providers/${cloud_provider_name}/${cloud_provider_id}/datastores`
+  ({ project_id, datastore_name }) =>
+    `/api/projects/${project_id}/datastores/${datastore_name}`
 );
 
 const getPreviousLogsForContainer = baseApi<
@@ -3503,6 +3557,7 @@ export default {
   getMatchingPods,
   getAllReleasePods,
   getClusterState,
+  getComplianceChecks,
   getMetrics,
   appMetrics,
   appHelmValues,
@@ -3513,6 +3568,7 @@ export default {
   getProcfileContents,
   getPorterYamlContents,
   parsePorterYaml,
+  attachEnvGroup,
   getDefaultDeploymentTarget,
   deleteDeploymentTarget,
   getBranchHead,
@@ -3616,6 +3672,9 @@ export default {
   getAwsCloudProviders,
   getDatabases,
   getDatastores,
+  listDatastores,
+  getDatastore,
+  updateDatastore,
   deleteDatastore,
   getPreviousLogsForContainer,
   upgradePorterAgent,

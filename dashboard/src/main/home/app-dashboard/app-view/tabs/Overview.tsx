@@ -31,7 +31,6 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
   const {
     porterApp,
     latestProto,
-    latestRevision,
     projectId,
     clusterId,
     deploymentTarget,
@@ -50,27 +49,23 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
 
   return (
     <>
-      {porterApp.git_repo_id && (
-        <>
-          <Text size={16}>Pre-deploy job</Text>
-          <Spacer y={0.5} />
-          <ServiceList
-            addNewText={"Add a new pre-deploy job"}
-            prePopulateService={deserializeService({
-              service: defaultSerialized({
-                name: "pre-deploy",
-                type: "predeploy",
-                defaultCPU: currentClusterResources.defaultCPU,
-                defaultRAM: currentClusterResources.defaultRAM,
-              }),
-            })}
-            existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
-            isPredeploy
-            fieldArrayName={"app.predeploy"}
-          />
-          <Spacer y={0.5} />
-        </>
-      )}
+      <Text size={16}>Pre-deploy job</Text>
+      <Spacer y={0.5} />
+      <ServiceList
+        addNewText={"Add a new pre-deploy job"}
+        prePopulateService={deserializeService({
+          service: defaultSerialized({
+            name: "pre-deploy",
+            type: "predeploy",
+            defaultCPU: currentClusterResources.defaultCPU,
+            defaultRAM: currentClusterResources.defaultRAM,
+          }),
+        })}
+        existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
+        isPredeploy
+        fieldArrayName={"app.predeploy"}
+      />
+      <Spacer y={0.5} />
       <Text size={16}>Application services</Text>
       <Spacer y={0.5} />
       <ServiceList
@@ -86,9 +81,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
       <Spacer y={0.75} />
       <AppSaveButton
         status={buttonStatus}
-        isDisabled={
-          formState.isSubmitting || latestRevision.status === "CREATED"
-        }
+        isDisabled={formState.isSubmitting}
         disabledTooltipMessage="Please wait for the deploy to complete before updating services"
       />
     </>

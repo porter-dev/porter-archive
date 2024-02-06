@@ -4,10 +4,9 @@ import styled from "styled-components";
 import CopyToClipboard from "components/CopyToClipboard";
 import Container from "components/porter/Container";
 import Text from "components/porter/Text";
+import { type DatastoreMetadataWithSource } from "lib/databases/types";
 
 import copy from "assets/copy-left.svg";
-
-import { type DatastoreMetadataWithSource } from "./types";
 
 type DatabaseHeaderItemProps = {
   item: DatastoreMetadataWithSource;
@@ -35,7 +34,7 @@ const DatabaseHeaderItem: React.FC<DatabaseHeaderItemProps> = ({ item }) => {
       <Text size={12}>{titleizeText(item.name)}</Text>
 
       <Container row>
-        <Text title={item.value} color="helper" size={10}>
+        <Text color="helper" size={10}>
           {truncateText(item.value, 42)}
         </Text>
         <CopyToClipboard text={item.value.toString()}>

@@ -3,7 +3,6 @@ package prometheus
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -234,6 +233,8 @@ func QueryPrometheus(
 		}
 
 		query = createHPACurrentReplicasQuery(metricName, opts.Name, opts.Namespace, appLabel, hpaMetricName)
+	} else if opts.Metric == "replicas" {
+		query = fmt.Sprintf(`kube_deployment_status_replicas{deployment="%s"}`, opts.Name)
 	}
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "query", Value: query})
@@ -267,7 +268,7 @@ func QueryPrometheus(
 		return nil, telemetry.Error(ctx, span, err, "failed to get raw query")
 	}
 
-	parsedQuery, err := parseQuery(rawQuery, opts.Metric)
+	parsedQuery, err := parseQuery(ctx, rawQuery, opts.Metric)
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "failed to parse query")
 	}
@@ -308,6 +309,7 @@ type promParsedSingletonQueryResult struct {
 	Bytes         interface{} `json:"bytes,omitempty"`
 	ErrorPct      interface{} `json:"error_pct,omitempty"`
 	Latency       interface{} `json:"latency,omitempty"`
+	StatusCode0xx interface{} `json:"0xx,omitempty"`
 	StatusCode1xx interface{} `json:"1xx,omitempty"`
 	StatusCode2xx interface{} `json:"2xx,omitempty"`
 	StatusCode3xx interface{} `json:"3xx,omitempty"`
@@ -320,16 +322,19 @@ type promParsedSingletonQuery struct {
 	Results []promParsedSingletonQueryResult `json:"results"`
 }
 
-func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, error) {
+func parseQuery(ctx context.Context, rawQuery []byte, metric string) ([]*promParsedSingletonQuery, error) {
+	ctx, span := telemetry.NewSpan(ctx, "parse-query")
+	defer span.End()
+
 	if metric == "nginx:status" {
-		return parseNginxStatusQuery(rawQuery)
+		return parseNginxStatusQuery(ctx, rawQuery)
 	}
 
 	rawQueryObj := &promRawQuery{}
 
 	err := json.Unmarshal(rawQuery, rawQueryObj)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "failed to unmarshal raw query")
 	}
 
 	res := make([]*promParsedSingletonQuery, 0)
@@ -362,6 +367,8 @@ func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, er
 				singletonResult.Replicas = values[1]
 			} else if metric == "nginx:latency" || metric == "nginx:latency-histogram" {
 				singletonResult.Latency = values[1]
+			} else if metric == "replicas" {
+				singletonResult.Replicas = values[1]
 			}
 
 			singletonResults = append(singletonResults, *singletonResult)
@@ -375,12 +382,15 @@ func parseQuery(rawQuery []byte, metric string) ([]*promParsedSingletonQuery, er
 	return res, nil
 }
 
-func parseNginxStatusQuery(rawQuery []byte) ([]*promParsedSingletonQuery, error) {
+func parseNginxStatusQuery(ctx context.Context, rawQuery []byte) ([]*promParsedSingletonQuery, error) {
+	ctx, span := telemetry.NewSpan(ctx, "parse-nginx-status-query")
+	defer span.End()
+
 	rawQueryObj := &promRawQuery{}
 
 	err := json.Unmarshal(rawQuery, rawQueryObj)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "failed to unmarshal raw query")
 	}
 
 	singletonResultsByDate := make(map[string]*promParsedSingletonQueryResult, 0)
@@ -398,6 +408,8 @@ func parseNginxStatusQuery(rawQuery []byte) ([]*promParsedSingletonQuery, error)
 			}
 
 			switch result.Metric.StatusCode {
+			case "0xx":
+				singletonResultsByDate[dateKey].StatusCode0xx = values[1]
 			case "1xx":
 				singletonResultsByDate[dateKey].StatusCode1xx = values[1]
 			case "2xx":
@@ -409,7 +421,8 @@ func parseNginxStatusQuery(rawQuery []byte) ([]*promParsedSingletonQuery, error)
 			case "5xx":
 				singletonResultsByDate[dateKey].StatusCode5xx = values[1]
 			default:
-				return nil, errors.New("invalid nginx status code")
+				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "status-code", Value: result.Metric.StatusCode})
+				return nil, telemetry.Error(ctx, span, nil, "unknown status code")
 			}
 		}
 	}

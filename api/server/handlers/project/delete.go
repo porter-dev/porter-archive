@@ -1,7 +1,6 @@
 package project
 
 import (
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -13,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/notifier"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type ProjectDeleteHandler struct {
@@ -29,14 +29,18 @@ func NewProjectDeleteHandler(
 }
 
 func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, span := telemetry.NewSpan(r.Context(), "delete-project")
+	defer span.End()
+
 	user, _ := ctx.Value(types.UserScope).(*models.User)
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	if proj.GetFeatureFlag(models.CapiProvisionerEnabled, p.Config().LaunchDarklyClient) {
 		clusters, err := p.Config().Repo.Cluster().ListClustersByProjectID(proj.ID)
 		if err != nil {
-			p.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error finding clusters for project: %w", err)))
+			e := "error finding clusters for project"
+			err = telemetry.Error(ctx, span, err, e)
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 
@@ -48,7 +52,9 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 				contractRevision, err := p.Config().Repo.APIContractRevisioner().List(ctx, proj.ID, cluster.ID)
 				if err != nil {
-					p.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error finding contract revisions for cluster: %w", err)))
+					e := "error finding contract revisions for cluster"
+					err = telemetry.Error(ctx, span, err, e)
+					p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 					return
 				}
 				if len(contractRevision) == 0 {
@@ -64,7 +70,9 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 				})
 				_, err = p.Config().ClusterControlPlaneClient.DeleteCluster(ctx, req)
 				if err != nil {
-					p.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting cluster: %w", err)))
+					e := "error deleting cluster"
+					err = telemetry.Error(ctx, span, err, e)
+					p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 					return
 				}
 			}
@@ -77,13 +85,33 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		},
 	)
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		e := "error sending project deletion email"
+		err = telemetry.Error(ctx, span, err, e)
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
 	deletedProject, err := p.Repo().Project().DeleteProject(proj)
 	if err != nil {
-		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		e := "error deleting project"
+		err = telemetry.Error(ctx, span, err, e)
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	err = p.Repo().AWSAssumeRoleChainer().Delete(ctx, proj.ID)
+	if err != nil {
+		e := "error deleting assume role chain"
+		err = telemetry.Error(ctx, span, err, e)
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	err = p.Repo().Project().DeleteRolesForProject(proj.ID)
+	if err != nil {
+		e := "error deleting roles for project"
+		err = telemetry.Error(ctx, span, err, e)
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 

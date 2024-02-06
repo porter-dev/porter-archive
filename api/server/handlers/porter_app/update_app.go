@@ -69,6 +69,8 @@ type UpdateAppRequest struct {
 	// IsEnvOverride is used to remove any variables that are not specified in the request.  If false, the request will only update the variables specified in the request,
 	// and leave all other variables untouched.
 	IsEnvOverride bool `json:"is_env_override"`
+	// WithPredeploy is a flag to indicate whether to run the predeploy job
+	WithPredeploy bool `json:"with_predeploy"`
 }
 
 // UpdateAppResponse is the response object for the POST /apps/update endpoint
@@ -111,6 +113,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		telemetry.AttributeKV{Key: "commit-sha", Value: request.CommitSHA},
 		telemetry.AttributeKV{Key: "porter-yaml-path", Value: request.PorterYAMLPath},
 		telemetry.AttributeKV{Key: "is-env-override", Value: request.IsEnvOverride},
+		telemetry.AttributeKV{Key: "with-predeploy", Value: request.WithPredeploy},
 	)
 
 	var addons, addonOverrides []*porterv1.Addon
@@ -254,11 +257,12 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			EnvGroupNames:    request.Deletions.EnvGroupNames,
 			ServiceDeletions: serviceDeletions,
 		},
-		AppOverrides:   overrides,
-		CommitSha:      request.CommitSHA,
-		IsEnvOverride:  request.IsEnvOverride,
-		Addons:         addons,
-		AddonOverrides: addonOverrides,
+		AppOverrides:        overrides,
+		CommitSha:           request.CommitSHA,
+		IsEnvOverride:       request.IsEnvOverride,
+		Addons:              addons,
+		AddonOverrides:      addonOverrides,
+		IsPredeployEligible: request.WithPredeploy,
 	})
 
 	ccpResp, err := c.Config().ClusterControlPlaneClient.UpdateApp(ctx, updateReq)

@@ -51,7 +51,7 @@ const PorterYamlModal: React.FC<Props> = ({
                     </Text>
                     <Spacer y={0.5} />
                     <Link
-                        to="https://docs.porter.run/standard/deploying-applications/writing-porter-yaml"
+                        to="https://docs.porter.run/deploy/configuration-as-code/overview"
                         target="_blank"
                         hasunderline
                     >

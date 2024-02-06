@@ -146,14 +146,46 @@ const Settings: React.FC = () => {
 
   return (
     <StyledSettingsTab>
+      <Text size={16}>Enable application auto-rollback</Text>
+      <Spacer y={0.5} />
+      <Text color="helper">
+        If enabled, Porter will automatically trigger a rollback to the last
+        successful deployment if any services of the new deployment fail to
+        deploy.
+      </Text>
+      <Spacer y={0.5} />
+      <Controller
+        name={`app.autoRollback`}
+        control={control}
+        render={({ field: { value, onChange } }) => (
+          <Checkbox
+            checked={value.enabled}
+            toggleChecked={() => {
+              onChange({
+                ...value,
+                enabled: !value.enabled,
+              });
+            }}
+            disabled={value.readOnly}
+            disabledTooltip={
+              "You may only edit this field in your porter.yaml."
+            }
+          >
+            <Text color="helper">Auto-rollback enabled</Text>
+          </Checkbox>
+        )}
+      />
+      <Spacer y={1} />
       {currentCluster?.cloud_provider === "AWS" &&
         currentProject?.efs_enabled && (
           <>
-            <Text size={16}>
-              Enable shared storage across services for &quot;{porterApp.name}
-              &quot;
-            </Text>
+            <Text size={16}>Enable shared storage (EFS)</Text>
             <Spacer y={0.5} />
+            <Text color="helper">
+              If enabled, Porter will mount a shared storage drive in your
+              cluster, accessible by all services of this app. This drive is
+              accessible at /data/efs/{porterApp.name}
+            </Text>
             <Spacer y={0.5} />
             <Controller
               name={`app.efsStorage`}
@@ -172,7 +204,7 @@ const Settings: React.FC = () => {
                     "You may only edit this field in your porter.yaml."
                   }
                 >
-                  <Text color="helper">Enable EFS Storage</Text>
+                  <Text color="helper">EFS Storage enabled</Text>
                 </Checkbox>
               )}
             />

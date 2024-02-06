@@ -184,3 +184,16 @@ export const ImageTagContainer = styled.div<{ hoverable?: boolean }>`
     cursor: pointer;
   }`}
 `;
+
+export const TagIcon = styled.img`
+  height: 12px;
+  margin-right: 3px;
+`;
+
+export const TagContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 1px;
+  padding: 0px 2px;
+`;

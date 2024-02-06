@@ -1,18 +1,24 @@
-import React, { useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import _ from "lodash";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled, { keyframes } from "styled-components";
 
 import Button from "components/porter/Button";
+import { ControlledInput } from "components/porter/ControlledInput";
 import Error from "components/porter/Error";
+import Selector from "components/porter/Selector";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
-import { useDatabase } from "lib/hooks/useDatabase";
+import { type DbFormData } from "lib/databases/types";
+import { isAWSCluster, useClusterList } from "lib/hooks/useClusterList";
+import { useDatastoreList } from "lib/hooks/useDatabaseList";
+import { useDatastoreMethods } from "lib/hooks/useDatabaseMethods";
 import { useIntercom } from "lib/hooks/useIntercom";
 
-import { type DbFormData } from "./types";
+import { Context } from "shared/Context";
 
 type Props = RouteComponentProps & {
   steps: React.ReactNode[];
@@ -26,48 +32,67 @@ const DatabaseForm: React.FC<Props> = ({
   form,
   history,
 }) => {
-  const [isCreating, setIsCreating] = useState<boolean>(false);
-  const { createDatabase } = useDatabase();
+  const [submitErrorMessage, setSubmitErrorMessage] = useState<string>("");
+  const { create: createDatastore } = useDatastoreMethods();
   const { showIntercomWithMessage } = useIntercom();
+  const { clusters } = useClusterList();
+  const { currentProject } = useContext(Context);
+
+  // only aws clusters supported right now
+  const awsClusters = useMemo(() => {
+    return clusters.filter(isAWSCluster);
+  }, [JSON.stringify(clusters)]);
 
   const {
-    formState: { isSubmitting: isValidating, errors },
+    formState: { isSubmitting, errors, isValidating },
     handleSubmit,
-    setError,
-    clearErrors,
+    register,
+    setValue,
+    watch,
   } = form;
 
-  const submitBtnStatus = useMemo(() => {
-    if (isValidating || isCreating) {
-      return "loading";
-    }
+  const { datastores: existingDatastores } = useDatastoreList();
 
-    if (Object.keys(errors).length) {
-      return <Error message={"Please address errors and resubmit."} />;
-    }
-
-    return "";
-  }, [isValidating, errors]);
+  const chosenClusterId = watch("clusterId", 0);
 
   const onSubmit = handleSubmit(async (data) => {
-    setIsCreating(true);
-    clearErrors();
+    setSubmitErrorMessage("");
+    if (existingDatastores.some((db) => db.name === data.name)) {
+      setSubmitErrorMessage(
+        "A datastore with this name already exists. Please choose a different name."
+      );
+      return;
+    }
     try {
-      await createDatabase(data);
-      history.push(`/databases`);
+      await createDatastore(data);
+      history.push(`/datastores/${data.name}`);
     } catch (err) {
       const errorMessage =
         axios.isAxiosError(err) && err.response?.data?.error
           ? err.response.data.error
-          : "An error occurred while creating your database. Please try again.";
-      setError("root", { message: errorMessage });
+          : "An error occurred while creating your datastore. Please try again.";
+      setSubmitErrorMessage(errorMessage);
       showIntercomWithMessage({
-        message: "I am having trouble creating a database.",
+        message: "I am having trouble creating a datastore.",
       });
-    } finally {
-      setIsCreating(false);
     }
   });
+
+  const submitButtonStatus = useMemo(() => {
+    if (isSubmitting || isValidating) {
+      return "loading";
+    }
+    if (submitErrorMessage) {
+      return <Error message={submitErrorMessage} />;
+    }
+    return undefined;
+  }, [isSubmitting, submitErrorMessage, isValidating]);
+
+  useEffect(() => {
+    if (awsClusters.length > 0) {
+      setValue("clusterId", awsClusters[0].id);
+    }
+  }, [JSON.stringify(awsClusters)]);
 
   return (
     <FormProvider {...form}>
@@ -75,24 +100,51 @@ const DatabaseForm: React.FC<Props> = ({
         <VerticalSteps
           currentStep={currentStep}
           steps={[
+            <>
+              <Text size={16}>Specify name</Text>
+              <Spacer y={0.5} />
+              <Text color="helper">
+                Lowercase letters, numbers, and &quot;-&quot; only.
+              </Text>
+              <Spacer height="20px" />
+              <ControlledInput
+                placeholder="ex: academic-sophon-db"
+                type="text"
+                width="300px"
+                error={errors.name?.message}
+                {...register("name")}
+              />
+              {currentProject?.multi_cluster && (
+                <>
+                  <Spacer y={1} />
+                  <Selector<string>
+                    activeValue={chosenClusterId.toString()}
+                    width="300px"
+                    options={awsClusters.map((c) => ({
+                      value: c.id.toString(),
+                      label: c.vanity_name,
+                      key: c.id.toString(),
+                    }))}
+                    setActiveValue={(value: string) => {
+                      setValue("clusterId", parseInt(value));
+                    }}
+                    label={"Cluster"}
+                  />
+                </>
+              )}
+            </>,
             ...steps,
             <>
-              <Text size={16}>Create database instance</Text>
+              <Text size={16}>Create datastore instance</Text>
               <Spacer y={0.5} />
               <Button
                 type="submit"
-                status={submitBtnStatus}
+                status={submitButtonStatus}
                 loadingText={"Creating..."}
-                disabled={isCreating}
+                disabled={isSubmitting || isValidating}
               >
                 Create
               </Button>
-              {errors.root?.message && (
-                <AppearingErrorContainer>
-                  <Spacer y={0.5} />
-                  <Error message={errors.root.message} />
-                </AppearingErrorContainer>
-              )}
             </>,
           ]}
         />

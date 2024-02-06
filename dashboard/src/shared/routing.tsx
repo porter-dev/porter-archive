@@ -16,6 +16,7 @@ export type PorterUrl =
   | "preview-environments"
   | "apps"
   | "addons"
+  | "compliance"
   | "stacks";
 
 export const PorterUrls = [
@@ -31,9 +32,11 @@ export const PorterUrls = [
   "jobs",
   "onboarding",
   "databases",
+  "datastores",
   "preview-environments",
   "apps",
   "addons",
+  "compliance",
   "stacks",
 ];
 

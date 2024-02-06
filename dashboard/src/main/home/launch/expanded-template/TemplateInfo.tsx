@@ -91,7 +91,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
             For instructions on connecting to your registry
             <Link
               target="_blank"
-              href="https://docs.getporter.dev/docs/cli-documentation#pushing-docker-images-to-your-porter-image-registry"
+              href="https://docs.porter.run/docs/cli-documentation#pushing-docker-images-to-your-porter-image-registry"
             >
               refer to our docs
             </Link>
@@ -110,7 +110,7 @@ export default class TemplateInfo extends Component<PropsType, StateType> {
             To use this template you must first follow
             <Link
               target="_blank"
-              href="https://docs.getporter.dev/docs/https-and-custom-domains"
+              href="https://docs.porter.run/docs/https-and-custom-domains"
             >
               Porter's HTTPS setup guide
             </Link>

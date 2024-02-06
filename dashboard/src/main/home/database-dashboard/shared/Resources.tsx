@@ -4,8 +4,7 @@ import styled from "styled-components";
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-
-import { type InstanceTier, type ResourceOption } from "../forms/types";
+import { type InstanceTier, type ResourceOption } from "lib/databases/types";
 
 type Props = {
   options: ResourceOption[];

@@ -72,7 +72,21 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		telemetry.AttributeKV{Key: "engine", Value: request.Engine},
 	)
 
-	record, err := datastore.CreateOrGetDatastoreRecord(ctx, datastore.CreateOrGetDatastoreRecordInput{
+	// TODO: replace this with ccp call
+	err := h.InstallDatastore(ctx, InstallDatastoreInput{
+		Name:    request.Name,
+		Type:    request.Type,
+		Engine:  request.Engine,
+		Values:  request.Values,
+		Request: r,
+	})
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error installing datastore")
+		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	record, err := datastore.CreateOrGetRecord(ctx, datastore.CreateOrGetRecordInput{
 		ProjectID:           project.ID,
 		ClusterID:           cluster.ID,
 		Name:                request.Name,
@@ -87,16 +101,14 @@ func (h *UpdateDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// TODO: replace this with ccp call
-	err = h.InstallDatastore(ctx, InstallDatastoreInput{
-		Name:    record.Name,
-		Type:    record.Type,
-		Engine:  record.Engine,
-		Values:  request.Values,
-		Request: r,
+	updateReq := connect.NewRequest(&porterv1.UpdateDatastoreRequest{
+		ProjectId:   int64(project.ID),
+		DatastoreId: record.ID.String(),
 	})
+
+	_, err = h.Config().ClusterControlPlaneClient.UpdateDatastore(ctx, updateReq)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error installing datastore")
+		err := telemetry.Error(ctx, span, err, "error calling ccp update datastore")
 		h.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
@@ -193,7 +205,7 @@ func (h *UpdateDatastoreHandler) getVPCConfig(ctx context.Context, templateName 
 	)
 
 	vpcConfig := map[string]any{}
-	if cluster.CloudProvider != "AWS" {
+	if cluster.CloudProvider != SupportedDatastoreCloudProvider_AWS {
 		return vpcConfig, nil
 	}
 
@@ -278,7 +290,7 @@ func (h *UpdateDatastoreHandler) performAddonPreinstall(ctx context.Context, r *
 		telemetry.AttributeKV{Key: "cloud-provider", Value: cluster.CloudProvider},
 	)
 
-	if cluster.CloudProvider != "AWS" {
+	if cluster.CloudProvider != SupportedDatastoreCloudProvider_AWS {
 		return nil
 	}
 

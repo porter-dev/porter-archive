@@ -297,6 +297,7 @@ type UpdateAppInput struct {
 	Base64AppProto     string
 	Base64PorterYAML   string
 	IsEnvOverride      bool
+	WithPredeploy      bool
 }
 
 // UpdateApp updates a porter app
@@ -316,6 +317,7 @@ func (c *Client) UpdateApp(
 		Base64AppProto:     inp.Base64AppProto,
 		Base64PorterYAML:   inp.Base64PorterYAML,
 		IsEnvOverride:      inp.IsEnvOverride,
+		WithPredeploy:      inp.WithPredeploy,
 	}
 
 	err := c.postRequest(
@@ -351,22 +353,33 @@ func (c *Client) DefaultDeploymentTarget(
 	return resp, err
 }
 
+// CurrentAppRevisionInput is the input struct to CurrentAppRevision
+type CurrentAppRevisionInput struct {
+	ProjectID uint
+	ClusterID uint
+	AppName   string
+	// DeploymentTargetName is the name of the deployment target to get the current app revision for. One of this or DeploymentTargetID must be set.
+	DeploymentTargetName string
+	// DeploymentTargetID is the id of the deployment target to get the current app revision for. One of this or DeploymentTargetName must be set.
+	DeploymentTargetID string
+}
+
 // CurrentAppRevision returns the currently deployed app revision for a given project, app name and deployment target
 func (c *Client) CurrentAppRevision(
 	ctx context.Context,
-	projectID uint, clusterID uint,
-	appName string, deploymentTarget string,
+	input CurrentAppRevisionInput,
 ) (*porter_app.LatestAppRevisionResponse, error) {
 	resp := &porter_app.LatestAppRevisionResponse{}
 
 	req := &porter_app.LatestAppRevisionRequest{
-		DeploymentTargetID: deploymentTarget,
+		DeploymentTargetName: input.DeploymentTargetName,
+		DeploymentTargetID:   input.DeploymentTargetID,
 	}
 
 	err := c.getRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/%s/latest",
-			projectID, clusterID, appName,
+			input.ProjectID, input.ClusterID, input.AppName,
 		),
 		req,
 		resp,
@@ -757,12 +770,12 @@ func (c *Client) RollbackRevision(
 	ctx context.Context,
 	projectID, clusterID uint,
 	appName string,
-	deploymentTargetID string,
+	deploymentTargetName string,
 ) (*porter_app.RollbackAppRevisionResponse, error) {
 	resp := &porter_app.RollbackAppRevisionResponse{}
 
 	req := &porter_app.RollbackAppRevisionRequest{
-		DeploymentTargetID: deploymentTargetID,
+		DeploymentTargetName: deploymentTargetName,
 	}
 
 	err := c.postRequest(
@@ -804,13 +817,13 @@ func (c *Client) RunAppJob(
 	ctx context.Context,
 	projectID, clusterID uint,
 	appName string, jobName string,
-	deploymentTargetID string,
+	deploymentTargetName string,
 ) (*porter_app.RunAppJobResponse, error) {
 	resp := &porter_app.RunAppJobResponse{}
 
 	req := &porter_app.RunAppJobRequest{
-		ServiceName:        jobName,
-		DeploymentTargetID: deploymentTargetID,
+		ServiceName:          jobName,
+		DeploymentTargetName: deploymentTargetName,
 	}
 
 	err := c.postRequest(
@@ -834,11 +847,8 @@ type RunAppJobStatusInput struct {
 	// Cluster is the id of the cluster against which to retrieve a helm agent for
 	ClusterID uint
 
-	// DeploymentTargetID is the id of the deployment target the job was run against
-	DeploymentTargetID string
-
-	// DeploymentTargetNamespace is the namespace in which the job was deployed
-	DeploymentTargetNamespace string
+	// DeploymentTargetName is the id of the deployment target the job was run against
+	DeploymentTargetName string
 
 	// ServiceName is the name of the app service that was triggered
 	ServiceName string
@@ -858,10 +868,9 @@ func (c *Client) RunAppJobStatus(
 	resp := &porter_app.AppJobRunStatusResponse{}
 
 	req := &porter_app.AppJobRunStatusRequest{
-		DeploymentTargetID: input.DeploymentTargetID,
-		JobRunID:           input.JobRunID,
-		Namespace:          input.DeploymentTargetNamespace,
-		ServiceName:        input.ServiceName,
+		DeploymentTargetName: input.DeploymentTargetName,
+		JobRunID:             input.JobRunID,
+		ServiceName:          input.ServiceName,
 	}
 
 	err := c.getRequest(

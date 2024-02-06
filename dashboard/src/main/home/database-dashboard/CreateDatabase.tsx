@@ -1,75 +1,68 @@
 import React, { useMemo } from "react";
 import _ from "lodash";
-import { withRouter, type RouteComponentProps } from "react-router";
+import { useHistory, useLocation, withRouter } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-import { z } from "zod";
 
 import Back from "components/porter/Back";
 import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
+import {
+  DATASTORE_ENGINE_AURORA_POSTGRES,
+  DATASTORE_ENGINE_POSTGRES,
+  DATASTORE_ENGINE_REDIS,
+  DATASTORE_TYPE_ELASTICACHE,
+  DATASTORE_TYPE_RDS,
+  type DatastoreTemplate,
+} from "lib/databases/types";
 
 import database from "assets/database.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import { SUPPORTED_DATABASE_TEMPLATES } from "./constants";
+import { SUPPORTED_DATASTORE_TEMPLATES } from "./constants";
 import DatabaseFormAuroraPostgres from "./forms/DatabaseFormAuroraPostgres";
 import DatabaseFormElasticacheRedis from "./forms/DatabaseFormElasticacheRedis";
 import DatabaseFormRDSPostgres from "./forms/DatabaseFormRDSPostgres";
-import {
-  DATABASE_ENGINE_POSTGRES,
-  DATABASE_ENGINE_REDIS,
-  DATABASE_TYPE_AURORA,
-  DATABASE_TYPE_ELASTICACHE,
-  DATABASE_TYPE_RDS,
-  type DatabaseTemplate,
-} from "./types";
+import EngineTag from "./tags/EngineTag";
 
-type Props = RouteComponentProps;
-const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
-  const templateMatch: DatabaseTemplate | undefined = useMemo(() => {
-    const { params } = queryMatch;
-    const validParams = z
-      .object({
-        type: z.string(),
-        engine: z.string(),
-      })
-      .safeParse(params);
+const CreateDatabase: React.FC = () => {
+  const { search } = useLocation();
+  const history = useHistory();
+  const queryParams = new URLSearchParams(search);
 
-    if (!validParams.success) {
-      return undefined;
-    }
-
-    return SUPPORTED_DATABASE_TEMPLATES.find(
+  const templateMatch: DatastoreTemplate | undefined = useMemo(() => {
+    return SUPPORTED_DATASTORE_TEMPLATES.find(
       (t) =>
         !t.disabled &&
-        t.type === validParams.data.type &&
-        t.engine.name === validParams.data.engine
+        t.type.name === queryParams.get("type") &&
+        t.engine.name === queryParams.get("engine")
     );
-  }, [queryMatch]);
+  }, [queryParams]);
 
   return (
     <StyledTemplateComponent>
       {match(templateMatch)
         .with(
-          { type: DATABASE_TYPE_RDS, engine: DATABASE_ENGINE_POSTGRES },
+          { type: DATASTORE_TYPE_RDS, engine: DATASTORE_ENGINE_POSTGRES },
           (t) => <DatabaseFormRDSPostgres template={t} />
         )
         .with(
-          { type: DATABASE_TYPE_AURORA, engine: DATABASE_ENGINE_POSTGRES },
+          {
+            type: DATASTORE_TYPE_RDS,
+            engine: DATASTORE_ENGINE_AURORA_POSTGRES,
+          },
           (t) => <DatabaseFormAuroraPostgres template={t} />
         )
         .with(
-          { type: DATABASE_TYPE_ELASTICACHE, engine: DATABASE_ENGINE_REDIS },
+          { type: DATASTORE_TYPE_ELASTICACHE, engine: DATASTORE_ENGINE_REDIS },
           (t) => <DatabaseFormElasticacheRedis template={t} />
         )
         .otherwise(() => (
           <>
-            <Back to="/databases" />
+            <Back to="/datastores" />
             <DashboardHeader
               image={database}
-              title="Create a new database"
+              title="Create a new datastore"
               capitalize={false}
               disableLineBreak
             />
@@ -80,7 +73,7 @@ const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
             </Text>
             <Spacer y={0.5} />
             <TemplateListWrapper>
-              {SUPPORTED_DATABASE_TEMPLATES.map((template) => {
+              {SUPPORTED_DATASTORE_TEMPLATES.map((template) => {
                 const { name, icon, description, disabled, engine, type } =
                   template;
                 return (
@@ -88,7 +81,10 @@ const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
                     disabled={disabled}
                     key={`${name}-${engine.name}`}
                     onClick={() => {
-                      history.push(`/databases/new/${type}/${engine.name}`);
+                      const query = new URLSearchParams();
+                      query.set("type", type.name);
+                      query.set("engine", engine.name);
+                      history.push(`/datastores/new?${query.toString()}`);
                     }}
                   >
                     <TemplateHeader>
@@ -96,8 +92,9 @@ const CreateDatabase: React.FC<Props> = ({ history, match: queryMatch }) => {
                       <Spacer inline x={0.5} />
                       <TemplateTitle>{name}</TemplateTitle>
                       <Spacer inline x={0.5} />
-                      <Tag hoverable={false}>{engine.displayName}</Tag>
                     </TemplateHeader>
+                    <Spacer y={0.5} />
+                    <EngineTag engine={engine} />
                     <Spacer y={0.5} />
                     <TemplateDescription>{description}</TemplateDescription>
                     <Spacer y={0.5} />

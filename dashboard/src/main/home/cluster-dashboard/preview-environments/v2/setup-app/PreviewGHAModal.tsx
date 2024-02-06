@@ -327,6 +327,7 @@ export const PreviewGHAModal: React.FC<PreviewGHAModalProps> = ({
                     onChange("skip");
                   }
                 }}
+                value={openPRChoice}
                 width="100%"
               />
             )}

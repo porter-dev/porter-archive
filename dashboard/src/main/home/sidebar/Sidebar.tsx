@@ -12,7 +12,7 @@ import addOns from "assets/add-ons.svg";
 import database from "assets/database.svg";
 import collapseSidebar from "assets/collapse-sidebar.svg";
 import pr_icon from "assets/pull_request_icon.svg";
-import lock from "assets/lock.svg";
+import compliance from "assets/compliance.svg";
 
 import { Context } from "shared/Context";
 
@@ -21,12 +21,13 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import Clusters from "./Clusters";
 import ProjectSectionContainer from "./ProjectSectionContainer";
-import { RouteComponentProps, withRouter } from "react-router";
-import { getQueryParam, pushFiltered } from "shared/routing";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { type RouteComponentProps, withRouter } from "react-router";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import SidebarLink from "./SidebarLink";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
 import ClusterListContainer from "./ClusterListContainer";
+import lock from "assets/lock.svg";
+import Image from "components/porter/Image";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -43,7 +44,7 @@ type StateType = {
   pressingCtrl: boolean;
   showTooltip: boolean;
   forceCloseDrawer: boolean;
-  showLinkTooltip: { [linkKey: string]: boolean };
+  showLinkTooltip: Record<string, boolean>;
 };
 
 class Sidebar extends Component<PropsType, StateType> {
@@ -113,9 +114,9 @@ class Sidebar extends Component<PropsType, StateType> {
     }
   };
 
-  renderProjectContents = () => {
-    let { currentView } = this.props;
-    let {
+  renderProjectContents = (): React.ReactNode => {
+    const { currentView } = this.props;
+    const {
       currentProject,
       user,
       currentCluster,
@@ -134,15 +135,15 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={rocket} />
             Launch
           </NavButton>
-          {currentProject &&
-            currentProject.managed_infra_enabled &&
+          {currentProject?.managed_infra_enabled &&
             (user?.isPorterUser ||
               overrideInfraTabEnabled({ projectID: currentProject.id })) && (
               <NavButton path={"/infrastructure"}>
                 <i className="material-icons">build_circle</i>
                 Infrastructure
               </NavButton>
-            )}
+            )
+          }
           {this.props.isAuthorized("integrations", "", [
             "get",
             "create",
@@ -206,6 +207,15 @@ class Sidebar extends Component<PropsType, StateType> {
                   Integrations
                 </NavButton>
               )}
+            {currentProject.db_enabled && (
+              <NavButton
+                path="/datastores"
+                active={window.location.pathname.startsWith("/apps")}
+              >
+                <Img src={database} />
+                Datastores
+              </NavButton>
+            )}
             {currentCluster && (
               <>
                 <Spacer y={0.5} />
@@ -219,15 +229,6 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={applications} />
               Applications
             </NavButton>
-            {currentProject.db_enabled && (
-              <NavButton
-                path="/databases"
-                active={window.location.pathname.startsWith("/apps")}
-              >
-                <Img src={database} />
-                Databases
-              </NavButton>
-            )}
             <NavButton
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}
@@ -287,13 +288,16 @@ class Sidebar extends Component<PropsType, StateType> {
               Applications
             </NavButton>
             <NavButton
-              path="/databases"
+              path="/datastores"
               active={window.location.pathname.startsWith("/apps")}
             >
               <Img src={database} />
-              Databases
+              Datastores
               {(currentProject.sandbox_enabled || !currentProject.db_enabled) && (
-                <Image src={lock} />
+                <Container row>
+                  <Spacer inline width="15px" />
+                  <Image size={15} src={lock} />
+                </Container>
               )}
             </NavButton>
             <NavButton
@@ -334,13 +338,30 @@ class Sidebar extends Component<PropsType, StateType> {
                   )}
                 </NavButton>
               )}
-            
-            {(currentProject.preview_envs_enabled) && (
-              <NavButton path="/preview-environments">
-                <Img src={pr_icon} />
-                Preview apps
-              </NavButton>
+
+            <NavButton path="/preview-environments">
+              <Img src={pr_icon} />
+              Preview apps
+              {(currentProject.sandbox_enabled || !currentProject.preview_envs_enabled) && (
+              <Container row>
+                <Spacer inline width="15px" />
+                <Image size={15} src={lock} />
+              </Container>
             )}
+            </NavButton>
+
+            <NavButton 
+              path="/compliance"
+            >
+              <Img src={compliance} />
+              Compliance
+              {(currentProject.sandbox_enabled || !currentProject.soc2_controls_enabled) && (
+                <Container row>
+                  <Spacer inline width="15px" />
+                  <Image size={15} src={lock} />
+                </Container>
+              )}
+            </NavButton>
 
             {this.props.isAuthorized("integrations", "", [
               "get",
@@ -383,7 +404,7 @@ class Sidebar extends Component<PropsType, StateType> {
   };
 
   // SidebarBg is separate to cover retracted drawer
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         {this.renderPullTab()}
@@ -407,11 +428,6 @@ class Sidebar extends Component<PropsType, StateType> {
 Sidebar.contextType = Context;
 
 export default withRouter(withAuth(Sidebar));
-
-const Image = styled.img`
-  height: 15px;
-  margin-left: 15px;
-`;
 
 const ScrollWrapper = styled.div`
   overflow-y: auto;
@@ -554,31 +570,6 @@ const Tooltip = styled.div`
     to {
       opacity: 1;
     }
-  }
-`;
-
-const CollapseButton = styled.div`
-  position: absolute;
-  right: 0;
-  top: 8px;
-  height: 23px;
-  width: 23px;
-  background: #525563aa;
-  border-top-left-radius: 3px;
-  border-bottom-left-radius: 3px;
-  cursor: pointer;
-
-  :hover {
-    background: #636674;
-  }
-
-  > i {
-    color: #ffffff77;
-    font-size: 14px;
-    transform: rotate(180deg);
-    position: absolute;
-    top: 4px;
-    right: 5px;
   }
 `;
 

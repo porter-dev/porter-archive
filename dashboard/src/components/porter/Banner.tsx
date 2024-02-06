@@ -36,7 +36,7 @@ const Banner: React.FC<Props> = ({
 
   return (
     <StyledBanner
-      color={type === "error" ? "#ff385d" : type === "warning" && "#f5cb42"}
+      color={type === "error" ? "#ff385d" : type === "warning" && "#F7A324"}
       noMargin={noMargin}
     >
       <>

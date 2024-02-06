@@ -27,3 +27,18 @@ func (repo *DatastoreRepository) GetByProjectIDAndName(ctx context.Context, proj
 func (repo *DatastoreRepository) Insert(ctx context.Context, datastore *models.Datastore) (*models.Datastore, error) {
 	return nil, errors.New("cannot write database")
 }
+
+// ListByProjectID retrieves a list of datastores by project id
+func (repo *DatastoreRepository) ListByProjectID(ctx context.Context, projectID uint) ([]*models.Datastore, error) {
+	return nil, errors.New("cannot read database")
+}
+
+// Delete deletes a datastore by id
+func (repo *DatastoreRepository) Delete(ctx context.Context, datastore *models.Datastore) (*models.Datastore, error) {
+	return nil, errors.New("cannot write database")
+}
+
+// UpdateStatus updates the status of a datastore
+func (repo *DatastoreRepository) UpdateStatus(ctx context.Context, datastore *models.Datastore, status models.DatastoreStatus) (*models.Datastore, error) {
+	return nil, errors.New("cannot write database")
+}

@@ -1,14 +1,33 @@
+import {
+  DATASTORE_ENGINE_AURORA_POSTGRES,
+  DATASTORE_ENGINE_POSTGRES,
+  DATASTORE_ENGINE_REDIS,
+  DATASTORE_TYPE_ELASTICACHE,
+  DATASTORE_TYPE_RDS,
+} from "lib/databases/types";
+
 import awsRDS from "assets/amazon-rds.png";
 import awsElasticache from "assets/aws-elasticache.png";
+import engine from "assets/computer-chip.svg";
+import database from "assets/database.svg";
+import postgresql from "assets/postgresql.svg";
+import redis from "assets/redis.svg";
 
-export const datastoreIcons: Record<string, string> = {
-  ENUM_DATASTORE_ELASTICACHE_REDIS: awsElasticache,
-  ENUM_DATASTORE_ELASTICACHE_MEMCACHED: awsElasticache,
-  ENUM_DATASTORE_RDS_POSTGRESQL: awsRDS,
-  ENUM_DATASTORE_RDS_MYSQL: awsRDS,
-  ENUM_DATASTORE_RDS_AURORA_POSTGRESQL: awsRDS,
+const datastoreIcons: Record<string, string> = {
+  [DATASTORE_TYPE_ELASTICACHE.name]: awsElasticache,
+  [DATASTORE_TYPE_RDS.name]: awsRDS,
+};
+
+const engineIcons: Record<string, string> = {
+  [DATASTORE_ENGINE_POSTGRES.name]: postgresql,
+  [DATASTORE_ENGINE_AURORA_POSTGRES.name]: postgresql,
+  [DATASTORE_ENGINE_REDIS.name]: redis,
 };
 
 export const getDatastoreIcon = (datastoreType: string): string => {
-  return datastoreIcons[datastoreType] ?? awsRDS;
+  return datastoreIcons[datastoreType] ?? database;
+};
+
+export const getEngineIcon = (engineName: string): string => {
+  return engineIcons[engineName] ?? engine;
 };

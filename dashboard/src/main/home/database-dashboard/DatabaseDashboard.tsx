@@ -81,10 +81,6 @@ const DatabaseDashboard: React.FC = () => {
   }, [datastores, searchValue, typeFilter, engineFilter]);
 
   const renderContents = (): JSX.Element => {
-    if (datastores === undefined || isLoading || isLoadingClusters) {
-      return <Loading offset="-150px" />;
-    }
-
     if (currentProject?.sandbox_enabled) {
       return (
         <DashboardPlaceholder>
@@ -103,6 +99,10 @@ const DatabaseDashboard: React.FC = () => {
           </ShowIntercomButton>
         </DashboardPlaceholder>
       );
+    }
+    
+    if (datastores === undefined || isLoading || isLoadingClusters) {
+      return <Loading offset="-150px" />;
     }
 
     if (clusters.filter(isAWSCluster).length === 0) {

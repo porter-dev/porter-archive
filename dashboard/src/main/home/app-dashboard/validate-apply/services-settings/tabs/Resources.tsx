@@ -90,7 +90,7 @@ const Resources: React.FC<ResourcesProps> = ({
             : `app.services.${index}.smartOptimization`
         }
         control={control}
-        render={({ field: { value, onChange } }) => currentProject?.sandbox_enabled ? (<div></div>) : (
+        render={({ field: { value, onChange } }) => (
           <SmartOptHeader>
             <StyledIcon
               className="material-icons"
@@ -157,7 +157,7 @@ const Resources: React.FC<ResourcesProps> = ({
             label="CPUs: "
             unit="Cores"
             min={0.05}
-            max={currentProject?.sandbox_enabled ? 0.2 : maxCPU}
+            max={maxCPU}
             color={"#3f51b5"}
             value={value.value.toString()}
             setValue={(e) => {
@@ -181,7 +181,7 @@ const Resources: React.FC<ResourcesProps> = ({
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
-            isSmartOptimizationOn={!currentProject?.sandbox_enabled && (smartOpt?.value ?? false)}
+            isSmartOptimizationOn={smartOpt?.value ?? false}
             decimalsToRoundTo={2}
           />
         )}
@@ -199,7 +199,7 @@ const Resources: React.FC<ResourcesProps> = ({
             label="RAM: "
             unit="MB"
             min={10}
-            max={currentProject?.sandbox_enabled ? 256 : maxRAM}
+            max={maxRAM}
             color={"#3f51b5"}
             value={value.value.toString()}
             setValue={(e) => {
@@ -223,7 +223,7 @@ const Resources: React.FC<ResourcesProps> = ({
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
-            isSmartOptimizationOn={!currentProject?.sandbox_enabled && (smartOpt?.value ?? false)}
+            isSmartOptimizationOn={smartOpt?.value ?? false}
           />
         )}
       />

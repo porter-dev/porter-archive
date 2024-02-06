@@ -58,13 +58,13 @@ const PreviewEnvs: React.FC = () => {
             Eject to your own cloud account to enable preview apps.
           </Text>
           <Spacer y={1} />
-            <ShowIntercomButton
-              alt
-              message="I would like to eject to my own cloud account"
-              height="35px"
-            >
-              Request ejection
-            </ShowIntercomButton>
+          <ShowIntercomButton
+            alt
+            message="I would like to eject to my own cloud account"
+            height="35px"
+          >
+            Request ejection
+          </ShowIntercomButton>
         </DashboardPlaceholder>
       );
     }

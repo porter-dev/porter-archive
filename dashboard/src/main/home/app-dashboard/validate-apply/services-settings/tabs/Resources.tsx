@@ -156,7 +156,7 @@ const Resources: React.FC<ResourcesProps> = ({
           <IntelligentSlider
             label="CPUs: "
             unit="Cores"
-            min={0.05}
+            min={0.1}
             max={maxCPU}
             color={"#3f51b5"}
             value={value.value.toString()}
@@ -176,7 +176,7 @@ const Resources: React.FC<ResourcesProps> = ({
                 value: e,
               });
             }}
-            step={0.05}
+            step={0.1}
             disabled={value.readOnly}
             disabledTooltip={
               "You may only edit this field in your porter.yaml."

@@ -22,10 +22,14 @@ export function useRevisionList({
   revisionList: AppRevision[];
   revisionIdToNumber: Record<string, number>;
   numberToRevisionId: Record<number, string>;
+  revisionIdToDescription: Record<string, string>;
 } {
   const [revisionList, setRevisionList] = useState<AppRevision[]>([]);
   const [revisionIdToNumber, setRevisionIdToNumber] = useState<
     Record<string, number>
+  >({});
+  const [revisionIdToDescription, setRevisionIdToDescription] = useState<
+    Record<string, string>
   >({});
   const [numberToRevisionId, setNumberToRevisionId] = useState<
     Record<number, string>
@@ -74,11 +78,24 @@ export function useRevisionList({
       setRevisionIdToNumber(
         Object.fromEntries(revisionList.map((r) => [r.id, r.revision_number]))
       );
+      setRevisionIdToDescription(
+        Object.fromEntries(
+          revisionList.map((r) => [
+            r.id,
+            r.b64_description ? atob(r.b64_description) : "",
+          ])
+        )
+      );
       setNumberToRevisionId(
         Object.fromEntries(revisionList.map((r) => [r.revision_number, r.id]))
       );
     }
   }, [data]);
 
-  return { revisionList, revisionIdToNumber, numberToRevisionId };
+  return {
+    revisionList,
+    revisionIdToNumber,
+    numberToRevisionId,
+    revisionIdToDescription,
+  };
 }

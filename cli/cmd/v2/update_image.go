@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -16,6 +17,7 @@ type UpdateImageInput struct {
 	AppName                     string
 	DeploymentTargetName        string
 	Tag                         string
+	Description                 string
 	Client                      api.Client
 	WaitForSuccessfulDeployment bool
 }
@@ -27,7 +29,12 @@ func UpdateImage(ctx context.Context, input UpdateImageInput) error {
 		tag = "latest"
 	}
 
-	resp, err := input.Client.UpdateImage(ctx, input.ProjectID, input.ClusterID, input.AppName, input.DeploymentTargetName, tag)
+	var base64Description string
+	if input.Description != "" {
+		base64Description = base64.StdEncoding.EncodeToString([]byte(input.Description))
+	}
+
+	resp, err := input.Client.UpdateImage(ctx, input.ProjectID, input.ClusterID, input.AppName, input.DeploymentTargetName, tag, base64Description)
 	if err != nil {
 		return fmt.Errorf("unable to update image: %w", err)
 	}

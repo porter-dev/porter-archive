@@ -113,6 +113,7 @@ applying a configuration:
 	applyCmd.PersistentFlags().BoolVarP(&previewApply, "preview", "p", false, "apply as preview environment based on current git branch")
 	applyCmd.PersistentFlags().BoolVar(&pullImageBeforeBuild, "pull-before-build", false, "attempt to pull image from registry before building")
 	applyCmd.PersistentFlags().StringVar(&imageTagOverride, "tag", "", "set the image tag used for the application (overrides field in yaml)")
+	applyCmd.PersistentFlags().StringVarP(&description, "description", "d", "", "an optional description for this update")
 	applyCmd.PersistentFlags().BoolVar(&predeploy, "predeploy", false, "run predeploy job before deploying the application")
 	applyCmd.PersistentFlags().BoolVarP(
 		&appWait,
@@ -159,6 +160,7 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 			WaitForSuccessfulDeployment: appWait,
 			PullImageBeforeBuild:        pullImageBeforeBuild,
 			WithPredeploy:               predeploy,
+			Description:                 description,
 		}
 		err := v2.Apply(ctx, inp)
 		if err != nil {

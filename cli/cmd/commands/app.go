@@ -46,6 +46,7 @@ var (
 	appWait              bool
 	deploymentTargetName string
 	jobName              string
+	description          string
 )
 
 const (
@@ -125,6 +126,14 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		"t",
 		"",
 		"the specified tag to use, default is \"latest\"",
+	)
+
+	appUpdateTagCmd.PersistentFlags().StringVarP(
+		&description,
+		"description",
+		"d",
+		"",
+		"optional description for this update",
 	)
 	appCmd.AddCommand(appUpdateTagCmd)
 
@@ -1258,6 +1267,7 @@ func appUpdateTag(ctx context.Context, user *types.GetAuthenticatedUserResponse,
 			AppName:                     args[0],
 			DeploymentTargetName:        deploymentTargetName,
 			Tag:                         appTag,
+			Description:                 description,
 			Client:                      client,
 			WaitForSuccessfulDeployment: appWait,
 		})

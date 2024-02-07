@@ -39,6 +39,8 @@ type Revision struct {
 	Env environment_groups.EnvironmentGroup `json:"env,omitempty"`
 	// AppInstanceID is the id of the app instance the revision is associated with
 	AppInstanceID uuid.UUID `json:"app_instance_id"`
+	// Description is the description of the revision
+	B64Description string `json:"b64_description"`
 }
 
 // RevisionProgress describes the progress of a revision in its lifecycle
@@ -160,6 +162,7 @@ func EncodedRevisionFromProto(ctx context.Context, appRevision *porterv1.AppRevi
 		UpdatedAt:        appRevision.UpdatedAt.AsTime(),
 		DeploymentTarget: DeploymentTarget{ID: appRevision.DeploymentTargetId},
 		AppInstanceID:    appInstanceId,
+		B64Description:   appRevision.B64Description,
 	}
 
 	return revision, nil

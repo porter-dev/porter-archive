@@ -18,6 +18,7 @@ import alert from "assets/alert-warning.svg";
 import deploy from "assets/deploy.png";
 import view_changes from "assets/edit-contained.svg";
 import revert from "assets/fast-backward.svg";
+import message_text from "assets/message_text.svg";
 import pull_request_icon from "assets/pull_request_icon.svg";
 import run_for from "assets/run_for.png";
 import tag_icon from "assets/tag.png";
@@ -82,12 +83,13 @@ const DeployEventCard: React.FC<Props> = ({
         MAX_DISPLAYED_SERVICE_STATUSES
   );
 
-  const { revisionIdToNumber, numberToRevisionId } = useRevisionList({
-    appName,
-    deploymentTargetId,
-    projectId,
-    clusterId,
-  });
+  const { revisionIdToNumber, numberToRevisionId, revisionIdToDescription } =
+    useRevisionList({
+      appName,
+      deploymentTargetId,
+      projectId,
+      clusterId,
+    });
   const {
     latestRevision,
     porterApp,
@@ -355,6 +357,22 @@ const DeployEventCard: React.FC<Props> = ({
           <Text color="helper">{getDuration(event)}</Text>
         </Container>
       </Container>
+      {revisionIdToDescription[event.metadata.app_revision_id] && (
+        <>
+          <Spacer y={0.5} />
+          <Container row spaced>
+            <Container row>
+              <Spacer x={1} inline />
+              <DescriptionContainer>
+                <Icon height="16px" src={message_text} />
+                <Spacer x={0.75} inline />
+                {revisionIdToDescription[event.metadata.app_revision_id]}
+              </DescriptionContainer>
+              <Spacer x={1} inline />
+            </Container>
+          </Container>
+        </>
+      )}
       <Spacer y={0.5} />
       <Container row spaced>
         <Container row>
@@ -452,4 +470,17 @@ const StatusTextContainer = styled.div`
   display: flex;
   align-items: center;
   flex-direction: row;
+`;
+
+const DescriptionContainer = styled.div`
+  background: #44444422;
+  border-radius: 5px;
+  padding: 8px;
+  display: flex;
+  width: 100%;
+  border-radius: 5px;
+  border: 1px solid ${({ theme }) => theme.border};
+  align-items: center;
+  font-family: monospace;
+  font-size: 12px;
 `;

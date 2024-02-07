@@ -298,6 +298,7 @@ type UpdateAppInput struct {
 	Base64PorterYAML   string
 	IsEnvOverride      bool
 	WithPredeploy      bool
+	Base64Description  string
 }
 
 // UpdateApp updates a porter app
@@ -318,6 +319,7 @@ func (c *Client) UpdateApp(
 		Base64PorterYAML:   inp.Base64PorterYAML,
 		IsEnvOverride:      inp.IsEnvOverride,
 		WithPredeploy:      inp.WithPredeploy,
+		Base64Description:  inp.Base64Description,
 	}
 
 	err := c.postRequest(
@@ -719,10 +721,12 @@ func (c *Client) UpdateImage(
 	ctx context.Context,
 	projectID, clusterID uint,
 	appName, deploymentTargetName, tag string,
+	base64Description string,
 ) (*porter_app.UpdateImageResponse, error) {
 	req := &porter_app.UpdateImageRequest{
 		Tag:                  tag,
 		DeploymentTargetName: deploymentTargetName,
+		Base64Description:    base64Description,
 	}
 
 	resp := &porter_app.UpdateImageResponse{}

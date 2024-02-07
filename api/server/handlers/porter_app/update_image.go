@@ -40,6 +40,7 @@ type UpdateImageRequest struct {
 	DeploymentTargetName string `json:"deployment_target_name"`
 	Repository           string `json:"repository"`
 	Tag                  string `json:"tag"`
+	Base64Description    string `json:"base64_description"`
 }
 
 // UpdateImageResponse is the response object for the /apps/{porter_app_name}/update-image endpoint
@@ -111,6 +112,7 @@ func (c *UpdateImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Id:   request.DeploymentTargetID,
 			Name: deploymentTargetName,
 		},
+		B64Description: request.Base64Description,
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.UpdateAppImage(ctx, updateImageReq)
 	if err != nil {

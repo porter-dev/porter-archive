@@ -44,6 +44,8 @@ type ApplyInput struct {
 	PullImageBeforeBuild bool
 	// WithPredeploy is true when Apply should run the predeploy step
 	WithPredeploy bool
+	// Description is the description for the image update
+	Description string
 }
 
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
@@ -111,6 +113,11 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		return fmt.Errorf("error getting git source from env: %w", err)
 	}
 
+	var base64Description string
+	if inp.Description != "" {
+		base64Description = base64.StdEncoding.EncodeToString([]byte(inp.Description))
+	}
+
 	updateInput := api.UpdateAppInput{
 		ProjectID:          cliConf.Project,
 		ClusterID:          cliConf.Cluster,
@@ -121,6 +128,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		CommitSHA:          commitSHA,
 		Base64PorterYAML:   b64YAML,
 		WithPredeploy:      inp.WithPredeploy,
+		Base64Description:  base64Description,
 	}
 
 	updateResp, err := client.UpdateApp(ctx, updateInput)

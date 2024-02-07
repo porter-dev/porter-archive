@@ -169,9 +169,15 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup }) => {
     <>
       <Text size={16}>Environment variables</Text>
       <Spacer y={0.5} />
-      <Text color="helper">
-        Set secret values and environment-specific configuration for your applications.
-      </Text>
+      {envGroup.type === "doppler" ? (
+        <Text color="helper">
+          Doppler environment variables can only be updated from the Doppler dashboard.
+        </Text>
+      ) : (
+        <Text color="helper">
+          Set secret values and environment-specific configuration for your applications.
+        </Text>
+      )}
       <Spacer height="15px" />
       <FormProvider {...envGroupFormMethods}>
         <form onSubmit={onSubmit}>
@@ -182,16 +188,21 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup }) => {
             }}
             fileUpload={true}
             secretOption={true}
+            disabled={envGroup.type === "doppler"}
           />
-          <Spacer y={1} />
-          <Button
-            type="submit"
-            status={buttonStatus}
-            loadingText="Updating env group . . ."
-            disabled={!isValid}
-          >
-            Update
-          </Button>
+          {envGroup.type !== "doppler" && (
+            <>
+              <Spacer y={1} />
+              <Button
+                type="submit"
+                status={buttonStatus}
+                loadingText="Updating env group . . ."
+                disabled={!isValid}
+              >
+                Update
+              </Button>
+            </>
+          )}
         </form>
       </FormProvider>
     </>

@@ -15,6 +15,7 @@ import list from "assets/list.png";
 import notFound from "assets/not-found.png";
 import time from "assets/time.png";
 import key from "assets/key.svg";
+import doppler from "assets/doppler.png";
 import envGroupGrad from "assets/env-group-grad.svg";
 
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
@@ -188,7 +189,10 @@ const EnvDashboard: React.FC<Props> = (props) => {
                 return (
                     <Block to={`/envs/${envGroup.name}`} key={i}>
                       <Container row>
-                        <Image src={key} size={20} />
+                        <Image
+                          src={envGroup.type === "doppler" ? doppler : key} 
+                          size={20} 
+                        />
                         <Spacer inline x={.7} />
                         <Text size={14}>{envGroup.name}</Text>
                       </Container>
@@ -210,7 +214,9 @@ const EnvDashboard: React.FC<Props> = (props) => {
               return (
                 <Row to={`/envs/${envGroup.name}`} key={i}>
                   <Container row>
-                    <Image src={key} />
+                    <Image
+                      src={envGroup.type === "doppler" ? doppler : key}
+                    />
                     <Spacer inline x={.7} />
                     <Text size={14}>{envGroup.name}</Text>
                   </Container>

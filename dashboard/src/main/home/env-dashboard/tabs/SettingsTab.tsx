@@ -12,11 +12,13 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Image from "components/porter/Image";
+import Error from "components/porter/Error";
 
 type Props = {
   envGroup: {
     name: string;
     type: string;
+    linked_applications: string[];
   }
 };
 
@@ -25,6 +27,7 @@ const SettingsTab: React.FC<Props> = ({ envGroup }) => {
   const history = useHistory();
 
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
 
   const deleteEnvGroup = async (): Promise<void> => {
     try {
@@ -44,6 +47,11 @@ const SettingsTab: React.FC<Props> = ({ envGroup }) => {
   };
   
   const handleDeletionSubmit = async (): Promise<void> => {
+    if (envGroup?.linked_applications) {
+      setButtonStatus(<Error message="Remove this env group from all synced applications to delete." />);
+      setCurrentOverlay && setCurrentOverlay(null);
+      return;
+    }
     setIsDeleting(true);
     if (setCurrentOverlay == null) {
       return;
@@ -55,7 +63,7 @@ const SettingsTab: React.FC<Props> = ({ envGroup }) => {
       history.push("/envs");
     } catch (error) {
       setIsDeleting(false);
-      console.log(error)
+      setButtonStatus(<Error message="Env group deletion failed" />);
     }
   };
 
@@ -90,10 +98,14 @@ const SettingsTab: React.FC<Props> = ({ envGroup }) => {
           <Text size={16}>Delete {envGroup.name}</Text>
           <Spacer y={1} />
           <Text color="helper">
-            Delete this datastore and all of its resources.
+            Delete this environment group including all secrets and environment-specific configuration.
           </Text>
           <Spacer y={1.2} />
-          <Button color="#b91133" onClick={handleDeletionClick}>
+          <Button
+            color="#b91133"
+            onClick={handleDeletionClick}
+            status={buttonStatus}
+          >
             Delete {envGroup.name}
           </Button>
         </>

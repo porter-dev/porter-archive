@@ -216,9 +216,9 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
                     type="submit"
                     status={submitButtonStatus}
                     loadingText="Creating env group . . ."
-                    width="120px"
+                    width="140px"
                   >
-                    Deploy app
+                    Deploy env group
                   </Button>
                 ]}
               />

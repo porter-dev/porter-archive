@@ -55,7 +55,7 @@ const SyncedAppsTab: React.FC<Props> = ({ envGroup }) => {
             }}>
               <Container row>
                 <Image src={box} size={18} />
-                <Spacer inline x={.75} />
+                <Spacer inline x={1} />
                 <Text>{app}</Text>
               </Container>
             </Clickable>

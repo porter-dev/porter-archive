@@ -1,32 +1,33 @@
 import React, { Component } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
+import Container from "components/porter/Container";
+import Image from "components/porter/Image";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { Context } from "shared/Context";
+import { overrideInfraTabEnabled } from "utils/infrastructure";
+import addOns from "assets/add-ons.svg";
+import applications from "assets/applications.svg";
 import category from "assets/category.svg";
+import infra from "assets/cluster.svg";
+import collapseSidebar from "assets/collapse-sidebar.svg";
+import compliance from "assets/compliance.svg";
+import database from "assets/database.svg";
+import sliders from "assets/env-groups.svg";
 import integrations from "assets/integrations.svg";
+import lock from "assets/lock.svg";
+import pr_icon from "assets/pull_request_icon.svg";
 import rocket from "assets/rocket.png";
 import settings from "assets/settings.svg";
-import applications from "assets/applications.svg";
-import infra from "assets/cluster.svg";
-import sliders from "assets/env-groups.svg";
-import addOns from "assets/add-ons.svg";
-import database from "assets/database.svg";
-import collapseSidebar from "assets/collapse-sidebar.svg";
-import pr_icon from "assets/pull_request_icon.svg";
-import compliance from "assets/compliance.svg";
 
-import { Context } from "shared/Context";
-
-import Text from "components/porter/Text";
-import Container from "components/porter/Container";
-import Spacer from "components/porter/Spacer";
+import ClusterListContainer from "./ClusterListContainer";
 import Clusters from "./Clusters";
 import ProjectSectionContainer from "./ProjectSectionContainer";
-import { type RouteComponentProps, withRouter } from "react-router";
-import { getQueryParam, pushFiltered } from "shared/routing";
-import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import SidebarLink from "./SidebarLink";
-import { overrideInfraTabEnabled } from "utils/infrastructure";
-import ClusterListContainer from "./ClusterListContainer";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -115,12 +116,8 @@ class Sidebar extends Component<PropsType, StateType> {
 
   renderProjectContents = () => {
     const { currentView } = this.props;
-    const {
-      currentProject,
-      user,
-      currentCluster,
-      hasFinishedOnboarding,
-    } = this.context;
+    const { currentProject, user, currentCluster, hasFinishedOnboarding } =
+      this.context;
     if (!currentProject?.simplified_view_enabled) {
       return (
         <ScrollWrapper>
@@ -141,29 +138,28 @@ class Sidebar extends Component<PropsType, StateType> {
                 <i className="material-icons">build_circle</i>
                 Infrastructure
               </NavButton>
-            )
-          }
+            )}
           {this.props.isAuthorized("integrations", "", [
             "get",
             "create",
             "update",
             "delete",
           ]) && (
-              <NavButton path={"/integrations"}>
-                <Img src={integrations} />
-                Integrations
-              </NavButton>
-            )}
+            <NavButton path={"/integrations"}>
+              <Img src={integrations} />
+              Integrations
+            </NavButton>
+          )}
           {this.props.isAuthorized("settings", "", [
             "get",
             "update",
             "delete",
           ]) && (
-              <NavButton path={"/project-settings"}>
-                <Img src={settings} />
-                Project settings
-              </NavButton>
-            )}
+            <NavButton path={"/project-settings"}>
+              <Img src={settings} />
+              Project settings
+            </NavButton>
+          )}
 
           <br />
 
@@ -190,31 +186,35 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-                <NavButton path={"/project-settings"}>
-                  <Img src={settings} />
-                  Project settings
-                </NavButton>
-              )}
+              <NavButton path={"/project-settings"}>
+                <Img src={settings} />
+                Project settings
+              </NavButton>
+            )}
             {this.props.isAuthorized("integrations", "", [
               "get",
               "create",
               "update",
               "delete",
             ]) && (
-                <NavButton path={"/integrations"}>
-                  <Img src={integrations} />
-                  Integrations
-                </NavButton>
-              )}
-            {currentProject.db_enabled && (
-              <NavButton
-                path="/datastores"
-                active={window.location.pathname.startsWith("/apps")}
-              >
-                <Img src={database} />
-                Datastores
+              <NavButton path={"/integrations"}>
+                <Img src={integrations} />
+                Integrations
               </NavButton>
             )}
+            <NavButton
+              path="/datastores"
+              active={window.location.pathname.startsWith("/apps")}
+            >
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={database} />
+                  Datastores
+                </Container>
+                {(currentProject.sandbox_enabled ||
+                  !currentProject.db_enabled) && <Image size={15} src={lock} />}
+              </Container>
+            </NavButton>
             {currentCluster && (
               <>
                 <Spacer y={0.5} />
@@ -247,24 +247,28 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-                <NavButton
-                  path={"/cluster-dashboard"}
-                  active={window.location.pathname.startsWith(
-                    "/cluster-dashboard"
-                  )}
-                >
-                  <Img src={settings} />
-                  Infrastructure
-                </NavButton>
-              )}
-
-            {currentProject.preview_envs_enabled && (
-              <NavButton path="/preview-environments">
-                <Img src={pr_icon} />
-                Preview apps
+              <NavButton
+                path={"/cluster-dashboard"}
+                active={window.location.pathname.startsWith(
+                  "/cluster-dashboard"
+                )}
+              >
+                <Img src={settings} />
+                Infrastructure
               </NavButton>
             )}
-
+            <NavButton path="/preview-environments">
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={pr_icon} />
+                  Preview apps
+                </Container>
+                {(currentProject.sandbox_enabled ||
+                  !currentProject.preview_envs_enabled) && (
+                  <Image size={15} src={lock} />
+                )}
+              </Container>
+            </NavButton>
             {/* Hacky workaround for setting currentCluster with legacy method */}
             <Clusters
               setWelcome={this.props.setWelcome}
@@ -286,15 +290,19 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={applications} />
               Applications
             </NavButton>
-            {currentProject.db_enabled && (
-              <NavButton
-                path="/datastores"
-                active={window.location.pathname.startsWith("/apps")}
-              >
-                <Img src={database} />
-                Datastores
-              </NavButton>
-            )}
+            <NavButton
+              path="/datastores"
+              active={window.location.pathname.startsWith("/apps")}
+            >
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={database} />
+                  Datastores
+                </Container>
+                {(currentProject.sandbox_enabled ||
+                  !currentProject.db_enabled) && <Image size={15} src={lock} />}
+              </Container>
+            </NavButton>
             <NavButton
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}
@@ -314,32 +322,42 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-                <NavButton
-                  path={"/cluster-dashboard"}
-                  active={window.location.pathname.startsWith(
-                    "/cluster-dashboard"
-                  )}
-                >
-                  <Img src={infra} />
-                  Infrastructure
-                </NavButton>
-              )}
-
-            {currentProject.preview_envs_enabled && (
-              <NavButton path="/preview-environments">
-                <Img src={pr_icon} />
-                Preview apps
-              </NavButton>
-            )}
-
-            {currentProject?.soc2_controls_enabled && (
-              <NavButton 
-                path="/compliance"
+              <NavButton
+                path={"/cluster-dashboard"}
+                active={window.location.pathname.startsWith(
+                  "/cluster-dashboard"
+                )}
               >
-                <Img src={compliance} />
-                Compliance
+                <Img src={infra} />
+                Infrastructure
               </NavButton>
             )}
+
+            <NavButton path="/preview-environments">
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={pr_icon} />
+                  Preview apps
+                </Container>
+                {(currentProject.sandbox_enabled ||
+                  !currentProject.preview_envs_enabled) && (
+                  <Image size={15} src={lock} />
+                )}
+              </Container>
+            </NavButton>
+
+            <NavButton path="/compliance">
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={compliance} />
+                  Compliance
+                </Container>
+                {(currentProject.sandbox_enabled ||
+                  !currentProject.soc2_controls_enabled) && (
+                  <Image size={15} src={lock} />
+                )}
+              </Container>
+            </NavButton>
 
             {this.props.isAuthorized("integrations", "", [
               "get",
@@ -347,22 +365,22 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) && (
-                <NavButton path={"/integrations"}>
-                  <Img src={integrations} />
-                  Integrations
-                </NavButton>
-              )}
+              <NavButton path={"/integrations"}>
+                <Img src={integrations} />
+                Integrations
+              </NavButton>
+            )}
 
             {this.props.isAuthorized("settings", "", [
               "get",
               "update",
               "delete",
             ]) && (
-                <NavButton path={"/project-settings"}>
-                  <Img src={settings} />
-                  Project settings
-                </NavButton>
-              )}
+              <NavButton path={"/project-settings"}>
+                <Img src={settings} />
+                Project settings
+              </NavButton>
+            )}
 
             {/* Hacky workaround for setting currentCluster with legacy method */}
             <Clusters

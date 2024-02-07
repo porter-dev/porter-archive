@@ -49,7 +49,7 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
       {
         tier: "db.t4g.large" as const,
         label: "Large",
-        cpuCores: 4,
+        cpuCores: 2,
         ramGigabytes: 8,
         storageGigabytes: 256,
       },

@@ -156,7 +156,7 @@ const Resources: React.FC<ResourcesProps> = ({
           <IntelligentSlider
             label="CPUs: "
             unit="Cores"
-            min={0.01}
+            min={0.1}
             max={maxCPU}
             color={"#3f51b5"}
             value={value.value.toString()}
@@ -198,7 +198,7 @@ const Resources: React.FC<ResourcesProps> = ({
           <IntelligentSlider
             label="RAM: "
             unit="MB"
-            min={1}
+            min={10}
             max={maxRAM}
             color={"#3f51b5"}
             value={value.value.toString()}

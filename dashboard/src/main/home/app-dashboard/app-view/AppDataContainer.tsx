@@ -236,10 +236,15 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       if (currentProject?.beta_features_enabled && !buildIsDirty) {
         const serviceDeletions = setServiceDeletions(data.app.services);
 
+        const withPredeploy =
+          needsRebuild && latestSource.type === "docker-registry";
+
         await api.updateApp(
           "<token>",
           {
-            b64_app_proto: btoa(validatedAppProto.toJsonString()),
+            b64_app_proto: btoa(
+              validatedAppProto.toJsonString({ emitDefaultValues: true })
+            ),
             deployment_target_id: deploymentTarget.id,
             variables,
             secrets,
@@ -252,6 +257,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
               ),
               service_deletions: serviceDeletions,
             },
+            with_predeploy: withPredeploy,
           },
           {
             project_id: projectId,

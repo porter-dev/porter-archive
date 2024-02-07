@@ -9,6 +9,7 @@ import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
 
+import CreateDeploymentTargetModal from "components/CreateDeploymentTargetModal";
 import Back from "components/porter/Back";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
@@ -45,7 +46,6 @@ import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 import web from "assets/web.png";
 
-import CreateDeploymentTargetModal from "components/CreateDeploymentTargetModal";
 import ImageSettings from "../image-settings/ImageSettings";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import SourceSelector from "../new-app-flow/SourceSelector";
@@ -345,7 +345,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
             "<token>",
             {
               deployment_target_id: deploymentTargetID,
-              b64_app_proto: btoa(app.toJsonString()),
+              b64_app_proto: btoa(
+                app.toJsonString({
+                  emitDefaultValues: true,
+                })
+              ),
               secrets,
               variables,
               is_env_override: true,
@@ -783,32 +787,30 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     </Text>
                     <EnvSettings baseEnvGroups={baseEnvGroups} />
                   </>,
-                  source.type === "github" && (
-                    <>
-                      <Text size={16}>Pre-deploy job (optional)</Text>
-                      <Spacer y={0.5} />
-                      <Text color="helper">
-                        You may add a pre-deploy job to perform an operation
-                        before your application services deploy each time, like
-                        a database migration.
-                      </Text>
-                      <Spacer y={0.5} />
-                      <ServiceList
-                        addNewText={"Add a new pre-deploy job"}
-                        prePopulateService={deserializeService({
-                          service: defaultSerialized({
-                            name: "pre-deploy",
-                            type: "predeploy",
-                            defaultCPU: currentClusterResources.defaultCPU,
-                            defaultRAM: currentClusterResources.defaultRAM,
-                          }),
-                          expanded: true,
-                        })}
-                        isPredeploy
-                        fieldArrayName={"app.predeploy"}
-                      />
-                    </>
-                  ),
+                  <>
+                    <Text size={16}>Pre-deploy job (optional)</Text>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      You may add a pre-deploy job to perform an operation
+                      before your application services deploy each time, like a
+                      database migration.
+                    </Text>
+                    <Spacer y={0.5} />
+                    <ServiceList
+                      addNewText={"Add a new pre-deploy job"}
+                      prePopulateService={deserializeService({
+                        service: defaultSerialized({
+                          name: "pre-deploy",
+                          type: "predeploy",
+                          defaultCPU: currentClusterResources.defaultCPU,
+                          defaultRAM: currentClusterResources.defaultRAM,
+                        }),
+                        expanded: true,
+                      })}
+                      isPredeploy
+                      fieldArrayName={"app.predeploy"}
+                    />
+                  </>,
                   <>
                     <Button
                       type="submit"

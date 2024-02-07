@@ -3,12 +3,13 @@ import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
 import Container from "components/porter/Container";
+import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Context } from "shared/Context";
-import { getQueryParam, pushFiltered } from "shared/routing";
+import { overrideInfraTabEnabled } from "utils/infrastructure";
 import addOns from "assets/add-ons.svg";
 import applications from "assets/applications.svg";
 import category from "assets/category.svg";
@@ -18,6 +19,7 @@ import compliance from "assets/compliance.svg";
 import database from "assets/database.svg";
 import sliders from "assets/env-groups.svg";
 import integrations from "assets/integrations.svg";
+import lock from "assets/lock.svg";
 import pr_icon from "assets/pull_request_icon.svg";
 import rocket from "assets/rocket.png";
 import settings from "assets/settings.svg";
@@ -192,15 +194,19 @@ class Sidebar extends Component<PropsType, StateType> {
                 Integrations
               </NavButton>
             )}
-            {currentProject.db_enabled && (
-              <NavButton
-                path="/datastores"
-                active={window.location.pathname.startsWith("/apps")}
-              >
-                <Img src={database} />
-                Datastores
-              </NavButton>
-            )}
+            <NavButton
+              path="/datastores"
+              active={window.location.pathname.startsWith("/apps")}
+            >
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={database} />
+                  Datastores
+                </Container>
+                {(currentProject.sandbox_enabled ||
+                  !currentProject.db_enabled) && <Image size={15} src={lock} />}
+              </Container>
+            </NavButton>
             {currentCluster && (
               <>
                 <Spacer y={0.5} />
@@ -237,28 +243,32 @@ class Sidebar extends Component<PropsType, StateType> {
                 path={
                   currentProject?.simplified_view_enabled &&
                   currentProject?.capi_provisioner_enabled
-                    ? "infrastructure"
+                    ? "/infrastructure"
                     : "/cluster-dashboard"
                 }
                 active={window.location.pathname.startsWith(
                   currentProject?.simplified_view_enabled &&
                     currentProject?.capi_provisioner_enabled
-                    ? "infrastructure"
+                    ? "/infrastructure"
                     : "/cluster-dashboard"
                 )}
               >
-                <Img src={settings} />
+                <Img src={infra} />
                 Infrastructure
               </NavButton>
             )}
-
-            {currentProject.preview_envs_enabled && (
-              <NavButton path="/preview-environments">
-                <Img src={pr_icon} />
-                Preview apps
-              </NavButton>
-            )}
-
+            <NavButton path="/preview-environments">
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={pr_icon} />
+                  Preview apps
+                </Container>
+                {(currentProject.sandbox_enabled ||
+                  !currentProject.preview_envs_enabled) && (
+                  <Image size={15} src={lock} />
+                )}
+              </Container>
+            </NavButton>
             {/* Hacky workaround for setting currentCluster with legacy method */}
             <Clusters
               setWelcome={this.props.setWelcome}
@@ -280,15 +290,19 @@ class Sidebar extends Component<PropsType, StateType> {
               <Img src={applications} />
               Applications
             </NavButton>
-            {currentProject.db_enabled && (
-              <NavButton
-                path="/datastores"
-                active={window.location.pathname.startsWith("/apps")}
-              >
-                <Img src={database} />
-                Datastores
-              </NavButton>
-            )}
+            <NavButton
+              path="/datastores"
+              active={window.location.pathname.startsWith("/apps")}
+            >
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={database} />
+                  Datastores
+                </Container>
+                {(currentProject.sandbox_enabled ||
+                  !currentProject.db_enabled) && <Image size={15} src={lock} />}
+              </Container>
+            </NavButton>
             <NavButton
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}
@@ -312,13 +326,13 @@ class Sidebar extends Component<PropsType, StateType> {
                 path={
                   currentProject?.simplified_view_enabled &&
                   currentProject?.capi_provisioner_enabled
-                    ? "infrastructure"
+                    ? "/infrastructure"
                     : "/cluster-dashboard"
                 }
                 active={window.location.pathname.startsWith(
                   currentProject?.simplified_view_enabled &&
                     currentProject?.capi_provisioner_enabled
-                    ? "infrastructure"
+                    ? "/infrastructure"
                     : "/cluster-dashboard"
                 )}
               >
@@ -327,19 +341,31 @@ class Sidebar extends Component<PropsType, StateType> {
               </NavButton>
             )}
 
-            {currentProject.preview_envs_enabled && (
-              <NavButton path="/preview-environments">
-                <Img src={pr_icon} />
-                Preview apps
-              </NavButton>
-            )}
+            <NavButton path="/preview-environments">
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={pr_icon} />
+                  Preview apps
+                </Container>
+                {(currentProject.sandbox_enabled ||
+                  !currentProject.preview_envs_enabled) && (
+                  <Image size={15} src={lock} />
+                )}
+              </Container>
+            </NavButton>
 
-            {currentProject?.soc2_controls_enabled && (
-              <NavButton path="/compliance">
-                <Img src={compliance} />
-                Compliance
-              </NavButton>
-            )}
+            <NavButton path="/compliance">
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={compliance} />
+                  Compliance
+                </Container>
+                {(currentProject.sandbox_enabled ||
+                  !currentProject.soc2_controls_enabled) && (
+                  <Image size={15} src={lock} />
+                )}
+              </Container>
+            </NavButton>
 
             {this.props.isAuthorized("integrations", "", [
               "get",

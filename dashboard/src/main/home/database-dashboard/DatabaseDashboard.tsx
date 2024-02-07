@@ -37,7 +37,7 @@ import { getDatastoreIcon, getEngineIcon } from "./icons";
 import EngineTag from "./tags/EngineTag";
 
 const DatabaseDashboard: React.FC = () => {
-  const { currentCluster } = useContext(Context);
+  const { currentProject, currentCluster } = useContext(Context);
   const { clusters, isLoading: isLoadingClusters } = useClusterList();
 
   const [searchValue, setSearchValue] = useState("");
@@ -109,6 +109,46 @@ const DatabaseDashboard: React.FC = () => {
     }
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
+    }
+
+    if (currentProject?.sandbox_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>Databases are not enabled for sandbox users</Text>
+          <Spacer y={0.5} />
+          <Text color={"helper"}>
+            Eject to your own cloud account to enable managed databases.
+          </Text>
+          <Spacer y={1} />
+          <ShowIntercomButton
+            alt
+            message="I would like to eject to my own cloud account"
+            height="35px"
+          >
+            Request ejection
+          </ShowIntercomButton>
+        </DashboardPlaceholder>
+      );
+    }
+
+    if (!currentProject?.db_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>Datastores are not enabled for this project</Text>
+          <Spacer y={0.5} />
+          <Text color={"helper"}>
+            Reach out to the Porter team to enable managed datastores on your project.
+          </Text>
+          <Spacer y={1} />
+          <ShowIntercomButton
+            alt
+            message="I would like to enable managed datastores on my project"
+            height="35px"
+          >
+            Request to enable
+          </ShowIntercomButton>
+        </DashboardPlaceholder>
+      );
     }
 
     if (datastores.length === 0) {

@@ -4,14 +4,16 @@ import { useIntercom } from "lib/hooks/useIntercom";
 
 import chat from "assets/chat.svg";
 
-import Button from "./Button";
+import Button, { type ButtonProps } from "./Button";
 
-type Props = {
+type Props = Omit<ButtonProps, "children"> & {
   message: string;
+  children?: React.ReactNode;
 };
-const ShowIntercomButton: React.FC<Props> = ({ message }) => {
-  const { showIntercomWithMessage } = useIntercom();
 
+const ShowIntercomButton: React.FC<Props> = (props) => {
+  const { showIntercomWithMessage } = useIntercom();
+  const { message, children } = props;
   return (
     <Button
       onClick={() => {
@@ -20,9 +22,10 @@ const ShowIntercomButton: React.FC<Props> = ({ message }) => {
           delaySeconds: 0,
         });
       }}
+      {...props}
     >
       <img src={chat} style={{ width: "15px", marginRight: "10px" }} />
-      Talk to support
+      {children || "Talk to support"}
     </Button>
   );
 };

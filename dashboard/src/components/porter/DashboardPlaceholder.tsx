@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
-import placeholder from "assets/placeholder.png";
+import placeholder from "assets/placeholder.svg";
 
 type Props = {
   children: React.ReactNode;

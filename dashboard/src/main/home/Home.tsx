@@ -48,6 +48,7 @@ import Dashboard from "./dashboard/Dashboard";
 import CreateDatabase from "./database-dashboard/CreateDatabase";
 import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
 import DatabaseView from "./database-dashboard/DatabaseView";
+import InfrastructureDashboard from "./infrastructure-dashboard/InfrastructureDashboard";
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 import ModalHandler from "./ModalHandler";
@@ -508,12 +509,15 @@ const Home: React.FC<Props> = (props) => {
                     return <Onboarding />;
                   }}
                 />
-                <Route
-                  path="/infrastructure"
-                  render={() => {
-                    return <div>hello world</div>;
-                  }}
-                />
+                {currentProject?.simplified_view_enabled &&
+                  currentProject?.capi_provisioner_enabled && (
+                    <Route
+                      path="/infrastructure"
+                      render={() => {
+                        return <InfrastructureDashboard />;
+                      }}
+                    />
+                  )}
                 <Route
                   path="/dashboard"
                   render={() => {
@@ -569,8 +573,7 @@ const Home: React.FC<Props> = (props) => {
                   path={"/project-settings"}
                   render={() => <GuardedProjectSettings />}
                 />
-                {currentProject?.validate_apply_v2 &&
-                currentProject.preview_envs_enabled ? (
+                {currentProject?.validate_apply_v2 && (
                   <>
                     <Route exact path="/preview-environments/configure">
                       <SetupApp />
@@ -591,7 +594,7 @@ const Home: React.FC<Props> = (props) => {
                       <PreviewEnvs />
                     </Route>
                   </>
-                ) : null}
+                )}
                 <Route path={"*"} render={() => <LaunchWrapper />} />
               </Switch>
             </ViewWrapper>

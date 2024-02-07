@@ -10,14 +10,13 @@ import convert from "convert";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
+import { azureMachineTypeDetails } from "components/azureUtils";
 import {
   AWS_INSTANCE_LIMITS,
   GPU_INSTANCE_LIMIT,
 } from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
 
 import api from "shared/api";
-
-import { azureMachineTypeDetails } from "components/azureUtils";
 
 const DEFAULT_INSTANCE_CLASS = "t3";
 const DEFAULT_INSTANCE_SIZE = "medium";
@@ -333,7 +332,7 @@ export const useClusterResourceLimits = ({
   }, [getClusterNodes]);
 
   const getCluster = useQuery(
-    ["getCluster", projectId, clusterId],
+    ["getClusterIngressIp", projectId, clusterId],
     async () => {
       if (!projectId || !clusterId || clusterId === -1) {
         return await Promise.resolve({ ingress_ip: "" });

@@ -57,15 +57,13 @@ const EnvDashboard: React.FC<Props> = (props) => {
         "<token>",
         {},
         {
-          id: currentProject?.id,
-          cluster_id: currentCluster?.id,
+          id: currentProject?.id || -1,
+          cluster_id: currentCluster?.id || -1,
         }
       );
-      console.log("huh fuck", res.data.environment_groups)
       setEnvGroups(res.data.environment_groups);
       setIsLoading(false);
     } catch (err) {
-      console.log("i hate it here")
       setHasError(true);
       setIsLoading(false);
     }
@@ -278,6 +276,7 @@ const Block = styled(Link)`
   border-radius: 5px;
   background: ${props => props.theme.clickable.bg};
   border: 1px solid #494b4f;
+  transition: all 0.2s;
   :hover {
     border: 1px solid #7a7b80;
   }

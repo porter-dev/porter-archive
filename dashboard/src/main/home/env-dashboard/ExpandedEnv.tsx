@@ -68,7 +68,6 @@ const ExpandedEnv: React.FC = () => {
       setEnvGroup(matchedEnvGroup);
     } catch (err) {
       setIsLoading(false);
-      console.log(err);
     }
   };
 
@@ -131,7 +130,7 @@ const ExpandedEnv: React.FC = () => {
           <Spacer y={1} />
           {match(tab)
             .with("env-vars", () => <EnvVarsTab envGroup={envGroup} />)
-            .with("synced-apps", () => <SyncedAppsTab />)
+            .with("synced-apps", () => <SyncedAppsTab envGroup={envGroup} />)
             .with("settings", () => <SettingsTab envGroup={envGroup} />)
             .otherwise(() => null)}
           <Spacer y={2} />

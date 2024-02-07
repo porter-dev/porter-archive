@@ -139,6 +139,7 @@ const StyledInput = styled.input<{
   color: ${(props) => (props.disabled ? "#aaaabb" : "#fefefe")};
   font-size: 13px;
   outline: none;
+  transition: all 0.2s;
   border-radius: 5px;
   background: ${(props) => props.theme.fg};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "")};

@@ -125,6 +125,7 @@ const StyledSearchBar = styled.div<{
   font-size: 13px;
   border-radius: 5px;
   background: ${props => props.theme.fg};
+  transition: all 0.2s;
 
   border: 1px solid ${props => props.hasError ? "#ff3b62" : "#494b4f"};
   :hover {

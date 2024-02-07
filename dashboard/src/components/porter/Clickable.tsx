@@ -9,14 +9,16 @@ type Props = {
   spaced?: boolean;
   alignItems?: string;
   style?: React.CSSProperties;
+  onClick?: () => void;
 };
 
 const Clickable: React.FC<Props> = ({
   children,
   style,
+  onClick,
 }) => {
   return (
-    <StyledClickable style={style}>
+    <StyledClickable onClick={onClick} style={style}>
       {children}
     </StyledClickable>
   );
@@ -30,4 +32,9 @@ const StyledClickable = styled.div`
   border-radius: 5px;
   font-size: 13px;
   padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  :hover {
+    border: 1px solid #7a7b80;
+  }
 `;

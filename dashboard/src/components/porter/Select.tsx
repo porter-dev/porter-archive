@@ -128,6 +128,7 @@ const SelectWrapper = styled.div`
   padding-left: 10px;
   padding-right: 28px;
   height: 30px;
+  transition: all 0.2s;
   background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
   :hover {

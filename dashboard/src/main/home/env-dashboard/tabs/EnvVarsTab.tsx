@@ -23,14 +23,14 @@ type Props = {
 
 const EnvVarsTab: React.FC<Props> = ({ envGroup }) => {
   const { currentProject, currentCluster } = useContext(Context);
+  const [buttonStatus, setButtonStatus] = useState<string | React.ReactNode>("");
 
   const envGroupFormMethods = useForm<EnvGroupFormData>({
     resolver: zodResolver(envGroupFormValidator),
     reValidateMode: "onSubmit",
   });
   const { 
-    formState: { isValidating, isSubmitting, errors },
-    register,
+    formState: { isValidating, isSubmitting },
     watch,
     trigger,
     handleSubmit,
@@ -42,6 +42,9 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup }) => {
   const envVariables = watch("envVariables");
 
   useEffect(() => {
+    if (buttonStatus === "success") {
+      setButtonStatus("");
+    }
     const validate = async (): Promise<void> => {
       const isEnvVariablesValid = await trigger("envVariables");
       if (isEnvVariablesValid) {
@@ -78,6 +81,7 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup }) => {
   }, [envGroup]);
 
   const onSubmit = handleSubmit(async (data) => {
+    setButtonStatus("loading");
     setSubmitErrorMessage("");
     const apiEnvVariables: Record<string, string> = {};
     const secretEnvVariables: Record<string, string> = {};
@@ -124,13 +128,15 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup }) => {
           id: currentProject?.id ?? -1,
           cluster_id: currentCluster?.id ?? -1,
         }
-      )
+      );
+      setButtonStatus("success");
     } catch (err) {
       const errorMessage =
         axios.isAxiosError(err) && err.response?.data?.error
           ? err.response.data.error
           : "An error occurred while creating your env group. Please try again.";
       setSubmitErrorMessage(errorMessage);
+      setButtonStatus(<Error message={errorMessage} />);
     }
   });
 
@@ -165,7 +171,7 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup }) => {
           <Spacer y={1} />
           <Button
             type="submit"
-            status={submitButtonStatus}
+            status={buttonStatus}
             loadingText="Updating env group . . ."
             disabled={!isValid}
           >

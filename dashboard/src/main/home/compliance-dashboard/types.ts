@@ -12,7 +12,7 @@ export const vendorCheckValidator = z.object({
   check_group: z.string(),
   status: z.enum(["passed", "failing", "not_applicable"]),
   reason: z.string(),
-  link: z.string().optional(),
+  vendor_check_id: z.string(),
 });
 export type VendorCheck = z.infer<typeof vendorCheckValidator>;
 

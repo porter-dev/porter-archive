@@ -213,8 +213,10 @@ export const VendorChecksList: React.FC = () => {
                 }}
                 additionalStyles=":hover { text-decoration: underline }"
                 onClick={() => {
-                  window.open("https://app.vanta.com", "_blank");
-                  // window.open(check.link, "_blank");
+                  window.open(
+                    `https://app.vanta.com/tests/${check.vendor_check_id}`,
+                    "_blank"
+                  );
                 }}
               >
                 {check.check}

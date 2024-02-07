@@ -25,7 +25,13 @@ import tag_icon from "assets/tag.png";
 import RevisionDiffModal from "../modals/RevisionDiffModal";
 import { type PorterAppDeployEvent } from "../types";
 import { getDuration, getStatusColor, getStatusIcon } from "../utils";
-import { CommitIcon, ImageTagContainer, StyledEventCard } from "./EventCard";
+import {
+  CommitIcon,
+  ImageTagContainer,
+  StyledEventCard,
+  TagContainer,
+  TagIcon,
+} from "./EventCard";
 import { RevertModal } from "./RevertModal";
 import RollbackEventCard from "./RollbackEventCard";
 import ServiceStatusDetail from "./ServiceStatusDetail";
@@ -446,17 +452,4 @@ const StatusTextContainer = styled.div`
   display: flex;
   align-items: center;
   flex-direction: row;
-`;
-
-const TagIcon = styled.img`
-  height: 12px;
-  margin-right: 3px;
-`;
-
-const TagContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  column-gap: 1px;
-  padding: 0px 2px;
 `;

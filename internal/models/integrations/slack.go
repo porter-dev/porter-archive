@@ -45,6 +45,7 @@ type SlackIntegration struct {
 	// The webhook to call
 	Webhook []byte
 
+	// NotificationConfigID is the ID of the notification config to use
 	NotificationConfigID uint `gorm:"default:0"`
 }
 

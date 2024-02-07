@@ -44,6 +44,8 @@ type SlackIntegration struct {
 
 	// The webhook to call
 	Webhook []byte
+
+	NotificationConfigID uint `gorm:"default:0"`
 }
 
 func (s *SlackIntegration) ToSlackIntegraionType() *types.SlackIntegration {

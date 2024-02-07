@@ -7,6 +7,7 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 
 import notFound from "assets/not-found.png";
+import doppler from "assets/doppler.png";
 import key from "assets/key.svg";
 import time from "assets/time.png";
 
@@ -104,7 +105,7 @@ const ExpandedEnv: React.FC = () => {
           <Back to="/envs" />
 
           <Container row>
-            <Image src={key} size={28} />
+            <Image src={envGroup.type === "doppler" ? doppler : key} size={28} />
             <Spacer inline x={1} />
             <Text size={21}>{envGroupName}</Text>
           </Container>

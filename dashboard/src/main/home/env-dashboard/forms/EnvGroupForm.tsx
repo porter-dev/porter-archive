@@ -51,7 +51,6 @@ const EnvGroupForm: React.FC<Props> = ({
       return;
     }
     try {
-      console.log("here's what i see", existingEnvGroups);
       history.push(`/envs/${data.name}`);
     } catch (err) {
       const errorMessage =

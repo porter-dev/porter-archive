@@ -61,7 +61,7 @@ const AppGrid: React.FC<AppGridProps> = ({
 
   const filteredApps = useMemo(() => {
     const filteredBySearch = search(appsWithProto ?? [], searchValue, {
-      keys: ["name"],
+      keys: ["source.name"],
       isCaseSensitive: false,
     });
 

@@ -31,6 +31,8 @@ type VendorComplianceCheck struct {
 	Status VendorComplianceCheckStatus `json:"status"`
 	// Reason is a message indicating why the check is in its current state.
 	Reason string `json:"reason"`
+	// VendorCheckID is the unique identifier for the check from the vendor.
+	VendorCheckID string `json:"vendor_check_id"`
 }
 
 // CheckGroupStatus is the status for a check group
@@ -118,10 +120,11 @@ func VendorCheckGroupsFromProto(ctx context.Context, vendorCheck []*porterv1.Ven
 		}
 
 		res = append(res, VendorComplianceCheck{
-			Check:      vc.Description,
-			CheckGroup: vc.CheckGroup,
-			Status:     status,
-			Reason:     vc.Reason,
+			Check:         vc.Description,
+			CheckGroup:    vc.CheckGroup,
+			Status:        status,
+			Reason:        vc.Reason,
+			VendorCheckID: vc.VendorCheckId,
 		})
 	}
 

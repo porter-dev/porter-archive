@@ -37,7 +37,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
   const { currentProject, currentCluster } = useContext(Context);
 
   const [searchValue, setSearchValue] = useState("");
-  const [envGroups, setEnvGroups] = useState<any[]>([]);
+  const [envGroups, setEnvGroups] = useState<[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [view, setView] = useState<"grid" | "list">("grid");
   const [hasError, setHasError] = useState<boolean>(false);
@@ -89,7 +89,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
           <Spacer y={0.5} />
           <Text color={"helper"}>Get started by creating an environment group.</Text>
           <Spacer y={1} />
-          <Link to={`/envs/new`}>
+          <Link to={`/environment-groups/new`}>
             <Button
               height="35px"
               alt
@@ -155,7 +155,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
           />
           <Spacer inline x={1} />
           {isAuthorizedToAdd && (
-            <Link to={`/envs/new`}>
+            <Link to={`/environment-groups/new`}>
               <Button
                 height="30px"
               >
@@ -187,7 +187,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
             {(filteredEnvGroups ?? []).map(
               (envGroup, i: number) => {
                 return (
-                    <Block to={`/envs/${envGroup.name}`} key={i}>
+                    <Block to={`/environment-groups/${envGroup.name}`} key={i}>
                       <Container row>
                         <Image
                           src={envGroup.type === "doppler" ? doppler : key} 
@@ -212,7 +212,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
           <List>
             {(filteredEnvGroups ?? []).map((envGroup: any, i: number) => {
               return (
-                <Row to={`/envs/${envGroup.name}`} key={i}>
+                <Row to={`/environment-groups/${envGroup.name}`} key={i}>
                   <Container row>
                     <Image
                       src={envGroup.type === "doppler" ? doppler : key}

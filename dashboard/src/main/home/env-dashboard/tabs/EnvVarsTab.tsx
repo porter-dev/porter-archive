@@ -16,8 +16,8 @@ import Error from "components/porter/Error";
 type Props = {
   envGroup: {
     name: string;
-    variables: {};
-    secret_variables?: {};
+    variables: Record<string, string>;
+    secret_variables?: Record<string, string>;
     type?: string;
   };
 }
@@ -86,36 +86,42 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup }) => {
     setSubmitErrorMessage("");
     const apiEnvVariables: Record<string, string> = {};
     const secretEnvVariables: Record<string, string> = {};
-    const envVariable = data.envVariables;
+    const envVariables = data.envVariables;
     try {
       // Old env var create logic
-      envVariable
-        .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
-          // remove any collisions that are marked as deleted and are duplicates
-          const numCollisions = self.reduce((n, _envVar: KeyValueType) => {
-            return n + (_envVar.key === envVar.key ? 1 : 0);
-          }, 0);
+      const filtered = envVariables.filter((
+        envVar: KeyValueType, 
+        index: number,
+        self: KeyValueType[]
+      ) => {
+        // remove any collisions that are marked as deleted and are duplicates
+        const numCollisions = self.reduce((n, _envVar: KeyValueType) => {
+          return n + (_envVar.key === envVar.key ? 1 : 0);
+        }, 0);
 
-          if (numCollisions === 1) {
-            return true;
-          } else {
-            return (
-              index ===
-              self.findIndex(
-                (_envVar: KeyValueType) =>
-                  _envVar.key === envVar.key && !_envVar.deleted
-              )
-            );
-          }
-        })
-        .forEach((envVar: KeyValueType) => {
-          if (!envVar.deleted) {
-            if (envVar.hidden) {
-              secretEnvVariables[envVar.key] = envVar.value;
-            } else {
-              apiEnvVariables[envVar.key] = envVar.value;
-            }
-          }
+        if (numCollisions === 1) {
+          return true;
+        } else {
+          return (
+            index ===
+            self.findIndex(
+              (_envVar: KeyValueType) =>
+                _envVar.key === envVar.key && !_envVar.deleted
+            )
+          );
+        }
+      })
+        
+      filtered
+        .filter((envVar) => !envVar.deleted && envVar.hidden)
+        .forEach((envVar) => {
+          secretEnvVariables[envVar.key] = envVar.value;
+        });
+      
+      filtered
+        .filter((envVar) => !envVar.deleted && !envVar.hidden)
+        .forEach((envVar) => {
+          apiEnvVariables[envVar.key] = envVar.value;
         });
 
       if (envGroup?.type !== "doppler") {

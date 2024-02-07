@@ -27,6 +27,18 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
   const envGroupFormMethods = useForm<EnvGroupFormData>({
     resolver: zodResolver(envGroupFormValidator),
     reValidateMode: "onSubmit",
+    defaultValues: {
+      name: "",
+      envVariables: [
+        {
+          key: "",
+          value: "",
+          hidden: false,
+          locked: false,
+          deleted: false,
+        }
+      ]
+    }
   });
 
   const { 
@@ -42,18 +54,6 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
   const [step, setStep] = React.useState(0);
   const name = watch("name");
   const envVariables = watch("envVariables");
-
-  useEffect(() => {
-    setValue("envVariables", [
-      {
-        key: "",
-        value: "",
-        hidden: false,
-        locked: false,
-        deleted: false,
-      }
-    ])
-  }, []);
 
   useEffect(() => {
     const validate = async (): Promise<void> => {
@@ -143,7 +143,7 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
         }
       )
         
-      history.push(`/envs`);
+      history.push(`/environment-groups/${data.name}/env-vars`);
     } catch (err) {
       const errorMessage =
         axios.isAxiosError(err) && err.response?.data?.error
@@ -167,7 +167,7 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
     <CenterWrapper>
       <Div>
         <StyledConfigureTemplate>
-          <Back to="/envs" />
+          <Back to="/environment-groups" />
           <DashboardHeader
             prefix={<Icon src={envGrad} />}
             title="Create a new env group"

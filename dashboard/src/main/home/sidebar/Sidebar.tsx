@@ -236,8 +236,8 @@ class Sidebar extends Component<PropsType, StateType> {
               Add-ons
             </NavButton>
             <NavButton
-              path="/envs"
-              active={window.location.pathname.startsWith("/envs")}
+              path="/environment-groups"
+              active={window.location.pathname.startsWith("/environment-groups")}
             >
               <Img src={sliders} />
               Env groups
@@ -311,8 +311,8 @@ class Sidebar extends Component<PropsType, StateType> {
               Add-ons
             </NavButton>
             <NavButton
-              path="/envs"
-              active={window.location.pathname.startsWith("/envs")}
+              path="/environment-groups"
+              active={window.location.pathname.startsWith("/environment-groups")}
             >
               <Img src={sliders} />
               Env groups

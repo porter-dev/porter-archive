@@ -42,7 +42,7 @@ const ExpandedEnv: React.FC = () => {
   const history = useHistory();
   
   const [isLoading, setIsLoading] = useState(true);
-  const [envGroup, setEnvGroup] = useState<any>(null);
+  const [envGroup, setEnvGroup] = useState(null);
 
   const tabs = useMemo(() => {
     return [
@@ -62,7 +62,7 @@ const ExpandedEnv: React.FC = () => {
           cluster_id: currentCluster?.id ?? -1,
         }
       );
-      const matchedEnvGroup = res.data.environment_groups.find((x: any) => {
+      const matchedEnvGroup = res.data.environment_groups.find((x) => {
         return x.name === envGroupName
       });
       setIsLoading(false);
@@ -79,7 +79,7 @@ const ExpandedEnv: React.FC = () => {
 
   useEffect(() => {
     if (!tab) {
-      history.push(`/envs/${envGroupName}/env-vars`);
+      history.push(`/environment-groups/${envGroupName}/env-vars`);
     }
   }, [tab])
 
@@ -97,12 +97,12 @@ const ExpandedEnv: React.FC = () => {
             </Text>
           </Container>
           <Spacer y={1} />
-          <Link hasunderline to="/envs">Return to dashboard</Link>
+          <Link hasunderline to="/environment-groups">Return to dashboard</Link>
         </Placeholder>
       )}
       {!isLoading && envGroup && (
         <StyledExpandedApp>
-          <Back to="/envs" />
+          <Back to="/environment-groups" />
 
           <Container row>
             <Image src={envGroup.type === "doppler" ? doppler : key} size={28} />
@@ -125,7 +125,7 @@ const ExpandedEnv: React.FC = () => {
             options={tabs}
             currentTab={tab}
             setCurrentTab={(t) => {
-              history.push(`/envs/${envGroupName}/${t}`);
+              history.push(`/environment-groups/${envGroupName}/${t}`);
             }}
           />
           <Spacer y={1} />

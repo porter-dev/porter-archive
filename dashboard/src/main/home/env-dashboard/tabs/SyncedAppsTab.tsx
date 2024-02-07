@@ -1,21 +1,20 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useMemo } from "react";
 import { useHistory } from "react-router";
 import styled from "styled-components";
+import _ from "lodash";
 
-import api from "shared/api";
 import { Context } from "shared/Context";
+import { useLatestAppRevisions } from "lib/hooks/useLatestAppRevisions";
 
-import loading from "assets/loading.gif";
 import box from "assets/box.png";
 
-import Button from "components/porter/Button";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Image from "components/porter/Image";
 import Clickable from "components/porter/Clickable";
-import Placeholder from "components/Placeholder";
 import Fieldset from "components/porter/Fieldset";
+import SelectableAppList from "main/home/app-dashboard/apps/SelectableAppList";
 
 type Props = {
   envGroup: {
@@ -26,6 +25,24 @@ type Props = {
 const SyncedAppsTab: React.FC<Props> = ({ envGroup }) => {
   const history = useHistory();
   const { currentProject, currentCluster } = useContext(Context);
+
+  const { revisions } = useLatestAppRevisions({
+    projectId: currentProject?.id || -1,
+    clusterId: currentCluster?.id || -1,
+  });
+
+  const { connectedApps } = useMemo(() => {
+    const [connected, remaining] = _.partition(
+      revisions,
+      (r) => envGroup.linked_applications?.includes(r.source.name)
+    );
+    return {
+      connectedApps: connected.sort((a, b) =>
+        a.source.name.localeCompare(b.source.name)
+      ),
+    }
+  }, [revisions, envGroup.linked_applications]);
+
   return (
     <FadeWrapper>
       <Text size={16}>
@@ -47,22 +64,19 @@ const SyncedAppsTab: React.FC<Props> = ({ envGroup }) => {
           </Text>
         </Fieldset>
       )}
-      {envGroup?.linked_applications?.map((app: string, i: number) => {
-        return (
-          <>
-            <Clickable key={i} row onClick={() => {
-              history.push(`/apps/${app}/environment`);
-            }}>
-              <Container row>
-                <Image src={box} size={18} />
-                <Spacer inline x={1} />
-                <Text>{app}</Text>
-              </Container>
-            </Clickable>
-            <Spacer y={.5} />
-          </>
-        );
-      })}
+      {connectedApps && (
+        <SelectableAppList
+          appListItems={connectedApps?.map((ra) => ({
+            app: ra,
+            key: ra.source.name,
+            onSelect: () => {
+              history.push(
+                `/apps/${ra.source.name}?target=${ra.app_revision.deployment_target.id}`
+              );
+            },
+          }))}
+        />
+      )}
     </FadeWrapper>
   );
 };

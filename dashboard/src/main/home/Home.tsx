@@ -475,16 +475,16 @@ const Home: React.FC<Props> = (props) => {
                   )}
                 </Route>
 
-                <Route path="/envs/new">
+                <Route path="/environment-groups/new">
                   <CreateEnvGroup />
                 </Route>
-                <Route path="/envs/:envGroupName/:tab">
+                <Route path="/environment-groups/:envGroupName/:tab">
                   <ExpandedEnv />
                 </Route>
-                <Route path="/envs/:envGroupName">
+                <Route path="/environment-groups/:envGroupName">
                   <ExpandedEnv />
                 </Route>
-                <Route path="/envs">
+                <Route path="/environment-groups">
                   <EnvDashboard />
                 </Route>
 

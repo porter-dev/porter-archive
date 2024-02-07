@@ -43,20 +43,21 @@ const SelectableAppRow: React.FC<SelectableAppRowProps> = ({
       }}
       isHoverable={onSelect != null || onDeselect != null}
     >
-      <div>
-        <Container row>
-          <Spacer inline width="1px" />
-          <AppIcon buildpacks={proto.build?.buildpacks ?? []} />
-          <Spacer inline width="12px" />
-          <Text size={14}>{proto.name}</Text>
-          <Spacer inline x={1} />
-        </Container>
-        <Spacer height="15px" />
-        <Container row>
-          <AppSource source={app.source} />
-          <Spacer inline x={1} />
-        </Container>
-      </div>
+      <Container row>
+        <Spacer inline width="1px" />
+        <AppIcon 
+          buildpacks={proto.build?.buildpacks ?? []} 
+          size="larger"
+        />
+        <Spacer inline width="12px" />
+        <Text size={14}>{proto.name}</Text>
+        <Spacer inline x={1} />
+      </Container>
+      <Spacer height="15px" />
+      <Container row>
+        <AppSource source={app.source} />
+        <Spacer inline x={1} />
+      </Container>
       {selected && <Icon height="18px" src={healthy} />}
     </ResourceOption>
   );
@@ -94,10 +95,11 @@ export default SelectableAppList;
 
 const StyledSelectableAppList = styled.div`
   display: flex;
-  row-gap: 10px;
+  row-gap: 15px;
   flex-direction: column;
   max-height: 400px;
-  overflow-y: scroll;
+  overflow-y: auto;
+  transition: all 0.2s;
 `;
 
 const ResourceOption = styled.div<{ selected?: boolean; isHoverable: boolean }>`
@@ -105,11 +107,11 @@ const ResourceOption = styled.div<{ selected?: boolean; isHoverable: boolean }>`
   border: 1px solid
     ${(props) => (props.selected ? "#ffffff" : props.theme.border)};
   width: 100%;
-  padding: 10px 15px;
+  padding: 15px;
+  margin-botton: 15px;
   border-radius: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  animation: fadeIn 0.3s 0s;
+  transition: all 0.2s;
   ${(props) => props.isHoverable && "cursor: pointer;"}
   ${(props) =>
     props.isHoverable &&

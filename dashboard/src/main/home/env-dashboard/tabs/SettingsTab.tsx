@@ -60,7 +60,7 @@ const SettingsTab: React.FC<Props> = ({ envGroup }) => {
     try {
       await deleteEnvGroup();
       setCurrentOverlay(null);
-      history.push("/envs");
+      history.push("/environment-groups");
     } catch (error) {
       setIsDeleting(false);
       setButtonStatus(<Error message="Env group deletion failed" />);

@@ -55,73 +55,67 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
     <Modal closeModal={() => { setOpen(false); }}>
       <Text size={16}>Load env group</Text>
       <Spacer height="15px" />
-      <ColumnContainer>
-        <ScrollableContainer>
-          {remainingEnvGroupOptions.length ? (
-            <>
-              <Text color="helper">
-                Select an Env Group to load into your application.
-              </Text>
-              <Spacer y={1} />
-              <GroupModalSections>
-                <SidebarSection $expanded={!selectedEnvGroup}>
-                  <EnvGroupList>
-                    {remainingEnvGroupOptions.map((eg, i) => (
-                      <EnvGroupRow
-                        key={eg.name}
-                        isSelected={
-                          Boolean(selectedEnvGroup) &&
-                          selectedEnvGroup?.name === eg.name
-                        }
-                        lastItem={i === remainingEnvGroupOptions?.length - 1}
-                        onClick={() => {
-                          setSelectedEnvGroup(eg);
-                        }}
-                      >
-                        {eg.type === "doppler" ? (
-                          <img src={doppler} />
-                            ) : (
-                        <img src={sliders} />
-                        )}
-                        {eg.name}
-                      </EnvGroupRow>
+      {remainingEnvGroupOptions.length ? (
+        <>
+          <Text color="helper">
+            Select an Env Group to load into your application.
+          </Text>
+          <Spacer y={1} />
+          <GroupModalSections>
+            <SidebarSection $expanded={!selectedEnvGroup}>
+              <EnvGroupList>
+                {remainingEnvGroupOptions.map((eg, i) => (
+                  <EnvGroupRow
+                    key={eg.name}
+                    isSelected={
+                      Boolean(selectedEnvGroup) &&
+                      selectedEnvGroup?.name === eg.name
+                    }
+                    lastItem={i === remainingEnvGroupOptions?.length - 1}
+                    onClick={() => {
+                      setSelectedEnvGroup(eg);
+                    }}
+                  >
+                    {eg.type === "doppler" ? (
+                      <img src={doppler} />
+                        ) : (
+                    <img src={sliders} />
+                    )}
+                    {eg.name}
+                  </EnvGroupRow>
+                ))}
+              </EnvGroupList>
+            </SidebarSection>
+            {selectedEnvGroup && (
+              <>
+                <SidebarSection>
+                  <GroupEnvPreview>
+                    {Object.entries(selectedEnvGroup?.variables || {}).map(
+                      ([key, value]) => (
+                        <div key={key}>
+                          <span className="key">{key} = </span>
+                          <span className="value">{value}</span>
+                        </div>
+                      )
+                    )}
+                    {Object.entries(
+                      selectedEnvGroup?.secret_variables || {}
+                    ).map(([key, value]) => (
+                      <div key={key}>
+                        <span className="key">{key} = </span>
+                        <span className="value">{value}</span>
+                      </div>
                     ))}
-                  </EnvGroupList>
+                  </GroupEnvPreview>
                 </SidebarSection>
-                {selectedEnvGroup && (
-                  <>
-                    <SidebarSection>
-                      <GroupEnvPreview>
-                        {Object.entries(selectedEnvGroup?.variables || {}).map(
-                          ([key, value]) => (
-                            <div key={key}>
-                              <span className="key">{key} = </span>
-                              <span className="value">{value}</span>
-                            </div>
-                          )
-                        )}
-                        {Object.entries(
-                          selectedEnvGroup?.secret_variables || {}
-                        ).map(([key, value]) => (
-                          <div key={key}>
-                            <span className="key">{key} = </span>
-                            <span className="value">{value}</span>
-                          </div>
-                        ))}
-                      </GroupEnvPreview>
-                    </SidebarSection>
-                  </>
-                )}
-              </GroupModalSections>
-              <Spacer y={1} />
-
-              <Spacer y={1} />
-            </>
-          ) : (
-            <Text>No selectable Env Groups</Text>
-          )}
-        </ScrollableContainer>
-      </ColumnContainer>
+              </>
+            )}
+          </GroupModalSections>
+        </>
+      ) : (
+        <Text>No selectable Env Groups</Text>
+      )}
+      <Spacer y={1} />
       <Button onClick={onSubmit} disabled={!selectedEnvGroup}>
         Load env group
       </Button>
@@ -162,6 +156,7 @@ const EnvGroupList = styled.div`
   background: #ffffff11;
   border: 1px solid #ffffff44;
   overflow-y: auto;
+  max-height: 340px;
 `;
 
 const SidebarSection = styled.section<{ $expanded?: boolean }>`
@@ -194,11 +189,6 @@ const GroupModalSections = styled.div`
   gap: 10px;
   grid-template-columns: 1fr 1fr;
   max-height: 365px;
-`;
-const ColumnContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
 `;
 
 const ScrollableContainer = styled.div`

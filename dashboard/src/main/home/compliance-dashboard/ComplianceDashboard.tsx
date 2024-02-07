@@ -6,7 +6,7 @@ import Spacer from "components/porter/Spacer";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 
 import { Context } from "shared/Context";
-import compliance from "assets/compliance.svg";
+import complianceGrad from "assets/compliance-grad.svg";
 
 import { ActionBanner } from "./ActionBanner";
 import { ProjectComplianceProvider } from "./ComplianceContext";
@@ -34,7 +34,7 @@ const ComplianceDashboard: React.FC = () => {
     >
       <StyledComplianceDashboard>
         <DashboardHeader
-          image={compliance}
+          image={complianceGrad}
           title="Compliance"
           description="Configure your Porter infrastructure for various compliance frameworks."
           disableLineBreak

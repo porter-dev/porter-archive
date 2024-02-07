@@ -139,6 +139,7 @@ const StyledInput = styled.input<{
   border-radius: 5px;
   background: #26292e;
   cursor: ${(props) => (props.disabled ? "not-allowed" : "")};
+  transition: all 0.2s;
 
   border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#494b4f")};
   ${(props) =>

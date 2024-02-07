@@ -368,6 +368,7 @@ const AddServiceButton = styled.div`
   display: flex;
   align-items: center;
   border-radius: 5px;
+  transition: all 0.2s;
   height: 40px;
   font-size: 13px;
   width: 100%;

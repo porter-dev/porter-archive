@@ -7,7 +7,6 @@ import Container from "./Container";
 import Spacer from "./Spacer";
 
 type Props = {
-  width?: string;
   options: Array<{
     label: string;
     value: string;
@@ -16,9 +15,7 @@ type Props = {
   }>;
   label?: string | React.ReactNode;
   labelColor?: string;
-  height?: string;
   error?: string;
-  children?: React.ReactNode;
   disabled?: boolean;
   value?: string;
   setValue?: (value: string) => void;
@@ -30,48 +27,40 @@ const Select: React.FC<Props> = ({
   label,
   labelColor,
   error,
-  children,
   disabled,
   value,
   setValue,
   prefix,
-  width = "200px",
-  height = "35px",
 }) => {
   return (
-    <Block width={width}>
+    <div>
       {label && <Label color={labelColor}>{label}</Label>}
       <SelectWrapper>
-        <AbsoluteWrapper>
-          <Spacer inline width="10px" />
-          {prefix && (
-            <>
-              <Prefix>{prefix}</Prefix>
-              <Bar />
-            </>
-          )}
-          {options.map((option) => {
-            if (option.value === value) {
-              return (
-                <Container key={1} row>
-                  {option.icon && <Img src={option?.icon} />}
-                  {option.label}
-                </Container>
-              );
-            }
-            return null;
-          })}
-          <img src={arrow} />
-        </AbsoluteWrapper>
-        <StyledSelect
+        {prefix && (
+          <>
+            <Prefix>{prefix}</Prefix>
+            <Bar />
+          </>
+        )}
+        {options.map((option) => {
+          if (option.value === value) {
+            return (
+              <Container key={1} row>
+                {option.icon && <Img src={option?.icon} />}
+                {option.label}
+              </Container>
+            );
+          }
+          return null;
+        })}
+        <img src={arrow} />
+        <SelectLayer
+          value={value}
           onChange={(e) => {
             setValue?.(e.target.value);
           }}
-          width={width}
-          height={height}
           hasError={(error && true) || error === ""}
           disabled={disabled || false}
-          value={value}
         >
           {options.map((option, i) => {
             return (
@@ -80,7 +69,7 @@ const Select: React.FC<Props> = ({
               </option>
             );
           })}
-        </StyledSelect>
+        </SelectLayer>
       </SelectWrapper>
       {error && (
         <Error>
@@ -88,8 +77,7 @@ const Select: React.FC<Props> = ({
           {error}
         </Error>
       )}
-      {children}
-    </Block>
+    </div>
   );
 };
 
@@ -98,21 +86,6 @@ export default Select;
 const Img = styled.img`
   height: 16px;
   margin-right: 10px;
-`;
-
-const AbsoluteWrapper = styled.div`
-  position: absolute;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  > img {
-    width: 8px;
-    position: absolute;
-    right: 10px;
-    top: calc(50% - 3px);
-    z-index: -1;
-  }
 `;
 
 const Bar = styled.div`
@@ -129,14 +102,6 @@ const Prefix = styled.div`
   display: flex;
   align-items: center;
   z-index: -1;
-`;
-
-const Block = styled.div<{
-  width: string;
-}>`
-  display: block;
-  position: relative;
-  width: ${(props) => props.width || "200px"};
 `;
 
 const Label = styled.div<{ color?: string }>`
@@ -160,6 +125,10 @@ const Error = styled.div`
 
 const SelectWrapper = styled.div`
   position: relative;
+  padding-left: 10px;
+  padding-right: 28px;
+  height: 30px;
+  transition: all 0.2s;
   background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
   :hover {
@@ -171,24 +140,31 @@ const SelectWrapper = styled.div`
   border-radius: 5px;
   font-size: 13px;
   overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  > img {
+    width: 8px;
+    position: absolute;
+    right: 10px;
+    top: calc(50% - 3px);
+    z-index: -1;
+  }
 `;
 
-const StyledSelect = styled.select<{
-  width: string;
-  height: string;
+const SelectLayer = styled.select<{
+  disabled?: boolean;
   hasError: boolean;
 }>`
-  height: ${(props) => props.height};
-  padding: 5px 10px;
-  width: ${(props) => props.width};
-  color: #ffffff;
-  font-size: 13px;
   outline: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   cursor: pointer;
-  border-radius: 5px;
   background: none;
   appearance: none;
-  overflow: hidden;
   opacity: 0;
   z-index: 1;
 `;

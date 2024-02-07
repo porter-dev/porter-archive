@@ -31,6 +31,7 @@ import {
   type ProjectType,
 } from "shared/types";
 import { overrideInfraTabEnabled } from "utils/infrastructure";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 
 import warning from "../../assets/warning.svg";
 import discordLogo from "../../assets/discord.svg";
@@ -409,7 +410,16 @@ const Home: React.FC<Props> = (props) => {
           {currentProject?.sandbox_enabled && (
             <GlobalBanner>
               <img src={warning} />
-              Your project is currently in Sandbox mode. All resources will be automatically deleted after one week.
+              Your project is currently in Sandbox mode. Your project will be deleted after one week.  
+              <CTA>
+              <ShowIntercomButton
+              alt
+              message="I would like to eject to my own cloud account"
+              height="25px"
+            >
+              Request ejection
+            </ShowIntercomButton>
+              </CTA>
             </GlobalBanner>
           )}
           <StyledHome isHosted={currentProject?.sandbox_enabled ?? false}>
@@ -687,6 +697,10 @@ const ViewWrapper = styled.div`
   background: ${(props) => props.theme.bg};
   position: relative;
 `;
+
+const CTA = styled.div`
+  margin-left: 30px; 
+`
 
 const DashboardWrapper = styled.div`
   width: 100%;

@@ -787,32 +787,30 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     </Text>
                     <EnvSettings baseEnvGroups={baseEnvGroups} />
                   </>,
-                  source.type === "github" && (
-                    <>
-                      <Text size={16}>Pre-deploy job (optional)</Text>
-                      <Spacer y={0.5} />
-                      <Text color="helper">
-                        You may add a pre-deploy job to perform an operation
-                        before your application services deploy each time, like
-                        a database migration.
-                      </Text>
-                      <Spacer y={0.5} />
-                      <ServiceList
-                        addNewText={"Add a new pre-deploy job"}
-                        prePopulateService={deserializeService({
-                          service: defaultSerialized({
-                            name: "pre-deploy",
-                            type: "predeploy",
-                            defaultCPU: currentClusterResources.defaultCPU,
-                            defaultRAM: currentClusterResources.defaultRAM,
-                          }),
-                          expanded: true,
-                        })}
-                        isPredeploy
-                        fieldArrayName={"app.predeploy"}
-                      />
-                    </>
-                  ),
+                  <>
+                    <Text size={16}>Pre-deploy job (optional)</Text>
+                    <Spacer y={0.5} />
+                    <Text color="helper">
+                      You may add a pre-deploy job to perform an operation
+                      before your application services deploy each time, like a
+                      database migration.
+                    </Text>
+                    <Spacer y={0.5} />
+                    <ServiceList
+                      addNewText={"Add a new pre-deploy job"}
+                      prePopulateService={deserializeService({
+                        service: defaultSerialized({
+                          name: "pre-deploy",
+                          type: "predeploy",
+                          defaultCPU: currentClusterResources.defaultCPU,
+                          defaultRAM: currentClusterResources.defaultRAM,
+                        }),
+                        expanded: true,
+                      })}
+                      isPredeploy
+                      fieldArrayName={"app.predeploy"}
+                    />
+                  </>,
                   <>
                     <Button
                       type="submit"

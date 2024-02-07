@@ -17,7 +17,8 @@ type Props = {
   envGroup: {
     name: string;
     variables: {};
-    secret_variables: {};
+    secret_variables?: {};
+    type?: string;
   };
 }
 
@@ -117,18 +118,32 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup }) => {
           }
         });
 
-      await api.createEnvironmentGroups(
+      if (envGroup?.type !== "doppler") {
+        await api.createEnvironmentGroups(
+          "<token>",
+          {
+            name: envGroup.name,
+            variables: apiEnvVariables,
+            secret_variables: secretEnvVariables,
+          },
+          {
+            id: currentProject?.id ?? -1,
+            cluster_id: currentCluster?.id ?? -1,
+          }
+        );
+      };
+     
+      await api.updateAppsLinkedToEnvironmentGroup(
         "<token>",
         {
-          name: envGroup.name,
-          variables: apiEnvVariables,
-          secret_variables: secretEnvVariables,
+          name: envGroup?.name,
         },
         {
-          id: currentProject?.id ?? -1,
-          cluster_id: currentCluster?.id ?? -1,
+          id: currentProject?.id || -1,
+          cluster_id: currentCluster?.id || -1,
         }
       );
+
       setButtonStatus("success");
     } catch (err) {
       const errorMessage =

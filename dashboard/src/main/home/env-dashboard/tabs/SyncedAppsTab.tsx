@@ -49,15 +49,18 @@ const SyncedAppsTab: React.FC<Props> = ({ envGroup }) => {
       )}
       {envGroup?.linked_applications?.map((app: string, i: number) => {
         return (
-          <Clickable key={i} row onClick={() => {
-            history.push(`/apps/${app}/environment`);
-          }}>
-            <Container row>
-              <Image src={box} size={18} />
-              <Spacer inline x={.75} />
-              <Text>{app}</Text>
-            </Container>
-          </Clickable>
+          <>
+            <Clickable key={i} row onClick={() => {
+              history.push(`/apps/${app}/environment`);
+            }}>
+              <Container row>
+                <Image src={box} size={18} />
+                <Spacer inline x={.75} />
+                <Text>{app}</Text>
+              </Container>
+            </Clickable>
+            <Spacer y={.5} />
+          </>
         );
       })}
     </FadeWrapper>

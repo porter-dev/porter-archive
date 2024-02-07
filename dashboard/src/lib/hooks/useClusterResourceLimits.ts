@@ -417,7 +417,7 @@ export const useClusterResourceLimits = ({
     maxCPU,
     maxRAM,
     defaultCPU,
-    defaultRAM,
+    defaultRAM: 40,
     clusterContainsGPUNodes,
     maxGPU,
     clusterIngressIp,

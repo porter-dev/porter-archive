@@ -227,7 +227,7 @@ export function defaultSerialized({
       enabled: false,
       gpuCoresNvidia: 0,
     },
-    smartOptimization: true,
+    smartOptimization: false,
   };
 
   const defaultAutoscaling: SerializedAutoscaling = {

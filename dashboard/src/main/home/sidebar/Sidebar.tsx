@@ -372,7 +372,7 @@ class Sidebar extends Component<PropsType, StateType> {
               )}
             </NavButton>
 
-            {this.props.isAuthorized("integrations", "", [
+            {!currentProject.sandbox_enabled && this.props.isAuthorized("integrations", "", [
               "get",
               "create",
               "update",

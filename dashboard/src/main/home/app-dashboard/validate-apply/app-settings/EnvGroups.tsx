@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useContext } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 import { type IterableElement } from "type-fest";
 
+import { Context } from "shared/Context";
 import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -25,6 +26,7 @@ const EnvGroups: React.FC<Props> = ({
   baseEnvGroups = [],
   attachedEnvGroups = [],
 }) => {
+  const { currentProject } = useContext(Context);
   const [showEnvModal, setShowEnvModal] = useState(false);
 
   const { control } = useFormContext<PorterAppFormData>();
@@ -103,14 +105,14 @@ const EnvGroups: React.FC<Props> = ({
 
   return (
     <div>
-      <LoadButton
+      {!currentProject.sandbox_enabled && (<LoadButton
         disabled={false}
         onClick={() => {
           setShowEnvModal(true);
         }}
       >
         <img src={sliders} /> Load from Env Group
-      </LoadButton>
+      </LoadButton>)}
       {populatedEnvWithFallback.length > 0 && (
         <>
           <Spacer y={0.5} />

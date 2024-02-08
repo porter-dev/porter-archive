@@ -26,8 +26,7 @@ export const Error: React.FC<Props> = ({
       <StyledError maxWidth={maxWidth}>
         <i className="material-icons">error_outline</i>
         <Block>
-          <Bold>Error:</Bold>
-          <Text>{message}</Text>
+          <Text>Error: {message}</Text>
           {ctaText && (errorModalContents != null || ctaOnClick != null) && (
             <Cta onClick={() => {
               errorModalContents ? setErrorModalOpen(true) : ctaOnClick();
@@ -73,12 +72,6 @@ const Cta = styled.span`
   }
 `;
 
-const Bold = styled.span`
-  font-weight: 600;
-  display: inline-block;
-  margin-right: 5px;
-`;
-
 const StyledError = styled.div<{ maxWidth?: string }>`
   line-height: 1.5;
   color: #ff385d;
@@ -92,7 +85,6 @@ const StyledError = styled.div<{ maxWidth?: string }>`
     margin-top: -1px;
     margin-right: 7px;
     float: left;
-    font-weight: 600;
     position: absolute;
     top: 1px;
     left: 0;

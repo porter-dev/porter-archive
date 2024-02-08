@@ -7,8 +7,10 @@ import Loading from "components/Loading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
+import Image from "components/porter/Image";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
+import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
@@ -24,10 +26,18 @@ import notFound from "assets/not-found.png";
 import time from "assets/time.png";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
+import {
+  CloudProviderAWS,
+  CloudProviderAzure,
+  CloudProviderGCP,
+} from "./constants";
 
 const ClusterDashboard: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [providerFilter, setProviderFilter] = useState<
+    "all" | "AWS" | "GCP" | "Azure"
+  >("all");
 
   const { clusters, isLoading } = useClusterList();
 
@@ -37,8 +47,19 @@ const ClusterDashboard: React.FC = () => {
       isCaseSensitive: false,
     });
 
-    return _.sortBy(filteredBySearch, ["name"]);
-  }, [clusters, searchValue]);
+    const sortedFilteredBySearch = _.sortBy(filteredBySearch, ["name"]);
+
+    const filteredByProvider = sortedFilteredBySearch.filter(
+      (cluster: ClientCluster) => {
+        if (providerFilter === "all") {
+          return true;
+        }
+        return cluster.cloud_provider.name === providerFilter;
+      }
+    );
+
+    return filteredByProvider;
+  }, [clusters, searchValue, providerFilter]);
 
   return (
     <StyledAppDashboard>
@@ -49,79 +70,45 @@ const ClusterDashboard: React.FC = () => {
         disableLineBreak
       />
       <Container row spaced>
-        {/* <Select
-            options={[
-              { value: "all", label: "All" },
-              {
-                value: "RDS",
-                label: "RDS",
-              },
-              {
-                value: "ELASTICACHE",
-                label: "Elasticache",
-              },
-            ]}
-            value={typeFilter}
-            setValue={(value) => {
-              if (
-                value === "all" ||
-                value === "RDS" ||
-                value === "ELASTICACHE"
-              ) {
-                setTypeFilter(value);
-                setEngineFilter("all");
-              }
-            }}
-            prefix={
-              <Container row>
-                <Image src={databaseGrad} size={15} opacity={0.6} />
-                <Spacer inline x={0.5} />
-                Type
-              </Container>
+        <Select
+          options={[
+            { value: "all", label: "All" },
+            {
+              value: "AWS",
+              label: "AWS",
+              icon: CloudProviderAWS.icon,
+            },
+            {
+              value: "GCP",
+              label: "GCP",
+              icon: CloudProviderGCP.icon,
+            },
+            {
+              value: "Azure",
+              label: "Azure",
+              icon: CloudProviderAzure.icon,
+            },
+          ]}
+          value={providerFilter}
+          setValue={(value) => {
+            if (
+              value === "all" ||
+              value === "GCP" ||
+              value === "AWS" ||
+              value === "Azure"
+            ) {
+              setProviderFilter(value);
             }
-          />
-          <Spacer inline x={1} />
-          <Select
-            options={[
-              { value: "all", label: "All" },
-              {
-                value: "POSTGRES",
-                label: "PostgreSQL",
-                icon: getEngineIcon("POSTGRES"),
-              },
-              {
-                value: "AURORA-POSTGRES",
-                label: "Aurora PostgreSQL",
-                icon: getEngineIcon("POSTGRES"),
-              },
-              {
-                value: "REDIS",
-                label: "Redis",
-                icon: getEngineIcon("REDIS"),
-              },
-            ]}
-            width="270px"
-            height="29px"
-            value={engineFilter}
-            setValue={(value) => {
-              if (
-                value === "all" ||
-                value === "POSTGRES" ||
-                value === "AURORA-POSTGRES" ||
-                value === "REDIS"
-              ) {
-                setEngineFilter(value);
-              }
-            }}
-            prefix={
-              <Container row>
-                <Image src={engine} size={15} opacity={0.6} />
-                <Spacer inline x={0.5} />
-                Engine
-              </Container>
-            }
-          />
-          <Spacer inline x={2} /> */}
+          }}
+          prefix={
+            <Container row>
+              <Image src={infra} size={15} opacity={0.6} />
+              <Spacer inline x={0.5} />
+              Cloud
+            </Container>
+          }
+        />
+        <Spacer inline x={2} />
         <SearchBar
           value={searchValue}
           setValue={(x) => {

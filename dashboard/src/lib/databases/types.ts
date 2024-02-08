@@ -156,8 +156,8 @@ const instanceTierValidator = z.enum([
   "db.t4g.large",
   "cache.t4g.micro",
   "cache.t4g.medium",
-  "cache.r7g.large",
-  "cache.r7g.xlarge",
+  "cache.r6g.large",
+  "cache.r6g.xlarge",
 ]);
 export type InstanceTier = z.infer<typeof instanceTierValidator>;
 

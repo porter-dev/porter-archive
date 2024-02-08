@@ -80,6 +80,47 @@ const DatabaseDashboard: React.FC = () => {
     return filteredByEngine;
   }, [datastores, searchValue, typeFilter, engineFilter]);
 
+  if (currentProject?.sandbox_enabled) {
+    return (
+      <DashboardPlaceholder>
+        <Text size={16}>Databases are not enabled for sandbox users</Text>
+        <Spacer y={0.5} />
+        <Text color={"helper"}>
+          Eject to your own cloud account to enable managed databases.
+        </Text>
+        <Spacer y={1} />
+        <ShowIntercomButton
+          alt
+          message="I would like to eject to my own cloud account"
+          height="35px"
+        >
+          Request ejection
+        </ShowIntercomButton>
+      </DashboardPlaceholder>
+    );
+  }
+
+  if (!currentProject?.db_enabled) {
+    return (
+      <DashboardPlaceholder>
+        <Text size={16}>Datastores are not enabled for this project</Text>
+        <Spacer y={0.5} />
+        <Text color={"helper"}>
+          Reach out to the Porter team to enable managed datastores on your
+          project.
+        </Text>
+        <Spacer y={1} />
+        <ShowIntercomButton
+          alt
+          message="I would like to enable managed datastores on my project"
+          height="35px"
+        >
+          Request to enable
+        </ShowIntercomButton>
+      </DashboardPlaceholder>
+    );
+  }
+
   const renderContents = (): JSX.Element => {
     if (datastores === undefined || isLoading || isLoadingClusters) {
       return <Loading offset="-150px" />;
@@ -109,46 +150,6 @@ const DatabaseDashboard: React.FC = () => {
     }
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />;
-    }
-
-    if (currentProject?.sandbox_enabled) {
-      return (
-        <DashboardPlaceholder>
-          <Text size={16}>Databases are not enabled for sandbox users</Text>
-          <Spacer y={0.5} />
-          <Text color={"helper"}>
-            Eject to your own cloud account to enable managed databases.
-          </Text>
-          <Spacer y={1} />
-          <ShowIntercomButton
-            alt
-            message="I would like to eject to my own cloud account"
-            height="35px"
-          >
-            Request ejection
-          </ShowIntercomButton>
-        </DashboardPlaceholder>
-      );
-    }
-
-    if (!currentProject?.db_enabled) {
-      return (
-        <DashboardPlaceholder>
-          <Text size={16}>Datastores are not enabled for this project</Text>
-          <Spacer y={0.5} />
-          <Text color={"helper"}>
-            Reach out to the Porter team to enable managed datastores on your project.
-          </Text>
-          <Spacer y={1} />
-          <ShowIntercomButton
-            alt
-            message="I would like to enable managed datastores on my project"
-            height="35px"
-          >
-            Request to enable
-          </ShowIntercomButton>
-        </DashboardPlaceholder>
-      );
     }
 
     if (datastores.length === 0) {
@@ -188,8 +189,6 @@ const DatabaseDashboard: React.FC = () => {
                 icon: getDatastoreIcon("ELASTICACHE"),
               },
             ]}
-            width="210px"
-            height="29px"
             value={typeFilter}
             setValue={(value) => {
               if (
@@ -229,8 +228,6 @@ const DatabaseDashboard: React.FC = () => {
                 icon: getEngineIcon("REDIS"),
               },
             ]}
-            width="270px"
-            height="29px"
             value={engineFilter}
             setValue={(value) => {
               if (
@@ -289,9 +286,7 @@ const DatabaseDashboard: React.FC = () => {
           <Fieldset>
             <Container row>
               <PlaceholderIcon src={notFound} />
-              <Text color="helper">
-                No matching datastores were found.
-              </Text>
+              <Text color="helper">No matching datastores were found.</Text>
             </Container>
           </Fieldset>
         ) : isLoading ? (

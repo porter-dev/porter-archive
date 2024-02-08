@@ -12,11 +12,13 @@ export const clusterValidator = z.object({
   cloud_provider: z.enum(["AWS", "GCP", "Azure"]),
   cloud_provider_credential_identifier: z.string(),
   status: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
 });
-export type Cluster = z.infer<typeof clusterValidator>;
+export type ClientCluster = z.infer<typeof clusterValidator>;
 export const isAWSCluster = (
-  cluster: Cluster
-): cluster is Cluster & { cloud_provider: "AWS" } => {
+  cluster: ClientCluster
+): cluster is ClientCluster & { cloud_provider: "AWS" } => {
   return cluster.cloud_provider === "AWS";
 };
 
@@ -24,6 +26,7 @@ type TUseClusterList = {
   clusters: Array<z.infer<typeof clusterValidator>>;
   isLoading: boolean;
 };
+
 export const useClusterList = (): TUseClusterList => {
   const { currentProject } = useContext(Context);
 
@@ -53,7 +56,7 @@ export const useClusterList = (): TUseClusterList => {
 };
 
 type TUseCluster = {
-  cluster: Cluster | undefined;
+  cluster: ClientCluster | undefined;
   isLoading: boolean;
 };
 export const useCluster = (): TUseCluster => {

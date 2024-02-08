@@ -38,7 +38,7 @@ const ClusterProvisioningPlaceholder: React.FC<RouteComponentProps> = (
             currentProject?.capi_provisioner_enabled &&
             currentProject?.simplified_view_enabled
           ) {
-            pushFiltered(props, "/infrastructure-dashboard", []);
+            pushFiltered(props, "/infrastructure", []);
           } else {
             pushFiltered(props, "/cluster-dashboard", ["project_id"], {
               cluster: currentCluster?.name,

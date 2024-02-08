@@ -132,6 +132,8 @@ func (c *Cluster) ToClusterType() *types.Cluster {
 		ProvisionedBy:                     c.ProvisionedBy,
 		CloudProvider:                     c.CloudProvider,
 		CloudProviderCredentialIdentifier: c.CloudProviderCredentialIdentifier,
+		CreatedAt:                         c.CreatedAt,
+		UpdatedAt:                         c.UpdatedAt,
 	}
 }
 

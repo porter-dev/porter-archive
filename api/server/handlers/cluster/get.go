@@ -6,7 +6,6 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
-	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/kubernetes"
@@ -38,7 +37,7 @@ func (c *ClusterGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	agent, err := c.GetAgent(r, cluster, "")
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		c.WriteResult(w, r, res)
 		return
 	}
 

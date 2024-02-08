@@ -37,7 +37,6 @@ import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
 import AppView from "./app-dashboard/app-view/AppView";
 import AppDashboard from "./app-dashboard/AppDashboard";
 import Apps from "./app-dashboard/apps/Apps";
-import CreateEnvGroup from "./env-dashboard/CreateEnvGroup";
 import CreateApp from "./app-dashboard/create-app/CreateApp";
 import ExpandedApp from "./app-dashboard/expanded-app/ExpandedApp";
 import NewAppFlow from "./app-dashboard/new-app-flow/NewAppFlow";
@@ -49,7 +48,10 @@ import Dashboard from "./dashboard/Dashboard";
 import CreateDatabase from "./database-dashboard/CreateDatabase";
 import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
 import DatabaseView from "./database-dashboard/DatabaseView";
-import InfrastructureDashboard from "./infrastructure-dashboard/InfrastructureDashboard";
+import CreateEnvGroup from "./env-dashboard/CreateEnvGroup";
+import EnvDashboard from "./env-dashboard/EnvDashboard";
+import ExpandedEnv from "./env-dashboard/ExpandedEnv";
+import ClusterDashboard from "./infrastructure-dashboard/ClusterDashboard";
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 import ModalHandler from "./ModalHandler";
@@ -58,8 +60,6 @@ import { NewProjectFC } from "./new-project/NewProject";
 import Onboarding from "./onboarding/Onboarding";
 import ProjectSettings from "./project-settings/ProjectSettings";
 import Sidebar from "./sidebar/Sidebar";
-import ExpandedEnv from "./env-dashboard/ExpandedEnv";
-import EnvDashboard from "./env-dashboard/EnvDashboard";
 
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
@@ -530,7 +530,7 @@ const Home: React.FC<Props> = (props) => {
                     <Route
                       path="/infrastructure"
                       render={() => {
-                        return <InfrastructureDashboard />;
+                        return <ClusterDashboard />;
                       }}
                     />
                   )}

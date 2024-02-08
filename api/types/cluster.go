@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 const (
 	URLParamCandidateID URLParam = "candidate_id"
 	URLParamNodeName    URLParam = "node_name"
@@ -51,6 +53,12 @@ type Cluster struct {
 	// This was likely the credential that was used to create the cluster.
 	// For AWS EKS clusters, this will be an ARN for the final target role in the assume role chain.
 	CloudProviderCredentialIdentifier string `json:"cloud_provider_credential_identifier"`
+
+	// CreatedAt is the time that this cluster was created
+	CreatedAt time.Time `json:"created_at"`
+
+	// UpdatedAt is the time that this cluster was last updated
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type ClusterCandidate struct {

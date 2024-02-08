@@ -143,7 +143,7 @@ const SlackIntegration: React.FC<SlackIntegrationProps> = ({
             <Icon src={hash} height={"12px"} />
             <Spacer x={0.2} inline />
             <Text size={13} color="#eeeeeedd">
-              {inst.channel}
+              {inst.channel.replace("#", "")}
             </Text>
           </Container>
         </Tag>

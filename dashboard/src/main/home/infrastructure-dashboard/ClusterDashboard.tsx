@@ -148,7 +148,7 @@ const ClusterDashboard: React.FC = () => {
         />
 
         <Spacer inline x={2} />
-        <PorterLink to="/datastores/new">
+        <PorterLink to="/infrastructure/new">
           <Button onClick={() => ({})} height="30px" width="70px">
             <I className="material-icons">add</I> New
           </Button>
@@ -173,7 +173,7 @@ const ClusterDashboard: React.FC = () => {
                 <Block>
                   <Container row spaced>
                     <Container row>
-                      <Icon src={infra} />
+                      <Icon src={cluster.cloud_provider.icon} />
                       <Text size={14}>{cluster.vanity_name}</Text>
                     </Container>
                     <StatusDot
@@ -201,7 +201,7 @@ const ClusterDashboard: React.FC = () => {
               <Row to={`/infrastructure/${cluster.name}`} key={i}>
                 <Container row spaced>
                   <Container row>
-                    <MidIcon src={infra} />
+                    <MidIcon src={cluster.cloud_provider.icon} />
                     <Text size={14}>{cluster.name}</Text>
                   </Container>
                   <StatusDot

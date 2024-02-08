@@ -2,8 +2,15 @@ import { useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
+import {
+  CloudProviderAWS,
+  SUPPORTED_CLOUD_PROVIDERS,
+  type CloudProvider,
+} from "main/home/infrastructure-dashboard/constants";
+
 import api from "shared/api";
 import { Context } from "shared/Context";
+import { valueExists } from "shared/util";
 
 export const clusterValidator = z.object({
   id: z.number(),
@@ -15,15 +22,18 @@ export const clusterValidator = z.object({
   created_at: z.string(),
   updated_at: z.string(),
 });
-export type ClientCluster = z.infer<typeof clusterValidator>;
+export type SerializedCluster = z.infer<typeof clusterValidator>;
+export type ClientCluster = Omit<SerializedCluster, "cloud_provider"> & {
+  cloud_provider: CloudProvider;
+};
 export const isAWSCluster = (
   cluster: ClientCluster
-): cluster is ClientCluster & { cloud_provider: "AWS" } => {
-  return cluster.cloud_provider === "AWS";
+): cluster is ClientCluster => {
+  return cluster.cloud_provider === CloudProviderAWS;
 };
 
 type TUseClusterList = {
-  clusters: Array<z.infer<typeof clusterValidator>>;
+  clusters: ClientCluster[];
   isLoading: boolean;
 };
 
@@ -42,7 +52,16 @@ export const useClusterList = (): TUseClusterList => {
         { id: currentProject.id }
       );
       const parsed = await z.array(clusterValidator).parseAsync(res.data);
-      return parsed;
+      return parsed
+        .map((c) => {
+          const cloudProviderMatch = SUPPORTED_CLOUD_PROVIDERS.find(
+            (s) => s.name === c.cloud_provider
+          );
+          return cloudProviderMatch
+            ? { ...c, cloud_provider: cloudProviderMatch }
+            : null;
+        })
+        .filter(valueExists);
     },
     {
       enabled: !!currentProject && currentProject.id !== -1,
@@ -79,7 +98,13 @@ export const useCluster = (): TUseCluster => {
         { project_id: currentProject.id, cluster_id: currentCluster.id }
       );
       const parsed = await clusterValidator.parseAsync(res.data);
-      return parsed;
+      const cloudProviderMatch = SUPPORTED_CLOUD_PROVIDERS.find(
+        (s) => s.name === parsed.cloud_provider
+      );
+      if (!cloudProviderMatch) {
+        return;
+      }
+      return { ...parsed, cloud_provider: cloudProviderMatch };
     },
     {
       enabled:

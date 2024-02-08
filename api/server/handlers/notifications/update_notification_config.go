@@ -58,7 +58,7 @@ type UpdateNotificationConfigResponse struct {
 
 // ServeHTTP updates a notification config
 func (n *UpdateNotificationConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-notifications-update")
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-notification-config-update")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)

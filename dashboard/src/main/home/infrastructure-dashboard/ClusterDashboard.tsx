@@ -160,7 +160,7 @@ const ClusterDashboard: React.FC = () => {
         <Fieldset>
           <Container row>
             <PlaceholderIcon src={notFound} />
-            <Text color="helper">No matching datastores were found.</Text>
+            <Text color="helper">No matching clusters were found.</Text>
           </Container>
         </Fieldset>
       ) : isLoading ? (
@@ -169,7 +169,7 @@ const ClusterDashboard: React.FC = () => {
         <GridList>
           {filteredClusters.map((cluster: ClientCluster, i: number) => {
             return (
-              <Link to={`/infrastructure/${cluster.vanity_name}`} key={i}>
+              <Link to={`/infrastructure/${cluster.id}`} key={i}>
                 <Block>
                   <Container row spaced>
                     <Container row>
@@ -196,13 +196,13 @@ const ClusterDashboard: React.FC = () => {
         </GridList>
       ) : (
         <List>
-          {(filteredClusters ?? []).map((cluster: ClientCluster, i: number) => {
+          {filteredClusters.map((cluster: ClientCluster, i: number) => {
             return (
-              <Row to={`/infrastructure/${cluster.name}`} key={i}>
+              <Row to={`/infrastructure/${cluster.id}`} key={i}>
                 <Container row spaced>
                   <Container row>
                     <MidIcon src={cluster.cloud_provider.icon} />
-                    <Text size={14}>{cluster.name}</Text>
+                    <Text size={14}>{cluster.vanity_name}</Text>
                   </Container>
                   <StatusDot
                     status={
@@ -319,6 +319,8 @@ const I = styled.i`
 const StyledAppDashboard = styled.div`
   width: 100%;
   height: 100%;
+  min-width: 300px;
+  height: fit-content;
 `;
 
 const SmallIcon = styled.img<{ opacity?: string; height?: string }>`

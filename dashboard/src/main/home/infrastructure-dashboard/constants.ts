@@ -2,6 +2,7 @@ import { type SerializedCluster } from "lib/hooks/useCluster";
 
 import aws from "assets/aws.png";
 import azure from "assets/azure.png";
+import infra from "assets/cluster.svg";
 import gcp from "assets/gcp.png";
 
 export type CloudProvider = {
@@ -24,9 +25,14 @@ export const CloudProviderAzure: CloudProvider = {
   displayName: "Microsoft Azure",
   icon: azure,
 };
-
+export const CloudProviderLocal: CloudProvider = {
+  name: "Local",
+  displayName: "Local",
+  icon: infra,
+};
 export const SUPPORTED_CLOUD_PROVIDERS = [
   CloudProviderAWS,
   CloudProviderGCP,
   CloudProviderAzure,
+  CloudProviderLocal,
 ];

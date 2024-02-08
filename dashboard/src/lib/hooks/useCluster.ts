@@ -16,7 +16,7 @@ export const clusterValidator = z.object({
   id: z.number(),
   name: z.string(),
   vanity_name: z.string(),
-  cloud_provider: z.enum(["AWS", "GCP", "Azure"]),
+  cloud_provider: z.enum(["AWS", "GCP", "Azure", "Local"]),
   cloud_provider_credential_identifier: z.string(),
   status: z.string(),
   created_at: z.string(),
@@ -77,25 +77,30 @@ export const useClusterList = (): TUseClusterList => {
 type TUseCluster = {
   cluster: ClientCluster | undefined;
   isLoading: boolean;
+  isError: boolean;
 };
-export const useCluster = (): TUseCluster => {
-  const { currentProject, currentCluster } = useContext(Context);
+export const useCluster = ({
+  clusterId,
+}: {
+  clusterId: number | undefined;
+}): TUseCluster => {
+  const { currentProject } = useContext(Context);
 
   const clusterReq = useQuery(
-    ["getCluster", currentProject?.id, currentCluster?.id],
+    ["getCluster", currentProject?.id, clusterId],
     async () => {
       if (
         !currentProject?.id ||
         currentProject.id === -1 ||
-        !currentCluster?.id ||
-        currentCluster.id === -1
+        !clusterId ||
+        clusterId === -1
       ) {
         return;
       }
       const res = await api.getCluster(
         "<token>",
         {},
-        { project_id: currentProject.id, cluster_id: currentCluster.id }
+        { project_id: currentProject.id, cluster_id: clusterId }
       );
       const parsed = await clusterValidator.parseAsync(res.data);
       const cloudProviderMatch = SUPPORTED_CLOUD_PROVIDERS.find(
@@ -110,13 +115,14 @@ export const useCluster = (): TUseCluster => {
       enabled:
         !!currentProject &&
         currentProject.id !== -1 &&
-        !!currentCluster &&
-        currentCluster.id !== -1,
+        !!clusterId &&
+        clusterId !== -1,
     }
   );
 
   return {
     cluster: clusterReq.data,
     isLoading: clusterReq.isLoading,
+    isError: clusterReq.isError,
   };
 };

@@ -140,7 +140,7 @@ const DatabaseForm: React.FC<Props> = ({
               <Button
                 type="submit"
                 status={submitButtonStatus}
-                loadingText={"Creating..."}
+                loadingText={"Creating . . ."}
                 disabled={isSubmitting || isValidating}
               >
                 Create

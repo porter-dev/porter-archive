@@ -1,17 +1,16 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import styled from "styled-components";
 
+import ConfirmOverlay from "components/ConfirmOverlay";
+import ExpandableSection from "components/porter/ExpandableSection";
+import Spacer from "components/porter/Spacer";
+
 import api from "shared/api";
+import { Context } from "shared/Context";
+import { readableDate } from "shared/string_utils";
 import loading from "assets/loading.gif";
 import warning from "assets/warning.png";
-
-import { readableDate } from "shared/string_utils";
-import { Context } from "shared/Context";
-import ExpandableSection from "components/porter/ExpandableSection";
-
-import Spacer from "components/porter/Spacer";
-import { createPortal } from "react-dom";
-import ConfirmOverlay from "components/ConfirmOverlay";
 
 type Props = {
   setSelectedClusterVersion: any;
@@ -24,7 +23,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
   setSelectedClusterVersion,
   setShowProvisionerStatus,
   setProvisionFailureReason,
-  gpuModal
+  gpuModal,
 }) => {
   const [showConfirmOverlay, setShowConfirmOverlay] = useState(false);
   const { currentProject, currentCluster } = useContext(Context);
@@ -41,7 +40,10 @@ const ClusterRevisionSelector: React.FC<Props> = ({
       return Date.parse(a.created_at) > Date.parse(b.created_at) ? -1 : 1;
     });
     let activeCandidate;
-    if (data[0].condition !== "SUCCESS") {
+    if (
+      data[0].condition !== "SUCCESS" &&
+      data[0].condition !== "COMPLIANCE_CHECK_FAILED"
+    ) {
       activeCandidate = data[0];
       setPendingContract(activeCandidate);
 
@@ -168,7 +170,11 @@ const ClusterRevisionSelector: React.FC<Props> = ({
         <Td>{readableDate(pendingContract.created_at)}</Td>
         {failedContractId && (
           <DeleteButton>
-            <div onClick={() => { setShowConfirmOverlay(true); }}>
+            <div
+              onClick={() => {
+                setShowConfirmOverlay(true);
+              }}
+            >
               Clear Revision
             </div>
           </DeleteButton>
@@ -179,8 +185,7 @@ const ClusterRevisionSelector: React.FC<Props> = ({
 
   return (
     <>
-      {
-        !gpuModal &&
+      {!gpuModal && (
         <>
           {hideSelector ? (
             <></>
@@ -196,10 +201,10 @@ const ClusterRevisionSelector: React.FC<Props> = ({
                         {selectedId === 0
                           ? "Current version -"
                           : selectedId === -1
-                            ? failedContractId
-                              ? ""
-                              : "In progress -"
-                            : "Previewing version (not deployed) -"}
+                          ? failedContractId
+                            ? ""
+                            : "In progress -"
+                          : "Previewing version (not deployed) -"}
                       </Label>
                       {selectedId === -1 ? (
                         failedContractId ? (
@@ -246,12 +251,14 @@ const ClusterRevisionSelector: React.FC<Props> = ({
                   deleteContract();
                   setShowConfirmOverlay(false);
                 }}
-                onNo={() => { setShowConfirmOverlay(false); }}
+                onNo={() => {
+                  setShowConfirmOverlay(false);
+                }}
               />,
               document.body
             )}
         </>
-      }
+      )}
     </>
   );
 };
@@ -328,7 +335,7 @@ const RollbackButton = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled: boolean }) =>
-    props.disabled ? "" : "#405eddbb"};
+      props.disabled ? "" : "#405eddbb"};
   }
 `;
 
@@ -342,7 +349,7 @@ const Tr = styled.tr`
     props.selected ? "#ffffff11" : ""};
   :hover {
     background: ${(props: { disableHover?: boolean; selected?: boolean }) =>
-    props.disableHover ? "" : "#ffffff22"};
+      props.disableHover ? "" : "#ffffff22"};
   }
 `;
 

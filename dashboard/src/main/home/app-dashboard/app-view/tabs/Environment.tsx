@@ -70,7 +70,7 @@ const Environment: React.FC<Props> = ({ latestSource, buttonStatus }) => {
         latestSource={latestSource}
         attachedEnvGroups={attachedEnvGroups}
       />
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <AppSaveButton
         status={buttonStatus}
         isDisabled={isSubmitting}

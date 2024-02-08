@@ -17,6 +17,7 @@ export type PorterUrl =
   | "apps"
   | "addons"
   | "compliance"
+  | "environment-groups"
   | "stacks";
 
 export const PorterUrls = [
@@ -37,6 +38,7 @@ export const PorterUrls = [
   "apps",
   "addons",
   "compliance",
+  "environment-groups",
   "stacks",
 ];
 

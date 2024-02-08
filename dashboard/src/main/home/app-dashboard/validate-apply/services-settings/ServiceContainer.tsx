@@ -265,6 +265,7 @@ const ServiceHeader = styled.div<{
   padding: 20px;
   color: ${(props) => props.theme.text.primary};
   position: relative;
+  transition: all 0.2s;
   border-radius: 5px;
   background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;

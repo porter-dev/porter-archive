@@ -232,6 +232,7 @@ export const Block = styled.div<{ locked?: boolean; appId?: string }>`
   padding: 20px;
   color: ${(props) => props.theme.text.primary};
   position: relative;
+  transition: all 0.2s;
   border-radius: 5px;
   background: ${(props) =>
     props.locked ? props.theme.fg : props.theme.clickable.bg};
@@ -280,6 +281,7 @@ export const Row = styled.div<{ isAtBottom?: boolean; locked?: boolean }>`
   border-radius: 5px;
   margin-bottom: 15px;
   animation: fadeIn 0.3s 0s;
+  transition: all 0.2s;
 `;
 
 const SmallIcon = styled.img<{ opacity?: string; height?: string }>`

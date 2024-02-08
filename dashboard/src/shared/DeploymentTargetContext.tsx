@@ -103,7 +103,7 @@ const DeploymentTargetProvider = ({
 
   const { data: cluster, isSuccess } = useQuery(
     [
-      "getCluster",
+      "getDeploymentTargetCluster",
       {
         project_id: currentProject?.id,
         cluster_id: deploymentTarget?.cluster_id,
@@ -132,7 +132,7 @@ const DeploymentTargetProvider = ({
   );
 
   useEffect(() => {
-    if (isSuccess && cluster.id !== currentCluster?.id) {
+    if (cluster && cluster.id !== currentCluster?.id && setCurrentCluster) {
       setCurrentCluster(cluster);
     }
   }, [isSuccess, cluster, setCurrentCluster]);

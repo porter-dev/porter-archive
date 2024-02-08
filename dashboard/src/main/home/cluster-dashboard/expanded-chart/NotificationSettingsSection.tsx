@@ -37,7 +37,7 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
 
   useEffect(() => {
     api
-      .getNotificationConfig(
+      .legacyGetNotificationConfig(
         "<token>",
         {},
         {
@@ -81,7 +81,7 @@ const NotificationSettingsSection: React.FC<Props> = (props) => {
     };
 
     api
-      .updateNotificationConfig(
+      .legacyUpdateNotificationConfig(
         "<token>",
         {
           payload,

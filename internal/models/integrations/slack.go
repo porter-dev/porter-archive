@@ -51,12 +51,13 @@ type SlackIntegration struct {
 
 func (s *SlackIntegration) ToSlackIntegraionType() *types.SlackIntegration {
 	return &types.SlackIntegration{
-		ID:               s.ID,
-		ProjectID:        s.ProjectID,
-		TeamID:           s.TeamID,
-		TeamName:         s.TeamName,
-		TeamIconURL:      s.TeamIconURL,
-		Channel:          s.Channel,
-		ConfigurationURL: s.ConfigurationURL,
+		ID:                   s.ID,
+		ProjectID:            s.ProjectID,
+		TeamID:               s.TeamID,
+		TeamName:             s.TeamName,
+		TeamIconURL:          s.TeamIconURL,
+		Channel:              s.Channel,
+		ConfigurationURL:     s.ConfigurationURL,
+		NotificationConfigID: s.NotificationConfigID,
 	}
 }

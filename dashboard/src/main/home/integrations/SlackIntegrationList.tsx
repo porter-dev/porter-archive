@@ -87,16 +87,19 @@ const SlackIntegrationList: React.FC<SlackIntegrationListProps> = (props) => {
           props.slackData.map((inst, idx) => {
             if (deleted.current.has(idx)) return null;
             return (
-              <SlackIntegration
-                projectID={currentProject.id}
-                key={idx.toString()}
-                idx={idx}
-                deleteIndex={(index: number) => {
-                  setDeleteIndex(index);
-                  setIsDelete(true);
-                }}
-                inst={inst}
-              />
+              <>
+                <SlackIntegration
+                  projectID={currentProject.id}
+                  key={idx.toString()}
+                  idx={idx}
+                  deleteIndex={(index: number) => {
+                    setDeleteIndex(index);
+                    setIsDelete(true);
+                  }}
+                  inst={inst}
+                />
+                <Spacer y={0.5} />
+              </>
             );
           })
         ) : (

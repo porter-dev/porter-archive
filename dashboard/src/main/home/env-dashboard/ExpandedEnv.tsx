@@ -130,7 +130,14 @@ const ExpandedEnv: React.FC = () => {
           />
           <Spacer y={1} />
           {match(tab)
-            .with("env-vars", () => <EnvVarsTab envGroup={envGroup} />)
+            .with("env-vars", () => {
+              return (
+                <EnvVarsTab 
+                  envGroup={envGroup}
+                  fetchEnvGroup={fetchEnvGroup}
+                />
+              );
+            })
             .with("synced-apps", () => <SyncedAppsTab envGroup={envGroup} />)
             .with("settings", () => <SettingsTab envGroup={envGroup} />)
             .otherwise(() => null)}

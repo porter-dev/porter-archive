@@ -20,9 +20,10 @@ type Props = {
     secret_variables?: Record<string, string>;
     type?: string;
   };
+  fetchEnvGroup: () => void;
 }
 
-const EnvVarsTab: React.FC<Props> = ({ envGroup }) => {
+const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [buttonStatus, setButtonStatus] = useState<string | React.ReactNode>("");
 
@@ -149,7 +150,7 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup }) => {
           cluster_id: currentCluster?.id || -1,
         }
       );
-
+      fetchEnvGroup();
       setButtonStatus("success");
     } catch (err) {
       const errorMessage =

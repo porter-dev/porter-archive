@@ -21,7 +21,11 @@ export const useDatastoreList = (): DatastoreListType => {
   const { data: datastores = [], isLoading: isLoadingDatastores } = useQuery(
     ["listDatastores"],
     async () => {
-      if (!currentProject?.id || currentProject.id === -1) {
+      if (
+        !currentProject?.id ||
+        currentProject.id === -1 ||
+        !currentProject.db_enabled
+      ) {
         return;
       }
 
@@ -48,7 +52,10 @@ export const useDatastoreList = (): DatastoreListType => {
         .filter(valueExists);
     },
     {
-      enabled: !!currentProject?.id && currentProject.id !== -1,
+      enabled:
+        !!currentProject?.id &&
+        currentProject.id !== -1 &&
+        currentProject.db_enabled,
       refetchOnWindowFocus: false,
     }
   );

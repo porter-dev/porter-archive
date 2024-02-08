@@ -23,6 +23,8 @@ type SlackIntegration struct {
 
 	// The URL for configuring the workspace app instance
 	ConfigurationURL string `json:"configuration_url"`
+
+	NotificationConfigID uint `json:"notification_config_id"`
 }
 
 type ListSlackIntegrationsResponse []*SlackIntegration

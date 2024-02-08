@@ -287,7 +287,7 @@ const NotificationConfigContainer: React.FC<
         })}
       />
       <Spacer y={0.75} />
-      <Text>@ Mention (for failures):</Text>
+      <Text>@ Mention (only on failure):</Text>
       <Spacer y={0.5} />
       <ControlledInput
         placeholder="ex: oncall"

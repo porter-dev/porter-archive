@@ -23,8 +23,8 @@ type GetNotificationConfigHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-// NewGetNotificationConfigHandler returns a new GetNotificationConfigHandler
-func NewGetNotificationConfigHandler(
+// NewNotificationConfigHandler returns a new GetNotificationConfigHandler
+func NewNotificationConfigHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
@@ -48,10 +48,6 @@ func (n *GetNotificationConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
-
-	telemetry.WithAttributes(span,
-		telemetry.AttributeKV{Key: "project-id", Value: project.ID},
-	)
 
 	notificationConfigID, reqErr := requestutils.GetURLParamUint(r, types.URLParamNotificationConfigID)
 	if reqErr != nil {

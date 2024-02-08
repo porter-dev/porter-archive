@@ -12,7 +12,7 @@ type Props = {
   title: string;
   tag?: ReactNode;
   iconURL?: string;
-  isOpened?: boolean;
+  isDefaultOpen?: boolean;
   deleteFunc?: () => void;
   children: ReactNode;
 };
@@ -21,11 +21,11 @@ const Dropdown: React.FC<Props> = ({
   title,
   tag,
   iconURL,
-  isOpened = false,
+  isDefaultOpen = false,
   deleteFunc,
   children,
 }) => {
-  const [isOpenedState, setIsOpenedState] = React.useState(isOpened);
+  const [isOpenedState, setIsOpenedState] = React.useState(isDefaultOpen);
 
   return (
     <>
@@ -77,7 +77,7 @@ const Dropdown: React.FC<Props> = ({
                 duration: 0.3,
               },
             }}
-            showExpanded={isOpened}
+            showExpanded={isDefaultOpen}
           >
             <div
               style={{

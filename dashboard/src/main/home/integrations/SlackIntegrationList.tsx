@@ -255,7 +255,7 @@ const NotificationConfigContainer: React.FC<
 
   return (
     <>
-      <Text>Statuses:</Text>
+      <Text>Filter deployment notifications:</Text>
       <Spacer y={0.5} />
       <SelectableList
         scroll={false}

@@ -102,7 +102,7 @@ func getNotificationRoutes(
 		},
 	)
 
-	getNotificationConfigHandler := notifications.NewGetNotificationConfigHandler(
+	getNotificationConfigHandler := notifications.NewNotificationConfigHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

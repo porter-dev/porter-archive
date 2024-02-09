@@ -655,7 +655,7 @@ const deleteSlackIntegration = baseApi<
   return `/api/projects/${pathParams.project_id}/slack_integrations/${pathParams.slack_integration_id}`;
 });
 
-const updateNotificationConfig = baseApi<
+const legacyUpdateNotificationConfig = baseApi<
   {
     payload: any;
   },
@@ -669,6 +669,36 @@ const updateNotificationConfig = baseApi<
   const { project_id, cluster_id, namespace, name } = pathParams;
 
   return `/api/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/releases/${name}/notifications`;
+});
+
+const getNotificationConfig = baseApi<
+  {},
+  {
+    project_id: number;
+    notification_config_id: number;
+  }
+>("GET", (pathParams) => {
+  const { project_id, notification_config_id } = pathParams;
+
+  return `/api/projects/${project_id}/notifications/${notification_config_id}`;
+});
+
+const updateNotificationConfig = baseApi<
+  {
+    slack_integration_id: number;
+    config: {
+      mention: string;
+      statuses: Array<{ status: string }>;
+    };
+  },
+  {
+    project_id: number;
+    notification_config_id: number;
+  }
+>("POST", (pathParams) => {
+  const { project_id, notification_config_id } = pathParams;
+
+  return `/api/projects/${project_id}/notifications/${notification_config_id}`;
 });
 
 const getPRDeploymentList = baseApi<
@@ -712,7 +742,7 @@ const deletePRDeployment = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/deployments/${deployment_id}`;
 });
 
-const getNotificationConfig = baseApi<
+const legacyGetNotificationConfig = baseApi<
   {},
   {
     project_id: number;
@@ -1566,7 +1596,7 @@ const getClusterState = baseApi<{}, { project_id: number; cluster_id: number }>(
 );
 
 const getComplianceChecks = baseApi<
-  { vendor: "vanta", profile: "soc2" | "hipaa" },
+  { vendor: "vanta"; profile: "soc2" | "hipaa" },
   { projectId: number; clusterId: number }
 >("GET", ({ projectId, clusterId }) => {
   return `/api/projects/${projectId}/clusters/${clusterId}/compliance/checks`;
@@ -3487,7 +3517,9 @@ export default {
   deleteProject,
   deleteRegistryIntegration,
   deleteSlackIntegration,
+  legacyUpdateNotificationConfig,
   updateNotificationConfig,
+  legacyGetNotificationConfig,
   getNotificationConfig,
   createSubdomain,
   deployTemplate,

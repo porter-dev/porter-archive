@@ -143,7 +143,7 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
         }
       )
         
-      history.push(`/environment-groups/${data.name}/env-vars`);
+      history.push(`/environment-groups/${data.name}/env-vars?created=true`);
     } catch (err) {
       const errorMessage =
         axios.isAxiosError(err) && err.response?.data?.error

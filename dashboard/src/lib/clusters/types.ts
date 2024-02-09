@@ -11,6 +11,8 @@ export type ClientCloudProvider = {
   name: CloudProvider;
   displayName: string;
   icon: string;
+  regions: ClientRegion[];
+  machineTypes: MachineType[];
 };
 const awsRegionValidator = z.enum([
   "us-east-1",
@@ -78,10 +80,126 @@ export type ClientRegion = {
   name: AWSRegion | GCPRegion | AzureRegion;
   displayName: string;
 };
+const awsMachineTypeValidator = z.enum([
+  "t3.medium",
+  "t3.large",
+  "t3.xlarge",
+  "t3.2xlarge",
+  "t3a.medium",
+  "t3a.large",
+  "t3a.xlarge",
+  "t3a.2xlarge",
+  "t4g.medium",
+  "t4g.large",
+  "t4g.xlarge",
+  "t4g.2xlarge",
+  "c6i.large",
+  "c6i.xlarge",
+  "c6i.2xlarge",
+  "c6i.4xlarge",
+  "c6i.8xlarge",
+  "c6a.large",
+  "c6a.2xlarge",
+  "c6a.4xlarge",
+  "c6a.8xlarge",
+  "r6i.large",
+  "r6i.xlarge",
+  "r6i.2xlarge",
+  "r6i.4xlarge",
+  "r6i.8xlarge",
+  "r6i.12xlarge",
+  "r6i.16xlarge",
+  "r6i.24xlarge",
+  "r6i.32xlarge",
+  "m5n.large",
+  "m5n.xlarge",
+  "m5n.2xlarge",
+  "m6a.large",
+  "m6a.xlarge",
+  "m6a.2xlarge",
+  "m6a.4xlarge",
+  "m6a.8xlarge",
+  "m6a.12xlarge",
+  "m7a.medium",
+  "m7a.large",
+  "m7a.xlarge",
+  "m7a.2xlarge",
+  "m7a.4xlarge",
+  "m7a.8xlarge",
+  "m7a.12xlarge",
+  "m7a.16xlarge",
+  "m7a.24xlarge",
+  "m7i.large",
+  "m7i.xlarge",
+  "m7i.2xlarge",
+  "m7i.4xlarge",
+  "m7i.8xlarge",
+  "m7i.12xlarge",
+  "c7a.medium",
+  "c7a.large",
+  "c7a.xlarge",
+  "c7a.2xlarge",
+  "c7a.4xlarge",
+  "c7a.8xlarge",
+  "c7a.12xlarge",
+  "c7a.16xlarge",
+  "c7a.24xlarge",
+]);
+type AWSMachineType = z.infer<typeof awsMachineTypeValidator>;
+const gcpMachineTypeValidator = z.enum([
+  "e2-standard-2",
+  "e2-standard-4",
+  "e2-standard-8",
+  "e2-standard-16",
+  "e2-standard-32",
+  "c3-standard-4",
+  "c3-standard-8",
+  "c3-standard-22",
+  "c3-standard-44",
+  "c3-highcpu-4",
+  "c3-highcpu-8",
+  "c3-highcpu-22",
+  "c3-highcpu-44",
+  "c3-highmem-4",
+  "c3-highmem-8",
+  "c3-highmem-22",
+  "c3-highmem-44",
+  "n1-standard-1",
+  "n1-standard-2",
+  "n1-standard-4",
+  "n1-standard-8",
+  "n1-standard-16",
+  "n1-standard-32",
+  "n1-highmem-2",
+  "n1-highmem-4",
+  "n1-highmem-8",
+  "n1-highmem-16",
+  "n1-highmem-32",
+  "n1-highcpu-8",
+  "n1-highcpu-16",
+  "n1-highcpu-32",
+]);
+type GCPMachineType = z.infer<typeof gcpMachineTypeValidator>;
+const azureMachineTypeValidator = z.enum([
+  "Standard_B2als_v2",
+  "Standard_B2as_v2",
+  "Standard_A2_v2",
+  "Standard_A4_v2",
+  "Standard_DS1_v2",
+  "Standard_DS2_v2",
+  "Standard_D2ads_v5",
+  "Standard_B4als_v2",
+  "Standard_NC4as_T4_v3",
+  "Standard_NC8as_T4_v3",
+  "Standard_NC16as_T4_v3",
+  "Standard_NC64as_T4_v3",
+  "Standard_D8s_v3",
+]);
+type AzureMachineType = z.infer<typeof azureMachineTypeValidator>;
 export type MachineType = {
-  name: string;
+  name: AWSMachineType | GCPMachineType | AzureMachineType;
   displayName: string;
-  supportedRegions: ClientRegion[];
+  supportedRegions: Array<AWSRegion | GCPRegion | AzureRegion>;
 };
 
 // Cluster

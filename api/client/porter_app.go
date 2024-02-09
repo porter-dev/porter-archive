@@ -298,6 +298,7 @@ type UpdateAppInput struct {
 	Base64PorterYAML   string
 	IsEnvOverride      bool
 	WithPredeploy      bool
+	Exact              bool
 }
 
 // UpdateApp updates a porter app
@@ -318,6 +319,7 @@ func (c *Client) UpdateApp(
 		Base64PorterYAML:   inp.Base64PorterYAML,
 		IsEnvOverride:      inp.IsEnvOverride,
 		WithPredeploy:      inp.WithPredeploy,
+		Exact:              inp.Exact,
 	}
 
 	err := c.postRequest(

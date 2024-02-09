@@ -50,6 +50,7 @@ const ExpandedContents = styled.div<{ isExpanded: boolean }>`
   color: ${(props) => props.theme.text.primary};
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+  overflow-y: auto;
 `;
 
 const FullWidth = styled.div`

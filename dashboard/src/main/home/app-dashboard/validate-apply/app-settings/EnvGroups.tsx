@@ -2,19 +2,18 @@ import React, { useMemo, useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 import { type IterableElement } from "type-fest";
+import { useHistory } from "react-router";
 
-import Icon from "components/porter/Icon";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
+import { type PopulatedEnvGroup } from "./types";
 import { type PorterAppFormData } from "lib/porter-apps";
 
 import { valueExists } from "shared/util";
-import doppler from "assets/doppler.png";
-import sliders from "assets/sliders.svg";
 
 import EnvGroupModal from "./EnvGroupModal";
-import ExpandableEnvGroup from "./ExpandableEnvGroup";
-import { type PopulatedEnvGroup } from "./types";
+import Button from "components/porter/Button";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import EnvGroupRow from "./EnvGroupRow";
 
 type Props = {
   baseEnvGroups?: PopulatedEnvGroup[];
@@ -25,6 +24,7 @@ const EnvGroups: React.FC<Props> = ({
   baseEnvGroups = [],
   attachedEnvGroups = [],
 }) => {
+  const history = useHistory();
   const [showEnvModal, setShowEnvModal] = useState(false);
 
   const { control } = useFormContext<PorterAppFormData>();
@@ -91,10 +91,12 @@ const EnvGroups: React.FC<Props> = ({
     append(inp);
   };
 
-  const onRemove = (index: number): void => {
-    const name = populatedEnvWithFallback[index].envGroup.name;
-    remove(index);
-
+  const onRemove = (name: string): void => {
+    const index = populatedEnvWithFallback.findIndex(eg => eg.envGroup.name === name);
+    if (index !== -1) {
+      remove(index);
+    }
+  
     const existingEnvGroupNames = envGroups.map((eg) => eg.name);
     if (existingEnvGroupNames.includes(name)) {
       appendDeletion({ name });
@@ -102,34 +104,39 @@ const EnvGroups: React.FC<Props> = ({
   };
 
   return (
-    <div>
-      <LoadButton
-        disabled={false}
+    <>
+      <Text size={16}>Synced environment groups</Text>
+      <Spacer y={0.5} />
+      <Text color="helper">
+        This application will be automatically redeployed when a synced env group is updated.
+      </Text>
+      <Spacer y={1} />
+      {populatedEnvWithFallback.length > 0 && (
+        <>
+          {populatedEnvWithFallback.map(({ envGroup, id, index }) => {
+            return (
+              <>
+                <EnvGroupRow
+                  key={id}
+                  envGroup={envGroup}
+                  onRemove={onRemove}
+                />
+                {index !== populatedEnvWithFallback.length - 1 && <Spacer y={.5} />}
+              </>
+            );
+          })}
+          <Spacer y={1} />
+        </>
+      )}
+      <Button
+        alt
         onClick={() => {
           setShowEnvModal(true);
         }}
       >
-        <img src={sliders} /> Load from Env Group
-      </LoadButton>
-      {populatedEnvWithFallback.length > 0 && (
-        <>
-          <Spacer y={0.5} />
-          <Text size={16}>Synced environment groups</Text>
-          {populatedEnvWithFallback.map(({ envGroup, id, index }) => {
-            return (
-              <ExpandableEnvGroup
-                key={id}
-                index={index}
-                envGroup={envGroup}
-                remove={onRemove}
-                icon={
-                  <Icon src={envGroup.type === "doppler" ? doppler : sliders} />
-                }
-              />
-            );
-          })}
-        </>
-      )}
+        <I className="material-icons">add</I>
+        Sync an env group
+      </Button>
       {showEnvModal ? (
         <EnvGroupModal
           setOpen={setShowEnvModal}
@@ -137,11 +144,21 @@ const EnvGroups: React.FC<Props> = ({
           append={onAdd}
         />
       ) : null}
-    </div>
+    </>
   );
 };
 
 export default EnvGroups;
+
+const I = styled.i`
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
+  color: #aaaabb;
+  :hover {
+    color: white;
+  }
+`;
 
 const AddRowButton = styled.div`
   display: flex;

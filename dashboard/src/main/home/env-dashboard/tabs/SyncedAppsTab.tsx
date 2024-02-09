@@ -71,7 +71,7 @@ const SyncedAppsTab: React.FC<Props> = ({ envGroup }) => {
             key: ra.source.name,
             onSelect: () => {
               history.push(
-                `/apps/${ra.source.name}?target=${ra.app_revision.deployment_target.id}`
+                `/apps/${ra.source.name}/environment?target=${ra.app_revision.deployment_target.id}`
               );
             },
           }))}

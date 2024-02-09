@@ -521,21 +521,21 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
     if (latestProto.build) {
       base.push({
-        label: "Build Settings",
+        label: "Build settings",
         value: "build-settings",
       });
     } else {
       base.push({
-        label: "Image Settings",
+        label: "Image settings",
         value: "image-settings",
       });
     }
 
     if ((currentProject?.helm_values_enabled ?? false) || user?.isPorterUser) {
-      base.push({ label: "Helm Overrides", value: "helm-overrides" });
+      base.push({ label: "Helm overrides", value: "helm-overrides" });
     }
     if ((currentProject?.helm_values_enabled ?? false) || user?.isPorterUser) {
-      base.push({ label: "Latest Helm Values", value: "helm-values" });
+      base.push({ label: "Latest Helm values", value: "helm-values" });
     }
 
     base.push({ label: "Settings", value: "settings" });

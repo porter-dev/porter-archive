@@ -71,6 +71,8 @@ type UpdateAppRequest struct {
 	IsEnvOverride bool `json:"is_env_override"`
 	// WithPredeploy is a flag to indicate whether to run the predeploy job
 	WithPredeploy bool `json:"with_predeploy"`
+	// Exact is a flag to indicate whether to apply the update exactly as specified in the request (default is to merge with existing app)
+	Exact bool `json:"exact"`
 }
 
 // UpdateAppResponse is the response object for the POST /apps/update endpoint
@@ -263,6 +265,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Addons:              addons,
 		AddonOverrides:      addonOverrides,
 		IsPredeployEligible: request.WithPredeploy,
+		Exact:               request.Exact,
 	})
 
 	ccpResp, err := c.Config().ClusterControlPlaneClient.UpdateApp(ctx, updateReq)

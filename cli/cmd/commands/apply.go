@@ -46,6 +46,7 @@ var (
 	// pullImageBeforeBuild is a flag that determines whether to pull the docker image from a repo before building
 	pullImageBeforeBuild bool
 	predeploy            bool
+	exact                bool
 )
 
 func registerCommand_Apply(cliConf config.CLIConfig) *cobra.Command {
@@ -114,6 +115,7 @@ applying a configuration:
 	applyCmd.PersistentFlags().BoolVar(&pullImageBeforeBuild, "pull-before-build", false, "attempt to pull image from registry before building")
 	applyCmd.PersistentFlags().StringVar(&imageTagOverride, "tag", "", "set the image tag used for the application (overrides field in yaml)")
 	applyCmd.PersistentFlags().BoolVar(&predeploy, "predeploy", false, "run predeploy job before deploying the application")
+	applyCmd.PersistentFlags().BoolVar(&exact, "exact", false, "apply the exact configuration as specified in the porter.yaml file (default is to merge with existing configuration)")
 	applyCmd.PersistentFlags().BoolVarP(
 		&appWait,
 		"wait",
@@ -159,6 +161,7 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 			WaitForSuccessfulDeployment: appWait,
 			PullImageBeforeBuild:        pullImageBeforeBuild,
 			WithPredeploy:               predeploy,
+			Exact:                       exact,
 		}
 		err := v2.Apply(ctx, inp)
 		if err != nil {

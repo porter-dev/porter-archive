@@ -1,15 +1,10 @@
-import { type SerializedCluster } from "lib/hooks/useCluster";
-
 import aws from "assets/aws.png";
 import azure from "assets/azure.png";
 import infra from "assets/cluster.svg";
 import gcp from "assets/gcp.png";
 
-export type CloudProvider = {
-  name: SerializedCluster["cloud_provider"];
-  displayName: string;
-  icon: string;
-};
+import { type CloudProvider } from "./types";
+
 export const CloudProviderAWS: CloudProvider = {
   name: "AWS",
   displayName: "Amazon Web Services",

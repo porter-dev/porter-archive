@@ -15,6 +15,11 @@ import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
+import {
+  CloudProviderAWS,
+  CloudProviderAzure,
+  CloudProviderGCP,
+} from "lib/clusters/constants";
 import { useClusterList, type ClientCluster } from "lib/hooks/useCluster";
 
 import { search } from "shared/search";
@@ -26,11 +31,6 @@ import notFound from "assets/not-found.png";
 import time from "assets/time.png";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import {
-  CloudProviderAWS,
-  CloudProviderAzure,
-  CloudProviderGCP,
-} from "./constants";
 
 const ClusterDashboard: React.FC = () => {
   const [searchValue, setSearchValue] = useState("");

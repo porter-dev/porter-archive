@@ -1,42 +1,24 @@
 import { useContext } from "react";
+import { Contract } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
+import { SUPPORTED_CLOUD_PROVIDERS } from "lib/clusters/constants";
 import {
-  CloudProviderAWS,
-  SUPPORTED_CLOUD_PROVIDERS,
-  type CloudProvider,
-} from "main/home/infrastructure-dashboard/constants";
+  clusterValidator,
+  contractValidator,
+  type APIContract,
+  type ClientCluster,
+} from "lib/clusters/types";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 
-export const clusterValidator = z.object({
-  id: z.number(),
-  name: z.string(),
-  vanity_name: z.string(),
-  cloud_provider: z.enum(["AWS", "GCP", "Azure", "Local"]),
-  cloud_provider_credential_identifier: z.string(),
-  status: z.string(),
-  created_at: z.string(),
-  updated_at: z.string(),
-});
-export type SerializedCluster = z.infer<typeof clusterValidator>;
-export type ClientCluster = Omit<SerializedCluster, "cloud_provider"> & {
-  cloud_provider: CloudProvider;
-};
-export const isAWSCluster = (
-  cluster: ClientCluster
-): cluster is ClientCluster => {
-  return cluster.cloud_provider === CloudProviderAWS;
-};
-
 type TUseClusterList = {
   clusters: ClientCluster[];
   isLoading: boolean;
 };
-
 export const useClusterList = (): TUseClusterList => {
   const { currentProject } = useContext(Context);
 
@@ -124,5 +106,68 @@ export const useCluster = ({
     cluster: clusterReq.data,
     isLoading: clusterReq.isLoading,
     isError: clusterReq.isError,
+  };
+};
+
+export const useLatestClusterContract = ({
+  clusterId,
+}: {
+  clusterId: number | undefined;
+}): {
+  contractDB: APIContract | undefined;
+  contractProto: Contract | undefined;
+  isLoading: boolean;
+  isError: boolean;
+} => {
+  const { currentProject } = useContext(Context);
+
+  const latestClusterContractReq = useQuery(
+    ["getLatestClusterContract", currentProject?.id, clusterId],
+    async () => {
+      if (
+        !currentProject?.id ||
+        currentProject.id === -1 ||
+        !clusterId ||
+        clusterId === -1
+      ) {
+        return;
+      }
+
+      const res = await api.getContracts(
+        "<token>",
+        {},
+        { project_id: currentProject.id }
+      );
+
+      const data = await z.array(contractValidator).parseAsync(res.data);
+      const filtered = data.filter(
+        (contract) => contract.cluster_id === clusterId
+      );
+      if (filtered.length === 0) {
+        return;
+      }
+      const match = filtered[0];
+      return {
+        contractDB: match,
+        contractProto: Contract.fromJsonString(atob(match.base64_contract), {
+          ignoreUnknownFields: true,
+        }),
+      };
+    },
+    {
+      refetchInterval: 3000,
+      enabled:
+        !!currentProject &&
+        currentProject.id !== -1 &&
+        !!clusterId &&
+        clusterId !== -1,
+    }
+  );
+
+  return {
+    contractDB: latestClusterContractReq.data?.contractDB,
+    contractProto: latestClusterContractReq.data?.contractProto,
+    isLoading: latestClusterContractReq.isLoading,
+    isError: latestClusterContractReq.isError,
   };
 };

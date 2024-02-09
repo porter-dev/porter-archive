@@ -1,7 +1,6 @@
 import React, {
   createContext,
   useContext,
-  useMemo,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -16,13 +15,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
+import { type APIContract } from "lib/clusters/types";
+import { useLatestClusterContract } from "lib/hooks/useCluster";
+
 import api from "shared/api";
 
 import {
   checkGroupValidator,
-  contractValidator,
   vendorCheckValidator,
-  type APIContract,
   type CheckGroup,
   type VendorCheck,
 } from "./types";
@@ -34,7 +34,7 @@ type ProjectComplianceContextType = {
   clusterId: number;
   checkGroups: CheckGroup[];
   vendorChecks: VendorCheck[];
-  latestContractProto: Contract | null;
+  latestContractProto: Contract | undefined;
   latestContractDB?: APIContract;
   checksLoading: boolean;
   contractLoading: boolean;
@@ -70,23 +70,11 @@ export const ProjectComplianceProvider: React.FC<
   const [updateInProgress, setUpdateInProgress] = useState(false);
   const [profile, setProfile] = useState<ComplianceProfileType>("soc2");
 
-  const { data: baseContract, isLoading: contractLoading } = useQuery(
-    [projectId, clusterId, "getContracts"],
-    async () => {
-      const res = await api.getContracts(
-        "<token>",
-        {},
-        { project_id: projectId }
-      );
-
-      const data = await z.array(contractValidator).parseAsync(res.data);
-
-      return data.filter((contract) => contract.cluster_id === clusterId)[0];
-    },
-    {
-      refetchInterval: 3000,
-    }
-  );
+  const {
+    contractDB: latestContractDB,
+    contractProto: latestContractProto,
+    isLoading: contractLoading,
+  } = useLatestClusterContract({ clusterId });
 
   const {
     data: { checkGroups = [], vendorChecks = [] } = {},
@@ -96,7 +84,7 @@ export const ProjectComplianceProvider: React.FC<
       {
         projectId,
         clusterId,
-        condition: baseContract?.condition ?? "",
+        condition: latestContractDB?.condition ?? "",
         profile,
         name: "getComplianceChecks",
       },
@@ -122,25 +110,15 @@ export const ProjectComplianceProvider: React.FC<
     }
   );
 
-  const latestContract = useMemo(() => {
-    if (!baseContract) {
-      return null;
-    }
-
-    return Contract.fromJsonString(atob(baseContract.base64_contract), {
-      ignoreUnknownFields: true,
-    });
-  }, [baseContract?.base64_contract]);
-
   const updateContractWithProfile = async (): Promise<void> => {
     try {
       setUpdateInProgress(true);
 
-      if (!latestContract?.cluster) {
+      if (!latestContractProto?.cluster) {
         return;
       }
 
-      const updatedKindValues = match(latestContract.cluster.kindValues)
+      const updatedKindValues = match(latestContractProto.cluster.kindValues)
         .with({ case: "eksKind" }, ({ value }) => ({
           case: "eksKind" as const,
           value: new EKS({
@@ -160,15 +138,15 @@ export const ProjectComplianceProvider: React.FC<
         .otherwise((kind) => kind);
 
       const complianceProfiles = new ComplianceProfile({
-        ...latestContract.complianceProfiles,
+        ...latestContractProto.complianceProfiles,
         ...(profile === "soc2" && { soc2: true }),
         ...(profile === "hipaa" && { hipaa: true }),
       });
 
       const updatedContract = new Contract({
-        ...latestContract,
+        ...latestContractProto,
         cluster: {
-          ...latestContract.cluster,
+          ...latestContractProto.cluster,
           kindValues: updatedKindValues,
           isSoc2Compliant: true,
         },
@@ -196,8 +174,8 @@ export const ProjectComplianceProvider: React.FC<
         clusterId,
         vendorChecks,
         checkGroups,
-        latestContractProto: latestContract,
-        latestContractDB: baseContract,
+        latestContractProto,
+        latestContractDB,
         checksLoading,
         contractLoading,
         updateInProgress,

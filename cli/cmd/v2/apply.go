@@ -44,6 +44,8 @@ type ApplyInput struct {
 	PullImageBeforeBuild bool
 	// WithPredeploy is true when Apply should run the predeploy step
 	WithPredeploy bool
+	// Exact is true when Apply should use the exact app config provided by the user
+	Exact bool
 }
 
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
@@ -121,6 +123,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		CommitSHA:          commitSHA,
 		Base64PorterYAML:   b64YAML,
 		WithPredeploy:      inp.WithPredeploy,
+		Exact:              inp.Exact,
 	}
 
 	updateResp, err := client.UpdateApp(ctx, updateInput)

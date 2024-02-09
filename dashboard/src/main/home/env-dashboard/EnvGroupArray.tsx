@@ -21,7 +21,7 @@ export type KeyValueType = {
 type PropsType = {
   label?: string;
   values: KeyValueType[];
-  setValues: (x: KeyValueType[]) => void;
+  setValues?: (x: KeyValueType[]) => void;
   disabled?: boolean;
   fileUpload?: boolean;
   secretOption?: boolean;
@@ -131,7 +131,6 @@ const EnvGroupArray = ({
                 {entry.hidden ? (
                   <Input
                     placeholder="ex: value"
-                    width="270px"
                     value={entry.value}
                     flex
                     onChange={(e: any) => {
@@ -293,7 +292,8 @@ const InputWrapper = styled.div`
   align-items: center;
   margin-bottom: 5px;
 `;
-const Input = styled.input<{ flex?: boolean }>`
+
+const Input = styled.input<{ flex?: boolean; override?: boolean }>`
   outline: none;
   display: ${(props) => (props.flex ? "flex" : "block")};
   ${(props) => (props.flex && 'flex: 1;')}
@@ -308,6 +308,7 @@ const Input = styled.input<{ flex?: boolean }>`
   padding: 5px 10px;
   height: 35px;
 `;
+
 const Label = styled.div`
   color: #ffffff;
   margin-bottom: 10px;

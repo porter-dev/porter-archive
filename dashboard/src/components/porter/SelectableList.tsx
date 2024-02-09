@@ -45,9 +45,14 @@ type ListProps = {
     isSelected?: boolean;
   }>;
   scroll?: boolean;
+  selectedIcon?: string;
 };
 
-const SelectableList: React.FC<ListProps> = ({ listItems, scroll = true }) => {
+const SelectableList: React.FC<ListProps> = ({
+  listItems,
+  scroll = true,
+  selectedIcon,
+}) => {
   return (
     <StyledSelectableList scroll={scroll}>
       {listItems.map((li) => {
@@ -58,6 +63,7 @@ const SelectableList: React.FC<ListProps> = ({ listItems, scroll = true }) => {
             selected={li.isSelected}
             onSelect={li.onSelect}
             onDeselect={li.onDeselect}
+            selectedIcon={selectedIcon}
           />
         );
       })}
@@ -69,14 +75,15 @@ export default SelectableList;
 
 const StyledSelectableList = styled.div<{ scroll?: boolean }>`
   display: flex;
-  row-gap: 10px;
+  row-gap: 15px;
   flex-direction: column;
+  overflow-y: auto;
   ${(props) =>
     props.scroll &&
     css`
       max-height: 400px;
-      overflow-y: scroll;
     `}
+  transition: all 0.2s;
 `;
 
 const ResourceOption = styled.div<{ selected?: boolean; isHoverable: boolean }>`
@@ -84,8 +91,10 @@ const ResourceOption = styled.div<{ selected?: boolean; isHoverable: boolean }>`
   border: 1px solid
     ${(props) => (props.selected ? "#ffffff" : props.theme.border)};
   width: 100%;
-  padding: 10px 15px;
+  padding: 15px;
   border-radius: 5px;
+  animation: fadeIn 0.3s 0s;
+  transition: all 0.2s;
   display: flex;
   justify-content: space-between;
   align-items: center;

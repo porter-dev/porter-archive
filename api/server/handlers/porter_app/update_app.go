@@ -120,6 +120,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var overrides *porterv1.PorterApp
 	appProto := &porterv1.PorterApp{}
 
+	var previewEnvVariables map[string]string
 	envVariables := request.Variables
 
 	// get app definition from either base64 yaml or base64 porter app proto
@@ -180,7 +181,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if appFromYaml.PreviewApp != nil {
 			overrides = appFromYaml.PreviewApp.AppProto
 			addonOverrides = appFromYaml.PreviewApp.Addons
-			envVariables = mergeEnvVariables(envVariables, appFromYaml.PreviewApp.EnvVariables)
+			previewEnvVariables = appFromYaml.PreviewApp.EnvVariables
 		}
 
 		addons = appFromYaml.Addons
@@ -249,6 +250,9 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AppEnv: &porterv1.EnvGroupVariables{
 			Normal: envVariables,
 			Secret: request.Secrets,
+		},
+		AppEnvOverrides: &porterv1.EnvGroupVariables{
+			Normal: previewEnvVariables,
 		},
 		Deletions: &porterv1.Deletions{
 			ServiceNames:     request.Deletions.ServiceNames,

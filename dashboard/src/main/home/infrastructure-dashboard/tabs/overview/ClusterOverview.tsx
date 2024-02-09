@@ -5,20 +5,17 @@ import { useClusterContext } from "../../ClusterContextProvider";
 import EKSClusterOverview from "./EKSClusterOverview";
 
 const ClusterOverview: React.FC = () => {
-  const { cluster } = useClusterContext();
+  const { latestClusterConfig } = useClusterContext();
 
-  return match(cluster.cloud_provider)
-    .with({ name: "AWS" }, () => {
-      return <EKSClusterOverview />;
+  return match(latestClusterConfig)
+    .with({ kind: "EKS" }, (config) => {
+      return <EKSClusterOverview config={config} />;
     })
-    .with({ name: "GCP" }, () => {
+    .with({ kind: "GKE" }, () => {
       return <div>GCP</div>;
     })
-    .with({ name: "Azure" }, () => {
+    .with({ kind: "AKS" }, () => {
       return <div>Azure</div>;
-    })
-    .with({ name: "Local" }, () => {
-      return <div>Local</div>;
     })
     .exhaustive();
 };

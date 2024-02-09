@@ -6,8 +6,11 @@ import Container from "components/porter/Container";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { type ClientCluster } from "lib/clusters/types";
-import { useCluster } from "lib/hooks/useCluster";
+import {
+  type ClientCluster,
+  type ClientClusterConfig,
+} from "lib/clusters/types";
+import { useCluster, useLatestClusterContract } from "lib/hooks/useCluster";
 
 import { Context } from "shared/Context";
 import notFound from "assets/not-found.png";
@@ -15,6 +18,7 @@ import notFound from "assets/not-found.png";
 type ClusterContextType = {
   cluster: ClientCluster;
   projectId: number;
+  latestClusterConfig: ClientClusterConfig;
 };
 
 const ClusterContext = createContext<ClusterContextType | null>(null);
@@ -42,10 +46,15 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
   const paramsExist =
     !!clusterId && !!currentProject && currentProject.id !== -1;
   const { cluster, isLoading, isError } = useCluster({ clusterId });
-  if (isLoading || !paramsExist) {
+  const {
+    clientContract: latestClientContract,
+    isLoading: isLoadingContract,
+    isError: isContractError,
+  } = useLatestClusterContract({ clusterId });
+  if (isLoading || isLoadingContract || !paramsExist) {
     return <Loading />;
   }
-  if (isError || !cluster) {
+  if (isError || isContractError || !cluster) {
     return (
       <Placeholder>
         <Container row>
@@ -59,8 +68,30 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
       </Placeholder>
     );
   }
+
+  if (!latestClientContract?.cluster?.config) {
+    return (
+      <Placeholder>
+        <Container row>
+          <PlaceholderIcon src={notFound} />
+          <Text color="helper">
+            Unable to load configuration for the provided cluster.
+          </Text>
+        </Container>
+        <Spacer y={1} />
+        <Link to="/infrastructure">Return to dashboard</Link>
+      </Placeholder>
+    );
+  }
+
   return (
-    <ClusterContext.Provider value={{ cluster, projectId: currentProject.id }}>
+    <ClusterContext.Provider
+      value={{
+        cluster,
+        projectId: currentProject.id,
+        latestClusterConfig: latestClientContract.cluster.config,
+      }}
+    >
       {children}
     </ClusterContext.Provider>
   );

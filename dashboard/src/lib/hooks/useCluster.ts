@@ -3,12 +3,14 @@ import { Contract } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
+import { clientClusterContractFromProto } from "lib/clusters";
 import { SUPPORTED_CLOUD_PROVIDERS } from "lib/clusters/constants";
 import {
   clusterValidator,
   contractValidator,
   type APIContract,
   type ClientCluster,
+  type ClientClusterContract,
 } from "lib/clusters/types";
 
 import api from "shared/api";
@@ -116,6 +118,7 @@ export const useLatestClusterContract = ({
 }): {
   contractDB: APIContract | undefined;
   contractProto: Contract | undefined;
+  clientContract: ClientClusterContract | undefined;
   isLoading: boolean;
   isError: boolean;
 } => {
@@ -146,12 +149,18 @@ export const useLatestClusterContract = ({
       if (filtered.length === 0) {
         return;
       }
-      const match = filtered[0];
-      return {
-        contractDB: match,
-        contractProto: Contract.fromJsonString(atob(match.base64_contract), {
+      const contractDB = filtered[0];
+      const contractProto = Contract.fromJsonString(
+        atob(contractDB.base64_contract),
+        {
           ignoreUnknownFields: true,
-        }),
+        }
+      );
+      const clientContract = clientClusterContractFromProto(contractProto);
+      return {
+        contractDB,
+        contractProto,
+        clientContract,
       };
     },
     {
@@ -167,6 +176,7 @@ export const useLatestClusterContract = ({
   return {
     contractDB: latestClusterContractReq.data?.contractDB,
     contractProto: latestClusterContractReq.data?.contractProto,
+    clientContract: latestClusterContractReq.data?.clientContract,
     isLoading: latestClusterContractReq.isLoading,
     isError: latestClusterContractReq.isError,
   };

@@ -17,8 +17,8 @@ export const clusterValidator = z.object({
   cloud_provider: z.enum(["AWS", "GCP", "Azure", "Local"]),
   cloud_provider_credential_identifier: z.string(),
   status: z.string(),
-  created_at: z.string(),
-  updated_at: z.string(),
+  // created_at: z.string(),
+  // updated_at: z.string(),
 });
 export type SerializedCluster = z.infer<typeof clusterValidator>;
 export type ClientCluster = Omit<SerializedCluster, "cloud_provider"> & {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import styled from "styled-components";
 
 import { useHistory } from "react-router";
@@ -15,25 +15,31 @@ import EnvGroupArray from "main/home/env-dashboard/EnvGroupArray";
 
 type Props = {
   onRemove: (name: string) => void;
-  envGroup: any;
+  envGroup: {
+    name: string;
+    id: number;
+    type: string;
+    isActive: boolean;
+    variables: Record<string, string>;
+    secret_variables: Record<string, string>;
+  };
 };
 
 // TODO: support footer for consolidation w/ app services
 const EnvGroupRow: React.FC<Props> = ({ envGroup, onRemove }) => {
   const history = useHistory();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [envVariables, setEnvVariables] = useState([]);
 
-  useEffect(() => {
+  const variables = useMemo(() => {
     const normalVariables = Object.entries(
       envGroup.variables || {}
     ).map(([key, value]) => ({
       key,
       value,
-      hidden: (value as string).includes("PORTERSECRET"),
-      locked: (value as string).includes("PORTERSECRET"),
+      hidden: value.includes("PORTERSECRET"),
+      locked: value.includes("PORTERSECRET"),
       deleted: false,
     }));
+  
     const secretVariables = Object.entries(
       envGroup.secret_variables || {}
     ).map(([key, value]) => ({
@@ -43,8 +49,8 @@ const EnvGroupRow: React.FC<Props> = ({ envGroup, onRemove }) => {
       locked: true,
       deleted: false,
     }));
-    const variables = [...normalVariables, ...secretVariables];
-    setEnvVariables(variables);
+  
+    return [...normalVariables, ...secretVariables];
   }, [envGroup]);
 
   return (
@@ -77,7 +83,7 @@ const EnvGroupRow: React.FC<Props> = ({ envGroup, onRemove }) => {
       )}
     >
       <EnvGroupArray
-        values={envVariables}
+        values={variables}
         disabled={true}
       />
     </Expandable>

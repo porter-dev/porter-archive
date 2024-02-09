@@ -100,19 +100,6 @@ const EnvVarRow: React.FC<Props> = ({
           )}
         />
       )}
-      {isKeyOverriding(entry.key) && (
-        <>
-          <Spacer width="10px" inline />
-          <Tooltip
-            content="This key overrides a value in a synced environment group"
-            position="left"
-            width="220px"
-          >
-            <Image src={warning} size={14} />
-          </Tooltip>
-          <Spacer width="2px" inline />
-        </>
-      )}
       {hidden ? (
         <Controller
           name={`app.env.${index}.hidden`}
@@ -151,6 +138,20 @@ const EnvVarRow: React.FC<Props> = ({
       >
         <i className="material-icons">cancel</i>
       </DeleteButton>
+      {isKeyOverriding(entry.key) && (
+        <>
+          <Spacer width="10px" inline />
+          <Tooltip
+            content="This key overrides a value in a synced environment group"
+            position="left"
+            width="220px"
+          >
+            <Image src={warning} size={14} />
+          </Tooltip>
+          <Spacer width="2px" inline />
+        </>
+      )}
+      {!isKeyOverriding(entry.key) && <Spacer width="27px" inline />}
     </InputWrapper>
   );
 };
@@ -159,7 +160,6 @@ export default EnvVarRow;
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 5px;
 `;
 
 type InputProps = {
@@ -173,7 +173,6 @@ const Input = styled.input<{ flex?: boolean; override?: boolean }>`
   display: ${(props) => (props.flex ? "flex" : "block")};
   ${(props) => (props.flex && 'flex: 1;')}
   border: none;
-  margin-bottom: 5px;
   font-size: 13px;
   background: ${(props) => props.theme.fg};
   border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #494b4f')};
@@ -189,7 +188,6 @@ export const MultiLineInputer = styled.textarea<InputProps>`
   border: none;
   display: flex;
   flex: 1;
-  margin-bottom: 5px;
   font-size: 13px;
   background: ${(props) => props.theme.fg};
   border: ${(props) => (props.override ? '2px solid #f4cb42' : ' 1px solid #494b4f')};

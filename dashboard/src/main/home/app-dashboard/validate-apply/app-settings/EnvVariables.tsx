@@ -46,7 +46,7 @@ const EnvVariables = ({ syncedEnvGroups }: PropsType) => {
     if (!syncedEnvGroups) return false;
     return syncedEnvGroups.some(
       (envGroup) =>
-        key in envGroup.variables || key in envGroup.secret_variables
+        key in (envGroup.variables || []) || key in (envGroup.secret_variables || [])
     );
   };
 
@@ -71,20 +71,21 @@ const EnvVariables = ({ syncedEnvGroups }: PropsType) => {
 
   return (
     <>
-      {environmentVariables.map((entry, i) => (
-        <EnvVarRow
-          key={entry.id}
-          entry={entry}
-          index={i}
-          remove={() => {
-            remove(i);
-          }}
-          isKeyOverriding={isKeyOverriding}
-        />
-      ))}
       {environmentVariables.length > 0 && (
-        <Spacer y={.5} />
-      )} 
+        <List>
+          {environmentVariables.map((entry, i) => (
+            <EnvVarRow
+              key={entry.id}
+              entry={entry}
+              index={i}
+              remove={() => {
+                remove(i);
+              }}
+              isKeyOverriding={isKeyOverriding}
+            />
+          ))}
+        </List>
+      )}
       <InputWrapper>
         <Button
           alt
@@ -135,6 +136,13 @@ const EnvVariables = ({ syncedEnvGroups }: PropsType) => {
 };
 
 export default EnvVariables;
+
+const List = styled.div`
+  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 25px;
+`;
 
 const I = styled.i`
   font-size: 16px;

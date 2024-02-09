@@ -10,10 +10,8 @@ import styled from "styled-components";
 import { z } from "zod";
 
 import Button from "components/porter/Button";
-import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Modal from "components/porter/Modal";
-import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
@@ -30,6 +28,7 @@ import job from "assets/job.png";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 
+import Tiles from "../../../../../components/porter/Tiles";
 import ServiceContainer from "./ServiceContainer";
 
 const addServiceFormValidator = z.object({
@@ -121,7 +120,6 @@ const ServiceList: React.FC<ServiceListProps> = ({
         : "deletions.predeploy",
   });
 
-  const serviceType = watch("type");
   const serviceName = watch("name");
 
   const [showAddServiceModal, setShowAddServiceModal] =
@@ -252,38 +250,44 @@ const ServiceList: React.FC<ServiceListProps> = ({
           closeModal={() => {
             setShowAddServiceModal(false);
           }}
-          width="500px"
+          width="800px"
         >
           <Text size={16}>{addNewText}</Text>
           <Spacer y={1} />
           <Text color="helper">Select a service type:</Text>
           <Spacer y={0.5} />
-          <Container row>
-            <ServiceIcon>
-              {serviceType === "web" && <img src={web} />}
-              {serviceType === "worker" && <img src={worker} />}
-              {serviceType === "job" && <img src={job} />}
-            </ServiceIcon>
-            <Controller
-              name="type"
-              control={control}
-              render={({ field: { onChange } }) => (
-                <Select
-                  value={serviceType}
-                  width="100%"
-                  setValue={(value: string) => {
-                    onChange(value);
-                  }}
-                  options={[
-                    { label: "Web", value: "web" },
-                    { label: "Worker", value: "worker" },
-                    { label: "Cron Job", value: "job" },
-                  ]}
-                />
-              )}
-            />
-          </Container>
-          <Spacer y={1} />
+          <Controller
+            name="type"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <Tiles
+                tileables={[
+                  {
+                    icon: web,
+                    label: "Web",
+                    value: "web",
+                    description: "Exposed to internal and/or external traffic",
+                  },
+                  {
+                    icon: worker,
+                    label: "Worker",
+                    value: "worker",
+                    description: "Long running background processes",
+                  },
+                  {
+                    icon: job,
+                    label: "Job",
+                    value: "job",
+                    description: "Scheduled tasks or one-off runs",
+                  },
+                ]}
+                onSelect={onChange}
+                selectedValue={value}
+                widthPercentage={30}
+                gapPixels={20}
+              />
+            )}
+          />
           <Text color="helper">Name this service:</Text>
           <Spacer y={0.5} />
           <ControlledInput
@@ -308,33 +312,6 @@ const ServiceList: React.FC<ServiceListProps> = ({
 };
 
 export default ServiceList;
-
-const ServiceIcon = styled.div`
-  border: 1px solid #494b4f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 35px;
-  width: 35px;
-  min-width: 35px;
-  margin-right: 10px;
-  overflow: hidden;
-  border-radius: 5px;
-  > img {
-    height: 18px;
-    animation: floatIn 0.5s 0s;
-    @keyframes floatIn {
-      from {
-        opacity: 0;
-        transform: translateY(7px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0px);
-      }
-    }
-  }
-`;
 
 const I = styled.i`
   color: white;

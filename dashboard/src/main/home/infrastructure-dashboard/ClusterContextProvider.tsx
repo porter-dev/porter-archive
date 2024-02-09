@@ -6,7 +6,8 @@ import Container from "components/porter/Container";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { useCluster, type ClientCluster } from "lib/hooks/useCluster";
+import { type ClientCluster } from "lib/clusters/types";
+import { useCluster } from "lib/hooks/useCluster";
 
 import { Context } from "shared/Context";
 import notFound from "assets/not-found.png";

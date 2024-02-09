@@ -20,7 +20,8 @@ import {
   CloudProviderAzure,
   CloudProviderGCP,
 } from "lib/clusters/constants";
-import { useClusterList, type ClientCluster } from "lib/hooks/useCluster";
+import { type ClientCluster } from "lib/clusters/types";
+import { useClusterList } from "lib/hooks/useCluster";
 
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";

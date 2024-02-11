@@ -7,11 +7,13 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
+// APIContractRevisionFilter is used to filter the APIContractRevisions
 type APIContractRevisionFilter struct {
 	ClusterID uint
 	Latest    bool
 }
 
+// APIContractRevisionFilters is a function that applies filters to the APIContractRevisions
 type APIContractRevisionFilters func(*APIContractRevisionFilter)
 
 // WithClusterID filters the APIContractRevisions by clusterID

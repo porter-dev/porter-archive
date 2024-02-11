@@ -14,10 +14,12 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// APIContractRevisionListHandler is the handler for the GET /api/projects/{project_id}/contracts endpoint
 type APIContractRevisionListHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
+// NewAPIContractRevisionListHandler returns a new APIContractRevisionListHandler
 func NewAPIContractRevisionListHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
@@ -28,6 +30,7 @@ func NewAPIContractRevisionListHandler(
 	}
 }
 
+// APIContractRevisionListRequest is the request schema for the APIContractRevisionListHandler
 type APIContractRevisionListRequest struct {
 	Latest    bool   `schema:"latest"`
 	ClusterID string `schema:"cluster_id"`

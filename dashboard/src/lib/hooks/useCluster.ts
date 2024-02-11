@@ -6,11 +6,14 @@ import { z } from "zod";
 import { clientClusterContractFromProto } from "lib/clusters";
 import { SUPPORTED_CLOUD_PROVIDERS } from "lib/clusters/constants";
 import {
+  clusterStateValidator,
   clusterValidator,
   contractValidator,
   type APIContract,
   type ClientCluster,
   type ClientClusterContract,
+  type ClusterState,
+  type ContractCondition,
 } from "lib/clusters/types";
 
 import api from "shared/api";
@@ -36,7 +39,7 @@ export const useClusterList = (): TUseClusterList => {
         { id: currentProject.id }
       );
       const parsed = await z.array(clusterValidator).parseAsync(res.data);
-      return parsed
+      const filtered = parsed
         .map((c) => {
           const cloudProviderMatch = SUPPORTED_CLOUD_PROVIDERS.find(
             (s) => s.name === c.cloud_provider
@@ -44,6 +47,41 @@ export const useClusterList = (): TUseClusterList => {
           return cloudProviderMatch
             ? { ...c, cloud_provider: cloudProviderMatch }
             : null;
+        })
+        .filter(valueExists);
+      const latestContractsRes = await api.getContracts(
+        "<token>",
+        { latest: true },
+        { project_id: currentProject.id }
+      );
+      const latestContracts = await z
+        .array(contractValidator)
+        .parseAsync(latestContractsRes.data);
+      return filtered
+        .map((c) => {
+          const latestContract = latestContracts.find(
+            (contract) => contract.cluster_id === c.id
+          );
+          // if this cluster has no latest contract, don't include it
+          if (!latestContract) {
+            return undefined;
+          }
+          const latestClientContract = clientClusterContractFromProto(
+            Contract.fromJsonString(atob(latestContract.base64_contract), {
+              ignoreUnknownFields: true,
+            })
+          );
+          // if we can't parse the latest contract, don't include it
+          if (!latestClientContract) {
+            return undefined;
+          }
+          return {
+            ...c,
+            contract: {
+              ...latestContract,
+              config: latestClientContract,
+            },
+          };
         })
         .filter(valueExists);
     },
@@ -65,8 +103,10 @@ type TUseCluster = {
 };
 export const useCluster = ({
   clusterId,
+  refetchInterval,
 }: {
   clusterId: number | undefined;
+  refetchInterval?: number;
 }): TUseCluster => {
   const { currentProject } = useContext(Context);
 
@@ -81,6 +121,8 @@ export const useCluster = ({
       ) {
         return;
       }
+
+      // get the cluster + match with what we know
       const res = await api.getCluster(
         "<token>",
         {},
@@ -93,7 +135,45 @@ export const useCluster = ({
       if (!cloudProviderMatch) {
         return;
       }
-      return { ...parsed, cloud_provider: cloudProviderMatch };
+
+      // get the latest contract
+      const latestContractsRes = await api.getContracts(
+        "<token>",
+        { latest: true, cluster_id: clusterId },
+        { project_id: currentProject.id }
+      );
+      const latestContracts = await z
+        .array(contractValidator)
+        .parseAsync(latestContractsRes.data);
+      if (latestContracts.length !== 1) {
+        return;
+      }
+      const latestClientContract = clientClusterContractFromProto(
+        Contract.fromJsonString(atob(latestContracts[0].base64_contract), {
+          ignoreUnknownFields: true,
+        })
+      );
+      if (!latestClientContract) {
+        return;
+      }
+
+      // get the latest state
+      const stateRes = await api.getClusterState(
+        "<token>",
+        {},
+        { project_id: currentProject.id, cluster_id: clusterId }
+      );
+      const state = await clusterStateValidator.parseAsync(stateRes.data);
+
+      return {
+        ...parsed,
+        cloud_provider: cloudProviderMatch,
+        state,
+        contract: {
+          ...latestContracts[0],
+          config: latestClientContract,
+        },
+      };
     },
     {
       enabled:
@@ -101,6 +181,7 @@ export const useCluster = ({
         currentProject.id !== -1 &&
         !!clusterId &&
         clusterId !== -1,
+      refetchInterval,
     }
   );
 
@@ -119,6 +200,7 @@ export const useLatestClusterContract = ({
   contractDB: APIContract | undefined;
   contractProto: Contract | undefined;
   clientContract: ClientClusterContract | undefined;
+  clusterCondition: ContractCondition | undefined;
   isLoading: boolean;
   isError: boolean;
 } => {
@@ -161,6 +243,7 @@ export const useLatestClusterContract = ({
         contractDB,
         contractProto,
         clientContract,
+        clusterCondition: contractDB.condition,
       };
     },
     {
@@ -177,7 +260,55 @@ export const useLatestClusterContract = ({
     contractDB: latestClusterContractReq.data?.contractDB,
     contractProto: latestClusterContractReq.data?.contractProto,
     clientContract: latestClusterContractReq.data?.clientContract,
+    clusterCondition: latestClusterContractReq.data?.clusterCondition,
     isLoading: latestClusterContractReq.isLoading,
     isError: latestClusterContractReq.isError,
+  };
+};
+
+type TUseClusterState = {
+  state: ClusterState | undefined;
+  isLoading: boolean;
+  isError: boolean;
+};
+export const useClusterState = ({
+  clusterId,
+}: {
+  clusterId: number | undefined;
+}): TUseClusterState => {
+  const { currentProject } = useContext(Context);
+
+  const clusterStateReq = useQuery(
+    ["getClusterState", currentProject?.id, clusterId],
+    async () => {
+      if (
+        !currentProject?.id ||
+        currentProject.id === -1 ||
+        !clusterId ||
+        clusterId === -1
+      ) {
+        return;
+      }
+      const res = await api.getClusterState(
+        "<token>",
+        {},
+        { project_id: currentProject.id, cluster_id: clusterId }
+      );
+      return await clusterStateValidator.parseAsync(res.data);
+    },
+    {
+      enabled:
+        !!currentProject &&
+        currentProject.id !== -1 &&
+        !!clusterId &&
+        clusterId !== -1,
+      refetchInterval: 5000,
+    }
+  );
+
+  return {
+    state: clusterStateReq.data,
+    isLoading: clusterStateReq.isLoading,
+    isError: clusterStateReq.isError,
   };
 };

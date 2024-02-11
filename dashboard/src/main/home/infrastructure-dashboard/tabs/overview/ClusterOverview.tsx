@@ -5,9 +5,9 @@ import { useClusterContext } from "../../ClusterContextProvider";
 import EKSClusterOverview from "./EKSClusterOverview";
 
 const ClusterOverview: React.FC = () => {
-  const { latestClusterConfig } = useClusterContext();
+  const { cluster } = useClusterContext();
 
-  return match(latestClusterConfig)
+  return match(cluster.contract.config.cluster.config)
     .with({ kind: "EKS" }, (config) => {
       return <EKSClusterOverview config={config} />;
     })

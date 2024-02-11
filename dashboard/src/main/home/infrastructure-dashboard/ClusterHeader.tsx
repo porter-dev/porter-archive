@@ -53,7 +53,7 @@ const ClusterHeader: React.FC = () => {
       <CreatedAtContainer>
         <div style={{ flexShrink: 0 }}>
           <Text color="#aaaabb66">
-            Updated {readableDate(cluster.updated_at)}
+            Updated {readableDate(cluster.contract.updated_at)}
           </Text>
         </div>
         <Spacer y={0.5} />

@@ -13,6 +13,7 @@ import SearchBar from "components/porter/SearchBar";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
+import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import {
@@ -26,6 +27,7 @@ import { useClusterList } from "lib/hooks/useCluster";
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
 import infra from "assets/cluster.svg";
+import globe from "assets/globe.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
@@ -172,9 +174,15 @@ const ClusterDashboard: React.FC = () => {
                     />
                   </Container>
                   <Container row>
+                    <Tag hoverable={false}>
+                      <Icon src={globe} height={"11px"} />
+                      {cluster.contract.config.cluster.config?.region}
+                    </Tag>
+                  </Container>
+                  <Container row>
                     <SmallIcon opacity="0.4" src={time} />
                     <Text size={13} color="#ffffff44">
-                      {readableDate(cluster.updated_at)}
+                      {readableDate(cluster.contract.updated_at)}
                     </Text>
                   </Container>
                 </Block>
@@ -204,7 +212,7 @@ const ClusterDashboard: React.FC = () => {
                   <Container>
                     <SmallIcon opacity="0.4" src={time} />
                     <Text size={13} color="#ffffff44">
-                      {readableDate(cluster.updated_at)}
+                      {readableDate(cluster.contract.updated_at)}
                     </Text>
                   </Container>
                 </Container>
@@ -250,7 +258,7 @@ const Icon = styled.img`
 `;
 
 const Block = styled.div`
-  height: 100px;
+  height: 150px;
   flex-direction: column;
   display: flex;
   justify-content: space-between;

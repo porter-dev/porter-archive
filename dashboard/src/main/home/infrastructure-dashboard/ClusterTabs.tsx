@@ -13,7 +13,9 @@ import ClusterRevisionSelector from "../cluster-dashboard/dashboard/ClusterRevis
 import ClusterSettings from "../cluster-dashboard/dashboard/ClusterSettings";
 import ProvisionerStatus from "../cluster-dashboard/dashboard/ProvisionerStatus";
 import { useClusterContext } from "./ClusterContextProvider";
+import ClusterProvisioningIndicator from "./ClusterProvisioningIndicator";
 import ClusterOverview from "./tabs/overview/ClusterOverview";
+import Settings from "./tabs/Settings";
 
 const validTabs = ["overview", "settings"] as const;
 const DEFAULT_TAB = "overview" as const;
@@ -58,6 +60,7 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
             <Spacer y={1} />
           </>
         )} */}
+      {cluster.contract.condition === "" && <ClusterProvisioningIndicator />}
       <TabSelector
         options={tabs}
         currentTab={currentTab}
@@ -67,15 +70,7 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
       />
       <Spacer y={1} />
       {match(currentTab)
-        .with("settings", () => (
-          <ClusterSettings
-            ingressIp={ingressIp}
-            ingressError={ingressError}
-            history={undefined}
-            location={undefined}
-            match={undefined}
-          />
-        ))
+        .with("settings", () => <Settings />)
         .with("overview", () => <ClusterOverview />)
 
         .otherwise(() => null)}

@@ -36,7 +36,7 @@ const awsRegionValidator = z.enum([
   "me-south-1",
   "sa-east-1",
 ]);
-export type AWSRegion = z.infer<typeof awsRegionValidator>;
+type AWSRegion = z.infer<typeof awsRegionValidator>;
 const gcpRegionValidator = z.enum([
   "us-east1",
   "us-east4",
@@ -52,7 +52,7 @@ const gcpRegionValidator = z.enum([
   "us-west3",
   "us-west4",
 ]);
-export type GCPRegion = z.infer<typeof gcpRegionValidator>;
+type GCPRegion = z.infer<typeof gcpRegionValidator>;
 const azureRegionValidator = z.enum([
   "australiaeast",
   "brazilsouth",
@@ -75,7 +75,7 @@ const azureRegionValidator = z.enum([
   "westus2",
   "westus3",
 ]);
-export type AzureRegion = z.infer<typeof azureRegionValidator>;
+type AzureRegion = z.infer<typeof azureRegionValidator>;
 export type ClientRegion = {
   name: AWSRegion | GCPRegion | AzureRegion;
   displayName: string;
@@ -210,38 +210,50 @@ export const clusterValidator = z.object({
   cloud_provider: cloudProviderValidator,
   cloud_provider_credential_identifier: z.string(),
   status: z.string(),
-  created_at: z.string(),
-  updated_at: z.string(),
 });
 export type SerializedCluster = z.infer<typeof clusterValidator>;
 export type ClientCluster = Omit<SerializedCluster, "cloud_provider"> & {
   cloud_provider: ClientCloudProvider;
+  contract: APIContract & {
+    config: ClientClusterContract;
+  };
+  state?: ClusterState;
 };
 export const isAWSCluster = (
   cluster: ClientCluster
 ): cluster is ClientCluster => {
   return cluster.cloud_provider === CloudProviderAWS;
 };
+export const clusterStateValidator = z.object({
+  phase: z.string(),
+  is_infrastructure_ready: z.boolean(),
+  is_control_plane_ready: z.boolean(),
+});
+export type ClusterState = z.infer<typeof clusterStateValidator>;
 
 // Contract
+const contractConditionValidator = z.enum([
+  "",
+  "QUOTA_REQUEST_FAILED",
+  "RETRYING_TOO_LONG",
+  "KUBE_APPLY_FAILED",
+  "FATAL_PROVISIONING_ERROR",
+  "ERROR_READING_MSG",
+  "MSG_CAUSED_PANIC",
+  "SUCCESS",
+  "DELETING",
+  "DELETED",
+  "COMPLIANCE_CHECK_FAILED",
+]);
+export type ContractCondition = z.infer<typeof contractConditionValidator>;
 export const contractValidator = z.object({
   id: z.string(),
   base64_contract: z.string(),
+  created_at: z.string(),
+  updated_at: z.string(),
   cluster_id: z.number(),
   project_id: z.number(),
-  condition: z.enum([
-    "",
-    "QUOTA_REQUEST_FAILED",
-    "RETRYING_TOO_LONG",
-    "KUBE_APPLY_FAILED",
-    "FATAL_PROVISIONING_ERROR",
-    "ERROR_READING_MSG",
-    "MSG_CAUSED_PANIC",
-    "SUCCESS",
-    "DELETING",
-    "DELETED",
-    "COMPLIANCE_CHECK_FAILED",
-  ]),
+  condition: contractConditionValidator,
   condition_metadata: z
     .discriminatedUnion("code", [
       z.object({
@@ -291,24 +303,66 @@ export const contractValidator = z.object({
 });
 // this is the type of the object that is returned from the getContract API, but only the base64_contract field is editable by the user
 export type APIContract = z.infer<typeof contractValidator>;
+const eksNodeGroupTypeValidator = z.enum([
+  "UNKNOWN",
+  "SYSTEM",
+  "MONITORING",
+  "APPLICATION",
+  "CUSTOM",
+]);
+const gkeNodeGroupTypeValidator = z.enum([
+  "UNKNOWN",
+  "SYSTEM",
+  "MONITORING",
+  "APPLICATION",
+  "CUSTOM",
+]);
+const eksNodeGroupValidator = z.object({
+  instanceType: z.string(),
+  minInstances: z.number(),
+  maxInstances: z.number(),
+  nodeGroupType: eksNodeGroupTypeValidator,
+});
+const gkeNodeGroupValidator = z.object({
+  instanceType: z.string(),
+  minInstances: z.number(),
+  maxInstances: z.number(),
+  nodeGroupType: gkeNodeGroupTypeValidator,
+});
+const aksNodeGroupTypeValidator = z.enum([
+  "UNKNOWN",
+  "SYSTEM",
+  "MONITORING",
+  "APPLICATION",
+  "CUSTOM",
+]);
+const aksNodeGroupValidator = z.object({
+  instanceType: z.string(),
+  minInstances: z.number(),
+  maxInstances: z.number(),
+  nodeGroupType: aksNodeGroupTypeValidator,
+});
+
 const eksConfigValidator = z.object({
   kind: z.literal("EKS"),
   clusterName: z.string(),
   clusterVersion: z.string(),
-  region: awsRegionValidator,
-  // nodeGroup: z.string(),
+  region: z.string(),
+  nodeGroups: eksNodeGroupValidator.array(),
 });
 const gkeConfigValidator = z.object({
   kind: z.literal("GKE"),
   clusterName: z.string(),
   clusterVersion: z.string(),
-  region: gcpRegionValidator,
+  region: z.string(),
+  nodeGroups: gkeNodeGroupValidator.array(),
 });
 const aksConfigValidator = z.object({
   kind: z.literal("AKS"),
   clusterName: z.string(),
   clusterVersion: z.string(),
-  location: azureRegionValidator,
+  region: z.string(),
+  nodeGroups: aksNodeGroupValidator.array(),
 });
 const clusterConfigValidator = z.discriminatedUnion("kind", [
   eksConfigValidator,
@@ -321,7 +375,7 @@ const contractClusterValidator = z.object({
   clusterId: z.number(),
   cloudProvider: cloudProviderValidator,
   cloudProviderCredentialsId: z.string(),
-  config: clusterConfigValidator.optional(),
+  config: clusterConfigValidator,
 });
 export type ClientClusterConfig = z.infer<typeof clusterConfigValidator>;
 export type EKSClientClusterConfig = z.infer<typeof eksConfigValidator>;

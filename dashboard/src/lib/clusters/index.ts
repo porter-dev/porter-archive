@@ -1,4 +1,10 @@
-import { EnumCloudProvider, type Contract } from "@porter-dev/api-contracts";
+import {
+  EnumCloudProvider,
+  GKENodePoolType,
+  NodeGroupType,
+  NodePoolType,
+  type Contract,
+} from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 
 import { type ClientClusterContract } from "./types";
@@ -18,10 +24,10 @@ import { type ClientClusterContract } from "./types";
 
 export function clientClusterContractFromProto(
   contract: Contract
-): ClientClusterContract {
+): ClientClusterContract | undefined {
   const contractCluster = contract.cluster;
   if (!contractCluster) {
-    throw new Error("Cluster not found in contract");
+    return undefined;
   }
   return {
     cluster: {
@@ -39,18 +45,75 @@ export function clientClusterContractFromProto(
           clusterName: value.clusterName,
           clusterVersion: value.clusterVersion,
           region: value.region,
+          nodeGroups: value.nodeGroups.map((ng) => {
+            return {
+              instanceType: ng.instanceType,
+              minInstances: ng.minInstances,
+              maxInstances: ng.maxInstances,
+              nodeGroupType: match(ng.nodeGroupType)
+                .with(NodeGroupType.UNSPECIFIED, () => "UNKNOWN" as const)
+                .with(NodeGroupType.UNSPECIFIED, () => "SYSTEM" as const)
+                .with(NodeGroupType.MONITORING, () => "MONITORING" as const)
+                .with(NodeGroupType.APPLICATION, () => "APPLICATION" as const)
+                .with(NodeGroupType.CUSTOM, () => "CUSTOM" as const)
+                .otherwise(() => "UNKNOWN" as const),
+            };
+          }),
         }))
         .with({ case: "gkeKind" }, ({ value }) => ({
           kind: "GKE" as const,
           clusterName: value.clusterName,
           clusterVersion: value.clusterVersion,
           region: value.region,
+          nodeGroups: value.nodePools.map((ng) => {
+            return {
+              instanceType: ng.instanceType,
+              minInstances: ng.minInstances,
+              maxInstances: ng.maxInstances,
+              nodeGroupType: match(ng.nodePoolType)
+                .with(
+                  GKENodePoolType.GKE_NODE_POOL_TYPE_UNSPECIFIED,
+                  () => "UNKNOWN" as const
+                )
+                .with(
+                  GKENodePoolType.GKE_NODE_POOL_TYPE_SYSTEM,
+                  () => "SYSTEM" as const
+                )
+                .with(
+                  GKENodePoolType.GKE_NODE_POOL_TYPE_MONITORING,
+                  () => "MONITORING" as const
+                )
+                .with(
+                  GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION,
+                  () => "APPLICATION" as const
+                )
+                .with(
+                  GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM,
+                  () => "CUSTOM" as const
+                )
+                .otherwise(() => "UNKNOWN" as const),
+            };
+          }),
         }))
         .with({ case: "aksKind" }, ({ value }) => ({
           kind: "AKS" as const,
           clusterName: value.clusterName,
           clusterVersion: value.clusterVersion,
-          location: value.location,
+          region: value.location,
+          nodeGroups: value.nodePools.map((ng) => {
+            return {
+              instanceType: ng.instanceType,
+              minInstances: ng.minInstances,
+              maxInstances: ng.maxInstances,
+              nodeGroupType: match(ng.nodePoolType)
+                .with(NodePoolType.UNSPECIFIED, () => "UNKNOWN" as const)
+                .with(NodePoolType.SYSTEM, () => "SYSTEM" as const)
+                .with(NodePoolType.MONITORING, () => "MONITORING" as const)
+                .with(NodePoolType.APPLICATION, () => "APPLICATION" as const)
+                .with(NodePoolType.CUSTOM, () => "CUSTOM" as const)
+                .otherwise(() => "UNKNOWN" as const),
+            };
+          }),
         }))
         .with({ case: undefined }, () => undefined)
         .exhaustive(),

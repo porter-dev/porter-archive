@@ -23,7 +23,7 @@ func (cr APIContractRepository) Insert(ctx context.Context, conf models.APIContr
 }
 
 // List returns a list of api contract revisions sorted by created date for a given project and cluster
-func (cr APIContractRepository) List(ctx context.Context, projectID uint, clusterID uint) ([]*models.APIContractRevision, error) {
+func (cr APIContractRepository) List(ctx context.Context, projectID uint, opts ...repository.APIContractRevisionFilters) ([]*models.APIContractRevision, error) {
 	var confs []*models.APIContractRevision
 	return confs, errors.New("not implemented")
 }

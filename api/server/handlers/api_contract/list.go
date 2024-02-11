@@ -1,17 +1,17 @@
 package api_contract
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type APIContractRevisionListHandler struct {
@@ -28,32 +28,48 @@ func NewAPIContractRevisionListHandler(
 	}
 }
 
+type APIContractRevisionListRequest struct {
+	Latest    bool   `schema:"latest"`
+	ClusterID string `schema:"cluster_id"`
+}
+
 // ServeHTTP returns a list of Porter API contract revisions for a given project.
 // If clusterID is also given, it will list by project_id, cluster_id
+// If latest is provided, it will only return the latest revision for each contract
 func (c *APIContractRevisionListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-api-contract-revisions")
+	defer span.End()
+
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+
+	request := &APIContractRevisionListRequest{}
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
 
 	clusterID := 0
-	clusterIDParam := chi.URLParam(r, "cluster_id")
+	clusterIDParam := request.ClusterID
 	if clusterIDParam != "" {
 		i, err := strconv.Atoi(clusterIDParam)
 		if err != nil {
-			e := fmt.Errorf("invalid cluster_id query param given: %w", err)
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+			err = telemetry.Error(ctx, span, err, "error parsing cluster id")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
 		}
 		clusterID = i
 	}
-
-	ctx := r.Context()
-
-	revisions, err := c.Config().Repo.APIContractRevisioner().List(ctx, proj.ID, uint(clusterID))
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "cluster-id", Value: clusterID},
+		telemetry.AttributeKV{Key: "latest", Value: request.Latest},
+	)
+	revisions, err := c.Config().Repo.APIContractRevisioner().List(ctx, proj.ID, repository.WithClusterID(uint(clusterID)), repository.WithLatest(request.Latest))
 	if err != nil {
-		e := fmt.Errorf("error listing api contract revision: %w", err)
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(e))
+		err = telemetry.Error(ctx, span, err, "error getting latest api contract revisions")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	c.WriteResult(w, r, revisions)
 }

@@ -311,9 +311,9 @@ export const useClusterResourceLimits = ({
           return Math.max(acc, curr.maxGPU);
         }, 0);
         let maxMultiplier = SMALL_INSTANCE_UPPER_BOUND;
-        // if the instance type has more than 4 GB ram, we use 90% of the ram/cpu
+        // if the instance type has more than 16 GB ram, we use 90% of the ram/cpu
         // otherwise, we use 75%
-        if (maxRAM > 4) {
+        if (maxRAM > 16) {
           maxMultiplier = LARGE_INSTANCE_UPPER_BOUND;
         }
         // round down to nearest 0.5 cores

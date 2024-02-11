@@ -135,6 +135,13 @@ const machineTypeOptions = [
   { value: "c7a.12xlarge", label: "c7a.12xlarge" },
   { value: "c7a.16xlarge", label: "c7a.16xlarge" },
   { value: "c7a.24xlarge", label: "c7a.24xlarge" },
+  { value: "c7g.large", label: "c7g.large" },
+  { value: "c7g.xlarge", label: "c7g.xlarge" },
+  { value: "c7g.2xlarge", label: "c7g.2xlarge" },
+  { value: "c7g.4xlarge", label: "c7g.4xlarge" },
+  { value: "c7g.8xlarge", label: "c7g.8xlarge" },
+  { value: "c7g.12xlarge", label: "c7g.12xlarge" },
+  { value: "c7g.16xlarge", label: "c7g.16xlarge" },
 ];
 
 const defaultCidrVpc = "10.78.0.0/16";

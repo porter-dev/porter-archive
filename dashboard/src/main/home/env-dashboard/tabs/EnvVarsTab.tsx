@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo, useContext } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
+import styled from "styled-components";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -26,6 +27,12 @@ type Props = {
 const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
   const { currentProject, currentCluster } = useContext(Context);
   const [buttonStatus, setButtonStatus] = useState<string | React.ReactNode>("");
+  const [wasCreated, setWasCreated] = useState(false);
+
+  useEffect(() => {
+    const created = new URLSearchParams(window.location.search).get("created")
+    setWasCreated(created === "true");
+  }, [])
 
   const envGroupFormMethods = useForm<EnvGroupFormData>({
     resolver: zodResolver(envGroupFormValidator),
@@ -191,6 +198,9 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
           <EnvGroupArray
             values={envVariables}
             setValues={(x) => {
+              if (wasCreated) {
+                setWasCreated(false);
+              }
               setValue("envVariables", x);
             }}
             fileUpload={true}
@@ -202,7 +212,14 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
               <Spacer y={1} />
               <Button
                 type="submit"
-                status={buttonStatus}
+                status={
+                  wasCreated ? (
+                    <StatusWrapper success={true}>
+                      <i className="material-icons">done</i>
+                      Successfully created
+                    </StatusWrapper>
+                  ) : buttonStatus
+                }
                 loadingText="Updating env group . . ."
                 disabled={!isValid}
               >
@@ -217,3 +234,22 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
 };
 
 export default EnvVarsTab;
+
+const StatusWrapper = styled.div<{
+  success?: boolean;
+}>`
+  display: flex;
+  line-height: 1.5;
+  align-items: center;
+  font-family: "Work Sans", sans-serif;
+  font-size: 13px;
+  color: #ffffff55;
+  margin-left: 15px;
+  text-overflow: ellipsis;
+  > i {
+    font-size: 18px;
+    margin-right: 10px;
+    float: left;
+    color: ${(props) => (props.success ? "#4797ff" : "#fcba03")};
+  }
+`;

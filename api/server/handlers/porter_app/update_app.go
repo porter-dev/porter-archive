@@ -71,6 +71,8 @@ type UpdateAppRequest struct {
 	IsEnvOverride bool `json:"is_env_override"`
 	// WithPredeploy is a flag to indicate whether to run the predeploy job
 	WithPredeploy bool `json:"with_predeploy"`
+	// Exact is a flag to indicate whether to apply the update exactly as specified in the request (default is to merge with existing app)
+	Exact bool `json:"exact"`
 }
 
 // UpdateAppResponse is the response object for the POST /apps/update endpoint
@@ -120,6 +122,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var overrides *porterv1.PorterApp
 	appProto := &porterv1.PorterApp{}
 
+	var previewEnvVariables map[string]string
 	envVariables := request.Variables
 
 	// get app definition from either base64 yaml or base64 porter app proto
@@ -180,7 +183,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if appFromYaml.PreviewApp != nil {
 			overrides = appFromYaml.PreviewApp.AppProto
 			addonOverrides = appFromYaml.PreviewApp.Addons
-			envVariables = mergeEnvVariables(envVariables, appFromYaml.PreviewApp.EnvVariables)
+			previewEnvVariables = appFromYaml.PreviewApp.EnvVariables
 		}
 
 		addons = appFromYaml.Addons
@@ -250,6 +253,9 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Normal: envVariables,
 			Secret: request.Secrets,
 		},
+		AppEnvOverrides: &porterv1.EnvGroupVariables{
+			Normal: previewEnvVariables,
+		},
 		Deletions: &porterv1.Deletions{
 			ServiceNames:     request.Deletions.ServiceNames,
 			PredeployNames:   request.Deletions.Predeploy,
@@ -263,6 +269,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Addons:              addons,
 		AddonOverrides:      addonOverrides,
 		IsPredeployEligible: request.WithPredeploy,
+		Exact:               request.Exact,
 	})
 
 	ccpResp, err := c.Config().ClusterControlPlaneClient.UpdateApp(ctx, updateReq)

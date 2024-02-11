@@ -36,72 +36,7 @@ func (cr APIContractRepository) Insert(ctx context.Context, conf models.APIContr
 
 // List returns a list of api contract revisions sorted by created date for a given projectID.
 // If clusterID is not specified (set to 0), this will return all revisions for a given project
-// func (cr APIContractRepository) List(ctx context.Context, projectID uint, filters ...repository.APIContractRevisionFilters) ([]*models.APIContractRevision, error) {
-// 	ctx, span := telemetry.NewSpan(ctx, "list-api-contract-revisions")
-// 	defer span.End()
-
-// 	var opts repository.APIContractRevisionFilter
-// 	for _, opt := range filters {
-// 		opt(&opts)
-// 	}
-
-// 	telemetry.WithAttributes(span,
-// 		telemetry.AttributeKV{Key: "project-id", Value: projectID},
-// 		telemetry.AttributeKV{Key: "cluster-id", Value: opts.ClusterID},
-// 		telemetry.AttributeKV{Key: "latest", Value: opts.Latest},
-// 	)
-
-// 	var confs []*models.APIContractRevision
-
-// 	if projectID == 0 {
-// 		return confs, telemetry.Error(ctx, span, nil, "project id cannot be 0")
-// 	}
-
-// 	if opts.ClusterID == 0 {
-// 		if opts.Latest {
-// 			// Define the custom SQL query string
-// 			queryString := `
-// 	SELECT DISTINCT ON (cluster_id) *
-// 	FROM api_contract_revisions
-// 	WHERE project_id = ?
-// 	ORDER BY cluster_id, created_at DESC
-// `
-
-// 			// Execute the custom SQL query
-// 			tx := cr.db.Raw(queryString, projectID).Scan(&confs)
-// 			if tx.Error != nil {
-// 				return nil, tx.Error
-// 			}
-// 			return confs, nil
-// 		}
-// 		tx := cr.db.Where("project_id = ?", projectID).Order("created_at desc").Find(&confs)
-// 		if tx.Error != nil {
-// 			return nil, tx.Error
-// 		}
-// 		return confs, nil
-// 	}
-// 	if opts.Latest {
-// 		// Define the custom SQL query string
-// 		queryString := `
-// 	SELECT DISTINCT ON (cluster_id) *
-// 	FROM api_contract_revisions
-// 	WHERE project_id = ? AND cluster_id = ?
-// 	ORDER BY cluster_id, created_at DESC
-// `
-// 		// Execute the custom SQL query
-// 		tx := cr.db.Raw(queryString, projectID).Scan(&confs)
-// 		if tx.Error != nil {
-// 			return nil, tx.Error
-// 		}
-// 		return confs, nil
-// 	}
-// 	tx := cr.db.Where("project_id = ? and cluster_id = ?", projectID, opts.ClusterID).Order("created_at desc").Find(&confs)
-// 	if tx.Error != nil {
-// 		return nil, tx.Error
-// 	}
-
-//		return confs, nil
-//	}
+// If latest is true, it will only return the latest revision for each contract
 func (cr APIContractRepository) List(ctx context.Context, projectID uint, filters ...repository.APIContractRevisionFilters) ([]*models.APIContractRevision, error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-api-contract-revisions")
 	defer span.End()
@@ -172,7 +107,7 @@ func (cr APIContractRepository) Get(ctx context.Context, revisionID uuid.UUID) (
 	return acr, nil
 }
 
-// Latest returns the latest APIContractRevisions for all clusters in a project
+// Latest returns the latest version for each contract specified by filters
 func (cr APIContractRepository) Latest(ctx context.Context, projectID uint, filters ...repository.APIContractRevisionFilters) ([]*models.APIContractRevision, error) {
 	var confs []*models.APIContractRevision
 

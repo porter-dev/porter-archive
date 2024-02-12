@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+// import { useFormContext } from "react-hook-form";
 import styled from "styled-components";
 
 import Button from "components/porter/Button";
@@ -7,7 +8,10 @@ import Input from "components/porter/Input";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { type EKSClientClusterConfig } from "lib/clusters/types";
+import {
+  // type ClientClusterContract,
+  type EKSClientClusterConfig,
+} from "lib/clusters/types";
 
 import { useClusterContext } from "../../ClusterContextProvider";
 
@@ -16,6 +20,7 @@ type Props = {
 };
 const EKSClusterOverview: React.FC<Props> = ({ config }) => {
   const { cluster } = useClusterContext();
+  // const { watch } = useFormContext<ClientClusterContract>();
   const displayableNodeGroups = useMemo(() => {
     return config.nodeGroups.filter(
       (ng) =>

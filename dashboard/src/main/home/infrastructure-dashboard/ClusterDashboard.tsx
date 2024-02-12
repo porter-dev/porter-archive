@@ -4,11 +4,11 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
-import Button from "components/porter/Button";
+// import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
 import Image from "components/porter/Image";
-import PorterLink from "components/porter/Link";
+// import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
@@ -307,14 +307,14 @@ const ToggleIcon = styled.img`
   min-width: 12px;
 `;
 
-const I = styled.i`
-  color: white;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  margin-right: 5px;
-  justify-content: center;
-`;
+// const I = styled.i`
+//   color: white;
+//   font-size: 14px;
+//   display: flex;
+//   align-items: center;
+//   margin-right: 5px;
+//   justify-content: center;
+// `;
 
 const StyledAppDashboard = styled.div`
   width: 100%;

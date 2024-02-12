@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext } from "react";
+import { Contract } from "@porter-dev/api-contracts";
 import { useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
 
@@ -7,8 +8,12 @@ import Container from "components/porter/Container";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { type ClientCluster } from "lib/clusters/types";
-import { useCluster } from "lib/hooks/useCluster";
+import { updateExistingClusterContract } from "lib/clusters";
+import {
+  type ClientCluster,
+  type ClientClusterContract,
+} from "lib/clusters/types";
+import { useCluster, useLatestClusterContract } from "lib/hooks/useCluster";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -18,6 +23,7 @@ type ClusterContextType = {
   cluster: ClientCluster;
   projectId: number;
   updateClusterVanityName: (name: string) => void;
+  updateCluster: (clientContract: ClientClusterContract) => void;
 };
 
 const ClusterContext = createContext<ClusterContextType | null>(null);
@@ -42,12 +48,19 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
   children,
 }) => {
   const { currentProject } = useContext(Context);
-  const paramsExist =
-    !!clusterId && !!currentProject && currentProject.id !== -1;
   const { cluster, isLoading, isError } = useCluster({
     clusterId,
     refetchInterval: 3000,
   });
+  const { contractProto: latestContract } = useLatestClusterContract({
+    clusterId,
+  });
+  const paramsExist =
+    !!clusterId &&
+    !!currentProject &&
+    currentProject.id !== -1 &&
+    latestContract;
+
   const queryClient = useQueryClient();
   const updateClusterVanityName = useCallback(
     async (name: string) => {
@@ -66,6 +79,25 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
       await queryClient.invalidateQueries(["getCluster"]);
     },
     [paramsExist, clusterId]
+  );
+  const updateCluster = useCallback(
+    async (clientContract: ClientClusterContract) => {
+      if (!paramsExist || !latestContract?.cluster) {
+        return;
+      }
+      const updatedContract = new Contract({
+        ...latestContract,
+        cluster: updateExistingClusterContract(
+          clientContract,
+          latestContract.cluster
+        ),
+      });
+
+      await api.createContract("<token>", updatedContract, {
+        project_id: currentProject.id,
+      });
+    },
+    [paramsExist, clusterId, currentProject?.id]
   );
 
   if (isLoading || !paramsExist) {
@@ -108,6 +140,7 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
         cluster,
         projectId: currentProject.id,
         updateClusterVanityName,
+        updateCluster,
       }}
     >
       {children}

@@ -220,18 +220,15 @@ export const useLatestClusterContract = ({
 
       const res = await api.getContracts(
         "<token>",
-        {},
+        { cluster_id: clusterId, latest: true },
         { project_id: currentProject.id }
       );
 
       const data = await z.array(contractValidator).parseAsync(res.data);
-      const filtered = data.filter(
-        (contract) => contract.cluster_id === clusterId
-      );
-      if (filtered.length === 0) {
+      if (data.length !== 1) {
         return;
       }
-      const contractDB = filtered[0];
+      const contractDB = data[0];
       const contractProto = Contract.fromJsonString(
         atob(contractDB.base64_contract),
         {
@@ -294,7 +291,8 @@ export const useClusterState = ({
         {},
         { project_id: currentProject.id, cluster_id: clusterId }
       );
-      return await clusterStateValidator.parseAsync(res.data);
+      const parsed = await clusterStateValidator.parseAsync(res.data);
+      return parsed;
     },
     {
       enabled:

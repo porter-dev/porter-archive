@@ -225,7 +225,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   }, [defaultDeploymentTarget]);
 
   const resetAllExceptName = (): void => {
-
     // Get the current name value before the reset
     setStep(0);
     const currentNameValue = porterAppFormMethods.getValues("app.name");
@@ -238,10 +237,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const onSubmit = handleSubmit(async (data) => {
     try {
       setDeployError("");
-      const { validatedAppProto, variables, secrets } = await validateApp(
-        data,
-        currentProject?.beta_features_enabled
-      );
+      const { validatedAppProto, variables, secrets } = await validateApp(data);
       setValidatedAppProto(validatedAppProto);
       setFinalizedAppEnv({ variables, secrets });
 
@@ -250,7 +246,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         return;
       }
 
-      await createAndApply({
+      await update({
         app: validatedAppProto,
         source,
         variables,
@@ -267,51 +263,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     }
   });
 
-  const createWithValidateApply = async ({
-    app,
-    projectID,
-    clusterID,
-    deploymentTargetID,
-    variables,
-    secrets,
-  }: {
-    app: PorterApp;
-    projectID: number;
-    clusterID: number;
-    deploymentTargetID: string;
-    variables: Record<string, string>;
-    secrets: Record<string, string>;
-  }): Promise<void> => {
-    await api.createApp(
-      "<token>",
-      {
-        ...source,
-        name: app.name,
-        deployment_target_id: deploymentTargetID,
-      },
-      {
-        project_id: projectID,
-        cluster_id: clusterID,
-      }
-    );
-
-    await api.applyApp(
-      "<token>",
-      {
-        b64_app_proto: btoa(app.toJsonString()),
-        deployment_target_id: deploymentTargetID,
-        variables,
-        secrets,
-        hard_env_update: true,
-      },
-      {
-        project_id: projectID,
-        cluster_id: clusterID,
-      }
-    );
-  };
-
-  const createAndApply = useCallback(
+  const update = useCallback(
     async ({
       app,
       source,
@@ -339,43 +291,32 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           return false;
         }
 
-        if (currentProject.beta_features_enabled) {
-          await api.updateApp(
-            "<token>",
-            {
-              deployment_target_id: deploymentTargetID,
-              b64_app_proto: btoa(
-                app.toJsonString({
-                  emitDefaultValues: true,
-                })
-              ),
-              secrets,
-              variables,
-              is_env_override: true,
-              ...(source.type === "github" && {
-                git_source: {
-                  git_branch: source.git_branch,
-                  git_repo_id: source.git_repo_id,
-                  git_repo_name: source.git_repo_name,
-                },
-                porter_yaml_path: source.porter_yaml_path,
-              }),
-            },
-            {
-              project_id: currentProject.id,
-              cluster_id: currentCluster.id,
-            }
-          );
-        } else {
-          await createWithValidateApply({
-            app,
-            projectID: currentProject.id,
-            clusterID: currentCluster.id,
-            deploymentTargetID,
-            variables,
+        await api.updateApp(
+          "<token>",
+          {
+            deployment_target_id: deploymentTargetID,
+            b64_app_proto: btoa(
+              app.toJsonString({
+                emitDefaultValues: true,
+              })
+            ),
             secrets,
-          });
-        }
+            variables,
+            is_env_override: true,
+            ...(source.type === "github" && {
+              git_source: {
+                git_branch: source.git_branch,
+                git_repo_id: source.git_repo_id,
+                git_repo_name: source.git_repo_name,
+              },
+              porter_yaml_path: source.porter_yaml_path,
+            }),
+          },
+          {
+            project_id: currentProject.id,
+            cluster_id: currentCluster.id,
+          }
+        );
 
         // log analytics event that we successfully deployed
         void updateAppStep({
@@ -425,7 +366,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       currentCluster?.id,
       deploymentTargetID,
       name.value,
-      createWithValidateApply,
     ]
   );
 
@@ -607,7 +547,15 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                   <>
                     <Text size={16}>Application name</Text>
                     <Spacer y={0.5} />
-                    <Text color={isNameHighlight && porterAppFormMethods.getValues("app.name.value").length > 0 ? "#FFCC00" : "helper"}>
+                    <Text
+                      color={
+                        isNameHighlight &&
+                        porterAppFormMethods.getValues("app.name.value")
+                          .length > 0
+                          ? "#FFCC00"
+                          : "helper"
+                      }
+                    >
                       Lowercase letters, numbers, and &quot;-&quot; only.
                     </Text>
                     <Spacer y={0.5} />
@@ -842,7 +790,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           projectId={currentProject.id}
           clusterId={currentCluster.id}
           deployPorterApp={async () =>
-            await createAndApply({
+            await update({
               app: validatedAppProto,
               source,
               variables: appEnv.variables,

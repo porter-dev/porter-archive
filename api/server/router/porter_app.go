@@ -717,35 +717,6 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/validate -> porter_app.NewValidatePorterAppHandler
-	validatePorterAppEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/validate", relPathV2),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	validatePorterAppHandler := porter_app.NewValidatePorterAppHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: validatePorterAppEndpoint,
-		Handler:  validatePorterAppHandler,
-		Router:   r,
-	})
-
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/create -> porter_app.NewCreateAppHandler
 	createAppEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -772,35 +743,6 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: createAppEndpoint,
 		Handler:  createAppHandler,
-		Router:   r,
-	})
-
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/apply -> porter_app.NewApplyPorterAppHandler
-	applyPorterAppEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbUpdate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/apply", relPathV2),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	applyPorterAppHandler := porter_app.NewApplyPorterAppHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: applyPorterAppEndpoint,
-		Handler:  applyPorterAppHandler,
 		Router:   r,
 	})
 
@@ -1673,35 +1615,6 @@ func getPorterAppRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: appHelmValuesEndpoint,
 		Handler:  appHelmValuesHandler,
-		Router:   r,
-	})
-
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/use-new-apply-logic -> porter_app.NewUseNewApplyLogicHandler
-	useNewApplyLogicEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/use-new-apply-logic", relPathV2),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	useNewApplyLogicHandler := porter_app.NewUseNewApplyLogicHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: useNewApplyLogicEndpoint,
-		Handler:  useNewApplyLogicHandler,
 		Router:   r,
 	})
 

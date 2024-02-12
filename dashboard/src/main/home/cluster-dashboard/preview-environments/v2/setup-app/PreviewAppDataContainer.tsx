@@ -68,7 +68,6 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
   existingTemplate,
 }) => {
   const history = useHistory();
-  const { currentProject } = useContext(Context);
 
   const [tab, setTab] = useState<PreviewEnvSettingsTab>("services");
   const [validatedAppProto, setValidatedAppProto] = useState<PorterApp | null>(
@@ -325,12 +324,8 @@ export const PreviewAppDataContainer: React.FC<Props> = ({
         options={[
           { label: "App Services", value: "services" },
           { label: "Environment Variables", value: "variables" },
-          ...(currentProject?.beta_features_enabled
-            ? [
-                { label: "Required Apps", value: "required-apps" },
-                { label: "Add-ons", value: "addons" },
-              ]
-            : []),
+          { label: "Required Apps", value: "required-apps" },
+          { label: "Add-ons", value: "addons" },
         ]}
         currentTab={tab}
         setCurrentTab={(tab: string) => {

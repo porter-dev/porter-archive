@@ -37,6 +37,21 @@ func NewUpdateAppHandler(
 	}
 }
 
+// ServiceDeletions are deletions to apply to a specific service
+type ServiceDeletions struct {
+	DomainNames           []string `json:"domain_names"`
+	IngressAnnotationKeys []string `json:"ingress_annotation_keys"`
+}
+
+// Deletions are the names of services and env variables to delete
+type Deletions struct {
+	ServiceNames     []string                    `json:"service_names"`
+	Predeploy        []string                    `json:"predeploy"`
+	EnvVariableNames []string                    `json:"env_variable_names"`
+	EnvGroupNames    []string                    `json:"env_group_names"`
+	ServiceDeletions map[string]ServiceDeletions `json:"service_deletions"`
+}
+
 // UpdateAppRequest is the request object for the POST /apps/update endpoint
 type UpdateAppRequest struct {
 	// Name is the name of the app to update. If not specified, the name will be inferred from the porter yaml

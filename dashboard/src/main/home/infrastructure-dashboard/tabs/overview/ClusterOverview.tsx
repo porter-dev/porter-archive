@@ -6,6 +6,7 @@ import Spacer from "components/porter/Spacer";
 import { useClusterContext } from "../../ClusterContextProvider";
 import ClusterSaveButton from "../../ClusterSaveButton";
 import { type ButtonStatus } from "../../ClusterTabs";
+import AKSClusterOverview from "./AKSClusterOverview";
 import EKSClusterOverview from "./EKSClusterOverview";
 
 type Props = {
@@ -28,7 +29,7 @@ const ClusterOverview: React.FC<Props> = ({
           return <div>GCP</div>;
         })
         .with({ kind: "AKS" }, () => {
-          return <div>Azure</div>;
+          return <AKSClusterOverview />;
         })
         .exhaustive()}
       <ClusterSaveButton

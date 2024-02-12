@@ -125,7 +125,7 @@ const Error = styled.div`
   }
 `;
 
-const SelectWrapper = styled.div<{ width: string }>`
+const SelectWrapper = styled.div<{ width?: string }>`
   position: relative;
   padding-left: 10px;
   padding-right: 28px;

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
@@ -8,16 +8,15 @@ import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
 
-import { Context } from "shared/Context";
 import { readableDate } from "shared/string_utils";
 import editIcon from "assets/edit-button.svg";
 
-import ClusterSettingsModal from "../cluster-dashboard/dashboard/ClusterSettingsModal";
 import { useClusterContext } from "./ClusterContextProvider";
+import RenameClusterVanityNameModal from "./modals/RenameClusterVanityNameModal";
 
 const ClusterHeader: React.FC = () => {
   const { cluster } = useClusterContext();
-  const { setCurrentModal } = useContext(Context);
+  const [showRenameModal, setShowRenameModal] = useState(false);
 
   return (
     <>
@@ -30,7 +29,7 @@ const ClusterHeader: React.FC = () => {
             <Spacer inline x={1} />
             <EditIconStyle
               onClick={() => {
-                setCurrentModal?.(<ClusterSettingsModal />);
+                setShowRenameModal(true);
               }}
             >
               <img src={editIcon} />
@@ -58,6 +57,13 @@ const ClusterHeader: React.FC = () => {
         </div>
         <Spacer y={0.5} />
       </CreatedAtContainer>
+      {showRenameModal && (
+        <RenameClusterVanityNameModal
+          onClose={() => {
+            setShowRenameModal(false);
+          }}
+        />
+      )}
     </>
   );
 };

@@ -26,7 +26,7 @@ const EKSClusterOverview: React.FC<Props> = ({ config }) => {
   return (
     <>
       <Container style={{ width: "300px" }}>
-        <Text size={16}>Cluster Region</Text>
+        <Text size={16}>Cluster region</Text>
         <Spacer y={0.5} />
         <Select
           options={[{ value: config.region, label: config.region }]}

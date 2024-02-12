@@ -13,6 +13,7 @@ export type ClientCloudProvider = {
   icon: string;
   regions: ClientRegion[];
   machineTypes: MachineType[];
+  baseCost: number;
 };
 const awsRegionValidator = z.enum([
   "us-east-1",

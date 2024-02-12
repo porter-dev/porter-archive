@@ -1,4 +1,5 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useCallback, useContext } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
@@ -9,12 +10,14 @@ import Text from "components/porter/Text";
 import { type ClientCluster } from "lib/clusters/types";
 import { useCluster } from "lib/hooks/useCluster";
 
+import api from "shared/api";
 import { Context } from "shared/Context";
 import notFound from "assets/not-found.png";
 
 type ClusterContextType = {
   cluster: ClientCluster;
   projectId: number;
+  updateClusterVanityName: (name: string) => void;
 };
 
 const ClusterContext = createContext<ClusterContextType | null>(null);
@@ -45,6 +48,25 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
     clusterId,
     refetchInterval: 3000,
   });
+  const queryClient = useQueryClient();
+  const updateClusterVanityName = useCallback(
+    async (name: string) => {
+      if (!paramsExist) {
+        return;
+      }
+      await api.renameCluster(
+        "<token",
+        { name },
+        {
+          project_id: currentProject.id,
+          cluster_id: clusterId,
+        }
+      );
+
+      await queryClient.invalidateQueries(["getCluster"]);
+    },
+    [paramsExist, clusterId]
+  );
 
   if (isLoading || !paramsExist) {
     return <Loading />;
@@ -85,6 +107,7 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
       value={{
         cluster,
         projectId: currentProject.id,
+        updateClusterVanityName,
       }}
     >
       {children}

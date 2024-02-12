@@ -827,6 +827,7 @@ export const CloudProviderAWS: ClientCloudProvider = {
   icon: aws,
   regions: SUPPORTED_AWS_REGIONS,
   machineTypes: SUPPORTED_AWS_MACHINE_TYPES,
+  baseCost: 224.58,
 };
 export const CloudProviderGCP: ClientCloudProvider = {
   name: "GCP",
@@ -834,6 +835,7 @@ export const CloudProviderGCP: ClientCloudProvider = {
   icon: gcp,
   regions: SUPPORTED_GCP_REGIONS,
   machineTypes: SUPPORTED_GCP_MACHINE_TYPES,
+  baseCost: 253.0,
 };
 export const CloudProviderAzure: ClientCloudProvider = {
   name: "Azure",
@@ -841,6 +843,7 @@ export const CloudProviderAzure: ClientCloudProvider = {
   icon: azure,
   regions: SUPPORTED_AZURE_REGIONS,
   machineTypes: SUPPORTED_AZURE_MACHINE_TYPES,
+  baseCost: 164.69,
 };
 export const CloudProviderLocal: ClientCloudProvider = {
   name: "Local",
@@ -848,6 +851,7 @@ export const CloudProviderLocal: ClientCloudProvider = {
   icon: infra,
   regions: [],
   machineTypes: [],
+  baseCost: 0,
 };
 export const SUPPORTED_CLOUD_PROVIDERS = [
   CloudProviderAWS,

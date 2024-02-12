@@ -53,6 +53,7 @@ import EnvDashboard from "./env-dashboard/EnvDashboard";
 import ExpandedEnv from "./env-dashboard/ExpandedEnv";
 import ClusterDashboard from "./infrastructure-dashboard/ClusterDashboard";
 import ClusterView from "./infrastructure-dashboard/ClusterView";
+import CreateClusterForm from "./infrastructure-dashboard/forms/CreateClusterForm";
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 import ModalHandler from "./ModalHandler";
@@ -526,6 +527,9 @@ const Home: React.FC<Props> = (props) => {
                     return <Onboarding />;
                   }}
                 />
+                <Route path="/infrastructure/new">
+                  <CreateClusterForm />
+                </Route>
                 <Route path="/infrastructure/:clusterId/:tab">
                   <ClusterView />
                 </Route>

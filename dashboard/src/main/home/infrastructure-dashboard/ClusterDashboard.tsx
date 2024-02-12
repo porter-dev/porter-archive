@@ -209,7 +209,11 @@ const ClusterDashboard: React.FC = () => {
                 </Container>
                 <Spacer y={0.5} />
                 <Container row>
-                  <Container>
+                  <Container row>
+                    <Text size={13} color="#ffffff44">
+                      {cluster.contract.config.cluster.config.region}
+                    </Text>
+                    <Spacer inline x={1} />
                     <SmallIcon opacity="0.4" src={time} />
                     <Text size={13} color="#ffffff44">
                       {readableDate(cluster.contract.updated_at)}

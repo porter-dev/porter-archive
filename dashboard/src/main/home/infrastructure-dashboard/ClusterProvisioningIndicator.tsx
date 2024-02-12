@@ -19,7 +19,7 @@ const ClusterProvisioningIndicator: React.FC = () => {
       stepsCompleted += 1;
     }
     const percentCompleted = (stepsCompleted / 4) * 100.0;
-    const title = `${cluster.cloud_provider.displayName} provisioning status`;
+    const title = `${cluster.cloud_provider.name} provisioning status`;
     return { percentCompleted, title };
   }, [cluster]);
 

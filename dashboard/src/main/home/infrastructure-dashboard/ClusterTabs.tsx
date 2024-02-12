@@ -60,7 +60,12 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
             <Spacer y={1} />
           </>
         )} */}
-      {cluster.contract.condition === "" && <ClusterProvisioningIndicator />}
+      {cluster.contract.condition === "" && (
+        <>
+          <ClusterProvisioningIndicator />
+          <Spacer y={1} />
+        </>
+      )}
       <TabSelector
         options={tabs}
         currentTab={currentTab}

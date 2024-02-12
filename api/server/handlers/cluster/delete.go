@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/repository"
 )
 
 type ClusterDeleteHandler struct {
@@ -36,7 +37,7 @@ func (c *ClusterDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	if cluster.ProvisionedBy == "CAPI" {
 		if c.Config().EnableCAPIProvisioner {
-			revisions, err := c.Config().Repo.APIContractRevisioner().List(ctx, cluster.ProjectID, cluster.ID)
+			revisions, err := c.Config().Repo.APIContractRevisioner().List(ctx, cluster.ProjectID, repository.WithClusterID(cluster.ID))
 			if err != nil {
 				e := fmt.Errorf("error listing revisions for cluster %d: %w", cluster.ID, err)
 				c.HandleAPIError(w, r, apierrors.NewErrInternal(e))

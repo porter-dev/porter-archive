@@ -22,6 +22,7 @@ export const ActionBanner: React.FC<ActionBannerProps> = ({
   const history = useHistory();
   const {
     profile,
+    vendor,
     updateInProgress,
     latestContractDB,
     latestContractProto,
@@ -86,6 +87,16 @@ export const ActionBanner: React.FC<ActionBannerProps> = ({
     latestContractProto?.toJsonString(),
     complianceEnabled,
   ]);
+
+  const isHipaaForOneleet = profile === "hipaa" && vendor === "oneleet";
+
+  if (isHipaaForOneleet) {
+    return (
+      <Banner type="warning">
+        HIPAA controls are not yet available for OneLeet
+      </Banner>
+    );
+  }
 
   if (isInfraPending) {
     return (

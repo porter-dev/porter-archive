@@ -1529,7 +1529,7 @@ const createContract = baseApi<Contract, { project_id: number }>(
   }
 );
 
-const getContracts = baseApi<{ cluster_id?: number }, { project_id: number }>(
+const getContracts = baseApi<{ cluster_id?: number, latest?: boolean }, { project_id: number }>(
   "GET",
   ({ project_id }) => {
     return `/api/projects/${project_id}/contracts`;
@@ -1551,7 +1551,7 @@ const getClusterState = baseApi<{}, { project_id: number; cluster_id: number }>(
 );
 
 const getComplianceChecks = baseApi<
-  { vendor: "vanta"; profile: "soc2" | "hipaa" },
+  { vendor: "vanta" | "oneleet"; profile: "soc2" | "hipaa" },
   { projectId: number; clusterId: number }
 >("GET", ({ projectId, clusterId }) => {
   return `/api/projects/${projectId}/clusters/${clusterId}/compliance/checks`;

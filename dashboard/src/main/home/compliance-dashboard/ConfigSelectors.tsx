@@ -7,6 +7,7 @@ import Spacer from "components/porter/Spacer";
 
 import aws from "assets/aws.png";
 import framework from "assets/framework.svg";
+import oneleet from "assets/oneleet.svg";
 import provider from "assets/provider.svg";
 import typeSvg from "assets/type.svg";
 import vanta from "assets/vanta.svg";
@@ -14,7 +15,7 @@ import vanta from "assets/vanta.svg";
 import { useCompliance } from "./ComplianceContext";
 
 export const ConfigSelectors: React.FC = () => {
-  const { profile, setProfile } = useCompliance();
+  const { profile, setProfile, vendor, setVendor } = useCompliance();
   return (
     <Container row>
       <Select
@@ -25,7 +26,6 @@ export const ConfigSelectors: React.FC = () => {
             label: "HIPAA",
           },
         ]}
-        width="200px"
         value={profile}
         setValue={(value) => {
           if (value === "soc2") {
@@ -58,7 +58,6 @@ export const ConfigSelectors: React.FC = () => {
             disabled: true,
           },
         ]}
-        width="180px"
         value={"aws"}
         setValue={() => {}}
         prefix={
@@ -74,19 +73,25 @@ export const ConfigSelectors: React.FC = () => {
         options={[
           { value: "vanta", label: "Vanta", icon: vanta },
           {
+            value: "oneleet",
+            label: "Oneleet",
+            icon: oneleet,
+          },
+          {
             value: "drata",
             label: "Drata (coming soon)",
             disabled: true,
           },
-          {
-            value: "oneleet",
-            label: "Oneleet (coming soon)",
-            disabled: true,
-          },
         ]}
-        width="200px"
-        value={"vanta"}
-        setValue={() => {}}
+        value={vendor}
+        setValue={(value) => {
+          if (value === "vanta") {
+            setVendor("vanta");
+            return;
+          }
+
+          setVendor("oneleet");
+        }}
         prefix={
           <Container row>
             <Image src={provider} size={15} opacity={0.6} />

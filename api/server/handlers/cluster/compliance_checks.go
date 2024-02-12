@@ -63,6 +63,8 @@ func (c *ListComplianceChecksHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		switch request.Vendor {
 		case compliance.Vendor_Vanta:
 			vendor = porterv1.EnumComplianceVendor_ENUM_COMPLIANCE_VENDOR_VANTA
+		case compliance.Vendor_OneLeet:
+			vendor = porterv1.EnumComplianceVendor_ENUM_COMPLIANCE_VENDOR_ONE_LEET
 		default:
 			err := telemetry.Error(ctx, span, nil, "invalid vendor")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))

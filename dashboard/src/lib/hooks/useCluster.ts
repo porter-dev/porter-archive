@@ -135,7 +135,9 @@ export const useLatestClusterContract = ({
 
       const res = await api.getContracts(
         "<token>",
-        {},
+        {
+          latest: true,
+        },
         { project_id: currentProject.id }
       );
 

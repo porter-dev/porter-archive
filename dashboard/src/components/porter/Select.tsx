@@ -4,7 +4,6 @@ import styled from "styled-components";
 import arrow from "assets/arrow-down.svg";
 
 import Container from "./Container";
-import Spacer from "./Spacer";
 
 type Props = {
   options: Array<{

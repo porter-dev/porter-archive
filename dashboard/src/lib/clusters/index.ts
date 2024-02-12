@@ -1,4 +1,5 @@
 import {
+  AksSkuTier,
   Cluster,
   EnumCloudProvider,
   GKENodePoolType,
@@ -26,7 +27,6 @@ export function updateExistingClusterContract(
             case: "eksKind",
             value: {
               ...existingContract.kindValues.value,
-              region: cluster.config.region,
               nodeGroups: cluster.config.nodeGroups.map((ng) => {
                 return {
                   instanceType: ng.instanceType,
@@ -112,6 +112,10 @@ export function updateExistingClusterContract(
                     .otherwise(() => NodePoolType.UNSPECIFIED),
                 };
               }),
+              skuTier: match(cluster.config.skuTier)
+                .with("FREE", () => AksSkuTier.FREE)
+                .with("STANDARD", () => AksSkuTier.STANDARD)
+                .otherwise(() => AksSkuTier.UNSPECIFIED),
             },
           },
         })
@@ -156,6 +160,7 @@ export function clientClusterContractFromProto(
                 .otherwise(() => "UNKNOWN" as const),
             };
           }),
+          cidrRange: value.network?.vpcCidr ?? "", // network will always be provided
         }))
         .with({ case: "gkeKind" }, ({ value }) => ({
           kind: "GKE" as const,
@@ -191,6 +196,7 @@ export function clientClusterContractFromProto(
                 .otherwise(() => "UNKNOWN" as const),
             };
           }),
+          cidrRange: value.network?.cidrRange ?? "", // network will always be provided
         }))
         .with({ case: "aksKind" }, ({ value }) => ({
           kind: "AKS" as const,
@@ -211,6 +217,11 @@ export function clientClusterContractFromProto(
                 .otherwise(() => "UNKNOWN" as const),
             };
           }),
+          skuTier: match(value.skuTier)
+            .with(AksSkuTier.FREE, () => "FREE" as const)
+            .with(AksSkuTier.STANDARD, () => "STANDARD" as const)
+            .otherwise(() => "UNKNOWN" as const),
+          cidrRange: value.cidrRange,
         }))
         .exhaustive(),
     },

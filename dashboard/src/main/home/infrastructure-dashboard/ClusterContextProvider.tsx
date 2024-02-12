@@ -13,7 +13,7 @@ import {
   type ClientCluster,
   type ClientClusterContract,
 } from "lib/clusters/types";
-import { useCluster, useLatestClusterContract } from "lib/hooks/useCluster";
+import { useCluster } from "lib/hooks/useCluster";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -24,6 +24,7 @@ type ClusterContextType = {
   projectId: number;
   updateClusterVanityName: (name: string) => void;
   updateCluster: (clientContract: ClientClusterContract) => Promise<void>;
+  deleteCluster: () => Promise<void>;
 };
 
 const ClusterContext = createContext<ClusterContextType | null>(null);
@@ -52,14 +53,8 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
     clusterId,
     refetchInterval: 3000,
   });
-  const { contractProto: latestContract } = useLatestClusterContract({
-    clusterId,
-  });
   const paramsExist =
-    !!clusterId &&
-    !!currentProject &&
-    currentProject.id !== -1 &&
-    latestContract;
+    !!clusterId && !!currentProject && currentProject.id !== -1;
 
   const queryClient = useQueryClient();
   const updateClusterVanityName = useCallback(
@@ -82,7 +77,16 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
   );
   const updateCluster = useCallback(
     async (clientContract: ClientClusterContract) => {
-      if (!paramsExist || !latestContract?.cluster) {
+      if (!paramsExist || !cluster?.contract) {
+        return;
+      }
+      const latestContract = Contract.fromJsonString(
+        atob(cluster.contract.base64_contract),
+        {
+          ignoreUnknownFields: true,
+        }
+      );
+      if (!latestContract.cluster) {
         return;
       }
       const updatedContract = new Contract({
@@ -96,9 +100,25 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
       await api.createContract("<token>", updatedContract, {
         project_id: currentProject.id,
       });
+
+      await queryClient.invalidateQueries(["getCluster"]);
     },
-    [paramsExist, clusterId, currentProject?.id]
+    [paramsExist, clusterId, currentProject?.id, cluster?.contract]
   );
+  const deleteCluster = useCallback(async () => {
+    if (!paramsExist) {
+      return;
+    }
+    await api.deleteCluster(
+      "<token",
+      {},
+      {
+        project_id: currentProject.id,
+        cluster_id: clusterId,
+      }
+    );
+    await queryClient.invalidateQueries(["getClusters"]);
+  }, [paramsExist, clusterId, currentProject?.id]);
 
   if (isLoading || !paramsExist) {
     return <Loading />;
@@ -141,6 +161,7 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
         projectId: currentProject.id,
         updateClusterVanityName,
         updateCluster,
+        deleteCluster,
       }}
     >
       {children}

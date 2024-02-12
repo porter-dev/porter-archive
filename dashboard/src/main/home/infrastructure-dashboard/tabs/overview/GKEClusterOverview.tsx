@@ -11,7 +11,7 @@ import { type ClientClusterContract } from "lib/clusters/types";
 
 import { useClusterContext } from "../../ClusterContextProvider";
 
-const EKSClusterOverview: React.FC = () => {
+const GKEClusterOverview: React.FC = () => {
   const { cluster } = useClusterContext();
   const { control, watch } = useFormContext<ClientClusterContract>();
   const { fields: nodeGroups } = useFieldArray({
@@ -41,7 +41,7 @@ const EKSClusterOverview: React.FC = () => {
           options={[{ value: region, label: region }]}
           disabled={true}
           value={region}
-          label="📍 AWS region"
+          label="📍 GCP location"
         />
         <Spacer y={1} />
       </Container>
@@ -88,6 +88,7 @@ const EKSClusterOverview: React.FC = () => {
                         });
                       }}
                       label="Machine type"
+                      disabled={true} // remove this when we support zero-downtime upgrades
                     />
                     <Spacer y={1} />
                     <Input
@@ -130,7 +131,7 @@ const EKSClusterOverview: React.FC = () => {
   );
 };
 
-export default EKSClusterOverview;
+export default GKEClusterOverview;
 
 const StyledForm = styled.div`
   display: flex;

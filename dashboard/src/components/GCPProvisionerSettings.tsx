@@ -112,6 +112,7 @@ type Props = RouteComponentProps & {
   credentialId: string;
   clusterId?: number;
   gpuModal?: boolean;
+  closeModal?: () => void;
 };
 
 const VALID_CIDR_RANGE_PATTERN =
@@ -485,6 +486,9 @@ const GCPProvisionerSettings: React.FC<Props> = (props) => {
         currentProject?.capi_provisioner_enabled &&
         currentProject?.simplified_view_enabled
       ) {
+        if (props.closeModal) {
+          props.closeModal();
+        }
         if (data.cluster?.clusterId) {
           pushFiltered(props, `/infrastructure/${data.cluster.clusterId}`, []);
         } else {

@@ -350,6 +350,7 @@ const eksConfigValidator = z.object({
   clusterVersion: z.string(),
   region: z.string(),
   nodeGroups: eksNodeGroupValidator.array(),
+  cidrRange: z.string(),
 });
 const gkeConfigValidator = z.object({
   kind: z.literal("GKE"),
@@ -357,6 +358,7 @@ const gkeConfigValidator = z.object({
   clusterVersion: z.string(),
   region: z.string(),
   nodeGroups: gkeNodeGroupValidator.array(),
+  cidrRange: z.string(),
 });
 const aksConfigValidator = z.object({
   kind: z.literal("AKS"),
@@ -364,6 +366,8 @@ const aksConfigValidator = z.object({
   clusterVersion: z.string(),
   region: z.string(),
   nodeGroups: aksNodeGroupValidator.array(),
+  skuTier: z.enum(["UNKNOWN", "FREE", "STANDARD"]),
+  cidrRange: z.string(),
 });
 const clusterConfigValidator = z.discriminatedUnion("kind", [
   eksConfigValidator,

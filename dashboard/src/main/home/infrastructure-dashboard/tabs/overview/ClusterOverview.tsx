@@ -8,6 +8,7 @@ import ClusterSaveButton from "../../ClusterSaveButton";
 import { type ButtonStatus } from "../../ClusterTabs";
 import AKSClusterOverview from "./AKSClusterOverview";
 import EKSClusterOverview from "./EKSClusterOverview";
+import GKEClusterOverview from "./GKEClusterOverview";
 
 type Props = {
   updateButtonStatus: ButtonStatus;
@@ -26,7 +27,7 @@ const ClusterOverview: React.FC<Props> = ({
           return <EKSClusterOverview />;
         })
         .with({ kind: "GKE" }, () => {
-          return <div>GCP</div>;
+          return <GKEClusterOverview />;
         })
         .with({ kind: "AKS" }, () => {
           return <AKSClusterOverview />;

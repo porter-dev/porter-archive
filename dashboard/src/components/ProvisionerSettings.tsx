@@ -461,6 +461,9 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         } else {
           pushFiltered(props, "/infrastructure", []);
         }
+        if (props.closeModal) {
+          props.closeModal();
+        }
         return;
       }
 

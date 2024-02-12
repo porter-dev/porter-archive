@@ -11,6 +11,14 @@ import { type ClientClusterContract } from "lib/clusters/types";
 
 import { useClusterContext } from "../../ClusterContextProvider";
 
+const skuTierOptions = [
+  { value: "FREE", label: "Free" },
+  {
+    value: "STANDARD",
+    label: "Standard (for production workloads, +$73/month)",
+  },
+];
+
 const AKSClusterOverview: React.FC = () => {
   const { cluster } = useClusterContext();
   const { control, watch } = useFormContext<ClientClusterContract>();
@@ -19,6 +27,7 @@ const AKSClusterOverview: React.FC = () => {
     name: "cluster.config.nodeGroups",
   });
   const region = watch("cluster.config.region");
+  const cidrRange = watch("cluster.config.cidrRange");
   const displayableNodeGroups = useMemo(() => {
     const dng = nodeGroups.map((ng, idx) => {
       return {
@@ -41,6 +50,34 @@ const AKSClusterOverview: React.FC = () => {
           disabled={true}
           value={region}
           label="📍 Azure region"
+        />
+        <Spacer y={1} />
+      </Container>
+      <Container style={{ width: "300px" }}>
+        <Text size={16}>Cluster CIDR range</Text>
+        <Spacer y={0.5} />
+        <Select
+          options={[{ value: cidrRange, label: cidrRange }]}
+          disabled={true}
+          value={cidrRange}
+        />
+        <Spacer y={1} />
+      </Container>
+      <Container style={{ width: "300px" }}>
+        <Text size={16}>Azure Tier</Text>
+        <Spacer y={0.5} />
+        <Controller
+          name={`cluster.config.skuTier`}
+          control={control}
+          render={({ field: { value, onChange } }) => (
+            <Select
+              options={skuTierOptions}
+              value={value}
+              setValue={(newSkuTier: string) => {
+                onChange(newSkuTier);
+              }}
+            />
+          )}
         />
         <Spacer y={1} />
       </Container>

@@ -1,10 +1,9 @@
 import React from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
 import arrow from "assets/arrow-down.svg";
 
 import Container from "./Container";
-import Spacer from "./Spacer";
 
 type Props = {
   options: Array<{
@@ -35,7 +34,7 @@ const Select: React.FC<Props> = ({
   return (
     <div>
       {label && <Label color={labelColor}>{label}</Label>}
-      <SelectWrapper>
+      <SelectWrapper isDisabled={disabled ?? false}>
         {prefix && (
           <>
             <Prefix>{prefix}</Prefix>
@@ -53,7 +52,7 @@ const Select: React.FC<Props> = ({
           }
           return null;
         })}
-        <img src={arrow} />
+        {!disabled && <img src={arrow} />}
         <SelectLayer
           value={value}
           onChange={(e) => {
@@ -123,7 +122,7 @@ const Error = styled.div`
   }
 `;
 
-const SelectWrapper = styled.div`
+const SelectWrapper = styled.div<{ isDisabled: boolean }>`
   position: relative;
   padding-left: 10px;
   padding-right: 28px;
@@ -131,9 +130,6 @@ const SelectWrapper = styled.div`
   transition: all 0.2s;
   background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
-  :hover {
-    border: 1px solid #7a7b80;
-  }
   z-index: 0;
   display: flex;
   align-items: center;
@@ -141,8 +137,13 @@ const SelectWrapper = styled.div`
   font-size: 13px;
   overflow: hidden;
 
-  display: flex;
-  align-items: center;
+  ${(props) =>
+    props.isDisabled &&
+    css`
+      opacity: 0.7;
+      pointer-events: none;
+    `}
+
   > img {
     width: 8px;
     position: absolute;
@@ -150,10 +151,17 @@ const SelectWrapper = styled.div`
     top: calc(50% - 3px);
     z-index: -1;
   }
+
+  ${(props) =>
+    !props.isDisabled &&
+    css`
+      :hover {
+        border: 1px solid #7a7b80;
+      }
+    `}
 `;
 
 const SelectLayer = styled.select<{
-  disabled?: boolean;
   hasError: boolean;
 }>`
   outline: none;

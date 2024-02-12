@@ -7,6 +7,7 @@ import Loading from "components/Loading";
 // import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
+import Icon from "components/porter/Icon";
 import Image from "components/porter/Image";
 // import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
@@ -164,6 +165,7 @@ const ClusterDashboard: React.FC = () => {
                   <Container row spaced>
                     <Container row>
                       <Icon src={cluster.cloud_provider.icon} />
+                      <Spacer inline x={0.5} />
                       <Text size={14}>{cluster.vanity_name}</Text>
                     </Container>
                     <StatusDot
@@ -175,8 +177,11 @@ const ClusterDashboard: React.FC = () => {
                   </Container>
                   <Container row>
                     <Tag hoverable={false}>
-                      <Icon src={globe} height={"11px"} />
-                      {cluster.contract.config.cluster.config?.region}
+                      <Container row>
+                        <Icon src={globe} height={"14px"} />
+                        <Spacer inline x={0.5} />
+                        {cluster.contract.config.cluster.config?.region}
+                      </Container>
                     </Tag>
                   </Container>
                   <Container row>
@@ -254,11 +259,6 @@ const Row = styled(Link)<{ isAtBottom?: boolean }>`
 
 const List = styled.div`
   overflow: hidden;
-`;
-
-const Icon = styled.img`
-  height: 20px;
-  margin-right: 13px;
 `;
 
 const Block = styled.div`

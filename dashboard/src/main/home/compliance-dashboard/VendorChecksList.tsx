@@ -20,7 +20,8 @@ import { type VendorCheck } from "./types";
 type Filter = "all" | "passing" | "action-required" | "not-applicable";
 
 export const VendorChecksList: React.FC = () => {
-  const { profile, vendorChecks, latestContractProto } = useCompliance();
+  const { profile, vendor, vendorChecks, latestContractProto } =
+    useCompliance();
   const { showIntercomWithMessage } = useIntercom();
 
   const [statusFilter, setStatusFilter] = useState<Filter>("all");
@@ -213,20 +214,24 @@ export const VendorChecksList: React.FC = () => {
                 }}
                 additionalStyles=":hover { text-decoration: underline }"
                 onClick={() => {
-                  window.open(
-                    `https://app.vanta.com/tests/${check.vendor_check_id}`,
-                    "_blank"
-                  );
+                  if (vendor === "vanta") {
+                    window.open(
+                      `https://app.vanta.com/tests/${check.vendor_check_id}`,
+                      "_blank"
+                    );
+                  }
                 }}
               >
                 {check.check}
                 <Spacer inline x={0.5} />
-                <Image
-                  src={linkExternal}
-                  opacity={check.status === "not_applicable" ? 0.25 : 1}
-                  size={12}
-                  additionalStyles="margin-bottom: -2px"
-                />
+                {vendor === "vanta" && (
+                  <Image
+                    src={linkExternal}
+                    opacity={check.status === "not_applicable" ? 0.25 : 1}
+                    size={12}
+                    additionalStyles="margin-bottom: -2px"
+                  />
+                )}
               </Text>
             </Container>
             <Spacer y={1} />

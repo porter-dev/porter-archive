@@ -28,6 +28,7 @@ import {
 } from "./types";
 
 type ComplianceProfileType = "soc2" | "hipaa";
+type ComplianceVendorType = "vanta" | "oneleet";
 
 type ProjectComplianceContextType = {
   projectId: number;
@@ -41,6 +42,8 @@ type ProjectComplianceContextType = {
   updateInProgress: boolean;
   profile: ComplianceProfileType;
   setProfile: Dispatch<SetStateAction<ComplianceProfileType>>;
+  vendor: ComplianceVendorType;
+  setVendor: Dispatch<SetStateAction<ComplianceVendorType>>;
   updateContractWithProfile: () => Promise<void>;
 };
 
@@ -69,6 +72,7 @@ export const ProjectComplianceProvider: React.FC<
   const queryClient = useQueryClient();
   const [updateInProgress, setUpdateInProgress] = useState(false);
   const [profile, setProfile] = useState<ComplianceProfileType>("soc2");
+  const [vendor, setVendor] = useState<ComplianceVendorType>("vanta");
 
   const {
     contractDB: latestContractDB,
@@ -86,13 +90,14 @@ export const ProjectComplianceProvider: React.FC<
         clusterId,
         condition: latestContractDB?.condition ?? "",
         profile,
+        vendor,
         name: "getComplianceChecks",
       },
     ],
     async () => {
       const res = await api.getComplianceChecks(
         "<token>",
-        { vendor: "vanta", profile },
+        { vendor, profile },
         { projectId, clusterId }
       );
 
@@ -181,6 +186,8 @@ export const ProjectComplianceProvider: React.FC<
         updateInProgress,
         profile,
         setProfile,
+        vendor,
+        setVendor,
         updateContractWithProfile,
       }}
     >

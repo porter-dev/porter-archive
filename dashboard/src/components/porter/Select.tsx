@@ -20,6 +20,7 @@ type Props = {
   value?: string;
   setValue?: (value: string) => void;
   prefix?: React.ReactNode;
+  width?: string;
 };
 
 const Select: React.FC<Props> = ({
@@ -31,11 +32,12 @@ const Select: React.FC<Props> = ({
   value,
   setValue,
   prefix,
+  width,
 }) => {
   return (
     <div>
       {label && <Label color={labelColor}>{label}</Label>}
-      <SelectWrapper>
+      <SelectWrapper width={width}>
         {prefix && (
           <>
             <Prefix>{prefix}</Prefix>
@@ -123,7 +125,7 @@ const Error = styled.div`
   }
 `;
 
-const SelectWrapper = styled.div`
+const SelectWrapper = styled.div<{ width: string }>`
   position: relative;
   padding-left: 10px;
   padding-right: 28px;
@@ -140,7 +142,7 @@ const SelectWrapper = styled.div`
   border-radius: 5px;
   font-size: 13px;
   overflow: hidden;
-
+  width: ${(props) => props.width};
   display: flex;
   align-items: center;
   > img {

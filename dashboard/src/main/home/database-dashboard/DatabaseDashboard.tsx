@@ -29,6 +29,7 @@ import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
 import engine from "assets/computer-chip.svg";
 import databaseGrad from "assets/database-grad.svg";
+import database from "assets/database.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
@@ -203,8 +204,8 @@ const DatabaseDashboard: React.FC = () => {
             }}
             prefix={
               <Container row>
-                <Image src={databaseGrad} size={15} opacity={0.6} />
-                <Spacer inline x={0.5} />
+                <Image src={database} size={15} opacity={0.5} />
+                <Spacer inline width="25px" />
                 Type
               </Container>
             }
@@ -243,7 +244,7 @@ const DatabaseDashboard: React.FC = () => {
             prefix={
               <Container row>
                 <Image src={engine} size={15} opacity={0.6} />
-                <Spacer inline x={0.5} />
+                <Spacer inline width="22px" />
                 Engine
               </Container>
             }

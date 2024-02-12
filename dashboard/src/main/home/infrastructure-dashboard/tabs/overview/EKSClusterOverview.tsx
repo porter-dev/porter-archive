@@ -1,32 +1,35 @@
 import React, { useMemo } from "react";
-// import { useFormContext } from "react-hook-form";
+import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 
-import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Input from "components/porter/Input";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import {
-  // type ClientClusterContract,
-  type EKSClientClusterConfig,
-} from "lib/clusters/types";
+import { type ClientClusterContract } from "lib/clusters/types";
 
 import { useClusterContext } from "../../ClusterContextProvider";
 
-type Props = {
-  config: EKSClientClusterConfig;
-};
-const EKSClusterOverview: React.FC<Props> = ({ config }) => {
+const EKSClusterOverview: React.FC = () => {
   const { cluster } = useClusterContext();
-  // const { watch } = useFormContext<ClientClusterContract>();
+  const { control, watch } = useFormContext<ClientClusterContract>();
+  const { fields: nodeGroups } = useFieldArray({
+    control,
+    name: "cluster.config.nodeGroups",
+  });
+  const region = watch("cluster.config.region");
   const displayableNodeGroups = useMemo(() => {
-    return config.nodeGroups.filter(
-      (ng) =>
-        ng.nodeGroupType === "APPLICATION" || ng.nodeGroupType === "CUSTOM"
-    );
-  }, [config.nodeGroups]);
+    const dng = nodeGroups.map((ng, idx) => {
+      return {
+        nodeGroup: ng,
+        idx,
+        isIncluded:
+          ng.nodeGroupType === "APPLICATION" || ng.nodeGroupType === "CUSTOM",
+      };
+    });
+    return dng;
+  }, [nodeGroups]);
 
   return (
     <>
@@ -34,9 +37,9 @@ const EKSClusterOverview: React.FC<Props> = ({ config }) => {
         <Text size={16}>Cluster region</Text>
         <Spacer y={0.5} />
         <Select
-          options={[{ value: config.region, label: config.region }]}
+          options={[{ value: region, label: region }]}
           disabled={true}
-          value={config.region}
+          value={region}
           label="📍 AWS region"
         />
         <Spacer y={1} />
@@ -53,46 +56,65 @@ const EKSClusterOverview: React.FC<Props> = ({ config }) => {
       </Text>
       <Spacer y={0.5} />
       <NodeGroupContainer>
-        {displayableNodeGroups.map((ng, i) => (
-          <StyledForm key={i}>
-            <Select
-              options={cluster.cloud_provider.machineTypes.map((t) => ({
-                value: t.name,
-                label: t.displayName,
-              }))}
-              value={ng.instanceType}
-              setValue={() => ({})}
-              label="Machine type"
-            />
-            <Spacer y={1} />
-            <Input
-              width="100%"
-              type="number"
-              disabled={false}
-              value={ng.maxInstances.toString()}
-              setValue={() => ({})}
-              label="Maximum number of application nodes"
-              placeholder="ex: 1"
-            />
-            <Spacer y={1} />
-            <Input
-              width="100%"
-              type="number"
-              disabled={false}
-              value={ng.minInstances.toString()}
-              setValue={() => ({})}
-              label="Minimum number of application nodes. If set to 0, no applications will be deployed."
-              placeholder="ex: 1"
-            />
-          </StyledForm>
-        ))}
+        {displayableNodeGroups.map((ng) => {
+          return ng.isIncluded ? (
+            <StyledForm key={ng.nodeGroup.id}>
+              <Controller
+                name={`cluster.config.nodeGroups.${ng.idx}`}
+                control={control}
+                render={({ field: { value, onChange } }) => (
+                  <>
+                    <Select
+                      options={cluster.cloud_provider.machineTypes.map((t) => ({
+                        value: t.name,
+                        label: t.displayName,
+                      }))}
+                      value={value.instanceType}
+                      setValue={(newInstanceType: string) => {
+                        onChange({
+                          ...value,
+                          instanceType: newInstanceType,
+                        });
+                      }}
+                      label="Machine type"
+                    />
+                    <Spacer y={1} />
+                    <Input
+                      width="100%"
+                      type="number"
+                      disabled={false}
+                      value={value.maxInstances.toString()}
+                      setValue={(newMaxInstances: string) => {
+                        onChange({
+                          ...value,
+                          maxInstances: parseInt(newMaxInstances),
+                        });
+                      }}
+                      label="Maximum number of application nodes"
+                      placeholder="ex: 1"
+                    />
+                    <Spacer y={1} />
+                    <Input
+                      width="100%"
+                      type="number"
+                      disabled={false}
+                      value={value.minInstances.toString()}
+                      setValue={(newMinInstances: string) => {
+                        onChange({
+                          ...value,
+                          minInstances: parseInt(newMinInstances),
+                        });
+                      }}
+                      label="Minimum number of application nodes. If set to 0, no applications will be deployed."
+                      placeholder="ex: 1"
+                    />
+                  </>
+                )}
+              />
+            </StyledForm>
+          ) : null;
+        })}
       </NodeGroupContainer>
-      <Button
-        // disabled={isDisabled()}
-        disabled={false}
-      >
-        Update
-      </Button>
     </>
   );
 };

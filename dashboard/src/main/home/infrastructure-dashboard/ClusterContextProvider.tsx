@@ -23,7 +23,7 @@ type ClusterContextType = {
   cluster: ClientCluster;
   projectId: number;
   updateClusterVanityName: (name: string) => void;
-  updateCluster: (clientContract: ClientClusterContract) => void;
+  updateCluster: (clientContract: ClientClusterContract) => Promise<void>;
 };
 
 const ClusterContext = createContext<ClusterContextType | null>(null);

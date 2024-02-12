@@ -371,7 +371,7 @@ const clusterConfigValidator = z.discriminatedUnion("kind", [
   aksConfigValidator,
 ]);
 
-export const contractClusterValidator = z.object({
+const contractClusterValidator = z.object({
   projectId: z.number(),
   clusterId: z.number(),
   cloudProvider: cloudProviderValidator,

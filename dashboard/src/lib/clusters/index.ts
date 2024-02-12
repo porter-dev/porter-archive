@@ -34,7 +34,7 @@ export function updateExistingClusterContract(
                   maxInstances: ng.maxInstances,
                   nodeGroupType: match(ng.nodeGroupType)
                     .with("UNKNOWN", () => NodeGroupType.UNSPECIFIED)
-                    .with("SYSTEM", () => NodeGroupType.UNSPECIFIED)
+                    .with("SYSTEM", () => NodeGroupType.SYSTEM)
                     .with("MONITORING", () => NodeGroupType.MONITORING)
                     .with("APPLICATION", () => NodeGroupType.APPLICATION)
                     .with("CUSTOM", () => NodeGroupType.CUSTOM)
@@ -149,7 +149,7 @@ export function clientClusterContractFromProto(
               maxInstances: ng.maxInstances,
               nodeGroupType: match(ng.nodeGroupType)
                 .with(NodeGroupType.UNSPECIFIED, () => "UNKNOWN" as const)
-                .with(NodeGroupType.UNSPECIFIED, () => "SYSTEM" as const)
+                .with(NodeGroupType.SYSTEM, () => "SYSTEM" as const)
                 .with(NodeGroupType.MONITORING, () => "MONITORING" as const)
                 .with(NodeGroupType.APPLICATION, () => "APPLICATION" as const)
                 .with(NodeGroupType.CUSTOM, () => "CUSTOM" as const)

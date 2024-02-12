@@ -8,7 +8,16 @@ export const notificationConfigFormValidator = z.object({
     .object({
       status: z.string(),
     })
-    .array(),
+    .array()
+    .nullish()
+    .default([]),
+  types: z
+    .object({
+      type: z.string(),
+    })
+    .array()
+    .nullish()
+    .default([]),
 });
 export type NotificationConfigFormData = z.infer<
   typeof notificationConfigFormValidator
@@ -17,4 +26,5 @@ export type NotificationConfigFormData = z.infer<
 export const emptyNotificationConfig: NotificationConfigFormData = {
   mention: "",
   statuses: [],
+  types: [],
 };

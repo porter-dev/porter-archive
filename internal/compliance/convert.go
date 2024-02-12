@@ -59,6 +59,8 @@ type Vendor string
 const (
 	// Vendor_Vanta is use to indicate that the compliance results are based on checks from Vanta
 	Vendor_Vanta Vendor = "vanta"
+	// Vendor_OneLeet is use to indicate that the compliance results are based on checks from OneLeet
+	Vendor_OneLeet Vendor = "oneleet"
 )
 
 // Profile is used to indicate which compliance profile the compliance check results are from

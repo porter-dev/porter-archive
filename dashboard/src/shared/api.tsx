@@ -974,33 +974,6 @@ const getBranchHead = baseApi<
   }/${encodeURIComponent(pathParams.branch)}/head`;
 });
 
-const validatePorterApp = baseApi<
-  {
-    b64_app_proto: string;
-    deployment_target_id: string;
-    commit_sha: string;
-    deletions: {
-      service_names: string[];
-      predeploy: string[];
-      env_variable_names: string[];
-      env_group_names: string[];
-      service_deletions: Record<
-        string,
-        {
-          domain_names: string[];
-          ingress_annotation_keys: string[];
-        }
-      >;
-    };
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/validate`;
-});
-
 const createApp = baseApi<
   | {
       name: string;
@@ -1117,24 +1090,6 @@ const updateBuildSettings = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.porter_app_name}/build`;
-});
-
-const applyApp = baseApi<
-  {
-    deployment_target_id: string;
-    b64_app_proto?: string;
-    app_revision_id?: string;
-    force_build?: boolean;
-    variables?: Record<string, string>;
-    secrets?: Record<string, string>;
-    hard_env_update?: boolean;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/apply`;
 });
 
 const revertApp = baseApi<
@@ -1596,7 +1551,7 @@ const getClusterState = baseApi<{}, { project_id: number; cluster_id: number }>(
 );
 
 const getComplianceChecks = baseApi<
-  { vendor: "vanta"; profile: "soc2" | "hipaa" },
+  { vendor: "vanta" | "oneleet"; profile: "soc2" | "hipaa" },
   { projectId: number; clusterId: number }
 >("GET", ({ projectId, clusterId }) => {
   return `/api/projects/${projectId}/clusters/${clusterId}/compliance/checks`;
@@ -3593,13 +3548,11 @@ export default {
   getDefaultDeploymentTarget,
   deleteDeploymentTarget,
   getBranchHead,
-  validatePorterApp,
   createApp,
   createAppTemplate,
   updateApp,
   appRun,
   updateBuildSettings,
-  applyApp,
   revertApp,
   getAttachedEnvGroups,
   getLatestRevision,

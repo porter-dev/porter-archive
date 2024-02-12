@@ -116,28 +116,27 @@ func (cr APIContractRepository) Latest(ctx context.Context, projectID uint, filt
 		opt(&opts)
 	}
 
-	if opts.ClusterID == 0 {
-		queryString := `
+	queryString := `
 		SELECT DISTINCT ON (cluster_id) *
 		FROM api_contract_revisions
 		WHERE project_id = ?
 		ORDER BY cluster_id, created_at DESC
-	`
-		tx := cr.db.Raw(queryString, projectID).Scan(&confs)
-		if tx.Error != nil {
-			return nil, tx.Error
-		}
-	} else {
-		queryString := `
-		SELECT DISTINCT ON (cluster_id) *
-		FROM api_contract_revisions
-		WHERE project_id = ? AND cluster_id = ?
-		ORDER BY cluster_id, created_at DESC
-	`
-		tx := cr.db.Raw(queryString, projectID, opts.ClusterID).Scan(&confs)
-		if tx.Error != nil {
-			return nil, tx.Error
-		}
+    `
+	args := []any{projectID}
+
+	if opts.ClusterID != 0 {
+		queryString = `
+			SELECT DISTINCT ON (cluster_id) *
+			FROM api_contract_revisions
+			WHERE project_id = ?
+			ORDER BY cluster_id, created_at DESC
+    	`
+		args = append(args, opts.ClusterID)
+	}
+
+	tx := cr.db.Raw(queryString, args...).Scan(&confs)
+	if tx.Error != nil {
+		return nil, tx.Error
 	}
 
 	return confs, nil

@@ -281,6 +281,19 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       // Only refresh and set clusters on initial create
       // if (!props.clusterId) {
       setShouldRefreshClusters(true);
+
+      if (
+        currentProject?.capi_provisioner_enabled &&
+        currentProject?.simplified_view_enabled
+      ) {
+        if (data.cluster?.clusterId) {
+          pushFiltered(props, `/infrastructure/${data.cluster.clusterId}`, []);
+        } else {
+          pushFiltered(props, "/infrastructure", []);
+        }
+        return;
+      }
+
       api
         .getClusters("<token>", {}, { id: currentProject.id })
         .then(({ data }) => {

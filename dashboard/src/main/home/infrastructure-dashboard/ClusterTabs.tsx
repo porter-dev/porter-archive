@@ -153,7 +153,7 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
             .with("overview", () => (
               <ClusterOverview
                 updateButtonStatus={buttonStatus}
-                isUpdateDisabled={isSubmitting}
+                isUpdateDisabled={isSubmitting || isClusterUpdating}
               />
             ))
             .with("settings", () => <Settings />)

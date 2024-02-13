@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -9,7 +8,6 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
-	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -45,32 +43,32 @@ func (c *ClusterStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	defer span.End()
 
 	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
+	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 	req := connect.NewRequest(&porterv1.ClusterStatusRequest{
 		ProjectId: int64(cluster.ProjectID),
 		ClusterId: int64(cluster.ID),
 	})
+	resp := ClusterStatusResponse{
+		ProjectID: int(project.ID),
+		ClusterID: int(cluster.ID),
+	}
+
 	status, err := c.Config().ClusterControlPlaneClient.ClusterStatus(ctx, req)
 	if err != nil {
-		err := fmt.Errorf("unable to retrieve status for cluster: %w", err)
-		err = telemetry.Error(ctx, span, err, err.Error())
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		telemetry.Error(ctx, span, err, "error getting cluster status")
+		c.WriteResult(w, r, resp)
 		return
 	}
 	if status.Msg == nil {
-		err := fmt.Errorf("unable to parse status for cluster: %w", err)
-		err = telemetry.Error(ctx, span, err, err.Error())
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+		telemetry.Error(ctx, span, nil, "error getting cluster status")
+		c.WriteResult(w, r, resp)
 		return
 	}
 	statusResp := status.Msg
 
-	resp := ClusterStatusResponse{
-		ProjectID:             int(statusResp.ProjectId),
-		ClusterID:             int(statusResp.ClusterId),
-		Phase:                 statusResp.Phase,
-		IsInfrastructureReady: statusResp.InfrastructureStatus,
-		IsControlPlaneReady:   statusResp.ControlPlaneStatus,
-	}
+	resp.Phase = statusResp.Phase
+	resp.IsInfrastructureReady = statusResp.InfrastructureStatus
+	resp.IsControlPlaneReady = statusResp.ControlPlaneStatus
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "cluster-phase", Value: statusResp.Phase},

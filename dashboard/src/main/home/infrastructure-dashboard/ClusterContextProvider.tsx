@@ -53,6 +53,7 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
     clusterId,
     refetchInterval: 3000,
   });
+
   const paramsExist =
     !!clusterId && !!currentProject && currentProject.id !== -1;
 

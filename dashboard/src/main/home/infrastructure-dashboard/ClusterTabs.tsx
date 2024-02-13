@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import AnimateHeight from "react-animate-height";
@@ -41,6 +41,7 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
   const history = useHistory();
 
   const { cluster, updateCluster } = useClusterContext();
+
   const { showIntercomWithMessage } = useIntercom();
 
   const clusterForm = useForm<ClientClusterContract>({
@@ -52,7 +53,12 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
     handleSubmit,
     formState: { isDirty, isSubmitting, isSubmitSuccessful, errors },
     setError,
+    reset,
   } = clusterForm;
+
+  useEffect(() => {
+    reset(cluster.contract.config);
+  }, [cluster]);
 
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {

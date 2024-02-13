@@ -146,16 +146,15 @@ const ClusterDashboard: React.FC = () => {
         </PorterLink> */}
       </Container>
       <Spacer y={1} />
-
-      {filteredClusters.length === 0 ? (
+      {isLoading ? (
+        <Loading />
+      ) : filteredClusters.length === 0 ? (
         <Fieldset>
           <Container row>
             <PlaceholderIcon src={notFound} />
             <Text color="helper">No matching clusters were found.</Text>
           </Container>
         </Fieldset>
-      ) : isLoading ? (
-        <Loading offset="-150px" />
       ) : view === "grid" ? (
         <GridList>
           {filteredClusters.map((cluster: ClientCluster, i: number) => {

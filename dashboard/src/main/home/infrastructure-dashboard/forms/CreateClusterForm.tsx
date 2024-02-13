@@ -2,13 +2,16 @@ import React, { useContext, useState } from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
+import Loading from "components/Loading";
 import { type ClientCloudProvider } from "lib/clusters/types";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
 
 import CreateEKSClusterForm from "./aws/CreateEKSClusterForm";
+import CreateAKSClusterForm from "./azure/CreateAKSClusterForm";
 import CloudProviderSelect from "./CloudProviderSelect";
+import CreateGKEClusterForm from "./gcp/CreateGKEClusterForm";
 
 const CreateClusterForm: React.FC = () => {
   const { currentProject } = useContext(Context);
@@ -16,6 +19,9 @@ const CreateClusterForm: React.FC = () => {
     ClientCloudProvider | undefined
   >(undefined);
 
+  if (!currentProject || currentProject.id === -1) {
+    return <Loading />;
+  }
   return (
     <CreateClusterFormContainer>
       {match(selectedCloudProvider)
@@ -24,10 +30,26 @@ const CreateClusterForm: React.FC = () => {
             goBack={() => {
               setSelectedCloudProvider(undefined);
             }}
+            projectId={currentProject.id}
+            ackEnabled={currentProject.aws_ack_auth_enabled}
           />
         ))
-        .with({ name: "GCP" }, () => <div>hello</div>)
-        .with({ name: "Azure" }, () => <div>hello</div>)
+        .with({ name: "GCP" }, () => (
+          <CreateGKEClusterForm
+            goBack={() => {
+              setSelectedCloudProvider(undefined);
+            }}
+            projectId={currentProject.id}
+          />
+        ))
+        .with({ name: "Azure" }, () => (
+          <CreateAKSClusterForm
+            goBack={() => {
+              setSelectedCloudProvider(undefined);
+            }}
+            projectId={currentProject.id}
+          />
+        ))
         .otherwise(() => (
           <CloudProviderSelect
             onComplete={(provider: ClientCloudProvider) => {
@@ -51,4 +73,36 @@ export default CreateClusterForm;
 const CreateClusterFormContainer = styled.div`
   width: 100%;
   height: 100%;
+`;
+
+export const Img = styled.img`
+  height: 18px;
+  margin-right: 15px;
+`;
+
+export const BackButton = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 13px;
+  height: 35px;
+  padding: 5px 13px;
+  padding-right: 15px;
+  border: 1px solid #ffffff55;
+  border-radius: 100px;
+  width: ${(props: { width: string }) => props.width};
+  color: white;
+  background: #ffffff11;
+
+  :hover {
+    background: #ffffff22;
+  }
+
+  > i {
+    color: white;
+    font-size: 16px;
+    margin-right: 6px;
+    margin-left: -2px;
+  }
 `;

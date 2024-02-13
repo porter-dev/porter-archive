@@ -17,7 +17,7 @@ import { isAWSArnAccessible } from "lib/hooks/useCloudProvider";
 import api from "shared/api";
 
 import GrantAWSPermissionsHelpModal from "../../modals/help/GrantAWSPermissionsHelpModal";
-import { BackButton, Img } from "./CreateEKSClusterForm";
+import { BackButton, Img } from "../CreateClusterForm";
 
 type Props = {
   goBack: () => void;

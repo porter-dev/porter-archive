@@ -7,7 +7,7 @@ import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
-import { CloudProviderAWS } from "lib/clusters/constants";
+import { CloudProviderGCP } from "lib/clusters/constants";
 import { type ClientClusterContract } from "lib/clusters/types";
 
 import NodeGroups from "../../shared/NodeGroups";
@@ -17,7 +17,7 @@ type Props = {
   goBack: () => void;
 };
 
-const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
+const ConfigureGKECluster: React.FC<Props> = ({ goBack }) => {
   const [currentStep, _setCurrentStep] = useState<number>(1);
 
   const { control } = useFormContext<ClientClusterContract>();
@@ -30,7 +30,7 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
           Select cloud
         </BackButton>
         <Spacer x={1} inline />
-        <Img src={CloudProviderAWS.icon} />
+        <Img src={CloudProviderGCP.icon} />
         <Text size={16}>Configure EKS Cluster</Text>
       </Container>
       <Spacer y={1} />
@@ -48,7 +48,7 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
               render={({ field: { value, onChange } }) => (
                 <Container style={{ width: "300px" }}>
                   <Select
-                    options={CloudProviderAWS.regions.map((region) => ({
+                    options={CloudProviderGCP.regions.map((region) => ({
                       value: region.name,
                       label: region.displayName,
                     }))}
@@ -56,7 +56,7 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
                       onChange(selected);
                     }}
                     value={value}
-                    label="📍 AWS region"
+                    label="📍 Azure region"
                   />
                 </Container>
               )}
@@ -74,12 +74,12 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
               </a>
             </Text>
             <Spacer y={0.5} />
-            <NodeGroups availableMachineTypes={CloudProviderAWS.machineTypes} />
+            <NodeGroups availableMachineTypes={CloudProviderGCP.machineTypes} />
           </>,
           <>
             <Text size={16}>Provision cluster</Text>
             <Spacer y={0.5} />
-            <Button>Submit</Button>
+            <Button type="submit">Submit</Button>
           </>,
         ]}
       />
@@ -87,4 +87,4 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
   );
 };
 
-export default ConfigureEKSCluster;
+export default ConfigureGKECluster;

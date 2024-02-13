@@ -10,14 +10,6 @@ import { type ClientClusterContract } from "lib/clusters/types";
 
 import NodeGroups from "../../shared/NodeGroups";
 
-const skuTierOptions = [
-  { value: "FREE", label: "Free" },
-  {
-    value: "STANDARD",
-    label: "Standard (for production workloads, +$73/month)",
-  },
-];
-
 const AKSClusterOverview: React.FC = () => {
   const { control, watch } = useFormContext<ClientClusterContract>();
 
@@ -48,14 +40,17 @@ const AKSClusterOverview: React.FC = () => {
         <Spacer y={1} />
       </Container>
       <Container style={{ width: "300px" }}>
-        <Text size={16}>Azure Tier</Text>
+        <Text size={16}>Azure tier</Text>
         <Spacer y={0.5} />
         <Controller
           name={`cluster.config.skuTier`}
           control={control}
           render={({ field: { value, onChange } }) => (
             <Select
-              options={skuTierOptions}
+              options={CloudProviderAzure.config.skuTiers.map((tier) => ({
+                value: tier.name,
+                label: tier.displayName,
+              }))}
               value={value}
               setValue={(newSkuTier: string) => {
                 onChange(newSkuTier);

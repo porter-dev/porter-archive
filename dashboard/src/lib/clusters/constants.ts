@@ -820,6 +820,16 @@ const SUPPORTED_AZURE_MACHINE_TYPES: MachineType[] = [
     ],
   },
 ];
+const SUPPORTED_AZURE_SKU_TIERS = [
+  {
+    name: "FREE",
+    displayName: "Free",
+  },
+  {
+    name: "STANDARD",
+    displayName: "Standard (for production workloads, +$73/month)",
+  },
+];
 
 export const CloudProviderAWS: ClientCloudProvider = {
   name: "AWS",
@@ -828,6 +838,9 @@ export const CloudProviderAWS: ClientCloudProvider = {
   regions: SUPPORTED_AWS_REGIONS,
   machineTypes: SUPPORTED_AWS_MACHINE_TYPES,
   baseCost: 224.58,
+  config: {
+    kind: "AWS",
+  },
 };
 export const CloudProviderGCP: ClientCloudProvider = {
   name: "GCP",
@@ -836,14 +849,23 @@ export const CloudProviderGCP: ClientCloudProvider = {
   regions: SUPPORTED_GCP_REGIONS,
   machineTypes: SUPPORTED_GCP_MACHINE_TYPES,
   baseCost: 253.0,
+  config: {
+    kind: "GCP",
+  },
 };
-export const CloudProviderAzure: ClientCloudProvider = {
+export const CloudProviderAzure: ClientCloudProvider & {
+  config: { kind: "Azure" };
+} = {
   name: "Azure",
   displayName: "Microsoft Azure",
   icon: azure,
   regions: SUPPORTED_AZURE_REGIONS,
   machineTypes: SUPPORTED_AZURE_MACHINE_TYPES,
   baseCost: 164.69,
+  config: {
+    kind: "Azure",
+    skuTiers: SUPPORTED_AZURE_SKU_TIERS,
+  },
 };
 export const CloudProviderLocal: ClientCloudProvider = {
   name: "Local",
@@ -852,6 +874,9 @@ export const CloudProviderLocal: ClientCloudProvider = {
   regions: [],
   machineTypes: [],
   baseCost: 0,
+  config: {
+    kind: "Local",
+  },
 };
 export const SUPPORTED_CLOUD_PROVIDERS = [
   CloudProviderAWS,

@@ -8,28 +8,24 @@ import {
   type ClientClusterContract,
 } from "lib/clusters/types";
 
-import ConfigureEKSCluster from "./ConfigureEKSCluster";
-import GrantAWSPermissions from "./GrantAWSPermissions";
+import ConfigureAKSCluster from "./ConfigureAKSCluster";
+import GrantAzurePermissions from "./GrantAzurePermissions";
 
 type Props = {
   goBack: () => void;
   projectId: number;
-  ackEnabled: boolean;
 };
-const CreateEKSClusterForm: React.FC<Props> = ({
-  goBack,
-  projectId,
-  ackEnabled,
-}) => {
+const CreateAKSClusterForm: React.FC<Props> = ({ goBack, projectId }) => {
   const [step, setStep] = useState<"permissions" | "cluster">("permissions");
+
   const clusterForm = useForm<ClientClusterContract>({
     reValidateMode: "onSubmit",
     resolver: zodResolver(clusterContractValidator),
     defaultValues: {
       cluster: {
-        cloudProvider: "AWS",
+        cloudProvider: "Azure",
         config: {
-          kind: "EKS",
+          kind: "AKS",
           region: "us-east-1",
           nodeGroups: [
             {
@@ -50,7 +46,7 @@ const CreateEKSClusterForm: React.FC<Props> = ({
       <form>
         {match(step)
           .with("permissions", () => (
-            <GrantAWSPermissions
+            <GrantAzurePermissions
               goBack={goBack}
               proceed={({
                 cloudProviderCredentialIdentifier,
@@ -64,11 +60,10 @@ const CreateEKSClusterForm: React.FC<Props> = ({
                 setStep("cluster");
               }}
               projectId={projectId}
-              ackEnabled={ackEnabled}
             />
           ))
           .with("cluster", () => (
-            <ConfigureEKSCluster
+            <ConfigureAKSCluster
               goBack={() => {
                 setStep("permissions");
                 setValue("cluster.cloudProviderCredentialsId", "");
@@ -81,4 +76,4 @@ const CreateEKSClusterForm: React.FC<Props> = ({
   );
 };
 
-export default CreateEKSClusterForm;
+export default CreateAKSClusterForm;

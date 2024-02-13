@@ -14,6 +14,21 @@ export type ClientCloudProvider = {
   regions: ClientRegion[];
   machineTypes: MachineType[];
   baseCost: number;
+  // catch all for cloud-specific settings, may refactor this later
+  config:
+    | {
+        kind: "Azure";
+        skuTiers: AzureSKUTier[];
+      }
+    | {
+        kind: "AWS";
+      }
+    | {
+        kind: "GCP";
+      }
+    | {
+        kind: "Local";
+      };
 };
 const awsRegionValidator = z.enum([
   "us-east-1",
@@ -197,6 +212,10 @@ const azureMachineTypeValidator = z.enum([
   "Standard_D8s_v3",
 ]);
 type AzureMachineType = z.infer<typeof azureMachineTypeValidator>;
+type AzureSKUTier = {
+  name: string;
+  displayName: string;
+};
 export type MachineType = {
   name: AWSMachineType | GCPMachineType | AzureMachineType;
   displayName: string;

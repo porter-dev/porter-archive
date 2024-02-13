@@ -8,29 +8,26 @@ import {
   type ClientClusterContract,
 } from "lib/clusters/types";
 
-import ConfigureEKSCluster from "./ConfigureEKSCluster";
-import GrantAWSPermissions from "./GrantAWSPermissions";
+import ConfigureGKECluster from "./ConfigureGKECluster";
+import GrantGCPPermissions from "./GrantGCPPermissions";
 
 type Props = {
   goBack: () => void;
   projectId: number;
-  ackEnabled: boolean;
 };
-const CreateEKSClusterForm: React.FC<Props> = ({
-  goBack,
-  projectId,
-  ackEnabled,
-}) => {
+
+const CreateGKEClusterForm: React.FC<Props> = ({ goBack, projectId }) => {
   const [step, setStep] = useState<"permissions" | "cluster">("permissions");
+
   const clusterForm = useForm<ClientClusterContract>({
     reValidateMode: "onSubmit",
     resolver: zodResolver(clusterContractValidator),
     defaultValues: {
       cluster: {
-        cloudProvider: "AWS",
+        cloudProvider: "GCP",
         config: {
-          kind: "EKS",
-          region: "us-east-1",
+          kind: "GKE",
+          region: "us-east1",
           nodeGroups: [
             {
               nodeGroupType: "APPLICATION",
@@ -50,7 +47,7 @@ const CreateEKSClusterForm: React.FC<Props> = ({
       <form>
         {match(step)
           .with("permissions", () => (
-            <GrantAWSPermissions
+            <GrantGCPPermissions
               goBack={goBack}
               proceed={({
                 cloudProviderCredentialIdentifier,
@@ -64,11 +61,10 @@ const CreateEKSClusterForm: React.FC<Props> = ({
                 setStep("cluster");
               }}
               projectId={projectId}
-              ackEnabled={ackEnabled}
             />
           ))
           .with("cluster", () => (
-            <ConfigureEKSCluster
+            <ConfigureGKECluster
               goBack={() => {
                 setStep("permissions");
                 setValue("cluster.cloudProviderCredentialsId", "");
@@ -81,4 +77,4 @@ const CreateEKSClusterForm: React.FC<Props> = ({
   );
 };
 
-export default CreateEKSClusterForm;
+export default CreateGKEClusterForm;

@@ -62,7 +62,6 @@ import Sidebar from "./sidebar/Sidebar";
 import ExpandedEnv from "./env-dashboard/ExpandedEnv";
 import EnvDashboard from "./env-dashboard/EnvDashboard";
 
-
 // Guarded components
 const GuardedProjectSettings = fakeGuardedRoute("settings", "", [
   "get",

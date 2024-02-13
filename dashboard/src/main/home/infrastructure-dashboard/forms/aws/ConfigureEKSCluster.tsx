@@ -1,9 +1,8 @@
-import React, { useMemo, useState } from "react";
-import { Controller, useFieldArray, useFormContext } from "react-hook-form";
+import React, { useState } from "react";
+import { Controller, useFormContext } from "react-hook-form";
 
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
-import Input from "components/porter/Input";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -11,6 +10,7 @@ import VerticalSteps from "components/porter/VerticalSteps";
 import { CloudProviderAWS } from "lib/clusters/constants";
 import { type ClientClusterContract } from "lib/clusters/types";
 
+import NodeGroups from "../../shared/NodeGroups";
 import { BackButton, Img } from "./CreateEKSClusterForm";
 
 type Props = {
@@ -21,22 +21,6 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
   const [currentStep, _setCurrentStep] = useState<number>(1);
 
   const { control } = useFormContext<ClientClusterContract>();
-  const { fields: nodeGroups } = useFieldArray({
-    control,
-    name: "cluster.config.nodeGroups",
-  });
-
-  const displayableNodeGroups = useMemo(() => {
-    const dng = nodeGroups.map((ng, idx) => {
-      return {
-        nodeGroup: ng,
-        idx,
-        isIncluded:
-          ng.nodeGroupType === "APPLICATION" || ng.nodeGroupType === "CUSTOM",
-      };
-    });
-    return dng;
-  }, [nodeGroups]);
 
   return (
     <div>
@@ -90,64 +74,7 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
               </a>
             </Text>
             <Spacer y={0.5} />
-            <Container style={{ width: "300px" }}>
-              {displayableNodeGroups.map((ng) => {
-                return ng.isIncluded ? (
-                  <Controller
-                    name={`cluster.config.nodeGroups.${ng.idx}`}
-                    control={control}
-                    render={({ field: { value, onChange } }) => (
-                      <>
-                        <Select
-                          options={CloudProviderAWS.machineTypes.map((t) => ({
-                            value: t.name,
-                            label: t.displayName,
-                          }))}
-                          value={value.instanceType}
-                          setValue={(newInstanceType: string) => {
-                            onChange({
-                              ...value,
-                              instanceType: newInstanceType,
-                            });
-                          }}
-                          label="Machine type"
-                        />
-                        <Spacer y={1} />
-                        <Input
-                          width="100%"
-                          type="number"
-                          disabled={false}
-                          value={value.maxInstances.toString()}
-                          setValue={(newMaxInstances: string) => {
-                            onChange({
-                              ...value,
-                              maxInstances: parseInt(newMaxInstances),
-                            });
-                          }}
-                          label="Maximum number of application nodes"
-                          placeholder="ex: 1"
-                        />
-                        <Spacer y={1} />
-                        <Input
-                          width="100%"
-                          type="number"
-                          disabled={false}
-                          value={value.minInstances.toString()}
-                          setValue={(newMinInstances: string) => {
-                            onChange({
-                              ...value,
-                              minInstances: parseInt(newMinInstances),
-                            });
-                          }}
-                          label="Minimum number of application nodes. If set to 0, no applications will be deployed."
-                          placeholder="ex: 1"
-                        />
-                      </>
-                    )}
-                  />
-                ) : null;
-              })}
-            </Container>
+            <NodeGroups availableMachineTypes={CloudProviderAWS.machineTypes} />
           </>,
           <>
             <Text size={16}>Provision cluster</Text>

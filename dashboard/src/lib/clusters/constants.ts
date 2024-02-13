@@ -1,3 +1,12 @@
+import {
+  AksSkuTier,
+  Contract,
+  EnumCloudProvider,
+  EnumKubernetesKind,
+  GKENetwork,
+  LoadBalancerType,
+} from "@porter-dev/api-contracts";
+
 import aws from "assets/aws.png";
 import azure from "assets/azure.png";
 import infra from "assets/cluster.svg";
@@ -831,6 +840,60 @@ const SUPPORTED_AZURE_SKU_TIERS = [
   },
 ];
 
+const DEFAULT_EKS_CONTRACT = new Contract({
+  cluster: {
+    kind: EnumKubernetesKind.EKS,
+    cloudProvider: EnumCloudProvider.AWS,
+    kindValues: {
+      case: "eksKind",
+      value: {
+        clusterVersion: "v1.27.0",
+        loadBalancer: {
+          loadBalancerType: LoadBalancerType.NLB,
+        },
+        network: {
+          serviceCidr: "172.20.0.0/16",
+          vpcCidr: "10.78.0.0/16",
+        },
+      },
+    },
+  },
+});
+
+const DEFAULT_AKS_CONTRACT = new Contract({
+  cluster: {
+    kind: EnumKubernetesKind.AKS,
+    cloudProvider: EnumCloudProvider.AZURE,
+    kindValues: {
+      case: "aksKind",
+      value: {
+        clusterVersion: "v1.27.3",
+        cidrRange: "10.78.0.0/16",
+        skuTier: AksSkuTier.FREE,
+      },
+    },
+  },
+});
+
+const DEFAULT_GKE_CONTRACT = new Contract({
+  cluster: {
+    kind: EnumKubernetesKind.GKE,
+    cloudProvider: EnumCloudProvider.GCP,
+    kindValues: {
+      case: "gkeKind",
+      value: {
+        clusterVersion: "v1.27.0",
+        network: new GKENetwork({
+          cidrRange: "10.78.0.0/16",
+          controlPlaneCidr: "10.77.0.0/28",
+          podCidr: "10.76.0.0/16",
+          serviceCidr: "10.75.0.0/16",
+        }),
+      },
+    },
+  },
+});
+
 export const CloudProviderAWS: ClientCloudProvider = {
   name: "AWS",
   displayName: "Amazon Web Services",
@@ -838,6 +901,7 @@ export const CloudProviderAWS: ClientCloudProvider = {
   regions: SUPPORTED_AWS_REGIONS,
   machineTypes: SUPPORTED_AWS_MACHINE_TYPES,
   baseCost: 224.58,
+  newClusterDefaultContract: DEFAULT_EKS_CONTRACT,
   config: {
     kind: "AWS",
   },
@@ -849,6 +913,7 @@ export const CloudProviderGCP: ClientCloudProvider = {
   regions: SUPPORTED_GCP_REGIONS,
   machineTypes: SUPPORTED_GCP_MACHINE_TYPES,
   baseCost: 253.0,
+  newClusterDefaultContract: DEFAULT_GKE_CONTRACT,
   config: {
     kind: "GCP",
   },
@@ -862,6 +927,7 @@ export const CloudProviderAzure: ClientCloudProvider & {
   regions: SUPPORTED_AZURE_REGIONS,
   machineTypes: SUPPORTED_AZURE_MACHINE_TYPES,
   baseCost: 164.69,
+  newClusterDefaultContract: DEFAULT_AKS_CONTRACT,
   config: {
     kind: "Azure",
     skuTiers: SUPPORTED_AZURE_SKU_TIERS,
@@ -874,6 +940,7 @@ export const CloudProviderLocal: ClientCloudProvider = {
   regions: [],
   machineTypes: [],
   baseCost: 0,
+  newClusterDefaultContract: new Contract({}),
   config: {
     kind: "Local",
   },

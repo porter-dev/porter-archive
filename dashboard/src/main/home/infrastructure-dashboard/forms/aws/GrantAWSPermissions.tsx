@@ -168,6 +168,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
       cloudFormationUrl,
       externalId,
     });
+    setCurrentStep(3);
     window.open(cloudFormationUrl, "_blank");
   }, [AWSAccountID, ackEnabled, externalId]);
   const handleGrantPermissionsComplete = (): void => {

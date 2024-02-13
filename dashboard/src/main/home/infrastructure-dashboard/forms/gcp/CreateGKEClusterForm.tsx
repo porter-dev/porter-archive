@@ -1,12 +1,8 @@
 import React, { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { FormProvider, useForm } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { match } from "ts-pattern";
 
-import {
-  clusterContractValidator,
-  type ClientClusterContract,
-} from "lib/clusters/types";
+import { type ClientClusterContract } from "lib/clusters/types";
 
 import ConfigureGKECluster from "./ConfigureGKECluster";
 import GrantGCPPermissions from "./GrantGCPPermissions";
@@ -14,67 +10,49 @@ import GrantGCPPermissions from "./GrantGCPPermissions";
 type Props = {
   goBack: () => void;
   projectId: number;
+  createClusterButtonStatus: "loading" | JSX.Element | "success" | "";
+  isCreateClusterButtonDisabled: boolean;
 };
 
-const CreateGKEClusterForm: React.FC<Props> = ({ goBack, projectId }) => {
-  const [step, setStep] = useState<"permissions" | "cluster">("permissions");
+const CreateGKEClusterForm: React.FC<Props> = ({
+  goBack,
+  projectId,
+  isCreateClusterButtonDisabled,
+  createClusterButtonStatus,
+}) => {
+  const [step, setStep] = useState<"permissions" | "cluster">("cluster");
 
-  const clusterForm = useForm<ClientClusterContract>({
-    reValidateMode: "onSubmit",
-    resolver: zodResolver(clusterContractValidator),
-    defaultValues: {
-      cluster: {
-        cloudProvider: "GCP",
-        config: {
-          kind: "GKE",
-          region: "us-east1",
-          nodeGroups: [
-            {
-              nodeGroupType: "APPLICATION",
-              instanceType: "t3.medium",
-              minInstances: 1,
-              maxInstances: 10,
-            },
-          ],
-        },
-      },
-    },
-  });
-  const { setValue } = clusterForm;
+  const { setValue } = useFormContext<ClientClusterContract>();
 
-  return (
-    <FormProvider {...clusterForm}>
-      <form>
-        {match(step)
-          .with("permissions", () => (
-            <GrantGCPPermissions
-              goBack={goBack}
-              proceed={({
-                cloudProviderCredentialIdentifier,
-              }: {
-                cloudProviderCredentialIdentifier: string;
-              }) => {
-                setValue(
-                  "cluster.cloudProviderCredentialsId",
-                  cloudProviderCredentialIdentifier
-                );
-                setStep("cluster");
-              }}
-              projectId={projectId}
-            />
-          ))
-          .with("cluster", () => (
-            <ConfigureGKECluster
-              goBack={() => {
-                setStep("permissions");
-                setValue("cluster.cloudProviderCredentialsId", "");
-              }}
-            />
-          ))
-          .exhaustive()}
-      </form>
-    </FormProvider>
-  );
+  return match(step)
+    .with("permissions", () => (
+      <GrantGCPPermissions
+        goBack={goBack}
+        proceed={({
+          cloudProviderCredentialIdentifier,
+        }: {
+          cloudProviderCredentialIdentifier: string;
+        }) => {
+          setValue(
+            "cluster.cloudProviderCredentialsId",
+            cloudProviderCredentialIdentifier
+          );
+          setStep("cluster");
+        }}
+        projectId={projectId}
+      />
+    ))
+    .with("cluster", () => (
+      <ConfigureGKECluster
+        goBack={() => {
+          setStep("permissions");
+          setValue("cluster.cloudProviderCredentialsId", "");
+        }}
+        createClusterButtonStatus={createClusterButtonStatus}
+        isCreateClusterButtonDisabled={isCreateClusterButtonDisabled}
+      />
+    ))
+    .exhaustive();
 };
 
 export default CreateGKEClusterForm;

@@ -1,7 +1,15 @@
 import {
+  AKS,
+  AKSNodePool,
   AksSkuTier,
+  AWSClusterNetwork,
   Cluster,
+  EKS,
+  EKSNodeGroup,
   EnumCloudProvider,
+  GKE,
+  GKENetwork,
+  GKENodePool,
   GKENodePoolType,
   NodeGroupType,
   NodePoolType,
@@ -9,7 +17,12 @@ import {
 } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 
-import { type ClientClusterContract } from "./types";
+import {
+  type AKSClientClusterConfig,
+  type ClientClusterContract,
+  type EKSClientClusterConfig,
+  type GKEClientClusterConfig,
+} from "./types";
 
 // this method takes in an existing contract, applies all the changes from the client contract, and returns a new contract
 // all non-editable fields should be spread from the existing contract
@@ -17,96 +30,135 @@ export function updateExistingClusterContract(
   clientClusterContract: ClientClusterContract,
   existingContract: Cluster
 ): Cluster {
-  return new Cluster({
+  const cluster = new Cluster({
     ...existingContract,
     cloudProviderCredentialsId:
       clientClusterContract.cluster.cloudProviderCredentialsId,
-    kindValues: match(clientClusterContract.cluster.config)
-      .with({ kind: "EKS" }, (config) => ({
-        case: "eksKind" as const,
-        value: {
-          ...existingContract.kindValues.value,
-          clusterName: config.clusterName,
-          clusterVersion: config.clusterVersion,
-          region: config.region,
-          nodeGroups: config.nodeGroups.map((ng) => {
-            return {
-              instanceType: ng.instanceType,
-              minInstances: ng.minInstances,
-              maxInstances: ng.maxInstances,
-              nodeGroupType: match(ng.nodeGroupType)
-                .with("UNKNOWN", () => NodeGroupType.UNSPECIFIED)
-                .with("SYSTEM", () => NodeGroupType.SYSTEM)
-                .with("MONITORING", () => NodeGroupType.MONITORING)
-                .with("APPLICATION", () => NodeGroupType.APPLICATION)
-                .with("CUSTOM", () => NodeGroupType.CUSTOM)
-                .otherwise(() => NodeGroupType.UNSPECIFIED),
-            };
-          }),
-        },
-      }))
-      .with({ kind: "GKE" }, (config) => ({
-        case: "gkeKind" as const,
-        value: {
-          ...existingContract.kindValues.value,
-          clusterName: config.clusterName,
-          clusterVersion: config.clusterVersion,
-          region: config.region,
-          nodePools: config.nodeGroups.map((ng) => {
-            return {
-              instanceType: ng.instanceType,
-              minInstances: ng.minInstances,
-              maxInstances: ng.maxInstances,
-              nodePoolType: match(ng.nodeGroupType)
-                .with(
-                  "UNKNOWN",
-                  () => GKENodePoolType.GKE_NODE_POOL_TYPE_UNSPECIFIED
-                )
-                .with("SYSTEM", () => GKENodePoolType.GKE_NODE_POOL_TYPE_SYSTEM)
-                .with(
-                  "MONITORING",
-                  () => GKENodePoolType.GKE_NODE_POOL_TYPE_MONITORING
-                )
-                .with(
-                  "APPLICATION",
-                  () => GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION
-                )
-                .with("CUSTOM", () => GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM)
-                .otherwise(
-                  () => GKENodePoolType.GKE_NODE_POOL_TYPE_UNSPECIFIED
-                ),
-            };
-          }),
-        },
-      }))
-      .with({ kind: "AKS" }, (config) => ({
-        case: "aksKind" as const,
-        value: {
-          ...existingContract.kindValues.value,
-          clusterName: config.clusterName,
-          clusterVersion: config.clusterVersion,
-          location: config.region,
-          nodePools: config.nodeGroups.map((ng) => {
-            return {
-              instanceType: ng.instanceType,
-              minInstances: ng.minInstances,
-              maxInstances: ng.maxInstances,
-              nodePoolType: match(ng.nodeGroupType)
-                .with("UNKNOWN", () => NodePoolType.UNSPECIFIED)
-                .with("SYSTEM", () => NodePoolType.SYSTEM)
-                .with("MONITORING", () => NodePoolType.MONITORING)
-                .with("APPLICATION", () => NodePoolType.APPLICATION)
-                .with("CUSTOM", () => NodePoolType.CUSTOM)
-                .otherwise(() => NodePoolType.UNSPECIFIED),
-            };
-          }),
-          skuTier: match(config.skuTier)
-            .with("FREE", () => AksSkuTier.FREE)
-            .with("STANDARD", () => AksSkuTier.STANDARD)
-            .otherwise(() => AksSkuTier.UNSPECIFIED),
-        },
-      }))
-      .exhaustive(),
+    projectId: clientClusterContract.cluster.projectId,
+  });
+  match(clientClusterContract.cluster.config)
+    .with({ kind: "EKS" }, (config) => {
+      if (cluster.kindValues.case !== "eksKind") {
+        throw new Error("Invalid kind value for EKS");
+      }
+      cluster.kindValues.value = updateEKSKindValues(
+        config,
+        cluster.kindValues.value
+      );
+    })
+    .with({ kind: "GKE" }, (config) => {
+      if (cluster.kindValues.case !== "gkeKind") {
+        throw new Error("Invalid kind value for GKE");
+      }
+      cluster.kindValues.value = updateGKEKindValues(
+        config,
+        cluster.kindValues.value
+      );
+    })
+    .with({ kind: "AKS" }, (config) => {
+      if (cluster.kindValues.case !== "aksKind") {
+        throw new Error("Invalid kind value for AKS");
+      }
+      cluster.kindValues.value = updateAKSKindValues(
+        config,
+        cluster.kindValues.value
+      );
+    });
+
+  return cluster;
+}
+
+function updateEKSKindValues(
+  clientConfig: EKSClientClusterConfig,
+  existingConfig: EKS
+): EKS {
+  return new EKS({
+    ...existingConfig,
+    clusterName: clientConfig.clusterName,
+    region: clientConfig.region,
+    nodeGroups: clientConfig.nodeGroups.map((ng) => {
+      return new EKSNodeGroup({
+        instanceType: ng.instanceType,
+        minInstances: ng.minInstances,
+        maxInstances: ng.maxInstances,
+        nodeGroupType: match(ng.nodeGroupType)
+          .with("UNKNOWN", () => NodeGroupType.UNSPECIFIED)
+          .with("SYSTEM", () => NodeGroupType.SYSTEM)
+          .with("MONITORING", () => NodeGroupType.MONITORING)
+          .with("APPLICATION", () => NodeGroupType.APPLICATION)
+          .with("CUSTOM", () => NodeGroupType.CUSTOM)
+          .otherwise(() => NodeGroupType.UNSPECIFIED),
+      });
+    }),
+    network: new AWSClusterNetwork({
+      ...(existingConfig?.network ?? {}),
+      vpcCidr: clientConfig.cidrRange,
+    }),
+  });
+}
+
+function updateGKEKindValues(
+  clientConfig: GKEClientClusterConfig,
+  existingConfig: GKE
+): GKE {
+  return new GKE({
+    ...existingConfig,
+    clusterName: clientConfig.clusterName,
+    region: clientConfig.region,
+    nodePools: clientConfig.nodeGroups.map((ng) => {
+      return new GKENodePool({
+        instanceType: ng.instanceType,
+        minInstances: ng.minInstances,
+        maxInstances: ng.maxInstances,
+        nodePoolType: match(ng.nodeGroupType)
+          .with("UNKNOWN", () => GKENodePoolType.GKE_NODE_POOL_TYPE_UNSPECIFIED)
+          .with("SYSTEM", () => GKENodePoolType.GKE_NODE_POOL_TYPE_SYSTEM)
+          .with(
+            "MONITORING",
+            () => GKENodePoolType.GKE_NODE_POOL_TYPE_MONITORING
+          )
+          .with(
+            "APPLICATION",
+            () => GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION
+          )
+          .with("CUSTOM", () => GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM)
+          .otherwise(() => GKENodePoolType.GKE_NODE_POOL_TYPE_UNSPECIFIED),
+      });
+    }),
+    network: new GKENetwork({
+      ...(existingConfig?.network ?? {}),
+      cidrRange: clientConfig.cidrRange,
+    }),
+  });
+}
+
+function updateAKSKindValues(
+  clientConfig: AKSClientClusterConfig,
+  existingConfig: AKS
+): AKS {
+  return new AKS({
+    ...existingConfig,
+    clusterName: clientConfig.clusterName,
+    location: clientConfig.region,
+    nodePools: clientConfig.nodeGroups.map((ng) => {
+      return new AKSNodePool({
+        instanceType: ng.instanceType,
+        minInstances: ng.minInstances,
+        maxInstances: ng.maxInstances,
+        nodePoolType: match(ng.nodeGroupType)
+          .with("UNKNOWN", () => NodePoolType.UNSPECIFIED)
+          .with("SYSTEM", () => NodePoolType.SYSTEM)
+          .with("MONITORING", () => NodePoolType.MONITORING)
+          .with("APPLICATION", () => NodePoolType.APPLICATION)
+          .with("CUSTOM", () => NodePoolType.CUSTOM)
+          .otherwise(() => NodePoolType.UNSPECIFIED),
+      });
+    }),
+    skuTier: match(clientConfig.skuTier)
+      .with("FREE", () => AksSkuTier.FREE)
+      .with("STANDARD", () => AksSkuTier.STANDARD)
+      .otherwise(() => AksSkuTier.UNSPECIFIED),
+    cidrRange: clientConfig.cidrRange,
   });
 }
 
@@ -147,7 +199,7 @@ export function clientClusterContractFromProto(
                 .otherwise(() => "UNKNOWN" as const),
             };
           }),
-          cidrRange: value.network?.vpcCidr ?? "", // network will always be provided
+          cidrRange: value.network?.vpcCidr ?? value.cidrRange ?? "", // network will always be provided in one of those fields
         }))
         .with({ case: "gkeKind" }, ({ value }) => ({
           kind: "GKE" as const,

@@ -105,7 +105,6 @@ const StyledForm = styled.div`
   background: ${({ theme }) => theme.fg};
   border: 1px solid #494b4f;
   font-size: 13px;
-  margin-bottom: 30px;
   width: 300px;
 `;
 

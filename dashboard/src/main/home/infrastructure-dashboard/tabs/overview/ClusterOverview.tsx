@@ -33,6 +33,7 @@ const ClusterOverview: React.FC<Props> = ({
           return <AKSClusterOverview />;
         })
         .exhaustive()}
+      <Spacer y={1} />
       <ClusterSaveButton
         status={updateButtonStatus}
         isDisabled={isUpdateDisabled}

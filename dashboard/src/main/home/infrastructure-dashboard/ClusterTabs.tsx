@@ -79,7 +79,7 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
       let errorMessage =
-        "App update failed. Please try again. If the error persists, please contact support@porter.run.";
+        "Cluster update failed. Please try again. If the error persists, please contact support@porter.run.";
       if (errorKeys.includes("cluster")) {
         errorMessage = errors.cluster?.message ?? errorMessage;
       }

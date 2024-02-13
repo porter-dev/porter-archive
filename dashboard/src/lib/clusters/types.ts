@@ -1,3 +1,4 @@
+import { type Contract } from "@porter-dev/api-contracts";
 import { z } from "zod";
 
 import { checkGroupValidator } from "main/home/compliance-dashboard/types";
@@ -14,6 +15,7 @@ export type ClientCloudProvider = {
   regions: ClientRegion[];
   machineTypes: MachineType[];
   baseCost: number;
+  newClusterDefaultContract: Contract; // this is where we include sensible defaults for new clusters
   // catch all for cloud-specific settings, may refactor this later
   config:
     | {
@@ -366,7 +368,7 @@ const aksNodeGroupValidator = z.object({
 const eksConfigValidator = z.object({
   kind: z.literal("EKS"),
   clusterName: z.string(),
-  clusterVersion: z.string(),
+  clusterVersion: z.string().optional().default(""),
   region: z.string(),
   nodeGroups: eksNodeGroupValidator.array(),
   cidrRange: z.string(),
@@ -374,15 +376,15 @@ const eksConfigValidator = z.object({
 const gkeConfigValidator = z.object({
   kind: z.literal("GKE"),
   clusterName: z.string(),
-  clusterVersion: z.string(),
-  region: z.string(),
+  clusterVersion: z.string().optional().default(""),
+  region: z.string().default("us-east1"),
   nodeGroups: gkeNodeGroupValidator.array(),
   cidrRange: z.string(),
 });
 const aksConfigValidator = z.object({
   kind: z.literal("AKS"),
   clusterName: z.string(),
-  clusterVersion: z.string(),
+  clusterVersion: z.string().optional().default(""),
   region: z.string(),
   nodeGroups: aksNodeGroupValidator.array(),
   skuTier: z.enum(["UNKNOWN", "FREE", "STANDARD"]),
@@ -396,7 +398,7 @@ const clusterConfigValidator = z.discriminatedUnion("kind", [
 
 const contractClusterValidator = z.object({
   projectId: z.number(),
-  clusterId: z.number(),
+  clusterId: z.number().optional(),
   cloudProvider: cloudProviderValidator,
   cloudProviderCredentialsId: z.string(),
   config: clusterConfigValidator,

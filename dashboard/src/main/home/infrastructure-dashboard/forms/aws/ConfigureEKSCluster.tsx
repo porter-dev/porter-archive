@@ -15,9 +15,15 @@ import { BackButton, Img } from "../CreateClusterForm";
 
 type Props = {
   goBack: () => void;
+  createClusterButtonStatus: "loading" | JSX.Element | "success" | "";
+  isCreateClusterButtonDisabled: boolean;
 };
 
-const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
+const ConfigureEKSCluster: React.FC<Props> = ({
+  goBack,
+  createClusterButtonStatus,
+  isCreateClusterButtonDisabled,
+}) => {
   const [currentStep, _setCurrentStep] = useState<number>(1);
 
   const { control } = useFormContext<ClientClusterContract>();
@@ -79,7 +85,13 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
           <>
             <Text size={16}>Provision cluster</Text>
             <Spacer y={0.5} />
-            <Button>Submit</Button>
+            <Button
+              type="submit"
+              status={createClusterButtonStatus}
+              disabled={isCreateClusterButtonDisabled}
+            >
+              Submit
+            </Button>
           </>,
         ]}
       />

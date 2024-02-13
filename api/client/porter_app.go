@@ -500,10 +500,13 @@ func (c *Client) GetAppEnvVariables(
 	ctx context.Context,
 	projectID uint, clusterID uint,
 	appName string,
+	deploymentTargetName string,
 ) (*porter_app.AppEnvVariablesResponse, error) {
 	resp := &porter_app.AppEnvVariablesResponse{}
 
-	req := &porter_app.AppEnvVariablesRequest{}
+	req := &porter_app.AppEnvVariablesRequest{
+		DeploymentTargetName: deploymentTargetName,
+	}
 
 	err := c.getRequest(
 		fmt.Sprintf(

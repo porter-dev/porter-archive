@@ -75,15 +75,10 @@ func (n *GetNotificationHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	porterApp, err := n.Repo().PorterApp().ReadPorterAppByID(ctx, event.PorterAppID)
+	// check project scope indirectly with deployment target
+	_, err = n.Repo().DeploymentTarget().DeploymentTarget(project.ID, event.DeploymentTargetID.String())
 	if err != nil {
-		e := telemetry.Error(ctx, span, nil, "error getting porter app by id")
-		n.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
-		return
-	}
-
-	if porterApp.ProjectID != project.ID {
-		e := telemetry.Error(ctx, span, nil, "notification is not scoped to the project")
+		e := telemetry.Error(ctx, span, nil, "notification is not in project scope")
 		n.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 		return
 	}

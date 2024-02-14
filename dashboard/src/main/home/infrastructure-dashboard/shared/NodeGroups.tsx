@@ -48,8 +48,9 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
               <Container row>
                 <Image src={world} />
                 <Spacer inline x={1} />
-                {ng.nodeGroup.nodeGroupType.charAt(0).toUpperCase()}
-                {ng.nodeGroup.nodeGroupType.slice(1).toLowerCase()}
+                {ng.nodeGroup.nodeGroupType === "APPLICATION" &&(
+                  "Default node group"
+                )}
               </Container>
             }
           >

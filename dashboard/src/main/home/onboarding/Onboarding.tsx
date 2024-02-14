@@ -10,7 +10,7 @@ import { OFState } from "./state";
 import { useSteps } from "./state/StepHandler";
 import { Onboarding as OnboardingSaveType } from "./types";
 
-import lightning from "assets/lightning.png";
+import bolt from "assets/bolt.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 
@@ -157,7 +157,7 @@ const Onboarding = () => {
       return (
         <Wrapper>
           <DashboardHeader
-            image={lightning}
+            image={bolt}
             title="Getting started"
             description="Select your existing cloud provider to get started with Porter."
             disableLineBreak

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 
-import Loading from "components/Loading";
 import { Error as ErrorComponent } from "components/porter/Error";
 import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
@@ -9,66 +8,53 @@ import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Step from "components/porter/Step";
 import Text from "components/porter/Text";
+import { type ClientPreflightCheck } from "lib/clusters/types";
 
 type ItemProps = {
-  checkKey: string;
-  checkLabel?: string;
-  preflight_checks: any;
+  preflightCheck: ClientPreflightCheck;
 };
-const PreflightCheckItem: React.FC<ItemProps> = ({
-  checkKey,
-  checkLabel,
-  preflight_checks,
-}) => {
-  const checkLabelConst = "Provisioning Cluster ";
-  const checkData = preflight_checks?.[checkKey];
-  const hasMessage = checkData?.message;
+const CheckItem: React.FC<ItemProps> = ({ preflightCheck }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
-  const handleToggle = (): void => {
-    if (hasMessage) {
-      setIsExpanded(!isExpanded);
-    }
-  };
   return (
-    <CheckItemContainer hasMessage={hasMessage}>
-      <CheckItemTop onClick={handleToggle}>
-        {!preflight_checks ? (
-          <Loading offset="0px" width="20px" height="20px" />
-        ) : (
-          <StatusDot status={"failing"} />
-        )}
+    <CheckItemContainer>
+      <CheckItemTop
+        onClick={() => {
+          setIsExpanded(!isExpanded);
+        }}
+      >
+        <StatusDot
+          status={preflightCheck.error != null ? "failing" : "available"}
+        />
         <Spacer inline x={1} />
         <Text style={{ marginLeft: "10px", flex: 1 }}>
-          {checkLabel ?? checkLabelConst}
+          {preflightCheck.title}
         </Text>
-        {hasMessage && (
-          <ExpandIcon className="material-icons" isExpanded={isExpanded}>
-            arrow_drop_down
-          </ExpandIcon>
-        )}
+        <ExpandIcon className="material-icons" isExpanded={isExpanded}>
+          arrow_drop_down
+        </ExpandIcon>
       </CheckItemTop>
-      {isExpanded && hasMessage && (
+      {isExpanded && preflightCheck.error && (
         <div>
           <ErrorComponent
-            message={checkData?.message}
-            ctaText={
-              checkData?.message !== DEFAULT_ERROR_MESSAGE
-                ? "Troubleshooting steps"
-                : undefined
-            }
-            errorModalContents={errorMessageToModal(checkData?.message)}
+            message={preflightCheck.error.detail}
+            ctaText={"Troubleshooting steps"}
+            errorModalContents={errorMessageToModal(
+              preflightCheck.error.detail
+            )}
           />
           <Spacer y={0.5} />
-          {checkData?.metadata &&
-            Object.entries(checkData.metadata).map(([key, value]) => (
-              <>
-                <div key={key}>
-                  <ErrorMessageLabel>{key}:</ErrorMessageLabel>
-                  <ErrorMessageContent>{value}</ErrorMessageContent>
-                </div>
-              </>
-            ))}
+          {preflightCheck.error.metadata &&
+            Object.entries(preflightCheck.error.metadata).map(
+              ([key, value]) => (
+                <>
+                  <div key={key}>
+                    <ErrorMessageLabel>{key}:</ErrorMessageLabel>
+                    <ErrorMessageContent>{value}</ErrorMessageContent>
+                  </div>
+                </>
+              )
+            )}
         </div>
       )}
     </CheckItemContainer>
@@ -77,38 +63,25 @@ const PreflightCheckItem: React.FC<ItemProps> = ({
 
 type Props = {
   onClose: () => void;
+  preflightChecks: ClientPreflightCheck[];
 };
-const PreflightChecksModal: React.FC<Props> = ({ onClose }) => {
-  const preflightChecks = {
-    eip: {
-      message:
-        "Your AWS account has reached the limit of elastic IPs allowed in the region. Additional addresses must be requested in order to provision.",
-    },
-    natGateway: {
-      message:
-        "Your AWS account has reached the limit of NAT Gateways allowed in the region. Additional NAT Gateways must be requested in order to provision.",
-    },
-    vpc: {},
-  };
-
-  const combinedKeys = Object.keys(preflightChecks);
+const PreflightChecksModal: React.FC<Props> = ({
+  onClose,
+  preflightChecks,
+}) => {
   return (
     <Modal width="600px" closeModal={onClose}>
       <AppearingDiv>
         <Text size={16}>Cluster provision check</Text>
         <Spacer y={0.5} />
         <Text color="helper">
-          Porter checks that the account has the right permissions and resources
-          to provision a cluster.
+          Your account does not have enough resources to provision this cluster.
+          Please correct the issue by addressing the troubleshooting steps, or
+          change your cluster configuration and re-provision.
         </Text>
         <Spacer y={1} />
-        {[...combinedKeys].map((checkKey) => (
-          <PreflightCheckItem
-            key={checkKey}
-            checkKey={checkKey}
-            checkLabel={checkKey}
-            preflight_checks={preflightChecks}
-          />
+        {preflightChecks.map((pfc) => (
+          <CheckItem preflightCheck={pfc} key={pfc.title} />
         ))}
       </AppearingDiv>
     </Modal>
@@ -145,7 +118,7 @@ const CheckItemContainer = styled.div`
   width: 100%;
   margin-bottom: 10px;
   padding-left: 10px;
-  cursor: ${(props) => (props.hasMessage ? "pointer" : "default")};
+  cursor: pointer;
   background: ${(props) => props.theme.clickable.bg};
 `;
 

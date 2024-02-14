@@ -16,14 +16,16 @@ import { BackButton, Img } from "../CreateClusterForm";
 
 type Props = {
   goBack: () => void;
-  createClusterButtonStatus: "loading" | JSX.Element | "success" | "";
-  isCreateClusterButtonDisabled: boolean;
+  createButtonProps: {
+    status: "loading" | JSX.Element | "success" | "";
+    isDisabled: boolean;
+    loadingText: string;
+  };
 };
 
 const ConfigureGKECluster: React.FC<Props> = ({
   goBack,
-  createClusterButtonStatus,
-  isCreateClusterButtonDisabled,
+  createButtonProps,
 }) => {
   const [currentStep, _setCurrentStep] = useState<number>(4);
 
@@ -116,8 +118,9 @@ const ConfigureGKECluster: React.FC<Props> = ({
             <Spacer y={0.5} />
             <Button
               type="submit"
-              status={createClusterButtonStatus}
-              disabled={isCreateClusterButtonDisabled}
+              status={createButtonProps.status}
+              disabled={createButtonProps.isDisabled}
+              loadingText={createButtonProps.loadingText}
             >
               Submit
             </Button>

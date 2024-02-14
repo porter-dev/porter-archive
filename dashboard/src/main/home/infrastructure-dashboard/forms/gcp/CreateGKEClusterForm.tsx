@@ -11,16 +11,18 @@ type Props = {
   goBack: () => void;
   projectId: number;
   projectName: string;
-  createClusterButtonStatus: "loading" | JSX.Element | "success" | "";
-  isCreateClusterButtonDisabled: boolean;
+  createButtonProps: {
+    status: "loading" | JSX.Element | "success" | "";
+    isDisabled: boolean;
+    loadingText: string;
+  };
 };
 
 const CreateGKEClusterForm: React.FC<Props> = ({
   goBack,
   projectId,
   projectName,
-  isCreateClusterButtonDisabled,
-  createClusterButtonStatus,
+  createButtonProps,
 }) => {
   const [step, setStep] = useState<"permissions" | "cluster">("permissions");
 
@@ -87,8 +89,7 @@ const CreateGKEClusterForm: React.FC<Props> = ({
           setStep("permissions");
           setValue("cluster.cloudProviderCredentialsId", "");
         }}
-        createClusterButtonStatus={createClusterButtonStatus}
-        isCreateClusterButtonDisabled={isCreateClusterButtonDisabled}
+        createButtonProps={createButtonProps}
       />
     ))
     .exhaustive();

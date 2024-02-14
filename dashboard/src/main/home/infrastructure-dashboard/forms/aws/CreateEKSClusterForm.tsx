@@ -12,16 +12,18 @@ type Props = {
   projectId: number;
   projectName: string;
   ackEnabled: boolean;
-  createClusterButtonStatus: "loading" | JSX.Element | "success" | "";
-  isCreateClusterButtonDisabled: boolean;
+  createButtonProps: {
+    status: "loading" | JSX.Element | "success" | "";
+    isDisabled: boolean;
+    loadingText: string;
+  };
 };
 const CreateEKSClusterForm: React.FC<Props> = ({
   goBack,
   projectId,
   projectName,
   ackEnabled,
-  createClusterButtonStatus,
-  isCreateClusterButtonDisabled,
+  createButtonProps,
 }) => {
   const [step, setStep] = useState<"permissions" | "cluster">("permissions");
   const { setValue, reset } = useFormContext<ClientClusterContract>();
@@ -88,8 +90,7 @@ const CreateEKSClusterForm: React.FC<Props> = ({
           setStep("permissions");
           setValue("cluster.cloudProviderCredentialsId", "");
         }}
-        createClusterButtonStatus={createClusterButtonStatus}
-        isCreateClusterButtonDisabled={isCreateClusterButtonDisabled}
+        createButtonProps={createButtonProps}
       />
     ))
     .exhaustive();

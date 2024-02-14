@@ -9,18 +9,20 @@ type Props = {
   isDisabled: boolean;
   height?: string;
   disabledTooltipPosition?: "top" | "bottom" | "left" | "right";
+  loadingText?: string;
 };
 const ClusterSaveButton: React.FC<Props> = ({
   status,
   isDisabled,
   height,
   disabledTooltipPosition,
+  loadingText,
 }) => {
   return (
     <Button
       type="submit"
       status={status}
-      loadingText={"Saving..."}
+      loadingText={loadingText}
       disabled={isDisabled}
       disabledTooltipMessage={
         "Please wait for the current update to complete before updating again."

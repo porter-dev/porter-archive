@@ -16,6 +16,7 @@ export type ClientCloudProvider = {
   machineTypes: MachineType[];
   baseCost: number;
   newClusterDefaultContract: Contract; // this is where we include sensible defaults for new clusters
+  preflightChecks: PreflightCheck[];
   // catch all for cloud-specific settings, may refactor this later
   config:
     | {
@@ -222,6 +223,10 @@ export type MachineType = {
   name: AWSMachineType | GCPMachineType | AzureMachineType;
   displayName: string;
   supportedRegions: Array<AWSRegion | GCPRegion | AzureRegion>;
+};
+export type PreflightCheck = {
+  name: PreflightCheckKey;
+  displayName: string;
 };
 
 // Cluster
@@ -439,13 +444,48 @@ export const clusterContractValidator = z.object({
 });
 export type ClientClusterContract = z.infer<typeof clusterContractValidator>;
 
-export type UpdateClusterResponse = {
-  preflightCheckResponse: {
-    data: any;
-    error: string;
-  };
-  createContractResponse: {
-    data: any;
-    error: string;
+const preflightCheckKeyValidator = z.enum([
+  "eip",
+  "vcpu",
+  "vpc",
+  "natGateway",
+  "apiEnabled",
+  "cidrAvailability",
+  "iamPermissions",
+]);
+type PreflightCheckKey = z.infer<typeof preflightCheckKeyValidator>;
+export const preflightCheckValidator = z.object({
+  errors: z
+    .object({
+      name: preflightCheckKeyValidator,
+      error: z.object({
+        message: z.string(),
+        metadata: z.record(z.string()).optional(),
+      }),
+    })
+    .array(),
+});
+export const createContractResponseValidator = z.object({
+  contract_revision: z.object({
+    project_id: z.number(),
+    cluster_id: z.number(),
+    revision_id: z.string(),
+  }),
+});
+export type ClientPreflightCheck = {
+  title: string;
+  error?: {
+    detail: string;
+    metadata: Record<string, string> | undefined;
   };
 };
+type CreateContractResponse = z.infer<typeof createContractResponseValidator>;
+export type UpdateClusterResponse =
+  | {
+      preflightChecks: ClientPreflightCheck[];
+      createContractResponse?: CreateContractResponse;
+    }
+  | {
+      preflightChecks?: ClientPreflightCheck[];
+      createContractResponse: CreateContractResponse;
+    };

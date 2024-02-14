@@ -1,12 +1,11 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
+import { Contract } from "@porter-dev/api-contracts";
 import AnimateHeight from "react-animate-height";
 import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-import { z } from "zod";
 
 import Banner from "components/porter/Banner";
 import { Error as ErrorComponent } from "components/porter/Error";
@@ -15,12 +14,16 @@ import TabSelector from "components/TabSelector";
 import {
   clusterContractValidator,
   type ClientClusterContract,
+  type UpdateClusterResponse,
 } from "lib/clusters/types";
+import { useUpdateCluster } from "lib/hooks/useCluster";
 import { useIntercom } from "lib/hooks/useIntercom";
 
 import { useClusterContext } from "./ClusterContextProvider";
 import ClusterProvisioningIndicator from "./ClusterProvisioningIndicator";
 import ClusterSaveButton from "./ClusterSaveButton";
+import { type UpdateClusterButtonProps } from "./forms/CreateClusterForm";
+import PreflightChecksModal from "./modals/PreflightChecksModal";
 import ClusterOverview from "./tabs/overview/ClusterOverview";
 import Settings from "./tabs/Settings";
 
@@ -31,16 +34,28 @@ const tabs = [
   { label: "Overview", value: "overview" },
   { label: "Settings", value: "settings" },
 ];
-// todo(ianedwards): refactor button to use more predictable state
-export type ButtonStatus = "" | "loading" | JSX.Element | "success";
 
 type Props = {
   tabParam?: string;
 };
 const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
   const history = useHistory();
-
-  const { cluster, updateCluster } = useClusterContext();
+  const [updateClusterResponse, setUpdateClusterResponse] = useState<
+    | {
+        response: UpdateClusterResponse;
+        error?: string;
+      }
+    | {
+        response?: UpdateClusterResponse;
+        error: string;
+      }
+    | undefined
+  >(undefined);
+  const [showFailedPreflightChecksModal, setShowFailedPreflightChecksModal] =
+    useState<boolean>(false);
+  const { cluster, projectId } = useClusterContext();
+  const { updateCluster, isHandlingPreflightChecks, isCreatingContract } =
+    useUpdateCluster({ projectId });
 
   const { showIntercomWithMessage } = useIntercom();
 
@@ -51,8 +66,7 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
   });
   const {
     handleSubmit,
-    formState: { isDirty, isSubmitting, isSubmitSuccessful, errors },
-    setError,
+    formState: { isDirty, isSubmitting },
     reset,
   } = clusterForm;
 
@@ -72,48 +86,62 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
     return cluster.contract.condition === "";
   }, [cluster.contract.condition]);
 
-  const buttonStatus = useMemo(() => {
+  const updateClusterButtonProps = useMemo(() => {
+    const props: UpdateClusterButtonProps = {
+      status: "",
+      isDisabled: false,
+      loadingText: "",
+    };
     if (isSubmitting) {
-      return "loading";
+      props.status = "loading";
+      props.isDisabled = true;
     }
-    const errorKeys = Object.keys(errors);
-    if (errorKeys.length > 0) {
-      let errorMessage =
-        "Cluster update failed. Please try again. If the error persists, please contact support@porter.run.";
-      if (errorKeys.includes("cluster")) {
-        errorMessage = errors.cluster?.message ?? errorMessage;
-      }
-      return <ErrorComponent message={errorMessage} maxWidth="600px" />;
+    if (updateClusterResponse?.error) {
+      props.status = (
+        <ErrorComponent
+          message={updateClusterResponse?.error}
+          maxWidth="600px"
+        />
+      );
+    }
+    if (isHandlingPreflightChecks) {
+      props.loadingText = "Running preflight checks...";
+    }
+    if (isCreatingContract) {
+      props.loadingText = "Creating cluster...";
+    }
+    if (updateClusterResponse?.response?.createContractResponse) {
+      props.status = "success";
     }
 
-    if (isSubmitSuccessful) {
-      return "success";
-    }
-
-    return "";
-  }, [isSubmitting, JSON.stringify(errors), isSubmitSuccessful]);
+    return props;
+  }, [
+    isSubmitting,
+    updateClusterResponse,
+    isHandlingPreflightChecks,
+    isCreatingContract,
+  ]);
 
   const onSubmit = handleSubmit(async (data) => {
-    try {
-      await updateCluster(data);
-    } catch (err) {
+    setUpdateClusterResponse(undefined);
+    const latestContract = Contract.fromJsonString(
+      atob(cluster.contract.base64_contract),
+      {
+        ignoreUnknownFields: true,
+      }
+    );
+    if (!latestContract.cluster) {
+      return;
+    }
+
+    const response = await updateCluster(data, latestContract);
+    setUpdateClusterResponse(response);
+    if (response.response?.preflightChecks) {
+      setShowFailedPreflightChecksModal(true);
+    }
+    if (response.error) {
       showIntercomWithMessage({
         message: "I am running into an issue updating my cluster.",
-      });
-
-      let message =
-        "Cluster update failed: please try again or contact support@porter.run if the error persists.";
-
-      if (axios.isAxiosError(err)) {
-        const parsed = z
-          .object({ error: z.string() })
-          .safeParse(err.response?.data);
-        if (parsed.success) {
-          message = `Cluster update failed: ${parsed.data.error}`;
-        }
-      }
-      setError("cluster", {
-        message,
       });
     }
   });
@@ -135,8 +163,9 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
                 <>
                   <ClusterSaveButton
                     height={"10px"}
-                    status={buttonStatus}
+                    status={updateClusterButtonProps.status}
                     isDisabled={isSubmitting || isClusterUpdating}
+                    loadingText={updateClusterButtonProps.loadingText}
                     disabledTooltipPosition={"bottom"}
                   />
                 </>
@@ -158,13 +187,21 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
           {match(currentTab)
             .with("overview", () => (
               <ClusterOverview
-                updateButtonStatus={buttonStatus}
-                isUpdateDisabled={isSubmitting || isClusterUpdating}
+                updateClusterButtonProps={updateClusterButtonProps}
               />
             ))
             .with("settings", () => <Settings />)
             .otherwise(() => null)}
         </DashboardWrapper>
+        {showFailedPreflightChecksModal &&
+          updateClusterResponse?.response?.preflightChecks && (
+            <PreflightChecksModal
+              onClose={() => {
+                setShowFailedPreflightChecksModal(false);
+              }}
+              preflightChecks={updateClusterResponse?.response?.preflightChecks}
+            />
+          )}
       </form>
     </FormProvider>
   );

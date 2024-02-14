@@ -365,13 +365,22 @@ const aksNodeGroupValidator = z.object({
   nodeGroupType: aksNodeGroupTypeValidator,
 });
 
+const cidrRangeValidator = z
+  .string()
+  .regex(
+    /^((1\d{2}|2[0-4]\d|25[0-4]|[1-9]\d|[1-9])\.(0|1\d{2}|2[0-4]\d|25[0-4]|[1-9]\d|\d)\.0\.0)\/16$/,
+    {
+      message: "CIDR range must be in the format (1-254).(0-254).0.0/16",
+    }
+  );
+
 const eksConfigValidator = z.object({
   kind: z.literal("EKS"),
   clusterName: z.string(),
   clusterVersion: z.string().optional().default(""),
   region: z.string(),
   nodeGroups: eksNodeGroupValidator.array(),
-  cidrRange: z.string(),
+  cidrRange: cidrRangeValidator,
 });
 const gkeConfigValidator = z.object({
   kind: z.literal("GKE"),
@@ -379,7 +388,7 @@ const gkeConfigValidator = z.object({
   clusterVersion: z.string().optional().default(""),
   region: z.string().default("us-east1"),
   nodeGroups: gkeNodeGroupValidator.array(),
-  cidrRange: z.string(),
+  cidrRange: cidrRangeValidator,
 });
 const aksConfigValidator = z.object({
   kind: z.literal("AKS"),
@@ -388,7 +397,7 @@ const aksConfigValidator = z.object({
   region: z.string(),
   nodeGroups: aksNodeGroupValidator.array(),
   skuTier: z.enum(["UNKNOWN", "FREE", "STANDARD"]),
-  cidrRange: z.string(),
+  cidrRange: cidrRangeValidator,
 });
 const clusterConfigValidator = z.discriminatedUnion("kind", [
   eksConfigValidator,

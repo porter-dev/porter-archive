@@ -53,17 +53,15 @@ const CreateClusterForm: React.FC = () => {
       return "loading";
     }
     const errorKeys = Object.keys(errors);
-    if (errorKeys.length > 0) {
-      let errorMessage =
+    if (errorKeys.length > 0 && errorKeys.includes("root")) {
+      const errorMessage =
+        errors.cluster?.message ??
         "Cluster creation failed. Please try again. If the error persists, please contact support@porter.run.";
-      if (errorKeys.includes("cluster")) {
-        errorMessage = errors.cluster?.message ?? errorMessage;
-      }
       return <ErrorComponent message={errorMessage} maxWidth="600px" />;
     }
 
     return "";
-  }, [isSubmitting, JSON.stringify(errors)]);
+  }, [isSubmitting, errors]);
 
   const onSubmit = clusterForm.handleSubmit(async (data) => {
     try {
@@ -84,7 +82,6 @@ const CreateClusterForm: React.FC = () => {
       const contract = new Contract({
         cluster: updateExistingClusterContract(data, defaultContract.cluster),
       });
-
       await api.createContract("<token>", contract, {
         project_id: currentProject.id,
       });
@@ -94,17 +91,17 @@ const CreateClusterForm: React.FC = () => {
       });
 
       let message =
-        "Cluster update failed: please try again or contact support@porter.run if the error persists.";
+        "Cluster creation failed: please try again or contact support@porter.run if the error persists.";
 
       if (axios.isAxiosError(err)) {
         const parsed = z
           .object({ error: z.string() })
           .safeParse(err.response?.data);
         if (parsed.success) {
-          message = `Cluster update failed: ${parsed.data.error}`;
+          message = `Cluster creation failed: ${parsed.data.error}`;
         }
       }
-      setError("cluster", {
+      setError("root", {
         message,
       });
     }

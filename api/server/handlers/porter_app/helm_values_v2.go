@@ -103,6 +103,7 @@ func (c *AppHelmValuesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		AppId:              int64(request.AppID),
 		DeploymentTargetId: request.DeploymentTargetID,
 		WithDefaults:       request.WithDefaults,
+		AppName:            appName,
 	})
 
 	helmValuesResp, err := c.Config().ClusterControlPlaneClient.AppHelmValues(ctx, helmValuesReq)

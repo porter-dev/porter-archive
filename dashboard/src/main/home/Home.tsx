@@ -422,7 +422,7 @@ const Home: React.FC<Props> = (props) => {
                 document.body
               )}
             {/* Render sidebar when there's at least one project */}
-            {projects?.length > 0 && baseRoute !== "new-project" ? (
+            {projects?.length > 0 && baseRoute !== "new-project" && (
               <Sidebar
                 key="sidebar"
                 forceSidebar={forceSidebar}
@@ -431,14 +431,6 @@ const Home: React.FC<Props> = (props) => {
                 forceRefreshClusters={forceRefreshClusters}
                 setRefreshClusters={setForceRefreshClusters}
               />
-            ) : (
-              <DiscordButton
-                href="https://discord.gg/34n7NN7FJ7"
-                target="_blank"
-              >
-                <Icon src={discordLogo} />
-                Join Our Discord
-              </DiscordButton>
             )}
             <ViewWrapper id="HomeViewWrapper">
               <Navbar

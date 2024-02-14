@@ -19,6 +19,7 @@ type Props = {
   value?: string;
   setValue?: (value: string) => void;
   prefix?: React.ReactNode;
+  width?: string;
 };
 
 const Select: React.FC<Props> = ({
@@ -30,9 +31,10 @@ const Select: React.FC<Props> = ({
   value,
   setValue,
   prefix,
+  width,
 }) => {
   return (
-    <div>
+    <Div width={width}>
       {label && <Label color={labelColor}>{label}</Label>}
       <SelectWrapper isDisabled={disabled ?? false}>
         {prefix && (
@@ -52,14 +54,14 @@ const Select: React.FC<Props> = ({
           }
           return null;
         })}
-        {!disabled && <img src={arrow} />}
+        <img src={arrow} />
         <SelectLayer
           value={value}
           onChange={(e) => {
             setValue?.(e.target.value);
           }}
           hasError={(error && true) || error === ""}
-          disabled={disabled || false}
+          disabled={disabled}
         >
           {options.map((option, i) => {
             return (
@@ -76,11 +78,15 @@ const Select: React.FC<Props> = ({
           {error}
         </Error>
       )}
-    </div>
+    </Div>
   );
 };
 
 export default Select;
+
+const Div = styled.div<{ width?: string }>`
+  width: ${({ width }) => width || "100%"};
+`;
 
 const Img = styled.img`
   height: 16px;
@@ -137,13 +143,6 @@ const SelectWrapper = styled.div<{ isDisabled: boolean }>`
   font-size: 13px;
   overflow: hidden;
 
-  ${(props) =>
-    props.isDisabled &&
-    css`
-      opacity: 0.7;
-      pointer-events: none;
-    `}
-
   > img {
     width: 8px;
     position: absolute;
@@ -153,16 +152,23 @@ const SelectWrapper = styled.div<{ isDisabled: boolean }>`
   }
 
   ${(props) =>
-    !props.isDisabled &&
+    !props.isDisabled ?
     css`
       :hover {
         border: 1px solid #7a7b80;
+      }
+    ` : 
+    css`
+      color: #ffffff55;
+      > img {
+        opacity: 0.5;
       }
     `}
 `;
 
 const SelectLayer = styled.select<{
   hasError: boolean;
+  disabled?: boolean;
 }>`
   outline: none;
   position: absolute;
@@ -170,7 +176,7 @@ const SelectLayer = styled.select<{
   left: 0;
   width: 100%;
   height: 100%;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
   background: none;
   appearance: none;
   opacity: 0;

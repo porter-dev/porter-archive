@@ -5,6 +5,7 @@ type Props = {
   header: React.ReactNode;
   children: React.ReactNode;
   style?: React.CSSProperties;
+  preExpanded?: boolean;
 };
 
 // TODO: support footer for consolidation w/ app services
@@ -12,8 +13,9 @@ const Expandable: React.FC<Props> = ({
   header,
   children,
   style,
+  preExpanded
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(preExpanded || false);
 
   return (
     <StyledExpandable style={style}>
@@ -44,7 +46,7 @@ const ExpandedContents = styled.div<{ isExpanded: boolean }>`
   padding: ${({ isExpanded }) => isExpanded ? "20px" : "0"};
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
-  background: ${(props) => props.theme.fg};
+  background: ${(props) => props.theme.fg + "66"};
   border: ${({ isExpanded }) => isExpanded && "1px solid #494b4f"};
   border-top: 0;
   color: ${(props) => props.theme.text.primary};

@@ -28,6 +28,7 @@ import { useClusterList } from "lib/hooks/useCluster";
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
 import infra from "assets/cluster.svg";
+import infraGrad from "assets/infra-grad.svg";
 import globe from "assets/globe.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
@@ -68,9 +69,9 @@ const ClusterDashboard: React.FC = () => {
   return (
     <StyledAppDashboard>
       <DashboardHeader
-        image={infra}
+        image={infraGrad}
         title="Clusters"
-        description="Clusters for this project."
+        description="Clusters for running applications on this project."
         disableLineBreak
       />
       <Container row spaced>
@@ -107,7 +108,7 @@ const ClusterDashboard: React.FC = () => {
           prefix={
             <Container row>
               <Image src={infra} size={15} opacity={0.6} />
-              <Spacer inline x={0.5} />
+              <Spacer inline width="20px" />
               Cloud
             </Container>
           }
@@ -161,30 +162,33 @@ const ClusterDashboard: React.FC = () => {
             return (
               <Link to={`/infrastructure/${cluster.id}`} key={i}>
                 <Block>
-                  <Container row spaced>
-                    <Container row>
-                      <Icon src={cluster.cloud_provider.icon} />
-                      <Spacer inline x={0.5} />
-                      <Text size={14}>{cluster.vanity_name}</Text>
-                    </Container>
-                    <StatusDot
-                      status={
-                        cluster.status === "READY" ? "available" : "pending"
-                      }
-                      heightPixels={9}
-                    />
+                  <Container row>
+                    <Icon src={cluster.cloud_provider.icon} height="18px" />
+                    <Spacer inline width="11px" />
+                    <Text size={14}>{cluster.vanity_name}</Text>
                   </Container>
                   <Container row>
                     <Tag hoverable={false}>
                       <Container row>
-                        <Icon src={globe} height={"14px"} />
+                        <Icon src={globe} height="13px" />
                         <Spacer inline x={0.5} />
                         {cluster.contract.config.cluster.config?.region}
                       </Container>
                     </Tag>
                   </Container>
                   <Container row>
-                    <SmallIcon opacity="0.4" src={time} />
+                    <StatusDot
+                      status={
+                        cluster.status === "READY" ? "available" : "pending"
+                      }
+                      heightPixels={8}
+                    />
+                    <Spacer inline x={0.5} />
+                    <Text color="helper">
+                      {cluster.status === "READY" ? "Running" : "Updating"}
+                    </Text>
+                    <Spacer inline x={1} />
+                    <SmallIcon opacity="0.3" src={time} />
                     <Text size={13} color="#ffffff44">
                       {readableDate(cluster.contract.updated_at)}
                     </Text>
@@ -204,21 +208,28 @@ const ClusterDashboard: React.FC = () => {
                     <MidIcon src={cluster.cloud_provider.icon} />
                     <Text size={14}>{cluster.vanity_name}</Text>
                   </Container>
-                  <StatusDot
-                    status={
-                      cluster.status === "READY" ? "available" : "pending"
-                    }
-                    heightPixels={9}
-                  />
+                  <Container row>
+                    <StatusDot
+                      status={
+                        cluster.status === "READY" ? "available" : "pending"
+                      }
+                      heightPixels={8}
+                    />
+                    <Spacer inline x={0.5} />
+                    <Text color="helper">
+                      {cluster.status === "READY" ? "Running" : "Updating"}
+                    </Text>
+                  </Container>
                 </Container>
                 <Spacer y={0.5} />
                 <Container row>
                   <Container row>
+                    <SmallIcon opacity="0.3" src={globe} />
                     <Text size={13} color="#ffffff44">
                       {cluster.contract.config.cluster.config.region}
                     </Text>
                     <Spacer inline x={1} />
-                    <SmallIcon opacity="0.4" src={time} />
+                    <SmallIcon opacity="0.3" src={time} />
                     <Text size={13} color="#ffffff44">
                       {readableDate(cluster.contract.updated_at)}
                     </Text>

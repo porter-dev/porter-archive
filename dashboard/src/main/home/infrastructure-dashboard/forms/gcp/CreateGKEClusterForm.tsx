@@ -27,17 +27,15 @@ const CreateGKEClusterForm: React.FC<Props> = ({
   const { setValue, reset } = useFormContext<ClientClusterContract>();
 
   useEffect(() => {
-    const clusterName = `${projectName}-cluster-${Math.random()
-      .toString(36)
-      .substring(2, 8)}`;
-
     reset({
       cluster: {
         projectId,
         cloudProvider: "GCP" as const,
         config: {
           kind: "GKE" as const,
-          clusterName,
+          clusterName: `${projectName}-cluster-${Math.random()
+            .toString(36)
+            .substring(2, 8)}`,
           region: "us-east1",
           nodeGroups: [
             {

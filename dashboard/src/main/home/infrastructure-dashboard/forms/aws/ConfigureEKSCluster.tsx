@@ -51,6 +51,17 @@ const ConfigureEKSCluster: React.FC<Props> = ({
         currentStep={currentStep}
         steps={[
           <>
+            <Text size={16}>Cluster name</Text>
+            <Spacer y={0.5} />
+            <ControlledInput
+              placeholder="ex: my-cluster"
+              type="text"
+              width="300px"
+              error={errors.cluster?.config?.clusterName?.message}
+              {...register("cluster.config.clusterName")}
+            />
+          </>,
+          <>
             <Text size={16}>Cluster region</Text>
             <Spacer y={0.5} />
             <Controller

@@ -16,7 +16,7 @@ import { isAWSArnAccessible } from "lib/hooks/useCloudProvider";
 
 import api from "shared/api";
 
-import GrantAWSPermissionsHelpModal from "../../modals/help/GrantAWSPermissionsHelpModal";
+import GrantAWSPermissionsHelpModal from "../../modals/help/permissions/GrantAWSPermissionsHelpModal";
 import { BackButton, Img } from "../CreateClusterForm";
 
 type Props = {

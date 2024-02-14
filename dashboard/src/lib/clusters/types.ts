@@ -376,7 +376,13 @@ const cidrRangeValidator = z
 
 const eksConfigValidator = z.object({
   kind: z.literal("EKS"),
-  clusterName: z.string(),
+  clusterName: z
+    .string()
+    .min(1, { message: "Name must be at least 1 character" })
+    .max(31, { message: "Name must be 31 characters or less" })
+    .regex(/^[a-z0-9-]{1,61}$/, {
+      message: 'Lowercase letters, numbers, and "-" only.',
+    }),
   clusterVersion: z.string().optional().default(""),
   region: z.string(),
   nodeGroups: eksNodeGroupValidator.array(),
@@ -384,7 +390,13 @@ const eksConfigValidator = z.object({
 });
 const gkeConfigValidator = z.object({
   kind: z.literal("GKE"),
-  clusterName: z.string(),
+  clusterName: z
+    .string()
+    .min(1, { message: "Name must be at least 1 character" })
+    .max(31, { message: "Name must be 31 characters or less" })
+    .regex(/^[a-z0-9-]{1,61}$/, {
+      message: 'Lowercase letters, numbers, and "-" only.',
+    }),
   clusterVersion: z.string().optional().default(""),
   region: z.string().default("us-east1"),
   nodeGroups: gkeNodeGroupValidator.array(),
@@ -392,7 +404,13 @@ const gkeConfigValidator = z.object({
 });
 const aksConfigValidator = z.object({
   kind: z.literal("AKS"),
-  clusterName: z.string(),
+  clusterName: z
+    .string()
+    .min(1, { message: "Name must be at least 1 character" })
+    .max(31, { message: "Name must be 31 characters or less" })
+    .regex(/^[a-z0-9-]{1,61}$/, {
+      message: 'Lowercase letters, numbers, and "-" only.',
+    }),
   clusterVersion: z.string().optional().default(""),
   region: z.string(),
   nodeGroups: aksNodeGroupValidator.array(),
@@ -420,3 +438,14 @@ export const clusterContractValidator = z.object({
   cluster: contractClusterValidator,
 });
 export type ClientClusterContract = z.infer<typeof clusterContractValidator>;
+
+export type UpdateClusterResponse = {
+  preflightCheckResponse: {
+    data: any;
+    error: string;
+  };
+  createContractResponse: {
+    data: any;
+    error: string;
+  };
+};

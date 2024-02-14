@@ -26,17 +26,15 @@ const CreateAKSClusterForm: React.FC<Props> = ({
   const { setValue, reset } = useFormContext<ClientClusterContract>();
 
   useEffect(() => {
-    const clusterName = `${projectName}-cluster-${Math.random()
-      .toString(36)
-      .substring(2, 8)}`;
-
     reset({
       cluster: {
         projectId,
         cloudProvider: "Azure" as const,
         config: {
           kind: "AKS" as const,
-          clusterName,
+          clusterName: `${projectName}-cluster-${Math.random()
+            .toString(36)
+            .substring(2, 8)}`,
           region: "eastus",
           nodeGroups: [
             {

@@ -1,9 +1,12 @@
-import { useContext } from "react";
-import { Contract } from "@porter-dev/api-contracts";
+import { useContext, useState } from "react";
+import { Contract, PreflightCheckRequest } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
-import { clientClusterContractFromProto } from "lib/clusters";
+import {
+  clientClusterContractFromProto,
+  updateExistingClusterContract,
+} from "lib/clusters";
 import { SUPPORTED_CLOUD_PROVIDERS } from "lib/clusters/constants";
 import {
   clusterStateValidator,
@@ -14,6 +17,7 @@ import {
   type ClientClusterContract,
   type ClusterState,
   type ContractCondition,
+  type UpdateClusterResponse,
 } from "lib/clusters/types";
 
 import api from "shared/api";
@@ -308,5 +312,57 @@ export const useClusterState = ({
     state: clusterStateReq.data,
     isLoading: clusterStateReq.isLoading,
     isError: clusterStateReq.isError,
+  };
+};
+
+type TUseUpdateCluster = {
+  updateCluster: (
+    clientContract: ClientClusterContract,
+    baseContract: Contract
+  ) => Promise<UpdateClusterResponse>;
+  isHandlingPreflightChecks: boolean;
+  isCreatingContract: boolean;
+};
+export const useUpdateCluster = ({
+  projectId,
+}: {
+  projectId: number;
+}): TUseUpdateCluster => {
+  const [isHandlingPreflightChecks, setIsHandlingPreflightChecks] =
+    useState<boolean>(false);
+  const [isCreatingContract, setIsCreatingContract] = useState<boolean>(false);
+
+  const updateCluster = async (
+    clientContract: ClientClusterContract,
+    baseContract: Contract
+  ): Promise<UpdateClusterResponse> => {
+    if (!baseContract.cluster) {
+      return;
+    }
+    const newContract = new Contract({
+      cluster: updateExistingClusterContract(
+        clientContract,
+        baseContract.cluster
+      ),
+    });
+
+    setIsHandlingPreflightChecks(true);
+    try {
+      const preflightCheckResp = await api.preflightCheck(
+        "<token>",
+        new PreflightCheckRequest({
+          contract: newContract,
+        }),
+        {
+          id: projectId,
+        }
+      );
+    } catch (err) {}
+  };
+
+  return {
+    updateCluster,
+    isHandlingPreflightChecks,
+    isCreatingContract,
   };
 };

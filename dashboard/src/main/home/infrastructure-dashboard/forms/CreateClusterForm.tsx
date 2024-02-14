@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Contract } from "@porter-dev/api-contracts";
+import { Contract, PreflightCheckRequest } from "@porter-dev/api-contracts";
 import axios from "axios";
 import { FormProvider, useForm } from "react-hook-form";
 import styled from "styled-components";
@@ -25,6 +25,7 @@ import { useIntercom } from "lib/hooks/useIntercom";
 import api from "shared/api";
 import { Context } from "shared/Context";
 
+import PreflightChecksModal from "../modals/PreflightChecksModal";
 import CreateEKSClusterForm from "./aws/CreateEKSClusterForm";
 import CreateAKSClusterForm from "./azure/CreateAKSClusterForm";
 import CloudProviderSelect from "./CloudProviderSelect";
@@ -35,6 +36,8 @@ const CreateClusterForm: React.FC = () => {
   const [selectedCloudProvider, setSelectedCloudProvider] = useState<
     ClientCloudProvider | undefined
   >(undefined);
+  const [showFailedPreflightChecksModal, setShowFailedPreflightChecksModal] =
+    useState<boolean>(false);
 
   const clusterForm = useForm<ClientClusterContract>({
     reValidateMode: "onSubmit",
@@ -55,7 +58,7 @@ const CreateClusterForm: React.FC = () => {
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0 && errorKeys.includes("root")) {
       const errorMessage =
-        errors.cluster?.message ??
+        errors.root?.message ??
         "Cluster creation failed. Please try again. If the error persists, please contact support@porter.run.";
       return <ErrorComponent message={errorMessage} maxWidth="600px" />;
     }
@@ -82,10 +85,19 @@ const CreateClusterForm: React.FC = () => {
       const contract = new Contract({
         cluster: updateExistingClusterContract(data, defaultContract.cluster),
       });
-      await api.createContract("<token>", contract, {
-        project_id: currentProject.id,
-      });
-      console.log(contract);
+      const preflightDataResp = await api.preflightCheck(
+        "<token>",
+        new PreflightCheckRequest({
+          contract,
+        }),
+        {
+          id: currentProject.id,
+        }
+      );
+      console.log(preflightDataResp);
+      // await api.createContract("<token>", contract, {
+      //   project_id: currentProject.id,
+      // });
     } catch (err) {
       showIntercomWithMessage({
         message: "I am running into an issue creating a cluster.",
@@ -93,7 +105,6 @@ const CreateClusterForm: React.FC = () => {
 
       let message =
         "Cluster creation failed: please try again or contact support@porter.run if the error persists.";
-      console.log(err);
       if (axios.isAxiosError(err)) {
         const parsed = z
           .object({ error: z.string() })
@@ -167,6 +178,13 @@ const CreateClusterForm: React.FC = () => {
             ))}
         </form>
       </FormProvider>
+      {showFailedPreflightChecksModal && (
+        <PreflightChecksModal
+          onClose={() => {
+            setShowFailedPreflightChecksModal(false);
+          }}
+        />
+      )}
     </CreateClusterFormContainer>
   );
 };
@@ -175,7 +193,8 @@ export default CreateClusterForm;
 
 const CreateClusterFormContainer = styled.div`
   width: 100%;
-  height: 100%;
+  height: fit-content;
+  margin-bottom: 10px;
 `;
 
 export const Img = styled.img`

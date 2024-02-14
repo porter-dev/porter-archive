@@ -27,18 +27,15 @@ const CreateEKSClusterForm: React.FC<Props> = ({
   const { setValue, reset } = useFormContext<ClientClusterContract>();
 
   useEffect(() => {
-    // const clusterName = `${projectName}-cluster-${Math.random()
-    //   .toString(36)
-    //   .substring(2, 8)}`;
-    const clusterName = "feroze-feb13-cluster-xylioz";
-
     reset({
       cluster: {
         projectId,
         cloudProvider: "AWS" as const,
         config: {
           kind: "EKS" as const,
-          clusterName,
+          clusterName: `${projectName}-cluster-${Math.random()
+            .toString(36)
+            .substring(2, 8)}`,
           region: "us-east-1",
           nodeGroups: [
             {

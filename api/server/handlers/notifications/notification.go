@@ -3,6 +3,8 @@ package notifications
 import (
 	"net/http"
 
+	"github.com/google/uuid"
+
 	"github.com/porter-dev/porter/internal/models"
 
 	"github.com/porter-dev/porter/internal/porter_app/notifications"
@@ -76,9 +78,9 @@ func (n *GetNotificationHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	}
 
 	// check project scope indirectly with deployment target
-	_, err = n.Repo().DeploymentTarget().DeploymentTarget(project.ID, event.DeploymentTargetID.String())
-	if err != nil {
-		e := telemetry.Error(ctx, span, nil, "notification is not in project scope")
+	deploymentTarget, err := n.Repo().DeploymentTarget().DeploymentTarget(project.ID, event.DeploymentTargetID.String())
+	if err != nil || deploymentTarget == nil || deploymentTarget.ID == uuid.Nil {
+		e := telemetry.Error(ctx, span, err, "notification is not in project scope")
 		n.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
 		return
 	}

@@ -9,7 +9,7 @@ import {
 } from "lib/clusters/constants";
 import { type ClientCloudProvider } from "lib/clusters/types";
 
-import lightning from "assets/lightning.png";
+import bolt from "assets/bolt.svg";
 
 import CostConsentModal from "../modals/cost-consent/CostConsentModal";
 
@@ -24,7 +24,7 @@ const CloudProviderSelect: React.FC<Props> = ({ onComplete }) => {
   return (
     <div>
       <DashboardHeader
-        image={lightning}
+        image={bolt}
         title="Getting started"
         description="Select your existing cloud provider to get started with Porter."
         disableLineBreak

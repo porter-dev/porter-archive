@@ -85,7 +85,7 @@ const Select: React.FC<Props> = ({
 export default Select;
 
 const Div = styled.div<{ width?: string }>`
-  width: ${({ width }) => width || "100%"};
+  width: ${({ width }) => width || ""};
 `;
 
 const Img = styled.img`

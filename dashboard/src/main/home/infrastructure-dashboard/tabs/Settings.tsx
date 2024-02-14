@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState, useCallback } from "react";
 import axios from "axios";
 import { useHistory } from "react-router";
 import { z } from "zod";
@@ -15,14 +15,27 @@ import { Context } from "shared/Context";
 import trash from "assets/trash.png";
 
 import { useClusterContext } from "../ClusterContextProvider";
+import Input from "components/porter/Input";
 
 const Settings: React.FC = () => {
-  const { cluster, deleteCluster } = useClusterContext();
+  const { cluster, deleteCluster, updateClusterVanityName } = useClusterContext();
+  const [clusterName, setClusterName] = useState(cluster.vanity_name);
   const history = useHistory();
   const { setCurrentOverlay = () => ({}) } = useContext(Context);
   const { showIntercomWithMessage } = useIntercom();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [status, setStatus] = useState("");
+
+  const renameCluster = useCallback(async (): Promise<void> => {
+    setStatus("loading");
+    try {
+      updateClusterVanityName(clusterName);
+      setStatus("success");
+    } catch (err) {
+      setStatus("error");
+    }
+  }, [clusterName, updateClusterVanityName]);
 
   const handleDeletionSubmit = async (): Promise<void> => {
     try {
@@ -74,7 +87,28 @@ const Settings: React.FC = () => {
   }, [isSubmitting, errorMessage]);
 
   return (
-    <Container style={{ width: "600px" }}>
+    <Container>
+      <Text size={16}>Cluster name</Text>
+      <Spacer y={0.5} />
+      <Text color={"helper"}>
+        The vanity name for your cluster will not change your cluster's name in your cloud provider.
+      </Text>
+      <Spacer y={0.7} />
+      <Input
+        placeholder="ex: my-cluster"
+        width="300px"
+        value={clusterName}
+        setValue={setClusterName}
+      />
+      <Spacer y={1} />
+      <Button
+        status={status}
+        onClick={renameCluster}
+        disabled={clusterName === ""}
+      >
+        Update
+      </Button>
+      <Spacer y={1} />
       <Text size={16}>Delete &quot;{cluster.name}&quot;</Text>
       <Spacer y={0.5} />
       <Text color={"helper"}>
@@ -91,7 +125,7 @@ const Settings: React.FC = () => {
         </a>
         . Contact support@porter.run if you need guidance.
       </Text>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <Button
         color="#b91133"
         onClick={handleDeletionClick}

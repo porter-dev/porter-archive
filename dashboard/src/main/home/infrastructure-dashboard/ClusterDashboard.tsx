@@ -70,7 +70,7 @@ const ClusterDashboard: React.FC = () => {
     <StyledAppDashboard>
       <DashboardHeader
         image={infraGrad}
-        title="Clusters"
+        title="Infrastructure"
         description="Clusters for running applications on this project."
         disableLineBreak
       />
@@ -302,7 +302,7 @@ const GridList = styled.div`
   display: grid;
   grid-column-gap: 25px;
   grid-row-gap: 25px;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 `;
 
 const PlaceholderIcon = styled.img`

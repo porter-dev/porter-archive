@@ -367,7 +367,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
             <Container row>
               <Button
                 onClick={handleGrantPermissionsComplete}
-                disabled={!isAccountAccessible && false}
+                disabled={!isAccountAccessible}
               >
                 Continue
               </Button>

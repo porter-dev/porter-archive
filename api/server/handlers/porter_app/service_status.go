@@ -122,6 +122,7 @@ func (c *ServiceStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		ProjectId:          int64(project.ID),
 		AppId:              int64(app.ID),
 		DeploymentTargetId: request.DeploymentTargetID,
+		AppName:            appName,
 	})
 
 	listAppRevisionsResp, err := c.Config().ClusterControlPlaneClient.ListAppRevisions(ctx, listAppRevisionsReq)

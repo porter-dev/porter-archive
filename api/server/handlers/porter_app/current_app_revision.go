@@ -133,6 +133,7 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 			Id:   request.DeploymentTargetID,
 			Name: deploymentTargetName,
 		},
+		AppName: appName,
 	})
 
 	currentAppRevisionResp, err := c.Config().ClusterControlPlaneClient.CurrentAppRevision(ctx, currentAppRevisionReq)

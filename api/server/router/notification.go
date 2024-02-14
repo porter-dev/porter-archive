@@ -58,14 +58,14 @@ func getNotificationRoutes(
 
 	routes := make([]*router.Route, 0)
 
-	// POST /api/projects/{project_id}/notifications/{notification_config_id} -> notifications.NewUpdateNotificationConfigHandler
+	// POST /api/projects/{project_id}/notifications/config/{notification_config_id} -> notifications.NewUpdateNotificationConfigHandler
 	updateNotificationConfigEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbUpdate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamNotificationConfigID),
+				RelativePath: fmt.Sprintf("%s/config/{%s}", relPath, types.URLParamNotificationConfigID),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -86,14 +86,14 @@ func getNotificationRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/notifications/{notification_config_id} -> notifications.NewNotificationConfigHandler
+	// GET /api/projects/{project_id}/notifications/config/{notification_config_id} -> notifications.NewNotificationConfigHandler
 	getNotificationConfigEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamNotificationConfigID),
+				RelativePath: fmt.Sprintf("%s/config/{%s}", relPath, types.URLParamNotificationConfigID),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -111,6 +111,34 @@ func getNotificationRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: getNotificationConfigEndpoint,
 		Handler:  getNotificationConfigHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/notifications/{notification_id} -> notifications.NewNotificationConfigHandler
+	notificationEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}", relPath, types.URLParamNotificationID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	notificationHandler := notifications.NewNotificationHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: notificationEndpoint,
+		Handler:  notificationHandler,
 		Router:   r,
 	})
 

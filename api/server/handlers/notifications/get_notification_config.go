@@ -18,7 +18,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 )
 
-// GetNotificationConfigHandler is the handler for the POST /notifications/{notification_config_id} endpoint
+// GetNotificationConfigHandler is the handler for the POST /notifications/config/{notification_config_id} endpoint
 type GetNotificationConfigHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -34,10 +34,10 @@ func NewNotificationConfigHandler(
 	}
 }
 
-// GetNotificationConfigRequest is the request object for the /notifications/{notification_config_id} endpoint
+// GetNotificationConfigRequest is the request object for the /notifications/config/{notification_config_id} endpoint
 type GetNotificationConfigRequest struct{}
 
-// GetNotificationConfigResponse is the response object for the /notifications/{notification_config_id} endpoint
+// GetNotificationConfigResponse is the response object for the /notifications/config/{notification_config_id} endpoint
 type GetNotificationConfigResponse struct {
 	Config Config `json:"config"`
 }

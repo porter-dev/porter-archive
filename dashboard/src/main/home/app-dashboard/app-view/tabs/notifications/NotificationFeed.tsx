@@ -12,6 +12,12 @@ import { type ClientNotification } from "lib/porter-apps/notification";
 import { useLatestRevision } from "../../LatestRevisionContext";
 import NotificationExpandedView from "./expanded-views/NotificationExpandedView";
 import NotificationList from "./NotificationList";
+import {useQuery} from "@tanstack/react-query";
+import {emptyNotificationConfig, notificationConfigFormValidator} from "../../../../../../lib/notifications/types";
+import api from "../../../../../../shared/api";
+import {z} from "zod";
+import {match} from "ts-pattern";
+import Loading from "../../../../../../components/Loading";
 
 type Props = {
   notifications: ClientNotification[];
@@ -54,19 +60,6 @@ const NotificationFeed: React.FC<Props> = ({
     }
   }, [notificationId, JSON.stringify(notifications)]);
 
-  if (notifications.length === 0) {
-    return (
-      <Fieldset>
-        <Text size={16}>This application currently has no notifications. </Text>
-        <Spacer height="15px" />
-        <Text color="helper">
-          You will receive notifications here if we need to alert you about any
-          issues with your services.
-        </Text>
-      </Fieldset>
-    );
-  }
-
   return (
     <StyledNotificationFeed>
       {selectedNotification ? (
@@ -91,7 +84,8 @@ const NotificationFeed: React.FC<Props> = ({
             appId={appId}
           />
         </>
-      ) : (
+      ) :
+          notifications.length !== 0 ?  (
         <NotificationList
           notifications={notifications}
           onNotificationClick={(notification: ClientNotification) => {
@@ -109,12 +103,80 @@ const NotificationFeed: React.FC<Props> = ({
           appName={appName}
           deploymentTargetId={deploymentTarget.id}
         />
-      )}
+      ) : <Fieldset>
+            <Text size={16}>This application currently has no notifications. </Text>
+            <Spacer height="15px" />
+            <Text color="helper">
+              You will receive notifications here if we need to alert you about any
+              issues with your services.
+            </Text>
+          </Fieldset>}
     </StyledNotificationFeed>
   );
 };
 
 export default NotificationFeed;
+
+type SetupNotificationProps = {
+  notificationId: string;
+  projectId: number;
+  clusterId: number;
+  appName: string;
+  deploymentTarget: DeploymentTarget;
+  appId: number;
+};
+
+const SetupNotification: React.FC<SetupNotificationProps> = ({
+                                                                 notificationId,
+                                                                 projectId,
+                                                                 clusterId,
+                                                                 appName,
+                                                                 deploymentTarget,
+                                                                 appId,
+                                                                         }) => {
+  const configRes = useQuery(
+      ["getNotification", notificationId],
+      async () => {
+        if (notificationId === 0) {
+          return emptyNotificationConfig;
+        }
+        const res = await api.getNotificationConfig(
+            "<token>",
+            {},
+            {
+              project_id: projectID,
+              notification_config_id: notificationConfigID,
+            }
+        );
+
+        const object = await z
+            .object({
+              config: notificationConfigFormValidator,
+            })
+            .parseAsync(res.data);
+
+        return object.config;
+      }
+  );
+
+  return (
+      <>
+        {match(configRes)
+            .with({ status: "loading" }, () => <Loading />)
+            .with({ status: "success" }, ({ data }) => {
+              return (
+                  <NotificationConfigContainer
+                      projectID={projectID}
+                      slackIntegrationID={slackIntegrationID}
+                      notificationConfigID={notificationConfigID}
+                      existingConfig={data}
+                  />
+              );
+            })
+            .otherwise(() => null)}
+      </>
+  );
+};
 
 const StyledNotificationFeed = styled.div`
   display: flex;

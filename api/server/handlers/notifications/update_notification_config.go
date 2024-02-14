@@ -18,7 +18,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 )
 
-// UpdateNotificationConfigHandler is the handler for the POST /notifications/{notification_config_id} endpoint
+// UpdateNotificationConfigHandler is the handler for the POST /notifications/config/{notification_config_id} endpoint
 type UpdateNotificationConfigHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -34,7 +34,7 @@ func NewUpdateNotificationConfigHandler(
 	}
 }
 
-// UpdateNotificationConfigRequest is the request object for the /notifications/{notification_config_id} endpoint
+// UpdateNotificationConfigRequest is the request object for the /notifications/config/{notification_config_id} endpoint
 type UpdateNotificationConfigRequest struct {
 	Config             Config `json:"config"`
 	SlackIntegrationID uint   `json:"slack_integration_id"`
@@ -57,7 +57,7 @@ type Type struct {
 	Type string `json:"type"`
 }
 
-// UpdateNotificationConfigResponse is the response object for the /notifications/{notification_config_id} endpoint
+// UpdateNotificationConfigResponse is the response object for the /notifications/config/{notification_config_id} endpoint
 type UpdateNotificationConfigResponse struct {
 	ID uint `json:"id"`
 }

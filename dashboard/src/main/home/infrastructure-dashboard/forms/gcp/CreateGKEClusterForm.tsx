@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { match } from "ts-pattern";
 
@@ -10,6 +10,7 @@ import GrantGCPPermissions from "./GrantGCPPermissions";
 type Props = {
   goBack: () => void;
   projectId: number;
+  projectName: string;
   createClusterButtonStatus: "loading" | JSX.Element | "success" | "";
   isCreateClusterButtonDisabled: boolean;
 };
@@ -17,12 +18,52 @@ type Props = {
 const CreateGKEClusterForm: React.FC<Props> = ({
   goBack,
   projectId,
+  projectName,
   isCreateClusterButtonDisabled,
   createClusterButtonStatus,
 }) => {
-  const [step, setStep] = useState<"permissions" | "cluster">("cluster");
+  const [step, setStep] = useState<"permissions" | "cluster">("permissions");
 
-  const { setValue } = useFormContext<ClientClusterContract>();
+  const { setValue, reset } = useFormContext<ClientClusterContract>();
+
+  useEffect(() => {
+    const clusterName = `${projectName}-cluster-${Math.random()
+      .toString(36)
+      .substring(2, 8)}`;
+
+    reset({
+      cluster: {
+        projectId,
+        cloudProvider: "GCP" as const,
+        config: {
+          kind: "GKE" as const,
+          clusterName,
+          region: "us-east1",
+          nodeGroups: [
+            {
+              nodeGroupType: "APPLICATION" as const,
+              instanceType: "e2-standard-2",
+              minInstances: 1,
+              maxInstances: 10,
+            },
+            {
+              nodeGroupType: "SYSTEM" as const,
+              instanceType: "custom-2-4096",
+              minInstances: 1,
+              maxInstances: 2,
+            },
+            {
+              nodeGroupType: "MONITORING" as const,
+              instanceType: "custom-2-4096",
+              minInstances: 1,
+              maxInstances: 1,
+            },
+          ],
+          cidrRange: "10.78.0.0/16",
+        },
+      },
+    });
+  }, []);
 
   return match(step)
     .with("permissions", () => (

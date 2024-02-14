@@ -24,7 +24,7 @@ const ConfigureEKSCluster: React.FC<Props> = ({
   createClusterButtonStatus,
   isCreateClusterButtonDisabled,
 }) => {
-  const [currentStep, _setCurrentStep] = useState<number>(1);
+  const [currentStep, _setCurrentStep] = useState<number>(4);
 
   const { control } = useFormContext<ClientClusterContract>();
 

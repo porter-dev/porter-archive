@@ -51,21 +51,23 @@ const ConfigureGKECluster: React.FC<Props> = ({
             <Controller
               name={`cluster.config.region`}
               control={control}
-              render={({ field: { value, onChange } }) => (
-                <Container style={{ width: "300px" }}>
-                  <Select
-                    options={CloudProviderGCP.regions.map((region) => ({
-                      value: region.name,
-                      label: region.displayName,
-                    }))}
-                    setValue={(selected: string) => {
-                      onChange(selected);
-                    }}
-                    value={value}
-                    label="📍 Azure region"
-                  />
-                </Container>
-              )}
+              render={({ field: { value, onChange } }) => {
+                return (
+                  <Container style={{ width: "300px" }}>
+                    <Select
+                      options={CloudProviderGCP.regions.map((region) => ({
+                        value: region.name,
+                        label: region.displayName,
+                      }))}
+                      setValue={(selected: string) => {
+                        onChange(selected);
+                      }}
+                      value={value}
+                      label="📍 GCP location"
+                    />
+                  </Container>
+                );
+              }}
             />
           </>,
           <>

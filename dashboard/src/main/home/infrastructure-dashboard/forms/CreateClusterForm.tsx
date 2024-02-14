@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Contract } from "@porter-dev/api-contracts";
 import axios from "axios";
@@ -40,121 +40,9 @@ const CreateClusterForm: React.FC = () => {
     reValidateMode: "onSubmit",
     resolver: zodResolver(clusterContractValidator),
   });
-  useEffect(() => {
-    if (!currentProject?.id) {
-      return;
-    }
-    const clusterName = `${currentProject.name}-cluster-${Math.random()
-      .toString(36)
-      .substring(2, 8)}`;
-    const projectId = currentProject.id;
-    const defaultEKSClusterValues = {
-      cluster: {
-        projectId,
-        cloudProvider: "AWS" as const,
-        config: {
-          kind: "EKS" as const,
-          clusterName,
-          region: "us-east-1",
-          nodeGroups: [
-            {
-              nodeGroupType: "APPLICATION" as const,
-              instanceType: "t3.medium",
-              minInstances: 1,
-              maxInstances: 10,
-            },
-            {
-              nodeGroupType: "SYSTEM" as const,
-              instanceType: "t3.medium",
-              minInstances: 1,
-              maxInstances: 3,
-            },
-            {
-              nodeGroupType: "MONITORING" as const,
-              instanceType: "t3.large",
-              minInstances: 1,
-              maxInstances: 1,
-            },
-          ],
-          cidrRange: "10.78.0.0/16",
-        },
-      },
-    };
-
-    clusterForm.reset(
-      match(selectedCloudProvider)
-        .with({ name: "AWS" }, () => defaultEKSClusterValues)
-        .with({ name: "GCP" }, () => ({
-          cluster: {
-            projectId,
-            cloudProvider: "GCP" as const,
-            config: {
-              kind: "GKE" as const,
-              clusterName,
-              region: "us-east1",
-              nodePools: [
-                {
-                  nodePoolType: "APPLICATION" as const,
-                  instanceType: "e2-standard-2",
-                  minInstances: 1,
-                  maxInstances: 10,
-                },
-                {
-                  nodePoolType: "SYSTEM" as const,
-                  instanceType: "custom-2-4096",
-                  minInstances: 1,
-                  maxInstances: 2,
-                },
-                {
-                  nodePoolType: "MONITORING" as const,
-                  instanceType: "custom-2-4096",
-                  minInstances: 1,
-                  maxInstances: 1,
-                },
-              ],
-              cidrRange: "10.78.0.0/16",
-            },
-          },
-        }))
-        .with({ name: "Azure" }, () => ({
-          cluster: {
-            projectId,
-            cloudProvider: "Azure" as const,
-            config: {
-              kind: "AKS" as const,
-              clusterName,
-              region: "eastus",
-              nodeGroups: [
-                {
-                  nodeGroupType: "APPLICATION" as const,
-                  instanceType: "Standard_B2als_v2",
-                  minInstances: 1,
-                  maxInstances: 10,
-                },
-                {
-                  nodeGroupType: "SYSTEM" as const,
-                  instanceType: "Standard_B2als_v2",
-                  minInstances: 1,
-                  maxInstances: 3,
-                },
-                {
-                  nodeGroupType: "MONITORING" as const,
-                  instanceType: "Standard_B2als_v2",
-                  minInstances: 1,
-                  maxInstances: 3,
-                },
-              ],
-              cidrRange: "10.78.0.0/16",
-              skuTier: "FREE" as const,
-            },
-          },
-        }))
-        .otherwise(() => defaultEKSClusterValues)
-    );
-  }, [selectedCloudProvider]);
 
   const {
-    formState: { errors, isSubmitting, isSubmitSuccessful },
+    formState: { errors, isSubmitting },
     setError,
   } = clusterForm;
 
@@ -174,12 +62,8 @@ const CreateClusterForm: React.FC = () => {
       return <ErrorComponent message={errorMessage} maxWidth="600px" />;
     }
 
-    if (isSubmitSuccessful) {
-      return "success";
-    }
-
     return "";
-  }, [isSubmitting, JSON.stringify(errors), isSubmitSuccessful]);
+  }, [isSubmitting, JSON.stringify(errors)]);
 
   const onSubmit = clusterForm.handleSubmit(async (data) => {
     try {
@@ -241,6 +125,7 @@ const CreateClusterForm: React.FC = () => {
                   setSelectedCloudProvider(undefined);
                 }}
                 projectId={currentProject.id}
+                projectName={currentProject.name}
                 ackEnabled={currentProject.aws_ack_auth_enabled}
                 createClusterButtonStatus={createClusterButtonStatus}
                 isCreateClusterButtonDisabled={isSubmitting}
@@ -252,6 +137,7 @@ const CreateClusterForm: React.FC = () => {
                   setSelectedCloudProvider(undefined);
                 }}
                 projectId={currentProject.id}
+                projectName={currentProject.name}
                 createClusterButtonStatus={createClusterButtonStatus}
                 isCreateClusterButtonDisabled={isSubmitting}
               />
@@ -262,6 +148,7 @@ const CreateClusterForm: React.FC = () => {
                   setSelectedCloudProvider(undefined);
                 }}
                 projectId={currentProject.id}
+                projectName={currentProject.name}
                 createClusterButtonStatus={createClusterButtonStatus}
                 isCreateClusterButtonDisabled={isSubmitting}
               />

@@ -90,6 +90,7 @@ function updateEKSKindValues(
           .otherwise(() => NodeGroupType.UNSPECIFIED),
       });
     }),
+    cidrRange: clientConfig.cidrRange, // this should be removed once we no longer use the deprecated value
     network: new AWSClusterNetwork({
       ...(existingConfig?.network ?? {}),
       vpcCidr: clientConfig.cidrRange,

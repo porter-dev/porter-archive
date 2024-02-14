@@ -224,9 +224,19 @@ export type MachineType = {
   displayName: string;
   supportedRegions: Array<AWSRegion | GCPRegion | AzureRegion>;
 };
+type PreflightCheckResolutionStep = {
+  text: string;
+  externalLink?: string;
+};
+export type PreflightCheckResolution = {
+  title: string;
+  subtitle: string;
+  steps: PreflightCheckResolutionStep[];
+};
 export type PreflightCheck = {
   name: PreflightCheckKey;
   displayName: string;
+  resolution?: PreflightCheckResolution;
 };
 
 // Cluster
@@ -474,9 +484,11 @@ export const createContractResponseValidator = z.object({
 });
 export type ClientPreflightCheck = {
   title: string;
+  status: "pending" | "success" | "failure";
   error?: {
     detail: string;
     metadata: Record<string, string> | undefined;
+    resolution?: PreflightCheckResolution;
   };
 };
 type CreateContractResponse = z.infer<typeof createContractResponseValidator>;

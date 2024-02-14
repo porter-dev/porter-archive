@@ -17,6 +17,7 @@ import {
   type ClientRegion,
   type MachineType,
   type PreflightCheck,
+  type PreflightCheckResolution,
 } from "./types";
 
 export const SUPPORTED_AWS_REGIONS: ClientRegion[] = [
@@ -841,22 +842,131 @@ const SUPPORTED_AZURE_SKU_TIERS = [
   },
 ];
 
+const AWS_EIP_QUOTA_RESOLUTION: PreflightCheckResolution = {
+  title: "Requesting more EIP Addresses",
+  subtitle:
+    "You will need to either request more EIP addresses or delete existing ones in order to provision in the region specified. You can request more addresses by following these steps:",
+  steps: [
+    {
+      text: "Log into your AWS Account",
+      externalLink:
+        "https://console.aws.amazon.com/billing/home?region=us-east-1#/account",
+    },
+    {
+      text: "Navigate to the Amazon Elastic Compute Cloud (Amazon EC2) Service Quotas portal",
+      externalLink:
+        "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas",
+    },
+    {
+      text: 'Search for "EC2-VPC Elastic IPs" in the search box and click on the search result.',
+    },
+    {
+      text: 'Click on "Request quota increase". In order to provision with Porter, you will need to request at least 3 addresses above your current quota limit.',
+    },
+    {
+      text: "Once that request is approved, return to Porter and retry the provision.",
+    },
+  ],
+};
+const AWS_NAT_GATEWAY_QUOTA_RESOLUTION: PreflightCheckResolution = {
+  title: "Requesting more NAT Gateways",
+  subtitle:
+    "You will need to either request more NAT Gateways or delete existing ones in order to provision in the region specified. You can request more NAT Gateways by following these steps:",
+  steps: [
+    {
+      text: "Log into your AWS Account",
+      externalLink:
+        "https://console.aws.amazon.com/billing/home?region=us-east-1#/account",
+    },
+    {
+      text: "Navigate to the Amazon Virtual Private Cloud (Amazon VPC) Service Quotas portal",
+      externalLink:
+        "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/vpc/quotas",
+    },
+    {
+      text: 'Search for "NAT gateways per Availability Zone" in the search box and click on the search result.',
+    },
+    {
+      text: 'Click on "Request quota increase". In order to provision with Porter, you will need to request at least 3 NAT Gateways above your current quota limit.',
+    },
+    {
+      text: "Once that request is approved, return to Porter and retry the provision.",
+    },
+  ],
+};
+const AWS_VPC_QUOTA_RESOLUTION: PreflightCheckResolution = {
+  title: "Requesting more VPCs",
+  subtitle:
+    "You will need to either request more VPCs or delete existing ones in order to provision in the region specified. You can request more VPCs by following these steps:",
+  steps: [
+    {
+      text: "Log into your AWS Account",
+      externalLink:
+        "https://console.aws.amazon.com/billing/home?region=us-east-1#/account",
+    },
+    {
+      text: "Navigate to the Amazon Virtual Private Cloud (Amazon VPC) Service Quotas portal",
+      externalLink:
+        "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/vpc/quotas",
+    },
+    {
+      text: 'Search for "VPCs per Region" in the search box and click on the search result.',
+    },
+    {
+      text: 'Click on "Request quota increase". In order to provision with Porter, you will need to request at least 1 VPC above your current quota limit.',
+    },
+    {
+      text: "Once that request is approved, return to Porter and retry the provision.",
+    },
+  ],
+};
+const AWS_VCPUS_QUOTA_RESOLUTION: PreflightCheckResolution = {
+  title: "Requesting more vCPUs",
+  subtitle:
+    "You will need to either request more vCPUs or delete existing instances in order to provision in the region specified. You can request more vCPUs by following these steps:",
+  steps: [
+    {
+      text: "Log into your AWS Account",
+      externalLink:
+        "https://console.aws.amazon.com/billing/home?region=us-east-1#/account",
+    },
+    {
+      text: "Navigate to the Amazon Elastic Compute Cloud (Amazon EC2) Service Quotas portal",
+      externalLink:
+        "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas",
+    },
+    {
+      text: 'Search for "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances" in the search box and click on the search result.',
+    },
+    {
+      text: 'Click on "Request quota increase". In order to provision with Porter, you will need to request at least 10 vCPUs above your current quota limit.',
+    },
+    {
+      text: "Once that request is approved, return to Porter and retry the provision.",
+    },
+  ],
+};
+
 const SUPPORTED_AWS_PREFLIGHT_CHECKS: PreflightCheck[] = [
   {
     name: "eip",
     displayName: "Elastic IP availability",
+    resolution: AWS_EIP_QUOTA_RESOLUTION,
   },
   {
     name: "natGateway",
     displayName: "NAT Gateway availability",
+    resolution: AWS_NAT_GATEWAY_QUOTA_RESOLUTION,
   },
   {
     name: "vpc",
     displayName: "VPC availability",
+    resolution: AWS_VPC_QUOTA_RESOLUTION,
   },
   {
     name: "vcpu",
     displayName: "vCPU availability",
+    resolution: AWS_VCPUS_QUOTA_RESOLUTION,
   },
 ];
 

@@ -10,13 +10,13 @@ import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
-import PreflightChecks from "components/PreflightChecks";
 import { CloudProviderAWS } from "lib/clusters/constants";
 import { isAWSArnAccessible } from "lib/hooks/useCloudProvider";
 
 import api from "shared/api";
 
 import GrantAWSPermissionsHelpModal from "../../modals/help/permissions/GrantAWSPermissionsHelpModal";
+import { CheckItem } from "../../modals/PreflightChecksModal";
 import { BackButton, Img } from "../CreateClusterForm";
 
 type Props = {
@@ -348,20 +348,11 @@ const GrantAWSPermissions: React.FC<Props> = ({
               </Link>
             </Text>
             <Spacer y={1} />
-            {/* TODO: do not use this component */}
-            <PreflightChecks
-              preflightData={
-                isAccountAccessible
-                  ? {
-                      Msg: {
-                        preflight_checks: {
-                          cloudFormation: {},
-                        },
-                      },
-                    }
-                  : undefined
-              }
-              provider={"DEFAULT"}
+            <CheckItem
+              preflightCheck={{
+                title: "AWS account accessible",
+                status: isAccountAccessible ? "success" : "pending",
+              }}
             />
             <Spacer y={1} />
             <Container row>

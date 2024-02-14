@@ -413,9 +413,11 @@ export const useUpdateCluster = ({
             }
             return {
               title: preflightCheckMatch.displayName,
+              status: "failure" as const,
               error: {
                 detail: e.error.message,
                 metadata: e.error.metadata,
+                resolution: preflightCheckMatch.resolution,
               },
             };
           })

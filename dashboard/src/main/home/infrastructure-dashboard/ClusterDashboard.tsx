@@ -70,7 +70,7 @@ const ClusterDashboard: React.FC = () => {
     <StyledAppDashboard>
       <DashboardHeader
         image={infraGrad}
-        title="Clusters"
+        title="Infrastructure"
         description="Clusters for running applications on this project."
         disableLineBreak
       />

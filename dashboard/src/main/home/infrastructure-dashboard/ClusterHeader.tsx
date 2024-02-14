@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
 import styled from "styled-components";
-import { match } from "ts-pattern";
 
 import Container from "components/porter/Container";
 import Icon from "components/porter/Icon";
@@ -9,47 +8,37 @@ import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
 
 import { readableDate } from "shared/string_utils";
-import editIcon from "assets/edit-button.svg";
 
 import { useClusterContext } from "./ClusterContextProvider";
-import RenameClusterVanityNameModal from "./modals/RenameClusterVanityNameModal";
 
 const ClusterHeader: React.FC = () => {
   const { cluster } = useClusterContext();
-  const [showRenameModal, setShowRenameModal] = useState(false);
 
   return (
     <>
       <Container row style={{ width: "100%" }}>
-        <Container row spaced style={{ width: "100%" }}>
-          <Container row>
-            <Icon src={cluster.cloud_provider.icon} height={"25px"} />
-            <Spacer inline x={1} />
-            <Text size={21}>{cluster.vanity_name}</Text>
-            <Spacer inline x={1} />
-            <EditIconStyle
-              onClick={() => {
-                setShowRenameModal(true);
-              }}
-            >
-              <img src={editIcon} />
-            </EditIconStyle>
-          </Container>
-          {match(cluster.status)
-            .with("READY", () => (
-              <Container row>
-                <StatusDot status={"available"} heightPixels={11} />
-              </Container>
-            ))
-            .otherwise(() => (
-              <Container row>
-                <StatusDot status={"pending"} heightPixels={11} />
-              </Container>
-            ))}
+        <Container row>
+          <Icon src={cluster.cloud_provider.icon} height={"25px"} />
+          <Spacer inline x={1} />
+          <Text size={21}>{cluster.vanity_name}</Text>
         </Container>
       </Container>
       <Spacer y={0.5} />
       <CreatedAtContainer>
+        <Container row>
+          <Spacer inline x={0.2} />
+          <StatusDot
+            status={
+              cluster.status === "READY" ? "available" : "pending"
+            }
+            heightPixels={8}
+          />
+          <Spacer inline x={0.7} />
+          <Text color="helper">
+            {cluster.status === "READY" ? "Running" : "Updating"}
+          </Text>
+          <Spacer inline x={1} />
+        </Container>
         <div style={{ flexShrink: 0 }}>
           <Text color="#aaaabb66">
             Updated {readableDate(cluster.contract.updated_at)}
@@ -57,13 +46,6 @@ const ClusterHeader: React.FC = () => {
         </div>
         <Spacer y={0.5} />
       </CreatedAtContainer>
-      {showRenameModal && (
-        <RenameClusterVanityNameModal
-          onClose={() => {
-            setShowRenameModal(false);
-          }}
-        />
-      )}
     </>
   );
 };

@@ -222,6 +222,7 @@ func (p *CreateUpdatePorterAppEventHandler) createNewAppEvent(ctx context.Contex
 			ProjectId:          int64(cluster.ProjectID),
 			AppId:              int64(app.ID),
 			DeploymentTargetId: deploymentTargetID,
+			AppName:            porterAppName,
 		}))
 		if err != nil {
 			return types.PorterAppEvent{}, telemetry.Error(ctx, span, err, "error getting current app revision from cluster control plane client")

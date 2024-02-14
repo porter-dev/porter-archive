@@ -12,32 +12,32 @@ type Props = {
   projectId: number;
   projectName: string;
   ackEnabled: boolean;
-  createClusterButtonStatus: "loading" | JSX.Element | "success" | "";
-  isCreateClusterButtonDisabled: boolean;
+  createButtonProps: {
+    status: "loading" | JSX.Element | "success" | "";
+    isDisabled: boolean;
+    loadingText: string;
+  };
 };
 const CreateEKSClusterForm: React.FC<Props> = ({
   goBack,
   projectId,
   projectName,
   ackEnabled,
-  createClusterButtonStatus,
-  isCreateClusterButtonDisabled,
+  createButtonProps,
 }) => {
   const [step, setStep] = useState<"permissions" | "cluster">("permissions");
   const { setValue, reset } = useFormContext<ClientClusterContract>();
 
   useEffect(() => {
-    const clusterName = `${projectName}-cluster-${Math.random()
-      .toString(36)
-      .substring(2, 8)}`;
-
     reset({
       cluster: {
         projectId,
         cloudProvider: "AWS" as const,
         config: {
           kind: "EKS" as const,
-          clusterName,
+          clusterName: `${projectName}-cluster-${Math.random()
+            .toString(36)
+            .substring(2, 8)}`,
           region: "us-east-1",
           nodeGroups: [
             {
@@ -90,8 +90,7 @@ const CreateEKSClusterForm: React.FC<Props> = ({
           setStep("permissions");
           setValue("cluster.cloudProviderCredentialsId", "");
         }}
-        createClusterButtonStatus={createClusterButtonStatus}
-        isCreateClusterButtonDisabled={isCreateClusterButtonDisabled}
+        createButtonProps={createButtonProps}
       />
     ))
     .exhaustive();

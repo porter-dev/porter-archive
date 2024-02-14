@@ -1,15 +1,11 @@
 import React, { useContext, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Contract } from "@porter-dev/api-contracts";
-import axios from "axios";
 import { FormProvider, useForm } from "react-hook-form";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-import { z } from "zod";
 
 import Loading from "components/Loading";
 import { Error as ErrorComponent } from "components/porter/Error";
-import { updateExistingClusterContract } from "lib/clusters";
 import {
   CloudProviderAWS,
   CloudProviderAzure,
@@ -19,21 +15,43 @@ import {
   clusterContractValidator,
   type ClientCloudProvider,
   type ClientClusterContract,
+  type UpdateClusterResponse,
 } from "lib/clusters/types";
+import { useUpdateCluster } from "lib/hooks/useCluster";
 import { useIntercom } from "lib/hooks/useIntercom";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
 
+import PreflightChecksModal from "../modals/PreflightChecksModal";
 import CreateEKSClusterForm from "./aws/CreateEKSClusterForm";
 import CreateAKSClusterForm from "./azure/CreateAKSClusterForm";
 import CloudProviderSelect from "./CloudProviderSelect";
 import CreateGKEClusterForm from "./gcp/CreateGKEClusterForm";
 
+// todo(ianedwards): refactor button to use more predictable state
+export type UpdateClusterButtonProps = {
+  status: "" | "loading" | JSX.Element | "success";
+  isDisabled: boolean;
+  loadingText: string;
+};
 const CreateClusterForm: React.FC = () => {
   const { currentProject } = useContext(Context);
   const [selectedCloudProvider, setSelectedCloudProvider] = useState<
     ClientCloudProvider | undefined
+  >(undefined);
+  const [showFailedPreflightChecksModal, setShowFailedPreflightChecksModal] =
+    useState<boolean>(false);
+  const [updateClusterResponse, setUpdateClusterResponse] = useState<
+    | {
+        response: UpdateClusterResponse;
+        error?: string;
+      }
+    | {
+        response?: UpdateClusterResponse;
+        error: string;
+      }
+    | undefined
   >(undefined);
 
   const clusterForm = useForm<ClientClusterContract>({
@@ -41,68 +59,73 @@ const CreateClusterForm: React.FC = () => {
     resolver: zodResolver(clusterContractValidator),
   });
 
+  const { updateCluster, isHandlingPreflightChecks, isCreatingContract } =
+    useUpdateCluster({ projectId: currentProject?.id });
+
   const {
-    formState: { errors, isSubmitting },
-    setError,
+    formState: { isSubmitting },
   } = clusterForm;
 
   const { showIntercomWithMessage } = useIntercom();
 
-  const createClusterButtonStatus = useMemo(() => {
+  const createClusterButtonProps = useMemo(() => {
+    const props: UpdateClusterButtonProps = {
+      status: "",
+      isDisabled: false,
+      loadingText: "",
+    };
     if (isSubmitting) {
-      return "loading";
+      props.status = "loading";
+      props.isDisabled = true;
     }
-    const errorKeys = Object.keys(errors);
-    if (errorKeys.length > 0 && errorKeys.includes("root")) {
-      const errorMessage =
-        errors.cluster?.message ??
-        "Cluster creation failed. Please try again. If the error persists, please contact support@porter.run.";
-      return <ErrorComponent message={errorMessage} maxWidth="600px" />;
+    if (updateClusterResponse?.error) {
+      props.status = (
+        <ErrorComponent
+          message={updateClusterResponse?.error}
+          maxWidth="600px"
+        />
+      );
+    }
+    if (isHandlingPreflightChecks) {
+      props.loadingText = "Running preflight checks...";
+    }
+    if (isCreatingContract) {
+      props.loadingText = "Creating cluster...";
     }
 
-    return "";
-  }, [isSubmitting, errors]);
+    return props;
+  }, [
+    isSubmitting,
+    updateClusterResponse,
+    isHandlingPreflightChecks,
+    isCreatingContract,
+  ]);
 
   const onSubmit = clusterForm.handleSubmit(async (data) => {
-    try {
-      if (!currentProject) {
-        return;
-      }
-      const defaultContract = match(selectedCloudProvider)
-        .with({ name: "AWS" }, () => CloudProviderAWS.newClusterDefaultContract)
-        .with({ name: "GCP" }, () => CloudProviderGCP.newClusterDefaultContract)
-        .with(
-          { name: "Azure" },
-          () => CloudProviderAzure.newClusterDefaultContract
-        )
-        .otherwise(() => undefined);
-      if (!defaultContract?.cluster) {
-        return;
-      }
-      const contract = new Contract({
-        cluster: updateExistingClusterContract(data, defaultContract.cluster),
-      });
-      await api.createContract("<token>", contract, {
-        project_id: currentProject.id,
-      });
-    } catch (err) {
+    if (!currentProject) {
+      return;
+    }
+    setUpdateClusterResponse(undefined);
+    const defaultContract = match(selectedCloudProvider)
+      .with({ name: "AWS" }, () => CloudProviderAWS.newClusterDefaultContract)
+      .with({ name: "GCP" }, () => CloudProviderGCP.newClusterDefaultContract)
+      .with(
+        { name: "Azure" },
+        () => CloudProviderAzure.newClusterDefaultContract
+      )
+      .otherwise(() => undefined);
+    if (!defaultContract?.cluster) {
+      return;
+    }
+
+    const response = await updateCluster(data, defaultContract);
+    setUpdateClusterResponse(response);
+    if (response.response?.preflightChecks) {
+      setShowFailedPreflightChecksModal(true);
+    }
+    if (response.error) {
       showIntercomWithMessage({
-        message: "I am running into an issue creating a cluster.",
-      });
-
-      let message =
-        "Cluster creation failed: please try again or contact support@porter.run if the error persists.";
-
-      if (axios.isAxiosError(err)) {
-        const parsed = z
-          .object({ error: z.string() })
-          .safeParse(err.response?.data);
-        if (parsed.success) {
-          message = `Cluster creation failed: ${parsed.data.error}`;
-        }
-      }
-      setError("root", {
-        message,
+        message: "I am running into an issue creating my cluster.",
       });
     }
   });
@@ -124,8 +147,7 @@ const CreateClusterForm: React.FC = () => {
                 projectId={currentProject.id}
                 projectName={currentProject.name}
                 ackEnabled={currentProject.aws_ack_auth_enabled}
-                createClusterButtonStatus={createClusterButtonStatus}
-                isCreateClusterButtonDisabled={isSubmitting}
+                createButtonProps={createClusterButtonProps}
               />
             ))
             .with({ name: "GCP" }, () => (
@@ -135,8 +157,7 @@ const CreateClusterForm: React.FC = () => {
                 }}
                 projectId={currentProject.id}
                 projectName={currentProject.name}
-                createClusterButtonStatus={createClusterButtonStatus}
-                isCreateClusterButtonDisabled={isSubmitting}
+                createButtonProps={createClusterButtonProps}
               />
             ))
             .with({ name: "Azure" }, () => (
@@ -146,8 +167,7 @@ const CreateClusterForm: React.FC = () => {
                 }}
                 projectId={currentProject.id}
                 projectName={currentProject.name}
-                createClusterButtonStatus={createClusterButtonStatus}
-                isCreateClusterButtonDisabled={isSubmitting}
+                createButtonProps={createClusterButtonProps}
               />
             ))
             .otherwise(() => (
@@ -166,6 +186,15 @@ const CreateClusterForm: React.FC = () => {
             ))}
         </form>
       </FormProvider>
+      {showFailedPreflightChecksModal &&
+        updateClusterResponse?.response?.preflightChecks && (
+          <PreflightChecksModal
+            onClose={() => {
+              setShowFailedPreflightChecksModal(false);
+            }}
+            preflightChecks={updateClusterResponse.response.preflightChecks}
+          />
+        )}
     </CreateClusterFormContainer>
   );
 };
@@ -174,7 +203,8 @@ export default CreateClusterForm;
 
 const CreateClusterFormContainer = styled.div`
   width: 100%;
-  height: 100%;
+  height: fit-content;
+  margin-bottom: 10px;
 `;
 
 export const Img = styled.img`

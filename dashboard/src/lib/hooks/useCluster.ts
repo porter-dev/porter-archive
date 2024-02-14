@@ -1,19 +1,32 @@
-import { useContext } from "react";
-import { Contract } from "@porter-dev/api-contracts";
+import { useContext, useState } from "react";
+import { Contract, PreflightCheckRequest } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { match } from "ts-pattern";
 import { z } from "zod";
 
-import { clientClusterContractFromProto } from "lib/clusters";
-import { SUPPORTED_CLOUD_PROVIDERS } from "lib/clusters/constants";
+import {
+  clientClusterContractFromProto,
+  updateExistingClusterContract,
+} from "lib/clusters";
+import {
+  CloudProviderAWS,
+  CloudProviderGCP,
+  SUPPORTED_CLOUD_PROVIDERS,
+} from "lib/clusters/constants";
 import {
   clusterStateValidator,
   clusterValidator,
   contractValidator,
+  createContractResponseValidator,
+  preflightCheckValidator,
   type APIContract,
   type ClientCluster,
   type ClientClusterContract,
+  type ClientPreflightCheck,
   type ClusterState,
   type ContractCondition,
+  type UpdateClusterResponse,
 } from "lib/clusters/types";
 
 import api from "shared/api";
@@ -309,4 +322,163 @@ export const useClusterState = ({
     isLoading: clusterStateReq.isLoading,
     isError: clusterStateReq.isError,
   };
+};
+
+type TUseUpdateCluster = {
+  updateCluster: (
+    clientContract: ClientClusterContract,
+    baseContract: Contract
+  ) => Promise<
+    | {
+        response: UpdateClusterResponse;
+        error?: string;
+      }
+    | {
+        response?: UpdateClusterResponse;
+        error: string;
+      }
+  >;
+  isHandlingPreflightChecks: boolean;
+  isCreatingContract: boolean;
+};
+export const useUpdateCluster = ({
+  projectId,
+}: {
+  projectId: number | undefined;
+}): TUseUpdateCluster => {
+  const [isHandlingPreflightChecks, setIsHandlingPreflightChecks] =
+    useState<boolean>(false);
+  const [isCreatingContract, setIsCreatingContract] = useState<boolean>(false);
+
+  const updateCluster = async (
+    clientContract: ClientClusterContract,
+    baseContract: Contract
+  ): Promise<
+    | {
+        response: UpdateClusterResponse;
+        error?: string;
+      }
+    | {
+        response?: UpdateClusterResponse;
+        error: string;
+      }
+  > => {
+    if (!projectId) {
+      return {
+        error: "Project ID is missing",
+      };
+    }
+    if (!baseContract.cluster) {
+      return {
+        error: "Cluster is missing",
+      };
+    }
+    const newContract = new Contract({
+      cluster: updateExistingClusterContract(
+        clientContract,
+        baseContract.cluster
+      ),
+    });
+
+    setIsHandlingPreflightChecks(true);
+    try {
+      const preflightCheckResp = await api.preflightCheck(
+        "<token>",
+        new PreflightCheckRequest({
+          contract: newContract,
+        }),
+        {
+          id: projectId,
+        }
+      );
+      const parsed = await preflightCheckValidator.parseAsync(
+        preflightCheckResp.data
+      );
+
+      if (parsed.errors.length > 0) {
+        const cloudProviderSpecificChecks = match(
+          clientContract.cluster.cloudProvider
+        )
+          .with("AWS", () => CloudProviderAWS.preflightChecks)
+          .with("GCP", () => CloudProviderGCP.preflightChecks)
+          .otherwise(() => []);
+
+        const clientPreflightChecks: ClientPreflightCheck[] = parsed.errors
+          .map((e) => {
+            const preflightCheckMatch = cloudProviderSpecificChecks.find(
+              (cloudProviderCheck) => e.name === cloudProviderCheck.name
+            );
+            if (!preflightCheckMatch) {
+              return undefined;
+            }
+            return {
+              title: preflightCheckMatch.displayName,
+              error: {
+                detail: e.error.message,
+                metadata: e.error.metadata,
+              },
+            };
+          })
+          .filter(valueExists);
+        return {
+          response: {
+            preflightChecks: clientPreflightChecks,
+          },
+        };
+      }
+      // otherwise, continue to create the contract
+    } catch (err) {
+      return {
+        error: getErrorMessageFromNetworkCall(err, "Cluster preflight checks"),
+      };
+    } finally {
+      setIsHandlingPreflightChecks(false);
+    }
+
+    setIsCreatingContract(true);
+    try {
+      const createContractResp = await api.createContract(
+        "<token>",
+        newContract,
+        {
+          project_id: projectId,
+        }
+      );
+      const parsed = await createContractResponseValidator.parseAsync(
+        createContractResp.data
+      );
+      return {
+        response: {
+          createContractResponse: parsed,
+        },
+      };
+    } catch (err) {
+      return {
+        error: getErrorMessageFromNetworkCall(err, "Cluster creation"),
+      };
+    } finally {
+      setIsCreatingContract(false);
+    }
+  };
+
+  return {
+    updateCluster,
+    isHandlingPreflightChecks,
+    isCreatingContract,
+  };
+};
+
+const getErrorMessageFromNetworkCall = (
+  err: unknown,
+  networkCallDescription: string
+): string => {
+  if (axios.isAxiosError(err)) {
+    const parsed = z
+      .object({ error: z.string() })
+      .safeParse(err.response?.data);
+    if (parsed.success) {
+      return `${networkCallDescription} failed: ${parsed.data.error}`;
+    }
+  }
+  return `${networkCallDescription} failed: please try again or contact support@porter.run if the error persists.`;
 };

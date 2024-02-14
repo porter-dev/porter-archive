@@ -16,6 +16,7 @@ import {
   type ClientCloudProvider,
   type ClientRegion,
   type MachineType,
+  type PreflightCheck,
 } from "./types";
 
 export const SUPPORTED_AWS_REGIONS: ClientRegion[] = [
@@ -840,6 +841,40 @@ const SUPPORTED_AZURE_SKU_TIERS = [
   },
 ];
 
+const SUPPORTED_AWS_PREFLIGHT_CHECKS: PreflightCheck[] = [
+  {
+    name: "eip",
+    displayName: "Elastic IP availability",
+  },
+  {
+    name: "natGateway",
+    displayName: "NAT Gateway availability",
+  },
+  {
+    name: "vpc",
+    displayName: "VPC availability",
+  },
+  {
+    name: "vcpu",
+    displayName: "vCPU availability",
+  },
+];
+
+const SUPPORTED_GCP_PREFLIGHT_CHECKS: PreflightCheck[] = [
+  {
+    name: "apiEnabled",
+    displayName: "APIs enabled on service account",
+  },
+  {
+    name: "cidrAvailability",
+    displayName: "CIDR availability",
+  },
+  {
+    name: "iamPermissions",
+    displayName: "IAM permissions",
+  },
+];
+
 const DEFAULT_EKS_CONTRACT = new Contract({
   cluster: {
     kind: EnumKubernetesKind.EKS,
@@ -902,6 +937,7 @@ export const CloudProviderAWS: ClientCloudProvider = {
   machineTypes: SUPPORTED_AWS_MACHINE_TYPES,
   baseCost: 224.58,
   newClusterDefaultContract: DEFAULT_EKS_CONTRACT,
+  preflightChecks: SUPPORTED_AWS_PREFLIGHT_CHECKS,
   config: {
     kind: "AWS",
   },
@@ -914,6 +950,7 @@ export const CloudProviderGCP: ClientCloudProvider = {
   machineTypes: SUPPORTED_GCP_MACHINE_TYPES,
   baseCost: 253.0,
   newClusterDefaultContract: DEFAULT_GKE_CONTRACT,
+  preflightChecks: SUPPORTED_GCP_PREFLIGHT_CHECKS,
   config: {
     kind: "GCP",
   },
@@ -928,6 +965,7 @@ export const CloudProviderAzure: ClientCloudProvider & {
   machineTypes: SUPPORTED_AZURE_MACHINE_TYPES,
   baseCost: 164.69,
   newClusterDefaultContract: DEFAULT_AKS_CONTRACT,
+  preflightChecks: [],
   config: {
     kind: "Azure",
     skuTiers: SUPPORTED_AZURE_SKU_TIERS,
@@ -941,6 +979,7 @@ export const CloudProviderLocal: ClientCloudProvider = {
   machineTypes: [],
   baseCost: 0,
   newClusterDefaultContract: new Contract({}),
+  preflightChecks: [],
   config: {
     kind: "Local",
   },

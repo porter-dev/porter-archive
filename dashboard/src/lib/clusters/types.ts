@@ -16,6 +16,7 @@ export type ClientCloudProvider = {
   machineTypes: MachineType[];
   baseCost: number;
   newClusterDefaultContract: Contract; // this is where we include sensible defaults for new clusters
+  preflightChecks: PreflightCheck[];
   // catch all for cloud-specific settings, may refactor this later
   config:
     | {
@@ -223,6 +224,10 @@ export type MachineType = {
   displayName: string;
   supportedRegions: Array<AWSRegion | GCPRegion | AzureRegion>;
 };
+export type PreflightCheck = {
+  name: PreflightCheckKey;
+  displayName: string;
+};
 
 // Cluster
 export const clusterValidator = z.object({
@@ -376,7 +381,13 @@ const cidrRangeValidator = z
 
 const eksConfigValidator = z.object({
   kind: z.literal("EKS"),
-  clusterName: z.string(),
+  clusterName: z
+    .string()
+    .min(1, { message: "Name must be at least 1 character" })
+    .max(31, { message: "Name must be 31 characters or less" })
+    .regex(/^[a-z0-9-]{1,61}$/, {
+      message: 'Lowercase letters, numbers, and "-" only.',
+    }),
   clusterVersion: z.string().optional().default(""),
   region: z.string(),
   nodeGroups: eksNodeGroupValidator.array(),
@@ -384,7 +395,13 @@ const eksConfigValidator = z.object({
 });
 const gkeConfigValidator = z.object({
   kind: z.literal("GKE"),
-  clusterName: z.string(),
+  clusterName: z
+    .string()
+    .min(1, { message: "Name must be at least 1 character" })
+    .max(31, { message: "Name must be 31 characters or less" })
+    .regex(/^[a-z0-9-]{1,61}$/, {
+      message: 'Lowercase letters, numbers, and "-" only.',
+    }),
   clusterVersion: z.string().optional().default(""),
   region: z.string().default("us-east1"),
   nodeGroups: gkeNodeGroupValidator.array(),
@@ -392,7 +409,13 @@ const gkeConfigValidator = z.object({
 });
 const aksConfigValidator = z.object({
   kind: z.literal("AKS"),
-  clusterName: z.string(),
+  clusterName: z
+    .string()
+    .min(1, { message: "Name must be at least 1 character" })
+    .max(31, { message: "Name must be 31 characters or less" })
+    .regex(/^[a-z0-9-]{1,61}$/, {
+      message: 'Lowercase letters, numbers, and "-" only.',
+    }),
   clusterVersion: z.string().optional().default(""),
   region: z.string(),
   nodeGroups: aksNodeGroupValidator.array(),
@@ -420,3 +443,49 @@ export const clusterContractValidator = z.object({
   cluster: contractClusterValidator,
 });
 export type ClientClusterContract = z.infer<typeof clusterContractValidator>;
+
+const preflightCheckKeyValidator = z.enum([
+  "eip",
+  "vcpu",
+  "vpc",
+  "natGateway",
+  "apiEnabled",
+  "cidrAvailability",
+  "iamPermissions",
+]);
+type PreflightCheckKey = z.infer<typeof preflightCheckKeyValidator>;
+export const preflightCheckValidator = z.object({
+  errors: z
+    .object({
+      name: preflightCheckKeyValidator,
+      error: z.object({
+        message: z.string(),
+        metadata: z.record(z.string()).optional(),
+      }),
+    })
+    .array(),
+});
+export const createContractResponseValidator = z.object({
+  contract_revision: z.object({
+    project_id: z.number(),
+    cluster_id: z.number(),
+    revision_id: z.string(),
+  }),
+});
+export type ClientPreflightCheck = {
+  title: string;
+  error?: {
+    detail: string;
+    metadata: Record<string, string> | undefined;
+  };
+};
+type CreateContractResponse = z.infer<typeof createContractResponseValidator>;
+export type UpdateClusterResponse =
+  | {
+      preflightChecks: ClientPreflightCheck[];
+      createContractResponse?: CreateContractResponse;
+    }
+  | {
+      preflightChecks?: ClientPreflightCheck[];
+      createContractResponse: CreateContractResponse;
+    };

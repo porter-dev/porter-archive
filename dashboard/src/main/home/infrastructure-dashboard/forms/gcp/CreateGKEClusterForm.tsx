@@ -11,33 +11,33 @@ type Props = {
   goBack: () => void;
   projectId: number;
   projectName: string;
-  createClusterButtonStatus: "loading" | JSX.Element | "success" | "";
-  isCreateClusterButtonDisabled: boolean;
+  createButtonProps: {
+    status: "loading" | JSX.Element | "success" | "";
+    isDisabled: boolean;
+    loadingText: string;
+  };
 };
 
 const CreateGKEClusterForm: React.FC<Props> = ({
   goBack,
   projectId,
   projectName,
-  isCreateClusterButtonDisabled,
-  createClusterButtonStatus,
+  createButtonProps,
 }) => {
   const [step, setStep] = useState<"permissions" | "cluster">("permissions");
 
   const { setValue, reset } = useFormContext<ClientClusterContract>();
 
   useEffect(() => {
-    const clusterName = `${projectName}-cluster-${Math.random()
-      .toString(36)
-      .substring(2, 8)}`;
-
     reset({
       cluster: {
         projectId,
         cloudProvider: "GCP" as const,
         config: {
           kind: "GKE" as const,
-          clusterName,
+          clusterName: `${projectName}-cluster-${Math.random()
+            .toString(36)
+            .substring(2, 8)}`,
           region: "us-east1",
           nodeGroups: [
             {
@@ -89,8 +89,7 @@ const CreateGKEClusterForm: React.FC<Props> = ({
           setStep("permissions");
           setValue("cluster.cloudProviderCredentialsId", "");
         }}
-        createClusterButtonStatus={createClusterButtonStatus}
-        isCreateClusterButtonDisabled={isCreateClusterButtonDisabled}
+        createButtonProps={createButtonProps}
       />
     ))
     .exhaustive();

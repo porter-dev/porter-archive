@@ -85,6 +85,7 @@ const CreateClusterForm: React.FC = () => {
       await api.createContract("<token>", contract, {
         project_id: currentProject.id,
       });
+      console.log(contract);
     } catch (err) {
       showIntercomWithMessage({
         message: "I am running into an issue creating a cluster.",
@@ -92,7 +93,7 @@ const CreateClusterForm: React.FC = () => {
 
       let message =
         "Cluster creation failed: please try again or contact support@porter.run if the error persists.";
-
+      console.log(err);
       if (axios.isAxiosError(err)) {
         const parsed = z
           .object({ error: z.string() })

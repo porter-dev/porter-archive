@@ -974,32 +974,6 @@ const getBranchHead = baseApi<
   }/${encodeURIComponent(pathParams.branch)}/head`;
 });
 
-const createApp = baseApi<
-  | {
-      name: string;
-      deployment_target_id: string;
-      type: "github";
-      git_repo_id: number;
-      git_branch: string;
-      git_repo_name: string;
-      porter_yaml_path: string;
-    }
-  | {
-      name: string;
-      deployment_target_id: string;
-      type: "docker-registry";
-      image: {
-        repository: string;
-        tag: string;
-      };
-    },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/create`;
-});
 
 const createAppTemplate = baseApi<
   {
@@ -3548,7 +3522,6 @@ export default {
   getDefaultDeploymentTarget,
   deleteDeploymentTarget,
   getBranchHead,
-  createApp,
   createAppTemplate,
   updateApp,
   appRun,

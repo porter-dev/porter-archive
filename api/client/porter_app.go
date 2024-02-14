@@ -6,7 +6,6 @@ import (
 
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/internal/models"
-	appInternal "github.com/porter-dev/porter/internal/porter_app"
 
 	"github.com/porter-dev/porter/api/types"
 )
@@ -314,53 +313,6 @@ type CreatePorterAppDBEntryInput struct {
 	ImageTag           string
 	Local              bool
 	DeploymentTargetID string
-}
-
-// CreatePorterAppDBEntry creates an entry in the porter app
-func (c *Client) CreatePorterAppDBEntry(
-	ctx context.Context,
-	projectID uint, clusterID uint,
-	inp CreatePorterAppDBEntryInput,
-) error {
-	var sourceType appInternal.SourceType
-	var image *appInternal.Image
-	if inp.Local {
-		sourceType = appInternal.SourceType_Local
-	}
-	if inp.GitRepoName != "" {
-		sourceType = appInternal.SourceType_Github
-	}
-	if inp.ImageRepository != "" {
-		sourceType = appInternal.SourceType_DockerRegistry
-		image = &appInternal.Image{
-			Repository: inp.ImageRepository,
-			Tag:        inp.ImageTag,
-		}
-	}
-
-	req := &porter_app.CreateAppRequest{
-		Name:       inp.AppName,
-		SourceType: sourceType,
-		GitSource: porter_app.GitSource{
-			GitBranch:   inp.GitBranch,
-			GitRepoName: inp.GitRepoName,
-			GitRepoID:   inp.GitRepoID,
-		},
-		Image:              image,
-		PorterYamlPath:     inp.PorterYamlPath,
-		DeploymentTargetID: inp.DeploymentTargetID,
-	}
-
-	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/create",
-			projectID, clusterID,
-		),
-		req,
-		&types.PorterApp{},
-	)
-
-	return err
 }
 
 // CreateSubdomain returns a subdomain for a given service that point to the ingress-nginx service in the cluster

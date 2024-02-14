@@ -321,6 +321,13 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.WriteResult(w, r, response)
 }
 
+// GitSource is the github metadata for an app
+type GitSource struct {
+	GitBranch   string `json:"git_branch"`
+	GitRepoName string `json:"git_repo_name"`
+	GitRepoID   uint   `json:"git_repo_id"`
+}
+
 func sourceFromAppAndGitSource(ctx context.Context, appProto *porterv1.PorterApp, gitSource GitSource) (porter_app.SourceType, *porter_app.Image, error) {
 	ctx, span := telemetry.NewSpan(ctx, "source-from-app-and-git-source")
 	defer span.End()

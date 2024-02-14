@@ -717,35 +717,6 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/create -> porter_app.NewCreateAppHandler
-	createAppEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/create", relPathV2),
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	createAppHandler := porter_app.NewCreateAppHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: createAppEndpoint,
-		Handler:  createAppHandler,
-		Router:   r,
-	})
-
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/attach-env-group -> porter_app.NewAttachEnvGroupHandler
 	attachEnvGroupEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

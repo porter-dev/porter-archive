@@ -2,6 +2,9 @@ import React, { useMemo } from "react";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 
+import world from "assets/world.svg";
+
+import Image from "components/porter/Image";
 import Input from "components/porter/Input";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
@@ -9,6 +12,9 @@ import {
   type ClientClusterContract,
   type MachineType,
 } from "lib/clusters/types";
+import Expandable from "components/porter/Expandable";
+import Container from "components/porter/Container";
+import Text from "components/porter/Text";
 
 type Props = {
   availableMachineTypes: MachineType[];
@@ -32,16 +38,28 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
   }, [nodeGroups]);
 
   return (
-    <NodeGroupContainer>
+    <>
       {displayableNodeGroups.map((ng) => {
         return ng.isIncluded ? (
-          <StyledForm key={ng.nodeGroup.id}>
+          <Expandable
+            preExpanded={true}
+            key={ng.nodeGroup.id}
+            header={
+              <Container row>
+                <Image src={world} />
+                <Spacer inline x={1} />
+                {ng.nodeGroup.nodeGroupType.charAt(0).toUpperCase()}
+                {ng.nodeGroup.nodeGroupType.slice(1).toLowerCase()}
+              </Container>
+            }
+          >
             <Controller
               name={`cluster.config.nodeGroups.${ng.idx}`}
               control={control}
               render={({ field: { value, onChange } }) => (
                 <>
                   <Select
+                    width="300px"
                     options={availableMachineTypes.map((t) => ({
                       value: t.name,
                       label: t.displayName,
@@ -56,23 +74,12 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
                     label="Machine type"
                   />
                   <Spacer y={1} />
+                  <Text color="helper">
+                    Minimum number of application nodes
+                  </Text>
+                  <Spacer y={0.5} />
                   <Input
-                    width="100%"
-                    type="number"
-                    disabled={false}
-                    value={value.maxInstances.toString()}
-                    setValue={(newMaxInstances: string) => {
-                      onChange({
-                        ...value,
-                        maxInstances: parseInt(newMaxInstances),
-                      });
-                    }}
-                    label="Maximum number of application nodes"
-                    placeholder="ex: 1"
-                  />
-                  <Spacer y={1} />
-                  <Input
-                    width="100%"
+                    width="75px"
                     type="number"
                     disabled={false}
                     value={value.minInstances.toString()}
@@ -82,31 +89,37 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
                         minInstances: parseInt(newMinInstances),
                       });
                     }}
-                    label="Minimum number of application nodes. If set to 0, no applications will be deployed."
                     placeholder="ex: 1"
+                  />
+                  <Spacer y={1} />
+                  <Text color="helper">
+                    Maximum number of application nodes
+                  </Text>
+                  <Spacer y={0.5} />
+                  <Input
+                    width="75px"
+                    type="number"
+                    disabled={false}
+                    value={value.maxInstances.toString()}
+                    setValue={(newMaxInstances: string) => {
+                      onChange({
+                        ...value,
+                        maxInstances: parseInt(newMaxInstances),
+                      });
+                    }}
+                    placeholder="ex: 10"
                   />
                 </>
               )}
             />
-          </StyledForm>
+          </Expandable>
         ) : null;
       })}
-    </NodeGroupContainer>
+    </>
   );
 };
 
 export default NodeGroups;
-
-const StyledForm = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 30px 30px 25px;
-  border-radius: 5px;
-  background: ${({ theme }) => theme.fg};
-  border: 1px solid #494b4f;
-  font-size: 13px;
-  width: 300px;
-`;
 
 const NodeGroupContainer = styled.div`
   display: flex;

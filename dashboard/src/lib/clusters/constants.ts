@@ -18,7 +18,7 @@ import {
   type MachineType,
 } from "./types";
 
-const SUPPORTED_AWS_REGIONS: ClientRegion[] = [
+export const SUPPORTED_AWS_REGIONS: ClientRegion[] = [
   { name: "us-east-1", displayName: "US East (N. Virginia) us-east-1" },
   { name: "us-east-2", displayName: "US East (Ohio) us-east-2" },
   { name: "us-west-1", displayName: "US West (N. California) us-west-1" },

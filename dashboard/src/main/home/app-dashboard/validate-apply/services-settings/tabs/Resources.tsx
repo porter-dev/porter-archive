@@ -104,11 +104,7 @@ const Resources: React.FC<ResourcesProps> = ({
             <Switch
               size="small"
               color="primary"
-              disabled={
-                memory.readOnly ||
-                cpu.readOnly ||
-                service.smartOptimization?.readOnly
-              }
+              disabled={false}
               checked={value?.value}
               onChange={() => {
                 if (!value?.value) {

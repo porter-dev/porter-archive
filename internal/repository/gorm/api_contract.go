@@ -107,7 +107,7 @@ func (cr APIContractRepository) Get(ctx context.Context, revisionID uuid.UUID) (
 	return acr, nil
 }
 
-// Latest returns the latest version for each contract specified by filters
+// Latest returns the latest version for each contract specified by filters, ignoring any deleted_at
 func (cr APIContractRepository) Latest(ctx context.Context, projectID uint, filters ...repository.APIContractRevisionFilters) ([]*models.APIContractRevision, error) {
 	ctx, span := telemetry.NewSpan(ctx, "list-latest-api-contract-revisions")
 	defer span.End()
@@ -122,7 +122,7 @@ func (cr APIContractRepository) Latest(ctx context.Context, projectID uint, filt
 	queryString := `
 		SELECT DISTINCT ON (cluster_id) *
 		FROM api_contract_revisions
-		WHERE project_id = ?
+		WHERE project_id = ? AND deleted_at IS NULL
 		ORDER BY cluster_id, created_at DESC
     `
 	args := []any{projectID}
@@ -131,7 +131,7 @@ func (cr APIContractRepository) Latest(ctx context.Context, projectID uint, filt
 		queryString = `
 			SELECT DISTINCT ON (cluster_id) *
 			FROM api_contract_revisions
-			WHERE project_id = ? AND cluster_id = ?
+			WHERE project_id = ? AND cluster_id = ? AND deleted_at IS NULL
 			ORDER BY cluster_id, created_at DESC
     	`
 		args = append(args, opts.ClusterID)

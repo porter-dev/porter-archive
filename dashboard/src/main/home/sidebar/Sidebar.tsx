@@ -211,10 +211,9 @@ class Sidebar extends Component<PropsType, StateType> {
               "update",
               "delete",
             ]) &&
-              (
-                currentProject?.simplified_view_enabled &&
-                currentProject?.capi_provisioner_enabled
-              ) && (
+              currentProject?.simplified_view_enabled &&
+              currentProject?.capi_provisioner_enabled &&
+              currentProject?.beta_features_enabled && (
                 <NavButton
                   path={"/infrastructure"}
                   active={window.location.pathname.startsWith(
@@ -261,7 +260,8 @@ class Sidebar extends Component<PropsType, StateType> {
             ]) &&
               !(
                 currentProject?.simplified_view_enabled &&
-                currentProject?.capi_provisioner_enabled
+                currentProject?.capi_provisioner_enabled &&
+                currentProject?.beta_features_enabled
               ) && (
                 <NavButton
                   path={"/cluster-dashboard"}
@@ -343,13 +343,15 @@ class Sidebar extends Component<PropsType, StateType> {
               <NavButton
                 path={
                   currentProject?.simplified_view_enabled &&
-                  currentProject?.capi_provisioner_enabled
+                  currentProject?.capi_provisioner_enabled &&
+                  currentProject?.beta_features_enabled
                     ? "/infrastructure"
                     : "/cluster-dashboard"
                 }
                 active={window.location.pathname.startsWith(
                   currentProject?.simplified_view_enabled &&
-                    currentProject?.capi_provisioner_enabled
+                    currentProject?.capi_provisioner_enabled &&
+                    currentProject?.beta_features_enabled
                     ? "/infrastructure"
                     : "/cluster-dashboard"
                 )}

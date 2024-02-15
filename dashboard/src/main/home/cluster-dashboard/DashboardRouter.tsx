@@ -1,47 +1,49 @@
-import React, { useContext, useEffect, useState } from "react";
-import loadable from "@loadable/component";
-import { withRouter, type RouteComponentProps } from "react-router";
-import { Route, Switch } from "react-router-dom";
+import React, { useState, useContext, useEffect } from "react";
 import styled from "styled-components";
-
-import Loading from "components/Loading";
+import loadable from "@loadable/component";
+import { RouteComponentProps, withRouter } from "react-router";
+import { Route, Switch } from "react-router-dom";
 
 import api from "shared/api";
-import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
-import GuardedRoute from "shared/auth/RouteGuard";
 import { Context } from "shared/Context";
-import { getQueryParam, pushQueryParams, type PorterUrl } from "shared/routing";
-import { type ClusterType } from "shared/types";
+import { WithAuthProps, withAuth } from "shared/auth/AuthorizationHoc";
+import { ClusterType } from "shared/types";
+import {
+  getQueryParam,
+  PorterUrl,
+  pushQueryParams,
+} from "shared/routing";
 
-import AppDashboard from "./apps/AppDashboard";
-import DashboardRoutes from "./dashboard/Routes";
-import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
-import ExpandedEnvGroupDashboard from "./env-groups/ExpandedEnvGroupDashboard";
+import Loading from "components/Loading";
 import ExpandedChartWrapper from "./expanded-chart/ExpandedChartWrapper";
+import DashboardRoutes from "./dashboard/Routes";
+import GuardedRoute from "shared/auth/RouteGuard";
+import AppDashboard from "./apps/AppDashboard";
 import JobDashboard from "./jobs/JobDashboard";
+import ExpandedEnvGroupDashboard from "./env-groups/ExpandedEnvGroupDashboard";
+import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
 
 const LazyPreviewEnvironmentsRoutes = loadable(
-  // @ts-expect-error
-  async () => await import("./preview-environments/routes.tsx"),
+  // @ts-ignore
+  () => import("./preview-environments/routes.tsx"),
   {
     fallback: <Loading />,
   }
 );
 
 const LazyStackRoutes = loadable(
-  // @ts-expect-error
-  async () => await import("./stacks/routes.tsx"),
+  // @ts-ignore
+  () => import("./stacks/routes.tsx"),
   {
     fallback: <Loading />,
   }
 );
 
-type Props = RouteComponentProps &
-  WithAuthProps & {
-    currentCluster: ClusterType;
-    setSidebar: (x: boolean) => void;
-    currentView: PorterUrl;
-  };
+type Props = RouteComponentProps & WithAuthProps & {
+  currentCluster: ClusterType;
+  setSidebar: (x: boolean) => void;
+  currentView: PorterUrl;
+};
 
 // TODO: should try to maintain single source of truth b/w router and context/state (ex: namespace -> being managed in parallel right now so highly inextensible and routing is fragile)
 const DashboardRouter: React.FC<Props> = ({
@@ -63,15 +65,14 @@ const DashboardRouter: React.FC<Props> = ({
     if (!cluster) {
       pushQueryParams(props, { cluster: currentCluster.name });
     }
-    api
-      .getPrometheusIsInstalled(
-        "<token>",
-        {},
-        {
-          id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      )
+    api.getPrometheusIsInstalled(
+      "<token>",
+      {},
+      {
+        id: currentProject.id,
+        cluster_id: currentCluster.id,
+      }
+    )
       .then((res) => {
         setIsMetricsInstalled(true);
       })
@@ -83,7 +84,7 @@ const DashboardRouter: React.FC<Props> = ({
   // Reset namespace filter and close expanded chart on cluster change
   useEffect(() => {
     let namespace = "default";
-    const localStorageNamespace = localStorage.getItem(
+    let localStorageNamespace = localStorage.getItem(
       `${currentProject.id}-${currentCluster.id}-namespace`
     );
     if (localStorageNamespace) {
@@ -98,17 +99,9 @@ const DashboardRouter: React.FC<Props> = ({
   }, [currentCluster]);
 
   useEffect(() => {
-    let { currentNamespace } =
-      currentProject?.simplified_view_enabled &&
-      currentProject?.capi_provisioner_enabled
-        ? "porter-env-group"
-        : (props.match?.params as any);
+    let { currentNamespace } = (currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "porter-env-group" : props.match?.params as any;
     if (!currentNamespace) {
-      currentNamespace =
-        currentProject?.simplified_view_enabled &&
-        currentProject?.capi_provisioner_enabled
-          ? "porter-env-group"
-          : getQueryParam(props, "namespace");
+      currentNamespace = (currentProject?.simplified_view_enabled && currentProject?.capi_provisioner_enabled) ? "porter-env-group" : getQueryParam(props, "namespace");
     }
     setSortType("Newest");
     setCurrentChart(null);
@@ -118,9 +111,7 @@ const DashboardRouter: React.FC<Props> = ({
 
   return (
     <Switch>
-      <Route path={"/stacks"}>
-        <LazyStackRoutes />
-      </Route>
+      <Route path={"/stacks"}><LazyStackRoutes /></Route>
       <Route path={"/preview-environments"}>
         <LazyPreviewEnvironmentsRoutes />
       </Route>
@@ -163,7 +154,9 @@ const DashboardRouter: React.FC<Props> = ({
         resource=""
         verb={["get", "list"]}
       >
-        <ExpandedEnvGroupDashboard currentCluster={currentCluster} />
+        <ExpandedEnvGroupDashboard
+          currentCluster={currentCluster}
+        />
       </GuardedRoute>
       <GuardedRoute
         path={"/env-groups"}
@@ -182,4 +175,5 @@ const DashboardRouter: React.FC<Props> = ({
 
 export default withRouter(withAuth(DashboardRouter));
 
-const StyledTemplateComponent = styled.div``;
+const StyledTemplateComponent = styled.div`
+`;

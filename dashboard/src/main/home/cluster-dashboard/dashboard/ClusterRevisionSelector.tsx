@@ -13,6 +13,7 @@ import loading from "assets/loading.gif";
 import warning from "assets/warning.png";
 
 type Props = {
+  selectedClusterVersion: any;
   setSelectedClusterVersion: any;
   setShowProvisionerStatus: any;
   setProvisionFailureReason: any;
@@ -20,6 +21,7 @@ type Props = {
 };
 
 const ClusterRevisionSelector: React.FC<Props> = ({
+  selectedClusterVersion,
   setSelectedClusterVersion,
   setShowProvisionerStatus,
   setProvisionFailureReason,
@@ -96,6 +98,19 @@ const ClusterRevisionSelector: React.FC<Props> = ({
   useEffect(() => {
     updateContracts();
   }, [currentCluster]);
+
+  const createContract = () => {
+    if (false) {
+      api
+        .createContract("<token>", selectedClusterVersion, {
+          project_id: currentProject.id,
+        })
+        .then(() => {})
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  };
 
   const deleteContract = () => {
     api
@@ -179,6 +194,16 @@ const ClusterRevisionSelector: React.FC<Props> = ({
             </div>
           </DeleteButton>
         )}
+        {/*
+        <Td>
+          <RollbackButton
+            disabled={i === 0}
+            onClick={createContract}
+          >
+            {i === 0 ? "Current" : "Revert"}
+          </RollbackButton>
+        </Td>
+        */}
       </Tr>
     );
   };

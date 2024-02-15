@@ -311,6 +311,7 @@ export type ProjectListType = {
 export type ProjectType = {
   id: number;
   name: string;
+  advanced_infra_enabled: boolean;
   api_tokens_enabled: boolean;
   azure_enabled: boolean;
   beta_features_enabled: boolean;

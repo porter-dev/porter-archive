@@ -36,6 +36,7 @@ export const Addon: React.FC<AddonProps> = ({ addon, view }) => {
     const host = match(addon.config.type)
       .with("postgres", () => "postgres-postgres-hl")
       .with("redis", () => "redis-redis")
+      .exhaustive();
 
     return `${host}.${currentDeploymentTarget.namespace}.svc.cluster.local:${port}`;
   }, [currentDeploymentTarget, addon.name.value]);

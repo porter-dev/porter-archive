@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext } from "react";
+import React, { createContext, useCallback, useContext, useMemo } from "react";
 import { Contract } from "@porter-dev/api-contracts";
 import { useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
@@ -22,6 +22,7 @@ import notFound from "assets/not-found.png";
 type ClusterContextType = {
   cluster: ClientCluster;
   projectId: number;
+  isClusterUpdating: boolean;
   updateClusterVanityName: (name: string) => void;
   updateCluster: (clientContract: ClientClusterContract) => Promise<void>;
   deleteCluster: () => Promise<void>;
@@ -120,6 +121,9 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
     );
     await queryClient.invalidateQueries(["getClusters"]);
   }, [paramsExist, clusterId, currentProject?.id]);
+  const isClusterUpdating = useMemo(() => {
+    return cluster?.contract?.condition === "" ?? false;
+  }, [cluster?.contract.condition]);
 
   if (isLoading || !paramsExist) {
     return <Loading />;
@@ -160,6 +164,7 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
       value={{
         cluster,
         projectId: currentProject.id,
+        isClusterUpdating,
         updateClusterVanityName,
         updateCluster,
         deleteCluster,

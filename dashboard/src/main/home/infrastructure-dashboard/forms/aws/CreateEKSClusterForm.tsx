@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { match } from "ts-pattern";
 
+import { CloudProviderAWS } from "lib/clusters/constants";
 import { type ClientClusterContract } from "lib/clusters/types";
 
+import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import ConfigureEKSCluster from "./ConfigureEKSCluster";
 import GrantAWSPermissions from "./GrantAWSPermissions";
 
@@ -12,21 +14,16 @@ type Props = {
   projectId: number;
   projectName: string;
   ackEnabled: boolean;
-  createButtonProps: {
-    status: "loading" | JSX.Element | "success" | "";
-    isDisabled: boolean;
-    loadingText: string;
-  };
 };
 const CreateEKSClusterForm: React.FC<Props> = ({
   goBack,
   projectId,
   projectName,
   ackEnabled,
-  createButtonProps,
 }) => {
   const [step, setStep] = useState<"permissions" | "cluster">("permissions");
   const { setValue, reset } = useFormContext<ClientClusterContract>();
+  const { setCurrentContract } = useClusterFormContext();
 
   useEffect(() => {
     reset({
@@ -63,6 +60,7 @@ const CreateEKSClusterForm: React.FC<Props> = ({
         },
       },
     });
+    setCurrentContract(CloudProviderAWS.newClusterDefaultContract);
   }, []);
 
   return match(step)
@@ -90,7 +88,6 @@ const CreateEKSClusterForm: React.FC<Props> = ({
           setStep("permissions");
           setValue("cluster.cloudProviderCredentialsId", "");
         }}
-        createButtonProps={createButtonProps}
       />
     ))
     .exhaustive();

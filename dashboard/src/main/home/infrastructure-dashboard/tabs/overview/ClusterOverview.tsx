@@ -5,15 +5,11 @@ import Spacer from "components/porter/Spacer";
 
 import { useClusterContext } from "../../ClusterContextProvider";
 import ClusterSaveButton from "../../ClusterSaveButton";
-import { type UpdateClusterButtonProps } from "../../forms/CreateClusterForm";
 import AKSClusterOverview from "./AKSClusterOverview";
 import EKSClusterOverview from "./EKSClusterOverview";
 import GKEClusterOverview from "./GKEClusterOverview";
 
-type Props = {
-  updateClusterButtonProps: UpdateClusterButtonProps;
-};
-const ClusterOverview: React.FC<Props> = ({ updateClusterButtonProps }) => {
+const ClusterOverview: React.FC = () => {
   const { cluster } = useClusterContext();
 
   return (
@@ -30,11 +26,7 @@ const ClusterOverview: React.FC<Props> = ({ updateClusterButtonProps }) => {
         })
         .exhaustive()}
       <Spacer y={1} />
-      <ClusterSaveButton
-        status={updateClusterButtonProps.status}
-        isDisabled={updateClusterButtonProps.isDisabled}
-        loadingText={updateClusterButtonProps.loadingText}
-      />
+      <ClusterSaveButton />
       <Spacer y={1} />
     </>
   );

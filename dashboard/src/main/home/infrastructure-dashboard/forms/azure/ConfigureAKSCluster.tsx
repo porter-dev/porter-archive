@@ -11,22 +11,15 @@ import VerticalSteps from "components/porter/VerticalSteps";
 import { CloudProviderAzure } from "lib/clusters/constants";
 import { type ClientClusterContract } from "lib/clusters/types";
 
+import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import NodeGroups from "../../shared/NodeGroups";
 import { BackButton, Img } from "../CreateClusterForm";
 
 type Props = {
   goBack: () => void;
-  createButtonProps: {
-    status: "loading" | JSX.Element | "success" | "";
-    isDisabled: boolean;
-    loadingText: string;
-  };
 };
 
-const ConfigureAKSCluster: React.FC<Props> = ({
-  goBack,
-  createButtonProps,
-}) => {
+const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
   const [currentStep, _setCurrentStep] = useState<number>(100);
 
   const {
@@ -34,6 +27,8 @@ const ConfigureAKSCluster: React.FC<Props> = ({
     register,
     formState: { errors },
   } = useFormContext<ClientClusterContract>();
+
+  const { updateClusterButtonProps } = useClusterFormContext();
 
   return (
     <div>
@@ -140,9 +135,9 @@ const ConfigureAKSCluster: React.FC<Props> = ({
             <Spacer y={0.5} />
             <Button
               type="submit"
-              status={createButtonProps.status}
-              disabled={createButtonProps.isDisabled}
-              loadingText={createButtonProps.loadingText}
+              status={updateClusterButtonProps.status}
+              disabled={updateClusterButtonProps.isDisabled}
+              loadingText={updateClusterButtonProps.loadingText}
             >
               Submit
             </Button>

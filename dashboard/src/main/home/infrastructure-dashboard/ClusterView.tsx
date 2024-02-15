@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
@@ -6,13 +6,17 @@ import { z } from "zod";
 import Back from "components/porter/Back";
 import Spacer from "components/porter/Spacer";
 
+import { Context } from "shared/Context";
+
 import ClusterContextProvider from "./ClusterContextProvider";
+import ClusterFormContextProvider from "./ClusterFormContextProvider";
 import ClusterHeader from "./ClusterHeader";
 import ClusterTabs from "./ClusterTabs";
 
 type Props = RouteComponentProps;
 
 const ClusterView: React.FC<Props> = ({ match }) => {
+  const { currentProject } = useContext(Context);
   const params = useMemo(() => {
     const { params } = match;
     const validParams = z
@@ -35,12 +39,14 @@ const ClusterView: React.FC<Props> = ({ match }) => {
   }, [match]);
   return (
     <ClusterContextProvider clusterId={params.clusterId}>
-      <StyledExpandedCluster>
-        <Back to="/infrastructure" />
-        <ClusterHeader />
-        <Spacer y={1} />
-        <ClusterTabs tabParam={params.tab} />
-      </StyledExpandedCluster>
+      <ClusterFormContextProvider projectId={currentProject?.id}>
+        <StyledExpandedCluster>
+          <Back to="/infrastructure" />
+          <ClusterHeader />
+          <Spacer y={1} />
+          <ClusterTabs tabParam={params.tab} />
+        </StyledExpandedCluster>
+      </ClusterFormContextProvider>
     </ClusterContextProvider>
   );
 };

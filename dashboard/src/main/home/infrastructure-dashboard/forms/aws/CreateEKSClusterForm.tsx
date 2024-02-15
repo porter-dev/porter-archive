@@ -13,13 +13,11 @@ type Props = {
   goBack: () => void;
   projectId: number;
   projectName: string;
-  ackEnabled: boolean;
 };
 const CreateEKSClusterForm: React.FC<Props> = ({
   goBack,
   projectId,
   projectName,
-  ackEnabled,
 }) => {
   const [step, setStep] = useState<"permissions" | "cluster">("permissions");
   const { setValue, reset } = useFormContext<ClientClusterContract>();
@@ -79,7 +77,6 @@ const CreateEKSClusterForm: React.FC<Props> = ({
           setStep("cluster");
         }}
         projectId={projectId}
-        ackEnabled={ackEnabled}
       />
     ))
     .with("cluster", () => (

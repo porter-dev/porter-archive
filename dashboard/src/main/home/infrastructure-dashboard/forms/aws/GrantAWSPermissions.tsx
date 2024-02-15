@@ -28,14 +28,12 @@ type Props = {
     cloudProviderCredentialIdentifier: string;
   }) => void;
   projectId: number;
-  ackEnabled: boolean;
 };
 
 const GrantAWSPermissions: React.FC<Props> = ({
   goBack,
   proceed,
   projectId,
-  ackEnabled,
 }) => {
   const [AWSAccountID, setAWSAccountID] = useState("");
   const [currentStep, setCurrentStep] = useState<number>(0);
@@ -160,9 +158,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
     const trustArn = process.env.TRUST_ARN
       ? process.env.TRUST_ARN
       : "arn:aws:iam::108458755588:role/CAPIManagement";
-    const cloudFormationUrl = ackEnabled
-      ? `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-access-policy.json&stackName=PorterRole&param_TrustArnParameter=${trustArn}`
-      : `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-policy.json&stackName=PorterRole&param_ExternalIdParameter=${externalId}&param_TrustArnParameter=${trustArn}`;
+    const cloudFormationUrl = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-access-policy.json&stackName=PorterRole&param_TrustArnParameter=${trustArn}`;
     void reportToAnalytics({
       step: "aws-cloudformation-redirect-success",
       awsAccountId: AWSAccountID,
@@ -171,7 +167,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
     });
     setCurrentStep(3);
     window.open(cloudFormationUrl, "_blank");
-  }, [AWSAccountID, ackEnabled, externalId]);
+  }, [AWSAccountID, externalId]);
   const handleGrantPermissionsComplete = (): void => {
     void reportToAnalytics({
       step: "aws-create-integration-success",

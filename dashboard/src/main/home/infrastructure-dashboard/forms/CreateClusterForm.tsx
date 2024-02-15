@@ -62,7 +62,6 @@ const CreateClusterForm: React.FC = () => {
               }}
               projectId={currentProject.id}
               projectName={currentProject.name}
-              ackEnabled={currentProject.aws_ack_auth_enabled}
             />
           ))
           .with({ name: "GCP" }, () => (

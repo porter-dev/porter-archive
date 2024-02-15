@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState, useCallback } from "react";
+import React, { useCallback, useContext, useMemo, useState } from "react";
 import axios from "axios";
 import { useHistory } from "react-router";
 import { z } from "zod";
@@ -7,6 +7,7 @@ import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import { Error as ErrorComponent } from "components/porter/Error";
 import Icon from "components/porter/Icon";
+import Input from "components/porter/Input";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { useIntercom } from "lib/hooks/useIntercom";
@@ -15,10 +16,11 @@ import { Context } from "shared/Context";
 import trash from "assets/trash.png";
 
 import { useClusterContext } from "../ClusterContextProvider";
-import Input from "components/porter/Input";
+import { useClusterFormContext } from "../ClusterFormContextProvider";
 
 const Settings: React.FC = () => {
-  const { cluster, deleteCluster, updateClusterVanityName } = useClusterContext();
+  const { cluster, deleteCluster, updateClusterVanityName, isClusterUpdating } =
+    useClusterContext();
   const [clusterName, setClusterName] = useState(cluster.vanity_name);
   const history = useHistory();
   const { setCurrentOverlay = () => ({}) } = useContext(Context);
@@ -26,6 +28,7 @@ const Settings: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [status, setStatus] = useState("");
+  const { updateClusterButtonProps } = useClusterFormContext();
 
   const renameCluster = useCallback(async (): Promise<void> => {
     setStatus("loading");
@@ -91,7 +94,8 @@ const Settings: React.FC = () => {
       <Text size={16}>Cluster name</Text>
       <Spacer y={0.5} />
       <Text color={"helper"}>
-        The vanity name for your cluster will not change your cluster's name in your cloud provider.
+        The vanity name for your cluster will not change your cluster&apos;s
+        name in your cloud provider.
       </Text>
       <Spacer y={0.7} />
       <Input
@@ -130,7 +134,16 @@ const Settings: React.FC = () => {
         color="#b91133"
         onClick={handleDeletionClick}
         status={buttonStatus}
-        disabled={isSubmitting}
+        disabled={
+          isSubmitting ||
+          updateClusterButtonProps.isDisabled ||
+          isClusterUpdating
+        }
+        disabledTooltipMessage={
+          isSubmitting
+            ? "Deleting..."
+            : "Unable to delete while the cluster is updating."
+        }
       >
         <Icon src={trash} height={"15px"} />
         <Spacer inline x={0.5} />

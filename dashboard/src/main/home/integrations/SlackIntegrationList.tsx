@@ -45,7 +45,7 @@ const statusOptions = [
 ];
 
 const typeOptions = [
-  { value: "deployment", icon: deploy, label: "Deploy" },
+  { value: "deploy", icon: deploy, label: "Deploy" },
   { value: "pre-deploy", icon: pre_deploy, label: "Pre-deploy" },
   { value: "build", icon: build, label: "Build" },
 ];

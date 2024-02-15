@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
 
+import Back from "components/porter/Back";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
+import Image from "components/porter/Image";
 import Input from "components/porter/Input";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
@@ -17,7 +19,6 @@ import api from "shared/api";
 
 import GrantAWSPermissionsHelpModal from "../../modals/help/permissions/GrantAWSPermissionsHelpModal";
 import { CheckItem } from "../../modals/PreflightChecksModal";
-import { BackButton, Img } from "../CreateClusterForm";
 
 type Props = {
   goBack: () => void;
@@ -183,17 +184,14 @@ const GrantAWSPermissions: React.FC<Props> = ({
 
   return (
     <>
+      <Back onClick={goBack} />
       <Container row>
-        <BackButton width="140px" onClick={goBack}>
-          <i className="material-icons">first_page</i>
-          Select cloud
-        </BackButton>
-        <Spacer x={1} inline />
-        <Img src={CloudProviderAWS.icon} />
-        <Text size={16}>Grant AWS permissions</Text>
+        <Image src={CloudProviderAWS.icon} size={22} />
+        <Spacer inline x={1} />
+        <Text size={21}>Grant AWS permissions</Text>
       </Container>
       <Spacer y={1} />
-      <Text>
+      <Text color="helper">
         Grant Porter permissions to create infrastructure in your AWS account by
         following 4 simple steps.
       </Text>
@@ -276,7 +274,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
                 }}
                 color="#222222"
                 status={accountIdContinueButtonStatus}
-                loadingText={`Checking if Porter can already access this account...`}
+                loadingText={`Checking if Porter can already access this account`}
               >
                 Back
               </Button>

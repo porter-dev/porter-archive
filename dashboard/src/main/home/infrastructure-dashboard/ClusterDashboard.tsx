@@ -28,9 +28,9 @@ import { useClusterList } from "lib/hooks/useCluster";
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
 import infra from "assets/cluster.svg";
-import infraGrad from "assets/infra-grad.svg";
 import globe from "assets/globe.svg";
 import grid from "assets/grid.png";
+import infraGrad from "assets/infra-grad.svg";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
 import time from "assets/time.png";
@@ -113,7 +113,7 @@ const ClusterDashboard: React.FC = () => {
             </Container>
           }
         />
-        <Spacer inline x={2} />
+        <Spacer inline x={1} />
         <SearchBar
           value={searchValue}
           setValue={(x) => {

@@ -16,21 +16,17 @@ const ClusterHeader: React.FC = () => {
 
   return (
     <>
-      <Container row style={{ width: "100%" }}>
-        <Container row>
-          <Icon src={cluster.cloud_provider.icon} height={"25px"} />
-          <Spacer inline x={1} />
-          <Text size={21}>{cluster.vanity_name}</Text>
-        </Container>
+      <Container row>
+        <Icon src={cluster.cloud_provider.icon} height="22px" />
+        <Spacer inline x={1} />
+        <Text size={21}>{cluster.vanity_name}</Text>
       </Container>
       <Spacer y={0.5} />
       <CreatedAtContainer>
         <Container row>
           <Spacer inline x={0.2} />
           <StatusDot
-            status={
-              cluster.status === "READY" ? "available" : "pending"
-            }
+            status={cluster.status === "READY" ? "available" : "pending"}
             heightPixels={8}
           />
           <Spacer inline x={0.7} />
@@ -55,24 +51,4 @@ export default ClusterHeader;
 const CreatedAtContainer = styled.div`
   display: inline-flex;
   column-gap: 6px;
-`;
-
-const EditIconStyle = styled.div`
-  width: 20px;
-  height: 20px;
-  margin-left: -5px;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 40px;
-  margin-bottom: 3px;
-  :hover {
-    background: #ffffff18;
-  }
-  > img {
-    width: 22px;
-    opacity: 0.4;
-    margin-bottom: -4px;
-  }
 `;

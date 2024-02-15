@@ -36,9 +36,7 @@ export const CheckItem: React.FC<ItemProps> = ({ preflightCheck }) => {
               .exhaustive()
           )}
         <Spacer inline x={1} />
-        <Text style={{ marginLeft: "10px", flex: 1 }}>
-          {preflightCheck.title}
-        </Text>
+        <Text style={{ flex: 1 }}>{preflightCheck.title}</Text>
         {preflightCheck.error && (
           <ExpandIcon className="material-icons" isExpanded={isExpanded}>
             arrow_drop_down

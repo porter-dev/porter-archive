@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
+import Back from "components/porter/Back";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
+import Image from "components/porter/Image";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -13,7 +15,6 @@ import { type ClientClusterContract } from "lib/clusters/types";
 
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import NodeGroups from "../../shared/NodeGroups";
-import { BackButton, Img } from "../CreateClusterForm";
 
 type Props = {
   goBack: () => void;
@@ -32,17 +33,14 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
 
   return (
     <div>
+      <Back onClick={goBack} />
       <Container row>
-        <BackButton width="140px" onClick={goBack}>
-          <i className="material-icons">first_page</i>
-          Select cloud
-        </BackButton>
-        <Spacer x={1} inline />
-        <Img src={CloudProviderAWS.icon} />
-        <Text size={16}>Configure EKS Cluster</Text>
+        <Image src={CloudProviderAWS.icon} size={22} />
+        <Spacer inline x={1} />
+        <Text size={21}>Configure AWS settings</Text>
       </Container>
       <Spacer y={1} />
-      <Text>Specify settings for your EKS cluster.</Text>
+      <Text color="helper">Specify settings for your AWS infrastructure.</Text>
       <Spacer y={1} />
       <VerticalSteps
         currentStep={currentStep}
@@ -50,6 +48,10 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
           <>
             <Text size={16}>Cluster name</Text>
             <Spacer y={0.5} />
+            <Text color="helper">
+              Lowercase letters, numbers, and &quot;-&quot; only.
+            </Text>
+            <Spacer y={0.7} />
             <ControlledInput
               placeholder="ex: my-cluster"
               type="text"
@@ -59,8 +61,12 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
             />
           </>,
           <>
-            <Text size={16}>Cluster region</Text>
+            <Text size={16}>Region</Text>
             <Spacer y={0.5} />
+            <Text color="helper">
+              Select the region where you want to run your cluster.
+            </Text>
+            <Spacer y={0.7} />
             <Controller
               name={`cluster.config.region`}
               control={control}
@@ -75,26 +81,16 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
                       onChange(selected);
                     }}
                     value={value}
-                    label="📍 AWS region"
                   />
                 </Container>
               )}
             />
           </>,
           <>
-            <Text size={16}>CIDR Range</Text>
+            <Text size={16}>Application node group</Text>
             <Spacer y={0.5} />
-            <ControlledInput
-              placeholder="ex: 10.78.0.0/16"
-              type="text"
-              width="300px"
-              error={errors.cluster?.config?.cidrRange?.message}
-              {...register("cluster.config.cidrRange")}
-            />
-          </>,
-          <>
-            <Text size={16}>
-              Application node group{" "}
+            <Text color="helper">
+              Configure your application infrastructure.{" "}
               <a
                 href="https://docs.porter.run/other/kubernetes-101"
                 target="_blank"
@@ -103,21 +99,18 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
                 &nbsp;(?)
               </a>
             </Text>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <NodeGroups availableMachineTypes={CloudProviderAWS.machineTypes} />
           </>,
-          <>
-            <Text size={16}>Provision cluster</Text>
-            <Spacer y={0.5} />
-            <Button
-              type="submit"
-              status={updateClusterButtonProps.status}
-              disabled={updateClusterButtonProps.isDisabled}
-              loadingText={updateClusterButtonProps.loadingText}
-            >
-              Submit
-            </Button>
-          </>,
+          <Button
+            key={3}
+            type="submit"
+            status={updateClusterButtonProps.status}
+            disabled={updateClusterButtonProps.isDisabled}
+            loadingText={updateClusterButtonProps.loadingText}
+          >
+            Create resources
+          </Button>,
         ]}
       />
     </div>

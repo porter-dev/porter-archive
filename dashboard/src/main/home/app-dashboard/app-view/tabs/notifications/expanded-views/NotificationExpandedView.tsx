@@ -1,14 +1,15 @@
 import React from "react";
+import AnimateHeight from "react-animate-height";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import { type ClientNotification } from "lib/porter-apps/notification";
+import Banner from "components/porter/Banner";
 
+import { useNotificationContext } from "./NotificationContextProvider";
 import RevisionNotificationExpandedView from "./RevisionNotificationExpandedView";
 import ServiceNotificationExpandedView from "./ServiceNotificationExpandedView";
 
 type Props = {
-  notification: ClientNotification;
   projectId: number;
   clusterId: number;
   appName: string;
@@ -17,36 +18,48 @@ type Props = {
 };
 
 const NotificationExpandedView: React.FC<Props> = ({
-  notification,
   projectId,
   clusterId,
   appName,
   deploymentTargetId,
   appId,
 }) => {
-  return match(notification)
-    .with({ scope: "SERVICE" }, (n) => (
-      <ServiceNotificationExpandedView
-        notification={n}
-        projectId={projectId}
-        clusterId={clusterId}
-        appName={appName}
-        deploymentTargetId={deploymentTargetId}
-        appId={appId}
-      />
-    ))
-    .with({ scope: "REVISION" }, (n) => (
-      <RevisionNotificationExpandedView
-        notification={n}
-        projectId={projectId}
-        appName={appName}
-        deploymentTargetId={deploymentTargetId}
-        clusterId={clusterId}
-        appId={appId}
-      />
-    ))
-    .with({ scope: "APPLICATION" }, () => null) // not implemented yet
-    .exhaustive();
+  const { notification } = useNotificationContext();
+
+  return (
+    <div>
+      {notification.isHistorical && (
+        <StyledHistoricalBannerContainer>
+          <AnimateHeight height={"auto"}>
+            <Banner type="warning">This notification has been resolved.</Banner>
+          </AnimateHeight>
+        </StyledHistoricalBannerContainer>
+      )}
+      {match(notification)
+        .with({ scope: "SERVICE" }, (n) => (
+          <ServiceNotificationExpandedView
+            notification={n}
+            projectId={projectId}
+            clusterId={clusterId}
+            appName={appName}
+            deploymentTargetId={deploymentTargetId}
+            appId={appId}
+          />
+        ))
+        .with({ scope: "REVISION" }, (n) => (
+          <RevisionNotificationExpandedView
+            notification={n}
+            projectId={projectId}
+            appName={appName}
+            deploymentTargetId={deploymentTargetId}
+            clusterId={clusterId}
+            appId={appId}
+          />
+        ))
+        .with({ scope: "APPLICATION" }, () => null) // not implemented yet
+        .exhaustive()}
+    </div>
+  );
 };
 
 export default NotificationExpandedView;
@@ -116,6 +129,26 @@ export const StyledMessageFeed = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const StyledHistoricalBannerContainer = styled.div`
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  animation: fadeIn 0.3s 0s;
+  padding: 70px;
+  padding-top: 15px;
+  padding-bottom: 15px;
   @keyframes fadeIn {
     from {
       opacity: 0;

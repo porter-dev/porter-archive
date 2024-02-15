@@ -56,6 +56,7 @@ const (
 	URLParamDatastoreType         URLParam = "datastore_type"
 	URLParamDatastoreName         URLParam = "datastore_name"
 	URLParamNotificationConfigID  URLParam = "notification_config_id"
+	URLParamNotificationID        URLParam = "notification_id"
 	URLParamCloudProviderType     URLParam = "cloud_provider_type"
 	URLParamCloudProviderID       URLParam = "cloud_provider_id"
 	URLParamDeploymentTargetID    URLParam = "deployment_target_id"

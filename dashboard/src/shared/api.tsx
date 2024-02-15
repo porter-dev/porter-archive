@@ -680,7 +680,7 @@ const getNotificationConfig = baseApi<
 >("GET", (pathParams) => {
   const { project_id, notification_config_id } = pathParams;
 
-  return `/api/projects/${project_id}/notifications/${notification_config_id}`;
+  return `/api/projects/${project_id}/notifications/config/${notification_config_id}`;
 });
 
 const updateNotificationConfig = baseApi<
@@ -698,7 +698,19 @@ const updateNotificationConfig = baseApi<
 >("POST", (pathParams) => {
   const { project_id, notification_config_id } = pathParams;
 
-  return `/api/projects/${project_id}/notifications/${notification_config_id}`;
+  return `/api/projects/${project_id}/notifications/config/${notification_config_id}`;
+});
+
+const getNotification = baseApi<
+  {},
+  {
+    project_id: number;
+    notification_id: string;
+  }
+>("GET", (pathParams) => {
+  const { project_id, notification_id } = pathParams;
+
+  return `/api/projects/${project_id}/notifications/${notification_id}`;
 });
 
 const getPRDeploymentList = baseApi<
@@ -3476,6 +3488,7 @@ export default {
   updateNotificationConfig,
   legacyGetNotificationConfig,
   getNotificationConfig,
+  getNotification,
   createSubdomain,
   deployTemplate,
   deployAddon,

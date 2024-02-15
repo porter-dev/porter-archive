@@ -3,12 +3,15 @@ import styled from "styled-components";
 import { match } from "ts-pattern";
 
 import Loading from "components/Loading";
+import Container from "components/porter/Container";
 import RequestToEnable from "components/porter/RequestToEnable";
+import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { type ClientCloudProvider } from "lib/clusters/types";
 import { useClusterList } from "lib/hooks/useCluster";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import infraGrad from "assets/infra-grad.svg";
 
 import ClusterFormContextProvider from "../ClusterFormContextProvider";
 import CreateEKSClusterForm from "./aws/CreateEKSClusterForm";
@@ -28,13 +31,21 @@ const CreateClusterForm: React.FC = () => {
   }
   if (!currentProject?.multi_cluster && clusters.length > 0) {
     return (
-      <RequestToEnable
-        title={"Multi-cluster is not enabled for this project"}
-        subtitle={
-          "Reach out to the Porter team to enable multi-cluster on your project."
-        }
-        intercomText={"I would like to enable multi-cluster for my project."}
-      />
+      <Wrapper>
+        <DashboardHeader
+          image={infraGrad}
+          title="Infrastructure"
+          description="Clusters for running applications on this project."
+          disableLineBreak
+        />
+        <RequestToEnable
+          title={"Multi-cluster is not enabled for this project"}
+          subtitle={
+            "Reach out to the Porter team to enable multi-cluster on your project."
+          }
+          intercomText={"I would like to enable multi-cluster for my project."}
+        />
+      </Wrapper>
     );
   }
 
@@ -93,6 +104,10 @@ const CreateClusterForm: React.FC = () => {
 };
 
 export default CreateClusterForm;
+
+const Wrapper = styled.div`
+  width: 100%;
+`;
 
 const CreateClusterFormContainer = styled.div`
   width: 100%;

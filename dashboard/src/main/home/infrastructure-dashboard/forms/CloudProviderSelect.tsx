@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 
+import Banner from "components/porter/Banner";
+import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import {
   CloudProviderAWS,
@@ -30,6 +33,15 @@ const CloudProviderSelect: React.FC<Props> = ({ onComplete }) => {
         disableLineBreak
         capitalize={false}
       />
+      <Banner>
+        Don't want to link your own cloud account? Immediately deploy your apps
+        on the <Spacer inline width="5px" />
+        <Link to="https://sandbox.porter.run" hasunderline>
+          Porter sandbox
+        </Link>
+        .
+      </Banner>
+      <Spacer y={1} />
       <StyledProvisionerFlow>
         <BlockList>
           {[CloudProviderAWS, CloudProviderGCP, CloudProviderAzure].map(

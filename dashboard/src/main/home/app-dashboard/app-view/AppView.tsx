@@ -28,9 +28,9 @@ export const porterAppValidator = z.object({
 });
 export type PorterAppRecord = z.infer<typeof porterAppValidator>;
 
-type Props = RouteComponentProps;
+type Props = RouteComponentProps & { preview?: boolean };
 
-const AppView: React.FC<Props> = ({ match }) => {
+const AppView: React.FC<Props> = ({ match, preview }) => {
   const params = useMemo(() => {
     const { params } = match;
     const validParams = z
@@ -53,7 +53,7 @@ const AppView: React.FC<Props> = ({ match }) => {
   return (
     <LatestRevisionProvider appName={params.appName}>
       <StyledExpandedApp>
-        <Back to="/apps" />
+        <Back to={preview ? "/preview-environments" : "/apps"} />
         <AppHeader />
         <AppDataContainer tabParam={params.tab} />
       </StyledExpandedApp>

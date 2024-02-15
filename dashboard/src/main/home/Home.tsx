@@ -605,10 +605,10 @@ const Home: React.FC<Props> = (props) => {
                       exact
                       path={`/preview-environments/apps/:appName/:tab`}
                     >
-                      <AppView />
+                      <AppView preview />
                     </Route>
                     <Route exact path="/preview-environments/apps/:appName">
-                      <AppView />
+                      <AppView preview />
                     </Route>
                     <Route exact path={`/preview-environments/apps`}>
                       <Apps />

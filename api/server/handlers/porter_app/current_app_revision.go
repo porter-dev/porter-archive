@@ -100,35 +100,8 @@ func (c *LatestAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
 	)
 
-	porterApps, err := c.Repo().PorterApp().ReadPorterAppsByProjectIDAndName(project.ID, appName)
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting porter app from repo")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if len(porterApps) == 0 {
-		err := telemetry.Error(ctx, span, err, "no porter apps returned")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-	if len(porterApps) > 1 {
-		err := telemetry.Error(ctx, span, err, "multiple porter apps returned; unable to determine which one to use")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
-
-	appId := porterApps[0].ID
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-id", Value: appId})
-
-	if appId == 0 {
-		err := telemetry.Error(ctx, span, err, "porter app id is missing")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
 	currentAppRevisionReq := connect.NewRequest(&porterv1.CurrentAppRevisionRequest{
 		ProjectId: int64(project.ID),
-		AppId:     int64(appId),
 		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
 			Id:   request.DeploymentTargetID,
 			Name: deploymentTargetName,

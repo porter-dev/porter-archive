@@ -43,12 +43,21 @@ type NotificationContextProviderProps = {
 export const NotificationContextProvider: React.FC<
   NotificationContextProviderProps
 > = ({ notificationId, children, projectId, clusterId, appName }) => {
-  const { latestClientNotifications, tabUrlGenerator } = useLatestRevision(); // this is essentially a cache
+  const { latestClientNotifications, tabUrlGenerator, loading } =
+    useLatestRevision(); // this is essentially a cache
 
   const paramsExist =
-    !!notificationId && !!projectId && !!clusterId && !!appName;
+    !!notificationId && !!projectId && !!clusterId && !!appName && !loading;
   const { data: notification, status } = useQuery(
-    ["getNotification", notificationId, projectId, clusterId, appName],
+    [
+      "getNotification",
+      notificationId,
+      projectId,
+      clusterId,
+      appName,
+      loading,
+      latestClientNotifications,
+    ],
     async () => {
       if (!paramsExist) {
         return;

@@ -123,10 +123,8 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 				Metadata: val.Metadata,
 			},
 		})
-
 	}
 	resp.Errors = errors
-
 	p.WriteResult(w, r, resp)
 }
 

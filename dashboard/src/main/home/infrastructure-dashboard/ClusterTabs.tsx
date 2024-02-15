@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useContext, useEffect, useMemo } from "react";
 import { Contract } from "@porter-dev/api-contracts";
 import AnimateHeight from "react-animate-height";
 import { useFormContext } from "react-hook-form";
@@ -11,14 +11,17 @@ import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import { type ClientClusterContract } from "lib/clusters/types";
 
+import { Context } from "shared/Context";
+
 import { useClusterContext } from "./ClusterContextProvider";
 import { useClusterFormContext } from "./ClusterFormContextProvider";
 import ClusterProvisioningIndicator from "./ClusterProvisioningIndicator";
 import ClusterSaveButton from "./ClusterSaveButton";
+import AdvancedSettings from "./tabs/AdvancedSettings";
 import ClusterOverview from "./tabs/overview/ClusterOverview";
 import Settings from "./tabs/Settings";
 
-const validTabs = ["overview", "settings"] as const;
+const validTabs = ["overview", "settings", "advanced"] as const;
 const DEFAULT_TAB = "overview" as const;
 type ValidTab = (typeof validTabs)[number];
 const tabs = [
@@ -30,6 +33,7 @@ type Props = {
   tabParam?: string;
 };
 const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
+  const { currentProject } = useContext(Context);
   const history = useHistory();
 
   const { cluster, isClusterUpdating } = useClusterContext();
@@ -49,6 +53,18 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
       })
     );
   }, [cluster]);
+
+  useEffect(() => {
+    if (
+      currentProject?.advanced_infra_enabled &&
+      !tabs.some((x) => x.value === "advanced")
+    ) {
+      tabs.splice(1, 0, {
+        label: "Advanced",
+        value: "advanced",
+      });
+    }
+  }, [currentProject]);
 
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
@@ -94,6 +110,7 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
       {match(currentTab)
         .with("overview", () => <ClusterOverview />)
         .with("settings", () => <Settings />)
+        .with("advanced", () => <AdvancedSettings />)
         .otherwise(() => null)}
     </DashboardWrapper>
   );

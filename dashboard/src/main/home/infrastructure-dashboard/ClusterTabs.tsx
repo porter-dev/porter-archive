@@ -96,6 +96,9 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
       props.status = "loading";
       props.isDisabled = true;
     }
+    if (isClusterUpdating) {
+      props.isDisabled = true;
+    }
     if (updateClusterResponse?.error) {
       props.status = (
         <ErrorComponent

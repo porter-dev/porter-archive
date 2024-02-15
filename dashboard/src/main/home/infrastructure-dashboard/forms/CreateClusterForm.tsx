@@ -5,6 +5,7 @@ import { match } from "ts-pattern";
 import Loading from "components/Loading";
 import RequestToEnable from "components/porter/RequestToEnable";
 import { type ClientCloudProvider } from "lib/clusters/types";
+import { useClusterList } from "lib/hooks/useCluster";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -17,6 +18,7 @@ import CreateGKEClusterForm from "./gcp/CreateGKEClusterForm";
 
 const CreateClusterForm: React.FC = () => {
   const { currentProject } = useContext(Context);
+  const { clusters } = useClusterList();
   const [selectedCloudProvider, setSelectedCloudProvider] = useState<
     ClientCloudProvider | undefined
   >(undefined);
@@ -24,7 +26,7 @@ const CreateClusterForm: React.FC = () => {
   if (!currentProject || currentProject.id === -1) {
     return <Loading />;
   }
-  if (!currentProject?.multi_cluster) {
+  if (!currentProject?.multi_cluster && clusters.length > 0) {
     return (
       <RequestToEnable
         title={"Multi-cluster is not enabled for this project"}

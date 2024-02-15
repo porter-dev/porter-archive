@@ -108,8 +108,16 @@ const ClusterList: React.FC = (props) => {
           <OptionDiv
             selected={false}
             onClick={() => {
-              setClusterModalVisible(true);
               setExpanded(false);
+              if (
+                currentProject?.simplified_view_enabled &&
+                currentProject?.capi_provisioner_enabled &&
+                currentProject?.beta_features_enabled
+              ) {
+                pushFiltered(props, "/infrastructure/new", []);
+              } else {
+                setClusterModalVisible(true);
+              }
             }}
           >
             <Plus>+</Plus> Deploy new cluster

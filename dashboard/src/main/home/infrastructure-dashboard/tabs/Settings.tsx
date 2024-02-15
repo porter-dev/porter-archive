@@ -48,18 +48,18 @@ const Settings: React.FC = () => {
       history.push("/infrastructure");
     } catch (err) {
       showIntercomWithMessage({
-        message: "I am running into an issue updating my cluster.",
+        message: "I am running into an issue deleting my cluster.",
       });
 
       let message =
-        "Cluster update failed: please try again or contact support@porter.run if the error persists.";
+        "Cluster deletion failed: please try again or contact support@porter.run if the error persists.";
 
       if (axios.isAxiosError(err)) {
         const parsed = z
           .object({ error: z.string() })
           .safeParse(err.response?.data);
         if (parsed.success) {
-          message = `Cluster update failed: ${parsed.data.error}`;
+          message = `Cluster deletion failed: ${parsed.data.error}`;
         }
       }
       setErrorMessage(message);

@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const clusterValidator = z.object({
   id: z.number(),
@@ -15,9 +15,8 @@ export const clusterValidator = z.object({
   cloud_provider_credential_identifier: z.string().optional(),
   status: z.string().optional(),
   cloud_provider: z.string(),
-  gpuCluster: z.boolean().optional()
-})
-
+  gpuCluster: z.boolean().optional(),
+});
 
 export type ClusterType = {
   id: number;
@@ -749,6 +748,10 @@ export type ClusterState = {
   gpuInstanceType?: string;
   gpuMinInstances: number;
   gpuMaxInstances: number;
+  complianceProfiles: {
+    soc2: boolean;
+    hipaa: boolean;
+  };
 };
 
 export type Soc2Check = {

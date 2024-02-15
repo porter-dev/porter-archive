@@ -324,7 +324,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
       notifications: latestSerializedNotifications,
       clientServices: latestClientServices,
       revisionId: latestRevision.id,
-      isHistorical: true,
+      isHistorical: false,
     });
   }, [latestSerializedNotifications, latestClientServices, latestRevision]);
 

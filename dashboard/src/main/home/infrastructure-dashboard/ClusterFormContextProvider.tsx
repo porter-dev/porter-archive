@@ -110,12 +110,14 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   }, [
     isSubmitting,
     updateClusterResponse,
+    updateClusterError,
     isHandlingPreflightChecks,
     isCreatingContract,
   ]);
 
   const onSubmit = handleSubmit(async (data) => {
     setUpdateClusterResponse(undefined);
+    setUpdateClusterError("");
     if (!currentContract?.cluster) {
       return;
     }

@@ -1,20 +1,19 @@
 import React, { useMemo } from "react";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
-import styled from "styled-components";
 
-import world from "assets/world.svg";
-
+import Container from "components/porter/Container";
+import Expandable from "components/porter/Expandable";
 import Image from "components/porter/Image";
 import Input from "components/porter/Input";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import {
   type ClientClusterContract,
   type MachineType,
 } from "lib/clusters/types";
-import Expandable from "components/porter/Expandable";
-import Container from "components/porter/Container";
-import Text from "components/porter/Text";
+
+import world from "assets/world.svg";
 
 type Props = {
   availableMachineTypes: MachineType[];
@@ -48,9 +47,8 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
               <Container row>
                 <Image src={world} />
                 <Spacer inline x={1} />
-                {ng.nodeGroup.nodeGroupType === "APPLICATION" &&(
-                  "Default node group"
-                )}
+                {ng.nodeGroup.nodeGroupType === "APPLICATION" &&
+                  "Default node group"}
               </Container>
             }
           >
@@ -121,9 +119,3 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
 };
 
 export default NodeGroups;
-
-const NodeGroupContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-`;

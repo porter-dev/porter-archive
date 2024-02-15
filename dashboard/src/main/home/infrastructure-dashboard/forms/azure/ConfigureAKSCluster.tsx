@@ -26,7 +26,10 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
     control,
     register,
     formState: { errors },
+    watch,
   } = useFormContext<ClientClusterContract>();
+
+  const region = watch("cluster.config.region");
 
   const { updateClusterButtonProps } = useClusterFormContext();
 
@@ -127,7 +130,9 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
             </Text>
             <Spacer y={0.5} />
             <NodeGroups
-              availableMachineTypes={CloudProviderAzure.machineTypes}
+              availableMachineTypes={CloudProviderAzure.machineTypes.filter(
+                (mt) => mt.supportedRegions.includes(region)
+              )}
             />
           </>,
           <>

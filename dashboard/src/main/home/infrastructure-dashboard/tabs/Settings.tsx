@@ -113,7 +113,7 @@ const Settings: React.FC = () => {
         Update
       </Button>
       <Spacer y={1} />
-      <Text size={16}>Delete &quot;{cluster.name}&quot;</Text>
+      <Text size={16}>Delete &quot;{cluster.vanity_name}&quot;</Text>
       <Spacer y={0.5} />
       <Text color={"helper"}>
         Delete this cluster and underlying infrastructure. To ensure that

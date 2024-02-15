@@ -399,7 +399,7 @@ const eksConfigValidator = z.object({
       message: 'Lowercase letters, numbers, and "-" only.',
     }),
   clusterVersion: z.string().optional().default(""),
-  region: z.string(),
+  region: awsRegionValidator,
   nodeGroups: eksNodeGroupValidator.array(),
   cidrRange: cidrRangeValidator,
 });
@@ -413,7 +413,7 @@ const gkeConfigValidator = z.object({
       message: 'Lowercase letters, numbers, and "-" only.',
     }),
   clusterVersion: z.string().optional().default(""),
-  region: z.string().default("us-east1"),
+  region: gcpRegionValidator,
   nodeGroups: gkeNodeGroupValidator.array(),
   cidrRange: cidrRangeValidator,
 });
@@ -427,7 +427,7 @@ const aksConfigValidator = z.object({
       message: 'Lowercase letters, numbers, and "-" only.',
     }),
   clusterVersion: z.string().optional().default(""),
-  region: z.string(),
+  region: azureRegionValidator,
   nodeGroups: aksNodeGroupValidator.array(),
   skuTier: z.enum(["UNKNOWN", "FREE", "STANDARD"]),
   cidrRange: cidrRangeValidator,

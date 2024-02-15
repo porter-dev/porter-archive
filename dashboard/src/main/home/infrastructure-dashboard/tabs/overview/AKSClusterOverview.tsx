@@ -71,7 +71,11 @@ const AKSClusterOverview: React.FC = () => {
         </a>
       </Text>
       <Spacer y={0.5} />
-      <NodeGroups availableMachineTypes={CloudProviderAzure.machineTypes} />
+      <NodeGroups
+        availableMachineTypes={CloudProviderAzure.machineTypes.filter((mt) =>
+          mt.supportedRegions.includes(region)
+        )}
+      />
     </>
   );
 };

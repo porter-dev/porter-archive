@@ -57,6 +57,7 @@ var recognizedPreflightCheckKeys = []string{
 	"apiEnabled",
 	"cidrAvailability",
 	"iamPermissions",
+	"resourceProviders",
 }
 
 func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +98,7 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if checkResp.Msg == nil || checkResp.Msg.PreflightChecks == nil {
+	if checkResp.Msg == nil {
 		err = telemetry.Error(ctx, span, nil, "no message received from preflight checks")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return

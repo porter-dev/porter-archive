@@ -3,7 +3,6 @@ import styled from "styled-components";
 import { match } from "ts-pattern";
 
 import Loading from "components/Loading";
-import Container from "components/porter/Container";
 import RequestToEnable from "components/porter/RequestToEnable";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { type ClientCloudProvider } from "lib/clusters/types";

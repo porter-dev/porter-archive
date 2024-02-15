@@ -359,61 +359,59 @@ export const useUpdateCluster = ({
       ),
     });
 
-    if (clientContract.cluster.cloudProvider !== "Azure") {
-      setIsHandlingPreflightChecks(true);
-      try {
-        const preflightCheckResp = await api.preflightCheck(
-          "<token>",
-          new PreflightCheckRequest({
-            contract: newContract,
-          }),
-          {
-            id: projectId,
-          }
-        );
-        const parsed = await preflightCheckValidator.parseAsync(
-          preflightCheckResp.data
-        );
-
-        if (parsed.errors.length > 0) {
-          const cloudProviderSpecificChecks = match(
-            clientContract.cluster.cloudProvider
-          )
-            .with("AWS", () => CloudProviderAWS.preflightChecks)
-            .with("GCP", () => CloudProviderGCP.preflightChecks)
-            .otherwise(() => []);
-
-          const clientPreflightChecks: ClientPreflightCheck[] = parsed.errors
-            .map((e) => {
-              const preflightCheckMatch = cloudProviderSpecificChecks.find(
-                (cloudProviderCheck) => e.name === cloudProviderCheck.name
-              );
-              if (!preflightCheckMatch) {
-                return undefined;
-              }
-              return {
-                title: preflightCheckMatch.displayName,
-                status: "failure" as const,
-                error: {
-                  detail: e.error.message,
-                  metadata: e.error.metadata,
-                  resolution: preflightCheckMatch.resolution,
-                },
-              };
-            })
-            .filter(valueExists);
-          return {
-            preflightChecks: clientPreflightChecks,
-          };
+    setIsHandlingPreflightChecks(true);
+    try {
+      const preflightCheckResp = await api.preflightCheck(
+        "<token>",
+        new PreflightCheckRequest({
+          contract: newContract,
+        }),
+        {
+          id: projectId,
         }
-        // otherwise, continue to create the contract
-      } catch (err) {
-        throw new Error(
-          getErrorMessageFromNetworkCall(err, "Cluster preflight checks")
-        );
-      } finally {
-        setIsHandlingPreflightChecks(false);
+      );
+      const parsed = await preflightCheckValidator.parseAsync(
+        preflightCheckResp.data
+      );
+
+      if (parsed.errors.length > 0) {
+        const cloudProviderSpecificChecks = match(
+          clientContract.cluster.cloudProvider
+        )
+          .with("AWS", () => CloudProviderAWS.preflightChecks)
+          .with("GCP", () => CloudProviderGCP.preflightChecks)
+          .otherwise(() => []);
+
+        const clientPreflightChecks: ClientPreflightCheck[] = parsed.errors
+          .map((e) => {
+            const preflightCheckMatch = cloudProviderSpecificChecks.find(
+              (cloudProviderCheck) => e.name === cloudProviderCheck.name
+            );
+            if (!preflightCheckMatch) {
+              return undefined;
+            }
+            return {
+              title: preflightCheckMatch.displayName,
+              status: "failure" as const,
+              error: {
+                detail: e.error.message,
+                metadata: e.error.metadata,
+                resolution: preflightCheckMatch.resolution,
+              },
+            };
+          })
+          .filter(valueExists);
+        return {
+          preflightChecks: clientPreflightChecks,
+        };
       }
+      // otherwise, continue to create the contract
+    } catch (err) {
+      throw new Error(
+        getErrorMessageFromNetworkCall(err, "Cluster preflight checks")
+      );
+    } finally {
+      setIsHandlingPreflightChecks(false);
     }
 
     setIsCreatingContract(true);

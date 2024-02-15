@@ -749,6 +749,10 @@ export type ClusterState = {
   gpuInstanceType?: string;
   gpuMinInstances: number;
   gpuMaxInstances: number;
+  complianceProfiles: {
+    soc2: boolean;
+    hipaa: boolean;
+  };
 };
 
 export type Soc2Check = {

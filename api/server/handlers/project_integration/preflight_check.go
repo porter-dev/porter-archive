@@ -1,9 +1,7 @@
 package project_integration
 
 import (
-	"fmt"
 	"net/http"
-	"slices"
 
 	"connectrpc.com/connect"
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
@@ -65,6 +63,9 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	ctx, span := telemetry.NewSpan(r.Context(), "preflight-checks")
 	defer span.End()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	betaFeaturesEnabled := project.GetFeatureFlag(models.BetaFeaturesEnabled, p.Config().LaunchDarklyClient)
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "beta-features-enabled", Value: betaFeaturesEnabled})
 
 	cloudValues := &porterv1.PreflightCheckRequest{}
 	err := helpers.UnmarshalContractObjectFromReader(r.Body, cloudValues)
@@ -102,11 +103,14 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	fmt.Printf("here is the message: %+v\n", checkResp.Msg.PreflightChecks)
+	if !betaFeaturesEnabled {
+		p.WriteResult(w, r, checkResp)
+		return
+	}
 
 	errors := []PreflightCheckError{}
 	for key, val := range checkResp.Msg.PreflightChecks {
-		if val.Message == "" || !slices.Contains(recognizedPreflightCheckKeys, key) {
+		if val.Message == "" || !contains(recognizedPreflightCheckKeys, key) {
 			continue
 		}
 
@@ -123,4 +127,13 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	resp.Errors = errors
 
 	p.WriteResult(w, r, resp)
+}
+
+func contains(slice []string, elem string) bool {
+	for _, item := range slice {
+		if item == elem {
+			return true
+		}
+	}
+	return false
 }

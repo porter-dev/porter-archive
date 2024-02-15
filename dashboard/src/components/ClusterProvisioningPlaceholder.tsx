@@ -36,7 +36,8 @@ const ClusterProvisioningPlaceholder: React.FC<RouteComponentProps> = (
         onClick={() => {
           if (
             currentProject?.capi_provisioner_enabled &&
-            currentProject?.simplified_view_enabled
+            currentProject?.simplified_view_enabled &&
+            currentProject?.beta_features_enabled
           ) {
             pushFiltered(
               props,

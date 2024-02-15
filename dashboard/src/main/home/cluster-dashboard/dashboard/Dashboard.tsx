@@ -4,7 +4,6 @@ import styled from "styled-components";
 
 import AzureProvisionerSettings from "components/AzureProvisionerSettings";
 import GCPProvisionerSettings from "components/GCPProvisionerSettings";
-import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
 import ProvisionerSettings from "components/ProvisionerSettings";
 import TabSelector from "components/TabSelector";
@@ -24,6 +23,7 @@ import Metrics from "./Metrics";
 import { NamespaceList } from "./NamespaceList";
 import NodeList from "./NodeList";
 import ProvisionerStatus from "./ProvisionerStatus";
+import Image from "components/porter/Image";
 
 type TabEnum =
   | "nodes"

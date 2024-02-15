@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import {
   AWSClusterNetwork,
   Cluster,
+  ComplianceProfile,
   Contract,
   EKS,
   EKSLogging,
@@ -171,6 +172,10 @@ const initialClusterState: ClusterState = {
   gpuInstanceType: "g4dn.xlarge",
   gpuMinInstances: 0,
   gpuMaxInstances: 5,
+  complianceProfiles: {
+    soc2: false,
+    hipaa: false,
+  },
 };
 
 type Props = RouteComponentProps & {
@@ -394,6 +399,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       );
     }
 
+    const complianceProfiles = new ComplianceProfile({
+      soc2: clusterState.complianceProfiles.soc2,
+      hipaa: clusterState.complianceProfiles.hipaa,
+    });
+
     const data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -422,6 +432,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           }),
         },
       }),
+      complianceProfiles,
     });
     return data;
   };
@@ -451,22 +462,6 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       // Only refresh and set clusters on initial create
       // if (!props.clusterId) {
       setShouldRefreshClusters(true);
-
-      if (
-        currentProject?.capi_provisioner_enabled &&
-        currentProject?.simplified_view_enabled
-      ) {
-        if (data.cluster?.clusterId) {
-          pushFiltered(props, `/infrastructure/${data.cluster.clusterId}`, []);
-        } else {
-          pushFiltered(props, "/infrastructure", []);
-        }
-        if (props.closeModal) {
-          props.closeModal();
-        }
-        return;
-      }
-
       api
         .getClusters("<token>", {}, { id: currentProject.id })
         .then(({ data }) => {
@@ -529,7 +524,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const contract = props.selectedClusterVersion as any;
+    const contract = props.selectedClusterVersion;
     // Unmarshall Contract here
     if (contract?.cluster) {
       const eksValues: EKS = contract.cluster?.eksKind as EKS;
@@ -619,6 +614,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         "certificateARN",
         eksValues.loadBalancer?.additionalCertificateArns?.join(",")
       );
+
+      if (contract.complianceProfiles) {
+        handleClusterStateChange(
+          "complianceProfiles",
+          contract.complianceProfiles
+        );
+      }
     }
   }, [isExpanded, props.selectedClusterVersion]);
 

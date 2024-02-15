@@ -92,9 +92,9 @@ const PreflightChecksModal: React.FC<Props> = ({
         <Text size={16}>Cluster provision check</Text>
         <Spacer y={0.5} />
         <Text color="helper">
-          Your account does not have enough resources to provision this cluster.
-          Please correct visit your cloud provider or change your cluster
-          configuration, then re-provision.
+          Your cloud provider account does not have enough resources to
+          provision this cluster. Please visit your cloud provider or change
+          your cluster configuration, then re-submit.
         </Text>
         <Spacer y={1} />
         {preflightChecks.map((pfc) => (

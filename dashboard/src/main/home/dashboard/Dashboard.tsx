@@ -1,14 +1,14 @@
 import React, { useState, useContext, useEffect } from "react";
 import styled from "styled-components";
-import { RouteComponentProps, withRouter } from "react-router";
+import { type RouteComponentProps, withRouter } from "react-router";
 
 import gradient from "assets/gradient.png";
 
 import { Context } from "shared/Context";
-import { InfraType } from "shared/types";
+import { type InfraType } from "shared/types";
 import api from "shared/api";
 import { pushFiltered, pushQueryParams } from "shared/routing";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 
 import ProvisionerSettings from "../provisioner/ProvisionerSettings";
 import ClusterPlaceholderContainer from "./ClusterPlaceholderContainer";
@@ -83,7 +83,7 @@ const Dashboard: React.FC<Props> = ({
             project_id: currentProject.id,
           }
         )
-        .then((res) => setInfras(res.data))
+        .then((res) => { setInfras(res.data); })
         .catch(console.log);
     }
   }, [currentProject]);
@@ -98,7 +98,7 @@ const Dashboard: React.FC<Props> = ({
     tabOptions.push({ label: "Provisioner status", value: "provisioner" });
 
     if (!capabilities?.provisioner) {
-      let newTabs = [{ label: "Project overview", value: "overview" }];
+      const newTabs = [{ label: "Project overview", value: "overview" }];
       setTabOptions(newTabs);
     } else {
       setTabOptions(tabOptions);
@@ -138,7 +138,7 @@ const Dashboard: React.FC<Props> = ({
         <DashboardWrapper>
           {showFormDebugger ? (
             <FormDebugger
-              goBack={() => setShowFormDebugger(false)}
+              goBack={() => { setShowFormDebugger(false); }}
             />
           ) : (
             <>

@@ -374,15 +374,16 @@ export const useUpdateCluster = ({
       };
     }
     const newContract = new Contract({
+      ...baseContract,
       cluster: updateExistingClusterContract(
         clientContract,
         baseContract.cluster
       ),
     });
 
-    setIsHandlingPreflightChecks(true);
-    try {
-      if (clientContract.cluster.cloudProvider !== "Azure") {
+    if (clientContract.cluster.cloudProvider !== "Azure") {
+      setIsHandlingPreflightChecks(true);
+      try {
         const preflightCheckResp = await api.preflightCheck(
           "<token>",
           new PreflightCheckRequest({
@@ -429,14 +430,17 @@ export const useUpdateCluster = ({
             },
           };
         }
+        // otherwise, continue to create the contract
+      } catch (err) {
+        return {
+          error: getErrorMessageFromNetworkCall(
+            err,
+            "Cluster preflight checks"
+          ),
+        };
+      } finally {
+        setIsHandlingPreflightChecks(false);
       }
-      // otherwise, continue to create the contract
-    } catch (err) {
-      return {
-        error: getErrorMessageFromNetworkCall(err, "Cluster preflight checks"),
-      };
-    } finally {
-      setIsHandlingPreflightChecks(false);
     }
 
     setIsCreatingContract(true);

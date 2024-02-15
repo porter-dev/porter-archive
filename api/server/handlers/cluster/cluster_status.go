@@ -55,12 +55,12 @@ func (c *ClusterStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	status, err := c.Config().ClusterControlPlaneClient.ClusterStatus(ctx, req)
 	if err != nil {
-		telemetry.Error(ctx, span, err, "error getting cluster status")
+		_ = telemetry.Error(ctx, span, err, "error getting cluster status")
 		c.WriteResult(w, r, resp)
 		return
 	}
 	if status.Msg == nil {
-		telemetry.Error(ctx, span, nil, "error getting cluster status")
+		_ = telemetry.Error(ctx, span, nil, "error getting cluster status")
 		c.WriteResult(w, r, resp)
 		return
 	}

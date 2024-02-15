@@ -115,6 +115,7 @@ func (c *RollbackAppRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			Name: deploymentTargetName,
 		},
 		AppRevisionId: request.AppRevisionID,
+		AppName:       appName,
 	})
 	ccpResp, err := c.Config().ClusterControlPlaneClient.RollbackRevision(ctx, rollbackReq)
 	if err != nil {

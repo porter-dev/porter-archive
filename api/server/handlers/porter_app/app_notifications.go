@@ -115,6 +115,7 @@ func (c *AppNotificationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		ProjectId:                  int64(project.ID),
 		AppId:                      int64(appId),
 		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{Id: request.DeploymentTargetID},
+		AppName:                    appName,
 	})
 
 	listAppRevisionsResp, err := c.Config().ClusterControlPlaneClient.ListAppRevisions(ctx, listAppRevisionsReq)

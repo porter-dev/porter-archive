@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { match } from "ts-pattern";
 
 import Loading from "components/Loading";
+import RequestToEnable from "components/porter/RequestToEnable";
 import { type ClientCloudProvider } from "lib/clusters/types";
 
 import api from "shared/api";
@@ -23,6 +24,18 @@ const CreateClusterForm: React.FC = () => {
   if (!currentProject || currentProject.id === -1) {
     return <Loading />;
   }
+  if (!currentProject?.multi_cluster) {
+    return (
+      <RequestToEnable
+        title={"Multi-cluster is not enabled for this project"}
+        subtitle={
+          "Reach out to the Porter team to enable multi-cluster on your project."
+        }
+        intercomText={"I would like to enable multi-cluster for my project."}
+      />
+    );
+  }
+
   return (
     <ClusterFormContextProvider
       projectId={currentProject?.id}

@@ -2,6 +2,7 @@ package porter_app
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -99,18 +100,15 @@ func CreateOrGetAppRecord(ctx context.Context, input CreateOrGetAppRecordInput) 
 		telemetry.AttributeKV{Key: "name", Value: input.Name},
 	)
 
-	porterAppDBEntries, err := input.PorterAppRepository.ReadPorterAppsByProjectIDAndName(input.ProjectID, input.Name)
-	if err != nil {
-		return app, telemetry.Error(ctx, span, err, "error reading porter apps by project id and name")
-	}
-	if len(porterAppDBEntries) > 1 {
-		return app, telemetry.Error(ctx, span, nil, "multiple apps with same name")
+	existingApp, err := input.PorterAppRepository.ReadPorterAppByName(input.ClusterID, input.Name)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return app, telemetry.Error(ctx, span, err, "error reading porter app by name")
 	}
 
 	// return existing app if one found with same name
-	if len(porterAppDBEntries) == 1 {
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "existing-app-id", Value: porterAppDBEntries[0].ID})
-		app = porterAppDBEntries[0].ToPorterAppType()
+	if existingApp.ID != 0 {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "existing-app-id", Value: existingApp.ID})
+		app = existingApp.ToPorterAppType()
 		return app, nil
 	}
 

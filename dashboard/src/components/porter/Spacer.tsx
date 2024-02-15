@@ -23,7 +23,7 @@ const Spacer: React.FC<Props> = ({
     return null
   };
 
-  const getCalcWidth = () => {
+  const getCalcWidth = (): string => {
     if (x) {
       return 15 * x + "px";
     }

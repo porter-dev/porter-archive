@@ -61,6 +61,7 @@ const Filter: React.FC<Props> = ({
                 options={filter.default ? [filter.default, ...filter.options] : filter.options}
                 setValue={filter.setValue}
                 value={selectedFilterValues[filter.name]}
+                width="200px"
               />
               {i !== filters.length - 1 && <Spacer y={0.5} />}
             </React.Fragment>

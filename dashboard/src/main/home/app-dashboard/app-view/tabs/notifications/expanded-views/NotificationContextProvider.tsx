@@ -68,6 +68,17 @@ export const NotificationContextProvider: React.FC<
       if (latestNotificationMatch) {
         return latestNotificationMatch;
       }
+
+      const latestNotificationMatchNested = latestClientNotifications.find(
+        (n) => {
+          return n.messages.find((m) => m.id === notificationId);
+        }
+      );
+
+      if (latestNotificationMatchNested) {
+        return latestNotificationMatchNested;
+      }
+
       const retrievedNotification = await getClientNotificationById({
         notificationId,
         projectId,

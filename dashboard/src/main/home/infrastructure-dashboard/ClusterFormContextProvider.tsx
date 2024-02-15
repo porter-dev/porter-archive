@@ -58,16 +58,9 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     undefined
   );
   const [updateClusterResponse, setUpdateClusterResponse] = useState<
-    | {
-        response: UpdateClusterResponse;
-        error?: string;
-      }
-    | {
-        response?: UpdateClusterResponse;
-        error: string;
-      }
-    | undefined
+    UpdateClusterResponse | undefined
   >(undefined);
+  const [updateClusterError, setUpdateClusterError] = useState<string>("");
   const [showFailedPreflightChecksModal, setShowFailedPreflightChecksModal] =
     useState<boolean>(false);
 
@@ -98,12 +91,9 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
       props.isDisabled = true;
     }
 
-    if (updateClusterResponse?.error) {
+    if (updateClusterError) {
       props.status = (
-        <ErrorComponent
-          message={updateClusterResponse?.error}
-          maxWidth="600px"
-        />
+        <ErrorComponent message={updateClusterError} maxWidth="600px" />
       );
     }
     if (isHandlingPreflightChecks) {
@@ -112,7 +102,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     if (isCreatingContract) {
       props.loadingText = "Provisioning cluster...";
     }
-    if (updateClusterResponse?.response?.createContractResponse) {
+    if (updateClusterResponse?.createContractResponse) {
       props.status = "success";
     }
 
@@ -129,23 +119,27 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     if (!currentContract?.cluster) {
       return;
     }
-    const response = await updateCluster(data, currentContract);
-    setUpdateClusterResponse(response);
-    if (response.response?.preflightChecks) {
-      setShowFailedPreflightChecksModal(true);
-    }
-    if (response.error) {
-      showIntercomWithMessage({
-        message: "I am running into an issue updating my cluster.",
-      });
-    }
-    if (response.response?.createContractResponse) {
-      await queryClient.invalidateQueries(["getCluster"]);
+    try {
+      const response = await updateCluster(data, currentContract);
+      setUpdateClusterResponse(response);
+      if (response.preflightChecks) {
+        setShowFailedPreflightChecksModal(true);
+      }
+      if (response.createContractResponse) {
+        await queryClient.invalidateQueries(["getCluster"]);
 
-      if (redirectOnSubmit) {
-        history.push(
-          `/infrastructure/${response.response.createContractResponse.contract_revision.cluster_id}`
-        );
+        if (redirectOnSubmit) {
+          history.push(
+            `/infrastructure/${response.createContractResponse.contract_revision.cluster_id}`
+          );
+        }
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setUpdateClusterError(err.message);
+        showIntercomWithMessage({
+          message: "I am running into an issue updating my cluster.",
+        });
       }
     }
   });
@@ -163,12 +157,12 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
           <form onSubmit={onSubmit}>{children}</form>
         </FormProvider>
         {showFailedPreflightChecksModal &&
-          updateClusterResponse?.response?.preflightChecks && (
+          updateClusterResponse?.preflightChecks && (
             <PreflightChecksModal
               onClose={() => {
                 setShowFailedPreflightChecksModal(false);
               }}
-              preflightChecks={updateClusterResponse.response.preflightChecks}
+              preflightChecks={updateClusterResponse.preflightChecks}
             />
           )}
       </Wrapper>

@@ -328,16 +328,7 @@ type TUseUpdateCluster = {
   updateCluster: (
     clientContract: ClientClusterContract,
     baseContract: Contract
-  ) => Promise<
-    | {
-        response: UpdateClusterResponse;
-        error?: string;
-      }
-    | {
-        response?: UpdateClusterResponse;
-        error: string;
-      }
-  >;
+  ) => Promise<UpdateClusterResponse>;
   isHandlingPreflightChecks: boolean;
   isCreatingContract: boolean;
 };
@@ -353,25 +344,12 @@ export const useUpdateCluster = ({
   const updateCluster = async (
     clientContract: ClientClusterContract,
     baseContract: Contract
-  ): Promise<
-    | {
-        response: UpdateClusterResponse;
-        error?: string;
-      }
-    | {
-        response?: UpdateClusterResponse;
-        error: string;
-      }
-  > => {
+  ): Promise<UpdateClusterResponse> => {
     if (!projectId) {
-      return {
-        error: "Project ID is missing",
-      };
+      throw new Error("Project ID is missing");
     }
     if (!baseContract.cluster) {
-      return {
-        error: "Cluster is missing",
-      };
+      throw new Error("Cluster is missing");
     }
     const newContract = new Contract({
       ...baseContract,
@@ -425,19 +403,14 @@ export const useUpdateCluster = ({
             })
             .filter(valueExists);
           return {
-            response: {
-              preflightChecks: clientPreflightChecks,
-            },
+            preflightChecks: clientPreflightChecks,
           };
         }
         // otherwise, continue to create the contract
       } catch (err) {
-        return {
-          error: getErrorMessageFromNetworkCall(
-            err,
-            "Cluster preflight checks"
-          ),
-        };
+        throw new Error(
+          getErrorMessageFromNetworkCall(err, "Cluster preflight checks")
+        );
       } finally {
         setIsHandlingPreflightChecks(false);
       }
@@ -456,14 +429,10 @@ export const useUpdateCluster = ({
         createContractResp.data
       );
       return {
-        response: {
-          createContractResponse: parsed,
-        },
+        createContractResponse: parsed,
       };
     } catch (err) {
-      return {
-        error: getErrorMessageFromNetworkCall(err, "Cluster creation"),
-      };
+      throw new Error(getErrorMessageFromNetworkCall(err, "Cluster creation"));
     } finally {
       setIsCreatingContract(false);
     }

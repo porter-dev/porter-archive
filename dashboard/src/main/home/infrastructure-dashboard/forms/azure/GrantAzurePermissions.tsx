@@ -200,7 +200,11 @@ const GrantAzurePermissions: React.FC<Props> = ({
                 Back
               </Button>
               <Spacer inline x={0.5} />
-              <Button status={buttonStatus} onClick={onSubmit}>
+              <Button
+                status={buttonStatus}
+                onClick={onSubmit}
+                loadingText={"Checking permissions..."}
+              >
                 Continue
               </Button>
             </Container>

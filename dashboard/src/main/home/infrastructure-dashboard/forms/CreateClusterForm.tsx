@@ -1,6 +1,7 @@
 import React, { useContext, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
+import { useHistory } from "react-router";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
@@ -37,6 +38,7 @@ export type UpdateClusterButtonProps = {
 };
 const CreateClusterForm: React.FC = () => {
   const { currentProject } = useContext(Context);
+  const history = useHistory();
   const [selectedCloudProvider, setSelectedCloudProvider] = useState<
     ClientCloudProvider | undefined
   >(undefined);
@@ -127,6 +129,11 @@ const CreateClusterForm: React.FC = () => {
       showIntercomWithMessage({
         message: "I am running into an issue creating my cluster.",
       });
+    }
+    if (response.response?.createContractResponse) {
+      history.push(
+        `/infrastructure/${response.response.createContractResponse.contract_revision.cluster_id}`
+      );
     }
   });
 

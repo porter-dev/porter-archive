@@ -27,7 +27,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({
   goBack,
   createButtonProps,
 }) => {
-  const [currentStep, _setCurrentStep] = useState<number>(4);
+  const [currentStep, _setCurrentStep] = useState<number>(100);
 
   const {
     control,

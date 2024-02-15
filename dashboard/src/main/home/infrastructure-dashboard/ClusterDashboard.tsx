@@ -139,10 +139,10 @@ const ClusterDashboard: React.FC = () => {
           }}
         />
 
-        <Spacer inline x={2} />
+        <Spacer inline x={1} />
         <PorterLink to="/infrastructure/new">
-          <Button onClick={() => ({})} height="30px" width="70px">
-            <I className="material-icons">add</I> New
+          <Button onClick={() => ({})} height="30px" width="130px">
+            <I className="material-icons">add</I> New cluster
           </Button>
         </PorterLink>
       </Container>

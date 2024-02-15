@@ -332,7 +332,7 @@ export const useClusterResourceLimits = ({
   }, [getClusterNodes]);
 
   const getCluster = useQuery(
-    ["getCluster", projectId, clusterId],
+    ["getClusterIngressIp", projectId, clusterId],
     async () => {
       if (!projectId || !clusterId || clusterId === -1) {
         return await Promise.resolve({ ingress_ip: "" });

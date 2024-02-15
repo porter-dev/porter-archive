@@ -130,16 +130,16 @@ const StyledInput = styled.input<{
   disabled: boolean;
   hideCursor: boolean;
 }>`
-  height: ${(props) => props.height || "35px"};
+  height: ${(props) => props.height || "30px"};
   padding: 5px 10px;
   width: ${(props) => props.width || "200px"};
   color: ${(props) => (props.disabled ? "#aaaabb" : "#ffffff")};
   font-size: 13px;
   outline: none;
   border-radius: 5px;
-  background: #26292e;
-  cursor: ${(props) => (props.disabled ? "not-allowed" : "")};
   transition: all 0.2s;
+  background: ${(props) => props.theme.fg};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "")};
 
   border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#494b4f")};
   ${(props) =>

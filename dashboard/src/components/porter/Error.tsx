@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 
-import Spacer from "./Spacer";
 import Modal from "./Modal";
+import Spacer from "./Spacer";
 
 type Props = {
   message: string;
@@ -28,20 +28,29 @@ export const Error: React.FC<Props> = ({
         <Block>
           <Text>Error: {message}</Text>
           {ctaText && (errorModalContents != null || ctaOnClick != null) && (
-            <Cta onClick={() => {
-              errorModalContents ? setErrorModalOpen(true) : ctaOnClick();
-            }}>
-              <Underline>{ctaText}</Underline>
-              <i className="material-icons">open_in_new</i>
-            </Cta>
+            <>
+              <Spacer y={0.5} />
+              <Cta
+                onClick={() => {
+                  errorModalContents ? setErrorModalOpen(true) : ctaOnClick?.();
+                }}
+              >
+                <Underline>{ctaText}</Underline>
+                <i className="material-icons">open_in_new</i>
+              </Cta>
+            </>
           )}
         </Block>
       </StyledError>
-      {errorModalOpen &&
-        <Modal closeModal={() => setErrorModalOpen(false)}>
+      {errorModalOpen && (
+        <Modal
+          closeModal={() => {
+            setErrorModalOpen(false);
+          }}
+        >
           {errorModalContents}
         </Modal>
-      }
+      )}
     </>
   );
 };
@@ -65,7 +74,8 @@ const Cta = styled.span`
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  
+  color: #fff;
+
   > i {
     margin-left: 5px;
     font-size: 15px;
@@ -76,7 +86,7 @@ const StyledError = styled.div<{ maxWidth?: string }>`
   line-height: 1.5;
   color: #ff385d;
   font-size: 13px;
-  display: flex; 
+  display: flex;
   align-items: center;
   position: relative;
   padding-left: 25px;

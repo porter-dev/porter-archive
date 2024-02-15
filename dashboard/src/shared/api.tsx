@@ -1541,12 +1541,12 @@ const createContract = baseApi<Contract, { project_id: number }>(
   }
 );
 
-const getContracts = baseApi<{ cluster_id?: number, latest?: boolean }, { project_id: number }>(
-  "GET",
-  ({ project_id }) => {
-    return `/api/projects/${project_id}/contracts`;
-  }
-);
+const getContracts = baseApi<
+  { cluster_id?: number; latest?: boolean },
+  { project_id: number }
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/contracts`;
+});
 
 const deleteContract = baseApi<{}, { project_id: number; revision_id: string }>(
   "DELETE",

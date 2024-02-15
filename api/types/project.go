@@ -22,6 +22,7 @@ type ProjectList struct {
 	FullAddOns             bool   `json:"full_add_ons"`
 	EnableReprovision      bool   `json:"enable_reprovision"`
 	ValidateApplyV2        bool   `json:"validate_apply_v2"`
+	AdvancedInfraEnabled   bool   `json:"advanced_infra_enabled"`
 }
 
 // Project type for entries in api responses for everything other than `GET /projects`
@@ -50,6 +51,7 @@ type Project struct {
 	StacksEnabled                   bool    `json:"stacks_enabled"`
 	ValidateApplyV2                 bool    `json:"validate_apply_v2"`
 	ManagedDeploymentTargetsEnabled bool    `json:"managed_deployment_targets_enabled"`
+	AdvancedInfraEnabled            bool    `json:"advanced_infra_enabled"`
 }
 
 // FeatureFlags is a struct that contains old feature flag representations

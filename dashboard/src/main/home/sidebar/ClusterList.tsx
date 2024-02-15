@@ -105,17 +105,23 @@ const ClusterList: React.FC = (props) => {
       <>
         <Dropdown>
           {renderOptionList()}
-          {currentProject?.enable_reprovision && (
-            <OptionDiv
-              selected={false}
-              onClick={() => {
+          <OptionDiv
+            selected={false}
+            onClick={() => {
+              setExpanded(false);
+              if (
+                currentProject?.simplified_view_enabled &&
+                currentProject?.capi_provisioner_enabled &&
+                currentProject?.beta_features_enabled
+              ) {
+                pushFiltered(props, "/infrastructure/new", []);
+              } else {
                 setClusterModalVisible(true);
-                setExpanded(false);
-              }}
-            >
-              <Plus>+</Plus> Deploy new cluster
-            </OptionDiv>
-          )}
+              }
+            }}
+          >
+            <Plus>+</Plus> Deploy new cluster
+          </OptionDiv>
         </Dropdown>
       </>
     );
@@ -157,9 +163,17 @@ const ClusterList: React.FC = (props) => {
   return (
     <InitializeButton
       onClick={() => {
-        pushFiltered(props, "/new-cluster", ["cluster_id"], {
-          new_cluster: true,
-        });
+        if (
+          currentProject?.simplified_view_enabled &&
+          currentProject?.capi_provisioner_enabled &&
+          currentProject?.beta_features_enabled
+        ) {
+          pushFiltered(props, "/infrastructure/new", []);
+        } else {
+          pushFiltered(props, "/new-cluster", ["cluster_id"], {
+            new_cluster: true,
+          });
+        }
       }}
     >
       <Plus>+</Plus> Create a cluster
@@ -274,7 +288,7 @@ const MainSelector = styled.div`
     justify-content: center;
     border-radius: 20px;
     background: ${(props: { expanded: boolean }) =>
-    props.expanded ? "#ffffff22" : ""};
+      props.expanded ? "#ffffff22" : ""};
   }
 `;
 
@@ -302,7 +316,7 @@ const NavButton = styled(SidebarLink)`
 
   :hover {
     background: ${(props: NavButtonProps) =>
-    props.active ? "#ffffff11" : "#ffffff08"};
+      props.active ? "#ffffff11" : "#ffffff08"};
   }
 
   &.active {

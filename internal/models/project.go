@@ -78,6 +78,9 @@ const (
 
 	// ManagedDeploymentTargetsEnabled controls whether a project can use managed deployment targets
 	ManagedDeploymentTargetsEnabled FeatureFlagLabel = "managed_deployment_targets_enabled"
+
+	// AdvancedInfraEnabled controls whether a project can use advanced infrastructure settings
+	AdvancedInfraEnabled FeatureFlagLabel = "advanced_infra_enabled"
 )
 
 // ProjectFeatureFlags keeps track of all project-related feature flags
@@ -103,6 +106,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	StacksEnabled:                   false,
 	ValidateApplyV2:                 true,
 	ManagedDeploymentTargetsEnabled: false,
+	AdvancedInfraEnabled:            false,
 }
 
 type ProjectPlan string
@@ -194,7 +198,8 @@ type Project struct {
 	ValidateApplyV2 bool `gorm:"default:false"`
 	// Deprecated: use p.GetFeatureFlag(EnableReprovision, *features.Client) instead
 
-	EnableReprovision bool `gorm:"default:false"`
+	EnableReprovision    bool `gorm:"default:false"`
+	AdvancedInfraEnabled bool `gorm:"default:false"`
 }
 
 // GetFeatureFlag calls launchdarkly for the specified flag
@@ -240,6 +245,8 @@ func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *
 		case "efs_enabled":
 			return false
 		case "aws_ack_auth_enabled":
+			return false
+		case "advanced_infra_enabled":
 			return false
 		}
 	}
@@ -289,6 +296,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		StacksEnabled:                   p.GetFeatureFlag(StacksEnabled, launchDarklyClient),
 		ValidateApplyV2:                 p.GetFeatureFlag(ValidateApplyV2, launchDarklyClient),
 		ManagedDeploymentTargetsEnabled: p.GetFeatureFlag(ManagedDeploymentTargetsEnabled, launchDarklyClient),
+		AdvancedInfraEnabled:            p.GetFeatureFlag(AdvancedInfraEnabled, launchDarklyClient),
 	}
 }
 
@@ -323,6 +331,7 @@ func (p *Project) ToProjectListType() *types.ProjectList {
 		EnableReprovision:      p.EnableReprovision,
 		ValidateApplyV2:        p.ValidateApplyV2,
 		FullAddOns:             p.FullAddOns,
+		AdvancedInfraEnabled:   p.AdvancedInfraEnabled,
 	}
 }
 

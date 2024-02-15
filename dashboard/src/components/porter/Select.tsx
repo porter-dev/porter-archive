@@ -1,5 +1,5 @@
 import React from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
 import arrow from "assets/arrow-down.svg";
 
@@ -19,6 +19,7 @@ type Props = {
   value?: string;
   setValue?: (value: string) => void;
   prefix?: React.ReactNode;
+  width?: string;
 };
 
 const Select: React.FC<Props> = ({
@@ -30,11 +31,12 @@ const Select: React.FC<Props> = ({
   value,
   setValue,
   prefix,
+  width,
 }) => {
   return (
-    <div>
+    <Div width={width}>
       {label && <Label color={labelColor}>{label}</Label>}
-      <SelectWrapper>
+      <SelectWrapper isDisabled={disabled ?? false}>
         {prefix && (
           <>
             <Prefix>{prefix}</Prefix>
@@ -59,7 +61,7 @@ const Select: React.FC<Props> = ({
             setValue?.(e.target.value);
           }}
           hasError={(error && true) || error === ""}
-          disabled={disabled || false}
+          disabled={disabled}
         >
           {options.map((option, i) => {
             return (
@@ -76,11 +78,15 @@ const Select: React.FC<Props> = ({
           {error}
         </Error>
       )}
-    </div>
+    </Div>
   );
 };
 
 export default Select;
+
+const Div = styled.div<{ width?: string }>`
+  width: ${({ width }) => width || ""};
+`;
 
 const Img = styled.img`
   height: 16px;
@@ -122,7 +128,7 @@ const Error = styled.div`
   }
 `;
 
-const SelectWrapper = styled.div`
+const SelectWrapper = styled.div<{ isDisabled: boolean }>`
   position: relative;
   padding-left: 10px;
   padding-right: 28px;
@@ -130,9 +136,6 @@ const SelectWrapper = styled.div`
   transition: all 0.2s;
   background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
-  :hover {
-    border: 1px solid #7a7b80;
-  }
   z-index: 0;
   display: flex;
   align-items: center;
@@ -140,8 +143,6 @@ const SelectWrapper = styled.div`
   font-size: 13px;
   overflow: hidden;
 
-  display: flex;
-  align-items: center;
   > img {
     width: 8px;
     position: absolute;
@@ -149,11 +150,25 @@ const SelectWrapper = styled.div`
     top: calc(50% - 3px);
     z-index: -1;
   }
+
+  ${(props) =>
+    !props.isDisabled ?
+    css`
+      :hover {
+        border: 1px solid #7a7b80;
+      }
+    ` : 
+    css`
+      color: #ffffff55;
+      > img {
+        opacity: 0.5;
+      }
+    `}
 `;
 
 const SelectLayer = styled.select<{
-  disabled?: boolean;
   hasError: boolean;
+  disabled?: boolean;
 }>`
   outline: none;
   position: absolute;
@@ -161,7 +176,7 @@ const SelectLayer = styled.select<{
   left: 0;
   width: 100%;
   height: 100%;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
   background: none;
   appearance: none;
   opacity: 0;

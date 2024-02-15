@@ -39,7 +39,7 @@ export default class DashboardHeader extends Component<PropsType, StateType> {
 
         {this.props.description && (
           <>
-            <Spacer height="35px" />
+            <Spacer y={1} />
             <InfoSection>
               <TopRow>
                 <Tooltip content="TestInfo" position="bottom" hidden={true}>

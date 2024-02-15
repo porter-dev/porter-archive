@@ -16,12 +16,10 @@ const ClusterHeader: React.FC = () => {
 
   return (
     <>
-      <Container row style={{ width: "100%" }}>
-        <Container row>
-          <Icon src={cluster.cloud_provider.icon} height={"25px"} />
-          <Spacer inline x={1} />
-          <Text size={21}>{cluster.vanity_name}</Text>
-        </Container>
+      <Container row>
+        <Icon src={cluster.cloud_provider.icon} height="22px" />
+        <Spacer inline x={1} />
+        <Text size={21}>{cluster.vanity_name}</Text>
       </Container>
       <Spacer y={0.5} />
       <CreatedAtContainer>

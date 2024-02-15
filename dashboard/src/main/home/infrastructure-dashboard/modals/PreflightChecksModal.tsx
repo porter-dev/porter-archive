@@ -36,7 +36,7 @@ export const CheckItem: React.FC<ItemProps> = ({ preflightCheck }) => {
               .exhaustive()
           )}
         <Spacer inline x={1} />
-        <Text style={{ marginLeft: "10px", flex: 1 }}>
+        <Text style={{ flex: 1 }}>
           {preflightCheck.title}
         </Text>
         {preflightCheck.error && (

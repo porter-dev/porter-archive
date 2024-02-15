@@ -113,7 +113,7 @@ const ClusterDashboard: React.FC = () => {
             </Container>
           }
         />
-        <Spacer inline x={2} />
+        <Spacer inline x={1} />
         <SearchBar
           value={searchValue}
           setValue={(x) => {

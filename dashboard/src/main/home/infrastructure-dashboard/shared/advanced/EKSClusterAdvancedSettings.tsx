@@ -371,7 +371,6 @@ const SettingsGroupContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: 500px;
 `;
 
 const CertificateArnContainer = styled.div`

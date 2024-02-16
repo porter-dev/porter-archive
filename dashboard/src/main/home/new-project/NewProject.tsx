@@ -179,7 +179,7 @@ export const NewProjectFC = () => {
           </InputWrapper>
           <NewProjectSaveButton
             text="Create project"
-            disabled={false}
+            disabled={buttonStatus === "loading"}
             onClick={createProject}
             status={buttonStatus === "loading"}
             makeFlush={true}

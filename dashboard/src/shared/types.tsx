@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const clusterValidator = z.object({
   id: z.number(),
@@ -15,17 +15,16 @@ export const clusterValidator = z.object({
   cloud_provider_credential_identifier: z.string().optional(),
   status: z.string().optional(),
   cloud_provider: z.string(),
-  gpuCluster: z.boolean().optional()
-})
-
+  gpuCluster: z.boolean().optional(),
+});
 
 export type ClusterType = {
   id: number;
   name: string;
   vanity_name?: string;
   server: string;
-  service_account_id: number;
-  agent_integration_enabled: boolean;
+  service_account_id?: number;
+  agent_integration_enabled?: boolean;
   infra_id?: number;
   service?: string;
   aws_integration_id?: number;
@@ -312,6 +311,7 @@ export type ProjectListType = {
 export type ProjectType = {
   id: number;
   name: string;
+  advanced_infra_enabled: boolean;
   api_tokens_enabled: boolean;
   azure_enabled: boolean;
   beta_features_enabled: boolean;
@@ -749,6 +749,10 @@ export type ClusterState = {
   gpuInstanceType?: string;
   gpuMinInstances: number;
   gpuMaxInstances: number;
+  complianceProfiles: {
+    soc2: boolean;
+    hipaa: boolean;
+  };
 };
 
 export type Soc2Check = {

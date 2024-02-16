@@ -680,7 +680,7 @@ const getNotificationConfig = baseApi<
 >("GET", (pathParams) => {
   const { project_id, notification_config_id } = pathParams;
 
-  return `/api/projects/${project_id}/notifications/${notification_config_id}`;
+  return `/api/projects/${project_id}/notifications/config/${notification_config_id}`;
 });
 
 const updateNotificationConfig = baseApi<
@@ -698,7 +698,19 @@ const updateNotificationConfig = baseApi<
 >("POST", (pathParams) => {
   const { project_id, notification_config_id } = pathParams;
 
-  return `/api/projects/${project_id}/notifications/${notification_config_id}`;
+  return `/api/projects/${project_id}/notifications/config/${notification_config_id}`;
+});
+
+const getNotification = baseApi<
+  {},
+  {
+    project_id: number;
+    notification_id: string;
+  }
+>("GET", (pathParams) => {
+  const { project_id, notification_id } = pathParams;
+
+  return `/api/projects/${project_id}/notifications/${notification_id}`;
 });
 
 const getPRDeploymentList = baseApi<
@@ -974,33 +986,6 @@ const getBranchHead = baseApi<
   }/${encodeURIComponent(pathParams.branch)}/head`;
 });
 
-const validatePorterApp = baseApi<
-  {
-    b64_app_proto: string;
-    deployment_target_id: string;
-    commit_sha: string;
-    deletions: {
-      service_names: string[];
-      predeploy: string[];
-      env_variable_names: string[];
-      env_group_names: string[];
-      service_deletions: Record<
-        string,
-        {
-          domain_names: string[];
-          ingress_annotation_keys: string[];
-        }
-      >;
-    };
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/validate`;
-});
-
 const createApp = baseApi<
   | {
       name: string;
@@ -1117,24 +1102,6 @@ const updateBuildSettings = baseApi<
   }
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/${pathParams.porter_app_name}/build`;
-});
-
-const applyApp = baseApi<
-  {
-    deployment_target_id: string;
-    b64_app_proto?: string;
-    app_revision_id?: string;
-    force_build?: boolean;
-    variables?: Record<string, string>;
-    secrets?: Record<string, string>;
-    hard_env_update?: boolean;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->("POST", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/apps/apply`;
 });
 
 const revertApp = baseApi<
@@ -1574,12 +1541,12 @@ const createContract = baseApi<Contract, { project_id: number }>(
   }
 );
 
-const getContracts = baseApi<{ cluster_id?: number }, { project_id: number }>(
-  "GET",
-  ({ project_id }) => {
-    return `/api/projects/${project_id}/contracts`;
-  }
-);
+const getContracts = baseApi<
+  { cluster_id?: number; latest?: boolean },
+  { project_id: number }
+>("GET", ({ project_id }) => {
+  return `/api/projects/${project_id}/contracts`;
+});
 
 const deleteContract = baseApi<{}, { project_id: number; revision_id: string }>(
   "DELETE",
@@ -1596,7 +1563,7 @@ const getClusterState = baseApi<{}, { project_id: number; cluster_id: number }>(
 );
 
 const getComplianceChecks = baseApi<
-  { vendor: "vanta"; profile: "soc2" | "hipaa" },
+  { vendor: "vanta" | "oneleet"; profile: "soc2" | "hipaa" },
   { projectId: number; clusterId: number }
 >("GET", ({ projectId, clusterId }) => {
   return `/api/projects/${projectId}/clusters/${clusterId}/compliance/checks`;
@@ -3521,6 +3488,7 @@ export default {
   updateNotificationConfig,
   legacyGetNotificationConfig,
   getNotificationConfig,
+  getNotification,
   createSubdomain,
   deployTemplate,
   deployAddon,
@@ -3593,13 +3561,11 @@ export default {
   getDefaultDeploymentTarget,
   deleteDeploymentTarget,
   getBranchHead,
-  validatePorterApp,
   createApp,
   createAppTemplate,
   updateApp,
   appRun,
   updateBuildSettings,
-  applyApp,
   revertApp,
   getAttachedEnvGroups,
   getLatestRevision,

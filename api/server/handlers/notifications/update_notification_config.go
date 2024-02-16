@@ -18,7 +18,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 )
 
-// UpdateNotificationConfigHandler is the handler for the POST /notifications/{notification_config_id} endpoint
+// UpdateNotificationConfigHandler is the handler for the POST /notifications/config/{notification_config_id} endpoint
 type UpdateNotificationConfigHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -34,7 +34,7 @@ func NewUpdateNotificationConfigHandler(
 	}
 }
 
-// UpdateNotificationConfigRequest is the request object for the /notifications/{notification_config_id} endpoint
+// UpdateNotificationConfigRequest is the request object for the /notifications/config/{notification_config_id} endpoint
 type UpdateNotificationConfigRequest struct {
 	Config             Config `json:"config"`
 	SlackIntegrationID uint   `json:"slack_integration_id"`
@@ -44,6 +44,7 @@ type UpdateNotificationConfigRequest struct {
 type Config struct {
 	Mention  string   `json:"mention"`
 	Statuses []Status `json:"statuses"`
+	Types    []Type   `json:"types"`
 }
 
 // Status is a wrapper object over a string for zod validation
@@ -51,7 +52,12 @@ type Status struct {
 	Status string `json:"status"`
 }
 
-// UpdateNotificationConfigResponse is the response object for the /notifications/{notification_config_id} endpoint
+// Type is a wrapper object over a string for zod validation
+type Type struct {
+	Type string `json:"type"`
+}
+
+// UpdateNotificationConfigResponse is the response object for the /notifications/config/{notification_config_id} endpoint
 type UpdateNotificationConfigResponse struct {
 	ID uint `json:"id"`
 }
@@ -117,8 +123,14 @@ func configToProto(config Config) *porterv1.NotificationConfig {
 		statuses = append(statuses, transformStatusStringToProto[status.Status])
 	}
 
+	var types []porterv1.EnumNotificationEventType
+	for _, t := range config.Types {
+		types = append(types, transformTypeStringToProto[t.Type])
+	}
+
 	return &porterv1.NotificationConfig{
 		Statuses:    statuses,
+		EventTypes:  types,
 		SlackConfig: &porterv1.SlackConfig{Mentions: []string{config.Mention}},
 	}
 }
@@ -127,4 +139,10 @@ var transformStatusStringToProto = map[string]porterv1.EnumNotificationStatus{
 	"successful":  porterv1.EnumNotificationStatus_ENUM_NOTIFICATION_STATUS_SUCCESSFUL,
 	"failed":      porterv1.EnumNotificationStatus_ENUM_NOTIFICATION_STATUS_FAILED,
 	"progressing": porterv1.EnumNotificationStatus_ENUM_NOTIFICATION_STATUS_PROGRESSING,
+}
+
+var transformTypeStringToProto = map[string]porterv1.EnumNotificationEventType{
+	"deploy":     porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_DEPLOY,
+	"build":      porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_BUILD,
+	"pre-deploy": porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_PREDEPLOY,
 }

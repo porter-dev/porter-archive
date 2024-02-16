@@ -7,9 +7,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-const DashboardPlaceholder: React.FC<Props> = ({
-  children,
-}) => {
+const DashboardPlaceholder: React.FC<Props> = ({ children }) => {
   return (
     <StyledDashboardPlaceholder>
       <Bg src={placeholder} />
@@ -39,4 +37,5 @@ const StyledDashboardPlaceholder = styled.div`
   border-radius: 10px;
   position: relative;
   overflow: hidden;
+  height: fit-content;
 `;

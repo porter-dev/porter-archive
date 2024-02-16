@@ -33,7 +33,12 @@ export const Addon: React.FC<AddonProps> = ({ addon, view }) => {
       .with("redis", () => 6379)
       .exhaustive();
 
-    return `${addon.name.value}-${addon.config.type}.${currentDeploymentTarget.namespace}.svc.cluster.local:${port}`;
+    const host = match(addon.config.type)
+      .with("postgres", () => "postgres-postgres-hl")
+      .with("redis", () => "redis-redis")
+      .exhaustive();
+
+    return `${host}.${currentDeploymentTarget.namespace}.svc.cluster.local:${port}`;
   }, [currentDeploymentTarget, addon.name.value]);
 
   const renderIcon = (type: ClientAddon["config"]["type"]): JSX.Element =>

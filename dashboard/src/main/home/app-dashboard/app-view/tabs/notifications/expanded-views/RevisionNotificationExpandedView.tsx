@@ -79,6 +79,7 @@ const RevisionNotificationExpandedView: React.FC<Props> = ({
 
   const { latestSerializedNotifications } = useLatestRevision();
 
+  // TODO: refactor this so it comes from the notification context provider
   // for rollback notifications, we want to show the notifications for a previous version, which may have different client services
   // therefore, we need to get the client services from that version, and parse the notifications from them
   const rollbackClientServiceNotifications = useMemo(() => {
@@ -109,11 +110,12 @@ const RevisionNotificationExpandedView: React.FC<Props> = ({
       rollbackApp.predeploy?.length ? rollbackApp.predeploy[0] : undefined,
     ].filter(valueExists);
 
-    const rollbackClientNotifications = deserializeNotifications(
-      latestSerializedNotifications,
-      rollbackClientServices,
-      rollbackSourceRevision.id
-    );
+    const rollbackClientNotifications = deserializeNotifications({
+      notifications: latestSerializedNotifications,
+      clientServices: rollbackClientServices,
+      revisionId: rollbackSourceRevision.id,
+      isHistorical: false,
+    });
 
     return (
       rollbackClientNotifications

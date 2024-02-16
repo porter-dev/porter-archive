@@ -48,6 +48,7 @@ Optionally, specify a file to write the environment variables to. Otherwise the 
 	pullCommand.Flags().StringVarP(&appName, "app", "a", "", "app name")
 	pullCommand.Flags().StringVarP(&envGroupName, "group", "g", "", "environment group name")
 	pullCommand.Flags().StringVarP(&envFilePath, "file", "f", "", "file to write environment variables to")
+	pullCommand.Flags().StringVarP(&deploymentTargetName, "target", "x", "", "the name of the deployment target for the app")
 
 	envCmd.AddCommand(pullCommand)
 
@@ -67,7 +68,7 @@ func pullEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, clie
 	if appName != "" {
 		color.New(color.FgGreen).Printf("Pulling environment variables for app %s...\n", appName) // nolint:errcheck,gosec
 
-		envVarsResp, err := client.GetAppEnvVariables(ctx, cliConf.Project, cliConf.Cluster, appName)
+		envVarsResp, err := client.GetAppEnvVariables(ctx, cliConf.Project, cliConf.Cluster, appName, deploymentTargetName)
 		if err != nil {
 			return fmt.Errorf("could not get app env variables: %w", err)
 		}

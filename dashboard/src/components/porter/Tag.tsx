@@ -46,6 +46,7 @@ const StyledTag = styled.div<{
 }>`
   display: flex;
   justify-content: center;
+  font-size: 13px;
   padding: 3px 5px;
   border-radius: ${({ borderRadiusPixels }) => borderRadiusPixels}px;
   background: ${({ backgroundColor }) => backgroundColor};

@@ -18,7 +18,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 )
 
-// GetNotificationConfigHandler is the handler for the POST /notifications/{notification_config_id} endpoint
+// GetNotificationConfigHandler is the handler for the POST /notifications/config/{notification_config_id} endpoint
 type GetNotificationConfigHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -34,10 +34,10 @@ func NewNotificationConfigHandler(
 	}
 }
 
-// GetNotificationConfigRequest is the request object for the /notifications/{notification_config_id} endpoint
+// GetNotificationConfigRequest is the request object for the /notifications/config/{notification_config_id} endpoint
 type GetNotificationConfigRequest struct{}
 
-// GetNotificationConfigResponse is the response object for the /notifications/{notification_config_id} endpoint
+// GetNotificationConfigResponse is the response object for the /notifications/config/{notification_config_id} endpoint
 type GetNotificationConfigResponse struct {
 	Config Config `json:"config"`
 }
@@ -101,6 +101,11 @@ func configFromProto(proto *porterv1.NotificationConfig) Config {
 		statuses = append(statuses, Status{transformProtoToStatusString[status]})
 	}
 
+	var types []Type
+	for _, t := range proto.EventTypes {
+		types = append(types, Type{transformProtoToTypeString[t]})
+	}
+
 	var mention string
 	if proto.SlackConfig != nil && len(proto.SlackConfig.Mentions) > 0 {
 		mention = proto.SlackConfig.Mentions[0]
@@ -109,6 +114,7 @@ func configFromProto(proto *porterv1.NotificationConfig) Config {
 	return Config{
 		Statuses: statuses,
 		Mention:  mention,
+		Types:    types,
 	}
 }
 
@@ -116,4 +122,10 @@ var transformProtoToStatusString = map[porterv1.EnumNotificationStatus]string{
 	porterv1.EnumNotificationStatus_ENUM_NOTIFICATION_STATUS_SUCCESSFUL:  "successful",
 	porterv1.EnumNotificationStatus_ENUM_NOTIFICATION_STATUS_FAILED:      "failed",
 	porterv1.EnumNotificationStatus_ENUM_NOTIFICATION_STATUS_PROGRESSING: "progressing",
+}
+
+var transformProtoToTypeString = map[porterv1.EnumNotificationEventType]string{
+	porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_DEPLOY:    "deploy",
+	porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_PREDEPLOY: "pre-deploy",
+	porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_BUILD:     "build",
 }

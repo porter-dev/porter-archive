@@ -28,7 +28,10 @@ import {
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import build from "assets/build.png";
+import deploy from "assets/deploy.png";
 import hash from "assets/hash-02.svg";
+import pre_deploy from "assets/pre_deploy.png";
 import save from "assets/save-01.svg";
 
 type SlackIntegrationListProps = {
@@ -41,13 +44,19 @@ const statusOptions = [
   { value: "progressing", emoji: "🚀", label: "Progressing" },
 ];
 
+const typeOptions = [
+  { value: "deploy", icon: deploy, label: "Deploy" },
+  { value: "pre-deploy", icon: pre_deploy, label: "Pre-deploy" },
+  { value: "build", icon: build, label: "Build" },
+];
+
 const SlackIntegrationList: React.FC<SlackIntegrationListProps> = (props) => {
   const [isDelete, setIsDelete] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(-1); // guaranteed to be set when used
   const { currentProject, setCurrentError } = useContext(Context);
   const deleted = useRef(new Set());
 
-  const handleDelete = () => {
+  const handleDelete = (): void => {
     api
       .deleteSlackIntegration(
         "<token>",
@@ -195,18 +204,43 @@ const NotificationConfigContainer: React.FC<
     register,
   } = notificationForm;
 
-  const { append, remove, fields } = useFieldArray({
+  const {
+    append: statusAppend,
+    remove: statusRemove,
+    fields: statusFields,
+  } = useFieldArray({
     control,
     name: "statuses",
   });
 
-  const onAdd = (
+  const onAddStatuses = (
     inp: IterableElement<NotificationConfigFormData["statuses"]>
   ): void => {
-    const previouslyAdded = fields.findIndex((s) => s.status === inp.status);
+    const previouslyAdded = statusFields.findIndex(
+      (s) => s.status === inp.status
+    );
 
     if (previouslyAdded === -1) {
-      append(inp);
+      statusAppend(inp);
+    }
+  };
+
+  const {
+    append: typeAppend,
+    remove: typeRemove,
+    fields: typeFields,
+  } = useFieldArray({
+    control,
+    name: "types",
+  });
+
+  const onAddTypes = (
+    inp: IterableElement<NotificationConfigFormData["types"]>
+  ): void => {
+    const previouslyAdded = typeFields.findIndex((s) => s.type === inp.type);
+
+    if (previouslyAdded === -1) {
+      typeAppend(inp);
     }
   };
 
@@ -258,12 +292,42 @@ const NotificationConfigContainer: React.FC<
 
   return (
     <>
-      <Text>Filter deployment notifications:</Text>
+      <Text>Filter notification types:</Text>
+      <Spacer y={0.5} />
+      <SelectableList
+        scroll={false}
+        listItems={typeOptions.map((option) => {
+          const selectedOptionsIdx = typeFields.findIndex(
+            (s) => s.type === option.value
+          );
+          return {
+            selectable: (
+              <Container row>
+                <Spacer inline width="1px" />
+                <Icon src={option.icon} width={"8px"} />
+                <Spacer inline width="10px" />
+                <Text size={12}>{option.label}</Text>
+                <Spacer inline x={1} />
+              </Container>
+            ),
+            key: option.value,
+            onSelect: () => {
+              onAddTypes({ type: option.value });
+            },
+            onDeselect: () => {
+              typeRemove(selectedOptionsIdx);
+            },
+            isSelected: selectedOptionsIdx !== -1,
+          };
+        })}
+      />
+      <Spacer y={0.75} />
+      <Text>Filter notification statuses:</Text>
       <Spacer y={0.5} />
       <SelectableList
         scroll={false}
         listItems={statusOptions.map((option) => {
-          const selectedOptionsIdx = fields.findIndex(
+          const selectedOptionsIdx = statusFields.findIndex(
             (s) => s.status === option.value
           );
           return {
@@ -280,10 +344,10 @@ const NotificationConfigContainer: React.FC<
             ),
             key: option.value,
             onSelect: () => {
-              onAdd({ status: option.value });
+              onAddStatuses({ status: option.value });
             },
             onDeselect: () => {
-              remove(selectedOptionsIdx);
+              statusRemove(selectedOptionsIdx);
             },
             isSelected: selectedOptionsIdx !== -1,
           };

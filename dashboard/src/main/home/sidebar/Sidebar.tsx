@@ -9,7 +9,6 @@ import Text from "components/porter/Text";
 
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Context } from "shared/Context";
-import { overrideInfraTabEnabled } from "utils/infrastructure";
 import addOns from "assets/add-ons.svg";
 import applications from "assets/applications.svg";
 import category from "assets/category.svg";
@@ -131,14 +130,6 @@ class Sidebar extends Component<PropsType, StateType> {
             <Img src={rocket} />
             Launch
           </NavButton>
-          {currentProject?.managed_infra_enabled &&
-            (user?.isPorterUser ||
-              overrideInfraTabEnabled({ projectID: currentProject.id })) && (
-              <NavButton path={"/infrastructure"}>
-                <i className="material-icons">build_circle</i>
-                Infrastructure
-              </NavButton>
-            )}
           {this.props.isAuthorized("integrations", "", [
             "get",
             "create",
@@ -215,6 +206,24 @@ class Sidebar extends Component<PropsType, StateType> {
                   !currentProject.db_enabled) && <Image size={15} src={lock} />}
               </Container>
             </NavButton>
+            {this.props.isAuthorized("settings", "", [
+              "get",
+              "update",
+              "delete",
+            ]) &&
+              currentProject?.simplified_view_enabled &&
+              currentProject?.capi_provisioner_enabled &&
+              currentProject?.beta_features_enabled && (
+                <NavButton
+                  path={"/infrastructure"}
+                  active={window.location.pathname.startsWith(
+                    "/infrastructure"
+                  )}
+                >
+                  <Img src={infra} />
+                  Infrastructure
+                </NavButton>
+              )}
             {currentCluster && (
               <>
                 <Spacer y={0.5} />
@@ -237,7 +246,9 @@ class Sidebar extends Component<PropsType, StateType> {
             </NavButton>
             <NavButton
               path="/environment-groups"
-              active={window.location.pathname.startsWith("/environment-groups")}
+              active={window.location.pathname.startsWith(
+                "/environment-groups"
+              )}
             >
               <Img src={sliders} />
               Env groups
@@ -246,17 +257,22 @@ class Sidebar extends Component<PropsType, StateType> {
               "get",
               "update",
               "delete",
-            ]) && (
-              <NavButton
-                path={"/cluster-dashboard"}
-                active={window.location.pathname.startsWith(
-                  "/cluster-dashboard"
-                )}
-              >
-                <Img src={settings} />
-                Infrastructure
-              </NavButton>
-            )}
+            ]) &&
+              !(
+                currentProject?.simplified_view_enabled &&
+                currentProject?.capi_provisioner_enabled &&
+                currentProject?.beta_features_enabled
+              ) && (
+                <NavButton
+                  path={"/cluster-dashboard"}
+                  active={window.location.pathname.startsWith(
+                    "/cluster-dashboard"
+                  )}
+                >
+                  <Img src={infra} />
+                  Infrastructure
+                </NavButton>
+              )}
             <NavButton path="/preview-environments">
               <Container row spaced style={{ width: "100%" }}>
                 <Container row>
@@ -312,7 +328,9 @@ class Sidebar extends Component<PropsType, StateType> {
             </NavButton>
             <NavButton
               path="/environment-groups"
-              active={window.location.pathname.startsWith("/environment-groups")}
+              active={window.location.pathname.startsWith(
+                "/environment-groups"
+              )}
             >
               <Img src={sliders} />
               Env groups
@@ -323,9 +341,19 @@ class Sidebar extends Component<PropsType, StateType> {
               "delete",
             ]) && (
               <NavButton
-                path={"/cluster-dashboard"}
+                path={
+                  currentProject?.simplified_view_enabled &&
+                  currentProject?.capi_provisioner_enabled &&
+                  currentProject?.beta_features_enabled
+                    ? "/infrastructure"
+                    : "/cluster-dashboard"
+                }
                 active={window.location.pathname.startsWith(
-                  "/cluster-dashboard"
+                  currentProject?.simplified_view_enabled &&
+                    currentProject?.capi_provisioner_enabled &&
+                    currentProject?.beta_features_enabled
+                    ? "/infrastructure"
+                    : "/cluster-dashboard"
                 )}
               >
                 <Img src={infra} />

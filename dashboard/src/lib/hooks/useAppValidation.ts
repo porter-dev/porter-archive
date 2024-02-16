@@ -1,5 +1,5 @@
 import { useCallback, useContext } from "react";
-import { PorterApp } from "@porter-dev/api-contracts";
+import { type PorterApp } from "@porter-dev/api-contracts";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
@@ -29,10 +29,7 @@ type ServiceDeletions = Record<
 >;
 
 type AppValidationHook = {
-  validateApp: (
-    data: PorterAppFormData,
-    skipValidation?: boolean
-  ) => Promise<AppValidationResult>;
+  validateApp: (data: PorterAppFormData) => Promise<AppValidationResult>;
   setServiceDeletions: (
     services: ClientPorterApp["services"]
   ) => ServiceDeletions;
@@ -109,10 +106,7 @@ export const useAppValidation = ({
   };
 
   const validateApp = useCallback(
-    async (
-      data: PorterAppFormData,
-      skipValidation = false
-    ): Promise<AppValidationResult> => {
+    async (data: PorterAppFormData): Promise<AppValidationResult> => {
       if (!currentProject || !currentCluster) {
         throw new Error("No project or cluster selected");
       }
@@ -158,50 +152,7 @@ export const useAppValidation = ({
         })
         .exhaustive();
 
-      if (skipValidation) {
-        return { validatedAppProto: proto, variables, secrets, commitSha };
-      }
-
-      const serviceDeletions = setServiceDeletions(data.app.services);
-
-      const res = await api.validatePorterApp(
-        "<token>",
-        {
-          b64_app_proto: btoa(
-            proto.toJsonString({
-              emitDefaultValues: true,
-            })
-          ),
-          deployment_target_id: deploymentTargetID,
-          commit_sha: commitSha,
-          deletions: {
-            service_names: data.deletions.serviceNames.map((s) => s.name),
-            predeploy: data.deletions.predeploy.map((s) => s.name),
-            env_group_names: data.deletions.envGroupNames.map((eg) => eg.name),
-            env_variable_names: [],
-            service_deletions: serviceDeletions,
-          },
-        },
-        {
-          project_id: currentProject.id,
-          cluster_id: currentCluster.id,
-        }
-      );
-
-      const validAppData = await z
-        .object({
-          validate_b64_app_proto: z.string(),
-        })
-        .parseAsync(res.data);
-
-      const validatedAppProto = PorterApp.fromJsonString(
-        atob(validAppData.validate_b64_app_proto),
-        {
-          ignoreUnknownFields: true,
-        }
-      );
-
-      return { validatedAppProto, variables, secrets, commitSha };
+      return { validatedAppProto: proto, variables, secrets, commitSha };
     },
     [deploymentTargetID, currentProject, currentCluster]
   );

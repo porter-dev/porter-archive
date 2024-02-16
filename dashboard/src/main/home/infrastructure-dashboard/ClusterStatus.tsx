@@ -37,7 +37,7 @@ const ClusterStatus: React.FC = () => {
           <Code>
             {applicationNodes[0]?.labels["node.kubernetes.io/instance-type"]}
           </Code>{" "}
-          instance{applicationNodes.length > 1 && "s"}
+          instance{applicationNodes.length !== 1 && "s"}
         </Text>
       ) : (
         <Text color="helper">Updating</Text>

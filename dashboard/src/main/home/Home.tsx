@@ -30,7 +30,10 @@ import {
   type ProjectListType,
   type ProjectType,
 } from "shared/types";
+import { overrideInfraTabEnabled } from "utils/infrastructure";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 
+import warning from "../../assets/warning.svg";
 import discordLogo from "../../assets/discord.svg";
 import AddOnDashboard from "./add-on-dashboard/AddOnDashboard";
 import NewAddOnFlow from "./add-on-dashboard/NewAddOnFlow";
@@ -409,7 +412,22 @@ const Home: React.FC<Props> = (props) => {
     >
       <ClusterResourcesProvider>
         <DeploymentTargetProvider>
-          <StyledHome>
+          {currentProject?.sandbox_enabled && (
+            <GlobalBanner>
+              <img src={warning} />
+              Your project is currently in Sandbox mode. Your project will be deleted after one week.  
+              <CTA>
+              <ShowIntercomButton
+              alt
+              message="I would like to eject to my own cloud account"
+              height="25px"
+            >
+              Request ejection
+            </ShowIntercomButton>
+              </CTA>
+            </GlobalBanner>
+          )}
+          <StyledHome isHosted={currentProject?.sandbox_enabled ?? false}>
             <ModalHandler setRefreshClusters={setForceRefreshClusters} />
             {currentOverlay &&
               createPortal(
@@ -655,6 +673,26 @@ const Home: React.FC<Props> = (props) => {
 
 export default withRouter(withAuth(Home));
 
+const GlobalBanner = styled.div`
+  width: 100vw;
+  z-index: 999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 35px;
+  background: #263061;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-family: "Work Sans", sans-serif;
+  
+  > img {
+    height: 16px;
+    margin-right: 10px;
+  }
+`;
+
 const ViewWrapper = styled.div`
   height: 100%;
   width: 100vw;
@@ -667,17 +705,21 @@ const ViewWrapper = styled.div`
   position: relative;
 `;
 
+const CTA = styled.div`
+  margin-left: 30px; 
+`
+
 const DashboardWrapper = styled.div`
   width: 100%;
   min-width: 300px;
   height: fit-content;
 `;
 
-const StyledHome = styled.div`
+const StyledHome = styled.div<{ isHosted: boolean }>`
   width: 100vw;
   height: 100vh;
   position: fixed;
-  top: 0;
+  top: ${(props) => (props.isHosted ? "35px" : "0")};
   left: 0;
   margin: 0;
   user-select: none;

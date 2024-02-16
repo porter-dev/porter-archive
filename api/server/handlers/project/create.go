@@ -46,6 +46,7 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		HelmValuesEnabled:      false,
 		MultiCluster:           false,
 		EnableReprovision:      false,
+		EnableSandbox:          p.Config().ServerConf.EnableSandbox,
 	}
 
 	var err error
@@ -56,10 +57,16 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// create onboarding flow set to the first step
+	step := types.StepConnectSource
+
+	if p.Config().ServerConf.EnableSandbox {
+		step = types.StepCleanUp
+	}
+
+	// create onboarding flow set to the first step. Read in env var
 	_, err = p.Repo().Onboarding().CreateProjectOnboarding(&models.Onboarding{
 		ProjectID:   proj.ID,
-		CurrentStep: types.StepConnectSource,
+		CurrentStep: step,
 	})
 
 	if err != nil {

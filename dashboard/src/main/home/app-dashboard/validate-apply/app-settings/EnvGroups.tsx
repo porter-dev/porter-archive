@@ -1,9 +1,13 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useContext } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 import { type IterableElement } from "type-fest";
 import { useHistory } from "react-router";
 
+import { Context } from "shared/Context";
+import Icon from "components/porter/Icon";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import { type PopulatedEnvGroup } from "./types";
 import { type PorterAppFormData } from "lib/porter-apps";
 
@@ -11,8 +15,6 @@ import { valueExists } from "shared/util";
 
 import EnvGroupModal from "./EnvGroupModal";
 import Button from "components/porter/Button";
-import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import EnvGroupRow from "./EnvGroupRow";
 
 type Props = {
@@ -24,6 +26,7 @@ const EnvGroups: React.FC<Props> = ({
   baseEnvGroups = [],
   attachedEnvGroups = [],
 }) => {
+  const { currentProject } = useContext(Context);
   const history = useHistory();
   const [showEnvModal, setShowEnvModal] = useState(false);
 
@@ -103,7 +106,7 @@ const EnvGroups: React.FC<Props> = ({
     }
   };
 
-  return (
+  return !currentProject?.sandbox_enabled && (
     <>
       <Text size={16}>Synced environment groups</Text>
       <Spacer y={0.5} />

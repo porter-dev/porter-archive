@@ -304,6 +304,7 @@ const Apps: React.FC = () => {
           ) : (
             <PorterLink to="/apps/new/app">
               <Button
+                disabled={currentProject?.sandbox_enabled && apps.length == 3}
                 onClick={async () => {
                   await updateAppStep({ step: "stack-launch-start" });
                 }}

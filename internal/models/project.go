@@ -198,6 +198,7 @@ type Project struct {
 	ValidateApplyV2 bool `gorm:"default:false"`
 	// Deprecated: use p.GetFeatureFlag(EnableReprovision, *features.Client) instead
 
+	EnableSandbox        bool `gorm:"default:false"`
 	EnableReprovision    bool `gorm:"default:false"`
 	AdvancedInfraEnabled bool `gorm:"default:false"`
 }
@@ -297,6 +298,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		ValidateApplyV2:                 p.GetFeatureFlag(ValidateApplyV2, launchDarklyClient),
 		ManagedDeploymentTargetsEnabled: p.GetFeatureFlag(ManagedDeploymentTargetsEnabled, launchDarklyClient),
 		AdvancedInfraEnabled:            p.GetFeatureFlag(AdvancedInfraEnabled, launchDarklyClient),
+		SandboxEnabled:                  p.EnableSandbox,
 	}
 }
 

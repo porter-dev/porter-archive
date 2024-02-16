@@ -141,6 +141,10 @@ type ServerConf struct {
 
 	// EnableCAPIProvisioner disables checks for ClusterControlPlaneClient and NATS, if set to true
 	EnableCAPIProvisioner bool `env:"ENABLE_CAPI_PROVISIONER"`
+
+	// EnableSandbox configures the API server to hit the endpoints designed for Porter's sandbox instance
+	EnableSandbox bool `env:"ENABLE_SANDBOX"`
+
 	// NATSUrl is the URL of the NATS cluster. This is required if ENABLE_CAPI_PROVISIONER is true
 	NATSUrl string `env:"NATS_URL"`
 

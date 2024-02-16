@@ -48,11 +48,15 @@ const ClusterStatus: React.FC = () => {
         heightPixels={8}
       />
       <Spacer inline x={0.7} />
-      <Text color="helper">
-        Running {nodes.length}{" "}
-        <Code>{nodes[0]?.labels["node.kubernetes.io/instance-type"]}</Code>{" "}
-        instances
-      </Text>
+      {cluster.status === "READY" ? (
+        <Text color="helper">
+          Running {nodes.length}{" "}
+          <Code>{nodes[0]?.labels["node.kubernetes.io/instance-type"]}</Code>{" "}
+          instances
+        </Text>
+      ) : (
+        <Text color="helper">Updating</Text>
+      )}
     </Container>
   );
 };

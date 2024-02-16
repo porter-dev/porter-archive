@@ -33,11 +33,11 @@ const ClusterStatus: React.FC = () => {
       <Spacer inline x={0.7} />
       {cluster.status === "READY" ? (
         <Text color="helper">
-          Running {applicationNodes.length}{" "}
+          Applications using {applicationNodes.length}{" "}
           <Code>
             {applicationNodes[0]?.labels["node.kubernetes.io/instance-type"]}
           </Code>{" "}
-          instances
+          instance{applicationNodes.length > 1 && "s"}
         </Text>
       ) : (
         <Text color="helper">Updating</Text>

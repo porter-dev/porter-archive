@@ -240,10 +240,26 @@ export type PreflightCheck = {
 };
 
 // Node
+const NodeCondition = z.object({
+  type: z.enum(["MemoryPressure", "DiskPressure", "PIDPressure", "Ready"]),
+  status: z.enum(["True", "False"]),
+  lastHeartbeatTime: z.string(), // For more precise validation, consider using z.date().transform() to parse strings into Date objects
+  lastTransitionTime: z.string(), // Similarly, use z.date().transform() for Date parsing
+  reason: z.string(),
+  message: z.string(),
+});
 export const nodeValidator = z.object({
-  id: z.string(),
   name: z.string(),
-  status: z.string(),
+  cpu_reqs: z.string(),
+  memory_reqs: z.string(),
+  ephemeral_storage_reqs: z.string(),
+  fraction_cpu_reqs: z.number(),
+  fraction_cpu_limits: z.number(),
+  fraction_memory_reqs: z.number(),
+  fraction_memory_limits: z.number(),
+  fraction_ephemeral_storage_reqs: z.number(),
+  fraction_ephemeral_storage_limits: z.number(),
+  node_conditions: NodeCondition.array(),
   labels: z.record(z.string()),
 });
 export type NodeType = z.infer<typeof nodeValidator>;

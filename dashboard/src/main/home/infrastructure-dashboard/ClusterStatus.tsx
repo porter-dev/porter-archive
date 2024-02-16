@@ -17,7 +17,9 @@ const ClusterStatus: React.FC = () => {
   // Filter to only include user applications nodes
   const applicationNodes = useMemo(() => {
     return nodes.filter(
-      (node) => node?.labels["porter.run/workload-kind"] === "application"
+      (node) =>
+        node?.labels &&
+        node?.labels["porter.run/workload-kind"] === "application"
     );
   }, [nodes]);
 

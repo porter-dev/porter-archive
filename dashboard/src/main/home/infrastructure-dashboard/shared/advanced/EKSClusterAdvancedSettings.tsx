@@ -104,7 +104,8 @@ const EKSClusterAdvancedSettings: React.FC = () => {
       <Text size={16}>AWS CloudWatch logging</Text>
       <Spacer y={0.5} />
       <Text color={"helper"}>
-        Configure which logs to send to AWS CloudWatch.
+        Configure which EKS cluster control plane log types to send to AWS
+        CloudWatch.
       </Text>
       <Spacer y={0.5} />
       <SettingsGroupContainer>

@@ -475,10 +475,15 @@ export const useClusterNodeList = ({
       );
 
       const parsed = await z.array(nodeValidator).parseAsync(res.data);
-      return parsed.filter(valueExists);
+      return parsed;
     },
     {
-      enabled: !!currentProject && currentProject.id !== -1,
+      refetchInterval: 3000,
+      enabled:
+        !!currentProject &&
+        currentProject.id !== -1 &&
+        !!clusterId &&
+        clusterId !== -1,
     }
   );
 

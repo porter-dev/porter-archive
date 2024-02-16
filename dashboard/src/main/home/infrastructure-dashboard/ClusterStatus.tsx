@@ -5,14 +5,11 @@ import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
-import { useClusterNodeList } from "lib/hooks/useCluster";
 
 import { useClusterContext } from "./ClusterContextProvider";
 
 const ClusterStatus: React.FC = () => {
-  const { cluster } = useClusterContext();
-
-  const { nodes } = useClusterNodeList({ clusterId: cluster.id });
+  const { cluster, nodes } = useClusterContext();
 
   // Filter to only include user applications nodes
   const applicationNodes = useMemo(() => {

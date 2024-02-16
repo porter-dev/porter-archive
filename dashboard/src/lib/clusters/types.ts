@@ -240,14 +240,6 @@ export type PreflightCheck = {
 };
 
 // Node
-const NodeCondition = z.object({
-  type: z.enum(["MemoryPressure", "DiskPressure", "PIDPressure", "Ready"]),
-  status: z.enum(["True", "False"]),
-  lastHeartbeatTime: z.string(), // For more precise validation, consider using z.date().transform() to parse strings into Date objects
-  lastTransitionTime: z.string(), // Similarly, use z.date().transform() for Date parsing
-  reason: z.string(),
-  message: z.string(),
-});
 export const nodeValidator = z.object({
   name: z.string(),
   labels: z.record(z.string()),

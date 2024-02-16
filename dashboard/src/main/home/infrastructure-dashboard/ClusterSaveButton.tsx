@@ -2,19 +2,21 @@ import React from "react";
 
 import Button from "components/porter/Button";
 
-import { useClusterContext } from "./ClusterContextProvider";
 import { useClusterFormContext } from "./ClusterFormContextProvider";
 
 type Props = {
   height?: string;
   disabledTooltipPosition?: "top" | "bottom" | "left" | "right";
+  isClusterUpdating?: boolean;
+  children: React.ReactNode;
 };
 const ClusterSaveButton: React.FC<Props> = ({
   height,
   disabledTooltipPosition,
+  isClusterUpdating,
+  children,
 }) => {
   const { updateClusterButtonProps } = useClusterFormContext();
-  const { isClusterUpdating } = useClusterContext();
 
   return (
     <Button
@@ -28,7 +30,7 @@ const ClusterSaveButton: React.FC<Props> = ({
       height={height}
       disabledTooltipPosition={disabledTooltipPosition}
     >
-      Update
+      {children}
     </Button>
   );
 };

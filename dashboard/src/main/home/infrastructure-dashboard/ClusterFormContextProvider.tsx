@@ -1,4 +1,4 @@
-import React, { createContext, useMemo, useState } from "react";
+import React, { createContext, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Contract } from "@porter-dev/api-contracts";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,9 +25,10 @@ export type UpdateClusterButtonProps = {
 };
 
 type ClusterFormContextType = {
-  setCurrentContract: (contract: Contract) => void;
+  isAdvancedSettingsEnabled: boolean;
   showFailedPreflightChecksModal: boolean;
   updateClusterButtonProps: UpdateClusterButtonProps;
+  setCurrentContract: (contract: Contract) => void;
 };
 
 const ClusterFormContext = createContext<ClusterFormContextType | null>(null);
@@ -44,12 +45,14 @@ export const useClusterFormContext = (): ClusterFormContextType => {
 
 type ClusterFormContextProviderProps = {
   projectId?: number;
+  isAdvancedSettingsEnabled?: boolean;
   redirectOnSubmit?: boolean;
   children: JSX.Element;
 };
 
 const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   projectId,
+  isAdvancedSettingsEnabled = false,
   redirectOnSubmit,
   children,
 }) => {
@@ -63,6 +66,8 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   const [updateClusterError, setUpdateClusterError] = useState<string>("");
   const [showFailedPreflightChecksModal, setShowFailedPreflightChecksModal] =
     useState<boolean>(false);
+
+  const scrollToTopRef = useRef<HTMLDivElement | null>(null);
 
   const { updateCluster, isHandlingPreflightChecks, isCreatingContract } =
     useUpdateCluster({ projectId });
@@ -103,7 +108,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
       props.loadingText = "Provisioning cluster...";
     }
     if (updateClusterResponse?.createContractResponse) {
-      props.status = "success";
+      props.status = "";
     }
 
     return props;
@@ -134,6 +139,11 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
           history.push(
             `/infrastructure/${response.createContractResponse.contract_revision.cluster_id}`
           );
+        } else if (scrollToTopRef.current) {
+          scrollToTopRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "end",
+          });
         }
       }
     } catch (err) {
@@ -152,9 +162,10 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
         setCurrentContract,
         showFailedPreflightChecksModal,
         updateClusterButtonProps,
+        isAdvancedSettingsEnabled,
       }}
     >
-      <Wrapper>
+      <Wrapper ref={scrollToTopRef}>
         <FormProvider {...clusterForm}>
           <form onSubmit={onSubmit}>{children}</form>
         </FormProvider>

@@ -10,7 +10,7 @@ import EKSClusterOverview from "./EKSClusterOverview";
 import GKEClusterOverview from "./GKEClusterOverview";
 
 const ClusterOverview: React.FC = () => {
-  const { cluster } = useClusterContext();
+  const { cluster, isClusterUpdating } = useClusterContext();
 
   return (
     <>
@@ -26,7 +26,9 @@ const ClusterOverview: React.FC = () => {
         })
         .exhaustive()}
       <Spacer y={1} />
-      <ClusterSaveButton />
+      <ClusterSaveButton isClusterUpdating={isClusterUpdating}>
+        Update
+      </ClusterSaveButton>
       <Spacer y={1} />
     </>
   );

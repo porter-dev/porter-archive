@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Contract } from "@porter-dev/api-contracts";
 import AnimateHeight from "react-animate-height";
 import { useFormContext } from "react-hook-form";
@@ -11,7 +11,7 @@ import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
 import { type ClientClusterContract } from "lib/clusters/types";
 
-import { Context } from "shared/Context";
+import { valueExists } from "shared/util";
 
 import { useClusterContext } from "./ClusterContextProvider";
 import { useClusterFormContext } from "./ClusterFormContextProvider";
@@ -23,16 +23,11 @@ import Settings from "./tabs/Settings";
 const validTabs = ["overview", "settings", "advanced"] as const;
 const DEFAULT_TAB = "overview" as const;
 type ValidTab = (typeof validTabs)[number];
-const tabs = [
-  { label: "Overview", value: "overview" },
-  { label: "Settings", value: "settings" },
-];
 
 type Props = {
   tabParam?: string;
 };
 const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
-  const { currentProject } = useContext(Context);
   const history = useHistory();
 
   const { cluster, isClusterUpdating } = useClusterContext();
@@ -42,7 +37,8 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
     formState: { isDirty },
   } = useFormContext<ClientClusterContract>();
 
-  const { setCurrentContract } = useClusterFormContext();
+  const { setCurrentContract, isAdvancedSettingsEnabled } =
+    useClusterFormContext();
 
   useEffect(() => {
     reset(cluster.contract.config);
@@ -53,17 +49,26 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
     );
   }, [cluster]);
 
-  useEffect(() => {
-    if (
-      currentProject?.advanced_infra_enabled &&
-      !tabs.some((x) => x.value === "advanced")
-    ) {
-      tabs.splice(1, 0, {
-        label: "Advanced",
-        value: "advanced",
-      });
-    }
-  }, [currentProject]);
+  const tabs = useMemo(() => {
+    const tabs = [
+      {
+        label: "Overview",
+        value: "overview" as ValidTab,
+      },
+      isAdvancedSettingsEnabled && cluster.cloud_provider.name === "AWS"
+        ? {
+            label: "Advanced",
+            value: "advanced" as ValidTab,
+          }
+        : undefined,
+      {
+        label: "Settings",
+        value: "settings" as ValidTab,
+      },
+    ].filter(valueExists);
+
+    return tabs;
+  }, [isAdvancedSettingsEnabled]);
 
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
@@ -89,7 +94,10 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
               <ClusterSaveButton
                 height={"10px"}
                 disabledTooltipPosition={"bottom"}
-              />
+                isClusterUpdating={isClusterUpdating}
+              >
+                Update
+              </ClusterSaveButton>
             </>
           }
         >

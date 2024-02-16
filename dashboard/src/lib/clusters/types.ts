@@ -239,6 +239,15 @@ export type PreflightCheck = {
   resolution?: PreflightCheckResolution;
 };
 
+// Node
+export const nodeValidator = z.object({
+  id: z.string(),
+  name: z.string(),
+  status: z.string(),
+  labels: z.record(z.string()),
+});
+export type NodeType = z.infer<typeof nodeValidator>;
+
 // Cluster
 export const clusterValidator = z.object({
   id: z.number(),

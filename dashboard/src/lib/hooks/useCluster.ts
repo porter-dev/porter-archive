@@ -19,6 +19,7 @@ import {
   clusterValidator,
   contractValidator,
   createContractResponseValidator,
+  nodeValidator,
   preflightCheckValidator,
   type APIContract,
   type ClientCluster,
@@ -26,6 +27,7 @@ import {
   type ClientPreflightCheck,
   type ClusterState,
   type ContractCondition,
+  type NodeType,
   type UpdateClusterResponse,
 } from "lib/clusters/types";
 
@@ -440,6 +442,48 @@ export const useUpdateCluster = ({
     updateCluster,
     isHandlingPreflightChecks,
     isCreatingContract,
+  };
+};
+
+type TUseClusterNodeList = {
+  nodes: NodeType[];
+  isLoading: boolean;
+};
+export const useClusterNodeList = ({
+  clusterId,
+}: {
+  clusterId: number | undefined;
+}): TUseClusterNodeList => {
+  const { currentProject } = useContext(Context);
+
+  const clusterNodesReq = useQuery(
+    ["getClusterNodes", currentProject?.id, clusterId],
+    async () => {
+      if (
+        !currentProject?.id ||
+        currentProject.id === -1 ||
+        !clusterId ||
+        clusterId === -1
+      ) {
+        return;
+      }
+
+      const res = await api.getClusterNodes(
+        "<token>",
+        {},
+        { project_id: currentProject.id, cluster_id: clusterId }
+      );
+      const parsed = await z.array(nodeValidator).parseAsync(res.data);
+      return parsed.filter(valueExists);
+    },
+    {
+      enabled: !!currentProject && currentProject.id !== -1,
+    }
+  );
+
+  return {
+    nodes: clusterNodesReq.data ?? [],
+    isLoading: clusterNodesReq.isLoading,
   };
 };
 

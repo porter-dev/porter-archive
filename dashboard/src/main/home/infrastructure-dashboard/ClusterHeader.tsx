@@ -24,8 +24,6 @@ const ClusterHeader: React.FC = () => {
       </Container>
       <Spacer y={0.5} />
       <CreatedAtContainer>
-        <ClusterStatus />
-        <Spacer inline x={1} />
         <div style={{ flexShrink: 0 }}>
           <Text color="#aaaabb66">
             Updated {readableDate(cluster.contract.updated_at)}
@@ -33,6 +31,8 @@ const ClusterHeader: React.FC = () => {
         </div>
         <Spacer y={0.5} />
       </CreatedAtContainer>
+      <Spacer y={0.5} />
+      <ClusterStatus />
     </>
   );
 };

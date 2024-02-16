@@ -1,51 +1,25 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import styled from "styled-components";
 
 import Container from "components/porter/Container";
 import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
-
-import api from "shared/api";
-import { Context } from "shared/Context";
+import { useClusterNodeList } from "lib/hooks/useCluster";
 
 import { useClusterContext } from "./ClusterContextProvider";
 
-type Node = {
-  labels: {
-    "node.kubernetes.io/instance-type": string;
-    "porter.run/workload-kind": string;
-  };
-};
-
 const ClusterStatus: React.FC = () => {
-  const { currentProject } = useContext(Context);
   const { cluster } = useClusterContext();
-  const [nodes, setNodes] = useState<Node[]>([]);
 
-  const updateNodes = async (): Promise<void> => {
-    try {
-      const res = await api.getClusterNodes(
-        "<token>",
-        {},
-        {
-          project_id: currentProject?.id || -1,
-          cluster_id: cluster.id,
-        }
-      );
-      const filtered = res.data.filter((node: Node) => {
-        return node?.labels["porter.run/workload-kind"] === "application";
-      });
-      setNodes(filtered);
-    } catch (err) {}
-  };
+  const { nodes } = useClusterNodeList({ clusterId: cluster.id });
 
-  useEffect(() => {
-    if (!currentProject || !cluster) {
-      return;
-    }
-    void updateNodes();
-  }, [currentProject, cluster]);
+  // Filter to only include user applications nodes
+  const applicationNodes = useMemo(() => {
+    return nodes.filter(
+      (node) => node?.labels["porter.run/workload-kind"] === "application"
+    );
+  }, [nodes]);
 
   return (
     <Container row style={{ flexShrink: 0 }}>
@@ -57,8 +31,10 @@ const ClusterStatus: React.FC = () => {
       <Spacer inline x={0.7} />
       {cluster.status === "READY" ? (
         <Text color="helper">
-          Running {nodes.length}{" "}
-          <Code>{nodes[0]?.labels["node.kubernetes.io/instance-type"]}</Code>{" "}
+          Running {applicationNodes.length}{" "}
+          <Code>
+            {applicationNodes[0]?.labels["node.kubernetes.io/instance-type"]}
+          </Code>{" "}
           instances
         </Text>
       ) : (

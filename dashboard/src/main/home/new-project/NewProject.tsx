@@ -181,7 +181,7 @@ export const NewProjectFC = () => {
             text="Create project"
             disabled={buttonStatus === "loading"}
             onClick={createProject}
-            status={buttonStatus}
+            status={buttonStatus === "loading"}
             makeFlush={true}
             clearPosition={true}
             statusPosition="right"

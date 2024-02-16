@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import styled from "styled-components";
+
+import Container from "./Container";
 import Tooltip from "./Tooltip";
 
 type Props = {
@@ -8,6 +10,7 @@ type Props = {
   children: React.ReactNode;
   disabled?: boolean;
   disabledTooltip?: string;
+  height?: string;
 };
 
 const Checkbox: React.FC<Props> = ({
@@ -17,29 +20,32 @@ const Checkbox: React.FC<Props> = ({
   disabled = false,
   disabledTooltip,
 }) => {
-  return (
-    disabled && disabledTooltip ?
-      <Tooltip content={disabledTooltip} position="right">
-        <StyledCheckbox 
-          onClick={disabled ? () => { } : toggleChecked}
+  return disabled && disabledTooltip ? (
+    <Tooltip content={disabledTooltip} position="right">
+      <Container row>
+        <StyledCheckbox
+          onClick={disabled ? () => {} : toggleChecked}
           disabled={disabled}
         >
           <Box checked={checked}>
             <i className="material-icons">done</i>
           </Box>
-          {children}
         </StyledCheckbox>
-      </Tooltip>
-      :
-      <StyledCheckbox 
-        onClick={disabled ? () => { } : toggleChecked}
+        {children}
+      </Container>
+    </Tooltip>
+  ) : (
+    <Container row>
+      <StyledCheckbox
+        onClick={disabled ? () => {} : toggleChecked}
         disabled={disabled}
       >
         <Box checked={checked}>
           <i className="material-icons">done</i>
         </Box>
-        {children}
       </StyledCheckbox>
+      {children}
+    </Container>
   );
 };
 
@@ -48,8 +54,6 @@ export default Checkbox;
 const StyledCheckbox = styled.div<{
   disabled?: boolean;
 }>`
-  display: flex;
-  align-items: center;
   cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 `;
 

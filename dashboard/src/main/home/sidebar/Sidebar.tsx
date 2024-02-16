@@ -323,29 +323,28 @@ class Sidebar extends Component<PropsType, StateType> {
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}
             >
-              <Img src={addOns} />
-              Add-ons
-              {currentProject.sandbox_enabled && (
+              <Container row spaced style={{ width: "100%" }}>
                 <Container row>
-                  <Spacer inline width="15px" />
-                  <Image size={15} src={lock} />
+                  <Img src={addOns} />
+                  Add-ons
                 </Container>
-              )}
+                {currentProject.sandbox_enabled && <Image size={15} src={lock} />}
+              </Container>
             </NavButton>
+
             <NavButton
               path="/environment-groups"
               active={window.location.pathname.startsWith(
                 "/environment-groups"
               )}
             >
-              <Img src={sliders} />
-              Env groups
-              {currentProject.sandbox_enabled && (
+              <Container row spaced style={{ width: "100%" }}>
                 <Container row>
-                  <Spacer inline width="15px" />
-                  <Image size={15} src={lock} />
+                  <Img src={sliders} />
+                  Env groups
                 </Container>
-              )}
+                {currentProject.sandbox_enabled && <Image size={15} src={lock} />}
+              </Container>
             </NavButton>
             <NavButton
               path={
@@ -363,14 +362,13 @@ class Sidebar extends Component<PropsType, StateType> {
                   : "/cluster-dashboard"
               )}
             >
-              <Img src={infra} />
-              Infrastructure
-              {currentProject.sandbox_enabled && (
-                <Container row>
-                  <Spacer inline width="15px" />
-                  <Image size={15} src={lock} />
-                </Container>
-              )}
+              <Container row spaced style={{ width: "100%" }}>
+                  <Container row>
+                    <Img src={infra} />
+                    Infrastructure
+                  </Container>
+                  {currentProject.sandbox_enabled && <Image size={15} src={lock} />}
+              </Container>
             </NavButton>
             <NavButton path="/preview-environments">
               <Container row spaced style={{ width: "100%" }}>

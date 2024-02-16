@@ -181,11 +181,11 @@ export const NewProjectFC = () => {
             text="Create project"
             disabled={false}
             onClick={createProject}
-            status={buttonStatus}
+            status={buttonStatus === "loading"}
             makeFlush={true}
             clearPosition={true}
             statusPosition="right"
-            saveText="Creating project..."
+            saveText="Creating project... This may take a minute."
             successText="Project created successfully!"
           />
         </SlideWrapper>

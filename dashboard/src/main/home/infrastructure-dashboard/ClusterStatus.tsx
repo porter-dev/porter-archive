@@ -11,10 +11,17 @@ import { Context } from "shared/Context";
 
 import { useClusterContext } from "./ClusterContextProvider";
 
+type Node = {
+  labels: {
+    "node.kubernetes.io/instance-type": string;
+    "porter.run/workload-kind": string;
+  };
+};
+
 const ClusterStatus: React.FC = () => {
   const { currentProject } = useContext(Context);
   const { cluster } = useClusterContext();
-  const [nodes, setNodes] = useState([]);
+  const [nodes, setNodes] = useState<Node[]>([]);
 
   const updateNodes = async (): Promise<void> => {
     try {
@@ -26,7 +33,7 @@ const ClusterStatus: React.FC = () => {
           cluster_id: cluster.id,
         }
       );
-      const filtered = res.data.filter((node: any) => {
+      const filtered = res.data.filter((node: Node) => {
         return node?.labels["porter.run/workload-kind"] === "application";
       });
       setNodes(filtered);

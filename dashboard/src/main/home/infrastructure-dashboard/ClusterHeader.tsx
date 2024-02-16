@@ -1,18 +1,22 @@
-import React from "react";
+import React, { useMemo } from "react";
 import styled from "styled-components";
 
 import Container from "components/porter/Container";
 import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
-import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
 
 import { readableDate } from "shared/string_utils";
 
 import { useClusterContext } from "./ClusterContextProvider";
+import ClusterStatus from "./ClusterStatus";
 
 const ClusterHeader: React.FC = () => {
-  const { cluster } = useClusterContext();
+  const { cluster, isClusterUpdating, nodes } = useClusterContext();
+
+  const applicationNodes = useMemo(() => {
+    return nodes.filter((n) => n.nodeGroupType === "APPLICATION");
+  }, [nodes]);
 
   return (
     <>
@@ -23,18 +27,6 @@ const ClusterHeader: React.FC = () => {
       </Container>
       <Spacer y={0.5} />
       <CreatedAtContainer>
-        <Container row>
-          <Spacer inline x={0.2} />
-          <StatusDot
-            status={cluster.status === "READY" ? "available" : "pending"}
-            heightPixels={8}
-          />
-          <Spacer inline x={0.7} />
-          <Text color="helper">
-            {cluster.status === "READY" ? "Running" : "Updating"}
-          </Text>
-          <Spacer inline x={1} />
-        </Container>
         <div style={{ flexShrink: 0 }}>
           <Text color="#aaaabb66">
             Updated {readableDate(cluster.contract.updated_at)}
@@ -42,6 +34,13 @@ const ClusterHeader: React.FC = () => {
         </div>
         <Spacer y={0.5} />
       </CreatedAtContainer>
+      {isClusterUpdating ||
+        (applicationNodes.length !== 0 && (
+          <>
+            <Spacer y={0.5} />
+            <ClusterStatus />
+          </>
+        ))}
     </>
   );
 };

@@ -1,4 +1,5 @@
-import React, { useMemo } from "react";
+import React from "react";
+import pluralize from "pluralize";
 import styled from "styled-components";
 
 import Container from "components/porter/Container";
@@ -9,16 +10,7 @@ import Text from "components/porter/Text";
 import { useClusterContext } from "./ClusterContextProvider";
 
 const ClusterStatus: React.FC = () => {
-  const { cluster, nodes } = useClusterContext();
-
-  // Filter to only include user applications nodes
-  const applicationNodes = useMemo(() => {
-    return nodes.filter(
-      (node) =>
-        node?.labels &&
-        node?.labels["porter.run/workload-kind"] === "application"
-    );
-  }, [nodes]);
+  const { cluster, applicationNodes } = useClusterContext();
 
   return (
     <Container row style={{ flexShrink: 0 }}>
@@ -34,7 +26,7 @@ const ClusterStatus: React.FC = () => {
           <Code>
             {applicationNodes[0]?.labels["node.kubernetes.io/instance-type"]}
           </Code>{" "}
-          instance{applicationNodes.length !== 1 && "s"}
+          {pluralize("instance", applicationNodes.length)}
         </Text>
       ) : (
         <Text color="helper">Updating</Text>

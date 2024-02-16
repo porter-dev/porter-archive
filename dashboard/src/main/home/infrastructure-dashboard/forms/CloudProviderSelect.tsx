@@ -2,8 +2,11 @@ import React, { useState } from "react";
 import styled from "styled-components";
 
 import Banner from "components/porter/Banner";
+import Button from "components/porter/Button";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import {
   CloudProviderAWS,
@@ -33,15 +36,6 @@ const CloudProviderSelect: React.FC<Props> = ({ onComplete }) => {
         disableLineBreak
         capitalize={false}
       />
-      <Banner>
-        Don't want to link your own cloud account? Immediately deploy your apps
-        on the <Spacer inline width="5px" />
-        <Link to="https://sandbox.porter.run" hasunderline>
-          Porter sandbox
-        </Link>
-        .
-      </Banner>
-      <Spacer y={1} />
       <StyledProvisionerFlow>
         <BlockList>
           {[CloudProviderAWS, CloudProviderGCP, CloudProviderAzure].map(
@@ -62,6 +56,24 @@ const CloudProviderSelect: React.FC<Props> = ({ onComplete }) => {
           )}
         </BlockList>
       </StyledProvisionerFlow>
+      <DashboardPlaceholder>
+        <Text size={16}>
+          Want to test Porter without linking your own cloud account?
+        </Text>
+        <Spacer y={0.5} />
+        <Text color={"helper"}>
+          Get started with the Porter sandbox environment.
+        </Text>
+        <Spacer y={1} />
+        <Link to="https://sandbox.porter.run">
+          <Button alt height="35px">
+            Deploy on the Porter sandbox <Spacer inline x={1} />{" "}
+            <i className="material-icons" style={{ fontSize: "18px" }}>
+              east
+            </i>
+          </Button>
+        </Link>
+      </DashboardPlaceholder>
       {cloudProvider !== undefined && (
         <CostConsentModal
           cloudProvider={cloudProvider}

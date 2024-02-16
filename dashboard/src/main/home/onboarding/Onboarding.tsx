@@ -4,8 +4,11 @@ import { devtools } from "valtio/utils";
 
 import Loading from "components/Loading";
 import Banner from "components/porter/Banner";
+import Button from "components/porter/Button";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import ProvisionerFlow from "components/ProvisionerFlow";
 
 import api from "shared/api";
@@ -174,16 +177,25 @@ const Onboarding = () => {
             disableLineBreak
             capitalize={false}
           />
-          <Banner>
-            Don't want to link your own cloud account? Immediately deploy your
-            apps on the <Spacer inline width="5px" />
-            <Link to="https://sandbox.porter.run" hasunderline>
-              Porter sandbox
-            </Link>
-            .
-          </Banner>
-          <Spacer y={1} />
           <ProvisionerFlow />
+          <DashboardPlaceholder>
+            <Text size={16}>
+              Want to test Porter without linking your own cloud account?
+            </Text>
+            <Spacer y={0.5} />
+            <Text color={"helper"}>
+              Get started with the Porter sandbox environment.
+            </Text>
+            <Spacer y={1} />
+            <Link to="https://sandbox.porter.run">
+              <Button alt height="35px">
+                Deploy on the Porter sandbox <Spacer inline x={1} />{" "}
+                <i className="material-icons" style={{ fontSize: "18px" }}>
+                  east
+                </i>
+              </Button>
+            </Link>
+          </DashboardPlaceholder>
           <Div />
         </Wrapper>
       );

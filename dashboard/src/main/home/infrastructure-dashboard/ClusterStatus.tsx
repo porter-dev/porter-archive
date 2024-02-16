@@ -27,7 +27,7 @@ const ClusterStatus: React.FC = () => {
         }
       );
       const filtered = res.data.filter((node: any) => {
-        return node.labels["porter.run/workload-kind"] === "application";
+        return node?.labels["porter.run/workload-kind"] === "application";
       });
       setNodes(filtered);
     } catch (err) {}
@@ -49,8 +49,8 @@ const ClusterStatus: React.FC = () => {
       />
       <Spacer inline x={0.7} />
       <Text color="helper">
-        Running {nodes.length}/{nodes.length}{" "}
-        <Code>{nodes[0].labels["node.kubernetes.io/instance-type"]}</Code>{" "}
+        Running {nodes.length}{" "}
+        <Code>{nodes[0]?.labels["node.kubernetes.io/instance-type"]}</Code>{" "}
         instances
       </Text>
     </Container>

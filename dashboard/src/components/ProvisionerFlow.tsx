@@ -1,16 +1,17 @@
-import React, { useState, useContext, useMemo } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import styled from "styled-components";
 
-import { integrationList } from "shared/common";
-import { Context } from "shared/Context";
-import api from "shared/api";
-
-import ProvisionerForm from "components/ProvisionerForm";
+import AzureCredentialForm from "components/AzureCredentialForm";
 import CloudFormationForm from "components/CloudFormationForm";
 import CredentialsForm from "components/CredentialsForm";
-import GCPCredentialsForm from "components/GCPCredentialsForm";
 import Helper from "components/form-components/Helper";
-import AzureCredentialForm from "components/AzureCredentialForm";
+import GCPCredentialsForm from "components/GCPCredentialsForm";
+import ProvisionerForm from "components/ProvisionerForm";
+
+import api from "shared/api";
+import { integrationList } from "shared/common";
+import { Context } from "shared/Context";
+
 import AWSCostConsent from "./AWSCostConsent";
 import AzureCostConsent from "./AzureCostConsent";
 import GCPCostConsent from "./GCPCostConsent";
@@ -19,13 +20,9 @@ const providers = ["aws", "gcp", "azure"];
 
 type Props = {};
 
-const ProvisionerFlow: React.FC<Props> = ({ }) => {
-  const {
-    usage,
-    hasBillingEnabled,
-    currentProject,
-    featurePreview,
-  } = useContext(Context);
+const ProvisionerFlow: React.FC<Props> = ({}) => {
+  const { usage, hasBillingEnabled, currentProject, featurePreview } =
+    useContext(Context);
   const [currentStep, setCurrentStep] = useState("cloud");
   const [credentialId, setCredentialId] = useState("");
   const [showCostConfirmModal, setShowCostConfirmModal] = useState(false);
@@ -35,7 +32,11 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
 
   const markStepCostConsent = async (step: string, provider: string) => {
     try {
-      await api.updateOnboardingStep("<token>", { step, provider }, { project_id: currentProject.id });
+      await api.updateOnboardingStep(
+        "<token>",
+        { step, provider },
+        { project_id: currentProject.id }
+      );
     } catch (err) {
       console.log(err);
     }
@@ -51,19 +52,19 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
     return (
       <>
         <StyledProvisionerFlow>
-          <Helper>Select your hosting backend:</Helper>
           <BlockList>
             {providers.map((provider: string, i: number) => {
-              let providerInfo = integrationList[provider];
+              const providerInfo = integrationList[provider];
               return (
                 <Block
                   key={i}
                   disabled={
                     !currentProject?.multi_cluster &&
-                    (provider === "gcp" && !currentProject?.azure_enabled)
+                    provider === "gcp" &&
+                    !currentProject?.azure_enabled
                   }
                   onClick={() => {
-                    if ((provider != "gcp" || currentProject?.azure_enabled)) {
+                    if (provider != "gcp" || currentProject?.azure_enabled) {
                       openCostConsentModal(provider);
                       // setSelectedProvider(provider);
                       // setCurrentStep("credentials");
@@ -73,7 +74,9 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                   <Icon src={providerInfo.icon} />
                   <BlockTitle>{providerInfo.label}</BlockTitle>
                   <BlockDescription>
-                    {(provider === "gcp" && !currentProject?.azure_enabled) ? providerInfo.tagline : "Hosted in your own cloud"}
+                    {provider === "gcp" && !currentProject?.azure_enabled
+                      ? providerInfo.tagline
+                      : "Hosted in your own cloud"}
                   </BlockDescription>
                 </Block>
               );
@@ -106,7 +109,7 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
               }}
             />
           )) ||
-            ((selectedProvider === "gcp" && (
+            (selectedProvider === "gcp" && (
               <GCPCostConsent
                 setCurrentStep={setCurrentStep}
                 setShowCostConfirmModal={setShowCostConfirmModal}
@@ -130,7 +133,7 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
                   }
                 }}
               />
-            ))) ||
+            )) ||
             (selectedProvider === "azure" && (
               <AzureCostConsent
                 setCurrentStep={setCurrentStep}
@@ -162,16 +165,22 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
       (selectedProvider === "aws" &&
         (useCloudFormationForm ? (
           <CloudFormationForm
-            goBack={() => setCurrentStep("cloud")}
+            goBack={() => {
+              setCurrentStep("cloud");
+            }}
             proceed={(id) => {
               setCredentialId(id);
               setCurrentStep("cluster");
             }}
-            switchToCredentialFlow={() => setUseCloudFormationForm(false)}
+            switchToCredentialFlow={() => {
+              setUseCloudFormationForm(false);
+            }}
           />
         ) : (
           <CredentialsForm
-            goBack={() => setCurrentStep("cloud")}
+            goBack={() => {
+              setCurrentStep("cloud");
+            }}
             proceed={(id) => {
               setCredentialId(id);
               setCurrentStep("cluster");
@@ -180,7 +189,9 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
         ))) ||
       (selectedProvider === "azure" && (
         <AzureCredentialForm
-          goBack={() => setCurrentStep("cloud")}
+          goBack={() => {
+            setCurrentStep("cloud");
+          }}
           proceed={(id) => {
             setCredentialId(id);
             setCurrentStep("cluster");
@@ -189,7 +200,9 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
       )) ||
       (selectedProvider === "gcp" && (
         <GCPCredentialsForm
-          goBack={() => setCurrentStep("cloud")}
+          goBack={() => {
+            setCurrentStep("cloud");
+          }}
           proceed={(id) => {
             setCredentialId(id);
             setCurrentStep("cluster");
@@ -200,7 +213,9 @@ const ProvisionerFlow: React.FC<Props> = ({ }) => {
   } else if (currentStep === "cluster") {
     return (
       <ProvisionerForm
-        goBack={() => setCurrentStep("credentials")}
+        goBack={() => {
+          setCurrentStep("credentials");
+        }}
         credentialId={credentialId}
         provider={selectedProvider}
       />

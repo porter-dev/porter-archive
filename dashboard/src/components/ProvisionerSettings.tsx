@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import {
   AWSClusterNetwork,
   Cluster,
+  ComplianceProfile,
   Contract,
   EKS,
   EKSLogging,
@@ -135,6 +136,13 @@ const machineTypeOptions = [
   { value: "c7a.12xlarge", label: "c7a.12xlarge" },
   { value: "c7a.16xlarge", label: "c7a.16xlarge" },
   { value: "c7a.24xlarge", label: "c7a.24xlarge" },
+  { value: "c7g.large", label: "c7g.large" },
+  { value: "c7g.xlarge", label: "c7g.xlarge" },
+  { value: "c7g.2xlarge", label: "c7g.2xlarge" },
+  { value: "c7g.4xlarge", label: "c7g.4xlarge" },
+  { value: "c7g.8xlarge", label: "c7g.8xlarge" },
+  { value: "c7g.12xlarge", label: "c7g.12xlarge" },
+  { value: "c7g.16xlarge", label: "c7g.16xlarge" },
 ];
 
 const defaultCidrVpc = "10.78.0.0/16";
@@ -164,6 +172,10 @@ const initialClusterState: ClusterState = {
   gpuInstanceType: "g4dn.xlarge",
   gpuMinInstances: 0,
   gpuMaxInstances: 5,
+  complianceProfiles: {
+    soc2: false,
+    hipaa: false,
+  },
 };
 
 type Props = RouteComponentProps & {
@@ -387,6 +399,11 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
       );
     }
 
+    const complianceProfiles = new ComplianceProfile({
+      soc2: clusterState.complianceProfiles.soc2,
+      hipaa: clusterState.complianceProfiles.hipaa,
+    });
+
     const data = new Contract({
       cluster: new Cluster({
         projectId: currentProject.id,
@@ -415,6 +432,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
           }),
         },
       }),
+      complianceProfiles,
     });
     return data;
   };
@@ -506,7 +524,7 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const contract = props.selectedClusterVersion as any;
+    const contract = props.selectedClusterVersion;
     // Unmarshall Contract here
     if (contract?.cluster) {
       const eksValues: EKS = contract.cluster?.eksKind as EKS;
@@ -596,6 +614,13 @@ const ProvisionerSettings: React.FC<Props> = (props) => {
         "certificateARN",
         eksValues.loadBalancer?.additionalCertificateArns?.join(",")
       );
+
+      if (contract.complianceProfiles) {
+        handleClusterStateChange(
+          "complianceProfiles",
+          contract.complianceProfiles
+        );
+      }
     }
   }, [isExpanded, props.selectedClusterVersion]);
 

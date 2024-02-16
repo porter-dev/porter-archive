@@ -25,7 +25,7 @@ const Text: React.FC<Props> = ({
   const getColor = () => {
     switch (color) {
       case "helper":
-        return "#aaaabb";
+        return "#9999aa";
       case "warner":
         return "#ff5a52";
       default:

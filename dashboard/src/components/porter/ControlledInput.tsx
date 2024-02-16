@@ -136,11 +136,12 @@ const StyledInput = styled.input<{
   height: ${(props) => props.height || "35px"};
   padding: 5px 10px;
   width: ${(props) => props.width || "200px"};
-  color: ${(props) => (props.disabled ? "#aaaabb" : "#ffffff")};
+  color: ${(props) => (props.disabled ? "#aaaabb" : "#fefefe")};
   font-size: 13px;
   outline: none;
+  transition: all 0.2s;
   border-radius: 5px;
-  background: #26292e;
+  background: ${(props) => props.theme.fg};
   cursor: ${(props) => (props.disabled ? "not-allowed" : "")};
   border: 1px solid ${(props) => (props.hasError ? "#ff3b62" : "#494b4f")};
   ${(props) =>

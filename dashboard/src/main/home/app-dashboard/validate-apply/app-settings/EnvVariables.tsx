@@ -11,7 +11,9 @@ import { type PorterAppFormData } from "lib/porter-apps";
 import { dotenv_parse } from "shared/string_utils";
 import upload from "assets/upload.svg";
 
+import Image from "components/porter/Image";
 import EnvVarRow from "./EnvVarRow";
+import Button from "components/porter/Button";
 
 export type KeyValueType = {
   key: string;
@@ -44,7 +46,7 @@ const EnvVariables = ({ syncedEnvGroups }: PropsType) => {
     if (!syncedEnvGroups) return false;
     return syncedEnvGroups.some(
       (envGroup) =>
-        key in envGroup.variables || key in envGroup?.secret_variables
+        key in (envGroup.variables || []) || key in (envGroup.secret_variables || [])
     );
   };
 
@@ -69,42 +71,48 @@ const EnvVariables = ({ syncedEnvGroups }: PropsType) => {
 
   return (
     <>
-      <StyledInputArray>
-        {environmentVariables.map((entry, i) => (
-          <EnvVarRow
-            key={entry.id}
-            entry={entry}
-            index={i}
-            remove={() => {
-              remove(i);
-            }}
-            isKeyOverriding={isKeyOverriding}
-          />
-        ))}
-        <InputWrapper>
-          <AddRowButton
-            onClick={() => {
-              append({
-                key: "",
-                value: "",
-                hidden: false,
-                locked: false,
-                deleted: false,
-              });
-            }}
-          >
-            <i className="material-icons">add</i> Add Row
-          </AddRowButton>
-          <Spacer x={0.5} inline />
-          <UploadButton
-            onClick={() => {
-              setShowEditorModal(true);
-            }}
-          >
-            <img src={upload} alt="Upload" /> Copy from File
-          </UploadButton>
-        </InputWrapper>
-      </StyledInputArray>
+      {environmentVariables.length > 0 && (
+        <List>
+          {environmentVariables.map((entry, i) => (
+            <EnvVarRow
+              key={entry.id}
+              entry={entry}
+              index={i}
+              remove={() => {
+                remove(i);
+              }}
+              isKeyOverriding={isKeyOverriding}
+            />
+          ))}
+        </List>
+      )}
+      <InputWrapper>
+        <Button
+          alt
+          onClick={() => {
+            append({
+              key: "",
+              value: "",
+              hidden: false,
+              locked: false,
+              deleted: false,
+            });
+          }}
+        >
+          <I className="material-icons">add</I> Add row
+        </Button>
+        <Spacer x={0.5} inline />
+        <Button
+          alt
+          onClick={() => {
+            setShowEditorModal(true);
+          }}
+        >
+          <Image src={upload} size={16} />
+          <Spacer inline x={.5} />
+          Copy from file
+        </Button>
+      </InputWrapper>
       {showEditorModal && (
         <Modal
           onRequestClose={() => {
@@ -129,58 +137,20 @@ const EnvVariables = ({ syncedEnvGroups }: PropsType) => {
 
 export default EnvVariables;
 
-const AddRowButton = styled.div`
+const List = styled.div`
+  gap: 10px;
   display: flex;
-  align-items: center;
-  width: 270px;
-  font-size: 13px;
-  color: #aaaabb;
-  height: 32px;
-  border-radius: 3px;
-  cursor: pointer;
-  background: #ffffff11;
-  :hover {
-    background: #ffffff22;
-  }
-
-  > i {
-    color: #ffffff44;
-    font-size: 16px;
-    margin-left: 8px;
-    margin-right: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  flex-direction: column;
+  margin-bottom: 25px;
 `;
 
-const UploadButton = styled(AddRowButton)`
-  background: none;
-  position: relative;
-  border: 1px solid #ffffff55;
-  > i {
-    color: #ffffff44;
-    font-size: 16px;
-    margin-left: 8px;
-    margin-right: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  > img {
-    width: 14px;
-    margin-left: 10px;
-    margin-right: 12px;
-  }
+const I = styled.i`
+  font-size: 16px;
+  margin-right: 7px;
 `;
 
 const InputWrapper = styled.div`
   display: flex;
   align-items: center;
-  margin-top: 5px;
-`;
-
-const StyledInputArray = styled.div`
-  margin-bottom: 15px;
-  margin-top: 22px;
+  margin-bottom: 5px;
 `;

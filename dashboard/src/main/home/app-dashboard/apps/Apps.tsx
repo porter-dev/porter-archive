@@ -28,7 +28,7 @@ import grid from "assets/grid.png";
 import list from "assets/list.png";
 import pull_request from "assets/pull_request_icon.svg";
 import letter from "assets/vector.svg";
-import web from "assets/web.png";
+import applicationGrad from "assets/application-grad.svg";
 
 import AppGrid from "./AppGrid";
 import { appRevisionWithSourceValidator } from "./types";
@@ -204,9 +204,9 @@ const Apps: React.FC = () => {
     if (apps.length === 0) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>No apps have been deployed yet</Text>
+          <Text size={16}>No applications have been created yet</Text>
           <Spacer y={0.5} />
-          <Text color={"helper"}>Get started by deploying your app.</Text>
+          <Text color={"helper"}>Get started by creating an application.</Text>
           <Spacer y={1} />
           <PorterLink to="/apps/new/app">
             <Button
@@ -216,7 +216,7 @@ const Apps: React.FC = () => {
               }}
               height="35px"
             >
-              Deploy app <Spacer inline x={1} />{" "}
+              Create a new application <Spacer inline x={1} />{" "}
               <i className="material-icons" style={{ fontSize: "18px" }}>
                 east
               </i>
@@ -273,8 +273,6 @@ const Apps: React.FC = () => {
                 setSort("letter");
               }
             }}
-            inactiveColor={"#ffffff11"}
-            activeColor={"transparent"}
           />
           <Spacer inline x={1} />
           <Toggle
@@ -290,8 +288,6 @@ const Apps: React.FC = () => {
                 setView("list");
               }
             }}
-            inactiveColor={"#ffffff11"}
-            activeColor={"transparent"}
           />
           <Spacer inline x={2} />
           {currentDeploymentTarget?.is_preview ? (
@@ -336,7 +332,7 @@ const Apps: React.FC = () => {
     <StyledAppDashboard>
       {!currentDeploymentTarget?.is_preview && (
         <DashboardHeader
-          image={web}
+          image={applicationGrad}
           title="Applications"
           description="Web services, workers, and jobs for this project."
           disableLineBreak

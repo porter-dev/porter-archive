@@ -19,15 +19,16 @@ import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import { isAWSCluster } from "lib/clusters/types";
 import { type ClientDatastore } from "lib/databases/types";
-import { isAWSCluster, useClusterList } from "lib/hooks/useClusterList";
+import { useClusterList } from "lib/hooks/useCluster";
 import { useDatastoreList } from "lib/hooks/useDatabaseList";
 
 import { Context } from "shared/Context";
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
 import engine from "assets/computer-chip.svg";
-import database from "assets/database.svg";
+import databaseGrad from "assets/database-grad.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
@@ -100,7 +101,28 @@ const DatabaseDashboard: React.FC = () => {
         </DashboardPlaceholder>
       );
     }
-    
+  
+    if (!currentProject?.db_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>Datastores are not enabled for this project</Text>
+          <Spacer y={0.5} />
+          <Text color={"helper"}>
+            Reach out to the Porter team to enable managed datastores on your
+            project.
+          </Text>
+          <Spacer y={1} />
+          <ShowIntercomButton
+            alt
+            message="I would like to enable managed datastores on my project"
+            height="35px"
+          >
+            Request to enable
+          </ShowIntercomButton>
+        </DashboardPlaceholder>
+      );
+    }
+  
     if (datastores === undefined || isLoading || isLoadingClusters) {
       return <Loading offset="-150px" />;
     }
@@ -131,26 +153,6 @@ const DatabaseDashboard: React.FC = () => {
       return <ClusterProvisioningPlaceholder />;
     }
 
-    if (!currentProject?.db_enabled) {
-      return (
-        <DashboardPlaceholder>
-          <Text size={16}>Datastores are not enabled for this project</Text>
-          <Spacer y={0.5} />
-          <Text color={"helper"}>
-            Reach out to the Porter team to enable managed datastores on your project.
-          </Text>
-          <Spacer y={1} />
-          <ShowIntercomButton
-            alt
-            message="I would like to enable managed datastores on my project"
-            height="35px"
-          >
-            Request to enable
-          </ShowIntercomButton>
-        </DashboardPlaceholder>
-      );
-    }
-
     if (datastores.length === 0) {
       return (
         <DashboardPlaceholder>
@@ -161,7 +163,7 @@ const DatabaseDashboard: React.FC = () => {
           <Spacer y={1} />
           <PorterLink to="/datastores/new">
             <Button onClick={() => ({})} height="35px" alt>
-              Create datastore <Spacer inline x={1} />{" "}
+              Create a new datastore <Spacer inline x={1} />{" "}
               <i className="material-icons" style={{ fontSize: "18px" }}>
                 east
               </i>
@@ -188,8 +190,6 @@ const DatabaseDashboard: React.FC = () => {
                 icon: getDatastoreIcon("ELASTICACHE"),
               },
             ]}
-            width="210px"
-            height="29px"
             value={typeFilter}
             setValue={(value) => {
               if (
@@ -203,7 +203,7 @@ const DatabaseDashboard: React.FC = () => {
             }}
             prefix={
               <Container row>
-                <Image src={database} size={15} opacity={0.6} />
+                <Image src={databaseGrad} size={15} opacity={0.6} />
                 <Spacer inline x={0.5} />
                 Type
               </Container>
@@ -229,8 +229,6 @@ const DatabaseDashboard: React.FC = () => {
                 icon: getEngineIcon("REDIS"),
               },
             ]}
-            width="270px"
-            height="29px"
             value={engineFilter}
             setValue={(value) => {
               if (
@@ -289,9 +287,7 @@ const DatabaseDashboard: React.FC = () => {
           <Fieldset>
             <Container row>
               <PlaceholderIcon src={notFound} />
-              <Text color="helper">
-                No datastores matching filters were found.
-              </Text>
+              <Text color="helper">No matching datastores were found.</Text>
             </Container>
           </Fieldset>
         ) : isLoading ? (
@@ -376,7 +372,7 @@ const DatabaseDashboard: React.FC = () => {
   return (
     <StyledAppDashboard>
       <DashboardHeader
-        image={database}
+        image={databaseGrad}
         title="Datastores"
         description="Storage, caches, and stateful workloads for this project."
         disableLineBreak

@@ -12,6 +12,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/notifier"
+	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -50,7 +51,7 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 					continue
 				}
 
-				contractRevision, err := p.Config().Repo.APIContractRevisioner().List(ctx, proj.ID, cluster.ID)
+				contractRevision, err := p.Config().Repo.APIContractRevisioner().List(ctx, proj.ID, repository.WithClusterID(cluster.ID))
 				if err != nil {
 					e := "error finding contract revisions for cluster"
 					err = telemetry.Error(ctx, span, err, e)

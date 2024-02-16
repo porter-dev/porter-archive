@@ -99,9 +99,7 @@ const fadeIn = keyframes`
 const StyledCard = styled.div`
   border: 1px solid #ffffff44;
   background: #ffffff11;
-  margin-bottom: 5px;
   border-radius: 8px;
-  margin-top: 15px;
   padding: 10px 14px;
   overflow: hidden;
   font-size: 13px;

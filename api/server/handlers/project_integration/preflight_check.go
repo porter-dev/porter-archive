@@ -1,7 +1,6 @@
 package project_integration
 
 import (
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -32,10 +31,42 @@ func NewCreatePreflightCheckHandler(
 	}
 }
 
+// PorterError is the error response for the preflight check endpoint
+type PorterError struct {
+	Code     string            `json:"code"`
+	Message  string            `json:"message"`
+	Metadata map[string]string `json:"metadata,omitempty"`
+}
+
+// PreflightCheckError is the error response for the preflight check endpoint
+type PreflightCheckError struct {
+	Name  string      `json:"name"`
+	Error PorterError `json:"error"`
+}
+
+// PreflightCheckResponse is the response to the preflight check endpoint
+type PreflightCheckResponse struct {
+	Errors []PreflightCheckError `json:"errors"`
+}
+
+var recognizedPreflightCheckKeys = []string{
+	"eip",
+	"vcpu",
+	"vpc",
+	"natGateway",
+	"apiEnabled",
+	"cidrAvailability",
+	"iamPermissions",
+	"resourceProviders",
+}
+
 func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "preflight-checks")
 	defer span.End()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	betaFeaturesEnabled := project.GetFeatureFlag(models.BetaFeaturesEnabled, p.Config().LaunchDarklyClient)
+
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "beta-features-enabled", Value: betaFeaturesEnabled})
 
 	cloudValues := &porterv1.PreflightCheckRequest{}
 	err := helpers.UnmarshalContractObjectFromReader(r.Body, cloudValues)
@@ -44,6 +75,8 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusPreconditionFailed, err.Error()))
 		return
 	}
+
+	var resp PreflightCheckResponse
 
 	input := porterv1.PreflightCheckRequest{
 		ProjectId:                  int64(project.ID),
@@ -60,10 +93,46 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	checkResp, err := p.Config().ClusterControlPlaneClient.PreflightCheck(ctx, connect.NewRequest(&input))
 	if err != nil {
-		e := fmt.Errorf("Pre-provision check failed: %w", err)
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusPreconditionFailed, err.Error()))
+		err = telemetry.Error(ctx, span, err, "error calling preflight checks")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	p.WriteResult(w, r, checkResp)
+	if checkResp.Msg == nil {
+		err = telemetry.Error(ctx, span, nil, "no message received from preflight checks")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	if !betaFeaturesEnabled {
+		p.WriteResult(w, r, checkResp)
+		return
+	}
+
+	errors := []PreflightCheckError{}
+	for key, val := range checkResp.Msg.PreflightChecks {
+		if val.Message == "" || !contains(recognizedPreflightCheckKeys, key) {
+			continue
+		}
+
+		errors = append(errors, PreflightCheckError{
+			Name: key,
+			Error: PorterError{
+				Code:     val.Code,
+				Message:  val.Message,
+				Metadata: val.Metadata,
+			},
+		})
+	}
+	resp.Errors = errors
+	p.WriteResult(w, r, resp)
+}
+
+func contains(slice []string, elem string) bool {
+	for _, item := range slice {
+		if item == elem {
+			return true
+		}
+	}
+	return false
 }

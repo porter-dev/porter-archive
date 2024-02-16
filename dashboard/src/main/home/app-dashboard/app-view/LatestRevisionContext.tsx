@@ -320,11 +320,12 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
       return [];
     }
 
-    return deserializeNotifications(
-      latestSerializedNotifications,
-      latestClientServices,
-      latestRevision.id
-    );
+    return deserializeNotifications({
+      notifications: latestSerializedNotifications,
+      clientServices: latestClientServices,
+      revisionId: latestRevision.id,
+      isHistorical: false,
+    });
   }, [latestSerializedNotifications, latestClientServices, latestRevision]);
 
   const loading =

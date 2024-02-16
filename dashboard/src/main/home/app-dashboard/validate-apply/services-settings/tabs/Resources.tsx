@@ -104,11 +104,7 @@ const Resources: React.FC<ResourcesProps> = ({
             <Switch
               size="small"
               color="primary"
-              disabled={
-                memory.readOnly ||
-                cpu.readOnly ||
-                service.smartOptimization?.readOnly
-              }
+              disabled={false}
               checked={value?.value}
               onChange={() => {
                 if (!value?.value) {
@@ -156,7 +152,7 @@ const Resources: React.FC<ResourcesProps> = ({
           <IntelligentSlider
             label="CPUs: "
             unit="Cores"
-            min={0.01}
+            min={0.1}
             max={maxCPU}
             color={"#3f51b5"}
             value={value.value.toString()}

@@ -51,7 +51,12 @@ import Dashboard from "./dashboard/Dashboard";
 import CreateDatabase from "./database-dashboard/CreateDatabase";
 import DatabaseDashboard from "./database-dashboard/DatabaseDashboard";
 import DatabaseView from "./database-dashboard/DatabaseView";
-import InfrastructureRouter from "./infrastructure/InfrastructureRouter";
+import CreateEnvGroup from "./env-dashboard/CreateEnvGroup";
+import EnvDashboard from "./env-dashboard/EnvDashboard";
+import ExpandedEnv from "./env-dashboard/ExpandedEnv";
+import ClusterDashboard from "./infrastructure-dashboard/ClusterDashboard";
+import ClusterView from "./infrastructure-dashboard/ClusterView";
+import CreateClusterForm from "./infrastructure-dashboard/forms/CreateClusterForm";
 import Integrations from "./integrations/Integrations";
 import LaunchWrapper from "./launch/LaunchWrapper";
 import ModalHandler from "./ModalHandler";
@@ -435,7 +440,7 @@ const Home: React.FC<Props> = (props) => {
                 document.body
               )}
             {/* Render sidebar when there's at least one project */}
-            {projects?.length > 0 && baseRoute !== "new-project" ? (
+            {projects?.length > 0 && baseRoute !== "new-project" && (
               <Sidebar
                 key="sidebar"
                 forceSidebar={forceSidebar}
@@ -444,14 +449,6 @@ const Home: React.FC<Props> = (props) => {
                 forceRefreshClusters={forceRefreshClusters}
                 setRefreshClusters={setForceRefreshClusters}
               />
-            ) : (
-              <DiscordButton
-                href="https://discord.gg/34n7NN7FJ7"
-                target="_blank"
-              >
-                <Icon src={discordLogo} />
-                Join Our Discord
-              </DiscordButton>
             )}
             <ViewWrapper id="HomeViewWrapper">
               <Navbar
@@ -487,6 +484,19 @@ const Home: React.FC<Props> = (props) => {
                   ) : (
                     <AppDashboard />
                   )}
+                </Route>
+
+                <Route path="/environment-groups/new">
+                  <CreateEnvGroup />
+                </Route>
+                <Route path="/environment-groups/:envGroupName/:tab">
+                  <ExpandedEnv />
+                </Route>
+                <Route path="/environment-groups/:envGroupName">
+                  <ExpandedEnv />
+                </Route>
+                <Route path="/environment-groups">
+                  <EnvDashboard />
                 </Route>
 
                 <Route path="/datastores/new/:type/:engine">
@@ -527,21 +537,18 @@ const Home: React.FC<Props> = (props) => {
                     return <Onboarding />;
                   }}
                 />
-                {(user?.isPorterUser ||
-                  overrideInfraTabEnabled({
-                    projectID: currentProject?.id,
-                  })) && (
-                  <Route
-                    path="/infrastructure"
-                    render={() => {
-                      return (
-                        <DashboardWrapper>
-                          <InfrastructureRouter />
-                        </DashboardWrapper>
-                      );
-                    }}
-                  />
-                )}
+                <Route path="/infrastructure/new">
+                  <CreateClusterForm />
+                </Route>
+                <Route path="/infrastructure/:clusterId/:tab">
+                  <ClusterView />
+                </Route>
+                <Route path="/infrastructure/:clusterId">
+                  <ClusterView />
+                </Route>
+                <Route path="/infrastructure">
+                  <ClusterDashboard />
+                </Route>
                 <Route
                   path="/dashboard"
                   render={() => {
@@ -606,10 +613,10 @@ const Home: React.FC<Props> = (props) => {
                       exact
                       path={`/preview-environments/apps/:appName/:tab`}
                     >
-                      <AppView />
+                      <AppView preview />
                     </Route>
                     <Route exact path="/preview-environments/apps/:appName">
-                      <AppView />
+                      <AppView preview />
                     </Route>
                     <Route exact path={`/preview-environments/apps`}>
                       <Apps />

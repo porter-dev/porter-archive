@@ -57,3 +57,8 @@ func (repo *PorterAppEventRepository) ReadDeployEventByAppRevisionID(ctx context
 func (repo *PorterAppEventRepository) ReadNotificationsByAppRevisionID(ctx context.Context, porterAppInstanceID uuid.UUID, appRevisionID string) ([]*models.PorterAppEvent, error) {
 	return nil, errors.New("cannot read database")
 }
+
+// NotificationByID returns a notification by the notification id
+func (repo *PorterAppEventRepository) NotificationByID(ctx context.Context, notificationID string) (*models.PorterAppEvent, error) {
+	return nil, errors.New("cannot read database")
+}

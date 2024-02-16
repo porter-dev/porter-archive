@@ -56,7 +56,7 @@ const Block = styled.div<{ selected?: boolean }>`
   cursor: pointer;
   color: #ffffff;
   position: relative;
-
+  transition: all 0.2s;
   border-radius: 5px;
   background: ${props => props.theme.clickable.bg};
   border: ${props => props.selected ? "2px solid #8590ff" : "1px solid #494b4f"};

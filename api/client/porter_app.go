@@ -197,93 +197,6 @@ func (c *Client) GetAppManifests(
 	return resp, err
 }
 
-// ValidatePorterAppInput is the input struct to ValidatePorterApp
-type ValidatePorterAppInput struct {
-	ProjectID          uint
-	ClusterID          uint
-	AppName            string
-	Base64AppProto     string
-	Base64AppOverrides string
-	DeploymentTarget   string
-	CommitSHA          string
-	ImageTagOverride   string
-}
-
-// ValidatePorterApp takes in a base64 encoded app definition that is potentially partial and returns a complete definition
-// using any previous app revisions and defaults
-func (c *Client) ValidatePorterApp(
-	ctx context.Context,
-	inp ValidatePorterAppInput,
-) (*porter_app.ValidatePorterAppResponse, error) {
-	resp := &porter_app.ValidatePorterAppResponse{}
-
-	req := &porter_app.ValidatePorterAppRequest{
-		AppName:            inp.AppName,
-		Base64AppProto:     inp.Base64AppProto,
-		Base64AppOverrides: inp.Base64AppOverrides,
-		DeploymentTargetId: inp.DeploymentTarget,
-		CommitSHA:          inp.CommitSHA,
-		ImageTagOverride:   inp.ImageTagOverride,
-	}
-
-	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/validate",
-			inp.ProjectID, inp.ClusterID,
-		),
-		req,
-		resp,
-	)
-
-	return resp, err
-}
-
-// ApplyPorterAppInput is the input struct to ApplyPorterApp
-type ApplyPorterAppInput struct {
-	ProjectID        uint
-	ClusterID        uint
-	Base64AppProto   string
-	DeploymentTarget string
-	AppRevisionID    string
-	ForceBuild       bool
-	Variables        map[string]string
-	Secrets          map[string]string
-	HardEnvUpdate    bool
-}
-
-// ApplyPorterApp takes in a base64 encoded app definition and applies it to the cluster
-func (c *Client) ApplyPorterApp(
-	ctx context.Context,
-	inp ApplyPorterAppInput,
-) (*porter_app.ApplyPorterAppResponse, error) {
-	resp := &porter_app.ApplyPorterAppResponse{}
-
-	req := &porter_app.ApplyPorterAppRequest{
-		Base64AppProto:     inp.Base64AppProto,
-		DeploymentTargetId: inp.DeploymentTarget,
-		AppRevisionID:      inp.AppRevisionID,
-		ForceBuild:         inp.ForceBuild,
-		Variables:          inp.Variables,
-		Secrets:            inp.Secrets,
-		HardEnvUpdate:      inp.HardEnvUpdate,
-	}
-
-	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/apply",
-			inp.ProjectID, inp.ClusterID,
-		),
-		req,
-		resp,
-		postRequestOpts{
-			retryCount:   3,
-			onlyRetry500: true,
-		},
-	)
-
-	return resp, err
-}
-
 // UpdateAppInput is the input struct to UpdateApp
 type UpdateAppInput struct {
 	ProjectID          uint
@@ -298,6 +211,7 @@ type UpdateAppInput struct {
 	Base64PorterYAML   string
 	IsEnvOverride      bool
 	WithPredeploy      bool
+	Exact              bool
 }
 
 // UpdateApp updates a porter app
@@ -318,6 +232,7 @@ func (c *Client) UpdateApp(
 		Base64PorterYAML:   inp.Base64PorterYAML,
 		IsEnvOverride:      inp.IsEnvOverride,
 		WithPredeploy:      inp.WithPredeploy,
+		Exact:              inp.Exact,
 	}
 
 	err := c.postRequest(
@@ -585,10 +500,13 @@ func (c *Client) GetAppEnvVariables(
 	ctx context.Context,
 	projectID uint, clusterID uint,
 	appName string,
+	deploymentTargetName string,
 ) (*porter_app.AppEnvVariablesResponse, error) {
 	resp := &porter_app.AppEnvVariablesResponse{}
 
-	req := &porter_app.AppEnvVariablesRequest{}
+	req := &porter_app.AppEnvVariablesRequest{
+		DeploymentTargetName: deploymentTargetName,
+	}
 
 	err := c.getRequest(
 		fmt.Sprintf(
@@ -783,27 +701,6 @@ func (c *Client) RollbackRevision(
 			"/projects/%d/clusters/%d/apps/%s/rollback",
 			projectID, clusterID,
 			appName,
-		),
-		req,
-		resp,
-	)
-
-	return resp, err
-}
-
-// UseNewApplyLogic checks whether the CLI should use the new apply logic
-func (c *Client) UseNewApplyLogic(
-	ctx context.Context,
-	projectID, clusterID uint,
-) (*porter_app.UseNewApplyLogicResponse, error) {
-	resp := &porter_app.UseNewApplyLogicResponse{}
-
-	req := &porter_app.UseNewApplyLogicRequest{}
-
-	err := c.getRequest(
-		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/use-new-apply-logic",
-			projectID, clusterID,
 		),
 		req,
 		resp,

@@ -249,7 +249,6 @@ const ActionButton = styled.button`
   position: relative;
   border: none;
   background: none;
-  color: white;
   padding: 5px;
   display: flex;
   justify-content: center;

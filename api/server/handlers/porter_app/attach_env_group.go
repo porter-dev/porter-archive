@@ -56,9 +56,6 @@ func (c *AttachEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "env-group-name", Value: request.EnvGroupName})
 
-	usingUpdateLogic := project.GetFeatureFlag(models.BetaFeaturesEnabled, c.Config().LaunchDarklyClient)
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "using-update-logic", Value: usingUpdateLogic})
-
 	if request.EnvGroupName == "" {
 		err := telemetry.Error(ctx, span, nil, "env group name cannot be empty")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -74,84 +71,29 @@ func (c *AttachEnvGroupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		// TODO: delete second branch once all projects are on update flow
-		if usingUpdateLogic {
-			updateReq := connect.NewRequest(&porterv1.UpdateAppRequest{
-				ProjectId: int64(project.ID),
-				DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
-					Id: appInstance.DeploymentTargetID.String(),
-				},
-				App: &porterv1.PorterApp{
-					Name: appInstance.Name,
-					EnvGroups: []*porterv1.EnvGroup{
-						{
-							Name: request.EnvGroupName,
-						},
+		updateReq := connect.NewRequest(&porterv1.UpdateAppRequest{
+			ProjectId: int64(project.ID),
+			DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
+				Id: appInstance.DeploymentTargetID.String(),
+			},
+			App: &porterv1.PorterApp{
+				Name: appInstance.Name,
+				EnvGroups: []*porterv1.EnvGroup{
+					{
+						Name: request.EnvGroupName,
 					},
 				},
-			})
+			},
+		})
 
-			_, err = c.Config().ClusterControlPlaneClient.UpdateApp(ctx, updateReq)
-			if err != nil {
-				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
-				err := telemetry.Error(ctx, span, err, "error calling ccp update app")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
-		} else {
-			validateReq := connect.NewRequest(&porterv1.ValidatePorterAppRequest{
-				ProjectId:          int64(project.ID),
-				DeploymentTargetId: appInstance.DeploymentTargetID.String(),
-				App: &porterv1.PorterApp{
-					Name: appInstance.Name,
-					EnvGroups: []*porterv1.EnvGroup{
-						{
-							Name: request.EnvGroupName,
-						},
-					},
-				},
-			})
-			ccpResp, err := c.Config().ClusterControlPlaneClient.ValidatePorterApp(ctx, validateReq)
-			if err != nil {
-				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
-				err := telemetry.Error(ctx, span, err, "error calling ccp validate porter app")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
-
-			if ccpResp == nil {
-				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
-				err := telemetry.Error(ctx, span, err, "ccp resp is nil")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
-			if ccpResp.Msg == nil {
-				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
-				err := telemetry.Error(ctx, span, err, "ccp resp msg is nil")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
-
-			if ccpResp.Msg.App == nil {
-				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
-				err := telemetry.Error(ctx, span, err, "ccp resp app is nil")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
-
-			applyReq := connect.NewRequest(&porterv1.ApplyPorterAppRequest{
-				ProjectId:          int64(project.ID),
-				DeploymentTargetId: appInstance.DeploymentTargetID.String(),
-				App:                ccpResp.Msg.App,
-			})
-			_, err = c.Config().ClusterControlPlaneClient.ApplyPorterApp(ctx, applyReq)
-			if err != nil {
-				telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
-				err := telemetry.Error(ctx, span, err, "error calling ccp apply porter app")
-				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-				return
-			}
+		_, err = c.Config().ClusterControlPlaneClient.UpdateApp(ctx, updateReq)
+		if err != nil {
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-instance-id", Value: appInstanceId})
+			err := telemetry.Error(ctx, span, err, "error calling ccp update app")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
 		}
+
 	}
 
 	c.WriteResult(w, r, nil)

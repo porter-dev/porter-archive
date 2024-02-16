@@ -8,6 +8,7 @@ const theme = {
   },
   text: {
     primary: "#fefefe",
+    secondary: "#9999aa",
   },
 }
 

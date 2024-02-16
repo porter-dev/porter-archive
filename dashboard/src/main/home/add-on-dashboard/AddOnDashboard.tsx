@@ -8,7 +8,7 @@ import React, {
 import styled from "styled-components";
 import _ from "lodash";
 
-import addOn from "assets/add-ons.svg";
+import addOnGrad from "assets/add-on-grad.svg";
 import time from "assets/time.png";
 import healthy from "assets/status-healthy.png";
 import grid from "assets/grid.png";
@@ -32,7 +32,6 @@ import { readableDate } from "shared/string_utils";
 import Loading from "components/Loading";
 import { Link } from "react-router-dom";
 import Fieldset from "components/porter/Fieldset";
-import Select from "components/porter/Select";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import { useAuthState } from "main/auth/context";
@@ -151,7 +150,7 @@ const AddOnDashboard: React.FC<Props> = ({
   return (
     <StyledAppDashboard>
       <DashboardHeader
-        image={addOn}
+        image={addOnGrad}
         title="Add-ons"
         capitalize={false}
         description="Add-ons and supporting workloads for this project."
@@ -182,7 +181,7 @@ const AddOnDashboard: React.FC<Props> = ({
             (<Loading offset="-150px" />) : (
               <DashboardPlaceholder>
                 <Text size={16}>
-                  No add-ons have been deployed yet
+                  No add-ons have been created yet
                 </Text>
                 <Spacer y={0.5} />
                 <Text color={"helper"}>
@@ -191,7 +190,7 @@ const AddOnDashboard: React.FC<Props> = ({
                 <Spacer y={1} />
                 <Link to="/addons/new">
                   <Button alt onClick={() => { }} height="35px" >
-                    Deploy add-ons <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
+                    Deploy a new add-on <Spacer inline x={1} /> <i className="material-icons" style={{ fontSize: '18px' }}>east</i>
                   </Button>
                 </Link>
               </DashboardPlaceholder>

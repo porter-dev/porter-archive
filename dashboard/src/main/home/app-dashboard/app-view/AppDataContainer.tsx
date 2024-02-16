@@ -9,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import _ from "lodash";
 import AnimateHeight from "react-animate-height";
 import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
@@ -218,10 +217,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
   const onSubmit = handleSubmit(async (data) => {
     try {
-      const { variables, secrets, validatedAppProto } = await validateApp(
-        data,
-        currentProject?.beta_features_enabled
-      );
+      const { variables, secrets, validatedAppProto } = await validateApp(data);
 
       const needsRebuild =
         buildIsDirty ||
@@ -233,7 +229,7 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         return;
       }
 
-      if (currentProject?.beta_features_enabled && !buildIsDirty) {
+      if (!buildIsDirty) {
         const serviceDeletions = setServiceDeletions(data.app.services);
 
         const withPredeploy =
@@ -266,33 +262,9 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
         );
       }
 
-      // force_build will create a new 0 revision that will not be deployed
-      // but will be used to hydrate values when the workflow is run
-      if (!currentProject?.beta_features_enabled) {
-        await api.applyApp(
-          "<token>",
-          {
-            b64_app_proto: btoa(validatedAppProto.toJsonString()),
-            deployment_target_id: deploymentTarget.id,
-            force_build: needsRebuild,
-            variables,
-            secrets,
-            hard_env_update: true,
-          },
-          {
-            project_id: projectId,
-            cluster_id: clusterId,
-          }
-        );
-      }
-
       if (latestSource.type === "github" && needsRebuild) {
         // add a new revision with updated build settings only if they have changed
-        if (
-          currentProject?.beta_features_enabled &&
-          validatedAppProto.build &&
-          buildIsDirty
-        ) {
+        if (validatedAppProto.build && buildIsDirty) {
           await api.updateBuildSettings(
             "<token>",
             {
@@ -521,21 +493,21 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
 
     if (latestProto.build) {
       base.push({
-        label: "Build Settings",
+        label: "Build settings",
         value: "build-settings",
       });
     } else {
       base.push({
-        label: "Image Settings",
+        label: "Image settings",
         value: "image-settings",
       });
     }
 
     if ((currentProject?.helm_values_enabled ?? false) || user?.isPorterUser) {
-      base.push({ label: "Helm Overrides", value: "helm-overrides" });
+      base.push({ label: "Helm overrides", value: "helm-overrides" });
     }
     if ((currentProject?.helm_values_enabled ?? false) || user?.isPorterUser) {
-      base.push({ label: "Latest Helm Values", value: "helm-values" });
+      base.push({ label: "Latest Helm values", value: "helm-values" });
     }
 
     base.push({ label: "Settings", value: "settings" });

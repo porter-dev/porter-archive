@@ -44,16 +44,20 @@ type SlackIntegration struct {
 
 	// The webhook to call
 	Webhook []byte
+
+	// NotificationConfigID is the ID of the notification config to use
+	NotificationConfigID uint `gorm:"default:0"`
 }
 
 func (s *SlackIntegration) ToSlackIntegraionType() *types.SlackIntegration {
 	return &types.SlackIntegration{
-		ID:               s.ID,
-		ProjectID:        s.ProjectID,
-		TeamID:           s.TeamID,
-		TeamName:         s.TeamName,
-		TeamIconURL:      s.TeamIconURL,
-		Channel:          s.Channel,
-		ConfigurationURL: s.ConfigurationURL,
+		ID:                   s.ID,
+		ProjectID:            s.ProjectID,
+		TeamID:               s.TeamID,
+		TeamName:             s.TeamName,
+		TeamIconURL:          s.TeamIconURL,
+		Channel:              s.Channel,
+		ConfigurationURL:     s.ConfigurationURL,
+		NotificationConfigID: s.NotificationConfigID,
 	}
 }

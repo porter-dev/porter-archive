@@ -137,6 +137,15 @@ export const AWS_INSTANCE_LIMITS: InstanceTypes = Object.freeze({
     "standard-22": { vCPU: 22, RAM: 88 },
     "standard-44": { vCPU: 44, RAM: 176 },
   },
+  c7g: {
+    large: { vCPU: 2, RAM: 4 },
+    xlarge: { vCPU: 4, RAM: 8 },
+    "2xlarge": { vCPU: 8, RAM: 16 },
+    "4xlarge": { vCPU: 16, RAM: 32 },
+    "8xlarge": { vCPU: 32, RAM: 64 },
+    "12xlarge": { vCPU: 48, RAM: 96 },
+    "16xlarge": { vCPU: 64, RAM: 128 },
+  },
 });
 
 export const GPU_INSTANCE_LIMIT: InstanceTypes = Object.freeze({

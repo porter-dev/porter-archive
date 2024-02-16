@@ -12,8 +12,9 @@ import Selector from "components/porter/Selector";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
+import { isAWSCluster } from "lib/clusters/types";
 import { type DbFormData } from "lib/databases/types";
-import { isAWSCluster, useClusterList } from "lib/hooks/useClusterList";
+import { useClusterList } from "lib/hooks/useCluster";
 import { useDatastoreList } from "lib/hooks/useDatabaseList";
 import { useDatastoreMethods } from "lib/hooks/useDatabaseMethods";
 import { useIntercom } from "lib/hooks/useIntercom";
@@ -140,7 +141,7 @@ const DatabaseForm: React.FC<Props> = ({
               <Button
                 type="submit"
                 status={submitButtonStatus}
-                loadingText={"Creating..."}
+                loadingText={"Creating . . ."}
                 disabled={isSubmitting || isValidating}
               >
                 Create

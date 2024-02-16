@@ -49,7 +49,7 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
       {
         tier: "db.t4g.large" as const,
         label: "Large",
-        cpuCores: 4,
+        cpuCores: 2,
         ramGigabytes: 8,
         storageGigabytes: 256,
       },
@@ -128,14 +128,14 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
         storageGigabytes: 0,
       },
       {
-        tier: "cache.r7g.large" as const,
+        tier: "cache.r6g.large" as const,
         label: "Large",
         cpuCores: 2,
         ramGigabytes: 13,
         storageGigabytes: 0,
       },
       {
-        tier: "cache.r7g.xlarge" as const,
+        tier: "cache.r6g.xlarge" as const,
         label: "Extra Large",
         cpuCores: 4,
         ramGigabytes: 26,

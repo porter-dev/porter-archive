@@ -165,18 +165,16 @@ const BuildpackSettings: React.FC<Props> = ({
           control={control}
           name="app.build.builder"
           render={({ field: { onChange } }) => (
-            <>
-              <Select
-                value={build.builder}
-                width="300px"
-                options={builderOptions}
-                setValue={(val) => {
-                  onChange(val);
-                }}
-                label={"Builder"}
-                labelColor="#DFDFE1"
-              />
-            </>
+            <Select
+              value={build.builder}
+              width="300px"
+              options={builderOptions}
+              setValue={(val) => {
+                onChange(val);
+              }}
+              label={"Builder"}
+              labelColor="#DFDFE1"
+            />
           )}
         />
       )}

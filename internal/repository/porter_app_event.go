@@ -21,4 +21,5 @@ type PorterAppEventRepository interface {
 	// ReadDeployEventByAppRevisionID returns a deploy event for a given porter app id and app revision ID
 	ReadDeployEventByAppRevisionID(ctx context.Context, porterAppID uint, appRevisionID string) (models.PorterAppEvent, error)
 	ReadNotificationsByAppRevisionID(ctx context.Context, porterAppInstanceID uuid.UUID, appRevisionID string) ([]*models.PorterAppEvent, error)
+	NotificationByID(ctx context.Context, notificationID string) (*models.PorterAppEvent, error)
 }

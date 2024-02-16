@@ -24,10 +24,10 @@ import {
   type APIContract,
   type ClientCluster,
   type ClientClusterContract,
+  type ClientNode,
   type ClientPreflightCheck,
   type ClusterState,
   type ContractCondition,
-  type NodeType,
   type UpdateClusterResponse,
 } from "lib/clusters/types";
 
@@ -446,7 +446,7 @@ export const useUpdateCluster = ({
 };
 
 type TUseClusterNodeList = {
-  nodes: NodeType[];
+  nodes: ClientNode[];
   isLoading: boolean;
 };
 export const useClusterNodeList = ({
@@ -475,7 +475,27 @@ export const useClusterNodeList = ({
       );
 
       const parsed = await z.array(nodeValidator).parseAsync(res.data);
-      return parsed;
+      return parsed
+        .map((n) => {
+          const nodeGroupType = match(n.labels["porter.run/workload-kind"])
+            .with("application", () => "APPLICATION" as const)
+            .with("system", () => "SYSTEM" as const)
+            .with("monitoring", () => "MONITORING" as const)
+            .with("custom", () => "CUSTOM" as const)
+            .otherwise(() => "UNKNOWN" as const);
+          if (nodeGroupType === "UNKNOWN") {
+            return undefined;
+          }
+          const instanceType = n.labels["node.kubernetes.io/instance-type"];
+          if (!instanceType) {
+            return undefined;
+          }
+          return {
+            nodeGroupType,
+            instanceType,
+          };
+        })
+        .filter(valueExists);
     },
     {
       refetchInterval: 3000,

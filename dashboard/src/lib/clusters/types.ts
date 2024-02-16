@@ -244,7 +244,10 @@ export const nodeValidator = z.object({
   name: z.string(),
   labels: z.record(z.string()),
 });
-export type NodeType = z.infer<typeof nodeValidator>;
+export type ClientNode = {
+  nodeGroupType: NodeGroupType;
+  instanceType: string;
+};
 
 // Cluster
 export const clusterValidator = z.object({
@@ -347,44 +350,31 @@ export const contractValidator = z.object({
 });
 // this is the type of the object that is returned from the getContract API, but only the base64_contract field is editable by the user
 export type APIContract = z.infer<typeof contractValidator>;
-const eksNodeGroupTypeValidator = z.enum([
+const nodeGroupTypeValidator = z.enum([
   "UNKNOWN",
   "SYSTEM",
   "MONITORING",
   "APPLICATION",
   "CUSTOM",
 ]);
-const gkeNodeGroupTypeValidator = z.enum([
-  "UNKNOWN",
-  "SYSTEM",
-  "MONITORING",
-  "APPLICATION",
-  "CUSTOM",
-]);
+type NodeGroupType = z.infer<typeof nodeGroupTypeValidator>;
 const eksNodeGroupValidator = z.object({
   instanceType: z.string(),
   minInstances: z.number(),
   maxInstances: z.number(),
-  nodeGroupType: eksNodeGroupTypeValidator,
+  nodeGroupType: nodeGroupTypeValidator,
 });
 const gkeNodeGroupValidator = z.object({
   instanceType: z.string(),
   minInstances: z.number(),
   maxInstances: z.number(),
-  nodeGroupType: gkeNodeGroupTypeValidator,
+  nodeGroupType: nodeGroupTypeValidator,
 });
-const aksNodeGroupTypeValidator = z.enum([
-  "UNKNOWN",
-  "SYSTEM",
-  "MONITORING",
-  "APPLICATION",
-  "CUSTOM",
-]);
 const aksNodeGroupValidator = z.object({
   instanceType: z.string(),
   minInstances: z.number(),
   maxInstances: z.number(),
-  nodeGroupType: aksNodeGroupTypeValidator,
+  nodeGroupType: nodeGroupTypeValidator,
 });
 
 const cidrRangeValidator = z

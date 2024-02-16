@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import pluralize from "pluralize";
 import styled from "styled-components";
 
@@ -10,26 +10,33 @@ import Text from "components/porter/Text";
 import { useClusterContext } from "./ClusterContextProvider";
 
 const ClusterStatus: React.FC = () => {
-  const { cluster, applicationNodes } = useClusterContext();
+  const { nodes, isClusterUpdating } = useClusterContext();
+
+  const applicationNodes = useMemo(() => {
+    return nodes.filter((n) => n.nodeGroupType === "APPLICATION");
+  }, [nodes]);
 
   return (
     <Container row style={{ flexShrink: 0 }}>
       <Spacer inline x={0.2} />
-      <StatusDot
-        status={cluster.status === "READY" ? "available" : "pending"}
-        heightPixels={8}
-      />
-      <Spacer inline x={0.7} />
-      {cluster.status === "READY" ? (
-        <Text color="helper">
-          Applications using {applicationNodes.length}{" "}
-          <Code>
-            {applicationNodes[0]?.labels["node.kubernetes.io/instance-type"]}
-          </Code>{" "}
-          {pluralize("instance", applicationNodes.length)}
-        </Text>
+      {isClusterUpdating ? (
+        <>
+          <StatusDot status={"pending"} heightPixels={8} />
+          <Spacer inline x={0.7} />
+          <Text color="helper">Updating</Text>
+        </>
       ) : (
-        <Text color="helper">Updating</Text>
+        applicationNodes.length !== 0 && (
+          <>
+            <StatusDot status={"available"} heightPixels={8} />
+            <Spacer inline x={0.7} />
+            <Text color="helper">
+              Applications using {applicationNodes.length}{" "}
+              <Code>{applicationNodes[0].instanceType}</Code>{" "}
+              {pluralize("instance", applicationNodes.length)}
+            </Text>
+          </>
+        )
       )}
     </Container>
   );

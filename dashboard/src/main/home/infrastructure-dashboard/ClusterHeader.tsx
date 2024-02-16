@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import styled from "styled-components";
 
 import Container from "components/porter/Container";
 import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
-import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
 
 import { readableDate } from "shared/string_utils";
@@ -13,7 +12,11 @@ import { useClusterContext } from "./ClusterContextProvider";
 import ClusterStatus from "./ClusterStatus";
 
 const ClusterHeader: React.FC = () => {
-  const { cluster } = useClusterContext();
+  const { cluster, isClusterUpdating, nodes } = useClusterContext();
+
+  const applicationNodes = useMemo(() => {
+    return nodes.filter((n) => n.nodeGroupType === "APPLICATION");
+  }, [nodes]);
 
   return (
     <>
@@ -31,8 +34,13 @@ const ClusterHeader: React.FC = () => {
         </div>
         <Spacer y={0.5} />
       </CreatedAtContainer>
-      <Spacer y={0.5} />
-      <ClusterStatus />
+      {isClusterUpdating ||
+        (applicationNodes.length !== 0 && (
+          <>
+            <Spacer y={0.5} />
+            <ClusterStatus />
+          </>
+        ))}
     </>
   );
 };

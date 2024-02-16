@@ -23,6 +23,7 @@ type ProjectList struct {
 	EnableReprovision      bool   `json:"enable_reprovision"`
 	ValidateApplyV2        bool   `json:"validate_apply_v2"`
 	AdvancedInfraEnabled   bool   `json:"advanced_infra_enabled"`
+	SandboxEnabled         bool   `json:"sandbox_enabled"`
 }
 
 // Project type for entries in api responses for everything other than `GET /projects`
@@ -52,6 +53,7 @@ type Project struct {
 	ValidateApplyV2                 bool    `json:"validate_apply_v2"`
 	ManagedDeploymentTargetsEnabled bool    `json:"managed_deployment_targets_enabled"`
 	AdvancedInfraEnabled            bool    `json:"advanced_infra_enabled"`
+	SandboxEnabled                  bool    `json:"sandbox_enabled"`
 }
 
 // FeatureFlags is a struct that contains old feature flag representations
@@ -162,6 +164,8 @@ type StepEnum string
 const (
 	// StepConnectSource is a value describing the current onboarding step as `connect_source` (the first step)
 	StepConnectSource StepEnum = "connect_source"
+	// StepCleanUp is a value describing the current onboarding step as `clean_up` (the last step)
+	StepCleanUp StepEnum = "clean_up"
 )
 
 // ConnectedSourceType describes the source of an onboarding

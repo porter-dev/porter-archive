@@ -90,7 +90,7 @@ const Resources: React.FC<ResourcesProps> = ({
             : `app.services.${index}.smartOptimization`
         }
         control={control}
-        render={({ field: { value, onChange } }) => (
+        render={({ field: { value, onChange } }) => {!currentProject?.sandbox_enabled && (
           <SmartOptHeader>
             <StyledIcon
               className="material-icons"
@@ -136,7 +136,7 @@ const Resources: React.FC<ResourcesProps> = ({
               inputProps={{ "aria-label": "controlled" }}
             />
           </SmartOptHeader>
-        )}
+        )}}
       />
       {showNeedHelpModal && (
         <SmartOptModal setModalVisible={setShowNeedHelpModal} />
@@ -172,12 +172,12 @@ const Resources: React.FC<ResourcesProps> = ({
                 value: e,
               });
             }}
-            step={0.1}
+            step={0.01}
             disabled={value.readOnly}
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
-            isSmartOptimizationOn={smartOpt?.value ?? false}
+            isSmartOptimizationOn={!currentProject?.sandbox_enabled && (smartOpt?.value ?? false)}
             decimalsToRoundTo={2}
           />
         )}
@@ -219,7 +219,7 @@ const Resources: React.FC<ResourcesProps> = ({
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
-            isSmartOptimizationOn={smartOpt?.value ?? false}
+            isSmartOptimizationOn={!currentProject?.sandbox_enabled && (smartOpt?.value ?? false)}
           />
         )}
       />

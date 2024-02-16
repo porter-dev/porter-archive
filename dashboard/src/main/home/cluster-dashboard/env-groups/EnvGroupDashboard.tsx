@@ -17,6 +17,9 @@ import { getQueryParam, pushQueryParams, pushFiltered } from "shared/routing";
 import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Spacer from "components/porter/Spacer";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import Text from "components/porter/Text";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -81,6 +84,26 @@ const EnvGroupDashboard = (props: PropsType) => {
   const renderBody = () => {
     if (props.currentCluster.status === "UPDATING_UNAVAILABLE") {
       return <ClusterProvisioningPlaceholder />
+    }
+
+    if (currentProject?.sandbox_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>Environment groups are not enabled for sandbox users</Text>
+          <Spacer y={0.5} />
+          <Text color={"helper"}>
+            Eject to your own cloud account to enable environment groups.
+          </Text>
+          <Spacer y={1} />
+          <ShowIntercomButton
+            alt
+            message="I would like to eject to my own cloud account"
+            height="35px"
+          >
+            Request ejection
+          </ShowIntercomButton>
+        </DashboardPlaceholder>
+      );
     }
 
     const goBack = () =>

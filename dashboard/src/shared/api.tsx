@@ -698,7 +698,17 @@ const updateNotificationConfig = baseApi<
     slack_integration_id: number;
     config: {
       mention: string;
-      statuses: Array<{ status: string }>;
+      statuses: {
+        successful: boolean;
+        failed: boolean;
+        progressing: boolean;
+      };
+      types: {
+        deploy: boolean;
+        predeploy: boolean;
+        build: boolean;
+        alert: boolean;
+      };
     };
   },
   {

@@ -250,16 +250,6 @@ const NodeCondition = z.object({
 });
 export const nodeValidator = z.object({
   name: z.string(),
-  cpu_reqs: z.string(),
-  memory_reqs: z.string(),
-  ephemeral_storage_reqs: z.string(),
-  fraction_cpu_reqs: z.number(),
-  fraction_cpu_limits: z.number(),
-  fraction_memory_reqs: z.number(),
-  fraction_memory_limits: z.number(),
-  fraction_ephemeral_storage_reqs: z.number(),
-  fraction_ephemeral_storage_limits: z.number(),
-  node_conditions: NodeCondition.array(),
   labels: z.record(z.string()),
 });
 export type NodeType = z.infer<typeof nodeValidator>;

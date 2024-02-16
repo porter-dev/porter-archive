@@ -12,8 +12,9 @@ import { updateExistingClusterContract } from "lib/clusters";
 import {
   type ClientCluster,
   type ClientClusterContract,
+  type ClientNode,
 } from "lib/clusters/types";
-import { useCluster } from "lib/hooks/useCluster";
+import { useCluster, useClusterNodeList } from "lib/hooks/useCluster";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -21,6 +22,7 @@ import notFound from "assets/not-found.png";
 
 type ClusterContextType = {
   cluster: ClientCluster;
+  nodes: ClientNode[];
   projectId: number;
   isClusterUpdating: boolean;
   updateClusterVanityName: (name: string) => void;
@@ -54,6 +56,8 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
     clusterId,
     refetchInterval: 3000,
   });
+
+  const { nodes } = useClusterNodeList({ clusterId });
 
   const paramsExist =
     !!clusterId && !!currentProject && currentProject.id !== -1;
@@ -163,6 +167,7 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
     <ClusterContext.Provider
       value={{
         cluster,
+        nodes,
         projectId: currentProject.id,
         isClusterUpdating,
         updateClusterVanityName,

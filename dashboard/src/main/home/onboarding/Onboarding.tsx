@@ -1,19 +1,23 @@
-import Loading from "components/Loading";
-import ProvisionerFlow from "components/ProvisionerFlow";
 import React, { useContext, useEffect, useState } from "react";
-import api from "shared/api";
-import { Context } from "shared/Context";
 import styled from "styled-components";
 import { devtools } from "valtio/utils";
-import Routes from "./Routes";
-import { OFState } from "./state";
-import { useSteps } from "./state/StepHandler";
-import { type Onboarding as OnboardingSaveType } from "./types";
 
+import Loading from "components/Loading";
+import Banner from "components/porter/Banner";
+import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
+import ProvisionerFlow from "components/ProvisionerFlow";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
 import bolt from "assets/bolt.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import CreateClusterForm from "../infrastructure-dashboard/forms/CreateClusterForm";
+import Routes from "./Routes";
+import { OFState } from "./state";
+import { useSteps } from "./state/StepHandler";
+import { type Onboarding as OnboardingSaveType } from "./types";
 
 const Onboarding = () => {
   const context = useContext(Context);
@@ -154,9 +158,13 @@ const Onboarding = () => {
   }, [context?.currentProject?.id]);
 
   const renderOnboarding = () => {
-    if (context?.currentProject?.simplified_view_enabled && context?.currentProject?.capi_provisioner_enabled && context?.currentProject?.beta_features_enabled) {
+    if (
+      context?.currentProject?.simplified_view_enabled &&
+      context?.currentProject?.capi_provisioner_enabled &&
+      context?.currentProject?.beta_features_enabled
+    ) {
       return <CreateClusterForm />;
-  } else if (context?.currentProject?.capi_provisioner_enabled) {
+    } else if (context?.currentProject?.capi_provisioner_enabled) {
       return (
         <Wrapper>
           <DashboardHeader
@@ -166,23 +174,29 @@ const Onboarding = () => {
             disableLineBreak
             capitalize={false}
           />
-          <Br />
+          <Banner>
+            Don't want to link your own cloud account? Immediately deploy your
+            apps on the <Spacer inline width="5px" />
+            <Link to="https://sandbox.porter.run" hasunderline>
+              Porter sandbox
+            </Link>
+            .
+          </Banner>
+          <Spacer y={1} />
           <ProvisionerFlow />
           <Div />
         </Wrapper>
-      )
+      );
     } else {
       return (
         <StyledOnboarding>
           {isLoading ? <Loading /> : <Routes />}
         </StyledOnboarding>
-      )
+      );
     }
   };
 
-  return (
-    <>{renderOnboarding()}</>
-  );
+  return <>{renderOnboarding()}</>;
 };
 
 export default Onboarding;

@@ -611,7 +611,7 @@ func (r *Registry) GetACRCredentials(repo repository.Repository) (string, string
 	// unique token name to prevent token expiry during close subsequent builds.
 	// Token expires in 14 days, limited at 100 tokens/reg.
 	if az.ACRTokenName == "" || len(az.ACRPassword1) == 0 {
-		az.ACRTokenName = fmt.Sprintf("porter-acr-token-%s-%d", az.ACRName, rand.Intn(100))
+		az.ACRTokenName = fmt.Sprintf("porter-acr-token-%s-%d", az.ACRName, rand.Intn(100)) // nolint:gosec
 
 		// create an acr repo token
 		cred, err := azidentity.NewClientSecretCredential(az.AzureTenantID, az.AzureClientID, string(az.ServicePrincipalSecret), nil)

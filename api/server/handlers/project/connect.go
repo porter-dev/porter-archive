@@ -1,9 +1,10 @@
 package project
 
 import (
+	"net/http"
+
 	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
-	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -15,21 +16,24 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-type ProjectConnectHandler struct {
+// ConnectHandler is the handler for the POST /projects/{project_id}/connect endpoint
+type ConnectHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
-func NewProjectConnectHandler(
+// NewConnectHandler returns a new ConnectHandler
+func NewConnectHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *ProjectConnectHandler {
-	return &ProjectConnectHandler{
+) *ConnectHandler {
+	return &ConnectHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (p *ProjectConnectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// ServeHTTP connects a project to the hosted cluster
+func (p *ConnectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "connect-project-to-hosted")
 	defer span.End()
 
@@ -40,7 +44,6 @@ func (p *ProjectConnectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	resp, err := p.Config().ClusterControlPlaneClient.ConnectHostedProject(ctx, connect.NewRequest(&porterv1.ConnectHostedProjectRequest{
 		ProjectId: int64(proj.ID),
 	}))
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -54,7 +57,7 @@ func (p *ProjectConnectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	p.WriteResult(w, r, resp.Msg.ClusterId)
 
-	p.Config().AnalyticsClient.Track(analytics.ProjectConnectTrack(&analytics.ProjectCreateDeleteTrackOpts{
+	_ = p.Config().AnalyticsClient.Track(analytics.ProjectConnectTrack(&analytics.ProjectCreateDeleteTrackOpts{
 		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),
 	}))
 }

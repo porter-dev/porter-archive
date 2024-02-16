@@ -164,7 +164,8 @@ type StepEnum string
 const (
 	// StepConnectSource is a value describing the current onboarding step as `connect_source` (the first step)
 	StepConnectSource StepEnum = "connect_source"
-	StepCleanUp       StepEnum = "clean_up"
+	// StepCleanUp is a value describing the current onboarding step as `clean_up` (the last step)
+	StepCleanUp StepEnum = "clean_up"
 )
 
 // ConnectedSourceType describes the source of an onboarding

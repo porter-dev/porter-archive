@@ -1135,7 +1135,7 @@ func getProjectRoutes(
 		},
 	)
 
-	connectHandler := project.NewProjectConnectHandler(
+	connectHandler := project.NewConnectHandler(
 		config,
 		factory.GetDecoderValidator(),
 		factory.GetResultWriter(),

@@ -23,14 +23,6 @@ import JobDashboard from "./jobs/JobDashboard";
 import ExpandedEnvGroupDashboard from "./env-groups/ExpandedEnvGroupDashboard";
 import EnvGroupDashboard from "./env-groups/EnvGroupDashboard";
 
-const LazyDatabasesRoutes = loadable(
-  // @ts-ignore
-  () => import("./databases/routes.tsx"),
-  {
-    fallback: <Loading />,
-  }
-);
-
 const LazyPreviewEnvironmentsRoutes = loadable(
   // @ts-ignore
   () => import("./preview-environments/routes.tsx"),

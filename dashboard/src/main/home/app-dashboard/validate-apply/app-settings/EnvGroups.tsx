@@ -106,7 +106,7 @@ const EnvGroups: React.FC<Props> = ({
     }
   };
 
-  return (
+  return !currentProject?.sandbox_enabled && (
     <>
       <Text size={16}>Synced environment groups</Text>
       <Spacer y={0.5} />
@@ -131,17 +131,15 @@ const EnvGroups: React.FC<Props> = ({
           <Spacer y={1} />
         </>
       )}
-      {!currentProject?.sandbox_enabled ? (
-        <Button
-          alt
-          onClick={() => {
-            setShowEnvModal(true);
-          }}
-        >
-          <I className="material-icons">add</I>
-          Sync an env group
-        </Button>
-      ) : null }
+      <Button
+        alt
+        onClick={() => {
+          setShowEnvModal(true);
+        }}
+      >
+        <I className="material-icons">add</I>
+        Sync an env group
+      </Button>
       {showEnvModal ? (
         <EnvGroupModal
           setOpen={setShowEnvModal}

@@ -109,8 +109,14 @@ function clientEKSConfigToProto(
       allowlistIpRanges: clientConfig.loadBalancer.allowlistIpRanges,
       enableWafv2: clientConfig.loadBalancer.isWafV2Enabled,
       wafv2Arn: clientConfig.loadBalancer.wafV2Arn,
-      additionalCertificateArns: clientConfig.loadBalancer.certificateArns,
-      tags: clientConfig.loadBalancer.awsTags,
+      additionalCertificateArns: clientConfig.loadBalancer.certificateArns.map(
+        (certArn) => certArn.arn
+      ),
+      tags: Object.fromEntries(
+        clientConfig.loadBalancer.awsTags
+          .filter((tag) => tag.key.length > 0 && tag.value.length > 0)
+          .map((tag) => [tag.key, tag.value])
+      ),
     }),
     logging: new EKSLogging({
       ...(existingConfig?.logging ?? {}),
@@ -261,8 +267,15 @@ const clientEKSConfigFromProto = (value: EKS): EKSClientClusterConfig => {
         .otherwise(() => "UNKNOWN" as const),
       wildcardDomain: value.loadBalancer?.wildcardDomain ?? "",
       allowlistIpRanges: value.loadBalancer?.allowlistIpRanges ?? "",
-      certificateArns: value.loadBalancer?.additionalCertificateArns ?? [],
-      awsTags: value.loadBalancer?.tags ?? {},
+      certificateArns: (
+        value.loadBalancer?.additionalCertificateArns ?? []
+      ).map((arn) => ({ arn })),
+      awsTags: Object.entries(value.loadBalancer?.tags ?? {}).map((tag) => {
+        return {
+          key: tag[0],
+          value: tag[1],
+        };
+      }),
       isWafV2Enabled: value.loadBalancer?.enableWafv2 ?? false,
       wafV2Arn: value.loadBalancer?.wafv2Arn ?? "",
     },

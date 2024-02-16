@@ -17,6 +17,7 @@ import { useClusterContext } from "./ClusterContextProvider";
 import { useClusterFormContext } from "./ClusterFormContextProvider";
 import ClusterProvisioningIndicator from "./ClusterProvisioningIndicator";
 import ClusterSaveButton from "./ClusterSaveButton";
+import AdvancedSettingsTab from "./tabs/AdvancedSettingsTab";
 import ClusterOverview from "./tabs/overview/ClusterOverview";
 import Settings from "./tabs/Settings";
 
@@ -117,7 +118,7 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
       {match(currentTab)
         .with("overview", () => <ClusterOverview />)
         .with("settings", () => <Settings />)
-        .with("advanced", () => <div>Advanced settings</div>)
+        .with("advanced", () => <AdvancedSettingsTab />)
         .otherwise(() => null)}
     </DashboardWrapper>
   );

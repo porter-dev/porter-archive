@@ -422,8 +422,17 @@ const eksConfigValidator = z.object({
       type: z.enum(["UNKNOWN", "ALB", "NLB"]),
       wildcardDomain: z.string(),
       allowlistIpRanges: z.string(),
-      certificateArns: z.string().array(),
-      awsTags: z.record(z.string()),
+      certificateArns: z
+        .object({
+          arn: z.string(),
+        })
+        .array(),
+      awsTags: z
+        .object({
+          key: z.string(),
+          value: z.string(),
+        })
+        .array(),
       isWafV2Enabled: z.boolean(),
       wafV2Arn: z.string(),
     })
@@ -432,7 +441,7 @@ const eksConfigValidator = z.object({
       wildcardDomain: "",
       allowlistIpRanges: "",
       certificateArns: [],
-      awsTags: {},
+      awsTags: [],
       isWafV2Enabled: false,
       wafV2Arn: "",
     }),

@@ -1,7 +1,7 @@
 "on":
   push:
     branches:
-    - sandbox
+    - master
 name: Deploy to porter-sandbox
 jobs:
   build-go:

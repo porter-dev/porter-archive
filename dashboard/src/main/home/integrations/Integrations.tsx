@@ -17,7 +17,7 @@ import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 type PropsType = RouteComponentProps;
 
 const Integrations: React.FC<PropsType> = (props) => {
-  const { enableGitlab } = useContext(Context);
+  const { enableGitlab, currentProject } = useContext(Context);
 
   const IntegrationCategoryStrings = useMemo(() => {
     if (!enableGitlab) {

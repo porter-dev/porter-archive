@@ -584,6 +584,16 @@ const createProject = baseApi<{ name: string }, {}>("POST", (pathParams) => {
   return `/api/projects`;
 });
 
+const connectProjectToCluster = baseApi<
+{}, 
+{
+  id: number;
+}>("POST", (pathParams) => {
+  const { id } = pathParams;
+
+  return `/api/projects/${id}/connect`;
+});
+
 const createSubdomain = baseApi<
   {},
   {
@@ -688,7 +698,17 @@ const updateNotificationConfig = baseApi<
     slack_integration_id: number;
     config: {
       mention: string;
-      statuses: Array<{ status: string }>;
+      statuses: {
+        successful: boolean;
+        failed: boolean;
+        progressing: boolean;
+      };
+      types: {
+        deploy: boolean;
+        predeploy: boolean;
+        build: boolean;
+        alert: boolean;
+      };
     };
   },
   {
@@ -3458,6 +3478,7 @@ export default {
   createPasswordResetVerify,
   createPasswordResetFinalize,
   createProject,
+  connectProjectToCluster,
   // ------------ PORTER APP -----------
   getPorterApps,
   getPorterApp,

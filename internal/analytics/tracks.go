@@ -129,6 +129,20 @@ type ProjectCreateDeleteTrackOpts struct {
 	CompanyName string
 }
 
+// ProjectConnectTrack returns a track for when a project is connected
+func ProjectConnectTrack(opts *ProjectCreateDeleteTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ProjectConnect),
+	)
+}
+
 // ProjectCreateTrack returns a track for when a project is created
 func ProjectCreateTrack(opts *ProjectCreateDeleteTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})

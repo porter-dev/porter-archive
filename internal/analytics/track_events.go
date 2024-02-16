@@ -7,6 +7,7 @@ const (
 	UserCreate      SegmentEvent = "New User"
 	UserVerifyEmail SegmentEvent = "User Verified Email"
 	ProjectCreate   SegmentEvent = "New Project Event"
+	ProjectConnect  SegmentEvent = "Project Connected to Sandbox"
 	ProjectDelete   SegmentEvent = "Project Deleted"
 	ClusterDelete   SegmentEvent = "Cluster Deleted"
 

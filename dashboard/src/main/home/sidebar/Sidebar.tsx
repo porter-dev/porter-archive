@@ -113,7 +113,7 @@ class Sidebar extends Component<PropsType, StateType> {
     }
   };
 
-  renderProjectContents = () => {
+  renderProjectContents = (): React.ReactNode => {
     const { currentView } = this.props;
     const { currentProject, user, currentCluster, hasFinishedOnboarding } =
       this.context;
@@ -323,44 +323,53 @@ class Sidebar extends Component<PropsType, StateType> {
               path="/addons"
               active={window.location.pathname.startsWith("/addons")}
             >
-              <Img src={addOns} />
-              Add-ons
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={addOns} />
+                  Add-ons
+                </Container>
+                {currentProject.sandbox_enabled && <Image size={15} src={lock} />}
+              </Container>
             </NavButton>
+
             <NavButton
               path="/environment-groups"
               active={window.location.pathname.startsWith(
                 "/environment-groups"
               )}
             >
-              <Img src={sliders} />
-              Env groups
+              <Container row spaced style={{ width: "100%" }}>
+                <Container row>
+                  <Img src={sliders} />
+                  Env groups
+                </Container>
+                {currentProject.sandbox_enabled && <Image size={15} src={lock} />}
+              </Container>
             </NavButton>
-            {this.props.isAuthorized("settings", "", [
-              "get",
-              "update",
-              "delete",
-            ]) && (
-              <NavButton
-                path={
-                  currentProject?.simplified_view_enabled &&
+            <NavButton
+              path={
+                currentProject?.simplified_view_enabled &&
+                currentProject?.capi_provisioner_enabled &&
+                currentProject?.beta_features_enabled
+                  ? "/infrastructure"
+                  : "/cluster-dashboard"
+              }
+              active={window.location.pathname.startsWith(
+                currentProject?.simplified_view_enabled &&
                   currentProject?.capi_provisioner_enabled &&
                   currentProject?.beta_features_enabled
-                    ? "/infrastructure"
-                    : "/cluster-dashboard"
-                }
-                active={window.location.pathname.startsWith(
-                  currentProject?.simplified_view_enabled &&
-                    currentProject?.capi_provisioner_enabled &&
-                    currentProject?.beta_features_enabled
-                    ? "/infrastructure"
-                    : "/cluster-dashboard"
-                )}
-              >
-                <Img src={infra} />
-                Infrastructure
-              </NavButton>
-            )}
-
+                  ? "/infrastructure"
+                  : "/cluster-dashboard"
+              )}
+            >
+              <Container row spaced style={{ width: "100%" }}>
+                  <Container row>
+                    <Img src={infra} />
+                    Infrastructure
+                  </Container>
+                  {currentProject.sandbox_enabled && <Image size={15} src={lock} />}
+              </Container>
+            </NavButton>
             <NavButton path="/preview-environments">
               <Container row spaced style={{ width: "100%" }}>
                 <Container row>
@@ -387,7 +396,7 @@ class Sidebar extends Component<PropsType, StateType> {
               </Container>
             </NavButton>
 
-            {this.props.isAuthorized("integrations", "", [
+            {!currentProject.sandbox_enabled && this.props.isAuthorized("integrations", "", [
               "get",
               "create",
               "update",
@@ -428,7 +437,7 @@ class Sidebar extends Component<PropsType, StateType> {
   };
 
   // SidebarBg is separate to cover retracted drawer
-  render() {
+  render(): React.ReactNode {
     return (
       <>
         {this.renderPullTab()}
@@ -594,31 +603,6 @@ const Tooltip = styled.div`
     to {
       opacity: 1;
     }
-  }
-`;
-
-const CollapseButton = styled.div`
-  position: absolute;
-  right: 0;
-  top: 8px;
-  height: 23px;
-  width: 23px;
-  background: #525563aa;
-  border-top-left-radius: 3px;
-  border-bottom-left-radius: 3px;
-  cursor: pointer;
-
-  :hover {
-    background: #636674;
-  }
-
-  > i {
-    color: #ffffff77;
-    font-size: 14px;
-    transform: rotate(180deg);
-    position: absolute;
-    top: 4px;
-    right: 5px;
   }
 `;
 

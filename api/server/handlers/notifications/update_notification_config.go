@@ -1,6 +1,8 @@
 package notifications
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -42,19 +44,24 @@ type UpdateNotificationConfigRequest struct {
 
 // Config is the config object for the /notifications endpoint
 type Config struct {
-	Mention  string   `json:"mention"`
-	Statuses []Status `json:"statuses"`
-	Types    []Type   `json:"types"`
+	Mention  string          `json:"mention"`
+	Statuses StatusesEnabled `json:"statuses"`
+	Types    TypesEnabled    `json:"types"`
 }
 
-// Status is a wrapper object over a string for zod validation
-type Status struct {
-	Status string `json:"status"`
+// StatusesEnabled is a struct that signifies whether a status is enabled or not
+type StatusesEnabled struct {
+	Successful  bool `json:"successful"`
+	Failed      bool `json:"failed"`
+	Progressing bool `json:"progressing"`
 }
 
-// Type is a wrapper object over a string for zod validation
-type Type struct {
-	Type string `json:"type"`
+// TypesEnabled is a struct that signifies whether a type is enabled or not
+type TypesEnabled struct {
+	Deploy    bool `json:"deploy"`
+	Build     bool `json:"build"`
+	PreDeploy bool `json:"predeploy"`
+	Alert     bool `json:"alert"`
 }
 
 // UpdateNotificationConfigResponse is the response object for the /notifications/config/{notification_config_id} endpoint
@@ -91,10 +98,17 @@ func (n *UpdateNotificationConfigHandler) ServeHTTP(w http.ResponseWriter, r *ht
 		return
 	}
 
+	configProto, err := configToProto(request.Config)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error converting config to proto")
+		n.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	updateReq := connect.NewRequest(&porterv1.UpdateNotificationConfigRequest{
 		ProjectId:            int64(project.ID),
 		NotificationConfigId: int64(notificationConfigID),
-		Config:               configToProto(request.Config),
+		Config:               configProto,
 		SlackIntegrationId:   int64(request.SlackIntegrationID),
 	})
 	updateResp, err := n.Config().ClusterControlPlaneClient.UpdateNotificationConfig(ctx, updateReq)
@@ -117,22 +131,58 @@ func (n *UpdateNotificationConfigHandler) ServeHTTP(w http.ResponseWriter, r *ht
 	n.WriteResult(w, r, response)
 }
 
-func configToProto(config Config) *porterv1.NotificationConfig {
-	var statuses []porterv1.EnumNotificationStatus
-	for _, status := range config.Statuses {
-		statuses = append(statuses, transformStatusStringToProto[status.Status])
+func configToProto(config Config) (*porterv1.NotificationConfig, error) {
+	statusMap := map[string]bool{}
+
+	by, err := json.Marshal(config.Statuses)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling statuses: %s", err)
 	}
 
-	var types []porterv1.EnumNotificationEventType
-	for _, t := range config.Types {
-		types = append(types, transformTypeStringToProto[t.Type])
+	err = json.Unmarshal(by, &statusMap)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling statuses: %s", err)
 	}
 
-	return &porterv1.NotificationConfig{
-		Statuses:    statuses,
-		EventTypes:  types,
-		SlackConfig: &porterv1.SlackConfig{Mentions: []string{config.Mention}},
+	var statuses []*porterv1.NotificationStatusEnabled
+	for status, enabled := range statusMap {
+		if protoStatus, ok := transformStatusStringToProto[status]; ok {
+			statuses = append(statuses, &porterv1.NotificationStatusEnabled{
+				Status:  protoStatus,
+				Enabled: enabled,
+			})
+		}
 	}
+
+	typeMap := map[string]bool{}
+
+	by, err = json.Marshal(config.Types)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling types: %s", err)
+	}
+
+	err = json.Unmarshal(by, &typeMap)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling types: %s", err)
+	}
+
+	var types []*porterv1.NotificationTypeEnabled
+	for t, enabled := range typeMap {
+		if protoType, ok := transformTypeStringToProto[t]; ok {
+			types = append(types, &porterv1.NotificationTypeEnabled{
+				Type:    protoType,
+				Enabled: enabled,
+			})
+		}
+	}
+
+	protoConfig := &porterv1.NotificationConfig{
+		EnabledStatuses: statuses,
+		EnabledTypes:    types,
+		SlackConfig:     &porterv1.SlackConfig{Mentions: []string{config.Mention}},
+	}
+
+	return protoConfig, nil
 }
 
 var transformStatusStringToProto = map[string]porterv1.EnumNotificationStatus{
@@ -142,7 +192,42 @@ var transformStatusStringToProto = map[string]porterv1.EnumNotificationStatus{
 }
 
 var transformTypeStringToProto = map[string]porterv1.EnumNotificationEventType{
-	"deploy":     porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_DEPLOY,
-	"build":      porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_BUILD,
-	"pre-deploy": porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_PREDEPLOY,
+	"deploy":    porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_DEPLOY,
+	"build":     porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_BUILD,
+	"predeploy": porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_PREDEPLOY,
+	"alert":     porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_ALERT,
 }
+
+// reverseMap returns a map with the keys and values swapped
+func reverseMap[K comparable, V comparable](m map[K]V) map[V]K {
+	result := map[V]K{}
+	for k, v := range m {
+		result[v] = k
+	}
+	return result
+}
+
+// mapKeys returns the keys of a map as a slice
+func mapKeys[K comparable, V any](m map[K]V) []K {
+	var keys []K
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// trueMap returns a map with the keys set to true
+func trueMap[K comparable](keys []K) map[K]bool {
+	m := map[K]bool{}
+	for _, k := range keys {
+		m[k] = true
+	}
+	return m
+}
+
+var (
+	transformProtoToStatusString = reverseMap(transformStatusStringToProto)
+	transformProtoToTypeString   = reverseMap(transformTypeStringToProto)
+	allStatuses                  = mapKeys(transformStatusStringToProto)
+	allTypes                     = mapKeys(transformTypeStringToProto)
+)

@@ -39,7 +39,7 @@ func (repo *ProjectOnboardingRepository) CreateProjectOnboarding(
 	return onboarding, nil
 }
 
-// CreateProjectOnboarding reads a project onboarding by project id
+// ReadProjectOnboarding reads a project onboarding by project id
 func (repo *ProjectOnboardingRepository) ReadProjectOnboarding(
 	projID uint,
 ) (*models.Onboarding, error) {

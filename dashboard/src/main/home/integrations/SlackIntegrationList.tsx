@@ -2,10 +2,9 @@ import React, { useContext, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import styled from "styled-components";
 import { match } from "ts-pattern";
-import type { IterableElement } from "type-fest";
 import { z } from "zod";
 
 import ConfirmOverlay from "components/ConfirmOverlay";
@@ -28,6 +27,7 @@ import {
 
 import api from "shared/api";
 import { Context } from "shared/Context";
+import alert_square from "assets/alert_square.svg";
 import build from "assets/build.png";
 import deploy from "assets/deploy.png";
 import hash from "assets/hash-02.svg";
@@ -37,18 +37,6 @@ import save from "assets/save-01.svg";
 type SlackIntegrationListProps = {
   slackData: any[];
 };
-
-const statusOptions = [
-  { value: "successful", emoji: "✅", label: "Successful" },
-  { value: "failed", emoji: "⚠️", label: "Failed" },
-  { value: "progressing", emoji: "🚀", label: "Progressing" },
-];
-
-const typeOptions = [
-  { value: "deploy", icon: deploy, label: "Deploy" },
-  { value: "pre-deploy", icon: pre_deploy, label: "Pre-deploy" },
-  { value: "build", icon: build, label: "Build" },
-];
 
 const SlackIntegrationList: React.FC<SlackIntegrationListProps> = (props) => {
   const [isDelete, setIsDelete] = useState(false);
@@ -199,50 +187,11 @@ const NotificationConfigContainer: React.FC<
   });
 
   const {
-    control,
     formState: { isSubmitting: isValidating, errors },
     register,
+    watch,
+    setValue,
   } = notificationForm;
-
-  const {
-    append: statusAppend,
-    remove: statusRemove,
-    fields: statusFields,
-  } = useFieldArray({
-    control,
-    name: "statuses",
-  });
-
-  const onAddStatuses = (
-    inp: IterableElement<NotificationConfigFormData["statuses"]>
-  ): void => {
-    const previouslyAdded = statusFields.findIndex(
-      (s) => s.status === inp.status
-    );
-
-    if (previouslyAdded === -1) {
-      statusAppend(inp);
-    }
-  };
-
-  const {
-    append: typeAppend,
-    remove: typeRemove,
-    fields: typeFields,
-  } = useFieldArray({
-    control,
-    name: "types",
-  });
-
-  const onAddTypes = (
-    inp: IterableElement<NotificationConfigFormData["types"]>
-  ): void => {
-    const previouslyAdded = typeFields.findIndex((s) => s.type === inp.type);
-
-    if (previouslyAdded === -1) {
-      typeAppend(inp);
-    }
-  };
 
   const submitBtnStatus = useMemo(() => {
     if (isValidating || isUpdating) {
@@ -290,71 +239,197 @@ const NotificationConfigContainer: React.FC<
     }
   });
 
+  const typesEnabled = watch("types");
+  const statusesEnabled = watch("statuses");
+
+  const statusOptions = [
+    {
+      value: "successful",
+      emoji: "✅",
+      label: "Successful",
+      field: statusesEnabled.successful,
+      setValue: (value: boolean) => {
+        setValue("statuses.successful", value);
+      },
+    },
+    {
+      value: "failed",
+      emoji: "⚠️",
+      label: "Failed",
+      field: statusesEnabled.failed,
+      setValue: (value: boolean) => {
+        setValue("statuses.failed", value);
+      },
+    },
+    {
+      value: "progressing",
+      emoji: "🚀",
+      label: "Progressing",
+      field: statusesEnabled.progressing,
+      setValue: (value: boolean) => {
+        setValue("statuses.progressing", value);
+      },
+    },
+  ];
+
+  const deploymentOptions = [
+    {
+      value: "deploy",
+      icon: deploy,
+      label: "Deploy",
+      field: typesEnabled.deploy,
+      setValue: (value: boolean) => {
+        setValue("types.deploy", value);
+      },
+    },
+    {
+      value: "pre-deploy",
+      icon: pre_deploy,
+      label: "Pre-deploy",
+      field: typesEnabled.predeploy,
+      setValue: (value: boolean) => {
+        setValue("types.predeploy", value);
+      },
+    },
+    {
+      value: "build",
+      icon: build,
+      label: "Build",
+      field: typesEnabled.build,
+      setValue: (value: boolean) => {
+        setValue("types.build", value);
+      },
+    },
+  ];
+
+  const monitoringOptions = [
+    {
+      value: "alert",
+      icon: alert_square,
+      label: "App Alerts",
+      field: typesEnabled.alert,
+      setValue: (value: boolean) => {
+        setValue("types.alert", value);
+      },
+    },
+  ];
+
   return (
     <>
-      <Text>Filter notification types:</Text>
-      <Spacer y={0.5} />
-      <SelectableList
-        scroll={false}
-        listItems={typeOptions.map((option) => {
-          const selectedOptionsIdx = typeFields.findIndex(
-            (s) => s.type === option.value
-          );
-          return {
-            selectable: (
-              <Container row>
-                <Spacer inline width="1px" />
-                <Icon src={option.icon} width={"8px"} />
-                <Spacer inline width="10px" />
-                <Text size={12}>{option.label}</Text>
-                <Spacer inline x={1} />
-              </Container>
-            ),
-            key: option.value,
-            onSelect: () => {
-              onAddTypes({ type: option.value });
-            },
-            onDeselect: () => {
-              typeRemove(selectedOptionsIdx);
-            },
-            isSelected: selectedOptionsIdx !== -1,
-          };
-        })}
-      />
+      <Text size={16}>App Deployments</Text>
+      <Spacer y={0.2} />
+      <Text size={13} color={"helper"}>
+        Choose which stages you would like to get notified on:
+      </Text>
+      <Spacer y={0.3} />
+      <Container row>
+        <Spacer inline x={0.5} />
+        <SelectableList
+          scroll={false}
+          listItems={deploymentOptions.map((option) => {
+            return {
+              selectable: (
+                <Container row>
+                  <Spacer inline width="1px" />
+                  <img src={option.icon} width={"18px"} />
+                  <Spacer inline width="10px" />
+                  <Text size={12}>{option.label}</Text>
+                  <Spacer inline x={1} />
+                </Container>
+              ),
+              key: option.value,
+              onSelect: () => {
+                option.setValue(true);
+              },
+              onDeselect: () => {
+                option.setValue(false);
+              },
+              isSelected: option.field,
+            };
+          })}
+          checkBox={true}
+          gap={"8px"}
+        />
+      </Container>
+      <Spacer y={0.4} />
+      <Text size={13} color={"helper"}>
+        Choose which statuses you would like to get notified on:
+      </Text>
+      <Spacer y={0.3} />
+      <Container row>
+        <Spacer inline x={0.5} />
+        <SelectableList
+          scroll={false}
+          listItems={statusOptions.map((option) => {
+            return {
+              selectable: (
+                <Container row>
+                  <Spacer inline width="1px" />
+                  <Text size={12}>
+                    <Text size={10}>{option.emoji}</Text>
+                    <Spacer inline x={0.7} />
+                    {option.label}
+                  </Text>
+                  <Spacer inline x={1} />
+                </Container>
+              ),
+              key: option.value,
+              onSelect: () => {
+                option.setValue(true);
+              },
+              onDeselect: () => {
+                option.setValue(false);
+              },
+              isSelected: option.field,
+            };
+          })}
+          checkBox={true}
+          gap={"8px"}
+        />
+      </Container>
       <Spacer y={0.75} />
-      <Text>Filter notification statuses:</Text>
-      <Spacer y={0.5} />
-      <SelectableList
-        scroll={false}
-        listItems={statusOptions.map((option) => {
-          const selectedOptionsIdx = statusFields.findIndex(
-            (s) => s.status === option.value
-          );
-          return {
-            selectable: (
-              <Container row>
-                <Spacer inline width="1px" />
-                <Text size={12}>
-                  {option.emoji}
-                  <Spacer inline x={0.7} />
-                  {option.label}
-                </Text>
-                <Spacer inline x={1} />
-              </Container>
-            ),
-            key: option.value,
-            onSelect: () => {
-              onAddStatuses({ status: option.value });
-            },
-            onDeselect: () => {
-              statusRemove(selectedOptionsIdx);
-            },
-            isSelected: selectedOptionsIdx !== -1,
-          };
-        })}
-      />
+      <Text size={16}>Ongoing Monitoring</Text>
+      <Spacer y={0.2} />
+      <Text size={13} color={"helper"}>
+        Enable alerts for your apps:
+      </Text>
+      <Spacer y={0.2} />
+      <Container row>
+        <Spacer inline x={0.5} />
+        <SelectableList
+          scroll={false}
+          listItems={monitoringOptions.map((option) => {
+            return {
+              selectable: (
+                <Container row>
+                  <Spacer inline width="1px" />
+                  <img src={option.icon} width={"18px"} />
+                  <Spacer inline width="10px" />
+                  <Text size={12}>{option.label}</Text>
+                  <Spacer inline x={1} />
+                </Container>
+              ),
+              key: option.value,
+              onSelect: () => {
+                option.setValue(true);
+              },
+              onDeselect: () => {
+                option.setValue(false);
+              },
+              isSelected: option.field,
+            };
+          })}
+          checkBox={true}
+          gap={"8px"}
+        />
+        <Spacer inline x={0.5} />
+      </Container>
       <Spacer y={0.75} />
-      <Text>@ Mention (only on failure):</Text>
+      <Text size={16}>Additional Configuration</Text>
+      <Spacer y={0.2} />
+      <Text color={"helper"} size={13}>
+        Include an @ mention on failures and alerts:
+      </Text>
       <Spacer y={0.5} />
       <ControlledInput
         placeholder="ex: oncall"

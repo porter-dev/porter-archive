@@ -3,6 +3,8 @@ import styled, { css } from "styled-components";
 
 import Icon from "components/porter/Icon";
 
+import Checkbox from "./Checkbox";
+
 type SelectableRowProps = {
   selectable: React.ReactNode;
   onSelect?: () => void;
@@ -46,17 +48,35 @@ type ListProps = {
   }>;
   scroll?: boolean;
   selectedIcon?: string;
+  checkBox?: boolean;
+  gap?: string;
 };
 
 const SelectableList: React.FC<ListProps> = ({
   listItems,
   scroll = true,
   selectedIcon,
+  checkBox = false,
+  gap = "15px",
 }) => {
   return (
-    <StyledSelectableList scroll={scroll}>
+    <StyledSelectableList scroll={scroll} gap={gap}>
       {listItems.map((li) => {
-        return (
+        return checkBox ? (
+          <Checkbox
+            key={li.key}
+            checked={li.isSelected ? li.isSelected : false}
+            toggleChecked={() => {
+              if (li.isSelected) {
+                li.onDeselect?.();
+              } else {
+                li.onSelect?.();
+              }
+            }}
+          >
+            {li.selectable}
+          </Checkbox>
+        ) : (
           <SelectableRow
             key={li.key}
             selectable={li.selectable}
@@ -73,9 +93,9 @@ const SelectableList: React.FC<ListProps> = ({
 
 export default SelectableList;
 
-const StyledSelectableList = styled.div<{ scroll?: boolean }>`
+const StyledSelectableList = styled.div<{ scroll?: boolean; gap: string }>`
   display: flex;
-  row-gap: 15px;
+  row-gap: ${(props) => props.gap};
   flex-direction: column;
   overflow-y: auto;
   ${(props) =>

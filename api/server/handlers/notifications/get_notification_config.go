@@ -1,6 +1,8 @@
 package notifications
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -84,26 +86,55 @@ func (n *GetNotificationConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
+	config, err := configFromProto(ccpResp.Msg.Config)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error getting config from proto")
+		n.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	response := &GetNotificationConfigResponse{
-		Config: configFromProto(ccpResp.Msg.Config),
+		Config: config,
 	}
 
 	n.WriteResult(w, r, response)
 }
 
-func configFromProto(proto *porterv1.NotificationConfig) Config {
-	if proto == nil {
-		return Config{}
+func configFromProto(proto *porterv1.NotificationConfig) (Config, error) {
+	// initializing the map to true for all statuses and types
+	// ensures that the default behavior is to notify for missing statuses and types
+	statuses := trueMap(allStatuses)
+	types := trueMap(allTypes)
+
+	for _, protoStatus := range proto.EnabledStatuses {
+		if status, ok := transformProtoToStatusString[protoStatus.Status]; ok {
+			statuses[status] = protoStatus.Enabled
+		}
+	}
+	for _, protoType := range proto.EnabledTypes {
+		if t, ok := transformProtoToTypeString[protoType.Type]; ok {
+			types[t] = protoType.Enabled
+		}
 	}
 
-	var statuses []Status
-	for _, status := range proto.Statuses {
-		statuses = append(statuses, Status{transformProtoToStatusString[status]})
+	statusesStruct := StatusesEnabled{}
+	by, err := json.Marshal(statuses)
+	if err != nil {
+		return Config{}, fmt.Errorf("error marshalling statuses: %s", err)
+	}
+	err = json.Unmarshal(by, &statusesStruct)
+	if err != nil {
+		return Config{}, fmt.Errorf("error unmarshalling statuses: %s", err)
 	}
 
-	var types []Type
-	for _, t := range proto.EventTypes {
-		types = append(types, Type{transformProtoToTypeString[t]})
+	typesStruct := TypesEnabled{}
+	by, err = json.Marshal(types)
+	if err != nil {
+		return Config{}, fmt.Errorf("error marshalling types: %s", err)
+	}
+	err = json.Unmarshal(by, &typesStruct)
+	if err != nil {
+		return Config{}, fmt.Errorf("error unmarshalling types: %s", err)
 	}
 
 	var mention string
@@ -111,21 +142,11 @@ func configFromProto(proto *porterv1.NotificationConfig) Config {
 		mention = proto.SlackConfig.Mentions[0]
 	}
 
-	return Config{
-		Statuses: statuses,
+	config := Config{
+		Statuses: statusesStruct,
 		Mention:  mention,
-		Types:    types,
+		Types:    typesStruct,
 	}
-}
 
-var transformProtoToStatusString = map[porterv1.EnumNotificationStatus]string{
-	porterv1.EnumNotificationStatus_ENUM_NOTIFICATION_STATUS_SUCCESSFUL:  "successful",
-	porterv1.EnumNotificationStatus_ENUM_NOTIFICATION_STATUS_FAILED:      "failed",
-	porterv1.EnumNotificationStatus_ENUM_NOTIFICATION_STATUS_PROGRESSING: "progressing",
-}
-
-var transformProtoToTypeString = map[porterv1.EnumNotificationEventType]string{
-	porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_DEPLOY:    "deploy",
-	porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_PREDEPLOY: "pre-deploy",
-	porterv1.EnumNotificationEventType_ENUM_NOTIFICATION_EVENT_TYPE_BUILD:     "build",
+	return config, nil
 }

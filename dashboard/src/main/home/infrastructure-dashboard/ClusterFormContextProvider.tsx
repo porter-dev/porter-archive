@@ -181,6 +181,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
         setUpdateClusterError(err.message);
         showIntercomWithMessage({
           message: "I am running into an issue updating my cluster.",
+          delaySeconds: 3,
         });
       }
     }

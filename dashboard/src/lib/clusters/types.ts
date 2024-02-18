@@ -434,7 +434,7 @@ const eksConfigValidator = z.object({
       wafV2Arn: z.string(),
     })
     .default({
-      type: "UNKNOWN",
+      type: "NLB",
       wildcardDomain: "",
       allowlistIpRanges: "",
       certificateArns: [],

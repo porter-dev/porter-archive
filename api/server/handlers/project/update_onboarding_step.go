@@ -263,7 +263,6 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		if err != nil {
 			_ = telemetry.Error(ctx, span, err, "error tracking cluster preflight checks failed")
 		}
-
 	}
 
 	if request.Step == "cluster-update-failed" {

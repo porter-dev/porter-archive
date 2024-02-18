@@ -4,6 +4,7 @@ import { match } from "ts-pattern";
 
 import { CloudProviderAWS } from "lib/clusters/constants";
 import { type ClientClusterContract } from "lib/clusters/types";
+import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import ConfigureEKSCluster from "./ConfigureEKSCluster";
@@ -22,6 +23,7 @@ const CreateEKSClusterForm: React.FC<Props> = ({
   const [step, setStep] = useState<"permissions" | "cluster">("permissions");
   const { setValue, reset } = useFormContext<ClientClusterContract>();
   const { setCurrentContract } = useClusterFormContext();
+  const { reportToAnalytics } = useClusterAnalytics();
 
   useEffect(() => {
     reset({
@@ -74,6 +76,12 @@ const CreateEKSClusterForm: React.FC<Props> = ({
             "cluster.cloudProviderCredentialsId",
             cloudProviderCredentialIdentifier
           );
+          void reportToAnalytics({
+            projectId,
+            step: "cloud-provider-permissions-granted",
+            provider: CloudProviderAWS.name,
+            cloudProviderCredentialIdentifier,
+          });
           setStep("cluster");
         }}
         projectId={projectId}

@@ -4,6 +4,7 @@ import { match } from "ts-pattern";
 
 import { CloudProviderAzure } from "lib/clusters/constants";
 import { type ClientClusterContract } from "lib/clusters/types";
+import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import ConfigureAKSCluster from "./ConfigureAKSCluster";
@@ -23,6 +24,7 @@ const CreateAKSClusterForm: React.FC<Props> = ({
 
   const { setValue, reset } = useFormContext<ClientClusterContract>();
   const { setCurrentContract } = useClusterFormContext();
+  const { reportToAnalytics } = useClusterAnalytics();
 
   useEffect(() => {
     reset({
@@ -76,6 +78,12 @@ const CreateAKSClusterForm: React.FC<Props> = ({
             "cluster.cloudProviderCredentialsId",
             cloudProviderCredentialIdentifier
           );
+          void reportToAnalytics({
+            projectId,
+            step: "cloud-provider-permissions-granted",
+            provider: CloudProviderAzure.name,
+            cloudProviderCredentialIdentifier,
+          });
           setStep("cluster");
         }}
         projectId={projectId}

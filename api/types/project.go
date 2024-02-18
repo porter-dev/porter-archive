@@ -200,13 +200,15 @@ type UpdateOnboardingRequest OnboardingData
 
 // UpdateOnboardingStepRequest is a struct that contains the information needed to make a `POST projects/{project_id}/onboarding_step` request
 type UpdateOnboardingStepRequest struct {
-	Step              string `json:"step" form:"required,max=255"`
-	Provider          string `json:"provider"`
-	AccountId         string `json:"account_id"`
-	CloudformationURL string `json:"cloudformation_url"`
-	ErrorMessage      string `json:"error_message"`
-	LoginURL          string `json:"login_url"`
-	Region            string `json:"region"`
+	Step                              string `json:"step" form:"required,max=255"`
+	Provider                          string `json:"provider"`
+	CloudProviderCredentialIdentifier string `json:"cloud_provider_credential_identifier"`
+	AccountId                         string `json:"account_id"`
+	CloudformationURL                 string `json:"cloudformation_url"`
+	ErrorMessage                      string `json:"error_message"`
+	LoginURL                          string `json:"login_url"`
+	Region                            string `json:"region"`
+	ClusterName                       string `json:"cluster_name"`
 	// ExternalId used as a 'password' for the aws assume role chain to porter-manager role
 	ExternalId string `json:"external_id"`
 }

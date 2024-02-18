@@ -585,10 +585,11 @@ const createProject = baseApi<{ name: string }, {}>("POST", (pathParams) => {
 });
 
 const connectProjectToCluster = baseApi<
-{}, 
-{
-  id: number;
-}>("POST", (pathParams) => {
+  {},
+  {
+    id: number;
+  }
+>("POST", (pathParams) => {
   const { id } = pathParams;
 
   return `/api/projects/${id}/connect`;
@@ -3213,12 +3214,14 @@ const updateOnboardingStep = baseApi<
   {
     step: string;
     provider?: string;
+    cloud_provider_credential_identifier?: string;
     account_id?: string;
     cloudformation_url?: string;
     error_message?: string;
     login_url?: string;
     external_id?: string;
     region?: string;
+    cluster_name?: string;
   },
   {
     project_id: number;

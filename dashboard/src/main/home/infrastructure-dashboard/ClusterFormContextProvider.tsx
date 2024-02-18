@@ -13,7 +13,10 @@ import {
   type UpdateClusterResponse,
 } from "lib/clusters/types";
 import { useUpdateCluster } from "lib/hooks/useCluster";
+import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 import { useIntercom } from "lib/hooks/useIntercom";
+
+import api from "shared/api";
 
 import PreflightChecksModal from "./modals/PreflightChecksModal";
 
@@ -74,6 +77,8 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
 
   const { showIntercomWithMessage } = useIntercom();
 
+  const { reportToAnalytics } = useClusterAnalytics();
+
   const clusterForm = useForm<ClientClusterContract>({
     reValidateMode: "onSubmit",
     resolver: zodResolver(clusterContractValidator),
@@ -123,16 +128,34 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   const onSubmit = handleSubmit(async (data) => {
     setUpdateClusterResponse(undefined);
     setUpdateClusterError("");
-    if (!currentContract?.cluster) {
+    if (!currentContract?.cluster || !projectId) {
       return;
     }
     try {
       const response = await updateCluster(data, currentContract);
       setUpdateClusterResponse(response);
       if (response.preflightChecks) {
+        void reportToAnalytics({
+          projectId,
+          step: "cluster-preflight-checks-failed",
+          errorMessage: `Preflight checks failed: ${response.preflightChecks
+            .map((c) => c.title)
+            .join(", ")}`,
+        });
         setShowFailedPreflightChecksModal(true);
       }
       if (response.createContractResponse) {
+        void reportToAnalytics({
+          projectId,
+          step: "provisioning-started",
+          provider: data.cluster.cloudProvider,
+          region: data.cluster.config.region,
+        });
+        await api.saveOnboardingState(
+          "<token>",
+          { current_step: "clean_up" },
+          { project_id: projectId }
+        );
         await queryClient.invalidateQueries(["getCluster"]);
 
         if (redirectOnSubmit) {
@@ -148,6 +171,13 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
       }
     } catch (err) {
       if (err instanceof Error) {
+        void reportToAnalytics({
+          projectId,
+          step: "cluster-update-failed",
+          errorMessage: err.message,
+          provider: data.cluster.cloudProvider,
+          clusterName: data.cluster.config.clusterName,
+        });
         setUpdateClusterError(err.message);
         showIntercomWithMessage({
           message: "I am running into an issue updating my cluster.",

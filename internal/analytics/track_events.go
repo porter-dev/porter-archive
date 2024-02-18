@@ -62,4 +62,9 @@ const (
 	StackBuildSuccess     SegmentEvent = "Stack Build Success"
 
 	PorterAppUpdateFailure SegmentEvent = "Porter App Update Failure"
+
+	// new infra flow
+	CloudProviderPermissionsGranted SegmentEvent = "Cloud Provider Permissions Granted"
+	ClusterPreflightChecksFailed    SegmentEvent = "Cluster Preflight Checks Failed"
+	ClusterUpdateFailed             SegmentEvent = "Cluster Update Failed"
 )

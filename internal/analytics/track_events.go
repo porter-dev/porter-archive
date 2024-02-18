@@ -64,6 +64,7 @@ const (
 	PorterAppUpdateFailure SegmentEvent = "Porter App Update Failure"
 
 	// new infra flow
+
 	// CloudProviderPermissionsGranted is a segment event that is triggered when a user grants cloud provider permissions
 	CloudProviderPermissionsGranted SegmentEvent = "Cloud Provider Permissions Granted"
 	// ClusterPreflightChecksFailed is a segment event that is triggered when a user's cluster fails preflight checks

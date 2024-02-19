@@ -4,6 +4,7 @@ import { match } from "ts-pattern";
 
 import { CloudProviderGCP } from "lib/clusters/constants";
 import { type ClientClusterContract } from "lib/clusters/types";
+import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
 import ConfigureGKECluster from "./ConfigureGKECluster";
@@ -24,6 +25,7 @@ const CreateGKEClusterForm: React.FC<Props> = ({
 
   const { setValue, reset } = useFormContext<ClientClusterContract>();
   const { setCurrentContract } = useClusterFormContext();
+  const { reportToAnalytics } = useClusterAnalytics();
 
   useEffect(() => {
     reset({
@@ -76,6 +78,12 @@ const CreateGKEClusterForm: React.FC<Props> = ({
             "cluster.cloudProviderCredentialsId",
             cloudProviderCredentialIdentifier
           );
+          void reportToAnalytics({
+            projectId,
+            step: "cloud-provider-permissions-granted",
+            provider: CloudProviderGCP.name,
+            cloudProviderCredentialIdentifier,
+          });
           setStep("cluster");
         }}
         projectId={projectId}

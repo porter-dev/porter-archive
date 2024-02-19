@@ -90,7 +90,7 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
           </>,
           isAdvancedSettingsEnabled ? (
             <>
-              <Text size={16}>CIDR Range</Text>
+              <Text size={16}>CIDR range</Text>
               <Spacer y={0.5} />
               <Text color="helper">
                 Specify the CIDR range for your cluster.

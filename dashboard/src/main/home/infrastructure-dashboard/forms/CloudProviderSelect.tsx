@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 
-import Banner from "components/porter/Banner";
 import Button from "components/porter/Button";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Link from "components/porter/Link";

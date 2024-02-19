@@ -236,5 +236,48 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		}
 	}
 
+	if request.Step == "cloud-provider-permissions-granted" {
+		err := v.Config().AnalyticsClient.Track(analytics.CloudProviderPermissionsGrantedTrack(&analytics.CloudProviderPermissionsGrantedTrackOpts{
+			ProjectScopedTrackOpts:            analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                             user.Email,
+			FirstName:                         user.FirstName,
+			LastName:                          user.LastName,
+			CompanyName:                       user.CompanyName,
+			CloudProvider:                     request.Provider,
+			CloudProviderCredentialIdentifier: request.CloudProviderCredentialIdentifier,
+		}))
+		if err != nil {
+			_ = telemetry.Error(ctx, span, err, "error tracking cloud provider permissions granted")
+		}
+	}
+
+	if request.Step == "cluster-preflight-checks-failed" {
+		err := v.Config().AnalyticsClient.Track(analytics.ClusterPreflightChecksFailedTrack(&analytics.ClusterPreflightChecksFailedTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			ErrorMessage:           request.ErrorMessage,
+		}))
+		if err != nil {
+			_ = telemetry.Error(ctx, span, err, "error tracking cluster preflight checks failed")
+		}
+	}
+
+	if request.Step == "cluster-update-failed" {
+		err := v.Config().AnalyticsClient.Track(analytics.ClusterUpdateFailedTrack(&analytics.ClusterUpdateFailedTrackOpts{
+			ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, project.ID),
+			Email:                  user.Email,
+			FirstName:              user.FirstName,
+			LastName:               user.LastName,
+			CompanyName:            user.CompanyName,
+			ErrorMessage:           request.ErrorMessage,
+		}))
+		if err != nil {
+			_ = telemetry.Error(ctx, span, err, "error tracking cluster update failed")
+		}
+	}
+
 	v.WriteResult(w, r, user.ToUserType())
 }

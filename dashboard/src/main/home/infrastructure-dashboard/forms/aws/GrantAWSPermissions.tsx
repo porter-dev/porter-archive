@@ -14,8 +14,7 @@ import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import { CloudProviderAWS } from "lib/clusters/constants";
 import { isAWSArnAccessible } from "lib/hooks/useCloudProvider";
-
-import api from "shared/api";
+import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 
 import GrantAWSPermissionsHelpModal from "../../modals/help/permissions/GrantAWSPermissionsHelpModal";
 import { CheckItem } from "../../modals/PreflightChecksModal";
@@ -41,41 +40,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
   const [accountIdContinueButtonStatus, setAccountIdContinueButtonStatus] =
     useState<string>("");
   const [isAccountAccessible, setIsAccountAccessible] = useState(false);
-  const reportToAnalytics = useCallback(
-    async ({
-      step,
-      awsAccountId = "",
-      cloudFormationUrl = "",
-      errorMessage = "",
-      loginUrl = "",
-      externalId = "",
-    }: {
-      step: string;
-      awsAccountId?: string;
-      cloudFormationUrl?: string;
-      errorMessage?: string;
-      loginUrl?: string;
-      externalId?: string;
-    }) => {
-      void api
-        .updateOnboardingStep(
-          "<token>",
-          {
-            step,
-            account_id: awsAccountId,
-            cloudformation_url: cloudFormationUrl,
-            error_message: errorMessage,
-            login_url: loginUrl,
-            external_id: externalId,
-          },
-          {
-            project_id: projectId,
-          }
-        )
-        .catch(() => ({})); // do not care about error here, so just catch it
-    },
-    [projectId]
-  );
+  const { reportToAnalytics } = useClusterAnalytics();
   const awsAccountIdInputError = useMemo(() => {
     const regex = /^\d{12}$/;
     if (AWSAccountID.trim().length === 0) {
@@ -141,6 +106,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
       setCurrentStep(2);
     }
     void reportToAnalytics({
+      projectId,
       step: "aws-account-id-complete",
       awsAccountId: AWSAccountID,
     });
@@ -149,6 +115,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
   const directToAWSLogin = (): void => {
     const loginUrl = `https://signin.aws.amazon.com/console`;
     void reportToAnalytics({
+      projectId,
       step: "aws-login-redirect-success",
       loginUrl,
     });
@@ -160,6 +127,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
       : "arn:aws:iam::108458755588:role/CAPIManagement";
     const cloudFormationUrl = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-access-policy.json&stackName=PorterRole&param_TrustArnParameter=${trustArn}`;
     void reportToAnalytics({
+      projectId,
       step: "aws-cloudformation-redirect-success",
       awsAccountId: AWSAccountID,
       cloudFormationUrl,
@@ -169,10 +137,6 @@ const GrantAWSPermissions: React.FC<Props> = ({
     window.open(cloudFormationUrl, "_blank");
   }, [AWSAccountID, externalId]);
   const handleGrantPermissionsComplete = (): void => {
-    void reportToAnalytics({
-      step: "aws-create-integration-success",
-      awsAccountId: AWSAccountID,
-    });
     proceed({
       cloudProviderCredentialIdentifier: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
     });
@@ -254,25 +218,26 @@ const GrantAWSPermissions: React.FC<Props> = ({
             <Spacer y={1} />
             <StepChangeButtonsContainer>
               <Button
+                onClick={() => {
+                  setCurrentStep(0);
+                }}
+                color="#222222"
+              >
+                Back
+              </Button>
+              <Spacer inline x={0.5} />
+
+              <Button
                 onClick={checkIfAlreadyAccessible}
                 disabled={
                   awsAccountIdInputError != null ||
                   AWSAccountID.length === 0 ||
                   accountIdContinueButtonStatus === "loading"
                 }
-              >
-                Continue
-              </Button>
-              <Spacer inline x={0.5} />
-              <Button
-                onClick={() => {
-                  setCurrentStep(0);
-                }}
-                color="#222222"
                 status={accountIdContinueButtonStatus}
                 loadingText={`Checking if Porter can already access this account`}
               >
-                Back
+                Continue
               </Button>
             </StepChangeButtonsContainer>
           </>,
@@ -309,19 +274,19 @@ const GrantAWSPermissions: React.FC<Props> = ({
             <StepChangeButtonsContainer>
               <Button
                 onClick={() => {
-                  setCurrentStep(3);
-                }}
-              >
-                Continue
-              </Button>
-              <Spacer inline x={0.5} />
-              <Button
-                onClick={() => {
                   setCurrentStep(1);
                 }}
                 color="#222222"
               >
                 Back
+              </Button>
+              <Spacer inline x={0.5} />
+              <Button
+                onClick={() => {
+                  setCurrentStep(3);
+                }}
+              >
+                Continue
               </Button>
             </StepChangeButtonsContainer>
           </>,
@@ -351,19 +316,19 @@ const GrantAWSPermissions: React.FC<Props> = ({
             <Spacer y={1} />
             <Container row>
               <Button
-                onClick={handleGrantPermissionsComplete}
-                disabled={!isAccountAccessible}
-              >
-                Continue
-              </Button>
-              <Spacer inline x={0.5} />
-              <Button
                 onClick={() => {
                   setCurrentStep(2);
                 }}
                 color="#222222"
               >
                 Back
+              </Button>
+              <Spacer inline x={0.5} />
+              <Button
+                onClick={handleGrantPermissionsComplete}
+                disabled={!isAccountAccessible}
+              >
+                Continue
               </Button>
             </Container>
           </>,

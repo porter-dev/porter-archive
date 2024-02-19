@@ -98,6 +98,17 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
             <Container style={{ width: "300px" }}>
               <Text size={16}>Azure tier</Text>
               <Spacer y={0.5} />
+              <Text color="helper">
+                Select Azure cluster management tier.{" "}
+                <a
+                  href="https://learn.microsoft.com/en-us/azure/aks/free-standard-pricing-tiers"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  &nbsp;(?)
+                </a>
+              </Text>
+              <Spacer y={0.7} />
               <Controller
                 name={`cluster.config.skuTier`}
                 control={control}
@@ -118,7 +129,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
           </>,
           isAdvancedSettingsEnabled ? (
             <>
-              <Text size={16}>CIDR Range</Text>
+              <Text size={16}>CIDR range</Text>
               <Spacer y={0.5} />
               <Text color="helper">
                 Specify the CIDR range for your cluster.

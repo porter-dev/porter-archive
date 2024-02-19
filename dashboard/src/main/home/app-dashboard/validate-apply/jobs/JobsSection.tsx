@@ -1,20 +1,23 @@
-import React, { useState, useMemo } from "react";
-import styled from "styled-components";
-
-import history from "assets/history.png";
-import Text from "components/porter/Text";
-import Container from "components/porter/Container";
-import Spacer from "components/porter/Spacer";
-import { type JobRun, useJobs } from "lib/hooks/useJobs";
-import Table from "components/OldTable";
-import { type CellProps, type Column } from "react-table";
-import { relativeDate, timeFrom } from "shared/string_utils";
+import React, { useMemo, useState } from "react";
 import { useLocation } from "react-router";
+import { type Column } from "react-table";
+import styled from "styled-components";
+import { match } from "ts-pattern";
+
 import SelectRow from "components/form-components/SelectRow";
+import Table from "components/OldTable";
+import Container from "components/porter/Container";
 import Link from "components/porter/Link";
-import { ranFor } from "./utils";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import { useJobs, type JobRun } from "lib/hooks/useJobs";
+
+import { relativeDate } from "shared/string_utils";
+import history from "assets/history.png";
+
 import JobRunDetails from "./JobRunDetails";
 import TriggerJobButton from "./TriggerJobButton";
+import { ranFor } from "./utils";
 
 type Props = {
   appName: string;
@@ -34,18 +37,23 @@ const JobsSection: React.FC<Props> = ({
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const serviceFromQueryParams = queryParams.get("service");
-  const jobRunId = queryParams.get("job_run_id");
+  const jobRunName = queryParams.get("job_run_name");
   const [selectedJobName, setSelectedJobName] = useState<string>(
-    serviceFromQueryParams != null && jobNames.includes(serviceFromQueryParams) ? serviceFromQueryParams : "all"
+    serviceFromQueryParams != null && jobNames.includes(serviceFromQueryParams)
+      ? serviceFromQueryParams
+      : "all"
   );
 
   const jobOptions = useMemo(() => {
-    return [{ label: "All jobs", value: "all" }, ...jobNames.map((name) => {
-      return {
-        label: name,
-        value: name,
-      };
-    })];
+    return [
+      { label: "All jobs", value: "all" },
+      ...jobNames.map((name) => {
+        return {
+          label: name,
+          value: name,
+        };
+      }),
+    ];
   }, [jobNames]);
 
   const { jobRuns, isLoadingJobRuns } = useJobs({
@@ -57,29 +65,25 @@ const JobsSection: React.FC<Props> = ({
   });
 
   const selectedJobRun = useMemo(() => {
-    return jobRuns.find((jr) => jr.metadata.uid === jobRunId);
-  }, [jobRuns, jobRunId]);
+    return jobRuns.find((jr) => jr.name === jobRunName);
+  }, [jobRuns, jobRunName]);
 
   const columns = useMemo<Array<Column<JobRun>>>(
     () => [
       {
         Header: "Started",
-        accessor: (originalRow) => relativeDate(originalRow?.status.startTime ?? ''),
+        accessor: (originalRow) => relativeDate(originalRow.created_at),
       },
       {
         Header: "Run for",
-        Cell: ({ row }) => {
+        Cell: (cell) => {
+          const { original: row } = cell.row;
           let ranForString = "Still running...";
-          if (row.original.status.completionTime) {
-            ranForString = ranFor(
-              row.original.status.startTime ?? row.original.metadata.creationTimestamp,
-              row.original.status.completionTime
-            );
-          } else if (row.original.status.conditions.length > 0 && row.original.status.conditions[0].lastTransitionTime) {
-            ranForString = ranFor(
-              row.original.status.startTime ?? row.original.metadata.creationTimestamp,
-              row.original?.status?.conditions[0]?.lastTransitionTime
-            );
+          const startedTime = new Date(row.created_at);
+          const finishedTime = new Date(row.finished_at);
+
+          if (finishedTime > startedTime) {
+            ranForString = ranFor(row.created_at, row.finished_at);
           }
 
           return <div>{ranForString}</div>;
@@ -88,43 +92,50 @@ const JobsSection: React.FC<Props> = ({
       {
         Header: "Name",
         id: "job_name",
-        Cell: ({ row }: CellProps<JobRun>) => {
-          return <div>{row.original.jobName}</div>;
+        Cell: (cell) => {
+          const { original: row } = cell.row;
+
+          return <div>{row.service_name}</div>;
         },
       },
       {
         Header: "Version",
         id: "version_number",
-        Cell: ({ row }: CellProps<JobRun>) => {
-          return <div>{row.original.revisionNumber}</div>;
+        Cell: (cell) => {
+          const { original: row } = cell.row;
+
+          return <div>{row.revisionNumber}</div>;
         },
         maxWidth: 100,
         styles: {
           padding: "10px",
-        }
+        },
       },
       {
         Header: "Status",
         id: "status",
-        Cell: ({ row }: CellProps<JobRun>) => {
-          if (row.original.status.succeeded != null && row.original.status.succeeded >= 1) {
-            return <Status color="#38a88a">Succeeded</Status>;
-          }
+        Cell: (cell) => {
+          const { original: row } = cell.row;
 
-          if (row.original.status.failed != null && row.original.status.failed >= 1) {
-            return <Status color="#cc3d42">Failed</Status>;
-          }
-
-          return <Status color="#ffffff11">Running</Status>;
+          return match(row.status)
+            .with("SUCCESSFUL", () => (
+              <Status color="#38a88a">Succeeded</Status>
+            ))
+            .with("FAILED", () => <Status color="#cc3d42">Failed</Status>)
+            .otherwise(() => <Status color="#ffffff11">Running</Status>);
         },
       },
 
       {
         Header: "Details",
         id: "expand",
-        Cell: ({ row }: CellProps<JobRun>) => {
+        Cell: (cell) => {
+          const { original: row } = cell.row;
+
           return (
-            <Link to={`/apps/${appName}/job-history?job_run_id=${row.original.metadata.uid}&service=${row.original.jobName}`}>
+            <Link
+              to={`/apps/${appName}/job-history?job_run_name=${row.name}&service=${row.service_name}`}
+            >
               <ExpandButton>
                 <i className="material-icons">open_in_new</i>
               </ExpandButton>
@@ -139,28 +150,32 @@ const JobsSection: React.FC<Props> = ({
 
   return (
     <>
-      {selectedJobRun && (
-        <JobRunDetails
-          jobRun={selectedJobRun}
-        />
-      )}
+      {selectedJobRun && <JobRunDetails jobRun={selectedJobRun} />}
       {!selectedJobRun && (
         <StyledExpandedApp>
           <Container row spaced>
-          <Container row>
-            <Icon src={history} />
-            <Text size={21}>Run history for</Text>
-            <SelectRow
-              displayFlex={true}
-              label=""
-              value={selectedJobName}
-              setActiveValue={(x: string) => { setSelectedJobName(x); }}
-              options={jobOptions}
-              width="200px"
-            />
-          </Container>
+            <Container row>
+              <Icon src={history} />
+              <Text size={21}>Run history for</Text>
+              <SelectRow
+                displayFlex={true}
+                label=""
+                value={selectedJobName}
+                setActiveValue={(x: string) => {
+                  setSelectedJobName(x);
+                }}
+                options={jobOptions}
+                width="200px"
+              />
+            </Container>
             {selectedJobName !== "all" && (
-              <TriggerJobButton projectId={projectId} clusterId={clusterId} appName={appName} jobName={selectedJobName} deploymentTargetId={deploymentTargetId}/>
+              <TriggerJobButton
+                projectId={projectId}
+                clusterId={clusterId}
+                appName={appName}
+                jobName={selectedJobName}
+                deploymentTargetId={deploymentTargetId}
+              />
             )}
           </Container>
           <Spacer y={1} />
@@ -168,8 +183,7 @@ const JobsSection: React.FC<Props> = ({
             columns={columns}
             disableGlobalFilter
             data={jobRuns.sort((a, b) => {
-              return Date.parse(a?.metadata?.creationTimestamp) >
-                Date.parse(b?.metadata?.creationTimestamp)
+              return Date.parse(a.created_at) > Date.parse(b.created_at)
                 ? -1
                 : 1;
             })}

@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { useHistory } from "react-router";
+import { z } from "zod";
 
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Error from "components/porter/Error";
-
+import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import { useIntercom } from "lib/hooks/useIntercom";
+
 import api from "shared/api";
-import {z} from "zod";
 import target from "assets/target.svg";
-import Icon from "components/porter/Icon";
 
 type Props = {
   projectId: number;
@@ -39,22 +39,25 @@ const TriggerJobButton: React.FC<Props> = ({
 
     try {
       const resp = await api.appRun(
-          "<token>",
-          {
-            deployment_target_id: deploymentTargetId,
-            service_name: jobName,
-          },
-          {
-            project_id: projectId,
-            cluster_id: clusterId,
-            porter_app_name: appName,
-          })
+        "<token>",
+        {
+          deployment_target_id: deploymentTargetId,
+          service_name: jobName,
+        },
+        {
+          project_id: projectId,
+          cluster_id: clusterId,
+          porter_app_name: appName,
+        }
+      );
 
-      const parsed = await z.object({job_run_id: z.string()}).parseAsync(resp.data)
+      const parsed = await z
+        .object({ job_run_id: z.string(), job_run_name: z.string() })
+        .parseAsync(resp.data);
 
-      const jobRunID = parsed.job_run_id
+      const jobRunName = parsed.job_run_name;
       history.push(
-          `/apps/${appName}/job-history?job_run_id=${jobRunID}&service=${jobName}`
+        `/apps/${appName}/job-history?job_run_name=${jobRunName}&service=${jobName}`
       );
     } catch {
       setStatus("");
@@ -73,8 +76,8 @@ const TriggerJobButton: React.FC<Props> = ({
         status={status}
         height={"33px"}
       >
-        <Icon src={target} height={"15px"}/>
-        <Spacer inline x={.5}/>
+        <Icon src={target} height={"15px"} />
+        <Spacer inline x={0.5} />
         Run once
       </Button>
       {errorMessage !== "" && (

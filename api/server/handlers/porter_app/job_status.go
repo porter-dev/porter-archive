@@ -113,7 +113,7 @@ func (c *JobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var runs []porter_app.JobRun
+	runs := []porter_app.JobRun{}
 	for _, jobRun := range jobRunsResp.Msg.JobRuns {
 		run, err := porter_app.JobRunFromProto(ctx, jobRun)
 		if err != nil {

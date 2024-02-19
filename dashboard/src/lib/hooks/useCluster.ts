@@ -19,10 +19,12 @@ import {
   clusterValidator,
   contractValidator,
   createContractResponseValidator,
+  nodeValidator,
   preflightCheckValidator,
   type APIContract,
   type ClientCluster,
   type ClientClusterContract,
+  type ClientNode,
   type ClientPreflightCheck,
   type ClusterState,
   type ContractCondition,
@@ -440,6 +442,74 @@ export const useUpdateCluster = ({
     updateCluster,
     isHandlingPreflightChecks,
     isCreatingContract,
+  };
+};
+
+type TUseClusterNodeList = {
+  nodes: ClientNode[];
+  isLoading: boolean;
+};
+export const useClusterNodeList = ({
+  clusterId,
+}: {
+  clusterId: number | undefined;
+}): TUseClusterNodeList => {
+  const { currentProject } = useContext(Context);
+
+  const clusterNodesReq = useQuery(
+    ["getClusterNodes", currentProject?.id, clusterId],
+    async () => {
+      if (
+        !currentProject?.id ||
+        currentProject.id === -1 ||
+        !clusterId ||
+        clusterId === -1
+      ) {
+        return;
+      }
+
+      const res = await api.getClusterNodes(
+        "<token>",
+        {},
+        { project_id: currentProject.id, cluster_id: clusterId }
+      );
+
+      const parsed = await z.array(nodeValidator).parseAsync(res.data);
+      return parsed
+        .map((n) => {
+          const nodeGroupType = match(n.labels["porter.run/workload-kind"])
+            .with("application", () => "APPLICATION" as const)
+            .with("system", () => "SYSTEM" as const)
+            .with("monitoring", () => "MONITORING" as const)
+            .with("custom", () => "CUSTOM" as const)
+            .otherwise(() => "UNKNOWN" as const);
+          if (nodeGroupType === "UNKNOWN") {
+            return undefined;
+          }
+          const instanceType = n.labels["node.kubernetes.io/instance-type"];
+          if (!instanceType) {
+            return undefined;
+          }
+          return {
+            nodeGroupType,
+            instanceType,
+          };
+        })
+        .filter(valueExists);
+    },
+    {
+      refetchInterval: 3000,
+      enabled:
+        !!currentProject &&
+        currentProject.id !== -1 &&
+        !!clusterId &&
+        clusterId !== -1,
+    }
+  );
+
+  return {
+    nodes: clusterNodesReq.data ?? [],
+    isLoading: clusterNodesReq.isLoading,
   };
 };
 

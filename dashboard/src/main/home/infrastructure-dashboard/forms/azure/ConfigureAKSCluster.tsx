@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Select from "components/porter/Select";
@@ -11,7 +10,10 @@ import VerticalSteps from "components/porter/VerticalSteps";
 import { CloudProviderAzure } from "lib/clusters/constants";
 import { type ClientClusterContract } from "lib/clusters/types";
 
+import { valueExists } from "shared/util";
+
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
+import ClusterSaveButton from "../../ClusterSaveButton";
 import NodeGroups from "../../shared/NodeGroups";
 import { BackButton, Img } from "../CreateClusterForm";
 
@@ -20,7 +22,7 @@ type Props = {
 };
 
 const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
-  const [currentStep, _setCurrentStep] = useState<number>(100);
+  const [currentStep, _setCurrentStep] = useState<number>(100); // hack to show all steps
 
   const {
     control,
@@ -29,9 +31,9 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
     watch,
   } = useFormContext<ClientClusterContract>();
 
-  const region = watch("cluster.config.region");
+  const { isAdvancedSettingsEnabled } = useClusterFormContext();
 
-  const { updateClusterButtonProps } = useClusterFormContext();
+  const region = watch("cluster.config.region");
 
   return (
     <div>
@@ -45,7 +47,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
         <Text size={16}>Configure AKS Cluster</Text>
       </Container>
       <Spacer y={1} />
-      <Text>Specify settings for your AKS cluster.</Text>
+      <Text>Specify settings for your AKS infratructure.</Text>
       <Spacer y={1} />
       <VerticalSteps
         currentStep={currentStep}
@@ -53,6 +55,10 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
           <>
             <Text size={16}>Cluster name</Text>
             <Spacer y={0.5} />
+            <Text color="helper">
+              Lowercase letters, numbers, and &quot;-&quot; only.
+            </Text>
+            <Spacer y={0.7} />
             <ControlledInput
               placeholder="ex: my-cluster"
               type="text"
@@ -62,8 +68,12 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
             />
           </>,
           <>
-            <Text size={16}>Cluster region</Text>
+            <Text size={16}>Region</Text>
             <Spacer y={0.5} />
+            <Text color="helper">
+              Select the region where you want to run your cluster.
+            </Text>
+            <Spacer y={0.7} />
             <Controller
               name={`cluster.config.region`}
               control={control}
@@ -88,6 +98,17 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
             <Container style={{ width: "300px" }}>
               <Text size={16}>Azure tier</Text>
               <Spacer y={0.5} />
+              <Text color="helper">
+                Select Azure cluster management tier.{" "}
+                <a
+                  href="https://learn.microsoft.com/en-us/azure/aks/free-standard-pricing-tiers"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  &nbsp;(?)
+                </a>
+              </Text>
+              <Spacer y={0.7} />
               <Controller
                 name={`cluster.config.skuTier`}
                 control={control}
@@ -106,20 +127,28 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
               />
             </Container>
           </>,
+          isAdvancedSettingsEnabled ? (
+            <>
+              <Text size={16}>CIDR range</Text>
+              <Spacer y={0.5} />
+              <Text color="helper">
+                Specify the CIDR range for your cluster.
+              </Text>
+              <Spacer y={0.7} />
+              <ControlledInput
+                placeholder="ex: 10.78.0.0/16"
+                type="text"
+                width="300px"
+                error={errors.cluster?.config?.cidrRange?.message}
+                {...register("cluster.config.cidrRange")}
+              />
+            </>
+          ) : null,
           <>
-            <Text size={16}>CIDR Range</Text>
+            <Text size={16}>Application node group </Text>
             <Spacer y={0.5} />
-            <ControlledInput
-              placeholder="ex: 10.78.0.0/16"
-              type="text"
-              width="300px"
-              error={errors.cluster?.config?.cidrRange?.message}
-              {...register("cluster.config.cidrRange")}
-            />
-          </>,
-          <>
-            <Text size={16}>
-              Application node group{" "}
+            <Text color="helper">
+              Configure your application infrastructure.{" "}
               <a
                 href="https://docs.porter.run/other/kubernetes-101"
                 target="_blank"
@@ -128,7 +157,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
                 &nbsp;(?)
               </a>
             </Text>
-            <Spacer y={0.5} />
+            <Spacer y={1} />
             <NodeGroups
               availableMachineTypes={CloudProviderAzure.machineTypes.filter(
                 (mt) => mt.supportedRegions.includes(region)
@@ -138,16 +167,9 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
           <>
             <Text size={16}>Provision cluster</Text>
             <Spacer y={0.5} />
-            <Button
-              type="submit"
-              status={updateClusterButtonProps.status}
-              disabled={updateClusterButtonProps.isDisabled}
-              loadingText={updateClusterButtonProps.loadingText}
-            >
-              Submit
-            </Button>
+            <ClusterSaveButton>Submit</ClusterSaveButton>
           </>,
-        ]}
+        ].filter(valueExists)}
       />
     </div>
   );

@@ -55,7 +55,7 @@ const awsRegionValidator = z.enum([
   "me-south-1",
   "sa-east-1",
 ]);
-type AWSRegion = z.infer<typeof awsRegionValidator>;
+export type AWSRegion = z.infer<typeof awsRegionValidator>;
 const gcpRegionValidator = z.enum([
   "us-east1",
   "us-east4",
@@ -71,7 +71,7 @@ const gcpRegionValidator = z.enum([
   "us-west3",
   "us-west4",
 ]);
-type GCPRegion = z.infer<typeof gcpRegionValidator>;
+export type GCPRegion = z.infer<typeof gcpRegionValidator>;
 const azureRegionValidator = z.enum([
   "australiaeast",
   "brazilsouth",
@@ -94,7 +94,7 @@ const azureRegionValidator = z.enum([
   "westus2",
   "westus3",
 ]);
-type AzureRegion = z.infer<typeof azureRegionValidator>;
+export type AzureRegion = z.infer<typeof azureRegionValidator>;
 export type ClientRegion = {
   name: AWSRegion | GCPRegion | AzureRegion;
   displayName: string;
@@ -239,6 +239,16 @@ export type PreflightCheck = {
   resolution?: PreflightCheckResolution;
 };
 
+// Node
+export const nodeValidator = z.object({
+  name: z.string(),
+  labels: z.record(z.string()),
+});
+export type ClientNode = {
+  nodeGroupType: NodeGroupType;
+  instanceType: string;
+};
+
 // Cluster
 export const clusterValidator = z.object({
   id: z.number(),
@@ -340,44 +350,31 @@ export const contractValidator = z.object({
 });
 // this is the type of the object that is returned from the getContract API, but only the base64_contract field is editable by the user
 export type APIContract = z.infer<typeof contractValidator>;
-const eksNodeGroupTypeValidator = z.enum([
+const nodeGroupTypeValidator = z.enum([
   "UNKNOWN",
   "SYSTEM",
   "MONITORING",
   "APPLICATION",
   "CUSTOM",
 ]);
-const gkeNodeGroupTypeValidator = z.enum([
-  "UNKNOWN",
-  "SYSTEM",
-  "MONITORING",
-  "APPLICATION",
-  "CUSTOM",
-]);
+type NodeGroupType = z.infer<typeof nodeGroupTypeValidator>;
 const eksNodeGroupValidator = z.object({
   instanceType: z.string(),
   minInstances: z.number(),
   maxInstances: z.number(),
-  nodeGroupType: eksNodeGroupTypeValidator,
+  nodeGroupType: nodeGroupTypeValidator,
 });
 const gkeNodeGroupValidator = z.object({
   instanceType: z.string(),
   minInstances: z.number(),
   maxInstances: z.number(),
-  nodeGroupType: gkeNodeGroupTypeValidator,
+  nodeGroupType: nodeGroupTypeValidator,
 });
-const aksNodeGroupTypeValidator = z.enum([
-  "UNKNOWN",
-  "SYSTEM",
-  "MONITORING",
-  "APPLICATION",
-  "CUSTOM",
-]);
 const aksNodeGroupValidator = z.object({
   instanceType: z.string(),
   minInstances: z.number(),
   maxInstances: z.number(),
-  nodeGroupType: aksNodeGroupTypeValidator,
+  nodeGroupType: nodeGroupTypeValidator,
 });
 
 const cidrRangeValidator = z
@@ -402,6 +399,52 @@ const eksConfigValidator = z.object({
   region: awsRegionValidator,
   nodeGroups: eksNodeGroupValidator.array(),
   cidrRange: cidrRangeValidator,
+  logging: z
+    .object({
+      isApiServerLogsEnabled: z.boolean(),
+      isAuditLogsEnabled: z.boolean(),
+      isAuthenticatorLogsEnabled: z.boolean(),
+      isControllerManagerLogsEnabled: z.boolean(),
+      isSchedulerLogsEnabled: z.boolean(),
+    })
+    .default({
+      isApiServerLogsEnabled: false,
+      isAuditLogsEnabled: false,
+      isAuthenticatorLogsEnabled: false,
+      isControllerManagerLogsEnabled: false,
+      isSchedulerLogsEnabled: false,
+    }),
+  loadBalancer: z
+    .object({
+      type: z.enum(["UNKNOWN", "ALB", "NLB"]),
+      wildcardDomain: z.string(),
+      allowlistIpRanges: z.string(),
+      certificateArns: z
+        .object({
+          arn: z.string(),
+        })
+        .array(),
+      awsTags: z
+        .object({
+          key: z.string(),
+          value: z.string(),
+        })
+        .array(),
+      isWafV2Enabled: z.boolean(),
+      wafV2Arn: z.string(),
+    })
+    .default({
+      type: "NLB",
+      wildcardDomain: "",
+      allowlistIpRanges: "",
+      certificateArns: [],
+      awsTags: [],
+      isWafV2Enabled: false,
+      wafV2Arn: "",
+    }),
+  isEcrScanningEnabled: z.boolean().default(false),
+  isGuardDutyEnabled: z.boolean().default(false),
+  isKmsEncryptionEnabled: z.boolean().default(false),
 });
 const gkeConfigValidator = z.object({
   kind: z.literal("GKE"),

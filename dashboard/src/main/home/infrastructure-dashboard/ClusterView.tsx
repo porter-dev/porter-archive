@@ -39,7 +39,10 @@ const ClusterView: React.FC<Props> = ({ match }) => {
   }, [match]);
   return (
     <ClusterContextProvider clusterId={params.clusterId}>
-      <ClusterFormContextProvider projectId={currentProject?.id}>
+      <ClusterFormContextProvider
+        projectId={currentProject?.id}
+        isAdvancedSettingsEnabled={currentProject?.advanced_infra_enabled}
+      >
         <StyledExpandedCluster>
           <Back to="/infrastructure" />
           <ClusterHeader />

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Select from "components/porter/Select";
@@ -11,7 +10,10 @@ import VerticalSteps from "components/porter/VerticalSteps";
 import { CloudProviderGCP } from "lib/clusters/constants";
 import { type ClientClusterContract } from "lib/clusters/types";
 
+import { valueExists } from "shared/util";
+
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
+import ClusterSaveButton from "../../ClusterSaveButton";
 import NodeGroups from "../../shared/NodeGroups";
 import { BackButton, Img } from "../CreateClusterForm";
 
@@ -20,7 +22,7 @@ type Props = {
 };
 
 const ConfigureGKECluster: React.FC<Props> = ({ goBack }) => {
-  const [currentStep, _setCurrentStep] = useState<number>(4);
+  const [currentStep, _setCurrentStep] = useState<number>(100); // hack to show all steps
 
   const {
     control,
@@ -28,7 +30,7 @@ const ConfigureGKECluster: React.FC<Props> = ({ goBack }) => {
     formState: { errors },
   } = useFormContext<ClientClusterContract>();
 
-  const { updateClusterButtonProps } = useClusterFormContext();
+  const { isAdvancedSettingsEnabled } = useClusterFormContext();
 
   return (
     <div>
@@ -39,10 +41,10 @@ const ConfigureGKECluster: React.FC<Props> = ({ goBack }) => {
         </BackButton>
         <Spacer x={1} inline />
         <Img src={CloudProviderGCP.icon} />
-        <Text size={16}>Configure EKS Cluster</Text>
+        <Text size={16}>Configure GKE Cluster</Text>
       </Container>
       <Spacer y={1} />
-      <Text>Specify settings for your EKS cluster.</Text>
+      <Text>Specify settings for your GKE infrastructure.</Text>
       <Spacer y={1} />
       <VerticalSteps
         currentStep={currentStep}
@@ -50,6 +52,10 @@ const ConfigureGKECluster: React.FC<Props> = ({ goBack }) => {
           <>
             <Text size={16}>Cluster name</Text>
             <Spacer y={0.5} />
+            <Text color="helper">
+              Lowercase letters, numbers, and &quot;-&quot; only.
+            </Text>
+            <Spacer y={0.7} />
             <ControlledInput
               placeholder="ex: my-cluster"
               type="text"
@@ -59,8 +65,12 @@ const ConfigureGKECluster: React.FC<Props> = ({ goBack }) => {
             />
           </>,
           <>
-            <Text size={16}>Cluster region</Text>
+            <Text size={16}>Region</Text>
             <Spacer y={0.5} />
+            <Text color="helper">
+              Select the region where you want to run your cluster.
+            </Text>
+            <Spacer y={0.7} />
             <Controller
               name={`cluster.config.region`}
               control={control}
@@ -83,17 +93,23 @@ const ConfigureGKECluster: React.FC<Props> = ({ goBack }) => {
               }}
             />
           </>,
-          <>
-            <Text size={16}>CIDR Range</Text>
-            <Spacer y={0.5} />
-            <ControlledInput
-              placeholder="ex: 10.78.0.0/16"
-              type="text"
-              width="300px"
-              error={errors.cluster?.config?.cidrRange?.message}
-              {...register("cluster.config.cidrRange")}
-            />
-          </>,
+          isAdvancedSettingsEnabled ? (
+            <>
+              <Text size={16}>CIDR range</Text>
+              <Spacer y={0.5} />
+              <Text color="helper">
+                Specify the CIDR range for your cluster.
+              </Text>
+              <Spacer y={0.7} />
+              <ControlledInput
+                placeholder="ex: 10.78.0.0/16"
+                type="text"
+                width="300px"
+                error={errors.cluster?.config?.cidrRange?.message}
+                {...register("cluster.config.cidrRange")}
+              />
+            </>
+          ) : null,
           <>
             <Text size={16}>
               Application node group{" "}
@@ -106,21 +122,25 @@ const ConfigureGKECluster: React.FC<Props> = ({ goBack }) => {
               </a>
             </Text>
             <Spacer y={0.5} />
+            <Text color="helper">
+              Configure your application infrastructure.{" "}
+              <a
+                href="https://docs.porter.run/other/kubernetes-101"
+                target="_blank"
+                rel="noreferrer"
+              >
+                &nbsp;(?)
+              </a>
+            </Text>
+            <Spacer y={1} />
             <NodeGroups availableMachineTypes={CloudProviderGCP.machineTypes} />
           </>,
           <>
             <Text size={16}>Provision cluster</Text>
             <Spacer y={0.5} />
-            <Button
-              type="submit"
-              status={updateClusterButtonProps.status}
-              disabled={updateClusterButtonProps.isDisabled}
-              loadingText={updateClusterButtonProps.loadingText}
-            >
-              Submit
-            </Button>
+            <ClusterSaveButton>Submit</ClusterSaveButton>
           </>,
-        ]}
+        ].filter(valueExists)}
       />
     </div>
   );

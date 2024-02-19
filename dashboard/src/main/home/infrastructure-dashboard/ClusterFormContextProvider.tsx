@@ -1,4 +1,4 @@
-import React, { createContext, useMemo, useState } from "react";
+import React, { createContext, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type Contract } from "@porter-dev/api-contracts";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,7 +13,10 @@ import {
   type UpdateClusterResponse,
 } from "lib/clusters/types";
 import { useUpdateCluster } from "lib/hooks/useCluster";
+import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 import { useIntercom } from "lib/hooks/useIntercom";
+
+import api from "shared/api";
 
 import PreflightChecksModal from "./modals/PreflightChecksModal";
 
@@ -25,9 +28,10 @@ export type UpdateClusterButtonProps = {
 };
 
 type ClusterFormContextType = {
-  setCurrentContract: (contract: Contract) => void;
+  isAdvancedSettingsEnabled: boolean;
   showFailedPreflightChecksModal: boolean;
   updateClusterButtonProps: UpdateClusterButtonProps;
+  setCurrentContract: (contract: Contract) => void;
 };
 
 const ClusterFormContext = createContext<ClusterFormContextType | null>(null);
@@ -44,12 +48,14 @@ export const useClusterFormContext = (): ClusterFormContextType => {
 
 type ClusterFormContextProviderProps = {
   projectId?: number;
+  isAdvancedSettingsEnabled?: boolean;
   redirectOnSubmit?: boolean;
   children: JSX.Element;
 };
 
 const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   projectId,
+  isAdvancedSettingsEnabled = false,
   redirectOnSubmit,
   children,
 }) => {
@@ -64,10 +70,14 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   const [showFailedPreflightChecksModal, setShowFailedPreflightChecksModal] =
     useState<boolean>(false);
 
+  const scrollToTopRef = useRef<HTMLDivElement | null>(null);
+
   const { updateCluster, isHandlingPreflightChecks, isCreatingContract } =
     useUpdateCluster({ projectId });
 
   const { showIntercomWithMessage } = useIntercom();
+
+  const { reportToAnalytics } = useClusterAnalytics();
 
   const clusterForm = useForm<ClientClusterContract>({
     reValidateMode: "onSubmit",
@@ -103,7 +113,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
       props.loadingText = "Provisioning cluster...";
     }
     if (updateClusterResponse?.createContractResponse) {
-      props.status = "success";
+      props.status = "";
     }
 
     return props;
@@ -118,29 +128,60 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   const onSubmit = handleSubmit(async (data) => {
     setUpdateClusterResponse(undefined);
     setUpdateClusterError("");
-    if (!currentContract?.cluster) {
+    if (!currentContract?.cluster || !projectId) {
       return;
     }
     try {
       const response = await updateCluster(data, currentContract);
       setUpdateClusterResponse(response);
       if (response.preflightChecks) {
+        void reportToAnalytics({
+          projectId,
+          step: "cluster-preflight-checks-failed",
+          errorMessage: `Preflight checks failed: ${response.preflightChecks
+            .map((c) => c.title)
+            .join(", ")}`,
+        });
         setShowFailedPreflightChecksModal(true);
       }
       if (response.createContractResponse) {
+        void reportToAnalytics({
+          projectId,
+          step: "provisioning-started",
+          provider: data.cluster.cloudProvider,
+          region: data.cluster.config.region,
+        });
+        await api.saveOnboardingState(
+          "<token>",
+          { current_step: "clean_up" },
+          { project_id: projectId }
+        );
         await queryClient.invalidateQueries(["getCluster"]);
 
         if (redirectOnSubmit) {
           history.push(
             `/infrastructure/${response.createContractResponse.contract_revision.cluster_id}`
           );
+        } else if (scrollToTopRef.current) {
+          scrollToTopRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "end",
+          });
         }
       }
     } catch (err) {
       if (err instanceof Error) {
+        void reportToAnalytics({
+          projectId,
+          step: "cluster-update-failed",
+          errorMessage: err.message,
+          provider: data.cluster.cloudProvider,
+          clusterName: data.cluster.config.clusterName,
+        });
         setUpdateClusterError(err.message);
         showIntercomWithMessage({
           message: "I am running into an issue updating my cluster.",
+          delaySeconds: 3,
         });
       }
     }
@@ -152,9 +193,10 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
         setCurrentContract,
         showFailedPreflightChecksModal,
         updateClusterButtonProps,
+        isAdvancedSettingsEnabled,
       }}
     >
-      <Wrapper>
+      <Wrapper ref={scrollToTopRef}>
         <FormProvider {...clusterForm}>
           <form onSubmit={onSubmit}>{children}</form>
         </FormProvider>

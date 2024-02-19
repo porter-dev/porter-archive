@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useMemo } from "react";
 import { Contract } from "@porter-dev/api-contracts";
 import { useQueryClient } from "@tanstack/react-query";
 import styled from "styled-components";
+import { z } from "zod";
 
 import Loading from "components/Loading";
 import Container from "components/porter/Container";
@@ -10,10 +11,13 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { updateExistingClusterContract } from "lib/clusters";
 import {
+  clusterValidator,
   type ClientCluster,
   type ClientClusterContract,
+  type ClientNode,
 } from "lib/clusters/types";
-import { useCluster } from "lib/hooks/useCluster";
+import { useCluster, useClusterNodeList } from "lib/hooks/useCluster";
+import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -21,6 +25,7 @@ import notFound from "assets/not-found.png";
 
 type ClusterContextType = {
   cluster: ClientCluster;
+  nodes: ClientNode[];
   projectId: number;
   isClusterUpdating: boolean;
   updateClusterVanityName: (name: string) => void;
@@ -54,6 +59,9 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
     clusterId,
     refetchInterval: 3000,
   });
+  const { reportToAnalytics } = useClusterAnalytics();
+
+  const { nodes } = useClusterNodeList({ clusterId });
 
   const paramsExist =
     !!clusterId && !!currentProject && currentProject.id !== -1;
@@ -111,6 +119,12 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
     if (!paramsExist) {
       return;
     }
+
+    void reportToAnalytics({
+      projectId: currentProject.id,
+      step: "cluster-delete",
+    });
+
     await api.deleteCluster(
       "<token",
       {},
@@ -119,6 +133,17 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
         cluster_id: clusterId,
       }
     );
+
+    const res = await api.getClusters("<token>", {}, { id: currentProject.id });
+    const parsed = await z.array(clusterValidator).parseAsync(res.data);
+    if (parsed.length === 0) {
+      await api.saveOnboardingState(
+        "<token>",
+        { current_step: "connect_source" },
+        { project_id: currentProject.id }
+      );
+    }
+
     await queryClient.invalidateQueries(["getClusters"]);
   }, [paramsExist, clusterId, currentProject?.id]);
   const isClusterUpdating = useMemo(() => {
@@ -163,6 +188,7 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
     <ClusterContext.Provider
       value={{
         cluster,
+        nodes,
         projectId: currentProject.id,
         isClusterUpdating,
         updateClusterVanityName,

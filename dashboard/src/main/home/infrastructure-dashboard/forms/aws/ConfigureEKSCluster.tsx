@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
 import Back from "components/porter/Back";
-import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Image from "components/porter/Image";
@@ -13,7 +12,10 @@ import VerticalSteps from "components/porter/VerticalSteps";
 import { CloudProviderAWS } from "lib/clusters/constants";
 import { type ClientClusterContract } from "lib/clusters/types";
 
+import { valueExists } from "shared/util";
+
 import { useClusterFormContext } from "../../ClusterFormContextProvider";
+import ClusterSaveButton from "../../ClusterSaveButton";
 import NodeGroups from "../../shared/NodeGroups";
 
 type Props = {
@@ -21,7 +23,7 @@ type Props = {
 };
 
 const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
-  const [currentStep, _setCurrentStep] = useState<number>(4);
+  const [currentStep, _setCurrentStep] = useState<number>(100); // hack to show all steps
 
   const {
     control,
@@ -29,7 +31,7 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
     formState: { errors },
   } = useFormContext<ClientClusterContract>();
 
-  const { updateClusterButtonProps } = useClusterFormContext();
+  const { isAdvancedSettingsEnabled } = useClusterFormContext();
 
   return (
     <div>
@@ -86,6 +88,23 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
               )}
             />
           </>,
+          isAdvancedSettingsEnabled ? (
+            <>
+              <Text size={16}>CIDR range</Text>
+              <Spacer y={0.5} />
+              <Text color="helper">
+                Specify the CIDR range for your cluster.
+              </Text>
+              <Spacer y={0.7} />
+              <ControlledInput
+                placeholder="ex: 10.78.0.0/16"
+                type="text"
+                width="300px"
+                error={errors.cluster?.config?.cidrRange?.message}
+                {...register("cluster.config.cidrRange")}
+              />
+            </>
+          ) : null,
           <>
             <Text size={16}>Application node group</Text>
             <Spacer y={0.5} />
@@ -102,16 +121,12 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
             <Spacer y={1} />
             <NodeGroups availableMachineTypes={CloudProviderAWS.machineTypes} />
           </>,
-          <Button
-            key={3}
-            type="submit"
-            status={updateClusterButtonProps.status}
-            disabled={updateClusterButtonProps.isDisabled}
-            loadingText={updateClusterButtonProps.loadingText}
-          >
-            Create resources
-          </Button>,
-        ]}
+          <>
+            <Text size={16}>Provision cluster</Text>
+            <Spacer y={0.5} />
+            <ClusterSaveButton>Submit</ClusterSaveButton>
+          </>,
+        ].filter(valueExists)}
       />
     </div>
   );

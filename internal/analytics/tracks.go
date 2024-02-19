@@ -1036,3 +1036,82 @@ func PorterAppUpdateFailureTrack(opts *PorterAppUpdateOpts) segmentTrack {
 		getDefaultSegmentTrack(additionalProps, PorterAppUpdateFailure),
 	)
 }
+
+// CloudProviderPermissionsGrantedTrackOpts are the options for creating a track when a user grants permission to use porter
+type CloudProviderPermissionsGrantedTrackOpts struct {
+	*ProjectScopedTrackOpts
+
+	Email                             string
+	FirstName                         string
+	LastName                          string
+	CompanyName                       string
+	CloudProvider                     string
+	CloudProviderCredentialIdentifier string
+}
+
+// CloudProviderPermissionsGrantedTrack returns a track for when a user grants permission to use porter
+func CloudProviderPermissionsGrantedTrack(opts *CloudProviderPermissionsGrantedTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["cloud_provider"] = opts.CloudProvider
+	additionalProps["cloud_provider_credential_identifier"] = opts.CloudProviderCredentialIdentifier
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, CloudProviderPermissionsGranted),
+	)
+}
+
+// ClusterPreflightChecksFailedTrackOpts are the options for creating a track when a user fails preflight checks
+type ClusterPreflightChecksFailedTrackOpts struct {
+	*ProjectScopedTrackOpts
+
+	Email        string
+	FirstName    string
+	LastName     string
+	CompanyName  string
+	ErrorMessage string
+}
+
+// ClusterPreflightChecksFailedTrack returns a track for when a user fails preflight checks
+func ClusterPreflightChecksFailedTrack(opts *ClusterPreflightChecksFailedTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["error_message"] = opts.ErrorMessage
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ClusterPreflightChecksFailed),
+	)
+}
+
+// ClusterUpdateFailedTrackOpts are the options for creating a track when a user fails to update a cluster
+type ClusterUpdateFailedTrackOpts struct {
+	*ProjectScopedTrackOpts
+
+	ClusterName  string
+	Email        string
+	FirstName    string
+	LastName     string
+	CompanyName  string
+	ErrorMessage string
+}
+
+// ClusterUpdateFailedTrack returns a track for when a user fails to update a cluster
+func ClusterUpdateFailedTrack(opts *ClusterUpdateFailedTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+	additionalProps["cluster_name"] = opts.ClusterName
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+	additionalProps["error_message"] = opts.ErrorMessage
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, ClusterUpdateFailed),
+	)
+}

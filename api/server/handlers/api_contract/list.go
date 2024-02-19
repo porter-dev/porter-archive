@@ -67,12 +67,15 @@ func (c *APIContractRevisionListHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		telemetry.AttributeKV{Key: "cluster-id", Value: clusterID},
 		telemetry.AttributeKV{Key: "latest", Value: request.Latest},
 	)
+
+	resp := []*models.APIContractRevision{}
 	revisions, err := c.Config().Repo.APIContractRevisioner().List(ctx, proj.ID, repository.WithClusterID(uint(clusterID)), repository.WithLatest(request.Latest))
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error getting latest api contract revisions")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
+	resp = append(resp, revisions...)
 
-	c.WriteResult(w, r, revisions)
+	c.WriteResult(w, r, resp)
 }

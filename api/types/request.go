@@ -63,6 +63,7 @@ const (
 	// URLParamDeploymentTargetIdentifier can be either the deployment target id or deployment target name
 	URLParamDeploymentTargetIdentifier URLParam = "deployment_target_identifier"
 	URLParamWebhookID                  URLParam = "webhook_id"
+	URLParamJobRunName                 URLParam = "job_run_name"
 )
 
 type Path struct {

@@ -53,7 +53,8 @@ type RunAppJobRequest struct {
 
 // RunAppJobResponse is the response object for the /apps/{porter_app_name}/run endpoint
 type RunAppJobResponse struct {
-	JobRunID string `json:"job_run_id"`
+	JobRunID   string `json:"job_run_id"`
+	JobRunName string `json:"job_run_name"`
 }
 
 // ServeHTTP runs a one-off command in the same environment as the provided service, app and deployment target
@@ -149,7 +150,8 @@ func (c *RunAppJobHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := RunAppJobResponse{
-		JobRunID: serviceResp.Msg.JobRunId,
+		JobRunID:   serviceResp.Msg.JobRunId,
+		JobRunName: serviceResp.Msg.JobRunName,
 	}
 
 	c.WriteResult(w, r, response)

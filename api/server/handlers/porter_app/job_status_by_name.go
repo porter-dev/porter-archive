@@ -17,41 +17,41 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// JobStatusHandler is the handler for GET /apps/jobs
-type JobStatusHandler struct {
+// JobStatusByNameHandler is the handler for GET /apps/jobs/{porter_app_name}/{job_run_name}
+type JobStatusByNameHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewJobStatusHandler returns a new JobStatusHandler
-func NewJobStatusHandler(
+// NewJobStatusByNameHandler returns a new JobStatusByNameHandler
+func NewJobStatusByNameHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *JobStatusHandler {
-	return &JobStatusHandler{
+) *JobStatusByNameHandler {
+	return &JobStatusByNameHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-// JobStatusRequest is the expected format for a request body on GET /apps/jobs
-type JobStatusRequest struct {
+// JobStatusByNameRequest is the expected format for a request body on GET /apps/jobs/{porter_app_name}/{job_run_name}
+type JobStatusByNameRequest struct {
 	DeploymentTargetID   string `schema:"deployment_target_id,omitempty"`
 	DeploymentTargetName string `schema:"deployment_target_name,omitempty"`
-	JobName              string `schema:"job_name"`
+	JobRunName           string `schema:"job_run_name"`
 }
 
-// JobStatusResponse is the response format for GET /apps/jobs
-type JobStatusResponse struct {
-	JobRuns []porter_app.JobRun `json:"job_runs"`
+// JobStatusByNameResponse is the response format for GET /apps/jobs/{porter_app_name}/{job_run_name}
+type JobStatusByNameResponse struct {
+	JobRun porter_app.JobRun `json:"job_run"`
 }
 
-func (c *JobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *JobStatusByNameHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-job-status")
 	defer span.End()
 
-	request := &JobStatusRequest{}
+	request := &JobStatusByNameRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "invalid request")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -67,8 +67,14 @@ func (c *JobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-name", Value: name})
+
+	jobRunName, reqErr := requestutils.GetURLParamString(r, types.URLParamJobRunName)
+	if reqErr != nil {
+		err := telemetry.Error(ctx, span, reqErr, "invalid job run name")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
 
 	deploymentTargetName := request.DeploymentTargetName
 	if request.DeploymentTargetName == "" && request.DeploymentTargetID == "" {
@@ -90,43 +96,37 @@ func (c *JobStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		telemetry.AttributeKV{Key: "deployment-target-id", Value: request.DeploymentTargetID},
 	)
 
-	jobRunsRequest := connect.NewRequest(&porterv1.JobRunsRequest{
+	jobRunsRequest := connect.NewRequest(&porterv1.JobRunStatusRequest{
 		ProjectId: int64(project.ID),
 		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
 			Id:   request.DeploymentTargetID,
 			Name: deploymentTargetName,
 		},
-		AppName:        name,
-		JobServiceName: request.JobName,
+		JobRunName: jobRunName,
 	})
 
-	jobRunsResp, err := c.Config().ClusterControlPlaneClient.JobRuns(ctx, jobRunsRequest)
+	jobRunResp, err := c.Config().ClusterControlPlaneClient.JobRunStatus(ctx, jobRunsRequest)
 	if err != nil {
-		err := telemetry.Error(ctx, span, err, "error getting job runs from cluster control plane client")
+		err := telemetry.Error(ctx, span, err, "error getting job run from cluster control plane client")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
 
-	if jobRunsResp == nil || jobRunsResp.Msg == nil {
-		err := telemetry.Error(ctx, span, nil, "job runs response is nil")
+	if jobRunResp == nil || jobRunResp.Msg == nil {
+		err := telemetry.Error(ctx, span, nil, "job run response is nil")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	runs := []porter_app.JobRun{}
-	for _, jobRun := range jobRunsResp.Msg.JobRuns {
-		run, err := porter_app.JobRunFromProto(ctx, jobRun)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error converting job run from proto")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		runs = append(runs, run)
+	run, err := porter_app.JobRunFromProto(ctx, jobRunResp.Msg.JobRun)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error converting job run from proto")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
 	}
 
-	res := JobStatusResponse{
-		JobRuns: runs,
+	res := JobStatusByNameResponse{
+		JobRun: run,
 	}
 
 	c.WriteResult(w, r, res)

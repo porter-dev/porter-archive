@@ -12,6 +12,8 @@ import { useIntercom } from "lib/hooks/useIntercom";
 import api from "shared/api";
 import target from "assets/target.svg";
 
+import { useLatestRevision } from "../../app-view/LatestRevisionContext";
+
 type Props = {
   projectId: number;
   clusterId: number;
@@ -29,6 +31,7 @@ const TriggerJobButton: React.FC<Props> = ({
 }) => {
   const history = useHistory();
   const { showIntercomWithMessage } = useIntercom();
+  const { deploymentTarget } = useLatestRevision();
 
   const [errorMessage, setErrorMessage] = useState("");
   const [status, setStatus] = useState("");
@@ -56,9 +59,10 @@ const TriggerJobButton: React.FC<Props> = ({
         .parseAsync(resp.data);
 
       const jobRunName = parsed.job_run_name;
-      history.push(
-        `/apps/${appName}/job-history?job_run_name=${jobRunName}&service=${jobName}`
-      );
+      const route = deploymentTarget.is_preview
+        ? `/preview-environments/apps/${appName}/job-history?job_run_name=${jobRunName}&service=${jobName}&target=${deploymentTargetId}`
+        : `/apps/${appName}/job-history?job_run_name=${jobRunName}&service=${jobName}`;
+      history.push(route);
     } catch {
       setStatus("");
       setErrorMessage("Unable to run job");

@@ -15,6 +15,7 @@ import { useJobs, type JobRun } from "lib/hooks/useJobs";
 import { relativeDate } from "shared/string_utils";
 import history from "assets/history.png";
 
+import { useLatestRevision } from "../../app-view/LatestRevisionContext";
 import JobRunDetails from "./JobRunDetails";
 import TriggerJobButton from "./TriggerJobButton";
 import { ranFor } from "./utils";
@@ -43,6 +44,7 @@ const JobsSection: React.FC<Props> = ({
       ? serviceFromQueryParams
       : "all"
   );
+  const { deploymentTarget } = useLatestRevision();
 
   const jobOptions = useMemo(() => {
     return [
@@ -134,7 +136,11 @@ const JobsSection: React.FC<Props> = ({
 
           return (
             <Link
-              to={`/apps/${appName}/job-history?job_run_name=${row.name}&service=${row.service_name}`}
+              to={
+                deploymentTarget.is_preview
+                  ? `/preview-environments/apps/${appName}/job-history?job_run_name=${row.name}&service=${row.service_name}&target=${deploymentTargetId}`
+                  : `/apps/${appName}/job-history?job_run_name=${row.name}&service=${row.service_name}`
+              }
             >
               <ExpandButton>
                 <i className="material-icons">open_in_new</i>

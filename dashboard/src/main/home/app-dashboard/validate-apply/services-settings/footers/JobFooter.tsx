@@ -20,7 +20,13 @@ const ServiceStatusFooter: React.FC<JobFooterProps> = ({ jobName }) => {
   return (
     <StyledStatusFooter>
       <Container row>
-        <Link to={`/apps/${latestProto.name}/job-history?service=${jobName}`}>
+        <Link
+          to={
+            deploymentTarget.is_preview
+              ? `/preview-environments/apps/${latestProto.name}/job-history?service=${jobName}&target=${deploymentTarget.id}`
+              : `/apps/${latestProto.name}/job-history?service=${jobName}`
+          }
+        >
           <Button
             onClick={() => {}}
             height="30px"

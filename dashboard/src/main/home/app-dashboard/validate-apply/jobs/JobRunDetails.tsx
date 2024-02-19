@@ -74,7 +74,11 @@ const JobRunDetails: React.FC<Props> = ({ jobRun }) => {
   return (
     <>
       <Link
-        to={`/apps/${latestProto.name}/job-history?service=${jobRun.service_name}`}
+        to={
+          deploymentTarget.is_preview
+            ? `/preview-environments/apps/${latestProto.name}/job-history?service=${jobRun.service_name}&target=${deploymentTarget.id}`
+            : `/apps/${latestProto.name}/job-history?service=${jobRun.service_name}`
+        }
       >
         <BackButton>
           <i className="material-icons">keyboard_backspace</i>

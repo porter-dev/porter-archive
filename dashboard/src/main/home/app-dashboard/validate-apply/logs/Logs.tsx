@@ -470,7 +470,8 @@ const Logs: React.FC<Props> = ({
               isRunning && (
                 <NoLogsFoundContainer>
                   <Container row>
-                    No logs emitted in the last 24 hours.
+                    No logs matching the current filters have been emitted in
+                    the last 24 hours.
                     <Highlight
                       onClick={() => {
                         setSelectedDate(dayjs().toDate());

@@ -33,6 +33,11 @@ const GPUResources: React.FC<Props> = ({ index, cluster }) => {
       (ng) => ng.nodeGroupType === "CUSTOM"
     );
   }, [cluster]);
+
+  const clusterIsUpdating = useMemo(() => {
+    return cluster.contract.condition === "";
+  }, [cluster]);
+
   return (
     <>
       <Spacer y={1} />
@@ -46,6 +51,7 @@ const GPUResources: React.FC<Props> = ({ index, cluster }) => {
                 size="small"
                 color="primary"
                 checked={value.enabled.value}
+                disabled={clusterIsUpdating}
                 onChange={() => {
                   if (!canEnableGPU) {
                     setClusterModalVisible(true);
@@ -128,7 +134,7 @@ const GPUResources: React.FC<Props> = ({ index, cluster }) => {
           />
         </>
       )} */}
-      {cluster.contract.condition === "" && !canEnableGPU && (
+      {clusterIsUpdating && (
         <CheckItemContainer>
           <CheckItemTop>
             <Loading offset="0px" width="20px" height="20px" />

@@ -505,6 +505,7 @@ const preflightCheckKeyValidator = z.enum([
   "apiEnabled",
   "cidrAvailability",
   "iamPermissions",
+  "gpu",
 ]);
 type PreflightCheckKey = z.infer<typeof preflightCheckKeyValidator>;
 export const preflightCheckValidator = z.object({

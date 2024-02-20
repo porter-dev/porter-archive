@@ -206,7 +206,6 @@ func (c *AppLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	logs, err := porter_agent.Logs(ctx, k8sAgent.Clientset, agentSvc, logRequest)
 	if err != nil {
-		fmt.Printf("error getting logs: %v\n", err)
 		_ = telemetry.Error(ctx, span, err, "unable to get logs")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("unable to get logs"), http.StatusInternalServerError))
 		return

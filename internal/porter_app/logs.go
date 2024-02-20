@@ -25,7 +25,7 @@ const (
 	lokiLabel_PorterServiceName   = "porter_run_service_name"
 	lokiLabel_PorterAppRevisionID = "porter_run_app_revision_id"
 	lokiLabel_DeploymentTargetId  = "porter_run_deployment_target_id"
-	lokiLabel_AppInstanceID			 = "porter_run_app_instance_id"
+	lokiLabel_AppInstanceID       = "porter_run_app_instance_id"
 	lokiLabel_JobRunName          = "job_name"
 	lokiLabel_ControllerUID       = "controller_uid"
 )
@@ -36,30 +36,18 @@ func AgentLogToStructuredLog(rawLogs []types.LogLine) []StructuredLog {
 
 	for _, log := range rawLogs {
 		structuredLog := StructuredLog{
-			Line:         log.Line,
-			OutputStream: log.Metadata.OutputStream,
+			Line:               log.Line,
+			OutputStream:       log.Metadata.OutputStream,
+			ServiceName:        log.Metadata.RawLabels[lokiLabel_PorterServiceName],
+			AppRevisionID:      log.Metadata.RawLabels[lokiLabel_PorterAppRevisionID],
+			DeploymentTargetID: log.Metadata.RawLabels[lokiLabel_DeploymentTargetId],
+			JobName:            log.Metadata.RawLabels[lokiLabel_JobRunName],
+			JobRunID:           log.Metadata.RawLabels[lokiLabel_ControllerUID],
+			AppInstanceID:      log.Metadata.RawLabels[lokiLabel_AppInstanceID],
 		}
 
 		if log.Timestamp != nil {
 			structuredLog.Timestamp = *log.Timestamp
-		}
-		if serviceName, ok := log.Metadata.RawLabels[lokiLabel_PorterServiceName]; ok {
-			structuredLog.ServiceName = serviceName
-		}
-		if appRevisionID, ok := log.Metadata.RawLabels[lokiLabel_PorterAppRevisionID]; ok {
-			structuredLog.AppRevisionID = appRevisionID
-		}
-		if deploymentTargetID, ok := log.Metadata.RawLabels[lokiLabel_DeploymentTargetId]; ok {
-			structuredLog.DeploymentTargetID = deploymentTargetID
-		}
-		if jobName, ok := log.Metadata.RawLabels[lokiLabel_JobRunName]; ok {
-			structuredLog.JobName = jobName
-		}
-		if jobRunID, ok := log.Metadata.RawLabels[lokiLabel_ControllerUID]; ok {
-			structuredLog.JobRunID = jobRunID
-		}
-		if appInstanceID, ok := log.Metadata.RawLabels[lokiLabel_AppInstanceID]; ok {
-			structuredLog.AppInstanceID = appInstanceID
 		}
 
 		logs = append(logs, structuredLog)

@@ -47,9 +47,12 @@ export const parseLogsFromAgent = (logs: unknown[] = []): PorterLog[] => {
         timestamp: parsed.timestamp,
         line: ansiLog,
         output_stream: parsed.metadata?.output_stream ?? "",
-        service_name: parsed.metadata?.raw_labels?.porter_run_service_name ?? "",
-        app_revision_id: parsed.metadata?.raw_labels?.porter_run_app_revision_id ?? "",
-        deployment_target_id: parsed.metadata?.raw_labels?.porter_run_deployment_target_id ?? "",
+        service_name:
+          parsed.metadata?.raw_labels?.porter_run_service_name ?? "",
+        app_revision_id:
+          parsed.metadata?.raw_labels?.porter_run_app_revision_id ?? "",
+        deployment_target_id:
+          parsed.metadata?.raw_labels?.porter_run_deployment_target_id ?? "",
         job_name: parsed.metadata?.raw_labels?.job_name ?? "",
         job_run_id: parsed.metadata?.raw_labels?.controller_uid ?? "",
         revision: "0",
@@ -82,6 +85,7 @@ export const useLogs = ({
   notify,
   setLoading,
   revisionIdToNumber,
+  revisionNumberToId,
   setDate,
   appRevisionId = "",
   timeRange,
@@ -98,6 +102,7 @@ export const useLogs = ({
   notify: (message: string) => void;
   setLoading: (isLoading: boolean) => void;
   revisionIdToNumber: Record<string, number>;
+  revisionNumberToId: Record<number, string>;
   // if setDate is set, results are not live
   setDate?: Date;
   appRevisionId?: string;
@@ -269,10 +274,6 @@ export const useLogs = ({
 
   const filterLogs = (logs: PorterLog[]): PorterLog[] => {
     return logs.filter((log) => {
-      if (jobRunName !== "" && log.job_name !== jobRunName) {
-        return false;
-      }
-
       if (
         selectedFilterValues.output_stream !==
           GenericFilter.getDefaultOption("output_stream").value &&
@@ -282,22 +283,6 @@ export const useLogs = ({
       }
 
       if (filterPredeploy && log.service_name.endsWith("predeploy")) {
-        return false;
-      }
-
-      if (
-        selectedFilterValues.revision !==
-          GenericFilter.getDefaultOption("revision").value &&
-        log.revision !== selectedFilterValues.revision
-      ) {
-        return false;
-      }
-
-      if (
-        selectedFilterValues.revision_id !==
-          GenericFilter.getDefaultOption("revision_id").value &&
-        log.app_revision_id !== selectedFilterValues.revision_id
-      ) {
         return false;
       }
 
@@ -324,7 +309,9 @@ export const useLogs = ({
         end_range: endDate,
         limit,
         direction,
-        app_revision_id: appRevisionId,
+        app_revision_id:
+          revisionNumberToId[parseInt(selectedFilterValues.revision)],
+        job_run_name: jobRunName,
       };
 
       const logsResp = await api.appLogs("<token>", getLogsReq, {
@@ -342,7 +329,6 @@ export const useLogs = ({
         .safeParse(logsResp.data);
 
       if (!parsedRes.success) {
-        console.log("parsedRes.error", parsedRes.error);
         return {
           logs: [],
           previousCursor: null,

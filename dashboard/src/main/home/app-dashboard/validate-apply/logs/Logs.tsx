@@ -29,8 +29,8 @@ import {
   GenericFilterOption,
   type FilterName,
 } from "../../expanded-app/logs/types";
-import { useLogs } from "./utils";
 import StyledLogs from "./StyledLogs";
+import { useLogs } from "./utils";
 
 type Props = {
   projectId: number;
@@ -128,7 +128,7 @@ const Logs: React.FC<Props> = ({
     });
   }, [selectedService, selectedRevisionId]);
 
-  const { revisionIdToNumber } = useRevisionList({
+  const { revisionIdToNumber, numberToRevisionId } = useRevisionList({
     appName,
     deploymentTargetId,
     projectId,
@@ -251,6 +251,7 @@ const Logs: React.FC<Props> = ({
     notify,
     setLoading: setIsLoading,
     revisionIdToNumber,
+    revisionNumberToId: numberToRevisionId,
     setDate: selectedDate,
     appRevisionId,
     filterPredeploy,

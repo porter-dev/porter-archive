@@ -636,7 +636,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                               source={source}
                               projectId={currentProject.id}
                             />
-                            {!userHasSeenNoPorterYamlFoundModal &&
+                            {/* {!userHasSeenNoPorterYamlFoundModal &&
                               !porterYamlFound &&
                               !isLoadingPorterYaml && (
                                 <Controller
@@ -665,7 +665,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                                     />
                                   )}
                                 />
-                              )}
+                              )} */}
                           </>
                         ) : (
                           <ImageSettings

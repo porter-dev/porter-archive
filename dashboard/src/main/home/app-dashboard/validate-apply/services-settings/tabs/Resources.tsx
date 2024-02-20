@@ -1,32 +1,23 @@
 import React, { useContext, useState } from "react";
-import { Switch } from "@material-ui/core";
 import { Controller, useFormContext } from "react-hook-form";
-import styled from "styled-components";
 import { match } from "ts-pattern";
 
-import Loading from "components/Loading";
 import Checkbox from "components/porter/Checkbox";
-import Container from "components/porter/Container";
 import { ControlledInput } from "components/porter/ControlledInput";
 import InputSlider from "components/porter/InputSlider";
-import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
-import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
 import SmartOptModal from "main/home/app-dashboard/new-app-flow/tabs/SmartOptModal";
-import ProvisionClusterModal from "main/home/sidebar/ProvisionClusterModal";
-import {
-  closestMultiplier,
-  lowestClosestResourceMultipler,
-} from "lib/hooks/useClusterResourceLimits";
+import { type ClientCluster } from "lib/clusters/types";
+import { closestMultiplier } from "lib/hooks/useClusterResourceLimits";
 import { type PorterAppFormData } from "lib/porter-apps";
 import { type ClientService } from "lib/porter-apps/services";
 
 import { Context } from "shared/Context";
-import addCircle from "assets/add-circle.png";
-import infra from "assets/cluster.svg";
 
+import GPUResources from "./GPUResources";
 import IntelligentSlider from "./IntelligentSlider";
+import OldGPUResources from "./Old_GPUResources";
 
 type ResourcesProps = {
   index: number;
@@ -36,6 +27,7 @@ type ResourcesProps = {
   isPredeploy?: boolean;
   clusterContainsGPUNodes: boolean;
   maxGPU: number;
+  cluster?: ClientCluster;
 };
 
 const Resources: React.FC<ResourcesProps> = ({
@@ -46,13 +38,13 @@ const Resources: React.FC<ResourcesProps> = ({
   service,
   clusterContainsGPUNodes,
   isPredeploy = false,
+  cluster,
 }) => {
   const { control, register, watch, setValue } =
     useFormContext<PorterAppFormData>();
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
-  const [clusterModalVisible, setClusterModalVisible] =
-    useState<boolean>(false);
-  const { currentCluster, currentProject } = useContext(Context);
+
+  const { currentProject } = useContext(Context);
 
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`,
@@ -67,77 +59,9 @@ const Resources: React.FC<ResourcesProps> = ({
     value: false,
   });
 
-  const memory = watch(`app.services.${index}.ramMegabytes`, {
-    readOnly: false,
-    value: 0,
-  });
-  const cpu = watch(`app.services.${index}.cpuCores`, {
-    readOnly: false,
-    value: 0,
-  });
-  const gpu = watch(`app.services.${index}.gpu.enabled`, {
-    readOnly: false,
-    value: false,
-  });
-
   return (
     <>
       <Spacer y={1} />
-      <Controller
-        name={
-          isPredeploy
-            ? `app.predeploy.${index}.smartOptimization`
-            : `app.services.${index}.smartOptimization`
-        }
-        control={control}
-        render={({ field: { value, onChange } }) => {!currentProject?.sandbox_enabled && (
-          <SmartOptHeader>
-            <StyledIcon
-              className="material-icons"
-              onClick={() => {
-                setShowNeedHelpModal(true);
-              }}
-            >
-              help_outline
-            </StyledIcon>
-            <Text>Smart Optimization</Text>
-            <Switch
-              size="small"
-              color="primary"
-              disabled={false}
-              checked={value?.value}
-              onChange={() => {
-                if (!value?.value) {
-                  const lowestRAM = lowestClosestResourceMultipler(
-                    0,
-                    maxRAM,
-                    memory.value
-                  );
-                  const lowestCPU = lowestClosestResourceMultipler(
-                    0,
-                    maxCPU,
-                    cpu.value
-                  );
-                  const lowestFraction = Math.min(lowestRAM, lowestCPU);
-                  setValue(`app.services.${index}.cpuCores`, {
-                    readOnly: false,
-                    value: Number((maxCPU * lowestFraction).toFixed(2)),
-                  });
-                  setValue(`app.services.${index}.ramMegabytes`, {
-                    readOnly: false,
-                    value: maxRAM * lowestFraction,
-                  });
-                }
-                onChange({
-                  ...value,
-                  value: !value?.value,
-                });
-              }}
-              inputProps={{ "aria-label": "controlled" }}
-            />
-          </SmartOptHeader>
-        )}}
-      />
       {showNeedHelpModal && (
         <SmartOptModal setModalVisible={setShowNeedHelpModal} />
       )}
@@ -177,7 +101,7 @@ const Resources: React.FC<ResourcesProps> = ({
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
-            isSmartOptimizationOn={!currentProject?.sandbox_enabled && (smartOpt?.value ?? false)}
+            isSmartOptimizationOn={false}
             decimalsToRoundTo={2}
           />
         )}
@@ -219,133 +143,23 @@ const Resources: React.FC<ResourcesProps> = ({
             disabledTooltip={
               "You may only edit this field in your porter.yaml."
             }
-            isSmartOptimizationOn={!currentProject?.sandbox_enabled && (smartOpt?.value ?? false)}
+            isSmartOptimizationOn={false}
           />
         )}
       />
 
-      {currentProject?.gpu_enabled && (
-        <>
-          <Spacer y={1} />
-          <Controller
-            name={`app.services.${index}.gpu`}
-            control={control}
-            render={({ field: { value, onChange } }) => (
-              <>
-                <Container row>
-                  <Switch
-                    size="small"
-                    color="primary"
-                    checked={value.enabled.value}
-                    disabled={!clusterContainsGPUNodes}
-                    onChange={() => {
-                      onChange({
-                        ...value,
-                        enabled: {
-                          ...value.enabled,
-                          value: !value.enabled.value,
-                        },
-                        gpuCoresNvidia: {
-                          ...value.gpuCoresNvidia,
-                          value: value.enabled.value ? 0 : 1,
-                        },
-                      });
-                    }}
-                    inputProps={{ "aria-label": "controlled" }}
-                  />
-                  <Spacer inline x={0.5} />
-                  <Text>
-                    <>
-                      <span>Enable GPU</span>
-                    </>
-                  </Text>
-
-                  {!clusterContainsGPUNodes && (
-                    <>
-                      <Spacer inline x={1} />
-                      <Text color="helper">
-                        Your cluster has no GPU nodes available.
-                      </Text>
-                      <Spacer inline x={0.5} />
-                      {currentCluster.status !== "UPDATING" && (
-                        <Tag>
-                          <Link
-                            onClick={() => {
-                              setClusterModalVisible(true);
-                            }}
-                          >
-                            <TagIcon src={addCircle} />
-                            Add GPU nodes
-                          </Link>
-                        </Tag>
-                      )}
-                    </>
-                  )}
-                </Container>
-
-                <Spacer y={0.5} />
-                {clusterModalVisible && (
-                  <ProvisionClusterModal
-                    closeModal={() => {
-                      setClusterModalVisible(false);
-                    }}
-                    gpuModal={true}
-                    gcp={currentCluster?.cloud_provider === "GCP"}
-                    azure={currentCluster?.cloud_provider === "Azure"}
-                  />
-                )}
-              </>
-            )}
+      {currentProject?.gpu_enabled &&
+        (currentProject?.beta_features_enabled ? (
+          cluster && (
+            <GPUResources index={index} maxGPU={maxGPU} cluster={cluster} />
+          )
+        ) : (
+          <OldGPUResources
+            clusterContainsGPUNodes={clusterContainsGPUNodes}
+            maxGPU={maxGPU}
+            index={index}
           />
-          {maxGPU > 1 && gpu.value && (
-            <>
-              <Spacer y={1} />
-              <Controller
-                name={`app.services.${index}.gpu`}
-                control={control}
-                render={({ field: { value, onChange } }) => (
-                  <InputSlider
-                    label="GPU"
-                    unit=""
-                    min={0}
-                    max={maxGPU}
-                    value={value?.gpuCoresNvidia.value ?? "1"}
-                    disabled={value?.readOnly}
-                    setValue={(e) => {
-                      onChange({
-                        ...value,
-                        gpuCoresNvidia: {
-                          ...value.gpuCoresNvidia,
-                          value: e,
-                        },
-                      });
-                    }}
-                    disabledTooltip={
-                      "You may only edit this field in your porter.yaml."
-                    }
-                  />
-                )}
-              />
-            </>
-          )}
-          {currentCluster.status === "UPDATING" && !clusterContainsGPUNodes && (
-            <CheckItemContainer>
-              <CheckItemTop>
-                <Loading offset="0px" width="20px" height="20px" />
-                <Spacer inline x={1} />
-                <Text>{"Cluster is updating..."}</Text>
-                <Spacer inline x={1} />
-                <Tag>
-                  <Link to={`/cluster-dashboard`}>
-                    <TagIcon src={infra} />
-                    View Status
-                  </Link>
-                </Tag>
-              </CheckItemTop>
-            </CheckItemContainer>
-          )}
-        </>
-      )}
+        ))}
       {match(service.config)
         .with({ type: "job" }, () => null)
         .with({ type: "predeploy" }, () => null)
@@ -506,42 +320,3 @@ const Resources: React.FC<ResourcesProps> = ({
 };
 
 export default Resources;
-
-const StyledIcon = styled.i`
-  cursor: pointer;
-  font-size: 16px;
-  margin-right: 5px;
-  &:hover {
-    color: #666;
-  }
-`;
-
-const SmartOptHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-`;
-
-const CheckItemContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  border: 1px solid ${(props) => props.theme.border};
-  border-radius: 5px;
-  font-size: 13px;
-  width: 100%;
-  margin-bottom: 10px;
-  padding-left: 10px;
-  background: ${(props) => props.theme.clickable.bg};
-`;
-
-const CheckItemTop = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  background: ${(props) => props.theme.clickable.bg};
-`;
-
-const TagIcon = styled.img`
-  height: 12px;
-  margin-right: 3px;
-`;

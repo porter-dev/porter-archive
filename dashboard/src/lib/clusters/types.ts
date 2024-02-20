@@ -228,6 +228,7 @@ export type ClientMachineType = {
   name: AWSMachineType | GCPMachineType | AzureMachineType;
   displayName: string;
   supportedRegions: Array<AWSRegion | GCPRegion | AzureRegion>;
+  isGPU: boolean;
 };
 type PreflightCheckResolutionStep = {
   text: string;

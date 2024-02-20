@@ -29,8 +29,7 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
       return {
         nodeGroup: ng,
         idx,
-        isIncluded:
-          ng.nodeGroupType === "APPLICATION" || ng.nodeGroupType === "CUSTOM",
+        isIncluded: ng.nodeGroupType === "APPLICATION",
       };
     });
     return dng;

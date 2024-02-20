@@ -6,6 +6,7 @@ import styled, { keyframes } from "styled-components";
 import { match } from "ts-pattern";
 
 import Spacer from "components/porter/Spacer";
+import { type ClientCluster } from "lib/clusters/types";
 import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
@@ -44,6 +45,7 @@ type ServiceProps = {
   clusterIngressIp: string;
   showDisableTls: boolean;
   existingServiceNames: string[];
+  cluster?: ClientCluster;
 };
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -60,6 +62,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   clusterIngressIp,
   showDisableTls,
   existingServiceNames,
+  cluster,
 }) => {
   const renderTabs = (service: ClientService): JSX.Element => {
     return match(service)
@@ -74,6 +77,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           internalNetworkingDetails={internalNetworkingDetails}
           clusterIngressIp={clusterIngressIp}
           showDisableTls={showDisableTls}
+          cluster={cluster}
         />
       ))
       .with({ config: { type: "worker" } }, (svc) => (

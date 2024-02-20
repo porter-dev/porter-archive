@@ -14,6 +14,7 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { type ClientCluster } from "lib/clusters/types";
 import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
@@ -55,6 +56,7 @@ type ServiceListProps = {
     appName: string;
   };
   allowAddServices?: boolean;
+  cluster?: ClientCluster;
 };
 
 const ServiceList: React.FC<ServiceListProps> = ({
@@ -69,6 +71,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
     appName: "",
   },
   allowAddServices = true,
+  cluster,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
@@ -239,6 +242,7 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 clusterIngressIp={clusterIngressIp}
                 showDisableTls={loadBalancerType === "ALB"}
                 existingServiceNames={existingServiceNames}
+                cluster={cluster}
               />
             ) : null;
           })}

@@ -163,6 +163,11 @@ const awsMachineTypeValidator = z.enum([
   "c7a.12xlarge",
   "c7a.16xlarge",
   "c7a.24xlarge",
+  // gpu types
+  "g4dn.xlarge",
+  "g4dn.2xlarge",
+  "g4dn.4xlarge",
+  "g4dn.24xlarge",
 ]);
 type AWSMachineType = z.infer<typeof awsMachineTypeValidator>;
 const gcpMachineTypeValidator = z.enum([

@@ -107,7 +107,7 @@ const JobRunDetails: React.FC<Props> = ({ jobRun }) => {
         }}
         appId={porterApp.id}
         defaultLatestRevision={false}
-        jobRunID={jobRun.id}
+        jobRunName={jobRun.name}
       />
     </>
   );

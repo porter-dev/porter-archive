@@ -25,6 +25,8 @@ const rawLabelsValidator = z.object({
     porter_run_app_revision_id: z.string().optional(),
     porter_run_service_name: z.string().optional(),
     porter_run_service_type: z.string().optional(),
+    porter_run_deployment_target_id: z.string().optional(),
+    job_name: z.string().optional(),
     controller_uid: z.string().optional(),
 });
 export type RawLabels = z.infer<typeof rawLabelsValidator>;

@@ -23,7 +23,6 @@ import api from "shared/api";
 import spinner from "assets/loading.gif";
 
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
-import StyledLogs from "../../expanded-app/logs/StyledLogs";
 import {
   Direction,
   GenericFilter,
@@ -31,6 +30,7 @@ import {
   type FilterName,
 } from "../../expanded-app/logs/types";
 import { useLogs } from "./utils";
+import StyledLogs from "./StyledLogs";
 
 type Props = {
   projectId: number;
@@ -50,7 +50,7 @@ type Props = {
   selectedRevisionId?: string;
   defaultScrollToBottomEnabled?: boolean;
   defaultLatestRevision?: boolean;
-  jobRunID?: string;
+  jobRunName?: string;
 };
 
 const DEFAULT_LOG_TIMEOUT_SECONDS = 60;
@@ -70,7 +70,7 @@ const Logs: React.FC<Props> = ({
   selectedRevisionId,
   defaultScrollToBottomEnabled = true,
   defaultLatestRevision = true,
-  jobRunID = "",
+  jobRunName = "",
 }) => {
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
@@ -256,7 +256,7 @@ const Logs: React.FC<Props> = ({
     filterPredeploy,
     timeRange,
     appID: appId,
-    jobRunID,
+    jobRunName,
   });
 
   const {

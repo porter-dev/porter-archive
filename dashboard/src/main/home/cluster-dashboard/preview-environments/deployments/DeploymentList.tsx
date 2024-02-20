@@ -310,7 +310,7 @@ const DeploymentList = () => {
         disableLineBreak
         capitalize={false}
       />
-      {porterYAMLErrors.length > 0 ? (
+      {/* {porterYAMLErrors.length > 0 ? (
         <PorterYAMLBannerWrapper>
           <Banner type="warning">
             No porter.yaml file in the default branch.
@@ -323,7 +323,7 @@ const DeploymentList = () => {
             </LinkButton>
           </Banner>
         </PorterYAMLBannerWrapper>
-      ) : null}
+      ) : null} */}
       <FlexRow>
         <Flex>
           <SearchRowWrapper>

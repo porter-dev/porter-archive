@@ -14,8 +14,8 @@ import gcp from "assets/gcp.png";
 
 import {
   type ClientCloudProvider,
+  type ClientMachineType,
   type ClientRegion,
-  type MachineType,
   type PreflightCheck,
   type PreflightCheckResolution,
 } from "./types";
@@ -94,7 +94,7 @@ const SUPPORTED_AZURE_REGIONS: ClientRegion[] = [
   { name: "westus3", displayName: "West US 3" },
 ];
 
-const SUPPORTED_AWS_MACHINE_TYPES: MachineType[] = [
+const SUPPORTED_AWS_MACHINE_TYPES: ClientMachineType[] = [
   {
     name: "t3.medium",
     displayName: "t3.medium",
@@ -410,9 +410,29 @@ const SUPPORTED_AWS_MACHINE_TYPES: MachineType[] = [
     displayName: "c7a.24xlarge",
     supportedRegions: SUPPORTED_AWS_REGIONS.map((r) => r.name),
   },
+  {
+    name: "g4dn.xlarge",
+    displayName: "g4dn.xlarge",
+    supportedRegions: SUPPORTED_AWS_REGIONS.map((r) => r.name),
+  },
+  {
+    name: "g4dn.2xlarge",
+    displayName: "g4dn.2xlarge",
+    supportedRegions: SUPPORTED_AWS_REGIONS.map((r) => r.name),
+  },
+  {
+    name: "g4dn.4xlarge",
+    displayName: "g4dn.4xlarge",
+    supportedRegions: SUPPORTED_AWS_REGIONS.map((r) => r.name),
+  },
+  {
+    name: "p4d.24xlarge",
+    displayName: "p4d.24xlarge",
+    supportedRegions: SUPPORTED_AWS_REGIONS.map((r) => r.name),
+  },
 ];
 
-const SUPPORTED_GCP_MACHINE_TYPES: MachineType[] = [
+const SUPPORTED_GCP_MACHINE_TYPES: ClientMachineType[] = [
   {
     name: "e2-standard-2",
     displayName: "e2-standard-2",
@@ -570,7 +590,7 @@ const SUPPORTED_GCP_MACHINE_TYPES: MachineType[] = [
   },
 ];
 
-const SUPPORTED_AZURE_MACHINE_TYPES: MachineType[] = [
+const SUPPORTED_AZURE_MACHINE_TYPES: ClientMachineType[] = [
   {
     name: "Standard_B2als_v2",
     displayName: "Standard_B2als_v2",

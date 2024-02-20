@@ -410,6 +410,26 @@ const SUPPORTED_AWS_MACHINE_TYPES: MachineType[] = [
     displayName: "c7a.24xlarge",
     supportedRegions: SUPPORTED_AWS_REGIONS.map((r) => r.name),
   },
+  {
+    name: "g4dn.xlarge",
+    displayName: "g4dn.xlarge",
+    supportedRegions: SUPPORTED_AWS_REGIONS.map((r) => r.name),
+  },
+  {
+    name: "g4dn.2xlarge",
+    displayName: "g4dn.2xlarge",
+    supportedRegions: SUPPORTED_AWS_REGIONS.map((r) => r.name),
+  },
+  {
+    name: "g4dn.4xlarge",
+    displayName: "g4dn.4xlarge",
+    supportedRegions: SUPPORTED_AWS_REGIONS.map((r) => r.name),
+  },
+  {
+    name: "g4dn.24xlarge",
+    displayName: "g4dn.24xlarge",
+    supportedRegions: SUPPORTED_AWS_REGIONS.map((r) => r.name),
+  },
 ];
 
 const SUPPORTED_GCP_MACHINE_TYPES: MachineType[] = [

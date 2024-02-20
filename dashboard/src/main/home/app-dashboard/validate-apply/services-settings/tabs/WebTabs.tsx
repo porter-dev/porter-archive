@@ -3,6 +3,7 @@ import { match } from "ts-pattern";
 
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
+import { type ClientCluster } from "lib/clusters/types";
 import { type ClientService } from "lib/porter-apps/services";
 
 import Advanced from "./Advanced";
@@ -28,6 +29,7 @@ type Props = {
   };
   clusterIngressIp: string;
   showDisableTls: boolean;
+  cluster?: ClientCluster;
 };
 
 const WebTabs: React.FC<Props> = ({
@@ -40,6 +42,7 @@ const WebTabs: React.FC<Props> = ({
   internalNetworkingDetails,
   clusterIngressIp,
   showDisableTls,
+  cluster,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "networking" | "advanced"
@@ -76,6 +79,7 @@ const WebTabs: React.FC<Props> = ({
             maxGPU={maxGPU}
             clusterContainsGPUNodes={clusterContainsGPUNodes}
             service={service}
+            cluster={cluster}
           />
         ))
         .with("advanced", () => (

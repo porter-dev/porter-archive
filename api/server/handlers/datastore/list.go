@@ -11,6 +11,7 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/handlers/cloud_provider"
+	"github.com/porter-dev/porter/api/server/handlers/environment_groups"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -54,7 +55,7 @@ type Datastore struct {
 	Engine string `json:"engine,omitempty"`
 
 	// Env is the env group for the datastore
-	Env *porterv1.EnvGroup `json:"env,omitempty"`
+	Env environment_groups.EnvironmentGroupListItem `json:"env,omitempty"`
 
 	// Metadata is a list of metadata objects for the datastore
 	Metadata []*porterv1.DatastoreMetadata `json:"metadata,omitempty"`
@@ -189,17 +190,26 @@ func Datastores(ctx context.Context, inp DatastoresInput) ([]Datastore, error) {
 			return datastores, telemetry.Error(ctx, span, err, "datastore record not found")
 		}
 
-		datastores = append(datastores, Datastore{
+		encodedDatastore := Datastore{
 			Name:                              datastore.Name,
 			Type:                              datastoreRecord.Type,
 			Engine:                            datastoreRecord.Engine,
 			CreatedAtUTC:                      datastoreRecord.CreatedAt,
 			Status:                            string(datastoreRecord.Status),
 			Metadata:                          datastore.Metadata,
-			Env:                               datastore.Env,
 			CloudProvider:                     datastoreRecord.CloudProvider,
 			CloudProviderCredentialIdentifier: datastoreRecord.CloudProviderCredentialIdentifier,
-		})
+		}
+		if inp.IncludeEnvGroup && datastore.Env != nil {
+			encodedDatastore.Env = environment_groups.EnvironmentGroupListItem{
+				Name:               datastore.Env.Name,
+				LatestVersion:      int(datastore.Env.Version),
+				Variables:          datastore.Env.Variables,
+				SecretVariables:    datastore.Env.SecretVariables,
+				LinkedApplications: datastore.Env.LinkedApplications,
+			}
+		}
+		datastores = append(datastores, encodedDatastore)
 	}
 
 	return datastores, nil

@@ -29,8 +29,10 @@ const GPUResources: React.FC<Props> = ({ index, cluster }) => {
   const { control } = useFormContext<PorterAppFormData>();
 
   const canEnableGPU = useMemo(() => {
-    return cluster?.contract.config.cluster.config.nodeGroups.some(
-      (ng) => ng.nodeGroupType === "CUSTOM"
+    return (
+      cluster.contract.config.cluster.config.nodeGroups.some(
+        (ng) => ng.nodeGroupType === "CUSTOM"
+      ) && cluster.contract.condition === "SUCCESS"
     );
   }, [cluster]);
 
@@ -53,7 +55,7 @@ const GPUResources: React.FC<Props> = ({ index, cluster }) => {
                 checked={value.enabled.value}
                 disabled={clusterIsUpdating}
                 onChange={() => {
-                  if (!canEnableGPU) {
+                  if (!value.enabled.value && !canEnableGPU) {
                     setClusterModalVisible(true);
                     return;
                   }

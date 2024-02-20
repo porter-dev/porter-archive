@@ -1,7 +1,6 @@
 package project_integration
 
 import (
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -110,8 +109,6 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		p.WriteResult(w, r, checkResp)
 		return
 	}
-
-	fmt.Printf("here are the ccp prefligt checks: %+v\n", checkResp.Msg.PreflightChecks)
 
 	errors := []PreflightCheckError{}
 	for key, val := range checkResp.Msg.PreflightChecks {

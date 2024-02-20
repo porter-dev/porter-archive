@@ -453,7 +453,7 @@ const Logs: React.FC<Props> = ({
             )}
             {!isLoading && logs.length === 0 && selectedDate != null && (
               <Message>
-                No logs found for this time range.
+                No logs emitted within 1 day of the selected end date.
                 <Highlight
                   onClick={() => {
                     setSelectedDate(undefined);
@@ -468,16 +468,33 @@ const Logs: React.FC<Props> = ({
               logs.length === 0 &&
               selectedDate == null &&
               isRunning && (
-                <Loading
-                  message={`Waiting ${totalSeconds} seconds for logs...`}
-                />
+                <NoLogsFoundContainer>
+                  <Container row>
+                    No logs matching the current filters have been emitted in
+                    the last 24 hours.
+                    <Highlight
+                      onClick={() => {
+                        setSelectedDate(dayjs().toDate());
+                      }}
+                    >
+                      <i className="material-icons">autorenew</i>
+                      View historical logs
+                    </Highlight>
+                  </Container>
+                  <Spacer y={0.5} />
+                  <Container row>
+                    <Spinner src={spinner} />
+                    <Spacer inline x={1} />
+                    <Text>{`Waiting ${totalSeconds} seconds for new logs...`}</Text>
+                  </Container>
+                </NoLogsFoundContainer>
               )}
             {!isLoading &&
               logs.length === 0 &&
               selectedDate == null &&
               !isRunning && (
                 <Message>
-                  Timed out waiting for logs.
+                  Timed out waiting for new logs.
                   <Highlight
                     onClick={async () => {
                       restartLogTimeout(
@@ -753,4 +770,12 @@ const NotificationWrapper = styled.div<{ active?: boolean }>`
 
 const LogsSectionWrapper = styled.div`
   position: relative;
+`;
+
+const NoLogsFoundContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  height: 100%;
 `;

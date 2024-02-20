@@ -10,13 +10,13 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
   type ClientClusterContract,
-  type MachineType,
+  type ClientMachineType,
 } from "lib/clusters/types";
 
 import world from "assets/world.svg";
 
 type Props = {
-  availableMachineTypes: MachineType[];
+  availableMachineTypes: ClientMachineType[];
 };
 const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
   const { control } = useFormContext<ClientClusterContract>();

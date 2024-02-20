@@ -13,7 +13,7 @@ export type ClientCloudProvider = {
   displayName: string;
   icon: string;
   regions: ClientRegion[];
-  machineTypes: MachineType[];
+  machineTypes: ClientMachineType[];
   baseCost: number;
   newClusterDefaultContract: Contract; // this is where we include sensible defaults for new clusters
   preflightChecks: PreflightCheck[];
@@ -224,7 +224,7 @@ type AzureSKUTier = {
   name: string;
   displayName: string;
 };
-export type MachineType = {
+export type ClientMachineType = {
   name: AWSMachineType | GCPMachineType | AzureMachineType;
   displayName: string;
   supportedRegions: Array<AWSRegion | GCPRegion | AzureRegion>;

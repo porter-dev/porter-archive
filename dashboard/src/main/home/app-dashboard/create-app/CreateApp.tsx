@@ -23,6 +23,7 @@ import VerticalSteps from "components/porter/VerticalSteps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
+import { useCluster } from "lib/hooks/useCluster";
 import {
   useDefaultDeploymentTarget,
   useDeploymentTargetList,
@@ -216,6 +217,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     creating: true,
   });
   const { currentClusterResources } = useClusterResources();
+  const { cluster } = useCluster({ clusterId: currentCluster?.id });
 
   // set the deployment target id to the default if no deployment target has been selected yet
   useEffect(() => {
@@ -361,12 +363,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
         setIsDeploying(false);
       }
     },
-    [
-      currentProject?.id,
-      currentCluster?.id,
-      deploymentTargetID,
-      name.value,
-    ]
+    [currentProject?.id, currentCluster?.id, deploymentTargetID, name.value]
   );
 
   useEffect(() => {
@@ -725,6 +722,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <ServiceList
                       addNewText={"Add a new service"}
                       fieldArrayName={"app.services"}
+                      cluster={cluster}
                     />
                   </>,
                   <>

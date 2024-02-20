@@ -62,6 +62,8 @@ const (
 	lokiLabel_Namespace           = "namespace"
 )
 
+const defaultLogLineLimit = 1000
+
 // AppLogsResponse represents the response to the /apps/logs endpoint
 type AppLogsResponse struct {
 	BackwardContinueTime *time.Time                 `json:"backward_continue_time,omitempty"`
@@ -135,14 +137,32 @@ func (c *AppLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	namespace := deploymentTarget.Namespace
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "namespace", Value: namespace})
 
-	if request.StartRange.IsZero() || request.EndRange.IsZero() {
-		err := telemetry.Error(ctx, span, nil, "must provide start and end range")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
+	startRange := request.StartRange
+	if request.StartRange.IsZero() {
+		dayAgo := time.Now().Add(-24 * time.Hour).UTC()
+		startRange = dayAgo
 	}
+
+	endRange := request.EndRange
+	if request.EndRange.IsZero() {
+		endRange = time.Now().UTC()
+	}
+
+	limit := request.Limit
+	if request.Limit == 0 {
+		limit = defaultLogLineLimit
+	}
+
+	direction := request.Direction
+	if request.Direction == "" {
+		direction = "backward"
+	}
+
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "start-range", Value: request.StartRange.String()},
 		telemetry.AttributeKV{Key: "end-range", Value: request.EndRange.String()},
+		telemetry.AttributeKV{Key: "limit", Value: limit},
+		telemetry.AttributeKV{Key: "direction", Value: direction},
 	)
 
 	k8sAgent, err := c.GetAgent(r, cluster, "")
@@ -176,16 +196,17 @@ func (c *AppLogsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logRequest := &types.LogRequest{
-		Limit:       request.Limit,
-		StartRange:  &request.StartRange,
-		EndRange:    &request.EndRange,
+		Limit:       limit,
+		StartRange:  &startRange,
+		EndRange:    &endRange,
 		MatchLabels: matchLabels,
-		Direction:   request.Direction,
+		Direction:   direction,
 		SearchParam: request.SearchParam,
 	}
 
-	logs, err := porter_agent.Logs(k8sAgent.Clientset, agentSvc, logRequest)
+	logs, err := porter_agent.Logs(ctx, k8sAgent.Clientset, agentSvc, logRequest)
 	if err != nil {
+		fmt.Printf("error getting logs: %v\n", err)
 		_ = telemetry.Error(ctx, span, err, "unable to get logs")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(fmt.Errorf("unable to get logs"), http.StatusInternalServerError))
 		return

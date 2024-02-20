@@ -55,7 +55,7 @@ const GPUResources: React.FC<Props> = ({ index, cluster }) => {
                 checked={value.enabled.value}
                 disabled={clusterIsUpdating}
                 onChange={() => {
-                  if (!canEnableGPU) {
+                  if (!value.enabled.value && !canEnableGPU) {
                     setClusterModalVisible(true);
                     return;
                   }

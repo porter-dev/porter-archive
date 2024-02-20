@@ -426,8 +426,8 @@ const SUPPORTED_AWS_MACHINE_TYPES: MachineType[] = [
     supportedRegions: SUPPORTED_AWS_REGIONS.map((r) => r.name),
   },
   {
-    name: "g4dn.24xlarge",
-    displayName: "g4dn.24xlarge",
+    name: "p4d.24xlarge",
+    displayName: "p4d.24xlarge",
     supportedRegions: SUPPORTED_AWS_REGIONS.map((r) => r.name),
   },
 ];

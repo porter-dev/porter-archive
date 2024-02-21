@@ -64,12 +64,10 @@ export const CheckItem: React.FC<ItemProps> = ({ preflightCheck }) => {
           {preflightCheck.error.metadata &&
             Object.entries(preflightCheck.error.metadata).map(
               ([key, value]) => (
-                <>
-                  <div key={key}>
-                    <ErrorMessageLabel>{key}:</ErrorMessageLabel>
-                    <ErrorMessageContent>{value}</ErrorMessageContent>
-                  </div>
-                </>
+                <div key={key}>
+                  <ErrorMessageLabel>{key}:</ErrorMessageLabel>
+                  <ErrorMessageContent>{value}</ErrorMessageContent>
+                </div>
               )
             )}
         </div>
@@ -107,12 +105,12 @@ const PreflightChecksModal: React.FC<Props> = ({
 
 export default PreflightChecksModal;
 
-const AppearingDiv = styled.div<{ color?: string }>`
+const AppearingDiv = styled.div`
   animation: floatIn 0.5s;
   animation-fill-mode: forwards;
   display: flex;
   flex-direction: column;
-  color: ${(props) => props.color || "#ffffff44"};
+  color: #fff;
 
   @keyframes floatIn {
     from {

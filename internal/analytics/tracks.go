@@ -1099,6 +1099,7 @@ type ClusterUpdateFailedTrackOpts struct {
 	LastName     string
 	CompanyName  string
 	ErrorMessage string
+	Provider     string
 }
 
 // ClusterUpdateFailedTrack returns a track for when a user fails to update a cluster
@@ -1109,6 +1110,7 @@ func ClusterUpdateFailedTrack(opts *ClusterUpdateFailedTrackOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["provider"] = opts.Provider
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,

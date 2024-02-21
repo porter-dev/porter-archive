@@ -1067,10 +1067,10 @@ const AWS_VCPUS_QUOTA_RESOLUTION: PreflightCheckResolution = {
         "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas",
     },
     {
-      text: 'Search for "Running On-Demand Standard (A, C, D, H, I, M, R, T, Z) instances" in the search box and click on the search result.',
+      text: "Input the reported quota name from the provision check error into the search box and click on the search result.",
     },
     {
-      text: 'Click on "Request quota increase". In order to provision with Porter, you will need to request at least 10 vCPUs above your current quota limit.',
+      text: 'Click on "Request quota increase". In order to provision with Porter, the new quota value must be at least the number reported from the provision check error.',
     },
     {
       text: "Once that request is approved, return to Porter and retry the provision.",

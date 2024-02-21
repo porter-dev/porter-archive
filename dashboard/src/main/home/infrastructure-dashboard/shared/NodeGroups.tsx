@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import _ from "lodash";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
@@ -15,6 +15,7 @@ import {
   type ClientMachineType,
 } from "lib/clusters/types";
 
+import { Context } from "shared/Context";
 import chip from "assets/computer-chip.svg";
 import world from "assets/world.svg";
 
@@ -23,6 +24,7 @@ type Props = {
 };
 const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
   const { control } = useFormContext<ClientClusterContract>();
+  const { currentProject } = useContext(Context);
   const { fields: nodeGroups, append } = useFieldArray({
     control,
     name: "cluster.config.nodeGroups",
@@ -192,21 +194,22 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
           </Expandable>
         );
       })}
-      {(displayableNodeGroups.CUSTOM ?? []).length === 0 && (
-        <AddServiceButton
-          onClick={() => {
-            append({
-              nodeGroupType: "CUSTOM",
-              instanceType: "g4dn.xlarge",
-              minInstances: 1,
-              maxInstances: 2,
-            });
-          }}
-        >
-          <i className="material-icons add-icon">add_icon</i>
-          Add a GPU node group
-        </AddServiceButton>
-      )}
+      {(displayableNodeGroups.CUSTOM ?? []).length === 0 &&
+        currentProject?.gpu_enabled && (
+          <AddServiceButton
+            onClick={() => {
+              append({
+                nodeGroupType: "CUSTOM",
+                instanceType: "g4dn.xlarge",
+                minInstances: 1,
+                maxInstances: 2,
+              });
+            }}
+          >
+            <i className="material-icons add-icon">add_icon</i>
+            Add a GPU node group
+          </AddServiceButton>
+        )}
     </NodeGroupContainer>
   );
 };

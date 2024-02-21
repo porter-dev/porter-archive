@@ -23,13 +23,13 @@ import api from "shared/api";
 import spinner from "assets/loading.gif";
 
 import { useLatestRevision } from "../../app-view/LatestRevisionContext";
-import StyledLogs from "../../expanded-app/logs/StyledLogs";
 import {
   Direction,
   GenericFilter,
   GenericFilterOption,
   type FilterName,
 } from "../../expanded-app/logs/types";
+import StyledLogs from "./StyledLogs";
 import { useLogs } from "./utils";
 
 type Props = {
@@ -50,7 +50,7 @@ type Props = {
   selectedRevisionId?: string;
   defaultScrollToBottomEnabled?: boolean;
   defaultLatestRevision?: boolean;
-  jobRunID?: string;
+  jobRunName?: string;
 };
 
 const DEFAULT_LOG_TIMEOUT_SECONDS = 60;
@@ -70,7 +70,7 @@ const Logs: React.FC<Props> = ({
   selectedRevisionId,
   defaultScrollToBottomEnabled = true,
   defaultLatestRevision = true,
-  jobRunID = "",
+  jobRunName = "",
 }) => {
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
@@ -128,7 +128,7 @@ const Logs: React.FC<Props> = ({
     });
   }, [selectedService, selectedRevisionId]);
 
-  const { revisionIdToNumber } = useRevisionList({
+  const { revisionIdToNumber, numberToRevisionId } = useRevisionList({
     appName,
     deploymentTargetId,
     projectId,
@@ -251,12 +251,13 @@ const Logs: React.FC<Props> = ({
     notify,
     setLoading: setIsLoading,
     revisionIdToNumber,
+    revisionNumberToId: numberToRevisionId,
     setDate: selectedDate,
     appRevisionId,
     filterPredeploy,
     timeRange,
     appID: appId,
-    jobRunID,
+    jobRunName,
   });
 
   const {
@@ -452,7 +453,7 @@ const Logs: React.FC<Props> = ({
             )}
             {!isLoading && logs.length === 0 && selectedDate != null && (
               <Message>
-                No logs found for this time range.
+                No logs emitted within 1 day of the selected end date.
                 <Highlight
                   onClick={() => {
                     setSelectedDate(undefined);
@@ -467,16 +468,33 @@ const Logs: React.FC<Props> = ({
               logs.length === 0 &&
               selectedDate == null &&
               isRunning && (
-                <Loading
-                  message={`Waiting ${totalSeconds} seconds for logs...`}
-                />
+                <NoLogsFoundContainer>
+                  <Container row>
+                    No logs matching the current filters have been emitted in
+                    the last 24 hours.
+                    <Highlight
+                      onClick={() => {
+                        setSelectedDate(dayjs().toDate());
+                      }}
+                    >
+                      <i className="material-icons">autorenew</i>
+                      View historical logs
+                    </Highlight>
+                  </Container>
+                  <Spacer y={0.5} />
+                  <Container row>
+                    <Spinner src={spinner} />
+                    <Spacer inline x={1} />
+                    <Text>{`Waiting ${totalSeconds} seconds for new logs...`}</Text>
+                  </Container>
+                </NoLogsFoundContainer>
               )}
             {!isLoading &&
               logs.length === 0 &&
               selectedDate == null &&
               !isRunning && (
                 <Message>
-                  Timed out waiting for logs.
+                  Timed out waiting for new logs.
                   <Highlight
                     onClick={async () => {
                       restartLogTimeout(
@@ -752,4 +770,12 @@ const NotificationWrapper = styled.div<{ active?: boolean }>`
 
 const LogsSectionWrapper = styled.div`
   position: relative;
+`;
+
+const NoLogsFoundContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  height: 100%;
 `;

@@ -397,7 +397,7 @@ const eksConfigValidator = z.object({
   clusterName: z
     .string()
     .min(1, { message: "Name must be at least 1 character" })
-    .max(31, { message: "Name must be 31 characters or less" })
+    .max(31, { message: "Name must be max 31 characters" })
     .regex(/^[a-z0-9-]{1,61}$/, {
       message: 'Lowercase letters, numbers, and "-" only.',
     }),
@@ -457,7 +457,7 @@ const gkeConfigValidator = z.object({
   clusterName: z
     .string()
     .min(1, { message: "Name must be at least 1 character" })
-    .max(31, { message: "Name must be 31 characters or less" })
+    .max(31, { message: "Name must be max 31 characters" })
     .regex(/^[a-z0-9-]{1,61}$/, {
       message: 'Lowercase letters, numbers, and "-" only.',
     }),
@@ -471,7 +471,7 @@ const aksConfigValidator = z.object({
   clusterName: z
     .string()
     .min(1, { message: "Name must be at least 1 character" })
-    .max(31, { message: "Name must be 31 characters or less" })
+    .max(31, { message: "Name must be max 31 characters" })
     .regex(/^[a-z0-9-]{1,61}$/, {
       message: 'Lowercase letters, numbers, and "-" only.',
     }),

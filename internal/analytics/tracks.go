@@ -1068,11 +1068,13 @@ func CloudProviderPermissionsGrantedTrack(opts *CloudProviderPermissionsGrantedT
 type ClusterPreflightChecksFailedTrackOpts struct {
 	*ProjectScopedTrackOpts
 
-	Email        string
-	FirstName    string
-	LastName     string
-	CompanyName  string
-	ErrorMessage string
+	Email         string
+	FirstName     string
+	LastName      string
+	CompanyName   string
+	ErrorMessage  string
+	ClusterName   string
+	CloudProvider string
 }
 
 // ClusterPreflightChecksFailedTrack returns a track for when a user fails preflight checks
@@ -1082,6 +1084,8 @@ func ClusterPreflightChecksFailedTrack(opts *ClusterPreflightChecksFailedTrackOp
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["error_message"] = opts.ErrorMessage
+	additionalProps["cluster_name"] = opts.ClusterName
+	additionalProps["cloud_provider"] = opts.CloudProvider
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,
@@ -1093,13 +1097,13 @@ func ClusterPreflightChecksFailedTrack(opts *ClusterPreflightChecksFailedTrackOp
 type ClusterUpdateFailedTrackOpts struct {
 	*ProjectScopedTrackOpts
 
-	ClusterName  string
-	Email        string
-	FirstName    string
-	LastName     string
-	CompanyName  string
-	ErrorMessage string
-	Provider     string
+	ClusterName   string
+	Email         string
+	FirstName     string
+	LastName      string
+	CompanyName   string
+	ErrorMessage  string
+	CloudProvider string
 }
 
 // ClusterUpdateFailedTrack returns a track for when a user fails to update a cluster
@@ -1110,7 +1114,7 @@ func ClusterUpdateFailedTrack(opts *ClusterUpdateFailedTrackOpts) segmentTrack {
 	additionalProps["name"] = opts.FirstName + " " + opts.LastName
 	additionalProps["company"] = opts.CompanyName
 	additionalProps["error_message"] = opts.ErrorMessage
-	additionalProps["provider"] = opts.Provider
+	additionalProps["cloud_provider"] = opts.CloudProvider
 
 	return getSegmentProjectTrack(
 		opts.ProjectScopedTrackOpts,

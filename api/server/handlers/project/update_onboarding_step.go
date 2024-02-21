@@ -259,6 +259,8 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
 			ErrorMessage:           request.ErrorMessage,
+			ClusterName:            request.ClusterName,
+			CloudProvider:          request.Provider,
 		}))
 		if err != nil {
 			_ = telemetry.Error(ctx, span, err, "error tracking cluster preflight checks failed")
@@ -273,6 +275,8 @@ func (v *UpdateOnboardingStepHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			LastName:               user.LastName,
 			CompanyName:            user.CompanyName,
 			ErrorMessage:           request.ErrorMessage,
+			ClusterName:            request.ClusterName,
+			CloudProvider:          request.Provider,
 		}))
 		if err != nil {
 			_ = telemetry.Error(ctx, span, err, "error tracking cluster update failed")

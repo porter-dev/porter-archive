@@ -1,22 +1,23 @@
-import React, { useState, useContext } from "react";
+import React, { useContext, useState } from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Loading from "components/Loading";
+import Container from "components/porter/Container";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import TabSelector from "components/TabSelector";
 import { useDeploymentTargetList } from "lib/hooks/useDeploymentTarget";
 
+import { Context } from "shared/Context";
 import prGrad from "assets/pr-grad.svg";
 
 import DashboardHeader from "../../DashboardHeader";
 import { ConfigurableAppList } from "./ConfigurableAppList";
 import PreviewEnvGrid from "./PreviewEnvGrid";
-import { Context } from "shared/Context";
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Text from "components/porter/Text";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
 
 const tabs = ["environments", "config"] as const;
 export type ValidTab = (typeof tabs)[number];
@@ -109,14 +110,20 @@ const PreviewEnvs: React.FC = () => {
         <Spacer y={1} />
         {renderTab()}
       </>
-    )
-  }
+    );
+  };
 
   return (
     <StyledAppDashboard>
       <DashboardHeader
         image={prGrad}
-        title="Preview apps"
+        title={
+          <Container row>
+            Preview apps
+            <Spacer inline x={1} />
+            <Badge>Beta</Badge>
+          </Container>
+        }
         capitalize={false}
         description="Preview apps are created for each pull request. They are automatically deleted when the pull request is closed."
         disableLineBreak
@@ -128,6 +135,15 @@ const PreviewEnvs: React.FC = () => {
 };
 
 export default PreviewEnvs;
+
+const Badge = styled.div`
+  background: linear-gradient(60deg, #4b366d 0%, #6475b9 100%);
+  color: white;
+  border-radius: 3px;
+  padding: 2px 5px;
+  margin-right: -5px;
+  font-size: 13px;
+`;
 
 const StyledAppDashboard = styled.div`
   width: 100%;

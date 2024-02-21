@@ -316,10 +316,14 @@ func GetHistoricalLogs(
 
 // Logs returns logs from the porter agent matching the provided labels and other query parameters
 func Logs(
+	ctx context.Context,
 	clientset kubernetes.Interface,
 	service *v1.Service,
 	req *types.LogRequest,
 ) (*types.GetLogResponse, error) {
+	ctx, span := telemetry.NewSpan(ctx, "agent-get-logs")
+	defer span.End()
+
 	vals := make(map[string]string)
 
 	if req.Limit != 0 {
@@ -329,7 +333,7 @@ func Logs(
 	if req.StartRange != nil {
 		startVal, err := req.StartRange.MarshalText()
 		if err != nil {
-			return nil, err
+			return nil, telemetry.Error(ctx, span, err, "unable to marshal start range")
 		}
 
 		vals["start_range"] = string(startVal)
@@ -338,7 +342,7 @@ func Logs(
 	if req.EndRange != nil {
 		endVal, err := req.EndRange.MarshalText()
 		if err != nil {
-			return nil, err
+			return nil, telemetry.Error(ctx, span, err, "unable to marshal end range")
 		}
 
 		vals["end_range"] = string(endVal)
@@ -368,16 +372,16 @@ func Logs(
 		vals,
 	)
 
-	rawQuery, err := resp.DoRaw(context.Background())
+	rawQuery, err := resp.DoRaw(ctx)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "unable to get raw response")
 	}
 
 	logsResp := &types.GetLogResponse{}
 
 	err = json.Unmarshal(rawQuery, logsResp)
 	if err != nil {
-		return nil, err
+		return nil, telemetry.Error(ctx, span, err, "unable to unmarshal logs response")
 	}
 
 	return logsResp, nil

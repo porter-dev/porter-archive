@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import styled from "styled-components";
 import { z } from "zod";
@@ -15,8 +15,8 @@ import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import { CloudProviderGCP } from "lib/clusters/constants";
 import { connectToGCPAccount } from "lib/hooks/useCloudProvider";
-import { useIntercom } from "lib/hooks/useIntercom";
 
+import { CheckItem } from "../../modals/PreflightChecksModal";
 import { BackButton, Img } from "../CreateClusterForm";
 
 type Props = {
@@ -41,27 +41,19 @@ const GrantGCPPermissions: React.FC<Props> = ({
   projectId,
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
   const [uploadFileError, setUploadFileError] = useState<string>("");
-  const { showIntercomWithMessage } = useIntercom();
+  const [
+    cloudProviderCredentialIdentifier,
+    setCloudProviderCredentialIdentifier,
+  ] = useState<string>("");
+
   const gcpPermissionsForm = useForm<GCPPermissionsForm>({
     reValidateMode: "onSubmit",
     resolver: zodResolver(gcpPermissionsFormValidator),
   });
-  const { handleSubmit, setValue, watch } = gcpPermissionsForm;
+  const { setValue, watch } = gcpPermissionsForm;
   const gcpProjectId = watch("gcpProjectId");
-
-  const buttonStatus = useMemo(() => {
-    if (isSubmitting) {
-      return "loading";
-    }
-    if (errorMessage) {
-      return <ErrorComponent message={errorMessage} maxWidth="600px" />;
-    }
-
-    return "";
-  }, [isSubmitting, errorMessage]);
+  const serviceAccountKey = watch("serviceAccountKey");
 
   const handleLoadJSON = (serviceAccountJSONFile: string): void => {
     setUploadFileError("");
@@ -91,32 +83,36 @@ const GrantGCPPermissions: React.FC<Props> = ({
     }
   };
 
-  const onSubmit = handleSubmit(async (data) => {
-    setIsSubmitting(true);
-    try {
-      const cloudProviderCredentialIdentifier = await connectToGCPAccount({
-        projectId,
-        gcpProjectId: data.gcpProjectId,
-        serviceAccountKey: data.serviceAccountKey,
-      });
-      proceed({ cloudProviderCredentialIdentifier });
-    } catch (err) {
-      showIntercomWithMessage({
-        message: "I am running into an issue setting up GCP permissions.",
-      });
-      let message =
-        "Permission setup failed: please try again or contact support@porter.run if the error persists.";
-      if (axios.isAxiosError(err)) {
-        const parsed = z
-          .object({ error: z.string() })
-          .safeParse(err.response?.data);
-        if (parsed.success) {
-          message = `Permission setup failed: ${parsed.data.error}`;
-        }
+  const data = useQuery(
+    [
+      "gcpPermissionsGranted",
+      projectId,
+      gcpProjectId,
+      serviceAccountKey,
+      currentStep,
+    ],
+    async () => {
+      if (!gcpProjectId || !serviceAccountKey) {
+        return "";
       }
-      setErrorMessage(message);
+
+      return await connectToGCPAccount({
+        projectId,
+        gcpProjectId,
+        serviceAccountKey,
+      });
+    },
+    {
+      enabled: !!gcpProjectId && !!serviceAccountKey && currentStep === 2,
+      refetchInterval: 5000,
+      refetchIntervalInBackground: true,
     }
-  });
+  );
+  useEffect(() => {
+    if (data.isSuccess) {
+      setCloudProviderCredentialIdentifier(data.data);
+    }
+  }, [data]);
 
   return (
     <div>
@@ -200,10 +196,49 @@ const GrantGCPPermissions: React.FC<Props> = ({
               >
                 Back
               </Button>
+              <Spacer inline x={0.5} />
               <Button
-                disabled={!!uploadFileError || isSubmitting}
-                onClick={onSubmit}
-                status={buttonStatus}
+                disabled={!!uploadFileError}
+                onClick={() => {
+                  setCurrentStep(2);
+                }}
+              >
+                Continue
+              </Button>
+            </Container>
+          </>,
+          <>
+            <Text size={16}>Check permissions</Text>
+            <Spacer y={0.5} />
+            <Text color="helper">
+              Checking if Porter can access your Google project. This can take
+              up to a minute.
+            </Text>
+            <Spacer y={1} />
+            <CheckItem
+              preflightCheck={{
+                title: "GCP project accessible",
+                status: cloudProviderCredentialIdentifier
+                  ? "success"
+                  : "pending",
+              }}
+            />
+            <Spacer y={1} />
+            <Container row>
+              <Button
+                onClick={() => {
+                  setCurrentStep(2);
+                }}
+                color="#222222"
+              >
+                Back
+              </Button>
+              <Spacer inline x={0.5} />
+              <Button
+                onClick={() => {
+                  proceed({ cloudProviderCredentialIdentifier });
+                }}
+                disabled={!cloudProviderCredentialIdentifier}
               >
                 Continue
               </Button>

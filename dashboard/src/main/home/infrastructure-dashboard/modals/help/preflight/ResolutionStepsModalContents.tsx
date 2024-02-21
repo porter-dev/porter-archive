@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 
 import Link from "components/porter/Link";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import Step from "components/porter/Step";
 import Text from "components/porter/Text";
@@ -32,6 +33,10 @@ const ElasticIPQuotaModalContents: React.FC<Props> = ({ resolution }) => {
           </Step>
         ))}
       </StepContainer>
+      <Spacer y={1} />
+      <ShowIntercomButton message="I need help resolving preflight check errors.">
+        Need help? Talk to support
+      </ShowIntercomButton>
     </div>
   );
 };

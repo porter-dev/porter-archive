@@ -56,7 +56,6 @@ import {
   type PopulatedEnvGroup,
 } from "../validate-apply/app-settings/types";
 import ServiceList from "../validate-apply/services-settings/ServiceList";
-import PorterYamlModal from "./PorterYamlModal";
 import RepoSettings from "./RepoSettings";
 
 type CreateAppProps = RouteComponentProps;
@@ -69,10 +68,6 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     count: number;
   }>({ detected: false, count: 0 });
   const [showGHAModal, setShowGHAModal] = React.useState(false);
-  const [
-    userHasSeenNoPorterYamlFoundModal,
-    setUserHasSeenNoPorterYamlFoundModal,
-  ] = React.useState(false);
   const isNameValid = (value: string): boolean => {
     return /^[a-z0-9-]{1,63}$/.test(value);
   };
@@ -195,12 +190,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
   const image = watch("source.image");
   const services = watch("app.services");
 
-  const {
-    detectedServices: servicesFromYaml,
-    detectedName,
-    porterYamlFound,
-    loading: isLoadingPorterYaml,
-  } = usePorterYaml({
+  const { detectedServices: servicesFromYaml, detectedName } = usePorterYaml({
     source: source?.type === "github" ? source : null,
     appName: "", // only want to know if porter.yaml has name set, otherwise use name from input
   });

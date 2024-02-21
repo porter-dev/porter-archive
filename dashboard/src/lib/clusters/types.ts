@@ -163,6 +163,14 @@ const awsMachineTypeValidator = z.enum([
   "c7a.12xlarge",
   "c7a.16xlarge",
   "c7a.24xlarge",
+  "c7g.medium",
+  "c7g.large",
+  "c7g.xlarge",
+  "c7g.2xlarge",
+  "c7g.4xlarge",
+  "c7g.8xlarge",
+  "c7g.12xlarge",
+  "c7g.16xlarge",
   // gpu types
   "g4dn.xlarge",
   "g4dn.2xlarge",
@@ -228,6 +236,7 @@ export type ClientMachineType = {
   name: AWSMachineType | GCPMachineType | AzureMachineType;
   displayName: string;
   supportedRegions: Array<AWSRegion | GCPRegion | AzureRegion>;
+  isGPU: boolean;
 };
 type PreflightCheckResolutionStep = {
   text: string;

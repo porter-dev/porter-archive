@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import _ from "lodash";
 import pluralize from "pluralize";
 import styled from "styled-components";
 
@@ -12,8 +13,18 @@ import { useClusterContext } from "./ClusterContextProvider";
 const ClusterStatus: React.FC = () => {
   const { nodes, isClusterUpdating } = useClusterContext();
 
-  const applicationNodes = useMemo(() => {
-    return nodes.filter((n) => n.nodeGroupType === "APPLICATION");
+  const nodeInformation = useMemo(() => {
+    const applicationNodes = nodes.filter(
+      (n) => n.nodeGroupType === "APPLICATION"
+    );
+    const customNodes = nodes.filter((n) => n.nodeGroupType === "CUSTOM");
+    if (!applicationNodes.length) {
+      return;
+    }
+    return {
+      APPLICATION: applicationNodes,
+      CUSTOM: customNodes,
+    };
   }, [nodes]);
 
   return (
@@ -26,14 +37,22 @@ const ClusterStatus: React.FC = () => {
           <Text color="helper">Updating</Text>
         </>
       ) : (
-        applicationNodes.length !== 0 && (
+        nodeInformation && (
           <>
             <StatusDot status={"available"} heightPixels={8} />
             <Spacer inline x={0.7} />
             <Text color="helper">
-              Applications using {applicationNodes.length}{" "}
-              <Code>{applicationNodes[0].instanceType}</Code>{" "}
-              {pluralize("instance", applicationNodes.length)}
+              Applications running on {nodeInformation.APPLICATION.length}{" "}
+              <Code>{nodeInformation.APPLICATION[0].instanceType}</Code>{" "}
+              {pluralize("instance", nodeInformation.APPLICATION.length)}
+              {nodeInformation.CUSTOM.length !== 0 && (
+                <>
+                  {" and "}
+                  {nodeInformation.CUSTOM.length}{" "}
+                  <Code>{nodeInformation.CUSTOM[0].instanceType}</Code>{" "}
+                  {pluralize("instance", nodeInformation.CUSTOM.length)}
+                </>
+              )}
             </Text>
           </>
         )

@@ -3,6 +3,7 @@ import { withRouter } from "react-router";
 import styled from "styled-components";
 
 import Icon from "components/porter/Icon";
+import { useClusterList } from "lib/hooks/useCluster";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -30,6 +31,7 @@ const ClusterList: React.FC = (props) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [clusters, setClusters] = useState<ClusterType[]>([]);
   const [options, setOptions] = useState<ClusterOptions[]>([]);
+  const { clusters: clusterList } = useClusterList();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent): void => {
@@ -50,6 +52,19 @@ const ClusterList: React.FC = (props) => {
 
   useEffect(() => {
     if (currentProject) {
+      if (
+        currentProject?.simplified_view_enabled &&
+        currentProject?.capi_provisioner_enabled &&
+        currentProject?.beta_features_enabled
+      ) {
+        setOptions(
+          clusterList.map((c) => ({
+            label: c.vanity_name,
+            value: c.name,
+          }))
+        );
+        return;
+      }
       api
         .getClusters("<token>", {}, { id: currentProject?.id })
         .then((res) => {
@@ -90,9 +105,31 @@ const ClusterList: React.FC = (props) => {
         title={option.label}
         onClick={() => {
           setExpanded(false);
-          const cluster = clusters.find((c) => c.name === option.value);
-          setCurrentCluster(cluster);
-          pushFiltered(props, "/apps", ["project_id"], {});
+          if (
+            currentProject?.simplified_view_enabled &&
+            currentProject?.capi_provisioner_enabled &&
+            currentProject?.beta_features_enabled
+          ) {
+            const cluster = clusterList.find((c) => c.name === option.value);
+            if (cluster) {
+              // TODO: remove the need for this conversion
+              const clusterToOldType: ClusterType = {
+                id: cluster.id,
+                name: cluster.name,
+                vanity_name: cluster.vanity_name,
+                cloud_provider: cluster.cloud_provider.name,
+                status: cluster.status,
+              };
+              setCurrentCluster?.(clusterToOldType);
+              pushFiltered(props, "/apps", ["project_id"], {});
+            }
+          } else {
+            const cluster = clusters.find((c) => c.name === option.value);
+            if (cluster) {
+              setCurrentCluster?.(cluster);
+              pushFiltered(props, "/apps", ["project_id"], {});
+            }
+          }
         }}
       >
         <Icon src={infra} height={"14px"} />

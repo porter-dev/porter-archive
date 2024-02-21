@@ -22,7 +22,7 @@ export type ClusterType = {
   id: number;
   name: string;
   vanity_name?: string;
-  server: string;
+  server?: string;
   service_account_id?: number;
   agent_integration_enabled?: boolean;
   infra_id?: number;

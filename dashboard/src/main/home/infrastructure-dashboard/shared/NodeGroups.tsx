@@ -3,6 +3,7 @@ import _ from "lodash";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import styled from "styled-components";
 
+import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Expandable from "components/porter/Expandable";
 import Image from "components/porter/Image";
@@ -25,7 +26,11 @@ type Props = {
 const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
   const { control } = useFormContext<ClientClusterContract>();
   const { currentProject } = useContext(Context);
-  const { fields: nodeGroups, append } = useFieldArray({
+  const {
+    fields: nodeGroups,
+    append,
+    remove,
+  } = useFieldArray({
     control,
     name: "cluster.config.nodeGroups",
   });
@@ -127,10 +132,22 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
             preExpanded={true}
             key={ng.nodeGroup.id}
             header={
-              <Container row>
-                <Image src={chip} />
-                <Spacer inline x={1} />
-                GPU node group
+              <Container row spaced>
+                <Container row>
+                  <Image src={chip} />
+                  <Spacer inline x={1} />
+                  GPU node group
+                </Container>
+                <Container row>
+                  <ActionButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      remove(ng.idx);
+                    }}
+                  >
+                    <span className="material-icons">delete</span>
+                  </ActionButton>
+                </Container>
               </Container>
             }
           >
@@ -196,7 +213,8 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
       })}
       {(displayableNodeGroups.CUSTOM ?? []).length === 0 &&
         currentProject?.gpu_enabled && (
-          <AddServiceButton
+          <Button
+            alt
             onClick={() => {
               append({
                 nodeGroupType: "CUSTOM",
@@ -206,9 +224,9 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
               });
             }}
           >
-            <i className="material-icons add-icon">add_icon</i>
+            <I className="material-icons">add</I>
             Add a GPU node group
-          </AddServiceButton>
+          </Button>
         )}
     </NodeGroupContainer>
   );
@@ -222,25 +240,34 @@ const NodeGroupContainer = styled.div`
   gap: 10px;
 `;
 
-const AddServiceButton = styled.div`
+const I = styled.i`
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
   color: #aaaabb;
-  background: ${({ theme }) => theme.fg};
-  border: 1px solid #494b4f;
   :hover {
-    border: 1px solid #7a7b80;
     color: white;
   }
+`;
+
+const ActionButton = styled.button`
+  position: relative;
+  border: none;
+  background: none;
+  color: white;
+  padding: 5px;
   display: flex;
+  justify-content: center;
   align-items: center;
-  border-radius: 5px;
-  transition: all 0.2s;
-  height: 40px;
-  font-size: 13px;
-  width: 100%;
-  padding-left: 10px;
+  border-radius: 50%;
   cursor: pointer;
-  .add-icon {
-    width: 30px;
+  color: #aaaabb;
+  :hover {
+    color: white;
+  }
+
+  > span {
     font-size: 20px;
   }
+  margin-right: 5px;
 `;

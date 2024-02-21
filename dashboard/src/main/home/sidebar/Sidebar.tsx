@@ -328,7 +328,9 @@ class Sidebar extends Component<PropsType, StateType> {
                   <Img src={addOns} />
                   Add-ons
                 </Container>
-                {currentProject.sandbox_enabled && <Image size={15} src={lock} />}
+                {currentProject.sandbox_enabled && (
+                  <Image size={15} src={lock} />
+                )}
               </Container>
             </NavButton>
 
@@ -343,7 +345,9 @@ class Sidebar extends Component<PropsType, StateType> {
                   <Img src={sliders} />
                   Env groups
                 </Container>
-                {currentProject.sandbox_enabled && <Image size={15} src={lock} />}
+                {currentProject.sandbox_enabled && (
+                  <Image size={15} src={lock} />
+                )}
               </Container>
             </NavButton>
             <NavButton
@@ -363,11 +367,13 @@ class Sidebar extends Component<PropsType, StateType> {
               )}
             >
               <Container row spaced style={{ width: "100%" }}>
-                  <Container row>
-                    <Img src={infra} />
-                    Infrastructure
-                  </Container>
-                  {currentProject.sandbox_enabled && <Image size={15} src={lock} />}
+                <Container row>
+                  <Img src={infra} />
+                  Infrastructure
+                </Container>
+                {currentProject.sandbox_enabled && (
+                  <Image size={15} src={lock} />
+                )}
               </Container>
             </NavButton>
             <NavButton path="/preview-environments">
@@ -376,9 +382,11 @@ class Sidebar extends Component<PropsType, StateType> {
                   <Img src={pr_icon} />
                   Preview apps
                 </Container>
-                {(currentProject.sandbox_enabled ||
-                  !currentProject.preview_envs_enabled) && (
+                {currentProject.sandbox_enabled ||
+                !currentProject.preview_envs_enabled ? (
                   <Image size={15} src={lock} />
+                ) : (
+                  <Badge>Beta</Badge>
                 )}
               </Container>
             </NavButton>
@@ -396,17 +404,18 @@ class Sidebar extends Component<PropsType, StateType> {
               </Container>
             </NavButton>
 
-            {!currentProject.sandbox_enabled && this.props.isAuthorized("integrations", "", [
-              "get",
-              "create",
-              "update",
-              "delete",
-            ]) && (
-              <NavButton path={"/integrations"}>
-                <Img src={integrations} />
-                Integrations
-              </NavButton>
-            )}
+            {!currentProject.sandbox_enabled &&
+              this.props.isAuthorized("integrations", "", [
+                "get",
+                "create",
+                "update",
+                "delete",
+              ]) && (
+                <NavButton path={"/integrations"}>
+                  <Img src={integrations} />
+                  Integrations
+                </NavButton>
+              )}
 
             {this.props.isAuthorized("settings", "", [
               "get",
@@ -461,6 +470,15 @@ class Sidebar extends Component<PropsType, StateType> {
 Sidebar.contextType = Context;
 
 export default withRouter(withAuth(Sidebar));
+
+const Badge = styled.div`
+  background: linear-gradient(60deg, #4b366d 0%, #6475b9 100%);
+  color: white;
+  border-radius: 3px;
+  padding: 2px 5px;
+  margin-right: -5px;
+  font-size: 13px;
+`;
 
 const ScrollWrapper = styled.div`
   overflow-y: auto;

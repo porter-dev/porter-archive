@@ -3,9 +3,11 @@ import styled from "styled-components";
 
 import Modal from "./Modal";
 import Spacer from "./Spacer";
+import Text from "./Text";
 
 type Props = {
   message: string;
+  metadata?:  Record<string, string>;
   ctaText?: string;
   ctaOnClick?: () => void;
   errorModalContents?: React.ReactNode;
@@ -14,6 +16,7 @@ type Props = {
 
 export const Error: React.FC<Props> = ({
   message,
+    metadata,
   ctaText,
   ctaOnClick,
   errorModalContents,
@@ -26,9 +29,20 @@ export const Error: React.FC<Props> = ({
       <StyledError maxWidth={maxWidth}>
         <i className="material-icons">error_outline</i>
         <Block>
-          <Text>Error: {message}</Text>
+          <Text color={"#ff385d"}>Error: {message}</Text>
           {ctaText && (errorModalContents != null || ctaOnClick != null) && (
             <>
+              <Spacer y={0.5} />
+              {metadata && Object.entries(metadata).map(
+              ([key, value]) => (
+              <>
+                <div key={key}>
+                  <ErrorMessageLabel>{key}:</ErrorMessageLabel>
+                  <ErrorMessageContent>{value}</ErrorMessageContent>
+                </div>
+              </>
+              )
+              )}
               <Spacer y={0.5} />
               <Cta
                 onClick={() => {
@@ -56,10 +70,6 @@ export const Error: React.FC<Props> = ({
 };
 
 export default Error;
-
-const Text = styled.span`
-  display: inline;
-`;
 
 const Block = styled.div`
   display: block;
@@ -100,4 +110,20 @@ const StyledError = styled.div<{ maxWidth?: string }>`
     left: 0;
   }
   max-width: ${(props) => props.maxWidth || "100%"};
+`;
+
+const ErrorMessageLabel = styled.span`
+  font-weight: bold;
+  margin-left: 10px;
+  color: #9999aa;
+  user-select: text;
+`;
+const ErrorMessageContent = styled.div`
+  font-family: "Courier New", Courier, monospace;
+  padding: 5px 10px;
+  border-radius: 4px;
+  margin-left: 10px;
+  user-select: text;
+  cursor: text;
+  color: #9999aa;
 `;

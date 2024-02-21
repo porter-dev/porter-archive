@@ -57,7 +57,7 @@ var recognizedPreflightCheckKeys = []string{
 	"apiEnabled",
 	"cidrAvailability",
 	"iamPermissions",
-	"resourceProviders",
+	"authz",
 }
 
 func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -109,22 +109,26 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	errors := []PreflightCheckError{}
-	for key, val := range checkResp.Msg.PreflightChecks {
-		if val.Message == "" || !contains(recognizedPreflightCheckKeys, key) {
+	var preflightCheckErrors []PreflightCheckError
+	for _, pce := range checkResp.Msg.PreflightCheckErrors {
+		if pce == nil || pce.Error == nil {
 			continue
 		}
 
-		errors = append(errors, PreflightCheckError{
-			Name: key,
+		if pce.Error.Message == "" || !contains(recognizedPreflightCheckKeys, pce.Key) {
+			continue
+		}
+
+		preflightCheckErrors = append(preflightCheckErrors, PreflightCheckError{
+			Name: pce.Key,
 			Error: PorterError{
-				Code:     val.Code,
-				Message:  val.Message,
-				Metadata: val.Metadata,
+				Code:     pce.Error.Code,
+				Message:  pce.Error.Message,
+				Metadata: pce.Error.Metadata,
 			},
 		})
 	}
-	resp.Errors = errors
+	resp.Errors = preflightCheckErrors
 	p.WriteResult(w, r, resp)
 }
 

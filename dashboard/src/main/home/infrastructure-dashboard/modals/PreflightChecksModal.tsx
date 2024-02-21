@@ -11,70 +11,61 @@ import Text from "components/porter/Text";
 import { type ClientPreflightCheck } from "lib/clusters/types";
 
 import ResolutionStepsModalContents from "./help/preflight/ResolutionStepsModalContents";
+import Expandable from "components/porter/Expandable";
 
 type ItemProps = {
   preflightCheck: ClientPreflightCheck;
+  defaultExpanded?: boolean;
 };
-export const CheckItem: React.FC<ItemProps> = ({ preflightCheck }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-
-  return (
-    <CheckItemContainer>
-      <CheckItemTop
-        onClick={() => {
-          setIsExpanded(!isExpanded);
-        }}
-      >
+export const CheckItem: React.FC<ItemProps> = ({ preflightCheck, defaultExpanded = true }) => {
+  const renderHeader = (): React.ReactElement => {
+    return (
+    <CheckItemTop>
         {match(preflightCheck.status)
-          .with("pending", () => (
-            <Loading offset="0px" width="20px" height="20px" />
-          ))
-          .otherwise((status) =>
-            match(status)
-              .with("success", () => <StatusDot status="available" />)
-              .with("failure", () => <StatusDot status="failing" />)
-              .exhaustive()
-          )}
+            .with("pending", () => (
+                <Loading offset="0px" width="20px" height="20px" />
+            ))
+            .otherwise((status) =>
+                match(status)
+                    .with("success", () => <StatusDot status="available" />)
+                    .with("failure", () => <StatusDot status="failing" />)
+                    .exhaustive()
+            )}
         <Spacer inline x={1} />
         <Text style={{ flex: 1 }}>{preflightCheck.title}</Text>
-        {preflightCheck.error && (
-          <ExpandIcon className="material-icons" isExpanded={isExpanded}>
-            arrow_drop_down
-          </ExpandIcon>
-        )}
-      </CheckItemTop>
-      {isExpanded && preflightCheck.error && (
-        <div>
-          <ErrorComponent
-            message={preflightCheck.error.detail}
-            ctaText={
-              preflightCheck.error.resolution
-                ? "Troubleshooting steps"
-                : undefined
-            }
-            errorModalContents={
-              preflightCheck.error.resolution ? (
-                <ResolutionStepsModalContents
-                  resolution={preflightCheck.error.resolution}
-                />
-              ) : undefined
-            }
-          />
-          <Spacer y={0.5} />
-          {preflightCheck.error.metadata &&
-            Object.entries(preflightCheck.error.metadata).map(
-              ([key, value]) => (
-                <>
-                  <div key={key}>
-                    <ErrorMessageLabel>{key}:</ErrorMessageLabel>
-                    <ErrorMessageContent>{value}</ErrorMessageContent>
-                  </div>
-                </>
-              )
-            )}
-        </div>
-      )}
-    </CheckItemContainer>
+        {preflightCheck?.error?.metadata?.quota && <Text color={"helper"}>{preflightCheck?.error?.metadata?.quota}</Text>}
+    </CheckItemTop>
+    );
+  }
+
+  if (!preflightCheck.error) {
+      return renderHeader()
+  }
+
+    return (
+                <Expandable
+                    preExpanded={defaultExpanded}
+                    header={renderHeader()}>
+                    <div>
+                        <ErrorComponent
+                            message={preflightCheck.error.detail}
+                            ctaText={
+                                preflightCheck.error.resolution
+                                    ? "Troubleshooting steps"
+                                    : undefined
+                            }
+                            metadata={preflightCheck.error.metadata}
+                            errorModalContents={
+                                preflightCheck.error.resolution ? (
+                                    <ResolutionStepsModalContents
+                                        resolution={preflightCheck.error.resolution}
+                                    />
+                                ) : undefined
+                            }
+                        />
+                        <Spacer y={0.5}/>
+                    </div>
+                </Expandable>
   );
 };
 
@@ -92,13 +83,13 @@ const PreflightChecksModal: React.FC<Props> = ({
         <Text size={16}>Cluster provision check</Text>
         <Spacer y={0.5} />
         <Text color="helper">
-          Your cloud provider account does not have enough resources to
-          provision this cluster. Please visit your cloud provider or change
-          your cluster configuration, then re-submit.
+          Your cloud provider account does not have the required permissions and/or
+          resources to provision with Porter. Please resolve the following issues or change
+          your cluster configuration and try again.
         </Text>
         <Spacer y={1} />
-        {preflightChecks.map((pfc) => (
-          <CheckItem preflightCheck={pfc} key={pfc.title} />
+        {preflightChecks.map((pfc, idx) => (
+          <CheckItem preflightCheck={pfc} key={pfc.title} defaultExpanded={idx === 0}/>
         ))}
       </AppearingDiv>
     </Modal>
@@ -137,6 +128,10 @@ const CheckItemContainer = styled.div`
   padding-left: 10px;
   cursor: pointer;
   background: ${(props) => props.theme.clickable.bg};
+  cursor: pointer;
+  &:hover {
+    border: 1px solid #7a7b80;
+  }
 `;
 
 const CheckItemTop = styled.div`
@@ -153,16 +148,4 @@ const ExpandIcon = styled.i<{ isExpanded: boolean }>`
   cursor: pointer;
   border-radius: 20px;
   transform: ${(props) => (props.isExpanded ? "" : "rotate(-90deg)")};
-`;
-const ErrorMessageLabel = styled.span`
-  font-weight: bold;
-  margin-left: 10px;
-`;
-const ErrorMessageContent = styled.div`
-  font-family: "Courier New", Courier, monospace;
-  padding: 5px 10px;
-  border-radius: 4px;
-  margin-left: 10px;
-  user-select: text;
-  cursor: text;
 `;

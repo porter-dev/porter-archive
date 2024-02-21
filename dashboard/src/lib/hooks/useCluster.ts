@@ -10,9 +10,9 @@ import {
   updateExistingClusterContract,
 } from "lib/clusters";
 import {
-  CloudProviderAWS,
-  CloudProviderGCP,
-  SUPPORTED_CLOUD_PROVIDERS,
+    CloudProviderAWS, CloudProviderAzure,
+    CloudProviderGCP,
+    SUPPORTED_CLOUD_PROVIDERS,
 } from "lib/clusters/constants";
 import {
   clusterStateValidator,
@@ -382,6 +382,7 @@ export const useUpdateCluster = ({
         )
           .with("AWS", () => CloudProviderAWS.preflightChecks)
           .with("GCP", () => CloudProviderGCP.preflightChecks)
+          .with("Azure", () => CloudProviderAzure.preflightChecks)
           .otherwise(() => []);
 
         const clientPreflightChecks: ClientPreflightCheck[] = parsed.errors
@@ -409,6 +410,7 @@ export const useUpdateCluster = ({
       }
       // otherwise, continue to create the contract
     } catch (err) {
+        console.log(err)
       throw new Error(
         getErrorMessageFromNetworkCall(err, "Cluster preflight checks")
       );

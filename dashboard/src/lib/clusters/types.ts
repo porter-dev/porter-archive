@@ -232,6 +232,7 @@ export type ClientMachineType = {
 type PreflightCheckResolutionStep = {
   text: string;
   externalLink?: string;
+  code?: string;
 };
 export type PreflightCheckResolution = {
   title: string;
@@ -510,6 +511,7 @@ const preflightCheckKeyValidator = z.enum([
   "apiEnabled",
   "cidrAvailability",
   "iamPermissions",
+  "authz",
 ]);
 type PreflightCheckKey = z.infer<typeof preflightCheckKeyValidator>;
 export const preflightCheckValidator = z.object({
@@ -521,7 +523,9 @@ export const preflightCheckValidator = z.object({
         metadata: z.record(z.string()).optional(),
       }),
     })
-    .array(),
+    .array()
+    .nullish()
+    .default([]),
 });
 export const createContractResponseValidator = z.object({
   contract_revision: z.object({

@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
-
-import styled from "styled-components";
-import { ClusterType, ProjectType } from "shared/types";
 import { Tooltip } from "@material-ui/core";
+import styled from "styled-components";
 
-import settings from "assets/settings.svg";
+import { type ClusterType, type ProjectType } from "shared/types";
 import job from "assets/job-bold.png";
-import web from "assets/web-bold.png";
+import settings from "assets/settings.svg";
 import sliders from "assets/sliders.svg";
+import web from "assets/web-bold.png";
 
 import SidebarLink from "./SidebarLink";
 
@@ -35,25 +34,25 @@ export const ClusterSection: React.FC<Props> = ({
   }, [currentCluster]);
 
   useEffect(() => {
-    console.log("clearing cache")
+    console.log("clearing cache");
     navigator.serviceWorker.getRegistrations().then((registrations) => {
       registrations.forEach((registration) => {
         registration.unregister();
       });
     });
-    caches.keys().then((keyList) => {
-      return Promise.all(
-        keyList.map((key) => {
-          return caches.delete(key);
+    caches.keys().then(async (keyList) => {
+      return await Promise.all(
+        keyList.map(async (key) => {
+          return await caches.delete(key);
         })
       );
     });
-    
+
     setIsExpanded(false);
   }, [currentProject]);
 
   const renderClusterContent = (cluster: any) => {
-    let clusterId = cluster.id;
+    const clusterId = cluster.id;
 
     if (currentCluster && isExpanded) {
       return (
@@ -166,7 +165,9 @@ export const ClusterSection: React.FC<Props> = ({
   return (
     <>
       <ClusterSelector
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => {
+          setIsExpanded(!isExpanded);
+        }}
         active={
           !isExpanded &&
           cluster.id === currentCluster.id &&
@@ -245,7 +246,11 @@ export const ClusterSection: React.FC<Props> = ({
           <Spacer />
         </LinkWrapper>
       </ClusterSelector>
-      <div onClick={() => setCurrentCluster(cluster)}>
+      <div
+        onClick={() => {
+          setCurrentCluster(cluster);
+        }}
+      >
         {renderClusterContent(cluster)}
       </div>
     </>
@@ -328,7 +333,7 @@ const NavButton = styled(SidebarLink)`
   margin-left: 39px;
   padding: 0 30px 2px 8px;
   font-size: 13px;
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   cursor: ${(props: { disabled?: boolean }) =>
     props.disabled ? "not-allowed" : "pointer"};
 

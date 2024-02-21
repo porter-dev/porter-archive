@@ -47,21 +47,23 @@ export const useClusterContext = (): ClusterContextType => {
 
 type ClusterContextProviderProps = {
   clusterId?: number;
+  refetchInterval?: number;
   children: JSX.Element;
 };
 
 const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
   clusterId,
   children,
+  refetchInterval = 3000,
 }) => {
   const { currentProject } = useContext(Context);
   const { cluster, isLoading, isError } = useCluster({
     clusterId,
-    refetchInterval: 3000,
+    refetchInterval,
   });
   const { reportToAnalytics } = useClusterAnalytics();
 
-  const { nodes } = useClusterNodeList({ clusterId });
+  const { nodes } = useClusterNodeList({ clusterId, refetchInterval });
 
   const paramsExist =
     !!clusterId && !!currentProject && currentProject.id !== -1;

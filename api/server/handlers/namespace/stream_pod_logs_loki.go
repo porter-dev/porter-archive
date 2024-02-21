@@ -13,6 +13,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/websocket"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 type StreamPodLogsLokiHandler struct {
@@ -32,6 +33,9 @@ func NewStreamPodLogsLokiHandler(
 }
 
 func (c *StreamPodLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-stream-pod-logs")
+	defer span.End()
+
 	request := &types.GetLogRequest{}
 
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -59,7 +63,7 @@ func (c *StreamPodLogsLokiHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = agent.StreamPorterAgentLokiLog([]string{
+	err = agent.StreamPorterAgentLokiLog(ctx, []string{
 		fmt.Sprintf("pod=%s", request.PodSelector),
 		fmt.Sprintf("namespace=%s", request.Namespace),
 	}, string(startTime), request.SearchParam, 0, safeRW)

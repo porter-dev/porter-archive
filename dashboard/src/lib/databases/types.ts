@@ -5,7 +5,6 @@ export const datastoreEnvValidator = z.object({
   linked_applications: z.string().array().default([]),
   secret_variables: z.record(z.string()).default({}),
   variables: z.record(z.string()).default({}),
-  version: z.number(),
 });
 
 export type DatastoreEnvWithSource = z.infer<typeof datastoreEnvValidator>;

@@ -282,7 +282,6 @@ const getLogsWithinTimeRange = baseApi<
 
 const appLogs = baseApi<
   {
-    app_id: number;
     service_name: string;
     deployment_target_id: string;
     limit: number;
@@ -291,6 +290,7 @@ const appLogs = baseApi<
     search_param?: string;
     direction?: string;
     app_revision_id?: string;
+    job_run_name?: string;
   },
   {
     project_id: number;

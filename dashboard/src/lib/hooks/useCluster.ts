@@ -451,8 +451,10 @@ type TUseClusterNodeList = {
 };
 export const useClusterNodeList = ({
   clusterId,
+  refetchInterval = 3000,
 }: {
   clusterId: number | undefined;
+  refetchInterval?: number;
 }): TUseClusterNodeList => {
   const { currentProject } = useContext(Context);
 
@@ -498,7 +500,7 @@ export const useClusterNodeList = ({
         .filter(valueExists);
     },
     {
-      refetchInterval: 3000,
+      refetchInterval,
       enabled:
         !!currentProject &&
         currentProject.id !== -1 &&

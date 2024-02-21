@@ -13,7 +13,7 @@ export type ClientCloudProvider = {
   displayName: string;
   icon: string;
   regions: ClientRegion[];
-  machineTypes: MachineType[];
+  machineTypes: ClientMachineType[];
   baseCost: number;
   newClusterDefaultContract: Contract; // this is where we include sensible defaults for new clusters
   preflightChecks: PreflightCheck[];
@@ -163,6 +163,11 @@ const awsMachineTypeValidator = z.enum([
   "c7a.12xlarge",
   "c7a.16xlarge",
   "c7a.24xlarge",
+  // gpu types
+  "g4dn.xlarge",
+  "g4dn.2xlarge",
+  "g4dn.4xlarge",
+  "p4d.24xlarge",
 ]);
 type AWSMachineType = z.infer<typeof awsMachineTypeValidator>;
 const gcpMachineTypeValidator = z.enum([
@@ -219,7 +224,7 @@ type AzureSKUTier = {
   name: string;
   displayName: string;
 };
-export type MachineType = {
+export type ClientMachineType = {
   name: AWSMachineType | GCPMachineType | AzureMachineType;
   displayName: string;
   supportedRegions: Array<AWSRegion | GCPRegion | AzureRegion>;

@@ -110,9 +110,7 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		DatastoreRepository: c.Repo().Datastore(),
 	})
 	if err == nil && len(datastores) == 1 {
-		ds := datastores[0]
-		datastore.Env = ds.Env
-		datastore.Metadata = ds.Metadata
+		datastore = datastores[0]
 	}
 
 	resp.Datastore = datastore

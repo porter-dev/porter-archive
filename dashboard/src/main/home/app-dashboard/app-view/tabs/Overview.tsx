@@ -4,6 +4,7 @@ import { useFormContext } from "react-hook-form";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { useAppStatus } from "lib/hooks/useAppStatus";
+import { useCluster } from "lib/hooks/useCluster";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
   defaultSerialized,
@@ -36,6 +37,10 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
     deploymentTarget,
     latestClientServices,
   } = useLatestRevision();
+
+  const { cluster } = useCluster({
+    clusterId,
+  });
 
   const { serviceVersionStatus } = useAppStatus({
     projectId,
@@ -77,6 +82,7 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
           namespace: deploymentTarget.namespace,
           appName: porterApp.name,
         }}
+        cluster={cluster}
       />
       <Spacer y={0.75} />
       <AppSaveButton

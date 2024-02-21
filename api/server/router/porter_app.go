@@ -1270,6 +1270,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET  /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/jobs/{job_run_name} -> porter_app.JobStatusByNameHandler
+	appJobStatusByNameEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/{%s}/jobs/{%s}", relPathV2, types.URLParamPorterAppName, types.URLParamJobRunName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	appJobStatusByNameHandler := porter_app.NewJobStatusByNameHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: appJobStatusByNameEndpoint,
+		Handler:  appJobStatusByNameHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/revisions/{app_revision_id} -> porter_app.NewGetAppRevisionHandler
 	getAppRevisionEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -8,7 +8,7 @@ const LogsTab: React.FC = () => {
     useLatestRevision();
 
   const appName = latestProto.name;
-  const serviceNames = Object.keys(latestProto.services);
+  const serviceNames = latestProto.serviceList.map((svc) => svc.name);
 
   return (
     <Logs

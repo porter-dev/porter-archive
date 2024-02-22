@@ -124,17 +124,14 @@ const AppHeader: React.FC = () => {
   };
 
   const displayDomain = useMemo(() => {
-    const domains = Object.values(latestProto.services).reduce(
-      (acc: string[], s) => {
-        if (s.config.case === "webConfig") {
-          const names = s.config.value.domains.map((d) => d.name);
-          return [...acc, ...names];
-        }
+    const domains = latestProto.serviceList.reduce((acc: string[], s) => {
+      if (s.config.case === "webConfig") {
+        const names = s.config.value.domains.map((d) => d.name);
+        return [...acc, ...names];
+      }
 
-        return acc;
-      },
-      []
-    );
+      return acc;
+    }, []);
 
     // we only show the custom domain if 1 exists; if no custom domain exists, we show the porter domain, if one exists
     const nonPorterDomains = domains.filter(

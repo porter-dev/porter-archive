@@ -85,7 +85,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   });
   const {
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = clusterForm;
 
   const queryClient = useQueryClient();
@@ -106,6 +106,10 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
         <ErrorComponent message={updateClusterError} maxWidth="600px" />
       );
     }
+    if (Object.keys(errors).length > 0) {
+      // TODO: remove this and properly handle form validation errors
+      console.log("errors", errors);
+    }
     if (isHandlingPreflightChecks) {
       props.loadingText = "Running preflight checks...";
     }
@@ -123,6 +127,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     updateClusterError,
     isHandlingPreflightChecks,
     isCreatingContract,
+    errors,
   ]);
 
   const onSubmit = handleSubmit(async (data) => {

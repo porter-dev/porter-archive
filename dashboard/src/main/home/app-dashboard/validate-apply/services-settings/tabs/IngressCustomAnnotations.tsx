@@ -52,20 +52,22 @@ const IngressCustomAnnotations: React.FC<Props> = ({ index }) => {
                         // Otherwise, the backend will merge the old set of keys with the new set, and the original key
                         // will still exist.
                         onChange: (e) => {
-                          if (
-                            e.target.value &&
-                            e.target.value !== annotation.key
-                          ) {
-                            setValue(
-                              `app.services.${index}.config.ingressAnnotations.${i}.key`,
-                              e.target.value.trim()
-                            );
-                            if (
-                              !fieldsAnnotationDeletion.find(
-                                (d) => d.key === annotation.key
-                              )
-                            ) {
-                              appendAnnotationDeletion({ key: annotation.key });
+                          if (e.target.value) {
+                            const newValue = e.target.value.trim();
+                            if (newValue !== annotation.key) {
+                              setValue(
+                                `app.services.${index}.config.ingressAnnotations.${i}.key`,
+                                newValue
+                              );
+                              if (
+                                !fieldsAnnotationDeletion.find(
+                                  (d) => d.key === annotation.key
+                                )
+                              ) {
+                                appendAnnotationDeletion({
+                                  key: annotation.key,
+                                });
+                              }
                             }
                           }
                         },

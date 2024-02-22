@@ -58,7 +58,7 @@ const IngressCustomAnnotations: React.FC<Props> = ({ index }) => {
                           ) {
                             setValue(
                               `app.services.${index}.config.ingressAnnotations.${i}.key`,
-                              e.target.value
+                              e.target.value.trim()
                             );
                             if (
                               !fieldsAnnotationDeletion.find(

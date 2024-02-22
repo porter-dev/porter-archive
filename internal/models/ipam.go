@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// Ipam represents a an entry in the Ipam table
+// Ipam represents an entry in the Ipam table
 type Ipam struct {
 	gorm.Model
 

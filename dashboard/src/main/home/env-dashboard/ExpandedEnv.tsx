@@ -1,24 +1,25 @@
-import React, { useMemo, useState, useContext, useEffect } from "react";
-import styled from "styled-components";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useParams } from "react-router";
+import styled from "styled-components";
 import { match } from "ts-pattern";
+
+import Loading from "components/Loading";
+import Back from "components/porter/Back";
+import Container from "components/porter/Container";
+import Image from "components/porter/Image";
+import Link from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import TabSelector from "components/TabSelector";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
-
-import notFound from "assets/not-found.png";
 import doppler from "assets/doppler.png";
 import key from "assets/key.svg";
+import notFound from "assets/not-found.png";
 import time from "assets/time.png";
 
-import Back from "components/porter/Back";
-import Loading from "components/Loading";
-import Container from "components/porter/Container";
-import Image from "components/porter/Image";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import Link from "components/porter/Link";
-import TabSelector from "components/TabSelector";
+import { envGroupPath } from "../../../shared/util";
 import EnvVarsTab from "./tabs/EnvVarsTab";
 import SettingsTab from "./tabs/SettingsTab";
 import SyncedAppsTab from "./tabs/SyncedAppsTab";
@@ -40,7 +41,7 @@ const ExpandedEnv: React.FC = () => {
     tab: string;
   }>();
   const history = useHistory();
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [envGroup, setEnvGroup] = useState(null);
 
@@ -57,13 +58,13 @@ const ExpandedEnv: React.FC = () => {
       const res = await api.getAllEnvGroups(
         "<token>",
         {},
-        { 
+        {
           id: currentProject?.id ?? -1,
           cluster_id: currentCluster?.id ?? -1,
         }
       );
       const matchedEnvGroup = res.data.environment_groups.find((x) => {
-        return x.name === envGroupName
+        return x.name === envGroupName;
       });
       setIsLoading(false);
       setEnvGroup(matchedEnvGroup);
@@ -79,9 +80,9 @@ const ExpandedEnv: React.FC = () => {
 
   useEffect(() => {
     if (!tab) {
-      history.push(`/environment-groups/${envGroupName}/env-vars`);
+      history.push(envGroupPath(currentProject, `/${envGroupName}/env-vars`));
     }
-  }, [tab])
+  }, [tab]);
 
   return (
     <>
@@ -90,30 +91,34 @@ const ExpandedEnv: React.FC = () => {
         <Placeholder>
           <Container row>
             <Image src={notFound} size={13} opacity={0.65} />
-            <Spacer inline x={.5} />
+            <Spacer inline x={0.5} />
             <Text color="helper">
-              No env group matching &quot;{envGroupName}&quot;
-              was found.
+              No env group matching &quot;{envGroupName}&quot; was found.
             </Text>
           </Container>
           <Spacer y={1} />
-          <Link hasunderline to="/environment-groups">Return to dashboard</Link>
+          <Link hasunderline to={envGroupPath(currentProject, "")}>
+            Return to dashboard
+          </Link>
         </Placeholder>
       )}
       {!isLoading && envGroup && (
         <StyledExpandedApp>
-          <Back to="/environment-groups" />
+          <Back to={envGroupPath(currentProject, "")} />
 
           <Container row>
-            <Image src={envGroup.type === "doppler" ? doppler : key} size={28} />
+            <Image
+              src={envGroup.type === "doppler" ? doppler : key}
+              size={28}
+            />
             <Spacer inline x={1} />
             <Text size={21}>{envGroupName}</Text>
           </Container>
           <Spacer y={0.5} />
           <Container row>
-            <Spacer inline x={.2} />
+            <Spacer inline x={0.2} />
             <Image opacity={0.3} src={time} size={14} />
-            <Spacer inline x={.5} />
+            <Spacer inline x={0.5} />
             <Text color="#aaaabb66">
               Last deployed {getReadableDate(envGroup.created_at)}
             </Text>
@@ -125,17 +130,16 @@ const ExpandedEnv: React.FC = () => {
             options={tabs}
             currentTab={tab}
             setCurrentTab={(t) => {
-              history.push(`/environment-groups/${envGroupName}/${t}`);
+              history.push(
+                envGroupPath(currentProject, `/${envGroupName}/${t}`)
+              );
             }}
           />
           <Spacer y={1} />
           {match(tab)
             .with("env-vars", () => {
               return (
-                <EnvVarsTab 
-                  envGroup={envGroup}
-                  fetchEnvGroup={fetchEnvGroup}
-                />
+                <EnvVarsTab envGroup={envGroup} fetchEnvGroup={fetchEnvGroup} />
               );
             })
             .with("synced-apps", () => <SyncedAppsTab envGroup={envGroup} />)

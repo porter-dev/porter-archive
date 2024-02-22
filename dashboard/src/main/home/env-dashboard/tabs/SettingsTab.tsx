@@ -13,6 +13,7 @@ import Text from "components/porter/Text";
 import Container from "components/porter/Container";
 import Image from "components/porter/Image";
 import Error from "components/porter/Error";
+import {envGroupPath} from "shared/util";
 
 type Props = {
   envGroup: {
@@ -60,7 +61,7 @@ const SettingsTab: React.FC<Props> = ({ envGroup }) => {
     try {
       await deleteEnvGroup();
       setCurrentOverlay(null);
-      history.push("/environment-groups");
+      history.push(envGroupPath(currentProject, ""));
     } catch (error) {
       setIsDeleting(false);
       setButtonStatus(<Error message="Env group deletion failed" />);

@@ -23,6 +23,7 @@ import pr_icon from "assets/pull_request_icon.svg";
 import rocket from "assets/rocket.png";
 import settings from "assets/settings.svg";
 
+import { envGroupPath } from "../../../shared/util";
 import ClusterListContainer from "./ClusterListContainer";
 import Clusters from "./Clusters";
 import ProjectSectionContainer from "./ProjectSectionContainer";
@@ -245,9 +246,9 @@ class Sidebar extends Component<PropsType, StateType> {
               Add-ons
             </NavButton>
             <NavButton
-              path="/environment-groups"
+              path={envGroupPath(currentProject, "")}
               active={window.location.pathname.startsWith(
-                "/environment-groups"
+                envGroupPath(currentProject, "")
               )}
             >
               <Img src={sliders} />
@@ -335,9 +336,9 @@ class Sidebar extends Component<PropsType, StateType> {
             </NavButton>
 
             <NavButton
-              path="/environment-groups"
+              path={envGroupPath(currentProject, "")}
               active={window.location.pathname.startsWith(
-                "/environment-groups"
+                envGroupPath(currentProject, "")
               )}
             >
               <Container row spaced style={{ width: "100%" }}>

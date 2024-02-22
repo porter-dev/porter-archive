@@ -484,7 +484,7 @@ export const ExpandedEnvGroupFC = ({
           git_branch: newAppData?.git_branch,
           buildpacks: "",
           // full_helm_values: yaml.dump(values),
-          environmentGroups: filteredEnvGroups?.map((env) => env.name),
+          environment_groups: filteredEnvGroups?.map((env) => env.name),
           user_update: true,
         }
 

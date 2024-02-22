@@ -70,7 +70,7 @@ const EnvGroupModal: React.FC<Props> = ({
             cluster_id: currentCluster?.id,
           }
         )
-        .then((res) => res.data?.environmentGroups);
+        .then((res) => res.data?.environment_groups);
     } catch (error) {
       setLoading(false)
       setError(true);

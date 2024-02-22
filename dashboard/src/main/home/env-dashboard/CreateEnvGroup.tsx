@@ -20,6 +20,7 @@ import { ControlledInput } from 'components/porter/ControlledInput';
 import Button from 'components/porter/Button';
 import EnvGroupArray, { type KeyValueType } from './EnvGroupArray';
 import axios from 'axios';
+import {envGroupPath} from "shared/util";
 
 const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -143,7 +144,7 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
         }
       )
         
-      history.push(`/environment-groups/${data.name}/env-vars?created=true`);
+      history.push(envGroupPath(currentProject, `/${data.name}/env-vars?created=true`));
     } catch (err) {
       const errorMessage =
         axios.isAxiosError(err) && err.response?.data?.error
@@ -167,7 +168,7 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
     <CenterWrapper>
       <Div>
         <StyledConfigureTemplate>
-          <Back to="/environment-groups" />
+          <Back to={envGroupPath(currentProject, "")} />
           <DashboardHeader
             prefix={<Icon src={envGrad} />}
             title="Create a new env group"

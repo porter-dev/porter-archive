@@ -52,19 +52,6 @@ const ClusterList: React.FC = (props) => {
 
   useEffect(() => {
     if (currentProject) {
-      if (
-        currentProject?.simplified_view_enabled &&
-        currentProject?.capi_provisioner_enabled &&
-        currentProject?.beta_features_enabled
-      ) {
-        setOptions(
-          clusterList.map((c) => ({
-            label: c.vanity_name,
-            value: c.name,
-          }))
-        );
-        return;
-      }
       api
         .getClusters("<token>", {}, { id: currentProject?.id })
         .then((res) => {
@@ -97,20 +84,22 @@ const ClusterList: React.FC = (props) => {
   const truncate = (input: string): string =>
     input.length > 27 ? `${input.substring(0, 27)}...` : input;
 
-  const renderOptionList = (): JSX.Element[] =>
-    options.map((option, i: number) => (
-      <OptionDiv
-        key={i}
-        selected={option.value === currentCluster?.name}
-        title={option.label}
-        onClick={() => {
-          setExpanded(false);
-          if (
-            currentProject?.simplified_view_enabled &&
-            currentProject?.capi_provisioner_enabled &&
-            currentProject?.beta_features_enabled
-          ) {
-            const cluster = clusterList.find((c) => c.name === option.value);
+  const renderOptionList = (): JSX.Element[] => {
+    if (
+      currentProject?.simplified_view_enabled &&
+      currentProject?.capi_provisioner_enabled &&
+      currentProject?.beta_features_enabled
+    ) {
+      return clusterList.map((c) => (
+        <OptionDiv
+          key={c.name}
+          selected={c.name === currentCluster?.name}
+          title={c.vanity_name}
+          onClick={() => {
+            setExpanded(false);
+            const cluster = clusterList.find(
+              (cluster) => cluster.name === c.name
+            );
             if (cluster) {
               // TODO: remove the need for this conversion
               const clusterToOldType: ClusterType = {
@@ -123,12 +112,25 @@ const ClusterList: React.FC = (props) => {
               setCurrentCluster?.(clusterToOldType);
               pushFiltered(props, "/apps", ["project_id"], {});
             }
-          } else {
-            const cluster = clusters.find((c) => c.name === option.value);
-            if (cluster) {
-              setCurrentCluster?.(cluster);
-              pushFiltered(props, "/apps", ["project_id"], {});
-            }
+          }}
+        >
+          <Icon src={infra} height={"14px"} />
+          <ClusterLabel>{c.vanity_name}</ClusterLabel>
+        </OptionDiv>
+      ));
+    }
+
+    return options.map((option, i: number) => (
+      <OptionDiv
+        key={i}
+        selected={option.value === currentCluster?.name}
+        title={option.label}
+        onClick={() => {
+          setExpanded(false);
+          const cluster = clusters.find((c) => c.name === option.value);
+          if (cluster) {
+            setCurrentCluster?.(cluster);
+            pushFiltered(props, "/apps", ["project_id"], {});
           }
         }}
       >
@@ -136,6 +138,7 @@ const ClusterList: React.FC = (props) => {
         <ClusterLabel>{option.label}</ClusterLabel>
       </OptionDiv>
     ));
+  };
 
   const renderDropdown = (): false | JSX.Element =>
     expanded && (

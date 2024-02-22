@@ -80,7 +80,7 @@ export const EnvVariablesTab: React.FC<EnvVariablesTabProps> = ({
             cluster_id: currentCluster.id,
           }
         )
-        .then((res) => res?.data?.environmentGroups);
+        .then((res) => res?.data?.environment_groups);
     } catch (error) {
       return;
     }

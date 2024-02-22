@@ -1,5 +1,7 @@
 import { EnumQuotaIncrease } from "@porter-dev/api-contracts";
 
+import { type ProjectType } from "./types";
+
 export const isJSON = (value: string): boolean => {
   try {
     JSON.parse(value);
@@ -11,6 +13,15 @@ export const isJSON = (value: string): boolean => {
 
 export function valueExists<T>(value: T | null | undefined): value is T {
   return !!value;
+}
+
+export function envGroupPath(
+  project: ProjectType | undefined,
+  subPath: string
+): string {
+  return project?.simplified_view_enabled && !project?.validate_apply_v2
+    ? `/env-groups${subPath}`
+    : `/environment-groups${subPath}`;
 }
 
 export const PREFLIGHT_MESSAGE_CONST = {

@@ -114,10 +114,7 @@ const EnvGroupModal: React.FC<Props> = ({
         </LoadingWrapper>
       );
     } else {
-      console.log(envGroups)
       const sortedEnvGroups = envGroups?.slice().sort((a, b) => a.name.localeCompare(b.name));
-      console.log(sortedEnvGroups)
-
 
       return sortedEnvGroups?.filter((envGroup) => {
         if (!Array.isArray(syncedEnvGroups)) {

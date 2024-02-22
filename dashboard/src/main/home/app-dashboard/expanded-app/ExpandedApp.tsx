@@ -585,8 +585,6 @@ const ExpandedApp: React.FC<Props> = ({ ...props }) => {
     }
   };
 
-  console.log(syncedEnvGroups)
-
   const renderTabContents = () => {
     switch (selectedTab) {
       case "activity":

@@ -59,6 +59,7 @@ type GormRepository struct {
 	githubWebhook             repository.GithubWebhookRepository
 	datastore                 repository.DatastoreRepository
 	appInstance               repository.AppInstanceRepository
+	ipam                      repository.IpamRepository
 }
 
 func (t *GormRepository) User() repository.UserRepository {
@@ -275,6 +276,11 @@ func (t *GormRepository) AppInstance() repository.AppInstanceRepository {
 	return t.appInstance
 }
 
+// Ipam returns the IpamRepository interface implemented by gorm
+func (t *GormRepository) Ipam() repository.IpamRepository {
+	return t.ipam
+}
+
 // NewRepository returns a Repository which persists users in memory
 // and accepts a parameter that can trigger read/write errors
 func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.CredentialStorage) repository.Repository {
@@ -331,5 +337,6 @@ func NewRepository(db *gorm.DB, key *[32]byte, storageBackend credentials.Creden
 		githubWebhook:             NewGithubWebhookRepository(db),
 		datastore:                 NewDatastoreRepository(db),
 		appInstance:               NewAppInstanceRepository(db),
+		ipam:                      NewIpamRepository(db),
 	}
 }

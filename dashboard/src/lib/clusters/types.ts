@@ -400,15 +400,16 @@ const cidrRangeValidator = z
     }
   );
 
+const clusterNameValidator = z
+  .string()
+  .min(1, { message: "Name must be at least 1 character" })
+  .max(38, { message: "Name must be max 38 characters" })
+  .regex(/^[a-z0-9-]{1,61}$/, {
+    message: 'Lowercase letters, numbers, and "-" only.',
+  });
 const eksConfigValidator = z.object({
   kind: z.literal("EKS"),
-  clusterName: z
-    .string()
-    .min(1, { message: "Name must be at least 1 character" })
-    .max(31, { message: "Name must be max 31 characters" })
-    .regex(/^[a-z0-9-]{1,61}$/, {
-      message: 'Lowercase letters, numbers, and "-" only.',
-    }),
+  clusterName: clusterNameValidator,
   clusterVersion: z.string().optional().default(""),
   region: awsRegionValidator,
   nodeGroups: eksNodeGroupValidator.array(),
@@ -462,13 +463,7 @@ const eksConfigValidator = z.object({
 });
 const gkeConfigValidator = z.object({
   kind: z.literal("GKE"),
-  clusterName: z
-    .string()
-    .min(1, { message: "Name must be at least 1 character" })
-    .max(31, { message: "Name must be max 31 characters" })
-    .regex(/^[a-z0-9-]{1,61}$/, {
-      message: 'Lowercase letters, numbers, and "-" only.',
-    }),
+  clusterName: clusterNameValidator,
   clusterVersion: z.string().optional().default(""),
   region: gcpRegionValidator,
   nodeGroups: gkeNodeGroupValidator.array(),
@@ -476,13 +471,7 @@ const gkeConfigValidator = z.object({
 });
 const aksConfigValidator = z.object({
   kind: z.literal("AKS"),
-  clusterName: z
-    .string()
-    .min(1, { message: "Name must be at least 1 character" })
-    .max(31, { message: "Name must be max 31 characters" })
-    .regex(/^[a-z0-9-]{1,61}$/, {
-      message: 'Lowercase letters, numbers, and "-" only.',
-    }),
+  clusterName: clusterNameValidator,
   clusterVersion: z.string().optional().default(""),
   region: azureRegionValidator,
   nodeGroups: aksNodeGroupValidator.array(),

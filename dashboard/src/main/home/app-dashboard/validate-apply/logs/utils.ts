@@ -248,17 +248,15 @@ export const useLogs = ({
         });
         const newLogsParsed = parseLogsFromAgent(newLogs);
 
-        const logsWithRevisionNumber = newLogsParsed
-          .filter(
-            (log) =>
-              !!log.app_revision_id &&
-              !!revisionIdToNumber[log.app_revision_id] &&
-              revisionIdToNumber[log.app_revision_id] !== 0
-          )
-          .map((log) => ({
-            ...log,
-            revision: revisionIdToNumber[log.app_revision_id].toString(),
-          }));
+        const logsWithRevisionNumber = newLogsParsed.map((log) => ({
+          ...log,
+          revision:
+            !!log.app_revision_id &&
+            !!revisionIdToNumber[log.app_revision_id] &&
+            revisionIdToNumber[log.app_revision_id] !== 0
+              ? revisionIdToNumber[log.app_revision_id].toString()
+              : "",
+        }));
 
         const newLogsFiltered = filterLogs(logsWithRevisionNumber);
         pushLogs(newLogsFiltered);
@@ -282,7 +280,13 @@ export const useLogs = ({
         return false;
       }
 
+      // if we are filtering out predeploy logs, filter out logs that have "predeploy" in the service name
       if (filterPredeploy && log.service_name.endsWith("predeploy")) {
+        return false;
+      }
+
+      // if we are missing a revision number, filter out the log unless we are showing predeploy logs (which don't have a revision number)
+      if (!log.revision && filterPredeploy) {
         return false;
       }
 
@@ -341,17 +345,15 @@ export const useLogs = ({
         newLogs.reverse();
       }
 
-      const logsWithRevisionNumber = newLogs
-        .filter(
-          (log) =>
-            !!log.app_revision_id &&
-            !!revisionIdToNumber[log.app_revision_id] &&
-            revisionIdToNumber[log.app_revision_id] !== 0
-        )
-        .map((log) => ({
-          ...log,
-          revision: revisionIdToNumber[log.app_revision_id].toString(),
-        }));
+      const logsWithRevisionNumber = newLogs.map((log) => ({
+        ...log,
+        revision:
+          !!log.app_revision_id &&
+          !!revisionIdToNumber[log.app_revision_id] &&
+          revisionIdToNumber[log.app_revision_id] !== 0
+            ? revisionIdToNumber[log.app_revision_id].toString()
+            : "",
+      }));
 
       return {
         logs: logsWithRevisionNumber,

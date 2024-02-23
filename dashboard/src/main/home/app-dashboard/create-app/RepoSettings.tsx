@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AnimateHeight from "react-animate-height";
 import { Controller, useFormContext } from "react-hook-form";
@@ -16,6 +16,7 @@ import { type PorterAppFormData, type SourceOptions } from "lib/porter-apps";
 import { type BuildOptions } from "lib/porter-apps/build";
 
 import api from "shared/api";
+import { Context } from "shared/Context";
 
 import BranchSelector from "../build-settings/BranchSelector";
 import RepositorySelector from "../build-settings/RepositorySelector";
@@ -23,6 +24,7 @@ import BuildpackSettings, {
   DEFAULT_BUILDERS,
 } from "../validate-apply/build-settings/buildpacks/BuildpackSettings";
 import DockerfileSettings from "../validate-apply/build-settings/docker/DockerfileSettings";
+import PorterYamlInput from "./PorterYamlInput";
 
 type Props = {
   projectId: number;
@@ -46,6 +48,7 @@ const RepoSettings: React.FC<Props> = ({
   build,
   appExists,
 }) => {
+  const { currentProject } = useContext(Context);
   const { control, register, setValue } = useFormContext<PorterAppFormData>();
   const [showSettings, setShowSettings] = useState<boolean>(false);
 
@@ -164,7 +167,7 @@ const RepoSettings: React.FC<Props> = ({
                     git_repo_name: "",
                     git_branch: "",
                     git_repo_id: 0,
-                    porter_yaml_path: "./porter.yaml",
+                    porter_yaml_path: "",
                   });
 
                   setValue("app.build.context", "./");
@@ -219,7 +222,7 @@ const RepoSettings: React.FC<Props> = ({
                       setValue("source", {
                         ...source,
                         git_branch: "",
-                        porter_yaml_path: "./porter.yaml",
+                        porter_yaml_path: "",
                       });
 
                       setValue("app.build.context", "./");
@@ -248,6 +251,29 @@ const RepoSettings: React.FC<Props> = ({
                 label={"Application root path:"}
               />
               <Spacer y={1} />
+              {!appExists && currentProject?.id && (
+                <>
+                  <Text color="helper">
+                    (Optional) Specify your porter.yaml path.{" "}
+                    <a
+                      href="https://docs.porter.run/deploy/configuration-as-code/overview"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      &nbsp;(?)
+                    </a>
+                  </Text>
+                  <Spacer y={0.5} />
+                  <PorterYamlInput
+                    projectId={currentProject.id}
+                    repoId={source.git_repo_id}
+                    repoOwner={source.git_repo_name.split("/")[0]}
+                    repoName={source.git_repo_name.split("/")[1]}
+                    branch={source.git_branch}
+                  />
+                  <Spacer y={1} />
+                </>
+              )}
               {isLoading && !appExists ? (
                 <AdvancedBuildTitle>
                   <Loading />

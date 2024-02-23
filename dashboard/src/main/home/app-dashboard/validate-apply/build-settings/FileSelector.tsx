@@ -1,135 +1,146 @@
-import { useGithubContents } from "lib/hooks/useGithubContents";
 import React, { useState } from "react";
 import styled from "styled-components";
-import file from "assets/file_v2.svg";
-import folder from "assets/folder_v2.svg";
-import file_branch from "assets/file-branch.svg";
 import { match } from "ts-pattern";
+
 import Loading from "components/Loading";
+import { useGithubContents } from "lib/hooks/useGithubContents";
+
+import file from "assets/file_v2.svg";
+import file_branch from "assets/file-branch.svg";
+import folder from "assets/folder_v2.svg";
 
 type Props = {
-    repoId: number;
-    repoOwner: string;
-    repoName: string;
-    branch: string;
-    projectId: number;
-    onFileSelect: (path: string) => void;
-    isFileSelectable?: (path: string) => boolean;
-    widthPixels?: number;
-    heightPixels?: number;
-    headerText: string;
-}
+  repoId: number;
+  repoOwner: string;
+  repoName: string;
+  branch: string;
+  projectId: number;
+  onFileSelect: (path: string) => void;
+  isFileSelectable?: (path: string) => boolean;
+  widthPixels?: number;
+  widthPercent?: number;
+  heightPixels?: number;
+  headerText: string;
+};
 const FileSelector: React.FC<Props> = ({
+  repoId,
+  repoOwner,
+  repoName,
+  branch,
+  projectId,
+  onFileSelect,
+  isFileSelectable = () => true,
+  widthPixels = 500,
+  heightPixels = 275,
+  headerText,
+  widthPercent,
+}) => {
+  const [path, setPath] = useState<string>("./");
+  const { contents, isLoading } = useGithubContents({
     repoId,
     repoOwner,
     repoName,
     branch,
+    path,
     projectId,
-    onFileSelect,
-    isFileSelectable = () => true,
-    widthPixels = 500,
-    heightPixels = 275,
-    headerText,
-}) => {
-    const [ path, setPath ] = useState<string>("./");
-    const { contents, isLoading } = useGithubContents({
-        repoId,
-        repoOwner,
-        repoName,
-        branch,
-        path,
-        projectId,
-    })
+  });
 
-    return (
-        <div>
-            <StyledFileSelector widthPixels={widthPixels} heightPixels={heightPixels}>
-                {isLoading ? (
-                    <Loading />
-                ) : (
-                    <>
-                    {path !== "./" && path !== "" ? (
-                    <Item
-                        onClick={() => {
-                            const parentPath = path.split("/").slice(0, -2).join("/") + "/";
-                            setPath(parentPath);
-                        }}
-                        isHeaderItem={false}
-                    >
-                        <img src={folder} />
-                        ..
-                    </Item>
-                ) : (
-                    <Item
-                        onClick={() => {}}
-                        isHeaderItem
-                    >
-                        <img src={file_branch} />
-                        {headerText}
-                    </Item>
-                )}
-                {contents.map((content, i) => 
-                    {
-                        // this is the path in the scope of the current directory
-                        // e.g. if the path is ./foo/bar, then the relative path is bar
-                        const relativePath = content.path.split("/").slice(-1)[0];
-                        const isSelectable = isFileSelectable(relativePath);
-                        return match(content)
-                            .with({ type: "file" }, (content) => (
-                                <FileItem 
-                                    key={i} 
-                                    onClick={() => {
-                                        if (isSelectable) {
-                                            onFileSelect(content.path);
-                                        }
-                                    }}
-                                    isFileSelectable={isSelectable}
-                                    isHeaderItem={false}
-                                >
-                                    <img src={file} />
-                                    {relativePath}
-                                </FileItem>
-                            ))
-                            .with({ type: "dir" }, (content) => (
-                                <Item 
-                                    key={i} 
-                                    onClick={() => setPath(`${path}${relativePath}/`)}
-                                    isHeaderItem={false}
-                                >
-                                    <img src={folder} />
-                                    {relativePath}
-                                </Item>
-                            ))
-                            .with({ type: "symlink" }, (content) => (
-                                <FileItem 
-                                    key={i} 
-                                    onClick={() => ({})}
-                                    isHeaderItem={false}
-                                    isFileSelectable={false}
-                                >
-                                    <img src={folder} />
-                                    {relativePath}
-                                </FileItem>
-                            ))
-                        .exhaustive();
-                    }
-                )}
-                    </>
-                )}
-            </StyledFileSelector>
-        </div>
-    );
+  return (
+    <div>
+      <StyledFileSelector
+        widthPixels={widthPixels}
+        widthPercent={widthPercent}
+        heightPixels={heightPixels}
+      >
+        {isLoading ? (
+          <Loading />
+        ) : (
+          <>
+            {path !== "./" && path !== "" ? (
+              <Item
+                onClick={() => {
+                  const parentPath =
+                    path.split("/").slice(0, -2).join("/") + "/";
+                  setPath(parentPath);
+                }}
+                isHeaderItem={false}
+              >
+                <img src={folder} />
+                ..
+              </Item>
+            ) : (
+              <Item onClick={() => {}} isHeaderItem>
+                <img src={file_branch} />
+                {headerText}
+              </Item>
+            )}
+            {contents.map((content, i) => {
+              // this is the path in the scope of the current directory
+              // e.g. if the path is ./foo/bar, then the relative path is bar
+              const relativePath = content.path.split("/").slice(-1)[0];
+              const isSelectable = isFileSelectable(relativePath);
+              return match(content)
+                .with({ type: "file" }, (content) => (
+                  <FileItem
+                    key={i}
+                    onClick={() => {
+                      if (isSelectable) {
+                        onFileSelect(content.path);
+                      }
+                    }}
+                    isFileSelectable={isSelectable}
+                    isHeaderItem={false}
+                  >
+                    <img src={file} />
+                    {relativePath}
+                  </FileItem>
+                ))
+                .with({ type: "dir" }, (content) => (
+                  <Item
+                    key={i}
+                    onClick={() => {
+                      setPath(`${path}${relativePath}/`);
+                    }}
+                    isHeaderItem={false}
+                  >
+                    <img src={folder} />
+                    {relativePath}
+                  </Item>
+                ))
+                .with({ type: "symlink" }, (content) => (
+                  <FileItem
+                    key={i}
+                    onClick={() => ({})}
+                    isHeaderItem={false}
+                    isFileSelectable={false}
+                  >
+                    <img src={folder} />
+                    {relativePath}
+                  </FileItem>
+                ))
+                .exhaustive();
+            })}
+          </>
+        )}
+      </StyledFileSelector>
+    </div>
+  );
 };
 
 export default FileSelector;
 
-const StyledFileSelector = styled.div<{ widthPixels: number, heightPixels: number }>`
+const StyledFileSelector = styled.div<{
+  widthPixels: number;
+  widthPercent?: number;
+  heightPixels: number;
+}>`
   margin-top: 10px;
   border-radius: 3px;
   border: 1px solid #ffffff44;
   max-height: 275px;
   overflow-y: auto;
-  width: ${({ widthPixels }) => widthPixels}px;
+  width: ${({ widthPixels, widthPercent }) =>
+    widthPercent ? `${widthPercent}%` : `${widthPixels}px`};
   height: ${({ heightPixels }) => heightPixels}px;
 `;
 
@@ -144,11 +155,11 @@ const Item = styled.div`
   padding: 10px 0px;
   cursor: ${(props: { isHeaderItem: boolean }) =>
     props.isHeaderItem ? "default" : "pointer"};
-  background:  ${(props) =>
-    props.isHeaderItem ?  `${props.theme.fg2}` : `${props.theme.clickable.bg}`};
+  background: ${(props) =>
+    props.isHeaderItem ? `${props.theme.fg2}` : `${props.theme.clickable.bg}`};
   :hover {
     border: ${(props) =>
-        props.isHeaderItem ? `1px solid #494b4f` : `1px solid #7a7b80`};
+      props.isHeaderItem ? `1px solid #494b4f` : `1px solid #7a7b80`};
   }
 
   > img {
@@ -181,11 +192,11 @@ const FileItem = styled(Item)`
     props.isFileSelectable ? "#ffffff" : "#ffffff55"};
   :hover {
     border: ${(props) =>
-        props.isFileSelectable ?  `1px solid #7a7b80`: `1px solid #494b4f`};
+      props.isFileSelectable ? `1px solid #7a7b80` : `1px solid #494b4f`};
   }
 
   img {
     opacity: ${(props: { isFileSelectable: boolean }) =>
-        props.isFileSelectable ? "1" : "0.5"} !important;
+      props.isFileSelectable ? "1" : "0.5"} !important;
   }
 `;

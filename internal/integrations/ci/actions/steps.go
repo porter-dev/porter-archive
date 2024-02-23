@@ -83,14 +83,11 @@ func getDeployStackStep(
 	projectID, clusterID uint,
 	preview bool,
 ) GithubActionYAMLStep {
-	var path string
+	command := "exec porter apply"
 	if porterYamlPath != "" {
-		path = porterYamlPath
-	} else {
-		path = "porter.yaml"
+		command = fmt.Sprintf("exec porter apply -f %s", porterYamlPath)
 	}
 
-	command := fmt.Sprintf("exec porter apply -f %s", path)
 	if preview {
 		command = fmt.Sprintf("%s --preview", command)
 	}

@@ -164,7 +164,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
       source: {
         git_repo_name: "",
         git_branch: "",
-        porter_yaml_path: "./porter.yaml",
+        porter_yaml_path: "",
       },
       deletions: {
         serviceNames: [],
@@ -617,43 +617,11 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       <Spacer y={1} />
                       {source?.type ? (
                         source.type === "github" ? (
-                          <>
-                            <RepoSettings
-                              build={build}
-                              source={source}
-                              projectId={currentProject.id}
-                            />
-                            {/* {!userHasSeenNoPorterYamlFoundModal &&
-                              !porterYamlFound &&
-                              !isLoadingPorterYaml && (
-                                <Controller
-                                  name="source.porter_yaml_path"
-                                  control={control}
-                                  render={({ field: { onChange, value } }) => (
-                                    <PorterYamlModal
-                                      close={() => {
-                                        setUserHasSeenNoPorterYamlFoundModal(
-                                          true
-                                        );
-                                      }}
-                                      setPorterYamlPath={(porterYamlPath) => {
-                                        onChange(porterYamlPath);
-                                      }}
-                                      porterYamlPath={value}
-                                      projectId={currentProject.id}
-                                      repoId={source.git_repo_id}
-                                      repoOwner={
-                                        source.git_repo_name.split("/")[0]
-                                      }
-                                      repoName={
-                                        source.git_repo_name.split("/")[1]
-                                      }
-                                      branch={source.git_branch}
-                                    />
-                                  )}
-                                />
-                              )} */}
-                          </>
+                          <RepoSettings
+                            build={build}
+                            source={source}
+                            projectId={currentProject.id}
+                          />
                         ) : (
                           <ImageSettings
                             projectId={currentProject.id}

@@ -371,7 +371,6 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       setAzureLocation(aksValues.location);
       const clusterVersionSplit = aksValues.clusterVersion.split(".");
       const minorClusterVersion = clusterVersionSplit.slice(0, 2).join(".");
-      console.log(minorClusterVersion)
       setClusterVersion(minorClusterVersion);
       setCidrRange(aksValues.cidrRange);
       if (aksValues.skuTier !== AksSkuTier.UNSPECIFIED) {

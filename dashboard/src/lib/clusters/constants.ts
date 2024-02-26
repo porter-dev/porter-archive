@@ -1278,7 +1278,7 @@ const DEFAULT_AKS_CONTRACT = new Contract({
     kindValues: {
       case: "aksKind",
       value: {
-        clusterVersion: "v1.27.3",
+        clusterVersion: "v1.27",
         cidrRange: "10.78.0.0/16",
         skuTier: AksSkuTier.FREE,
       },

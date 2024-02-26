@@ -80,7 +80,7 @@ const getGitlabIntegration = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/integrations/gitlab`
 );
 
-const preflightCheck = baseApi<PreflightCheckRequest, { id: number }>(
+const legacyPreflightCheck = baseApi<PreflightCheckRequest, { id: number }>(
   "POST",
   (pathParams) => {
     return `/api/projects/${pathParams.id}/integrations/preflightcheck`;
@@ -1559,6 +1559,13 @@ const createContract = baseApi<Contract, { project_id: number }>(
   "POST",
   ({ project_id }) => {
     return `/api/projects/${project_id}/contract`;
+  }
+);
+
+const cloudContractPreflightCheck = baseApi<Contract, { project_id: number }>(
+  "POST",
+  ({ project_id }) => {
+    return `/api/projects/${project_id}/contract/preflight_check`;
   }
 );
 
@@ -3678,7 +3685,7 @@ export default {
   addApplicationToEnvGroup,
   removeApplicationFromEnvGroup,
   provisionDatabase,
-  preflightCheck,
+  legacyPreflightCheck,
   requestQuotaIncrease,
   getAwsCloudProviders,
   getDatabases,
@@ -3713,6 +3720,7 @@ export default {
   getIncidentEvents,
   createContract,
   getContracts,
+  cloudContractPreflightCheck,
   deleteContract,
   // TRACKING
   updateOnboardingStep,

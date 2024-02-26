@@ -1543,14 +1543,14 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// POST /api/projects/{project_id}/contract/preflight_check -> apiContract.NewPreflightCheckHandler
+	// POST /api/projects/{project_id}/contract/preflight -> apiContract.NewPreflightCheckHandler
 	preflightCheckEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: fmt.Sprintf("%s/contract/preflight_check", relPath),
+				RelativePath: fmt.Sprintf("%s/contract/preflight", relPath),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

@@ -7,7 +7,7 @@ import Text from "./Text";
 
 type Props = {
   message: string;
-  metadata?:  Record<string, string>;
+  metadata?: Record<string, string>;
   ctaText?: string;
   ctaOnClick?: () => void;
   errorModalContents?: React.ReactNode;
@@ -16,7 +16,7 @@ type Props = {
 
 export const Error: React.FC<Props> = ({
   message,
-    metadata,
+  metadata,
   ctaText,
   ctaOnClick,
   errorModalContents,
@@ -33,16 +33,13 @@ export const Error: React.FC<Props> = ({
           {ctaText && (errorModalContents != null || ctaOnClick != null) && (
             <>
               <Spacer y={0.5} />
-              {metadata && Object.entries(metadata).map(
-              ([key, value]) => (
-              <>
-                <div key={key}>
-                  <ErrorMessageLabel>{key}:</ErrorMessageLabel>
-                  <ErrorMessageContent>{value}</ErrorMessageContent>
-                </div>
-              </>
-              )
-              )}
+              {metadata &&
+                Object.entries(metadata).map(([key, value]) => (
+                  <div key={key}>
+                    <ErrorMessageLabel>{key}:</ErrorMessageLabel>
+                    <ErrorMessageContent>{value}</ErrorMessageContent>
+                  </div>
+                ))}
               <Spacer y={0.5} />
               <Cta
                 onClick={() => {

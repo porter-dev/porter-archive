@@ -15,11 +15,11 @@ import ResolutionStepsModalContents from "./help/preflight/ResolutionStepsModalC
 
 type ItemProps = {
   preflightCheck: ClientPreflightCheck;
-  defaultExpanded?: boolean;
+  preExpanded?: boolean;
 };
 export const CheckItem: React.FC<ItemProps> = ({
   preflightCheck,
-  defaultExpanded = true,
+  preExpanded = true,
 }) => {
   const renderHeader = (): React.ReactElement => {
     return (
@@ -36,8 +36,8 @@ export const CheckItem: React.FC<ItemProps> = ({
           )}
         <Spacer inline x={1} />
         <Text style={{ flex: 1 }}>{preflightCheck.title}</Text>
-        {preflightCheck?.error?.metadata?.quota && (
-          <Text color={"helper"}>{preflightCheck?.error?.metadata?.quota}</Text>
+        {preflightCheck?.error?.metadata?.quotaName && (
+          <Text color={"helper"}>{preflightCheck?.error?.metadata?.quotaName}</Text>
         )}
       </CheckItemTop>
     );
@@ -48,7 +48,7 @@ export const CheckItem: React.FC<ItemProps> = ({
   }
 
   return (
-    <Expandable preExpanded={defaultExpanded} header={renderHeader()}>
+    <Expandable preExpanded={preExpanded} header={renderHeader()}>
       <div>
         <ErrorComponent
           message={preflightCheck.error.detail}
@@ -95,7 +95,7 @@ const PreflightChecksModal: React.FC<Props> = ({
           <CheckItem
             preflightCheck={pfc}
             key={pfc.title}
-            defaultExpanded={idx === 0}
+            preExpanded={idx === 0}
           />
         ))}
       </AppearingDiv>

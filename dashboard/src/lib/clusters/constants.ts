@@ -1126,6 +1126,33 @@ const AWS_VCPUS_QUOTA_RESOLUTION: PreflightCheckResolution = {
   ],
 };
 
+const AWS_GPU_QUOTA_RESOLUTION: PreflightCheckResolution = {
+  title: "Requesting more GPU-type vCPUs",
+  subtitle:
+    "You will need to either request more GPU-type vCPUs or delete existing instances in order to provision in the region specified. You can request more GPU-type vCPUs by following these steps:",
+  steps: [
+    {
+      text: "Log into your AWS Account",
+      externalLink:
+        "https://console.aws.amazon.com/billing/home?region=us-east-1#/account",
+    },
+    {
+      text: "Navigate to the Amazon Elastic Compute Cloud (Amazon EC2) Service Quotas portal",
+      externalLink:
+        "https://us-east-1.console.aws.amazon.com/servicequotas/home/services/ec2/quotas",
+    },
+    {
+      text: 'Search for "Running On-Demand G and VT instances" in the search box and click on the search result.',
+    },
+    {
+      text: 'Click on "Request quota increase". In order to provision with Porter, you will need to request the specified number of vCPUs above your current quota limit.',
+    },
+    {
+      text: "Once that request is approved, return to Porter and retry the provision.",
+    },
+  ],
+};
+
 const SUPPORTED_AWS_PREFLIGHT_CHECKS: PreflightCheck[] = [
   {
     name: "eip",
@@ -1146,6 +1173,11 @@ const SUPPORTED_AWS_PREFLIGHT_CHECKS: PreflightCheck[] = [
     name: "vcpu",
     displayName: "vCPU availability",
     resolution: AWS_VCPUS_QUOTA_RESOLUTION,
+  },
+  {
+    name: "gpu",
+    displayName: "GPU availability",
+    resolution: AWS_GPU_QUOTA_RESOLUTION,
   },
 ];
 

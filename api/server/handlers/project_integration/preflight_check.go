@@ -58,6 +58,7 @@ var recognizedPreflightCheckKeys = []string{
 	"cidrAvailability",
 	"iamPermissions",
 	"resourceProviders",
+	"gpu",
 }
 
 func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

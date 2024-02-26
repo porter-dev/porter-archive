@@ -1,6 +1,7 @@
 package project_integration
 
 import (
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -57,7 +58,7 @@ var recognizedPreflightCheckKeys = []string{
 	"apiEnabled",
 	"cidrAvailability",
 	"iamPermissions",
-	"resourceProviders",
+	"authz",
 }
 
 func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -89,6 +90,48 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		if cloudValues.CloudProvider == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP || cloudValues.CloudProvider == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS {
 			input.PreflightValues = cloudValues.PreflightValues
 		}
+	}
+
+	if cloudValues.Contract != nil && cloudValues.Contract.Cluster != nil && cloudValues.Contract.Cluster.CloudProvider == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AZURE {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "new-endpoint", Value: true})
+		checkResp, err := p.Config().ClusterControlPlaneClient.CloudContractPreflightCheck(ctx,
+			connect.NewRequest(
+				&porterv1.CloudContractPreflightCheckRequest{
+					Contract: cloudValues.Contract,
+				},
+			),
+		)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error calling preflight checks")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		if checkResp.Msg == nil {
+			err = telemetry.Error(ctx, span, nil, "no message received from preflight checks")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		errors := []PreflightCheckError{}
+		for _, val := range checkResp.Msg.FailingPreflightChecks {
+			if val.Message == "" || !contains(recognizedPreflightCheckKeys, val.Type) {
+				continue
+			}
+
+			fmt.Printf("val: %+v\n", val.Metadata)
+
+			errors = append(errors, PreflightCheckError{
+				Name: val.Type,
+				Error: PorterError{
+					Message:  val.Message,
+					Metadata: val.Metadata,
+				},
+			})
+		}
+		resp.Errors = errors
+		p.WriteResult(w, r, resp)
+		return
 	}
 
 	checkResp, err := p.Config().ClusterControlPlaneClient.PreflightCheck(ctx, connect.NewRequest(&input))

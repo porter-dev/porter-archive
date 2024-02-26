@@ -55,7 +55,7 @@ var recognizedPreflightCheckTypes = []string{
 	"apiEnabled",
 	"cidrAvailability",
 	"iamPermissions",
-	"resourceProviders",
+	"authz",
 }
 
 func (p *PreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -61,7 +61,6 @@ const Underline = styled.div<{ color: string }>`
 
 const StyledLink = styled(DynamicLink) <{ hasunderline?: boolean, color: string }>`
   color: ${(props) => props.color};
-  display: inline-flex;
   font-size: 13px;
   cursor: pointer;
   align-items: center;

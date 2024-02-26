@@ -61,7 +61,6 @@ var recognizedPreflightCheckTypes = []string{
 func (p *PreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-preflight-checks")
 	defer span.End()
-	// project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	var apiContract porterv1.Contract
 

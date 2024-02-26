@@ -365,7 +365,10 @@ export const useUpdateCluster = ({
     setIsHandlingPreflightChecks(true);
     try {
       let preflightCheckResp;
-      if (clientContract.cluster.cloudProvider === "AWS") {
+      if (
+        clientContract.cluster.cloudProvider === "AWS" ||
+        clientContract.cluster.cloudProvider === "Azure"
+      ) {
         preflightCheckResp = await api.cloudContractPreflightCheck(
           "<token>",
           newContract,

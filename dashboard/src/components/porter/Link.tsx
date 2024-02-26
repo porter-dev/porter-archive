@@ -59,9 +59,9 @@ const Underline = styled.div<{ color: string }>`
   background: ${(props) => props.color};
 `;
 
-const StyledLink = styled(DynamicLink) <{ hasunderline?: boolean, color: string }>`
+const StyledLink = styled(DynamicLink) <{ hasunderline?: boolean, color: string, removeInline?: boolean }>`
   color: ${(props) => props.color};
-  display: inline-flex;
+  ${(props) => !props.removeInline && "display: inline-flex;"};
   font-size: 13px;
   cursor: pointer;
   align-items: center;

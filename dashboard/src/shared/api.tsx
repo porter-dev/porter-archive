@@ -1565,7 +1565,7 @@ const createContract = baseApi<Contract, { project_id: number }>(
 const cloudContractPreflightCheck = baseApi<Contract, { project_id: number }>(
   "POST",
   ({ project_id }) => {
-    return `/api/projects/${project_id}/contract/preflight_check`;
+    return `/api/projects/${project_id}/contract/preflight`;
   }
 );
 

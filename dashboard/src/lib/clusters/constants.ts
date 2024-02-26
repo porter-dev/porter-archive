@@ -1206,7 +1206,7 @@ const DEFAULT_GKE_CONTRACT = new Contract({
     kindValues: {
       case: "gkeKind",
       value: {
-        clusterVersion: "1.27.0",
+        clusterVersion: "1.27",
         network: new GKENetwork({
           cidrRange: "10.78.0.0/16",
           controlPlaneCidr: "10.77.0.0/28",

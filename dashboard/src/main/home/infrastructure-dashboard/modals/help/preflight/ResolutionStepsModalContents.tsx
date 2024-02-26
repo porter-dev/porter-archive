@@ -11,7 +11,7 @@ import { type PreflightCheckResolution } from "lib/clusters/types";
 type Props = {
   resolution: PreflightCheckResolution;
 };
-const ElasticIPQuotaModalContents: React.FC<Props> = ({ resolution }) => {
+const ResolutionStepsModalContents: React.FC<Props> = ({ resolution }) => {
   return (
     <div>
       <Text size={16} weight={500}>
@@ -41,7 +41,7 @@ const ElasticIPQuotaModalContents: React.FC<Props> = ({ resolution }) => {
   );
 };
 
-export default ElasticIPQuotaModalContents;
+export default ResolutionStepsModalContents;
 
 const StepContainer = styled.div`
   display: flex;

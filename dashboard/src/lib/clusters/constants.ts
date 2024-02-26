@@ -1027,7 +1027,7 @@ const AWS_EIP_QUOTA_RESOLUTION: PreflightCheckResolution = {
     "You will need to either request more EIP addresses or delete existing ones in order to provision in the region specified. You can request more addresses by following these steps:",
   steps: [
     {
-      text: "Log into your AWS Account",
+      text: "Log in to your AWS Account",
       externalLink:
         "https://console.aws.amazon.com/billing/home?region=us-east-1#/account",
     },
@@ -1053,7 +1053,7 @@ const AWS_NAT_GATEWAY_QUOTA_RESOLUTION: PreflightCheckResolution = {
     "You will need to either request more NAT Gateways or delete existing ones in order to provision in the region specified. You can request more NAT Gateways by following these steps:",
   steps: [
     {
-      text: "Log into your AWS Account",
+      text: "Log in to your AWS Account",
       externalLink:
         "https://console.aws.amazon.com/billing/home?region=us-east-1#/account",
     },
@@ -1079,7 +1079,7 @@ const AWS_VPC_QUOTA_RESOLUTION: PreflightCheckResolution = {
     "You will need to either request more VPCs or delete existing ones in order to provision in the region specified. You can request more VPCs by following these steps:",
   steps: [
     {
-      text: "Log into your AWS Account",
+      text: "Log in to your AWS Account",
       externalLink:
         "https://console.aws.amazon.com/billing/home?region=us-east-1#/account",
     },
@@ -1105,7 +1105,7 @@ const AWS_VCPUS_QUOTA_RESOLUTION: PreflightCheckResolution = {
     "You will need to either request more vCPUs or delete existing instances in order to provision in the region specified. You can request more vCPUs by following these steps:",
   steps: [
     {
-      text: "Log into your AWS Account",
+      text: "Log in to your AWS Account",
       externalLink:
         "https://console.aws.amazon.com/billing/home?region=us-east-1#/account",
     },
@@ -1122,6 +1122,75 @@ const AWS_VCPUS_QUOTA_RESOLUTION: PreflightCheckResolution = {
     },
     {
       text: "Once that request is approved, return to Porter and retry the provision.",
+    },
+  ],
+};
+const AZURE_AUTHZ_RESOLUTION: PreflightCheckResolution = {
+  title: "Granting your service principal authorization to your subscription",
+  subtitle:
+    "You will need to authorize your service principal to read and write to your subscription. To properly configure the service principal, following the creation steps in our docs:",
+  steps: [
+    {
+      text: "Log in to your Azure Portal:",
+      externalLink:
+        "https://portal.azure.com",
+    },
+    {
+      text: "Click on the Azure Cloud Shell icon to the right of the global search bar, and select Bash as your shell"
+    },
+    {
+      text: "Follow the directions in our docs to create the Azure role required for provisioning with Porter and attach it to a service principal:",
+      externalLink:
+          "https://docs.porter.run/provision/provisioning-on-azure#creating-the-service-principal",
+    },
+    {
+      text: "Note the outputted credentials, return to the Azure credential input screen in Porter, and re-enter the credentials to provision",
+    },
+  ],
+};
+const AZURE_RESOURCE_PROVIDER_RESOLUTION: PreflightCheckResolution = {
+  title: "Enable required resource providers in your subscription",
+  subtitle:
+    "You will need to enable certain resource providers in your Azure subscription in order for Porter to provision your infrastructure:",
+  steps: [
+    {
+      text: "Take note of any particular resource providers flagged as missing in the provisioning error message."
+    },
+    {
+      text: "Log in to your Azure Portal:",
+      externalLink:
+          "https://portal.azure.com",
+    },
+    {
+      text: "Follow the directions in our docs to enable all required resource providers in your subscription:",
+      externalLink:
+          "https://docs.porter.run/provision/provisioning-on-azure#prerequisites",
+    },
+    {
+      text: "Changes may take a few minutes to take effect. Once you have enabled the resource providers, return to Porter and retry the provision.",
+    },
+  ],
+};
+const AZURE_VCPUS_QUOTA_RESOLUTION: PreflightCheckResolution = {
+  title: "Requesting more vCPUs",
+  subtitle:
+      "You will need to either request more vCPUs or delete existing instances in order to provision in the location specified. You can request more vCPUs by following these steps:",
+  steps: [
+    {
+      text: "Note which resource families were flagged in the provisioning error message. These may include your requested machine types, as well as those required by Porter."
+    },
+    {
+      text: "Log in to your Azure Portal:",
+      externalLink:
+          "https://portal.azure.com",
+    },
+    {
+      text: "Follow the directions in our docs to request quota increases:",
+      externalLink:
+          "https://docs.porter.run/provision/provisioning-on-azure#compute-quotas",
+    },
+    {
+      text: "Requests may take a few hours to be fulfilled. Once you have confirmed that the quota increases have been granted, return to Porter and retry the provision.",
     },
   ],
 };
@@ -1146,6 +1215,24 @@ const SUPPORTED_AWS_PREFLIGHT_CHECKS: PreflightCheck[] = [
     name: "vcpu",
     displayName: "vCPU availability",
     resolution: AWS_VCPUS_QUOTA_RESOLUTION,
+  },
+];
+
+const SUPPORTED_AZURE_PREFLIGHT_CHECKS: PreflightCheck[] = [
+  {
+    name: "authz",
+    displayName: "Subscription authorization",
+    resolution: AZURE_AUTHZ_RESOLUTION,
+  },
+  {
+    name: "apiEnabled",
+    displayName: "Enable resource providers",
+    resolution: AZURE_RESOURCE_PROVIDER_RESOLUTION,
+  },
+  {
+    name: "vcpu",
+    displayName: "vCPU availability",
+    resolution: AZURE_VCPUS_QUOTA_RESOLUTION,
   },
 ];
 
@@ -1254,7 +1341,7 @@ export const CloudProviderAzure: ClientCloudProvider & {
   machineTypes: SUPPORTED_AZURE_MACHINE_TYPES,
   baseCost: 164.69,
   newClusterDefaultContract: DEFAULT_AKS_CONTRACT,
-  preflightChecks: [],
+  preflightChecks: SUPPORTED_AZURE_PREFLIGHT_CHECKS,
   config: {
     kind: "Azure",
     skuTiers: SUPPORTED_AZURE_SKU_TIERS,

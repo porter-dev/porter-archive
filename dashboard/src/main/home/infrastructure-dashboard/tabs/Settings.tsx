@@ -44,7 +44,6 @@ const Settings: React.FC = () => {
     try {
       setIsSubmitting(true);
       await deleteCluster();
-      setCurrentOverlay(null);
       history.push("/infrastructure");
     } catch (err) {
       showIntercomWithMessage({
@@ -65,6 +64,7 @@ const Settings: React.FC = () => {
       setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
+      setCurrentOverlay(null);
     }
   };
 

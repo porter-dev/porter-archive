@@ -146,6 +146,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
           errorMessage: `Preflight checks failed: ${response.preflightChecks
             .map((c) => c.title)
             .join(", ")}`,
+          clusterName: data.cluster.config.clusterName,
         });
         setShowFailedPreflightChecksModal(true);
       }

@@ -48,7 +48,7 @@ const skuTierOptions = [
   },
 ];
 
-const clusterVersionOptions = [{ value: "v1.27.3", label: "v1.27" }];
+const clusterVersionOptions = [{ value: "v1.27", label: "v1.27" }];
 
 type Props = RouteComponentProps & {
   selectedClusterVersion?: Contract;
@@ -83,7 +83,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
   const [minInstances, setMinInstances] = useState(1);
   const [maxInstances, setMaxInstances] = useState(10);
   const [cidrRange, setCidrRange] = useState("10.78.0.0/16");
-  const [clusterVersion, setClusterVersion] = useState("v1.27.3");
+  const [clusterVersion, setClusterVersion] = useState("v1.27");
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [skuTier, setSkuTier] = useState(AksSkuTier.FREE);
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -251,7 +251,7 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
           case: "aksKind",
           value: new AKS({
             clusterName,
-            clusterVersion: clusterVersion || "v1.27.3",
+            clusterVersion: clusterVersion || "v1.27",
             cidrRange: cidrRange || "10.78.0.0/16",
             location: azureLocation,
             nodePools,
@@ -369,7 +369,10 @@ const AzureProvisionerSettings: React.FC<Props> = (props) => {
       setCreateStatus("");
       setClusterName(aksValues.clusterName);
       setAzureLocation(aksValues.location);
-      setClusterVersion(aksValues.clusterVersion);
+      const clusterVersionSplit = aksValues.clusterVersion.split(".");
+      const minorClusterVersion = clusterVersionSplit.slice(0, 2).join(".");
+      console.log(minorClusterVersion)
+      setClusterVersion(minorClusterVersion);
       setCidrRange(aksValues.cidrRange);
       if (aksValues.skuTier !== AksSkuTier.UNSPECIFIED) {
         setSkuTier(aksValues.skuTier);

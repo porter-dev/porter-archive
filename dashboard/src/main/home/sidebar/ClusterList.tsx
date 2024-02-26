@@ -102,12 +102,14 @@ const ClusterList: React.FC = (props) => {
             );
             if (cluster) {
               // TODO: remove the need for this conversion
-              const clusterToOldType: ClusterType = {
+              // TODO: project_id is required for the current cluster to persist on page refresh - find out why
+              const clusterToOldType: ClusterType & { project_id: number } = {
                 id: cluster.id,
                 name: cluster.name,
                 vanity_name: cluster.vanity_name,
                 cloud_provider: cluster.cloud_provider.name,
                 status: cluster.status,
+                project_id: currentProject.id,
               };
               setCurrentCluster?.(clusterToOldType);
               pushFiltered(props, "/apps", ["project_id"], {});

@@ -90,10 +90,9 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	errs := make([]string, 0)
 
 	for i := range namespaceScopedReleases {
-		index := i
 		wg.Add(1)
 
-		go func() {
+		go func(index int) {
 			ctx, span := telemetry.NewSpan(ctx, "update-image-batch")
 			defer span.End()
 			defer wg.Done()
@@ -142,7 +141,7 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 					mu.Unlock()
 				}
 			}
-		}()
+		}(i)
 	}
 
 	wg.Wait()

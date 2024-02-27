@@ -72,7 +72,7 @@ export const ProjectComplianceProvider: React.FC<
   const queryClient = useQueryClient();
   const [updateInProgress, setUpdateInProgress] = useState(false);
   const [profile, setProfile] = useState<ComplianceProfileType>("soc2");
-  const [vendor, setVendor] = useState<ComplianceVendorType>("vanta");
+  const [vendor, setVendor] = useState<ComplianceVendorType>("oneleet");
 
   const {
     contractDB: latestContractDB,

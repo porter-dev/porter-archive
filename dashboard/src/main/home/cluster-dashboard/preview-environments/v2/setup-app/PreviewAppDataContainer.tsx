@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type PorterApp } from "@porter-dev/api-contracts";
 import axios from "axios";
@@ -32,7 +26,6 @@ import {
 } from "lib/porter-apps";
 
 import api from "shared/api";
-import { Context } from "shared/Context";
 
 import { type ExistingTemplateWithEnv } from "../types";
 import { Addons } from "./Addons";

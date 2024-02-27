@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { cloudProviderValidator } from "lib/clusters/types";
+
 export const datastoreEnvValidator = z.object({
   name: z.string(),
   linked_applications: z.string().array().default([]),
@@ -40,6 +42,8 @@ export const datastoreValidator = z.object({
     "DELETING_RECORD",
     "DELETED",
   ]),
+  cloud_provider: cloudProviderValidator,
+  cloud_provider_credential_identifier: z.string(),
 });
 
 export type SerializedDatastore = z.infer<typeof datastoreValidator>;

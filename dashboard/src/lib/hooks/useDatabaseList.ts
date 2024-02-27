@@ -15,7 +15,11 @@ type DatastoreListType = {
   datastores: ClientDatastore[];
   isLoading: boolean;
 };
-export const useDatastoreList = (): DatastoreListType => {
+export const useDatastoreList = (
+  opts: { refetchIntervalMilliseconds: number } = {
+    refetchIntervalMilliseconds: 5000,
+  }
+): DatastoreListType => {
   const { currentProject } = useContext(Context);
 
   const { data: datastores = [], isLoading: isLoadingDatastores } = useQuery(
@@ -57,6 +61,7 @@ export const useDatastoreList = (): DatastoreListType => {
         currentProject.id !== -1 &&
         currentProject.db_enabled,
       refetchOnWindowFocus: false,
+      refetchInterval: opts.refetchIntervalMilliseconds,
     }
   );
 

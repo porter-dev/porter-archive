@@ -103,7 +103,6 @@ const GPUResources: React.FC<Props> = ({ index, cluster }) => {
                   <Spacer y={1} />
                   <Button
                     alt
-                    // to={`/infrastructure/${cluster.id}`}
                     onClick={() => {
                       history.push(`/infrastructure/${cluster.id}`);
                     }}

@@ -1,7 +1,6 @@
 package project_integration
 
 import (
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -118,8 +117,6 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			if val.Message == "" || !contains(recognizedPreflightCheckKeys, val.Type) {
 				continue
 			}
-
-			fmt.Printf("val: %+v\n", val.Metadata)
 
 			errors = append(errors, PreflightCheckError{
 				Name: val.Type,

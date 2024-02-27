@@ -37,7 +37,9 @@ export const CheckItem: React.FC<ItemProps> = ({
         <Spacer inline x={1} />
         <Text style={{ flex: 1 }}>{preflightCheck.title}</Text>
         {preflightCheck?.error?.metadata?.quotaName && (
-          <Text color={"helper"}>{preflightCheck?.error?.metadata?.quotaName}</Text>
+          <Text color={"helper"}>
+            {preflightCheck?.error?.metadata?.quotaName}
+          </Text>
         )}
       </CheckItemTop>
     );
@@ -111,6 +113,8 @@ const AppearingDiv = styled.div`
   display: flex;
   flex-direction: column;
   color: #fff;
+  max-height: 80vh;
+  overflow-y: auto;
 
   @keyframes floatIn {
     from {

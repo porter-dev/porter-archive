@@ -77,11 +77,13 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	datastore := Datastore{
-		Name:         datastoreRecord.Name,
-		Type:         datastoreRecord.Type,
-		Engine:       datastoreRecord.Engine,
-		CreatedAtUTC: datastoreRecord.CreatedAt,
-		Status:       string(datastoreRecord.Status),
+		Name:                              datastoreRecord.Name,
+		Type:                              datastoreRecord.Type,
+		Engine:                            datastoreRecord.Engine,
+		CreatedAtUTC:                      datastoreRecord.CreatedAt,
+		Status:                            string(datastoreRecord.Status),
+		CloudProvider:                     datastoreRecord.CloudProvider,
+		CloudProviderCredentialIdentifier: datastoreRecord.CloudProviderCredentialIdentifier,
 	}
 
 	if datastoreRecord.CloudProvider != SupportedDatastoreCloudProvider_AWS {

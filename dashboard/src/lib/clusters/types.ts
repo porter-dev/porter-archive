@@ -6,7 +6,7 @@ import { checkGroupValidator } from "main/home/compliance-dashboard/types";
 import { CloudProviderAWS } from "./constants";
 
 // Cloud
-const cloudProviderValidator = z.enum(["AWS", "GCP", "Azure", "Local"]);
+export const cloudProviderValidator = z.enum(["AWS", "GCP", "Azure", "Local"]);
 export type CloudProvider = z.infer<typeof cloudProviderValidator>;
 export type ClientCloudProvider = {
   name: CloudProvider;
@@ -521,7 +521,7 @@ export const preflightCheckValidator = z.object({
         metadata: z.record(z.string()).optional(),
       }),
     })
-    .array()
+    .array(),
 });
 export const createContractResponseValidator = z.object({
   contract_revision: z.object({

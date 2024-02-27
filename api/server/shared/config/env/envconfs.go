@@ -29,8 +29,8 @@ type ServerConf struct {
 	IsTesting            bool          `env:"IS_TESTING,default=false"`
 	AppRootDomain        string        `env:"APP_ROOT_DOMAIN,default=porter.run"`
 
-	DefaultApplicationHelmRepoURL string `env:"HELM_APP_REPO_URL,default=https://charts.dev.getporter.dev"`
-	DefaultAddonHelmRepoURL       string `env:"HELM_ADD_ON_REPO_URL,default=https://chart-addons.dev.getporter.dev"`
+	DefaultApplicationHelmRepoURL string `env:"HELM_APP_REPO_URL,default=https://charts.getporter.dev"`
+	DefaultAddonHelmRepoURL       string `env:"HELM_ADD_ON_REPO_URL,default=https://chart-addons.getporter.dev"`
 
 	BasicLoginEnabled bool `env:"BASIC_LOGIN_ENABLED,default=true"`
 

@@ -71,12 +71,12 @@ export const ConfigSelectors: React.FC = () => {
       <Spacer inline x={1} />
       <Select
         options={[
-          { value: "vanta", label: "Vanta", icon: vanta },
           {
             value: "oneleet",
             label: "Oneleet",
             icon: oneleet,
           },
+          { value: "vanta", label: "Vanta", icon: vanta },
           {
             value: "drata",
             label: "Drata (coming soon)",

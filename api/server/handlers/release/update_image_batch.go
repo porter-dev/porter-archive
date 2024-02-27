@@ -61,7 +61,7 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	releases, err := c.Repo().Release().ListReleasesByImageRepoURI(cluster.ID, request.ImageRepoURI)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error listing releases by image repo uri")
+		_ = telemetry.Error(ctx, span, err, "error listing releases by image repo uri")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(
 			fmt.Errorf("releases not found with given image repo uri"),
 			http.StatusBadRequest,

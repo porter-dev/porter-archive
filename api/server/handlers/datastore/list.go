@@ -110,11 +110,13 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	for _, datastore := range datastores {
 		datastoreList = append(datastoreList, Datastore{
-			Name:         datastore.Name,
-			Type:         datastore.Type,
-			Engine:       datastore.Engine,
-			CreatedAtUTC: datastore.CreatedAt,
-			Status:       string(datastore.Status),
+			Name:                              datastore.Name,
+			Type:                              datastore.Type,
+			Engine:                            datastore.Engine,
+			CreatedAtUTC:                      datastore.CreatedAt,
+			Status:                            string(datastore.Status),
+			CloudProvider:                     datastore.CloudProvider,
+			CloudProviderCredentialIdentifier: datastore.CloudProviderCredentialIdentifier,
 		})
 	}
 

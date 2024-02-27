@@ -50,7 +50,9 @@ const DatabaseDashboard: React.FC = () => {
     "all" | "POSTGRES" | "AURORA-POSTGRES" | "REDIS"
   >("all");
 
-  const { datastores, isLoading } = useDatastoreList();
+  const { datastores, isLoading } = useDatastoreList({
+    refetchIntervalMilliseconds: 5000,
+  });
 
   const filteredDatastores = useMemo(() => {
     const filteredBySearch = search(datastores, searchValue, {
@@ -101,7 +103,7 @@ const DatabaseDashboard: React.FC = () => {
         </DashboardPlaceholder>
       );
     }
-  
+
     if (!currentProject?.db_enabled) {
       return (
         <DashboardPlaceholder>
@@ -122,7 +124,7 @@ const DatabaseDashboard: React.FC = () => {
         </DashboardPlaceholder>
       );
     }
-  
+
     if (datastores === undefined || isLoading || isLoadingClusters) {
       return <Loading offset="-150px" />;
     }

@@ -10,9 +10,10 @@ import {
   updateExistingClusterContract,
 } from "lib/clusters";
 import {
-    CloudProviderAWS, CloudProviderAzure,
-    CloudProviderGCP,
-    SUPPORTED_CLOUD_PROVIDERS,
+  CloudProviderAWS,
+  CloudProviderAzure,
+  CloudProviderGCP,
+  SUPPORTED_CLOUD_PROVIDERS,
 } from "lib/clusters/constants";
 import {
   clusterStateValidator,
@@ -363,15 +364,29 @@ export const useUpdateCluster = ({
 
     setIsHandlingPreflightChecks(true);
     try {
-      const preflightCheckResp = await api.preflightCheck(
-        "<token>",
-        new PreflightCheckRequest({
-          contract: newContract,
-        }),
-        {
-          id: projectId,
-        }
-      );
+      let preflightCheckResp;
+      if (
+        clientContract.cluster.cloudProvider === "AWS" ||
+        clientContract.cluster.cloudProvider === "Azure"
+      ) {
+        preflightCheckResp = await api.cloudContractPreflightCheck(
+          "<token>",
+          newContract,
+          {
+            project_id: projectId,
+          }
+        );
+      } else {
+        preflightCheckResp = await api.legacyPreflightCheck(
+          "<token>",
+          new PreflightCheckRequest({
+            contract: newContract,
+          }),
+          {
+            id: projectId,
+          }
+        );
+      }
       const parsed = await preflightCheckValidator.parseAsync(
         preflightCheckResp.data
       );

@@ -41,7 +41,7 @@ const ClusterResourcesProvider = ({
 }): JSX.Element => {
   const { currentCluster, currentProject } = useContext(Context);
 
-  var {
+  const {
     maxCPU,
     maxRAM,
     defaultCPU,
@@ -56,21 +56,14 @@ const ClusterResourcesProvider = ({
     clusterStatus: currentCluster?.status,
   });
 
-  if (currentProject?.sandbox_enabled) {
-    defaultCPU = 0.1
-    defaultRAM = 120
-    maxRAM = 250
-    maxCPU = 0.2
-  }
-
   return (
     <ClusterResourcesContext.Provider
       value={{
         currentClusterResources: {
-          maxCPU,
-          maxRAM,
-          defaultCPU,
-          defaultRAM,
+          maxCPU: currentProject?.sandbox_enabled ? 0.2 : maxCPU,
+          maxRAM: currentProject?.sandbox_enabled ? 250 : maxRAM,
+          defaultCPU: currentProject?.sandbox_enabled ? 0.1 : defaultCPU,
+          defaultRAM: currentProject?.sandbox_enabled ? 120 : defaultRAM,
           maxGPU,
           clusterContainsGPUNodes,
           clusterIngressIp,

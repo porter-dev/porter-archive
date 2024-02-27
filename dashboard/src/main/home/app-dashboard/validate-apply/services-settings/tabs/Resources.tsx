@@ -114,40 +114,38 @@ const Resources: React.FC<ResourcesProps> = ({
             : `app.services.${index}.ramMegabytes`
         }
         control={control}
-        render={({ field: { value, onChange } }) => {
-          return (
-            <IntelligentSlider
-              label="RAM: "
-              unit="MB"
-              min={10}
-              max={maxRAM}
-              color={"#3f51b5"}
-              value={isNaN(value.value) ? "0" : value.value.toString()}
-              setValue={(e) => {
-                if (smartOpt?.value) {
-                  setValue(`app.services.${index}.cpuCores`, {
-                    readOnly: false,
-                    value: Number(
-                      (
-                        closestMultiplier(0, maxRAM, value.value) * maxCPU
-                      ).toFixed(2)
-                    ),
-                  });
-                }
-                onChange({
-                  ...value,
-                  value: e,
+        render={({ field: { value, onChange } }) => (
+          <IntelligentSlider
+            label="RAM: "
+            unit="MB"
+            min={10}
+            max={maxRAM}
+            color={"#3f51b5"}
+            value={value.value.toString()}
+            setValue={(e) => {
+              if (smartOpt?.value) {
+                setValue(`app.services.${index}.cpuCores`, {
+                  readOnly: false,
+                  value: Number(
+                    (
+                      closestMultiplier(0, maxRAM, value.value) * maxCPU
+                    ).toFixed(2)
+                  ),
                 });
-              }}
-              step={10}
-              disabled={value.readOnly}
-              disabledTooltip={
-                "You may only edit this field in your porter.yaml."
               }
-              isSmartOptimizationOn={false}
-            />
-          );
-        }}
+              onChange({
+                ...value,
+                value: e,
+              });
+            }}
+            step={10}
+            disabled={value.readOnly}
+            disabledTooltip={
+              "You may only edit this field in your porter.yaml."
+            }
+            isSmartOptimizationOn={false}
+          />
+        )}
       />
 
       {currentProject?.gpu_enabled &&

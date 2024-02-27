@@ -409,6 +409,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     // TODO: create a more unified way of parsing form/apply errors, unified with the logic in AppDataContainer
     const errorKeys = Object.keys(errors);
     if (errorKeys.length > 0) {
+      const stringifiedJson = JSON.stringify(errors);
+
       let errorMessage = "App could not be deployed as defined.";
       if (errorKeys.includes("app")) {
         const appErrors = Object.keys(errors.app ?? {});
@@ -431,7 +433,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
 
       void updateAppStep({
         step: "stack-launch-failure",
-        errorMessage: `Form validation error: ${errorMessage}`,
+        errorMessage: `Form validation error (visible to user): ${errorMessage}. Stringified JSON errors (invisible to user): ${stringifiedJson}`,
         appName: name.value,
       });
 

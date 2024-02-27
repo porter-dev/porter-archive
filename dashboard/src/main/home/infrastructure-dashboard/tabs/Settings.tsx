@@ -10,6 +10,7 @@ import Icon from "components/porter/Icon";
 import Input from "components/porter/Input";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { useDatastoreList } from "lib/hooks/useDatabaseList";
 import { useIntercom } from "lib/hooks/useIntercom";
 
 import { Context } from "shared/Context";
@@ -29,6 +30,16 @@ const Settings: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [status, setStatus] = useState("");
   const { updateClusterButtonProps } = useClusterFormContext();
+  const { datastores } = useDatastoreList();
+
+  const datastoresBelongingToCluster = useMemo(() => {
+    return datastores.filter(
+      (d) =>
+        d.cloud_provider === cluster.cloud_provider.name &&
+        d.cloud_provider_credential_identifier ===
+          cluster.cloud_provider_credential_identifier
+    );
+  }, [datastores]);
 
   const renameCluster = useCallback(async (): Promise<void> => {
     setStatus("loading");
@@ -129,6 +140,22 @@ const Settings: React.FC = () => {
         </a>
         . Contact support@porter.run if you need guidance.
       </Text>
+      {datastoresBelongingToCluster.length > 0 && (
+        <>
+          <Spacer y={0.7} />
+          <Text color={"warner"}>
+            Note that deleting this cluster will delete the following attached
+            datastores:{" "}
+          </Text>
+          <ul style={{ margin: 0 }}>
+            {datastoresBelongingToCluster.map((d) => (
+              <li key={d.name}>
+                <Text color={"warner"}>{d.name}</Text>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       <Spacer y={1} />
       <Button
         color="#b91133"

@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { Switch } from "@material-ui/core";
 import { Controller, useFormContext } from "react-hook-form";
+import { useHistory } from "react-router";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
+import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
@@ -23,6 +25,8 @@ type Props = {
 
 // TODO: allow users to provision multiple GPU nodes in the slider
 const GPUResources: React.FC<Props> = ({ index, cluster }) => {
+  const history = useHistory();
+
   const [clusterModalVisible, setClusterModalVisible] =
     useState<boolean>(false);
 
@@ -90,15 +94,22 @@ const GPUResources: React.FC<Props> = ({ index, cluster }) => {
               >
                 <div>
                   <Text size={16}>Cluster GPU check</Text>
-                  <Spacer height="15px" />
+                  <Spacer y={0.5} />
                   <Text color="helper">
                     Your cluster is not yet configured to allow applications to
-                    run on GPU nodes.
+                    run on GPU nodes. You can add a GPU node group in your
+                    infrastructure dashboard.
                   </Text>
-                  <Spacer height="15px" />
-                  <Link to={`/infrastructure/${cluster.id}`}>
-                    You can add a GPU node group to your cluster here.
-                  </Link>
+                  <Spacer y={1} />
+                  <Button
+                    alt
+                    // to={`/infrastructure/${cluster.id}`}
+                    onClick={() => {
+                      history.push(`/infrastructure/${cluster.id}`);
+                    }}
+                  >
+                    To infrastructure
+                  </Button>
                 </div>
               </Modal>
             )}

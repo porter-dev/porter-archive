@@ -26,6 +26,7 @@ services:
     healthCheck:
       enabled: true
       httpPath: /healthz
+      command: ""
   - name: example-wkr
     type: worker
     run: echo 'work'

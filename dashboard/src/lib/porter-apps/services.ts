@@ -72,6 +72,7 @@ export type ClientWebConfig = z.infer<typeof webConfigValidator>;
 const workerConfigValidator = z.object({
   type: z.literal("worker"),
   autoscaling: autoscalingValidator.optional(),
+  healthCheck: healthcheckValidator.optional(),
 });
 export type ClientWorkerConfig = z.infer<typeof workerConfigValidator>;
 
@@ -160,6 +161,7 @@ export type SerializedService = {
     | {
         type: "worker";
         autoscaling?: SerializedAutoscaling;
+        healthCheck?: SerializedHealthcheck;
       }
     | {
         type: "job";
@@ -238,9 +240,14 @@ export function defaultSerialized({
     memoryThresholdPercent: 50,
   };
 
-  const defaultHealthCheck: SerializedHealthcheck = {
+  const defaultWebHealthCheck: SerializedHealthcheck = {
     enabled: false,
     httpPath: "/healthz",
+  };
+
+  const defaultWorkerHealthCheck: SerializedHealthcheck = {
+    enabled: false,
+    command: "./healthz.sh",
   };
 
   return match(type)
@@ -249,7 +256,7 @@ export function defaultSerialized({
       config: {
         type: "web" as const,
         autoscaling: defaultAutoscaling,
-        healthCheck: defaultHealthCheck,
+        healthCheck: defaultWebHealthCheck,
         domains: [],
         private: false,
         ingressAnnotations: {},
@@ -261,6 +268,7 @@ export function defaultSerialized({
       config: {
         type: "worker" as const,
         autoscaling: defaultAutoscaling,
+        healthCheck: defaultWorkerHealthCheck,
       },
     }))
     .with("job", () => ({
@@ -328,6 +336,7 @@ export function serializeService(service: ClientService): SerializedService {
           autoscaling: serializeAutoscaling({
             autoscaling: config.autoscaling,
           }),
+          healthCheck: serializeHealth({ health: config.healthCheck }),
         })
       )
       .with({ type: "job" }, (config) =>
@@ -505,6 +514,11 @@ export function deserializeService({
             override: overrideWorkerConfig?.autoscaling,
             setDefaults,
           }),
+          healthCheck: deserializeHealthCheck({
+            health: config.healthCheck,
+            override: overrideWorkerConfig?.healthCheck,
+            setDefaults,
+          }),
         },
       };
     })
@@ -673,6 +687,7 @@ export function serializedServiceFromProto({
       config: {
         type: "worker" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
+        healthCheck: value.healthCheck ? value.healthCheck : undefined,
         ...value,
       },
     }))

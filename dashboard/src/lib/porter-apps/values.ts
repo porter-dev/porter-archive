@@ -160,11 +160,13 @@ export function deserializeAutoscaling({
 export const healthcheckValidator = z.object({
   enabled: serviceBooleanValidator,
   httpPath: serviceStringValidator.optional(),
+  command: serviceStringValidator.optional(),
 });
 export type ClientHealthCheck = z.infer<typeof healthcheckValidator>;
 export type SerializedHealthcheck = {
   enabled: boolean;
   httpPath?: string;
+  command?: string;
 };
 
 export function serializeHealth({
@@ -176,6 +178,7 @@ export function serializeHealth({
     health && {
       enabled: health.enabled.value,
       httpPath: health.httpPath?.value,
+      command: health.command?.value,
     }
   );
 }
@@ -194,11 +197,15 @@ export function deserializeHealthCheck({
         httpPath: health.httpPath
           ? ServiceField.string(health.httpPath, override?.httpPath)
           : ServiceField.string("", undefined),
+        command: health.command
+          ? ServiceField.string(health.command, override?.command)
+          : ServiceField.string("", undefined),
       }
     : setDefaults
     ? {
         enabled: ServiceField.boolean(false, undefined),
         httpPath: ServiceField.string("", undefined),
+        command: ServiceField.string("", undefined),
       }
     : undefined;
 }

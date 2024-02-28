@@ -211,7 +211,7 @@ type Domains struct {
 	Name string `yaml:"name"`
 }
 
-// HealthCheck is the health check settings for a web service
+// HealthCheck contains the health check settings
 type HealthCheck struct {
 	Enabled  bool   `yaml:"enabled"`
 	HttpPath string `yaml:"httpPath"`

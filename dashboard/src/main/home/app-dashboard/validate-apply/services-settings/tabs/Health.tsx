@@ -10,9 +10,10 @@ import { type PorterAppFormData } from "lib/porter-apps";
 
 type HealthProps = {
   index: number;
+  command?: boolean;
 };
 
-const Health: React.FC<HealthProps> = ({ index }) => {
+const Health: React.FC<HealthProps> = ({ index, command = false }) => {
   const { register, control, watch } = useFormContext<PorterAppFormData>();
 
   const healthCheckEnabled = watch(
@@ -58,20 +59,34 @@ const Health: React.FC<HealthProps> = ({ index }) => {
           </Checkbox>
         )}
       />
-      {healthCheckEnabled.value && (
-        <>
-          <Spacer y={0.5} />
-          <Text>Health check endpoint</Text>
-          <Spacer y={0.5} />
-          <ControlledInput
-            type="text"
-            placeholder="ex: /healthz"
-            {...register(
-              `app.services.${index}.config.healthCheck.httpPath.value`
-            )}
-          />
-        </>
-      )}
+      {healthCheckEnabled.value &&
+        (command ? (
+          <>
+            <Spacer y={0.5} />
+            <Text>Health check command</Text>
+            <Spacer y={0.5} />
+            <ControlledInput
+              type="text"
+              placeholder="ex: ./healthz.sh"
+              {...register(
+                `app.services.${index}.config.healthCheck.command.value`
+              )}
+            />
+          </>
+        ) : (
+          <>
+            <Spacer y={0.5} />
+            <Text>Health check endpoint</Text>
+            <Spacer y={0.5} />
+            <ControlledInput
+              type="text"
+              placeholder="ex: /healthz"
+              {...register(
+                `app.services.${index}.config.healthCheck.httpPath.value`
+              )}
+            />
+          </>
+        ))}
     </>
   );
 };

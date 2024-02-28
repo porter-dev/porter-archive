@@ -87,8 +87,7 @@ const ClusterList: React.FC = (props) => {
   const renderOptionList = (): JSX.Element[] => {
     if (
       currentProject?.simplified_view_enabled &&
-      currentProject?.capi_provisioner_enabled &&
-      currentProject?.beta_features_enabled
+      currentProject?.capi_provisioner_enabled
     ) {
       return clusterList.map((c) => (
         <OptionDiv
@@ -153,8 +152,7 @@ const ClusterList: React.FC = (props) => {
               setExpanded(false);
               if (
                 currentProject?.simplified_view_enabled &&
-                currentProject?.capi_provisioner_enabled &&
-                currentProject?.beta_features_enabled
+                currentProject?.capi_provisioner_enabled
               ) {
                 pushFiltered(props, "/infrastructure/new", []);
               } else {
@@ -207,8 +205,7 @@ const ClusterList: React.FC = (props) => {
       onClick={() => {
         if (
           currentProject?.simplified_view_enabled &&
-          currentProject?.capi_provisioner_enabled &&
-          currentProject?.beta_features_enabled
+          currentProject?.capi_provisioner_enabled
         ) {
           pushFiltered(props, "/infrastructure/new", []);
         } else {

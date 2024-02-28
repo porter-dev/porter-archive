@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import _ from "lodash";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
@@ -25,6 +25,7 @@ import {
 import { type ClientCluster } from "lib/clusters/types";
 import { useClusterList } from "lib/hooks/useCluster";
 
+import { Context } from "shared/Context";
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
 import infra from "assets/cluster.svg";
@@ -45,6 +46,7 @@ const ClusterDashboard: React.FC = () => {
   >("all");
 
   const { clusters, isLoading } = useClusterList();
+  const { user } = useContext(Context);
 
   const filteredClusters = useMemo(() => {
     const filteredBySearch = search(clusters, searchValue, {
@@ -161,7 +163,9 @@ const ClusterDashboard: React.FC = () => {
           {filteredClusters.map((cluster: ClientCluster, i: number) => {
             return (
               <Link to={`/infrastructure/${cluster.id}`} key={i}>
-                <Block>
+                <Block
+                  clusterId={user.isPorterUser ? cluster.id.toString() : ""}
+                >
                   <Container row>
                     <Icon src={cluster.cloud_provider.icon} height="18px" />
                     <Spacer inline width="11px" />
@@ -271,7 +275,7 @@ const List = styled.div`
   overflow: hidden;
 `;
 
-const Block = styled.div`
+const Block = styled.div<{ clusterId?: string }>`
   height: 150px;
   flex-direction: column;
   display: flex;
@@ -285,6 +289,19 @@ const Block = styled.div`
   border: 1px solid #494b4f;
   :hover {
     border: 1px solid #7a7b80;
+
+    ::after {
+      content: ${(props) =>
+        !props.clusterId ? "''" : `"AppID: ${props.clusterId}"`};
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: ${(props) => props.clusterId && `#ffffff44`};
+      opacity: 0.3;
+      padding: 5px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
   }
 
   animation: fadeIn 0.3s 0s;

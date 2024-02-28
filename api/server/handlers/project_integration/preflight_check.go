@@ -64,9 +64,6 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	ctx, span := telemetry.NewSpan(r.Context(), "preflight-checks")
 	defer span.End()
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
-	betaFeaturesEnabled := project.GetFeatureFlag(models.BetaFeaturesEnabled, p.Config().LaunchDarklyClient)
-
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "beta-features-enabled", Value: betaFeaturesEnabled})
 
 	cloudValues := &porterv1.PreflightCheckRequest{}
 	err := helpers.UnmarshalContractObjectFromReader(r.Body, cloudValues)
@@ -91,46 +88,6 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		}
 	}
 
-	if cloudValues.Contract != nil && cloudValues.Contract.Cluster != nil && cloudValues.Contract.Cluster.CloudProvider == porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AZURE {
-		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "new-endpoint", Value: true})
-		checkResp, err := p.Config().ClusterControlPlaneClient.CloudContractPreflightCheck(ctx,
-			connect.NewRequest(
-				&porterv1.CloudContractPreflightCheckRequest{
-					Contract: cloudValues.Contract,
-				},
-			),
-		)
-		if err != nil {
-			err = telemetry.Error(ctx, span, err, "error calling preflight checks")
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		if checkResp.Msg == nil {
-			err = telemetry.Error(ctx, span, nil, "no message received from preflight checks")
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
-
-		errors := []PreflightCheckError{}
-		for _, val := range checkResp.Msg.FailingPreflightChecks {
-			if val.Message == "" || !contains(recognizedPreflightCheckKeys, val.Type) {
-				continue
-			}
-
-			errors = append(errors, PreflightCheckError{
-				Name: val.Type,
-				Error: PorterError{
-					Message:  val.Message,
-					Metadata: val.Metadata,
-				},
-			})
-		}
-		resp.Errors = errors
-		p.WriteResult(w, r, resp)
-		return
-	}
-
 	checkResp, err := p.Config().ClusterControlPlaneClient.PreflightCheck(ctx, connect.NewRequest(&input))
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error calling preflight checks")
@@ -141,11 +98,6 @@ func (p *CreatePreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	if checkResp.Msg == nil {
 		err = telemetry.Error(ctx, span, nil, "no message received from preflight checks")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	if !betaFeaturesEnabled {
-		p.WriteResult(w, r, checkResp)
 		return
 	}
 

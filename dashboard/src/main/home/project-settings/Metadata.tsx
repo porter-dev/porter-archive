@@ -86,7 +86,7 @@ const Metadata: React.FC<Props> = ({
                 {clusters?.length > 0 &&
                     clusters.map((cluster, index) =>
                         <>
-                            <IdTextWithCopy key={index} id={cluster.id} name={cluster.name} icon={infra} />
+                            <IdTextWithCopy key={index} id={cluster.id} name={cluster.vanity_name ?? cluster.name} icon={infra} />
                         </>
                     )
                 }

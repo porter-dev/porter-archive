@@ -17,7 +17,6 @@ import { Context } from "shared/Context";
 
 import GPUResources from "./GPUResources";
 import IntelligentSlider from "./IntelligentSlider";
-import OldGPUResources from "./Old_GPUResources";
 
 type ResourcesProps = {
   index: number;
@@ -36,7 +35,6 @@ const Resources: React.FC<ResourcesProps> = ({
   maxRAM,
   maxGPU,
   service,
-  clusterContainsGPUNodes,
   isPredeploy = false,
   cluster,
 }) => {
@@ -148,18 +146,9 @@ const Resources: React.FC<ResourcesProps> = ({
         )}
       />
 
-      {currentProject?.gpu_enabled &&
-        (currentProject?.beta_features_enabled ? (
-          cluster && (
-            <GPUResources index={index} maxGPU={maxGPU} cluster={cluster} />
-          )
-        ) : (
-          <OldGPUResources
-            clusterContainsGPUNodes={clusterContainsGPUNodes}
-            maxGPU={maxGPU}
-            index={index}
-          />
-        ))}
+      {currentProject?.gpu_enabled && cluster && (
+        <GPUResources index={index} maxGPU={maxGPU} cluster={cluster} />
+      )}
       {match(service.config)
         .with({ type: "job" }, () => null)
         .with({ type: "predeploy" }, () => null)

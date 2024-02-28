@@ -29,7 +29,7 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
   const {
     fields: nodeGroups,
     append,
-    remove,
+    // remove,
   } = useFieldArray({
     control,
     name: "cluster.config.nodeGroups",
@@ -138,7 +138,7 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
                   <Spacer inline x={1} />
                   GPU node group
                 </Container>
-                <Container row>
+                {/* <Container row>
                   <ActionButton
                     onClick={(e) => {
                       e.stopPropagation();
@@ -147,7 +147,7 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
                   >
                     <span className="material-icons">delete</span>
                   </ActionButton>
-                </Container>
+                </Container> */}
               </Container>
             }
           >
@@ -250,24 +250,24 @@ const I = styled.i`
   }
 `;
 
-const ActionButton = styled.button`
-  position: relative;
-  border: none;
-  background: none;
-  color: white;
-  padding: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  cursor: pointer;
-  color: #aaaabb;
-  :hover {
-    color: white;
-  }
+// const ActionButton = styled.button`
+//   position: relative;
+//   border: none;
+//   background: none;
+//   color: white;
+//   padding: 5px;
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+//   border-radius: 50%;
+//   cursor: pointer;
+//   color: #aaaabb;
+//   :hover {
+//     color: white;
+//   }
 
-  > span {
-    font-size: 20px;
-  }
-  margin-right: 5px;
-`;
+//   > span {
+//     font-size: 20px;
+//   }
+//   margin-right: 5px;
+// `;

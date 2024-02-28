@@ -426,7 +426,11 @@ export const useUpdateCluster = ({
       // otherwise, continue to create the contract
     } catch (err) {
       throw new Error(
-        getErrorMessageFromNetworkCall(err, "Cluster preflight checks")
+        getErrorMessageFromNetworkCall(
+          err,
+          "Cluster preflight checks",
+          preflightCheckErrorReplacements
+        )
       );
     } finally {
       setIsHandlingPreflightChecks(false);
@@ -531,15 +535,28 @@ export const useClusterNodeList = ({
   };
 };
 
+const preflightCheckErrorReplacements = {
+  RequestThrottled:
+    "Your cloud provider is currently throttling API requests. Please try again in a few minutes.",
+};
+
 const getErrorMessageFromNetworkCall = (
   err: unknown,
-  networkCallDescription: string
+  networkCallDescription: string,
+  replaceError?: Record<string, string>
 ): string => {
   if (axios.isAxiosError(err)) {
     const parsed = z
       .object({ error: z.string() })
       .safeParse(err.response?.data);
     if (parsed.success) {
+      if (replaceError) {
+        for (const key in replaceError) {
+          if (parsed.data.error.includes(key)) {
+            return `${networkCallDescription} failed: ${replaceError[key]}`;
+          }
+        }
+      }
       return `${networkCallDescription} failed: ${parsed.data.error}`;
     }
   }

@@ -211,10 +211,11 @@ type Domains struct {
 	Name string `yaml:"name"`
 }
 
-// HealthCheck is the health check settings for a web service
+// HealthCheck contains the health check settings
 type HealthCheck struct {
 	Enabled  bool   `yaml:"enabled"`
 	HttpPath string `yaml:"httpPath"`
+	Command  string `yaml:"command"`
 }
 
 // ProtoFromApp converts a PorterApp type to a base PorterApp proto type and returns env variables
@@ -417,6 +418,7 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			healthCheck = &porterv1.HealthCheck{
 				Enabled:  service.HealthCheck.Enabled,
 				HttpPath: service.HealthCheck.HttpPath,
+				Command:  service.HealthCheck.Command,
 			}
 		}
 		webConfig.HealthCheck = healthCheck
@@ -456,6 +458,16 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			}
 		}
 		workerConfig.Autoscaling = autoscaling
+
+		var healthCheck *porterv1.HealthCheck
+		if service.HealthCheck != nil {
+			healthCheck = &porterv1.HealthCheck{
+				Enabled:  service.HealthCheck.Enabled,
+				HttpPath: service.HealthCheck.HttpPath,
+				Command:  service.HealthCheck.Command,
+			}
+		}
+		workerConfig.HealthCheck = healthCheck
 
 		serviceProto.Config = &porterv1.Service_WorkerConfig{
 			WorkerConfig: workerConfig,
@@ -592,6 +604,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 			healthCheck = &HealthCheck{
 				Enabled:  webConfig.HealthCheck.Enabled,
 				HttpPath: webConfig.HealthCheck.HttpPath,
+				Command:  webConfig.HealthCheck.Command,
 			}
 		}
 		appService.HealthCheck = healthCheck
@@ -628,6 +641,16 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 			}
 		}
 		appService.Autoscaling = autoscaling
+
+		var healthCheck *HealthCheck
+		if workerConfig.HealthCheck != nil {
+			healthCheck = &HealthCheck{
+				Enabled:  workerConfig.HealthCheck.Enabled,
+				HttpPath: workerConfig.HealthCheck.HttpPath,
+				Command:  workerConfig.HealthCheck.Command,
+			}
+		}
+		appService.HealthCheck = healthCheck
 	case porterv1.ServiceType_SERVICE_TYPE_JOB:
 		jobConfig := service.GetJobConfig()
 		appService.Type = "job"

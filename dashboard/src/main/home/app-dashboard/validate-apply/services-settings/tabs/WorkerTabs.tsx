@@ -6,6 +6,7 @@ import TabSelector from "components/TabSelector";
 import { type ClientService } from "lib/porter-apps/services";
 
 import Advanced from "./Advanced";
+import Health from "./Health";
 import MainTab from "./Main";
 import Resources from "./Resources";
 
@@ -59,6 +60,7 @@ const WorkerTabs: React.FC<Props> = ({
         ))
         .with("advanced", () => (
           <>
+            <Health index={index} />
             <Spacer y={1} />
             <Advanced index={index} />
           </>

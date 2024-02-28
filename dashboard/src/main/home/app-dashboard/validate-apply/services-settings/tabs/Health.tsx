@@ -19,6 +19,8 @@ const Health: React.FC<HealthProps> = ({ index }) => {
     `app.services.${index}.config.healthCheck.enabled`
   );
 
+  const serviceType = watch(`app.services.${index}.config.type`);
+
   return (
     <>
       <Spacer y={1} />
@@ -58,20 +60,34 @@ const Health: React.FC<HealthProps> = ({ index }) => {
           </Checkbox>
         )}
       />
-      {healthCheckEnabled.value && (
-        <>
-          <Spacer y={0.5} />
-          <Text>Health check endpoint</Text>
-          <Spacer y={0.5} />
-          <ControlledInput
-            type="text"
-            placeholder="ex: /healthz"
-            {...register(
-              `app.services.${index}.config.healthCheck.httpPath.value`
-            )}
-          />
-        </>
-      )}
+      {healthCheckEnabled.value &&
+        (serviceType === "web" ? (
+          <>
+            <Spacer y={0.5} />
+            <Text>Health check endpoint</Text>
+            <Spacer y={0.5} />
+            <ControlledInput
+              type="text"
+              placeholder="ex: /healthz"
+              {...register(
+                `app.services.${index}.config.healthCheck.httpPath.value`
+              )}
+            />
+          </>
+        ) : (
+          <>
+            <Spacer y={0.5} />
+            <Text>Health check command</Text>
+            <Spacer y={0.5} />
+            <ControlledInput
+              type="text"
+              placeholder="ex: ./healthz.sh"
+              {...register(
+                `app.services.${index}.config.healthCheck.command.value`
+              )}
+            />
+          </>
+        ))}
     </>
   );
 };

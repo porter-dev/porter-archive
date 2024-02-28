@@ -79,6 +79,7 @@ var result_nobuild = &porterv1.PorterApp{
 					HealthCheck: &porterv1.HealthCheck{
 						Enabled:  true,
 						HttpPath: "/healthz",
+						Command:  "",
 					},
 				},
 			},
@@ -180,6 +181,7 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 					HealthCheck: &porterv1.HealthCheck{
 						Enabled:  true,
 						HttpPath: "/healthz",
+						Command:  "",
 					},
 					Private: pointer.Bool(false),
 				},

@@ -130,6 +130,13 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     errors,
   ]);
 
+  const formatContractErrorMessage = (errorMessage: string): string => {
+    if (errorMessage.includes("RequestThrottled")) {
+      return "Your cloud provider is currently throttling API requests. Please try again in a few minutes.";
+    }
+    return errorMessage;
+  };
+
   const onSubmit = handleSubmit(async (data) => {
     setUpdateClusterResponse(undefined);
     setUpdateClusterError("");
@@ -184,7 +191,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
           provider: data.cluster.cloudProvider,
           clusterName: data.cluster.config.clusterName,
         });
-        setUpdateClusterError(err.message);
+        setUpdateClusterError(formatContractErrorMessage(err.message));
         showIntercomWithMessage({
           message: "I am running into an issue updating my cluster.",
           delaySeconds: 3,

@@ -24,7 +24,7 @@ const ResolutionStepsModalContents: React.FC<Props> = ({ resolution }) => {
         {resolution.steps.map((step, i) => (
           <Step number={i + 1} key={i}>
             {step.externalLink ? (
-              <Link to={step.externalLink} target="_blank">
+              <Link to={step.externalLink} target="_blank" removeInline={true}>
                 {step.text}
               </Link>
             ) : (

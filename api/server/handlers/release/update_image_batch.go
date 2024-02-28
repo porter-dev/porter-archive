@@ -73,7 +73,7 @@ func (c *UpdateImageBatchHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	printReleases := func(releases []*models.Release) string {
 		var names []string
 		for _, release := range releases {
-			names = append(names, release.Name)
+			names = append(names, fmt.Sprintf("%s-%s", release.Name, release.Namespace))
 		}
 		return strings.Join(names, ",")
 	}

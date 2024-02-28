@@ -12,7 +12,7 @@ type Props = {
   color?: string;
   hoverColor?: string;
   showTargetBlankIcon?: boolean;
-  removeInline?: boolean;
+  inline?: boolean;
 };
 
 const Link: React.FC<Props> = ({
@@ -24,7 +24,7 @@ const Link: React.FC<Props> = ({
   color = "#ffffff",
   hoverColor,
   showTargetBlankIcon = true,
-  removeInline = false,
+  inline = true,
 }) => {
   return (
     <LinkWrapper hoverColor={hoverColor} color={color}>
@@ -33,7 +33,7 @@ const Link: React.FC<Props> = ({
           to={to}
           target={target}
           color={color}
-          removeInline={removeInline}
+          inline={inline}
         >
           {children}
           {target === "_blank" && showTargetBlankIcon && (
@@ -89,10 +89,10 @@ const Underline = styled.div<{ color: string }>`
 const StyledLink = styled(DynamicLink)<{
   hasunderline?: boolean;
   color: string;
-  removeInline?: boolean;
+  inline: boolean;
 }>`
   color: ${(props) => props.color};
-  ${(props) => !props.removeInline && "display: inline-flex;"};
+  ${(props) => props.inline && "display: inline-flex;"};
   font-size: 13px;
   cursor: pointer;
   align-items: center;

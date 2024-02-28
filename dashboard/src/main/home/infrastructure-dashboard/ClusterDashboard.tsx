@@ -292,7 +292,7 @@ const Block = styled.div<{ clusterId?: string }>`
 
     ::after {
       content: ${(props) =>
-        !props.clusterId ? "''" : `"AppID: ${props.clusterId}"`};
+        !props.clusterId ? "''" : `"ID: ${props.clusterId}"`};
       position: absolute;
       top: 2px;
       right: 2px;

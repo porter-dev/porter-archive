@@ -240,9 +240,14 @@ export function defaultSerialized({
     memoryThresholdPercent: 50,
   };
 
-  const defaultHealthCheck: SerializedHealthcheck = {
+  const defaultWebHealthCheck: SerializedHealthcheck = {
     enabled: false,
     httpPath: "/healthz",
+  };
+
+  const defaultWorkerHealthCheck: SerializedHealthcheck = {
+    enabled: false,
+    command: "./healthz.sh",
   };
 
   return match(type)
@@ -251,7 +256,7 @@ export function defaultSerialized({
       config: {
         type: "web" as const,
         autoscaling: defaultAutoscaling,
-        healthCheck: defaultHealthCheck,
+        healthCheck: defaultWebHealthCheck,
         domains: [],
         private: false,
         ingressAnnotations: {},
@@ -263,7 +268,7 @@ export function defaultSerialized({
       config: {
         type: "worker" as const,
         autoscaling: defaultAutoscaling,
-        healthCheck: defaultHealthCheck,
+        healthCheck: defaultWorkerHealthCheck,
       },
     }))
     .with("job", () => ({

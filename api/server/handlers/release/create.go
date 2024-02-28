@@ -307,22 +307,6 @@ func CreateAppReleaseFromHelmRelease(
 	return config.Repo.Release().CreateRelease(release)
 }
 
-func CreateAddonReleaseFromHelmRelease(
-	config *config.Config,
-	projectID, clusterID, stackResourceID uint,
-	helmRelease *release.Release,
-) (*models.Release, error) {
-	release := &models.Release{
-		ClusterID:       clusterID,
-		ProjectID:       projectID,
-		Namespace:       helmRelease.Namespace,
-		Name:            helmRelease.Name,
-		StackResourceID: stackResourceID,
-	}
-
-	return config.Repo.Release().CreateRelease(release)
-}
-
 func createGitAction(
 	ctx context.Context,
 	config *config.Config,

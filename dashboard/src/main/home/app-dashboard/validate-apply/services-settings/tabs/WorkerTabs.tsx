@@ -60,7 +60,7 @@ const WorkerTabs: React.FC<Props> = ({
         ))
         .with("advanced", () => (
           <>
-            <Health index={index} command={true} />
+            <Health index={index} />
             <Spacer y={1} />
             <Advanced index={index} />
           </>

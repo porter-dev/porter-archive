@@ -10,15 +10,16 @@ import { type PorterAppFormData } from "lib/porter-apps";
 
 type HealthProps = {
   index: number;
-  command?: boolean;
 };
 
-const Health: React.FC<HealthProps> = ({ index, command = false }) => {
+const Health: React.FC<HealthProps> = ({ index }) => {
   const { register, control, watch } = useFormContext<PorterAppFormData>();
 
   const healthCheckEnabled = watch(
     `app.services.${index}.config.healthCheck.enabled`
   );
+
+  const serviceType = watch(`app.services.${index}.config.type`);
 
   return (
     <>
@@ -60,20 +61,7 @@ const Health: React.FC<HealthProps> = ({ index, command = false }) => {
         )}
       />
       {healthCheckEnabled.value &&
-        (command ? (
-          <>
-            <Spacer y={0.5} />
-            <Text>Health check command</Text>
-            <Spacer y={0.5} />
-            <ControlledInput
-              type="text"
-              placeholder="ex: ./healthz.sh"
-              {...register(
-                `app.services.${index}.config.healthCheck.command.value`
-              )}
-            />
-          </>
-        ) : (
+        (serviceType === "web" ? (
           <>
             <Spacer y={0.5} />
             <Text>Health check endpoint</Text>
@@ -83,6 +71,19 @@ const Health: React.FC<HealthProps> = ({ index, command = false }) => {
               placeholder="ex: /healthz"
               {...register(
                 `app.services.${index}.config.healthCheck.httpPath.value`
+              )}
+            />
+          </>
+        ) : (
+          <>
+            <Spacer y={0.5} />
+            <Text>Health check command</Text>
+            <Spacer y={0.5} />
+            <ControlledInput
+              type="text"
+              placeholder="ex: ./healthz.sh"
+              {...register(
+                `app.services.${index}.config.healthCheck.command.value`
               )}
             />
           </>

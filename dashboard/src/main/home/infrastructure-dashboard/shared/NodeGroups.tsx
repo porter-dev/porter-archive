@@ -218,7 +218,12 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
             onClick={() => {
               append({
                 nodeGroupType: "CUSTOM",
-                instanceType: "g4dn.xlarge",
+                instanceType: availableMachineTypes
+                  .filter((t) => t.isGPU)
+                  .map((t) => ({
+                    value: t.name,
+                    label: t.displayName,
+                  }))[0].value,
                 minInstances: 1,
                 maxInstances: 2,
               });

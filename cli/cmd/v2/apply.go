@@ -191,7 +191,9 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		for _, v := range env {
 			pair := strings.SplitN(v, "=", 2)
 			if len(pair) == 2 {
-				buildEnvVariables[pair[0]] = pair[1]
+				if strings.HasPrefix(pair[0], "PORTER_") || strings.HasPrefix(pair[0], "NEXT_PUBLIC_") {
+					buildEnvVariables[pair[0]] = pair[1]
+				}
 			}
 		}
 

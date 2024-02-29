@@ -53,7 +53,7 @@ const NotificationTile: React.FC<Props> = ({
           ? "A service failed to deploy"
           : ["job", "predeploy"].includes(n.service.config.type)
           ? "A job run encountered issues"
-          : "A service is unhealthy";
+          : "A service was unhealthy";
       })
       .with({ scope: "APPLICATION" }, () => {
         return "The application failed to deploy";

@@ -70,6 +70,7 @@ export default Error;
 
 const Block = styled.div`
   display: block;
+  max-width: 100%;
 `;
 
 const Underline = styled.span`
@@ -114,6 +115,7 @@ const ErrorMessageLabel = styled.span`
   margin-left: 10px;
   color: #9999aa;
   user-select: text;
+  display: inline;
 `;
 const ErrorMessageContent = styled.div`
   font-family: "Courier New", Courier, monospace;
@@ -123,4 +125,5 @@ const ErrorMessageContent = styled.div`
   user-select: text;
   cursor: text;
   color: #9999aa;
+  display: inline;
 `;

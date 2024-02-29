@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -180,13 +181,27 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 
 		color.New(color.FgGreen).Printf("Building new image with tag %s...\n", commitSHA) // nolint:errcheck,gosec
 
+		buildEnvVariables := make(map[string]string)
+		for k, v := range buildSettings.BuildEnvVariables {
+			buildEnvVariables[k] = v
+		}
+
+		// use all env variables from running container in build
+		env := os.Environ()
+		for _, v := range env {
+			pair := strings.SplitN(v, "=", 2)
+			if len(pair) == 2 {
+				buildEnvVariables[pair[0]] = pair[1]
+			}
+		}
+
 		buildInput, err := buildInputFromBuildSettings(buildInputFromBuildSettingsInput{
 			projectID:            cliConf.Project,
 			appName:              appName,
 			commitSHA:            commitSHA,
 			image:                buildSettings.Image,
 			build:                buildSettings.Build,
-			buildEnv:             buildSettings.BuildEnvVariables,
+			buildEnv:             buildEnvVariables,
 			pullImageBeforeBuild: inp.PullImageBeforeBuild,
 		})
 		if err != nil {

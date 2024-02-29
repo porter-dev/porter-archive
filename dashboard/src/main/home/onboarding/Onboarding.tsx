@@ -163,8 +163,7 @@ const Onboarding = () => {
   const renderOnboarding = () => {
     if (
       context?.currentProject?.simplified_view_enabled &&
-      context?.currentProject?.capi_provisioner_enabled &&
-      context?.currentProject?.beta_features_enabled
+      context?.currentProject?.capi_provisioner_enabled
     ) {
       return <CreateClusterForm />;
     } else if (context?.currentProject?.capi_provisioner_enabled) {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Contract,
+  GKENodePoolType,
   LoadBalancerType,
   NodeGroupType,
   NodePoolType,
@@ -11,10 +12,7 @@ import { match } from "ts-pattern";
 import { z } from "zod";
 
 import { azureMachineTypeDetails } from "components/azureUtils";
-import {
-  AWS_INSTANCE_LIMITS,
-  GPU_INSTANCE_LIMIT,
-} from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
+import { AWS_INSTANCE_LIMITS } from "main/home/app-dashboard/validate-apply/services-settings/tabs/utils";
 
 import api from "shared/api";
 
@@ -101,8 +99,6 @@ const clusterNodesValidator = z
       maxRAM:
         AWS_INSTANCE_LIMITS[DEFAULT_INSTANCE_CLASS][DEFAULT_INSTANCE_SIZE].RAM,
       maxGPU: 1,
-      instanceClass: DEFAULT_INSTANCE_CLASS,
-      instanceSize: DEFAULT_INSTANCE_SIZE,
     };
     if (!data.labels) {
       return defaultResources;
@@ -120,15 +116,6 @@ const clusterNodesValidator = z
       return defaultResources;
     }
 
-    // update resource limits to the custom GPU limits
-    if (workloadKind === "custom" && GPU_INSTANCE_LIMIT[instanceType]) {
-      const { vCPU, RAM, GPU } = GPU_INSTANCE_LIMIT[instanceType];
-      return {
-        maxCPU: vCPU,
-        maxRAM: RAM,
-        maxGPU: GPU,
-      };
-    }
     // Azure instance types are all prefixed with "Standard_"
     if (instanceType.startsWith("Standard_")) {
       const azureMachineType = azureMachineTypeDetails(instanceType);
@@ -137,8 +124,7 @@ const clusterNodesValidator = z
         return {
           maxCPU: vCPU,
           maxRAM: RAM,
-          maxGPU: GPU,
-          azureType: instanceType,
+          maxGPU: GPU || 1,
         };
       } else {
         return defaultResources;
@@ -172,8 +158,6 @@ const clusterNodesValidator = z
         maxCPU: vCPU,
         maxRAM: RAM,
         maxGPU: GPU || 1,
-        instanceClass,
-        instanceSize,
       };
     }
     return defaultResources;
@@ -379,9 +363,10 @@ export const useClusterResourceLimits = ({
         .with({ kindValues: { case: "gkeKind" } }, (c) => {
           return c.kindValues.value.nodePools.some(
             (ng) =>
-              (ng.nodePoolType === NodePoolType.CUSTOM &&
+              (ng.nodePoolType === GKENodePoolType.GKE_NODE_POOL_TYPE_CUSTOM &&
                 ng.instanceType.includes("n1")) ||
-              (ng.nodePoolType === NodePoolType.APPLICATION &&
+              (ng.nodePoolType ===
+                GKENodePoolType.GKE_NODE_POOL_TYPE_APPLICATION &&
                 ng.instanceType.includes("n1"))
           );
         })

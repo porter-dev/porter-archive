@@ -62,7 +62,6 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 
 	if len(dockerIgnoreBytes) != 0 {
 		excludes, err = dockerignore.ReadAll(bytes.NewBuffer(dockerIgnoreBytes))
-
 		if err != nil {
 			return fmt.Errorf("error reading .dockerignore: %w", err)
 		}
@@ -92,7 +91,6 @@ func (a *Agent) BuildLocal(ctx context.Context, opts *BuildOpts) (err error) {
 
 		// add the dockerfile to the build context
 		tar, dockerfilePath, err = AddDockerfileToBuildContext(dockerfileCtx, tar)
-
 		if err != nil {
 			return fmt.Errorf("error adding Dockerfile to build context: %w", err)
 		}
@@ -222,6 +220,9 @@ func buildLocalWithBuildkit(ctx context.Context, opts BuildOpts) error {
 		"--cache-from", fmt.Sprintf("type=registry,ref=%s:%s", opts.ImageRepo, opts.CurrentTag),
 	}
 	for key, val := range opts.Env {
+		if key == "PORTER_BUILDKIT_ARGS" {
+			continue
+		}
 		commandArgs = append(commandArgs, "--build-arg", fmt.Sprintf("%s=%s", key, val))
 	}
 

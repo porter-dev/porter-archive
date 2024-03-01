@@ -53,6 +53,13 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
         ramGigabytes: 8,
         storageGigabytes: 256,
       },
+      {
+        tier: "db.m7g.large" as const,
+        label: "Large (High Performance)",
+        cpuCores: 2,
+        ramGigabytes: 8,
+        storageGigabytes: 256,
+      },
     ],
     formTitle: "Create an RDS PostgreSQL instance",
     creationStateProgression: [

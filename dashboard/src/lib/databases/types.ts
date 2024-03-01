@@ -157,6 +157,7 @@ const instanceTierValidator = z.enum([
   "db.t4g.small",
   "db.t4g.medium",
   "db.t4g.large",
+  "db.m7g.large",
   "cache.t4g.micro",
   "cache.t4g.medium",
   "cache.r6g.large",

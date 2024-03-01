@@ -307,12 +307,21 @@ const GrantAWSPermissions: React.FC<Props> = ({
               </Link>
             </Text>
             <Spacer y={1} />
-            <CheckItem
-              preflightCheck={{
-                title: "AWS account accessible",
-                status: isAccountAccessible ? "success" : "pending",
-              }}
-            />
+            {isAccountAccessible ? (
+              <CheckItem
+                preflightCheck={{
+                  title: "AWS account is accessible by Porter!",
+                  status: "success",
+                }}
+              />
+            ) : (
+              <CheckItem
+                preflightCheck={{
+                  title: "Checking if AWS account is accessible by Porter",
+                  status: "pending",
+                }}
+              />
+            )}
             <Spacer y={1} />
             <Container row>
               <Button

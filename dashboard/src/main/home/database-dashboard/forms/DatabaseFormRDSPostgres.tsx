@@ -10,6 +10,7 @@ import ClickToCopy from "components/porter/ClickToCopy";
 import Container from "components/porter/Container";
 import Error from "components/porter/Error";
 import Fieldset from "components/porter/Fieldset";
+import Selector from "components/porter/Selector";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
@@ -49,6 +50,7 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
         databaseName: "postgres",
         masterUsername: "postgres",
         masterUserPassword: uuidv4(),
+        engineVersion: "15.4",
       },
     },
   });
@@ -65,6 +67,11 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
   const watchDbName = watch("config.databaseName");
   const watchDbUsername = watch("config.masterUsername");
   const watchDbPassword = watch("config.masterUserPassword");
+
+  const dbEngineVersions = [
+    { value: "15.4", label: "15.4", key: "15.4" },
+    { value: "14.11", label: "14.11", key: "14.11" },
+  ];
 
   useEffect(() => {
     let newStep = 0;
@@ -95,6 +102,22 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
           <DarkMatter />
           <DatabaseForm
             steps={[
+              <>
+                <Text size={16}>Specify Engine Version</Text>
+                <Spacer y={0.5} />
+                <Text color="helper">
+                  Choose the version of Postgres you want to use.
+                </Text>
+                <Selector<string>
+                  activeValue={dbEngineVersions[0].value}
+                  setActiveValue={(value) => {
+                    setValue("config.engineVersion", value);
+                  }}
+                  width="300px"
+                  options={dbEngineVersions}
+                  label={"Engine Version"}
+                />
+              </>,
               <>
                 <Text size={16}>Specify resources</Text>
                 <Spacer y={0.5} />

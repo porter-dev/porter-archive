@@ -190,6 +190,7 @@ const rdsPostgresConfigValidator = z.object({
     .string()
     .nonempty("Master password is required")
     .default(""),
+  engineVersion: z.string().nonempty().default("15.4"),
 });
 
 const auroraPostgresConfigValidator = z.object({

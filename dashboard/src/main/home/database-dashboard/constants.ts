@@ -58,7 +58,7 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
         label: "Large (High Performance)",
         cpuCores: 2,
         ramGigabytes: 8,
-        storageGigabytes: 256,
+        storageGigabytes: 512,
       },
     ],
     formTitle: "Create an RDS PostgreSQL instance",

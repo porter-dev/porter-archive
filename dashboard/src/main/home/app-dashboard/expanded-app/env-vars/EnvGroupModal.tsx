@@ -1,33 +1,35 @@
-import { type RouteComponentProps, withRouter } from "react-router";
-import styled, { css } from "styled-components";
 import React, { useContext, useEffect, useState } from "react";
-import Loading from "components/Loading";
-
-import Modal from "components/porter/Modal";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import Button from "components/porter/Button";
-import api from "shared/api";
-import { getGithubAction } from "./utils";
-import AceEditor from "react-ace";
-import YamlEditor from "components/YamlEditor";
-import Error from "components/porter/Error";
-import Container from "components/porter/Container";
-import Checkbox from "components/porter/Checkbox";
-import { Context } from "../../../../../shared/Context";
-import sliders from "assets/sliders.svg";
 import { isEmpty, isObject } from "lodash";
+import AceEditor from "react-ace";
+import { withRouter, type RouteComponentProps } from "react-router";
+import styled, { css } from "styled-components";
+import { set } from "zod";
+
+import Loading from "components/Loading";
+import {
+  type NewPopulatedEnvGroup,
+  type PartialEnvGroup,
+  type PopulatedEnvGroup,
+} from "components/porter-form/types";
+import Button from "components/porter/Button";
+import Checkbox from "components/porter/Checkbox";
+import Container from "components/porter/Container";
+import Error from "components/porter/Error";
+import Modal from "components/porter/Modal";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import YamlEditor from "components/YamlEditor";
+
+import api from "shared/api";
+import sliders from "assets/sliders.svg";
+
+import { Context } from "../../../../../shared/Context";
 import {
   EnvGroupData,
   formattedEnvironmentValue,
 } from "../../../cluster-dashboard/env-groups/EnvGroup";
-import {
-  type PartialEnvGroup,
-  type PopulatedEnvGroup,
-  type NewPopulatedEnvGroup,
-} from "components/porter-form/types";
 import { type KeyValueType } from "../../../cluster-dashboard/env-groups/EnvGroupArray";
-import { set } from "zod";
+import { getGithubAction } from "./utils";
 
 type Props = RouteComponentProps & {
   closeModal: () => void;
@@ -38,7 +40,7 @@ type Props = RouteComponentProps & {
   setSyncedEnvGroups: (values: NewPopulatedEnvGroup[]) => void;
   namespace: string;
   newApp?: boolean;
-}
+};
 
 const EnvGroupModal: React.FC<Props> = ({
   closeModal,
@@ -51,11 +53,12 @@ const EnvGroupModal: React.FC<Props> = ({
   newApp,
 }) => {
   const { currentCluster, currentProject } = useContext(Context);
-  const [envGroups, setEnvGroups] = useState<any>([])
+  const [envGroups, setEnvGroups] = useState<any>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<any>(null);
   const [shouldSync, setShouldSync] = useState<boolean>(true);
-  const [selectedEnvGroup, setSelectedEnvGroup] = useState<PopulatedEnvGroup | null>(null);
+  const [selectedEnvGroup, setSelectedEnvGroup] =
+    useState<PopulatedEnvGroup | null>(null);
   const [cloneSuccess, setCloneSuccess] = useState(false);
 
   const updateEnvGroups = async () => {
@@ -72,20 +75,16 @@ const EnvGroupModal: React.FC<Props> = ({
         )
         .then((res) => res.data?.environment_groups);
     } catch (error) {
-      setLoading(false)
+      setLoading(false);
       setError(true);
       return;
     }
 
-
-
     try {
-
-      setEnvGroups(populatedEnvGroups)
-      setLoading(false)
-
+      setEnvGroups(populatedEnvGroups);
+      setLoading(false);
     } catch (error) {
-      setLoading(false)
+      setLoading(false);
       setError(true);
     }
   };
@@ -97,7 +96,7 @@ const EnvGroupModal: React.FC<Props> = ({
   }, [values]);
 
   useEffect(() => {
-    setLoading(true)
+    setLoading(true);
     if (Array.isArray(availableEnvGroups)) {
       setEnvGroups(availableEnvGroups);
       setLoading(false);
@@ -114,23 +113,28 @@ const EnvGroupModal: React.FC<Props> = ({
         </LoadingWrapper>
       );
     } else {
-      const sortedEnvGroups = envGroups?.slice().sort((a, b) => a.name.localeCompare(b.name));
+      const sortedEnvGroups = envGroups
+        ?.slice()
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-      return sortedEnvGroups?.filter((envGroup) => {
-        if (!Array.isArray(syncedEnvGroups)) {
-          return true;
-        }
-        return !syncedEnvGroups?.find(
-          (syncedEnvGroup) => syncedEnvGroup?.name === envGroup?.name
-        );
-      })
+      return sortedEnvGroups
+        ?.filter((envGroup) => {
+          if (!Array.isArray(syncedEnvGroups)) {
+            return true;
+          }
+          return !syncedEnvGroups?.find(
+            (syncedEnvGroup) => syncedEnvGroup?.name === envGroup?.name
+          );
+        })
         .map((envGroup: any, i: number) => {
           return (
             <EnvGroupRow
               key={i}
               isSelected={selectedEnvGroup === envGroup}
               lastItem={i === envGroups?.length - 1}
-              onClick={() => { setSelectedEnvGroup(envGroup); }}
+              onClick={() => {
+                setSelectedEnvGroup(envGroup);
+              }}
             >
               <img src={sliders} />
               {envGroup?.name}
@@ -142,24 +146,20 @@ const EnvGroupModal: React.FC<Props> = ({
 
   const onSubmit = () => {
     if (shouldSync) {
-
       syncedEnvGroups.push(selectedEnvGroup);
       setSyncedEnvGroups(syncedEnvGroups);
-    }
-    else {
+    } else {
       const _values = [...values];
 
-      Object.entries(selectedEnvGroup?.variables || {})
-        .map(
-          ([key, value]) =>
-            _values.push({
-              key,
-              value ,
-              hidden: false,
-              locked: false,
-              deleted: false,
-            })
-        )
+      Object.entries(selectedEnvGroup?.variables || {}).map(([key, value]) =>
+        _values.push({
+          key,
+          value,
+          hidden: false,
+          locked: false,
+          deleted: false,
+        })
+      );
       setValues(_values);
     }
     closeModal();
@@ -167,141 +167,131 @@ const EnvGroupModal: React.FC<Props> = ({
 
   return (
     <Modal closeModal={closeModal}>
-      <Text size={16}>
-        Load env group
-      </Text>
+      <Text size={16}>Load env group</Text>
       <Spacer height="15px" />
       <ColumnContainer>
-
         <ScrollableContainer>
-          {syncedEnvGroups?.length != envGroups?.length ? (<>
-            <Text color="helper">
-              Select an Env Group to load into your application.
-            </Text>
-            <Spacer y={0.5} />
-            <GroupModalSections>
-              <SidebarSection $expanded={!selectedEnvGroup}>
-                <EnvGroupList>{renderEnvGroupList()}</EnvGroupList>
-              </SidebarSection>
-              {selectedEnvGroup && (
-                <><SidebarSection>
-
-                  <GroupEnvPreview>
-                    {
-                      isObject(selectedEnvGroup?.variables) || isObject(selectedEnvGroup?.secret_variables) ? (
-                        <>
-                          {[
-                            ...Object.entries(selectedEnvGroup?.variables || {}).map(([key, value]) => ({
-                              source: 'variables',
-                              key,
-                              value,
-                            })),
-                            ...Object.entries(selectedEnvGroup?.secret_variables || {}).map(([key, value]) => ({
-                              source: 'secret_variables',
-                              key,
-                              value,
-                            })),
-                          ]
-                            .map(({ key, value, source }, index) => (
+          {syncedEnvGroups?.length != envGroups?.length ? (
+            <>
+              <Text color="helper">
+                Select an Env Group to load into your application.
+              </Text>
+              <Spacer y={0.5} />
+              <GroupModalSections>
+                <SidebarSection $expanded={!selectedEnvGroup}>
+                  <EnvGroupList>{renderEnvGroupList()}</EnvGroupList>
+                </SidebarSection>
+                {selectedEnvGroup && (
+                  <>
+                    <SidebarSection>
+                      <GroupEnvPreview>
+                        {isObject(selectedEnvGroup?.variables) ||
+                        isObject(selectedEnvGroup?.secret_variables) ? (
+                          <>
+                            {[
+                              ...Object.entries(
+                                selectedEnvGroup?.variables || {}
+                              ).map(([key, value]) => ({
+                                source: "variables",
+                                key,
+                                value,
+                              })),
+                              ...Object.entries(
+                                selectedEnvGroup?.secret_variables || {}
+                              ).map(([key, value]) => ({
+                                source: "secret_variables",
+                                key,
+                                value,
+                              })),
+                            ].map(({ key, value, source }, index) => (
                               <div key={index}>
                                 <span className="key">{key} = </span>
-                                <span className="value">{formattedEnvironmentValue(source === 'secret_variables' ? "****" : value)}</span>
+                                <span className="value">
+                                  {formattedEnvironmentValue(
+                                    source === "secret_variables"
+                                      ? "****"
+                                      : value
+                                  )}
+                                </span>
                               </div>
                             ))}
-                        </>
-                      ) : (
-                        <>This environment group has no variables</>
-                      )
-                    }
-                  </GroupEnvPreview>
-                </SidebarSection>
+                          </>
+                        ) : (
+                          <>This environment group has no variables</>
+                        )}
+                      </GroupEnvPreview>
+                    </SidebarSection>
+                  </>
+                )}
+              </GroupModalSections>
+              <Spacer y={1} />
 
-                </>
-              )
-
-              }
-
-            </GroupModalSections>
-            <Spacer y={1} />
-
-            <Spacer y={1} />
-          </>
+              <Spacer y={1} />
+            </>
+          ) : loading ? (
+            <LoadingWrapper>
+              <Loading />
+            </LoadingWrapper>
           ) : (
-
-            loading ? (
-              < LoadingWrapper >
-                < Loading />
-              </LoadingWrapper>)
-              : (<Text >
-                No selectable Env Groups
-              </Text>)
-
-          )
-
-          }
+            <Text>No selectable Env Groups</Text>
+          )}
         </ScrollableContainer>
       </ColumnContainer>
       <SubmitButtonContainer>
-
-        <Button
-          onClick={onSubmit}
-          disabled={!selectedEnvGroup}
-        >
+        <Button onClick={onSubmit} disabled={!selectedEnvGroup}>
           Load Env Group
         </Button>
       </SubmitButtonContainer>
-
-
-    </Modal >
-  )
-}
+    </Modal>
+  );
+};
 
 export default withRouter(EnvGroupModal);
 
 const LoadingWrapper = styled.div`
-height: 150px;
+  height: 150px;
 `;
 const Placeholder = styled.div`
-width: 100%;
-height: 150px;
-display: flex;
-align-items: center;
-justify-content: center;
-color: #aaaabb;
-font-size: 13px;
+  width: 100%;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaaabb;
+  font-size: 13px;
 `;
 
 const EnvGroupRow = styled.div<{ lastItem?: boolean; isSelected: boolean }>`
-display: flex;
-width: 100%;
-font-size: 13px;
-border-bottom: 1px solid
-  ${(props) => (props.lastItem ? "#00000000" : "#606166")};
-color: #ffffff;
-user-select: none;
-align-items: center;
-padding: 10px 0px;
-cursor: pointer;
-background: ${(props) => (props.isSelected ? "#ffffff11" : "")};
-:hover {
-  background: #ffffff11;
-}
+  display: flex;
+  width: 100%;
+  font-size: 13px;
+  border-bottom: 1px solid
+    ${(props) => (props.lastItem ? "#00000000" : "#606166")};
+  color: #ffffff;
+  user-select: none;
+  align-items: center;
+  padding: 10px 0px;
+  cursor: pointer;
+  background: ${(props) => (props.isSelected ? "#ffffff11" : "")};
+  :hover {
+    background: #ffffff11;
+  }
 
-> img,
-i {
-  width: 16px;
-  height: 18px;
-  margin-left: 12px;
-  margin-right: 12px;
-  font-size: 20px;
-}
+  > img,
+  i {
+    width: 16px;
+    height: 18px;
+    margin-left: 12px;
+    margin-right: 12px;
+    font-size: 20px;
+  }
 `;
 const EnvGroupList = styled.div`
-width: 100%;
-border-radius: 3px;
-background: #ffffff11;
-border: 1px solid #ffffff44;
-overflow-y: auto;
+  width: 100%;
+  border-radius: 3px;
+  background: #ffffff11;
+  border: 1px solid #ffffff44;
+  overflow-y: auto;
 `;
 
 const SidebarSection = styled.section<{ $expanded?: boolean }>`
@@ -339,13 +329,13 @@ const GroupModalSections = styled.div`
 const ColumnContainer = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: stretch; 
+  align-items: stretch;
 `;
 
 const ScrollableContainer = styled.div`
-  flex: 1; 
+  flex: 1;
   overflow-y: auto;
-  max-height: 300px; 
+  max-height: 300px;
 `;
 
 const SubmitButtonContainer = styled.div`

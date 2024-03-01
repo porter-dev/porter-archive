@@ -60,54 +60,56 @@ const Health: React.FC<HealthProps> = ({ index }) => {
           </Checkbox>
         )}
       />
-      {healthCheckEnabled.value &&
-        (serviceType === "web" ? (
-          <>
-            <Spacer y={0.5} />
-            <Text>Health check endpoint</Text>
-            <Spacer y={0.5} />
-            <ControlledInput
-              type="text"
-              placeholder="ex: /healthz"
-              {...register(
-                `app.services.${index}.config.healthChe ck.httpPath.value`
-              )}
-            />
-          </>
-        ) : (
-          <>
-            <Spacer y={0.5} />
-            <Text>Health check command</Text>
-            <Spacer y={0.5} />
-            <ControlledInput
-              type="text"
-              placeholder="ex: ./healthz.sh"
-              {...register(
-                `app.services.${index}.config.healthCheck.command.value`
-              )}
-            />
-          </>
-        ))}
-      <Spacer y={0.5} />
-      <Text color="helper">Timeout (seconds)</Text>
-      <Spacer y={0.25} />
-      <ControlledInput
-        type="text"
-        placeholder="ex: 1"
-        {...register(
-          `app.services.${index}.config.healthCheck.timeoutSeconds.value`
-        )}
-      />
-      <Spacer y={0.5} />
-      <Text color="helper">Initial delay before first check (seconds)</Text>
-      <Spacer y={0.25} />
-      <ControlledInput
-        type="text"
-        placeholder="ex: 30"
-        {...register(
-          `app.services.${index}.config.healthCheck.initialDelaySeconds.value`
-        )}
-      />
+      {healthCheckEnabled.value && (
+        <>
+          <Spacer y={0.75} />
+          {serviceType === "web" ? (
+            <>
+              <Text color="helper">Endpoint</Text>
+              <Spacer y={0.25} />
+              <ControlledInput
+                type="text"
+                placeholder="ex: /healthz"
+                {...register(
+                  `app.services.${index}.config.healthCheck.httpPath.value`
+                )}
+              />
+            </>
+          ) : (
+            <>
+              <Text color="helper">Command</Text>
+              <Spacer y={0.25} />
+              <ControlledInput
+                type="text"
+                placeholder="ex: ./healthz.sh"
+                {...register(
+                  `app.services.${index}.config.healthCheck.command.value`
+                )}
+              />
+            </>
+          )}
+          <Spacer y={0.5} />
+          <Text color="helper">Timeout (seconds)</Text>
+          <Spacer y={0.25} />
+          <ControlledInput
+            type="text"
+            placeholder="ex: 1"
+            {...register(
+              `app.services.${index}.config.healthCheck.timeoutSeconds.value`
+            )}
+          />
+          <Spacer y={0.5} />
+          <Text color="helper">Initial delay (seconds)</Text>
+          <Spacer y={0.25} />
+          <ControlledInput
+            type="text"
+            placeholder="ex: 30"
+            {...register(
+              `app.services.${index}.config.healthCheck.initialDelaySeconds.value`
+            )}
+          />
+        </>
+      )}
     </>
   );
 };

@@ -213,9 +213,11 @@ type Domains struct {
 
 // HealthCheck contains the health check settings
 type HealthCheck struct {
-	Enabled  bool   `yaml:"enabled"`
-	HttpPath string `yaml:"httpPath"`
-	Command  string `yaml:"command"`
+	Enabled             bool   `yaml:"enabled"`
+	HttpPath            string `yaml:"httpPath"`
+	Command             string `yaml:"command"`
+	TimeoutSeconds      int    `yaml:"timeoutSeconds"`
+	InitialDelaySeconds *int32 `yaml:"initialDelaySeconds"`
 }
 
 // ProtoFromApp converts a PorterApp type to a base PorterApp proto type and returns env variables
@@ -416,9 +418,11 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		var healthCheck *porterv1.HealthCheck
 		if service.HealthCheck != nil {
 			healthCheck = &porterv1.HealthCheck{
-				Enabled:  service.HealthCheck.Enabled,
-				HttpPath: service.HealthCheck.HttpPath,
-				Command:  service.HealthCheck.Command,
+				Enabled:             service.HealthCheck.Enabled,
+				HttpPath:            service.HealthCheck.HttpPath,
+				Command:             service.HealthCheck.Command,
+				TimeoutSeconds:      int32(service.HealthCheck.TimeoutSeconds),
+				InitialDelaySeconds: service.HealthCheck.InitialDelaySeconds,
 			}
 		}
 		webConfig.HealthCheck = healthCheck
@@ -462,9 +466,11 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		var healthCheck *porterv1.HealthCheck
 		if service.HealthCheck != nil {
 			healthCheck = &porterv1.HealthCheck{
-				Enabled:  service.HealthCheck.Enabled,
-				HttpPath: service.HealthCheck.HttpPath,
-				Command:  service.HealthCheck.Command,
+				Enabled:             service.HealthCheck.Enabled,
+				HttpPath:            service.HealthCheck.HttpPath,
+				Command:             service.HealthCheck.Command,
+				TimeoutSeconds:      int32(service.HealthCheck.TimeoutSeconds),
+				InitialDelaySeconds: service.HealthCheck.InitialDelaySeconds,
 			}
 		}
 		workerConfig.HealthCheck = healthCheck
@@ -602,9 +608,11 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		var healthCheck *HealthCheck
 		if webConfig.HealthCheck != nil {
 			healthCheck = &HealthCheck{
-				Enabled:  webConfig.HealthCheck.Enabled,
-				HttpPath: webConfig.HealthCheck.HttpPath,
-				Command:  webConfig.HealthCheck.Command,
+				Enabled:             webConfig.HealthCheck.Enabled,
+				HttpPath:            webConfig.HealthCheck.HttpPath,
+				Command:             webConfig.HealthCheck.Command,
+				TimeoutSeconds:      int(webConfig.HealthCheck.TimeoutSeconds),
+				InitialDelaySeconds: webConfig.HealthCheck.InitialDelaySeconds,
 			}
 		}
 		appService.HealthCheck = healthCheck
@@ -645,9 +653,11 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		var healthCheck *HealthCheck
 		if workerConfig.HealthCheck != nil {
 			healthCheck = &HealthCheck{
-				Enabled:  workerConfig.HealthCheck.Enabled,
-				HttpPath: workerConfig.HealthCheck.HttpPath,
-				Command:  workerConfig.HealthCheck.Command,
+				Enabled:             workerConfig.HealthCheck.Enabled,
+				HttpPath:            workerConfig.HealthCheck.HttpPath,
+				Command:             workerConfig.HealthCheck.Command,
+				TimeoutSeconds:      int(workerConfig.HealthCheck.TimeoutSeconds),
+				InitialDelaySeconds: workerConfig.HealthCheck.InitialDelaySeconds,
 			}
 		}
 		appService.HealthCheck = healthCheck

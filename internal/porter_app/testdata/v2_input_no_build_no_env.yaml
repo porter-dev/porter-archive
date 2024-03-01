@@ -27,6 +27,8 @@ services:
       enabled: true
       httpPath: /healthz
       command: ""
+      initialDelaySeconds: 10
+      timeoutSeconds: 5
   - name: example-wkr
     type: worker
     run: echo 'work'

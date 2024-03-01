@@ -117,6 +117,12 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		prRequestBody = "Hello 👋 from Porter! Please merge this PR to enable preview environments for your application."
 	}
 
+	prBranchName := fmt.Sprintf("setup-porter-app-%s", appName)
+	// limit branch name to 100 characters for safety
+	if len(prBranchName) > 100 {
+		prBranchName = prBranchName[:100]
+	}
+
 	if request.OpenPr || request.DeleteWorkflowFilename != "" {
 		openPRInput := &actions.GithubPROpts{
 			PRAction:       actions.GithubPRAction_NewAppWorkflow,
@@ -131,7 +137,7 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			SecretName:     secretName,
 			PorterYamlPath: request.PorterYamlPath,
 			Body:           prRequestBody,
-			PRBranch:       "porter-stack",
+			PRBranch:       prBranchName,
 		}
 		if request.DeleteWorkflowFilename != "" {
 			openPRInput.PRAction = actions.GithubPRAction_DeleteAppWorkflow

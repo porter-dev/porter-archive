@@ -15,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/auth/token"
+	"github.com/porter-dev/porter/internal/encryption"
 	"github.com/porter-dev/porter/internal/integrations/ci/actions"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -117,6 +118,19 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		prRequestBody = "Hello 👋 from Porter! Please merge this PR to enable preview environments for your application."
 	}
 
+	randStr, err := encryption.GenerateRandomBytes(4)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error generating random bytes")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	prBranchName := fmt.Sprintf("porter-stack-%s-%s", appName, randStr)
+	// limit branch name to 100 characters for safety
+	if len(prBranchName) > 100 {
+		prBranchName = prBranchName[:100]
+	}
+
 	if request.OpenPr || request.DeleteWorkflowFilename != "" {
 		openPRInput := &actions.GithubPROpts{
 			PRAction:       actions.GithubPRAction_NewAppWorkflow,
@@ -131,7 +145,7 @@ func (c *OpenStackPRHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			SecretName:     secretName,
 			PorterYamlPath: request.PorterYamlPath,
 			Body:           prRequestBody,
-			PRBranch:       "porter-stack",
+			PRBranch:       prBranchName,
 		}
 		if request.DeleteWorkflowFilename != "" {
 			openPRInput.PRAction = actions.GithubPRAction_DeleteAppWorkflow

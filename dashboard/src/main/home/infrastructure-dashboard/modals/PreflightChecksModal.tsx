@@ -6,6 +6,7 @@ import Loading from "components/Loading";
 import { Error as ErrorComponent } from "components/porter/Error";
 import Expandable from "components/porter/Expandable";
 import Modal from "components/porter/Modal";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
@@ -93,13 +94,21 @@ const PreflightChecksModal: React.FC<Props> = ({
           following issues or change your cluster configuration and try again.
         </Text>
         <Spacer y={1} />
-        {preflightChecks.map((pfc, idx) => (
-          <CheckItem
-            preflightCheck={pfc}
-            key={pfc.title}
-            preExpanded={idx === 0}
-          />
-        ))}
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {preflightChecks.map((pfc, idx) => (
+            <CheckItem
+              preflightCheck={pfc}
+              key={pfc.title}
+              preExpanded={idx === 0}
+            />
+          ))}
+        </div>
+        <Spacer y={1} />
+        <ShowIntercomButton
+          message={"I need help resolving cluster preflight checks."}
+        >
+          Talk to support
+        </ShowIntercomButton>
       </AppearingDiv>
     </Modal>
   );

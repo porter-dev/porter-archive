@@ -1237,6 +1237,10 @@ const SUPPORTED_AWS_PREFLIGHT_CHECKS: PreflightCheck[] = [
     resolution: AWS_VCPUS_QUOTA_RESOLUTION,
   },
   {
+    name: "cidrAvailability",
+    displayName: "CIDR availability",
+  },
+  {
     name: "enforceCidrUniqueness",
     displayName: "Overlapping CIDR blocks",
     resolution: OVERLAPPING_CIDR_RESOLUTION,

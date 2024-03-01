@@ -237,6 +237,8 @@ export type ClientMachineType = {
   displayName: string;
   supportedRegions: Array<AWSRegion | GCPRegion | AzureRegion>;
   isGPU: boolean;
+  cpuCores: number;
+  ramMegabytes: number;
 };
 type PreflightCheckResolutionStep = {
   text: string;

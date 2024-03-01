@@ -7,6 +7,8 @@ import _ from "lodash";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
+import { type ClientNode } from "lib/clusters/types";
+
 import { type BuildOptions } from "./build";
 import {
   autoscalingValidator,
@@ -714,4 +716,30 @@ export function serializedServiceFromProto({
           }
     )
     .exhaustive();
+}
+
+export function getServiceResourceAllowances(nodes: ClientNode[] = []): {
+  maxCpuCores: number;
+  maxRamMegabytes: number;
+  newServiceDefaultCpuCores: number;
+  newServiceDefaultRamMegabytes: number;
+} {
+  const defaultResourceAllowances = {
+    maxCpuCores: 2,
+    maxRamMegabytes: 4000,
+    newServiceDefaultCpuCores: 0.1,
+    newServiceDefaultRamMegabytes: 256,
+  };
+  if (nodes.length === 0) {
+    return {
+      maxCpuCores: 0,
+      maxRamMegabytes: 0,
+      newServiceDefaultCpuCores: 0.1,
+      newServiceDefaultRamMegabytes: 256,
+    };
+  }
+  return {
+    cpu: service.cpuCores * service.instances,
+    memory: service.ramMegabytes * service.instances,
+  };
 }

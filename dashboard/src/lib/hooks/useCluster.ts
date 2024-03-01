@@ -497,7 +497,7 @@ export const useClusterNodeList = ({
       );
 
       const parsed = await z.array(nodeValidator).parseAsync(res.data);
-      return parsed
+      const nodes = parsed
         .map((n) => {
           const nodeGroupType = match(n.labels["porter.run/workload-kind"])
             .with("application", () => "APPLICATION" as const)
@@ -518,6 +518,7 @@ export const useClusterNodeList = ({
           };
         })
         .filter(valueExists);
+      return nodes;
     },
     {
       refetchInterval,

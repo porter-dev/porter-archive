@@ -214,10 +214,10 @@ type Domains struct {
 // HealthCheck contains the health check settings
 type HealthCheck struct {
 	Enabled             bool   `yaml:"enabled"`
-	HttpPath            string `yaml:"httpPath"`
-	Command             string `yaml:"command"`
-	TimeoutSeconds      int    `yaml:"timeoutSeconds"`
-	InitialDelaySeconds *int32 `yaml:"initialDelaySeconds"`
+	HttpPath            string `yaml:"httpPath,omitempty"`
+	Command             string `yaml:"command,omitempty"`
+	TimeoutSeconds      int    `yaml:"timeoutSeconds,omitempty"`
+	InitialDelaySeconds *int32 `yaml:"initialDelaySeconds,omitempty"`
 }
 
 // ProtoFromApp converts a PorterApp type to a base PorterApp proto type and returns env variables

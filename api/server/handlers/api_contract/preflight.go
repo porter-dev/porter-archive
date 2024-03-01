@@ -47,17 +47,6 @@ type PreflightCheckResponse struct {
 	Errors []PreflightCheckError `json:"errors"`
 }
 
-var recognizedPreflightCheckTypes = []string{
-	"eip",
-	"vcpu",
-	"vpc",
-	"natGateway",
-	"apiEnabled",
-	"cidrAvailability",
-	"iamPermissions",
-	"authz",
-}
-
 func (p *PreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-preflight-checks")
 	defer span.End()
@@ -92,10 +81,6 @@ func (p *PreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	errors := []PreflightCheckError{}
 	for _, check := range checkResp.Msg.FailingPreflightChecks {
-		if check.Message == "" || !contains(recognizedPreflightCheckTypes, check.Type) {
-			continue
-		}
-
 		errors = append(errors, PreflightCheckError{
 			Name: check.Type,
 			Error: PorterError{
@@ -106,13 +91,4 @@ func (p *PreflightCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 	resp.Errors = errors
 	p.WriteResult(w, r, resp)
-}
-
-func contains(slice []string, elem string) bool {
-	for _, item := range slice {
-		if item == elem {
-			return true
-		}
-	}
-	return false
 }

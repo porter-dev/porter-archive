@@ -1216,6 +1216,10 @@ const SUPPORTED_AWS_PREFLIGHT_CHECKS: PreflightCheck[] = [
     displayName: "vCPU availability",
     resolution: AWS_VCPUS_QUOTA_RESOLUTION,
   },
+  {
+    name: "cidrAvailability",
+    displayName: "CIDR availability",
+  },
 ];
 
 const SUPPORTED_AZURE_PREFLIGHT_CHECKS: PreflightCheck[] = [

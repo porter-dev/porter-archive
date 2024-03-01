@@ -80,11 +80,16 @@ const GrantAWSPermissions: React.FC<Props> = ({
       externalId,
     ],
     async () => {
-      return await isAWSArnAccessible({
-        targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
-        externalId,
-        projectId,
-      });
+      try {
+        await isAWSArnAccessible({
+          targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
+          externalId,
+          projectId,
+        });
+        return true;
+      } catch (err) {
+        return false;
+      }
     },
     {
       enabled: currentStep === 3 && !isAccountAccessible, // no need to check if it's already accessible

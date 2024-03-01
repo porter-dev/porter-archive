@@ -70,7 +70,7 @@ const Health: React.FC<HealthProps> = ({ index }) => {
               type="text"
               placeholder="ex: /healthz"
               {...register(
-                `app.services.${index}.config.healthCheck.httpPath.value`
+                `app.services.${index}.config.healthChe ck.httpPath.value`
               )}
             />
           </>
@@ -88,6 +88,26 @@ const Health: React.FC<HealthProps> = ({ index }) => {
             />
           </>
         ))}
+      <Spacer y={0.5} />
+      <Text color="helper">Timeout (seconds)</Text>
+      <Spacer y={0.25} />
+      <ControlledInput
+        type="text"
+        placeholder="ex: 1"
+        {...register(
+          `app.services.${index}.config.healthCheck.timeoutSeconds.value`
+        )}
+      />
+      <Spacer y={0.5} />
+      <Text color="helper">Initial delay before first check (seconds)</Text>
+      <Spacer y={0.25} />
+      <ControlledInput
+        type="text"
+        placeholder="ex: 30"
+        {...register(
+          `app.services.${index}.config.healthCheck.initialDelaySeconds.value`
+        )}
+      />
     </>
   );
 };

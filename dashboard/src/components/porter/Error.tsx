@@ -30,16 +30,16 @@ export const Error: React.FC<Props> = ({
         <i className="material-icons">error_outline</i>
         <Block>
           <Text color={"#ff385d"}>Error: {message}</Text>
+          <Spacer y={0.5} />
+          {metadata &&
+            Object.entries(metadata).map(([key, value]) => (
+              <div key={key}>
+                <ErrorMessageLabel>{key}:</ErrorMessageLabel>
+                <ErrorMessageContent>{value}</ErrorMessageContent>
+              </div>
+            ))}
           {ctaText && (errorModalContents != null || ctaOnClick != null) && (
             <>
-              <Spacer y={0.5} />
-              {metadata &&
-                Object.entries(metadata).map(([key, value]) => (
-                  <div key={key}>
-                    <ErrorMessageLabel>{key}:</ErrorMessageLabel>
-                    <ErrorMessageContent>{value}</ErrorMessageContent>
-                  </div>
-                ))}
               <Spacer y={0.5} />
               <Cta
                 onClick={() => {

@@ -419,9 +419,13 @@ export const useUpdateCluster = ({
             };
           })
           .filter(valueExists);
-        return {
-          preflightChecks: clientPreflightChecks,
-        };
+
+        // note that if a preflight check fails but the front-end doesn't know how to display it, it will be ignored
+        if (clientPreflightChecks.length > 0) {
+          return {
+            preflightChecks: clientPreflightChecks,
+          };
+        }
       }
       // otherwise, continue to create the contract
     } catch (err) {

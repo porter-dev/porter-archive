@@ -77,9 +77,11 @@ var result_nobuild = &porterv1.PorterApp{
 						},
 					},
 					HealthCheck: &porterv1.HealthCheck{
-						Enabled:  true,
-						HttpPath: "/healthz",
-						Command:  "",
+						Enabled:             true,
+						HttpPath:            "/healthz",
+						Command:             "",
+						InitialDelaySeconds: &initialDelaySeconds10,
+						TimeoutSeconds:      5,
 					},
 				},
 			},
@@ -229,6 +231,8 @@ var v1_result_nobuild_no_image = &porterv1.PorterApp{
 		Type:           3,
 	},
 }
+
+var initialDelaySeconds10 = int32(10)
 
 func diffProtoWithFailTest(t *testing.T, is *is.I, want, got *porterv1.PorterApp) {
 	t.Helper()

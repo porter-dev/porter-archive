@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import _ from "lodash";
 import { useForm } from "react-hook-form";
@@ -17,6 +17,7 @@ import {
   dbFormValidator,
   type DatastoreTemplate,
   type DbFormData,
+  type EngineVersion,
   type ResourceOption,
 } from "lib/databases/types";
 
@@ -38,7 +39,6 @@ type Props = RouteComponentProps & {
 };
 
 const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
-  const [currentStep, setCurrentStep] = useState<number>(0);
   const [isPasswordHidden, setIsPasswordHidden] = useState<boolean>(true);
 
   const dbForm = useForm<DbFormData>({
@@ -61,28 +61,11 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
     watch,
   } = dbForm;
 
-  const watchName = watch("name", "");
   const watchTier = watch("config.instanceClass", "unspecified");
   const watchDbName = watch("config.databaseName");
   const watchDbUsername = watch("config.masterUsername");
   const watchDbPassword = watch("config.masterUserPassword");
   const watchEngine = watch("config.engineVersion", "15.4");
-
-  const dbEngineVersions = [
-    { value: "15.4", label: "15.4", key: "15.4" },
-    { value: "14.11", label: "14.11", key: "14.11" },
-  ];
-
-  useEffect(() => {
-    let newStep = 0;
-    if (watchName) {
-      newStep = 1;
-    }
-    if (watchTier !== "unspecified") {
-      newStep = 3;
-    }
-    setCurrentStep(Math.max(newStep, currentStep));
-  }, [watchName, watchTier]);
 
   return (
     <CenterWrapper>
@@ -103,19 +86,19 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
           <DatabaseForm
             steps={[
               <>
-                <Text size={16}>Specify Engine Version</Text>
+                <Text size={16}>Specify engine version</Text>
                 <Spacer y={0.5} />
-                <Text color="helper">
-                  Choose the version of Postgres you want to use.
-                </Text>
-                <Selector<string>
+                <Selector<EngineVersion["name"]>
                   activeValue={watchEngine}
                   setActiveValue={(value) => {
                     setValue("config.engineVersion", value);
                   }}
                   width="300px"
-                  options={dbEngineVersions}
-                  label={"Engine Version"}
+                  options={template.supportedEngineVersions.map((v) => ({
+                    value: v.name,
+                    label: v.displayName,
+                    key: v.name,
+                  }))}
                 />
               </>,
               <>
@@ -208,7 +191,7 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
                 </Fieldset>
               </>,
             ]}
-            currentStep={currentStep}
+            currentStep={100}
             form={dbForm}
           />
         </StyledConfigureTemplate>

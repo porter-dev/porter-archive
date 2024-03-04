@@ -512,20 +512,17 @@ export const useClusterNodeList = ({
           if (!instanceTypeName) {
             return undefined;
           }
-          // TODO: use more node information to determine which cloud provider to check
-          let instanceType = CloudProviderAWS.machineTypes.find(
-            (i) => i.name === instanceTypeName
-          );
-          if (!instanceType) {
-            instanceType = CloudProviderAzure.machineTypes.find(
+          // TODO: use more node information to narrow down which cloud provider instance type list to check against
+          const instanceType =
+            CloudProviderAWS.machineTypes.find(
+              (i) => i.name === instanceTypeName
+            ) ??
+            CloudProviderAzure.machineTypes.find(
+              (i) => i.name === instanceTypeName
+            ) ??
+            CloudProviderGCP.machineTypes.find(
               (i) => i.name === instanceTypeName
             );
-          }
-          if (!instanceType) {
-            instanceType = CloudProviderGCP.machineTypes.find(
-              (i) => i.name === instanceTypeName
-            );
-          }
           if (!instanceType) {
             return undefined;
           }

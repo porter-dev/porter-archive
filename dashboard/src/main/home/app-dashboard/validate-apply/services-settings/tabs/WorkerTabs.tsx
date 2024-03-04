@@ -17,20 +17,9 @@ type Props = {
       type: "worker";
     };
   };
-  maxRAM: number;
-  maxCPU: number;
-  maxGPU: number;
-  clusterContainsGPUNodes: boolean;
 };
 
-const WorkerTabs: React.FC<Props> = ({
-  index,
-  service,
-  maxCPU,
-  maxRAM,
-  maxGPU,
-  clusterContainsGPUNodes,
-}) => {
+const WorkerTabs: React.FC<Props> = ({ index, service }) => {
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "advanced"
   >("main");
@@ -48,16 +37,7 @@ const WorkerTabs: React.FC<Props> = ({
       />
       {match(currentTab)
         .with("main", () => <MainTab index={index} service={service} />)
-        .with("resources", () => (
-          <Resources
-            index={index}
-            maxCPU={maxCPU}
-            maxRAM={maxRAM}
-            service={service}
-            maxGPU={maxGPU}
-            clusterContainsGPUNodes={clusterContainsGPUNodes}
-          />
-        ))
+        .with("resources", () => <Resources index={index} service={service} />)
         .with("advanced", () => (
           <>
             <Health index={index} />

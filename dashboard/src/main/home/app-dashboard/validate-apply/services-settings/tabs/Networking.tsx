@@ -7,6 +7,7 @@ import Checkbox from "components/porter/Checkbox";
 import { ControlledInput } from "components/porter/ControlledInput";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 import { type PorterAppFormData } from "lib/porter-apps";
 import { prefixSubdomain, type ClientService } from "lib/porter-apps/services";
 
@@ -26,18 +27,22 @@ type NetworkingProps = {
     namespace: string;
     appName: string;
   };
-  clusterIngressIp: string;
-  showDisableTls: boolean;
 };
 
 const Networking: React.FC<NetworkingProps> = ({
   index,
   service,
   internalNetworkingDetails: { namespace, appName },
-  clusterIngressIp,
-  showDisableTls,
 }) => {
   const { register, control, watch } = useFormContext<PorterAppFormData>();
+  const { cluster } = useClusterContext();
+
+  const showDisableTls = useMemo(() => {
+    return (
+      cluster.contract.config.cluster.config.kind === "EKS" &&
+      cluster.contract.config.cluster.config.loadBalancer.type === "ALB"
+    );
+  }, [cluster]);
 
   const privateService = watch(`app.services.${index}.config.private.value`);
 
@@ -149,7 +154,7 @@ const Networking: React.FC<NetworkingProps> = ({
             </a>
           </Text>
           <Spacer y={0.5} />
-          <CustomDomains index={index} clusterIngressIp={clusterIngressIp} />
+          <CustomDomains index={index} />
           <Spacer y={0.5} />
           <Text color="helper">
             Ingress Custom Annotations

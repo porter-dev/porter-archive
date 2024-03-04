@@ -52,7 +52,7 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
       {displayableNodeGroups.APPLICATION?.map((ng) => {
         return (
           <Expandable
-            preExpanded={true}
+            preExpanded={false}
             key={ng.nodeGroup.id}
             header={
               <Container row>
@@ -129,7 +129,7 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
       {displayableNodeGroups.CUSTOM?.map((ng) => {
         return (
           <Expandable
-            preExpanded={true}
+            preExpanded={false}
             key={ng.nodeGroup.id}
             header={
               <Container row spaced>

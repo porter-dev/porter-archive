@@ -63,10 +63,10 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
 
   const watchName = watch("name", "");
   const watchTier = watch("config.instanceClass", "unspecified");
-
   const watchDbName = watch("config.databaseName");
   const watchDbUsername = watch("config.masterUsername");
   const watchDbPassword = watch("config.masterUserPassword");
+  const watchEngine = watch("config.engineVersion", "15.4");
 
   const dbEngineVersions = [
     { value: "15.4", label: "15.4", key: "15.4" },
@@ -109,7 +109,7 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
                   Choose the version of Postgres you want to use.
                 </Text>
                 <Selector<string>
-                  activeValue={dbEngineVersions[0].value}
+                  activeValue={watchEngine}
                   setActiveValue={(value) => {
                     setValue("config.engineVersion", value);
                   }}

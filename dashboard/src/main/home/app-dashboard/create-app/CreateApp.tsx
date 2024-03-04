@@ -21,9 +21,9 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
-import { useCluster } from "lib/hooks/useCluster";
 import {
   useDefaultDeploymentTarget,
   useDeploymentTargetList,
@@ -36,13 +36,8 @@ import {
   type PorterAppFormData,
   type SourceOptions,
 } from "lib/porter-apps";
-import {
-  defaultSerialized,
-  deserializeService,
-} from "lib/porter-apps/services";
 
 import api from "shared/api";
-import { useClusterResources } from "shared/ClusterResourcesContext";
 import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 import applicationGrad from "assets/application-grad.svg";
@@ -206,8 +201,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     deploymentTargetID,
     creating: true,
   });
-  const { currentClusterResources } = useClusterResources();
-  const { cluster } = useCluster({ clusterId: currentCluster?.id });
+  const { cluster } = useClusterContext();
 
   // set the deployment target id to the default if no deployment target has been selected yet
   useEffect(() => {
@@ -704,17 +698,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <Spacer y={0.5} />
                     <ServiceList
                       addNewText={"Add a new pre-deploy job"}
-                      prePopulateService={deserializeService({
-                        service: defaultSerialized({
-                          name: "pre-deploy",
-                          type: "predeploy",
-                          defaultCPU: currentClusterResources.defaultCPU,
-                          defaultRAM: currentClusterResources.defaultRAM,
-                        }),
-                        expanded: true,
-                      })}
-                      isPredeploy
                       fieldArrayName={"app.predeploy"}
+                      isPredeploy
                     />
                   </>,
                   <>

@@ -38,8 +38,10 @@ const GKEClusterOverview: React.FC = () => {
         />
         <Spacer y={1} />
       </Container>
-      <Text size={16}>
-        Application node group{" "}
+      <Text size={16}>Node groups</Text>
+      <Spacer y={0.5} />
+      <Text color="helper">
+        Configure node groups to support custom workloads.{" "}
         <a
           href="https://docs.porter.run/other/kubernetes-101"
           target="_blank"
@@ -48,7 +50,7 @@ const GKEClusterOverview: React.FC = () => {
           &nbsp;(?)
         </a>
       </Text>
-      <Spacer y={0.5} />
+      <Spacer y={1} />
       <NodeGroups availableMachineTypes={CloudProviderGCP.machineTypes} />
     </>
   );

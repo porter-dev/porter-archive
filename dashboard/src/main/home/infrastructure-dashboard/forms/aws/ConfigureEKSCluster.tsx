@@ -31,7 +31,7 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
     formState: { errors },
   } = useFormContext<ClientClusterContract>();
 
-  const { isAdvancedSettingsEnabled } = useClusterFormContext();
+  const { isMultiClusterEnabled } = useClusterFormContext();
 
   return (
     <div>
@@ -88,7 +88,7 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
               )}
             />
           </>,
-          isAdvancedSettingsEnabled ? (
+          isMultiClusterEnabled ? (
             <>
               <Text size={16}>CIDR range</Text>
               <Spacer y={0.5} />

@@ -1,9 +1,12 @@
-import React, { useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 import { z } from "zod";
 
 import Back from "components/porter/Back";
+import ClusterContextProvider from "main/home/infrastructure-dashboard/ClusterContextProvider";
+
+import { Context } from "shared/Context";
 
 import AppDataContainer from "./AppDataContainer";
 import AppHeader from "./AppHeader";
@@ -31,6 +34,7 @@ export type PorterAppRecord = z.infer<typeof porterAppValidator>;
 type Props = RouteComponentProps & { preview?: boolean };
 
 const AppView: React.FC<Props> = ({ match, preview }) => {
+  const { currentCluster } = useContext(Context);
   const params = useMemo(() => {
     const { params } = match;
     const validParams = z
@@ -51,13 +55,15 @@ const AppView: React.FC<Props> = ({ match, preview }) => {
   }, [match]);
 
   return (
-    <LatestRevisionProvider appName={params.appName}>
-      <StyledExpandedApp>
-        <Back to={preview ? "/preview-environments" : "/apps"} />
-        <AppHeader />
-        <AppDataContainer tabParam={params.tab} />
-      </StyledExpandedApp>
-    </LatestRevisionProvider>
+    <ClusterContextProvider clusterId={currentCluster?.id} refetchInterval={0}>
+      <LatestRevisionProvider appName={params.appName}>
+        <StyledExpandedApp>
+          <Back to={preview ? "/preview-environments" : "/apps"} />
+          <AppHeader />
+          <AppDataContainer tabParam={params.tab} />
+        </StyledExpandedApp>
+      </LatestRevisionProvider>
+    </ClusterContextProvider>
   );
 };
 

@@ -77,6 +77,7 @@ const AKSClusterOverview: React.FC = () => {
         availableMachineTypes={CloudProviderAzure.machineTypes.filter((mt) =>
           mt.supportedRegions.includes(region)
         )}
+        isDefaultExpanded={false}
       />
     </>
   );

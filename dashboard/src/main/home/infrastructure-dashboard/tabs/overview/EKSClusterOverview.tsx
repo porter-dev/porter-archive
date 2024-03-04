@@ -61,7 +61,10 @@ const EKSClusterOverview: React.FC = () => {
         </a>
       </Text>
       <Spacer y={1} />
-      <NodeGroups availableMachineTypes={CloudProviderAWS.machineTypes} />
+      <NodeGroups
+        availableMachineTypes={CloudProviderAWS.machineTypes}
+        isDefaultExpanded={false}
+      />
     </>
   );
 };

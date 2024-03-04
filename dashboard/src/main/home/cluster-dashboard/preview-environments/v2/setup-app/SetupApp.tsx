@@ -9,6 +9,7 @@ import Back from "components/porter/Back";
 import Spacer from "components/porter/Spacer";
 import { LatestRevisionProvider } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import ClusterContextProvider from "main/home/infrastructure-dashboard/ClusterContextProvider";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -76,30 +77,32 @@ const SetupApp: React.FC<Props> = ({ location }) => {
   }
 
   return (
-    <LatestRevisionProvider appName={appName}>
-      <CenterWrapper>
-        <Div>
-          <StyledConfigureTemplate>
-            <Back to="/preview-environments" />
-            <DashboardHeader
-              prefix={<Icon src={pull_request} />}
-              title={`Preview apps for ${appName}`}
-              description="Set preview specific configuration for this app below. Any newly created preview apps will use these settings."
-              capitalize={false}
-              disableLineBreak
-            />
-            <DarkMatter />
-            {match(templateRes)
-              .with({ status: "loading" }, () => <Loading />)
-              .with({ status: "success" }, ({ data }) => {
-                return <PreviewAppDataContainer existingTemplate={data} />;
-              })
-              .otherwise(() => null)}
-            <Spacer y={3} />
-          </StyledConfigureTemplate>
-        </Div>
-      </CenterWrapper>
-    </LatestRevisionProvider>
+    <ClusterContextProvider clusterId={currentCluster?.id} refetchInterval={0}>
+      <LatestRevisionProvider appName={appName}>
+        <CenterWrapper>
+          <Div>
+            <StyledConfigureTemplate>
+              <Back to="/preview-environments" />
+              <DashboardHeader
+                prefix={<Icon src={pull_request} />}
+                title={`Preview apps for ${appName}`}
+                description="Set preview specific configuration for this app below. Any newly created preview apps will use these settings."
+                capitalize={false}
+                disableLineBreak
+              />
+              <DarkMatter />
+              {match(templateRes)
+                .with({ status: "loading" }, () => <Loading />)
+                .with({ status: "success" }, ({ data }) => {
+                  return <PreviewAppDataContainer existingTemplate={data} />;
+                })
+                .otherwise(() => null)}
+              <Spacer y={3} />
+            </StyledConfigureTemplate>
+          </Div>
+        </CenterWrapper>
+      </LatestRevisionProvider>
+    </ClusterContextProvider>
   );
 };
 

@@ -30,7 +30,7 @@ const ConfigureGKECluster: React.FC<Props> = ({ goBack }) => {
     formState: { errors },
   } = useFormContext<ClientClusterContract>();
 
-  const { isAdvancedSettingsEnabled } = useClusterFormContext();
+  const { isMultiClusterEnabled } = useClusterFormContext();
 
   return (
     <div>
@@ -93,12 +93,12 @@ const ConfigureGKECluster: React.FC<Props> = ({ goBack }) => {
               }}
             />
           </>,
-          isAdvancedSettingsEnabled ? (
+          isMultiClusterEnabled ? (
             <>
               <Text size={16}>CIDR range</Text>
               <Spacer y={0.5} />
               <Text color="helper">
-                Specify the CIDR range for your cluster.
+                Specify the VPC CIDR range for your cluster.
               </Text>
               <Spacer y={0.7} />
               <ControlledInput
@@ -107,6 +107,18 @@ const ConfigureGKECluster: React.FC<Props> = ({ goBack }) => {
                 width="300px"
                 error={errors.cluster?.config?.cidrRange?.message}
                 {...register("cluster.config.cidrRange")}
+              />
+              <Spacer y={0.5} />
+              <Text color="helper">
+                Specify the service CIDR range for your cluster.
+              </Text>
+              <Spacer y={0.7} />
+              <ControlledInput
+                placeholder="ex: 172.20.0.0/16"
+                type="text"
+                width="300px"
+                error={errors.cluster?.config?.serviceCidrRange?.message}
+                {...register("cluster.config.serviceCidrRange")}
               />
             </>
           ) : null,

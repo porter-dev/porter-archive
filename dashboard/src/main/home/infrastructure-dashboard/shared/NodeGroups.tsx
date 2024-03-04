@@ -22,8 +22,12 @@ import world from "assets/world.svg";
 
 type Props = {
   availableMachineTypes: ClientMachineType[];
+  isDefaultExpanded?: boolean;
 };
-const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
+const NodeGroups: React.FC<Props> = ({
+  availableMachineTypes,
+  isDefaultExpanded = true,
+}) => {
   const { control } = useFormContext<ClientClusterContract>();
   const { currentProject } = useContext(Context);
   const {
@@ -52,7 +56,7 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
       {displayableNodeGroups.APPLICATION?.map((ng) => {
         return (
           <Expandable
-            preExpanded={true}
+            preExpanded={isDefaultExpanded}
             key={ng.nodeGroup.id}
             header={
               <Container row>
@@ -129,7 +133,7 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
       {displayableNodeGroups.CUSTOM?.map((ng) => {
         return (
           <Expandable
-            preExpanded={true}
+            preExpanded={isDefaultExpanded}
             key={ng.nodeGroup.id}
             header={
               <Container row spaced>
@@ -211,8 +215,9 @@ const NodeGroups: React.FC<Props> = ({ availableMachineTypes }) => {
           </Expandable>
         );
       })}
-      {(displayableNodeGroups.CUSTOM ?? []).length === 0 &&
-        currentProject?.gpu_enabled && (
+      {currentProject?.gpu_enabled &&
+        (displayableNodeGroups.CUSTOM ?? []).length === 0 &&
+        availableMachineTypes.filter((t) => t.isGPU).length > 0 && (
           <Button
             alt
             onClick={() => {

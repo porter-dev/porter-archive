@@ -29,6 +29,7 @@ export type UpdateClusterButtonProps = {
 
 type ClusterFormContextType = {
   isAdvancedSettingsEnabled: boolean;
+  isMultiClusterEnabled: boolean;
   showFailedPreflightChecksModal: boolean;
   updateClusterButtonProps: UpdateClusterButtonProps;
   setCurrentContract: (contract: Contract) => void;
@@ -49,6 +50,7 @@ export const useClusterFormContext = (): ClusterFormContextType => {
 type ClusterFormContextProviderProps = {
   projectId?: number;
   isAdvancedSettingsEnabled?: boolean;
+  isMultiClusterEnabled?: boolean;
   redirectOnSubmit?: boolean;
   children: JSX.Element;
 };
@@ -56,6 +58,7 @@ type ClusterFormContextProviderProps = {
 const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   projectId,
   isAdvancedSettingsEnabled = false,
+  isMultiClusterEnabled = false,
   redirectOnSubmit,
   children,
 }) => {
@@ -200,6 +203,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
         showFailedPreflightChecksModal,
         updateClusterButtonProps,
         isAdvancedSettingsEnabled,
+        isMultiClusterEnabled,
       }}
     >
       <Wrapper ref={scrollToTopRef}>

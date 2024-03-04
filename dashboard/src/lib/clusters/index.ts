@@ -353,6 +353,6 @@ const clientAKSConfigFromProto = (value: AKS): AKSClientClusterConfig => {
       .with(AksSkuTier.STANDARD, () => "STANDARD" as const)
       .otherwise(() => "UNKNOWN" as const),
     cidrRange: value.cidrRange,
-    serviceCidrRange: "", // not yet supported by AKS
+    serviceCidrRange: "172.20.0.0/16", // not yet supported by AKS, this is a placeholder
   };
 };

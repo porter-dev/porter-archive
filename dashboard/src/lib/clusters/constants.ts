@@ -1128,6 +1128,26 @@ const AWS_VCPUS_QUOTA_RESOLUTION: PreflightCheckResolution = {
     },
   ],
 };
+const OVERLAPPING_CIDR_RESOLUTION: PreflightCheckResolution = {
+  title: "Preventing Overlapping CIDR Blocks",
+  subtitle:
+    "You will need to select an unused CIDR Block in order to provision in the region specified.",
+  steps: [
+    {
+      text: "Change the CIDR blocks on this page to be unique and not overlap with any other CIDR blocks in your account.",
+    },
+    {
+      text: "The VPC CIDR block should be a /16 in the 10.0.0.0/8 range",
+    },
+    {
+      text: "The Service CIDR block should be a /16 in the 172.16.0.0/12 range in accordanc with RFC 1918",
+      externalLink: "https://datatracker.ietf.org/doc/html/rfc1918",
+    },
+    {
+      text: "Once you have selected unique CIDR blocks, return to Porter and retry the provision. If you have any issues or questions, please reach out to Porter support",
+    },
+  ],
+};
 const AZURE_AUTHZ_RESOLUTION: PreflightCheckResolution = {
   title: "Granting your service principal authorization to your subscription",
   subtitle:
@@ -1216,6 +1236,15 @@ const SUPPORTED_AWS_PREFLIGHT_CHECKS: PreflightCheck[] = [
     displayName: "vCPU availability",
     resolution: AWS_VCPUS_QUOTA_RESOLUTION,
   },
+  {
+    name: "cidrAvailability",
+    displayName: "CIDR availability",
+  },
+  {
+    name: "enforceCidrUniqueness",
+    displayName: "Overlapping CIDR blocks",
+    resolution: OVERLAPPING_CIDR_RESOLUTION,
+  },
 ];
 
 const SUPPORTED_AZURE_PREFLIGHT_CHECKS: PreflightCheck[] = [
@@ -1234,6 +1263,11 @@ const SUPPORTED_AZURE_PREFLIGHT_CHECKS: PreflightCheck[] = [
     displayName: "vCPU availability",
     resolution: AZURE_VCPUS_QUOTA_RESOLUTION,
   },
+  {
+    name: "enforceCidrUniqueness",
+    displayName: "Overlapping CIDR blocks",
+    resolution: OVERLAPPING_CIDR_RESOLUTION,
+  },
 ];
 
 const SUPPORTED_GCP_PREFLIGHT_CHECKS: PreflightCheck[] = [
@@ -1248,6 +1282,11 @@ const SUPPORTED_GCP_PREFLIGHT_CHECKS: PreflightCheck[] = [
   {
     name: "iamPermissions",
     displayName: "IAM permissions",
+  },
+  {
+    name: "enforceCidrUniqueness",
+    displayName: "Overlapping CIDR blocks",
+    resolution: OVERLAPPING_CIDR_RESOLUTION,
   },
 ];
 

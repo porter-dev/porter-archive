@@ -6,7 +6,6 @@ import styled, { keyframes } from "styled-components";
 import { match } from "ts-pattern";
 
 import Spacer from "components/porter/Spacer";
-import { type ClientCluster } from "lib/clusters/types";
 import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
@@ -34,18 +33,11 @@ type ServiceProps = {
   >;
   remove: (index: number) => void;
   status?: ClientServiceStatus[];
-  maxCPU: number;
-  maxRAM: number;
-  maxGPU: number;
-  clusterContainsGPUNodes: boolean;
   internalNetworkingDetails: {
     namespace: string;
     appName: string;
   };
-  clusterIngressIp: string;
-  showDisableTls: boolean;
   existingServiceNames: string[];
-  cluster?: ClientCluster;
 };
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -54,15 +46,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   update,
   remove,
   status,
-  maxCPU,
-  maxRAM,
-  maxGPU,
-  clusterContainsGPUNodes,
   internalNetworkingDetails,
-  clusterIngressIp,
-  showDisableTls,
   existingServiceNames,
-  cluster,
 }) => {
   const renderTabs = (service: ClientService): JSX.Element => {
     return match(service)
@@ -70,46 +55,17 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         <WebTabs
           index={index}
           service={svc}
-          maxCPU={maxCPU}
-          maxRAM={maxRAM}
-          maxGPU={maxGPU}
-          clusterContainsGPUNodes={clusterContainsGPUNodes}
           internalNetworkingDetails={internalNetworkingDetails}
-          clusterIngressIp={clusterIngressIp}
-          showDisableTls={showDisableTls}
-          cluster={cluster}
         />
       ))
       .with({ config: { type: "worker" } }, (svc) => (
-        <WorkerTabs
-          index={index}
-          service={svc}
-          maxCPU={maxCPU}
-          maxRAM={maxRAM}
-          maxGPU={maxGPU}
-          clusterContainsGPUNodes={clusterContainsGPUNodes}
-        />
+        <WorkerTabs index={index} service={svc} />
       ))
       .with({ config: { type: "job" } }, (svc) => (
-        <JobTabs
-          index={index}
-          service={svc}
-          maxCPU={maxCPU}
-          maxRAM={maxRAM}
-          maxGPU={maxGPU}
-          clusterContainsGPUNodes={clusterContainsGPUNodes}
-        />
+        <JobTabs index={index} service={svc} />
       ))
       .with({ config: { type: "predeploy" } }, (svc) => (
-        <JobTabs
-          index={index}
-          service={svc}
-          maxCPU={maxCPU}
-          maxRAM={maxRAM}
-          maxGPU={maxGPU}
-          clusterContainsGPUNodes={clusterContainsGPUNodes}
-          isPredeploy
-        />
+        <JobTabs index={index} service={svc} isPredeploy />
       ))
       .exhaustive();
   };

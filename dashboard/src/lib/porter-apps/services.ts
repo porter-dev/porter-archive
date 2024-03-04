@@ -7,6 +7,8 @@ import _ from "lodash";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
+import { type ClientNode } from "lib/clusters/types";
+
 import { type BuildOptions } from "./build";
 import {
   autoscalingValidator,
@@ -243,11 +245,15 @@ export function defaultSerialized({
   const defaultWebHealthCheck: SerializedHealthcheck = {
     enabled: false,
     httpPath: "/healthz",
+    timeoutSeconds: 1,
+    initialDelaySeconds: 15,
   };
 
   const defaultWorkerHealthCheck: SerializedHealthcheck = {
     enabled: false,
     command: "./healthz.sh",
+    timeoutSeconds: 1,
+    initialDelaySeconds: 15,
   };
 
   return match(type)
@@ -714,4 +720,71 @@ export function serializedServiceFromProto({
           }
     )
     .exhaustive();
+}
+
+const SMALL_INSTANCE_UPPER_BOUND = 0.75;
+const LARGE_INSTANCE_UPPER_BOUND = 0.9;
+const NEW_SERVICE_RESOURCE_DEFAULT_MULTIPLIER = 0.125;
+
+const DEFAULT_RESOURCE_ALLOWANCES = {
+  maxCpuCores: 1.5,
+  newServiceDefaultCpuCores: 0.19,
+  maxRamMegabytes: 3100,
+  newServiceDefaultRamMegabytes: 400,
+};
+
+const DEFAULT_SANDBOX_RESOURCE_ALLOWANCES = {
+  maxCpuCores: 0.2,
+  newServiceDefaultCpuCores: 0.1,
+  maxRamMegabytes: 250,
+  newServiceDefaultRamMegabytes: 120,
+};
+
+export function getServiceResourceAllowances(
+  nodes: ClientNode[],
+  isSandboxEnabled?: boolean
+): {
+  maxCpuCores: number;
+  maxRamMegabytes: number;
+  newServiceDefaultCpuCores: number;
+  newServiceDefaultRamMegabytes: number;
+} {
+  if (isSandboxEnabled) {
+    return DEFAULT_SANDBOX_RESOURCE_ALLOWANCES;
+  }
+
+  if (nodes.length === 0) {
+    return DEFAULT_RESOURCE_ALLOWANCES;
+  }
+  const maxRamApplicationInstance = nodes
+    .filter((n) => n.nodeGroupType === "APPLICATION")
+    .reduce((max, node) =>
+      node.instanceType.ramMegabytes > max.instanceType.ramMegabytes
+        ? node
+        : max
+    );
+  const multiplier =
+    maxRamApplicationInstance.instanceType.ramMegabytes > 16000
+      ? LARGE_INSTANCE_UPPER_BOUND
+      : SMALL_INSTANCE_UPPER_BOUND;
+
+  const maxCpuCores =
+    Math.floor(
+      maxRamApplicationInstance.instanceType.cpuCores * multiplier * 2
+    ) / 2; // round to nearest half
+  const maxRamMegabytes =
+    Math.round(
+      (maxRamApplicationInstance.instanceType.ramMegabytes * multiplier) / 100
+    ) * 100; // round to nearest 100 MB
+  return {
+    maxCpuCores,
+    newServiceDefaultCpuCores: Number(
+      (maxCpuCores * NEW_SERVICE_RESOURCE_DEFAULT_MULTIPLIER).toFixed(2)
+    ), // round to hundredths place
+    maxRamMegabytes,
+    newServiceDefaultRamMegabytes:
+      Math.round(
+        (maxRamMegabytes * NEW_SERVICE_RESOURCE_DEFAULT_MULTIPLIER) / 100
+      ) * 100, // round to nearest 100 MB
+  };
 }

@@ -237,6 +237,8 @@ export type ClientMachineType = {
   displayName: string;
   supportedRegions: Array<AWSRegion | GCPRegion | AzureRegion>;
   isGPU: boolean;
+  cpuCores: number;
+  ramMegabytes: number;
 };
 type PreflightCheckResolutionStep = {
   text: string;
@@ -261,7 +263,7 @@ export const nodeValidator = z.object({
 });
 export type ClientNode = {
   nodeGroupType: NodeGroupType;
-  instanceType: string;
+  instanceType: ClientMachineType;
 };
 
 // Cluster
@@ -272,6 +274,7 @@ export const clusterValidator = z.object({
   cloud_provider: cloudProviderValidator,
   cloud_provider_credential_identifier: z.string(),
   status: z.string(),
+  ingress_ip: z.string().optional().default(""),
 });
 export type SerializedCluster = z.infer<typeof clusterValidator>;
 export type ClientCluster = Omit<SerializedCluster, "cloud_provider"> & {
@@ -415,6 +418,7 @@ const eksConfigValidator = z.object({
   region: awsRegionValidator,
   nodeGroups: eksNodeGroupValidator.array(),
   cidrRange: cidrRangeValidator,
+  serviceCidrRange: cidrRangeValidator,
   logging: z
     .object({
       isApiServerLogsEnabled: z.boolean(),
@@ -469,6 +473,7 @@ const gkeConfigValidator = z.object({
   region: gcpRegionValidator,
   nodeGroups: gkeNodeGroupValidator.array(),
   cidrRange: cidrRangeValidator,
+  serviceCidrRange: cidrRangeValidator,
 });
 const aksConfigValidator = z.object({
   kind: z.literal("AKS"),
@@ -478,6 +483,7 @@ const aksConfigValidator = z.object({
   nodeGroups: aksNodeGroupValidator.array(),
   skuTier: z.enum(["UNKNOWN", "FREE", "STANDARD"]),
   cidrRange: cidrRangeValidator,
+  serviceCidrRange: cidrRangeValidator,
 });
 const clusterConfigValidator = z.discriminatedUnion("kind", [
   eksConfigValidator,
@@ -502,6 +508,7 @@ export const clusterContractValidator = z.object({
 export type ClientClusterContract = z.infer<typeof clusterContractValidator>;
 
 const preflightCheckKeyValidator = z.enum([
+  "UNKNOWN",
   "eip",
   "vcpu",
   "vpc",
@@ -516,7 +523,7 @@ type PreflightCheckKey = z.infer<typeof preflightCheckKeyValidator>;
 export const preflightCheckValidator = z.object({
   errors: z
     .object({
-      name: preflightCheckKeyValidator,
+      name: z.string().pipe(preflightCheckKeyValidator.catch("UNKNOWN")),
       error: z.object({
         message: z.string(),
         metadata: z.record(z.string()).optional(),

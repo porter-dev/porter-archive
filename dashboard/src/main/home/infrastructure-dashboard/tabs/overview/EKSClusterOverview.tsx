@@ -16,6 +16,7 @@ import NodeGroups from "../../shared/NodeGroups";
 const EKSClusterOverview: React.FC = () => {
   const { watch } = useFormContext<ClientClusterContract>();
   const region = watch("cluster.config.region");
+  const cidrRange = watch("cluster.config.cidrRange");
 
   const label = useMemo(() => {
     return SUPPORTED_AWS_REGIONS.find((x) => x.name === region)?.displayName;
@@ -37,6 +38,16 @@ const EKSClusterOverview: React.FC = () => {
         />
       </Container>
       <Spacer y={1} />
+      <Container style={{ width: "300px" }}>
+        <Text size={16}>Cluster CIDR range</Text>
+        <Spacer y={0.5} />
+        <Select
+          options={[{ value: cidrRange, label: cidrRange }]}
+          disabled={true}
+          value={cidrRange}
+        />
+        <Spacer y={1} />
+      </Container>
       <Text size={16}>Node groups</Text>
       <Spacer y={0.5} />
       <Text color="helper">
@@ -50,7 +61,10 @@ const EKSClusterOverview: React.FC = () => {
         </a>
       </Text>
       <Spacer y={1} />
-      <NodeGroups availableMachineTypes={CloudProviderAWS.machineTypes} />
+      <NodeGroups
+        availableMachineTypes={CloudProviderAWS.machineTypes}
+        isDefaultExpanded={false}
+      />
     </>
   );
 };

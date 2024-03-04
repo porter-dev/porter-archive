@@ -9,12 +9,6 @@ import AppSaveButton from "main/home/app-dashboard/app-view/AppSaveButton";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import ServiceList from "main/home/app-dashboard/validate-apply/services-settings/ServiceList";
 import { type PorterAppFormData } from "lib/porter-apps";
-import {
-  defaultSerialized,
-  deserializeService,
-} from "lib/porter-apps/services";
-
-import { useClusterResources } from "shared/ClusterResourcesContext";
 
 type Props = {
   buttonStatus: ButtonStatus;
@@ -22,7 +16,6 @@ type Props = {
 
 export const ServiceSettings: React.FC<Props> = ({ buttonStatus }) => {
   const { deploymentTarget, porterApp, latestProto } = useLatestRevision();
-  const { currentClusterResources } = useClusterResources();
 
   const {
     formState: { isSubmitting },
@@ -34,14 +27,6 @@ export const ServiceSettings: React.FC<Props> = ({ buttonStatus }) => {
       <Spacer y={0.5} />
       <ServiceList
         addNewText={"Add a new pre-deploy job"}
-        prePopulateService={deserializeService({
-          service: defaultSerialized({
-            name: "pre-deploy",
-            type: "predeploy",
-            defaultCPU: currentClusterResources.defaultCPU,
-            defaultRAM: currentClusterResources.defaultRAM,
-          }),
-        })}
         existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
         isPredeploy
         fieldArrayName={"app.predeploy"}

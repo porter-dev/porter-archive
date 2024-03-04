@@ -387,6 +387,7 @@ export const useUpdateCluster = ({
           }
         );
       }
+
       const parsed = await preflightCheckValidator.parseAsync(
         preflightCheckResp.data
       );
@@ -406,7 +407,15 @@ export const useUpdateCluster = ({
               (cloudProviderCheck) => e.name === cloudProviderCheck.name
             );
             if (!preflightCheckMatch) {
-              return undefined;
+              return {
+                title: "Unknown preflight check",
+                status: "failure" as const,
+                error: {
+                  detail:
+                    "Your cloud provider returned an unknown error. Please reach out to Porter support.",
+                  metadata: {},
+                },
+              };
             }
             return {
               title: preflightCheckMatch.displayName,
@@ -419,6 +428,7 @@ export const useUpdateCluster = ({
             };
           })
           .filter(valueExists);
+
         return {
           preflightChecks: clientPreflightChecks,
         };
@@ -497,7 +507,7 @@ export const useClusterNodeList = ({
       );
 
       const parsed = await z.array(nodeValidator).parseAsync(res.data);
-      return parsed
+      const nodes = parsed
         .map((n) => {
           const nodeGroupType = match(n.labels["porter.run/workload-kind"])
             .with("application", () => "APPLICATION" as const)
@@ -508,7 +518,21 @@ export const useClusterNodeList = ({
           if (nodeGroupType === "UNKNOWN") {
             return undefined;
           }
-          const instanceType = n.labels["node.kubernetes.io/instance-type"];
+          const instanceTypeName = n.labels["node.kubernetes.io/instance-type"];
+          if (!instanceTypeName) {
+            return undefined;
+          }
+          // TODO: use more node information to narrow down which cloud provider instance type list to check against
+          const instanceType =
+            CloudProviderAWS.machineTypes.find(
+              (i) => i.name === instanceTypeName
+            ) ??
+            CloudProviderAzure.machineTypes.find(
+              (i) => i.name === instanceTypeName
+            ) ??
+            CloudProviderGCP.machineTypes.find(
+              (i) => i.name === instanceTypeName
+            );
           if (!instanceType) {
             return undefined;
           }
@@ -518,6 +542,7 @@ export const useClusterNodeList = ({
           };
         })
         .filter(valueExists);
+      return nodes;
     },
     {
       refetchInterval,

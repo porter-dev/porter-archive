@@ -51,7 +51,10 @@ export const usePorterYaml = ({
   const { nodes } = useClusterContext();
   const { newServiceDefaultCpuCores, newServiceDefaultRamMegabytes } =
     useMemo(() => {
-      return getServiceResourceAllowances(nodes);
+      return getServiceResourceAllowances(
+        nodes,
+        currentProject?.sandbox_enabled
+      );
     }, [nodes]);
 
   const { data, status } = useQuery(

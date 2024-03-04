@@ -733,12 +733,26 @@ const DEFAULT_RESOURCE_ALLOWANCES = {
   newServiceDefaultRamMegabytes: 400,
 };
 
-export function getServiceResourceAllowances(nodes: ClientNode[]): {
+const DEFAULT_SANDBOX_RESOURCE_ALLOWANCES = {
+  maxCpuCores: 0.2,
+  newServiceDefaultCpuCores: 0.1,
+  maxRamMegabytes: 250,
+  newServiceDefaultRamMegabytes: 120,
+};
+
+export function getServiceResourceAllowances(
+  nodes: ClientNode[],
+  isSandboxEnabled?: boolean
+): {
   maxCpuCores: number;
   maxRamMegabytes: number;
   newServiceDefaultCpuCores: number;
   newServiceDefaultRamMegabytes: number;
 } {
+  if (isSandboxEnabled) {
+    return DEFAULT_SANDBOX_RESOURCE_ALLOWANCES;
+  }
+
   if (nodes.length === 0) {
     return DEFAULT_RESOURCE_ALLOWANCES;
   }

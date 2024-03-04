@@ -36,7 +36,7 @@ const Resources: React.FC<ResourcesProps> = ({
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
   const { nodes } = useClusterContext();
   const { maxRamMegabytes, maxCpuCores } = useMemo(() => {
-    return getServiceResourceAllowances(nodes);
+    return getServiceResourceAllowances(nodes, currentProject?.sandbox_enabled);
   }, [nodes]);
 
   const autoscalingEnabled = watch(

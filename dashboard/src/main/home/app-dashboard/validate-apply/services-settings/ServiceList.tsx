@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Controller,
@@ -25,6 +25,7 @@ import {
   isPredeployService,
 } from "lib/porter-apps/services";
 
+import { Context } from "shared/Context";
 import job from "assets/job.png";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
@@ -72,11 +73,15 @@ const ServiceList: React.FC<ServiceListProps> = ({
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
+  const { currentProject } = useContext(Context);
 
   const { nodes } = useClusterContext();
   const { newServiceDefaultCpuCores, newServiceDefaultRamMegabytes } =
     useMemo(() => {
-      return getServiceResourceAllowances(nodes);
+      return getServiceResourceAllowances(
+        nodes,
+        currentProject?.sandbox_enabled
+      );
     }, [nodes]);
 
   // add service modal form

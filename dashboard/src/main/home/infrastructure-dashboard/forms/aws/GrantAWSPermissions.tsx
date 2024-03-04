@@ -1,20 +1,25 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
+import { z } from "zod";
 
 import Back from "components/porter/Back";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
+import { Error as ErrorComponent } from "components/porter/Error";
 import Image from "components/porter/Image";
 import Input from "components/porter/Input";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
+import { type ButtonStatus } from "main/home/app-dashboard/app-view/AppDataContainer";
 import { CloudProviderAWS } from "lib/clusters/constants";
 import { isAWSArnAccessible } from "lib/hooks/useCloudProvider";
 import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
+import { useIntercom } from "lib/hooks/useIntercom";
 
 import GrantAWSPermissionsHelpModal from "../../modals/help/permissions/GrantAWSPermissionsHelpModal";
 import { CheckItem } from "../../modals/PreflightChecksModal";
@@ -38,9 +43,11 @@ const GrantAWSPermissions: React.FC<Props> = ({
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
   const [accountIdContinueButtonStatus, setAccountIdContinueButtonStatus] =
-    useState<string>("");
+    useState<ButtonStatus>("");
   const [isAccountAccessible, setIsAccountAccessible] = useState(false);
   const { reportToAnalytics } = useClusterAnalytics();
+  const { showIntercomWithMessage } = useIntercom();
+
   const awsAccountIdInputError = useMemo(() => {
     const regex = /^\d{12}$/;
     if (AWSAccountID.trim().length === 0) {
@@ -50,6 +57,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
     }
     return undefined;
   }, [AWSAccountID]);
+
   const externalId = useMemo(() => {
     if (!AWSAccountID || awsAccountIdInputError) {
       return "";
@@ -62,6 +70,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
 
     return externalId;
   }, [AWSAccountID, awsAccountIdInputError]);
+
   const data = useQuery(
     [
       "cloudFormationStackCreated",
@@ -71,11 +80,16 @@ const GrantAWSPermissions: React.FC<Props> = ({
       externalId,
     ],
     async () => {
-      return await isAWSArnAccessible({
-        targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
-        externalId,
-        projectId,
-      });
+      try {
+        await isAWSArnAccessible({
+          targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
+          externalId,
+          projectId,
+        });
+        return true;
+      } catch (err) {
+        return false;
+      }
     },
     {
       enabled: currentStep === 3 && !isAccountAccessible, // no need to check if it's already accessible
@@ -88,30 +102,58 @@ const GrantAWSPermissions: React.FC<Props> = ({
       setIsAccountAccessible(data.data);
     }
   }, [data]);
+
   const handleAWSAccountIDChange = (accountId: string): void => {
     setAWSAccountID(accountId);
     setIsAccountAccessible(false); // any time they change the account ID, we need to re-check if it's accessible
   };
+
   const checkIfAlreadyAccessible = async (): Promise<void> => {
     setAccountIdContinueButtonStatus("loading");
-    const isAlreadyAccessible = await isAWSArnAccessible({
-      targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
-      externalId,
-      projectId,
-    });
-    if (isAlreadyAccessible) {
+    try {
+      await isAWSArnAccessible({
+        targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
+        externalId,
+        projectId,
+      });
       setCurrentStep(3);
       setIsAccountAccessible(true);
-    } else {
-      setCurrentStep(2);
+    } catch (err) {
+      let shouldProceed = true;
+      if (axios.isAxiosError(err)) {
+        const parsed = z
+          .object({ error: z.string() })
+          .safeParse(err.response?.data);
+        if (
+          parsed.success &&
+          parsed.data.error.includes(
+            "user does not have access to all projects"
+          )
+        ) {
+          setAccountIdContinueButtonStatus(
+            <ErrorComponent
+              message={"Unable to proceed. Please reach out to support."}
+            />
+          );
+          showIntercomWithMessage({
+            message: "I need help granting AWS permissions.",
+          });
+          shouldProceed = false;
+        }
+      }
+      if (shouldProceed) {
+        setCurrentStep(2);
+        setAccountIdContinueButtonStatus("");
+      }
+    } finally {
+      void reportToAnalytics({
+        projectId,
+        step: "aws-account-id-complete",
+        awsAccountId: AWSAccountID,
+      });
     }
-    void reportToAnalytics({
-      projectId,
-      step: "aws-account-id-complete",
-      awsAccountId: AWSAccountID,
-    });
-    setAccountIdContinueButtonStatus("");
   };
+
   const directToAWSLogin = (): void => {
     const loginUrl = `https://signin.aws.amazon.com/console`;
     void reportToAnalytics({
@@ -121,6 +163,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
     });
     window.open(loginUrl, "_blank");
   };
+
   const directToCloudFormation = useCallback(async () => {
     const trustArn = process.env.TRUST_ARN
       ? process.env.TRUST_ARN
@@ -136,6 +179,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
     setCurrentStep(3);
     window.open(cloudFormationUrl, "_blank");
   }, [AWSAccountID, externalId]);
+
   const handleGrantPermissionsComplete = (): void => {
     proceed({
       cloudProviderCredentialIdentifier: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
@@ -220,6 +264,8 @@ const GrantAWSPermissions: React.FC<Props> = ({
               <Button
                 onClick={() => {
                   setCurrentStep(0);
+                  setAccountIdContinueButtonStatus("");
+                  setAWSAccountID("");
                 }}
                 color="#222222"
               >
@@ -232,7 +278,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
                 disabled={
                   awsAccountIdInputError != null ||
                   AWSAccountID.length === 0 ||
-                  accountIdContinueButtonStatus === "loading"
+                  accountIdContinueButtonStatus !== ""
                 }
                 status={accountIdContinueButtonStatus}
                 loadingText={`Checking if Porter can already access this account`}

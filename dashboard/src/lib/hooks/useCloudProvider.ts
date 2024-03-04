@@ -12,19 +12,15 @@ export const isAWSArnAccessible = async ({
   externalId: string;
   projectId: number;
 }): Promise<boolean> => {
-  try {
-    await api.createAWSIntegration(
-      "<token>",
-      {
-        aws_target_arn: targetArn,
-        aws_external_id: externalId,
-      },
-      { id: projectId }
-    );
-    return true;
-  } catch (err) {
-    return false;
-  }
+  await api.createAWSIntegration(
+    "<token>",
+    {
+      aws_target_arn: targetArn,
+      aws_external_id: externalId,
+    },
+    { id: projectId }
+  );
+  return true;
 };
 
 export const connectToAzureAccount = async ({

@@ -97,7 +97,7 @@ function clientEKSConfigToProto(
       });
     }),
     network: new AWSClusterNetwork({
-      ...(existingConfig?.network ?? {}),
+      ...(existingConfig?.network ?? { serviceCidr: "172.20.0.0/16" }), // serviceCidr explicitly added for backwards compatibility with contracts without network fields
       vpcCidr: clientConfig.cidrRange,
     }),
     loadBalancer: new LoadBalancer({

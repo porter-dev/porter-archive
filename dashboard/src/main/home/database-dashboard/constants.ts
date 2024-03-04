@@ -28,8 +28,8 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
     type: DATASTORE_TYPE_RDS,
     engine: DATASTORE_ENGINE_POSTGRES,
     supportedEngineVersions: [
-      { name: "15.4" as const, displayName: "Postgres 15.4" },
-      { name: "14.11" as const, displayName: "Postgres 14.11" },
+      { name: "15.4" as const, displayName: "PostgreSQL 15.4" },
+      { name: "14.11" as const, displayName: "PostgreSQL 14.11" },
     ],
     icon: awsRDS as string,
     description:

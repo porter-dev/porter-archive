@@ -63,6 +63,7 @@ const CreateGKEClusterForm: React.FC<Props> = ({
             },
           ],
           cidrRange: "10.78.0.0/16",
+          serviceCidrRange: "172.20.0.0/16",
         },
       },
     });

@@ -51,7 +51,10 @@ const GKEClusterOverview: React.FC = () => {
         </a>
       </Text>
       <Spacer y={1} />
-      <NodeGroups availableMachineTypes={CloudProviderGCP.machineTypes} />
+      <NodeGroups
+        availableMachineTypes={CloudProviderGCP.machineTypes}
+        isDefaultExpanded={false}
+      />
     </>
   );
 };

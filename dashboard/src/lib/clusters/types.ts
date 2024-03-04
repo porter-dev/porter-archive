@@ -418,6 +418,7 @@ const eksConfigValidator = z.object({
   region: awsRegionValidator,
   nodeGroups: eksNodeGroupValidator.array(),
   cidrRange: cidrRangeValidator,
+  serviceCidrRange: cidrRangeValidator,
   logging: z
     .object({
       isApiServerLogsEnabled: z.boolean(),
@@ -472,6 +473,7 @@ const gkeConfigValidator = z.object({
   region: gcpRegionValidator,
   nodeGroups: gkeNodeGroupValidator.array(),
   cidrRange: cidrRangeValidator,
+  serviceCidrRange: cidrRangeValidator,
 });
 const aksConfigValidator = z.object({
   kind: z.literal("AKS"),
@@ -481,6 +483,7 @@ const aksConfigValidator = z.object({
   nodeGroups: aksNodeGroupValidator.array(),
   skuTier: z.enum(["UNKNOWN", "FREE", "STANDARD"]),
   cidrRange: cidrRangeValidator,
+  serviceCidrRange: cidrRangeValidator,
 });
 const clusterConfigValidator = z.discriminatedUnion("kind", [
   eksConfigValidator,

@@ -34,7 +34,7 @@ const getNumericValue = (
   defaultValue: number,
   overrideValue?: number,
   validAsZero = false
-) => {
+): number => {
   if (!overrideValue) {
     return defaultValue;
   }
@@ -161,12 +161,16 @@ export const healthcheckValidator = z.object({
   enabled: serviceBooleanValidator,
   httpPath: serviceStringValidator.optional(),
   command: serviceStringValidator.optional(),
+  timeoutSeconds: serviceNumberValidator.optional(),
+  initialDelaySeconds: serviceNumberValidator.optional(),
 });
 export type ClientHealthCheck = z.infer<typeof healthcheckValidator>;
 export type SerializedHealthcheck = {
   enabled: boolean;
   httpPath?: string;
   command?: string;
+  timeoutSeconds?: number;
+  initialDelaySeconds?: number;
 };
 
 export function serializeHealth({
@@ -179,6 +183,8 @@ export function serializeHealth({
       enabled: health.enabled.value,
       httpPath: health.httpPath?.value,
       command: health.command?.value,
+      timeoutSeconds: health.timeoutSeconds?.value,
+      initialDelaySeconds: health.initialDelaySeconds?.value,
     }
   );
 }
@@ -200,12 +206,23 @@ export function deserializeHealthCheck({
         command: health.command
           ? ServiceField.string(health.command, override?.command)
           : ServiceField.string("", undefined),
+        timeoutSeconds: health.timeoutSeconds
+          ? ServiceField.number(health.timeoutSeconds, override?.timeoutSeconds)
+          : ServiceField.number(1, undefined),
+        initialDelaySeconds: health.initialDelaySeconds
+          ? ServiceField.number(
+              health.initialDelaySeconds,
+              override?.initialDelaySeconds
+            )
+          : ServiceField.number(15, undefined),
       }
     : setDefaults
     ? {
         enabled: ServiceField.boolean(false, undefined),
         httpPath: ServiceField.string("", undefined),
         command: ServiceField.string("", undefined),
+        timeoutSeconds: ServiceField.number(1, undefined),
+        initialDelaySeconds: ServiceField.number(15, undefined),
       }
     : undefined;
 }

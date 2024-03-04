@@ -16,7 +16,7 @@ const Advanced: React.FC<AdvancedProps> = ({ index }) => {
 
   return (
     <>
-      <Text>Termination grace period seconds</Text>
+      <Text>Termination grace period (seconds)</Text>
       <Spacer y={0.25} />
       <Container style={{ width: "400px" }}>
         <Text color="helper">

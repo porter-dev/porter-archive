@@ -62,6 +62,7 @@ const CreateAKSClusterForm: React.FC<Props> = ({
             },
           ],
           cidrRange: "10.78.0.0/16",
+          serviceCidrRange: "172.20.0.0/16", // does not actually go into contract because not supported there yet
           skuTier: "FREE" as const,
         },
       },

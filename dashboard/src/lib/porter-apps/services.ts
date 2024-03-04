@@ -245,11 +245,15 @@ export function defaultSerialized({
   const defaultWebHealthCheck: SerializedHealthcheck = {
     enabled: false,
     httpPath: "/healthz",
+    timeoutSeconds: 1,
+    initialDelaySeconds: 15,
   };
 
   const defaultWorkerHealthCheck: SerializedHealthcheck = {
     enabled: false,
     command: "./healthz.sh",
+    timeoutSeconds: 1,
+    initialDelaySeconds: 15,
   };
 
   return match(type)

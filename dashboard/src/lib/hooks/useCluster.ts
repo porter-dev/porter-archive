@@ -387,6 +387,7 @@ export const useUpdateCluster = ({
           }
         );
       }
+
       const parsed = await preflightCheckValidator.parseAsync(
         preflightCheckResp.data
       );
@@ -406,7 +407,15 @@ export const useUpdateCluster = ({
               (cloudProviderCheck) => e.name === cloudProviderCheck.name
             );
             if (!preflightCheckMatch) {
-              return undefined;
+              return {
+                title: "Unknown preflight check",
+                status: "failure" as const,
+                error: {
+                  detail:
+                    "Your cloud provider returned an unknown error. Please reach out to Porter support.",
+                  metadata: {},
+                },
+              };
             }
             return {
               title: preflightCheckMatch.displayName,
@@ -419,6 +428,7 @@ export const useUpdateCluster = ({
             };
           })
           .filter(valueExists);
+
         return {
           preflightChecks: clientPreflightChecks,
         };

@@ -508,6 +508,7 @@ export const clusterContractValidator = z.object({
 export type ClientClusterContract = z.infer<typeof clusterContractValidator>;
 
 const preflightCheckKeyValidator = z.enum([
+  "UNKNOWN",
   "eip",
   "vcpu",
   "vpc",
@@ -522,7 +523,7 @@ type PreflightCheckKey = z.infer<typeof preflightCheckKeyValidator>;
 export const preflightCheckValidator = z.object({
   errors: z
     .object({
-      name: preflightCheckKeyValidator,
+      name: z.string().pipe(preflightCheckKeyValidator.catch("UNKNOWN")),
       error: z.object({
         message: z.string(),
         metadata: z.record(z.string()).optional(),

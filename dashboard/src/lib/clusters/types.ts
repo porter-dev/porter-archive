@@ -263,7 +263,7 @@ export const nodeValidator = z.object({
 });
 export type ClientNode = {
   nodeGroupType: NodeGroupType;
-  instanceType: string;
+  instanceType: ClientMachineType;
 };
 
 // Cluster
@@ -274,6 +274,7 @@ export const clusterValidator = z.object({
   cloud_provider: cloudProviderValidator,
   cloud_provider_credential_identifier: z.string(),
   status: z.string(),
+  ingress_ip: z.string().optional().default(""),
 });
 export type SerializedCluster = z.infer<typeof clusterValidator>;
 export type ClientCluster = Omit<SerializedCluster, "cloud_provider"> & {

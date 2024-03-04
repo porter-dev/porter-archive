@@ -718,28 +718,55 @@ export function serializedServiceFromProto({
     .exhaustive();
 }
 
-export function getServiceResourceAllowances(nodes: ClientNode[] = []): {
+const SMALL_INSTANCE_UPPER_BOUND = 0.75;
+const LARGE_INSTANCE_UPPER_BOUND = 0.9;
+const NEW_SERVICE_RESOURCE_DEFAULT_MULTIPLIER = 0.125;
+
+const DEFAULT_RESOURCE_ALLOWANCES = {
+  maxCpuCores: 1.5,
+  newServiceDefaultCpuCores: 0.19,
+  maxRamMegabytes: 3100,
+  newServiceDefaultRamMegabytes: 400,
+};
+
+export function getServiceResourceAllowances(nodes: ClientNode[]): {
   maxCpuCores: number;
   maxRamMegabytes: number;
   newServiceDefaultCpuCores: number;
   newServiceDefaultRamMegabytes: number;
 } {
-  const defaultResourceAllowances = {
-    maxCpuCores: 2,
-    maxRamMegabytes: 4000,
-    newServiceDefaultCpuCores: 0.1,
-    newServiceDefaultRamMegabytes: 256,
-  };
   if (nodes.length === 0) {
-    return {
-      maxCpuCores: 0,
-      maxRamMegabytes: 0,
-      newServiceDefaultCpuCores: 0.1,
-      newServiceDefaultRamMegabytes: 256,
-    };
+    return DEFAULT_RESOURCE_ALLOWANCES;
   }
+  const maxRamApplicationInstance = nodes
+    .filter((n) => n.nodeGroupType === "APPLICATION")
+    .reduce((max, node) =>
+      node.instanceType.ramMegabytes > max.instanceType.ramMegabytes
+        ? node
+        : max
+    );
+  const multiplier =
+    maxRamApplicationInstance.instanceType.ramMegabytes > 16000
+      ? LARGE_INSTANCE_UPPER_BOUND
+      : SMALL_INSTANCE_UPPER_BOUND;
+
+  const maxCpuCores =
+    Math.floor(
+      maxRamApplicationInstance.instanceType.cpuCores * multiplier * 2
+    ) / 2; // round to nearest half
+  const maxRamMegabytes =
+    Math.round(
+      (maxRamApplicationInstance.instanceType.ramMegabytes * multiplier) / 100
+    ) * 100; // round to nearest 100 MB
   return {
-    cpu: service.cpuCores * service.instances,
-    memory: service.ramMegabytes * service.instances,
+    maxCpuCores,
+    newServiceDefaultCpuCores: Number(
+      (maxCpuCores * NEW_SERVICE_RESOURCE_DEFAULT_MULTIPLIER).toFixed(2)
+    ), // round to hundredths place
+    maxRamMegabytes,
+    newServiceDefaultRamMegabytes:
+      Math.round(
+        (maxRamMegabytes * NEW_SERVICE_RESOURCE_DEFAULT_MULTIPLIER) / 100
+      ) * 100, // round to nearest 100 MB
   };
 }

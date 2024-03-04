@@ -508,7 +508,24 @@ export const useClusterNodeList = ({
           if (nodeGroupType === "UNKNOWN") {
             return undefined;
           }
-          const instanceType = n.labels["node.kubernetes.io/instance-type"];
+          const instanceTypeName = n.labels["node.kubernetes.io/instance-type"];
+          if (!instanceTypeName) {
+            return undefined;
+          }
+          // TODO: use more node information to determine which cloud provider to check
+          let instanceType = CloudProviderAWS.machineTypes.find(
+            (i) => i.name === instanceTypeName
+          );
+          if (!instanceType) {
+            instanceType = CloudProviderAzure.machineTypes.find(
+              (i) => i.name === instanceTypeName
+            );
+          }
+          if (!instanceType) {
+            instanceType = CloudProviderGCP.machineTypes.find(
+              (i) => i.name === instanceTypeName
+            );
+          }
           if (!instanceType) {
             return undefined;
           }

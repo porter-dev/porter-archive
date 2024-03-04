@@ -1,13 +1,16 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { PorterApp } from "@porter-dev/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 import { serviceOverrides, type SourceOptions } from "lib/porter-apps";
-import { type DetectedServices } from "lib/porter-apps/services";
+import {
+  getServiceResourceAllowances,
+  type DetectedServices,
+} from "lib/porter-apps/services";
 
 import api from "shared/api";
-import { useClusterResources } from "shared/ClusterResourcesContext";
 import { Context } from "shared/Context";
 
 type PorterYamlStatus =
@@ -41,11 +44,15 @@ export const usePorterYaml = ({
   useDefaults?: boolean;
 }): PorterYamlStatus => {
   const { currentProject, currentCluster } = useContext(Context);
-  const { currentClusterResources } = useClusterResources();
   const [detectedServices, setDetectedServices] =
     useState<DetectedServices | null>(null);
   const [detectedName, setDetectedName] = useState<string | null>(null);
   const [porterYamlFound, setPorterYamlFound] = useState(false);
+  const { nodes } = useClusterContext();
+  const { newServiceDefaultCpuCores, newServiceDefaultRamMegabytes } =
+    useMemo(() => {
+      return getServiceResourceAllowances(nodes);
+    }, [nodes]);
 
   const { data, status } = useQuery(
     [
@@ -135,8 +142,8 @@ export const usePorterYaml = ({
         const { services, predeploy, build } = serviceOverrides({
           overrides: proto,
           useDefaults,
-          defaultCPU: currentClusterResources.defaultCPU,
-          defaultRAM: currentClusterResources.defaultRAM,
+          defaultCPU: newServiceDefaultCpuCores,
+          defaultRAM: newServiceDefaultRamMegabytes,
         });
 
         if (services.length || predeploy || build) {

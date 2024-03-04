@@ -9,9 +9,10 @@ import Text from "components/porter/Text";
 import TabSelector from "components/TabSelector";
 import IntelligentSlider from "main/home/app-dashboard/validate-apply/services-settings/tabs/IntelligentSlider";
 import { type AppTemplateFormData } from "main/home/cluster-dashboard/preview-environments/v2/setup-app/PreviewAppDataContainer";
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 import { type ClientAddon } from "lib/addons";
+import { getServiceResourceAllowances } from "lib/porter-apps/services";
 
-import { useClusterResources } from "shared/ClusterResourcesContext";
 import copy from "assets/copy-left.svg";
 
 import { Code, CopyContainer, CopyIcon, IdContainer } from "./shared";
@@ -27,9 +28,10 @@ type Props = {
 
 export const RedisTabs: React.FC<Props> = ({ index }) => {
   const { register, control, watch } = useFormContext<AppTemplateFormData>();
-  const {
-    currentClusterResources: { maxCPU, maxRAM },
-  } = useClusterResources();
+  const { nodes } = useClusterContext();
+  const { maxRamMegabytes, maxCpuCores } = useMemo(() => {
+    return getServiceResourceAllowances(nodes);
+  }, [nodes]);
 
   const [currentTab, setCurrentTab] = useState<"credentials" | "resources">(
     "credentials"
@@ -95,7 +97,7 @@ export const RedisTabs: React.FC<Props> = ({ index }) => {
                   label="CPUs: "
                   unit="Cores"
                   min={0.01}
-                  max={maxCPU}
+                  max={maxCpuCores}
                   color={"#3f51b5"}
                   value={value.value.toString()}
                   setValue={(e) => {
@@ -123,7 +125,7 @@ export const RedisTabs: React.FC<Props> = ({ index }) => {
                   label="RAM: "
                   unit="MB"
                   min={1}
-                  max={maxRAM}
+                  max={maxRamMegabytes}
                   color={"#3f51b5"}
                   value={value.value.toString()}
                   setValue={(e) => {

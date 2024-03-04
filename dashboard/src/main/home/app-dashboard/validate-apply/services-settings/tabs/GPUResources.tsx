@@ -12,20 +12,20 @@ import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Tag from "components/porter/Tag";
 import Text from "components/porter/Text";
-import { type ClientCluster } from "lib/clusters/types";
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 import { type PorterAppFormData } from "lib/porter-apps";
 
 import infra from "assets/cluster.svg";
 
 type Props = {
-  maxGPU: number;
   index: number;
-  cluster: ClientCluster;
 };
 
 // TODO: allow users to provision multiple GPU nodes in the slider
-const GPUResources: React.FC<Props> = ({ index, cluster }) => {
+const GPUResources: React.FC<Props> = ({ index }) => {
   const history = useHistory();
+
+  const { cluster } = useClusterContext();
 
   const [clusterModalVisible, setClusterModalVisible] =
     useState<boolean>(false);

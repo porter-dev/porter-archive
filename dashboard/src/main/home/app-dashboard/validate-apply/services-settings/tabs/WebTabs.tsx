@@ -3,7 +3,6 @@ import { match } from "ts-pattern";
 
 import Spacer from "components/porter/Spacer";
 import TabSelector from "components/TabSelector";
-import { type ClientCluster } from "lib/clusters/types";
 import { type ClientService } from "lib/porter-apps/services";
 
 import Advanced from "./Advanced";
@@ -19,30 +18,16 @@ type Props = {
       type: "web";
     };
   };
-  maxRAM: number;
-  maxCPU: number;
-  maxGPU: number;
-  clusterContainsGPUNodes: boolean;
   internalNetworkingDetails: {
     namespace: string;
     appName: string;
   };
-  clusterIngressIp: string;
-  showDisableTls: boolean;
-  cluster?: ClientCluster;
 };
 
 const WebTabs: React.FC<Props> = ({
   index,
   service,
-  maxRAM,
-  maxCPU,
-  maxGPU,
-  clusterContainsGPUNodes,
   internalNetworkingDetails,
-  clusterIngressIp,
-  showDisableTls,
-  cluster,
 }) => {
   const [currentTab, setCurrentTab] = React.useState<
     "main" | "resources" | "networking" | "advanced"
@@ -67,21 +52,9 @@ const WebTabs: React.FC<Props> = ({
             index={index}
             service={service}
             internalNetworkingDetails={internalNetworkingDetails}
-            clusterIngressIp={clusterIngressIp}
-            showDisableTls={showDisableTls}
           />
         ))
-        .with("resources", () => (
-          <Resources
-            index={index}
-            maxCPU={maxCPU}
-            maxRAM={maxRAM}
-            maxGPU={maxGPU}
-            clusterContainsGPUNodes={clusterContainsGPUNodes}
-            service={service}
-            cluster={cluster}
-          />
-        ))
+        .with("resources", () => <Resources index={index} service={service} />)
         .with("advanced", () => (
           <>
             <Health index={index} />

@@ -7,13 +7,9 @@ import { useAppStatus } from "lib/hooks/useAppStatus";
 import { useCluster } from "lib/hooks/useCluster";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
-  defaultSerialized,
-  deserializeService,
   isClientWebService,
   isClientWorkerService,
 } from "lib/porter-apps/services";
-
-import { useClusterResources } from "shared/ClusterResourcesContext";
 
 import ServiceList from "../../validate-apply/services-settings/ServiceList";
 import { type ButtonStatus } from "../AppDataContainer";
@@ -26,8 +22,6 @@ type Props = {
 
 const Overview: React.FC<Props> = ({ buttonStatus }) => {
   const { formState } = useFormContext<PorterAppFormData>();
-
-  const { currentClusterResources } = useClusterResources();
 
   const {
     porterApp,
@@ -58,14 +52,6 @@ const Overview: React.FC<Props> = ({ buttonStatus }) => {
       <Spacer y={0.5} />
       <ServiceList
         addNewText={"Add a new pre-deploy job"}
-        prePopulateService={deserializeService({
-          service: defaultSerialized({
-            name: "pre-deploy",
-            type: "predeploy",
-            defaultCPU: currentClusterResources.defaultCPU,
-            defaultRAM: currentClusterResources.defaultRAM,
-          }),
-        })}
         existingServiceNames={latestProto.predeploy ? ["pre-deploy"] : []}
         isPredeploy
         fieldArrayName={"app.predeploy"}

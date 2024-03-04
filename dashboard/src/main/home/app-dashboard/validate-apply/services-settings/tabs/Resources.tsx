@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { match } from "ts-pattern";
 
@@ -8,10 +8,12 @@ import InputSlider from "components/porter/InputSlider";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import SmartOptModal from "main/home/app-dashboard/new-app-flow/tabs/SmartOptModal";
-import { type ClientCluster } from "lib/clusters/types";
-import { closestMultiplier } from "lib/hooks/useClusterResourceLimits";
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 import { type PorterAppFormData } from "lib/porter-apps";
-import { type ClientService } from "lib/porter-apps/services";
+import {
+  getServiceResourceAllowances,
+  type ClientService,
+} from "lib/porter-apps/services";
 
 import { Context } from "shared/Context";
 
@@ -20,29 +22,22 @@ import IntelligentSlider from "./IntelligentSlider";
 
 type ResourcesProps = {
   index: number;
-  maxCPU: number;
-  maxRAM: number;
   service: ClientService;
   isPredeploy?: boolean;
-  clusterContainsGPUNodes: boolean;
-  maxGPU: number;
-  cluster?: ClientCluster;
 };
 
 const Resources: React.FC<ResourcesProps> = ({
   index,
-  maxCPU,
-  maxRAM,
-  maxGPU,
   service,
   isPredeploy = false,
-  cluster,
 }) => {
-  const { control, register, watch, setValue } =
-    useFormContext<PorterAppFormData>();
-  const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
-
+  const { control, register, watch } = useFormContext<PorterAppFormData>();
   const { currentProject } = useContext(Context);
+  const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
+  const { nodes } = useClusterContext();
+  const { maxRamMegabytes, maxCpuCores } = useMemo(() => {
+    return getServiceResourceAllowances(nodes);
+  }, [nodes]);
 
   const autoscalingEnabled = watch(
     `app.services.${index}.config.autoscaling.enabled`,
@@ -51,11 +46,6 @@ const Resources: React.FC<ResourcesProps> = ({
       value: false,
     }
   );
-
-  const smartOpt = watch(`app.services.${index}.smartOptimization`, {
-    readOnly: false,
-    value: false,
-  });
 
   return (
     <>
@@ -75,20 +65,10 @@ const Resources: React.FC<ResourcesProps> = ({
             label="CPUs: "
             unit="Cores"
             min={0.1}
-            max={maxCPU}
+            max={maxCpuCores}
             color={"#3f51b5"}
             value={value.value.toString()}
             setValue={(e) => {
-              if (smartOpt?.value) {
-                setValue(`app.services.${index}.ramMegabytes`, {
-                  readOnly: false,
-                  value: Number(
-                    (
-                      closestMultiplier(0, maxCPU, value.value) * maxRAM
-                    ).toFixed(0)
-                  ),
-                });
-              }
               onChange({
                 ...value,
                 value: e,
@@ -117,20 +97,10 @@ const Resources: React.FC<ResourcesProps> = ({
             label="RAM: "
             unit="MB"
             min={10}
-            max={maxRAM}
+            max={maxRamMegabytes}
             color={"#3f51b5"}
             value={value.value.toString()}
             setValue={(e) => {
-              if (smartOpt?.value) {
-                setValue(`app.services.${index}.cpuCores`, {
-                  readOnly: false,
-                  value: Number(
-                    (
-                      closestMultiplier(0, maxRAM, value.value) * maxCPU
-                    ).toFixed(2)
-                  ),
-                });
-              }
               onChange({
                 ...value,
                 value: e,
@@ -146,9 +116,7 @@ const Resources: React.FC<ResourcesProps> = ({
         )}
       />
 
-      {currentProject?.gpu_enabled && cluster && (
-        <GPUResources index={index} maxGPU={maxGPU} cluster={cluster} />
-      )}
+      {currentProject?.gpu_enabled && <GPUResources index={index} />}
       {match(service.config)
         .with({ type: "job" }, () => null)
         .with({ type: "predeploy" }, () => null)

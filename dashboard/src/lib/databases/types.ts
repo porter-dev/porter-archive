@@ -147,6 +147,7 @@ export type DatastoreTemplate = {
   description: string;
   disabled: boolean;
   instanceTiers: ResourceOption[];
+  supportedEngineVersions: EngineVersion[];
   formTitle: string;
   creationStateProgression: DatastoreState[];
   deletionStateProgression: DatastoreState[];
@@ -157,12 +158,19 @@ const instanceTierValidator = z.enum([
   "db.t4g.small",
   "db.t4g.medium",
   "db.t4g.large",
+  "db.m6g.large",
   "cache.t4g.micro",
   "cache.t4g.medium",
   "cache.r6g.large",
   "cache.r6g.xlarge",
 ]);
 export type InstanceTier = z.infer<typeof instanceTierValidator>;
+
+const engineVersionValidator = z.enum(["15.4", "14.11"]);
+export type EngineVersion = {
+  name: z.infer<typeof engineVersionValidator>;
+  displayName: string;
+};
 
 const rdsPostgresConfigValidator = z.object({
   type: z.literal("rds-postgres"),
@@ -176,6 +184,7 @@ const rdsPostgresConfigValidator = z.object({
     .int()
     .positive("Allocated storage must be a positive integer")
     .default(30),
+  engineVersion: engineVersionValidator,
   // the following three are not yet specified by the user during creation - only parsed from the backend after the form is submitted
   databaseName: z
     .string()

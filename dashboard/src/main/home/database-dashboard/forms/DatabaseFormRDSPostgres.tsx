@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import _ from "lodash";
 import { useForm } from "react-hook-form";
@@ -10,12 +10,14 @@ import ClickToCopy from "components/porter/ClickToCopy";
 import Container from "components/porter/Container";
 import Error from "components/porter/Error";
 import Fieldset from "components/porter/Fieldset";
+import Selector from "components/porter/Selector";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
   dbFormValidator,
   type DatastoreTemplate,
   type DbFormData,
+  type EngineVersion,
   type ResourceOption,
 } from "lib/databases/types";
 
@@ -37,7 +39,6 @@ type Props = RouteComponentProps & {
 };
 
 const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
-  const [currentStep, setCurrentStep] = useState<number>(0);
   const [isPasswordHidden, setIsPasswordHidden] = useState<boolean>(true);
 
   const dbForm = useForm<DbFormData>({
@@ -49,6 +50,7 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
         databaseName: "postgres",
         masterUsername: "postgres",
         masterUserPassword: uuidv4(),
+        engineVersion: "15.4",
       },
     },
   });
@@ -59,23 +61,11 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
     watch,
   } = dbForm;
 
-  const watchName = watch("name", "");
   const watchTier = watch("config.instanceClass", "unspecified");
-
   const watchDbName = watch("config.databaseName");
   const watchDbUsername = watch("config.masterUsername");
   const watchDbPassword = watch("config.masterUserPassword");
-
-  useEffect(() => {
-    let newStep = 0;
-    if (watchName) {
-      newStep = 1;
-    }
-    if (watchTier !== "unspecified") {
-      newStep = 3;
-    }
-    setCurrentStep(Math.max(newStep, currentStep));
-  }, [watchName, watchTier]);
+  const watchEngine = watch("config.engineVersion", "15.4");
 
   return (
     <CenterWrapper>
@@ -95,6 +85,22 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
           <DarkMatter />
           <DatabaseForm
             steps={[
+              <>
+                <Text size={16}>Specify engine version</Text>
+                <Spacer y={0.5} />
+                <Selector<EngineVersion["name"]>
+                  activeValue={watchEngine}
+                  setActiveValue={(value) => {
+                    setValue("config.engineVersion", value);
+                  }}
+                  width="300px"
+                  options={template.supportedEngineVersions.map((v) => ({
+                    value: v.name,
+                    label: v.displayName,
+                    key: v.name,
+                  }))}
+                />
+              </>,
               <>
                 <Text size={16}>Specify resources</Text>
                 <Spacer y={0.5} />
@@ -185,7 +191,7 @@ const DatabaseFormRDSPostgres: React.FC<Props> = ({ history, template }) => {
                 </Fieldset>
               </>,
             ]}
-            currentStep={currentStep}
+            currentStep={100}
             form={dbForm}
           />
         </StyledConfigureTemplate>

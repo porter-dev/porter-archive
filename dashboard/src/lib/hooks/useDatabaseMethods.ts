@@ -40,6 +40,7 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
             masterUserPassword: values.config.masterUserPassword,
             allocatedStorage: values.config.allocatedStorageGigabytes,
             instanceClass: values.config.instanceClass,
+            engineVersion: values.config.engineVersion,
           },
         },
         type: "RDS",

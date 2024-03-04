@@ -27,6 +27,10 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
     name: "Amazon RDS",
     type: DATASTORE_TYPE_RDS,
     engine: DATASTORE_ENGINE_POSTGRES,
+    supportedEngineVersions: [
+      { name: "15.4" as const, displayName: "PostgreSQL 15.4" },
+      { name: "14.11" as const, displayName: "PostgreSQL 14.11" },
+    ],
     icon: awsRDS as string,
     description:
       "Amazon Relational Database Service (RDS) is a web service that makes it easier to set up, operate, and scale a relational database in the cloud.",
@@ -53,6 +57,13 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
         ramGigabytes: 8,
         storageGigabytes: 256,
       },
+      {
+        tier: "db.m6g.large" as const,
+        label: "Large (High Performance)",
+        cpuCores: 2,
+        ramGigabytes: 8,
+        storageGigabytes: 512,
+      },
     ],
     formTitle: "Create an RDS PostgreSQL instance",
     creationStateProgression: [
@@ -73,6 +84,7 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
     name: "Amazon Aurora",
     type: DATASTORE_TYPE_RDS,
     engine: DATASTORE_ENGINE_AURORA_POSTGRES,
+    supportedEngineVersions: [],
     icon: awsRDS as string,
     description:
       "Amazon Aurora PostgreSQL is an ACID–compliant relational database engine that combines the speed, reliability, and manageability of Amazon Aurora with the simplicity and cost-effectiveness of open-source databases.",
@@ -108,6 +120,7 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
     name: "Amazon ElastiCache",
     type: DATASTORE_TYPE_ELASTICACHE,
     engine: DATASTORE_ENGINE_REDIS,
+    supportedEngineVersions: [],
     icon: awsElastiCache as string,
     description:
       "Amazon ElastiCache is a web service that makes it easy to deploy, operate, and scale an in-memory data store or cache in the cloud.",
@@ -160,6 +173,7 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
     name: "Amazon ElastiCache",
     type: DATASTORE_TYPE_ELASTICACHE,
     engine: DATASTORE_ENGINE_MEMCACHED,
+    supportedEngineVersions: [],
     icon: awsElastiCache as string,
     description:
       "Currently unavailable. Please contact support@porter.run for more details.",

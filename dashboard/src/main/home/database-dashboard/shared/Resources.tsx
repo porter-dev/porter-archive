@@ -70,7 +70,7 @@ const StyledResourceOption = styled.div<{ selected?: boolean }>`
   background: ${(props) => props.theme.clickable.bg};
   border: 1px solid
     ${(props) => (props.selected ? "#ffffff" : props.theme.border)};
-  width: 350px;
+  width: 600px;
   padding: 10px 15px;
   border-radius: 5px;
   display: flex;

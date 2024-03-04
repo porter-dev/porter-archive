@@ -54,7 +54,7 @@ export const SUPPORTED_DATASTORE_TEMPLATES: DatastoreTemplate[] = [
         storageGigabytes: 256,
       },
       {
-        tier: "db.m7g.large" as const,
+        tier: "db.m6g.large" as const,
         label: "Large (High Performance)",
         cpuCores: 2,
         ramGigabytes: 8,

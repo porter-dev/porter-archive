@@ -139,6 +139,7 @@ func (p *CreateAWSHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			res.CloudProviderCredentialIdentifier = credResp.Msg.CredentialsIdentifier
+			res.PercentCompleted = credResp.Msg.PercentCompleted
 		} else {
 			credReq := porterv1.CreateAssumeRoleChainRequest{ //nolint:staticcheck // being deprecated by the above UpdateCloudProviderCredentials
 				ProjectId:       int64(project.ID),

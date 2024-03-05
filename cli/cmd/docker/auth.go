@@ -114,7 +114,10 @@ func (a *AuthGetter) GetGARCredentials(ctx context.Context, serverURL string, pr
 		return "", "", err
 	}
 
-	serverURL = parsedURL.String()
+	pathParts := strings.Split(parsedURL.Path, "/")
+	if len(pathParts) > 0 {
+		parsedURL.Path = strings.Join(pathParts[0:len(pathParts)-1], "/")
+	}
 
 	var token string
 
@@ -123,7 +126,7 @@ func (a *AuthGetter) GetGARCredentials(ctx context.Context, serverURL string, pr
 	} else {
 		// get a token from the server
 		tokenResp, err := a.Client.GetGARAuthorizationToken(ctx, projID, &types.GetRegistryGARTokenRequest{
-			ServerURL: serverURL,
+			ServerURL: parsedURL.String(),
 		})
 		if err != nil {
 			return "", "", err

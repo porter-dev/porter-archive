@@ -131,10 +131,6 @@ func (a *AuthGetter) GetGARCredentials(ctx context.Context, serverURL string, pr
 
 		token = tokenResp.Token
 
-		if !strings.HasPrefix(serverURL, "https://") {
-			serverURL = "https://" + serverURL
-		}
-
 		// set the token in cache
 		a.Cache.Set(serverURL, &AuthEntry{
 			AuthorizationToken: token,

@@ -1,36 +1,37 @@
-import React, { useContext, useEffect, useState, useMemo } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import _ from "lodash";
-import styled from "styled-components";
-import { Link } from "react-router-dom";
 import { withRouter, type RouteComponentProps } from "react-router";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
 
-import { Context } from "shared/Context";
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import Loading from "components/Loading";
+import Button from "components/porter/Button";
+import Container from "components/porter/Container";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import Fieldset from "components/porter/Fieldset";
+import Image from "components/porter/Image";
+import SearchBar from "components/porter/SearchBar";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import Toggle from "components/porter/Toggle";
+import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+
 import api from "shared/api";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { Context } from "shared/Context";
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
-import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
-
+import doppler from "assets/doppler.png";
+import envGroupGrad from "assets/env-group-grad.svg";
 import grid from "assets/grid.png";
+import key from "assets/key.svg";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
 import time from "assets/time.png";
-import key from "assets/key.svg";
-import doppler from "assets/doppler.png";
-import envGroupGrad from "assets/env-group-grad.svg";
 
-import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import Spacer from "components/porter/Spacer";
-import Loading from "components/Loading";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Text from "components/porter/Text";
-import Button from "components/porter/Button";
-import Container from "components/porter/Container";
-import Image from "components/porter/Image";
-import SearchBar from "components/porter/SearchBar";
-import Toggle from "components/porter/Toggle";
-import Fieldset from "components/porter/Fieldset";
-import {envGroupPath} from "../../../shared/util";
+import { envGroupPath } from "../../../shared/util";
 
 type Props = RouteComponentProps & WithAuthProps;
 
@@ -79,8 +80,30 @@ const EnvDashboard: React.FC<Props> = (props) => {
   }, [currentProject, currentCluster]);
 
   const renderContents = (): React.ReactNode => {
+    if (currentProject?.sandbox_enabled) {
+      return (
+        <DashboardPlaceholder>
+          <Text size={16}>
+            Environment groups are not enabled for sandbox users
+          </Text>
+          <Spacer y={0.5} />
+          <Text color={"helper"}>
+            Eject to your own cloud account to enable environment groups.
+          </Text>
+          <Spacer y={1} />
+          <ShowIntercomButton
+            alt
+            message="I would like to eject to my own cloud account"
+            height="35px"
+          >
+            Request ejection
+          </ShowIntercomButton>
+        </DashboardPlaceholder>
+      );
+    }
+
     if (currentCluster?.status === "UPDATING_UNAVAILABLE") {
-      return <ClusterProvisioningPlaceholder />
+      return <ClusterProvisioningPlaceholder />;
     }
 
     if (!isLoading && (!envGroups || envGroups.length === 0)) {
@@ -88,13 +111,12 @@ const EnvDashboard: React.FC<Props> = (props) => {
         <DashboardPlaceholder>
           <Text size={16}>No environment groups found</Text>
           <Spacer y={0.5} />
-          <Text color={"helper"}>Get started by creating an environment group.</Text>
+          <Text color={"helper"}>
+            Get started by creating an environment group.
+          </Text>
           <Spacer y={1} />
           <Link to={envGroupPath(currentProject, "/new")}>
-            <Button
-              height="35px"
-              alt
-            >
+            <Button height="35px" alt>
               Create a new env group <Spacer inline x={1} />{" "}
               <i className="material-icons" style={{ fontSize: "18px" }}>
                 east
@@ -102,7 +124,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
             </Button>
           </Link>
         </DashboardPlaceholder>
-      )
+      );
     }
 
     const isAuthorizedToAdd = props.isAuthorized("env_group", "", [
@@ -124,25 +146,17 @@ const EnvDashboard: React.FC<Props> = (props) => {
           <Spacer inline x={1} />
           <Toggle
             items={[
-              { 
+              {
                 label: (
-                  <Image 
-                    src={grid}
-                    size={12}
-                    style={{ margin: "0 5px" }}
-                  />
+                  <Image src={grid} size={12} style={{ margin: "0 5px" }} />
                 ),
-                value: "grid"
+                value: "grid",
               },
-              { 
+              {
                 label: (
-                  <Image
-                    src={list}
-                    size={12}
-                    style={{ margin: "0 5px" }}
-                  />
+                  <Image src={list} size={12} style={{ margin: "0 5px" }} />
                 ),
-                value: "list"
+                value: "list",
               },
             ]}
             active={view}
@@ -157,9 +171,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
           <Spacer inline x={1} />
           {isAuthorizedToAdd && (
             <Link to={envGroupPath(currentProject, "/new")}>
-              <Button
-                height="30px"
-              >
+              <Button height="30px">
                 <I className="material-icons">add</I> New env group
               </Button>
             </Link>
@@ -170,11 +182,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
         {!isLoading && filteredEnvGroups.length === 0 ? (
           <Fieldset>
             <Container row>
-              <Image 
-                src={notFound}
-                size={13}
-                opacity={0.65}
-              />
+              <Image src={notFound} size={13} opacity={0.65} />
               <Spacer inline x={1} />
               <Text color="helper">
                 No matching environment groups were found.
@@ -185,46 +193,48 @@ const EnvDashboard: React.FC<Props> = (props) => {
           <Loading offset="-150px" />
         ) : view === "grid" ? (
           <GridList>
-            {(filteredEnvGroups ?? []).map(
-              (envGroup, i: number) => {
-                return (
-                    <Block to={envGroupPath(currentProject, `/${envGroup.name}`)} key={i}>
-                      <Container row>
-                        <Image
-                          src={envGroup.type === "doppler" ? doppler : key} 
-                          size={20} 
-                        />
-                        <Spacer inline x={.7} />
-                        <Text size={14}>{envGroup.name}</Text>
-                      </Container>
-                      <Container row>
-                        <Image opacity={0.4} src={time} size={14} />
-                        <Spacer inline x={.5} />
-                        <Text size={13} color="#ffffff44">
-                          {readableDate(envGroup.created_at)}
-                        </Text>
-                      </Container>
-                    </Block>
-                );
-              }
-            )}
+            {(filteredEnvGroups ?? []).map((envGroup, i: number) => {
+              return (
+                <Block
+                  to={envGroupPath(currentProject, `/${envGroup.name}`)}
+                  key={i}
+                >
+                  <Container row>
+                    <Image
+                      src={envGroup.type === "doppler" ? doppler : key}
+                      size={20}
+                    />
+                    <Spacer inline x={0.7} />
+                    <Text size={14}>{envGroup.name}</Text>
+                  </Container>
+                  <Container row>
+                    <Image opacity={0.4} src={time} size={14} />
+                    <Spacer inline x={0.5} />
+                    <Text size={13} color="#ffffff44">
+                      {readableDate(envGroup.created_at)}
+                    </Text>
+                  </Container>
+                </Block>
+              );
+            })}
           </GridList>
         ) : (
           <List>
             {(filteredEnvGroups ?? []).map((envGroup: any, i: number) => {
               return (
-                <Row to={envGroupPath(currentProject, `/${envGroup.name}`)} key={i}>
+                <Row
+                  to={envGroupPath(currentProject, `/${envGroup.name}`)}
+                  key={i}
+                >
                   <Container row>
-                    <Image
-                      src={envGroup.type === "doppler" ? doppler : key}
-                    />
-                    <Spacer inline x={.7} />
+                    <Image src={envGroup.type === "doppler" ? doppler : key} />
+                    <Spacer inline x={0.7} />
                     <Text size={14}>{envGroup.name}</Text>
                   </Container>
                   <Spacer height="15px" />
                   <Container row>
                     <Image opacity={0.4} src={time} size={14} />
-                    <Spacer inline x={.5} />
+                    <Spacer inline x={0.5} />
                     <Text size={13} color="#ffffff44">
                       {readableDate(envGroup.created_at)}
                     </Text>
@@ -254,12 +264,13 @@ const EnvDashboard: React.FC<Props> = (props) => {
 
 export default withRouter(withAuth(EnvDashboard));
 
-const Row = styled(Link) <{ isAtBottom?: boolean }>`
+const Row = styled(Link)<{ isAtBottom?: boolean }>`
   cursor: pointer;
   display: block;
   padding: 15px;
-  border-bottom: ${props => props.isAtBottom ? "none" : "1px solid #494b4f"};
-  background: ${props => props.theme.clickable.bg};
+  border-bottom: ${(props) =>
+    props.isAtBottom ? "none" : "1px solid #494b4f"};
+  background: ${(props) => props.theme.clickable.bg};
   position: relative;
   border: 1px solid #494b4f;
   border-radius: 5px;
@@ -278,10 +289,10 @@ const Block = styled(Link)`
   justify-content: space-between;
   cursor: pointer;
   padding: 20px;
-  color: ${props => props.theme.text.primary};
+  color: ${(props) => props.theme.text.primary};
   position: relative;
   border-radius: 5px;
-  background: ${props => props.theme.clickable.bg};
+  background: ${(props) => props.theme.clickable.bg};
   border: 1px solid #494b4f;
   transition: all 0.2s;
   :hover {

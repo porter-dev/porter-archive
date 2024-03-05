@@ -109,6 +109,7 @@ jobs:
         uses: porter-dev/porter-run-job-action@v0.1.0
         with:
           job: migrate
+          host: https://dashboard.internal-tools.porter.run 
           cluster: 9
           project: 5
           token: ${{ secrets.PORTER_PRODUCTION_DEPLOYMENT }}

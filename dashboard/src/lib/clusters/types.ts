@@ -6,7 +6,14 @@ import { checkGroupValidator } from "main/home/compliance-dashboard/types";
 import { CloudProviderAWS } from "./constants";
 
 // Cloud
-export const cloudProviderValidator = z.enum(["AWS", "GCP", "Azure", "Local"]);
+export const cloudProviderValidator = z.enum([
+  "AWS",
+  "GCP",
+  "Azure",
+  "Local",
+  "Hosted",
+  "UNKNOWN",
+]);
 export type CloudProvider = z.infer<typeof cloudProviderValidator>;
 export type ClientCloudProvider = {
   name: CloudProvider;
@@ -31,6 +38,12 @@ export type ClientCloudProvider = {
       }
     | {
         kind: "Local";
+      }
+    | {
+        kind: "Hosted";
+      }
+    | {
+        kind: "UNKNOWN";
       };
 };
 const awsRegionValidator = z.enum([
@@ -271,7 +284,7 @@ export const clusterValidator = z.object({
   id: z.number(),
   name: z.string(),
   vanity_name: z.string(),
-  cloud_provider: cloudProviderValidator,
+  cloud_provider: z.string().pipe(cloudProviderValidator.catch("UNKNOWN")),
   cloud_provider_credential_identifier: z.string(),
   status: z.string(),
   ingress_ip: z.string().optional().default(""),

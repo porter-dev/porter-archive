@@ -26,14 +26,16 @@ const ClusterHeader: React.FC = () => {
         <Text size={21}>{cluster.vanity_name}</Text>
       </Container>
       <Spacer y={0.5} />
-      <CreatedAtContainer>
-        <div style={{ flexShrink: 0 }}>
-          <Text color="#aaaabb66">
-            Updated {readableDate(cluster.contract.updated_at)}
-          </Text>
-        </div>
-        <Spacer y={0.5} />
-      </CreatedAtContainer>
+      {cluster.contract != null && (
+        <CreatedAtContainer>
+          <div style={{ flexShrink: 0 }}>
+            <Text color="#aaaabb66">
+              Updated {readableDate(cluster.contract.updated_at)}
+            </Text>
+          </div>
+          <Spacer y={0.5} />
+        </CreatedAtContainer>
+      )}
       {isClusterUpdating ||
         (applicationNodes.length !== 0 && (
           <>

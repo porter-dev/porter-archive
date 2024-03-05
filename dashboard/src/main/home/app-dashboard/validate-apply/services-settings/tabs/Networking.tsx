@@ -39,7 +39,7 @@ const Networking: React.FC<NetworkingProps> = ({
 
   const showDisableTls = useMemo(() => {
     return (
-      cluster.contract.config.cluster.config.kind === "EKS" &&
+      cluster.contract?.config.cluster.config.kind === "EKS" &&
       cluster.contract.config.cluster.config.loadBalancer.type === "ALB"
     );
   }, [cluster]);

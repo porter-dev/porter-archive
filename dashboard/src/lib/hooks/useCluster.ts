@@ -78,18 +78,18 @@ export const useClusterList = (): TUseClusterList => {
           const latestContract = latestContracts.find(
             (contract) => contract.cluster_id === c.id
           );
-          // if this cluster has no latest contract, don't include it
+          // if this cluster has no latest contract, don't include it in the response
           if (!latestContract) {
-            return undefined;
+            return c;
           }
           const latestClientContract = clientClusterContractFromProto(
             Contract.fromJsonString(atob(latestContract.base64_contract), {
               ignoreUnknownFields: true,
             })
           );
-          // if we can't parse the latest contract, don't include it
+          // if we can't parse the latest contract, don't include it in the response
           if (!latestClientContract) {
-            return undefined;
+            return c;
           }
           return {
             ...c,
@@ -152,23 +152,6 @@ export const useCluster = ({
         return;
       }
 
-      // TODO: refactor this
-      if (currentProject?.sandbox_enabled) {
-        return {
-          ...parsed,
-          cloud_provider: cloudProviderMatch,
-          contract: {
-            config: {
-              cluster: {
-                config: {
-                  kind: "Hosted",
-                },
-              },
-            },
-          },
-        };
-      }
-
       // get the latest contract
       const latestContractsRes = await api.getContracts(
         "<token>",
@@ -180,7 +163,10 @@ export const useCluster = ({
         .parseAsync(latestContractsRes.data);
 
       if (latestContracts.length !== 1) {
-        return;
+        return {
+          ...parsed,
+          cloud_provider: cloudProviderMatch,
+        };
       }
       const latestClientContract = clientClusterContractFromProto(
         Contract.fromJsonString(atob(latestContracts[0].base64_contract), {
@@ -188,7 +174,10 @@ export const useCluster = ({
         })
       );
       if (!latestClientContract) {
-        return;
+        return {
+          ...parsed,
+          cloud_provider: cloudProviderMatch,
+        };
       }
 
       // get the latest state

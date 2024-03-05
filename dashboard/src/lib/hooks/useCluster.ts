@@ -78,18 +78,18 @@ export const useClusterList = (): TUseClusterList => {
           const latestContract = latestContracts.find(
             (contract) => contract.cluster_id === c.id
           );
-          // if this cluster has no latest contract, don't include it
+          // if this cluster has no latest contract, don't include it in the response
           if (!latestContract) {
-            return undefined;
+            return c;
           }
           const latestClientContract = clientClusterContractFromProto(
             Contract.fromJsonString(atob(latestContract.base64_contract), {
               ignoreUnknownFields: true,
             })
           );
-          // if we can't parse the latest contract, don't include it
+          // if we can't parse the latest contract, don't include it in the response
           if (!latestClientContract) {
-            return undefined;
+            return c;
           }
           return {
             ...c,

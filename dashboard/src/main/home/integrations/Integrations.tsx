@@ -21,10 +21,10 @@ const Integrations: React.FC<PropsType> = (props) => {
 
   const IntegrationCategoryStrings = useMemo(() => {
     if (!enableGitlab) {
-      return ["registry", "slack", "doppler"];
+      return ["slack", "doppler"];
     }
 
-    return ["registry", "slack", "doppler", "gitlab"];
+    return ["slack", "doppler", "gitlab"];
   }, [enableGitlab]);
 
   return (

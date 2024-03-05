@@ -106,6 +106,7 @@ jobs:
           PORTER_TOKEN: ${{ secrets.PORTER_PRODUCTION_DEPLOYMENT }}  
 
       - name: Run Migration Job
+        timeout-minutes: 20
         uses: porter-dev/porter-run-job-action@v0.1.0
         with:
           job: migrate

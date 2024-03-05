@@ -152,6 +152,23 @@ export const useCluster = ({
         return;
       }
 
+      // TODO: refactor this
+      if (currentProject?.sandbox_enabled) {
+        return {
+          ...parsed,
+          cloud_provider: cloudProviderMatch,
+          contract: {
+            config: {
+              cluster: {
+                config: {
+                  kind: "Hosted",
+                },
+              },
+            },
+          },
+        };
+      }
+
       // get the latest contract
       const latestContractsRes = await api.getContracts(
         "<token>",
@@ -161,6 +178,7 @@ export const useCluster = ({
       const latestContracts = await z
         .array(contractValidator)
         .parseAsync(latestContractsRes.data);
+
       if (latestContracts.length !== 1) {
         return;
       }

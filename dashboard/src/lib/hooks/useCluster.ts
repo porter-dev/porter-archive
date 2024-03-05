@@ -152,14 +152,6 @@ export const useCluster = ({
         return;
       }
 
-      // TODO: refactor this
-      if (currentProject?.sandbox_enabled) {
-        return {
-          ...parsed,
-          cloud_provider: cloudProviderMatch,
-        };
-      }
-
       // get the latest contract
       const latestContractsRes = await api.getContracts(
         "<token>",
@@ -171,7 +163,10 @@ export const useCluster = ({
         .parseAsync(latestContractsRes.data);
 
       if (latestContracts.length !== 1) {
-        return;
+        return {
+          ...parsed,
+          cloud_provider: cloudProviderMatch,
+        };
       }
       const latestClientContract = clientClusterContractFromProto(
         Contract.fromJsonString(atob(latestContracts[0].base64_contract), {
@@ -179,7 +174,10 @@ export const useCluster = ({
         })
       );
       if (!latestClientContract) {
-        return;
+        return {
+          ...parsed,
+          cloud_provider: cloudProviderMatch,
+        };
       }
 
       // get the latest state

@@ -292,6 +292,7 @@ export const clusterValidator = z.object({
 export type SerializedCluster = z.infer<typeof clusterValidator>;
 export type ClientCluster = Omit<SerializedCluster, "cloud_provider"> & {
   cloud_provider: ClientCloudProvider;
+  // Contract is optional because some clusters seem to not have one
   contract?: APIContract & {
     config: ClientClusterContract;
   };

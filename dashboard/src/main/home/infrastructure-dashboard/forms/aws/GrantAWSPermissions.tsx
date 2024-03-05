@@ -341,7 +341,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
             <Spacer y={0.5} />
             <Text color="helper">
               Checking if Porter can access AWS account with ID {AWSAccountID}
-              . This can take up to a minute.
+              . This can take up to 10 minutes.
               <Spacer inline width="10px" />
               <Link
                 hasunderline

@@ -1639,9 +1639,37 @@ export const CloudProviderLocal: ClientCloudProvider = {
     kind: "Local",
   },
 };
+export const CloudProviderHosted: ClientCloudProvider = {
+  name: "Hosted",
+  displayName: "Hosted",
+  icon: infra,
+  regions: [],
+  machineTypes: [],
+  baseCost: 0,
+  newClusterDefaultContract: new Contract({}),
+  preflightChecks: [],
+  config: {
+    kind: "Hosted",
+  },
+};
+export const CloudProviderUnknown: ClientCloudProvider = {
+  name: "UNKNOWN",
+  displayName: "Unknown",
+  icon: infra,
+  regions: [],
+  machineTypes: [],
+  baseCost: 0,
+  newClusterDefaultContract: new Contract({}),
+  preflightChecks: [],
+  config: {
+    kind: "UNKNOWN",
+  },
+};
 export const SUPPORTED_CLOUD_PROVIDERS = [
   CloudProviderAWS,
   CloudProviderGCP,
   CloudProviderAzure,
   CloudProviderLocal,
+  CloudProviderHosted,
+  CloudProviderUnknown,
 ];

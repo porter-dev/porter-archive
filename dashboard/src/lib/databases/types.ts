@@ -42,7 +42,7 @@ export const datastoreValidator = z.object({
     "DELETING_RECORD",
     "DELETED",
   ]),
-  cloud_provider: cloudProviderValidator,
+  cloud_provider: z.string().pipe(cloudProviderValidator.catch("UNKNOWN")),
   cloud_provider_credential_identifier: z.string(),
 });
 

@@ -71,9 +71,53 @@ jobs:
       - name: Set Github tag
         id: vars
         run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-      - name: Update Porter API
+
+      - name: Build Image
         timeout-minutes: 20
-        uses: porter-dev/porter-update-action@v0.1.0
+        uses: porter-dev/porter-cli-action@v0.1.0
+        with:
+          command: update build --app porter-ui --tag ${{ steps.vars.outputs.sha_short }} --stream
+        env:
+          PORTER_HOST: https://dashboard.internal-tools.porter.run
+          PORTER_CLUSTER: 9
+          PORTER_PROJECT: 5
+          PORTER_TOKEN: ${{ secrets.PORTER_PRODUCTION_DEPLOYMENT }}   
+        
+      - name: Push Image
+        timeout-minutes: 20
+        uses: porter-dev/porter-cli-action@v0.1.0
+        with:
+          command: update push --app porter-ui --tag ${{ steps.vars.outputs.sha_short }} --stream
+        env:
+          PORTER_HOST: https://dashboard.internal-tools.porter.run
+          PORTER_CLUSTER: 9
+          PORTER_PROJECT: 5
+          PORTER_TOKEN: ${{ secrets.PORTER_PRODUCTION_DEPLOYMENT }}  
+
+      - name: Update Porter Migration Job
+        timeout-minutes: 20
+        uses: porter-dev/porter-cli-action@v0.1.0
+        with:
+          command: update config --app migrate --tag ${{ steps.vars.outputs.sha_short }} --stream
+        env:
+          PORTER_HOST: https://dashboard.internal-tools.porter.run
+          PORTER_CLUSTER: 9
+          PORTER_PROJECT: 5
+          PORTER_TOKEN: ${{ secrets.PORTER_PRODUCTION_DEPLOYMENT }}  
+
+      - name: Run Migration Job
+        timeout-minutes: 20
+        uses: porter-dev/porter-run-job-action@v0.1.0
+        with:
+          job: migrate
+          host: https://dashboard.internal-tools.porter.run 
+          cluster: 9
+          project: 5
+          token: ${{ secrets.PORTER_PRODUCTION_DEPLOYMENT }}
+
+      - name: Update Porter Server
+        timeout-minutes: 20
+        uses: porter-dev/porter-update-config-action@v0.1.0
         with:
           app: porter-ui
           cluster: "9"
@@ -82,6 +126,7 @@ jobs:
           project: "5"
           tag: ${{ steps.vars.outputs.sha_short }}
           token: ${{ secrets.PORTER_PRODUCTION_DEPLOYMENT }}
+          
       - name: Update Porter Auth
         timeout-minutes: 20
         uses: porter-dev/porter-update-config-action@v0.1.0

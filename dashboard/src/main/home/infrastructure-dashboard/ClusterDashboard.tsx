@@ -171,32 +171,36 @@ const ClusterDashboard: React.FC = () => {
                     <Spacer inline width="11px" />
                     <Text size={14}>{cluster.vanity_name}</Text>
                   </Container>
-                  <Container row>
-                    <Tag hoverable={false}>
+                  {cluster.contract != null && (
+                    <>
                       <Container row>
-                        <Icon src={globe} height="13px" />
-                        <Spacer inline x={0.5} />
-                        {cluster.contract.config.cluster.config?.region}
+                        <Tag hoverable={false}>
+                          <Container row>
+                            <Icon src={globe} height="13px" />
+                            <Spacer inline x={0.5} />
+                            {cluster.contract.config.cluster.config?.region}
+                          </Container>
+                        </Tag>
                       </Container>
-                    </Tag>
-                  </Container>
-                  <Container row>
-                    <StatusDot
-                      status={
-                        cluster.status === "READY" ? "available" : "pending"
-                      }
-                      heightPixels={8}
-                    />
-                    <Spacer inline x={0.5} />
-                    <Text color="helper">
-                      {cluster.status === "READY" ? "Running" : "Updating"}
-                    </Text>
-                    <Spacer inline x={1} />
-                    <SmallIcon opacity="0.3" src={time} />
-                    <Text size={13} color="#ffffff44">
-                      {readableDate(cluster.contract.updated_at)}
-                    </Text>
-                  </Container>
+                      <Container row>
+                        <StatusDot
+                          status={
+                            cluster.status === "READY" ? "available" : "pending"
+                          }
+                          heightPixels={8}
+                        />
+                        <Spacer inline x={0.5} />
+                        <Text color="helper">
+                          {cluster.status === "READY" ? "Running" : "Updating"}
+                        </Text>
+                        <Spacer inline x={1} />
+                        <SmallIcon opacity="0.3" src={time} />
+                        <Text size={13} color="#ffffff44">
+                          {readableDate(cluster.contract.updated_at)}
+                        </Text>
+                      </Container>
+                    </>
+                  )}
                 </Block>
               </Link>
             );
@@ -226,19 +230,21 @@ const ClusterDashboard: React.FC = () => {
                   </Container>
                 </Container>
                 <Spacer y={0.5} />
-                <Container row>
+                {cluster.contract != null && (
                   <Container row>
-                    <SmallIcon opacity="0.3" src={globe} />
-                    <Text size={13} color="#ffffff44">
-                      {cluster.contract.config.cluster.config.region}
-                    </Text>
-                    <Spacer inline x={1} />
-                    <SmallIcon opacity="0.3" src={time} />
-                    <Text size={13} color="#ffffff44">
-                      {readableDate(cluster.contract.updated_at)}
-                    </Text>
+                    <Container row>
+                      <SmallIcon opacity="0.3" src={globe} />
+                      <Text size={13} color="#ffffff44">
+                        {cluster.contract.config.cluster.config.region}
+                      </Text>
+                      <Spacer inline x={1} />
+                      <SmallIcon opacity="0.3" src={time} />
+                      <Text size={13} color="#ffffff44">
+                        {readableDate(cluster.contract.updated_at)}
+                      </Text>
+                    </Container>
                   </Container>
-                </Container>
+                )}
               </Row>
             );
           })}

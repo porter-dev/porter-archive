@@ -42,12 +42,14 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
     useClusterFormContext();
 
   useEffect(() => {
-    reset(cluster.contract.config);
-    setCurrentContract(
-      Contract.fromJsonString(atob(cluster.contract.base64_contract), {
-        ignoreUnknownFields: true,
-      })
-    );
+    if (cluster.contract) {
+      reset(cluster.contract.config);
+      setCurrentContract(
+        Contract.fromJsonString(atob(cluster.contract.base64_contract), {
+          ignoreUnknownFields: true,
+        })
+      );
+    }
   }, [cluster]);
 
   const tabs = useMemo(() => {

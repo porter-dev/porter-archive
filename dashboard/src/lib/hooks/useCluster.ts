@@ -157,15 +157,6 @@ export const useCluster = ({
         return {
           ...parsed,
           cloud_provider: cloudProviderMatch,
-          contract: {
-            config: {
-              cluster: {
-                config: {
-                  kind: "Hosted",
-                },
-              },
-            },
-          },
         };
       }
 

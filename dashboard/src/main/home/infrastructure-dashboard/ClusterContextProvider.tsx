@@ -150,7 +150,7 @@ const ClusterContextProvider: React.FC<ClusterContextProviderProps> = ({
   }, [paramsExist, clusterId, currentProject?.id]);
   const isClusterUpdating = useMemo(() => {
     return cluster?.contract?.condition === "" ?? false;
-  }, [cluster?.contract.condition]);
+  }, [cluster?.contract?.condition]);
 
   if (isLoading || !paramsExist) {
     return <Loading />;

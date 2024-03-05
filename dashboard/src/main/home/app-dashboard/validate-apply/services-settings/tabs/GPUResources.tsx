@@ -34,14 +34,14 @@ const GPUResources: React.FC<Props> = ({ index }) => {
 
   const canEnableGPU = useMemo(() => {
     return (
-      cluster.contract.config.cluster.config.nodeGroups.some(
+      cluster.contract?.config.cluster.config.nodeGroups.some(
         (ng) => ng.nodeGroupType === "CUSTOM"
       ) && cluster.contract.condition === "SUCCESS"
     );
   }, [cluster]);
 
   const clusterIsUpdating = useMemo(() => {
-    return cluster.contract.condition === "";
+    return cluster.contract?.condition === "";
   }, [cluster]);
 
   return (

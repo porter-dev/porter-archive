@@ -1,6 +1,7 @@
 import React from "react";
 import { match } from "ts-pattern";
 
+import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 
 import { useClusterContext } from "../../ClusterContextProvider";
@@ -12,6 +13,9 @@ import GKEClusterOverview from "./GKEClusterOverview";
 const ClusterOverview: React.FC = () => {
   const { cluster, isClusterUpdating } = useClusterContext();
 
+  if (!cluster.contract) {
+    return <Fieldset>Unable to load overview for this cluster.</Fieldset>;
+  }
   return (
     <>
       {match(cluster.contract.config.cluster.config)

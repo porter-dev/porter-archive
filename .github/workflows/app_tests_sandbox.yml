@@ -1,0 +1,19 @@
+on:
+  workflow_run:
+    workflows: ["Deploy to porter-sandbox"]
+    branches: [master]
+    types:
+      - completed
+
+name: Run sandbox app tests
+jobs:
+  call-base-workflow:
+    uses: ./.github/workflows/app_tests_base.yml
+    with:
+      stage: sandbox
+      project: "242"
+      cluster: "240"
+      host: https://sandbox.porter.run
+    secrets:
+      token: ${{ secrets.APP_TESTS_SANDBOX_TOKEN }}
+      slack_webhook_url: ${{ secrets.APP_INTEGRATION_SLACK_WEBHOOK }}

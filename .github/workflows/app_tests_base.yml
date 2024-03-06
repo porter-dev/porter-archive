@@ -1,10 +1,28 @@
 on:
-  workflow_run:
-    workflows: ["Deploy Porter to Internal Tooling"]
-    branches: [master]
-    types:
-      - completed
-name: Run internal tools app tests
+  workflow_call:
+    inputs:
+      stage:
+        required: true
+        type: string
+      project:
+        required: true
+        type: string
+      cluster:
+        required: true
+        type: string
+      host:
+        required: true
+        type: string
+    secrets:
+      token:
+        required: true
+      slack_webhook_url:
+        required: true
+
+env:
+  repo: porter
+
+name: Run app tests
 jobs:
   integration-tests:
     name: Run app tests
@@ -22,11 +40,12 @@ jobs:
       - name: Run test
         uses: ./.github/actions
         with:
-          host: https://dashboard.internal-tools.porter.run
-          project: "301"
-          cluster: "142"
-          token: ${{ secrets.APP_INTEGRATION_PROJECT_TOKEN }}
+          host: ${{ inputs.host }}
+          project: ${{ inputs.project }}
+          cluster: ${{ inputs.cluster }}
+          token: ${{ secrets.token }}
           yaml_file: ./test-yamls/${{ matrix.yaml }}.yaml
+          app_name: ${{ env.repo }}-${{ matrix.yaml }}
   notify-on-failure:
     name: Notify on failure
     needs: integration-tests
@@ -35,8 +54,6 @@ jobs:
     steps:
       - name: Notify Slack on failure
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.APP_INTEGRATION_SLACK_WEBHOOK }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          REPO: ${{ github.repository }}
         run: |
-          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"<!subteam^S05LXJ5DU9L> \`$REPO\` integration tests failed in \`internal-tools\`: $RUN_URL \"}" $SLACK_WEBHOOK_URL
+          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"<!subteam^S05LXJ5DU9L> \`${{ env.repo }}\` integration tests failed in \`${{ inputs.STAGE }}\`: $RUN_URL \"}" ${{ secrets.slack_webhook_url }}

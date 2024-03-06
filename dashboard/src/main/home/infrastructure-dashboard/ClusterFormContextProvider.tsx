@@ -33,6 +33,7 @@ type ClusterFormContextType = {
   showFailedPreflightChecksModal: boolean;
   updateClusterButtonProps: UpdateClusterButtonProps;
   setCurrentContract: (contract: Contract) => void;
+  submitSkippingPreflightChecks: () => Promise<void>;
 };
 
 const ClusterFormContext = createContext<ClusterFormContextType | null>(null);
@@ -133,14 +134,21 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     errors,
   ]);
 
-  const onSubmit = handleSubmit(async (data) => {
+  const handleClusterUpdate = async (
+    data: ClientClusterContract,
+    skipPreflightChecks?: boolean
+  ): Promise<void> => {
     setUpdateClusterResponse(undefined);
     setUpdateClusterError("");
     if (!currentContract?.cluster || !projectId) {
       return;
     }
     try {
-      const response = await updateCluster(data, currentContract);
+      const response = await updateCluster(
+        data,
+        currentContract,
+        skipPreflightChecks
+      );
       setUpdateClusterResponse(response);
       if (response.preflightChecks) {
         void reportToAnalytics({
@@ -194,7 +202,24 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
         });
       }
     }
+  };
+
+  const onSubmit = handleSubmit(async (data) => {
+    await handleClusterUpdate(data);
   });
+
+  const submitSkippingPreflightChecks = async (): Promise<void> => {
+    if (clusterForm.formState.isSubmitting) {
+      return;
+    }
+    if (!currentContract?.cluster) {
+      return;
+    }
+    const fullValuesWithDefaults = clusterContractValidator.parse(
+      clusterForm.getValues()
+    );
+    await handleClusterUpdate(fullValuesWithDefaults, true);
+  };
 
   return (
     <ClusterFormContext.Provider
@@ -204,6 +229,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
         updateClusterButtonProps,
         isAdvancedSettingsEnabled,
         isMultiClusterEnabled,
+        submitSkippingPreflightChecks,
       }}
     >
       <Wrapper ref={scrollToTopRef}>

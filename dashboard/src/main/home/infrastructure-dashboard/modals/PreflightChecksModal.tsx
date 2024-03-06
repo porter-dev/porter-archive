@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
 import Loading from "components/Loading";
+import Button from "components/porter/Button";
+import Container from "components/porter/Container";
 import { Error as ErrorComponent } from "components/porter/Error";
 import Expandable from "components/porter/Expandable";
 import Modal from "components/porter/Modal";
@@ -12,6 +14,9 @@ import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
 import { type ClientPreflightCheck } from "lib/clusters/types";
 
+import { Context } from "shared/Context";
+
+import { useClusterFormContext } from "../ClusterFormContextProvider";
 import ResolutionStepsModalContents from "./help/preflight/ResolutionStepsModalContents";
 
 type ItemProps = {
@@ -83,6 +88,9 @@ const PreflightChecksModal: React.FC<Props> = ({
   onClose,
   preflightChecks,
 }) => {
+  const { user } = useContext(Context);
+  const { submitSkippingPreflightChecks } = useClusterFormContext();
+
   return (
     <Modal width="600px" closeModal={onClose}>
       <AppearingDiv>
@@ -104,11 +112,25 @@ const PreflightChecksModal: React.FC<Props> = ({
           ))}
         </div>
         <Spacer y={1} />
-        <ShowIntercomButton
-          message={"I need help resolving cluster preflight checks."}
-        >
-          Talk to support
-        </ShowIntercomButton>
+        <Container row spaced>
+          <ShowIntercomButton
+            message={"I need help resolving cluster preflight checks."}
+          >
+            Talk to support
+          </ShowIntercomButton>
+          {user.email?.endsWith("@porter.run") && (
+            <>
+              <Button
+                onClick={async () => {
+                  await submitSkippingPreflightChecks();
+                }}
+                color="red"
+              >
+                (Porter operators only) Skip preflight checks
+              </Button>
+            </>
+          )}
+        </Container>
       </AppearingDiv>
     </Modal>
   );

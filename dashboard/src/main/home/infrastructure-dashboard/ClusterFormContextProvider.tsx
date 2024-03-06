@@ -133,14 +133,18 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     errors,
   ]);
 
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = handleSubmit(async (data, skipPreflightChecks = false) => {
     setUpdateClusterResponse(undefined);
     setUpdateClusterError("");
     if (!currentContract?.cluster || !projectId) {
       return;
     }
     try {
-      const response = await updateCluster(data, currentContract);
+      const response = await updateCluster(
+        data,
+        currentContract,
+        skipPreflightChecks
+      );
       setUpdateClusterResponse(response);
       if (response.preflightChecks) {
         void reportToAnalytics({

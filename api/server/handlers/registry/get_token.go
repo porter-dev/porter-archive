@@ -309,7 +309,7 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	var expiresAt time.Time
 
 	for _, reg := range regs {
-		if reg.GCPIntegrationID != 0 && strings.Contains(reg.URL, request.ServerURL) {
+		if reg.GCPIntegrationID != 0 {
 			_reg := registry.Registry(*reg)
 
 			oauthTok, err := _reg.GetGARToken(ctx, c.Repo())
@@ -330,6 +330,27 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			token = oauthTok.AccessToken
 			expiresAt = oauthTok.Expiry
 			break
+		}
+	}
+
+	if token == "" && len(regs) > 0 {
+		_reg := registry.Registry(*regs[0])
+
+		oauthTok, err := _reg.GetGARToken(ctx, c.Repo())
+		if err != nil {
+			// if the oauth token is not nil, we still return the token but log an error
+			if oauthTok == nil {
+				e := telemetry.Error(ctx, span, err, "error getting gar token")
+				c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusInternalServerError))
+				return
+			}
+			e := telemetry.Error(ctx, span, err, "error getting gar token, but token was returned")
+			c.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(e))
+		}
+
+		if oauthTok != nil {
+			token = oauthTok.AccessToken
+			expiresAt = oauthTok.Expiry
 		}
 	}
 

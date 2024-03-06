@@ -1,0 +1,42 @@
+on:
+  workflow_run:
+    workflows: ["Deploy to porter-sandbox"]
+    branches: [master]
+    types:
+      - completed
+name: Run sandbox app tests
+jobs:
+  integration-tests:
+    name: Run app tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        yaml: ['js-test-app-buildpack', 'js-test-app-dockerfile', 'nginx', 'next-test-app-dockerfile']
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: porter-dev/app-integration-tests
+          ref: refs/heads/main
+      - name: Run test
+        uses: ./.github/actions
+        with:
+          host: https://sandbox.porter.run
+          project: "242"
+          cluster: "240"
+          token: ${{ secrets.APP_TESTS_SANDBOX_TOKEN }}
+          yaml_file: ./test-yamls/${{ matrix.yaml }}.yaml
+  notify-on-failure:
+    name: Notify on failure
+    needs: integration-tests
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Notify Slack on failure
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.APP_INTEGRATION_SLACK_WEBHOOK }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"<!subteam^S05LXJ5DU9L> \`$REPO\` integration tests failed in \`sandbox\`: $RUN_URL \"}" $SLACK_WEBHOOK_URL

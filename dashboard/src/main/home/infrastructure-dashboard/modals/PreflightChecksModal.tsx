@@ -126,7 +126,7 @@ const PreflightChecksModal: React.FC<Props> = ({
                 }}
                 color="red"
               >
-                (Porter users only) Skip preflight checks
+                (Porter operators only) Skip preflight checks
               </Button>
             </>
           )}

@@ -1,7 +1,7 @@
 on:
   workflow_run:
-    workflows: ["Deploy to porter-ccp"]
-    branches: [main]
+    workflows: ["Deploy to porter-sandbox"]
+    branches: [master]
     types:
       - completed
 

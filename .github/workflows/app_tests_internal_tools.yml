@@ -1,7 +1,7 @@
 on:
   workflow_run:
-    workflows: ["Deploy to Internal Tooling"]
-    branches: [main]
+    workflows: ["Deploy Porter to Internal Tooling"]
+    branches: [master]
     types:
       - completed
 

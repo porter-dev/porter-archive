@@ -1,7 +1,7 @@
 on:
   workflow_run:
-    workflows: ["Deploy to Production"]
-    branches: [main]
+    workflows: ["Deploy Porter to Production"]
+    branches: [master]
     types:
       - completed
 

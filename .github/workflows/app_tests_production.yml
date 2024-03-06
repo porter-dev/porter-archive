@@ -22,7 +22,7 @@ jobs:
       - name: Run test
         uses: ./.github/actions
         with:
-          host: https://dashboard.getporter.dev/
+          host: https://sandbox.porter.run
           project: "11646"
           cluster: "3618"
           token: ${{ secrets.APP_TESTS_PRODUCTION_TOKEN }}
@@ -39,4 +39,4 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           REPO: ${{ github.repository }}
         run: |
-          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"<!subteam^S05LXJ5DU9L> \`$REPO\` integration tests failed in \`production\`: $RUN_URL \"}" $SLACK_WEBHOOK_URL
+          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"<!subteam^S05LXJ5DU9L> \`$REPO\` integration tests failed in \`sandbox\`: $RUN_URL \"}" $SLACK_WEBHOOK_URL

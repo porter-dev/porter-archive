@@ -4,6 +4,15 @@ on:
     branches: [master]
     types:
       - completed
+env:
+  REPO: porter
+  STAGE: internal-tools
+  PROJECT: "301"
+  CLUSTER: "142"
+  HOST: https://dashboard.internal-tools.porter.run
+  TOKEN: ${{ secrets.APP_INTEGRATION_PROJECT_TOKEN }}
+  SLACK_WEBHOOK_URL: ${{ secrets.APP_INTEGRATION_SLACK_WEBHOOK }}
+
 name: Run internal tools app tests
 jobs:
   integration-tests:
@@ -22,11 +31,12 @@ jobs:
       - name: Run test
         uses: ./.github/actions
         with:
-          host: https://dashboard.internal-tools.porter.run
-          project: "301"
-          cluster: "142"
-          token: ${{ secrets.APP_INTEGRATION_PROJECT_TOKEN }}
+          host: $HOST
+          project: $PROJECT
+          cluster: $CLUSTER
+          token: $TOKEN
           yaml_file: ./test-yamls/${{ matrix.yaml }}.yaml
+          app_name: $REPO-${{ matrix.yaml }}
   notify-on-failure:
     name: Notify on failure
     needs: integration-tests
@@ -35,8 +45,7 @@ jobs:
     steps:
       - name: Notify Slack on failure
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.APP_INTEGRATION_SLACK_WEBHOOK }}
+          SLACK_WEBHOOK_URL: $SLACK_WEBHOOK_URL
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          REPO: ${{ github.repository }}
         run: |
-          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"<!subteam^S05LXJ5DU9L> \`$REPO\` integration tests failed in \`internal-tools\`: $RUN_URL \"}" $SLACK_WEBHOOK_URL
+          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"<!subteam^S05LXJ5DU9L> \`$REPO\` integration tests failed in \`$STAGE\`: $RUN_URL \"}" $SLACK_WEBHOOK_URL

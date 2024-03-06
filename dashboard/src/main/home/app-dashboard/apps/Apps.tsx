@@ -23,12 +23,12 @@ import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import api from "shared/api";
 import { Context } from "shared/Context";
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
+import applicationGrad from "assets/application-grad.svg";
 import calendar from "assets/calendar-number.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import pull_request from "assets/pull_request_icon.svg";
 import letter from "assets/vector.svg";
-import applicationGrad from "assets/application-grad.svg";
 
 import AppGrid from "./AppGrid";
 import { appRevisionWithSourceValidator } from "./types";
@@ -202,6 +202,10 @@ const Apps: React.FC = () => {
     }
 
     if (apps.length === 0) {
+      if (currentCluster?.status === "FAILED") {
+        return <ClusterProvisioningPlaceholder />;
+      }
+
       return (
         <DashboardPlaceholder>
           <Text size={16}>No applications have been created yet</Text>

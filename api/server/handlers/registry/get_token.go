@@ -309,7 +309,7 @@ func (c *RegistryGetGARTokenHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	var expiresAt time.Time
 
 	for _, reg := range regs {
-		if reg.GCPIntegrationID != 0 {
+		if reg.GCPIntegrationID != 0 && strings.Contains(reg.URL, request.ServerURL) {
 			_reg := registry.Registry(*reg)
 
 			oauthTok, err := _reg.GetGARToken(ctx, c.Repo())

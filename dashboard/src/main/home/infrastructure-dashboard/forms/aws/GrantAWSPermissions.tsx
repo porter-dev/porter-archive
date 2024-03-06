@@ -13,6 +13,7 @@ import Image from "components/porter/Image";
 import Input from "components/porter/Input";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
+import StatusBar from "components/porter/StatusBar";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import { type ButtonStatus } from "main/home/app-dashboard/app-view/AppDataContainer";
@@ -22,7 +23,6 @@ import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 import { useIntercom } from "lib/hooks/useIntercom";
 
 import GrantAWSPermissionsHelpModal from "../../modals/help/permissions/GrantAWSPermissionsHelpModal";
-import { CheckItem } from "../../modals/PreflightChecksModal";
 
 type Props = {
   goBack: () => void;
@@ -44,7 +44,8 @@ const GrantAWSPermissions: React.FC<Props> = ({
   const [showNeedHelpModal, setShowNeedHelpModal] = useState(false);
   const [accountIdContinueButtonStatus, setAccountIdContinueButtonStatus] =
     useState<ButtonStatus>("");
-  const [isAccountAccessible, setIsAccountAccessible] = useState(false);
+  const [permissionsGrantCompletionPercentage, setAWSPermissionsProgress] =
+    useState(0);
   const { reportToAnalytics } = useClusterAnalytics();
   const { showIntercomWithMessage } = useIntercom();
 
@@ -71,53 +72,74 @@ const GrantAWSPermissions: React.FC<Props> = ({
     return externalId;
   }, [AWSAccountID, awsAccountIdInputError]);
 
+  const awsPermissionsLoadingMessage = useMemo(() => {
+    if (permissionsGrantCompletionPercentage === 0) {
+      return "Setting up access roles and policies...";
+    }
+    if (permissionsGrantCompletionPercentage < 50) {
+      return "Creating cluster management roles...";
+    }
+    if (permissionsGrantCompletionPercentage < 100) {
+      return "Creating cluster management policies...";
+    }
+    return "";
+  }, [permissionsGrantCompletionPercentage]);
+
   const data = useQuery(
     [
       "cloudFormationStackCreated",
       AWSAccountID,
       projectId,
-      isAccountAccessible,
+      permissionsGrantCompletionPercentage,
       externalId,
     ],
     async () => {
       try {
-        await isAWSArnAccessible({
+        const res = await isAWSArnAccessible({
           targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
           externalId,
           projectId,
         });
-        return true;
+        return res;
       } catch (err) {
-        return false;
+        return 0;
       }
     },
     {
-      enabled: currentStep === 3 && !isAccountAccessible, // no need to check if it's already accessible
+      enabled:
+        currentStep === 3 && permissionsGrantCompletionPercentage !== 100, // no need to check if it's already accessible
       refetchInterval: 5000,
       refetchIntervalInBackground: true,
     }
   );
   useEffect(() => {
     if (data.isSuccess) {
-      setIsAccountAccessible(data.data);
+      setAWSPermissionsProgress(data.data);
     }
   }, [data]);
 
   const handleAWSAccountIDChange = (accountId: string): void => {
     setAWSAccountID(accountId);
-    setIsAccountAccessible(false); // any time they change the account ID, we need to re-check if it's accessible
+    setAWSPermissionsProgress(0); // any time they change the account ID, we need to re-check if it's accessible
   };
 
   const checkIfAlreadyAccessible = async (): Promise<void> => {
     setAccountIdContinueButtonStatus("loading");
     try {
-      await isAWSArnAccessible({
+      const awsIntegrationPercentCompleted = await isAWSArnAccessible({
         targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
         externalId,
         projectId,
       });
-      setCurrentStep(3);
-      setIsAccountAccessible(true);
+      if (awsIntegrationPercentCompleted > 0) {
+        // this indicates the permission check is already in place; no need to re-create cloudformation stack
+        setCurrentStep(3);
+        setAWSPermissionsProgress(awsIntegrationPercentCompleted);
+        setAccountIdContinueButtonStatus("");
+      } else {
+        setCurrentStep(2);
+        setAccountIdContinueButtonStatus("");
+      }
     } catch (err) {
       let shouldProceed = true;
       if (axios.isAxiosError(err)) {
@@ -266,6 +288,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
                   setCurrentStep(0);
                   setAccountIdContinueButtonStatus("");
                   setAWSAccountID("");
+                  setAWSPermissionsProgress(0);
                 }}
                 color="#222222"
               >
@@ -308,7 +331,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
                 onClick={directToCloudFormation}
                 color="linear-gradient(180deg, #26292e, #24272c)"
                 withBorder
-                disabled={isAccountAccessible}
+                disabled={permissionsGrantCompletionPercentage === 100}
                 disabledTooltipMessage={
                   "Porter can already access your account!"
                 }
@@ -338,36 +361,33 @@ const GrantAWSPermissions: React.FC<Props> = ({
           </>,
           <>
             <Text size={16}>Check permissions</Text>
-            <Spacer y={0.5} />
-            <Text color="helper">
-              Checking if Porter can access AWS account with ID {AWSAccountID}
-              . This can take up to 10 minutes.
-              <Spacer inline width="10px" />
-              <Link
-                hasunderline
-                onClick={() => {
-                  setShowNeedHelpModal(true);
-                }}
-              >
-                Need help?
-              </Link>
-            </Text>
             <Spacer y={1} />
-            {isAccountAccessible ? (
-              <CheckItem
-                preflightCheck={{
-                  title: "AWS account is accessible by Porter!",
-                  status: "success",
-                }}
-              />
-            ) : (
-              <CheckItem
-                preflightCheck={{
-                  title: "Checking if AWS account is accessible by Porter",
-                  status: "pending",
-                }}
-              />
-            )}
+            <StatusBar
+              icon={CloudProviderAWS.icon}
+              title={"AWS permissions setup"}
+              titleDescriptor={awsPermissionsLoadingMessage}
+              subtitle={
+                permissionsGrantCompletionPercentage === 100
+                  ? "Porter can access your account! You may now continue."
+                  : "Porter is creating roles and policies to access your account. This can take up to 15 minutes. Please stay on this page."
+              }
+              percentCompleted={Math.max(
+                permissionsGrantCompletionPercentage,
+                5
+              )}
+            />
+            <Spacer y={0.5} />
+            <Link
+              hasunderline
+              onClick={() => {
+                showIntercomWithMessage({
+                  message: "I need help with AWS permissions setup.",
+                  delaySeconds: 0,
+                });
+              }}
+            >
+              Need help?
+            </Link>
             <Spacer y={1} />
             <Container row>
               <Button
@@ -381,7 +401,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
               <Spacer inline x={0.5} />
               <Button
                 onClick={handleGrantPermissionsComplete}
-                disabled={!isAccountAccessible}
+                disabled={permissionsGrantCompletionPercentage !== 100}
               >
                 Continue
               </Button>

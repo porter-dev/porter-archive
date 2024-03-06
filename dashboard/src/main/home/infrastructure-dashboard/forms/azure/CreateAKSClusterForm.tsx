@@ -27,9 +27,11 @@ const CreateAKSClusterForm: React.FC<Props> = ({
   const { reportToAnalytics } = useClusterAnalytics();
 
   useEffect(() => {
-    const projectNameLimit = 31 - "-cluster-".length - 6; // 6 characters for the random suffix
-    const truncatedProjectName = projectName.substring(0, projectNameLimit);
-    const clusterName = `${truncatedProjectName}-cluster-${Math.random()
+    const truncatedProjectName = projectName
+      .substring(0, 24)
+      .replace(/-+$/, "");
+
+    const clusterName = `${truncatedProjectName}-${Math.random()
       .toString(36)
       .substring(2, 8)}`;
 

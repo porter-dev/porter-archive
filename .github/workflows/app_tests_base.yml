@@ -1,0 +1,59 @@
+on:
+  workflow_call:
+    inputs:
+      stage:
+        required: true
+        type: string
+      project:
+        required: true
+        type: string
+      cluster:
+        required: true
+        type: string
+      host:
+        required: true
+        type: string
+    secrets:
+      token:
+        required: true
+      slack_webhook_url:
+        required: true
+
+env:
+  repo: porter
+
+name: Run app tests
+jobs:
+  integration-tests:
+    name: Run app tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        yaml: ['js-test-app-buildpack', 'js-test-app-dockerfile', 'nginx', 'next-test-app-dockerfile']
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: porter-dev/app-integration-tests
+          ref: refs/heads/main
+      - name: Run test
+        uses: ./.github/actions
+        with:
+          host: ${{ inputs.host }}
+          project: ${{ inputs.project }}
+          cluster: ${{ inputs.cluster }}
+          token: ${{ secrets.token }}
+          yaml_file: ./test-yamls/${{ matrix.yaml }}.yaml
+          app_name: ${{ env.repo }}-${{ matrix.yaml }}
+  notify-on-failure:
+    name: Notify on failure
+    needs: integration-tests
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Notify Slack on failure
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"<!subteam^S05LXJ5DU9L> \`${{ env.repo }}\` integration tests failed in \`${{ inputs.STAGE }}\`: $RUN_URL \"}" ${{ secrets.slack_webhook_url }}

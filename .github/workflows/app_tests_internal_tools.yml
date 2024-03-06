@@ -1,51 +1,19 @@
 on:
   workflow_run:
-    workflows: ["Deploy Porter to Internal Tooling"]
-    branches: [master]
+    workflows: ["Deploy to Internal Tooling"]
+    branches: [main]
     types:
       - completed
-env:
-  REPO: porter
-  STAGE: internal-tools
-  PROJECT: "301"
-  CLUSTER: "142"
-  HOST: https://dashboard.internal-tools.porter.run
-  TOKEN: ${{ secrets.APP_INTEGRATION_PROJECT_TOKEN }}
-  SLACK_WEBHOOK_URL: ${{ secrets.APP_INTEGRATION_SLACK_WEBHOOK }}
 
 name: Run internal tools app tests
 jobs:
-  integration-tests:
-    name: Run app tests
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        yaml: ['js-test-app-buildpack', 'js-test-app-dockerfile', 'nginx', 'next-test-app-dockerfile']
-      fail-fast: false
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          repository: porter-dev/app-integration-tests
-          ref: refs/heads/main
-      - name: Run test
-        uses: ./.github/actions
-        with:
-          host: $HOST
-          project: $PROJECT
-          cluster: $CLUSTER
-          token: $TOKEN
-          yaml_file: ./test-yamls/${{ matrix.yaml }}.yaml
-          app_name: $REPO-${{ matrix.yaml }}
-  notify-on-failure:
-    name: Notify on failure
-    needs: integration-tests
-    runs-on: ubuntu-latest
-    if: failure()
-    steps:
-      - name: Notify Slack on failure
-        env:
-          SLACK_WEBHOOK_URL: $SLACK_WEBHOOK_URL
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"<!subteam^S05LXJ5DU9L> \`$REPO\` integration tests failed in \`$STAGE\`: $RUN_URL \"}" $SLACK_WEBHOOK_URL
+  call-base-workflow:
+    uses: ./.github/workflows/app_tests_base.yml
+    with:
+      stage: internal-tools
+      project: "301"
+      cluster: "142"
+      host: https://dashboard.internal-tools.porter.run
+    secrets:
+      token: ${{ secrets.APP_INTEGRATION_PROJECT_TOKEN }}
+      slack_webhook_url: ${{ secrets.APP_INTEGRATION_SLACK_WEBHOOK }}

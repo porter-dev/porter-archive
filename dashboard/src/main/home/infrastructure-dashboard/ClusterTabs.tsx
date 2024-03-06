@@ -8,6 +8,7 @@ import { match } from "ts-pattern";
 
 import Banner from "components/porter/Banner";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import TabSelector from "components/TabSelector";
 import { type ClientClusterContract } from "lib/clusters/types";
 
@@ -86,6 +87,29 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
       {isClusterUpdating && (
         <>
           <ClusterProvisioningIndicator />
+          <Spacer y={1} />
+        </>
+      )}
+      {cluster.status === "FAILED" && (
+        <>
+          <Banner
+            type="error"
+            suffix={
+              <>
+                <ClusterSaveButton
+                  height={"10px"}
+                  disabledTooltipPosition={"bottom"}
+                  isClusterUpdating={isClusterUpdating}
+                >
+                  Retry
+                </ClusterSaveButton>
+              </>
+            }
+          >
+            An error occurred while applying the latest updates to your
+            infrastructure.
+            <Spacer inline width="5px" />
+          </Banner>
           <Spacer y={1} />
         </>
       )}

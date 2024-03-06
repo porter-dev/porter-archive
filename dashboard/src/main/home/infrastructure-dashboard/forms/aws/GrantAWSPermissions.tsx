@@ -11,6 +11,7 @@ import Container from "components/porter/Container";
 import { Error as ErrorComponent } from "components/porter/Error";
 import Image from "components/porter/Image";
 import Input from "components/porter/Input";
+import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import StatusBar from "components/porter/StatusBar";
 import Text from "components/porter/Text";
@@ -363,18 +364,30 @@ const GrantAWSPermissions: React.FC<Props> = ({
             <Spacer y={1} />
             <StatusBar
               icon={CloudProviderAWS.icon}
-              title={"AWS Permissions Setup"}
+              title={"AWS permissions setup"}
               titleDescriptor={awsPermissionsLoadingMessage}
               subtitle={
                 permissionsGrantCompletionPercentage === 100
                   ? "Porter can access your account! You may now continue."
-                  : "This can take up to 15 minutes. Please stay on this page."
+                  : "Porter is creating roles and policies to access your account. This can take up to 15 minutes. Please stay on this page."
               }
               percentCompleted={Math.max(
                 permissionsGrantCompletionPercentage,
                 5
               )}
             />
+            <Spacer y={0.5} />
+            <Link
+              hasunderline
+              onClick={() => {
+                showIntercomWithMessage({
+                  message: "I need help with AWS permissions setup.",
+                  delaySeconds: 0,
+                });
+              }}
+            >
+              Need help?
+            </Link>
             <Spacer y={1} />
             <Container row>
               <Button

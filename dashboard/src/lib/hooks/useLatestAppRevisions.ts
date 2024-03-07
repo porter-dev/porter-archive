@@ -33,8 +33,6 @@ export const useLatestAppRevisions = ({
         return;
       }
 
-      console.log("clusterId", clusterId, "projectId", projectId)
-
       const res = await api.getLatestAppRevisions(
         "<token>",
         {
@@ -84,8 +82,6 @@ export const useAppInstances = ({
       if (clusterId === -1 || projectId === -1) {
         return;
       }
-
-      console.log("clusterId", clusterId, "projectId", projectId)
 
       const res = await api.getAppInstances(
         "<token>",

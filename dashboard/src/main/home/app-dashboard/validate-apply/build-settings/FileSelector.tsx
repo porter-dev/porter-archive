@@ -95,7 +95,7 @@ const FileSelector: React.FC<Props> = ({
                     {relativePath}
                   </FileItem>
                 ))
-                .with({ type: "dir" }, (content) => (
+                .with({ type: "dir" }, () => (
                   <Item
                     key={i}
                     onClick={() => {
@@ -107,7 +107,7 @@ const FileSelector: React.FC<Props> = ({
                     {relativePath}
                   </Item>
                 ))
-                .with({ type: "symlink" }, (content) => (
+                .with({ type: "symlink" }, () => (
                   <FileItem
                     key={i}
                     onClick={() => ({})}

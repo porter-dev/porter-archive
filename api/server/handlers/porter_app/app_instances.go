@@ -87,14 +87,9 @@ func (c *AppInstancesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	protoAppInstances := latestAppInstancesResp.Msg.AppInstances
-	if protoAppInstances == nil {
-		protoAppInstances = []*porterv1.AppInstance{}
-	}
-
 	var appInstances []porter_app.AppInstance
 
-	for _, instance := range protoAppInstances {
+	for _, instance := range latestAppInstancesResp.Msg.AppInstances {
 		appInstances = append(appInstances, porter_app.AppInstance{
 			Id: instance.Id,
 			DeploymentTarget: porter_app.DeploymentTarget{

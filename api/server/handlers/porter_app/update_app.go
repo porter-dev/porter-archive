@@ -239,10 +239,6 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// err = telemetry.Error(ctx, span, err, "blah blah blah")
-	// c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-	// return
-
 	var serviceDeletions map[string]*porterv1.ServiceDeletions
 	if request.Deletions.ServiceDeletions != nil {
 		serviceDeletions = make(map[string]*porterv1.ServiceDeletions)

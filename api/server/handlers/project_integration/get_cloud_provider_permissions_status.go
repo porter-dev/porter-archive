@@ -100,7 +100,7 @@ func (p *CloudProviderPermissionsStatusHandler) ServeHTTP(w http.ResponseWriter,
 		}
 
 		if accessErrorExists {
-			err = telemetry.Error(ctx, span, err, "same account is used in a project this user has no access to")
+			err = telemetry.Error(ctx, span, err, "user does not have access to all projects")
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 			return
 		}

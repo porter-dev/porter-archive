@@ -68,6 +68,14 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 	cliConf := inp.CLIConfig
 	client := inp.Client
 
+	if cliConf.Project == 0 {
+		return errors.New("project must be set")
+	}
+
+	if cliConf.Cluster == 0 {
+		return errors.New("cluster must be set")
+	}
+
 	deploymentTargetID, err := deploymentTargetFromConfig(ctx, client, cliConf.Project, cliConf.Cluster, inp.PreviewApply)
 	if err != nil {
 		return fmt.Errorf("error getting deployment target from config: %w", err)
@@ -464,11 +472,15 @@ func buildInputFromBuildSettings(inp buildInputFromBuildSettingsInput) (buildInp
 	if inp.commitSHA == "" {
 		return buildSettings, errors.New("commit SHA is empty")
 	}
+	if inp.build.Context == "" {
+		return buildSettings, errors.New("build context is empty")
+	}
+	buildContext := correctBuildContext(inp.build.Context)
 
 	return buildInput{
 		ProjectID:            inp.projectID,
 		AppName:              inp.appName,
-		BuildContext:         inp.build.Context,
+		BuildContext:         buildContext,
 		Dockerfile:           inp.build.Dockerfile,
 		BuildMethod:          inp.build.Method,
 		Builder:              inp.build.Builder,
@@ -479,4 +491,14 @@ func buildInputFromBuildSettings(inp buildInputFromBuildSettingsInput) (buildInp
 		Env:                  inp.buildEnv,
 		PullImageBeforeBuild: inp.pullImageBeforeBuild,
 	}, nil
+}
+
+func correctBuildContext(buildContext string) string {
+	if !strings.HasPrefix(buildContext, "./") {
+		if strings.HasPrefix(buildContext, "/") {
+			return fmt.Sprintf(".%s", buildContext)
+		}
+		return fmt.Sprintf("./%s", buildContext)
+	}
+	return buildContext
 }

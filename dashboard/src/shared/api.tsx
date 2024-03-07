@@ -3451,6 +3451,31 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/pr`
 );
 
+const getCloudProviderPermissionsStatus = baseApi<
+  | {
+      cloud_provider: "AWS";
+      target_arn: string;
+      external_id: string;
+    }
+  | {
+      cloud_provider: "GCP";
+      service_account_key: string;
+      gcp_project_id: string;
+    }
+  | {
+      cloud_provider: "Azure";
+      subscription_id: string;
+      client_id: string;
+      tenant_id: string;
+      service_principal_key: string;
+    },
+  { project_id: number }
+>(
+  "GET",
+  ({ project_id }) =>
+    `/api/projects/${project_id}/integrations/cloud-permissions`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -3741,4 +3766,5 @@ export default {
   // STATUS
   getGithubStatus,
   getDatabaseStatus,
+  getCloudProviderPermissionsStatus,
 };

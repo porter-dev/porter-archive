@@ -18,9 +18,11 @@ import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import { type ButtonStatus } from "main/home/app-dashboard/app-view/AppDataContainer";
 import { CloudProviderAWS } from "lib/clusters/constants";
-import { isAWSArnAccessible } from "lib/hooks/useCloudProvider";
+import { connectToAwsAccount } from "lib/hooks/useCloudProvider";
 import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 import { useIntercom } from "lib/hooks/useIntercom";
+
+import api from "shared/api";
 
 import GrantAWSPermissionsHelpModal from "../../modals/help/permissions/GrantAWSPermissionsHelpModal";
 
@@ -95,12 +97,23 @@ const GrantAWSPermissions: React.FC<Props> = ({
     ],
     async () => {
       try {
-        const res = await isAWSArnAccessible({
-          targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
-          externalId,
-          projectId,
-        });
-        return res;
+        const res = await api.getCloudProviderPermissionsStatus(
+          "<token>",
+          {
+            cloud_provider: "AWS",
+            target_arn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
+            external_id: externalId,
+          },
+          {
+            project_id: projectId,
+          }
+        );
+        const parsed = z
+          .object({
+            percent_completed: z.number(),
+          })
+          .parse(res.data);
+        return parsed.percent_completed;
       } catch (err) {
         return 0;
       }
@@ -126,11 +139,23 @@ const GrantAWSPermissions: React.FC<Props> = ({
   const checkIfAlreadyAccessible = async (): Promise<void> => {
     setAccountIdContinueButtonStatus("loading");
     try {
-      const awsIntegrationPercentCompleted = await isAWSArnAccessible({
-        targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
-        externalId,
-        projectId,
-      });
+      const res = await api.getCloudProviderPermissionsStatus(
+        "<token>",
+        {
+          cloud_provider: "AWS",
+          target_arn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
+          external_id: externalId,
+        },
+        {
+          project_id: projectId,
+        }
+      );
+      const parsed = z
+        .object({
+          percent_completed: z.number(),
+        })
+        .parse(res.data);
+      const awsIntegrationPercentCompleted = parsed.percent_completed;
       if (awsIntegrationPercentCompleted > 0) {
         // this indicates the permission check is already in place; no need to re-create cloudformation stack
         setCurrentStep(3);
@@ -187,19 +212,29 @@ const GrantAWSPermissions: React.FC<Props> = ({
   };
 
   const directToCloudFormation = useCallback(async () => {
-    const trustArn = process.env.TRUST_ARN
-      ? process.env.TRUST_ARN
-      : "arn:aws:iam::108458755588:role/CAPIManagement";
-    const cloudFormationUrl = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-access-policy.json&stackName=PorterRole&param_TrustArnParameter=${trustArn}`;
-    void reportToAnalytics({
-      projectId,
-      step: "aws-cloudformation-redirect-success",
-      awsAccountId: AWSAccountID,
-      cloudFormationUrl,
-      externalId,
-    });
-    setCurrentStep(3);
-    window.open(cloudFormationUrl, "_blank");
+    try {
+      await connectToAwsAccount({
+        targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
+        externalId,
+        projectId,
+      });
+
+      const trustArn = process.env.TRUST_ARN
+        ? process.env.TRUST_ARN
+        : "arn:aws:iam::108458755588:role/CAPIManagement";
+      const cloudFormationUrl = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-access-policy.json&stackName=PorterRole&param_TrustArnParameter=${trustArn}`;
+      void reportToAnalytics({
+        projectId,
+        step: "aws-cloudformation-redirect-success",
+        awsAccountId: AWSAccountID,
+        cloudFormationUrl,
+        externalId,
+      });
+      setCurrentStep(3);
+      window.open(cloudFormationUrl, "_blank");
+    } catch (err) {
+      // todo: handle error here
+    }
   }, [AWSAccountID, externalId]);
 
   const handleGrantPermissionsComplete = (): void => {

@@ -2,7 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
 import {
+  appInstanceValidator,
   appRevisionWithSourceValidator,
+  type AppInstance,
   type AppRevisionWithSource,
 } from "main/home/app-dashboard/apps/types";
 
@@ -31,6 +33,8 @@ export const useLatestAppRevisions = ({
         return;
       }
 
+      console.log("clusterId", clusterId, "projectId", projectId)
+
       const res = await api.getLatestAppRevisions(
         "<token>",
         {
@@ -55,5 +59,56 @@ export const useLatestAppRevisions = ({
   );
   return {
     revisions: apps,
+  };
+};
+
+// use this hook to get the latest revision of every app in the project/cluster
+export const useAppInstances = ({
+  projectId,
+  clusterId,
+}: {
+  projectId: number;
+  clusterId: number;
+}): {
+  instances: AppInstance[];
+} => {
+  const { data: appInstances = [] } = useQuery(
+    [
+      "getAppInstances",
+      {
+        cluster_id: clusterId,
+        project_id: projectId,
+      },
+    ],
+    async () => {
+      if (clusterId === -1 || projectId === -1) {
+        return;
+      }
+
+      console.log("clusterId", clusterId, "projectId", projectId)
+
+      const res = await api.getAppInstances(
+        "<token>",
+        {
+          deployment_target_id: undefined,
+        },
+        { cluster_id: clusterId, project_id: projectId }
+      );
+
+      const apps = await z
+        .object({
+          app_instances: z.array(appInstanceValidator),
+        })
+        .parseAsync(res.data);
+
+      return apps.app_instances;
+    },
+    {
+      refetchOnWindowFocus: false,
+      enabled: clusterId !== 0 && projectId !== 0,
+    }
+  );
+  return {
+    instances: appInstances,
   };
 };

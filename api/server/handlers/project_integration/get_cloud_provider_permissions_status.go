@@ -1,7 +1,9 @@
 package project_integration
 
 import (
+	"context"
 	"net/http"
+	"strings"
 
 	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
@@ -68,6 +70,7 @@ func (p *CloudProviderPermissionsStatusHandler) ServeHTTP(w http.ResponseWriter,
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-cloud-provider-permissions-status")
 	defer span.End()
 
+	user, _ := ctx.Value(types.UserScope).(*models.User)
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	request := &CloudProviderPermissionsStatusRequest{}
@@ -83,6 +86,25 @@ func (p *CloudProviderPermissionsStatusHandler) ServeHTTP(w http.ResponseWriter,
 
 	switch request.CloudProvider {
 	case CloudProviderAWS:
+		if request.TargetArn == "" {
+			err := telemetry.Error(ctx, span, nil, "target arn is required for AWS ACK auth")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		accessErrorExists, err := p.checkSameAccountInDifferentProjects(ctx, request.TargetArn, user)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error checking if same account exists in different projects")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		if accessErrorExists {
+			err = telemetry.Error(ctx, span, err, "same account is used in a project this user has no access to")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
+			return
+		}
+
 		credReq.CloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS
 		credReq.CloudProviderCredentials = &porterv1.CloudProviderPermissionsStatusRequest_AwsCredentials{
 			AwsCredentials: &porterv1.AWSCredentials{
@@ -135,4 +157,46 @@ func (p *CloudProviderPermissionsStatusHandler) ServeHTTP(w http.ResponseWriter,
 	}
 
 	p.WriteResult(w, r, res)
+}
+
+func (p *CloudProviderPermissionsStatusHandler) checkSameAccountInDifferentProjects(ctx context.Context, targetArn string, user *models.User) (bool, error) {
+	ctx, span := telemetry.NewSpan(ctx, "check-same-account-in-different-projects")
+	defer span.End()
+
+	// if a user is changing the external ID, then we need to update the external ID for all projects that use that AWS account.
+	// This is required since the same AWS account can be used across multiple projects. In order to change the external ID for a project,
+	// the user must then have access to all projects that use that AWS account.
+	// If we ever do a higher abstraction about porter projects, then we can tie the ability to access a cloud provider account to that higher abstraction.
+	awsAccountIdPrefix := strings.TrimPrefix(targetArn, "arn:aws:iam::")
+	awsAccountId := strings.TrimSuffix(awsAccountIdPrefix, ":role/porter-manager")
+	assumeRoles, err := p.Repo().AWSAssumeRoleChainer().ListByAwsAccountId(ctx, awsAccountId)
+	if err != nil {
+		return false, telemetry.Error(ctx, span, err, "error listing assume role chains")
+	}
+
+	requiredProjects := make(map[int]bool)
+	for _, role := range assumeRoles {
+		requiredProjects[role.ProjectID] = false
+	}
+
+	usersProject, err := p.Repo().Project().ListProjectsByUserID(user.ID)
+	if err != nil {
+		return false, telemetry.Error(ctx, span, err, "error listing projects by user id")
+	}
+
+	for _, project := range usersProject {
+		if _, ok := requiredProjects[int(project.ID)]; ok {
+			requiredProjects[int(project.ID)] = true
+		}
+	}
+
+	for proj, required := range requiredProjects {
+		if !required {
+			err = telemetry.Error(ctx, span, err, "user does not have access to all projects that use this AWS account")
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "missing-project", Value: proj})
+			return true, err
+		}
+	}
+
+	return false, nil
 }

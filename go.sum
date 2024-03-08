@@ -1527,6 +1527,8 @@ github.com/porter-dev/api-contracts v0.2.113 h1:sv1huO9MpykJaWhV2D5zTD2LouMbRSBV
 github.com/porter-dev/api-contracts v0.2.113/go.mod h1:fX6JmP5QuzxDLvqP3evFOTXjI4dHxsG0+VKNTjImZU8=
 github.com/porter-dev/api-contracts v0.2.114 h1:qfEq70BJ8xXTkiZU7ygzOSGnMCqJHOa5Lbkfu4OzQBI=
 github.com/porter-dev/api-contracts v0.2.114/go.mod h1:fX6JmP5QuzxDLvqP3evFOTXjI4dHxsG0+VKNTjImZU8=
+github.com/porter-dev/api-contracts v0.2.116 h1:Oe7pO69yyv1lEnafGWnKoHqNYJAe8KpQCE9cnTC1m1w=
+github.com/porter-dev/api-contracts v0.2.116/go.mod h1:fX6JmP5QuzxDLvqP3evFOTXjI4dHxsG0+VKNTjImZU8=
 github.com/porter-dev/switchboard v0.0.3 h1:dBuYkiVLa5Ce7059d6qTe9a1C2XEORFEanhbtV92R+M=
 github.com/porter-dev/switchboard v0.0.3/go.mod h1:xSPzqSFMQ6OSbp42fhCi4AbGbQbsm6nRvOkrblFeXU4=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=

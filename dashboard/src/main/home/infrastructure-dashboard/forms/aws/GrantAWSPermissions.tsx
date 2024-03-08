@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import AnimateHeight from "react-animate-height";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
@@ -25,6 +26,7 @@ import { useIntercom } from "lib/hooks/useIntercom";
 import api from "shared/api";
 
 import GrantAWSPermissionsHelpModal from "../../modals/help/permissions/GrantAWSPermissionsHelpModal";
+import { CheckItem } from "../../modals/PreflightChecksModal";
 
 type Props = {
   goBack: () => void;
@@ -397,32 +399,47 @@ const GrantAWSPermissions: React.FC<Props> = ({
           <>
             <Text size={16}>Check permissions</Text>
             <Spacer y={1} />
-            <StatusBar
-              icon={CloudProviderAWS.icon}
-              title={"AWS permissions setup"}
-              titleDescriptor={awsPermissionsLoadingMessage}
-              subtitle={
-                permissionsGrantCompletionPercentage === 100
-                  ? "Porter can access your account! You may now continue."
-                  : "Porter is creating roles and policies to access your account. This can take up to 15 minutes. Please stay on this page."
-              }
-              percentCompleted={Math.max(
-                permissionsGrantCompletionPercentage,
-                5
-              )}
-            />
-            <Spacer y={0.5} />
-            <Link
-              hasunderline
-              onClick={() => {
-                showIntercomWithMessage({
-                  message: "I need help with AWS permissions setup.",
-                  delaySeconds: 0,
-                });
-              }}
+            <AnimateHeight
+              height={permissionsGrantCompletionPercentage === 100 ? 0 : "auto"}
             >
-              Need help?
-            </Link>
+              <StatusBar
+                icon={CloudProviderAWS.icon}
+                title={"AWS permissions setup"}
+                titleDescriptor={awsPermissionsLoadingMessage}
+                subtitle={
+                  permissionsGrantCompletionPercentage === 100
+                    ? "Porter can access your account! You may now continue."
+                    : "Porter is creating roles and policies to access your account. This can take up to 15 minutes. Please stay on this page."
+                }
+                percentCompleted={Math.max(
+                  permissionsGrantCompletionPercentage,
+                  5
+                )}
+              />
+              <Spacer y={0.5} />
+              <Link
+                hasunderline
+                onClick={() => {
+                  showIntercomWithMessage({
+                    message: "I need help with AWS permissions setup.",
+                    delaySeconds: 0,
+                  });
+                }}
+              >
+                Need help?
+              </Link>
+            </AnimateHeight>
+            <AnimateHeight
+              height={permissionsGrantCompletionPercentage === 100 ? "auto" : 0}
+            >
+              <CheckItem
+                preflightCheck={{
+                  title:
+                    "AWS account is accessible by Porter! You may continue.",
+                  status: "success",
+                }}
+              />
+            </AnimateHeight>
             <Spacer y={1} />
             <Container row>
               <Button

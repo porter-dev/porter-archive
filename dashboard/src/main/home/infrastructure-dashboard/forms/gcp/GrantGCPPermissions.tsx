@@ -139,7 +139,7 @@ const GrantGCPPermissions: React.FC<Props> = ({
             <Text size={16}> Create the service account </Text>
             <Spacer y={0.5} />
             <Link
-              to="https://docs.porter.run/standard/getting-started/provisioning-on-gcp"
+              to="https://docs.porter.run/provision/provisioning-on-gcp"
               target="_blank"
             >
               Follow the steps in the Porter docs to generate your service

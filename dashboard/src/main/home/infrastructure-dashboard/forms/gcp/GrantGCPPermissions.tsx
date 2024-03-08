@@ -227,7 +227,7 @@ const GrantGCPPermissions: React.FC<Props> = ({
             <Container row>
               <Button
                 onClick={() => {
-                  setCurrentStep(2);
+                  setCurrentStep(1);
                 }}
                 color="#222222"
               >

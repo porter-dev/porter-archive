@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import AnimateHeight from "react-animate-height";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
@@ -18,11 +19,14 @@ import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import { type ButtonStatus } from "main/home/app-dashboard/app-view/AppDataContainer";
 import { CloudProviderAWS } from "lib/clusters/constants";
-import { isAWSArnAccessible } from "lib/hooks/useCloudProvider";
+import { connectToAwsAccount } from "lib/hooks/useCloudProvider";
 import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 import { useIntercom } from "lib/hooks/useIntercom";
 
+import api from "shared/api";
+
 import GrantAWSPermissionsHelpModal from "../../modals/help/permissions/GrantAWSPermissionsHelpModal";
+import { CheckItem } from "../../modals/PreflightChecksModal";
 
 type Props = {
   goBack: () => void;
@@ -95,12 +99,22 @@ const GrantAWSPermissions: React.FC<Props> = ({
     ],
     async () => {
       try {
-        const res = await isAWSArnAccessible({
-          targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
-          externalId,
-          projectId,
-        });
-        return res;
+        const res = await api.getCloudProviderPermissionsStatus(
+          "<token>",
+          {
+            cloud_provider: "AWS",
+            cloud_provider_credential_identifier: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
+          },
+          {
+            project_id: projectId,
+          }
+        );
+        const parsed = z
+          .object({
+            percent_completed: z.number(),
+          })
+          .parse(res.data);
+        return parsed.percent_completed;
       } catch (err) {
         return 0;
       }
@@ -126,11 +140,22 @@ const GrantAWSPermissions: React.FC<Props> = ({
   const checkIfAlreadyAccessible = async (): Promise<void> => {
     setAccountIdContinueButtonStatus("loading");
     try {
-      const awsIntegrationPercentCompleted = await isAWSArnAccessible({
-        targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
-        externalId,
-        projectId,
-      });
+      const res = await api.getCloudProviderPermissionsStatus(
+        "<token>",
+        {
+          cloud_provider: "AWS",
+          cloud_provider_credential_identifier: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
+        },
+        {
+          project_id: projectId,
+        }
+      );
+      const parsed = z
+        .object({
+          percent_completed: z.number(),
+        })
+        .parse(res.data);
+      const awsIntegrationPercentCompleted = parsed.percent_completed;
       if (awsIntegrationPercentCompleted > 0) {
         // this indicates the permission check is already in place; no need to re-create cloudformation stack
         setCurrentStep(3);
@@ -187,6 +212,17 @@ const GrantAWSPermissions: React.FC<Props> = ({
   };
 
   const directToCloudFormation = useCallback(async () => {
+    try {
+      // this sends an async connection request on the backend
+      await connectToAwsAccount({
+        targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
+        externalId,
+        projectId,
+      });
+    } catch (err) {
+      // todo: handle error here
+    }
+
     const trustArn = process.env.TRUST_ARN
       ? process.env.TRUST_ARN
       : "arn:aws:iam::108458755588:role/CAPIManagement";
@@ -362,32 +398,47 @@ const GrantAWSPermissions: React.FC<Props> = ({
           <>
             <Text size={16}>Check permissions</Text>
             <Spacer y={1} />
-            <StatusBar
-              icon={CloudProviderAWS.icon}
-              title={"AWS permissions setup"}
-              titleDescriptor={awsPermissionsLoadingMessage}
-              subtitle={
-                permissionsGrantCompletionPercentage === 100
-                  ? "Porter can access your account! You may now continue."
-                  : "Porter is creating roles and policies to access your account. This can take up to 15 minutes. Please stay on this page."
-              }
-              percentCompleted={Math.max(
-                permissionsGrantCompletionPercentage,
-                5
-              )}
-            />
-            <Spacer y={0.5} />
-            <Link
-              hasunderline
-              onClick={() => {
-                showIntercomWithMessage({
-                  message: "I need help with AWS permissions setup.",
-                  delaySeconds: 0,
-                });
-              }}
+            <AnimateHeight
+              height={permissionsGrantCompletionPercentage === 100 ? 0 : "auto"}
             >
-              Need help?
-            </Link>
+              <StatusBar
+                icon={CloudProviderAWS.icon}
+                title={"AWS permissions setup"}
+                titleDescriptor={awsPermissionsLoadingMessage}
+                subtitle={
+                  permissionsGrantCompletionPercentage === 100
+                    ? "Porter can access your account! You may now continue."
+                    : "Porter is creating roles and policies to access your account. This can take up to 15 minutes. Please stay on this page."
+                }
+                percentCompleted={Math.max(
+                  permissionsGrantCompletionPercentage,
+                  5
+                )}
+              />
+              <Spacer y={0.5} />
+              <Link
+                hasunderline
+                onClick={() => {
+                  showIntercomWithMessage({
+                    message: "I need help with AWS permissions setup.",
+                    delaySeconds: 0,
+                  });
+                }}
+              >
+                Need help?
+              </Link>
+            </AnimateHeight>
+            <AnimateHeight
+              height={permissionsGrantCompletionPercentage === 100 ? "auto" : 0}
+            >
+              <CheckItem
+                preflightCheck={{
+                  title:
+                    "AWS account is accessible by Porter! You may continue.",
+                  status: "success",
+                }}
+              />
+            </AnimateHeight>
             <Spacer y={1} />
             <Container row>
               <Button

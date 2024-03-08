@@ -27,6 +27,7 @@ jobs:
   integration-tests:
     name: Run app tests
     runs-on: ubuntu-latest
+    timeout-minutes: 7
     strategy:
       matrix:
         yaml: ['js-test-app-buildpack', 'js-test-app-dockerfile', 'nginx', 'next-test-app-dockerfile']
@@ -56,4 +57,4 @@ jobs:
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"<!subteam^S05LXJ5DU9L> \`${{ env.repo }}\` integration tests failed in \`${{ inputs.STAGE }}\`: $RUN_URL \"}" ${{ secrets.slack_webhook_url }}
+          curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"<!subteam^S05MGRLKF33> \`${{ env.repo }}\` integration tests failed in \`${{ inputs.STAGE }}\`: $RUN_URL \"}" ${{ secrets.slack_webhook_url }}

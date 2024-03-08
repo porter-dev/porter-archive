@@ -38,28 +38,9 @@ const (
 	CloudProviderAzure CloudProviderType = "Azure"
 )
 
-type Aws struct {
-	TargetArn  string `schema:"target_arn"`
-	ExternalID string `schema:"external_id"`
-}
-
-type Gcp struct {
-	ServiceAccountKey string `schema:"service_account_key"`
-	GcpProjectId      string `schema:"gcp_project_id"`
-}
-
-type Azure struct {
-	SubscriptionId      string `schema:"subscription_id"`
-	ClientId            string `schema:"client_id"`
-	TenantId            string `schema:"tenant_id"`
-	ServicePrincipalKey string `schema:"service_principal_key"`
-}
-
 type CloudProviderPermissionsStatusRequest struct {
-	CloudProvider CloudProviderType `schema:"cloud_provider"`
-	Aws
-	Gcp
-	Azure
+	CloudProvider                     CloudProviderType `schema:"cloud_provider"`
+	CloudProviderCredentialIdentifier string            `schema:"cloud_provider_credential_identifier"`
 }
 
 type CloudProviderPermissionsStatusResponse struct {
@@ -80,19 +61,26 @@ func (p *CloudProviderPermissionsStatusHandler) ServeHTTP(w http.ResponseWriter,
 		return
 	}
 
-	credReq := porterv1.CloudProviderPermissionsStatusRequest{
-		ProjectId: int64(project.ID),
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "cloud-provider", Value: string(request.CloudProvider)},
+		telemetry.AttributeKV{Key: "cloud-provider-credential-identifier", Value: request.CloudProviderCredentialIdentifier},
+	)
+
+	if request.CloudProviderCredentialIdentifier == "" {
+		err := telemetry.Error(ctx, span, nil, "missing cloud provider credential identifier")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+	if request.CloudProvider == "" {
+		err := telemetry.Error(ctx, span, nil, "missing cloud provider")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
 	}
 
+	var cloudProvider porterv1.EnumCloudProvider
 	switch request.CloudProvider {
 	case CloudProviderAWS:
-		if request.TargetArn == "" {
-			err := telemetry.Error(ctx, span, nil, "target arn is required for AWS ACK auth")
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-			return
-		}
-
-		accessErrorExists, err := p.checkSameAccountInDifferentProjects(ctx, request.TargetArn, user)
+		accessErrorExists, err := p.checkSameAccountInDifferentProjects(ctx, request.CloudProviderCredentialIdentifier, user)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error checking if same account exists in different projects")
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -104,37 +92,14 @@ func (p *CloudProviderPermissionsStatusHandler) ServeHTTP(w http.ResponseWriter,
 			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusForbidden))
 			return
 		}
-
-		credReq.CloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS
-		credReq.CloudProviderCredentials = &porterv1.CloudProviderPermissionsStatusRequest_AwsCredentials{
-			AwsCredentials: &porterv1.AWSCredentials{
-				TargetArn:  request.Aws.TargetArn,
-				ExternalId: request.Aws.ExternalID,
-			},
-		}
-	case CloudProviderGCP:
-		credReq.CloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_GCP
-		credReq.CloudProviderCredentials = &porterv1.CloudProviderPermissionsStatusRequest_GcpCredentials{
-			GcpCredentials: &porterv1.GCPCredentials{
-				ServiceAccountJsonBase64: request.Gcp.ServiceAccountKey,
-			},
-		}
-	case CloudProviderAzure:
-		credReq.CloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AZURE
-		credReq.CloudProviderCredentials = &porterv1.CloudProviderPermissionsStatusRequest_AzureCredentials{
-			AzureCredentials: &porterv1.AzureCredentials{
-				SubscriptionId:         request.Azure.SubscriptionId,
-				TenantId:               request.Azure.TenantId,
-				ClientId:               request.Azure.ClientId,
-				ServicePrincipalSecret: []byte(request.Azure.ServicePrincipalKey),
-			},
-		}
-	default:
-		err := telemetry.Error(ctx, span, nil, "unsupported cloud provider")
-		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
+		cloudProvider = porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS
 	}
 
+	credReq := porterv1.CloudProviderPermissionsStatusRequest{
+		ProjectId:                         int64(project.ID),
+		CloudProvider:                     cloudProvider,
+		CloudProviderCredentialIdentifier: request.CloudProviderCredentialIdentifier,
+	}
 	credResp, err := p.Config().ClusterControlPlaneClient.CloudProviderPermissionsStatus(ctx, connect.NewRequest(&credReq))
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error checking cloud provider permissions status")

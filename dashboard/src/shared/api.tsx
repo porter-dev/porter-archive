@@ -3464,23 +3464,10 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
 );
 
 const getCloudProviderPermissionsStatus = baseApi<
-  | {
-      cloud_provider: "AWS";
-      target_arn: string;
-      external_id: string;
-    }
-  | {
-      cloud_provider: "GCP";
-      service_account_key: string;
-      gcp_project_id: string;
-    }
-  | {
-      cloud_provider: "Azure";
-      subscription_id: string;
-      client_id: string;
-      tenant_id: string;
-      service_principal_key: string;
-    },
+  {
+    cloud_provider: string;
+    cloud_provider_credential_identifier: string;
+  },
   { project_id: number }
 >(
   "GET",

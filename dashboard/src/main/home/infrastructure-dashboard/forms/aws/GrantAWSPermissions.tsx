@@ -103,8 +103,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
           "<token>",
           {
             cloud_provider: "AWS",
-            target_arn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
-            external_id: externalId,
+            cloud_provider_credential_identifier: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
           },
           {
             project_id: projectId,
@@ -145,8 +144,7 @@ const GrantAWSPermissions: React.FC<Props> = ({
         "<token>",
         {
           cloud_provider: "AWS",
-          target_arn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
-          external_id: externalId,
+          cloud_provider_credential_identifier: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
         },
         {
           project_id: projectId,
@@ -215,28 +213,29 @@ const GrantAWSPermissions: React.FC<Props> = ({
 
   const directToCloudFormation = useCallback(async () => {
     try {
+      // this sends an async connection request on the backend
       await connectToAwsAccount({
         targetArn: `arn:aws:iam::${AWSAccountID}:role/porter-manager`,
         externalId,
         projectId,
       });
-
-      const trustArn = process.env.TRUST_ARN
-        ? process.env.TRUST_ARN
-        : "arn:aws:iam::108458755588:role/CAPIManagement";
-      const cloudFormationUrl = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-access-policy.json&stackName=PorterRole&param_TrustArnParameter=${trustArn}`;
-      void reportToAnalytics({
-        projectId,
-        step: "aws-cloudformation-redirect-success",
-        awsAccountId: AWSAccountID,
-        cloudFormationUrl,
-        externalId,
-      });
-      setCurrentStep(3);
-      window.open(cloudFormationUrl, "_blank");
     } catch (err) {
       // todo: handle error here
     }
+
+    const trustArn = process.env.TRUST_ARN
+      ? process.env.TRUST_ARN
+      : "arn:aws:iam::108458755588:role/CAPIManagement";
+    const cloudFormationUrl = `https://console.aws.amazon.com/cloudformation/home?#/stacks/create/review?templateURL=https://porter-role.s3.us-east-2.amazonaws.com/cloudformation-access-policy.json&stackName=PorterRole&param_TrustArnParameter=${trustArn}`;
+    void reportToAnalytics({
+      projectId,
+      step: "aws-cloudformation-redirect-success",
+      awsAccountId: AWSAccountID,
+      cloudFormationUrl,
+      externalId,
+    });
+    setCurrentStep(3);
+    window.open(cloudFormationUrl, "_blank");
   }, [AWSAccountID, externalId]);
 
   const handleGrantPermissionsComplete = (): void => {

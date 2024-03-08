@@ -16,10 +16,12 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
+// CloudProviderPermissionsStatusHandler is the handler for checking the status of cloud provider permissions
 type CloudProviderPermissionsStatusHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
+// NewCloudProviderPermissionsStatusHandler returns a handler for checking the status of cloud provider permissions
 func NewCloudProviderPermissionsStatusHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

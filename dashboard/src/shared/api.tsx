@@ -1229,6 +1229,18 @@ const getLatestAppRevisions = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/revisions`;
 });
 
+const getAppInstances = baseApi<
+  {
+    deployment_target_id: string | undefined;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", ({ project_id, cluster_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/instances`;
+});
+
 const listDeploymentTargets = baseApi<
   {
     preview: boolean;
@@ -3604,6 +3616,7 @@ export default {
   getRevision,
   listAppRevisions,
   getLatestAppRevisions,
+  getAppInstances,
   listDeploymentTargets,
   createDeploymentTarget,
   getDeploymentTarget,

@@ -1036,6 +1036,35 @@ func getPorterAppRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/clusters/{cluster_id}/apps/instances -> porter_app.NewAppInstancesHandler
+	latestAppInstancesEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/instances", relPathV2),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+				types.ClusterScope,
+			},
+		},
+	)
+
+	latestAppInstancesHandler := porter_app.NewAppInstancesHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: latestAppInstancesEndpoint,
+		Handler:  latestAppInstancesHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/clusters/{cluster_id}/apps/{porter_app_name}/subdomain -> porter_app.NewCreateSubdomainHandler
 	createSubdomainEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -30,23 +30,30 @@ func NewCloudProviderPermissionsStatusHandler(
 	}
 }
 
+// CloudProviderType is a type for the cloud provider
 type CloudProviderType string
 
 const (
-	CloudProviderAWS   CloudProviderType = "AWS"
-	CloudProviderGCP   CloudProviderType = "GCP"
+	// CloudProviderAWS is the AWS cloud provider
+	CloudProviderAWS CloudProviderType = "AWS"
+	// CloudProviderGCP is the GCP cloud provider
+	CloudProviderGCP CloudProviderType = "GCP"
+	// CloudProviderAzure is the Azure cloud provider
 	CloudProviderAzure CloudProviderType = "Azure"
 )
 
+// CloudProviderPermissionsStatusRequest is the request to check the status of cloud provider permissions
 type CloudProviderPermissionsStatusRequest struct {
 	CloudProvider                     CloudProviderType `schema:"cloud_provider"`
 	CloudProviderCredentialIdentifier string            `schema:"cloud_provider_credential_identifier"`
 }
 
+// CloudProviderPermissionsStatusResponse is the response to check the status of cloud provider permissions
 type CloudProviderPermissionsStatusResponse struct {
 	PercentCompleted float32 `json:"percent_completed"`
 }
 
+// ServeHTTP checks the status of cloud provider permissions
 func (p *CloudProviderPermissionsStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-cloud-provider-permissions-status")
 	defer span.End()

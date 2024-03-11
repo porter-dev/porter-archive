@@ -200,8 +200,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   // expanded is a ui only value used to determine if a service is expanded or not
   // id is set by useFieldArray and is also not relevant to the app proto
   const onlyExpandedChanged = useMemo(() => {
-    console.log(isDirty, dirtyFields);
-
     if (!isDirty) return false;
 
     // get all entries in entire dirtyFields object that are true

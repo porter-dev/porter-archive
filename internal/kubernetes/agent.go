@@ -589,7 +589,7 @@ func (a *Agent) GetSecret(name string, namespace string) (*v1.Secret, error) {
 
 // CreateSecret creates the secret given its name and namespace
 func (a *Agent) CreateSecret(secret *v1.Secret, namespace string) (*v1.Secret, error) {
-	secret, err := a.Clientset.CoreV1().Secrets(namespace).Get(
+	_, err := a.Clientset.CoreV1().Secrets(namespace).Get(
 		context.TODO(),
 		secret.Name,
 		metav1.GetOptions{},

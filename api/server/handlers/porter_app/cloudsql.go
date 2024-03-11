@@ -1,6 +1,7 @@
 package porter_app
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 
@@ -148,12 +149,19 @@ func (c *CreateCloudSqlSecretHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	decoded, err := base64.StdEncoding.DecodeString(request.B64ServiceAccountJson)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error decoding base64 service account json")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("cloudsql-secret-%s", appName),
 		},
 		Data: map[string][]byte{
-			"service_account.json": []byte(request.B64ServiceAccountJson),
+			"service_account.json": decoded,
 		},
 	}
 

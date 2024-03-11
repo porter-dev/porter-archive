@@ -1368,6 +1368,11 @@ const AWS_VCPUS_QUOTA_RESOLUTION: PreflightCheckResolution = {
     },
   ],
 };
+const UNAVAILABLE_AVAILABILITY_ZONES: PreflightCheckResolution = {
+  title: "Addressing unavailable availability zones",
+  subtitle:
+    "You will need to select another region, as your AWS account does not support enough Availability Zones in the region specified.",
+};
 const OVERLAPPING_CIDR_RESOLUTION: PreflightCheckResolution = {
   title: "Preventing Overlapping CIDR Blocks",
   subtitle:
@@ -1484,6 +1489,11 @@ const SUPPORTED_AWS_PREFLIGHT_CHECKS: PreflightCheck[] = [
     name: "enforceCidrUniqueness",
     displayName: "Overlapping CIDR blocks",
     resolution: OVERLAPPING_CIDR_RESOLUTION,
+  },
+  {
+    name: "availabilityZone",
+    displayName: "Unavailable Availability Zones in region",
+    resolution: UNAVAILABLE_AVAILABILITY_ZONES,
   },
 ];
 

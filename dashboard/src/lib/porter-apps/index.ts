@@ -516,7 +516,6 @@ export function clientAppFromProto({
     );
   }
   if (!overrides?.predeploy) {
-    console.log("exit here");
     return {
       name: {
         readOnly: true,

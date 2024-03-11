@@ -116,6 +116,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     deploymentTargetID: deploymentTarget.id,
   });
 
+  console.log(latestProto.cloudSql);
+
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
       return tabParam as ValidTab;
@@ -145,6 +147,14 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       porter_yaml_path: porterAppRecord.porter_yaml_path ?? "./porter.yaml",
     };
   }, [porterAppRecord, latestProto]);
+
+  console.log(latestProto.cloudSql);
+  console.log(
+    clientAppFromProto({
+      proto: latestProto,
+      overrides: servicesFromYaml,
+    }).cloudSql
+  );
 
   const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",
@@ -200,6 +210,8 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
   // expanded is a ui only value used to determine if a service is expanded or not
   // id is set by useFieldArray and is also not relevant to the app proto
   const onlyExpandedChanged = useMemo(() => {
+    console.log(isDirty, dirtyFields);
+
     if (!isDirty) return false;
 
     // get all entries in entire dirtyFields object that are true

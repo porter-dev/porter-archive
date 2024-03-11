@@ -116,8 +116,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
     deploymentTargetID: deploymentTarget.id,
   });
 
-  console.log(latestProto.cloudSql);
-
   const currentTab = useMemo(() => {
     if (tabParam && validTabs.includes(tabParam as ValidTab)) {
       return tabParam as ValidTab;
@@ -147,14 +145,6 @@ const AppDataContainer: React.FC<AppDataContainerProps> = ({ tabParam }) => {
       porter_yaml_path: porterAppRecord.porter_yaml_path ?? "./porter.yaml",
     };
   }, [porterAppRecord, latestProto]);
-
-  console.log(latestProto.cloudSql);
-  console.log(
-    clientAppFromProto({
-      proto: latestProto,
-      overrides: servicesFromYaml,
-    }).cloudSql
-  );
 
   const porterAppFormMethods = useForm<PorterAppFormData>({
     reValidateMode: "onSubmit",

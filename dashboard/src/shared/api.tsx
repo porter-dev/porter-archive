@@ -2295,6 +2295,7 @@ const createEnvironmentGroups = baseApi<
     secret_variables?: Record<string, string>;
     type?: string;
     auth_token?: string;
+    is_env_override?: boolean;
   },
   {
     id: number;

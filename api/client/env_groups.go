@@ -23,3 +23,30 @@ func (c *Client) GetLatestEnvGroupVariables(
 
 	return resp, err
 }
+
+// UpdateEnvGroupInput is the input for the UpdateEnvGroup method
+type UpdateEnvGroupInput struct {
+	ProjectID    uint
+	ClusterID    uint
+	EnvGroupName string
+	Variables    map[string]string
+	Secrets      map[string]string
+}
+
+// UpdateEnvGroup creates or updates an environment group with the provided variables
+func (c *Client) UpdateEnvGroup(
+	ctx context.Context,
+	inp UpdateEnvGroupInput,
+) error {
+	req := &environment_groups.UpdateEnvironmentGroupRequest{
+		Name:            inp.EnvGroupName,
+		Variables:       inp.Variables,
+		SecretVariables: inp.Secrets,
+	}
+
+	return c.postRequest(
+		fmt.Sprintf("/projects/%d/clusters/%d/environment-groups", inp.ProjectID, inp.ClusterID),
+		req,
+		nil,
+	)
+}

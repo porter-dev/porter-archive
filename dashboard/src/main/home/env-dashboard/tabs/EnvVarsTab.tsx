@@ -71,8 +71,8 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
     ).map(([key, value]) => ({
       key,
       value,
-      hidden: (value as string).includes("PORTERSECRET"),
-      locked: (value as string).includes("PORTERSECRET"),
+      hidden: (value ).includes("PORTERSECRET"),
+      locked: (value ).includes("PORTERSECRET"),
       deleted: false,
     }));
     const secretVariables = Object.entries(
@@ -139,6 +139,7 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
             name: envGroup.name,
             variables: apiEnvVariables,
             secret_variables: secretEnvVariables,
+            is_env_override: true,
           },
           {
             id: currentProject?.id ?? -1,

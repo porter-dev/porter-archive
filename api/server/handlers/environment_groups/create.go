@@ -13,7 +13,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
-	"github.com/porter-dev/porter/internal/kubernetes/environment_groups"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
@@ -49,6 +48,9 @@ type UpdateEnvironmentGroupRequest struct {
 
 	// SecretVariables are sensitive values. All values must be a string due to a kubernetes limitation.
 	SecretVariables map[string]string `json:"secret_variables"`
+
+	// IsEnvOverride is a flag to determine if provided variables should override or merge with existing variables
+	IsEnvOverride bool `json:"is_env_override"`
 }
 type UpdateEnvironmentGroupResponse struct {
 	// Name of the env group to create or update
@@ -78,14 +80,6 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 		telemetry.AttributeKV{Key: "environment-group-type", Value: request.Type},
 	)
 
-	agent, err := c.GetAgent(r, cluster, "")
-	if err != nil {
-		err := telemetry.Error(ctx, span, err, "unable to connect to kubernetes cluster")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	var envGroup environment_groups.EnvironmentGroup
 	switch request.Type {
 	case "doppler":
 		_, err := c.Config().ClusterControlPlaneClient.CreateOrUpdateEnvGroup(ctx, connect.NewRequest(&porterv1.CreateOrUpdateEnvGroupRequest{
@@ -101,29 +95,28 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 			return
 		}
 
-		envGroup = environment_groups.EnvironmentGroup{
-			Name:         request.Name,
-			CreatedAtUTC: time.Now().UTC(),
-		}
 	default:
-		envGroup := environment_groups.EnvironmentGroup{
-			Name:            request.Name,
-			Variables:       request.Variables,
-			SecretVariables: request.SecretVariables,
-			CreatedAtUTC:    time.Now().UTC(),
-		}
-
-		err = environment_groups.CreateOrUpdateBaseEnvironmentGroup(ctx, agent, envGroup, nil)
+		_, err := c.Config().ClusterControlPlaneClient.CreateOrUpdateEnvGroup(ctx, connect.NewRequest(&porterv1.CreateOrUpdateEnvGroupRequest{
+			ProjectId:            int64(cluster.ProjectID),
+			ClusterId:            int64(cluster.ID),
+			EnvGroupProviderType: porterv1.EnumEnvGroupProviderType_ENUM_ENV_GROUP_PROVIDER_TYPE_PORTER,
+			EnvGroupName:         request.Name,
+			EnvVars: &porterv1.EnvGroupVariables{
+				Normal: request.Variables,
+				Secret: request.SecretVariables,
+			},
+			IsEnvOverride: request.IsEnvOverride,
+		}))
 		if err != nil {
-			err := telemetry.Error(ctx, span, err, "unable to create or update environment group")
+			err := telemetry.Error(ctx, span, err, "unable to create environment group")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 			return
 		}
 	}
 
 	envGroupResponse := &UpdateEnvironmentGroupResponse{
-		Name:      envGroup.Name,
-		CreatedAt: envGroup.CreatedAtUTC,
+		Name:      request.Name,
+		CreatedAt: time.Now().UTC(),
 	}
 	c.WriteResult(w, r, envGroupResponse)
 }

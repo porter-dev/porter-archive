@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useContext } from "react";
 import styled from "styled-components";
 
 import Text from "components/porter/Text";
 
+import { Context } from "shared/Context";
 import info from "assets/information-circle-contained.svg";
 
 import Container from "./Container";
@@ -13,6 +14,11 @@ type Props = {
   children: JSX.Element;
 };
 const PorterOperatorComponent: React.FC<Props> = ({ children }) => {
+  const { user } = useContext(Context);
+
+  if (!user?.email?.endsWith("@porter.run")) {
+    return null;
+  }
   return (
     <StyledContainer>
       <Container row>

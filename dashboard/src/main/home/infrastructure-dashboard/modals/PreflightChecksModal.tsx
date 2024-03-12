@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React from "react";
 import styled from "styled-components";
 import { match } from "ts-pattern";
 
@@ -14,8 +14,6 @@ import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
 import { type ClientPreflightCheck } from "lib/clusters/types";
-
-import { Context } from "shared/Context";
 
 import { useClusterFormContext } from "../ClusterFormContextProvider";
 import ResolutionStepsModalContents from "./help/preflight/ResolutionStepsModalContents";
@@ -89,7 +87,6 @@ const PreflightChecksModal: React.FC<Props> = ({
   onClose,
   preflightChecks,
 }) => {
-  const { user } = useContext(Context);
   const { submitSkippingPreflightChecks } = useClusterFormContext();
 
   return (
@@ -119,18 +116,16 @@ const PreflightChecksModal: React.FC<Props> = ({
           >
             Talk to support
           </ShowIntercomButton>
-          {user.email?.endsWith("@porter.run") && (
-            <PorterOperatorComponent>
-              <Button
-                onClick={async () => {
-                  await submitSkippingPreflightChecks();
-                }}
-                color="red"
-              >
-                Skip preflight checks
-              </Button>
-            </PorterOperatorComponent>
-          )}
+          <PorterOperatorComponent>
+            <Button
+              onClick={async () => {
+                await submitSkippingPreflightChecks();
+              }}
+              color="red"
+            >
+              Skip preflight checks
+            </Button>
+          </PorterOperatorComponent>
         </Container>
       </AppearingDiv>
     </Modal>

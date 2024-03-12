@@ -3475,6 +3475,26 @@ const getCloudProviderPermissionsStatus = baseApi<
     `/api/projects/${project_id}/integrations/cloud-permissions`
 );
 
+const getCloudSqlSecret = baseApi<
+  {},
+  { project_id: number; deployment_target_id: string; app_name: string }
+>(
+  "GET",
+  ({ project_id, deployment_target_id, app_name }) =>
+    `/api/projects/${project_id}/targets/${deployment_target_id}/apps/${app_name}/cloudsql`
+);
+
+const createCloudSqlSecret = baseApi<
+  {
+    b64_service_account_json: string;
+  },
+  { project_id: number; deployment_target_id: string; app_name: string }
+>(
+  "POST",
+  ({ project_id, deployment_target_id, app_name }) =>
+    `/api/projects/${project_id}/targets/${deployment_target_id}/apps/${app_name}/cloudsql`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -3767,4 +3787,7 @@ export default {
   getGithubStatus,
   getDatabaseStatus,
   getCloudProviderPermissionsStatus,
+
+  getCloudSqlSecret,
+  createCloudSqlSecret,
 };

@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Controller, useFormContext } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
+import { z } from "zod";
 
 import Button from "components/porter/Button";
 import Checkbox from "components/porter/Checkbox";
@@ -16,6 +17,12 @@ import api from "shared/api";
 import { Context } from "shared/Context";
 import document from "assets/document.svg";
 
+import UploadArea from "components/form-components/UploadArea";
+import Container from "components/porter/Container";
+import { ControlledInput } from "components/porter/ControlledInput";
+import Input from "components/porter/Input";
+import { useCloudSqlSecret } from "lib/hooks/useCloudSqlSecret";
+import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 import DeleteApplicationModal from "../../expanded-app/DeleteApplicationModal";
 import { useLatestRevision } from "../LatestRevisionContext";
 import ExportAppModal from "./ExportAppModal";
@@ -29,7 +36,7 @@ const Settings: React.FC = () => {
   const { porterApp, clusterId, projectId } = useLatestRevision();
   const { updateAppStep } = useAppAnalytics();
   const [isDeleting, setIsDeleting] = useState(false);
-  const { control } = useFormContext<PorterAppFormData>();
+  const { control, register, watch } = useFormContext<PorterAppFormData>();
   const [githubWorkflowFilename, setGithubWorkflowFilename] = useState(
     `porter_stack_${porterApp.name}.yml`
   );
@@ -175,6 +182,7 @@ const Settings: React.FC = () => {
           </Checkbox>
         )}
       />
+      {currentCluster?.cloud_provider === "GCP" && <CloudSql />}
       <Spacer y={1} />
       {currentCluster?.cloud_provider === "AWS" &&
         currentProject?.efs_enabled && (
@@ -271,6 +279,133 @@ const Settings: React.FC = () => {
 };
 
 export default Settings;
+
+const CloudSql: React.FC = () => {
+  const { register, control, watch, setValue } =
+    useFormContext<PorterAppFormData>();
+  const { currentDeploymentTarget } = useDeploymentTarget();
+  const [created, setCreated] = useState(false);
+
+  if (!currentDeploymentTarget) {
+    return null;
+  }
+
+  const cloudSqlEnabled = watch(`app.cloudSql.enabled`);
+  const appName = watch(`app.name.value`);
+
+  const secretExists = useCloudSqlSecret({
+    projectId: currentDeploymentTarget.project_id,
+    deploymentTargetId: currentDeploymentTarget.id,
+    appName,
+  });
+
+  const handleLoadJSON = async (data: string): Promise<void> => {
+    try {
+      await api.createCloudSqlSecret(
+        "<token>",
+        {
+          b64_service_account_json: btoa(data),
+        },
+        {
+          project_id: currentDeploymentTarget.project_id,
+          deployment_target_id: currentDeploymentTarget.id,
+          app_name: appName,
+        }
+      );
+      setCreated(true);
+    } catch (err) {}
+  };
+
+  const enabled = watch(`app.cloudSql.enabled`);
+
+  useEffect(() => {
+    if (enabled) {
+      setValue(
+        `app.cloudSql.serviceAccountJsonSecret`,
+        `cloudsql-secret-${appName}`
+      );
+    }
+  }, [enabled]);
+
+  return (
+    <>
+      <Spacer y={1} />
+      <Text>CloudSQL proxy</Text>
+      <Spacer y={0.25} />
+      <Text color="helper">
+        When enabled, Porter will automatically deploy a CloudSQL proxy with
+        your application, allowing all your services to securely access your
+        CloudSQL instance.
+      </Text>
+      <Spacer y={0.5} />
+      <Controller
+        name={`app.cloudSql.enabled`}
+        control={control}
+        render={({ field: { value, onChange } }) => (
+          <Checkbox
+            checked={value}
+            toggleChecked={() => {
+              onChange(!value);
+            }}
+          >
+            <Text color="helper">Enable CloudSQL Proxy</Text>
+          </Checkbox>
+        )}
+      />
+      {cloudSqlEnabled && (
+        <>
+          <Spacer y={0.75} />
+          <Text color="helper">Connection Name</Text>
+          <Spacer y={0.25} />
+          <ControlledInput
+            type="text"
+            placeholder="ex: project:us-east1:instance"
+            {...register(`app.cloudSql.connectionName`)}
+          />
+          <Spacer y={0.5} />
+          <Text color="helper">Port</Text>
+          <Spacer y={0.25} />
+          <Controller
+            name={`app.cloudSql.dbPort`}
+            control={control}
+            render={({ field: { value, onChange } }) => (
+              <Input
+                placeholder={"ex: 5432"}
+                value={value.toString()}
+                setValue={(x: string) => {
+                  onChange(z.coerce.number().parse(x));
+                }}
+              />
+            )}
+          />
+          <Spacer y={0.5} />
+          <Container row>
+            <Text color={"helper"}>Service Account JSON</Text>
+            <Spacer inline x={0.5} />
+            {secretExists && created && (
+              <i className="material-icons">done</i>
+            )}{" "}
+          </Container>
+          <UploadArea
+            setValue={(x: string) => {
+              handleLoadJSON(x).catch(() => {});
+            }}
+            label=""
+            placeholder={
+              (secretExists
+                ? "To update your credentials, "
+                : "To enable the CloudSql Proxy, ") +
+              "drag a GCP Service Account JSON here, or click to browse."
+            }
+            width="100%"
+            height="100%"
+            isRequired={false}
+          />
+        </>
+      )}
+    </>
+  );
+};
 
 const StyledSettingsTab = styled.div`
   width: 100%;

@@ -8,6 +8,7 @@ import Container from "components/porter/Container";
 import { Error as ErrorComponent } from "components/porter/Error";
 import Expandable from "components/porter/Expandable";
 import Modal from "components/porter/Modal";
+import PorterOperatorComponent from "components/porter/PorterOperatorComponent";
 import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
@@ -119,16 +120,16 @@ const PreflightChecksModal: React.FC<Props> = ({
             Talk to support
           </ShowIntercomButton>
           {user.email?.endsWith("@porter.run") && (
-            <>
+            <PorterOperatorComponent>
               <Button
                 onClick={async () => {
                   await submitSkippingPreflightChecks();
                 }}
                 color="red"
               >
-                (Porter operators only) Skip preflight checks
+                Skip preflight checks
               </Button>
-            </>
+            </PorterOperatorComponent>
           )}
         </Container>
       </AppearingDiv>

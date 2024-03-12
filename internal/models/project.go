@@ -81,6 +81,9 @@ const (
 
 	// AdvancedInfraEnabled controls whether a project can use advanced infrastructure settings
 	AdvancedInfraEnabled FeatureFlagLabel = "advanced_infra_enabled"
+
+	// AdvancedRbacEnabled controls whether a project can use advanced rbac settings
+	AdvancedRbacEnabled FeatureFlagLabel = "advanced_rbac_enabled"
 )
 
 // ProjectFeatureFlags keeps track of all project-related feature flags
@@ -107,6 +110,7 @@ var ProjectFeatureFlags = map[FeatureFlagLabel]bool{
 	ValidateApplyV2:                 true,
 	ManagedDeploymentTargetsEnabled: false,
 	AdvancedInfraEnabled:            false,
+	AdvancedRbacEnabled:             false,
 }
 
 type ProjectPlan string
@@ -201,6 +205,7 @@ type Project struct {
 	EnableSandbox        bool `gorm:"default:false"`
 	EnableReprovision    bool `gorm:"default:false"`
 	AdvancedInfraEnabled bool `gorm:"default:false"`
+	AdvancedRbacEnabled	 bool `gorm:"default:false"`
 }
 
 // GetFeatureFlag calls launchdarkly for the specified flag
@@ -249,6 +254,8 @@ func (p *Project) GetFeatureFlag(flagName FeatureFlagLabel, launchDarklyClient *
 			return false
 		case "advanced_infra_enabled":
 			return false
+		case "advanced_rbac_enabled":
+			return p.AdvancedRbacEnabled
 		}
 	}
 
@@ -299,6 +306,7 @@ func (p *Project) ToProjectType(launchDarklyClient *features.Client) types.Proje
 		ManagedDeploymentTargetsEnabled: p.GetFeatureFlag(ManagedDeploymentTargetsEnabled, launchDarklyClient),
 		AdvancedInfraEnabled:            p.GetFeatureFlag(AdvancedInfraEnabled, launchDarklyClient),
 		SandboxEnabled:                  p.EnableSandbox,
+		AdvancedRbacEnabled:             p.GetFeatureFlag(AdvancedRbacEnabled, launchDarklyClient),
 	}
 }
 
@@ -334,6 +342,7 @@ func (p *Project) ToProjectListType() *types.ProjectList {
 		ValidateApplyV2:        p.ValidateApplyV2,
 		FullAddOns:             p.FullAddOns,
 		AdvancedInfraEnabled:   p.AdvancedInfraEnabled,
+		AdvancedRbacEnabled:    p.AdvancedRbacEnabled, 
 	}
 }
 

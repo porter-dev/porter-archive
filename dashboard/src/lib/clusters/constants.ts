@@ -1372,6 +1372,11 @@ const UNAVAILABLE_AVAILABILITY_ZONES: PreflightCheckResolution = {
   title: "Addressing unavailable availability zones",
   subtitle:
     "You will need to select another region, as your AWS account does not support enough Availability Zones in the region specified.",
+  steps: [
+    {
+      text: "Select another region from the region dropdown and retry the provision.",
+    },
+  ],
 };
 const OVERLAPPING_CIDR_RESOLUTION: PreflightCheckResolution = {
   title: "Preventing Overlapping CIDR Blocks",

@@ -31,6 +31,7 @@ type UpdateEnvGroupInput struct {
 	EnvGroupName string
 	Variables    map[string]string
 	Secrets      map[string]string
+	Deletions    environment_groups.EnvVariableDeletions
 }
 
 // UpdateEnvGroup creates or updates an environment group with the provided variables
@@ -42,6 +43,7 @@ func (c *Client) UpdateEnvGroup(
 		Name:            inp.EnvGroupName,
 		Variables:       inp.Variables,
 		SecretVariables: inp.Secrets,
+		Deletions:       inp.Deletions,
 	}
 
 	return c.postRequest(

@@ -215,6 +215,7 @@ type UpdateAppInput struct {
 	Exact                bool
 	Variables            map[string]string
 	Secrets              map[string]string
+	Deletions            porter_app.Deletions
 }
 
 // UpdateApp updates a porter app
@@ -239,6 +240,7 @@ func (c *Client) UpdateApp(
 		Exact:                inp.Exact,
 		Variables:            inp.Variables,
 		Secrets:              inp.Secrets,
+		Deletions:            inp.Deletions,
 	}
 
 	err := c.postRequest(

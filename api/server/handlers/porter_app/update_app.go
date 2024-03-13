@@ -60,6 +60,8 @@ type UpdateAppRequest struct {
 	GitSource GitSource `json:"git_source,omitempty"`
 	// DeploymentTargetId is the ID of the deployment target to apply the update to
 	DeploymentTargetId string `json:"deployment_target_id"`
+	// DeploymentTargetName is the name of the deployment target to apply the update to
+	DeploymentTargetName string `json:"deployment_target_name"`
 	// Variables is a map of environment variable names to values
 	Variables map[string]string `json:"variables"`
 	// Secrets is a map of secret names to values
@@ -116,12 +118,21 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	if request.DeploymentTargetId == "" {
-		err := telemetry.Error(ctx, span, nil, "deployment target id is empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
+
 	deploymentTargetID := request.DeploymentTargetId
+	deploymentTargetName := request.DeploymentTargetName
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTargetID},
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: deploymentTargetName},
+	)
+
+	var deploymentTargetIdentifer *porterv1.DeploymentTargetIdentifier
+	if deploymentTargetID != "" || deploymentTargetName != "" {
+		deploymentTargetIdentifer = &porterv1.DeploymentTargetIdentifier{
+			Id:   deploymentTargetID,
+			Name: deploymentTargetName,
+		}
+	}
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "name", Value: request.Name},
@@ -258,12 +269,11 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updateReq := connect.NewRequest(&porterv1.UpdateAppRequest{
-		ProjectId: int64(project.ID),
-		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
-			Id: deploymentTargetID,
-		},
-		App:           appProto,
-		AppRevisionId: request.AppRevisionID,
+		ProjectId:                  int64(project.ID),
+		ClusterId:                  int64(cluster.ID),
+		DeploymentTargetIdentifier: deploymentTargetIdentifer,
+		App:                        appProto,
+		AppRevisionId:              request.AppRevisionID,
 		AppEnv: &porterv1.EnvGroupVariables{
 			Normal: envVariables,
 			Secret: request.Secrets,

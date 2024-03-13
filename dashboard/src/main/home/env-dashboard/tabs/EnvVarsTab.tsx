@@ -148,16 +148,6 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
         );
       };
      
-      await api.updateAppsLinkedToEnvironmentGroup(
-        "<token>",
-        {
-          name: envGroup?.name,
-        },
-        {
-          id: currentProject?.id || -1,
-          cluster_id: currentCluster?.id || -1,
-        }
-      );
       fetchEnvGroup();
       setButtonStatus("success");
     } catch (err) {

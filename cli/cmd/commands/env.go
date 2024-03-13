@@ -7,6 +7,8 @@ import (
 
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
+	"github.com/porter-dev/porter/api/server/handlers/environment_groups"
+	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/spf13/cobra"
@@ -21,6 +23,11 @@ var (
 type envVariables struct {
 	Variables map[string]string `json:"variables"`
 	Secrets   map[string]string `json:"secrets"`
+}
+
+type envVariableDeletions struct {
+	Variables []string `json:"variables"`
+	Secrets   []string `json:"secrets"`
 }
 
 func registerCommand_Env(cliConf config.CLIConfig) *cobra.Command {
@@ -207,7 +214,60 @@ func setEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, clien
 }
 
 func unsetEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
-	fmt.Println("This command is not supported for your project. Contact support@porter.run for more information.")
+	var envVarDeletions envVariableDeletions
+
+	variables, err := cmd.Flags().GetStringSlice("variables")
+	if err != nil {
+		return fmt.Errorf("could not get variables: %w", err)
+	}
+
+	secrets, err := cmd.Flags().GetStringSlice("secrets")
+	if err != nil {
+		return fmt.Errorf("could not get secrets: %w", err)
+	}
+
+	envVarDeletions = envVariableDeletions{
+		Variables: variables,
+		Secrets:   secrets,
+	}
+
+	if appName != "" {
+		color.New(color.FgGreen).Printf("Unsetting environment variables for app %s...\n", appName) // nolint:errcheck,gosec
+
+		_, err := client.UpdateApp(ctx, api.UpdateAppInput{
+			ProjectID:            cliConf.Project,
+			ClusterID:            cliConf.Cluster,
+			Name:                 appName,
+			DeploymentTargetName: deploymentTargetName,
+			Deletions: porter_app.Deletions{
+				EnvVariableDeletions: porter_app.EnvVariableDeletions{
+					Variables: envVarDeletions.Variables,
+					Secrets:   envVarDeletions.Secrets,
+				},
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("could not unset app env variables: %w", err)
+		}
+	}
+
+	if envGroupName != "" {
+		color.New(color.FgGreen).Printf("Unsetting environment variables for environment group %s...\n", envGroupName) // nolint:errcheck,gosec
+
+		err := client.UpdateEnvGroup(ctx, api.UpdateEnvGroupInput{
+			ProjectID:    cliConf.Project,
+			ClusterID:    cliConf.Cluster,
+			EnvGroupName: envGroupName,
+			Deletions: environment_groups.EnvVariableDeletions{
+				Variables: envVarDeletions.Variables,
+				Secrets:   envVarDeletions.Secrets,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("could not unset env group env variables: %w", err)
+		}
+	}
+
 	return nil
 }
 

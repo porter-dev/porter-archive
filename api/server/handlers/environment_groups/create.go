@@ -33,6 +33,14 @@ func NewUpdateEnvironmentGroupHandler(
 	}
 }
 
+// EnvVariableDeletions is the set of keys to delete from the environment group
+type EnvVariableDeletions struct {
+	// Variables is a set of variable keys to delete from the environment group
+	Variables []string `json:"variables"`
+	// Secrets is a set of secret variable keys to delete from the environment group
+	Secrets []string `json:"secrets"`
+}
+
 type UpdateEnvironmentGroupRequest struct {
 	// Name of the env group to create or update
 	Name string `json:"name"`
@@ -51,6 +59,9 @@ type UpdateEnvironmentGroupRequest struct {
 
 	// IsEnvOverride is a flag to determine if provided variables should override or merge with existing variables
 	IsEnvOverride bool `json:"is_env_override"`
+
+	// Deletions is a set of keys to delete from the environment group
+	Deletions EnvVariableDeletions `json:"deletions"`
 }
 type UpdateEnvironmentGroupResponse struct {
 	// Name of the env group to create or update
@@ -104,6 +115,10 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 			EnvVars: &porterv1.EnvGroupVariables{
 				Normal: request.Variables,
 				Secret: request.SecretVariables,
+			},
+			EnvVariableDeletions: &porterv1.EnvVariableDeletions{
+				Variables: request.Deletions.Variables,
+				Secrets:   request.Deletions.Secrets,
 			},
 			IsEnvOverride: request.IsEnvOverride,
 		}))

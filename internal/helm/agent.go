@@ -54,15 +54,16 @@ func (a *Agent) ListReleases(
 	ctx, span := telemetry.NewSpan(ctx, "helm-list-releases")
 	defer span.End()
 
+	stringFilter := strings.Join(filter.StatusFilter, ",")
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "namespace", Value: namespace},
+		telemetry.AttributeKV{Key: "filter", Value: stringFilter},
 	)
 
-	lsel := fmt.Sprintf("owner=helm,status in (%s)", strings.Join(filter.StatusFilter, ","))
+	lsel := fmt.Sprintf("owner=helm,status in (%s)", stringFilter)
 
-	// list secrets
 	secretList, err := a.K8sAgent.Clientset.CoreV1().Secrets(namespace).List(
-		context.Background(),
+		ctx,
 		v1.ListOptions{
 			LabelSelector: lsel,
 		},
@@ -365,7 +366,6 @@ func (a *Agent) UpgradeReleaseByValues(
 		doAuth,
 		disablePullSecretsInjection,
 	)
-
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "error getting porter postrenderer")
 	}
@@ -411,14 +411,12 @@ func (a *Agent) UpgradeReleaseByValues(
 					rel.Info.Status = release.StatusFailed
 
 					err = helmSecrets.Update(mostRecentSecret.GetName(), rel)
-
 					if err != nil {
 						return nil, telemetry.Error(ctx, span, err, "error updating helm secrets")
 					}
 
 					// retry upgrade
 					res, err = cmd.Run(conf.Name, ch, conf.Values)
-
 					if err != nil {
 						return nil, telemetry.Error(ctx, span, err, "error running upgrade after updating helm secrets")
 					}
@@ -485,7 +483,6 @@ func (a *Agent) UpgradeReleaseByValues(
 				helmSecrets := driver.NewSecrets(a.K8sAgent.Clientset.CoreV1().Secrets(rel.Namespace))
 
 				err = helmSecrets.Update(mostRecentSecret.GetName(), rel)
-
 				if err != nil {
 					return nil, telemetry.Error(ctx, span, err, "error updating helm secret")
 				}
@@ -592,7 +589,6 @@ func (a *Agent) InstallChart(
 		doAuth,
 		disablePullSecretsInjection,
 	)
-
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "error getting post renderer")
 	}
@@ -658,7 +654,6 @@ func (a *Agent) UpgradeInstallChart(
 		doAuth,
 		disablePullSecretsInjection,
 	)
-
 	if err != nil {
 		return nil, telemetry.Error(ctx, span, err, "error getting post renderer")
 	}

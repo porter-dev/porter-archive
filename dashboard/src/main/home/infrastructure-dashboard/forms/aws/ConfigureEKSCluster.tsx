@@ -131,7 +131,10 @@ const ConfigureEKSCluster: React.FC<Props> = ({ goBack }) => {
               </a>
             </Text>
             <Spacer y={1} />
-            <NodeGroups availableMachineTypes={CloudProviderAWS.machineTypes} />
+            <NodeGroups
+              availableMachineTypes={CloudProviderAWS.machineTypes}
+              isCreating
+            />
           </>,
           <>
             <Text size={16}>Provision cluster</Text>

@@ -78,7 +78,8 @@ Optionally, specify a file to write the environment variables to. Otherwise the 
 		Short: "Set environment variables for an app or environment group",
 		Long: `Set environment variables for an app or environment group.
 
-Both variables and secrets can be specified as key-value pairs.`,
+Both variables and secrets can be specified as key-value pairs.
+When updating an environment group, all apps linked to the environment group will be re-deployed, unless the --skip-redeploys flag is used.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return checkLoginAndRunWithConfig(cmd, cliConf, args, setEnv)
@@ -86,13 +87,15 @@ Both variables and secrets can be specified as key-value pairs.`,
 	}
 	setCommand.Flags().StringToStringP("variables", "v", nil, "variables to set")
 	setCommand.Flags().StringToStringP("secrets", "s", nil, "secrets to set")
+	setCommand.Flags().Bool("skip-redeploys", false, "skip re-deploying apps linked to the environment group")
 
 	unsetCommand := &cobra.Command{
 		Use:   "unset",
 		Short: "Unset environment variables for an app or environment group",
 		Long: `Unset environment variables for an app or environment group.
 
-Both variables and secrets can be specified as keys.`,
+Both variables and secrets can be specified as keys.
+When updating an environment group, all apps linked to the environment group will be re-deployed, unless the --skip-redeploys flag is used.`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return checkLoginAndRunWithConfig(cmd, cliConf, args, unsetEnv)
@@ -100,6 +103,7 @@ Both variables and secrets can be specified as keys.`,
 	}
 	unsetCommand.Flags().StringSliceP("variables", "v", nil, "variables to unset")
 	unsetCommand.Flags().StringSliceP("secrets", "s", nil, "secrets to unset")
+	unsetCommand.Flags().Bool("skip-redeploys", false, "skip re-deploying apps linked to the environment group")
 
 	envCmd.AddCommand(pullCommand)
 	envCmd.AddCommand(setCommand)
@@ -176,6 +180,11 @@ func setEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, clien
 		return fmt.Errorf("could not get secrets: %w", err)
 	}
 
+	skipRedeploys, err := cmd.Flags().GetBool("skip-redeploys")
+	if err != nil {
+		return fmt.Errorf("could not get skip-redeploys: %w", err)
+	}
+
 	envVars = envVariables{
 		Variables: variables,
 		Secrets:   secrets,
@@ -209,11 +218,12 @@ func setEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, clien
 
 		s.Start()
 		err := client.UpdateEnvGroup(ctx, api.UpdateEnvGroupInput{
-			ProjectID:    cliConf.Project,
-			ClusterID:    cliConf.Cluster,
-			EnvGroupName: envGroupName,
-			Variables:    envVars.Variables,
-			Secrets:      envVars.Secrets,
+			ProjectID:     cliConf.Project,
+			ClusterID:     cliConf.Cluster,
+			EnvGroupName:  envGroupName,
+			Variables:     envVars.Variables,
+			Secrets:       envVars.Secrets,
+			SkipRedeploys: skipRedeploys,
 		})
 		if err != nil {
 			return fmt.Errorf("could not set env group env variables: %w", err)
@@ -244,6 +254,11 @@ func unsetEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, cli
 	secrets, err := cmd.Flags().GetStringSlice("secrets")
 	if err != nil {
 		return fmt.Errorf("could not get secrets: %w", err)
+	}
+
+	skipRedeploys, err := cmd.Flags().GetBool("skip-redeploys")
+	if err != nil {
+		return fmt.Errorf("could not get skip-redeploys: %w", err)
 	}
 
 	envVarDeletions = envVariableDeletions{
@@ -289,6 +304,7 @@ func unsetEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, cli
 				Variables: envVarDeletions.Variables,
 				Secrets:   envVarDeletions.Secrets,
 			},
+			SkipRedeploys: skipRedeploys,
 		})
 		if err != nil {
 			return fmt.Errorf("could not unset env group env variables: %w", err)

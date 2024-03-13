@@ -62,6 +62,9 @@ type UpdateEnvironmentGroupRequest struct {
 
 	// Deletions is a set of keys to delete from the environment group
 	Deletions EnvVariableDeletions `json:"deletions"`
+
+	// SkipAppAutoDeploy is a flag to determine if the app should be auto deployed
+	SkipAppAutoDeploy bool `json:"skip_app_auto_deploy"`
 }
 type UpdateEnvironmentGroupResponse struct {
 	// Name of the env group to create or update
@@ -121,7 +124,7 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 				Secrets:   request.Deletions.Secrets,
 			},
 			IsEnvOverride:     request.IsEnvOverride,
-			SkipAppAutoDeploy: true, // switch to false once CCP changes are in, so as to not miss any redeploys
+			SkipAppAutoDeploy: request.SkipAppAutoDeploy,
 		}))
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "unable to create environment group")

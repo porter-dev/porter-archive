@@ -46,4 +46,7 @@ type Datastore struct {
 
 	// Status describes the status of a datastore
 	Status DatastoreStatus `json:"status"`
+
+	// OnManagementCluster is a flag that indicates whether the datastore is hosted on the management cluster or on the customer's cluster
+	OnManagementCluster bool `json:"on_management_cluster" gorm:"not null;default:false"`
 }

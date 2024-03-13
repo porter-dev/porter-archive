@@ -145,7 +145,10 @@ const ConfigureGKECluster: React.FC<Props> = ({ goBack }) => {
               </a>
             </Text>
             <Spacer y={1} />
-            <NodeGroups availableMachineTypes={CloudProviderGCP.machineTypes} />
+            <NodeGroups
+              availableMachineTypes={CloudProviderGCP.machineTypes}
+              isCreating
+            />
           </>,
           <>
             <Text size={16}>Provision cluster</Text>

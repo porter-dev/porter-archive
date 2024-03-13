@@ -162,6 +162,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
               availableMachineTypes={CloudProviderAzure.machineTypes.filter(
                 (mt) => mt.supportedRegions.includes(region)
               )}
+              isCreating
             />
           </>,
           <>

@@ -428,16 +428,15 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           <>
             <Heading isAtTop={true}>Permission groups</Heading>
             <Helper>Manage permission groups for your organization.</Helper>
-            <PermissionGroup>Admin</PermissionGroup>
-            <PermissionGroup>Developer</PermissionGroup>
-            <PermissionGroup>Viewer</PermissionGroup>
+            <PermissionGroup name="Admin" />
+            <PermissionGroup name="Developer" />
+            <PermissionGroup name="Viewer" />
             <Spacer y={0.4} />
             <Button alt>
               <I className="material-icons">add</I>
               New group
             </Button>
             <Spacer y={1.7} />
-            <RoleModal />
           </>
         )}
         <Heading isAtTop={true}>Share project</Heading>
@@ -499,6 +498,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           </Placeholder>
         )
       )}
+      <Spacer y={2} />
     </>
   );
 };
@@ -508,19 +508,6 @@ export default InvitePage;
 const I = styled.i`
   margin-right: 10px;
   font-size: 18px;
-`;
-
-const Group = styled.div`
-  display: inline-block;
-  border-radius: 5px;
-  margin-right: 10px;
-  cursor: pointer;
-  font-size: 13px;
-  padding: 7px 10px;
-  background: ${({ theme }) => theme.clickable.bg};
-  border: 1px solid ${({ theme }) => theme.border};
-  width: fit-content;
-  margin-bottom: 15px;
 `;
 
 const Flex = styled.div`

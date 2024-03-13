@@ -10,12 +10,13 @@ import Text from "components/porter/Text";
 import role from "assets/role.svg";
 
 type RoleModalProps = {
-  foo?: boolean;
+  name: string;
+  closeModal: () => void;
 };
 
-const RoleModal: React.FC<RoleModalProps> = ({ foo }) => {
+const RoleModal: React.FC<RoleModalProps> = ({ name, closeModal }) => {
   return (
-    <Modal closeModal={() => {}} width={"800px"}>
+    <Modal closeModal={closeModal} width={"800px"}>
       <Container row>
         <Image src={role} />
         <Spacer inline x={1} />
@@ -25,7 +26,7 @@ const RoleModal: React.FC<RoleModalProps> = ({ foo }) => {
       <Input
         placeholder="ex: admin"
         width="300px"
-        value="Admin"
+        value={name}
         setValue={() => {}}
       />
       <Spacer y={1} />

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/server/handlers/environment_groups"
@@ -179,9 +181,13 @@ func setEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, clien
 		Secrets:   secrets,
 	}
 
-	if appName != "" {
-		color.New(color.FgGreen).Printf("Setting environment variables for app %s...\n", appName) // nolint:errcheck,gosec
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Color("cyan") // nolint:errcheck,gosec
 
+	if appName != "" {
+		s.Suffix = fmt.Sprintf(" Setting environment variables for app %s...", appName)
+
+		s.Start()
 		_, err := client.UpdateApp(ctx, api.UpdateAppInput{
 			ProjectID:            cliConf.Project,
 			ClusterID:            cliConf.Cluster,
@@ -193,11 +199,15 @@ func setEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, clien
 		if err != nil {
 			return fmt.Errorf("could not set app env variables: %w", err)
 		}
+		s.Stop()
+
+		color.New(color.FgGreen).Printf("Updated environment variable keys in app %s:\n", appName) // nolint:errcheck,gosec
 	}
 
 	if envGroupName != "" {
-		color.New(color.FgGreen).Printf("Setting environment variables for environment group %s...\n", envGroupName) // nolint:errcheck,gosec
+		s.Suffix = fmt.Sprintf(" Setting environment variables for environment group %s...", envGroupName)
 
+		s.Start()
 		err := client.UpdateEnvGroup(ctx, api.UpdateEnvGroupInput{
 			ProjectID:    cliConf.Project,
 			ClusterID:    cliConf.Cluster,
@@ -208,6 +218,16 @@ func setEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, clien
 		if err != nil {
 			return fmt.Errorf("could not set env group env variables: %w", err)
 		}
+		s.Stop()
+
+		color.New(color.FgGreen).Printf("Updated keys in environment group %s:\n", envGroupName) // nolint:errcheck,gosec
+	}
+
+	for k, v := range envVars.Variables {
+		color.New(color.FgBlue).Printf("%s=%s\n", k, v) // nolint:errcheck,gosec
+	}
+	for k := range envVars.Secrets {
+		color.New(color.FgBlue).Printf("%s=********\n", k) // nolint:errcheck,gosec
 	}
 
 	return nil
@@ -231,9 +251,13 @@ func unsetEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, cli
 		Secrets:   secrets,
 	}
 
-	if appName != "" {
-		color.New(color.FgGreen).Printf("Unsetting environment variables for app %s...\n", appName) // nolint:errcheck,gosec
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+	s.Color("cyan") // nolint:errcheck,gosec
 
+	if appName != "" {
+		s.Suffix = fmt.Sprintf(" Unsetting environment variables for app %s...", appName)
+
+		s.Start()
 		_, err := client.UpdateApp(ctx, api.UpdateAppInput{
 			ProjectID:            cliConf.Project,
 			ClusterID:            cliConf.Cluster,
@@ -249,10 +273,13 @@ func unsetEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, cli
 		if err != nil {
 			return fmt.Errorf("could not unset app env variables: %w", err)
 		}
+		s.Stop()
+
+		color.New(color.FgGreen).Printf("Unset environment variable keys in app %s:\n", appName) // nolint:errcheck,gosec
 	}
 
 	if envGroupName != "" {
-		color.New(color.FgGreen).Printf("Unsetting environment variables for environment group %s...\n", envGroupName) // nolint:errcheck,gosec
+		s.Suffix = fmt.Sprintf(" Unsetting environment variables for environment group %s...", envGroupName)
 
 		err := client.UpdateEnvGroup(ctx, api.UpdateEnvGroupInput{
 			ProjectID:    cliConf.Project,
@@ -266,6 +293,15 @@ func unsetEnv(ctx context.Context, user *types.GetAuthenticatedUserResponse, cli
 		if err != nil {
 			return fmt.Errorf("could not unset env group env variables: %w", err)
 		}
+
+		color.New(color.FgGreen).Printf("Unset the keys in environment group %s:\n", envGroupName) // nolint:errcheck,gosec
+	}
+
+	for _, v := range envVarDeletions.Variables {
+		color.New(color.FgBlue).Printf("%s\n", v) // nolint:errcheck,gosec
+	}
+	for _, v := range envVarDeletions.Secrets {
+		color.New(color.FgBlue).Printf("%s\n", v) // nolint:errcheck,gosec
 	}
 
 	return nil

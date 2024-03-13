@@ -120,7 +120,8 @@ func (c *UpdateEnvironmentGroupHandler) ServeHTTP(w http.ResponseWriter, r *http
 				Variables: request.Deletions.Variables,
 				Secrets:   request.Deletions.Secrets,
 			},
-			IsEnvOverride: request.IsEnvOverride,
+			IsEnvOverride:     request.IsEnvOverride,
+			SkipAppAutoDeploy: true, // switch to false once CCP changes are in, so as to not miss any redeploys
 		}))
 		if err != nil {
 			err := telemetry.Error(ctx, span, err, "unable to create environment group")

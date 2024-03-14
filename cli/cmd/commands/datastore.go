@@ -157,7 +157,7 @@ func datastoreConnect(ctx context.Context, _ *types.GetAuthenticatedUserResponse
 
 	req := config.RestClient.Post().
 		Resource("pods").
-		Namespace(namespace).
+		Namespace(resp.Namespace).
 		Name(proxyPod.Name).
 		SubResource("portforward")
 

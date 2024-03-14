@@ -1,0 +1,58 @@
+{
+  "name": "js-test-app",
+  "build": {
+    "context": "./",
+    "method": "pack",
+    "builder": "heroku/buildpacks:18",
+    "buildpacks": [
+      "heroku/nodejs"
+    ]
+  },
+  "image": {
+    "repository": "1234567890.dkr.ecr.us-east-1.amazonaws.com/js-test-app",
+    "tag": "0cfc7dba6ab859d33309c8717a63f4eeac95669a"
+  },
+  "envGroups": [
+    {
+      "name": "sponsor",
+      "version": "9"
+    },
+    {
+      "name": "2-230178",
+      "version": "5"
+    }
+  ],
+  "helmOverrides": {},
+  "serviceList": [
+    {
+      "run": "/cnb/lifecycle/launcher node index.js",
+      "instances": 1,
+      "port": 3000,
+      "cpuCores": 0.19,
+      "ramMegabytes": 400,
+      "webConfig": {
+        "autoscaling": {
+          "minInstances": 1,
+          "maxInstances": 10,
+          "cpuThresholdPercent": 50,
+          "memoryThresholdPercent": 50
+        },
+        "domains": [],
+        "healthCheck": {
+          "httpPath": "/healthz",
+          "timeoutSeconds": 1,
+          "initialDelaySeconds": 15
+        },
+        "private": false,
+        "disableTls": false
+      },
+      "type": "SERVICE_TYPE_WEB",
+      "smartOptimization": false,
+      "runOptional": "/cnb/lifecycle/launcher node index.js",
+      "name": "web",
+      "instancesOptional": 1,
+      "gpu": {},
+      "terminationGracePeriodSeconds": 30
+    }
+  ]
+}

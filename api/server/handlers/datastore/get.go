@@ -166,6 +166,7 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	c.WriteResult(w, r, resp)
 }
 
+// LEGACY_handleGetDatastore retrieves the datastore in the given project for datastores that are on the customer clusters rather than the management cluster
 func (c *GetDatastoreHandler) LEGACY_handleGetDatastore(ctx context.Context, projectId uint, accountId string, datastoreName string) (datastore.Datastore, error) {
 	ctx, span := telemetry.NewSpan(ctx, "legacy-handle-get-datastore")
 	defer span.End()

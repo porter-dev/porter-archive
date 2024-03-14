@@ -26,32 +26,32 @@ type Credential struct {
 	DatabaseName string `json:"database_name"`
 }
 
-// DatastoreCredentialsResponse describes the datastore credentials response body
-type DatastoreCredentialsResponse struct {
+// GetDatastoreCredentialsResponse describes the datastore credentials response body
+type GetDatastoreCredentialsResponse struct {
 	// Credential is the credential that has been retrieved for this datastore
 	Credential Credential `json:"credential"`
 }
 
-// DatastoreCredentialsHandler is a struct for retrieving credentials for datastore
-type DatastoreCredentialsHandler struct {
+// GetDatastoreCredentialsHandler is a struct for retrieving credentials for datastore
+type GetDatastoreCredentialsHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewDatastoreCredentialsHandler returns a DatastoreCredentialsHandler
-func NewDatastoreCredentialsHandler(
+// NewGetDatastoreCredentialsHandler returns a DatastoreCredentialsHandler
+func NewGetDatastoreCredentialsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *DatastoreCredentialsHandler {
-	return &DatastoreCredentialsHandler{
+) *GetDatastoreCredentialsHandler {
+	return &GetDatastoreCredentialsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
 // ServeHTTP retrieves the credentials for a datastore
-func (c *DatastoreCredentialsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *GetDatastoreCredentialsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-datastore-credentials")
 	defer span.End()
 
@@ -63,7 +63,7 @@ func (c *DatastoreCredentialsHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 	projectId := int64(project.ID)
 
-	var resp DatastoreCredentialsResponse
+	var resp GetDatastoreCredentialsResponse
 
 	datastoreName, reqErr := requestutils.GetURLParamString(r, types.URLParamDatastoreName)
 	if reqErr != nil {
@@ -103,7 +103,7 @@ func (c *DatastoreCredentialsHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	resp = DatastoreCredentialsResponse{
+	resp = GetDatastoreCredentialsResponse{
 		Credential: Credential{
 			Host:         ccpResp.Msg.Credential.Host,
 			Port:         int(ccpResp.Msg.Credential.Port),

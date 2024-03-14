@@ -319,35 +319,6 @@ func getClusterRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/clusters/{cluster_id}/datastore/status -> datastore.NewStatusHandler
-	datastoreStatusEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbList,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/datastore/status",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-				types.ClusterScope,
-			},
-		},
-	)
-
-	datastoreStatusHandler := datastore.NewStatusHandler(
-		config,
-		factory.GetDecoderValidator(),
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: datastoreStatusEndpoint,
-		Handler:  datastoreStatusHandler,
-		Router:   r,
-	})
-
 	// GET /api/projects/{project_id}/clusters/{cluster_id}/compliance/checks -> cluster.NewListComplianceChecksHandler
 	listComplianceChecksEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

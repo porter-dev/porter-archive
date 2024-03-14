@@ -3,7 +3,6 @@ package datastore
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"connectrpc.com/connect"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
@@ -16,6 +15,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/datastore"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -40,37 +40,7 @@ type ListDatastoresRequest struct {
 // ListDatastoresResponse describes the list datastores response body
 type ListDatastoresResponse struct {
 	// Datastores is a list of datastore entries for the http response
-	Datastores []Datastore `json:"datastores"`
-}
-
-// Datastore describes an outbound datastores response entry
-type Datastore struct {
-	// Name is the name of the datastore
-	Name string `json:"name"`
-
-	// Type is the type of the datastore
-	Type string `json:"type"`
-
-	// Engine is the engine of the datastore
-	Engine string `json:"engine,omitempty"`
-
-	// Env is the env group for the datastore
-	Env environment_groups.EnvironmentGroupListItem `json:"env,omitempty"`
-
-	// Metadata is a list of metadata objects for the datastore
-	Metadata []*porterv1.DatastoreMetadata `json:"metadata,omitempty"`
-
-	// Status is the status of the datastore
-	Status string `json:"status"`
-
-	// CreatedAtUTC is the time the datastore was created in UTC
-	CreatedAtUTC time.Time `json:"created_at"`
-
-	// CloudProvider is the cloud provider associated with the datastore
-	CloudProvider string `json:"cloud_provider"`
-
-	// CloudProviderCredentialIdentifier is the cloud provider credential identifier associated with the datastore
-	CloudProviderCredentialIdentifier string `json:"cloud_provider_credential_identifier"`
+	Datastores []datastore.Datastore `json:"datastores"`
 }
 
 // ListDatastoresHandler is a struct for listing all datastores for a given project
@@ -99,7 +69,7 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	resp := ListDatastoresResponse{}
-	datastoreList := []Datastore{}
+	datastoreList := []datastore.Datastore{}
 
 	datastores, err := h.Repo().Datastore().ListByProjectID(ctx, project.ID)
 	if err != nil {
@@ -108,15 +78,15 @@ func (h *ListDatastoresHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	for _, datastore := range datastores {
-		datastoreList = append(datastoreList, Datastore{
-			Name:                              datastore.Name,
-			Type:                              datastore.Type,
-			Engine:                            datastore.Engine,
-			CreatedAtUTC:                      datastore.CreatedAt,
-			Status:                            string(datastore.Status),
-			CloudProvider:                     datastore.CloudProvider,
-			CloudProviderCredentialIdentifier: datastore.CloudProviderCredentialIdentifier,
+	for _, ds := range datastores {
+		datastoreList = append(datastoreList, datastore.Datastore{
+			Name:                              ds.Name,
+			Type:                              ds.Type,
+			Engine:                            ds.Engine,
+			CreatedAtUTC:                      ds.CreatedAt,
+			Status:                            string(ds.Status),
+			CloudProvider:                     ds.CloudProvider,
+			CloudProviderCredentialIdentifier: ds.CloudProviderCredentialIdentifier,
 		})
 	}
 
@@ -139,7 +109,7 @@ type DatastoresInput struct {
 }
 
 // Datastores returns a list of datastores associated with the specified project/cloud-provider
-func Datastores(ctx context.Context, inp DatastoresInput) ([]Datastore, error) {
+func Datastores(ctx context.Context, inp DatastoresInput) ([]datastore.Datastore, error) {
 	ctx, span := telemetry.NewSpan(ctx, "datastores-for-cloud-provider")
 	defer span.End()
 
@@ -153,7 +123,7 @@ func Datastores(ctx context.Context, inp DatastoresInput) ([]Datastore, error) {
 		telemetry.AttributeKV{Key: "project-id", Value: inp.ProjectID},
 	)
 
-	datastores := []Datastore{}
+	datastores := []datastore.Datastore{}
 
 	if inp.ProjectID == 0 {
 		return datastores, telemetry.Error(ctx, span, nil, "project id must be specified")
@@ -185,30 +155,30 @@ func Datastores(ctx context.Context, inp DatastoresInput) ([]Datastore, error) {
 		return datastores, telemetry.Error(ctx, span, nil, "missing response message from ccp")
 	}
 
-	for _, datastore := range resp.Msg.Datastores {
-		datastoreRecord, err := inp.DatastoreRepository.GetByProjectIDAndName(ctx, inp.ProjectID, datastore.Name)
+	for _, ds := range resp.Msg.Datastores {
+		datastoreRecord, err := inp.DatastoreRepository.GetByProjectIDAndName(ctx, inp.ProjectID, ds.Name)
 		if err != nil {
-			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "err-datastore-name", Value: datastore.Name})
+			telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "err-datastore-name", Value: ds.Name})
 			return datastores, telemetry.Error(ctx, span, err, "datastore record not found")
 		}
 
-		encodedDatastore := Datastore{
-			Name:                              datastore.Name,
+		encodedDatastore := datastore.Datastore{
+			Name:                              ds.Name,
 			Type:                              datastoreRecord.Type,
 			Engine:                            datastoreRecord.Engine,
 			CreatedAtUTC:                      datastoreRecord.CreatedAt,
 			Status:                            string(datastoreRecord.Status),
-			Metadata:                          datastore.Metadata,
+			Metadata:                          ds.Metadata,
 			CloudProvider:                     datastoreRecord.CloudProvider,
 			CloudProviderCredentialIdentifier: datastoreRecord.CloudProviderCredentialIdentifier,
 		}
-		if inp.IncludeEnvGroup && datastore.Env != nil {
+		if inp.IncludeEnvGroup && ds.Env != nil {
 			encodedDatastore.Env = environment_groups.EnvironmentGroupListItem{
-				Name:               datastore.Env.Name,
-				LatestVersion:      int(datastore.Env.Version),
-				Variables:          datastore.Env.Variables,
-				SecretVariables:    datastore.Env.SecretVariables,
-				LinkedApplications: datastore.Env.LinkedApplications,
+				Name:               ds.Env.Name,
+				LatestVersion:      int(ds.Env.Version),
+				Variables:          ds.Env.Variables,
+				SecretVariables:    ds.Env.SecretVariables,
+				LinkedApplications: ds.Env.LinkedApplications,
 			}
 		}
 		datastores = append(datastores, encodedDatastore)

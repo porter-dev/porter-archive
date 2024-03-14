@@ -1979,19 +1979,6 @@ const updateDatabaseStatus = baseApi<
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/database`;
 });
-// GET /api/projects/{project_id}/clusters/{cluster_id}/datastore/status
-const getDatabaseStatus = baseApi<
-  {
-    name: string;
-    type: string;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/datastore/status`;
-});
 
 const getRepoIntegrations = baseApi("GET", "/api/integrations/repo");
 
@@ -3786,7 +3773,6 @@ export default {
 
   // STATUS
   getGithubStatus,
-  getDatabaseStatus,
   getCloudProviderPermissionsStatus,
 
   getCloudSqlSecret,

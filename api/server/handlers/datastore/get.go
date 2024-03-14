@@ -1,10 +1,14 @@
 package datastore
 
 import (
+	"context"
+	"encoding/base64"
 	"net/http"
 
+	"connectrpc.com/connect"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/google/uuid"
+	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -14,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/datastore"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
@@ -21,7 +26,7 @@ import (
 // GetDatastoreResponse describes the list datastores response body
 type GetDatastoreResponse struct {
 	// Datastore is the datastore that has been retrieved
-	Datastore Datastore `json:"datastore"`
+	Datastore datastore.Datastore `json:"datastore"`
 }
 
 // GetDatastoreHandler is a struct for retrieving a datastore
@@ -76,33 +81,101 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	datastore := Datastore{
+	// TODO: delete this branch once all datastores are on the management cluster
+	if !datastoreRecord.OnManagementCluster {
+		awsArn, err := arn.Parse(datastoreRecord.CloudProviderCredentialIdentifier)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error parsing aws account id")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		datastore, err := c.LEGACY_handleGetDatastore(ctx, project.ID, awsArn.AccountID, datastoreName)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error retrieving datastore")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		resp.Datastore = datastore
+		c.WriteResult(w, r, resp)
+		return
+	}
+
+	req := connect.NewRequest(&porterv1.ReadCloudContractRequest{
+		ProjectId: int64(project.ID),
+	})
+	ccpResp, err := c.Config().ClusterControlPlaneClient.ReadCloudContract(ctx, req)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error getting cloud contract")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+	if ccpResp.Msg == nil {
+		err = telemetry.Error(ctx, span, nil, "cloud contract not found")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
+		return
+	}
+
+	cloudContract := ccpResp.Msg.CloudContract
+	if cloudContract == nil {
+		err = telemetry.Error(ctx, span, nil, "cloud contract is empty")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
+		return
+	}
+
+	datastores := cloudContract.Datastores
+	if datastores == nil {
+		err = telemetry.Error(ctx, span, nil, "datastores is empty")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
+		return
+	}
+
+	var matchingDatastore *porterv1.ManagedDatastore
+	for _, ds := range datastores {
+		if ds.Id == datastoreRecord.ID.String() {
+			matchingDatastore = ds
+			break
+		}
+	}
+	if matchingDatastore == nil {
+		err = telemetry.Error(ctx, span, nil, "datastore not found")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
+		return
+	}
+	encoded, err := helpers.MarshalContractObject(ctx, matchingDatastore)
+	if err != nil {
+		err = telemetry.Error(ctx, span, err, "error marshaling datastore")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
+	b64 := base64.StdEncoding.EncodeToString(encoded)
+
+	datastore := datastore.Datastore{
 		Name:                              datastoreRecord.Name,
 		Type:                              datastoreRecord.Type,
 		Engine:                            datastoreRecord.Engine,
 		CreatedAtUTC:                      datastoreRecord.CreatedAt,
 		Status:                            string(datastoreRecord.Status),
-		CloudProvider:                     datastoreRecord.CloudProvider,
+		CloudProvider:                     SupportedDatastoreCloudProvider_AWS,
 		CloudProviderCredentialIdentifier: datastoreRecord.CloudProviderCredentialIdentifier,
+		B64Proto:                          b64,
 	}
 
-	if datastoreRecord.CloudProvider != SupportedDatastoreCloudProvider_AWS {
-		err = telemetry.Error(ctx, span, nil, "unsupported datastore cloud provider")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
+	resp.Datastore = datastore
+	c.WriteResult(w, r, resp)
+}
 
-	awsArn, err := arn.Parse(datastoreRecord.CloudProviderCredentialIdentifier)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error parsing aws account id")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
+func (c *GetDatastoreHandler) LEGACY_handleGetDatastore(ctx context.Context, projectId uint, accountId string, datastoreName string) (datastore.Datastore, error) {
+	ctx, span := telemetry.NewSpan(ctx, "legacy-handle-get-datastore")
+	defer span.End()
+
+	var datastore datastore.Datastore
 
 	datastores, err := Datastores(ctx, DatastoresInput{
-		ProjectID: project.ID,
+		ProjectID: projectId,
 		CloudProvider: cloud_provider.CloudProvider{
-			AccountID: awsArn.AccountID,
+			AccountID: accountId,
 			Type:      porterv1.EnumCloudProvider_ENUM_CLOUD_PROVIDER_AWS,
 		},
 		Name:                datastoreName,
@@ -111,11 +184,17 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		CCPClient:           c.Config().ClusterControlPlaneClient,
 		DatastoreRepository: c.Repo().Datastore(),
 	})
-	if err == nil && len(datastores) == 1 {
-		datastore = datastores[0]
+	if err != nil {
+		return datastore, err
 	}
 
-	resp.Datastore = datastore
+	if len(datastores) != 1 {
+		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "datastore-count", Value: len(datastores)})
+		if len(datastores) == 0 {
+			return datastore, telemetry.Error(ctx, span, nil, "datastore not found")
+		}
+		return datastore, telemetry.Error(ctx, span, nil, "unexpected number of datastores found matching filters")
+	}
 
-	c.WriteResult(w, r, resp)
+	return datastores[0], nil
 }

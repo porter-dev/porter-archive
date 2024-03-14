@@ -268,7 +268,7 @@ type GetPodsRequest struct {
 }
 
 type CreateClusterManualRequest struct {
-	Name      string `json:"name" form:"required"`
+	Name      string `json:"name" form:"required,dns_rfc1035_label,min=1"`
 	ProjectID uint   `json:"project_id" form:"required"`
 	Server    string `json:"server" form:"required"`
 

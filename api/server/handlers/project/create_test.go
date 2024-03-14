@@ -1,6 +1,7 @@
 package project_test
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/porter-dev/porter/api/server/handlers/project"
@@ -102,7 +103,9 @@ func TestFailingCreateMethod(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	apitest.AssertResponseInternalServerError(t, rr)
+	apitest.AssertResponseError(t, rr, http.StatusInternalServerError, &types.ExternalError{
+		Error: "Cannot write database",
+	})
 }
 
 func TestFailingCreateRoleMethod(t *testing.T) {
@@ -127,7 +130,9 @@ func TestFailingCreateRoleMethod(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	apitest.AssertResponseInternalServerError(t, rr)
+	apitest.AssertResponseError(t, rr, http.StatusInternalServerError, &types.ExternalError{
+		Error: "Cannot write database",
+	})
 }
 
 func TestFailingReadMethod(t *testing.T) {
@@ -152,5 +157,7 @@ func TestFailingReadMethod(t *testing.T) {
 
 	handler.ServeHTTP(rr, req)
 
-	apitest.AssertResponseInternalServerError(t, rr)
+	apitest.AssertResponseError(t, rr, http.StatusInternalServerError, &types.ExternalError{
+		Error: "Cannot read from database",
+	})
 }

@@ -79,7 +79,7 @@ type FeatureFlags struct {
 // CreateProjectRequest is a struct that contains the information
 // necessary to seed a project
 type CreateProjectRequest struct {
-	Name string `json:"name" form:"required"`
+	Name string `json:"name" form:"required,min=1,max=25"`
 }
 
 // CreateProjectResponse is a struct that contains the response from a create project call

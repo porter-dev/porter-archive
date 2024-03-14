@@ -1,6 +1,7 @@
 package project_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/porter-dev/porter/api/server/handlers/project"
@@ -15,7 +16,7 @@ func TestGetProjectSuccessful(t *testing.T) {
 	// create a test project
 	config := apitest.LoadConfig(t)
 	user := apitest.CreateTestUser(t, config, true)
-	proj, _, err := project.CreateProjectWithUser(config.Repo.Project(), &models.Project{
+	proj, _, err := project.CreateProjectWithUser(context.Background(), config.Repo.Project(), &models.Project{
 		Name: "test-project",
 	}, user)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 
 	"github.com/porter-dev/porter/internal/porter_app"
+	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 
 	"github.com/porter-dev/porter/internal/telemetry"
 
@@ -38,8 +39,9 @@ func NewParsePorterYAMLToProtoHandler(
 
 // ParsePorterYAMLToProtoRequest is the request object for the /apps/parse endpoint
 type ParsePorterYAMLToProtoRequest struct {
-	B64Yaml string `json:"b64_yaml"`
-	AppName string `json:"app_name"`
+	B64Yaml         string              `json:"b64_yaml"`
+	AppName         string              `json:"app_name"`
+	PatchOperations []v2.PatchOperation `json:"patch_operations"`
 }
 
 // EncodedAppWithEnv is a struct that contains a base64-encoded app proto object and a map of env variables
@@ -107,9 +109,16 @@ func (c *ParsePorterYAMLToProtoHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
+	patchedProto, err := v2.PatchApp(ctx, appDefinition.AppProto, request.PatchOperations)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error patching app proto")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
+	}
+
 	response := &ParsePorterYAMLToProtoResponse{}
 
-	encodedApp, err := encodeAppProto(ctx, appDefinition.AppProto)
+	encodedApp, err := encodeAppProto(ctx, patchedProto)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error encoding app proto")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

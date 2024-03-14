@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	jsonpatch "github.com/evanphx/json-patch"
+	jsonpatch "github.com/evanphx/json-patch/v5"
 	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/internal/telemetry"
@@ -46,7 +46,9 @@ func PatchApp(ctx context.Context, app *porterv1.PorterApp, ops []PatchOperation
 		return patchedApp, telemetry.Error(ctx, span, err, "failed to decode patch")
 	}
 
-	modified, err := patch.Apply(by)
+	modified, err := patch.ApplyWithOptions(by, &jsonpatch.ApplyOptions{
+		EnsurePathExistsOnAdd: true,
+	})
 	if err != nil {
 		return patchedApp, telemetry.Error(ctx, span, err, "failed to apply patch")
 	}

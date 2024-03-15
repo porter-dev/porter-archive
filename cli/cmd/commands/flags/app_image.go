@@ -21,7 +21,7 @@ func UseAppImageFlags(cmd *cobra.Command) {
 		"set the image tag used for the application (overrides field in yaml)",
 	)
 	cmd.PersistentFlags().String(
-		App_ImageTag,
+		App_ImageRepository,
 		"",
 		"set the image repository to use for the app",
 	)

@@ -19,6 +19,16 @@ export const datastoreMetadataValidator = z.object({
 export type DatastoreMetadataWithSource = z.infer<
   typeof datastoreMetadataValidator
 >;
+export const datastoreCredentialValidator = z.object({
+  host: z.string().optional().default(""),
+  port: z.number().optional().default(0),
+  username: z.string().optional().default(""),
+  database_name: z.string().optional().default(""),
+  password: z.string().optional().default(""),
+});
+export type DatastoreConnectionInfo = z.infer<
+  typeof datastoreCredentialValidator
+>;
 
 export const datastoreValidator = z.object({
   name: z.string(),
@@ -44,6 +54,7 @@ export const datastoreValidator = z.object({
   ]),
   cloud_provider: z.string().pipe(cloudProviderValidator.catch("UNKNOWN")),
   cloud_provider_credential_identifier: z.string(),
+  credential: datastoreCredentialValidator,
 });
 
 export type SerializedDatastore = z.infer<typeof datastoreValidator>;
@@ -177,7 +188,7 @@ const rdsPostgresConfigValidator = z.object({
   instanceClass: instanceTierValidator
     .default("unspecified")
     .refine((val) => val !== "unspecified", {
-      message: "Instance class is required",
+      message: "Instance tier is required",
     }),
   allocatedStorageGigabytes: z
     .number()
@@ -205,7 +216,7 @@ const auroraPostgresConfigValidator = z.object({
   instanceClass: instanceTierValidator
     .default("unspecified")
     .refine((val) => val !== "unspecified", {
-      message: "Instance class is required",
+      message: "Instance tier is required",
     }),
   allocatedStorageGigabytes: z
     .number()
@@ -229,7 +240,7 @@ const elasticacheRedisConfigValidator = z.object({
   instanceClass: instanceTierValidator
     .default("unspecified")
     .refine((val) => val !== "unspecified", {
-      message: "Instance class is required",
+      message: "Instance tier is required",
     }),
   // the following three are not yet specified by the user during creation - only parsed from the backend after the form is submitted
   databaseName: z.string().nonempty("Database name is required").default(""),

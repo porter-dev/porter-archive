@@ -13,46 +13,38 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/datastore"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// Credential has all information about connecting to a datastore
-type Credential struct {
-	Host         string `json:"host"`
-	Port         int    `json:"port"`
-	Username     string `json:"username"`
-	Password     string `json:"password"`
-	DatabaseName string `json:"database_name"`
-}
-
-// GetDatastoreCredentialsResponse describes the datastore credentials response body
-type GetDatastoreCredentialsResponse struct {
+// GetDatastoreCredentialResponse describes the datastore credential response body
+type GetDatastoreCredentialResponse struct {
 	// Credential is the credential that has been retrieved for this datastore
-	Credential Credential `json:"credential"`
+	Credential datastore.Credential `json:"credential"`
 }
 
-// GetDatastoreCredentialsHandler is a struct for retrieving credentials for datastore
-type GetDatastoreCredentialsHandler struct {
+// GetDatastoreCredentialHandler is a struct for retrieving credentials for datastore
+type GetDatastoreCredentialHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewGetDatastoreCredentialsHandler returns a DatastoreCredentialsHandler
-func NewGetDatastoreCredentialsHandler(
+// NewGetDatastoreCredentialHandler returns a GetDatastoreCredentialHandler
+func NewGetDatastoreCredentialHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetDatastoreCredentialsHandler {
-	return &GetDatastoreCredentialsHandler{
+) *GetDatastoreCredentialHandler {
+	return &GetDatastoreCredentialHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
 // ServeHTTP retrieves the credentials for a datastore
-func (c *GetDatastoreCredentialsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-datastore-credentials")
+func (c *GetDatastoreCredentialHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-datastore-credential")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
@@ -63,7 +55,7 @@ func (c *GetDatastoreCredentialsHandler) ServeHTTP(w http.ResponseWriter, r *htt
 	}
 	projectId := int64(project.ID)
 
-	var resp GetDatastoreCredentialsResponse
+	var resp GetDatastoreCredentialResponse
 
 	datastoreName, reqErr := requestutils.GetURLParamString(r, types.URLParamDatastoreName)
 	if reqErr != nil {
@@ -86,25 +78,25 @@ func (c *GetDatastoreCredentialsHandler) ServeHTTP(w http.ResponseWriter, r *htt
 		return
 	}
 
-	message := porterv1.CreateDatastoreProxyRequest{
+	message := porterv1.DatastoreCredentialRequest{
 		ProjectId:   projectId,
 		DatastoreId: datastoreRecord.ID.String(),
 	}
 	req := connect.NewRequest(&message)
-	ccpResp, err := c.Config().ClusterControlPlaneClient.CreateDatastoreProxy(ctx, req)
+	ccpResp, err := c.Config().ClusterControlPlaneClient.DatastoreCredential(ctx, req)
 	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error creating datastore proxy")
+		err = telemetry.Error(ctx, span, err, "error getting datastore credential")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 	if ccpResp == nil || ccpResp.Msg == nil {
-		err = telemetry.Error(ctx, span, nil, "error creating datastore proxy")
+		err = telemetry.Error(ctx, span, nil, "datastore credential not found")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	resp = GetDatastoreCredentialsResponse{
-		Credential: Credential{
+	resp = GetDatastoreCredentialResponse{
+		Credential: datastore.Credential{
 			Host:         ccpResp.Msg.Credential.Host,
 			Port:         int(ccpResp.Msg.Credential.Port),
 			Username:     ccpResp.Msg.Credential.Username,

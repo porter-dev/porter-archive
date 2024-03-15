@@ -91,24 +91,33 @@ const ConnectAppsModal: React.FC<Props> = ({ closeModal, apps, onSubmit }) => {
     <Modal closeModal={closeModal}>
       <Text size={16}>Select apps</Text>
       <Spacer y={0.5} />
-      <SelectableAppList
-        appListItems={apps.map((a) => ({
-          app: a,
-          key: a.source.name,
-          onSelect: () => {
-            append(a.app_revision.app_instance_id);
-          },
-          onDeselect: () => {
-            remove(a.app_revision.app_instance_id);
-          },
-          isSelected: isSelected(a.app_revision.app_instance_id),
-        }))}
-      />
-      <Spacer y={1} />
-      <Text color="helper">
-        Click the button below to confirm the above selections. Newly connected
-        apps may take a few seconds to appear on the dashboard.
-      </Text>
+      {apps.length === 0 && (
+        <Text color="helper">
+          No apps are available to connect. Please create an app first.
+        </Text>
+      )}
+      {apps.length !== 0 && (
+        <>
+          <SelectableAppList
+            appListItems={apps.map((a) => ({
+              app: a,
+              key: a.source.name,
+              onSelect: () => {
+                append(a.app_revision.app_instance_id);
+              },
+              onDeselect: () => {
+                remove(a.app_revision.app_instance_id);
+              },
+              isSelected: isSelected(a.app_revision.app_instance_id),
+            }))}
+          />
+          <Spacer y={1} />
+          <Text color="helper">
+            Click the button below to confirm the above selections. Newly
+            connected apps may take a few seconds to appear on the dashboard.
+          </Text>
+        </>
+      )}
       <Spacer y={0.5} />
       <Button
         disabled={selectedAppInstanceIds.length === 0 || isSubmitting}

@@ -2,6 +2,7 @@ package porter_app
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -55,8 +56,9 @@ type BuildSettings struct {
 	CommitSHA  string   `json:"commit_sha"`
 }
 
+// GetBuildFromRevisionRequest is the request object for the /apps/{porter_app_name}/revisions/{app_revision_id}/build endpoint
 type GetBuildFromRevisionRequest struct {
-	PatchOperations []v2.PatchOperation `json:"patch_operations"`
+	B64PatchOperations string `json:"b64_patch_operations"`
 }
 
 // GetBuildFromRevisionResponse is the response object for the /apps/{porter_app_name}/revisions/{app_revision_id}/build endpoint
@@ -112,6 +114,23 @@ func (c *GetBuildFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	var patchOps []v2.PatchOperation
+	if request.B64PatchOperations != "" {
+		decodedPatchOps, err := base64.StdEncoding.DecodeString(request.B64PatchOperations)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error decoding patch operations")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		err = json.Unmarshal(decodedPatchOps, &patchOps)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error unmarshalling patch operations")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+	}
+
 	revision, err := porter_app.GetAppRevision(ctx, porter_app.GetAppRevisionInput{
 		AppRevisionID: appRevisionUuid,
 		ProjectID:     project.ID,
@@ -146,7 +165,7 @@ func (c *GetBuildFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	patchedProto, err := v2.PatchApp(ctx, appProto, request.PatchOperations)
+	patchedProto, err := v2.PatchApp(ctx, appProto, patchOps)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error patching app proto")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))

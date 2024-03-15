@@ -14,7 +14,10 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/porter-dev/porter/api/server/handlers/porter_app"
+	app_api "github.com/porter-dev/porter/api/server/handlers/porter_app"
+	"github.com/porter-dev/porter/internal/porter_app"
+	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -47,6 +50,8 @@ type ApplyInput struct {
 	WithPredeploy bool
 	// Exact is true when Apply should use the exact app config provided by the user
 	Exact bool
+	// PatchOperations is a list of patch operations to apply to the app
+	PatchOperations []v2.PatchOperation
 }
 
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
@@ -116,10 +121,34 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		color.New(color.FgGreen).Printf("Using Porter YAML at path: %s\n", inp.PorterYamlPath) // nolint:errcheck,gosec
 	}
 
+	if b64YAML == "" {
+		color.New(color.FgGreen).Printf("No Porter YAML found, using default configuration...\n") // nolint:errcheck,gosec
+		if inp.AppName == "" {
+			return errors.New("no porter yaml found and app name not specified")
+		}
+
+		app := v2.PorterApp{
+			Version: string(porter_app.PorterYamlVersion_V2),
+			Name:    inp.AppName,
+		}
+
+		by, err := yaml.Marshal(app)
+		if err != nil {
+			return fmt.Errorf("error marshaling default porter yaml: %w", err)
+		}
+
+		b64YAML = base64.StdEncoding.EncodeToString(by)
+	}
+
 	commitSHA := commitSHAFromEnv()
 	gitSource, err := gitSourceFromEnv()
 	if err != nil {
 		return fmt.Errorf("error getting git source from env: %w", err)
+	}
+
+	parseRes, err := client.ParseYAML(ctx, cliConf.Project, cliConf.Cluster, b64YAML, inp.AppName, inp.PatchOperations)
+	if err != nil {
+		return fmt.Errorf("error parsing porter yaml: %w", err)
 	}
 
 	updateInput := api.UpdateAppInput{
@@ -130,7 +159,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		GitSource:          gitSource,
 		DeploymentTargetId: deploymentTargetID,
 		CommitSHA:          commitSHA,
-		Base64PorterYAML:   b64YAML,
+		Base64AppProto:     parseRes.B64AppProto,
 		WithPredeploy:      inp.WithPredeploy,
 		Exact:              inp.Exact,
 	}
@@ -428,8 +457,8 @@ const checkDeployTimeout = 15 * time.Minute
 // checkDeployFrequency is the frequency for checking if an app has been deployed
 const checkDeployFrequency = 10 * time.Second
 
-func gitSourceFromEnv() (porter_app.GitSource, error) {
-	var source porter_app.GitSource
+func gitSourceFromEnv() (app_api.GitSource, error) {
+	var source app_api.GitSource
 
 	var repoID uint
 	if os.Getenv("GITHUB_REPOSITORY_ID") != "" {
@@ -440,7 +469,7 @@ func gitSourceFromEnv() (porter_app.GitSource, error) {
 		repoID = uint(id)
 	}
 
-	return porter_app.GitSource{
+	return app_api.GitSource{
 		GitBranch:   os.Getenv("GITHUB_REF_NAME"),
 		GitRepoID:   repoID,
 		GitRepoName: os.Getenv("GITHUB_REPOSITORY"),
@@ -451,8 +480,8 @@ type buildInputFromBuildSettingsInput struct {
 	projectID            uint
 	appName              string
 	commitSHA            string
-	image                porter_app.Image
-	build                porter_app.BuildSettings
+	image                app_api.Image
+	build                app_api.BuildSettings
 	buildEnv             map[string]string
 	pullImageBeforeBuild bool
 }

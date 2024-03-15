@@ -7,6 +7,7 @@ import (
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/internal/models"
 	appInternal "github.com/porter-dev/porter/internal/porter_app"
+	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 
 	"github.com/porter-dev/porter/api/types"
 )
@@ -157,12 +158,14 @@ func (c *Client) ParseYAML(
 	projectID, clusterID uint,
 	b64Yaml string,
 	appName string,
+	patchOperations []v2.PatchOperation,
 ) (*porter_app.ParsePorterYAMLToProtoResponse, error) {
 	resp := &porter_app.ParsePorterYAMLToProtoResponse{}
 
 	req := &porter_app.ParsePorterYAMLToProtoRequest{
-		B64Yaml: b64Yaml,
-		AppName: appName,
+		B64Yaml:         b64Yaml,
+		AppName:         appName,
+		PatchOperations: patchOperations,
 	}
 
 	err := c.postRequest(

@@ -241,6 +241,7 @@ const elasticacheRedisConfigValidator = z.object({
     .string()
     .nonempty("Master password is required")
     .default(""),
+  engineVersion: z.string().default("7.1"),
 });
 
 export const dbFormValidator = z.object({

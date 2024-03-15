@@ -76,6 +76,7 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
             masterUsername: values.config.masterUsername,
             masterUserPassword: values.config.masterUserPassword,
             instanceClass: values.config.instanceClass,
+            engineVersion: values.config.engineVersion,
           },
         },
         type: "ELASTICACHE",

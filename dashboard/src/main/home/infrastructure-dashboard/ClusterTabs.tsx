@@ -8,7 +8,6 @@ import { match } from "ts-pattern";
 
 import Banner from "components/porter/Banner";
 import Spacer from "components/porter/Spacer";
-import Text from "components/porter/Text";
 import TabSelector from "components/TabSelector";
 import { type ClientClusterContract } from "lib/clusters/types";
 

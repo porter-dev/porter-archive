@@ -55,7 +55,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
   }
 
   return (
-    <>
+    <div>
       <TabSelector
         noBuffer
         options={tabs}
@@ -73,7 +73,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
         .with("connected-apps", () => <ConnectedAppsTab />)
         .otherwise(() => null)}
       <Spacer y={2} />
-    </>
+    </div>
   );
 };
 

@@ -90,7 +90,7 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		datastore, err := c.LEGACY_handleGetDatastore(ctx, project.ID, awsArn.AccountID, datastoreName)
+		datastore, err := c.LEGACY_handleGetDatastore(ctx, project.ID, awsArn.AccountID, datastoreName, datastoreRecord.ID)
 		if err != nil {
 			err = telemetry.Error(ctx, span, err, "error retrieving datastore")
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
@@ -151,7 +151,7 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	b64 := base64.StdEncoding.EncodeToString(encoded)
 
-	datastore := datastore.Datastore{
+	ds := datastore.Datastore{
 		Name:                              datastoreRecord.Name,
 		Type:                              datastoreRecord.Type,
 		Engine:                            datastoreRecord.Engine,
@@ -162,16 +162,34 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		B64Proto:                          b64,
 	}
 
-	resp.Datastore = datastore
+	message := porterv1.DatastoreCredentialRequest{
+		ProjectId:   int64(project.ID),
+		DatastoreId: datastoreRecord.ID.String(),
+	}
+	credentialReq := connect.NewRequest(&message)
+	credentialCcpResp, err := c.Config().ClusterControlPlaneClient.DatastoreCredential(ctx, credentialReq)
+	if err == nil && credentialCcpResp != nil && credentialCcpResp.Msg != nil {
+		// the credential may not exist because the datastore is not yet ready
+		ds.Credential = datastore.Credential{
+			Host:         credentialCcpResp.Msg.Credential.Host,
+			Port:         int(credentialCcpResp.Msg.Credential.Port),
+			Username:     credentialCcpResp.Msg.Credential.Username,
+			Password:     credentialCcpResp.Msg.Credential.Password,
+			DatabaseName: credentialCcpResp.Msg.Credential.DatabaseName,
+		}
+	}
+
+	resp.Datastore = ds
+
 	c.WriteResult(w, r, resp)
 }
 
 // LEGACY_handleGetDatastore retrieves the datastore in the given project for datastores that are on the customer clusters rather than the management cluster
-func (c *GetDatastoreHandler) LEGACY_handleGetDatastore(ctx context.Context, projectId uint, accountId string, datastoreName string) (datastore.Datastore, error) {
+func (c *GetDatastoreHandler) LEGACY_handleGetDatastore(ctx context.Context, projectId uint, accountId string, datastoreName string, datastoreId uuid.UUID) (datastore.Datastore, error) {
 	ctx, span := telemetry.NewSpan(ctx, "legacy-handle-get-datastore")
 	defer span.End()
 
-	var datastore datastore.Datastore
+	var ds datastore.Datastore
 
 	datastores, err := Datastores(ctx, DatastoresInput{
 		ProjectID: projectId,
@@ -186,16 +204,35 @@ func (c *GetDatastoreHandler) LEGACY_handleGetDatastore(ctx context.Context, pro
 		DatastoreRepository: c.Repo().Datastore(),
 	})
 	if err != nil {
-		return datastore, err
+		return ds, err
 	}
 
 	if len(datastores) != 1 {
 		telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "datastore-count", Value: len(datastores)})
 		if len(datastores) == 0 {
-			return datastore, telemetry.Error(ctx, span, nil, "datastore not found")
+			return ds, telemetry.Error(ctx, span, nil, "datastore not found")
 		}
-		return datastore, telemetry.Error(ctx, span, nil, "unexpected number of datastores found matching filters")
+		return ds, telemetry.Error(ctx, span, nil, "unexpected number of datastores found matching filters")
 	}
 
-	return datastores[0], nil
+	ds = datastores[0]
+
+	message := porterv1.DatastoreCredentialRequest{
+		ProjectId:   int64(projectId),
+		DatastoreId: datastoreId.String(),
+	}
+	req := connect.NewRequest(&message)
+	ccpResp, err := c.Config().ClusterControlPlaneClient.DatastoreCredential(ctx, req)
+	// the credential may not exist because the datastore is not yet ready
+	if err == nil && ccpResp != nil && ccpResp.Msg != nil {
+		ds.Credential = datastore.Credential{
+			Host:         ccpResp.Msg.Credential.Host,
+			Port:         int(ccpResp.Msg.Credential.Port),
+			Username:     ccpResp.Msg.Credential.Username,
+			Password:     ccpResp.Msg.Credential.Password,
+			DatabaseName: ccpResp.Msg.Credential.DatabaseName,
+		}
+	}
+
+	return ds, nil
 }

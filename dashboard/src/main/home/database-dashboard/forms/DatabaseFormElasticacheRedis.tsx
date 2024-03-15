@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import _ from "lodash";
 import { useForm } from "react-hook-form";
@@ -6,10 +6,7 @@ import { withRouter, type RouteComponentProps } from "react-router";
 import { v4 as uuidv4 } from "uuid";
 
 import Back from "components/porter/Back";
-import ClickToCopy from "components/porter/ClickToCopy";
-import Container from "components/porter/Container";
 import Error from "components/porter/Error";
-import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
@@ -20,15 +17,14 @@ import {
 } from "lib/databases/types";
 
 import DashboardHeader from "../../cluster-dashboard/DashboardHeader";
+import ConnectionInfo from "../shared/ConnectionInfo";
 import Resources from "../shared/Resources";
 import DatabaseForm, {
   AppearingErrorContainer,
-  Blur,
   CenterWrapper,
   DarkMatter,
   Div,
   Icon,
-  RevealButton,
   StyledConfigureTemplate,
 } from "./DatabaseForm";
 
@@ -40,9 +36,6 @@ const DatabaseFormElasticacheRedis: React.FC<Props> = ({
   history,
   template,
 }) => {
-  const [currentStep, setCurrentStep] = useState<number>(0);
-  const [isPasswordHidden, setIsPasswordHidden] = useState<boolean>(true);
-
   const dbForm = useForm<DbFormData>({
     resolver: zodResolver(dbFormValidator),
     reValidateMode: "onSubmit",
@@ -62,21 +55,9 @@ const DatabaseFormElasticacheRedis: React.FC<Props> = ({
     watch,
   } = dbForm;
 
-  const watchName = watch("name", "");
   const watchTier = watch("config.instanceClass", "unspecified");
 
   const watchDbPassword = watch("config.masterUserPassword");
-
-  useEffect(() => {
-    let newStep = 0;
-    if (watchName) {
-      newStep = 1;
-    }
-    if (watchTier !== "unspecified") {
-      newStep = 3;
-    }
-    setCurrentStep(Math.max(newStep, currentStep));
-  }, [watchName, watchTier]);
 
   return (
     <CenterWrapper>
@@ -123,50 +104,26 @@ const DatabaseFormElasticacheRedis: React.FC<Props> = ({
                 />
               </>,
               <>
-                <Text size={16}>View credentials</Text>
+                <Text size={16}>Credentials</Text>
                 <Spacer y={0.5} />
                 <Text color="helper">
-                  These credentials never leave your own cloud environment. You
-                  will be able to automatically import these credentials from
-                  any app.
+                  These credentials never leave your own cloud environment. Your
+                  app will use them to connect to this datastore.
                 </Text>
                 <Spacer height="20px" />
-                <Fieldset>
-                  <Text>Redis token</Text>
-                  <Spacer y={0.5} />
-                  <Container row>
-                    {isPasswordHidden ? (
-                      <>
-                        <Blur>{watchDbPassword}</Blur>
-                        <Spacer inline width="10px" />
-                        <RevealButton
-                          onClick={() => {
-                            setIsPasswordHidden(false);
-                          }}
-                        >
-                          Reveal
-                        </RevealButton>
-                      </>
-                    ) : (
-                      <>
-                        <ClickToCopy color="helper">
-                          {watchDbPassword}
-                        </ClickToCopy>
-                        <Spacer inline width="10px" />
-                        <RevealButton
-                          onClick={() => {
-                            setIsPasswordHidden(true);
-                          }}
-                        >
-                          Hide
-                        </RevealButton>
-                      </>
-                    )}
-                  </Container>
-                </Fieldset>
+                <ConnectionInfo
+                  connectionInfo={{
+                    host: "(determined after creation)",
+                    port: 6379,
+                    password: watchDbPassword,
+                    username: "",
+                    database_name: "",
+                  }}
+                  type={template.type}
+                />
               </>,
             ]}
-            currentStep={currentStep}
+            currentStep={100}
             form={dbForm}
           />
         </StyledConfigureTemplate>

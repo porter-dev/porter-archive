@@ -527,6 +527,34 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/datastores -> datastore.NewGetDatastoreCredentialHandler
+	getDatastoreCredentialEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbList,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/datastores/{%s}/credential", relPath, types.URLParamDatastoreName),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getDatastoreCredentialHandler := datastore.NewGetDatastoreCredentialHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getDatastoreCredentialEndpoint,
+		Handler:  getDatastoreCredentialHandler,
+		Router:   r,
+	})
+
 	// POST /api/projects/{project_id}/datastores/{datastore_name}/create-proxy -> cluster.NewCreateDatastoreProxyHandler
 	createDatastoreProxyEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

@@ -2803,6 +2803,16 @@ const getDatastore = baseApi<
   return `/api/projects/${project_id}/datastores/${datastore_name}`;
 });
 
+const getDatastoreCredential = baseApi<
+  {},
+  {
+    project_id: number;
+    datastore_name: string;
+  }
+>("GET", ({ project_id, datastore_name }) => {
+  return `/api/projects/${project_id}/datastores/${datastore_name}/credential`;
+});
+
 const updateDatastore = baseApi<
   {
     name: string;
@@ -3725,6 +3735,7 @@ export default {
   getDatastores,
   listDatastores,
   getDatastore,
+  getDatastoreCredential,
   updateDatastore,
   deleteDatastore,
   getPreviousLogsForContainer,

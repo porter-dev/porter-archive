@@ -8,6 +8,7 @@ import Container from "components/porter/Container";
 import Expandable from "components/porter/Expandable";
 import Image from "components/porter/Image";
 import Input from "components/porter/Input";
+import PorterOperatorComponent from "components/porter/PorterOperatorComponent";
 import Select from "components/porter/Select";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -23,17 +24,19 @@ import world from "assets/world.svg";
 type Props = {
   availableMachineTypes: ClientMachineType[];
   isDefaultExpanded?: boolean;
+  isCreating?: boolean;
 };
 const NodeGroups: React.FC<Props> = ({
   availableMachineTypes,
   isDefaultExpanded = true,
+  isCreating = false,
 }) => {
   const { control } = useFormContext<ClientClusterContract>();
   const { currentProject } = useContext(Context);
   const {
     fields: nodeGroups,
     append,
-    // remove,
+    remove,
   } = useFieldArray({
     control,
     name: "cluster.config.nodeGroups",
@@ -88,48 +91,249 @@ const NodeGroups: React.FC<Props> = ({
                     }}
                     label="Machine type"
                   />
-                  <Spacer y={1} />
-                  <Text color="helper">
-                    Minimum number of application nodes
-                  </Text>
-                  <Spacer y={0.5} />
-                  <Input
-                    width="75px"
-                    type="number"
-                    disabled={false}
-                    value={value.minInstances.toString()}
-                    setValue={(newMinInstances: string) => {
-                      onChange({
-                        ...value,
-                        minInstances: parseInt(newMinInstances),
-                      });
-                    }}
-                    placeholder="ex: 1"
-                  />
-                  <Spacer y={1} />
-                  <Text color="helper">
-                    Maximum number of application nodes
-                  </Text>
-                  <Spacer y={0.5} />
-                  <Input
-                    width="75px"
-                    type="number"
-                    disabled={false}
-                    value={value.maxInstances.toString()}
-                    setValue={(newMaxInstances: string) => {
-                      onChange({
-                        ...value,
-                        maxInstances: parseInt(newMaxInstances),
-                      });
-                    }}
-                    placeholder="ex: 10"
-                  />
+                  {isCreating ? (
+                    <>
+                      <Spacer y={1} />
+                      <PorterOperatorComponent>
+                        <>
+                          <Text color="helper">
+                            Minimum number of application nodes
+                          </Text>
+                          <Spacer y={0.5} />
+                          <Input
+                            width="75px"
+                            type="number"
+                            disabled={false}
+                            value={value.minInstances.toString()}
+                            setValue={(newMinInstances: string) => {
+                              onChange({
+                                ...value,
+                                minInstances: parseInt(newMinInstances),
+                              });
+                            }}
+                            placeholder="ex: 1"
+                          />
+                          <Spacer y={1} />
+                          <Text color="helper">
+                            Maximum number of application nodes
+                          </Text>
+                          <Spacer y={0.5} />
+                          <Input
+                            width="75px"
+                            type="number"
+                            disabled={false}
+                            value={value.maxInstances.toString()}
+                            setValue={(newMaxInstances: string) => {
+                              onChange({
+                                ...value,
+                                maxInstances: parseInt(newMaxInstances),
+                              });
+                            }}
+                            placeholder="ex: 10"
+                          />
+                        </>
+                      </PorterOperatorComponent>
+                    </>
+                  ) : (
+                    <>
+                      <Spacer y={1} />
+                      <Text color="helper">
+                        Minimum number of application nodes
+                      </Text>
+                      <Spacer y={0.5} />
+                      <Input
+                        width="75px"
+                        type="number"
+                        disabled={false}
+                        value={value.minInstances.toString()}
+                        setValue={(newMinInstances: string) => {
+                          onChange({
+                            ...value,
+                            minInstances: parseInt(newMinInstances),
+                          });
+                        }}
+                        placeholder="ex: 1"
+                      />
+                      <Spacer y={1} />
+                      <Text color="helper">
+                        Maximum number of application nodes
+                      </Text>
+                      <Spacer y={0.5} />
+                      <Input
+                        width="75px"
+                        type="number"
+                        disabled={false}
+                        value={value.maxInstances.toString()}
+                        setValue={(newMaxInstances: string) => {
+                          onChange({
+                            ...value,
+                            maxInstances: parseInt(newMaxInstances),
+                          });
+                        }}
+                        placeholder="ex: 10"
+                      />
+                    </>
+                  )}
                 </>
               )}
             />
           </Expandable>
         );
       })}
+      <PorterOperatorComponent>
+        <>
+          {displayableNodeGroups.MONITORING?.map((ng) => {
+            return (
+              <Expandable
+                preExpanded={isDefaultExpanded}
+                key={ng.nodeGroup.id}
+                header={
+                  <Container row>
+                    <Image src={world} />
+                    <Spacer inline x={1} />
+                    Monitoring node group
+                  </Container>
+                }
+              >
+                <Controller
+                  name={`cluster.config.nodeGroups.${ng.idx}`}
+                  control={control}
+                  render={({ field: { value, onChange } }) => (
+                    <>
+                      <Select
+                        width="300px"
+                        options={availableMachineTypes
+                          .filter((t) => !t.isGPU)
+                          .map((t) => ({
+                            value: t.name,
+                            label: t.displayName,
+                          }))}
+                        value={value.instanceType}
+                        setValue={(newInstanceType: string) => {
+                          onChange({
+                            ...value,
+                            instanceType: newInstanceType,
+                          });
+                        }}
+                        label="Machine type"
+                      />
+                      <Spacer y={1} />
+                      <Text color="helper">
+                        Minimum number of monitoring nodes
+                      </Text>
+                      <Spacer y={0.5} />
+                      <Input
+                        width="75px"
+                        type="number"
+                        disabled={false}
+                        value={value.minInstances.toString()}
+                        setValue={(newMinInstances: string) => {
+                          onChange({
+                            ...value,
+                            minInstances: parseInt(newMinInstances),
+                          });
+                        }}
+                        placeholder="ex: 1"
+                      />
+                      <Spacer y={1} />
+                      <Text color="helper">
+                        Maximum number of monitoring nodes
+                      </Text>
+                      <Spacer y={0.5} />
+                      <Input
+                        width="75px"
+                        type="number"
+                        disabled={false}
+                        value={value.maxInstances.toString()}
+                        setValue={(newMaxInstances: string) => {
+                          onChange({
+                            ...value,
+                            maxInstances: parseInt(newMaxInstances),
+                          });
+                        }}
+                        placeholder="ex: 10"
+                      />
+                    </>
+                  )}
+                />
+              </Expandable>
+            );
+          })}
+          {displayableNodeGroups.SYSTEM?.map((ng) => {
+            return (
+              <Expandable
+                preExpanded={isDefaultExpanded}
+                key={ng.nodeGroup.id}
+                header={
+                  <Container row>
+                    <Image src={world} />
+                    <Spacer inline x={1} />
+                    System node group
+                  </Container>
+                }
+              >
+                <Controller
+                  name={`cluster.config.nodeGroups.${ng.idx}`}
+                  control={control}
+                  render={({ field: { value, onChange } }) => (
+                    <>
+                      <Select
+                        width="300px"
+                        options={availableMachineTypes
+                          .filter((t) => !t.isGPU)
+                          .map((t) => ({
+                            value: t.name,
+                            label: t.displayName,
+                          }))}
+                        value={value.instanceType}
+                        setValue={(newInstanceType: string) => {
+                          onChange({
+                            ...value,
+                            instanceType: newInstanceType,
+                          });
+                        }}
+                        label="Machine type"
+                      />
+                      <Spacer y={1} />
+                      <Text color="helper">Minimum number of system nodes</Text>
+                      <Spacer y={0.5} />
+                      <Input
+                        width="75px"
+                        type="number"
+                        disabled={false}
+                        value={value.minInstances.toString()}
+                        setValue={(newMinInstances: string) => {
+                          onChange({
+                            ...value,
+                            minInstances: parseInt(newMinInstances),
+                          });
+                        }}
+                        placeholder="ex: 1"
+                      />
+                      <Spacer y={1} />
+                      <Text color="helper">Maximum number of system nodes</Text>
+                      <Spacer y={0.5} />
+                      <Input
+                        width="75px"
+                        type="number"
+                        disabled={false}
+                        value={value.maxInstances.toString()}
+                        setValue={(newMaxInstances: string) => {
+                          onChange({
+                            ...value,
+                            maxInstances: parseInt(newMaxInstances),
+                          });
+                        }}
+                        placeholder="ex: 10"
+                      />
+                    </>
+                  )}
+                />
+              </Expandable>
+            );
+          })}
+        </>
+      </PorterOperatorComponent>
       {displayableNodeGroups.CUSTOM?.map((ng) => {
         return (
           <Expandable
@@ -142,16 +346,18 @@ const NodeGroups: React.FC<Props> = ({
                   <Spacer inline x={1} />
                   GPU node group
                 </Container>
-                {/* <Container row>
-                  <ActionButton
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      remove(ng.idx);
-                    }}
-                  >
-                    <span className="material-icons">delete</span>
-                  </ActionButton>
-                </Container> */}
+                {isCreating && (
+                  <Container row>
+                    <ActionButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        remove(ng.idx);
+                      }}
+                    >
+                      <span className="material-icons">delete</span>
+                    </ActionButton>
+                  </Container>
+                )}
               </Container>
             }
           >
@@ -177,38 +383,85 @@ const NodeGroups: React.FC<Props> = ({
                     }}
                     label="Machine type"
                   />
-                  <Spacer y={1} />
-                  <Text color="helper">Minimum number of GPU nodes</Text>
-                  <Spacer y={0.5} />
-                  <Input
-                    width="75px"
-                    type="number"
-                    disabled={false}
-                    value={value.minInstances.toString()}
-                    setValue={(newMinInstances: string) => {
-                      onChange({
-                        ...value,
-                        minInstances: parseInt(newMinInstances),
-                      });
-                    }}
-                    placeholder="ex: 1"
-                  />
-                  <Spacer y={1} />
-                  <Text color="helper">Maximum number of GPU nodes</Text>
-                  <Spacer y={0.5} />
-                  <Input
-                    width="75px"
-                    type="number"
-                    disabled={false}
-                    value={value.maxInstances.toString()}
-                    setValue={(newMaxInstances: string) => {
-                      onChange({
-                        ...value,
-                        maxInstances: parseInt(newMaxInstances),
-                      });
-                    }}
-                    placeholder="ex: 10"
-                  />
+                  {isCreating ? (
+                    <>
+                      <Spacer y={1} />
+                      <PorterOperatorComponent>
+                        <>
+                          <Text color="helper">
+                            Minimum number of GPU nodes
+                          </Text>
+                          <Spacer y={0.5} />
+                          <Input
+                            width="75px"
+                            type="number"
+                            disabled={false}
+                            value={value.minInstances.toString()}
+                            setValue={(newMinInstances: string) => {
+                              onChange({
+                                ...value,
+                                minInstances: parseInt(newMinInstances),
+                              });
+                            }}
+                            placeholder="ex: 1"
+                          />
+                          <Spacer y={1} />
+                          <Text color="helper">
+                            Maximum number of GPU nodes
+                          </Text>
+                          <Spacer y={0.5} />
+                          <Input
+                            width="75px"
+                            type="number"
+                            disabled={false}
+                            value={value.maxInstances.toString()}
+                            setValue={(newMaxInstances: string) => {
+                              onChange({
+                                ...value,
+                                maxInstances: parseInt(newMaxInstances),
+                              });
+                            }}
+                            placeholder="ex: 10"
+                          />
+                        </>
+                      </PorterOperatorComponent>
+                    </>
+                  ) : (
+                    <>
+                      <Spacer y={1} />
+                      <Text color="helper">Minimum number of GPU nodes</Text>
+                      <Spacer y={0.5} />
+                      <Input
+                        width="75px"
+                        type="number"
+                        disabled={false}
+                        value={value.minInstances.toString()}
+                        setValue={(newMinInstances: string) => {
+                          onChange({
+                            ...value,
+                            minInstances: parseInt(newMinInstances),
+                          });
+                        }}
+                        placeholder="ex: 1"
+                      />
+                      <Spacer y={1} />
+                      <Text color="helper">Maximum number of GPU nodes</Text>
+                      <Spacer y={0.5} />
+                      <Input
+                        width="75px"
+                        type="number"
+                        disabled={false}
+                        value={value.maxInstances.toString()}
+                        setValue={(newMaxInstances: string) => {
+                          onChange({
+                            ...value,
+                            maxInstances: parseInt(newMaxInstances),
+                          });
+                        }}
+                        placeholder="ex: 10"
+                      />
+                    </>
+                  )}
                 </>
               )}
             />
@@ -260,24 +513,24 @@ const I = styled.i`
   }
 `;
 
-// const ActionButton = styled.button`
-//   position: relative;
-//   border: none;
-//   background: none;
-//   color: white;
-//   padding: 5px;
-//   display: flex;
-//   justify-content: center;
-//   align-items: center;
-//   border-radius: 50%;
-//   cursor: pointer;
-//   color: #aaaabb;
-//   :hover {
-//     color: white;
-//   }
+const ActionButton = styled.button`
+  position: relative;
+  border: none;
+  background: none;
+  color: white;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #aaaabb;
+  :hover {
+    color: white;
+  }
 
-//   > span {
-//     font-size: 20px;
-//   }
-//   margin-right: 5px;
-// `;
+  > span {
+    font-size: 20px;
+  }
+  margin-right: 5px;
+`;

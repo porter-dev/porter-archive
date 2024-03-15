@@ -532,6 +532,7 @@ const preflightCheckKeyValidator = z.enum([
   "iamPermissions",
   "authz",
   "enforceCidrUniqueness",
+  "availabilityZone",
 ]);
 type PreflightCheckKey = z.infer<typeof preflightCheckKeyValidator>;
 export const preflightCheckValidator = z.object({

@@ -17,41 +17,42 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// CreateDatastoreProxyResponse is the response body for the create datastore proxy endpoint
-type CreateDatastoreProxyResponse struct {
-	// PodName is the name of the pod that was created
-	PodName string `json:"pod_name"`
-	// Credential is the credential used to connect to the datastore
-	Credential Credential `json:"credential"`
-	// ClusterID is the ID of the cluster that the pod was created in
-	ClusterID uint `json:"cluster_id"`
-	// Namespace is the namespace that the pod was created in
-	Namespace string `json:"namespace"`
-	// Type is the type of datastore
-	Type string `json:"type"`
+// Credential has all information about connecting to a datastore
+type Credential struct {
+	Host         string `json:"host"`
+	Port         int    `json:"port"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	DatabaseName string `json:"database_name"`
 }
 
-// CreateDatastoreProxyHandler is a handler for creating a datastore proxy pod which is used to connect to the datastore
-type CreateDatastoreProxyHandler struct {
+// GetDatastoreCredentialsResponse describes the datastore credentials response body
+type GetDatastoreCredentialsResponse struct {
+	// Credential is the credential that has been retrieved for this datastore
+	Credential Credential `json:"credential"`
+}
+
+// GetDatastoreCredentialsHandler is a struct for retrieving credentials for datastore
+type GetDatastoreCredentialsHandler struct {
 	handlers.PorterHandlerReadWriter
 	authz.KubernetesAgentGetter
 }
 
-// NewCreateDatastoreProxyHandler returns a CreateDatastoreProxyHandler
-func NewCreateDatastoreProxyHandler(
+// NewGetDatastoreCredentialsHandler returns a DatastoreCredentialsHandler
+func NewGetDatastoreCredentialsHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *CreateDatastoreProxyHandler {
-	return &CreateDatastoreProxyHandler{
+) *GetDatastoreCredentialsHandler {
+	return &GetDatastoreCredentialsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 		KubernetesAgentGetter:   authz.NewOutOfClusterAgentGetter(config),
 	}
 }
 
-// ServeHTTP creates a datastore proxy pod
-func (c *CreateDatastoreProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-datastore-proxy")
+// ServeHTTP retrieves the credentials for a datastore
+func (c *GetDatastoreCredentialsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "serve-get-datastore-credentials")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
@@ -62,7 +63,7 @@ func (c *CreateDatastoreProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 	projectId := int64(project.ID)
 
-	var resp CreateDatastoreProxyResponse
+	var resp GetDatastoreCredentialsResponse
 
 	datastoreName, reqErr := requestutils.GetURLParamString(r, types.URLParamDatastoreName)
 	if reqErr != nil {
@@ -102,8 +103,7 @@ func (c *CreateDatastoreProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	resp = CreateDatastoreProxyResponse{
-		PodName: ccpResp.Msg.PodName,
+	resp = GetDatastoreCredentialsResponse{
 		Credential: Credential{
 			Host:         ccpResp.Msg.Credential.Host,
 			Port:         int(ccpResp.Msg.Credential.Port),
@@ -111,9 +111,6 @@ func (c *CreateDatastoreProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 			Password:     ccpResp.Msg.Credential.Password,
 			DatabaseName: ccpResp.Msg.Credential.DatabaseName,
 		},
-		ClusterID: uint(ccpResp.Msg.ClusterId),
-		Namespace: ccpResp.Msg.Namespace,
-		Type:      datastoreRecord.Type,
 	}
 
 	c.WriteResult(w, r, resp)

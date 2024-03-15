@@ -58,7 +58,7 @@ const CreateAKSClusterForm: React.FC<Props> = ({
             },
             {
               nodeGroupType: "MONITORING" as const,
-              instanceType: "Standard_B2als_v2",
+              instanceType: "Standard_B2as_v2",
               minInstances: 1,
               maxInstances: 3,
             },

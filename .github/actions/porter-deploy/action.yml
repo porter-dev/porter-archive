@@ -39,7 +39,7 @@ runs:
     - name: Deploy stack
       uses: porter-dev/porter-cli-action@v0.1.0
       with:
-        command: apply
+        command: apply --wait
       env:
         PORTER_CLUSTER: "${{ inputs.cluster }}"
         PORTER_HOST: "${{ inputs.host }}"

@@ -1229,6 +1229,18 @@ const getLatestAppRevisions = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/revisions`;
 });
 
+const getAppInstances = baseApi<
+  {
+    deployment_target_id: string | undefined;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", ({ project_id, cluster_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/instances`;
+});
+
 const listDeploymentTargets = baseApi<
   {
     preview: boolean;
@@ -1967,19 +1979,6 @@ const updateDatabaseStatus = baseApi<
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/database`;
 });
-// GET /api/projects/{project_id}/clusters/{cluster_id}/datastore/status
-const getDatabaseStatus = baseApi<
-  {
-    name: string;
-    type: string;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/datastore/status`;
-});
 
 const getRepoIntegrations = baseApi("GET", "/api/integrations/repo");
 
@@ -2283,6 +2282,7 @@ const createEnvironmentGroups = baseApi<
     secret_variables?: Record<string, string>;
     type?: string;
     auth_token?: string;
+    is_env_override?: boolean;
   },
   {
     id: number;
@@ -3451,6 +3451,38 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
     `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/pr`
 );
 
+const getCloudProviderPermissionsStatus = baseApi<
+  {
+    cloud_provider: string;
+    cloud_provider_credential_identifier: string;
+  },
+  { project_id: number }
+>(
+  "GET",
+  ({ project_id }) =>
+    `/api/projects/${project_id}/integrations/cloud-permissions`
+);
+
+const getCloudSqlSecret = baseApi<
+  {},
+  { project_id: number; deployment_target_id: string; app_name: string }
+>(
+  "GET",
+  ({ project_id, deployment_target_id, app_name }) =>
+    `/api/projects/${project_id}/targets/${deployment_target_id}/apps/${app_name}/cloudsql`
+);
+
+const createCloudSqlSecret = baseApi<
+  {
+    b64_service_account_json: string;
+  },
+  { project_id: number; deployment_target_id: string; app_name: string }
+>(
+  "POST",
+  ({ project_id, deployment_target_id, app_name }) =>
+    `/api/projects/${project_id}/targets/${deployment_target_id}/apps/${app_name}/cloudsql`
+);
+
 // Bundle export to allow default api import (api.<method> is more readable)
 export default {
   checkAuth,
@@ -3604,6 +3636,7 @@ export default {
   getRevision,
   listAppRevisions,
   getLatestAppRevisions,
+  getAppInstances,
   listDeploymentTargets,
   createDeploymentTarget,
   getDeploymentTarget,
@@ -3740,5 +3773,8 @@ export default {
 
   // STATUS
   getGithubStatus,
-  getDatabaseStatus,
+  getCloudProviderPermissionsStatus,
+
+  getCloudSqlSecret,
+  createCloudSqlSecret,
 };

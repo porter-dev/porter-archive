@@ -43,13 +43,21 @@ type ServiceDeletions struct {
 	IngressAnnotationKeys []string `json:"ingress_annotation_keys"`
 }
 
+// EnvVariableDeletions is the set of keys to delete from the environment group
+type EnvVariableDeletions struct {
+	// Variables is a set of variable keys to delete from the environment group
+	Variables []string `json:"variables"`
+	// Secrets is a set of secret variable keys to delete from the environment group
+	Secrets []string `json:"secrets"`
+}
+
 // Deletions are the names of services and env variables to delete
 type Deletions struct {
-	ServiceNames     []string                    `json:"service_names"`
-	Predeploy        []string                    `json:"predeploy"`
-	EnvVariableNames []string                    `json:"env_variable_names"`
-	EnvGroupNames    []string                    `json:"env_group_names"`
-	ServiceDeletions map[string]ServiceDeletions `json:"service_deletions"`
+	ServiceNames         []string                    `json:"service_names"`
+	Predeploy            []string                    `json:"predeploy"`
+	EnvGroupNames        []string                    `json:"env_group_names"`
+	ServiceDeletions     map[string]ServiceDeletions `json:"service_deletions"`
+	EnvVariableDeletions EnvVariableDeletions        `json:"env_variable_deletions"`
 }
 
 // UpdateAppRequest is the request object for the POST /apps/update endpoint
@@ -60,6 +68,8 @@ type UpdateAppRequest struct {
 	GitSource GitSource `json:"git_source,omitempty"`
 	// DeploymentTargetId is the ID of the deployment target to apply the update to
 	DeploymentTargetId string `json:"deployment_target_id"`
+	// DeploymentTargetName is the name of the deployment target to apply the update to
+	DeploymentTargetName string `json:"deployment_target_name"`
 	// Variables is a map of environment variable names to values
 	Variables map[string]string `json:"variables"`
 	// Secrets is a map of secret names to values
@@ -116,12 +126,21 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	if request.DeploymentTargetId == "" {
-		err := telemetry.Error(ctx, span, nil, "deployment target id is empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
+
 	deploymentTargetID := request.DeploymentTargetId
+	deploymentTargetName := request.DeploymentTargetName
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTargetID},
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: deploymentTargetName},
+	)
+
+	var deploymentTargetIdentifer *porterv1.DeploymentTargetIdentifier
+	if deploymentTargetID != "" || deploymentTargetName != "" {
+		deploymentTargetIdentifer = &porterv1.DeploymentTargetIdentifier{
+			Id:   deploymentTargetID,
+			Name: deploymentTargetName,
+		}
+	}
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "name", Value: request.Name},
@@ -258,12 +277,11 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updateReq := connect.NewRequest(&porterv1.UpdateAppRequest{
-		ProjectId: int64(project.ID),
-		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
-			Id: deploymentTargetID,
-		},
-		App:           appProto,
-		AppRevisionId: request.AppRevisionID,
+		ProjectId:                  int64(project.ID),
+		ClusterId:                  int64(cluster.ID),
+		DeploymentTargetIdentifier: deploymentTargetIdentifer,
+		App:                        appProto,
+		AppRevisionId:              request.AppRevisionID,
 		AppEnv: &porterv1.EnvGroupVariables{
 			Normal: envVariables,
 			Secret: request.Secrets,
@@ -274,9 +292,12 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Deletions: &porterv1.Deletions{
 			ServiceNames:     request.Deletions.ServiceNames,
 			PredeployNames:   request.Deletions.Predeploy,
-			EnvVariableNames: request.Deletions.EnvVariableNames,
 			EnvGroupNames:    request.Deletions.EnvGroupNames,
 			ServiceDeletions: serviceDeletions,
+			EnvVariableDeletions: &porterv1.EnvVariableDeletions{
+				Variables: request.Deletions.EnvVariableDeletions.Variables,
+				Secrets:   request.Deletions.EnvVariableDeletions.Secrets,
+			},
 		},
 		AppOverrides:        overrides,
 		CommitSha:           request.CommitSHA,

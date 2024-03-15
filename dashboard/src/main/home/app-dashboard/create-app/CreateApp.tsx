@@ -42,6 +42,10 @@ import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 import applicationGrad from "assets/application-grad.svg";
 
+import {
+  useAppInstances,
+  useLatestAppRevisions,
+} from "../../../../lib/hooks/useLatestAppRevisions";
 import ImageSettings from "../image-settings/ImageSettings";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import SourceSelector from "../new-app-flow/SourceSelector";
@@ -82,34 +86,27 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     secrets: {},
   });
 
-  const { data: porterApps = [] } = useQuery<string[]>(
-    ["getPorterApps", currentProject?.id, currentCluster?.id],
-    async () => {
-      if (!currentProject?.id || !currentCluster?.id) {
-        return await Promise.resolve([]);
-      }
+  const { revisions: appsWithRevisions } = useLatestAppRevisions({
+    projectId: currentProject?.id ?? 0,
+    clusterId: currentCluster?.id ?? 0,
+  });
 
-      const res = await api.getPorterApps(
-        "<token>",
-        {},
-        {
-          project_id: currentProject?.id,
-          cluster_id: currentCluster?.id,
-        }
+  const { instances: appInstances } = useAppInstances({
+    projectId: currentProject?.id ?? 0,
+    clusterId: currentCluster?.id ?? 0,
+  });
+
+  const porterApps = useMemo((): string[] => {
+    return appsWithRevisions.reduce(function (result: string[], app) {
+      const instances = appInstances.filter(
+        (instance) => instance.id === app.app_revision.app_instance_id
       );
-
-      const apps = await z
-        .object({
-          name: z.string(),
-        })
-        .array()
-        .parseAsync(res.data);
-      return apps.map((app) => app.name);
-    },
-    {
-      enabled: !!currentProject?.id && !!currentCluster?.id,
-    }
-  );
+      if (instances.length > 0) {
+        return result.concat(instances[0].name);
+      }
+      return result;
+    }, []);
+  }, [appsWithRevisions, appInstances]);
 
   const { data: baseEnvGroups = [] } = useQuery(
     ["getAllEnvGroups", currentProject?.id, currentCluster?.id],

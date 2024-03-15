@@ -38,7 +38,9 @@ const MainTab: React.FC<MainTabProps> = ({
   const getScheduleDescription = useCallback((cron: string) => {
     try {
       return (
-        <Text color="helper">This job runs: {cronstrue.toString(cron)}</Text>
+        <Text color="helper">
+          This job runs: {cronstrue.toString(cron)} UTC
+        </Text>
       );
     } catch (err) {
       return (

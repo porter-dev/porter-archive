@@ -1,26 +1,29 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
-import styled from 'styled-components';
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
 import { FormProvider, useForm } from "react-hook-form";
 import { withRouter, type RouteComponentProps } from "react-router";
+import styled from "styled-components";
 
-import api from 'shared/api';
-import { Context } from 'shared/Context';
-import { type EnvGroupFormData, envGroupFormValidator } from 'lib/env-groups/types';
-
-import envGrad from 'assets/env-group-grad.svg';
-
-import Error from "components/porter/Error";
 import Back from "components/porter/Back";
-import DashboardHeader from '../cluster-dashboard/DashboardHeader';
-import VerticalSteps from 'components/porter/VerticalSteps';
-import Text from 'components/porter/Text';
-import Spacer from 'components/porter/Spacer';
-import { ControlledInput } from 'components/porter/ControlledInput';
-import Button from 'components/porter/Button';
-import EnvGroupArray, { type KeyValueType } from './EnvGroupArray';
-import axios from 'axios';
-import {envGroupPath} from "shared/util";
+import Button from "components/porter/Button";
+import { ControlledInput } from "components/porter/ControlledInput";
+import Error from "components/porter/Error";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import VerticalSteps from "components/porter/VerticalSteps";
+import {
+  envGroupFormValidator,
+  type EnvGroupFormData,
+} from "lib/env-groups/types";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { envGroupPath } from "shared/util";
+import envGrad from "assets/env-group-grad.svg";
+
+import DashboardHeader from "../cluster-dashboard/DashboardHeader";
+import EnvGroupArray, { type KeyValueType } from "./EnvGroupArray";
 
 const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -37,12 +40,12 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
           hidden: false,
           locked: false,
           deleted: false,
-        }
-      ]
-    }
+        },
+      ],
+    },
   });
 
-  const { 
+  const {
     formState: { isValidating, isSubmitting, errors },
     register,
     watch,
@@ -77,30 +80,6 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
     const secretEnvVariables: Record<string, string> = {};
     const envVariable = data.envVariables;
     try {
-
-      // Create env group namespace if it doesn't exist
-      const res = await api.getNamespaces(
-        "<token>",
-        {},
-        {
-          id: currentProject?.id ?? -1,
-          cluster_id: currentCluster?.id ?? -1,
-        }
-      );
-      const namespaceExists = res.data.some((n: { name: string }) => n.name === "porter-env-group");
-      if (!namespaceExists) {
-        await api.createNamespace(
-          "<token>",
-          {
-            name: "porter-env-group",
-          },
-          {
-            id: currentProject?.id ?? -1,
-            cluster_id: currentCluster?.id ?? -1,
-          }
-        );
-      }
-
       // Old env var create logic
       envVariable
         .filter((envVar: KeyValueType, index: number, self: KeyValueType[]) => {
@@ -137,14 +116,17 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
           name: data.name,
           variables: apiEnvVariables,
           secret_variables: secretEnvVariables,
+          is_env_override: true,
         },
         {
           id: currentProject?.id ?? -1,
           cluster_id: currentCluster?.id ?? -1,
         }
-      )
-        
-      history.push(envGroupPath(currentProject, `/${data.name}/env-vars?created=true`));
+      );
+
+      history.push(
+        envGroupPath(currentProject, `/${data.name}/env-vars?created=true`)
+      );
     } catch (err) {
       const errorMessage =
         axios.isAxiosError(err) && err.response?.data?.error
@@ -192,7 +174,9 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
                       placeholder="ex: academic-sophon-db"
                       type="text"
                       width="320px"
-                      error={name?.length > 0 ? errors.name?.message : undefined}
+                      error={
+                        name?.length > 0 ? errors.name?.message : undefined
+                      }
                       {...register("name")}
                     />
                   </>,
@@ -200,7 +184,8 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
                     <Text size={16}>Environment variables</Text>
                     <Spacer y={0.5} />
                     <Text color="helper">
-                      Set environment-specific configuration including evironment variables and secrets.
+                      Set environment-specific configuration including
+                      evironment variables and secrets.
                     </Text>
                     <Spacer height="15px" />
                     <EnvGroupArray
@@ -220,7 +205,7 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
                     width="140px"
                   >
                     Deploy env group
-                  </Button>
+                  </Button>,
                 ]}
               />
             </form>
@@ -230,7 +215,7 @@ const CreateEnvGroup: React.FC<RouteComponentProps> = ({ history }) => {
       </Div>
     </CenterWrapper>
   );
-}
+};
 
 export default withRouter(CreateEnvGroup);
 

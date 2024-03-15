@@ -43,7 +43,7 @@ jobs:
       uses: porter-dev/setup-porter@v0.1.0
     - name: Deploy stack
       timeout-minutes: 30
-      run: exec porter apply -f ./porter.yaml
+      run: exec porter apply -f ./porter.yaml --wait
       env:
         PORTER_CLUSTER: "11"
         PORTER_HOST: https://dashboard.internal-tools.porter.run

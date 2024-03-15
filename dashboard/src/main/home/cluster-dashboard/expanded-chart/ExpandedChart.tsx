@@ -115,26 +115,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
     setOverrideCurrentTab("logs");
   };
 
-  const updateDatabaseStatuses = async (): Promise<void> => {
-    try {
-
-      const statusRes = await api.getDatabaseStatus("<token>", {
-        name: currentChart.name,
-        type: currentChart.chart.metadata.name
-      }, {
-        project_id: currentProject?.id ?? 0,
-        cluster_id: currentCluster?.id ?? 0,
-      });
-      if (statusRes.data.status === "available") {
-        setDatabaseStatus(true);
-      }
-      else {
-        setDatabaseStatus(false);
-      }
-    } catch (err) {
-      setDatabaseStatus(false);
-    }
-  };
   // Retrieve full chart data (includes form and values)
   const getChartData = async (chart: ChartType) => {
     setIsLoadingChartData(true);
@@ -850,9 +830,6 @@ const ExpandedChart: React.FC<Props> = (props) => {
           });
       });
     });
-    if (templateWhitelist.includes(currentChart.chart.metadata.name)) {
-      void updateDatabaseStatuses()
-    }
     return () => {
       closeAllWebsockets();
     };

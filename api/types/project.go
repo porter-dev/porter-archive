@@ -76,7 +76,7 @@ type FeatureFlags struct {
 	StacksEnabled                   string `json:"stacks_enabled,omitempty"`
 	ValidateApplyV2                 bool   `json:"validate_apply_v2"`
 	ManagedDeploymentTargetsEnabled bool   `json:"managed_deployment_targets_enabled"`
-	AdvancedRbacEnabled						  bool   `json:"advanced_rbac_enabled"`
+	AdvancedRbacEnabled             bool   `json:"advanced_rbac_enabled"`
 }
 
 // CreateProjectRequest is a struct that contains the information

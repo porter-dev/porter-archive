@@ -13,7 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/cli/cmd/commands/flags"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+	appV2 "github.com/porter-dev/porter/internal/porter_app/v2"
 
 	"github.com/cli/cli/git"
 	"github.com/fatih/color"
@@ -40,9 +42,9 @@ import (
 )
 
 var (
-	porterYAML       string
-	previewApply     bool
-	imageTagOverride string
+	porterYAML   string
+	previewApply bool
+	envGroups    []string
 	// pullImageBeforeBuild is a flag that determines whether to pull the docker image from a repo before building
 	pullImageBeforeBuild bool
 	predeploy            bool
@@ -122,14 +124,11 @@ applying a configuration:
 		false,
 		"set this to wait and be notified when an apply is successful, otherwise time out",
 	)
-	applyCmd.PersistentFlags().StringSlice("attach-env-groups", nil, "attach environment groups to the app on apply")
-	applyCmd.PersistentFlags().String("build-method", "", "set the build method for the app on apply, either 'docker' or 'pack'")
-	applyCmd.PersistentFlags().String("dockerfile", "", "set the path to the Dockerfile when build method is 'docker'")
-	applyCmd.PersistentFlags().String("builder", "", "set the builder to use when build method is 'pack'")
-	applyCmd.PersistentFlags().StringSlice("attach-buildpacks", nil, "attach buildpacks to use when build method is 'pack'")
-	applyCmd.PersistentFlags().String("build-context", "", "set the build context for the app")
-	applyCmd.PersistentFlags().StringVar(&imageTagOverride, "tag", "", "set the image tag used for the application (overrides field in yaml)")
-	applyCmd.PersistentFlags().String("image-repository", "", "set the image repository to use for the app")
+	applyCmd.PersistentFlags().StringSliceVar(&envGroups, "attach-env-groups", nil, "attach environment groups to the app on apply")
+
+	flags.UseAppBuildFlags(applyCmd)
+	flags.UseAppImageFlags(applyCmd)
+
 	applyCmd.MarkFlagRequired("file")
 
 	return applyCmd
@@ -153,22 +152,38 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 
 	appName := appNameFromEnvironmentVariable()
 
+	imageValues, err := flags.AppImageValuesFromCmd(cmd)
+	if err != nil {
+		return fmt.Errorf("could not retrieve image values from command")
+	}
+
+	buildValues, err := flags.AppBuildValuesFromCmd(cmd)
+	if err != nil {
+		return fmt.Errorf("could not retrieve build values from command")
+	}
+
 	if project.ValidateApplyV2 {
 		if previewApply && !project.PreviewEnvsEnabled {
 			return fmt.Errorf("preview environments are not enabled for this project. Please contact support@porter.run")
 		}
 
-		patchOperations, err := porter_app.PatchOperationsFromFlags(cmd)
-		if err != nil {
-			return fmt.Errorf("error parsing patch operations: %w", err)
-		}
+		patchOperations := appV2.PatchOperationsFromFlagValues(appV2.PatchOperationsFromFlagValuesInput{
+			EnvGroups:       envGroups,
+			BuildMethod:     buildValues.BuildMethod,
+			Dockerfile:      buildValues.Dockerfile,
+			Builder:         buildValues.Builder,
+			Buildpacks:      buildValues.Buildpacks,
+			BuildContext:    buildValues.BuildContext,
+			ImageRepository: imageValues.Repository,
+			ImageTag:        imageValues.Tag,
+		})
 
 		inp := v2.ApplyInput{
 			CLIConfig:                   cliConfig,
 			Client:                      client,
 			PorterYamlPath:              porterYAML,
 			AppName:                     appName,
-			ImageTagOverride:            imageTagOverride,
+			ImageTagOverride:            imageValues.Tag,
 			PreviewApply:                previewApply,
 			WaitForSuccessfulDeployment: appWait,
 			PullImageBeforeBuild:        pullImageBeforeBuild,

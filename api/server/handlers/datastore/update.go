@@ -488,7 +488,7 @@ func (h *UpdateDatastoreHandler) getClusterRegion(
 	var region string
 
 	var clusterContractRecord *models.APIContractRevision
-	clusterContractRevisions, err := h.Config().Repo.APIContractRevisioner().List(ctx, projectId, repository.WithClusterID(uint(clusterId)), repository.WithLatest(true))
+	clusterContractRevisions, err := h.Config().Repo.APIContractRevisioner().List(ctx, projectId, repository.WithClusterID(clusterId), repository.WithLatest(true))
 	if err != nil {
 		return region, telemetry.Error(ctx, span, err, "error getting latest cluster contract revisions")
 	}

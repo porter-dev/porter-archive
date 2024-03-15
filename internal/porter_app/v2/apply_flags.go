@@ -56,7 +56,7 @@ type SetName struct {
 func (f SetName) AsPatchOperations() []PatchOperation {
 	return []PatchOperation{
 		{
-			Operation: ReplaceOperation,
+			Operation: AddOperation,
 			Path:      "/name",
 			Value:     f.Name,
 		},
@@ -106,7 +106,7 @@ type SetBuildContext struct {
 func (f SetBuildContext) AsPatchOperations() []PatchOperation {
 	return []PatchOperation{
 		{
-			Operation: ReplaceOperation,
+			Operation: AddOperation,
 			Path:      "/build/context",
 			Value:     f.Context,
 		},
@@ -122,7 +122,7 @@ type SetBuildMethod struct {
 func (f SetBuildMethod) AsPatchOperations() []PatchOperation {
 	return []PatchOperation{
 		{
-			Operation: ReplaceOperation,
+			Operation: AddOperation,
 			Path:      "/build/method",
 			Value:     f.Method,
 		},
@@ -138,7 +138,7 @@ type SetBuildDockerfile struct {
 func (f SetBuildDockerfile) AsPatchOperations() []PatchOperation {
 	return []PatchOperation{
 		{
-			Operation: ReplaceOperation,
+			Operation: AddOperation,
 			Path:      "/build/dockerfile",
 			Value:     f.Dockerfile,
 		},
@@ -174,7 +174,7 @@ type SetBuilder struct {
 func (f SetBuilder) AsPatchOperations() []PatchOperation {
 	return []PatchOperation{
 		{
-			Operation: ReplaceOperation,
+			Operation: AddOperation,
 			Path:      "/build/builder",
 			Value:     f.Builder,
 		},
@@ -190,7 +190,7 @@ type SetImageRepo struct {
 func (f SetImageRepo) AsPatchOperations() []PatchOperation {
 	return []PatchOperation{
 		{
-			Operation: ReplaceOperation,
+			Operation: AddOperation,
 			Path:      "/image/repository",
 			Value:     f.Repo,
 		},
@@ -206,7 +206,7 @@ type SetImageTag struct {
 func (f SetImageTag) AsPatchOperations() []PatchOperation {
 	return []PatchOperation{
 		{
-			Operation: ReplaceOperation,
+			Operation: AddOperation,
 			Path:      "/image/tag",
 			Value:     f.Tag,
 		},

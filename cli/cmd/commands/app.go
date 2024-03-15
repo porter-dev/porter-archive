@@ -117,6 +117,19 @@ buildpacks using the --builder and --attach-buildpacks flags:
 		Use:   "push [application]",
 		Args:  cobra.MinimumNArgs(1),
 		Short: "Pushes your application to a remote registry.",
+		Long: fmt.Sprintf(`
+	%s
+
+Pushes the specified app to your default Porter registry. If no tag is specified, the latest
+commit SHA from the current branch will be used as the tag.
+
+You can specify a tag using the --tag flag:
+
+	%s
+`,
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter app push\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter app push example-app --tag v1.0.0"),
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return checkLoginAndRunWithConfig(cmd, cliConf, args, appPush)
 		},
@@ -124,7 +137,7 @@ buildpacks using the --builder and --attach-buildpacks flags:
 	appBuildCommand.PersistentFlags().String(
 		flags.App_ImageTag,
 		"",
-		"set the image tag to use for the build",
+		"set the image tag to use for the push",
 	)
 	appCmd.AddCommand(appPushCommand)
 

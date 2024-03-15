@@ -54,8 +54,6 @@ type ApplyInput struct {
 	PatchOperations []v2.PatchOperation
 }
 
-const defaultPorterYamlPath = "porter.yaml"
-
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
 func Apply(ctx context.Context, inp ApplyInput) error {
 	ctx, cancel := context.WithCancel(ctx)

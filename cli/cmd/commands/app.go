@@ -13,9 +13,11 @@ import (
 	"github.com/fatih/color"
 	api "github.com/porter-dev/porter/api/client"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/cli/cmd/commands/flags"
 	"github.com/porter-dev/porter/cli/cmd/config"
 	"github.com/porter-dev/porter/cli/cmd/utils"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+	appV2 "github.com/porter-dev/porter/internal/porter_app/v2"
 	"github.com/spf13/cobra"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -68,6 +70,48 @@ func registerCommand_App(cliConf config.CLIConfig) *cobra.Command {
 		"",
 		"the name of the deployment target for the app",
 	)
+
+	appBuildCommand := &cobra.Command{
+		Use:   "build [application]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Builds your application.",
+		Long: fmt.Sprintf(`
+  %s
+
+Builds a new version of the specified app. Attempts to use any build settings
+previously configured for the app, which can be overridden with flags.
+
+If you would like to change the build context, you can do so by using the --build-context flag:
+
+  %s
+
+When using "--method docker", you can specify the path to the Dockerfile using the
+--dockerfile flag. This will also override the Dockerfile path that you may have linked
+for the application:
+
+  %s
+
+To use buildpacks with the "--method pack" flag, you can specify the builder and attach
+buildpacks using the --builder and --attach-buildpacks flags:
+
+	%s
+`,
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter app build\":"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter app build example --build-context ./app"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter app build example-app --method docker --dockerfile ./prod.Dockerfile"),
+			color.New(color.FgGreen, color.Bold).Sprintf("porter app build example-app --method pack --builder heroku/buildpacks:20 --attach-buildpacks heroku/nodejs"),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return checkLoginAndRunWithConfig(cmd, cliConf, args, appBuild)
+		},
+	}
+	flags.UseAppBuildFlags(appBuildCommand)
+	appBuildCommand.PersistentFlags().String(
+		flags.App_ImageTag,
+		"",
+		"set the image tag to use for the build",
+	)
+	appCmd.AddCommand(appBuildCommand)
 
 	// appRunCmd represents the "porter app run" subcommand
 	appRunCmd := &cobra.Command{
@@ -214,6 +258,50 @@ func appRunFlags(appRunCmd *cobra.Command) {
 		"",
 		"name of the job to run (will run the job as defined instead of the provided command, and returns the job run id without waiting for the job to complete or displaying logs)",
 	)
+}
+
+func appBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, cmd *cobra.Command, args []string) error {
+	appName := args[0]
+	if appName == "" {
+		return fmt.Errorf("app name must be specified")
+	}
+
+	buildValues, err := flags.AppBuildValuesFromCmd(cmd)
+	if err != nil {
+		return err
+	}
+
+	patchOperations := appV2.PatchOperationsFromFlagValues(appV2.PatchOperationsFromFlagValuesInput{
+		BuildMethod:  buildValues.BuildMethod,
+		Dockerfile:   buildValues.Dockerfile,
+		Builder:      buildValues.Builder,
+		Buildpacks:   buildValues.Buildpacks,
+		BuildContext: buildValues.BuildContext,
+	})
+
+	tag, err := cmd.Flags().GetString(flags.App_ImageTag)
+	if err != nil {
+		return fmt.Errorf("error getting tag: %w", err)
+	}
+
+	err = v2.AppBuild(ctx, v2.AppBuildInput{
+		CLIConfig:            cliConfig,
+		Client:               client,
+		AppName:              appName,
+		DeploymentTargetName: deploymentTargetName,
+		BuildMethod:          buildValues.BuildMethod,
+		Dockerfile:           buildValues.Dockerfile,
+		Builder:              buildValues.Builder,
+		Buildpacks:           buildValues.Buildpacks,
+		BuildContext:         buildValues.BuildContext,
+		ImageTag:             tag,
+		PatchOperations:      patchOperations,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to build app: %w", err)
+	}
+
+	return nil
 }
 
 func appManifests(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, args []string) error {
@@ -370,7 +458,6 @@ func appRun(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client a
 	}
 
 	err = config.setSharedConfig(ctx)
-
 	if err != nil {
 		return fmt.Errorf("Could not retrieve kube credentials: %s", err.Error())
 	}

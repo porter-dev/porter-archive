@@ -2,6 +2,7 @@ package porter_app
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -17,6 +18,7 @@ import (
 	"github.com/porter-dev/porter/internal/deployment_target"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/porter_app"
+	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -52,6 +54,11 @@ type BuildSettings struct {
 	Buildpacks []string `json:"buildpacks"`
 	Dockerfile string   `json:"dockerfile"`
 	CommitSHA  string   `json:"commit_sha"`
+}
+
+// GetBuildFromRevisionRequest is the request object for the /apps/{porter_app_name}/revisions/{app_revision_id}/build endpoint
+type GetBuildFromRevisionRequest struct {
+	B64PatchOperations string `json:"b64_patch_operations"`
 }
 
 // GetBuildFromRevisionResponse is the response object for the /apps/{porter_app_name}/revisions/{app_revision_id}/build endpoint
@@ -100,6 +107,30 @@ func (c *GetBuildFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-revision-id", Value: appRevisionUuid.String()})
 
+	request := &GetBuildFromRevisionRequest{}
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		err := telemetry.Error(ctx, span, nil, "error decoding request")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
+	var patchOps []v2.PatchOperation
+	if request.B64PatchOperations != "" {
+		decodedPatchOps, err := base64.StdEncoding.DecodeString(request.B64PatchOperations)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error decoding patch operations")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+
+		err = json.Unmarshal(decodedPatchOps, &patchOps)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error unmarshalling patch operations")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+			return
+		}
+	}
+
 	revision, err := porter_app.GetAppRevision(ctx, porter_app.GetAppRevisionInput{
 		AppRevisionID: appRevisionUuid,
 		ProjectID:     project.ID,
@@ -134,23 +165,30 @@ func (c *GetBuildFromRevisionHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	resp.Image = Image{
-		Repository: appProto.Image.Repository,
-		Tag:        appProto.Image.Tag,
+	patchedProto, err := v2.PatchApp(ctx, appProto, patchOps)
+	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error patching app proto")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
 	}
 
-	if appProto.Build == nil {
+	resp.Image = Image{
+		Repository: patchedProto.Image.Repository,
+		Tag:        patchedProto.Image.Tag,
+	}
+
+	if patchedProto.Build == nil {
 		c.WriteResult(w, r, resp)
 		return
 	}
 
 	resp.Build = BuildSettings{
-		Method:     appProto.Build.Method,
-		Context:    appProto.Build.Context,
-		Builder:    appProto.Build.Builder,
-		Buildpacks: appProto.Build.Buildpacks,
-		Dockerfile: appProto.Build.Dockerfile,
-		CommitSHA:  appProto.Build.CommitSha,
+		Method:     patchedProto.Build.Method,
+		Context:    patchedProto.Build.Context,
+		Builder:    patchedProto.Build.Builder,
+		Buildpacks: patchedProto.Build.Buildpacks,
+		Dockerfile: patchedProto.Build.Dockerfile,
+		CommitSHA:  patchedProto.Build.CommitSha,
 	}
 
 	agent, err := c.GetAgent(r, cluster, "")

@@ -175,7 +175,12 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 
 	appName := updateResp.AppName
 
-	buildSettings, err := client.GetBuildFromRevision(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
+	buildSettings, err := client.GetBuildFromRevision(ctx, api.GetBuildFromRevisionInput{
+		ProjectID:     cliConf.Project,
+		ClusterID:     cliConf.Cluster,
+		AppName:       appName,
+		AppRevisionID: updateResp.AppRevisionId,
+	})
 	if err != nil {
 		return fmt.Errorf("error getting build from revision: %w", err)
 	}

@@ -24,6 +24,7 @@ type ProjectList struct {
 	ValidateApplyV2        bool   `json:"validate_apply_v2"`
 	AdvancedInfraEnabled   bool   `json:"advanced_infra_enabled"`
 	SandboxEnabled         bool   `json:"sandbox_enabled"`
+	AdvancedRbacEnabled    bool   `json:"advanced_rbac_enabled"`
 }
 
 // Project type for entries in api responses for everything other than `GET /projects`
@@ -54,6 +55,7 @@ type Project struct {
 	ManagedDeploymentTargetsEnabled bool    `json:"managed_deployment_targets_enabled"`
 	AdvancedInfraEnabled            bool    `json:"advanced_infra_enabled"`
 	SandboxEnabled                  bool    `json:"sandbox_enabled"`
+	AdvancedRbacEnabled             bool    `json:"advanced_rbac_enabled"`
 }
 
 // FeatureFlags is a struct that contains old feature flag representations
@@ -74,6 +76,7 @@ type FeatureFlags struct {
 	StacksEnabled                   string `json:"stacks_enabled,omitempty"`
 	ValidateApplyV2                 bool   `json:"validate_apply_v2"`
 	ManagedDeploymentTargetsEnabled bool   `json:"managed_deployment_targets_enabled"`
+	AdvancedRbacEnabled             bool   `json:"advanced_rbac_enabled"`
 }
 
 // CreateProjectRequest is a struct that contains the information

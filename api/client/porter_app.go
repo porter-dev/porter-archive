@@ -531,20 +531,31 @@ func (c *Client) GetAppEnvVariables(
 	return resp, err
 }
 
+type GetBuildFromRevisionInput struct {
+	ProjectID       uint
+	ClusterID       uint
+	AppName         string
+	AppRevisionID   string
+	PatchOperations []v2.PatchOperation
+}
+
 // GetBuildFromRevision returns the build environment for a given app proto
 func (c *Client) GetBuildFromRevision(
 	ctx context.Context,
-	projectID uint, clusterID uint,
-	appName string, appRevisionId string,
+	inp GetBuildFromRevisionInput,
 ) (*porter_app.GetBuildFromRevisionResponse, error) {
+	req := &porter_app.GetBuildFromRevisionRequest{
+		PatchOperations: inp.PatchOperations,
+	}
+
 	resp := &porter_app.GetBuildFromRevisionResponse{}
 
 	err := c.getRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/%s/revisions/%s/build",
-			projectID, clusterID, appName, appRevisionId,
+			inp.ProjectID, inp.ClusterID, inp.AppName, inp.AppRevisionID,
 		),
-		nil,
+		req,
 		resp,
 	)
 

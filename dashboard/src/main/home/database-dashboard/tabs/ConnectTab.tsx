@@ -24,8 +24,8 @@ const ConnectTab: React.FC = () => {
         <>
           <Spacer y={0.5} />
           <Text color="helper">
-            All apps deployed in your cluster can access the datastore using the
-            following credentials:
+            All apps deployed in your cluster can access this datastore using
+            the following credentials:
           </Text>
           <Spacer y={0.5} />
           <ConnectionInfo

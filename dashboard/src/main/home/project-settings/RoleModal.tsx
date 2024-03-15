@@ -49,8 +49,378 @@ const RoleModal: React.FC<RoleModalProps> = ({
       <Text color="helper">Manage permissions for this role:</Text>
       <Spacer y={1} />
       <ScrollWrapper>
+        <Expandable alt preExpanded header={<>Clusters</>}>
+          <Expandable alt preExpanded header={<>All clusters</>}>
+            <Checkbox
+              checked={perms?.addOns.read}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Read
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              checked={perms?.addOns.write}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Write
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              checked={perms?.addOns.create}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Create
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              checked={perms?.addOns.delete}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Delete
+            </Checkbox>
+            <Spacer y={0.5} />
+          </Expandable>
+        </Expandable>
+
         <Expandable alt preExpanded header={<>Applications</>}>
           <Expandable alt preExpanded header={<>All applications</>}>
+            <Checkbox
+              checked={perms?.applications.read}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Read
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              checked={perms?.applications.write}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Write
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              checked={perms?.applications.create}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Create
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              checked={perms?.applications.delete}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Delete
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Expandable alt preExpanded header={<>Tabs</>}>
+              <Checkbox
+                checked={perms?.applications.tabs.notifications}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Notifications
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.activity}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Activity
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.overview}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Overview
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.logs}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Logs
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.metrics}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Metrics
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.environment}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Environment
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.build_settings}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Build settings
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.settings}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Settings
+              </Checkbox>
+              <Spacer y={0.5} />
+            </Expandable>
+            <Expandable alt preExpanded header={<>Actions</>}>
+              <Checkbox
+                checked={perms?.applications.actions?.app_rollbacks}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                App rollbacks
+              </Checkbox>
+              <Spacer y={0.5} />
+            </Expandable>
+          </Expandable>
+
+          <Expandable alt preExpanded header={<>tetris-app</>}>
+            <Checkbox
+              checked={perms?.applications.read}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Read
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              checked={perms?.applications.write}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Write
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              checked={perms?.applications.create}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Create
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              checked={perms?.applications.delete}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Delete
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Expandable alt preExpanded header={<>Tabs</>}>
+              <Checkbox
+                checked={perms?.applications.tabs.notifications}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Notifications
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.activity}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Activity
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.overview}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Overview
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.logs}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Logs
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.metrics}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Metrics
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.environment}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Environment
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.build_settings}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Build settings
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.settings}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Settings
+              </Checkbox>
+              <Spacer y={0.5} />
+            </Expandable>
+            <Expandable alt preExpanded header={<>Actions</>}>
+              <Checkbox
+                checked={perms?.applications.actions?.app_rollbacks}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                App rollbacks
+              </Checkbox>
+              <Spacer y={0.5} />
+            </Expandable>
+          </Expandable>
+
+          <Expandable alt preExpanded header={<>bartender-backend</>}>
+            <Checkbox
+              checked={perms?.applications.read}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Read
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              checked={perms?.applications.write}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Write
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              checked={perms?.applications.create}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Create
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Checkbox
+              checked={perms?.applications.delete}
+              toggleChecked={() => {}}
+              disabled={readOnly}
+            >
+              Delete
+            </Checkbox>
+            <Spacer y={0.5} />
+            <Expandable alt preExpanded header={<>Tabs</>}>
+              <Checkbox
+                checked={perms?.applications.tabs.notifications}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Notifications
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.activity}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Activity
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.overview}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Overview
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.logs}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Logs
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.metrics}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Metrics
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.environment}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Environment
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.build_settings}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Build settings
+              </Checkbox>
+              <Spacer y={0.5} />
+              <Checkbox
+                checked={perms?.applications.tabs.settings}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                Settings
+              </Checkbox>
+              <Spacer y={0.5} />
+            </Expandable>
+            <Expandable alt preExpanded header={<>Actions</>}>
+              <Checkbox
+                checked={perms?.applications.actions?.app_rollbacks}
+                toggleChecked={() => {}}
+                disabled={readOnly}
+              >
+                App rollbacks
+              </Checkbox>
+              <Spacer y={0.5} />
+            </Expandable>
+          </Expandable>
+
+          <Expandable alt preExpanded header={<>chatter-v2-frontend</>}>
             <Checkbox
               checked={perms?.applications.read}
               toggleChecked={() => {}}

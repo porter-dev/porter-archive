@@ -46,6 +46,7 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
   const [roleList, setRoleList] = useState([]);
   const [isInvalidEmail, setIsInvalidEmail] = useState(false);
   const [isHTTPS] = useState(() => window.location.protocol === "https:");
+  const [showNewGroupModal, setShowNewGroupModal] = useState(false);
 
   useEffect(() => {
     api
@@ -428,15 +429,192 @@ const InvitePage: React.FunctionComponent<Props> = ({}) => {
           <>
             <Heading isAtTop={true}>Permission groups</Heading>
             <Helper>Manage permission groups for your organization.</Helper>
-            <PermissionGroup name="Admin" />
-            <PermissionGroup name="Developer" />
-            <PermissionGroup name="Viewer" />
+            <PermissionGroup
+              name="Admin"
+              permissions={{
+                applications: {
+                  read: true,
+                  write: true,
+                  create: true,
+                  delete: true,
+                  tabs: {
+                    notifications: true,
+                    activity: true,
+                    overview: true,
+                    logs: true,
+                    metrics: true,
+                    environment: true,
+                    build_settings: true,
+                    settings: true,
+                  },
+                  actions: {
+                    app_rollbacks: true,
+                  },
+                },
+                datastores: {
+                  read: true,
+                  write: true,
+                  create: true,
+                  delete: true,
+                  tabs: {
+                    connection_info: true,
+                    connected_apps: true,
+                    configuration: true,
+                    settings: true,
+                  },
+                },
+                addOns: {
+                  read: true,
+                  write: true,
+                  create: true,
+                  delete: true,
+                },
+                envGroups: {
+                  read: true,
+                  write: true,
+                  create: true,
+                  delete: true,
+                  tabs: {
+                    environment_variables: true,
+                    synced_applications: true,
+                    settings: true,
+                  },
+                },
+                previewEnvironments: {
+                  read: true,
+                  manage: true,
+                  tabs: {
+                    app_services: true,
+                    environment_variables: true,
+                    required_apps: true,
+                    add_ons: true,
+                  },
+                },
+                integrations: {
+                  read: true,
+                  manage: true,
+                },
+              }}
+            />
+            <PermissionGroup
+              name="Developer"
+              permissions={{
+                applications: {
+                  read: true,
+                  write: true,
+                  tabs: {
+                    notifications: true,
+                    activity: true,
+                    overview: true,
+                    logs: true,
+                    metrics: true,
+                    environment: true,
+                  },
+                  actions: {
+                    app_rollbacks: true,
+                  },
+                },
+                datastores: {
+                  read: true,
+                  write: true,
+                  tabs: {
+                    connection_info: true,
+                    connected_apps: true,
+                    configuration: true,
+                  },
+                },
+                addOns: {
+                  read: true,
+                  write: true,
+                },
+                envGroups: {
+                  read: true,
+                  write: true,
+                  tabs: {
+                    environment_variables: true,
+                    synced_applications: true,
+                  },
+                },
+                previewEnvironments: {
+                  read: true,
+                  tabs: {
+                    app_services: true,
+                    environment_variables: true,
+                    required_apps: true,
+                    add_ons: true,
+                  },
+                },
+                integrations: {
+                  read: true,
+                },
+              }}
+            />
+            <PermissionGroup
+              name="Viewer"
+              permissions={{
+                applications: {
+                  read: true,
+                  tabs: {
+                    notifications: true,
+                    activity: true,
+                    overview: true,
+                    logs: true,
+                    metrics: true,
+                    environment: true,
+                  },
+                },
+                datastores: {
+                  read: true,
+                  tabs: {
+                    connection_info: true,
+                    connected_apps: true,
+                    configuration: true,
+                  },
+                },
+                addOns: {
+                  read: true,
+                },
+                envGroups: {
+                  read: true,
+                  tabs: {
+                    environment_variables: true,
+                    synced_applications: true,
+                  },
+                },
+                previewEnvironments: {
+                  read: true,
+                  tabs: {
+                    app_services: true,
+                    environment_variables: true,
+                    required_apps: true,
+                    add_ons: true,
+                  },
+                },
+                integrations: {
+                  read: true,
+                },
+              }}
+            />
             <Spacer y={0.4} />
-            <Button alt>
+            <Button
+              alt
+              onClick={() => {
+                setShowNewGroupModal(true);
+              }}
+            >
               <I className="material-icons">add</I>
               New group
             </Button>
             <Spacer y={1.7} />
+            {showNewGroupModal && (
+              <RoleModal
+                name=""
+                readOnly={false}
+                closeModal={() => {
+                  setShowNewGroupModal(false);
+                }}
+              />
+            )}
           </>
         )}
         <Heading isAtTop={true}>Share project</Heading>

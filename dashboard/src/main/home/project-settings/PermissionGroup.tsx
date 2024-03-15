@@ -7,9 +7,13 @@ import RoleModal from "./RoleModal";
 
 type PermissionGroupProps = {
   name: string;
+  permissions?: any;
 };
 
-const PermissionGroup: React.FC<PermissionGroupProps> = ({ name }) => {
+const PermissionGroup: React.FC<PermissionGroupProps> = ({
+  name,
+  permissions,
+}) => {
   const [showModal, setShowModal] = useState(false);
 
   return (
@@ -24,6 +28,8 @@ const PermissionGroup: React.FC<PermissionGroupProps> = ({ name }) => {
       {showModal && (
         <RoleModal
           name={name}
+          permissions={permissions}
+          readOnly={true}
           closeModal={() => {
             setShowModal(false);
           }}

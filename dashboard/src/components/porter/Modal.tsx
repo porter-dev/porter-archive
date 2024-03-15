@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import styled from "styled-components";
 import { createPortal } from "react-dom";
+import styled from "styled-components";
 
 type Props = {
   closeModal?: () => void;
@@ -8,29 +8,23 @@ type Props = {
   width?: string;
 };
 
-const Modal: React.FC<Props> = ({
-  closeModal,
-  children,
-  width,
-}) => {
+const Modal: React.FC<Props> = ({ closeModal, children, width }) => {
   return (
     <>
-      {
-        createPortal(
-          <ModalWrapper>
-            <ModalBg onClick={closeModal} />
-            <StyledModal width={width}> 
-              {closeModal && (
-                <CloseButton onClick={closeModal}>
-                  <i className="material-icons">close</i>
-                </CloseButton>
-              )}
-              {children}
-            </StyledModal>
-          </ModalWrapper>,
-          document.body
-        )
-      }
+      {createPortal(
+        <ModalWrapper>
+          <ModalBg onClick={closeModal} />
+          <StyledModal width={width}>
+            {closeModal && (
+              <CloseButton onClick={closeModal}>
+                <i className="material-icons">close</i>
+              </CloseButton>
+            )}
+            {children}
+          </StyledModal>
+        </ModalWrapper>,
+        document.body
+      )}
     </>
   );
 };
@@ -103,7 +97,7 @@ const StyledModal = styled.div<{
   border-radius: 10px;
   border: 1px solid #494b4f;
   font-size: 13px;
-  width: ${props => props.width || "600px"};
+  width: ${(props) => props.width || "600px"};
   background: #42444933;
   backdrop-filter: saturate(150%) blur(8px);
 

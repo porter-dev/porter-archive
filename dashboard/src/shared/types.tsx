@@ -334,6 +334,7 @@ export type ProjectType = {
   managed_deployment_targets_enabled: boolean;
   aws_ack_auth_enabled: boolean;
   sandbox_enabled: boolean;
+  advanced_rbac_enabled: boolean;
   roles: Array<{
     id: number;
     kind: string;

@@ -205,7 +205,7 @@ type Project struct {
 	EnableSandbox        bool `gorm:"default:false"`
 	EnableReprovision    bool `gorm:"default:false"`
 	AdvancedInfraEnabled bool `gorm:"default:false"`
-	AdvancedRbacEnabled	 bool `gorm:"default:false"`
+	AdvancedRbacEnabled  bool `gorm:"default:false"`
 }
 
 // GetFeatureFlag calls launchdarkly for the specified flag
@@ -342,7 +342,7 @@ func (p *Project) ToProjectListType() *types.ProjectList {
 		ValidateApplyV2:        p.ValidateApplyV2,
 		FullAddOns:             p.FullAddOns,
 		AdvancedInfraEnabled:   p.AdvancedInfraEnabled,
-		AdvancedRbacEnabled:    p.AdvancedRbacEnabled, 
+		AdvancedRbacEnabled:    p.AdvancedRbacEnabled,
 	}
 }
 

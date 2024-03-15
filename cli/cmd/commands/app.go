@@ -113,6 +113,21 @@ buildpacks using the --builder and --attach-buildpacks flags:
 	)
 	appCmd.AddCommand(appBuildCommand)
 
+	appPushCommand := &cobra.Command{
+		Use:   "push [application]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Pushes your application to a remote registry.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return checkLoginAndRunWithConfig(cmd, cliConf, args, appPush)
+		},
+	}
+	appBuildCommand.PersistentFlags().String(
+		flags.App_ImageTag,
+		"",
+		"set the image tag to use for the build",
+	)
+	appCmd.AddCommand(appPushCommand)
+
 	// appRunCmd represents the "porter app run" subcommand
 	appRunCmd := &cobra.Command{
 		Use:   "run [application] -- COMMAND [args...]",
@@ -299,6 +314,31 @@ func appBuild(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client
 	})
 	if err != nil {
 		return fmt.Errorf("failed to build app: %w", err)
+	}
+
+	return nil
+}
+
+func appPush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, cmd *cobra.Command, args []string) error {
+	appName := args[0]
+	if appName == "" {
+		return fmt.Errorf("app name must be specified")
+	}
+
+	tag, err := cmd.Flags().GetString(flags.App_ImageTag)
+	if err != nil {
+		return fmt.Errorf("error getting tag: %w", err)
+	}
+
+	err = v2.AppPush(ctx, v2.AppPushInput{
+		CLIConfig:            cliConfig,
+		Client:               client,
+		AppName:              appName,
+		DeploymentTargetName: deploymentTargetName,
+		ImageTag:             tag,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to push image for app: %w", err)
 	}
 
 	return nil

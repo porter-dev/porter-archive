@@ -134,7 +134,7 @@ You can specify a tag using the --tag flag:
 			return checkLoginAndRunWithConfig(cmd, cliConf, args, appPush)
 		},
 	}
-	appBuildCommand.PersistentFlags().String(
+	appPushCommand.PersistentFlags().String(
 		flags.App_ImageTag,
 		"",
 		"set the image tag to use for the push",

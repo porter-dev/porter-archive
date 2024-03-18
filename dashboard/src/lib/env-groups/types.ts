@@ -18,7 +18,21 @@ export const envGroupFormValidator = z.object({
         locked: z.boolean(),
       })
     )
-    .min(1, { message: "At least one environment variable is required" })
+    .min(1, { message: "At least one environment variable is required" }),
 });
 
 export type EnvGroupFormData = z.infer<typeof envGroupFormValidator>;
+
+export const envGroupValidator = z.object({
+  name: z.string(),
+  variables: z.record(z.string()).optional().default({}),
+  secret_variables: z.record(z.string()).optional().default({}),
+  created_at: z.string(),
+  type: z
+    .string()
+    .pipe(
+      z.enum(["UNKNOWN", "datastore", "doppler", "porter"]).catch("UNKNOWN")
+    ),
+});
+
+export type ClientEnvGroup = z.infer<typeof envGroupValidator>;

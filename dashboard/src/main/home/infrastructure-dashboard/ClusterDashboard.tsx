@@ -237,52 +237,59 @@ const ClusterDashboard: React.FC = () => {
           })}
         </GridList>
       ) : (
-        <List>
-          {filteredClusters.map((cluster: ClientCluster, i: number) => {
-            return (
-              <Row to={`/infrastructure/${cluster.id}`} key={i}>
-                <Container row spaced>
-                  <Container row>
-                    <MidIcon src={cluster.cloud_provider.icon} />
-                    <Text size={14}>{cluster.vanity_name}</Text>
-                  </Container>
-                  <Container row>
-                    <StatusDot
-                      status={
-                        cluster.status === "READY" ? "available" : "pending"
-                      }
-                      heightPixels={8}
-                    />
-                    <Spacer inline x={0.5} />
-                    <Text color="helper">
-                      {cluster.status === "READY" ? "Running" : "Updating"}
-                    </Text>
-                  </Container>
-                </Container>
-                <Spacer y={0.5} />
-                {cluster.contract != null && (
-                  <Container row>
-                    <Container row>
-                      <SmallIcon opacity="0.3" src={globe} />
-                      <Text size={13} color="#ffffff44">
-                        {cluster.contract.config.cluster.config.region}
-                      </Text>
-                      <Spacer inline x={1} />
-                      <SmallIcon opacity="0.3" src={time} />
-                      <Text size={13} color="#ffffff44">
-                        {readableDate(cluster.contract.updated_at)}
-                      </Text>
-                    </Container>
-                  </Container>
-                )}
-              </Row>
-            );
-          })}
-        </List>
+        <ClusterList clusters={filteredClusters} />
       )}
 
       <Spacer y={5} />
     </StyledAppDashboard>
+  );
+};
+
+type ClusterListProps = {
+  clusters: ClientCluster[];
+};
+export const ClusterList: React.FC<ClusterListProps> = ({ clusters }) => {
+  return (
+    <List>
+      {clusters.map((cluster: ClientCluster, i: number) => {
+        return (
+          <Row to={`/infrastructure/${cluster.id}`} key={i}>
+            <Container row spaced>
+              <Container row>
+                <MidIcon src={cluster.cloud_provider.icon} />
+                <Text size={14}>{cluster.vanity_name}</Text>
+              </Container>
+              <Container row>
+                <StatusDot
+                  status={cluster.status === "READY" ? "available" : "pending"}
+                  heightPixels={8}
+                />
+                <Spacer inline x={0.5} />
+                <Text color="helper">
+                  {cluster.status === "READY" ? "Running" : "Updating"}
+                </Text>
+              </Container>
+            </Container>
+            <Spacer y={0.5} />
+            {cluster.contract != null && (
+              <Container row>
+                <Container row>
+                  <SmallIcon opacity="0.3" src={globe} />
+                  <Text size={13} color="#ffffff44">
+                    {cluster.contract.config.cluster.config.region}
+                  </Text>
+                  <Spacer inline x={1} />
+                  <SmallIcon opacity="0.3" src={time} />
+                  <Text size={13} color="#ffffff44">
+                    {readableDate(cluster.contract.updated_at)}
+                  </Text>
+                </Container>
+              </Container>
+            )}
+          </Row>
+        );
+      })}
+    </List>
   );
 };
 
@@ -305,6 +312,9 @@ const Row = styled(Link)<{ isAtBottom?: boolean }>`
   border-radius: 5px;
   margin-bottom: 15px;
   animation: fadeIn 0.3s 0s;
+  :hover {
+    border: 1px solid #7a7b80;
+  }
 `;
 
 const List = styled.div`

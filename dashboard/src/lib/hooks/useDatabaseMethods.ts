@@ -13,11 +13,9 @@ type DatastoreHook = {
   attachDatastoreToAppInstances: ({
     name,
     appInstanceIds,
-    clusterId,
   }: {
     name: string;
     appInstanceIds: string[];
-    clusterId: number;
   }) => Promise<void>;
 };
 type CreateDatastoreInput = {

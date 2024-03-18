@@ -95,8 +95,10 @@ type PorterAppEvent struct {
 	// PorterAppID is the ID that the given event relates to
 	PorterAppID uint `json:"porter_app_id"`
 	// DeploymentTargetID is the ID of the deployment target that the given event relates to
-	DeploymentTargetID string         `json:"deployment_target_id"`
-	Metadata           map[string]any `json:"metadata,omitempty"`
+	DeploymentTargetID string `json:"deployment_target_id"`
+	// AppRevisionId is the ID of the app revision that the given event relates to
+	AppRevisionID string         `json:"app_revision_id"`
+	Metadata      map[string]any `json:"metadata,omitempty"`
 }
 
 // PorterAppAppEventMetadata represents the metadata for a Porter App Event of type APP_EVENT

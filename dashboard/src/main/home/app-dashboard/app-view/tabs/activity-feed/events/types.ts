@@ -18,19 +18,7 @@ const porterAppAppEventMetadataValidator = z.object({
   agent_event_id: z.number(),
 });
 const porterAppDeployEventMetadataValidator = z.object({
-  image_tag: z.string().optional(),
-  app_revision_id: z.string(),
-  rollback_target_app_revision_id: z.string().optional(),
-  rollback_target_image_tag: z.string().optional(),
-  service_deployment_metadata: z
-    .record(
-      z.object({
-        status: z.string(),
-        type: z.string(),
-      })
-    )
-    .optional(),
-  end_time: z.string().optional(),
+
 });
 const porterAppBuildEventMetadataValidator = z.object({
   repo: z.string().optional(),
@@ -161,7 +149,19 @@ export const porterAppEventValidator = z.discriminatedUnion("type", [
     type: z.literal("DEPLOY"),
     type_external_source: z.string().optional().default(""),
     porter_app_id: z.number(),
-    metadata: porterAppDeployEventMetadataValidator,
+    image_tag: z.string().optional(),
+    app_revision_id: z.string(),
+    rollback_target_app_revision_id: z.string().optional(),
+    rollback_target_image_tag: z.string().optional(),
+    service_deployment_metadata: z
+        .record(
+            z.object({
+              status: z.string(),
+              type: z.string(),
+            })
+        )
+        .optional(),
+    end_time: z.string().optional(),
   }),
   z.object({
     id: z.string(),

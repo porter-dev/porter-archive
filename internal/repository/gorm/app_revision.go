@@ -3,6 +3,7 @@ package gorm
 import (
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/repository"
+	"github.com/porter-dev/porter/internal/repository/gorm/helpers"
 	"gorm.io/gorm"
 )
 
@@ -37,4 +38,20 @@ func (repo *AppRevisionRepository) LatestNumberedAppRevision(projectID uint, app
 	}
 
 	return AppRevision, nil
+}
+
+// Revisions lists all revisions for a projectID and appInstanceId
+func (repo *AppRevisionRepository) Revisions(projectID uint, appInstanceId string, opts ...helpers.QueryOption) ([]*models.AppRevision, helpers.PaginatedResult, error) {
+	var appRevisions []*models.AppRevision
+
+	resultDB := repo.db.Where("project_id = ? AND app_instance_id = ?", projectID, appInstanceId)
+
+	var paginatedResult helpers.PaginatedResult
+	resultDB = resultDB.Scopes(helpers.Paginate(repo.db, &paginatedResult, opts...))
+
+	if err := resultDB.Find(&appRevisions).Error; err != nil {
+		return nil, paginatedResult, err
+	}
+
+	return appRevisions, paginatedResult, nil
 }

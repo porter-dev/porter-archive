@@ -84,4 +84,6 @@ type AppRevision struct {
 
 	// AppInstanceID is the ID of the AppInstance that the revision belongs to. This will be null while the app instance table is being seeded (tracking: POR-1991)
 	AppInstanceID uuid.UUID `json:"app_instance_id" gorm:"type:uuid;default:00000000-0000-0000-0000-000000000000"`
+
+	Metadata JSONB `json:"metadata" sql:"type:jsonb" gorm:"type:jsonb"`
 }

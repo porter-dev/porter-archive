@@ -1,8 +1,11 @@
 package porter_app
 
 import (
-	"errors"
+	"encoding/json"
+	"fmt"
 	"net/http"
+
+	"github.com/porter-dev/porter/internal/repository/gorm/helpers"
 
 	"github.com/google/uuid"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -12,9 +15,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/porter-dev/porter/internal/repository/gorm/helpers"
 	"github.com/porter-dev/porter/internal/telemetry"
-	"gorm.io/gorm"
 )
 
 // PorterAppV2EventListHandler handles the /apps/{app_name}/events endpoint (used for validate_apply v2)
@@ -72,20 +73,18 @@ func (p *PorterAppV2EventListHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	app, err := p.Repo().PorterApp().ReadPorterAppByName(cluster.ID, appName)
+	appInstance, err := p.Repo().AppInstance().FromNameAndDeploymentTargetId(ctx, appName, uid.String())
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error retrieving porter app by name")
 		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
 		return
 	}
 
-	porterAppEvents, paginatedResult, err := p.Repo().PorterAppEvent().ListBuildDeployEventsByPorterAppIDAndDeploymentTargetID(ctx, app.ID, uid, helpers.WithPageSize(20), helpers.WithPage(int(request.Page)))
+	revisions, paginatedResult, err := p.Repo().AppRevision().Revisions(cluster.ProjectID, appInstance.ID.String(), helpers.WithPageSize(20), helpers.WithPage(int(request.Page)))
 	if err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			e := telemetry.Error(ctx, span, nil, "error listing porter app events by porter app id")
-			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(e, http.StatusBadRequest))
-			return
-		}
+		err = telemetry.Error(ctx, span, err, "error retrieving app revisions")
+		p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+		return
 	}
 
 	res := struct {
@@ -96,12 +95,44 @@ func (p *PorterAppV2EventListHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 	}
 	res.Events = make([]types.PorterAppEvent, 0)
 
-	for _, porterApp := range porterAppEvents {
-		if porterApp == nil {
+	for _, revision := range revisions {
+		if revision == nil {
 			continue
 		}
-		pa := porterApp.ToPorterAppEvent()
-		res.Events = append(res.Events, pa)
+		by, err := revision.Metadata.Value()
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error getting metadata value")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		strMetadata, ok := by.(string)
+		if !ok {
+			err = telemetry.Error(ctx, span, nil, "error getting string metadata value")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		fmt.Println(strMetadata)
+
+		var events struct {
+			Events []types.PorterAppEvent
+		}
+
+		err = json.Unmarshal([]byte(strMetadata), &events)
+		if err != nil {
+			err = telemetry.Error(ctx, span, err, "error unmarshalling metadata value")
+			p.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+
+		for i := range events.Events {
+			events.Events[i].DeploymentTargetID = request.DeploymentTargetId
+			events.Events[i].PorterAppID = uint(revision.PorterAppID)
+			events.Events[i].AppRevisionID = revision.ID.String()
+		}
+
+		res.Events = append(res.Events, events.Events...)
 	}
 	p.WriteResult(w, r, res)
 }

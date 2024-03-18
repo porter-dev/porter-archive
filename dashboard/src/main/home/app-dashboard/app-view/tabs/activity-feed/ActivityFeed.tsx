@@ -159,6 +159,7 @@ const ActivityFeed: React.FC<Props> = ({
   }
 
   if (isEventFetchLoading || porterAgentCheckLoading || events == null) {
+    console.log(isEventFetchLoading, porterAgentCheckLoading, events);
     return (
       <div>
         <Spacer y={2} />

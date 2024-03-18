@@ -160,6 +160,8 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		DeploymentTargetId: deploymentTargetID,
 		CommitSHA:          commitSHA,
 		Base64AppProto:     parseRes.B64AppProto,
+		Variables:          parseRes.EnvVariables,
+		Secrets:            parseRes.EnvSecrets,
 		WithPredeploy:      inp.WithPredeploy,
 		Exact:              inp.Exact,
 	}

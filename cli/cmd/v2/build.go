@@ -153,6 +153,13 @@ func build(ctx context.Context, client api.Client, inp buildInput) buildOutput {
 			Buildpacks: inp.BuildPacks,
 		}
 
+		if buildConfig.Builder == "heroku/buildpacks:20" {
+			if opts.Env == nil {
+				opts.Env = map[string]string{}
+			}
+			opts.Env["ALLOW_EOL_SHIMMED_BUILDER"] = "1"
+		}
+
 		err := packAgent.Build(ctx, opts, buildConfig, "")
 		if err != nil {
 			output.Error = fmt.Errorf("error building image with pack: %w", err)

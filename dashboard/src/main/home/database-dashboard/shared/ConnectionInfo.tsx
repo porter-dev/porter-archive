@@ -22,93 +22,121 @@ const ConnectionInfo: React.FC<Props> = ({ connectionInfo, type }) => {
 
   return (
     <Fieldset>
-      <Text>Host</Text>
-      <Spacer y={0.2} />
-      <ClickToCopy color="helper">{connectionInfo.host}</ClickToCopy>
-      <Spacer y={0.5} />
-      <Text>Port</Text>
-      <Spacer y={0.2} />
-      <ClickToCopy color="helper">{connectionInfo.port.toString()}</ClickToCopy>
-      <Spacer y={0.5} />
-      {type === DATASTORE_TYPE_ELASTICACHE ? (
-        <>
-          <Text>Auth token</Text>
-          <Spacer y={0.2} />
-          <Container row>
-            {isPasswordHidden ? (
-              <>
-                <Blur>{connectionInfo.password}</Blur>
-                <Spacer inline width="10px" />
-                <RevealButton
-                  onClick={() => {
-                    setIsPasswordHidden(false);
-                  }}
-                >
-                  Reveal
-                </RevealButton>
-              </>
-            ) : (
-              <>
-                <ClickToCopy color="helper">
-                  {connectionInfo.password}
-                </ClickToCopy>
-                <Spacer inline width="10px" />
-                <RevealButton
-                  onClick={() => {
-                    setIsPasswordHidden(true);
-                  }}
-                >
-                  Hide
-                </RevealButton>
-              </>
-            )}
-          </Container>
-        </>
-      ) : (
-        <>
-          <Text>Database name</Text>
-          <Spacer y={0.2} />
-          <ClickToCopy color="helper">
-            {connectionInfo.database_name}
-          </ClickToCopy>
-          <Spacer y={0.5} />
-          <Text>Username</Text>
-          <Spacer y={0.2} />
-          <ClickToCopy color="helper">{connectionInfo.username}</ClickToCopy>
-          <Spacer y={0.5} />
-          <Text>Password</Text>
-          <Spacer y={0.2} />
-          <Container row>
-            {isPasswordHidden ? (
-              <>
-                <Blur>{connectionInfo.password}</Blur>
-                <Spacer inline width="10px" />
-                <RevealButton
-                  onClick={() => {
-                    setIsPasswordHidden(false);
-                  }}
-                >
-                  Reveal
-                </RevealButton>
-              </>
-            ) : (
-              <>
-                <ClickToCopy color="helper">
-                  {connectionInfo.password}
-                </ClickToCopy>
-                <Spacer inline width="10px" />
-                <RevealButton
-                  onClick={() => {
-                    setIsPasswordHidden(true);
-                  }}
-                >
-                  Hide
-                </RevealButton>
-              </>
-            )}
-          </Container>
-        </>
-      )}
+      <table style={{ borderSpacing: "5px" }}>
+        <tbody>
+          <tr>
+            <td>
+              <Text>Host</Text>
+            </td>
+            <td>
+              <ClickToCopy color="helper">{connectionInfo.host}</ClickToCopy>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <Text>Port</Text>
+            </td>
+            <td>
+              <ClickToCopy color="helper">
+                {connectionInfo.port.toString()}
+              </ClickToCopy>
+            </td>
+          </tr>
+          {type === DATASTORE_TYPE_ELASTICACHE ? (
+            <tr>
+              <td>
+                <Text>Auth token</Text>
+              </td>
+              <td>
+                {isPasswordHidden ? (
+                  <Container row>
+                    <Blur>{connectionInfo.password}</Blur>
+                    <Spacer inline width="10px" />
+                    <RevealButton
+                      onClick={() => {
+                        setIsPasswordHidden(false);
+                      }}
+                    >
+                      Reveal
+                    </RevealButton>
+                  </Container>
+                ) : (
+                  <Container row>
+                    <ClickToCopy color="helper">
+                      {connectionInfo.password}
+                    </ClickToCopy>
+                    <Spacer inline width="10px" />
+                    <RevealButton
+                      onClick={() => {
+                        setIsPasswordHidden(true);
+                      }}
+                    >
+                      Hide
+                    </RevealButton>
+                  </Container>
+                )}
+              </td>
+            </tr>
+          ) : (
+            <>
+              <tr>
+                <td>
+                  <Text>Database name</Text>
+                </td>
+                <td>
+                  <ClickToCopy color="helper">
+                    {connectionInfo.database_name}
+                  </ClickToCopy>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <Text>Username</Text>
+                </td>
+                <td>
+                  <ClickToCopy color="helper">
+                    {connectionInfo.username}
+                  </ClickToCopy>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <Text>Password</Text>
+                </td>
+                <td>
+                  {isPasswordHidden ? (
+                    <Container row>
+                      <Blur>{connectionInfo.password}</Blur>
+                      <Spacer inline width="10px" />
+                      <RevealButton
+                        onClick={() => {
+                          setIsPasswordHidden(false);
+                        }}
+                      >
+                        Reveal
+                      </RevealButton>
+                    </Container>
+                  ) : (
+                    <Container row>
+                      <ClickToCopy color="helper">
+                        {connectionInfo.password}
+                      </ClickToCopy>
+                      <Spacer inline width="10px" />
+                      <RevealButton
+                        onClick={() => {
+                          setIsPasswordHidden(true);
+                        }}
+                      >
+                        Hide
+                      </RevealButton>
+                    </Container>
+                  )}
+                </td>
+              </tr>
+            </>
+          )}
+        </tbody>
+      </table>
     </Fieldset>
   );
 };

@@ -55,6 +55,8 @@ export const datastoreValidator = z.object({
   cloud_provider: z.string().pipe(cloudProviderValidator.catch("UNKNOWN")),
   cloud_provider_credential_identifier: z.string(),
   credential: datastoreCredentialValidator,
+  connected_cluster_ids: z.number().array().optional().default([]),
+  on_management_cluster: z.boolean().default(false),
 });
 
 export type SerializedDatastore = z.infer<typeof datastoreValidator>;

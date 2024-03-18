@@ -142,6 +142,13 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
 		return
 	}
+	connectedClusterIds := make([]uint, 0)
+	if matchingDatastore.ConnectedClusters != nil {
+		for _, cc := range matchingDatastore.ConnectedClusters.ConnectedClusterIds {
+			connectedClusterIds = append(connectedClusterIds, uint(cc))
+		}
+	}
+
 	encoded, err := helpers.MarshalContractObject(ctx, matchingDatastore)
 	if err != nil {
 		err = telemetry.Error(ctx, span, err, "error marshaling datastore")
@@ -159,6 +166,8 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Status:                            string(datastoreRecord.Status),
 		CloudProvider:                     SupportedDatastoreCloudProvider_AWS,
 		CloudProviderCredentialIdentifier: datastoreRecord.CloudProviderCredentialIdentifier,
+		ConnectedClusterIds:               connectedClusterIds,
+		OnManagementCluster:               true,
 		B64Proto:                          b64,
 	}
 

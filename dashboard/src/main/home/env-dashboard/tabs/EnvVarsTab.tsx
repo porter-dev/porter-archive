@@ -198,7 +198,7 @@ const EnvVarsTab: React.FC<Props> = ({ envGroup, fetchEnvGroup }) => {
             secretOption={true}
             disabled={envGroup.type === "doppler"}
           />
-          {envGroup.type !== "doppler" && (
+          {envGroup.type !== "doppler" && envGroup.type !== "datastore" && (
             <>
               <Spacer y={1} />
               <Button

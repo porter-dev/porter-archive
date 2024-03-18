@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import styled from "styled-components";
 
 import CopyToClipboard from "components/CopyToClipboard";
+import Banner from "components/porter/Banner";
 import Container from "components/porter/Container";
 import Link from "components/porter/Link";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 
@@ -17,6 +19,25 @@ const ConnectTab: React.FC = () => {
   const { datastore } = useDatastoreContext();
   const [showConnectAppsModal, setShowConnectAppsModal] = useState(false);
 
+  if (datastore.credential.host === "") {
+    return (
+      <Banner
+        type="error"
+        suffix={
+          <>
+            <ShowIntercomButton
+              message={"I need help retrieving credentials for my datastore."}
+            >
+              Talk to support
+            </ShowIntercomButton>
+          </>
+        }
+      >
+        Error reaching your datastore for credentials. Please contact support.
+        <Spacer inline width="5px" />
+      </Banner>
+    );
+  }
   return (
     <ConnectTabContainer>
       <div
@@ -28,49 +49,48 @@ const ConnectTab: React.FC = () => {
         }}
       >
         <Container row>
-          <Text size={16}>Credentials</Text>
+          <Text size={16}>Application connection</Text>
         </Container>
-        {datastore.credential.host !== "" && (
-          <>
-            <Spacer y={0.5} />
-            <ConnectionInfo
-              connectionInfo={datastore.credential}
-              type={datastore.template.type}
-            />
-            <Spacer y={0.5} />
+        <Spacer y={0.5} />
+        <Text color="helper">
+          An application deployed in one of this datastore&apos;s connected
+          clusters can use the following credentials to access the datastore:
+        </Text>
+        <Spacer y={0.5} />
+        <ConnectionInfo
+          connectionInfo={datastore.credential}
+          type={datastore.template.type}
+        />
+        <Spacer y={0.5} />
+        <Text color="warner">
+          For security, access to the datastore is restricted - connection
+          attempts from outside a connected cluster will not succeed.
+        </Text>
+        <Spacer y={0.5} />
+        <Text color="helper">
+          The datastore client of your application should use these credentials
+          to create a connection.{" "}
+          {datastore.template.type.name === "ELASTICACHE" && (
             <Text color="warner">
-              For security, access to the datastore is restricted - connection
-              attempts from outside the cluster will not succeed.
+              The datastore client must connect via SSL.
             </Text>
-            <Spacer y={0.5} />
-            <Text color="helper">
-              The datastore client of your application should use these
-              credentials to create a connection.{" "}
-              {datastore.template.type.name === "ELASTICACHE" && (
-                <Text color="warner">
-                  The datastore client must connect via SSL.
-                </Text>
-              )}
-            </Text>
-            <Spacer y={1} />
-            <ConnectAppButton
-              onClick={() => {
-                setShowConnectAppsModal(true);
-              }}
-            >
-              <I className="material-icons add-icon">add</I>
-              Inject credentials into an app
-            </ConnectAppButton>
-            {showConnectAppsModal && (
-              <ConnectAppsModal
-                closeModal={() => {
-                  setShowConnectAppsModal(false);
-                }}
-                apps={[]}
-                onSubmit={async () => {}}
-              />
-            )}
-          </>
+          )}
+        </Text>
+        <Spacer y={1} />
+        <ConnectAppButton
+          onClick={() => {
+            setShowConnectAppsModal(true);
+          }}
+        >
+          <I className="material-icons add-icon">add</I>
+          Inject these credentials into an app
+        </ConnectAppButton>
+        {showConnectAppsModal && (
+          <ConnectAppsModal
+            closeModal={() => {
+              setShowConnectAppsModal(false);
+            }}
+          />
         )}
       </div>
       <div style={{ width: "100%", height: "100%", paddingLeft: "10px" }}>

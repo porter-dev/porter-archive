@@ -10,7 +10,6 @@ import (
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/handlers/cloud_provider"
-	"github.com/porter-dev/porter/api/server/handlers/environment_groups"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
@@ -140,8 +139,6 @@ func Datastores(ctx context.Context, inp DatastoresInput) ([]datastore.Datastore
 		CloudProvider:          inp.CloudProvider.Type,
 		CloudProviderAccountId: inp.CloudProvider.AccountID,
 		Name:                   inp.Name,
-		IncludeEnvGroup:        inp.IncludeEnvGroup,
-		IncludeMetadata:        inp.IncludeMetadata,
 	}
 	if inp.Type != porterv1.EnumDatastore_ENUM_DATASTORE_UNSPECIFIED {
 		message.Type = &inp.Type
@@ -168,18 +165,10 @@ func Datastores(ctx context.Context, inp DatastoresInput) ([]datastore.Datastore
 			Engine:                            datastoreRecord.Engine,
 			CreatedAtUTC:                      datastoreRecord.CreatedAt,
 			Status:                            string(datastoreRecord.Status),
-			Metadata:                          ds.Metadata,
 			CloudProvider:                     datastoreRecord.CloudProvider,
 			CloudProviderCredentialIdentifier: datastoreRecord.CloudProviderCredentialIdentifier,
-		}
-		if inp.IncludeEnvGroup && ds.Env != nil {
-			encodedDatastore.Env = environment_groups.EnvironmentGroupListItem{
-				Name:               ds.Env.Name,
-				LatestVersion:      int(ds.Env.Version),
-				Variables:          ds.Env.Variables,
-				SecretVariables:    ds.Env.SecretVariables,
-				LinkedApplications: ds.Env.LinkedApplications,
-			}
+			ConnectedClusterIds:               []uint{uint(ds.ConnectedClusterId)},
+			OnManagementCluster:               false,
 		}
 		datastores = append(datastores, encodedDatastore)
 	}

@@ -30,6 +30,7 @@ import key from "assets/key.svg";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
 import time from "assets/time.png";
+import database from "assets/database.svg";
 
 import { envGroupPath } from "../../../shared/util";
 
@@ -201,7 +202,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
                 >
                   <Container row>
                     <Image
-                      src={envGroup.type === "doppler" ? doppler : key}
+                      src={envGroup.type === "doppler" ? doppler : envGroup.type === "datastore" ? database : key}
                       size={20}
                     />
                     <Spacer inline x={0.7} />
@@ -227,7 +228,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
                   key={i}
                 >
                   <Container row>
-                    <Image src={envGroup.type === "doppler" ? doppler : key} />
+                    <Image src={envGroup.type === "doppler" ? doppler : envGroup.type === "datastore" ? database : key} />
                     <Spacer inline x={0.7} />
                     <Text size={14}>{envGroup.name}</Text>
                   </Container>

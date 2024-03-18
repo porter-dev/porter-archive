@@ -2,9 +2,6 @@ package datastore
 
 import (
 	"time"
-
-	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
-	"github.com/porter-dev/porter/api/server/handlers/environment_groups"
 )
 
 // Datastore describes an outbound datastores response entry
@@ -15,10 +12,6 @@ type Datastore struct {
 	Type string `json:"type"`
 	// Engine is the engine of the datastore
 	Engine string `json:"engine,omitempty"`
-	// Env is the env group for the datastore
-	Env environment_groups.EnvironmentGroupListItem `json:"env,omitempty"`
-	// Metadata is a list of metadata objects for the datastore - TODO: remove this field, it is unnecessary
-	Metadata []*porterv1.DatastoreMetadata `json:"metadata,omitempty"`
 	// Status is the status of the datastore
 	Status string `json:"status"`
 	// CreatedAtUTC is the time the datastore was created in UTC
@@ -29,6 +22,10 @@ type Datastore struct {
 	CloudProviderCredentialIdentifier string `json:"cloud_provider_credential_identifier"`
 	// Credential is the credential used for connecting to the datastore
 	Credential Credential `json:"credential"`
+	// ConnectedClusterIds is a list of connected cluster ids
+	ConnectedClusterIds []uint `json:"connected_cluster_ids,omitempty"`
+	// OnManagementCluster is a flag indicating whether the datastore is on the management cluster
+	OnManagementCluster bool `json:"on_management_cluster"`
 	// B64Proto is the base64 encoded datastore proto. Note that this is only populated for datastores created with the new cloud contract flow
 	B64Proto string `json:"b64_proto"`
 }

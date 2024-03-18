@@ -64,7 +64,7 @@ require (
 	k8s.io/helm v2.17.0+incompatible
 	k8s.io/kubectl v0.25.2
 	sigs.k8s.io/aws-iam-authenticator v0.6.1
-	sigs.k8s.io/yaml v1.3.0
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (

@@ -2,6 +2,8 @@ package client
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
@@ -531,20 +533,39 @@ func (c *Client) GetAppEnvVariables(
 	return resp, err
 }
 
+// GetBuildFromRevisionInput is the input struct to GetBuildFromRevision
+type GetBuildFromRevisionInput struct {
+	ProjectID       uint
+	ClusterID       uint
+	AppName         string
+	AppRevisionID   string
+	PatchOperations []v2.PatchOperation
+}
+
 // GetBuildFromRevision returns the build environment for a given app proto
 func (c *Client) GetBuildFromRevision(
 	ctx context.Context,
-	projectID uint, clusterID uint,
-	appName string, appRevisionId string,
+	inp GetBuildFromRevisionInput,
 ) (*porter_app.GetBuildFromRevisionResponse, error) {
+	by, err := json.Marshal(inp.PatchOperations)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling patch operations: %w", err)
+	}
+
+	encoded := base64.StdEncoding.EncodeToString(by)
+
+	req := &porter_app.GetBuildFromRevisionRequest{
+		B64PatchOperations: encoded,
+	}
+
 	resp := &porter_app.GetBuildFromRevisionResponse{}
 
-	err := c.getRequest(
+	err = c.getRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/%s/revisions/%s/build",
-			projectID, clusterID, appName, appRevisionId,
+			inp.ProjectID, inp.ClusterID, inp.AppName, inp.AppRevisionID,
 		),
-		nil,
+		req,
 		resp,
 	)
 

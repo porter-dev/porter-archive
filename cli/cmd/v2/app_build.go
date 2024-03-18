@@ -106,6 +106,9 @@ func AppBuild(ctx context.Context, inp AppBuildInput) error {
 		return fmt.Errorf("error creating build input from build settings: %w", err)
 	}
 
+	// skip push when only a build is requested
+	buildInput.SkipPush = true
+
 	buildOutput := build(ctx, client, buildInput)
 	if buildOutput.Error != nil {
 		return fmt.Errorf("error building app: %w", buildOutput.Error)

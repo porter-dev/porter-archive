@@ -15,9 +15,7 @@ import (
 
 	"github.com/fatih/color"
 	app_api "github.com/porter-dev/porter/api/server/handlers/porter_app"
-	"github.com/porter-dev/porter/internal/porter_app"
 	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
-	"gopkg.in/yaml.v3"
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -121,34 +119,10 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		color.New(color.FgGreen).Printf("Using Porter YAML at path: %s\n", inp.PorterYamlPath) // nolint:errcheck,gosec
 	}
 
-	if b64YAML == "" {
-		color.New(color.FgGreen).Printf("No Porter YAML found, using default configuration...\n") // nolint:errcheck,gosec
-		if inp.AppName == "" {
-			return errors.New("no porter yaml found and app name not specified")
-		}
-
-		app := v2.PorterApp{
-			Version: string(porter_app.PorterYamlVersion_V2),
-			Name:    inp.AppName,
-		}
-
-		by, err := yaml.Marshal(app)
-		if err != nil {
-			return fmt.Errorf("error marshaling default porter yaml: %w", err)
-		}
-
-		b64YAML = base64.StdEncoding.EncodeToString(by)
-	}
-
 	commitSHA := commitSHAFromEnv()
 	gitSource, err := gitSourceFromEnv()
 	if err != nil {
 		return fmt.Errorf("error getting git source from env: %w", err)
-	}
-
-	parseRes, err := client.ParseYAML(ctx, cliConf.Project, cliConf.Cluster, b64YAML, inp.AppName, inp.PatchOperations)
-	if err != nil {
-		return fmt.Errorf("error parsing porter yaml: %w", err)
 	}
 
 	updateInput := api.UpdateAppInput{
@@ -159,11 +133,10 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		GitSource:          gitSource,
 		DeploymentTargetId: deploymentTargetID,
 		CommitSHA:          commitSHA,
-		Base64AppProto:     parseRes.B64AppProto,
-		Variables:          parseRes.EnvVariables,
-		Secrets:            parseRes.EnvSecrets,
+		Base64PorterYAML:   b64YAML,
 		WithPredeploy:      inp.WithPredeploy,
 		Exact:              inp.Exact,
+		PatchOperations:    inp.PatchOperations,
 	}
 
 	updateResp, err := client.UpdateApp(ctx, updateInput)

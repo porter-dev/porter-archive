@@ -221,6 +221,7 @@ type UpdateAppInput struct {
 	Variables            map[string]string
 	Secrets              map[string]string
 	Deletions            porter_app.Deletions
+	PatchOperations      []v2.PatchOperation
 }
 
 // UpdateApp updates a porter app
@@ -246,6 +247,7 @@ func (c *Client) UpdateApp(
 		Variables:            inp.Variables,
 		Secrets:              inp.Secrets,
 		Deletions:            inp.Deletions,
+		PatchOperations:      inp.PatchOperations,
 	}
 
 	err := c.postRequest(

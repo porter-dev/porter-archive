@@ -16,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/porter_app"
+	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -91,6 +92,8 @@ type UpdateAppRequest struct {
 	Base64AddonProtos []string `json:"b64_addon_protos"`
 	// Base64PorterYAML is a base64 encoded porter yaml to apply representing a potentially partial porter app contract
 	Base64PorterYAML string `json:"b64_porter_yaml"`
+	// PatchOperations is a set of patch operations to apply to the porter.yaml if specified
+	PatchOperations []v2.PatchOperation `json:"patch_operations"`
 	// IsEnvOverride is used to remove any variables that are not specified in the request.  If false, the request will only update the variables specified in the request,
 	// and leave all other variables untouched.
 	IsEnvOverride bool `json:"is_env_override"`
@@ -209,7 +212,13 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
 		}
-		appProto = appFromYaml.AppProto
+
+		appProto, err = v2.PatchApp(ctx, appFromYaml.AppProto, request.PatchOperations)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error patching app proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
 
 		// only public variables can be defined in porter.yaml
 		envVariables = mergeEnvVariables(request.Variables, appFromYaml.EnvVariables)

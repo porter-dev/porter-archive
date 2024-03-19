@@ -29,6 +29,7 @@ import InvitePage from "./InviteList";
 import Metadata from "./Metadata";
 import ProjectDeleteConsent from "./ProjectDeleteConsent";
 import BillingModal from "../modals/BillingModal";
+import BillingPage from "./BillingPage";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 type ValidationError = {
@@ -179,7 +180,7 @@ function ProjectSettings(props: any) {
       return <APITokensSection />;
     } else if (currentTab === "billing") {
       return (
-        <BillingModal></BillingModal>
+        <BillingPage></BillingPage>
       );
     } else {
       return (

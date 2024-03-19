@@ -3778,6 +3778,8 @@ export default {
   // BILLING
   listPaymentMethod,
   addPaymentMethod,
+  updatePaymentMethod,
+  deletePaymentMethod,
 
   // STATUS
   getGithubStatus,

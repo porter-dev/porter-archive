@@ -26,8 +26,6 @@ type Datastore struct {
 	ConnectedClusterIds []uint `json:"connected_cluster_ids,omitempty"`
 	// OnManagementCluster is a flag indicating whether the datastore is on the management cluster
 	OnManagementCluster bool `json:"on_management_cluster"`
-	// B64Proto is the base64 encoded datastore proto. Note that this is only populated for datastores created with the new cloud contract flow
-	B64Proto string `json:"b64_proto"`
 }
 
 // Credential has all information about connecting to a datastore

@@ -2,13 +2,11 @@ package datastore
 
 import (
 	"context"
-	"encoding/base64"
 	"net/http"
 
 	"connectrpc.com/connect"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/google/uuid"
-	"github.com/porter-dev/api-contracts/generated/go/helpers"
 	porterv1 "github.com/porter-dev/api-contracts/generated/go/porter/v1"
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -101,59 +99,6 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	req := connect.NewRequest(&porterv1.ReadCloudContractRequest{
-		ProjectId: int64(project.ID),
-	})
-	ccpResp, err := c.Config().ClusterControlPlaneClient.ReadCloudContract(ctx, req)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error getting cloud contract")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-	if ccpResp.Msg == nil {
-		err = telemetry.Error(ctx, span, nil, "cloud contract not found")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
-		return
-	}
-
-	cloudContract := ccpResp.Msg.CloudContract
-	if cloudContract == nil {
-		err = telemetry.Error(ctx, span, nil, "cloud contract is empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
-		return
-	}
-
-	datastores := cloudContract.Datastores
-	if datastores == nil {
-		err = telemetry.Error(ctx, span, nil, "datastores is empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
-		return
-	}
-
-	var matchingDatastore *porterv1.ManagedDatastore
-	for _, ds := range datastores {
-		if ds.Id == datastoreRecord.ID.String() {
-			matchingDatastore = ds
-			break
-		}
-	}
-
-	connectedClusterIds := make([]uint, 0)
-	if matchingDatastore != nil && matchingDatastore.ConnectedClusters != nil {
-		for _, cc := range matchingDatastore.ConnectedClusters.ConnectedClusterIds {
-			connectedClusterIds = append(connectedClusterIds, uint(cc))
-		}
-	}
-
-	encoded, err := helpers.MarshalContractObject(ctx, matchingDatastore)
-	if err != nil {
-		err = telemetry.Error(ctx, span, err, "error marshaling datastore")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-		return
-	}
-
-	b64 := base64.StdEncoding.EncodeToString(encoded)
-
 	ds := datastore.Datastore{
 		Name:                              datastoreRecord.Name,
 		Type:                              datastoreRecord.Type,
@@ -162,27 +107,12 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		Status:                            string(datastoreRecord.Status),
 		CloudProvider:                     SupportedDatastoreCloudProvider_AWS,
 		CloudProviderCredentialIdentifier: datastoreRecord.CloudProviderCredentialIdentifier,
-		ConnectedClusterIds:               connectedClusterIds,
 		OnManagementCluster:               true,
-		B64Proto:                          b64,
 	}
 
-	message := porterv1.DatastoreCredentialRequest{
-		ProjectId:   int64(project.ID),
-		DatastoreId: datastoreRecord.ID.String(),
-	}
-	credentialReq := connect.NewRequest(&message)
-	credentialCcpResp, err := c.Config().ClusterControlPlaneClient.DatastoreCredential(ctx, credentialReq)
-	if err == nil && credentialCcpResp != nil && credentialCcpResp.Msg != nil {
-		// the credential may not exist because the datastore is not yet ready
-		ds.Credential = datastore.Credential{
-			Host:         credentialCcpResp.Msg.Credential.Host,
-			Port:         int(credentialCcpResp.Msg.Credential.Port),
-			Username:     credentialCcpResp.Msg.Credential.Username,
-			Password:     credentialCcpResp.Msg.Credential.Password,
-			DatabaseName: credentialCcpResp.Msg.Credential.DatabaseName,
-		}
-	}
+	// this is done for backwards compatibility; eventually we will just return proto
+	ds.ConnectedClusterIds = c.connectedClusters(ctx, project, datastoreRecord.ID)
+	ds.Credential = c.credential(ctx, project, datastoreRecord.ID)
 
 	resp.Datastore = ds
 
@@ -209,7 +139,7 @@ func (c *GetDatastoreHandler) LEGACY_handleGetDatastore(ctx context.Context, pro
 		DatastoreRepository: c.Repo().Datastore(),
 	})
 	if err != nil {
-		return ds, err
+		return ds, telemetry.Error(ctx, span, err, "error listing datastores")
 	}
 
 	if len(datastores) != 1 {
@@ -240,4 +170,75 @@ func (c *GetDatastoreHandler) LEGACY_handleGetDatastore(ctx context.Context, pro
 	}
 
 	return ds, nil
+}
+
+func (c *GetDatastoreHandler) connectedClusters(ctx context.Context, project *models.Project, datastoreID uuid.UUID) []uint {
+	ctx, span := telemetry.NewSpan(ctx, "hydrate-connected-clusters")
+	defer span.End()
+
+	connectedClusterIds := make([]uint, 0)
+
+	req := connect.NewRequest(&porterv1.ReadCloudContractRequest{
+		ProjectId: int64(project.ID),
+	})
+	ccpResp, err := c.Config().ClusterControlPlaneClient.ReadCloudContract(ctx, req)
+	if err != nil {
+		return connectedClusterIds
+	}
+	if ccpResp.Msg == nil {
+		return connectedClusterIds
+	}
+
+	cloudContract := ccpResp.Msg.CloudContract
+	if cloudContract == nil {
+		return connectedClusterIds
+	}
+
+	datastores := cloudContract.Datastores
+	if datastores == nil {
+		return connectedClusterIds
+	}
+
+	var matchingDatastore *porterv1.ManagedDatastore
+	for _, ds := range datastores {
+		if ds.Id == datastoreID.String() {
+			matchingDatastore = ds
+			break
+		}
+	}
+
+	if matchingDatastore != nil && matchingDatastore.ConnectedClusters != nil {
+		for _, cc := range matchingDatastore.ConnectedClusters.ConnectedClusterIds {
+			connectedClusterIds = append(connectedClusterIds, uint(cc))
+		}
+	}
+
+	return connectedClusterIds
+}
+
+func (c *GetDatastoreHandler) credential(ctx context.Context, project *models.Project, datastoreID uuid.UUID) datastore.Credential {
+	ctx, span := telemetry.NewSpan(ctx, "hydrate-credential")
+	defer span.End()
+
+	message := porterv1.DatastoreCredentialRequest{
+		ProjectId:   int64(project.ID),
+		DatastoreId: datastoreID.String(),
+	}
+	req := connect.NewRequest(&message)
+	ccpResp, err := c.Config().ClusterControlPlaneClient.DatastoreCredential(ctx, req)
+	if err != nil {
+		return datastore.Credential{}
+	}
+
+	if ccpResp == nil || ccpResp.Msg == nil {
+		return datastore.Credential{}
+	}
+
+	return datastore.Credential{
+		Host:         ccpResp.Msg.Credential.Host,
+		Port:         int(ccpResp.Msg.Credential.Port),
+		Username:     ccpResp.Msg.Credential.Username,
+		Password:     ccpResp.Msg.Credential.Password,
+		DatabaseName: ccpResp.Msg.Credential.DatabaseName,
+	}
 }

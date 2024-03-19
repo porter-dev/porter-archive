@@ -137,13 +137,9 @@ func (c *GetDatastoreHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			break
 		}
 	}
-	if matchingDatastore == nil {
-		err = telemetry.Error(ctx, span, nil, "datastore not found")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusNotFound))
-		return
-	}
+
 	connectedClusterIds := make([]uint, 0)
-	if matchingDatastore.ConnectedClusters != nil {
+	if matchingDatastore != nil && matchingDatastore.ConnectedClusters != nil {
 		for _, cc := range matchingDatastore.ConnectedClusters.ConnectedClusterIds {
 			connectedClusterIds = append(connectedClusterIds, uint(cc))
 		}

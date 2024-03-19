@@ -771,7 +771,7 @@ export function getServiceResourceAllowances(
   const maxCpuCores =
     Math.floor(
       maxRamApplicationInstance.instanceType.cpuCores * multiplier * 4
-    ) / 4; // round to nearest half
+    ) / 4; // round to nearest quarter
   const maxRamMegabytes =
     Math.round(
       (maxRamApplicationInstance.instanceType.ramMegabytes * multiplier) / 100

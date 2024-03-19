@@ -32,7 +32,7 @@ type CheckoutData struct {
 
 func (c *CreatePaymentMethodHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-	stripe.Key = ""
+	stripe.Key = c.Config().ServerConf.StripeSecretKey
 	params := &stripe.SetupIntentParams{
 		Customer: stripe.String(""),
 		AutomaticPaymentMethods: &stripe.SetupIntentAutomaticPaymentMethodsParams{

@@ -5,10 +5,20 @@ import {
     PaymentElement,
 } from '@stripe/react-stripe-js';
 import PaymentSetupForm from "./PaymentSetupForm";
+import api from "shared/api";
 
-const stripePromise = loadStripe('');
+const stripePromise = loadStripe("")
 
 const BillingModal = () => {
+    const [paymentMethods, setPaymentMethods] = useState([]);
+
+    useEffect(() => {
+        api.listPaymentMethod("{}", {}, {}).then((resp) => {
+            console.log(resp)
+            setPaymentMethods(resp.data)
+        })
+    }, [])
+
     const options = {
         mode: 'setup',
         currency: 'usd',
@@ -18,11 +28,19 @@ const BillingModal = () => {
 
     return (
         <>
-            <div id="checkout">
-                <Elements stripe={stripePromise} options={options}>
-                    <PaymentSetupForm></PaymentSetupForm>
-                </Elements>
-            </div>
+            {
+                paymentMethods.length > 0 ?
+                    (
+                        <div>Available payment methods</div>
+                    ) :
+                    (
+                        <div id="checkout">
+                            <Elements stripe={stripePromise} options={options}>
+                                <PaymentSetupForm></PaymentSetupForm>
+                            </Elements>
+                        </div>
+                    )
+            }
         </>
 
     );

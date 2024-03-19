@@ -53,6 +53,32 @@ func getBillingRoutes(
 
 	routes := make([]*router.Route, 0)
 
+	// GET /api/billing/payment_method -> billing.NewListPaymentMethodHandler
+	listPaymentMethodEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/payment_method",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+			},
+		},
+	)
+
+	listPaymentMethodHandler := billing.NewListPaymentMethodHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listPaymentMethodEndpoint,
+		Handler:  listPaymentMethodHandler,
+		Router:   r,
+	})
+
 	// POST /api/billing/payment_method -> billing.NewPaymentMethodHandler
 	createPaymentMethodEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
@@ -60,7 +86,7 @@ func getBillingRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/checkout_session",
+				RelativePath: relPath + "/payment_method",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,

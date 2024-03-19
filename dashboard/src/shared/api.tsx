@@ -3424,8 +3424,11 @@ const removeStackEnvGroup = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/remove_env_group/${env_group_name}`
 );
 
-// Payment
-const addPaymentMethod = baseApi<{}, {}>("POST", ({ }) => `/api/billing/checkout_session`);
+// Billing
+const listPaymentMethod = baseApi<{}, {}>("GET", ({ }) => `/api/billing/payment_method`);
+const addPaymentMethod = baseApi<{}, {}>("POST", ({ }) => `/api/billing/payment_method`);
+const updatePaymentMethod = baseApi<{}, {}>("PUT", ({ }) => `/api/billing/payment_method`);
+const deletePaymentMethod = baseApi<{}, {}>("DELETE", ({ }) => `/api/billing/payment_method`);
 
 const getGithubStatus = baseApi<{}, {}>("GET", ({ }) => `/api/status/github`);
 
@@ -3772,7 +3775,8 @@ export default {
   addStackEnvGroup,
   removeStackEnvGroup,
 
-  // PAYMENT
+  // BILLING
+  listPaymentMethod,
   addPaymentMethod,
 
   // STATUS

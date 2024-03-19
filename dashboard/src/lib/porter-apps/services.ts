@@ -722,7 +722,7 @@ export function serializedServiceFromProto({
     .exhaustive();
 }
 
-const SMALL_INSTANCE_UPPER_BOUND = 0.75;
+const SMALL_INSTANCE_UPPER_BOUND = 0.65;
 const LARGE_INSTANCE_UPPER_BOUND = 0.9;
 const NEW_SERVICE_RESOURCE_DEFAULT_MULTIPLIER = 0.125;
 
@@ -770,8 +770,8 @@ export function getServiceResourceAllowances(
 
   const maxCpuCores =
     Math.floor(
-      maxRamApplicationInstance.instanceType.cpuCores * multiplier * 2
-    ) / 2; // round to nearest half
+      maxRamApplicationInstance.instanceType.cpuCores * multiplier * 4
+    ) / 4; // round to nearest quarter
   const maxRamMegabytes =
     Math.round(
       (maxRamApplicationInstance.instanceType.ramMegabytes * multiplier) / 100

@@ -9,16 +9,16 @@ import (
 
 // BillingManager contains methods for managing billing for a project
 type BillingManager interface {
-	CreateTeam(user *models.User, proj *models.Project) (teamID string, err error) 
-	DeleteTeam(user *models.User, proj *models.Project) (err error) 
+	CreateTeam(user *models.User, proj *models.Project) (teamID string, err error)
+	DeleteTeam(user *models.User, proj *models.Project) (err error)
 
 	// CreateCustomer registers a project in the billing provider. This is currently a one-to-one
 	// mapping with projects and billing customers, because billing and usage are set per project.
-	// CreateCustomer(userEmail string, proj *models.Project) (err error)
-	// ListPaymentMethod(proj *models.Project) (err error)
-	// CreatePaymentMethod(proj *models.Project) (err error)
-	// UpdatePaymentMethod(paymentMethodID string, proj *models.Project) (err error)
-	// DeletePaymentMethod(paymentMethodID string, proj *models.Project) (err error)
+	CreateCustomer(userEmail string, proj *models.Project) (customerID string, err error)
+	ListPaymentMethod(proj *models.Project) (paymentMethods []types.PaymentMethod, err error)
+	CreatePaymentMethod(proj *models.Project) (err error)
+	UpdatePaymentMethod(paymentMethodID string) (err error)
+	DeletePaymentMethod(paymentMethodID string) (err error)
 
 	// GetRedirectURI gets the redirect URI to send the user to the billing portal
 	GetRedirectURI(user *models.User, proj *models.Project) (url string, err error)
@@ -33,6 +33,26 @@ type BillingManager interface {
 
 // NoopBillingManager performs no billing operations
 type NoopBillingManager struct{}
+
+func (s *NoopBillingManager) CreateCustomer(userEmail string, proj *models.Project) (customerID string, err error) {
+	return "", nil
+}
+
+func (s *NoopBillingManager) ListPaymentMethod(proj *models.Project) (paymentMethods []types.PaymentMethod, err error) {
+	return []types.PaymentMethod{}, nil
+}
+
+func (s *NoopBillingManager) CreatePaymentMethod(proj *models.Project) (err error) {
+	return nil
+}
+
+func (s *NoopBillingManager) UpdatePaymentMethod(paymentMethodID string) (err error) {
+	return nil
+}
+
+func (s *NoopBillingManager) DeletePaymentMethod(paymentMethodID string) (err error) {
+	return nil
+}
 
 func (n *NoopBillingManager) CreateTeam(user *models.User, proj *models.Project) (teamID string, err error) {
 	return fmt.Sprintf("%d", proj.ID), nil

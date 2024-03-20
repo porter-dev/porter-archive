@@ -7,7 +7,7 @@ import {
 import PaymentSetupForm from "./PaymentSetupForm";
 import backArrow from "assets/back_arrow.png";
 
-const stripePromise = loadStripe("")
+const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY || "")
 
 const BillingModal = ({ project_id, defaultValues }) => {
     const appearance = {

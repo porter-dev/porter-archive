@@ -10,8 +10,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/stripe/stripe-go/v76"
-	"github.com/stripe/stripe-go/v76/setupintent"
 )
 
 type CreateBillingHandler struct {
@@ -35,26 +33,11 @@ type CheckoutData struct {
 func (c *CreateBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	stripe.Key = c.Config().ServerConf.StripeSecretKey
-
-	params := &stripe.SetupIntentParams{
-		Customer: stripe.String(proj.BillingID),
-		AutomaticPaymentMethods: &stripe.SetupIntentAutomaticPaymentMethodsParams{
-			Enabled: stripe.Bool(false),
-		},
-		PaymentMethodTypes: []*string{stripe.String("card")},
-	}
-
-	intent, err := setupintent.New(params)
-
+	err := c.Config().BillingManager.CreatePaymentMethod(proj)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating setup intent: %w", err)))
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating payment method: %w", err)))
 		return
 	}
 
-	data := CheckoutData{
-		ClientSecret: intent.ClientSecret,
-	}
-
-	c.WriteResult(w, r, data)
+	c.WriteResult(w, r, "")
 }

@@ -10,8 +10,6 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
-	"github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/customer"
 )
 
 type CreateBillingCustomerIfNotExists struct {
@@ -36,31 +34,19 @@ func (c *CreateBillingCustomerIfNotExists) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
-	stripe.Key = c.Config().ServerConf.StripeSecretKey
+	// Create customer in Stripe
+	customerID, err := c.Config().BillingManager.CreateCustomer(request.UserEmail, proj)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating billing customer: %w", err)))
+		return
+	}
 
-	if proj.BillingID == "" {
-		// Create customer if not exists
-		customerName := fmt.Sprintf("project_%s", proj.Name)
-		params := &stripe.CustomerParams{
-			Name:  stripe.String(customerName),
-			Email: stripe.String(request.UserEmail),
-		}
-
-		// Create in Stripe
-		customer, err := customer.New(params)
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting payment method: %w", err)))
-			return
-		}
-
-		// Update the project record with the customer ID
-		proj.BillingID = customer.ID
-		_, err = c.Repo().Project().UpdateProject(proj)
-		if err != nil {
-			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-			return
-		}
-
+	// Update the project record with the customer ID
+	proj.BillingID = customerID
+	_, err = c.Repo().Project().UpdateProject(proj)
+	if err != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error updating record: %w", err)))
+		return
 	}
 
 	c.WriteResult(w, r, "")

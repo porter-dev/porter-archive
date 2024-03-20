@@ -88,7 +88,7 @@ require (
 	github.com/riandyrn/otelchi v0.5.1
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/stefanmcshane/helm v0.0.0-20221213002717-88a4a2c6e77d
-	github.com/stripe/stripe-go v70.15.0+incompatible
+	github.com/stripe/stripe-go/v72 v72.122.0
 	github.com/stripe/stripe-go/v76 v76.21.0
 	github.com/xanzy/go-gitlab v0.68.0
 	go.opentelemetry.io/otel v1.16.0

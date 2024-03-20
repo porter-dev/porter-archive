@@ -61,10 +61,9 @@ func NewAPIRouter(config *config.Config) *chi.Mux {
 		deploymentTargetRegisterer,
 		notificationRegisterer,
 	)
-	billingRegister := NewBillingScopedRegisterer()
 	statusRegisterer := NewStatusScopedRegisterer()
 
-	userRegisterer := NewUserScopedRegisterer(projRegisterer, billingRegister, statusRegisterer)
+	userRegisterer := NewUserScopedRegisterer(projRegisterer, statusRegisterer)
 	panicMW := middleware.NewPanicMiddleware(config)
 
 	if config.ServerConf.PprofEnabled {

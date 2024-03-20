@@ -13,21 +13,21 @@ import (
 	"github.com/stripe/stripe-go/v76/paymentmethod"
 )
 
-type UpdatePaymentMethodHandler struct {
+type UpdateBillingHandler struct {
 	handlers.PorterHandlerWriter
 }
 
-func NewUpdatePaymentMethodHandler(
+func NewUpdateBillingHandler(
 	config *config.Config,
+	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *UpdatePaymentMethodHandler {
-	return &UpdatePaymentMethodHandler{
-		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
+) *UpdateBillingHandler {
+	return &UpdateBillingHandler{
+		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (c *UpdatePaymentMethodHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
+func (c *UpdateBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stripe.Key = c.Config().ServerConf.StripeSecretKey
 	params := &stripe.PaymentMethodParams{}
 

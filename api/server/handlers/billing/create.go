@@ -3,25 +3,28 @@ package billing
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/stripe/stripe-go/v76"
 	"github.com/stripe/stripe-go/v76/setupintent"
 )
 
-type CreatePaymentMethodHandler struct {
+type CreateBillingHandler struct {
 	handlers.PorterHandlerWriter
 }
 
-func NewCreatePaymentMethodHandler(
+func NewCreateBillingHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *CreatePaymentMethodHandler {
-	return &CreatePaymentMethodHandler{
+) *CreateBillingHandler {
+	return &CreateBillingHandler{
 		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
@@ -30,7 +33,8 @@ type CheckoutData struct {
 	ClientSecret string `json:"clientSecret"`
 }
 
-func (c *CreatePaymentMethodHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *CreateBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	stripe.Key = c.Config().ServerConf.StripeSecretKey
 	params := &stripe.SetupIntentParams{
@@ -39,6 +43,9 @@ func (c *CreatePaymentMethodHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 			Enabled: stripe.Bool(false),
 		},
 		PaymentMethodTypes: []*string{stripe.String("card")},
+		Metadata: map[string]string{
+			"project_id": strconv.FormatUint(uint64(proj.ID), 10),
+		},
 	}
 
 	intent, err := setupintent.New(params)

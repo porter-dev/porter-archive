@@ -251,9 +251,9 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 	}
 	res.LaunchDarklyClient = launchDarklyClient
 
-	if sc.StripeSecretKey == "" {
-		return nil, fmt.Errorf("STRIPE_SECRET_KEY must be set")
-	}
+	// if sc.StripeSecretKey == "" {
+	// 	return nil, fmt.Errorf("STRIPE_SECRET_KEY must be set")
+	// }
 
 	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {
 		res.Logger.Info().Msg("Creating Slack client")

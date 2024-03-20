@@ -13,21 +13,20 @@ import (
 	"github.com/stripe/stripe-go/v76/paymentmethod"
 )
 
-type DeletePaymentMethodHandler struct {
+type DeleteBillingHandler struct {
 	handlers.PorterHandlerWriter
 }
 
-func NewDeletePaymentMethodHandler(
+func NewDeleteBillingHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *DeletePaymentMethodHandler {
-	return &DeletePaymentMethodHandler{
+) *DeleteBillingHandler {
+	return &DeleteBillingHandler{
 		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 
-func (c *DeletePaymentMethodHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
+func (c *DeleteBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stripe.Key = c.Config().ServerConf.StripeSecretKey
 
 	result, err := paymentmethod.Detach("", nil)

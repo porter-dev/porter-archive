@@ -11,21 +11,20 @@ import (
 	"github.com/stripe/stripe-go/v76/paymentmethod"
 )
 
-type ListPaymentMethodHandler struct {
+type ListBillingHandler struct {
 	handlers.PorterHandlerWriter
 }
 
-func NewListPaymentMethodHandler(
+func NewListBillingHandler(
 	config *config.Config,
 	writer shared.ResultWriter,
-) *ListPaymentMethodHandler {
-	return &ListPaymentMethodHandler{
+) *ListBillingHandler {
+	return &ListBillingHandler{
 		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
 	}
 }
 
-func (c *ListPaymentMethodHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
+func (c *ListBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stripe.Key = c.Config().ServerConf.StripeSecretKey
 	params := &stripe.PaymentMethodListParams{
 		Customer: stripe.String(""),

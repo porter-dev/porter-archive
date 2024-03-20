@@ -1,12 +1,13 @@
 package billing
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/stripe/stripe-go/v76"
 	"github.com/stripe/stripe-go/v76/paymentmethod"
 )
@@ -25,20 +26,20 @@ func NewListBillingHandler(
 }
 
 func (c *ListBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+
 	stripe.Key = c.Config().ServerConf.StripeSecretKey
+
 	params := &stripe.PaymentMethodListParams{
-		Customer: stripe.String(""),
+		Customer: stripe.String(proj.BillingID),
 		Type:     stripe.String(string(stripe.PaymentMethodTypeCard)),
 	}
 	result := paymentmethod.List(params)
 
-	var paymentMethods []interface{}
+	var paymentMethods []*stripe.PaymentMethod
 
 	for result.Next() {
-		paymentMethods = append(paymentMethods, result.Current())
+		paymentMethods = append(paymentMethods, result.PaymentMethod())
 	}
-
-	log.Println(paymentMethods)
-
 	c.WriteResult(w, r, paymentMethods)
 }

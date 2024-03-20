@@ -129,6 +129,7 @@ type Project struct {
 	Name  string `json:"name"`
 	Roles []Role `json:"roles"`
 
+	BillingID           string
 	ProjectUsageID      uint
 	ProjectUsageCacheID uint
 

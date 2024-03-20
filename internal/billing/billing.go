@@ -9,13 +9,16 @@ import (
 
 // BillingManager contains methods for managing billing for a project
 type BillingManager interface {
-	// CreateTeam creates the concept of a billing "team". This is currently a one-to-one
-	// mapping with projects, but this may change in the future (i.e. multiple projects
-	// per same team)
-	CreateTeam(user *models.User, proj *models.Project) (teamID string, err error)
+	CreateTeam(user *models.User, proj *models.Project) (teamID string, err error) 
+	DeleteTeam(user *models.User, proj *models.Project) (err error) 
 
-	// DeleteTeam deletes a billing team.
-	DeleteTeam(user *models.User, proj *models.Project) (err error)
+	// CreateCustomer registers a project in the billing provider. This is currently a one-to-one
+	// mapping with projects and billing customers, because billing and usage are set per project.
+	// CreateCustomer(userEmail string, proj *models.Project) (err error)
+	// ListPaymentMethod(proj *models.Project) (err error)
+	// CreatePaymentMethod(proj *models.Project) (err error)
+	// UpdatePaymentMethod(paymentMethodID string, proj *models.Project) (err error)
+	// DeletePaymentMethod(paymentMethodID string, proj *models.Project) (err error)
 
 	// GetRedirectURI gets the redirect URI to send the user to the billing portal
 	GetRedirectURI(user *models.User, proj *models.Project) (url string, err error)

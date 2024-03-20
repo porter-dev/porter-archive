@@ -9,6 +9,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared"
 	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
+	"github.com/porter-dev/porter/api/server/shared/requestutils"
+	"github.com/porter-dev/porter/api/types"
 	"github.com/stripe/stripe-go/v76"
 	"github.com/stripe/stripe-go/v76/paymentmethod"
 )
@@ -29,7 +31,13 @@ func NewDeleteBillingHandler(
 func (c *DeleteBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stripe.Key = c.Config().ServerConf.StripeSecretKey
 
-	result, err := paymentmethod.Detach("", nil)
+	paymentMethodID, reqErr := requestutils.GetURLParamString(r, types.URLParamPaymentMethodID)
+	if reqErr != nil {
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting payment method: %w", fmt.Errorf("invalid id parameter"))))
+		return
+	}
+
+	result, err := paymentmethod.Detach(paymentMethodID, nil)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting payment method: %w", err)))
 		return

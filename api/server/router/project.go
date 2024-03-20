@@ -285,17 +285,18 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/billing -> project.NewListBillingHandler
+	// GET /api/projects/{project_id}/billing/payment_method -> project.NewListBillingHandler
 	listBillingEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/billing",
+				RelativePath: relPath + "/billing/payment_method",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
+				types.ProjectScope,
 			},
 		},
 	)
@@ -318,10 +319,11 @@ func getProjectRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/billing",
+				RelativePath: relPath + "/billing/payment_method",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
+				types.ProjectScope,
 			},
 		},
 	)
@@ -345,10 +347,11 @@ func getProjectRoutes(
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/billing",
+				RelativePath: fmt.Sprintf("%s/billing/payment_method/{%s}", relPath, types.URLParamPaymentMethodID),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
+				types.ProjectScope,
 			},
 		},
 	)
@@ -365,17 +368,18 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// DELETE /api/projects/{project_id}/billing/{payment_method_id} -> project.NewDeleteBillingHandler
+	// DELETE /api/projects/{project_id}/billing/payment_method/{payment_method_id} -> project.NewDeleteBillingHandler
 	deleteBillingEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
-			Verb:   types.APIVerbCreate,
-			Method: types.HTTPVerbPost,
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/billing",
+				RelativePath: fmt.Sprintf("%s/billing/payment_method/{%s}", relPath, types.URLParamPaymentMethodID),
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
+				types.ProjectScope,
 			},
 		},
 	)
@@ -391,31 +395,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/billing/customer/{customer_id} -> project.NewGetOrCreateCustomerHandler
+	// POST /api/projects/{project_id}/billing/customer/ -> project.NewGetOrCreateCustomerHandler
 	getOrCreateBillingCustomerEndpoint := factory.NewAPIEndpoint(
-			&types.APIRequestMetadata{
-				Verb:   types.APIVerbCreate,
-				Method: types.HTTPVerbPost,
-				Path: &types.Path{
-					Parent:       basePath,
-					RelativePath: relPath + "/billing/customer/{customer_id}",
-				},
-				Scopes: []types.PermissionScope{
-					types.UserScope,
-				},
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/customer",
 			},
-		)
-	
-		getOrCreateBillingCustomerHandler := billing.NewGetOrCreateBillingCustomerHandler(
-			config,
-			factory.GetResultWriter(),
-		)
-	
-		routes = append(routes, &router.Route{
-			Endpoint: getOrCreateBillingCustomerEndpoint,
-			Handler:  getOrCreateBillingCustomerHandler,
-			Router:   r,
-		})
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getOrCreateBillingCustomerHandler := billing.NewCreateBillingCustomerIfNotExists(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getOrCreateBillingCustomerEndpoint,
+		Handler:  getOrCreateBillingCustomerHandler,
+		Router:   r,
+	})
 
 	// GET /api/projects/{project_id}/clusters -> cluster.NewClusterListHandler
 	listClusterEndpoint := factory.NewAPIEndpoint(

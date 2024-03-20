@@ -3425,10 +3425,60 @@ const removeStackEnvGroup = baseApi<
 );
 
 // Billing
-const listPaymentMethod = baseApi<{}, {}>("GET", ({ }) => `/api/billing/payment_method`);
-const addPaymentMethod = baseApi<{}, {}>("POST", ({ }) => `/api/billing/payment_method`);
-const updatePaymentMethod = baseApi<{}, {}>("PUT", ({ }) => `/api/billing/payment_method`);
-const deletePaymentMethod = baseApi<{}, {}>("DELETE", ({ }) => `/api/billing/payment_method`);
+const checkBillingCustomerExists = baseApi<
+  {
+    user_email?: string,
+  },
+  {
+    project_id?: number;
+  }
+>(
+  "POST",
+  ({ project_id }) =>
+    `/api/projects/${project_id}/billing/customer`
+);
+const listPaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+  }
+>(
+  "GET",
+  ({ project_id }) =>
+    `/api/projects/${project_id}/billing/payment_method`
+);
+const addPaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+  }
+>(
+  "POST",
+  ({ project_id }) =>
+    `/api/projects/${project_id}/billing/payment_method`
+);
+const updatePaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+    payment_method_id: string;
+  }
+>(
+  "GET",
+  ({ project_id, payment_method_id }) =>
+    `/api/projects/${project_id}/billing/payment_method/${payment_method_id}`
+);
+const deletePaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+    payment_method_id: string;
+  }
+>(
+  "DELETE",
+  ({ project_id, payment_method_id }) =>
+    `/api/projects/${project_id}/billing/payment_method/${payment_method_id}`
+);
 
 const getGithubStatus = baseApi<{}, {}>("GET", ({ }) => `/api/status/github`);
 
@@ -3776,6 +3826,7 @@ export default {
   removeStackEnvGroup,
 
   // BILLING
+  checkBillingCustomerExists,
   listPaymentMethod,
   addPaymentMethod,
   updatePaymentMethod,

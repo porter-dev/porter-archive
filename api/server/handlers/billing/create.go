@@ -3,7 +3,6 @@ package billing
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
@@ -37,15 +36,13 @@ func (c *CreateBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	stripe.Key = c.Config().ServerConf.StripeSecretKey
+
 	params := &stripe.SetupIntentParams{
-		Customer: stripe.String(""),
+		Customer: stripe.String(proj.BillingID),
 		AutomaticPaymentMethods: &stripe.SetupIntentAutomaticPaymentMethodsParams{
 			Enabled: stripe.Bool(false),
 		},
 		PaymentMethodTypes: []*string{stripe.String("card")},
-		Metadata: map[string]string{
-			"project_id": strconv.FormatUint(uint64(proj.ID), 10),
-		},
 	}
 
 	intent, err := setupintent.New(params)

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import api from 'shared/api';
 
-const PaymentSetupForm = () => {
+const PaymentSetupForm = ({ project_id }) => {
     const stripe = useStripe();
     const elements = useElements();
 
@@ -27,7 +27,7 @@ const PaymentSetupForm = () => {
 
         // Create the setup intent in the server
         const resp = await api
-            .addPaymentMethod("<token>", {}, {})
+            .addPaymentMethod("<token>", {}, { project_id })
 
         // Finally, confirm with Stripe so the payment method is saved
         const clientSecret = resp.data.clientSecret;

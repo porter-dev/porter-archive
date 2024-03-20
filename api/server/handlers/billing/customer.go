@@ -14,55 +14,54 @@ import (
 	"github.com/stripe/stripe-go/v72/customer"
 )
 
-type GetOrCreateBillingCustomerHandler struct {
-	handlers.PorterHandlerWriter
+type CreateBillingCustomerIfNotExists struct {
+	handlers.PorterHandlerReadWriter
 }
 
-func NewGetOrCreateBillingCustomerHandler(
+func NewCreateBillingCustomerIfNotExists(
 	config *config.Config,
+	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *GetOrCreateBillingCustomerHandler {
-	return &GetOrCreateBillingCustomerHandler{
-		PorterHandlerWriter: handlers.NewDefaultPorterHandler(config, nil, writer),
+) *CreateBillingCustomerIfNotExists {
+	return &CreateBillingCustomerIfNotExists{
+		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (c *GetOrCreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *CreateBillingCustomerIfNotExists) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+
+	request := &types.CreateBillingCustomerRequest{}
+	if ok := c.DecodeAndValidate(w, r, request); !ok {
+		return
+	}
 
 	stripe.Key = c.Config().ServerConf.StripeSecretKey
 
-	exists, customerID := c.GetCustomer(proj.Name)
-	if !exists {
+	if proj.BillingID == "" {
 		// Create customer if not exists
+		customerName := fmt.Sprintf("project_%s", proj.Name)
 		params := &stripe.CustomerParams{
-			Name:  stripe.String(proj.Name),
-			Email: stripe.String(""),
+			Name:  stripe.String(customerName),
+			Email: stripe.String(request.UserEmail),
 		}
-		_, err := customer.New(params)
+
+		// Create in Stripe
+		customer, err := customer.New(params)
 		if err != nil {
 			c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting payment method: %w", err)))
 			return
 		}
+
+		// Update the project record with the customer ID
+		proj.BillingID = customer.ID
+		_, err = c.Repo().Project().UpdateProject(proj)
+		if err != nil {
+			c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+			return
+		}
+
 	}
 
-	c.WriteResult(w, r, customerID)
-}
-
-func (c *GetOrCreateBillingCustomerHandler) GetCustomer(projectName string) (bool, string) {
-	customerQuery := fmt.Sprintf("name:'%s'", projectName)
-
-	params := &stripe.CustomerSearchParams{
-		SearchParams: stripe.SearchParams{
-			Query: customerQuery,
-		},
-	}
-	result := customer.Search(params)
-
-	if !result.Next() {
-		return false, ""
-	}
-
-	result.Current()
-	return true, ""
+	c.WriteResult(w, r, "")
 }

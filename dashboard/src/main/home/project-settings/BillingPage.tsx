@@ -13,34 +13,45 @@ import BillingModal from "../modals/BillingModal";
 import Button from "components/porter/Button";
 
 function BillingPage() {
+  const { user, currentProject } = useContext(Context);
+
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [shouldCreate, setShouldCreate] = useState(false);
-  const { currentProject, setCurrentError, queryUsage } = useContext(Context);
 
   useEffect(() => {
-    api.listPaymentMethod("{}", {}, {}).then((resp) => {
-      console.log(resp)
-      setPaymentMethods(resp.data.map(paymentMethod => paymentMethod.card))
-    })
-  }, [currentProject?.id]);
+    (async () => {
+      await api.checkBillingCustomerExists("<token>", { user_email: user?.email }, { project_id: currentProject?.id })
+      const listResponse = await api.listPaymentMethod("<token>", {}, { project_id: currentProject?.id })
+      const paymentMethodList = listResponse.data === null ? [] : listResponse.data
+      console.log(paymentMethodList)
+      setPaymentMethods(paymentMethodList)
+    })();
+  }, []);
 
   if (shouldCreate) {
     return (
       <BillingModal
         onCreate={() => setShouldCreate(false)}
         back={() => setShouldCreate(false)}
+        project_id={currentProject?.id}
       />
     );
   }
 
   const updatePaymentMethod = (paymentMethod) => {
-    console.log("update payment method", paymentMethod)
-    // api.updatePaymentMethod
+    console.log('update')
+    return (
+      <BillingModal
+        onCreate={() => setShouldCreate(false)}
+        back={() => setShouldCreate(false)}
+        defaultValues={paymentMethod}
+        project_id={currentProject?.id}
+      />
+    )
   }
 
   const deletePaymentMethod = (paymentMethod) => {
-    // api.deletePaymentMethod
-    console.log("delete payment method", paymentMethod)
+    api.deletePaymentMethod("<token>", {}, { project_id: currentProject?.id, payment_method_id: paymentMethod.id })
   }
 
   return (
@@ -52,11 +63,11 @@ function BillingPage() {
         </Helper>
         <PaymentMethodListWrapper>
           {
-            paymentMethods.map(paymentMethod => {
+            paymentMethods.map((paymentMethod, idx) => {
               return (
-                <PaymentMethodContainer>
+                <PaymentMethodContainer key={idx}>
                   <Container>
-                    <PaymentMethodText>{paymentMethod.display_brand} {paymentMethod.last4}</PaymentMethodText>
+                    <PaymentMethodText>{paymentMethod.card.display_brand} {paymentMethod.card.last4}</PaymentMethodText>
                     <ButtonContainer>
                       <Button onClick={() => updatePaymentMethod(paymentMethod)}>
                         <Icon src={editIcon} height={"14px"} />

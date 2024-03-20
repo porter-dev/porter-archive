@@ -9,7 +9,7 @@ import backArrow from "assets/back_arrow.png";
 
 const stripePromise = loadStripe("")
 
-const BillingModal = (back) => {
+const BillingModal = ({ project_id, defaultValues }) => {
     const appearance = {
         variables: {
             colorPrimary: '#aaaabb',
@@ -32,8 +32,8 @@ const BillingModal = (back) => {
                 <BackButton>
                     <BackButtonImg src={backArrow} />
                 </BackButton>
-                <Elements stripe={stripePromise} options={options} appearance={appearance}>
-                    <PaymentSetupForm></PaymentSetupForm>
+                <Elements stripe={stripePromise} options={options} appearance={appearance} defaultValues={defaultValues}>
+                    <PaymentSetupForm project_id={project_id}></PaymentSetupForm>
                 </Elements>
             </div>
         </>

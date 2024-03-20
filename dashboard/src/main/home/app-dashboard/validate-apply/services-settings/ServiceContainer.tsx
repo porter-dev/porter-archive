@@ -18,6 +18,7 @@ import job from "assets/job.png";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 
+import AsleepFooter from "./footers/AsleepFooter";
 import JobFooter from "./footers/JobFooter";
 import ServiceStatusFooter from "./footers/ServiceStatusFooter";
 import JobTabs from "./tabs/JobTabs";
@@ -158,6 +159,7 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           </StyledSourceBox>
         )}
       </AnimatePresence>
+      {service.sleep?.value && <AsleepFooter />}
       {!isClientJobService(service) && status && (
         <ServiceStatusFooter status={status} name={service.name.value} />
       )}

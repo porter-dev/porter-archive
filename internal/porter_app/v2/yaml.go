@@ -189,6 +189,7 @@ type Service struct {
 	Private                       *bool             `yaml:"private,omitempty" validate:"excluded_unless=Type web"`
 	IngressAnnotations            map[string]string `yaml:"ingressAnnotations,omitempty" validate:"excluded_unless=Type web"`
 	DisableTLS                    *bool             `yaml:"disableTLS,omitempty" validate:"excluded_unless=Type web"`
+	Sleep                         *bool             `yaml:"sleep,omitempty" validate:"excluded_unless=Type job"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -444,6 +445,9 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		if service.DisableTLS != nil {
 			webConfig.DisableTls = service.DisableTLS
 		}
+		if service.Sleep != nil {
+			serviceProto.Sleep = service.Sleep
+		}
 
 		serviceProto.Config = &porterv1.Service_WebConfig{
 			WebConfig: webConfig,
@@ -474,6 +478,10 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			}
 		}
 		workerConfig.HealthCheck = healthCheck
+
+		if service.Sleep != nil {
+			serviceProto.Sleep = service.Sleep
+		}
 
 		serviceProto.Config = &porterv1.Service_WorkerConfig{
 			WorkerConfig: workerConfig,
@@ -582,6 +590,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		SmartOptimization:             service.SmartOptimization,
 		GPU:                           gpu,
 		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
+		Sleep:                         service.Sleep,
 	}
 
 	switch service.Type {

@@ -3,6 +3,7 @@ package porter_app
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"
@@ -178,6 +179,8 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	fmt.Printf("appProto: %v", appProto)
 
 	for _, b64AddonProto := range request.Base64AddonProtos {
 		decoded, err := base64.StdEncoding.DecodeString(b64AddonProto)

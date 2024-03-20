@@ -110,6 +110,7 @@ export const serviceValidator = z.object({
   }),
   smartOptimization: serviceBooleanValidator.optional(),
   terminationGracePeriodSeconds: serviceNumberValidator.optional(),
+  sleep: serviceBooleanValidator.optional(),
   config: z.discriminatedUnion("type", [
     webConfigValidator,
     workerConfigValidator,
@@ -148,6 +149,7 @@ export type SerializedService = {
     gpuCoresNvidia: number;
   };
   terminationGracePeriodSeconds?: number;
+  sleep?: boolean;
   config:
     | {
         type: "web";
@@ -314,6 +316,7 @@ export function serializeService(service: ClientService): SerializedService {
       gpuCoresNvidia: service.gpu.gpuCoresNvidia.value,
     },
     terminationGracePeriodSeconds: service.terminationGracePeriodSeconds?.value,
+    sleep: service.sleep?.value,
     config: match(service.config)
       .with({ type: "web" }, (config) =>
         Object.freeze({
@@ -386,6 +389,7 @@ export function deserializeService({
     instances: ServiceField.number(service.instances, override?.instances),
     port: ServiceField.number(service.port, override?.port),
     cpuCores: ServiceField.number(service.cpuCores, override?.cpuCores),
+    sleep: ServiceField.boolean(service.sleep, override?.sleep),
     gpu: {
       enabled: ServiceField.boolean(
         service.gpu?.enabled,
@@ -600,6 +604,7 @@ export function serviceProto(service: SerializedService): Service {
           runOptional: service.run,
           instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
+          sleep: service.sleep,
           config: {
             value: {
               ...config,
@@ -616,6 +621,7 @@ export function serviceProto(service: SerializedService): Service {
           runOptional: service.run,
           instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
+          sleep: service.sleep,
           config: {
             value: {
               ...config,
@@ -678,6 +684,7 @@ export function serializedServiceFromProto({
       ...service,
       run: service.runOptional ?? service.run,
       instances: service.instancesOptional ?? service.instances,
+      sleep: service.sleep,
       config: {
         type: "web" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -690,6 +697,7 @@ export function serializedServiceFromProto({
       ...service,
       run: service.runOptional ?? service.run,
       instances: service.instancesOptional ?? service.instances,
+      sleep: service.sleep,
       config: {
         type: "worker" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,

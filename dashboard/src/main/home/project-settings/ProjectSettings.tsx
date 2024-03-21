@@ -76,21 +76,9 @@ function ProjectSettings(props: any) {
 
     const tabOpts = [];
     tabOpts.push({ value: "manage-access", label: "Manage access" });
-    // ? Disabled for now https://discord.com/channels/542888846271184896/1059277393031856208/1059277395913351258
-    // tabOptions.push({
-    //   value: "billing",
-    //   label: "Billing",
-    // });
     tabOpts.push({ value: "metadata", label: "Metadata" });
 
     if (props.isAuthorized("settings", "", ["get", "delete"])) {
-      // if (this.context?.hasBillingEnabled) {
-      //   tabOptions.push({
-      //     value: "billing",
-      //     label: "Billing",
-      //   });
-      // }
-
       if (currentProject?.api_tokens_enabled) {
         tabOpts.push({
           value: "api-tokens",
@@ -103,10 +91,13 @@ function ProjectSettings(props: any) {
         label: "Additional settings",
       });
 
-      tabOpts.push({
-        value: "billing",
-        label: "Billing",
-      });
+      if (currentProject?.billing_enabled) {
+        tabOpts.push({
+          value: "billing",
+          label: "Billing",
+        });
+      }
+
     }
 
     if (!_.isEqual(tabOpts, tabOptions)) {

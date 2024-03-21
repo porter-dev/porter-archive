@@ -3,7 +3,6 @@ package porter_app
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"net/http"
 
 	"connectrpc.com/connect"

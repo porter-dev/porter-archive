@@ -140,7 +140,7 @@ const Resources: React.FC<ResourcesProps> = ({
           <Text>
             Sleep Service
             <a
-              href="https://docs.porter.run/configure/autoscaling"
+              href="https://docs.porter.run/configure/basic-configuration#sleep-mode"
               target="_blank"
               rel="noreferrer"
             >

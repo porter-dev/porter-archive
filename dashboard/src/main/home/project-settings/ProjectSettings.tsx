@@ -28,6 +28,8 @@ import APITokensSection from "./APITokensSection";
 import InvitePage from "./InviteList";
 import Metadata from "./Metadata";
 import ProjectDeleteConsent from "./ProjectDeleteConsent";
+import BillingModal from "../modals/BillingModal";
+import BillingPage from "./BillingPage";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 type ValidationError = {
@@ -80,6 +82,7 @@ function ProjectSettings(props: any) {
     //   label: "Billing",
     // });
     tabOpts.push({ value: "metadata", label: "Metadata" });
+
     if (props.isAuthorized("settings", "", ["get", "delete"])) {
       // if (this.context?.hasBillingEnabled) {
       //   tabOptions.push({
@@ -98,6 +101,11 @@ function ProjectSettings(props: any) {
       tabOpts.push({
         value: "additional-settings",
         label: "Additional settings",
+      });
+
+      tabOpts.push({
+        value: "billing",
+        label: "Billing",
       });
     }
 
@@ -172,17 +180,7 @@ function ProjectSettings(props: any) {
       return <APITokensSection />;
     } else if (currentTab === "billing") {
       return (
-        <Placeholder>
-          <Helper>
-            Visit the{" "}
-            <a
-              href={`/api/projects/${context.currentProject?.id}/billing/redirect`}
-            >
-              billing portal
-            </a>{" "}
-            to view plans.
-          </Helper>
-        </Placeholder>
+        <BillingPage></BillingPage>
       );
     } else {
       return (

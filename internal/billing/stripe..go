@@ -11,6 +11,8 @@ import (
 	"github.com/stripe/stripe-go/v76/setupintent"
 )
 
+// StripeBillingManager interacts with the Stripe API to manage payment methods
+// and customers
 type StripeBillingManager struct {
 	StripeSecretKey string
 }
@@ -88,29 +90,27 @@ func (s *StripeBillingManager) DeletePaymentMethod(paymentMethodID string) (err 
 	return nil
 }
 
-// TODO: remove these methods when the billing tech-debt is cleaned
-
-// CreateTeam
+// CreateTeam is a no-op
 func (s *StripeBillingManager) CreateTeam(user *models.User, proj *models.Project) (teamID string, err error) {
 	return fmt.Sprintf("%d", proj.ID), nil
 }
 
-// DeleteTeam
+// DeleteTeam is a no-op
 func (s *StripeBillingManager) DeleteTeam(user *models.User, proj *models.Project) (err error) {
 	return nil
 }
 
-// GetRedirectURI
+// GetRedirectURI is a no-op
 func (s *StripeBillingManager) GetRedirectURI(user *models.User, proj *models.Project) (url string, err error) {
 	return "", nil
 }
 
-// ParseProjectUsageFromWebhook
-func (s *StripeBillingManager) ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, *types.FeatureFlags, error) {
-	return nil, nil, nil
+// ParseProjectUsageFromWebhook is a no-op
+func (s *StripeBillingManager) ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, error) {
+	return nil, nil
 }
 
-// VerifySignature
+// VerifySignature is a no-op
 func (s *StripeBillingManager) VerifySignature(signature string, body []byte) bool {
 	return false
 }

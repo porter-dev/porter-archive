@@ -35,7 +35,7 @@ type BillingManager interface {
 
 	// ParseProjectUsageFromWebhook parses the project usage from a webhook payload sent
 	// from a billing agent
-	ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, *types.FeatureFlags, error)
+	ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, error)
 
 	// VerifySignature verifies the signature for a webhook
 	VerifySignature(signature string, body []byte) bool
@@ -80,8 +80,8 @@ func (n *NoopBillingManager) GetRedirectURI(user *models.User, proj *models.Proj
 }
 
 // ParseProjectUsageFromWebhook is a no-op
-func (n *NoopBillingManager) ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, *types.FeatureFlags, error) {
-	return nil, nil, nil
+func (n *NoopBillingManager) ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, error) {
+	return nil, nil
 }
 
 // VerifySignature is a no-op

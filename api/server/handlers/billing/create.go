@@ -17,7 +17,7 @@ type CreateBillingHandler struct {
 	handlers.PorterHandlerWriter
 }
 
-// NewCreateBillingCustomerIfNotExists will create a new CreateBillingHandler
+// NewCreateBillingHandler will create a new CreateBillingHandler
 func NewCreateBillingHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

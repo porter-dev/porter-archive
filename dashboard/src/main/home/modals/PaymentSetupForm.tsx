@@ -5,7 +5,7 @@ import SaveButton from "components/SaveButton";
 import styled from "styled-components";
 import Error from "components/porter/Error";
 
-const PaymentSetupForm = ({ project_id, onCreate }) => {
+const PaymentSetupForm = ({ projectId, onCreate }: { projectId: number, onCreate: () => void, }) => {
     const stripe = useStripe();
     const elements = useElements();
 
@@ -14,7 +14,7 @@ const PaymentSetupForm = ({ project_id, onCreate }) => {
 
     const handleSubmit = async () => {
         if (!stripe || !elements) {
-            return null;
+            return;
         }
 
         setLoading(true);
@@ -28,7 +28,7 @@ const PaymentSetupForm = ({ project_id, onCreate }) => {
 
         // Create the setup intent in the server
         const resp = await api
-            .addPaymentMethod("<token>", {}, { project_id })
+            .addPaymentMethod("<token>", {}, { project_id: projectId })
 
         // Finally, confirm with Stripe so the payment method is saved
         const clientSecret = resp.data.clientSecret;

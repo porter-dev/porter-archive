@@ -35,7 +35,6 @@ function BillingPage() {
         onCreate={() => setShouldCreate(false)}
         back={() => setShouldCreate(false)}
         project_id={currentProject?.id}
-        defaultValues={null}
       />
     );
   }

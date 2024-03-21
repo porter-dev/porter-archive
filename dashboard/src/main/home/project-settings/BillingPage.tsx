@@ -29,6 +29,7 @@ function BillingPage() {
     })();
   }, []);
 
+<<<<<<< Updated upstream
   if (shouldCreate) {
     return (
       <BillingModal
@@ -37,6 +38,15 @@ function BillingPage() {
         project_id={currentProject?.id}
       />
     );
+=======
+  const onCreate = async () => {
+    // Refetch the payment method list since Stripe won't return the newly
+    // created payment method
+    const listResponse = await api.listPaymentMethod("<token>", {}, { project_id: currentProject?.id })
+    const paymentMethodList = listResponse.data === null ? [] : listResponse.data
+    setPaymentMethods(paymentMethodList)
+    setShouldCreate(false)
+>>>>>>> Stashed changes
   }
 
   const deletePaymentMethod = async (paymentMethod) => {
@@ -48,6 +58,17 @@ function BillingPage() {
 
     setDeleteStatus(false)
     setPaymentMethods(paymentMethods.filter(elem => elem !== paymentMethod))
+  }
+
+  if (shouldCreate) {
+    return (
+      <BillingModal
+        onCreate={onCreate}
+        back={() => setShouldCreate(false)}
+        project_id={currentProject?.id}
+        defaultValues={null}
+      />
+    );
   }
 
   return (

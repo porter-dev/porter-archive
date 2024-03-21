@@ -10,11 +10,12 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// CreateBillingCustomerIfNotExistsHandler will create a new handler
+// CreateBillingCustomerHandler will create a new handler
 // for creating customers in the billing provider
-type CreateBillingCustomerIfNotExistsHandler struct {
+type CreateBillingCustomerHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
@@ -23,14 +24,17 @@ func NewCreateBillingCustomerIfNotExists(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *CreateBillingCustomerIfNotExistsHandler {
-	return &CreateBillingCustomerIfNotExistsHandler{
+) *CreateBillingCustomerHandler {
+	return &CreateBillingCustomerHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (c *CreateBillingCustomerIfNotExistsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+func (c *CreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "auth-endpoint-api-token")
+	defer span.End()
+
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	request := &types.CreateBillingCustomerRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
@@ -45,6 +49,7 @@ func (c *CreateBillingCustomerIfNotExistsHandler) ServeHTTP(w http.ResponseWrite
 	// Create customer in Stripe
 	customerID, err := c.Config().BillingManager.CreateCustomer(request.UserEmail, proj)
 	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error creating billing customer")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating billing customer: %w", err)))
 		return
 	}
@@ -53,7 +58,8 @@ func (c *CreateBillingCustomerIfNotExistsHandler) ServeHTTP(w http.ResponseWrite
 	proj.BillingID = customerID
 	_, err = c.Repo().Project().UpdateProject(proj)
 	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error updating record: %w", err)))
+		err := telemetry.Error(ctx, span, err, "error updating project")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error updating project: %w", err)))
 		return
 	}
 

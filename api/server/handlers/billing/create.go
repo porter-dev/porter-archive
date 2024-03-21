@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 // CreateBillingHandler is a handler for creating payment methods
@@ -29,10 +30,14 @@ func NewCreateBillingHandler(
 }
 
 func (c *CreateBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
+	ctx, span := telemetry.NewSpan(r.Context(), "auth-endpoint-api-token")
+	defer span.End()
+
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	clientSecret, err := c.Config().BillingManager.CreatePaymentMethod(proj)
 	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error creating payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating payment method: %w", err)))
 		return
 	}

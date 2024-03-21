@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/telemetry"
 )
 
 // DeleteBillingHandler is a handler for deleting payment methods
@@ -28,14 +29,19 @@ func NewDeleteBillingHandler(
 }
 
 func (c *DeleteBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, span := telemetry.NewSpan(r.Context(), "auth-endpoint-api-token")
+	defer span.End()
+
 	paymentMethodID, reqErr := requestutils.GetURLParamString(r, types.URLParamPaymentMethodID)
 	if reqErr != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting payment method: %w", fmt.Errorf("invalid id parameter"))))
+		err := telemetry.Error(ctx, span, reqErr, "error deleting payment method")
+		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting payment method: %w", err)))
 		return
 	}
 
 	err := c.Config().BillingManager.DeletePaymentMethod(paymentMethodID)
 	if err != nil {
+		err := telemetry.Error(ctx, span, err, "error deleting payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting payment method: %w", err)))
 		return
 	}

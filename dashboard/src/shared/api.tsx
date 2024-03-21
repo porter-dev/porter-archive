@@ -371,8 +371,9 @@ const getFeedEvents = baseApi<
   }
 >("GET", (pathParams) => {
   const { project_id, cluster_id, stack_name, page } = pathParams;
-  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/events?page=${page || 1
-    }`;
+  return `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/events?page=${
+    page || 1
+  }`;
 });
 
 const createEnvironment = baseApi<
@@ -860,9 +861,11 @@ const detectBuildpack = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/buildpack/detect`;
 });
 
 const detectGitlabBuildpack = baseApi<
@@ -893,9 +896,11 @@ const getBranchContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/contents`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/contents`;
 });
 
 const getProcfileContents = baseApi<
@@ -911,9 +916,11 @@ const getProcfileContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/procfile`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/procfile`;
 });
 
 const getPorterYamlContents = baseApi<
@@ -929,9 +936,11 @@ const getPorterYamlContents = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/porteryaml`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/porteryaml`;
 });
 
 const parsePorterYaml = baseApi<
@@ -991,30 +1000,32 @@ const getBranchHead = baseApi<
     branch: string;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/gitrepos/${pathParams.git_repo_id
-    }/repos/${pathParams.kind}/${pathParams.owner}/${pathParams.name
-    }/${encodeURIComponent(pathParams.branch)}/head`;
+  return `/api/projects/${pathParams.project_id}/gitrepos/${
+    pathParams.git_repo_id
+  }/repos/${pathParams.kind}/${pathParams.owner}/${
+    pathParams.name
+  }/${encodeURIComponent(pathParams.branch)}/head`;
 });
 
 const createApp = baseApi<
   | {
-    name: string;
-    deployment_target_id: string;
-    type: "github";
-    git_repo_id: number;
-    git_branch: string;
-    git_repo_name: string;
-    porter_yaml_path: string;
-  }
+      name: string;
+      deployment_target_id: string;
+      type: "github";
+      git_repo_id: number;
+      git_branch: string;
+      git_repo_name: string;
+      porter_yaml_path: string;
+    }
   | {
-    name: string;
-    deployment_target_id: string;
-    type: "docker-registry";
-    image: {
-      repository: string;
-      tag: string;
-    };
-  },
+      name: string;
+      deployment_target_id: string;
+      type: "docker-registry";
+      image: {
+        repository: string;
+        tag: string;
+      };
+    },
   {
     project_id: number;
     cluster_id: number;
@@ -2229,9 +2240,11 @@ const getEnvGroup = baseApi<
     version?: number;
   }
 >("GET", (pathParams) => {
-  return `/api/projects/${pathParams.id}/clusters/${pathParams.cluster_id
-    }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${pathParams.version ? "&version=" + pathParams.version : ""
-    }`;
+  return `/api/projects/${pathParams.id}/clusters/${
+    pathParams.cluster_id
+  }/namespaces/${pathParams.namespace}/envgroup?name=${pathParams.name}${
+    pathParams.version ? "&version=" + pathParams.version : ""
+  }`;
 });
 
 const getConfigMap = baseApi<
@@ -3424,63 +3437,7 @@ const removeStackEnvGroup = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/remove_env_group/${env_group_name}`
 );
 
-// Billing
-const checkBillingCustomerExists = baseApi<
-  {
-    user_email?: string,
-  },
-  {
-    project_id?: number;
-  }
->(
-  "POST",
-  ({ project_id }) =>
-    `/api/projects/${project_id}/billing/customer`
-);
-const listPaymentMethod = baseApi<
-  {},
-  {
-    project_id?: number;
-  }
->(
-  "GET",
-  ({ project_id }) =>
-    `/api/projects/${project_id}/billing/payment_method`
-);
-const addPaymentMethod = baseApi<
-  {},
-  {
-    project_id?: number;
-  }
->(
-  "POST",
-  ({ project_id }) =>
-    `/api/projects/${project_id}/billing/payment_method`
-);
-const updatePaymentMethod = baseApi<
-  {},
-  {
-    project_id?: number;
-    payment_method_id: string;
-  }
->(
-  "GET",
-  ({ project_id, payment_method_id }) =>
-    `/api/projects/${project_id}/billing/payment_method/${payment_method_id}`
-);
-const deletePaymentMethod = baseApi<
-  {},
-  {
-    project_id?: number;
-    payment_method_id: string;
-  }
->(
-  "DELETE",
-  ({ project_id, payment_method_id }) =>
-    `/api/projects/${project_id}/billing/payment_method/${payment_method_id}`
-);
-
-const getGithubStatus = baseApi<{}, {}>("GET", ({ }) => `/api/status/github`);
+const getGithubStatus = baseApi<{}, {}>("GET", ({}) => `/api/status/github`);
 
 const createSecretAndOpenGitHubPullRequest = baseApi<
   {
@@ -3824,13 +3781,6 @@ export default {
   removeStackAppResource,
   addStackEnvGroup,
   removeStackEnvGroup,
-
-  // BILLING
-  checkBillingCustomerExists,
-  listPaymentMethod,
-  addPaymentMethod,
-  updatePaymentMethod,
-  deletePaymentMethod,
 
   // STATUS
   getGithubStatus,

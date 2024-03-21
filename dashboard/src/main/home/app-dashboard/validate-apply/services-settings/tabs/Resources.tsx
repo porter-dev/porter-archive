@@ -57,7 +57,7 @@ const Resources: React.FC<ResourcesProps> = ({
     isAsleep?: boolean
   ): string => {
     if (isAsleep) {
-      return "Your app is asleep. Resource settings are disabled.";
+      return "This service is asleep. Disable sleep mode to edit resources.";
     }
 
     return defaultMessage;

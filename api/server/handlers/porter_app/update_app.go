@@ -180,8 +180,6 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Printf("appProto: %v", appProto)
-
 	for _, b64AddonProto := range request.Base64AddonProtos {
 		decoded, err := base64.StdEncoding.DecodeString(b64AddonProto)
 		if err != nil {

@@ -33,7 +33,7 @@ func (c *CreateBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	ctx, span := telemetry.NewSpan(r.Context(), "auth-endpoint-api-token")
 	defer span.End()
 
-	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+	proj, _ := ctx.Value(types.ProjectScope).(models.Project)
 
 	clientSecret, err := c.Config().BillingManager.CreatePaymentMethod(proj)
 	if err != nil {

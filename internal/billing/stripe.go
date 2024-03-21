@@ -18,7 +18,7 @@ type StripeBillingManager struct {
 }
 
 // CreateCustomer will create a customer in Stripe only if the project doesn't have a BillingID
-func (s *StripeBillingManager) CreateCustomer(userEmail string, proj models.Project) (customerID string, err error) {
+func (s *StripeBillingManager) CreateCustomer(userEmail string, proj *models.Project) (customerID string, err error) {
 	stripe.Key = s.StripeSecretKey
 
 	if proj.BillingID == "" {
@@ -52,7 +52,13 @@ func (s *StripeBillingManager) ListPaymentMethod(proj models.Project) (paymentMe
 	result := paymentmethod.List(params)
 
 	for result.Next() {
-		paymentMethods = append(paymentMethods, result.PaymentMethod())
+		stripePaymentMethod := result.PaymentMethod()
+
+		paymentMethods = append(paymentMethods, types.PaymentMethod{
+			ID:           stripePaymentMethod.ID,
+			DisplayBrand: stripePaymentMethod.Card.DisplayBrand,
+			Last4:        stripePaymentMethod.Card.Last4,
+		})
 	}
 
 	return paymentMethods, nil

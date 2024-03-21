@@ -19,7 +19,7 @@ type BillingManager interface {
 
 	// CreateCustomer registers a project in the billing provider. This is currently a one-to-one
 	// mapping with projects and billing customers, because billing and usage are set per project.
-	CreateCustomer(userEmail string, proj models.Project) (customerID string, err error)
+	CreateCustomer(userEmail string, proj *models.Project) (customerID string, err error)
 
 	// ListPaymentMethod will return all payment methods for the project
 	ListPaymentMethod(proj models.Project) (paymentMethods []types.PaymentMethod, err error)

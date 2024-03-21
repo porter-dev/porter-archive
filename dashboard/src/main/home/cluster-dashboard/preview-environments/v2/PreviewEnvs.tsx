@@ -53,10 +53,11 @@ const PreviewEnvs: React.FC = () => {
     if (currentProject?.sandbox_enabled) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>Preview apps are not enabled for sandbox users</Text>
+          <Text size={16}>Preview apps are coming soon for sandbox users</Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
-            Eject to your own cloud account to enable preview apps.
+            You can also eject to your own cloud account to start using preview
+            apps.
           </Text>
           <Spacer y={1} />
           <ShowIntercomButton

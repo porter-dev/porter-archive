@@ -174,10 +174,7 @@ const Home: React.FC<Props> = (props) => {
           .getProject("<token>", {}, { id })
           .then((res) => res.data as ProjectType);
 
-        setCurrentProject({
-          ...project,
-          sandbox_enabled: true,
-        });
+        setCurrentProject(project);
       }
     } catch (error) {
       console.log(error);

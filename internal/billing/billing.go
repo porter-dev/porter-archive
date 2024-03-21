@@ -9,7 +9,12 @@ import (
 
 // BillingManager contains methods for managing billing for a project
 type BillingManager interface {
+	// CreateTeam creates the concept of a billing "team". This is currently a one-to-one
+	// mapping with projects, but this may change in the future (i.e. multiple projects
+	// per same team)
 	CreateTeam(user *models.User, proj *models.Project) (teamID string, err error)
+
+	// DeleteTeam deletes a billing team.
 	DeleteTeam(user *models.User, proj *models.Project) (err error)
 
 	// CreateCustomer registers a project in the billing provider. This is currently a one-to-one

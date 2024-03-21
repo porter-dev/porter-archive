@@ -9,7 +9,7 @@ import backArrow from "assets/back_arrow.png";
 
 const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY || "")
 
-const BillingModal = ({ project_id, defaultValues }) => {
+const BillingModal = ({ project_id, back, onCreate }) => {
     const appearance = {
         variables: {
             colorPrimary: '#aaaabb',
@@ -24,16 +24,26 @@ const BillingModal = ({ project_id, defaultValues }) => {
         setupFutureUsage: 'off_session',
         paymentMethodTypes: ['card'],
         appearance,
+        fonts: [
+            {
+                cssSrc: 'https://fonts.googleapis.com/css?family=Work+Sans'
+            }
+        ]
     };
 
     return (
         <>
             <div id="checkout">
-                <BackButton>
+                <BackButton onClick={back}>
                     <BackButtonImg src={backArrow} />
                 </BackButton>
-                <Elements stripe={stripePromise} options={options} appearance={appearance} defaultValues={defaultValues}>
-                    <PaymentSetupForm project_id={project_id}></PaymentSetupForm>
+                <Elements stripe={stripePromise} options={options} appearance={appearance}>
+                    <PaymentSetupForm
+                        project_id={project_id}
+                        onCreate={onCreate}
+                        back={back}
+                    >
+                    </PaymentSetupForm>
                 </Elements>
             </div>
         </>

@@ -54,7 +54,7 @@ func (s *StripeBillingManager) ListPaymentMethod(proj *models.Project) (paymentM
 	return paymentMethods, nil
 }
 
-func (s *StripeBillingManager) CreatePaymentMethod(proj *models.Project) (err error) {
+func (s *StripeBillingManager) CreatePaymentMethod(proj *models.Project) (clientSecret string, err error) {
 	stripe.Key = s.StripeSecretKey
 
 	params := &stripe.SetupIntentParams{
@@ -65,25 +65,12 @@ func (s *StripeBillingManager) CreatePaymentMethod(proj *models.Project) (err er
 		PaymentMethodTypes: []*string{stripe.String("card")},
 	}
 
-	_, err = setupintent.New(params)
+	intent, err := setupintent.New(params)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
-}
-
-func (s *StripeBillingManager) UpdatePaymentMethod(paymentMethodID string) (err error) {
-	stripe.Key = s.StripeSecretKey
-
-	params := &stripe.PaymentMethodParams{}
-
-	_, err = paymentmethod.Update(paymentMethodID, params)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return intent.ClientSecret, nil
 }
 
 func (s *StripeBillingManager) DeletePaymentMethod(paymentMethodID string) (err error) {

@@ -26,18 +26,14 @@ func NewCreateBillingHandler(
 	}
 }
 
-type CheckoutData struct {
-	ClientSecret string `json:"clientSecret"`
-}
-
 func (c *CreateBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
-	err := c.Config().BillingManager.CreatePaymentMethod(proj)
+	clientSecret, err := c.Config().BillingManager.CreatePaymentMethod(proj)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating payment method: %w", err)))
 		return
 	}
 
-	c.WriteResult(w, r, "")
+	c.WriteResult(w, r, clientSecret)
 }

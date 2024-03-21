@@ -16,8 +16,7 @@ type BillingManager interface {
 	// mapping with projects and billing customers, because billing and usage are set per project.
 	CreateCustomer(userEmail string, proj *models.Project) (customerID string, err error)
 	ListPaymentMethod(proj *models.Project) (paymentMethods []types.PaymentMethod, err error)
-	CreatePaymentMethod(proj *models.Project) (err error)
-	UpdatePaymentMethod(paymentMethodID string) (err error)
+	CreatePaymentMethod(proj *models.Project) (clientSecret string, err error)
 	DeletePaymentMethod(paymentMethodID string) (err error)
 
 	// GetRedirectURI gets the redirect URI to send the user to the billing portal
@@ -42,12 +41,8 @@ func (s *NoopBillingManager) ListPaymentMethod(proj *models.Project) (paymentMet
 	return []types.PaymentMethod{}, nil
 }
 
-func (s *NoopBillingManager) CreatePaymentMethod(proj *models.Project) (err error) {
-	return nil
-}
-
-func (s *NoopBillingManager) UpdatePaymentMethod(paymentMethodID string) (err error) {
-	return nil
+func (s *NoopBillingManager) CreatePaymentMethod(proj *models.Project) (clientSecret string, err error) {
+	return "", nil
 }
 
 func (s *NoopBillingManager) DeletePaymentMethod(paymentMethodID string) (err error) {

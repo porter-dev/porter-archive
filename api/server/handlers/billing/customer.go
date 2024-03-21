@@ -34,6 +34,11 @@ func (c *CreateBillingCustomerIfNotExists) ServeHTTP(w http.ResponseWriter, r *h
 		return
 	}
 
+	if proj.BillingID != "" {
+		c.WriteResult(w, r, "")
+		return
+	}
+
 	// Create customer in Stripe
 	customerID, err := c.Config().BillingManager.CreateCustomer(request.UserEmail, proj)
 	if err != nil {

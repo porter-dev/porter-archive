@@ -5,25 +5,26 @@ import Helper from "components/form-components/Helper";
 import SaveButton from "components/SaveButton";
 import styled from "styled-components";
 import Icon from "components/porter/Icon";
-import editIcon from "assets/edit-button.svg"
 import trashIcon from "assets/trash.png"
+import cardIcon from "assets/credit-card.svg"
 
 import { Context } from "shared/Context";
 import BillingModal from "../modals/BillingModal";
-import Button from "components/porter/Button";
+import Error from "components/porter/Error";
+import Loading from "components/Loading";
 
 function BillingPage() {
   const { user, currentProject } = useContext(Context);
 
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [shouldCreate, setShouldCreate] = useState(false);
+  const [deleteStatus, setDeleteStatus] = useState(false);
 
   useEffect(() => {
     (async () => {
       await api.checkBillingCustomerExists("<token>", { user_email: user?.email }, { project_id: currentProject?.id })
       const listResponse = await api.listPaymentMethod("<token>", {}, { project_id: currentProject?.id })
       const paymentMethodList = listResponse.data === null ? [] : listResponse.data
-      console.log(paymentMethodList)
       setPaymentMethods(paymentMethodList)
     })();
   }, []);
@@ -34,24 +35,20 @@ function BillingPage() {
         onCreate={() => setShouldCreate(false)}
         back={() => setShouldCreate(false)}
         project_id={currentProject?.id}
+        defaultValues={null}
       />
     );
   }
 
-  const updatePaymentMethod = (paymentMethod) => {
-    console.log('update')
-    return (
-      <BillingModal
-        onCreate={() => setShouldCreate(false)}
-        back={() => setShouldCreate(false)}
-        defaultValues={paymentMethod}
-        project_id={currentProject?.id}
-      />
-    )
-  }
+  const deletePaymentMethod = async (paymentMethod) => {
+    setDeleteStatus(true)
+    const resp = await api.deletePaymentMethod("<token>", {}, { project_id: currentProject?.id, payment_method_id: paymentMethod.id })
+    if (resp.status !== 200) {
+      return <Error message="failed to delete payment method" />
+    }
 
-  const deletePaymentMethod = (paymentMethod) => {
-    api.deletePaymentMethod("<token>", {}, { project_id: currentProject?.id, payment_method_id: paymentMethod.id })
+    setDeleteStatus(false)
+    setPaymentMethods(paymentMethods.filter(elem => elem !== paymentMethod))
   }
 
   return (
@@ -67,15 +64,15 @@ function BillingPage() {
               return (
                 <PaymentMethodContainer key={idx}>
                   <Container>
-                    <PaymentMethodText>{paymentMethod.card.display_brand} {paymentMethod.card.last4}</PaymentMethodText>
-                    <ButtonContainer>
-                      <Button onClick={() => updatePaymentMethod(paymentMethod)}>
-                        <Icon src={editIcon} height={"14px"} />
-                      </Button>
-                      <Button onClick={() => deletePaymentMethod(paymentMethod)}>
-                        <Icon src={trashIcon} height={"14px"} />
-                      </Button>
-                    </ButtonContainer>
+                    <Icon src={cardIcon} height={"14px"} />
+                    <PaymentMethodText>{paymentMethod.card.display_brand} - **** **** **** {paymentMethod.card.last4}</PaymentMethodText>
+                    <DeleteButtonContainer>
+                      {
+                        deleteStatus ? <Loading /> : <DeleteButton onClick={() => deletePaymentMethod(paymentMethod)} status={deleteStatus}>
+                          <Icon src={trashIcon} height={"14px"} />
+                        </DeleteButton>
+                      }
+                    </DeleteButtonContainer>
                   </Container>
                 </PaymentMethodContainer>
               )
@@ -136,15 +133,30 @@ const Container = styled.div`
   align-items: center;
 `;
 
-const ButtonContainer = styled.div`
-  width: 20%;
-  padding: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
 const PaymentMethodText = styled.span`
   font-size: 0.8em;
   margin-right: 5px;
+`;
+
+const DeleteButton = styled.div`
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 10px;
+  text-align: center;
+  border: 1px solid #ffffff55;
+  border-radius: 4px;
+  background: #ffffff11;
+  color: #ffffffdd;
+  cursor: pointer;
+  width: 120px;
+  :hover {
+    background: #ffffff22;
+  }
+`;
+
+const DeleteButtonContainer = styled.div`
+  width: 20%;
+  text-align: right;
+  margin-top: 12px;
 `;

@@ -15,10 +15,10 @@ import {
 
 import chip from "assets/computer-chip.svg";
 import job from "assets/job.png";
+import moon from "assets/moon.svg";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 
-import AsleepFooter from "./footers/AsleepFooter";
 import JobFooter from "./footers/JobFooter";
 import ServiceStatusFooter from "./footers/ServiceStatusFooter";
 import JobTabs from "./tabs/JobTabs";
@@ -113,6 +113,15 @@ const ServiceContainer: React.FC<ServiceProps> = ({
               </TagContainer>
             </>
           )}
+          {service.sleep?.value && (
+            <>
+              <Spacer inline x={1.5} />
+              <TagContainer disableAnimation>
+                <ChipIcon src={moon} alt="Moon" />
+                <TagText>Sleeping</TagText>
+              </TagContainer>
+            </>
+          )}
         </ServiceTitle>
 
         {service.canDelete && (
@@ -159,7 +168,6 @@ const ServiceContainer: React.FC<ServiceProps> = ({
           </StyledSourceBox>
         )}
       </AnimatePresence>
-      {service.sleep?.value && <AsleepFooter />}
       {!isClientJobService(service) && status && (
         <ServiceStatusFooter status={status} name={service.name.value} />
       )}
@@ -262,7 +270,9 @@ const reflectiveGleam = keyframes`
   }
 `;
 
-const TagContainer = styled.div`
+const TagContainer = styled.div<{
+  disableAnimation?: boolean;
+}>`
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
@@ -279,7 +289,8 @@ const TagContainer = styled.div`
   );
   background-size: 200% 200%;
   border-radius: 10px;
-  animation: ${reflectiveGleam} 4s infinite linear;
+  animation: ${reflectiveGleam} ${(props) =>
+    props.disableAnimation ? "" : "4s infinite"}
   border: 1px solid rgba(255, 255, 255, 0.2);
 `;
 

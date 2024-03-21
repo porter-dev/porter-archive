@@ -14,6 +14,7 @@ type ProjectList struct {
 	APITokensEnabled       bool   `json:"api_tokens_enabled"`
 	StacksEnabled          bool   `json:"stacks_enabled"`
 	CapiProvisionerEnabled bool   `json:"capi_provisioner_enabled"`
+	BillingEnabled         bool   `json:"billing_enabled"`
 	DBEnabled              bool   `json:"db_enabled"`
 	SimplifiedViewEnabled  bool   `json:"simplified_view_enabled"`
 	AzureEnabled           bool   `json:"azure_enabled"`
@@ -37,6 +38,7 @@ type Project struct {
 	AzureEnabled                    bool    `json:"azure_enabled"`
 	BetaFeaturesEnabled             bool    `json:"beta_features_enabled"`
 	CapiProvisionerEnabled          bool    `json:"capi_provisioner_enabled"`
+	BillingEnabled                  bool    `json:"billing_enabled"`
 	DBEnabled                       bool    `json:"db_enabled"`
 	EFSEnabled                      bool    `json:"efs_enabled"`
 	EnableReprovision               bool    `json:"enable_reprovision"`

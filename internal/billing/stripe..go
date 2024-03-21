@@ -89,30 +89,27 @@ func (s *StripeBillingManager) DeletePaymentMethod(paymentMethodID string) (err 
 }
 
 // TODO: remove these methods when the billing tech-debt is cleaned
+
 // CreateTeam
 func (s *StripeBillingManager) CreateTeam(user *models.User, proj *models.Project) (teamID string, err error) {
 	return fmt.Sprintf("%d", proj.ID), nil
 }
 
-// TODO: remove these methods when the billing tech-debt is cleaned
 // DeleteTeam
 func (s *StripeBillingManager) DeleteTeam(user *models.User, proj *models.Project) (err error) {
 	return nil
 }
 
-// TODO: remove these methods when the billing tech-debt is cleaned
 // GetRedirectURI
 func (s *StripeBillingManager) GetRedirectURI(user *models.User, proj *models.Project) (url string, err error) {
 	return "", nil
 }
 
-// TODO: remove these methods when the billing tech-debt is cleaned
 // ParseProjectUsageFromWebhook
 func (s *StripeBillingManager) ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, *types.FeatureFlags, error) {
 	return nil, nil, nil
 }
 
-// TODO: remove these methods when the billing tech-debt is cleaned
 // VerifySignature
 func (s *StripeBillingManager) VerifySignature(signature string, body []byte) bool {
 	return false

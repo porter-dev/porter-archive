@@ -12,10 +12,12 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
+// ListBillingHandler is a handler for listing payment methods
 type ListBillingHandler struct {
 	handlers.PorterHandlerWriter
 }
 
+// NewListBillingHandler will create a new ListBillingHandler
 func NewListBillingHandler(
 	config *config.Config,
 	writer shared.ResultWriter,

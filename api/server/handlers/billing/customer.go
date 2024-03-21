@@ -12,21 +12,24 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
-type CreateBillingCustomerIfNotExists struct {
+// CreateBillingCustomerIfNotExistsHandler will create a new handler
+// for creating customers in the billing provider
+type CreateBillingCustomerIfNotExistsHandler struct {
 	handlers.PorterHandlerReadWriter
 }
 
+// NewCreateBillingCustomerIfNotExists will create a new CreateBillingCustomerIfNotExists
 func NewCreateBillingCustomerIfNotExists(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,
 	writer shared.ResultWriter,
-) *CreateBillingCustomerIfNotExists {
-	return &CreateBillingCustomerIfNotExists{
+) *CreateBillingCustomerIfNotExistsHandler {
+	return &CreateBillingCustomerIfNotExistsHandler{
 		PorterHandlerReadWriter: handlers.NewDefaultPorterHandler(config, decoderValidator, writer),
 	}
 }
 
-func (c *CreateBillingCustomerIfNotExists) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (c *CreateBillingCustomerIfNotExistsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proj, _ := r.Context().Value(types.ProjectScope).(*models.Project)
 
 	request := &types.CreateBillingCustomerRequest{}

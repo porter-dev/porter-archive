@@ -12,10 +12,12 @@ import (
 	"github.com/porter-dev/porter/api/types"
 )
 
+// DeleteBillingHandler is a handler for deleting payment methods
 type DeleteBillingHandler struct {
 	handlers.PorterHandlerWriter
 }
 
+// NewDeleteBillingHandler will create a new DeleteBillingHandler
 func NewDeleteBillingHandler(
 	config *config.Config,
 	writer shared.ResultWriter,

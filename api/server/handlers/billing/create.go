@@ -12,10 +12,12 @@ import (
 	"github.com/porter-dev/porter/internal/models"
 )
 
+// CreateBillingHandler is a handler for creating payment methods
 type CreateBillingHandler struct {
 	handlers.PorterHandlerWriter
 }
 
+// NewCreateBillingCustomerIfNotExists will create a new CreateBillingHandler
 func NewCreateBillingHandler(
 	config *config.Config,
 	decoderValidator shared.RequestDecoderValidator,

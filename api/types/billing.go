@@ -1,15 +1,12 @@
 package types
 
-type AddProjectBillingRequest struct {
-	ProjectID uint `json:"project_id" form:"required"`
+import "github.com/stripe/stripe-go/v76"
 
-	// Monthly price, in cents
-	Price uint `json:"price" form:"required"`
-
-	Users    uint `json:"users"`
-	Clusters uint `json:"clusters"`
-	CPU      uint `json:"cpu"`
-	Memory   uint `json:"memory"`
-
-	ExistingPlanName string `json:"existing_plan_name"`
+// AddProjectBillingRequest is a request for creating a new billing customer.
+type CreateBillingCustomerRequest struct {
+	UserEmail string `json:"user_email" form:"required"`
 }
+
+// PaymentMethod is a wrapper for the Stripe type, but it may be changed to include only
+// the necessary fields.
+type PaymentMethod = *stripe.PaymentMethod

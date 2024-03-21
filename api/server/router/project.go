@@ -285,14 +285,14 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
-	// GET /api/project/{project_id}/billing/redirect -> billing.NewRedirectBillingHandler
-	redirectBillingEndpoint := factory.NewAPIEndpoint(
+	// GET /api/projects/{project_id}/billing/payment_method -> project.NewListBillingHandler
+	listBillingEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbGet,
 			Method: types.HTTPVerbGet,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: relPath + "/billing/redirect",
+				RelativePath: relPath + "/billing/payment_method",
 			},
 			Scopes: []types.PermissionScope{
 				types.UserScope,
@@ -301,65 +301,97 @@ func getProjectRoutes(
 		},
 	)
 
-	redirectBillingHandler := billing.NewRedirectBillingHandler(
+	listBillingHandler := billing.NewListBillingHandler(
 		config,
 		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: redirectBillingEndpoint,
-		Handler:  redirectBillingHandler,
+		Endpoint: listBillingEndpoint,
+		Handler:  listBillingHandler,
 		Router:   r,
 	})
 
-	// GET /api/projects/{project_id}/billing -> project.NewProjectGetBillingHandler
-	getBillingEndpoint := factory.NewAPIEndpoint(
-		&types.APIRequestMetadata{
-			Verb:   types.APIVerbGet,
-			Method: types.HTTPVerbGet,
-			Path: &types.Path{
-				Parent:       basePath,
-				RelativePath: relPath + "/billing",
-			},
-			Scopes: []types.PermissionScope{
-				types.UserScope,
-				types.ProjectScope,
-			},
-		},
-	)
-
-	getBillingHandler := project.NewProjectGetBillingHandler(
-		config,
-		factory.GetResultWriter(),
-	)
-
-	routes = append(routes, &router.Route{
-		Endpoint: getBillingEndpoint,
-		Handler:  getBillingHandler,
-		Router:   r,
-	})
-
-	// GET /api/billing_webhook -> billing.NewBillingWebhookHandler
-	getBillingWebhookEndpoint := factory.NewAPIEndpoint(
+	// POST /api/projects/{project_id}/billing/payment_method -> project.NewCreateBillingHandler
+	createBillingEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{
 			Verb:   types.APIVerbCreate,
 			Method: types.HTTPVerbPost,
 			Path: &types.Path{
 				Parent:       basePath,
-				RelativePath: "/billing_webhook",
+				RelativePath: relPath + "/billing/payment_method",
 			},
-			Scopes: []types.PermissionScope{},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
 		},
 	)
 
-	getBillingWebhookHandler := billing.NewBillingWebhookHandler(
+	createBillingHandler := billing.NewCreateBillingHandler(
 		config,
 		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
 	)
 
 	routes = append(routes, &router.Route{
-		Endpoint: getBillingWebhookEndpoint,
-		Handler:  getBillingWebhookHandler,
+		Endpoint: createBillingEndpoint,
+		Handler:  createBillingHandler,
+		Router:   r,
+	})
+
+	// DELETE /api/projects/{project_id}/billing/payment_method/{payment_method_id} -> project.NewDeleteBillingHandler
+	deleteBillingEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbDelete,
+			Method: types.HTTPVerbDelete,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/billing/payment_method/{%s}", relPath, types.URLParamPaymentMethodID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	deleteBillingHandler := billing.NewDeleteBillingHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: deleteBillingEndpoint,
+		Handler:  deleteBillingHandler,
+		Router:   r,
+	})
+
+	// POST /api/projects/{project_id}/billing/customer/ -> project.NewGetOrCreateCustomerHandler
+	getOrCreateBillingCustomerEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing/customer",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	getOrCreateBillingCustomerHandler := billing.NewCreateBillingCustomerIfNotExists(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: getOrCreateBillingCustomerEndpoint,
+		Handler:  getOrCreateBillingCustomerHandler,
 		Router:   r,
 	})
 

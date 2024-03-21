@@ -31,7 +31,7 @@ const PaymentSetupForm = ({ projectId, onCreate }: { projectId: number, onCreate
             .addPaymentMethod("<token>", {}, { project_id: projectId })
 
         // Finally, confirm with Stripe so the payment method is saved
-        const clientSecret = resp.data.clientSecret;
+        const clientSecret = resp.data;
         const { error } = await stripe.confirmSetup({
             elements,
             clientSecret,

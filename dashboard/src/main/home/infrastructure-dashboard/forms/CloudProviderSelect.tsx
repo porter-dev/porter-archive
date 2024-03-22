@@ -70,7 +70,7 @@ const CloudProviderSelect: React.FC<Props> = ({ onComplete }) => {
           Get started with the Porter sandbox environment.
         </Text>
         <Spacer y={1} />
-        <Link to="https://sandbox.porter.run">
+        <Link to="https://cloud.porter.run">
           <Button alt height="35px">
             Deploy on the Porter sandbox <Spacer inline x={1} />{" "}
             <i className="material-icons" style={{ fontSize: "18px" }}>

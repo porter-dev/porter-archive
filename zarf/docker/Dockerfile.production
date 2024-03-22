@@ -2,7 +2,7 @@ FROM node:16
 
 WORKDIR /app
 COPY dashboard .
-RUN npm i
+RUN npm i --legacy-peer-deps
 RUN npm run build
 
 # All build artifacts are built in github actions, and copied in

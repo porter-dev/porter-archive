@@ -411,22 +411,6 @@ const Home: React.FC<Props> = (props) => {
       theme={currentProject?.simplified_view_enabled ? midnight : standard}
     >
       <DeploymentTargetProvider>
-        {currentProject?.sandbox_enabled && (
-          <GlobalBanner>
-            <img src={warning} />
-            Your project is currently in Sandbox mode. Your project will be
-            deleted after one week.
-            <CTA>
-              <ShowIntercomButton
-                alt
-                message="I would like to eject to my own cloud account"
-                height="25px"
-              >
-                Request ejection
-              </ShowIntercomButton>
-            </CTA>
-          </GlobalBanner>
-        )}
         <StyledHome isHosted={currentProject?.sandbox_enabled ?? false}>
           <ModalHandler setRefreshClusters={setForceRefreshClusters} />
           {currentOverlay &&

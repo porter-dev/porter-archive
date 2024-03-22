@@ -1,23 +1,16 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 
-import { InviteType } from "shared/types";
+import Heading from "components/form-components/Heading";
+import Helper from "components/form-components/Helper";
+import Loading from "components/Loading";
+import SaveButton from "components/SaveButton";
+
 import api from "shared/api";
 import { Context } from "shared/Context";
 
-import Loading from "components/Loading";
-import InputRow from "components/form-components/InputRow";
-import Helper from "components/form-components/Helper";
-import Heading from "components/form-components/Heading";
-import CopyToClipboard from "components/CopyToClipboard";
-import { Column } from "react-table";
-import Table from "components/OldTable";
-import RadioSelector from "components/RadioSelector";
 import CreateAPITokenForm from "./api-tokens/CreateAPITokenForm";
 import TokenList from "./api-tokens/TokenList";
-import SaveButton from "components/SaveButton";
-
-type Props = {};
 
 export type APITokenMeta = {
   created_at: string;
@@ -33,11 +26,11 @@ export type APIToken = APITokenMeta & {
   token?: string;
 };
 
-const APITokensSection: React.FunctionComponent<Props> = ({}) => {
+const APITokensSection: React.FC = () => {
   const { currentProject } = useContext(Context);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [apiTokens, setAPITokens] = useState<Array<APITokenMeta>>([]);
+  const [apiTokens, setAPITokens] = useState<APITokenMeta[]>([]);
   const [shouldCreate, setShouldCreate] = useState(false);
   const [expanded, setExpanded] = useState("");
 
@@ -64,8 +57,12 @@ const APITokensSection: React.FunctionComponent<Props> = ({}) => {
   if (shouldCreate) {
     return (
       <CreateAPITokenForm
-        onCreate={() => setShouldCreate(false)}
-        back={() => setShouldCreate(false)}
+        onCreate={() => {
+          setShouldCreate(false);
+        }}
+        back={() => {
+          setShouldCreate(false);
+        }}
       />
     );
   }
@@ -99,7 +96,9 @@ const APITokensSection: React.FunctionComponent<Props> = ({}) => {
         <SaveButton
           makeFlush={true}
           clearPosition={true}
-          onClick={() => setShouldCreate(true)}
+          onClick={() => {
+            setShouldCreate(true);
+          }}
         >
           <i className="material-icons">add</i>
           Create API Token

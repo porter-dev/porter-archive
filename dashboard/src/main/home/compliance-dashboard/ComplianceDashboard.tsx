@@ -44,7 +44,7 @@ const ComplianceDashboard: React.FC = () => {
         ) : currentProject?.sandbox_enabled ? (
           <DashboardPlaceholder>
             <Text size={16}>
-              Managed SOC 2 and HIPAA compliance are not available on the Porter Cloud
+              One-Click SOC 2 and HIPAA compliance are not available on the Porter Cloud
             </Text>
             <Spacer y={0.5} />
             <Text color={"helper"}>

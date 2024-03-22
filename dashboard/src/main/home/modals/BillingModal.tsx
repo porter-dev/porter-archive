@@ -39,9 +39,8 @@ const BillingModal = ({ project_id, back, onCreate }) => {
                 </BackButton>
                 <Elements stripe={stripePromise} options={options} appearance={appearance}>
                     <PaymentSetupForm
-                        project_id={project_id}
+                        projectId={project_id}
                         onCreate={onCreate}
-                        back={back}
                     >
                     </PaymentSetupForm>
                 </Elements>

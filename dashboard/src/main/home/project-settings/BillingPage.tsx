@@ -1,53 +1,36 @@
-import React, { useContext, useEffect, useState } from "react";
-import api from "shared/api";
-import Heading from "components/form-components/Heading";
-import Helper from "components/form-components/Helper";
-import SaveButton from "components/SaveButton";
+import React, { useContext, useState } from "react";
 import styled from "styled-components";
+
+import Heading from "components/form-components/Heading";
+import Loading from "components/Loading";
 import Icon from "components/porter/Icon";
-import trashIcon from "assets/trash.png"
-import cardIcon from "assets/credit-card.svg"
+import Text from "components/porter/Text";
+import SaveButton from "components/SaveButton";
+import {
+  useDeletePaymentMethod,
+  usePaymentMethodList,
+} from "lib/hooks/useStripe";
 
 import { Context } from "shared/Context";
+import cardIcon from "assets/credit-card.svg";
+import trashIcon from "assets/trash.png";
+
 import BillingModal from "../modals/BillingModal";
-import Error from "components/porter/Error";
-import Loading from "components/Loading";
 
 function BillingPage() {
-  const { user, currentProject } = useContext(Context);
-
-  const [paymentMethods, setPaymentMethods] = useState([]);
+  const { currentProject } = useContext(Context);
   const [shouldCreate, setShouldCreate] = useState(false);
-  const [deleteStatus, setDeleteStatus] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      await api.checkBillingCustomerExists("<token>", { user_email: user?.email }, { project_id: currentProject?.id })
-      const listResponse = await api.listPaymentMethod("<token>", {}, { project_id: currentProject?.id })
-      const paymentMethodList = listResponse.data === null ? [] : listResponse.data
-      setPaymentMethods(paymentMethodList)
-    })();
-  }, []);
+  const { paymentMethods } = usePaymentMethodList();
+  const { deletePaymentMethod, isDeleting } = useDeletePaymentMethod();
 
   const onCreate = async () => {
-    // Refetch the payment method list since Stripe won't return the newly
-    // created payment method
-    const listResponse = await api.listPaymentMethod("<token>", {}, { project_id: currentProject?.id })
-    const paymentMethodList = listResponse.data === null ? [] : listResponse.data
-    setPaymentMethods(paymentMethodList)
-    setShouldCreate(false)
-  }
+    setShouldCreate(false);
+  };
 
-  const deletePaymentMethod = async (paymentMethod) => {
-    setDeleteStatus(true)
-    const resp = await api.deletePaymentMethod("<token>", {}, { project_id: currentProject?.id, payment_method_id: paymentMethod.id })
-    if (resp.status !== 200) {
-      return <Error message="failed to delete payment method" />
-    }
-
-    setDeleteStatus(false)
-    setPaymentMethods(paymentMethods.filter(elem => elem !== paymentMethod))
-  }
+  const onDelete = async (paymentMethodId: string) => {
+    deletePaymentMethod(paymentMethodId);
+  };
 
   if (shouldCreate) {
     return (
@@ -63,29 +46,30 @@ function BillingPage() {
     <div style={{ height: "1000px" }}>
       <BillingModalWrapper>
         <Heading isAtTop={true}>Payment methods</Heading>
-        <Helper>
-          This displays all configured payment methods
-        </Helper>
+        <Text>This displays all configured payment methods</Text>
         <PaymentMethodListWrapper>
-          {
-            paymentMethods.map((paymentMethod, idx) => {
-              return (
-                <PaymentMethodContainer key={idx}>
-                  <Container>
-                    <Icon src={cardIcon} height={"14px"} />
-                    <PaymentMethodText>{paymentMethod.card.display_brand} - **** **** **** {paymentMethod.card.last4}</PaymentMethodText>
-                    <DeleteButtonContainer>
-                      {
-                        deleteStatus ? <Loading /> : <DeleteButton onClick={() => deletePaymentMethod(paymentMethod)} status={deleteStatus}>
-                          <Icon src={trashIcon} height={"14px"} />
-                        </DeleteButton>
-                      }
-                    </DeleteButtonContainer>
-                  </Container>
-                </PaymentMethodContainer>
-              )
-            })
-          }
+          {paymentMethods.map((paymentMethod, idx) => {
+            return (
+              <PaymentMethodContainer key={idx}>
+                <Container>
+                  <Icon src={cardIcon} height={"14px"} />
+                  <PaymentMethodText>
+                    {paymentMethod.display_brand} - **** **** ****{" "}
+                    {paymentMethod.last4}
+                  </PaymentMethodText>
+                  <DeleteButtonContainer>
+                    {isDeleting ? (
+                      <Loading />
+                    ) : (
+                      <DeleteButton onClick={() => onDelete(paymentMethod.id)}>
+                        <Icon src={trashIcon} height={"14px"} />
+                      </DeleteButton>
+                    )}
+                  </DeleteButtonContainer>
+                </Container>
+              </PaymentMethodContainer>
+            );
+          })}
         </PaymentMethodListWrapper>
         <SaveButtonContainer>
           <SaveButton
@@ -121,17 +105,17 @@ const SaveButtonContainer = styled.div`
 `;
 
 const PaymentMethodContainer = styled.div`
-    color: #aaaabb;
-    border-radius: 5px;
-    padding: 5px;
-    padding-left: 10px;
-    display: block;
-    width: 100%;
-    border-radius: 5px;
-    background: ${(props) => props.theme.fg};
-    border: 1px solid ${({ theme }) => theme.border};
-    margin-bottom: 10px;
-    margin-top: 5px;
+  color: #aaaabb;
+  border-radius: 5px;
+  padding: 5px;
+  padding-left: 10px;
+  display: block;
+  width: 100%;
+  border-radius: 5px;
+  background: ${(props) => props.theme.fg};
+  border: 1px solid ${({ theme }) => theme.border};
+  margin-bottom: 10px;
+  margin-top: 5px;
 `;
 
 const Container = styled.div`

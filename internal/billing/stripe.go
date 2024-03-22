@@ -41,6 +41,21 @@ func (s *StripeBillingManager) CreateCustomer(userEmail string, proj *models.Pro
 	return customerID, nil
 }
 
+// DeleteCustomer will delete the customer from the billing provider
+func (s *StripeBillingManager) DeleteCustomer(proj *models.Project) (err error) {
+	stripe.Key = s.StripeSecretKey
+
+	if proj.BillingID == "" {
+		params := &stripe.CustomerParams{}
+		_, err := customer.Del(proj.BillingID, params)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ListPaymentMethod will return all payment methods for the project
 func (s *StripeBillingManager) ListPaymentMethod(proj *models.Project) (paymentMethods []types.PaymentMethod, err error) {
 	stripe.Key = s.StripeSecretKey

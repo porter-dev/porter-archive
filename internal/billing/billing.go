@@ -11,6 +11,9 @@ type BillingManager interface {
 	// mapping with projects and billing customers, because billing and usage are set per project.
 	CreateCustomer(userEmail string, proj *models.Project) (customerID string, err error)
 
+	// DeleteCustomer will delete the customer from the billing provider
+	DeleteCustomer(proj *models.Project) (err error)
+
 	// ListPaymentMethod will return all payment methods for the project
 	ListPaymentMethod(proj *models.Project) (paymentMethods []types.PaymentMethod, err error)
 

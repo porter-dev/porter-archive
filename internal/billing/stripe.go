@@ -95,28 +95,3 @@ func (s *StripeBillingManager) DeletePaymentMethod(paymentMethodID string) (err 
 
 	return nil
 }
-
-// CreateTeam is a no-op
-func (s *StripeBillingManager) CreateTeam(user *models.User, proj *models.Project) (teamID string, err error) {
-	return fmt.Sprintf("%d", proj.ID), nil
-}
-
-// DeleteTeam is a no-op
-func (s *StripeBillingManager) DeleteTeam(user *models.User, proj *models.Project) (err error) {
-	return nil
-}
-
-// GetRedirectURI is a no-op
-func (s *StripeBillingManager) GetRedirectURI(user *models.User, proj *models.Project) (url string, err error) {
-	return "", nil
-}
-
-// ParseProjectUsageFromWebhook is a no-op
-func (s *StripeBillingManager) ParseProjectUsageFromWebhook(payload []byte) (*models.ProjectUsage, error) {
-	return nil, nil
-}
-
-// VerifySignature is a no-op
-func (s *StripeBillingManager) VerifySignature(signature string, body []byte) bool {
-	return false
-}

@@ -31,7 +31,7 @@ func NewCreateBillingCustomerIfNotExists(
 }
 
 func (c *CreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "auth-endpoint-api-token")
+	ctx, span := telemetry.NewSpan(r.Context(), "create-billing-customer-endpoint")
 	defer span.End()
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)

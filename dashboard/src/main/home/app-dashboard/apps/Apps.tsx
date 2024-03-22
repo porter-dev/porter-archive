@@ -21,6 +21,7 @@ import DeleteEnvModal from "main/home/cluster-dashboard/preview-environments/v2/
 import BillingModal from "main/home/modals/BillingModal";
 import { clientAddonFromProto, type ClientAddon } from "lib/addons";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -45,6 +46,7 @@ const Apps: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
   const { currentDeploymentTarget } = useDeploymentTarget();
+  const { hasPaymentEnabled } = checkIfProjectHasPayment();
   const history = useHistory();
 
   const [searchValue, setSearchValue] = useState("");
@@ -215,7 +217,7 @@ const Apps: React.FC = () => {
           <Spacer y={0.5} />
           <Text color={"helper"}>Get started by creating an application.</Text>
           <Spacer y={1} />
-          {currentProject?.billing_enabled ? (
+          {currentProject?.billing_enabled && !hasPaymentEnabled ? (
             <Button
               alt
               onClick={() => {
@@ -252,7 +254,6 @@ const Apps: React.FC = () => {
               onCreate={() => {
                 history.push("/apps/new/app");
               }}
-              project_id={currentProject?.id ?? -1}
             />
           )}
         </DashboardPlaceholder>

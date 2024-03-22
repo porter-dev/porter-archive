@@ -8,7 +8,10 @@ import Fieldset from "components/porter/Fieldset";
 import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { usePaymentMethods } from "lib/hooks/useStripe";
+import {
+  checkIfProjectHasPayment,
+  usePaymentMethods,
+} from "lib/hooks/useStripe";
 
 import { Context } from "shared/Context";
 import cardIcon from "assets/credit-card.svg";
@@ -17,7 +20,7 @@ import trashIcon from "assets/trash.png";
 import BillingModal from "../modals/BillingModal";
 
 function BillingPage(): JSX.Element {
-  const { currentProject, setCurrentOverlay } = useContext(Context);
+  const { setCurrentOverlay } = useContext(Context);
   const [shouldCreate, setShouldCreate] = useState(false);
   const {
     paymentMethodList,
@@ -26,20 +29,22 @@ function BillingPage(): JSX.Element {
     isDeleting,
   } = usePaymentMethods();
 
+  const { refetchPaymentEnabled } = checkIfProjectHasPayment();
+
   const onCreate = async () => {
     setShouldCreate(false);
     refetchPaymentMethods();
+    refetchPaymentEnabled();
+  };
+
+  const onDelete = async (paymentMethodId: string) => {
+    deletePaymentMethod(paymentMethodId);
+    refetchPaymentEnabled();
   };
 
   if (shouldCreate) {
     return (
-      <BillingModal
-        onCreate={onCreate}
-        back={() => {
-          setShouldCreate(false);
-        }}
-        project_id={currentProject?.id}
-      />
+      <BillingModal onCreate={onCreate} back={() => setShouldCreate(false)} />
     );
   }
 

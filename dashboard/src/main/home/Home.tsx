@@ -374,7 +374,7 @@ const Home: React.FC<Props> = (props) => {
       theme={currentProject?.simplified_view_enabled ? midnight : standard}
     >
       <DeploymentTargetProvider>
-        <StyledHome isHosted={currentProject?.sandbox_enabled ?? false}>
+        <StyledHome>
           <ModalHandler setRefreshClusters={setForceRefreshClusters} />
           {currentOverlay &&
             createPortal(
@@ -666,11 +666,11 @@ const DashboardWrapper = styled.div`
   height: fit-content;
 `;
 
-const StyledHome = styled.div<{ isHosted: boolean }>`
+const StyledHome = styled.div`
   width: 100vw;
   height: 100vh;
   position: fixed;
-  top: ${(props) => (props.isHosted ? "35px" : "0")};
+  top: 0;
   left: 0;
   margin: 0;
   user-select: none;

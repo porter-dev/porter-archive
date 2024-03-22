@@ -32,6 +32,10 @@ func (s *NoopBillingManager) CreateCustomer(userEmail string, proj *models.Proje
 	return "", nil
 }
 
+func (s *NoopBillingManager) DeleteCustomer(proj *models.Project) (err error) {
+	return nil
+}
+
 // ListPaymentMethod is a no-op
 func (s *NoopBillingManager) ListPaymentMethod(proj *models.Project) (paymentMethods []types.PaymentMethod, err error) {
 	return []types.PaymentMethod{}, nil

@@ -45,7 +45,7 @@ func (s *StripeBillingManager) CreateCustomer(userEmail string, proj *models.Pro
 func (s *StripeBillingManager) DeleteCustomer(proj *models.Project) (err error) {
 	stripe.Key = s.StripeSecretKey
 
-	if proj.BillingID == "" {
+	if proj.BillingID != "" {
 		params := &stripe.CustomerParams{}
 		_, err := customer.Del(proj.BillingID, params)
 		if err != nil {

@@ -28,6 +28,8 @@ import APITokensSection from "./APITokensSection";
 import InvitePage from "./InviteList";
 import Metadata from "./Metadata";
 import ProjectDeleteConsent from "./ProjectDeleteConsent";
+import BillingModal from "../modals/BillingModal";
+import BillingPage from "./BillingPage";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 type ValidationError = {
@@ -74,20 +76,9 @@ function ProjectSettings(props: any) {
 
     const tabOpts = [];
     tabOpts.push({ value: "manage-access", label: "Manage access" });
-    // ? Disabled for now https://discord.com/channels/542888846271184896/1059277393031856208/1059277395913351258
-    // tabOptions.push({
-    //   value: "billing",
-    //   label: "Billing",
-    // });
     tabOpts.push({ value: "metadata", label: "Metadata" });
-    if (props.isAuthorized("settings", "", ["get", "delete"])) {
-      // if (this.context?.hasBillingEnabled) {
-      //   tabOptions.push({
-      //     value: "billing",
-      //     label: "Billing",
-      //   });
-      // }
 
+    if (props.isAuthorized("settings", "", ["get", "delete"])) {
       if (currentProject?.api_tokens_enabled) {
         tabOpts.push({
           value: "api-tokens",
@@ -99,6 +90,14 @@ function ProjectSettings(props: any) {
         value: "additional-settings",
         label: "Additional settings",
       });
+
+      if (currentProject?.billing_enabled) {
+        tabOpts.push({
+          value: "billing",
+          label: "Billing",
+        });
+      }
+
     }
 
     if (!_.isEqual(tabOpts, tabOptions)) {
@@ -172,17 +171,7 @@ function ProjectSettings(props: any) {
       return <APITokensSection />;
     } else if (currentTab === "billing") {
       return (
-        <Placeholder>
-          <Helper>
-            Visit the{" "}
-            <a
-              href={`/api/projects/${context.currentProject?.id}/billing/redirect`}
-            >
-              billing portal
-            </a>{" "}
-            to view plans.
-          </Helper>
-        </Placeholder>
+        <BillingPage></BillingPage>
       );
     } else {
       return (

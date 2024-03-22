@@ -85,12 +85,12 @@ function ProjectSettings(props: any) {
         });
       }
 
-      // if (currentProject?.billing_enabled) {
-      tabOpts.push({
-        value: "billing",
-        label: "Billing",
-      });
-      // }
+      if (currentProject?.billing_enabled) {
+        tabOpts.push({
+          value: "billing",
+          label: "Billing",
+        });
+      }
 
       tabOpts.push({
         value: "additional-settings",

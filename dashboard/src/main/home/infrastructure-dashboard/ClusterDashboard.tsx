@@ -80,7 +80,7 @@ const ClusterDashboard: React.FC = () => {
           disableLineBreak
         />
         <DashboardPlaceholder>
-          <Text size={16}>Infrastructure is not enabled for sandbox users</Text>
+          <Text size={16}>Infrastructure is not enabled on the Porter Cloud</Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
             Eject to your own cloud account to enable infrastructure.

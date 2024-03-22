@@ -161,7 +161,7 @@ const AddOnDashboard: React.FC<Props> = ({
       ) : (
         currentProject?.sandbox_enabled ? (
           <DashboardPlaceholder>
-            <Text size={16}>Add-ons are not enabled for sandbox users</Text>
+            <Text size={16}>Add-ons are not enabled on the Porter Cloud</Text>
             <Spacer y={0.5} />
             <Text color={"helper"}>
               Eject to your own cloud account to enable Porter add-ons.

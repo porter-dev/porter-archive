@@ -73,6 +73,8 @@ func (s *StripeBillingManager) ListPaymentMethod(proj *models.Project) (paymentM
 			ID:           stripePaymentMethod.ID,
 			DisplayBrand: stripePaymentMethod.Card.DisplayBrand,
 			Last4:        stripePaymentMethod.Card.Last4,
+			ExpMonth:     stripePaymentMethod.Card.ExpMonth,
+			ExpYear:      stripePaymentMethod.Card.ExpYear,
 		})
 	}
 

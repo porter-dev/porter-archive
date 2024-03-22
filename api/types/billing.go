@@ -11,4 +11,6 @@ type PaymentMethod = struct {
 	ID           string `json:"id"`
 	DisplayBrand string `json:"display_brand"`
 	Last4        string `json:"last4"`
+	ExpMonth     int64  `json:"exp_month"`
+	ExpYear      int64  `json:"exp_year"`
 }

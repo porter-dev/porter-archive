@@ -85,18 +85,17 @@ function ProjectSettings(props: any) {
         });
       }
 
-      tabOpts.push({
-        value: "additional-settings",
-        label: "Additional settings",
-      });
-
-      console.log("is billing enabled?", currentProject?.billing_enabled);
       // if (currentProject?.billing_enabled) {
       tabOpts.push({
         value: "billing",
         label: "Billing",
       });
       // }
+
+      tabOpts.push({
+        value: "additional-settings",
+        label: "Additional settings",
+      });
     }
 
     if (!_.isEqual(tabOpts, tabOptions)) {

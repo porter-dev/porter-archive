@@ -50,9 +50,7 @@ export const usePaymentMethods = (): TUsePaymentMethod => {
         { project_id: currentProject?.id }
       );
 
-      const data = await z
-        .array(PaymentMethodValidator)
-        .parseAsync(listResponse.data);
+      const data = PaymentMethodValidator.array().parse(listResponse.data);
       setPaymentMethodList(data);
 
       return data;

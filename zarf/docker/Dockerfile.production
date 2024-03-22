@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:16 as nodebuild
 
 WORKDIR /app
 COPY dashboard .
@@ -13,5 +13,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 WORKDIR /porter
 COPY bin/app /porter/
 COPY bin/migrate /porter/
-COPY build/ /porter/static
+# COPY build/ /porter/static
+COPY --from=nodebuild /app/dashboard/build/ /porter/static
 RUN chmod +x /porter/app /porter/migrate

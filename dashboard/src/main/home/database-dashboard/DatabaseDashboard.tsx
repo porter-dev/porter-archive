@@ -94,13 +94,11 @@ const DatabaseDashboard: React.FC = () => {
             datastores.
           </Text>
           <Spacer y={1} />
-          <ShowIntercomButton
-            alt
-            message="I would like to eject to my own cloud account"
-            height="35px"
-          >
-            Request ejection
-          </ShowIntercomButton>
+          <PorterLink to="https://docs.porter.run/other/eject" target="_blank">
+            <Button alt height="35px">
+             Eject to AWS, Azure, or GCP.
+            </Button>
+          </PorterLink>
         </DashboardPlaceholder>
       );
     }

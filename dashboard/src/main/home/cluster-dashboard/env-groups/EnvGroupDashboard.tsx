@@ -1,25 +1,26 @@
 import React, { Component, useContext, useEffect, useState } from "react";
+import { withRouter, type RouteComponentProps } from "react-router";
 import styled from "styled-components";
 
-import sliders from "assets/env-groups.svg";
+import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import PorterButton from "components/porter/Button";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import PorterLink from "components/porter/Link";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Context } from "shared/Context";
-import { ClusterType } from "shared/types";
+import { getQueryParam, pushFiltered, pushQueryParams } from "shared/routing";
+import { type ClusterType } from "shared/types";
+import sliders from "assets/env-groups.svg";
 
 import DashboardHeader from "../DashboardHeader";
 import { NamespaceSelector } from "../NamespaceSelector";
 import SortSelector from "../SortSelector";
-import EnvGroupList from "./EnvGroupList";
 import CreateEnvGroup from "./CreateEnvGroup";
+import EnvGroupList from "./EnvGroupList";
 import ExpandedEnvGroup from "./ExpandedEnvGroup";
-import { RouteComponentProps, withRouter } from "react-router";
-import { getQueryParam, pushQueryParams, pushFiltered } from "shared/routing";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
-import Spacer from "components/porter/Spacer";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Text from "components/porter/Text";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
 
 type PropsType = RouteComponentProps &
   WithAuthProps & {
@@ -52,7 +53,9 @@ const EnvGroupDashboard = (props: PropsType) => {
   const setNamespace = (namespace: string) => {
     setState((state) => ({ ...state, namespace }));
     pushQueryParams(props, {
-      namespace: currentProject.simplified_view_enabled ? ("porter-env-group") : (namespace ?? "ALL"),
+      namespace: currentProject.simplified_view_enabled
+        ? "porter-env-group"
+        : namespace ?? "ALL",
     });
   };
 
@@ -83,31 +86,32 @@ const EnvGroupDashboard = (props: PropsType) => {
 
   const renderBody = () => {
     if (props.currentCluster.status === "UPDATING_UNAVAILABLE") {
-      return <ClusterProvisioningPlaceholder />
+      return <ClusterProvisioningPlaceholder />;
     }
 
     if (currentProject?.sandbox_enabled) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>Environment groups are not enabled for sandbox users</Text>
+          <Text size={16}>
+            Environment groups are not enabled for sandbox users
+          </Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
             Eject to your own cloud account to enable environment groups.
           </Text>
           <Spacer y={1} />
-          <ShowIntercomButton
-            alt
-            message="I would like to eject to my own cloud account"
-            height="35px"
-          >
-            Request ejection
-          </ShowIntercomButton>
+          <PorterLink to="https://docs.porter.run/other/eject">
+            <PorterButton alt height="35px">
+              Request ejection
+            </PorterButton>
+          </PorterLink>
         </DashboardPlaceholder>
       );
     }
 
-    const goBack = () =>
+    const goBack = () => {
       setState((state) => ({ ...state, createEnvMode: false }));
+    };
 
     if (state.createEnvMode) {
       return (
@@ -129,10 +133,16 @@ const EnvGroupDashboard = (props: PropsType) => {
                 sortType={state.sortType}
               />
               <Spacer inline width="10px" />
-              {!currentProject.simplified_view_enabled && <NamespaceSelector
-                setNamespace={setNamespace}
-                namespace={currentProject.simplified_view_enabled ? "porter-env-group" : state.namespace}
-              />}
+              {!currentProject.simplified_view_enabled && (
+                <NamespaceSelector
+                  setNamespace={setNamespace}
+                  namespace={
+                    currentProject.simplified_view_enabled
+                      ? "porter-env-group"
+                      : state.namespace
+                  }
+                />
+              )}
             </SortFilterWrapper>
             <Flex>
               {isAuthorizedToAdd && (
@@ -145,7 +155,11 @@ const EnvGroupDashboard = (props: PropsType) => {
 
           <EnvGroupList
             currentCluster={props.currentCluster}
-            namespace={currentProject?.simplified_view_enabled ? "porter-env-group" : state.namespace}
+            namespace={
+              currentProject?.simplified_view_enabled
+                ? "porter-env-group"
+                : state.namespace
+            }
             sortType={state.sortType}
             setExpandedEnvGroup={setExpandedEnvGroup}
           />
@@ -159,10 +173,16 @@ const EnvGroupDashboard = (props: PropsType) => {
       return (
         <ExpandedEnvGroup
           isAuthorized={props.isAuthorized}
-          namespace={currentProject?.simplified_view_enabled ? "porter-env-group" : (state.expandedEnvGroup?.namespace || state.namespace)}
+          namespace={
+            currentProject?.simplified_view_enabled
+              ? "porter-env-group"
+              : state.expandedEnvGroup?.namespace || state.namespace
+          }
           currentCluster={props.currentCluster}
           envGroup={state.expandedEnvGroup}
-          closeExpanded={() => closeExpanded()}
+          closeExpanded={() => {
+            closeExpanded();
+          }}
         />
       );
     } else {
@@ -237,7 +257,7 @@ const Button = styled.div`
     props.disabled ? "#aaaabbee" : "#616FEEcc"};
   :hover {
     background: ${(props: { disabled?: boolean }) =>
-    props.disabled ? "" : "#505edddd"};
+      props.disabled ? "" : "#505edddd"};
   }
 
   > i {

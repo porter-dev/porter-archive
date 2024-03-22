@@ -90,8 +90,7 @@ function ProjectSettings(props: any) {
         label: "Additional settings",
       });
 
-      console.log(currentProject);
-      console.log(currentProject?.billing_enabled);
+      console.log("is billing enabled?", currentProject?.billing_enabled);
       if (currentProject?.billing_enabled) {
         tabOpts.push({
           value: "billing",

@@ -8,14 +8,16 @@ import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { usePublishableKey } from "lib/hooks/useStripe";
 
 import backArrow from "assets/back_arrow.png";
 
 import PaymentSetupForm from "./PaymentSetupForm";
 
-const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY || "");
-
 const BillingModal = ({ back, onCreate }) => {
+  const { publishableKey } = usePublishableKey();
+  const stripePromise = loadStripe(publishableKey);
+
   const appearance = {
     variables: {
       colorPrimary: "#aaaabb",

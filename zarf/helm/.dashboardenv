@@ -19,6 +19,3 @@ API_SERVER=http://localhost:8080
 # TRUST_ARN is used with the cloudformation pack, to allow supporting multiple AWS accounts as management accounts. Change MY_AWS_DEV_ACCOUNT_ID to your AWS developer account ID
 
 TRUST_ARN=arn:aws:iam::MY_AWS_DEV_ACCOUNT_ID:role/CAPIManagement
-
-# STRIPE_PUBLISHABLE_KEY is used to create Stripe Web Elements
-STRIPE_PUBLISHABLE_KEY=

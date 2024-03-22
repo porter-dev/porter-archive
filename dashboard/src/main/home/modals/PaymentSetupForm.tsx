@@ -36,7 +36,6 @@ const PaymentSetupForm = ({ onCreate }: { onCreate: () => void }) => {
 
     // Create the setup intent in the server
     const clientSecret = await createPaymentMethod();
-    console.log(clientSecret);
 
     // Finally, confirm with Stripe so the payment method is saved
     const { error } = await stripe.confirmSetup({

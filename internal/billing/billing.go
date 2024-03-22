@@ -25,6 +25,9 @@ type BillingManager interface {
 
 	// DeletePaymentMethod will remove a payment method for the project in Stripe
 	DeletePaymentMethod(paymentMethodID string) (err error)
+
+	// GetPublishableKey returns the key used to render frontend components for the billing manager
+	GetPublishableKey() (key string)
 }
 
 // NoopBillingManager performs no billing operations
@@ -58,4 +61,9 @@ func (s *NoopBillingManager) CreatePaymentMethod(proj *models.Project) (clientSe
 // DeletePaymentMethod is a no-op
 func (s *NoopBillingManager) DeletePaymentMethod(paymentMethodID string) (err error) {
 	return nil
+}
+
+// GetPublishableKey is a no-op
+func (s *NoopBillingManager) GetPublishableKey() (key string) {
+	return ""
 }

@@ -555,6 +555,7 @@ export const createContractResponseValidator = z.object({
 });
 export type ClientPreflightCheck = {
   title: string;
+  name: PreflightCheckKey;
   status: "pending" | "success" | "failure";
   error?: {
     detail: string;

@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useMemo } from "react";
+import DiffViewer, { DiffMethod } from "react-diff-viewer";
 import styled from "styled-components";
-import { match } from "ts-pattern";
+import { match, P } from "ts-pattern";
 
 import Loading from "components/Loading";
 import Button from "components/porter/Button";
-import Container from "components/porter/Container";
 import { Error as ErrorComponent } from "components/porter/Error";
 import Expandable from "components/porter/Expandable";
+import Icon from "components/porter/Icon";
 import Modal from "components/porter/Modal";
 import PorterOperatorComponent from "components/porter/PorterOperatorComponent";
 import ShowIntercomButton from "components/porter/ShowIntercomButton";
@@ -14,12 +15,18 @@ import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
 import { type ClientPreflightCheck } from "lib/clusters/types";
+import {
+  checksWithSuggestedChanges,
+  type ClientPreflightCheckWithSuggestedChanges,
+} from "lib/hooks/useCluster";
+
+import file_diff from "assets/file-diff.svg";
 
 import { useClusterFormContext } from "../ClusterFormContextProvider";
 import ResolutionStepsModalContents from "./help/preflight/ResolutionStepsModalContents";
 
 type ItemProps = {
-  preflightCheck: ClientPreflightCheck;
+  preflightCheck: ClientPreflightCheckWithSuggestedChanges;
   preExpanded?: boolean;
 };
 export const CheckItem: React.FC<ItemProps> = ({
@@ -33,12 +40,9 @@ export const CheckItem: React.FC<ItemProps> = ({
           .with("pending", () => (
             <Loading offset="0px" width="20px" height="20px" />
           ))
-          .otherwise((status) =>
-            match(status)
-              .with("success", () => <StatusDot status="available" />)
-              .with("failure", () => <StatusDot status="failing" />)
-              .exhaustive()
-          )}
+          .with("success", () => <StatusDot status="available" />)
+          .with("failure", () => <StatusDot status="failing" />)
+          .exhaustive()}
         <Spacer inline x={1} />
         <Text style={{ flex: 1 }}>{preflightCheck.title}</Text>
         {preflightCheck?.error?.metadata?.quotaName && (
@@ -57,22 +61,47 @@ export const CheckItem: React.FC<ItemProps> = ({
   return (
     <Expandable preExpanded={preExpanded} header={renderHeader()}>
       <div>
-        <ErrorComponent
-          message={preflightCheck.error.detail}
-          ctaText={
-            preflightCheck.error.resolution
-              ? "Troubleshooting steps"
-              : undefined
-          }
-          metadata={preflightCheck.error.metadata}
-          errorModalContents={
-            preflightCheck.error.resolution ? (
-              <ResolutionStepsModalContents
-                resolution={preflightCheck.error.resolution}
+        {match(preflightCheck)
+          .with({ suggestedChanges: P.nullish }, () => (
+            <ErrorComponent
+              message={preflightCheck.error?.detail || ""}
+              ctaText={
+                preflightCheck.error?.resolution
+                  ? "Troubleshooting steps"
+                  : undefined
+              }
+              metadata={preflightCheck.error?.metadata}
+              errorModalContents={
+                preflightCheck.error?.resolution ? (
+                  <ResolutionStepsModalContents
+                    resolution={preflightCheck.error.resolution}
+                  />
+                ) : undefined
+              }
+            />
+          ))
+          .with({ suggestedChanges: P._ }, (check) => (
+            <RevisionDiffContainer>
+              <DiffViewer
+                leftTitle={"Current"}
+                rightTitle={"Suggested"}
+                oldValue={check.suggestedChanges?.original}
+                newValue={check.suggestedChanges?.suggested}
+                splitView={true}
+                hideLineNumbers
+                useDarkTheme
+                compareMethod={DiffMethod.TRIMMED_LINES}
+                styles={{
+                  variables: {
+                    dark: {
+                      diffViewerTitleColor: "fff",
+                    },
+                  },
+                }}
               />
-            ) : undefined
-          }
-        />
+            </RevisionDiffContainer>
+          ))
+          .exhaustive()}
         <Spacer y={0.5} />
       </div>
     </Expandable>
@@ -87,7 +116,23 @@ const PreflightChecksModal: React.FC<Props> = ({
   onClose,
   preflightChecks,
 }) => {
-  const { submitSkippingPreflightChecks } = useClusterFormContext();
+  const { submitSkippingPreflightChecks, submitAndPatchCheckSuggestions } =
+    useClusterFormContext();
+
+  const checksWithSuggestions = useMemo(() => {
+    return checksWithSuggestedChanges({ preflightChecks });
+  }, [preflightChecks]);
+
+  const allHaveSuggestions = checksWithSuggestions.every(
+    (check) => !!check.suggestedChanges
+  );
+
+  const acceptChanges = async (): Promise<void> => {
+    void submitAndPatchCheckSuggestions({
+      preflightChecks: checksWithSuggestions,
+    });
+    onClose();
+  };
 
   return (
     <Modal width="600px" closeModal={onClose}>
@@ -99,9 +144,19 @@ const PreflightChecksModal: React.FC<Props> = ({
           and/or resources to provision with Porter. Please resolve the
           following issues or change your cluster configuration and try again.
         </Text>
+        <PorterOperatorComponent>
+          <Button
+            onClick={async () => {
+              await submitSkippingPreflightChecks();
+            }}
+            color="red"
+          >
+            Skip preflight checks
+          </Button>
+        </PorterOperatorComponent>
         <Spacer y={1} />
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          {preflightChecks.map((pfc, idx) => (
+          {checksWithSuggestions.map((pfc, idx) => (
             <CheckItem
               preflightCheck={pfc}
               key={pfc.title}
@@ -110,23 +165,25 @@ const PreflightChecksModal: React.FC<Props> = ({
           ))}
         </div>
         <Spacer y={1} />
-        <Container row spaced>
-          <ShowIntercomButton
-            message={"I need help resolving cluster preflight checks."}
-          >
-            Talk to support
-          </ShowIntercomButton>
-          <PorterOperatorComponent>
+        <ButtonContainer>
+          {allHaveSuggestions ? (
             <Button
               onClick={async () => {
-                await submitSkippingPreflightChecks();
+                await acceptChanges();
               }}
-              color="red"
             >
-              Skip preflight checks
+              <Icon src={file_diff} height={"15px"} />
+              <Spacer inline x={0.5} />
+              Accept & Retry
             </Button>
-          </PorterOperatorComponent>
-        </Container>
+          ) : (
+            <ShowIntercomButton
+              message={"I need help resolving cluster preflight checks."}
+            >
+              Talk to support
+            </ShowIntercomButton>
+          )}
+        </ButtonContainer>
       </AppearingDiv>
     </Modal>
   );
@@ -160,4 +217,16 @@ const CheckItemTop = styled.div`
   align-items: center;
   padding: 10px;
   background: ${(props) => props.theme.clickable.bg};
+`;
+
+const RevisionDiffContainer = styled.div`
+  max-height: 400px;
+  overflow-y: auto;
+  border-radius: 8px;
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  column-gap: 0.5rem;
 `;

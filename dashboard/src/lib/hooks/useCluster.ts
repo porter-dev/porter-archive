@@ -420,6 +420,7 @@ export const useUpdateCluster = ({
                 return {
                   title: "Unknown preflight check",
                   status: "failure" as const,
+                  name: "UNKNOWN" as const,
                   error: {
                     detail:
                       "Your cloud provider returned an unknown error. Please reach out to Porter support.",
@@ -430,6 +431,7 @@ export const useUpdateCluster = ({
               return {
                 title: preflightCheckMatch.displayName,
                 status: "failure" as const,
+                name: preflightCheckMatch.name,
                 error: {
                   detail: e.error.message,
                   metadata: e.error.metadata,
@@ -569,6 +571,103 @@ export const useClusterNodeList = ({
     nodes: clusterNodesReq.data ?? [],
     isLoading: clusterNodesReq.isLoading,
   };
+};
+
+type TPreflightCheckFixSuggestion = {
+  original: string;
+  suggested: string;
+};
+
+export const uniqueCidrMetadataValidator = z.object({
+  "overlapping-service-cidr": z.string(),
+  "overlapping-vpc-cidr": z.string(),
+  "suggested-service-cidr": z.string(),
+  "suggested-vpc-cidr": z.string(),
+});
+const unavailableCidrMetadataValidator = z.object({
+  "Conflicting CIDR range in this region": z.string(),
+});
+
+export type ClientPreflightCheckWithSuggestedChanges = ClientPreflightCheck & {
+  suggestedChanges?: TPreflightCheckFixSuggestion;
+};
+
+export const checksWithSuggestedChanges = ({
+  preflightChecks,
+}: {
+  preflightChecks: ClientPreflightCheck[];
+}): ClientPreflightCheckWithSuggestedChanges[] => {
+  return preflightChecks.map((c) =>
+    match(c.name)
+      .with("enforceCidrUniqueness", () => {
+        const parsed = uniqueCidrMetadataValidator.safeParse(
+          c.error?.metadata || {}
+        );
+        if (!parsed.success) {
+          return c;
+        }
+        const suggestion = {
+          original: `Service CIDR:\n${parsed.data["overlapping-service-cidr"]}\n\nVPC CIDR:\n${parsed.data["overlapping-vpc-cidr"]}`,
+          suggested: `Service CIDR:\n${parsed.data["suggested-service-cidr"]}\n\nVPC CIDR:\n${parsed.data["suggested-vpc-cidr"]}`,
+        };
+
+        return {
+          ...c,
+          suggestedChanges: suggestion,
+        };
+      })
+      .with("cidrAvailability", () => {
+        const cidrUniquenessCheck = preflightChecks.find(
+          (c) => c.name === "enforceCidrUniqueness"
+        );
+        if (!cidrUniquenessCheck) {
+          return c;
+        }
+
+        const uniqueCidrParsedMetadata = uniqueCidrMetadataValidator.safeParse(
+          cidrUniquenessCheck.error?.metadata || {}
+        );
+        const unavailableCidrParsedMetadata =
+          unavailableCidrMetadataValidator.safeParse(c.error?.metadata || {});
+        if (
+          !uniqueCidrParsedMetadata.success ||
+          !unavailableCidrParsedMetadata.success
+        ) {
+          return c;
+        }
+
+        const unavailableCidr =
+          unavailableCidrParsedMetadata.data[
+            "Conflicting CIDR range in this region"
+          ];
+        if (
+          unavailableCidr ===
+          uniqueCidrParsedMetadata.data["overlapping-service-cidr"]
+        ) {
+          return {
+            ...c,
+            suggestedChanges: {
+              original: `CIDR:\n${unavailableCidr}`,
+              suggested: `CIDR:\n${uniqueCidrParsedMetadata.data["suggested-service-cidr"]}`,
+            },
+          };
+        } else if (
+          unavailableCidr ===
+          uniqueCidrParsedMetadata.data["overlapping-vpc-cidr"]
+        ) {
+          return {
+            ...c,
+            suggestedChanges: {
+              original: `CIDR:\n${unavailableCidr}`,
+              suggested: `CIDR:\n${uniqueCidrParsedMetadata.data["suggested-vpc-cidr"]}`,
+            },
+          };
+        }
+
+        return c;
+      })
+      .otherwise(() => c)
+  );
 };
 
 const preflightCheckErrorReplacements = {

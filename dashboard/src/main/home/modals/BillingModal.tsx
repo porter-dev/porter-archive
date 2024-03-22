@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useState } from "react";
+import React from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import styled from "styled-components";
@@ -12,8 +12,6 @@ import PaymentSetupForm from "./PaymentSetupForm";
 const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY || "");
 
 const BillingModal = ({ project_id, back, onCreate }) => {
-  const { setCurrentModal } = useContext(Context);
-
   const appearance = {
     variables: {
       colorPrimary: "#aaaabb",

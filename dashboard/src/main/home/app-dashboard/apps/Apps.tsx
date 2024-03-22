@@ -18,6 +18,7 @@ import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import DeleteEnvModal from "main/home/cluster-dashboard/preview-environments/v2/DeleteEnvModal";
+import BillingModal from "main/home/modals/BillingModal";
 import { clientAddonFromProto, type ClientAddon } from "lib/addons";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 
@@ -246,7 +247,13 @@ const Apps: React.FC = () => {
             </PorterLink>
           )}
           {showBillingModal && (
-            <Modal closeModal={() => setShowBillingModal(false)}>hello</Modal>
+            <BillingModal
+              back={() => setShowBillingModal(false)}
+              onCreate={() => {
+                history.push("/apps/new/app");
+              }}
+              project_id={currentProject?.id ?? -1}
+            />
           )}
         </DashboardPlaceholder>
       );

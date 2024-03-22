@@ -6,7 +6,9 @@ import {
 } from "@stripe/react-stripe-js";
 import styled from "styled-components";
 
+import Button from "components/porter/Button";
 import Error from "components/porter/Error";
+import Spacer from "components/porter/Spacer";
 import SaveButton from "components/SaveButton";
 import { useCreatePaymentMethod } from "lib/hooks/useStripe";
 
@@ -39,6 +41,7 @@ const PaymentSetupForm = ({
 
     // Create the setup intent in the server
     const clientSecret = await createPaymentMethod();
+    console.log(clientSecret);
 
     // Finally, confirm with Stripe so the payment method is saved
     const { error } = await stripe.confirmSetup({
@@ -57,12 +60,10 @@ const PaymentSetupForm = ({
   return (
     <form>
       <PaymentElement />
-      <SubmitButton
-        className="submit-button"
-        text={"Add Payment Method"}
-        disabled={!stripe || loading}
-        onClick={handleSubmit}
-      ></SubmitButton>
+      <Spacer y={1} />
+      <Button disabled={!stripe || loading} onClick={handleSubmit}>
+        Add payment method
+      </Button>
       {errorMessage && <Error message={errorMessage}></Error>}
     </form>
   );

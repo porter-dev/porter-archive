@@ -66,6 +66,7 @@ type Project struct {
 // retrieve feature flags from the `GET /projects/{project_id}` response instead
 type FeatureFlags struct {
 	AzureEnabled                    bool   `json:"azure_enabled,omitempty"`
+	BillingEnabled 									bool   `json:"billing_enabled,omitempty"`
 	CapiProvisionerEnabled          string `json:"capi_provisioner_enabled,omitempty"`
 	EnableReprovision               bool   `json:"enable_reprovision,omitempty"`
 	FullAddOns                      bool   `json:"full_add_ons,omitempty"`

@@ -338,6 +338,7 @@ func (p *Project) ToProjectListType() *types.ProjectList {
 		// note: all of these fields should be considered deprecated
 		// in an api response
 		Roles:                  roles,
+		BillingEnabled:         p.BillingEnabled,
 		PreviewEnvsEnabled:     p.PreviewEnvsEnabled,
 		RDSDatabasesEnabled:    p.RDSDatabasesEnabled,
 		ManagedInfraEnabled:    p.ManagedInfraEnabled,

@@ -6,10 +6,7 @@ import Loading from "components/Loading";
 import Icon from "components/porter/Icon";
 import Text from "components/porter/Text";
 import SaveButton from "components/SaveButton";
-import {
-  useDeletePaymentMethod,
-  usePaymentMethodList,
-} from "lib/hooks/useStripe";
+import { usePaymentMethods } from "lib/hooks/useStripe";
 
 import { Context } from "shared/Context";
 import cardIcon from "assets/credit-card.svg";
@@ -20,12 +17,16 @@ import BillingModal from "../modals/BillingModal";
 function BillingPage() {
   const { currentProject } = useContext(Context);
   const [shouldCreate, setShouldCreate] = useState(false);
-
-  const { paymentMethods } = usePaymentMethodList();
-  const { deletePaymentMethod, isDeleting } = useDeletePaymentMethod();
+  const {
+    paymentMethodList,
+    refetchPaymentMethods,
+    deletePaymentMethod,
+    isDeleting,
+  } = usePaymentMethods();
 
   const onCreate = async () => {
     setShouldCreate(false);
+    refetchPaymentMethods();
   };
 
   const onDelete = async (paymentMethodId: string) => {
@@ -48,7 +49,7 @@ function BillingPage() {
         <Heading isAtTop={true}>Payment methods</Heading>
         <Text>This displays all configured payment methods</Text>
         <PaymentMethodListWrapper>
-          {paymentMethods.map((paymentMethod, idx) => {
+          {paymentMethodList.map((paymentMethod, idx) => {
             return (
               <PaymentMethodContainer key={idx}>
                 <Container>

@@ -91,12 +91,12 @@ function ProjectSettings(props: any) {
       });
 
       console.log("is billing enabled?", currentProject?.billing_enabled);
-      if (currentProject?.billing_enabled) {
-        tabOpts.push({
-          value: "billing",
-          label: "Billing",
-        });
-      }
+      // if (currentProject?.billing_enabled) {
+      tabOpts.push({
+        value: "billing",
+        label: "Billing",
+      });
+      // }
     }
 
     if (!_.isEqual(tabOpts, tabOptions)) {

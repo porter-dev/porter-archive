@@ -1,56 +1,74 @@
-import React, { Component, useState, useEffect } from "react";
-import { loadStripe } from '@stripe/stripe-js';
+import React, { Component, useEffect, useState } from "react";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import styled from "styled-components";
-import {
-    Elements,
-} from '@stripe/react-stripe-js';
-import PaymentSetupForm from "./PaymentSetupForm";
+
+import Heading from "components/form-components/Heading";
+
 import backArrow from "assets/back_arrow.png";
 
-const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY || "")
+import PaymentSetupForm from "./PaymentSetupForm";
+
+const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY || "");
 
 const BillingModal = ({ project_id, back, onCreate }) => {
-    const appearance = {
-        variables: {
-            colorPrimary: '#aaaabb',
-            colorBackground: "#27292e",
-            colorText: "#fefefe",
-            fontFamily: "Work Sans",
-        }
-    }
-    const options = {
-        mode: 'setup',
-        currency: 'usd',
-        setupFutureUsage: 'off_session',
-        paymentMethodTypes: ['card'],
-        appearance,
-        fonts: [
-            {
-                cssSrc: 'https://fonts.googleapis.com/css?family=Work+Sans'
-            }
-        ]
-    };
+  const { setCurrentModal } = useContext(Context);
 
-    return (
-        <>
-            <div id="checkout">
-                <BackButton onClick={back}>
-                    <BackButtonImg src={backArrow} />
-                </BackButton>
-                <Elements stripe={stripePromise} options={options} appearance={appearance}>
-                    <PaymentSetupForm
-                        projectId={project_id}
-                        onCreate={onCreate}
-                    >
-                    </PaymentSetupForm>
-                </Elements>
-            </div>
-        </>
+  const appearance = {
+    variables: {
+      colorPrimary: "#aaaabb",
+      colorBackground: "#27292e",
+      colorText: "#fefefe",
+      fontFamily: "Work Sans",
+    },
+  };
+  const options = {
+    mode: "setup",
+    currency: "usd",
+    setupFutureUsage: "off_session",
+    paymentMethodTypes: ["card"],
+    appearance,
+    fonts: [
+      {
+        cssSrc: "https://fonts.googleapis.com/css?family=Work+Sans",
+      },
+    ],
+  };
 
-    );
-}
+  return (
+    <>
+      <div id="checkout">
+        <ControlRow>
+          <Heading isAtTop={true}>Add Payment Method</Heading>
+          <BackButton onClick={back}>
+            <BackButtonImg src={backArrow} />
+          </BackButton>
+        </ControlRow>
+        <Elements
+          stripe={stripePromise}
+          options={options}
+          appearance={appearance}
+        >
+          <PaymentSetupForm
+            projectId={project_id}
+            onCreate={onCreate}
+          ></PaymentSetupForm>
+        </Elements>
+      </div>
+    </>
+  );
+};
 
 export default BillingModal;
+
+const ControlRow = styled.div`
+  width: 100%;
+  display: flex;
+  margin-left: auto;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+`;
 
 const BackButton = styled.div`
   display: flex;

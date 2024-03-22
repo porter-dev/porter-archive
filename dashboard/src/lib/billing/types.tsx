@@ -8,6 +8,8 @@ export const PaymentMethodValidator = z.object({
   display_brand: z.string(),
   id: z.string(),
   last4: z.string(),
+  exp_month: z.number(),
+  exp_year: z.number(),
 });
 
 export const ClientSecretResponse = z.string();

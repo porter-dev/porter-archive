@@ -13,9 +13,11 @@ import cardIcon from "assets/credit-card.svg";
 import trashIcon from "assets/trash.png";
 
 import BillingModal from "../modals/BillingModal";
+import BillingDeleteConsent from "./BillingDeleteConsent";
 
 function BillingPage() {
   const { currentProject } = useContext(Context);
+  const [showBillingDeleteModal, setShowBillingDeleteModal] = useState(false);
   const [shouldCreate, setShouldCreate] = useState(false);
   const {
     paymentMethodList,
@@ -27,10 +29,6 @@ function BillingPage() {
   const onCreate = async () => {
     setShouldCreate(false);
     refetchPaymentMethods();
-  };
-
-  const onDelete = async (paymentMethodId: string) => {
-    deletePaymentMethod(paymentMethodId);
   };
 
   if (shouldCreate) {
@@ -55,18 +53,27 @@ function BillingPage() {
                 <Container>
                   <Icon src={cardIcon} height={"14px"} />
                   <PaymentMethodText>
-                    {paymentMethod.display_brand} - **** **** ****{" "}
-                    {paymentMethod.last4}
+                    **** **** **** {paymentMethod.last4}
                   </PaymentMethodText>
+                  <ExpirationText>
+                    Expires: {paymentMethod.exp_month}/{paymentMethod.exp_year}
+                  </ExpirationText>
                   <DeleteButtonContainer>
                     {isDeleting ? (
                       <Loading />
                     ) : (
-                      <DeleteButton onClick={() => onDelete(paymentMethod.id)}>
+                      <DeleteButton
+                        onClick={() => setShowBillingDeleteModal(true)}
+                      >
                         <Icon src={trashIcon} height={"14px"} />
                       </DeleteButton>
                     )}
                   </DeleteButtonContainer>
+                  <BillingDeleteConsent
+                    setShowModal={setShowBillingDeleteModal}
+                    show={showBillingDeleteModal}
+                    onDelete={() => deletePaymentMethod(paymentMethod.id)}
+                  />
                 </Container>
               </PaymentMethodContainer>
             );
@@ -108,15 +115,14 @@ const SaveButtonContainer = styled.div`
 const PaymentMethodContainer = styled.div`
   color: #aaaabb;
   border-radius: 5px;
-  padding: 5px;
-  padding-left: 10px;
+  padding: 10px;
   display: block;
   width: 100%;
   border-radius: 5px;
   background: ${(props) => props.theme.fg};
   border: 1px solid ${({ theme }) => theme.border};
   margin-bottom: 10px;
-  margin-top: 5px;
+  margin-top: 10px;
 `;
 
 const Container = styled.div`
@@ -131,25 +137,15 @@ const PaymentMethodText = styled.span`
   margin-right: 5px;
 `;
 
+const ExpirationText = styled.span`
+  font-size: 0.8em;
+  margin-right: 5px;
+`;
+
 const DeleteButton = styled.div`
-  display: inline-block;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 6px 10px;
-  text-align: center;
-  border: 1px solid #ffffff55;
-  border-radius: 4px;
-  background: #ffffff11;
-  color: #ffffffdd;
   cursor: pointer;
-  width: 120px;
-  :hover {
-    background: #ffffff22;
-  }
 `;
 
 const DeleteButtonContainer = styled.div`
-  width: 20%;
-  text-align: right;
-  margin-top: 12px;
+  text-align: center;
 `;

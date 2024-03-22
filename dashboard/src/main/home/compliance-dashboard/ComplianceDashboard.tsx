@@ -56,7 +56,7 @@ const ComplianceDashboard: React.FC = () => {
             </Text>
             <Spacer y={1} />
             <PorterLink to="https://docs.porter.run/other/eject" target="_blank">
-              <Button alt height="35px" target="_blank">
+              <Button alt height="35px">
                 Eject to AWS, Azure, or GCP.
               </Button>
             </PorterLink>

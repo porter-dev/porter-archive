@@ -35,10 +35,12 @@ func (s *NoopBillingManager) CreateCustomer(userEmail string, proj *models.Proje
 	return "", nil
 }
 
+// DeleteCustomer is a no-op
 func (s *NoopBillingManager) DeleteCustomer(proj *models.Project) (err error) {
 	return nil
 }
 
+// CheckPaymentEnabled is a  no-op
 func (s *NoopBillingManager) CheckPaymentEnabled(proj *models.Project) (paymentEnabled bool, err error) {
 	return false, nil
 }

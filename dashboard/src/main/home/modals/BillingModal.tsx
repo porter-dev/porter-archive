@@ -15,7 +15,7 @@ import PaymentSetupForm from "./PaymentSetupForm";
 
 const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY || "");
 
-const BillingModal = ({ project_id, back, onCreate }) => {
+const BillingModal = ({ back, onCreate }) => {
   const appearance = {
     variables: {
       colorPrimary: "#aaaabb",
@@ -55,10 +55,7 @@ const BillingModal = ({ project_id, back, onCreate }) => {
           options={options}
           appearance={appearance}
         >
-          <PaymentSetupForm
-            projectId={project_id}
-            onCreate={onCreate}
-          ></PaymentSetupForm>
+          <PaymentSetupForm onCreate={onCreate}></PaymentSetupForm>
         </Elements>
       </div>
     </Modal>

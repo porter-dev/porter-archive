@@ -12,12 +12,7 @@ import Spacer from "components/porter/Spacer";
 import SaveButton from "components/SaveButton";
 import { useCreatePaymentMethod } from "lib/hooks/useStripe";
 
-const PaymentSetupForm = ({
-  onCreate,
-}: {
-  projectId: number;
-  onCreate: () => void;
-}) => {
+const PaymentSetupForm = ({ onCreate }: { onCreate: () => void }) => {
   const stripe = useStripe();
   const elements = useElements();
 

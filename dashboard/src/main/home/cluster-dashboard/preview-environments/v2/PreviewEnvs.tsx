@@ -4,8 +4,10 @@ import { match } from "ts-pattern";
 
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Loading from "components/Loading";
+import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import PorterLink from "components/porter/Link";
 import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -60,13 +62,11 @@ const PreviewEnvs: React.FC = () => {
             apps immediately.
           </Text>
           <Spacer y={1} />
-          <ShowIntercomButton
-            alt
-            message="I would like to eject to my own cloud account"
-            height="35px"
-          >
-            Request ejection
-          </ShowIntercomButton>
+          <PorterLink to="https://docs.porter.run/other/eject">
+            <Button alt height="35px">
+              Request ejection
+            </Button>
+          </PorterLink>
         </DashboardPlaceholder>
       );
     }

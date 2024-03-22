@@ -2,7 +2,9 @@ import React, { useContext, useState } from "react";
 import styled from "styled-components";
 
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import Button from "components/porter/Button";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import PorterLink from "components/porter/Link";
 import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -52,13 +54,11 @@ const ComplianceDashboard: React.FC = () => {
               dashboard.
             </Text>
             <Spacer y={1} />
-            <ShowIntercomButton
-              alt
-              message="I would like to eject to my own cloud account"
-              height="35px"
-            >
-              Request ejection
-            </ShowIntercomButton>
+            <PorterLink to="https://docs.porter.run/other/eject">
+              <Button alt height="35px">
+                Request ejection
+              </Button>
+            </PorterLink>
           </DashboardPlaceholder>
         ) : !currentProject?.soc2_controls_enabled ? (
           <DashboardPlaceholder>

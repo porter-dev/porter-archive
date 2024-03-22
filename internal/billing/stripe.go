@@ -14,7 +14,8 @@ import (
 // StripeBillingManager interacts with the Stripe API to manage payment methods
 // and customers
 type StripeBillingManager struct {
-	StripeSecretKey string
+	StripeSecretKey      string
+	StripePublishableKey string
 }
 
 // CreateCustomer will create a customer in Stripe only if the project doesn't have a BillingID
@@ -124,4 +125,9 @@ func (s *StripeBillingManager) DeletePaymentMethod(paymentMethodID string) (err 
 	}
 
 	return nil
+}
+
+// GetPublishableKey is a no-op
+func (s *StripeBillingManager) GetPublishableKey() (key string) {
+	return s.StripePublishableKey
 }

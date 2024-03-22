@@ -69,9 +69,10 @@ type ServerConf struct {
 	SendgridDeleteProjectTemplateID    string `env:"SENDGRID_DELETE_PROJECT_TEMPLATE_ID"`
 	SendgridSenderEmail                string `env:"SENDGRID_SENDER_EMAIL"`
 
-	StripeSecretKey   string `env:"STRIPE_SECRET_KEY"`
-	SlackClientID     string `env:"SLACK_CLIENT_ID"`
-	SlackClientSecret string `env:"SLACK_CLIENT_SECRET"`
+	StripeSecretKey      string `env:"STRIPE_SECRET_KEY"`
+	StripePublishableKey string `env:"STRIPE_PUBLISHABLE_KEY"`
+	SlackClientID        string `env:"SLACK_CLIENT_ID"`
+	SlackClientSecret    string `env:"SLACK_CLIENT_SECRET"`
 
 	BillingPrivateKey       string `env:"BILLING_PRIVATE_KEY"`
 	BillingPrivateServerURL string `env:"BILLING_PRIVATE_URL"`

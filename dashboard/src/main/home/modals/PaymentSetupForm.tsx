@@ -1,58 +1,71 @@
-import React, { useState } from 'react';
-import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
-import api from 'shared/api';
-import SaveButton from "components/SaveButton";
+import React, { useState } from "react";
+import {
+  PaymentElement,
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
 import styled from "styled-components";
+
 import Error from "components/porter/Error";
+import SaveButton from "components/SaveButton";
+import { useCreatePaymentMethod } from "lib/hooks/useStripe";
 
-const PaymentSetupForm = ({ projectId, onCreate }: { projectId: number, onCreate: () => void, }) => {
-    const stripe = useStripe();
-    const elements = useElements();
+const PaymentSetupForm = ({
+  onCreate,
+}: {
+  projectId: number;
+  onCreate: () => void;
+}) => {
+  const stripe = useStripe();
+  const elements = useElements();
 
-    const [errorMessage, setErrorMessage] = useState(null);
-    const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const { createPaymentMethod } = useCreatePaymentMethod();
 
-    const handleSubmit = async () => {
-        if (!stripe || !elements) {
-            return;
-        }
+  const handleSubmit = async () => {
+    if (!stripe || !elements) {
+      return;
+    }
 
-        setLoading(true);
+    setLoading(true);
 
-        // Submit form before calling the server
-        const { error: submitError } = await elements.submit();
-        if (submitError) {
-            setLoading(false);
-            return;
-        }
+    // Submit form before calling the server
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+      setLoading(false);
+      return;
+    }
 
-        // Create the setup intent in the server
-        const resp = await api
-            .addPaymentMethod("<token>", {}, { project_id: projectId })
+    // Create the setup intent in the server
+    const clientSecret = await createPaymentMethod();
 
-        // Finally, confirm with Stripe so the payment method is saved
-        const clientSecret = resp.data;
-        const { error } = await stripe.confirmSetup({
-            elements,
-            clientSecret,
-            redirect: "if_required",
-        });
+    // Finally, confirm with Stripe so the payment method is saved
+    const { error } = await stripe.confirmSetup({
+      elements,
+      clientSecret,
+      redirect: "if_required",
+    });
 
-        if (error) {
-            setErrorMessage(error.message);
-        }
+    if (error) {
+      setErrorMessage(error.message);
+    }
 
-        onCreate()
-    };
+    onCreate();
+  };
 
-    return (
-        <form>
-            <PaymentElement />
-            <SubmitButton className='submit-button' text={"Add Payment Method"} disabled={!stripe || loading} onClick={handleSubmit}>
-            </SubmitButton>
-            {errorMessage && <Error message={errorMessage}></Error>}
-        </form>
-    )
+  return (
+    <form>
+      <PaymentElement />
+      <SubmitButton
+        className="submit-button"
+        text={"Add Payment Method"}
+        disabled={!stripe || loading}
+        onClick={handleSubmit}
+      ></SubmitButton>
+      {errorMessage && <Error message={errorMessage}></Error>}
+    </form>
+  );
 };
 
 export default PaymentSetupForm;

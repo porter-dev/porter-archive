@@ -22,10 +22,10 @@ type BillingManager interface {
 	CreateCustomer(userEmail string, proj *models.Project) (customerID string, err error)
 
 	// ListPaymentMethod will return all payment methods for the project
-	ListPaymentMethod(proj models.Project) (paymentMethods []types.PaymentMethod, err error)
+	ListPaymentMethod(proj *models.Project) (paymentMethods []types.PaymentMethod, err error)
 
 	// CreatePaymentMethod will add a new payment method to the project in Stripe
-	CreatePaymentMethod(proj models.Project) (clientSecret string, err error)
+	CreatePaymentMethod(proj *models.Project) (clientSecret string, err error)
 
 	// DeletePaymentMethod will remove a payment method for the project in Stripe
 	DeletePaymentMethod(paymentMethodID string) (err error)

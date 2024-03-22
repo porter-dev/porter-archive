@@ -25,11 +25,10 @@ import settingsGrad from "assets/settings-grad.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import APITokensSection from "./APITokensSection";
+import BillingPage from "./BillingPage";
 import InvitePage from "./InviteList";
 import Metadata from "./Metadata";
 import ProjectDeleteConsent from "./ProjectDeleteConsent";
-import BillingModal from "../modals/BillingModal";
-import BillingPage from "./BillingPage";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 type ValidationError = {
@@ -97,7 +96,6 @@ function ProjectSettings(props: any) {
           label: "Billing",
         });
       }
-
     }
 
     if (!_.isEqual(tabOpts, tabOptions)) {
@@ -170,9 +168,7 @@ function ProjectSettings(props: any) {
     } else if (currentTab === "api-tokens") {
       return <APITokensSection />;
     } else if (currentTab === "billing") {
-      return (
-        <BillingPage></BillingPage>
-      );
+      return <BillingPage></BillingPage>;
     } else {
       return (
         <>

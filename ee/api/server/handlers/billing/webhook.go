@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 
 	"github.com/porter-dev/porter/api/server/authz"
 	"github.com/porter-dev/porter/api/server/handlers"
@@ -48,7 +47,7 @@ func (c *BillingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	// parse usage and update project
-	newUsage, features, err := c.Config().BillingManager.ParseProjectUsageFromWebhook(payload)
+	newUsage, err := c.Config().BillingManager.ParseProjectUsageFromWebhook(payload)
 	if err != nil {
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -88,25 +87,25 @@ func (c *BillingWebhookHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if managedDatabasesEnabled, err := strconv.ParseBool(features.ManagedDatabasesEnabled); err == nil {
-		project.RDSDatabasesEnabled = managedDatabasesEnabled
-	}
+	// if managedDatabasesEnabled, err := strconv.ParseBool(features.ManagedDatabasesEnabled); err == nil {
+	// 	project.RDSDatabasesEnabled = managedDatabasesEnabled
+	// }
 
-	if managedInfraEnabled, err := strconv.ParseBool(features.ManagedInfraEnabled); err == nil {
-		project.ManagedInfraEnabled = managedInfraEnabled
-	}
+	// if managedInfraEnabled, err := strconv.ParseBool(features.ManagedInfraEnabled); err == nil {
+	// 	project.ManagedInfraEnabled = managedInfraEnabled
+	// }
 
-	if stacksEnabled, err := strconv.ParseBool(features.StacksEnabled); err == nil {
-		project.StacksEnabled = stacksEnabled
-	}
+	// if stacksEnabled, err := strconv.ParseBool(features.StacksEnabled); err == nil {
+	// 	project.StacksEnabled = stacksEnabled
+	// }
 
-	if previewEnvsEnabled, err := strconv.ParseBool(features.PreviewEnvironmentsEnabled); err == nil {
-		project.PreviewEnvsEnabled = previewEnvsEnabled
-	}
+	// if previewEnvsEnabled, err := strconv.ParseBool(features.PreviewEnvironmentsEnabled); err == nil {
+	// 	project.PreviewEnvsEnabled = previewEnvsEnabled
+	// }
 
-	if capiProvisionerEnabled, err := strconv.ParseBool(features.CapiProvisionerEnabled); err == nil {
-		project.CapiProvisionerEnabled = capiProvisionerEnabled
-	}
+	// if capiProvisionerEnabled, err := strconv.ParseBool(features.CapiProvisionerEnabled); err == nil {
+	// 	project.CapiProvisionerEnabled = capiProvisionerEnabled
+	// }
 
 	_, err = c.Repo().Project().UpdateProject(project)
 

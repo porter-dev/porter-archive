@@ -92,9 +92,7 @@ const EnvGroupDashboard = (props: PropsType) => {
     if (currentProject?.sandbox_enabled) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>
-            Environment groups are not enabled for sandbox users
-          </Text>
+          <Text size={16}>Environment groups are not enabled on the Porter Cloud.</Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
             Eject to your own cloud account to enable environment groups.

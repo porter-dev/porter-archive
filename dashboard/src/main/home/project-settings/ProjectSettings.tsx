@@ -75,7 +75,10 @@ function ProjectSettings(props: any) {
 
     const tabOpts = [];
     tabOpts.push({ value: "manage-access", label: "Manage access" });
-    tabOpts.push({ value: "metadata", label: "Metadata" });
+
+    if (!currentProject?.sandbox_enabled) {
+      tabOpts.push({ value: "metadata", label: "Metadata" });
+    }
 
     if (props.isAuthorized("settings", "", ["get", "delete"])) {
       if (currentProject?.api_tokens_enabled) {

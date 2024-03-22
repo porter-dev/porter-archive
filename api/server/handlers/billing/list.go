@@ -18,6 +18,7 @@ type ListBillingHandler struct {
 	handlers.PorterHandlerWriter
 }
 
+// CheckPaymentEnabledHandler is a handler for checking if payment is setup
 type CheckPaymentEnabledHandler struct {
 	handlers.PorterHandlerWriter
 }

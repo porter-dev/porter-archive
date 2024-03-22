@@ -1,15 +1,16 @@
 package types
 
-type AddProjectBillingRequest struct {
-	ProjectID uint `json:"project_id" form:"required"`
+// CreateBillingCustomerRequest is a request for creating a new billing customer.
+type CreateBillingCustomerRequest struct {
+	UserEmail string `json:"user_email" form:"required"`
+}
 
-	// Monthly price, in cents
-	Price uint `json:"price" form:"required"`
-
-	Users    uint `json:"users"`
-	Clusters uint `json:"clusters"`
-	CPU      uint `json:"cpu"`
-	Memory   uint `json:"memory"`
-
-	ExistingPlanName string `json:"existing_plan_name"`
+// PaymentMethod is a subset of the Stripe PaymentMethod type,
+// with only the fields used on the dashboard
+type PaymentMethod = struct {
+	ID           string `json:"id"`
+	DisplayBrand string `json:"display_brand"`
+	Last4        string `json:"last4"`
+	ExpMonth     int64  `json:"exp_month"`
+	ExpYear      int64  `json:"exp_year"`
 }

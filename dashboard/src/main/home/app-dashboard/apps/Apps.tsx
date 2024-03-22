@@ -11,14 +11,17 @@ import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import PorterLink from "components/porter/Link";
+import Modal from "components/porter/Modal";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import DeleteEnvModal from "main/home/cluster-dashboard/preview-environments/v2/DeleteEnvModal";
+import BillingModal from "main/home/modals/BillingModal";
 import { clientAddonFromProto, type ClientAddon } from "lib/addons";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
+import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 
 import api from "shared/api";
 import { Context } from "shared/Context";
@@ -43,6 +46,7 @@ const Apps: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
   const { updateAppStep } = useAppAnalytics();
   const { currentDeploymentTarget } = useDeploymentTarget();
+  const { hasPaymentEnabled } = checkIfProjectHasPayment();
   const history = useHistory();
 
   const [searchValue, setSearchValue] = useState("");
@@ -50,6 +54,7 @@ const Apps: React.FC = () => {
   const [sort, setSort] = useState<"calendar" | "letter">("calendar");
   const [showDeleteEnvModal, setShowDeleteEnvModal] = useState(false);
   const [envDeleting, setEnvDeleting] = useState(false);
+  const [showBillingModal, setShowBillingModal] = useState(false);
 
   const [{ data: apps = [], status }, { data: addons = [] }] = useQueries({
     queries: [
@@ -212,20 +217,45 @@ const Apps: React.FC = () => {
           <Spacer y={0.5} />
           <Text color={"helper"}>Get started by creating an application.</Text>
           <Spacer y={1} />
-          <PorterLink to="/apps/new/app">
+          {currentProject?.billing_enabled && !hasPaymentEnabled ? (
             <Button
               alt
-              onClick={async () => {
-                await updateAppStep({ step: "stack-launch-start" });
+              onClick={() => {
+                setShowBillingModal(true);
               }}
               height="35px"
             >
-              Create a new application <Spacer inline x={1} />{" "}
+              Create a new application
+              <Spacer inline x={1} />{" "}
               <i className="material-icons" style={{ fontSize: "18px" }}>
                 east
               </i>
             </Button>
-          </PorterLink>
+          ) : (
+            <PorterLink to="/apps/new/app">
+              <Button
+                alt
+                onClick={async () => {
+                  await updateAppStep({ step: "stack-launch-start" });
+                }}
+                height="35px"
+              >
+                Create a new application
+                <Spacer inline x={1} />{" "}
+                <i className="material-icons" style={{ fontSize: "18px" }}>
+                  east
+                </i>
+              </Button>
+            </PorterLink>
+          )}
+          {showBillingModal && (
+            <BillingModal
+              back={() => setShowBillingModal(false)}
+              onCreate={() => {
+                history.push("/apps/new/app");
+              }}
+            />
+          )}
         </DashboardPlaceholder>
       );
     }
@@ -308,7 +338,6 @@ const Apps: React.FC = () => {
           ) : (
             <PorterLink to="/apps/new/app">
               <Button
-                disabled={currentProject?.sandbox_enabled && apps.length == 3}
                 onClick={async () => {
                   await updateAppStep({ step: "stack-launch-start" });
                 }}

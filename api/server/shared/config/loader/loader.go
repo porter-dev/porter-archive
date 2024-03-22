@@ -63,7 +63,9 @@ func sharedInit() {
 		panic(err)
 	}
 
-	InstanceBillingManager = &billing.NoopBillingManager{}
+	InstanceBillingManager = &billing.StripeBillingManager{
+		StripeSecretKey: InstanceEnvConf.ServerConf.StripeSecretKey,
+	}
 }
 
 func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
@@ -250,6 +252,10 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 		return nil, fmt.Errorf("could not create launch darkly client: %s", err)
 	}
 	res.LaunchDarklyClient = launchDarklyClient
+
+	if sc.StripeSecretKey == "" {
+		res.Logger.Info().Msg("STRIPE_SECRET_KEY not set, all Stripe functionality will be disabled")
+	}
 
 	if sc.SlackClientID != "" && sc.SlackClientSecret != "" {
 		res.Logger.Info().Msg("Creating Slack client")

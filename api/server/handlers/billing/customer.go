@@ -41,8 +41,12 @@ func (c *CreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
+	// There is no easy way to pass environment variables to the frontend,
+	// so for now pass via the backend. This is acceptable because the key is
+	// meant to be public
+	publishableKey := c.Config().BillingManager.GetPublishableKey()
 	if proj.BillingID != "" {
-		c.WriteResult(w, r, "")
+		c.WriteResult(w, r, publishableKey)
 		return
 	}
 
@@ -63,5 +67,5 @@ func (c *CreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.
 		return
 	}
 
-	c.WriteResult(w, r, "")
+	c.WriteResult(w, r, publishableKey)
 }

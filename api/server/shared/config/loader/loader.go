@@ -58,13 +58,13 @@ func sharedInit() {
 	InstanceEnvConf, _ = envloader.FromEnv()
 
 	InstanceDB, err = adapter.New(InstanceEnvConf.DBConf)
-
 	if err != nil {
 		panic(err)
 	}
 
 	InstanceBillingManager = &billing.StripeBillingManager{
-		StripeSecretKey: InstanceEnvConf.ServerConf.StripeSecretKey,
+		StripeSecretKey:      InstanceEnvConf.ServerConf.StripeSecretKey,
+		StripePublishableKey: InstanceEnvConf.ServerConf.StripePublishableKey,
 	}
 }
 
@@ -123,7 +123,6 @@ func (e *EnvConfigLoader) LoadConfig() (res *config.Config, err error) {
 			Insecure:          envConf.ServerConf.CookieInsecure,
 		},
 	)
-
 	if err != nil {
 		return nil, err
 	}

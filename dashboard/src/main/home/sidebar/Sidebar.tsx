@@ -314,77 +314,69 @@ class Sidebar extends Component<PropsType, StateType> {
                   <Img src={database} />
                   Datastores
                 </Container>
-                {(currentProject.sandbox_enabled ||
-                  !currentProject.db_enabled) && <Image size={15} src={lock} />}
               </Container>
             </NavButton>
-            <NavButton
-              path="/addons"
-              active={window.location.pathname.startsWith("/addons")}
-            >
-              <Container row spaced style={{ width: "100%" }}>
-                <Container row>
-                  <Img src={addOns} />
-                  Add-ons
+            {!currentProject.sandbox_enabled && (
+              <NavButton
+                path="/addons"
+                active={window.location.pathname.startsWith("/addons")}
+              >
+                <Container row spaced style={{ width: "100%" }}>
+                  <Container row>
+                    <Img src={addOns} />
+                    Add-ons
+                  </Container>
                 </Container>
-                {currentProject.sandbox_enabled && (
-                  <Image size={15} src={lock} />
-                )}
-              </Container>
-            </NavButton>
+              </NavButton>
+            )}
 
-            <NavButton
-              path={envGroupPath(currentProject, "")}
-              active={window.location.pathname.startsWith(
-                envGroupPath(currentProject, "")
-              )}
-            >
-              <Container row spaced style={{ width: "100%" }}>
-                <Container row>
-                  <Img src={sliders} />
-                  Env groups
-                </Container>
-                {currentProject.sandbox_enabled && (
-                  <Image size={15} src={lock} />
+            {!currentProject.sandbox_enabled && (
+              <NavButton
+                path={envGroupPath(currentProject, "")}
+                active={window.location.pathname.startsWith(
+                  envGroupPath(currentProject, "")
                 )}
-              </Container>
-            </NavButton>
-            <NavButton
-              path={
-                currentProject?.simplified_view_enabled &&
-                currentProject?.capi_provisioner_enabled
-                  ? "/infrastructure"
-                  : "/cluster-dashboard"
-              }
-              active={window.location.pathname.startsWith(
-                currentProject?.simplified_view_enabled &&
+              >
+                <Container row spaced style={{ width: "100%" }}>
+                  <Container row>
+                    <Img src={sliders} />
+                    Env groups
+                  </Container>
+                </Container>
+              </NavButton>
+            )}
+
+            {!currentProject.sandbox_enabled && (
+              <NavButton
+                path={
+                  currentProject?.simplified_view_enabled &&
                   currentProject?.capi_provisioner_enabled
-                  ? "/infrastructure"
-                  : "/cluster-dashboard"
-              )}
-            >
-              <Container row spaced style={{ width: "100%" }}>
-                <Container row>
-                  <Img src={infra} />
-                  Infrastructure
-                </Container>
-                {currentProject.sandbox_enabled && (
-                  <Image size={15} src={lock} />
+                    ? "/infrastructure"
+                    : "/cluster-dashboard"
+                }
+                active={window.location.pathname.startsWith(
+                  currentProject?.simplified_view_enabled &&
+                    currentProject?.capi_provisioner_enabled
+                    ? "/infrastructure"
+                    : "/cluster-dashboard"
                 )}
-              </Container>
-            </NavButton>
+              >
+                <Container row spaced style={{ width: "100%" }}>
+                  <Container row>
+                    <Img src={infra} />
+                    Infrastructure
+                  </Container>
+                </Container>
+              </NavButton>
+            )}
+
             <NavButton path="/preview-environments">
               <Container row spaced style={{ width: "100%" }}>
                 <Container row>
                   <Img src={pr_icon} />
                   Preview apps
                 </Container>
-                {currentProject.sandbox_enabled ||
-                !currentProject.preview_envs_enabled ? (
-                  <Image size={15} src={lock} />
-                ) : (
-                  <Badge>Beta</Badge>
-                )}
+                {!currentProject.preview_envs_enabled && <Badge>Beta</Badge>}
               </Container>
             </NavButton>
 

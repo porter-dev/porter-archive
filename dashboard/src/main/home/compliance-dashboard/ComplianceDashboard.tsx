@@ -2,7 +2,10 @@ import React, { useContext, useState } from "react";
 import styled from "styled-components";
 
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 
 import { Context } from "shared/Context";
@@ -14,9 +17,6 @@ import { ConfigSelectors } from "./ConfigSelectors";
 import { ProfileHeader } from "./ProfileHeader";
 import { SOC2CostConsent } from "./SOC2CostConsent";
 import { VendorChecksList } from "./VendorChecksList";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Text from "components/porter/Text";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
 
 const ComplianceDashboard: React.FC = () => {
   const { currentProject, currentCluster } = useContext(Context);
@@ -43,10 +43,14 @@ const ComplianceDashboard: React.FC = () => {
           <ClusterProvisioningPlaceholder />
         ) : currentProject?.sandbox_enabled ? (
           <DashboardPlaceholder>
-            <Text size={16}>Compliance is not enabled for sandbox users</Text>
+            <Text size={16}>
+              Managed SOC 2 and HIPAA compliance are not enabled for sandbox
+              users
+            </Text>
             <Spacer y={0.5} />
             <Text color={"helper"}>
-              Eject to your own cloud account to enable the Compliance dashboard.
+              Eject to your own cloud account to enable the Compliance
+              dashboard.
             </Text>
             <Spacer y={1} />
             <ShowIntercomButton
@@ -62,7 +66,8 @@ const ComplianceDashboard: React.FC = () => {
             <Text size={16}>Compliance is not enabled for this project</Text>
             <Spacer y={0.5} />
             <Text color={"helper"}>
-            Reach out to the Porter team to enable the compliance dashboard on your project.
+              Reach out to the Porter team to enable the compliance dashboard on
+              your project.
             </Text>
             <Spacer y={1} />
             <ShowIntercomButton

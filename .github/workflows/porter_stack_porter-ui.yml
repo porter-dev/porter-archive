@@ -1,7 +1,7 @@
 "on":
   push:
     branches:
-      - master
+      - sms/test
 name: Deploy Porter to Internal Tooling
 jobs:
   build-go:

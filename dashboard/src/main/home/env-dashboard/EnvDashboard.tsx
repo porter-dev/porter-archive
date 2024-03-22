@@ -85,7 +85,7 @@ const EnvDashboard: React.FC<Props> = (props) => {
       return (
         <DashboardPlaceholder>
           <Text size={16}>
-            Environment groups are not enabled for sandbox users
+            Environment groups are not enabled on the Porter Cloud
           </Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>

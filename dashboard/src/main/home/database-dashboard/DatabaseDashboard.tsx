@@ -87,11 +87,11 @@ const DatabaseDashboard: React.FC = () => {
     if (currentProject?.sandbox_enabled) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>Datastores are coming soon for sandbox users</Text>
+          <Text size={16}>Datastores are coming soon to the Porter Cloud</Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
             You can also eject to your own cloud account to start using managed
-            datastores.
+            datastores immediately.
           </Text>
           <Spacer y={1} />
           <PorterLink to="https://docs.porter.run/other/eject" target="_blank">

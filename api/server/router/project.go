@@ -285,6 +285,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// GET /api/projects/{project_id}/billing -> project.NewCheckPaymentEnabledHandler
+	checkPaymentEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: relPath + "/billing",
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	checkPaymentHandler := billing.NewCheckPaymentEnabledHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: checkPaymentEndpoint,
+		Handler:  checkPaymentHandler,
+		Router:   r,
+	})
+
 	// GET /api/projects/{project_id}/billing/payment_method -> project.NewListBillingHandler
 	listBillingEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

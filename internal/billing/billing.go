@@ -14,6 +14,9 @@ type BillingManager interface {
 	// DeleteCustomer will delete the customer from the billing provider
 	DeleteCustomer(proj *models.Project) (err error)
 
+	// CheckPaymentEnabled will check if the project has a payment method configured
+	CheckPaymentEnabled(proj *models.Project) (paymentEnabled bool, err error)
+
 	// ListPaymentMethod will return all payment methods for the project
 	ListPaymentMethod(proj *models.Project) (paymentMethods []types.PaymentMethod, err error)
 
@@ -34,6 +37,10 @@ func (s *NoopBillingManager) CreateCustomer(userEmail string, proj *models.Proje
 
 func (s *NoopBillingManager) DeleteCustomer(proj *models.Project) (err error) {
 	return nil
+}
+
+func (s *NoopBillingManager) CheckPaymentEnabled(proj *models.Project) (paymentEnabled bool, err error) {
+	return false, nil
 }
 
 // ListPaymentMethod is a no-op

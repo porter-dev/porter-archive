@@ -56,6 +56,19 @@ func (s *StripeBillingManager) DeleteCustomer(proj *models.Project) (err error) 
 	return nil
 }
 
+// CheckPaymentEnabled will return true if the project has a payment method added, false otherwise
+func (s *StripeBillingManager) CheckPaymentEnabled(proj *models.Project) (paymentEnabled bool, err error) {
+	stripe.Key = s.StripeSecretKey
+
+	params := &stripe.PaymentMethodListParams{
+		Customer: stripe.String(proj.BillingID),
+		Type:     stripe.String(string(stripe.PaymentMethodTypeCard)),
+	}
+	result := paymentmethod.List(params)
+
+	return result.Next(), nil
+}
+
 // ListPaymentMethod will return all payment methods for the project
 func (s *StripeBillingManager) ListPaymentMethod(proj *models.Project) (paymentMethods []types.PaymentMethod, err error) {
 	stripe.Key = s.StripeSecretKey

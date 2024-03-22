@@ -29,7 +29,7 @@ func NewDeleteBillingHandler(
 }
 
 func (c *DeleteBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx, span := telemetry.NewSpan(r.Context(), "auth-endpoint-api-token")
+	ctx, span := telemetry.NewSpan(r.Context(), "delete-billing-endpoint")
 	defer span.End()
 
 	paymentMethodID, reqErr := requestutils.GetURLParamString(r, types.URLParamPaymentMethodID)

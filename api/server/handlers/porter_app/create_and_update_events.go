@@ -556,7 +556,7 @@ func (p *CreateUpdatePorterAppEventHandler) handleNotification(ctx context.Conte
 	if agentEventMetadata == nil {
 		return telemetry.Error(ctx, span, nil, "app event metadata is nil")
 	}
-	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-event-type", Value: agentEventMetadata.Type})
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "app-event-type", Value: agentEventMetadata.AppEventType.String()})
 
 	createNotificationRequest := connect.NewRequest(&porterv1.CreateNotificationRequest{
 		ProjectId: int64(projectId),
@@ -568,7 +568,7 @@ func (p *CreateUpdatePorterAppEventHandler) handleNotification(ctx context.Conte
 		ServiceName:        agentEventMetadata.ServiceName,
 		AppRevisionId:      agentEventMetadata.AppRevisionID,
 		PorterAgentEventId: int64(agentEventMetadata.AgentEventID),
-		AppEventType:       agentEventMetadata.Type,
+		AppEventType:       agentEventMetadata.AppEventType,
 		RawSummary:         agentEventMetadata.Summary,
 		RawDetail:          agentEventMetadata.Detail,
 		JobRunId:           agentEventMetadata.JobRunID,

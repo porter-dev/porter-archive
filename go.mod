@@ -372,5 +372,3 @@ require (
 )
 
 replace github.com/porter-dev/api-contracts => ../api-contracts
-
-replace github.com/porter-dev/porter-agent => ../porter-agent

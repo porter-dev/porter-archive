@@ -11,6 +11,7 @@ import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import PorterLink from "components/porter/Link";
+import Modal from "components/porter/Modal";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
@@ -50,6 +51,7 @@ const Apps: React.FC = () => {
   const [sort, setSort] = useState<"calendar" | "letter">("calendar");
   const [showDeleteEnvModal, setShowDeleteEnvModal] = useState(false);
   const [envDeleting, setEnvDeleting] = useState(false);
+  const [showBillingModal, setShowBillingModal] = useState(false);
 
   const [{ data: apps = [], status }, { data: addons = [] }] = useQueries({
     queries: [
@@ -212,20 +214,40 @@ const Apps: React.FC = () => {
           <Spacer y={0.5} />
           <Text color={"helper"}>Get started by creating an application.</Text>
           <Spacer y={1} />
-          <PorterLink to="/apps/new/app">
+          {currentProject?.billing_enabled ? (
             <Button
               alt
-              onClick={async () => {
-                await updateAppStep({ step: "stack-launch-start" });
+              onClick={() => {
+                setShowBillingModal(true);
               }}
               height="35px"
             >
-              Create a new application <Spacer inline x={1} />{" "}
+              Create a new application
+              <Spacer inline x={1} />{" "}
               <i className="material-icons" style={{ fontSize: "18px" }}>
                 east
               </i>
             </Button>
-          </PorterLink>
+          ) : (
+            <PorterLink to="/apps/new/app">
+              <Button
+                alt
+                onClick={async () => {
+                  await updateAppStep({ step: "stack-launch-start" });
+                }}
+                height="35px"
+              >
+                Create a new application
+                <Spacer inline x={1} />{" "}
+                <i className="material-icons" style={{ fontSize: "18px" }}>
+                  east
+                </i>
+              </Button>
+            </PorterLink>
+          )}
+          {showBillingModal && (
+            <Modal closeModal={() => setShowBillingModal(false)}>hello</Modal>
+          )}
         </DashboardPlaceholder>
       );
     }
@@ -308,7 +330,6 @@ const Apps: React.FC = () => {
           ) : (
             <PorterLink to="/apps/new/app">
               <Button
-                disabled={currentProject?.sandbox_enabled && apps.length == 3}
                 onClick={async () => {
                   await updateAppStep({ step: "stack-launch-start" });
                 }}

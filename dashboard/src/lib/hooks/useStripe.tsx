@@ -22,6 +22,11 @@ type TCreatePaymentMethod = {
   createPaymentMethod: () => Promise<string>;
 };
 
+type TCheckHasPaymentEnabled = {
+  hasPaymentEnabled: boolean;
+  refetchPaymentEnabled: any;
+};
+
 export const usePaymentMethods = (): TUsePaymentMethod => {
   const { user, currentProject } = useContext(Context);
 
@@ -109,5 +114,33 @@ export const useCreatePaymentMethod = (): TCreatePaymentMethod => {
 
   return {
     createPaymentMethod,
+  };
+};
+
+export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
+  const { currentProject } = useContext(Context);
+
+  if (!currentProject?.id) {
+    throw new Error("Project ID is missing");
+  }
+
+  // Fetch list of payment methods
+  const paymentEnabledReq = useQuery(
+    ["checkPaymentEnabled", currentProject?.id],
+    async () => {
+      const res = await api.getHasBilling(
+        "<token>",
+        {},
+        { project_id: currentProject.id }
+      );
+
+      const data = z.boolean().parse(res.data);
+      return data;
+    }
+  );
+
+  return {
+    hasPaymentEnabled: paymentEnabledReq.data ?? false,
+    refetchPaymentEnabled: paymentEnabledReq.refetch,
   };
 };

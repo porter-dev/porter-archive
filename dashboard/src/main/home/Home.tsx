@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import { useStripe } from "@stripe/react-stripe-js";
 import { createPortal } from "react-dom";
 import {
   Route,
@@ -108,7 +109,6 @@ const Home: React.FC<Props> = (props) => {
     setHasFinishedOnboarding,
     setCurrentError,
     setCurrentModal,
-    setHasBillingEnabled,
     setUsage,
     setShouldRefreshClusters,
   } = useContext(Context);
@@ -262,46 +262,9 @@ const Home: React.FC<Props> = (props) => {
     }
   }, [shouldRefreshClusters]);
 
-  const checkIfProjectHasBilling = async (projectId: number) => {
-    if (!projectId) {
-      return false;
-    }
-    try {
-      const res = await api.getHasBilling(
-        "<token>",
-        {},
-        { project_id: projectId }
-      );
-      setHasBillingEnabled(res.data?.has_billing);
-      return res?.data?.has_billing;
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
     getMetadata();
     checkOnboarding();
-    if (!process.env.DISABLE_BILLING) {
-      checkIfProjectHasBilling(currentProject?.id)
-        .then((isBillingEnabled) => {
-          if (isBillingEnabled) {
-            api
-              .getUsage("<token>", {}, { project_id: currentProject?.id })
-              .then((res) => {
-                const usage = res.data;
-                setUsage(usage);
-                /*
-                if (usage.exceeded) {
-                  setCurrentModal("UsageWarningModal", { usage });
-                }
-                */
-              })
-              .catch(console.log);
-          }
-        })
-        .catch(console.log);
-    }
   }, [props.currentProject?.id]);
 
   useEffect(() => {
@@ -411,22 +374,6 @@ const Home: React.FC<Props> = (props) => {
       theme={currentProject?.simplified_view_enabled ? midnight : standard}
     >
       <DeploymentTargetProvider>
-        {currentProject?.sandbox_enabled && (
-          <GlobalBanner>
-            <img src={warning} />
-            Your project is currently in Sandbox mode. Your project will be
-            deleted after one week.
-            <CTA>
-              <ShowIntercomButton
-                alt
-                message="I would like to eject to my own cloud account"
-                height="25px"
-              >
-                Request ejection
-              </ShowIntercomButton>
-            </CTA>
-          </GlobalBanner>
-        )}
         <StyledHome isHosted={currentProject?.sandbox_enabled ?? false}>
           <ModalHandler setRefreshClusters={setForceRefreshClusters} />
           {currentOverlay &&

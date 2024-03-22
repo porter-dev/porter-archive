@@ -42,7 +42,7 @@ const BillingModal = ({ back, onCreate }) => {
   return (
     <Modal closeModal={back}>
       <div id="checkout">
-        <Text size={16}>Add Payment Method</Text>
+        <Text size={16}>Add payment method</Text>
         <Spacer y={1} />
         <Text color="helper">
           A payment method is required to begin deploying applications on

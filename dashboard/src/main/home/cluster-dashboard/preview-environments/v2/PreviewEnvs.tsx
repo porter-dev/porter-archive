@@ -62,9 +62,9 @@ const PreviewEnvs: React.FC = () => {
             apps immediately.
           </Text>
           <Spacer y={1} />
-          <PorterLink to="https://docs.porter.run/other/eject" target="_blank">
+          <PorterLink to="https://docs.porter.run/other/eject">
             <Button alt height="35px">
-             Eject to AWS, Azure, or GCP.
+             Eject to AWS, Azure, or GCP
             </Button>
           </PorterLink>
         </DashboardPlaceholder>

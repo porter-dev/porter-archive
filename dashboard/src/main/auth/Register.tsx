@@ -216,7 +216,7 @@ const Register: React.FC<Props> = ({
           </Jumbotron>
           <Spacer y={2} />
           <CheckRow>
-            <i className="material-icons">done</i> 14 day free trial (no credit card required)
+            <i className="material-icons">done</i> 14 day free trial
           </CheckRow>
           <Spacer y={0.5} />
           <CheckRow>
@@ -224,7 +224,7 @@ const Register: React.FC<Props> = ({
           </CheckRow>
           <Spacer y={0.5} />
           <CheckRow>
-            <i className="material-icons">done</i> Use your AWS credits
+            <i className="material-icons">done</i> Bring your own cloud and use your credits
           </CheckRow>
         </Wrapper>
       )}

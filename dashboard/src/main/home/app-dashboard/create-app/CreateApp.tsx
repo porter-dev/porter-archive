@@ -760,7 +760,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }}
         />
       )}
-      {!hasPaymentEnabled && (
+      {currentProject?.billing_enabled && !hasPaymentEnabled && (
         <BillingModal
           back={() => {
             history.push("/apps");

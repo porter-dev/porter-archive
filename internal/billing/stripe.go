@@ -81,19 +81,9 @@ func (s *StripeBillingManager) ListPaymentMethod(proj *models.Project) (paymentM
 	}
 	result := paymentmethod.List(params)
 
-	// Get customer to check default payment method
-	customer, err := customer.Get(proj.BillingID, nil)
+	defaultPaymentExists, defaultPaymentID, err := s.checkDefaultPaymentMethod(proj.BillingID)
 	if err != nil {
 		return paymentMethods, err
-	}
-
-	var (
-		defaultPaymentExists bool
-		defaultPaymentID     string
-	)
-	if customer.InvoiceSettings != nil && customer.InvoiceSettings.DefaultPaymentMethod != nil {
-		defaultPaymentExists = true
-		defaultPaymentID = customer.InvoiceSettings.DefaultPaymentMethod.ID
 	}
 
 	for result.Next() {
@@ -146,7 +136,7 @@ func (s *StripeBillingManager) CreatePaymentMethod(proj *models.Project) (client
 	return intent.ClientSecret, nil
 }
 
-// CreatePaymentMethod will add a new payment method to the project in Stripe
+// SetDefaultPaymentMethod will add a new payment method to the project in Stripe
 func (s *StripeBillingManager) SetDefaultPaymentMethod(paymentMethodID string, proj *models.Project) (err error) {
 	stripe.Key = s.StripeSecretKey
 
@@ -179,4 +169,19 @@ func (s *StripeBillingManager) DeletePaymentMethod(paymentMethodID string) (err 
 // GetPublishableKey is a no-op
 func (s *StripeBillingManager) GetPublishableKey() (key string) {
 	return s.StripePublishableKey
+}
+
+func (s *StripeBillingManager) checkDefaultPaymentMethod(customerID string) (defaultPaymentExists bool, defaultPaymentID string, err error) {
+	// Get customer to check default payment method
+	customer, err := customer.Get(customerID, nil)
+	if err != nil {
+		return defaultPaymentExists, defaultPaymentID, err
+	}
+
+	if customer.InvoiceSettings != nil && customer.InvoiceSettings.DefaultPaymentMethod != nil {
+		defaultPaymentExists = true
+		defaultPaymentID = customer.InvoiceSettings.DefaultPaymentMethod.ID
+	}
+
+	return defaultPaymentExists, defaultPaymentID, err
 }

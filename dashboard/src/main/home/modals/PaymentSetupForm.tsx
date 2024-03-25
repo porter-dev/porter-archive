@@ -10,15 +10,19 @@ import Button from "components/porter/Button";
 import Error from "components/porter/Error";
 import Spacer from "components/porter/Spacer";
 import SaveButton from "components/SaveButton";
-import { useCreatePaymentMethod } from "lib/hooks/useStripe";
+import {
+  useCreatePaymentMethod,
+  useSetDefaultPaymentMethod,
+} from "lib/hooks/useStripe";
 
-const PaymentSetupForm = ({ onCreate }: { onCreate: () => void }) => {
+const PaymentSetupForm = ({ onCreate }: { onCreate: () => Promise<void> }) => {
   const stripe = useStripe();
   const elements = useElements();
 
   const [errorMessage, setErrorMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const { createPaymentMethod } = useCreatePaymentMethod();
+  const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
 
   const handleSubmit = async () => {
     if (!stripe || !elements) {
@@ -38,7 +42,7 @@ const PaymentSetupForm = ({ onCreate }: { onCreate: () => void }) => {
     const clientSecret = await createPaymentMethod();
 
     // Finally, confirm with Stripe so the payment method is saved
-    const { error } = await stripe.confirmSetup({
+    const { error, setupIntent } = await stripe.confirmSetup({
       elements,
       clientSecret,
       redirect: "if_required",
@@ -46,6 +50,11 @@ const PaymentSetupForm = ({ onCreate }: { onCreate: () => void }) => {
 
     if (error) {
       setErrorMessage(error.message);
+    }
+
+    // Confirm the setup and set as default
+    if (setupIntent?.payment_method !== null) {
+      await setDefaultPaymentMethod(setupIntent?.payment_method as string);
     }
 
     onCreate();

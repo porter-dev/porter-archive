@@ -13,7 +13,13 @@ import {
 
 import PaymentSetupForm from "./PaymentSetupForm";
 
-const BillingModal = ({ back, onCreate }) => {
+const BillingModal = ({
+  back,
+  onCreate,
+}: {
+  back: (value: React.SetStateAction<boolean>) => void;
+  onCreate: () => Promise<void>;
+}) => {
   const { publishableKey } = usePublishableKey();
   const stripePromise = loadStripe(publishableKey);
   checkBillingCustomerExists();

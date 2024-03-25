@@ -9,8 +9,10 @@ import Icon from "components/porter/Icon";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
+  checkBillingCustomerExists,
   checkIfProjectHasPayment,
   usePaymentMethods,
+  useSetDefaultPaymentMethod,
 } from "lib/hooks/useStripe";
 
 import { Context } from "shared/Context";
@@ -22,23 +24,21 @@ import BillingModal from "../modals/BillingModal";
 function BillingPage(): JSX.Element {
   const { setCurrentOverlay } = useContext(Context);
   const [shouldCreate, setShouldCreate] = useState(false);
+  checkBillingCustomerExists();
+
   const {
     paymentMethodList,
     refetchPaymentMethods,
     deletePaymentMethod,
     isDeleting,
   } = usePaymentMethods();
+  const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
 
   const onCreate = async () => {
+    await refetchPaymentMethods();
     setShouldCreate(false);
-    refetchPaymentMethods();
-    refetchPaymentEnabled();
-  };
-
-  const onDelete = async (paymentMethodId: string) => {
-    deletePaymentMethod(paymentMethodId);
     refetchPaymentEnabled();
   };
 
@@ -76,23 +76,36 @@ function BillingPage(): JSX.Element {
                 <DeleteButtonContainer>
                   {isDeleting ? (
                     <Loading />
+                  ) : !paymentMethod.is_default ? (
+                    <Container row={true}>
+                      <DeleteButton
+                        onClick={() => {
+                          setCurrentOverlay({
+                            message: `Are you sure you want to remove this payment method?`,
+                            onYes: () => {
+                              deletePaymentMethod(paymentMethod.id);
+                              setCurrentOverlay(null);
+                            },
+                            onNo: () => {
+                              setCurrentOverlay(null);
+                            },
+                          });
+                        }}
+                      >
+                        <Icon src={trashIcon} height={"18px"} />
+                      </DeleteButton>
+                      <Spacer inline x={1} />
+                      <Button
+                        onClick={() => {
+                          setDefaultPaymentMethod(paymentMethod.id);
+                          refetchPaymentMethods();
+                        }}
+                      >
+                        Set as default
+                      </Button>
+                    </Container>
                   ) : (
-                    <DeleteButton
-                      onClick={() => {
-                        setCurrentOverlay({
-                          message: `Are you sure you want to remove this payment method?`,
-                          onYes: () => {
-                            deletePaymentMethod(paymentMethod.id);
-                            setCurrentOverlay(null);
-                          },
-                          onNo: () => {
-                            setCurrentOverlay(null);
-                          },
-                        });
-                      }}
-                    >
-                      <Icon src={trashIcon} height={"18px"} />
-                    </DeleteButton>
+                    <Text>Default</Text>
                   )}
                 </DeleteButtonContainer>
               </Container>

@@ -367,6 +367,33 @@ func getProjectRoutes(
 		Router:   r,
 	})
 
+	// PUT /api/projects/{project_id}/billing/payment_method/{payment_method_id}/default -> project.NewSetDefaultBillingHandler
+	setDefaultBillingEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbUpdate,
+			Method: types.HTTPVerbPut,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/billing/payment_method/{%s}/default", relPath, types.URLParamPaymentMethodID),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	setDefaultBillingHandler := billing.NewSetDefaultBillingHandler(
+		config,
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: setDefaultBillingEndpoint,
+		Handler:  setDefaultBillingHandler,
+		Router:   r,
+	})
+
 	// DELETE /api/projects/{project_id}/billing/payment_method/{payment_method_id} -> project.NewDeleteBillingHandler
 	deleteBillingEndpoint := factory.NewAPIEndpoint(
 		&types.APIRequestMetadata{

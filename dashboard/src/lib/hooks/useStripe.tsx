@@ -22,6 +22,10 @@ type TCreatePaymentMethod = {
   createPaymentMethod: () => Promise<string>;
 };
 
+type TSetDefaultPaymentMethod = {
+  setDefaultPaymentMethod: (paymentMethodId: string) => Promise<void>;
+};
+
 type TCheckHasPaymentEnabled = {
   hasPaymentEnabled: boolean;
   refetchPaymentEnabled: any;
@@ -32,7 +36,7 @@ type TGetPublishableKey = {
 };
 
 export const usePaymentMethods = (): TUsePaymentMethod => {
-  const { user, currentProject } = useContext(Context);
+  const { currentProject } = useContext(Context);
 
   // State has be shared so that payment methods can be removed
   // from the Billing page once they are deleted
@@ -48,11 +52,6 @@ export const usePaymentMethods = (): TUsePaymentMethod => {
       if (!currentProject?.id || currentProject.id === -1) {
         return;
       }
-      await api.checkBillingCustomerExists(
-        "<token>",
-        { user_email: user?.email },
-        { project_id: currentProject?.id }
-      );
       const listResponse = await api.listPaymentMethod(
         "<token>",
         {},
@@ -167,5 +166,41 @@ export const usePublishableKey = (): TGetPublishableKey => {
 
   return {
     publishableKey: keyReq.data,
+  };
+};
+
+export const checkBillingCustomerExists = async (): Promise<void> => {
+  const { user, currentProject } = useContext(Context);
+  const res = await api.checkBillingCustomerExists(
+    "<token>",
+    { user_email: user?.email },
+    {
+      project_id: currentProject?.id,
+    }
+  );
+
+  if (res.status !== 200) {
+    throw Error("failed to check if billing customer exists");
+  }
+};
+
+export const useSetDefaultPaymentMethod = (): TSetDefaultPaymentMethod => {
+  const { currentProject } = useContext(Context);
+
+  const setDefaultPaymentMethod = async (paymentMethodId: string) => {
+    // Set payment method as default
+    const res = await api.setDefaultPaymentMethod(
+      "<token>",
+      {},
+      { project_id: currentProject?.id, payment_method_id: paymentMethodId }
+    );
+
+    if (res.status !== 200) {
+      throw Error("failed to set payment method as default");
+    }
+  };
+
+  return {
+    setDefaultPaymentMethod,
   };
 };

@@ -74,14 +74,35 @@ func (s *StripeBillingManager) CheckPaymentEnabled(proj *models.Project) (paymen
 func (s *StripeBillingManager) ListPaymentMethod(proj *models.Project) (paymentMethods []types.PaymentMethod, err error) {
 	stripe.Key = s.StripeSecretKey
 
+	// Get configured payment methods
 	params := &stripe.PaymentMethodListParams{
 		Customer: stripe.String(proj.BillingID),
 		Type:     stripe.String(string(stripe.PaymentMethodTypeCard)),
 	}
 	result := paymentmethod.List(params)
 
+	// Get customer to check default payment method
+	customer, err := customer.Get(proj.BillingID, nil)
+	if err != nil {
+		return paymentMethods, err
+	}
+
+	var (
+		defaultPaymentExists bool
+		defaultPaymentID     string
+	)
+	if customer.InvoiceSettings != nil && customer.InvoiceSettings.DefaultPaymentMethod != nil {
+		defaultPaymentExists = true
+		defaultPaymentID = customer.InvoiceSettings.DefaultPaymentMethod.ID
+	}
+
 	for result.Next() {
 		stripePaymentMethod := result.PaymentMethod()
+
+		var isDefaultPaymentMethod bool
+		if stripePaymentMethod.ID == defaultPaymentID {
+			isDefaultPaymentMethod = true
+		}
 
 		paymentMethods = append(paymentMethods, types.PaymentMethod{
 			ID:           stripePaymentMethod.ID,
@@ -89,7 +110,17 @@ func (s *StripeBillingManager) ListPaymentMethod(proj *models.Project) (paymentM
 			Last4:        stripePaymentMethod.Card.Last4,
 			ExpMonth:     stripePaymentMethod.Card.ExpMonth,
 			ExpYear:      stripePaymentMethod.Card.ExpYear,
+			Default:      isDefaultPaymentMethod,
 		})
+	}
+
+	// Set default payment method when project has payment methods enabled but
+	// no default setup
+	if len(paymentMethods) > 0 && !defaultPaymentExists {
+		err = s.SetDefaultPaymentMethod(paymentMethods[len(paymentMethods)-1].ID, proj)
+		if err != nil {
+			return paymentMethods, err
+		}
 	}
 
 	return paymentMethods, nil
@@ -113,6 +144,24 @@ func (s *StripeBillingManager) CreatePaymentMethod(proj *models.Project) (client
 	}
 
 	return intent.ClientSecret, nil
+}
+
+// CreatePaymentMethod will add a new payment method to the project in Stripe
+func (s *StripeBillingManager) SetDefaultPaymentMethod(paymentMethodID string, proj *models.Project) (err error) {
+	stripe.Key = s.StripeSecretKey
+
+	params := &stripe.CustomerParams{
+		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
+			DefaultPaymentMethod: stripe.String(paymentMethodID),
+		},
+	}
+
+	_, err = customer.Update(proj.BillingID, params)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // DeletePaymentMethod will remove a payment method for the project in Stripe

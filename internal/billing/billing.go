@@ -23,6 +23,9 @@ type BillingManager interface {
 	// CreatePaymentMethod will add a new payment method to the project in Stripe
 	CreatePaymentMethod(proj *models.Project) (clientSecret string, err error)
 
+	// SetDefaultPaymentMethod will set the payment method as default in the customer invoice settings
+	SetDefaultPaymentMethod(paymentMethodID string, proj *models.Project) (err error)
+
 	// DeletePaymentMethod will remove a payment method for the project in Stripe
 	DeletePaymentMethod(paymentMethodID string) (err error)
 
@@ -56,6 +59,11 @@ func (s *NoopBillingManager) ListPaymentMethod(proj *models.Project) (paymentMet
 // CreatePaymentMethod is a no-op
 func (s *NoopBillingManager) CreatePaymentMethod(proj *models.Project) (clientSecret string, err error) {
 	return "", nil
+}
+
+// SetDefaultPaymentMethod is a no-op
+func (s *NoopBillingManager) SetDefaultPaymentMethod(paymentMethodID string, proj *models.Project) (err error) {
+	return nil
 }
 
 // DeletePaymentMethod is a no-op

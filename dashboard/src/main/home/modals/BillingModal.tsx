@@ -1,22 +1,28 @@
 import React from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import styled from "styled-components";
 
-import Heading from "components/form-components/Heading";
 import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { usePublishableKey } from "lib/hooks/useStripe";
-
-import backArrow from "assets/back_arrow.png";
+import {
+  checkBillingCustomerExists,
+  usePublishableKey,
+} from "lib/hooks/useStripe";
 
 import PaymentSetupForm from "./PaymentSetupForm";
 
-const BillingModal = ({ back, onCreate }) => {
+const BillingModal = ({
+  back,
+  onCreate,
+}: {
+  back: (value: React.SetStateAction<boolean>) => void;
+  onCreate: () => Promise<void>;
+}) => {
   const { publishableKey } = usePublishableKey();
   const stripePromise = loadStripe(publishableKey);
+  checkBillingCustomerExists();
 
   const appearance = {
     variables: {
@@ -65,36 +71,3 @@ const BillingModal = ({ back, onCreate }) => {
 };
 
 export default BillingModal;
-
-const ControlRow = styled.div`
-  width: 100%;
-  display: flex;
-  margin-left: auto;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 35px;
-`;
-
-const BackButton = styled.div`
-  display: flex;
-  width: 36px;
-  cursor: pointer;
-  height: 36px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #ffffff55;
-  border-radius: 100px;
-  background: #ffffff11;
-
-  :hover {
-    background: #ffffff22;
-    > img {
-      opacity: 1;
-    }
-  }
-`;
-
-const BackButtonImg = styled.img`
-  width: 16px;
-  opacity: 0.75;
-`;

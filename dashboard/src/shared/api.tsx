@@ -3461,16 +3461,16 @@ const addPaymentMethod = baseApi<
   ({ project_id }) => `/api/projects/${project_id}/billing/payment_method`
 );
 
-const updatePaymentMethod = baseApi<
+const setDefaultPaymentMethod = baseApi<
   {},
   {
     project_id?: number;
     payment_method_id: string;
   }
 >(
-  "GET",
+  "PUT",
   ({ project_id, payment_method_id }) =>
-    `/api/projects/${project_id}/billing/payment_method/${payment_method_id}`
+    `/api/projects/${project_id}/billing/payment_method/${payment_method_id}/default`
 );
 
 const deletePaymentMethod = baseApi<
@@ -3833,7 +3833,7 @@ export default {
   checkBillingCustomerExists,
   listPaymentMethod,
   addPaymentMethod,
-  updatePaymentMethod,
+  setDefaultPaymentMethod,
   deletePaymentMethod,
 
   // STATUS

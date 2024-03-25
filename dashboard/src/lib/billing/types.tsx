@@ -10,6 +10,7 @@ export const PaymentMethodValidator = z.object({
   last4: z.string(),
   exp_month: z.number(),
   exp_year: z.number(),
+  is_default: z.boolean(),
 });
 
 export const ClientSecretResponse = z.string();

@@ -1,20 +1,21 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-
-import github from "assets/github-icon.png";
-import logo from "assets/logo.png";
-import GoogleIcon from "assets/GoogleIcon";
-
-import api from "shared/api";
-import { Context } from "shared/Context";
 
 import Heading from "components/form-components/Heading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Input from "components/porter/Input";
+import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import Link from "components/porter/Link";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import github from "assets/github-icon.png";
+import GoogleIcon from "assets/GoogleIcon";
+import logo from "assets/logo.png";
+
+import InfoPanel from "./InfoPanel";
 
 type Props = {
   handleLogOut: () => void;
@@ -23,55 +24,40 @@ type Props = {
 const getWindowDimensions = () => {
   const { innerWidth: width, innerHeight: height } = window;
   return { width, height };
-}
+};
 
-const Register: React.FC<Props> = ({
-  handleLogOut,
-}) => {
+const Register: React.FC<Props> = ({ handleLogOut }) => {
   const { user, setCurrentError } = useContext(Context);
   const [submitted, setSubmitted] = useState(false);
-  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
+  const [windowDimensions, setWindowDimensions] = useState(
+    getWindowDimensions()
+  );
 
   const handleResize = () => {
     setWindowDimensions(getWindowDimensions());
   };
 
   useEffect(() => {
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   const handleSendEmail = (): void => {
-    api.createEmailVerification("", {}, {})
+    api
+      .createEmailVerification("", {}, {})
       .then((res) => {
         setSubmitted(true);
       })
-      .catch((err) => setCurrentError(err.response.data.error));
+      .catch((err) => {
+        setCurrentError(err.response.data.error);
+      });
   };
 
   return (
     <StyledRegister>
-      {windowDimensions.width > windowDimensions.height && (
-        <Wrapper>
-          <Logo src={logo} />
-          <Spacer y={2} />
-          <Jumbotron>
-            Deploy and scale <Shiny>effortlessly</Shiny> with Porter
-          </Jumbotron>
-          <Spacer y={2} />
-          <CheckRow>
-            <i className="material-icons">done</i> Generous startup program for seed-stage companies 
-          </CheckRow>
-          <Spacer y={0.5} />
-          <CheckRow>
-            <i className="material-icons">done</i> Bring your own cloud (and cloud credits)
-          </CheckRow>
-          <Spacer y={0.5} />
-          <CheckRow>
-            <i className="material-icons">done</i> Fully automated setup and deployment
-          </CheckRow>
-        </Wrapper>
-      )}
+      {windowDimensions.width > windowDimensions.height && <InfoPanel />}
       <Wrapper>
         {windowDimensions.width <= windowDimensions.height && (
           <Flex>
@@ -79,9 +65,7 @@ const Register: React.FC<Props> = ({
             <Spacer y={2} />
           </Flex>
         )}
-        <Heading isAtTop>
-          Verify your email
-        </Heading>
+        <Heading isAtTop>Verify your email</Heading>
         <Spacer y={1} />
         {submitted ? (
           <>
@@ -121,11 +105,10 @@ const Register: React.FC<Props> = ({
           </>
         )}
         <Spacer y={1} />
-        <Text 
-          size={13}
-          color="helper"
-        >
-          Want to use a different email?<Spacer inline width="5px" /><Link onClick={handleLogOut}>Log out</Link>
+        <Text size={13} color="helper">
+          Want to use a different email?
+          <Spacer inline width="5px" />
+          <Link onClick={handleLogOut}>Log out</Link>
         </Text>
       </Wrapper>
     </StyledRegister>

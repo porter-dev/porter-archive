@@ -1,25 +1,24 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-
-import github from "assets/github-icon.png";
-import logo from "assets/logo.png";
-import docs from "assets/docs.png";
-import blog from "assets/blog.png";
-import community from "assets/community.png";
-import GoogleIcon from "assets/GoogleIcon";
-
-import api from "shared/api";
-import { emailRegex } from "shared/regex";
-import { Context } from "shared/Context";
 
 import DynamicLink from "components/DynamicLink";
 import Heading from "components/form-components/Heading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Input from "components/porter/Input";
+import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import Link from "components/porter/Link";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { emailRegex } from "shared/regex";
+import blog from "assets/blog.png";
+import community from "assets/community.png";
+import docs from "assets/docs.png";
+import github from "assets/github-icon.png";
+import GoogleIcon from "assets/GoogleIcon";
+import logo from "assets/logo.png";
 
 type Props = {
   authenticate: () => void;
@@ -28,11 +27,9 @@ type Props = {
 const getWindowDimensions = () => {
   const { innerWidth: width, innerHeight: height } = window;
   return { width, height };
-}
+};
 
-const Login: React.FC<Props> = ({
-  authenticate,
-}) => {
+const Login: React.FC<Props> = ({ authenticate }) => {
   const { setUser, setCurrentError } = useContext(Context);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,7 +39,9 @@ const Login: React.FC<Props> = ({
   const [hasGithub, setHasGithub] = useState(true);
   const [hasGoogle, setHasGoogle] = useState(false);
   const [hasResetPassword, setHasResetPassword] = useState(true);
-  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
+  const [windowDimensions, setWindowDimensions] = useState(
+    getWindowDimensions()
+  );
 
   const handleLogin = (): void => {
     if (!emailRegex.test(email)) {
@@ -50,11 +49,8 @@ const Login: React.FC<Props> = ({
     } else if (password === "") {
       setCredentialError(true);
     } else {
-      api.logInUser(
-        "",
-        { email: email, password: password },
-        {}
-      )
+      api
+        .logInUser("", { email, password }, {})
         .then((res) => {
           if (res?.data?.redirect) {
             window.location.href = res.data.redirect;
@@ -63,7 +59,9 @@ const Login: React.FC<Props> = ({
             authenticate();
           }
         })
-        .catch((err) => setCurrentError(err.response.data.error));
+        .catch((err) => {
+          setCurrentError(err.response.data.error);
+        });
     }
   };
 
@@ -74,7 +72,7 @@ const Login: React.FC<Props> = ({
   const handleKeyDown = (e: any) => {
     if (e.key === "Enter") {
       handleLogin();
-    };
+    }
   };
 
   // Manually re-register event listener on email/password change
@@ -87,34 +85,36 @@ const Login: React.FC<Props> = ({
   }, [email, password]);
 
   useEffect(() => {
-
     // Get capabilities to case on login methods
-    api.getMetadata("", {}, {})
+    api
+      .getMetadata("", {}, {})
       .then((res) => {
         setHasBasic(res.data?.basic_login);
         setHasGithub(res.data?.github_login);
         setHasGoogle(res.data?.google_login);
         setHasResetPassword(res.data?.email);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        console.log(err);
+      });
 
     const urlParams = new URLSearchParams(window.location.search);
     const emailFromCLI = urlParams.get("email");
     emailFromCLI && setEmail(emailFromCLI);
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
   const githubRedirect = () => {
-    let redirectUrl = `/api/oauth/login/github`;
+    const redirectUrl = `/api/oauth/login/github`;
     window.location.href = redirectUrl;
   };
 
   const googleRedirect = () => {
-    let redirectUrl = `/api/oauth/login/google`;
+    const redirectUrl = `/api/oauth/login/google`;
     window.location.href = redirectUrl;
   };
 
@@ -122,9 +122,12 @@ const Login: React.FC<Props> = ({
     <StyledLogin>
       {windowDimensions.width > windowDimensions.height && (
         <Wrapper>
-          <a href="https://porter.run">
-            <Logo src={logo} />
-          </a>
+          <Container row>
+            <a href="https://porter.run">
+              <Logo src={logo} />
+            </a>
+            <Badge>Cloud</Badge>
+          </Container>
           <Spacer y={2} />
           <Jumbotron>
             <Shiny>Welcome back to Porter</Shiny>
@@ -137,10 +140,6 @@ const Login: React.FC<Props> = ({
           <LinkRow to="https://porter.run/blog" target="_blank">
             <img src={blog} /> See what's new with Porter
           </LinkRow>
-          <Spacer y={0.5} />
-          <LinkRow to="https://discord.com/invite/34n7NN7FJ7" target="_blank">
-            <img src={community} /> Join the community
-          </LinkRow>
         </Wrapper>
       )}
       <Wrapper>
@@ -152,9 +151,7 @@ const Login: React.FC<Props> = ({
             <Spacer y={2} />
           </Flex>
         )}
-        <Heading isAtTop>
-          Log in to your Porter account
-        </Heading>
+        <Heading isAtTop>Log in to your Porter account</Heading>
         <Spacer y={1} />
         {(hasGithub || hasGoogle) && (
           <>
@@ -165,9 +162,7 @@ const Login: React.FC<Props> = ({
                   Log in with GitHub
                 </OAuthButton>
               )}
-              {hasGithub && hasGoogle && (
-                <Spacer inline x={2} />
-              )}
+              {hasGithub && hasGoogle && <Spacer inline x={2} />}
               {hasGoogle && (
                 <OAuthButton onClick={googleRedirect}>
                   <StyledGoogleIcon />
@@ -227,11 +222,10 @@ const Login: React.FC<Props> = ({
           </>
         )}
         <Spacer y={1} />
-        <Text
-          size={13}
-          color="helper"
-        >
-          Don't have an account?<Spacer width="5px" inline /><Link to="/register">Sign up</Link>
+        <Text size={13} color="helper">
+          Don't have an account?
+          <Spacer width="5px" inline />
+          <Link to="/register">Sign up</Link>
         </Text>
       </Wrapper>
     </StyledLogin>
@@ -239,6 +233,15 @@ const Login: React.FC<Props> = ({
 };
 
 export default Login;
+
+const Badge = styled.div`
+  margin-left: 17px;
+  margin-top: -6px;
+  background: ${(props) => props.theme.clickable};
+  padding: 5px 10px;
+  border: 1px solid #aaaabb;
+  border-radius: 5px;
+`;
 
 const ForgotPassword = styled.div`
   position: absolute;

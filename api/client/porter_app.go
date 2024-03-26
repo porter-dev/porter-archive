@@ -2,11 +2,14 @@ package client
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"github.com/porter-dev/porter/api/server/handlers/porter_app"
 	"github.com/porter-dev/porter/internal/models"
 	appInternal "github.com/porter-dev/porter/internal/porter_app"
+	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 
 	"github.com/porter-dev/porter/api/types"
 )
@@ -157,12 +160,14 @@ func (c *Client) ParseYAML(
 	projectID, clusterID uint,
 	b64Yaml string,
 	appName string,
+	patchOperations []v2.PatchOperation,
 ) (*porter_app.ParsePorterYAMLToProtoResponse, error) {
 	resp := &porter_app.ParsePorterYAMLToProtoResponse{}
 
 	req := &porter_app.ParsePorterYAMLToProtoRequest{
-		B64Yaml: b64Yaml,
-		AppName: appName,
+		B64Yaml:         b64Yaml,
+		AppName:         appName,
+		PatchOperations: patchOperations,
 	}
 
 	err := c.postRequest(
@@ -199,19 +204,24 @@ func (c *Client) GetAppManifests(
 
 // UpdateAppInput is the input struct to UpdateApp
 type UpdateAppInput struct {
-	ProjectID          uint
-	ClusterID          uint
-	Name               string
-	ImageTagOverride   string
-	GitSource          porter_app.GitSource
-	DeploymentTargetId string
-	CommitSHA          string
-	AppRevisionID      string
-	Base64AppProto     string
-	Base64PorterYAML   string
-	IsEnvOverride      bool
-	WithPredeploy      bool
-	Exact              bool
+	ProjectID            uint
+	ClusterID            uint
+	Name                 string
+	ImageTagOverride     string
+	GitSource            porter_app.GitSource
+	DeploymentTargetId   string
+	DeploymentTargetName string
+	CommitSHA            string
+	AppRevisionID        string
+	Base64AppProto       string
+	Base64PorterYAML     string
+	IsEnvOverride        bool
+	WithPredeploy        bool
+	Exact                bool
+	Variables            map[string]string
+	Secrets              map[string]string
+	Deletions            porter_app.Deletions
+	PatchOperations      []v2.PatchOperation
 }
 
 // UpdateApp updates a porter app
@@ -222,17 +232,22 @@ func (c *Client) UpdateApp(
 	resp := &porter_app.UpdateAppResponse{}
 
 	req := &porter_app.UpdateAppRequest{
-		Name:               inp.Name,
-		GitSource:          inp.GitSource,
-		DeploymentTargetId: inp.DeploymentTargetId,
-		CommitSHA:          inp.CommitSHA,
-		ImageTagOverride:   inp.ImageTagOverride,
-		AppRevisionID:      inp.AppRevisionID,
-		Base64AppProto:     inp.Base64AppProto,
-		Base64PorterYAML:   inp.Base64PorterYAML,
-		IsEnvOverride:      inp.IsEnvOverride,
-		WithPredeploy:      inp.WithPredeploy,
-		Exact:              inp.Exact,
+		Name:                 inp.Name,
+		GitSource:            inp.GitSource,
+		DeploymentTargetId:   inp.DeploymentTargetId,
+		DeploymentTargetName: inp.DeploymentTargetName,
+		CommitSHA:            inp.CommitSHA,
+		ImageTagOverride:     inp.ImageTagOverride,
+		AppRevisionID:        inp.AppRevisionID,
+		Base64AppProto:       inp.Base64AppProto,
+		Base64PorterYAML:     inp.Base64PorterYAML,
+		IsEnvOverride:        inp.IsEnvOverride,
+		WithPredeploy:        inp.WithPredeploy,
+		Exact:                inp.Exact,
+		Variables:            inp.Variables,
+		Secrets:              inp.Secrets,
+		Deletions:            inp.Deletions,
+		PatchOperations:      inp.PatchOperations,
 	}
 
 	err := c.postRequest(
@@ -520,20 +535,39 @@ func (c *Client) GetAppEnvVariables(
 	return resp, err
 }
 
+// GetBuildFromRevisionInput is the input struct to GetBuildFromRevision
+type GetBuildFromRevisionInput struct {
+	ProjectID       uint
+	ClusterID       uint
+	AppName         string
+	AppRevisionID   string
+	PatchOperations []v2.PatchOperation
+}
+
 // GetBuildFromRevision returns the build environment for a given app proto
 func (c *Client) GetBuildFromRevision(
 	ctx context.Context,
-	projectID uint, clusterID uint,
-	appName string, appRevisionId string,
+	inp GetBuildFromRevisionInput,
 ) (*porter_app.GetBuildFromRevisionResponse, error) {
+	by, err := json.Marshal(inp.PatchOperations)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling patch operations: %w", err)
+	}
+
+	encoded := base64.StdEncoding.EncodeToString(by)
+
+	req := &porter_app.GetBuildFromRevisionRequest{
+		B64PatchOperations: encoded,
+	}
+
 	resp := &porter_app.GetBuildFromRevisionResponse{}
 
-	err := c.getRequest(
+	err = c.getRequest(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/%s/revisions/%s/build",
-			projectID, clusterID, appName, appRevisionId,
+			inp.ProjectID, inp.ClusterID, inp.AppName, inp.AppRevisionID,
 		),
-		nil,
+		req,
 		resp,
 	)
 
@@ -566,38 +600,6 @@ func (c *Client) ReportRevisionStatus(
 		fmt.Sprintf(
 			"/projects/%d/clusters/%d/apps/%s/revisions/%s/status",
 			inp.ProjectID, inp.ClusterID, inp.AppName, inp.AppRevisionID,
-		),
-		req,
-		resp,
-	)
-
-	return resp, err
-}
-
-// CreateOrUpdateAppEnvironment updates the app environment group and creates it if it doesn't exist
-func (c *Client) CreateOrUpdateAppEnvironment(
-	ctx context.Context,
-	projectID uint, clusterID uint,
-	appName string,
-	deploymentTargetID string,
-	variables map[string]string,
-	secrets map[string]string,
-	Base64AppProto string,
-) (*porter_app.UpdateAppEnvironmentResponse, error) {
-	resp := &porter_app.UpdateAppEnvironmentResponse{}
-
-	req := &porter_app.UpdateAppEnvironmentRequest{
-		DeploymentTargetID: deploymentTargetID,
-		Variables:          variables,
-		Secrets:            secrets,
-		HardUpdate:         false,
-		Base64AppProto:     Base64AppProto,
-	}
-
-	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects/%d/clusters/%d/apps/%s/update-environment",
-			projectID, clusterID, appName,
 		),
 		req,
 		resp,

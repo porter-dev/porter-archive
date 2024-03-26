@@ -84,6 +84,7 @@ export const DatastoreContextProvider: React.FC<
       refetchOnWindowFocus: true,
     }
   );
+
   if (status === "loading" || !paramsExist) {
     return <Loading />;
   }

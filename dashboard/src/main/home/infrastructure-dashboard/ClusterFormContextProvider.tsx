@@ -5,14 +5,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { FormProvider, useForm } from "react-hook-form";
 import { useHistory } from "react-router";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import { Error as ErrorComponent } from "components/porter/Error";
 import {
   clusterContractValidator,
   type ClientClusterContract,
+  type ClientPreflightCheck,
   type UpdateClusterResponse,
 } from "lib/clusters/types";
-import { useUpdateCluster } from "lib/hooks/useCluster";
+import {
+  uniqueCidrMetadataValidator,
+  useUpdateCluster,
+} from "lib/hooks/useCluster";
 import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 import { useIntercom } from "lib/hooks/useIntercom";
 
@@ -24,14 +29,19 @@ import PreflightChecksModal from "./modals/PreflightChecksModal";
 export type UpdateClusterButtonProps = {
   status: "" | "loading" | JSX.Element | "success";
   isDisabled: boolean;
-  loadingText: string;
+  loadingText?: string;
 };
 
 type ClusterFormContextType = {
   isAdvancedSettingsEnabled: boolean;
+  isMultiClusterEnabled: boolean;
   showFailedPreflightChecksModal: boolean;
   updateClusterButtonProps: UpdateClusterButtonProps;
   setCurrentContract: (contract: Contract) => void;
+  submitSkippingPreflightChecks: () => Promise<void>;
+  submitAndPatchCheckSuggestions: (args: {
+    preflightChecks: ClientPreflightCheck[];
+  }) => Promise<void>;
 };
 
 const ClusterFormContext = createContext<ClusterFormContextType | null>(null);
@@ -49,6 +59,7 @@ export const useClusterFormContext = (): ClusterFormContextType => {
 type ClusterFormContextProviderProps = {
   projectId?: number;
   isAdvancedSettingsEnabled?: boolean;
+  isMultiClusterEnabled?: boolean;
   redirectOnSubmit?: boolean;
   children: JSX.Element;
 };
@@ -56,6 +67,7 @@ type ClusterFormContextProviderProps = {
 const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   projectId,
   isAdvancedSettingsEnabled = false,
+  isMultiClusterEnabled = false,
   redirectOnSubmit,
   children,
 }) => {
@@ -85,6 +97,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   });
   const {
     handleSubmit,
+    setValue,
     formState: { isSubmitting, errors },
   } = clusterForm;
 
@@ -108,7 +121,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     }
     if (Object.keys(errors).length > 0) {
       // TODO: remove this and properly handle form validation errors
-      console.log("errors", errors);
+      // console.log("errors", errors);
     }
     if (isHandlingPreflightChecks) {
       props.loadingText = "Running preflight checks...";
@@ -130,14 +143,21 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     errors,
   ]);
 
-  const onSubmit = handleSubmit(async (data) => {
+  const handleClusterUpdate = async (
+    data: ClientClusterContract,
+    skipPreflightChecks?: boolean
+  ): Promise<void> => {
     setUpdateClusterResponse(undefined);
     setUpdateClusterError("");
     if (!currentContract?.cluster || !projectId) {
       return;
     }
     try {
-      const response = await updateCluster(data, currentContract);
+      const response = await updateCluster(
+        data,
+        currentContract,
+        skipPreflightChecks
+      );
       setUpdateClusterResponse(response);
       if (response.preflightChecks) {
         void reportToAnalytics({
@@ -191,7 +211,55 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
         });
       }
     }
+  };
+
+  const onSubmit = handleSubmit(async (data) => {
+    await handleClusterUpdate(data);
   });
+
+  const submitSkippingPreflightChecks = async (): Promise<void> => {
+    if (clusterForm.formState.isSubmitting) {
+      return;
+    }
+    if (!currentContract?.cluster) {
+      return;
+    }
+    const fullValuesWithDefaults = clusterContractValidator.parse(
+      clusterForm.getValues()
+    );
+    await handleClusterUpdate(fullValuesWithDefaults, true);
+  };
+
+  const submitAndPatchCheckSuggestions = async ({
+    preflightChecks,
+  }: {
+    preflightChecks: ClientPreflightCheck[];
+  }): Promise<void> => {
+    if (clusterForm.formState.isSubmitting) {
+      return;
+    }
+    if (!currentContract?.cluster) {
+      return;
+    }
+
+    preflightChecks.forEach((check) => {
+      match(check).with({ name: "enforceCidrUniqueness" }, () => {
+        const parsedMetadata = uniqueCidrMetadataValidator.parse(
+          check.error?.metadata
+        );
+        setValue(
+          "cluster.config.serviceCidrRange",
+          parsedMetadata["suggested-service-cidr"]
+        );
+        setValue(
+          "cluster.config.cidrRange",
+          parsedMetadata["suggested-vpc-cidr"]
+        );
+      });
+    });
+
+    void onSubmit();
+  };
 
   return (
     <ClusterFormContext.Provider
@@ -200,6 +268,9 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
         showFailedPreflightChecksModal,
         updateClusterButtonProps,
         isAdvancedSettingsEnabled,
+        isMultiClusterEnabled,
+        submitSkippingPreflightChecks,
+        submitAndPatchCheckSuggestions,
       }}
     >
       <Wrapper ref={scrollToTopRef}>

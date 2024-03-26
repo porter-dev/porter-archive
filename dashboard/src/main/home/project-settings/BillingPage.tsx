@@ -1,69 +1,162 @@
 import React, { useContext, useEffect, useState } from "react";
-import { CustomerProvider, PlanSelect } from "@ironplans/react";
-import api from "shared/api";
+import styled from "styled-components";
+
+import Loading from "components/Loading";
+import Button from "components/porter/Button";
+import Container from "components/porter/Container";
+import Fieldset from "components/porter/Fieldset";
+import Icon from "components/porter/Icon";
+import Image from "components/porter/Image";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import {
+  checkBillingCustomerExists,
+  checkIfProjectHasPayment,
+  usePaymentMethods,
+  useSetDefaultPaymentMethod,
+} from "lib/hooks/useStripe";
+
 import { Context } from "shared/Context";
+import cardIcon from "assets/credit-card.svg";
+import gift from "assets/gift.svg";
+import trashIcon from "assets/trash.png";
 
-function BillingPage() {
-  const [customerToken, setCustomerToken] = useState("");
-  const [teamID, setTeamID] = useState("");
-  const { currentProject, setCurrentError, queryUsage } = useContext(Context);
+import BillingModal from "../modals/BillingModal";
 
-  useEffect(() => {
-    let isSubscripted = true;
-    api
-      .getCustomerToken("<token>", {}, { project_id: currentProject?.id })
-      .then((res) => {
-        if (isSubscripted) {
-          const token = res?.data?.token;
-          const teamID = res?.data?.team_id;
-          setCustomerToken(token);
-          setTeamID(teamID);
-        }
-      })
-      .catch((err) => {
-        setCurrentError(err);
-      });
-    return () => {
-      isSubscripted = false;
-      queryUsage();
-    };
-  }, [currentProject?.id]);
+function BillingPage(): JSX.Element {
+  const { setCurrentOverlay } = useContext(Context);
+  const [shouldCreate, setShouldCreate] = useState(false);
+
+  const {
+    paymentMethodList,
+    refetchPaymentMethods,
+    deletePaymentMethod,
+    deletingIds,
+  } = usePaymentMethods();
+  const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
+  checkBillingCustomerExists();
+
+  const { refetchPaymentEnabled } = checkIfProjectHasPayment();
+
+  const onCreate = async () => {
+    await refetchPaymentMethods();
+    setShouldCreate(false);
+    refetchPaymentEnabled();
+  };
+
+  if (shouldCreate) {
+    return (
+      <BillingModal
+        onCreate={onCreate}
+        back={() => {
+          setShouldCreate(false);
+        }}
+      />
+    );
+  }
 
   return (
-    <div style={{ height: "1000px" }}>
-      <CustomerProvider token={customerToken} teamId={teamID}>
-        <PlanSelect
-          theme={{
-            base: {
-              customFont: "Work Sans",
-              fontFamily: '"Work Sans", sans-serif',
-              darkMode: "on",
-              colors: {
-                primary: "rgba(97, 111, 238, 0.8)",
-                secondary: "rgb(103, 108, 124)",
-                danger: "rgb(227, 54, 109)",
-                success: "rgb(56, 168, 138)",
-              },
-            },
-            card: {
-              backgroundColor: "rgb(38, 40, 47)",
-              boxShadow: "rgb(0 0 0 / 33%) 0px 4px 15px 0px",
-              borderRadius: "8px",
-              border: "2px solid rgba(158, 180, 255, 0)",
-            },
-            button: {
-              base: {
-                boxShadow: "rgb(0 0 0 / 19%) 0px 2px 5px 0px",
-                borderRadius: "5px",
-                fontSize: "14px",
-                fontWeight: "500",
-              },
-            },
-          }}
-        ></PlanSelect>
-      </CustomerProvider>
-    </div>
+    <>
+      <Text size={16}>Porter credit balance</Text>
+      <Spacer y={1} />
+      <Text color="helper">
+        View the amount of Porter credits you have available to spend on
+        resources within this project.
+      </Text>
+      <Spacer y={1} />
+      <Container row>
+        <Image src={gift} style={{ marginTop: "-2px" }} />
+        <Spacer inline x={1} />
+        <Text size={20}>$ 5.00</Text>
+      </Container>
+      <Spacer y={2} />
+      <Text size={16}>Payment methods</Text>
+      <Spacer y={1} />
+      <Text color="helper">
+        Manage the payment methods associated with this project.
+      </Text>
+      <Spacer y={1} />
+      {paymentMethodList.map((paymentMethod, idx) => {
+        return (
+          <div key={idx}>
+            <Fieldset>
+              <Container row spaced>
+                <Container row>
+                  <Icon src={cardIcon} height={"14px"} />
+                  <Spacer inline x={1} />
+                  <Text color="helper">
+                    **** **** **** {paymentMethod.last4}
+                  </Text>
+                  <Spacer inline x={1} />
+                  <Text color="helper">
+                    Expires: {paymentMethod.exp_month}/{paymentMethod.exp_year}
+                  </Text>
+                  <Spacer inline x={1} />
+                </Container>
+                <DeleteButtonContainer>
+                  {deletingIds.includes(paymentMethod.id) ? (
+                    <Loading />
+                  ) : !paymentMethod.is_default ? (
+                    <Container row={true}>
+                      <DeleteButton
+                        onClick={() => {
+                          setCurrentOverlay({
+                            message: `Are you sure you want to remove this payment method?`,
+                            onYes: () => {
+                              deletePaymentMethod(paymentMethod.id);
+                              setCurrentOverlay(null);
+                            },
+                            onNo: () => {
+                              setCurrentOverlay(null);
+                            },
+                          });
+                        }}
+                      >
+                        <Icon src={trashIcon} height={"18px"} />
+                      </DeleteButton>
+                      <Spacer inline x={1} />
+                      <Button
+                        onClick={() => {
+                          setDefaultPaymentMethod(paymentMethod.id);
+                          refetchPaymentMethods();
+                        }}
+                      >
+                        Set as default
+                      </Button>
+                    </Container>
+                  ) : (
+                    <Text>Default</Text>
+                  )}
+                </DeleteButtonContainer>
+              </Container>
+            </Fieldset>
+            <Spacer y={1} />
+          </div>
+        );
+      })}
+      <Button
+        onClick={() => {
+          setShouldCreate(true);
+        }}
+      >
+        <I className="material-icons">add</I>
+        Add Payment Method
+      </Button>
+    </>
   );
 }
 
 export default BillingPage;
+
+const I = styled.i`
+  font-size: 18px;
+  margin-right: 10px;
+`;
+
+const DeleteButton = styled.div`
+  cursor: pointer;
+`;
+
+const DeleteButtonContainer = styled.div`
+  text-align: center;
+`;

@@ -2,8 +2,7 @@ import { z } from "zod";
 
 import api from "shared/api";
 
-// TODO: refactor this to match "connectTo.." syntax
-export const isAWSArnAccessible = async ({
+export const connectToAwsAccount = async ({
   targetArn,
   externalId,
   projectId,
@@ -11,7 +10,7 @@ export const isAWSArnAccessible = async ({
   targetArn: string;
   externalId: string;
   projectId: number;
-}): Promise<boolean> => {
+}): Promise<void> => {
   await api.createAWSIntegration(
     "<token>",
     {
@@ -20,7 +19,6 @@ export const isAWSArnAccessible = async ({
     },
     { id: projectId }
   );
-  return true;
 };
 
 export const connectToAzureAccount = async ({

@@ -1,68 +1,169 @@
-import React, { useContext } from "react";
+import React, { useMemo, useState } from "react";
 import styled from "styled-components";
 
 import Button from "components/porter/Button";
+import { Error as ErrorComponent } from "components/porter/Error";
 import Icon from "components/porter/Icon";
+import Input from "components/porter/Input";
+import Link from "components/porter/Link";
+import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { type UpdateClusterButtonProps } from "main/home/infrastructure-dashboard/ClusterFormContextProvider";
+import { getErrorMessageFromNetworkCall } from "lib/hooks/useCluster";
 import { useDatastoreMethods } from "lib/hooks/useDatabaseMethods";
 
-import { Context } from "shared/Context";
 import trash from "assets/trash.png";
 
 import { useDatastoreContext } from "../DatabaseContextProvider";
 
 const SettingsTab: React.FC = () => {
-  const { setCurrentOverlay } = useContext(Context);
+  const [showDeleteDatastoreModal, setShowDeleteDatastoreModal] =
+    useState(false);
+
   const { datastore } = useDatastoreContext();
   const { deleteDatastore } = useDatastoreMethods();
-  const handleDeletionSubmit = async (): Promise<void> => {
-    if (setCurrentOverlay == null) {
-      return;
-    }
-
-    try {
-      await deleteDatastore(datastore.name);
-      setCurrentOverlay(null);
-    } catch (error) {
-      // todo: handle error
-    }
-  };
-
-  const handleDeletionClick = async (): Promise<void> => {
-    if (setCurrentOverlay === undefined) {
-      return;
-    }
-
-    setCurrentOverlay({
-      message: `Are you sure you want to delete ${datastore.name}?`,
-      onYes: handleDeletionSubmit,
-      onNo: () => {
-        setCurrentOverlay(null);
-      },
-    });
-  };
 
   return (
-    <StyledTemplateComponent>
-      <InnerWrapper>
+    <div>
+      <StyledTemplateComponent>
         <Text size={16}>Delete &quot;{datastore.name}&quot;</Text>
         <Spacer y={0.5} />
         <Text color="helper">
           Delete this datastore and all of its resources.
         </Text>
         <Spacer y={0.5} />
-        <Button color="#b91133" onClick={handleDeletionClick}>
+        <Button
+          color="#b91133"
+          onClick={() => {
+            setShowDeleteDatastoreModal(true);
+          }}
+        >
           <Icon src={trash} height={"15px"} />
           <Spacer inline x={0.5} />
           Delete {datastore.name}
         </Button>
-      </InnerWrapper>
-    </StyledTemplateComponent>
+      </StyledTemplateComponent>
+      {showDeleteDatastoreModal && (
+        <DeleteDatastoreModal
+          datastoreName={datastore.name}
+          onClose={() => {
+            setShowDeleteDatastoreModal(false);
+          }}
+          onSubmit={async () => {
+            await deleteDatastore(datastore.name);
+          }}
+        />
+      )}
+    </div>
   );
 };
 
 export default SettingsTab;
+
+type DeleteDatastoreModalProps = {
+  datastoreName: string;
+  onSubmit: () => Promise<void>;
+  onClose: () => void;
+};
+
+const DeleteDatastoreModal: React.FC<DeleteDatastoreModalProps> = ({
+  datastoreName,
+  onSubmit,
+  onClose,
+}) => {
+  const [inputtedDatastoreName, setInputtedDatastoreName] =
+    useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [deleteDatastoreError, setDeleteDatastoreError] = useState<string>("");
+
+  const confirmDeletion = async (): Promise<void> => {
+    setIsSubmitting(true);
+    try {
+      await onSubmit();
+      onClose();
+    } catch (err) {
+      setDeleteDatastoreError(
+        getErrorMessageFromNetworkCall(err, "Datastore deletion")
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const deleteButtonProps: UpdateClusterButtonProps = useMemo(() => {
+    if (isSubmitting) {
+      return {
+        status: "loading",
+        isDisabled: true,
+      };
+    }
+    if (deleteDatastoreError) {
+      return {
+        status: (
+          <ErrorComponent message={deleteDatastoreError} maxWidth="600px" />
+        ),
+        isDisabled: false,
+      };
+    }
+    return {
+      status: "",
+      isDisabled: false,
+    };
+  }, [isSubmitting, deleteDatastoreError]);
+
+  return (
+    <Modal closeModal={onClose}>
+      <Text size={16}>Delete {datastoreName}?</Text>
+      <Spacer y={1} />
+
+      <Text size={14} color="red">
+        Attention:
+      </Text>
+      <Spacer y={0.1} />
+      <Text>
+        Destruction of resources sometimes results in dangling resources. To
+        ensure that everything has been properly destroyed, please visit your
+        cloud provider&apos;s console.
+      </Text>
+      <Spacer y={0.5} />
+      <Link
+        target="_blank"
+        hasunderline
+        to="https://docs.porter.run/other/deleting-dangling-resources"
+      >
+        Deletion instructions
+      </Link>
+      <Spacer y={1} />
+      <Text color="helper">
+        To confirm, enter the datastore name below. This action is irreversible.
+      </Text>
+      <Spacer y={0.5} />
+      <Input
+        placeholder={datastoreName}
+        value={inputtedDatastoreName}
+        setValue={setInputtedDatastoreName}
+        width="100%"
+        height="40px"
+      />
+      <Spacer y={1} />
+      <Button
+        color="#b91133"
+        onClick={async () => {
+          await confirmDeletion();
+        }}
+        status={deleteButtonProps.status}
+        disabled={
+          deleteButtonProps.isDisabled ||
+          inputtedDatastoreName !== datastoreName
+        }
+        loadingText={"Deleting..."}
+      >
+        Delete
+      </Button>
+    </Modal>
+  );
+};
 
 const StyledTemplateComponent = styled.div`
   width: 100%;
@@ -75,17 +176,4 @@ const StyledTemplateComponent = styled.div`
       opacity: 1;
     }
   }
-`;
-
-const InnerWrapper = styled.div<{ full?: boolean }>`
-  width: 100%;
-  height: ${(props) => (props.full ? "100%" : "calc(100% - 65px)")};
-  padding: 30px;
-  padding-bottom: 15px;
-  position: relative;
-  overflow: auto;
-  margin-bottom: 30px;
-  border-radius: 5px;
-  background: ${(props) => props.theme.fg};
-  border: 1px solid #494b4f;
 `;

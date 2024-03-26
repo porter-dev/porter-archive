@@ -43,13 +43,17 @@ const ClusterStatus: React.FC = () => {
             <Spacer inline x={0.7} />
             <Text color="helper">
               Applications running on {nodeInformation.APPLICATION.length}{" "}
-              <Code>{nodeInformation.APPLICATION[0].instanceType}</Code>{" "}
+              <Code>
+                {nodeInformation.APPLICATION[0].instanceType.displayName}
+              </Code>{" "}
               {pluralize("instance", nodeInformation.APPLICATION.length)}
               {nodeInformation.CUSTOM.length !== 0 && (
                 <>
                   {" and "}
                   {nodeInformation.CUSTOM.length}{" "}
-                  <Code>{nodeInformation.CUSTOM[0].instanceType}</Code>{" "}
+                  <Code>
+                    {nodeInformation.CUSTOM[0].instanceType.displayName}
+                  </Code>{" "}
                   {pluralize("instance", nodeInformation.CUSTOM.length)}
                 </>
               )}

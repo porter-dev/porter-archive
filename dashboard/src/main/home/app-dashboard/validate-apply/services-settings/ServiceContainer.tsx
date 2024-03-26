@@ -6,7 +6,6 @@ import styled, { keyframes } from "styled-components";
 import { match } from "ts-pattern";
 
 import Spacer from "components/porter/Spacer";
-import { type ClientCluster } from "lib/clusters/types";
 import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
@@ -16,6 +15,7 @@ import {
 
 import chip from "assets/computer-chip.svg";
 import job from "assets/job.png";
+import moon from "assets/moon.svg";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
 
@@ -34,18 +34,11 @@ type ServiceProps = {
   >;
   remove: (index: number) => void;
   status?: ClientServiceStatus[];
-  maxCPU: number;
-  maxRAM: number;
-  maxGPU: number;
-  clusterContainsGPUNodes: boolean;
   internalNetworkingDetails: {
     namespace: string;
     appName: string;
   };
-  clusterIngressIp: string;
-  showDisableTls: boolean;
   existingServiceNames: string[];
-  cluster?: ClientCluster;
 };
 
 const ServiceContainer: React.FC<ServiceProps> = ({
@@ -54,15 +47,8 @@ const ServiceContainer: React.FC<ServiceProps> = ({
   update,
   remove,
   status,
-  maxCPU,
-  maxRAM,
-  maxGPU,
-  clusterContainsGPUNodes,
   internalNetworkingDetails,
-  clusterIngressIp,
-  showDisableTls,
   existingServiceNames,
-  cluster,
 }) => {
   const renderTabs = (service: ClientService): JSX.Element => {
     return match(service)
@@ -70,46 +56,17 @@ const ServiceContainer: React.FC<ServiceProps> = ({
         <WebTabs
           index={index}
           service={svc}
-          maxCPU={maxCPU}
-          maxRAM={maxRAM}
-          maxGPU={maxGPU}
-          clusterContainsGPUNodes={clusterContainsGPUNodes}
           internalNetworkingDetails={internalNetworkingDetails}
-          clusterIngressIp={clusterIngressIp}
-          showDisableTls={showDisableTls}
-          cluster={cluster}
         />
       ))
       .with({ config: { type: "worker" } }, (svc) => (
-        <WorkerTabs
-          index={index}
-          service={svc}
-          maxCPU={maxCPU}
-          maxRAM={maxRAM}
-          maxGPU={maxGPU}
-          clusterContainsGPUNodes={clusterContainsGPUNodes}
-        />
+        <WorkerTabs index={index} service={svc} />
       ))
       .with({ config: { type: "job" } }, (svc) => (
-        <JobTabs
-          index={index}
-          service={svc}
-          maxCPU={maxCPU}
-          maxRAM={maxRAM}
-          maxGPU={maxGPU}
-          clusterContainsGPUNodes={clusterContainsGPUNodes}
-        />
+        <JobTabs index={index} service={svc} />
       ))
       .with({ config: { type: "predeploy" } }, (svc) => (
-        <JobTabs
-          index={index}
-          service={svc}
-          maxCPU={maxCPU}
-          maxRAM={maxRAM}
-          maxGPU={maxGPU}
-          clusterContainsGPUNodes={clusterContainsGPUNodes}
-          isPredeploy
-        />
+        <JobTabs index={index} service={svc} isPredeploy />
       ))
       .exhaustive();
   };
@@ -153,6 +110,15 @@ const ServiceContainer: React.FC<ServiceProps> = ({
               <TagContainer>
                 <ChipIcon src={chip} alt="Chip Icon" />
                 <TagText>GPU Workload</TagText>
+              </TagContainer>
+            </>
+          )}
+          {service.sleep?.value && (
+            <>
+              <Spacer inline x={1.5} />
+              <TagContainer disableAnimation>
+                <ChipIcon src={moon} alt="Moon" />
+                <TagText>Sleeping</TagText>
               </TagContainer>
             </>
           )}
@@ -304,7 +270,9 @@ const reflectiveGleam = keyframes`
   }
 `;
 
-const TagContainer = styled.div`
+const TagContainer = styled.div<{
+  disableAnimation?: boolean;
+}>`
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
@@ -321,7 +289,8 @@ const TagContainer = styled.div`
   );
   background-size: 200% 200%;
   border-radius: 10px;
-  animation: ${reflectiveGleam} 4s infinite linear;
+  animation: ${reflectiveGleam} ${(props) =>
+    props.disableAnimation ? "" : "4s infinite"}
   border: 1px solid rgba(255, 255, 255, 0.2);
 `;
 

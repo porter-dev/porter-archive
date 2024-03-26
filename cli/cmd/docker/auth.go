@@ -109,16 +109,12 @@ func (a *AuthGetter) GetGARCredentials(ctx context.Context, serverURL string, pr
 
 	cachedEntry := a.Cache.Get(serverURL)
 
-	if !strings.HasPrefix(serverURL, "https://") {
-		serverURL = "https://" + serverURL
-	}
-
 	parsedURL, err := url.Parse(serverURL)
 	if err != nil {
 		return "", "", err
 	}
 
-	serverURL = parsedURL.Host + "/" + strings.Split(parsedURL.Path, "/")[0]
+	serverURL = parsedURL.String()
 
 	var token string
 
@@ -396,7 +392,6 @@ func (f *FileCredentialCache) save(registryCache *RegistryCache) error {
 	}
 
 	_, err = file.Write(buff)
-
 	if err != nil {
 		file.Close()
 		os.Remove(file.Name())

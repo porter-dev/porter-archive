@@ -14,7 +14,8 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/porter-dev/porter/api/server/handlers/porter_app"
+	app_api "github.com/porter-dev/porter/api/server/handlers/porter_app"
+	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -47,6 +48,8 @@ type ApplyInput struct {
 	WithPredeploy bool
 	// Exact is true when Apply should use the exact app config provided by the user
 	Exact bool
+	// PatchOperations is a list of patch operations to apply to the app
+	PatchOperations []v2.PatchOperation
 }
 
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
@@ -67,6 +70,14 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 
 	cliConf := inp.CLIConfig
 	client := inp.Client
+
+	if cliConf.Project == 0 {
+		return errors.New("project must be set")
+	}
+
+	if cliConf.Cluster == 0 {
+		return errors.New("cluster must be set")
+	}
 
 	deploymentTargetID, err := deploymentTargetFromConfig(ctx, client, cliConf.Project, cliConf.Cluster, inp.PreviewApply)
 	if err != nil {
@@ -125,6 +136,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		Base64PorterYAML:   b64YAML,
 		WithPredeploy:      inp.WithPredeploy,
 		Exact:              inp.Exact,
+		PatchOperations:    inp.PatchOperations,
 	}
 
 	updateResp, err := client.UpdateApp(ctx, updateInput)
@@ -138,7 +150,12 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 
 	appName := updateResp.AppName
 
-	buildSettings, err := client.GetBuildFromRevision(ctx, cliConf.Project, cliConf.Cluster, appName, updateResp.AppRevisionId)
+	buildSettings, err := client.GetBuildFromRevision(ctx, api.GetBuildFromRevisionInput{
+		ProjectID:     cliConf.Project,
+		ClusterID:     cliConf.Cluster,
+		AppName:       appName,
+		AppRevisionID: updateResp.AppRevisionId,
+	})
 	if err != nil {
 		return fmt.Errorf("error getting build from revision: %w", err)
 	}
@@ -420,8 +437,8 @@ const checkDeployTimeout = 15 * time.Minute
 // checkDeployFrequency is the frequency for checking if an app has been deployed
 const checkDeployFrequency = 10 * time.Second
 
-func gitSourceFromEnv() (porter_app.GitSource, error) {
-	var source porter_app.GitSource
+func gitSourceFromEnv() (app_api.GitSource, error) {
+	var source app_api.GitSource
 
 	var repoID uint
 	if os.Getenv("GITHUB_REPOSITORY_ID") != "" {
@@ -432,7 +449,7 @@ func gitSourceFromEnv() (porter_app.GitSource, error) {
 		repoID = uint(id)
 	}
 
-	return porter_app.GitSource{
+	return app_api.GitSource{
 		GitBranch:   os.Getenv("GITHUB_REF_NAME"),
 		GitRepoID:   repoID,
 		GitRepoName: os.Getenv("GITHUB_REPOSITORY"),
@@ -443,8 +460,8 @@ type buildInputFromBuildSettingsInput struct {
 	projectID            uint
 	appName              string
 	commitSHA            string
-	image                porter_app.Image
-	build                porter_app.BuildSettings
+	image                app_api.Image
+	build                app_api.BuildSettings
 	buildEnv             map[string]string
 	pullImageBeforeBuild bool
 }
@@ -464,11 +481,15 @@ func buildInputFromBuildSettings(inp buildInputFromBuildSettingsInput) (buildInp
 	if inp.commitSHA == "" {
 		return buildSettings, errors.New("commit SHA is empty")
 	}
+	if inp.build.Context == "" {
+		return buildSettings, errors.New("build context is empty")
+	}
+	buildContext := correctBuildContext(inp.build.Context)
 
 	return buildInput{
 		ProjectID:            inp.projectID,
 		AppName:              inp.appName,
-		BuildContext:         inp.build.Context,
+		BuildContext:         buildContext,
 		Dockerfile:           inp.build.Dockerfile,
 		BuildMethod:          inp.build.Method,
 		Builder:              inp.build.Builder,
@@ -479,4 +500,14 @@ func buildInputFromBuildSettings(inp buildInputFromBuildSettingsInput) (buildInp
 		Env:                  inp.buildEnv,
 		PullImageBeforeBuild: inp.pullImageBeforeBuild,
 	}, nil
+}
+
+func correctBuildContext(buildContext string) string {
+	if !strings.HasPrefix(buildContext, "./") {
+		if strings.HasPrefix(buildContext, "/") {
+			return fmt.Sprintf(".%s", buildContext)
+		}
+		return fmt.Sprintf("./%s", buildContext)
+	}
+	return buildContext
 }

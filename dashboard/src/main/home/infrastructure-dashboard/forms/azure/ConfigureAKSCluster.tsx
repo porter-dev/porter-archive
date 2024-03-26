@@ -31,7 +31,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
     watch,
   } = useFormContext<ClientClusterContract>();
 
-  const { isAdvancedSettingsEnabled } = useClusterFormContext();
+  const { isMultiClusterEnabled } = useClusterFormContext();
 
   const region = watch("cluster.config.region");
 
@@ -127,7 +127,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
               />
             </Container>
           </>,
-          isAdvancedSettingsEnabled ? (
+          isMultiClusterEnabled ? (
             <>
               <Text size={16}>CIDR range</Text>
               <Spacer y={0.5} />
@@ -162,6 +162,7 @@ const ConfigureAKSCluster: React.FC<Props> = ({ goBack }) => {
               availableMachineTypes={CloudProviderAzure.machineTypes.filter(
                 (mt) => mt.supportedRegions.includes(region)
               )}
+              isCreating
             />
           </>,
           <>

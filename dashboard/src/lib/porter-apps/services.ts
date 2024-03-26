@@ -7,6 +7,8 @@ import _ from "lodash";
 import { match } from "ts-pattern";
 import { z } from "zod";
 
+import { type ClientNode } from "lib/clusters/types";
+
 import { type BuildOptions } from "./build";
 import {
   autoscalingValidator,
@@ -37,7 +39,7 @@ export type DetectedServices = {
     variables?: Record<string, string>;
   };
 };
-type ClientServiceType = "web" | "worker" | "job" | "predeploy";
+type ClientServiceType = "web" | "worker" | "job" | "predeploy" | "initdeploy";
 
 type ClientWebService = ClientService & { config: ClientWebConfig };
 export const isClientWebService = (
@@ -90,6 +92,13 @@ const predeployConfigValidator = z.object({
 });
 export type ClientPredeployConfig = z.infer<typeof predeployConfigValidator>;
 
+const initialDeployConfigValidator = z.object({
+  type: z.literal("initdeploy"),
+});
+export type ClientInitialDeployConfig = z.infer<
+  typeof initialDeployConfigValidator
+>;
+
 // serviceValidator is the validator for a ClientService
 // This is used to validate a service when creating or updating an app
 export const serviceValidator = z.object({
@@ -108,11 +117,13 @@ export const serviceValidator = z.object({
   }),
   smartOptimization: serviceBooleanValidator.optional(),
   terminationGracePeriodSeconds: serviceNumberValidator.optional(),
+  sleep: serviceBooleanValidator.optional(),
   config: z.discriminatedUnion("type", [
     webConfigValidator,
     workerConfigValidator,
     jobConfigValidator,
     predeployConfigValidator,
+    initialDeployConfigValidator,
   ]),
   domainDeletions: z
     .object({
@@ -146,6 +157,7 @@ export type SerializedService = {
     gpuCoresNvidia: number;
   };
   terminationGracePeriodSeconds?: number;
+  sleep?: boolean;
   config:
     | {
         type: "web";
@@ -172,6 +184,9 @@ export type SerializedService = {
       }
     | {
         type: "predeploy";
+      }
+    | {
+        type: "initdeploy";
       };
 };
 
@@ -243,11 +258,15 @@ export function defaultSerialized({
   const defaultWebHealthCheck: SerializedHealthcheck = {
     enabled: false,
     httpPath: "/healthz",
+    timeoutSeconds: 1,
+    initialDelaySeconds: 15,
   };
 
   const defaultWorkerHealthCheck: SerializedHealthcheck = {
     enabled: false,
     command: "./healthz.sh",
+    timeoutSeconds: 1,
+    initialDelaySeconds: 15,
   };
 
   return match(type)
@@ -287,6 +306,12 @@ export function defaultSerialized({
         type: "predeploy" as const,
       },
     }))
+    .with("initdeploy", () => ({
+      ...baseService,
+      config: {
+        type: "initdeploy" as const,
+      },
+    }))
     .exhaustive();
 }
 
@@ -308,6 +333,7 @@ export function serializeService(service: ClientService): SerializedService {
       gpuCoresNvidia: service.gpu.gpuCoresNvidia.value,
     },
     terminationGracePeriodSeconds: service.terminationGracePeriodSeconds?.value,
+    sleep: service.sleep?.value,
     config: match(service.config)
       .with({ type: "web" }, (config) =>
         Object.freeze({
@@ -353,6 +379,11 @@ export function serializeService(service: ClientService): SerializedService {
           type: "predeploy" as const,
         })
       )
+      .with({ type: "initdeploy" }, () =>
+        Object.freeze({
+          type: "initdeploy" as const,
+        })
+      )
       .exhaustive(),
   });
 }
@@ -380,6 +411,7 @@ export function deserializeService({
     instances: ServiceField.number(service.instances, override?.instances),
     port: ServiceField.number(service.port, override?.port),
     cpuCores: ServiceField.number(service.cpuCores, override?.cpuCores),
+    sleep: ServiceField.boolean(service.sleep, override?.sleep),
     gpu: {
       enabled: ServiceField.boolean(
         service.gpu?.enabled,
@@ -569,6 +601,12 @@ export function deserializeService({
         type: "predeploy" as const,
       },
     }))
+    .with({ type: "initdeploy" }, () => ({
+      ...baseService,
+      config: {
+        type: "initdeploy" as const,
+      },
+    }))
     .exhaustive();
 }
 
@@ -579,6 +617,7 @@ export const serviceTypeEnumProto = (type: ClientServiceType): ServiceType => {
     .with("worker", () => ServiceType.WORKER)
     .with("job", () => ServiceType.JOB)
     .with("predeploy", () => ServiceType.JOB)
+    .with("initdeploy", () => ServiceType.JOB)
     .exhaustive();
 };
 
@@ -594,6 +633,7 @@ export function serviceProto(service: SerializedService): Service {
           runOptional: service.run,
           instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
+          sleep: service.sleep,
           config: {
             value: {
               ...config,
@@ -610,6 +650,7 @@ export function serviceProto(service: SerializedService): Service {
           runOptional: service.run,
           instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
+          sleep: service.sleep,
           config: {
             value: {
               ...config,
@@ -650,6 +691,20 @@ export function serviceProto(service: SerializedService): Service {
           },
         })
     )
+    .with(
+      { type: "initdeploy" },
+      (config) =>
+        new Service({
+          ...service,
+          runOptional: service.run,
+          instancesOptional: service.instances,
+          type: serviceTypeEnumProto(config.type),
+          config: {
+            value: {},
+            case: "jobConfig",
+          },
+        })
+    )
     .exhaustive();
 }
 
@@ -672,6 +727,7 @@ export function serializedServiceFromProto({
       ...service,
       run: service.runOptional ?? service.run,
       instances: service.instancesOptional ?? service.instances,
+      sleep: service.sleep,
       config: {
         type: "web" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -684,6 +740,7 @@ export function serializedServiceFromProto({
       ...service,
       run: service.runOptional ?? service.run,
       instances: service.instancesOptional ?? service.instances,
+      sleep: service.sleep,
       config: {
         type: "worker" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -714,4 +771,71 @@ export function serializedServiceFromProto({
           }
     )
     .exhaustive();
+}
+
+const SMALL_INSTANCE_UPPER_BOUND = 0.65;
+const LARGE_INSTANCE_UPPER_BOUND = 0.9;
+const NEW_SERVICE_RESOURCE_DEFAULT_MULTIPLIER = 0.125;
+
+const DEFAULT_RESOURCE_ALLOWANCES = {
+  maxCpuCores: 1.5,
+  newServiceDefaultCpuCores: 0.19,
+  maxRamMegabytes: 3100,
+  newServiceDefaultRamMegabytes: 400,
+};
+
+const DEFAULT_SANDBOX_RESOURCE_ALLOWANCES = {
+  maxCpuCores: 0.2,
+  newServiceDefaultCpuCores: 0.1,
+  maxRamMegabytes: 250,
+  newServiceDefaultRamMegabytes: 120,
+};
+
+export function getServiceResourceAllowances(
+  nodes: ClientNode[],
+  isSandboxEnabled?: boolean
+): {
+  maxCpuCores: number;
+  maxRamMegabytes: number;
+  newServiceDefaultCpuCores: number;
+  newServiceDefaultRamMegabytes: number;
+} {
+  if (isSandboxEnabled) {
+    return DEFAULT_SANDBOX_RESOURCE_ALLOWANCES;
+  }
+
+  if (nodes.length === 0) {
+    return DEFAULT_RESOURCE_ALLOWANCES;
+  }
+  const maxRamApplicationInstance = nodes
+    .filter((n) => n.nodeGroupType === "APPLICATION")
+    .reduce((max, node) =>
+      node.instanceType.ramMegabytes > max.instanceType.ramMegabytes
+        ? node
+        : max
+    );
+  const multiplier =
+    maxRamApplicationInstance.instanceType.ramMegabytes > 16000
+      ? LARGE_INSTANCE_UPPER_BOUND
+      : SMALL_INSTANCE_UPPER_BOUND;
+
+  const maxCpuCores =
+    Math.floor(
+      maxRamApplicationInstance.instanceType.cpuCores * multiplier * 4
+    ) / 4; // round to nearest quarter
+  const maxRamMegabytes =
+    Math.round(
+      (maxRamApplicationInstance.instanceType.ramMegabytes * multiplier) / 100
+    ) * 100; // round to nearest 100 MB
+  return {
+    maxCpuCores,
+    newServiceDefaultCpuCores: Number(
+      (maxCpuCores * NEW_SERVICE_RESOURCE_DEFAULT_MULTIPLIER).toFixed(2)
+    ), // round to hundredths place
+    maxRamMegabytes,
+    newServiceDefaultRamMegabytes:
+      Math.round(
+        (maxRamMegabytes * NEW_SERVICE_RESOURCE_DEFAULT_MULTIPLIER) / 100
+      ) * 100, // round to nearest 100 MB
+  };
 }

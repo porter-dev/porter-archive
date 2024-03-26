@@ -1,21 +1,22 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-
-import github from "assets/github-icon.png";
-import logo from "assets/logo.png";
-import GoogleIcon from "assets/GoogleIcon";
-
-import api from "shared/api";
-import { emailRegex } from "shared/regex";
-import { Context } from "shared/Context";
 
 import Heading from "components/form-components/Heading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Input from "components/porter/Input";
+import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import Link from "components/porter/Link";
+
+import api from "shared/api";
+import { Context } from "shared/Context";
+import { emailRegex } from "shared/regex";
+import github from "assets/github-icon.png";
+import GoogleIcon from "assets/GoogleIcon";
+import logo from "assets/logo.png";
+
+import InfoPanel from "./InfoPanel";
 
 type Props = {
   authenticate: () => void;
@@ -25,12 +26,9 @@ type Props = {
 const getWindowDimensions = () => {
   const { innerWidth: width, innerHeight: height } = window;
   return { width, height };
-}
+};
 
-const SetInfo: React.FC<Props> = ({
-  authenticate,
-  handleLogOut,
-}) => {
+const SetInfo: React.FC<Props> = ({ authenticate, handleLogOut }) => {
   const { user, setCurrentError } = useContext(Context);
   const [firstName, setFirstName] = useState("");
   const [firstNameError, setFirstNameError] = useState(false);
@@ -38,7 +36,9 @@ const SetInfo: React.FC<Props> = ({
   const [lastNameError, setLastNameError] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const [companyNameError, setCompanyNameError] = useState(false);
-  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
+  const [windowDimensions, setWindowDimensions] = useState(
+    getWindowDimensions()
+  );
 
   const handleResize = () => {
     setWindowDimensions(getWindowDimensions());
@@ -57,43 +57,42 @@ const SetInfo: React.FC<Props> = ({
       setCompanyNameError(true);
     }
 
-    if (
-      firstName !== "" &&
-      lastName !== "" &&
-      companyName !== ""
-    ) {
-      api.updateUserInfo(
-        "",
-        { 
-          first_name: firstName,
-          last_name: lastName,
-          company_name: companyName,
-        },
-        { id: user.id }
-      )
+    if (firstName !== "" && lastName !== "" && companyName !== "") {
+      api
+        .updateUserInfo(
+          "",
+          {
+            first_name: firstName,
+            last_name: lastName,
+            company_name: companyName,
+          },
+          { id: user.id }
+        )
         .then((res: any) => {
           authenticate();
 
           try {
             window.dataLayer?.push({
-              event: 'sign-up',
+              event: "sign-up",
               data: {
-                method: 'github',
-                email: user?.email
-              }
+                method: "github",
+                email: user?.email,
+              },
             });
           } catch (err) {
             console.log(err);
           }
         })
-        .catch((err) => setCurrentError(err));
+        .catch((err) => {
+          setCurrentError(err);
+        });
     }
   };
 
   const handleKeyDown = (e: any) => {
     if (e.key === "Enter") {
       finishAccountSetup();
-    };
+    }
   };
 
   // Manually re-register event listener on email/password change
@@ -106,35 +105,15 @@ const SetInfo: React.FC<Props> = ({
   }, [firstName, lastName, companyName]);
 
   useEffect(() => {
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   return (
     <StyledRegister>
-      {windowDimensions.width > windowDimensions.height && (
-        <Wrapper>
-          <Logo src={logo} onClick={() => {
-            window.location.href = "https://porter.run"
-          }}/>
-          <Spacer y={2} />
-          <Jumbotron>
-            Deploy and scale <Shiny>effortlessly</Shiny> with Porter
-          </Jumbotron>
-          <Spacer y={2} />
-          <CheckRow>
-            <i className="material-icons">done</i> Generous startup program for seed-stage companies
-          </CheckRow>
-          <Spacer y={0.5} />
-          <CheckRow>
-            <i className="material-icons">done</i> Bring your own cloud (and cloud credits)
-          </CheckRow>
-          <Spacer y={0.5} />
-          <CheckRow>
-            <i className="material-icons">done</i> Fully automated setup and deployment
-          </CheckRow>
-        </Wrapper>
-      )}
+      {windowDimensions.width > windowDimensions.height && <InfoPanel />}
       <Wrapper>
         {windowDimensions.width <= windowDimensions.height && (
           <Flex>
@@ -142,9 +121,7 @@ const SetInfo: React.FC<Props> = ({
             <Spacer y={2} />
           </Flex>
         )}
-        <Heading isAtTop>
-          Finish setting up your account
-        </Heading>
+        <Heading isAtTop>Finish setting up your account</Heading>
         <Spacer y={1} />
         <Container row>
           <RowWrapper>
@@ -158,11 +135,9 @@ const SetInfo: React.FC<Props> = ({
               }}
               width="100%"
               height="40px"
-              error={(firstNameError && "First name cannot be blank")}
+              error={firstNameError && "First name cannot be blank"}
             />
-            {!firstNameError && lastNameError && (
-              <Spacer height="27px" />
-            )}
+            {!firstNameError && lastNameError && <Spacer height="27px" />}
           </RowWrapper>
           <Spacer inline x={2} />
           <RowWrapper>
@@ -176,11 +151,9 @@ const SetInfo: React.FC<Props> = ({
               }}
               width="100%"
               height="40px"
-              error={(lastNameError && "Last name cannot be blank")}
+              error={lastNameError && "Last name cannot be blank"}
             />
-            {!lastNameError && firstNameError && (
-              <Spacer height="27px" />
-            )}
+            {!lastNameError && firstNameError && <Spacer height="27px" />}
           </RowWrapper>
         </Container>
         <Spacer y={1} />
@@ -194,18 +167,16 @@ const SetInfo: React.FC<Props> = ({
           }}
           width="100%"
           height="40px"
-          error={(companyNameError && "")}
+          error={companyNameError && ""}
         />
         <Spacer height="30px" />
         <Button onClick={finishAccountSetup} width="100%" height="40px">
           Continue
         </Button>
         <Spacer y={1} />
-        <Text 
-          size={13}
-          color="helper"
-        >
-          Want to use a different login method? <Link onClick={handleLogOut}>Log out</Link>
+        <Text size={13} color="helper">
+          Want to use a different login method?{" "}
+          <Link onClick={handleLogOut}>Log out</Link>
         </Text>
       </Wrapper>
     </StyledRegister>

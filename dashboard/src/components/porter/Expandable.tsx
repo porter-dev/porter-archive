@@ -7,6 +7,7 @@ type Props = {
   children: React.ReactNode;
   style?: React.CSSProperties;
   preExpanded?: boolean;
+  alt?: boolean;
 };
 
 // TODO: support footer for consolidation w/ app services
@@ -16,8 +17,28 @@ const Expandable: React.FC<Props> = ({
   children,
   style,
   preExpanded,
+  alt,
 }) => {
   const [isExpanded, setIsExpanded] = useState(preExpanded || false);
+
+  if (alt) {
+    return (
+      <StyledExpandable style={style}>
+        <AltHeader
+          isExpanded={isExpanded}
+          onClick={() => {
+            setIsExpanded(!isExpanded);
+          }}
+        >
+          <span className="material-icons dropdown">arrow_drop_down</span>
+          {header}
+        </AltHeader>
+        <AltExpandedContents isExpanded={isExpanded}>
+          {children}
+        </AltExpandedContents>
+      </StyledExpandable>
+    );
+  }
 
   return (
     <StyledExpandable style={style}>
@@ -105,4 +126,46 @@ const Header = styled.div<{ isExpanded: boolean }>`
 
 const StyledExpandable = styled.div`
   transition: all 0.2s;
+`;
+
+const AltHeader = styled.div<{ isExpanded: boolean }>`
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #aaaabbaa;
+  position: relative;
+  :hover {
+    color: ${(props) => props.theme.text.primary};
+  }
+
+  .dropdown {
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 20px;
+    margin-left: -5px;
+    margin-right: 8px;
+    transform: ${({ isExpanded }) => !isExpanded && "rotate(-90deg)"};
+  }
+
+  animation: fadeIn 0.3s 0s;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+`;
+
+const AltExpandedContents = styled.div<{ isExpanded: boolean }>`
+  transition: all 0.5s;
+  margin-left: 4px;
+  overflow: hidden;
+  max-height: ${({ isExpanded }) => (isExpanded ? "500px" : "0")};
+  padding-top: 10px;
+  padding-left: ${({ isExpanded }) => (isExpanded ? "18px" : "0")};
+  border-left: ${({ isExpanded }) => isExpanded && "1px solid #494b4f"};
+  color: ${(props) => props.theme.text.primary};
 `;

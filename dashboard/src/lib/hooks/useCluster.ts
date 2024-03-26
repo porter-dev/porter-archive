@@ -78,18 +78,18 @@ export const useClusterList = (): TUseClusterList => {
           const latestContract = latestContracts.find(
             (contract) => contract.cluster_id === c.id
           );
-          // if this cluster has no latest contract, don't include it
+          // if this cluster has no latest contract, don't include it in the response
           if (!latestContract) {
-            return undefined;
+            return c;
           }
           const latestClientContract = clientClusterContractFromProto(
             Contract.fromJsonString(atob(latestContract.base64_contract), {
               ignoreUnknownFields: true,
             })
           );
-          // if we can't parse the latest contract, don't include it
+          // if we can't parse the latest contract, don't include it in the response
           if (!latestClientContract) {
-            return undefined;
+            return c;
           }
           return {
             ...c,
@@ -161,8 +161,12 @@ export const useCluster = ({
       const latestContracts = await z
         .array(contractValidator)
         .parseAsync(latestContractsRes.data);
+
       if (latestContracts.length !== 1) {
-        return;
+        return {
+          ...parsed,
+          cloud_provider: cloudProviderMatch,
+        };
       }
       const latestClientContract = clientClusterContractFromProto(
         Contract.fromJsonString(atob(latestContracts[0].base64_contract), {
@@ -170,7 +174,10 @@ export const useCluster = ({
         })
       );
       if (!latestClientContract) {
-        return;
+        return {
+          ...parsed,
+          cloud_provider: cloudProviderMatch,
+        };
       }
 
       // get the latest state
@@ -330,7 +337,8 @@ export const useClusterState = ({
 type TUseUpdateCluster = {
   updateCluster: (
     clientContract: ClientClusterContract,
-    baseContract: Contract
+    baseContract: Contract,
+    skipPreflightChecks?: boolean
   ) => Promise<UpdateClusterResponse>;
   isHandlingPreflightChecks: boolean;
   isCreatingContract: boolean;
@@ -346,7 +354,8 @@ export const useUpdateCluster = ({
 
   const updateCluster = async (
     clientContract: ClientClusterContract,
-    baseContract: Contract
+    baseContract: Contract,
+    skipPreflightChecks: boolean = false
   ): Promise<UpdateClusterResponse> => {
     if (!projectId) {
       throw new Error("Project ID is missing");
@@ -362,78 +371,92 @@ export const useUpdateCluster = ({
       ),
     });
 
-    setIsHandlingPreflightChecks(true);
-    try {
-      let preflightCheckResp;
-      if (
-        clientContract.cluster.cloudProvider === "AWS" ||
-        clientContract.cluster.cloudProvider === "Azure"
-      ) {
-        preflightCheckResp = await api.cloudContractPreflightCheck(
-          "<token>",
-          newContract,
-          {
-            project_id: projectId,
-          }
-        );
-      } else {
-        preflightCheckResp = await api.legacyPreflightCheck(
-          "<token>",
-          new PreflightCheckRequest({
-            contract: newContract,
-          }),
-          {
-            id: projectId,
-          }
-        );
-      }
-      const parsed = await preflightCheckValidator.parseAsync(
-        preflightCheckResp.data
-      );
-
-      if (parsed.errors.length > 0) {
-        const cloudProviderSpecificChecks = match(
-          clientContract.cluster.cloudProvider
-        )
-          .with("AWS", () => CloudProviderAWS.preflightChecks)
-          .with("GCP", () => CloudProviderGCP.preflightChecks)
-          .with("Azure", () => CloudProviderAzure.preflightChecks)
-          .otherwise(() => []);
-
-        const clientPreflightChecks: ClientPreflightCheck[] = parsed.errors
-          .map((e) => {
-            const preflightCheckMatch = cloudProviderSpecificChecks.find(
-              (cloudProviderCheck) => e.name === cloudProviderCheck.name
-            );
-            if (!preflightCheckMatch) {
-              return undefined;
+    if (!skipPreflightChecks) {
+      setIsHandlingPreflightChecks(true);
+      try {
+        let preflightCheckResp;
+        if (
+          clientContract.cluster.cloudProvider === "AWS" ||
+          clientContract.cluster.cloudProvider === "Azure"
+        ) {
+          preflightCheckResp = await api.cloudContractPreflightCheck(
+            "<token>",
+            newContract,
+            {
+              project_id: projectId,
             }
-            return {
-              title: preflightCheckMatch.displayName,
-              status: "failure" as const,
-              error: {
-                detail: e.error.message,
-                metadata: e.error.metadata,
-                resolution: preflightCheckMatch.resolution,
-              },
-            };
-          })
-          .filter(valueExists);
-        return {
-          preflightChecks: clientPreflightChecks,
-        };
+          );
+        } else {
+          preflightCheckResp = await api.legacyPreflightCheck(
+            "<token>",
+            new PreflightCheckRequest({
+              contract: newContract,
+            }),
+            {
+              id: projectId,
+            }
+          );
+        }
+
+        const parsed = await preflightCheckValidator.parseAsync(
+          preflightCheckResp.data
+        );
+
+        if (parsed.errors.length > 0) {
+          const cloudProviderSpecificChecks = match(
+            clientContract.cluster.cloudProvider
+          )
+            .with("AWS", () => CloudProviderAWS.preflightChecks)
+            .with("GCP", () => CloudProviderGCP.preflightChecks)
+            .with("Azure", () => CloudProviderAzure.preflightChecks)
+            .otherwise(() => []);
+
+          const clientPreflightChecks: ClientPreflightCheck[] = parsed.errors
+            .map((e) => {
+              const preflightCheckMatch = cloudProviderSpecificChecks.find(
+                (cloudProviderCheck) => e.name === cloudProviderCheck.name
+              );
+              if (!preflightCheckMatch) {
+                return {
+                  title: "Unknown preflight check",
+                  status: "failure" as const,
+                  name: "UNKNOWN" as const,
+                  error: {
+                    detail:
+                      "Your cloud provider returned an unknown error. Please reach out to Porter support.",
+                    metadata: {},
+                  },
+                };
+              }
+              return {
+                title: preflightCheckMatch.displayName,
+                status: "failure" as const,
+                name: preflightCheckMatch.name,
+                error: {
+                  detail: e.error.message,
+                  metadata: e.error.metadata,
+                  resolution: preflightCheckMatch.resolution,
+                },
+              };
+            })
+            .filter(valueExists);
+
+          return {
+            preflightChecks: clientPreflightChecks,
+          };
+        }
+        // otherwise, continue to create the contract
+      } catch (err) {
+        throw new Error(
+          getErrorMessageFromNetworkCall(
+            err,
+            "Cluster preflight checks",
+            preflightCheckErrorReplacements
+          )
+        );
+      } finally {
+        setIsHandlingPreflightChecks(false);
       }
-      // otherwise, continue to create the contract
-    } catch (err) {
-      throw new Error(
-        getErrorMessageFromNetworkCall(
-          err,
-          "Cluster preflight checks",
-          preflightCheckErrorReplacements
-        )
-      );
-    } finally {
-      setIsHandlingPreflightChecks(false);
     }
 
     setIsCreatingContract(true);
@@ -497,7 +520,7 @@ export const useClusterNodeList = ({
       );
 
       const parsed = await z.array(nodeValidator).parseAsync(res.data);
-      return parsed
+      const nodes = parsed
         .map((n) => {
           const nodeGroupType = match(n.labels["porter.run/workload-kind"])
             .with("application", () => "APPLICATION" as const)
@@ -508,7 +531,21 @@ export const useClusterNodeList = ({
           if (nodeGroupType === "UNKNOWN") {
             return undefined;
           }
-          const instanceType = n.labels["node.kubernetes.io/instance-type"];
+          const instanceTypeName = n.labels["node.kubernetes.io/instance-type"];
+          if (!instanceTypeName) {
+            return undefined;
+          }
+          // TODO: use more node information to narrow down which cloud provider instance type list to check against
+          const instanceType =
+            CloudProviderAWS.machineTypes.find(
+              (i) => i.name === instanceTypeName
+            ) ??
+            CloudProviderAzure.machineTypes.find(
+              (i) => i.name === instanceTypeName
+            ) ??
+            CloudProviderGCP.machineTypes.find(
+              (i) => i.name === instanceTypeName
+            );
           if (!instanceType) {
             return undefined;
           }
@@ -518,6 +555,7 @@ export const useClusterNodeList = ({
           };
         })
         .filter(valueExists);
+      return nodes;
     },
     {
       refetchInterval,
@@ -535,12 +573,100 @@ export const useClusterNodeList = ({
   };
 };
 
+export const uniqueCidrMetadataValidator = z.object({
+  "overlapping-service-cidr": z.string(),
+  "overlapping-vpc-cidr": z.string(),
+  "suggested-service-cidr": z.string(),
+  "suggested-vpc-cidr": z.string(),
+});
+const unavailableCidrMetadataValidator = z.object({
+  "Conflicting CIDR range in this region": z.string(),
+});
+
+export const checksWithSuggestedChanges = ({
+  preflightChecks,
+}: {
+  preflightChecks: ClientPreflightCheck[];
+}): ClientPreflightCheck[] => {
+  return preflightChecks.map((c) =>
+    match(c.name)
+      .with("enforceCidrUniqueness", () => {
+        const parsed = uniqueCidrMetadataValidator.safeParse(
+          c.error?.metadata || {}
+        );
+        if (!parsed.success) {
+          return c;
+        }
+        const suggestion = {
+          original: `Service CIDR:\n${parsed.data["overlapping-service-cidr"]}\n\nVPC CIDR:\n${parsed.data["overlapping-vpc-cidr"]}`,
+          suggested: `Service CIDR:\n${parsed.data["suggested-service-cidr"]}\n\nVPC CIDR:\n${parsed.data["suggested-vpc-cidr"]}`,
+        };
+
+        return {
+          ...c,
+          suggestedChanges: suggestion,
+        };
+      })
+      .with("cidrAvailability", () => {
+        const cidrUniquenessCheck = preflightChecks.find(
+          (c) => c.name === "enforceCidrUniqueness"
+        );
+        if (!cidrUniquenessCheck) {
+          return c;
+        }
+
+        const uniqueCidrParsedMetadata = uniqueCidrMetadataValidator.safeParse(
+          cidrUniquenessCheck.error?.metadata || {}
+        );
+        const unavailableCidrParsedMetadata =
+          unavailableCidrMetadataValidator.safeParse(c.error?.metadata || {});
+        if (
+          !uniqueCidrParsedMetadata.success ||
+          !unavailableCidrParsedMetadata.success
+        ) {
+          return c;
+        }
+
+        const unavailableCidr =
+          unavailableCidrParsedMetadata.data[
+            "Conflicting CIDR range in this region"
+          ];
+        if (
+          unavailableCidr ===
+          uniqueCidrParsedMetadata.data["overlapping-service-cidr"]
+        ) {
+          return {
+            ...c,
+            suggestedChanges: {
+              original: `CIDR:\n${unavailableCidr}`,
+              suggested: `CIDR:\n${uniqueCidrParsedMetadata.data["suggested-service-cidr"]}`,
+            },
+          };
+        } else if (
+          unavailableCidr ===
+          uniqueCidrParsedMetadata.data["overlapping-vpc-cidr"]
+        ) {
+          return {
+            ...c,
+            suggestedChanges: {
+              original: `CIDR:\n${unavailableCidr}`,
+              suggested: `CIDR:\n${uniqueCidrParsedMetadata.data["suggested-vpc-cidr"]}`,
+            },
+          };
+        }
+
+        return c;
+      })
+      .otherwise(() => c)
+  );
+};
+
 const preflightCheckErrorReplacements = {
   RequestThrottled:
     "Your cloud provider is currently throttling API requests. Please try again in a few minutes.",
 };
 
-const getErrorMessageFromNetworkCall = (
+export const getErrorMessageFromNetworkCall = (
   err: unknown,
   networkCallDescription: string,
   replaceError?: Record<string, string>

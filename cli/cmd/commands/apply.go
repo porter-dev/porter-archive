@@ -13,7 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/porter-dev/porter/cli/cmd/commands/flags"
 	v2 "github.com/porter-dev/porter/cli/cmd/v2"
+	appV2 "github.com/porter-dev/porter/internal/porter_app/v2"
 
 	"github.com/cli/cli/git"
 	"github.com/fatih/color"
@@ -40,9 +42,9 @@ import (
 )
 
 var (
-	porterYAML       string
-	previewApply     bool
-	imageTagOverride string
+	porterYAML   string
+	previewApply bool
+	envGroups    []string
 	// pullImageBeforeBuild is a flag that determines whether to pull the docker image from a repo before building
 	pullImageBeforeBuild bool
 	predeploy            bool
@@ -113,7 +115,6 @@ applying a configuration:
 	applyCmd.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
 	applyCmd.PersistentFlags().BoolVarP(&previewApply, "preview", "p", false, "apply as preview environment based on current git branch")
 	applyCmd.PersistentFlags().BoolVar(&pullImageBeforeBuild, "pull-before-build", false, "attempt to pull image from registry before building")
-	applyCmd.PersistentFlags().StringVar(&imageTagOverride, "tag", "", "set the image tag used for the application (overrides field in yaml)")
 	applyCmd.PersistentFlags().BoolVar(&predeploy, "predeploy", false, "run predeploy job before deploying the application")
 	applyCmd.PersistentFlags().BoolVar(&exact, "exact", false, "apply the exact configuration as specified in the porter.yaml file (default is to merge with existing configuration)")
 	applyCmd.PersistentFlags().BoolVarP(
@@ -123,6 +124,11 @@ applying a configuration:
 		false,
 		"set this to wait and be notified when an apply is successful, otherwise time out",
 	)
+	applyCmd.PersistentFlags().StringSliceVar(&envGroups, "attach-env-groups", nil, "attach environment groups to the app on apply")
+
+	flags.UseAppBuildFlags(applyCmd)
+	flags.UseAppImageFlags(applyCmd)
+
 	applyCmd.MarkFlagRequired("file")
 
 	return applyCmd
@@ -138,7 +144,7 @@ func appNameFromEnvironmentVariable() string {
 	return ""
 }
 
-func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, _ *cobra.Command, _ []string) (err error) {
+func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, cmd *cobra.Command, _ []string) (err error) {
 	project, err := client.GetProject(ctx, cliConfig.Project)
 	if err != nil {
 		return fmt.Errorf("could not retrieve project from Porter API. Please contact support@porter.run")
@@ -146,24 +152,46 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 
 	appName := appNameFromEnvironmentVariable()
 
+	imageValues, err := flags.AppImageValuesFromCmd(cmd)
+	if err != nil {
+		return fmt.Errorf("could not retrieve image values from command")
+	}
+
+	buildValues, err := flags.AppBuildValuesFromCmd(cmd)
+	if err != nil {
+		return fmt.Errorf("could not retrieve build values from command")
+	}
+
 	if project.ValidateApplyV2 {
 		if previewApply && !project.PreviewEnvsEnabled {
 			return fmt.Errorf("preview environments are not enabled for this project. Please contact support@porter.run")
 		}
+
+		patchOperations := appV2.PatchOperationsFromFlagValues(appV2.PatchOperationsFromFlagValuesInput{
+			EnvGroups:       envGroups,
+			BuildMethod:     buildValues.BuildMethod,
+			Dockerfile:      buildValues.Dockerfile,
+			Builder:         buildValues.Builder,
+			Buildpacks:      buildValues.Buildpacks,
+			BuildContext:    buildValues.BuildContext,
+			ImageRepository: imageValues.Repository,
+			ImageTag:        imageValues.Tag,
+		})
 
 		inp := v2.ApplyInput{
 			CLIConfig:                   cliConfig,
 			Client:                      client,
 			PorterYamlPath:              porterYAML,
 			AppName:                     appName,
-			ImageTagOverride:            imageTagOverride,
+			ImageTagOverride:            imageValues.Tag,
 			PreviewApply:                previewApply,
 			WaitForSuccessfulDeployment: appWait,
 			PullImageBeforeBuild:        pullImageBeforeBuild,
 			WithPredeploy:               predeploy,
 			Exact:                       exact,
+			PatchOperations:             patchOperations,
 		}
-		err := v2.Apply(ctx, inp)
+		err = v2.Apply(ctx, inp)
 		if err != nil {
 			return err
 		}
@@ -180,7 +208,6 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 	}
 
 	err = yaml.Unmarshal(fileBytes, &previewVersion)
-
 	if err != nil {
 		return fmt.Errorf("error unmarshaling porter.yaml: %w", err)
 	}
@@ -197,7 +224,6 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 		}
 
 		resGroup, err = applier.DowngradeToV1()
-
 		if err != nil {
 			return err
 		}
@@ -210,7 +236,6 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 		}
 
 		resGroup, err = parser.ParseRawBytes(fileBytes)
-
 		if err != nil {
 			return fmt.Errorf("error parsing porter.yaml: %w", err)
 		}
@@ -263,10 +288,6 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 				Services: services,
 				Build:    parsed.Build,
 				Release:  parsed.Release,
-			}
-
-			if err != nil {
-				return fmt.Errorf("error parsing porter.yaml for build resources: %w", err)
 			}
 
 			resources, err := porter_app.CreateApplicationDeploy(ctx, client, worker, app, appName, cliConfig)
@@ -519,7 +540,6 @@ func (d *DeployDriver) applyAddon(ctx context.Context, resource *switchboardMode
 				Values: string(bytes),
 			},
 		)
-
 		if err != nil {
 			return nil, fmt.Errorf("error updating addon from resource %s: %w", resource.Name, err)
 		}
@@ -601,13 +621,11 @@ func (d *DeployDriver) applyApplication(ctx context.Context, resource *switchboa
 
 	if shouldCreate {
 		resource, err = d.createApplication(ctx, resource, client, sharedOpts, appConfig)
-
 		if err != nil {
 			return nil, fmt.Errorf("error creating app from resource %s: %w", resourceName, err)
 		}
 	} else if !appConfig.OnlyCreate {
 		resource, err = d.updateApplication(ctx, resource, client, sharedOpts, appConfig)
-
 		if err != nil {
 			return nil, fmt.Errorf("error updating application from resource %s: %w", resourceName, err)
 		}
@@ -764,7 +782,6 @@ func (d *DeployDriver) createApplication(ctx context.Context, resource *switchbo
 					ImageRepoURI: imageURL,
 				},
 			)
-
 			if err != nil {
 				return nil, err
 			}
@@ -806,7 +823,6 @@ func (d *DeployDriver) updateApplication(ctx context.Context, resource *switchbo
 		}
 
 		err = updateAgent.SetBuildEnv(buildEnv)
-
 		if err != nil {
 			return nil, err
 		}
@@ -821,14 +837,12 @@ func (d *DeployDriver) updateApplication(ctx context.Context, resource *switchbo
 		}
 
 		err = updateAgent.Build(ctx, buildConfig)
-
 		if err != nil {
 			return nil, err
 		}
 
 		if !appConf.Build.UseCache {
 			err = updateAgent.Push(ctx)
-
 			if err != nil {
 				return nil, err
 			}
@@ -894,7 +908,6 @@ func (d *DeployDriver) getApplicationConfig(resource *switchboardModels.Resource
 	appConf := &previewInt.ApplicationConfig{}
 
 	err = mapstructure.Decode(populatedConf, appConf)
-
 	if err != nil {
 		return nil, err
 	}
@@ -1423,7 +1436,6 @@ func (t *CloneEnvGroupHook) PreApply() error {
 							TargetNamespace: target.Namespace,
 						},
 					)
-
 					if err != nil {
 						return err
 					}

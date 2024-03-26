@@ -21,9 +21,10 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
+import BillingModal from "main/home/modals/BillingModal";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
-import { useCluster } from "lib/hooks/useCluster";
 import {
   useDefaultDeploymentTarget,
   useDeploymentTargetList,
@@ -31,22 +32,22 @@ import {
 } from "lib/hooks/useDeploymentTarget";
 import { useIntercom } from "lib/hooks/useIntercom";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
+import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 import {
   porterAppFormValidator,
   type PorterAppFormData,
   type SourceOptions,
 } from "lib/porter-apps";
-import {
-  defaultSerialized,
-  deserializeService,
-} from "lib/porter-apps/services";
 
 import api from "shared/api";
-import { useClusterResources } from "shared/ClusterResourcesContext";
 import { Context } from "shared/Context";
 import { valueExists } from "shared/util";
 import applicationGrad from "assets/application-grad.svg";
 
+import {
+  useAppInstances,
+  useLatestAppRevisions,
+} from "../../../../lib/hooks/useLatestAppRevisions";
 import ImageSettings from "../image-settings/ImageSettings";
 import GithubActionModal from "../new-app-flow/GithubActionModal";
 import SourceSelector from "../new-app-flow/SourceSelector";
@@ -72,6 +73,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     return /^[a-z0-9-]{1,63}$/.test(value);
   };
   const [isNameHighlight, setIsNameHighlight] = React.useState(false);
+  const { hasPaymentEnabled } = checkIfProjectHasPayment();
 
   const { showIntercomWithMessage } = useIntercom();
 
@@ -87,34 +89,27 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     secrets: {},
   });
 
-  const { data: porterApps = [] } = useQuery<string[]>(
-    ["getPorterApps", currentProject?.id, currentCluster?.id],
-    async () => {
-      if (!currentProject?.id || !currentCluster?.id) {
-        return await Promise.resolve([]);
-      }
+  const { revisions: appsWithRevisions } = useLatestAppRevisions({
+    projectId: currentProject?.id ?? 0,
+    clusterId: currentCluster?.id ?? 0,
+  });
 
-      const res = await api.getPorterApps(
-        "<token>",
-        {},
-        {
-          project_id: currentProject?.id,
-          cluster_id: currentCluster?.id,
-        }
+  const { instances: appInstances } = useAppInstances({
+    projectId: currentProject?.id ?? 0,
+    clusterId: currentCluster?.id ?? 0,
+  });
+
+  const porterApps = useMemo((): string[] => {
+    return appsWithRevisions.reduce(function (result: string[], app) {
+      const instances = appInstances.filter(
+        (instance) => instance.id === app.app_revision.app_instance_id
       );
-
-      const apps = await z
-        .object({
-          name: z.string(),
-        })
-        .array()
-        .parseAsync(res.data);
-      return apps.map((app) => app.name);
-    },
-    {
-      enabled: !!currentProject?.id && !!currentCluster?.id,
-    }
-  );
+      if (instances.length > 0) {
+        return result.concat(instances[0].name);
+      }
+      return result;
+    }, []);
+  }, [appsWithRevisions, appInstances]);
 
   const { data: baseEnvGroups = [] } = useQuery(
     ["getAllEnvGroups", currentProject?.id, currentCluster?.id],
@@ -206,8 +201,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     deploymentTargetID,
     creating: true,
   });
-  const { currentClusterResources } = useClusterResources();
-  const { cluster } = useCluster({ clusterId: currentCluster?.id });
+  const { cluster } = useClusterContext();
 
   // set the deployment target id to the default if no deployment target has been selected yet
   useEffect(() => {
@@ -704,17 +698,8 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                     <Spacer y={0.5} />
                     <ServiceList
                       addNewText={"Add a new pre-deploy job"}
-                      prePopulateService={deserializeService({
-                        service: defaultSerialized({
-                          name: "pre-deploy",
-                          type: "predeploy",
-                          defaultCPU: currentClusterResources.defaultCPU,
-                          defaultRAM: currentClusterResources.defaultRAM,
-                        }),
-                        expanded: true,
-                      })}
-                      isPredeploy
                       fieldArrayName={"app.predeploy"}
+                      isPredeploy
                     />
                   </>,
                   <>
@@ -772,6 +757,16 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           setDeploymentTargetID={(x: string) => {
             setDeploymentTargetID(x);
             refetchDeploymentTargetList();
+          }}
+        />
+      )}
+      {currentProject?.billing_enabled && !hasPaymentEnabled && (
+        <BillingModal
+          back={() => {
+            history.push("/apps");
+          }}
+          onCreate={() => {
+            history.push("/apps/new/app");
           }}
         />
       )}

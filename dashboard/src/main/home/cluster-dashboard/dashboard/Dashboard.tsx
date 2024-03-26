@@ -4,7 +4,12 @@ import styled from "styled-components";
 
 import AzureProvisionerSettings from "components/AzureProvisionerSettings";
 import GCPProvisionerSettings from "components/GCPProvisionerSettings";
+import Button from "components/porter/Button";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import Image from "components/porter/Image";
+import PorterLink from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
 import ProvisionerSettings from "components/ProvisionerSettings";
 import TabSelector from "components/TabSelector";
 
@@ -23,10 +28,6 @@ import Metrics from "./Metrics";
 import { NamespaceList } from "./NamespaceList";
 import NodeList from "./NodeList";
 import ProvisionerStatus from "./ProvisionerStatus";
-import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
-import Text from "components/porter/Text";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
-import Image from "components/porter/Image";
 
 type TabEnum =
   | "nodes"
@@ -188,19 +189,17 @@ export const Dashboard: React.FunctionComponent = () => {
     if (context.currentProject?.sandbox_enabled) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>Infrastructure settings are not enabled for sandbox users</Text>
+          <Text size={16}>Infrastructure settings are not enabled on the Porter Cloud.</Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
             Eject to your own cloud account to enable managed infrastructure.
           </Text>
           <Spacer y={1} />
-          <ShowIntercomButton
-            alt
-            message="I would like to eject to my own cloud account"
-            height="35px"
-          >
-            Request ejection
-          </ShowIntercomButton>
+          <PorterLink to="https://docs.porter.run/other/eject">
+            <Button alt height="35px">
+              Request ejection
+            </Button>
+          </PorterLink>
         </DashboardPlaceholder>
       );
     } else if (context.currentProject?.capi_provisioner_enabled) {

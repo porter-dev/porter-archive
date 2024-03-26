@@ -27,9 +27,11 @@ const CreateAKSClusterForm: React.FC<Props> = ({
   const { reportToAnalytics } = useClusterAnalytics();
 
   useEffect(() => {
-    const projectNameLimit = 31 - "-cluster-".length - 6; // 6 characters for the random suffix
-    const truncatedProjectName = projectName.substring(0, projectNameLimit);
-    const clusterName = `${truncatedProjectName}-cluster-${Math.random()
+    const truncatedProjectName = projectName
+      .substring(0, 24)
+      .replace(/-+$/, "");
+
+    const clusterName = `${truncatedProjectName}-${Math.random()
       .toString(36)
       .substring(2, 8)}`;
 
@@ -56,12 +58,13 @@ const CreateAKSClusterForm: React.FC<Props> = ({
             },
             {
               nodeGroupType: "MONITORING" as const,
-              instanceType: "Standard_B2als_v2",
+              instanceType: "Standard_B2as_v2",
               minInstances: 1,
               maxInstances: 3,
             },
           ],
           cidrRange: "10.78.0.0/16",
+          serviceCidrRange: "172.20.0.0/16", // does not actually go into contract because not supported there yet
           skuTier: "FREE" as const,
         },
       },

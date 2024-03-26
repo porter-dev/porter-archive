@@ -6,6 +6,7 @@ import styled from "styled-components";
 import Loading from "components/Loading";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
+import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Fieldset from "components/porter/Fieldset";
 import Icon from "components/porter/Icon";
 import Image from "components/porter/Image";
@@ -46,7 +47,7 @@ const ClusterDashboard: React.FC = () => {
   >("all");
 
   const { clusters, isLoading } = useClusterList();
-  const { user } = useContext(Context);
+  const { user, currentProject } = useContext(Context);
 
   const filteredClusters = useMemo(() => {
     const filteredBySearch = search(clusters, searchValue, {
@@ -67,6 +68,32 @@ const ClusterDashboard: React.FC = () => {
 
     return filteredByProvider;
   }, [clusters, searchValue, providerFilter]);
+
+  if (currentProject?.sandbox_enabled) {
+    return (
+      <StyledAppDashboard>
+        <DashboardHeader
+          image={infraGrad}
+          title="Infrastructure"
+          description="Clusters for running applications on this project."
+          disableLineBreak
+        />
+        <DashboardPlaceholder>
+          <Text size={16}>Infrastructure is not enabled on the Porter Cloud</Text>
+          <Spacer y={0.5} />
+          <Text color={"helper"}>
+            Eject to your own cloud account to enable infrastructure.
+          </Text>
+          <Spacer y={1} />
+          <PorterLink to="https://docs.porter.run/other/eject">
+            <Button alt height="35px">
+              Request ejection
+            </Button>
+          </PorterLink>
+        </DashboardPlaceholder>
+      </StyledAppDashboard>
+    );
+  }
 
   return (
     <StyledAppDashboard>
@@ -171,82 +198,95 @@ const ClusterDashboard: React.FC = () => {
                     <Spacer inline width="11px" />
                     <Text size={14}>{cluster.vanity_name}</Text>
                   </Container>
-                  <Container row>
-                    <Tag hoverable={false}>
+                  {cluster.contract != null && (
+                    <>
                       <Container row>
-                        <Icon src={globe} height="13px" />
-                        <Spacer inline x={0.5} />
-                        {cluster.contract.config.cluster.config?.region}
+                        <Tag hoverable={false}>
+                          <Container row>
+                            <Icon src={globe} height="13px" />
+                            <Spacer inline x={0.5} />
+                            {cluster.contract.config.cluster.config?.region}
+                          </Container>
+                        </Tag>
                       </Container>
-                    </Tag>
-                  </Container>
-                  <Container row>
-                    <StatusDot
-                      status={
-                        cluster.status === "READY" ? "available" : "pending"
-                      }
-                      heightPixels={8}
-                    />
-                    <Spacer inline x={0.5} />
-                    <Text color="helper">
-                      {cluster.status === "READY" ? "Running" : "Updating"}
-                    </Text>
-                    <Spacer inline x={1} />
-                    <SmallIcon opacity="0.3" src={time} />
-                    <Text size={13} color="#ffffff44">
-                      {readableDate(cluster.contract.updated_at)}
-                    </Text>
-                  </Container>
+                      <Container row>
+                        <StatusDot
+                          status={
+                            cluster.status === "READY" ? "available" : "pending"
+                          }
+                          heightPixels={8}
+                        />
+                        <Spacer inline x={0.5} />
+                        <Text color="helper">
+                          {cluster.status === "READY" ? "Running" : "Updating"}
+                        </Text>
+                        <Spacer inline x={1} />
+                        <SmallIcon opacity="0.3" src={time} />
+                        <Text size={13} color="#ffffff44">
+                          {readableDate(cluster.contract.updated_at)}
+                        </Text>
+                      </Container>
+                    </>
+                  )}
                 </Block>
               </Link>
             );
           })}
         </GridList>
       ) : (
-        <List>
-          {filteredClusters.map((cluster: ClientCluster, i: number) => {
-            return (
-              <Row to={`/infrastructure/${cluster.id}`} key={i}>
-                <Container row spaced>
-                  <Container row>
-                    <MidIcon src={cluster.cloud_provider.icon} />
-                    <Text size={14}>{cluster.vanity_name}</Text>
-                  </Container>
-                  <Container row>
-                    <StatusDot
-                      status={
-                        cluster.status === "READY" ? "available" : "pending"
-                      }
-                      heightPixels={8}
-                    />
-                    <Spacer inline x={0.5} />
-                    <Text color="helper">
-                      {cluster.status === "READY" ? "Running" : "Updating"}
-                    </Text>
-                  </Container>
-                </Container>
-                <Spacer y={0.5} />
-                <Container row>
-                  <Container row>
-                    <SmallIcon opacity="0.3" src={globe} />
-                    <Text size={13} color="#ffffff44">
-                      {cluster.contract.config.cluster.config.region}
-                    </Text>
-                    <Spacer inline x={1} />
-                    <SmallIcon opacity="0.3" src={time} />
-                    <Text size={13} color="#ffffff44">
-                      {readableDate(cluster.contract.updated_at)}
-                    </Text>
-                  </Container>
-                </Container>
-              </Row>
-            );
-          })}
-        </List>
+        <ClusterList clusters={filteredClusters} />
       )}
 
       <Spacer y={5} />
     </StyledAppDashboard>
+  );
+};
+
+type ClusterListProps = {
+  clusters: ClientCluster[];
+};
+export const ClusterList: React.FC<ClusterListProps> = ({ clusters }) => {
+  return (
+    <List>
+      {clusters.map((cluster: ClientCluster, i: number) => {
+        return (
+          <Row to={`/infrastructure/${cluster.id}`} key={i}>
+            <Container row spaced>
+              <Container row>
+                <MidIcon src={cluster.cloud_provider.icon} />
+                <Text size={14}>{cluster.vanity_name}</Text>
+              </Container>
+              <Container row>
+                <StatusDot
+                  status={cluster.status === "READY" ? "available" : "pending"}
+                  heightPixels={8}
+                />
+                <Spacer inline x={0.5} />
+                <Text color="helper">
+                  {cluster.status === "READY" ? "Running" : "Updating"}
+                </Text>
+              </Container>
+            </Container>
+            <Spacer y={0.5} />
+            {cluster.contract != null && (
+              <Container row>
+                <Container row>
+                  <SmallIcon opacity="0.3" src={globe} />
+                  <Text size={13} color="#ffffff44">
+                    {cluster.contract.config.cluster.config.region}
+                  </Text>
+                  <Spacer inline x={1} />
+                  <SmallIcon opacity="0.3" src={time} />
+                  <Text size={13} color="#ffffff44">
+                    {readableDate(cluster.contract.updated_at)}
+                  </Text>
+                </Container>
+              </Container>
+            )}
+          </Row>
+        );
+      })}
+    </List>
   );
 };
 
@@ -269,6 +309,9 @@ const Row = styled(Link)<{ isAtBottom?: boolean }>`
   border-radius: 5px;
   margin-bottom: 15px;
   animation: fadeIn 0.3s 0s;
+  :hover {
+    border: 1px solid #7a7b80;
+  }
 `;
 
 const List = styled.div`

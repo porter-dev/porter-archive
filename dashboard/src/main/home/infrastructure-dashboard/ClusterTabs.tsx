@@ -42,12 +42,14 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
     useClusterFormContext();
 
   useEffect(() => {
-    reset(cluster.contract.config);
-    setCurrentContract(
-      Contract.fromJsonString(atob(cluster.contract.base64_contract), {
-        ignoreUnknownFields: true,
-      })
-    );
+    if (cluster.contract) {
+      reset(cluster.contract.config);
+      setCurrentContract(
+        Contract.fromJsonString(atob(cluster.contract.base64_contract), {
+          ignoreUnknownFields: true,
+        })
+      );
+    }
   }, [cluster]);
 
   const tabs = useMemo(() => {
@@ -84,6 +86,29 @@ const ClusterTabs: React.FC<Props> = ({ tabParam }) => {
       {isClusterUpdating && (
         <>
           <ClusterProvisioningIndicator />
+          <Spacer y={1} />
+        </>
+      )}
+      {cluster.status === "FAILED" && (
+        <>
+          <Banner
+            type="error"
+            suffix={
+              <>
+                <ClusterSaveButton
+                  height={"10px"}
+                  disabledTooltipPosition={"bottom"}
+                  isClusterUpdating={isClusterUpdating}
+                >
+                  Retry
+                </ClusterSaveButton>
+              </>
+            }
+          >
+            An error occurred while applying the latest updates to your
+            infrastructure.
+            <Spacer inline width="5px" />
+          </Banner>
           <Spacer y={1} />
         </>
       )}

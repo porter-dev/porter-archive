@@ -13,25 +13,17 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/datastore"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
-
-// Credential has all information about connecting to a datastore
-type Credential struct {
-	Host         string `json:"host"`
-	Port         int    `json:"port"`
-	Username     string `json:"username"`
-	Password     string `json:"password"`
-	DatabaseName string `json:"database_name"`
-}
 
 // CreateDatastoreProxyResponse is the response body for the create datastore proxy endpoint
 type CreateDatastoreProxyResponse struct {
 	// PodName is the name of the pod that was created
 	PodName string `json:"pod_name"`
 	// Credential is the credential used to connect to the datastore
-	Credential Credential `json:"credential"`
+	Credential datastore.Credential `json:"credential"`
 	// ClusterID is the ID of the cluster that the pod was created in
 	ClusterID uint `json:"cluster_id"`
 	// Namespace is the namespace that the pod was created in
@@ -113,7 +105,7 @@ func (c *CreateDatastoreProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.R
 
 	resp = CreateDatastoreProxyResponse{
 		PodName: ccpResp.Msg.PodName,
-		Credential: Credential{
+		Credential: datastore.Credential{
 			Host:         ccpResp.Msg.Credential.Host,
 			Port:         int(ccpResp.Msg.Credential.Port),
 			Username:     ccpResp.Msg.Credential.Username,

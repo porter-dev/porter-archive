@@ -97,8 +97,9 @@ function clientEKSConfigToProto(
       });
     }),
     network: new AWSClusterNetwork({
-      ...(existingConfig?.network ?? { serviceCidr: "172.20.0.0/16" }), // serviceCidr explicitly added for backwards compatibility with contracts without network fields
+      ...(existingConfig?.network ?? {}),
       vpcCidr: clientConfig.cidrRange,
+      serviceCidr: clientConfig.serviceCidrRange,
     }),
     loadBalancer: new LoadBalancer({
       loadBalancerType: match(clientConfig.loadBalancer.type)
@@ -164,6 +165,7 @@ function clientGKEConfigToProto(
     network: new GKENetwork({
       ...(existingConfig?.network ?? {}),
       cidrRange: clientConfig.cidrRange,
+      serviceCidr: clientConfig.serviceCidrRange,
     }),
   });
 }
@@ -251,6 +253,7 @@ const clientEKSConfigFromProto = (value: EKS): EKSClientClusterConfig => {
       };
     }),
     cidrRange: value.network?.vpcCidr ?? value.cidrRange ?? "", // network will always be provided in one of those fields
+    serviceCidrRange: value.network?.serviceCidr ?? "172.20.0.0/16", // serviceCidr explicitly added for backwards compatibility with contracts without network fields
     logging: {
       isApiServerLogsEnabled: value.logging?.enableApiServerLogs ?? false,
       isAuditLogsEnabled: value.logging?.enableAuditLogs ?? false,
@@ -321,6 +324,7 @@ const clientGKEConfigFromProto = (value: GKE): GKEClientClusterConfig => {
       };
     }),
     cidrRange: value.network?.cidrRange ?? "", // network will always be provided
+    serviceCidrRange: value.network?.serviceCidr ?? "",
   };
 };
 
@@ -349,5 +353,6 @@ const clientAKSConfigFromProto = (value: AKS): AKSClientClusterConfig => {
       .with(AksSkuTier.STANDARD, () => "STANDARD" as const)
       .otherwise(() => "UNKNOWN" as const),
     cidrRange: value.cidrRange,
+    serviceCidrRange: "172.20.0.0/16", // not yet supported by AKS, this is a placeholder
   };
 };

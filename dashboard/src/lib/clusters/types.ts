@@ -6,7 +6,14 @@ import { checkGroupValidator } from "main/home/compliance-dashboard/types";
 import { CloudProviderAWS } from "./constants";
 
 // Cloud
-export const cloudProviderValidator = z.enum(["AWS", "GCP", "Azure", "Local"]);
+export const cloudProviderValidator = z.enum([
+  "AWS",
+  "GCP",
+  "Azure",
+  "Local",
+  "Hosted",
+  "UNKNOWN",
+]);
 export type CloudProvider = z.infer<typeof cloudProviderValidator>;
 export type ClientCloudProvider = {
   name: CloudProvider;
@@ -31,6 +38,12 @@ export type ClientCloudProvider = {
       }
     | {
         kind: "Local";
+      }
+    | {
+        kind: "Hosted";
+      }
+    | {
+        kind: "UNKNOWN";
       };
 };
 const awsRegionValidator = z.enum([
@@ -130,6 +143,15 @@ const awsMachineTypeValidator = z.enum([
   "r6i.16xlarge",
   "r6i.24xlarge",
   "r6i.32xlarge",
+  "r7a.large",
+  "r7a.xlarge",
+  "r7a.2xlarge",
+  "r7a.4xlarge",
+  "r7a.8xlarge",
+  "r7a.12xlarge",
+  "r7a.16xlarge",
+  "r7a.24xlarge",
+  "r7a.32xlarge",
   "m5n.large",
   "m5n.xlarge",
   "m5n.2xlarge",
@@ -237,6 +259,8 @@ export type ClientMachineType = {
   displayName: string;
   supportedRegions: Array<AWSRegion | GCPRegion | AzureRegion>;
   isGPU: boolean;
+  cpuCores: number;
+  ramMegabytes: number;
 };
 type PreflightCheckResolutionStep = {
   text: string;
@@ -261,7 +285,7 @@ export const nodeValidator = z.object({
 });
 export type ClientNode = {
   nodeGroupType: NodeGroupType;
-  instanceType: string;
+  instanceType: ClientMachineType;
 };
 
 // Cluster
@@ -269,14 +293,16 @@ export const clusterValidator = z.object({
   id: z.number(),
   name: z.string(),
   vanity_name: z.string(),
-  cloud_provider: cloudProviderValidator,
+  cloud_provider: z.string().pipe(cloudProviderValidator.catch("UNKNOWN")),
   cloud_provider_credential_identifier: z.string(),
   status: z.string(),
+  ingress_ip: z.string().optional().default(""),
 });
 export type SerializedCluster = z.infer<typeof clusterValidator>;
 export type ClientCluster = Omit<SerializedCluster, "cloud_provider"> & {
   cloud_provider: ClientCloudProvider;
-  contract: APIContract & {
+  // Contract is optional because some clusters seem to not have one
+  contract?: APIContract & {
     config: ClientClusterContract;
   };
   state?: ClusterState;
@@ -408,6 +434,13 @@ const clusterNameValidator = z
   .regex(/^[a-z0-9-]{1,61}$/, {
     message: 'Lowercase letters, numbers, and "-" only.',
   });
+const gkeClusterNameValidator = z
+  .string()
+  .min(1, { message: "Name must be at least 1 character" })
+  .max(20, { message: "Name must be max 20 characters" })
+  .regex(/^[a-z0-9-]{1,61}$/, {
+    message: 'Lowercase letters, numbers, and "-" only.',
+  });
 const eksConfigValidator = z.object({
   kind: z.literal("EKS"),
   clusterName: clusterNameValidator,
@@ -415,6 +448,7 @@ const eksConfigValidator = z.object({
   region: awsRegionValidator,
   nodeGroups: eksNodeGroupValidator.array(),
   cidrRange: cidrRangeValidator,
+  serviceCidrRange: cidrRangeValidator,
   logging: z
     .object({
       isApiServerLogsEnabled: z.boolean(),
@@ -464,11 +498,12 @@ const eksConfigValidator = z.object({
 });
 const gkeConfigValidator = z.object({
   kind: z.literal("GKE"),
-  clusterName: clusterNameValidator,
+  clusterName: gkeClusterNameValidator,
   clusterVersion: z.string().optional().default(""),
   region: gcpRegionValidator,
   nodeGroups: gkeNodeGroupValidator.array(),
   cidrRange: cidrRangeValidator,
+  serviceCidrRange: cidrRangeValidator,
 });
 const aksConfigValidator = z.object({
   kind: z.literal("AKS"),
@@ -478,6 +513,7 @@ const aksConfigValidator = z.object({
   nodeGroups: aksNodeGroupValidator.array(),
   skuTier: z.enum(["UNKNOWN", "FREE", "STANDARD"]),
   cidrRange: cidrRangeValidator,
+  serviceCidrRange: cidrRangeValidator,
 });
 const clusterConfigValidator = z.discriminatedUnion("kind", [
   eksConfigValidator,
@@ -502,6 +538,7 @@ export const clusterContractValidator = z.object({
 export type ClientClusterContract = z.infer<typeof clusterContractValidator>;
 
 const preflightCheckKeyValidator = z.enum([
+  "UNKNOWN",
   "eip",
   "vcpu",
   "vpc",
@@ -511,12 +548,13 @@ const preflightCheckKeyValidator = z.enum([
   "iamPermissions",
   "authz",
   "enforceCidrUniqueness",
+  "availabilityZone",
 ]);
 type PreflightCheckKey = z.infer<typeof preflightCheckKeyValidator>;
 export const preflightCheckValidator = z.object({
   errors: z
     .object({
-      name: preflightCheckKeyValidator,
+      name: z.string().pipe(preflightCheckKeyValidator.catch("UNKNOWN")),
       error: z.object({
         message: z.string(),
         metadata: z.record(z.string()).optional(),
@@ -531,14 +569,22 @@ export const createContractResponseValidator = z.object({
     revision_id: z.string(),
   }),
 });
+
+type TPreflightCheckFixSuggestion = {
+  original: string;
+  suggested: string;
+};
+
 export type ClientPreflightCheck = {
   title: string;
+  name: PreflightCheckKey;
   status: "pending" | "success" | "failure";
   error?: {
     detail: string;
     metadata: Record<string, string> | undefined;
     resolution?: PreflightCheckResolution;
   };
+  suggestedChanges?: TPreflightCheckFixSuggestion;
 };
 type CreateContractResponse = z.infer<typeof createContractResponseValidator>;
 export type UpdateClusterResponse =

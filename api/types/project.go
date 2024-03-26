@@ -14,6 +14,7 @@ type ProjectList struct {
 	APITokensEnabled       bool   `json:"api_tokens_enabled"`
 	StacksEnabled          bool   `json:"stacks_enabled"`
 	CapiProvisionerEnabled bool   `json:"capi_provisioner_enabled"`
+	BillingEnabled         bool   `json:"billing_enabled"`
 	DBEnabled              bool   `json:"db_enabled"`
 	SimplifiedViewEnabled  bool   `json:"simplified_view_enabled"`
 	AzureEnabled           bool   `json:"azure_enabled"`
@@ -24,6 +25,7 @@ type ProjectList struct {
 	ValidateApplyV2        bool   `json:"validate_apply_v2"`
 	AdvancedInfraEnabled   bool   `json:"advanced_infra_enabled"`
 	SandboxEnabled         bool   `json:"sandbox_enabled"`
+	AdvancedRbacEnabled    bool   `json:"advanced_rbac_enabled"`
 }
 
 // Project type for entries in api responses for everything other than `GET /projects`
@@ -36,6 +38,7 @@ type Project struct {
 	AzureEnabled                    bool    `json:"azure_enabled"`
 	BetaFeaturesEnabled             bool    `json:"beta_features_enabled"`
 	CapiProvisionerEnabled          bool    `json:"capi_provisioner_enabled"`
+	BillingEnabled                  bool    `json:"billing_enabled"`
 	DBEnabled                       bool    `json:"db_enabled"`
 	EFSEnabled                      bool    `json:"efs_enabled"`
 	EnableReprovision               bool    `json:"enable_reprovision"`
@@ -54,6 +57,7 @@ type Project struct {
 	ManagedDeploymentTargetsEnabled bool    `json:"managed_deployment_targets_enabled"`
 	AdvancedInfraEnabled            bool    `json:"advanced_infra_enabled"`
 	SandboxEnabled                  bool    `json:"sandbox_enabled"`
+	AdvancedRbacEnabled             bool    `json:"advanced_rbac_enabled"`
 }
 
 // FeatureFlags is a struct that contains old feature flag representations
@@ -62,6 +66,7 @@ type Project struct {
 // retrieve feature flags from the `GET /projects/{project_id}` response instead
 type FeatureFlags struct {
 	AzureEnabled                    bool   `json:"azure_enabled,omitempty"`
+	BillingEnabled                  bool   `json:"billing_enabled,omitempty"`
 	CapiProvisionerEnabled          string `json:"capi_provisioner_enabled,omitempty"`
 	EnableReprovision               bool   `json:"enable_reprovision,omitempty"`
 	FullAddOns                      bool   `json:"full_add_ons,omitempty"`
@@ -74,6 +79,7 @@ type FeatureFlags struct {
 	StacksEnabled                   string `json:"stacks_enabled,omitempty"`
 	ValidateApplyV2                 bool   `json:"validate_apply_v2"`
 	ManagedDeploymentTargetsEnabled bool   `json:"managed_deployment_targets_enabled"`
+	AdvancedRbacEnabled             bool   `json:"advanced_rbac_enabled"`
 }
 
 // CreateProjectRequest is a struct that contains the information

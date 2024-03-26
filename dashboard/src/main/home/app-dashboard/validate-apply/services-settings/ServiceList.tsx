@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Controller,
@@ -14,17 +14,18 @@ import { ControlledInput } from "components/porter/ControlledInput";
 import Modal from "components/porter/Modal";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
 import { type ClientCluster } from "lib/clusters/types";
 import { type ClientServiceStatus } from "lib/hooks/useAppStatus";
 import { type PorterAppFormData } from "lib/porter-apps";
 import {
   defaultSerialized,
   deserializeService,
+  getServiceResourceAllowances,
   isPredeployService,
-  type ClientService,
 } from "lib/porter-apps/services";
 
-import { useClusterResources } from "shared/ClusterResourcesContext";
+import { Context } from "shared/Context";
 import job from "assets/job.png";
 import web from "assets/web.png";
 import worker from "assets/worker.png";
@@ -46,7 +47,6 @@ type AddServiceFormValues = z.infer<typeof addServiceFormValidator>;
 
 type ServiceListProps = {
   addNewText: string;
-  prePopulateService?: ClientService;
   isPredeploy?: boolean;
   existingServiceNames?: string[];
   fieldArrayName: "app.services" | "app.predeploy";
@@ -61,7 +61,6 @@ type ServiceListProps = {
 
 const ServiceList: React.FC<ServiceListProps> = ({
   addNewText,
-  prePopulateService,
   fieldArrayName,
   isPredeploy = false,
   existingServiceNames = [],
@@ -71,23 +70,19 @@ const ServiceList: React.FC<ServiceListProps> = ({
     appName: "",
   },
   allowAddServices = true,
-  cluster,
 }) => {
   // top level app form
   const { control: appControl } = useFormContext<PorterAppFormData>();
+  const { currentProject } = useContext(Context);
 
-  const {
-    currentClusterResources: {
-      maxCPU,
-      maxRAM,
-      maxGPU,
-      clusterContainsGPUNodes,
-      clusterIngressIp,
-      defaultCPU,
-      defaultRAM,
-      loadBalancerType,
-    },
-  } = useClusterResources();
+  const { nodes } = useClusterContext();
+  const { newServiceDefaultCpuCores, newServiceDefaultRamMegabytes } =
+    useMemo(() => {
+      return getServiceResourceAllowances(
+        nodes,
+        currentProject?.sandbox_enabled
+      );
+    }, [nodes]);
 
   // add service modal form
   const {
@@ -170,12 +165,22 @@ const ServiceList: React.FC<ServiceListProps> = ({
       <>
         <AddServiceButton
           onClick={() => {
-            if (!prePopulateService) {
+            if (!isPredeploy) {
               setShowAddServiceModal(true);
               return;
             }
 
-            append(prePopulateService);
+            append(
+              deserializeService({
+                service: defaultSerialized({
+                  name: "pre-deploy",
+                  type: "predeploy",
+                  defaultCPU: newServiceDefaultCpuCores,
+                  defaultRAM: newServiceDefaultRamMegabytes,
+                }),
+                expanded: true,
+              })
+            );
           }}
         >
           <i className="material-icons add-icon">add_icon</i>
@@ -201,8 +206,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
       deserializeService({
         service: defaultSerialized({
           ...data,
-          defaultCPU,
-          defaultRAM,
+          defaultCPU: newServiceDefaultCpuCores,
+          defaultRAM: newServiceDefaultRamMegabytes,
         }),
         expanded: true,
       })
@@ -234,15 +239,8 @@ const ServiceList: React.FC<ServiceListProps> = ({
                 update={update}
                 remove={onRemove}
                 status={serviceVersionStatus?.[svc.name.value]}
-                maxCPU={maxCPU}
-                maxRAM={maxRAM}
-                maxGPU={maxGPU}
-                clusterContainsGPUNodes={clusterContainsGPUNodes}
                 internalNetworkingDetails={internalNetworkingDetails}
-                clusterIngressIp={clusterIngressIp}
-                showDisableTls={loadBalancerType === "ALB"}
                 existingServiceNames={existingServiceNames}
-                cluster={cluster}
               />
             ) : null;
           })}

@@ -1,36 +1,33 @@
-import React from "react";
-import styled from "styled-components";
+import React, { useMemo } from "react";
 
-import Fieldset from "components/porter/Fieldset";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
+import { ClusterList } from "main/home/infrastructure-dashboard/ClusterDashboard";
+import { useClusterList } from "lib/hooks/useCluster";
 
 import { useDatastoreContext } from "../DatabaseContextProvider";
-import DatabaseHeaderItem from "../DatabaseHeaderItem";
 
 const ConfigurationTab: React.FC = () => {
   const { datastore } = useDatastoreContext();
-  return (
-    <Fieldset>
-      <Text size={12}>Datastore details: </Text>
-      <Spacer y={0.5} />
+  const { clusters } = useClusterList();
 
-      {datastore.metadata !== undefined && datastore.metadata?.length > 0 && (
-        <GridList>
-          {datastore.metadata?.map((item, index) => (
-            <DatabaseHeaderItem item={item} key={index}></DatabaseHeaderItem>
-          ))}
-        </GridList>
-      )}
-    </Fieldset>
+  const connectedClusters = useMemo(() => {
+    return clusters.filter((cluster) => {
+      return datastore.connected_cluster_ids.includes(cluster.id);
+    });
+  }, [clusters, datastore.connected_cluster_ids]);
+  return (
+    <div>
+      <Text size={16}>Connected clusters</Text>
+      <Spacer y={0.5} />
+      <Text color="helper">
+        Porter automatically manages connectivity between connected clusters and
+        this datastore.
+      </Text>
+      <Spacer y={0.5} />
+      <ClusterList clusters={connectedClusters} />
+    </div>
   );
 };
 
 export default ConfigurationTab;
-
-const GridList = styled.div`
-  display: grid;
-  grid-column-gap: 25px;
-  grid-row-gap: 25px;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-`;

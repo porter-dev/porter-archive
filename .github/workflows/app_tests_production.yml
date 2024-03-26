@@ -1,0 +1,19 @@
+on:
+  workflow_run:
+    workflows: ["Deploy Porter to Production"]
+    branches: [master]
+    types:
+      - completed
+
+name: Run production app tests
+jobs:
+  call-base-workflow:
+    uses: ./.github/workflows/app_tests_base.yml
+    with:
+      stage: production
+      project: "11646"
+      cluster: "3618"
+      host: https://dashboard.getporter.dev
+    secrets:
+      token: ${{ secrets.APP_TESTS_PRODUCTION_TOKEN }}
+      slack_webhook_url: ${{ secrets.APP_INTEGRATION_SLACK_WEBHOOK }}

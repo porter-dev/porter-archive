@@ -8,7 +8,6 @@ import TabSelector from "components/TabSelector";
 import { useDatastoreContext } from "./DatabaseContextProvider";
 import DatastoreProvisioningIndicator from "./DatastoreProvisioningIndicator";
 import ConfigurationTab from "./tabs/ConfigurationTab";
-import ConnectedAppsTab from "./tabs/ConnectedAppsTab";
 import ConnectTab from "./tabs/ConnectTab";
 import MetricsTab from "./tabs/MetricsTab";
 import SettingsTab from "./tabs/SettingsTab";
@@ -44,8 +43,8 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
 
   const tabs = useMemo(() => {
     return [
-      { label: "Connect", value: "connect" },
-      { label: "Connected Apps", value: "connected-apps" },
+      { label: "Connectivity", value: "connect" },
+      // { label: "Connected Apps", value: "connected-apps" },
       { label: "Configuration", value: "configuration" },
       { label: "Settings", value: "settings" },
     ];
@@ -56,7 +55,7 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
   }
 
   return (
-    <>
+    <div>
       <TabSelector
         noBuffer
         options={tabs}
@@ -71,10 +70,9 @@ const DatabaseTabs: React.FC<DbTabProps> = ({ tabParam }) => {
         .with("settings", () => <SettingsTab />)
         .with("metrics", () => <MetricsTab />)
         .with("configuration", () => <ConfigurationTab />)
-        .with("connected-apps", () => <ConnectedAppsTab />)
+        // .with("connected-apps", () => <ConnectedAppsTab />)
         .otherwise(() => null)}
-      <Spacer y={2} />
-    </>
+    </div>
   );
 };
 

@@ -13,11 +13,9 @@ type DatastoreHook = {
   attachDatastoreToAppInstances: ({
     name,
     appInstanceIds,
-    clusterId,
   }: {
     name: string;
     appInstanceIds: string[];
-    clusterId: number;
   }) => Promise<void>;
 };
 type CreateDatastoreInput = {
@@ -40,6 +38,7 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
             masterUserPassword: values.config.masterUserPassword,
             allocatedStorage: values.config.allocatedStorageGigabytes,
             instanceClass: values.config.instanceClass,
+            engineVersion: values.config.engineVersion,
           },
         },
         type: "RDS",
@@ -75,6 +74,7 @@ const clientDbToCreateInput = (values: DbFormData): CreateDatastoreInput => {
             masterUsername: values.config.masterUsername,
             masterUserPassword: values.config.masterUserPassword,
             instanceClass: values.config.instanceClass,
+            engineVersion: values.config.engineVersion,
           },
         },
         type: "ELASTICACHE",

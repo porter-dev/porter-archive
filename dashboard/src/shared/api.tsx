@@ -1229,6 +1229,18 @@ const getLatestAppRevisions = baseApi<
   return `/api/projects/${project_id}/clusters/${cluster_id}/apps/revisions`;
 });
 
+const getAppInstances = baseApi<
+  {
+    deployment_target_id: string | undefined;
+  },
+  {
+    project_id: number;
+    cluster_id: number;
+  }
+>("GET", ({ project_id, cluster_id }) => {
+  return `/api/projects/${project_id}/clusters/${cluster_id}/apps/instances`;
+});
+
 const listDeploymentTargets = baseApi<
   {
     preview: boolean;
@@ -1967,19 +1979,6 @@ const updateDatabaseStatus = baseApi<
 >("POST", (pathParams) => {
   return `/api/projects/${pathParams.project_id}/infras/${pathParams.infra_id}/database`;
 });
-// GET /api/projects/{project_id}/clusters/{cluster_id}/datastore/status
-const getDatabaseStatus = baseApi<
-  {
-    name: string;
-    type: string;
-  },
-  {
-    project_id: number;
-    cluster_id: number;
-  }
->("GET", (pathParams) => {
-  return `/api/projects/${pathParams.project_id}/clusters/${pathParams.cluster_id}/datastore/status`;
-});
 
 const getRepoIntegrations = baseApi("GET", "/api/integrations/repo");
 
@@ -2283,6 +2282,7 @@ const createEnvironmentGroups = baseApi<
     secret_variables?: Record<string, string>;
     type?: string;
     auth_token?: string;
+    is_env_override?: boolean;
   },
   {
     id: number;
@@ -2574,17 +2574,6 @@ const getUsage = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/usage`
 );
 
-// Used for billing purposes
-const getCustomerToken = baseApi<{}, { project_id: number }>(
-  "GET",
-  ({ project_id }) => `/api/projects/${project_id}/billing/token`
-);
-
-const getHasBilling = baseApi<{}, { project_id: number }>(
-  "GET",
-  ({ project_id }) => `/api/projects/${project_id}/billing`
-);
-
 const getOnboardingState = baseApi<{}, { project_id: number }>(
   "GET",
   ({ project_id }) => `/api/projects/${project_id}/onboarding`
@@ -2801,6 +2790,16 @@ const getDatastore = baseApi<
   }
 >("GET", ({ project_id, datastore_name }) => {
   return `/api/projects/${project_id}/datastores/${datastore_name}`;
+});
+
+const getDatastoreCredential = baseApi<
+  {},
+  {
+    project_id: number;
+    datastore_name: string;
+  }
+>("GET", ({ project_id, datastore_name }) => {
+  return `/api/projects/${project_id}/datastores/${datastore_name}/credential`;
 });
 
 const updateDatastore = baseApi<
@@ -3427,6 +3426,65 @@ const removeStackEnvGroup = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/remove_env_group/${env_group_name}`
 );
 
+// Billing
+const checkBillingCustomerExists = baseApi<
+  {
+    user_email?: string;
+  },
+  {
+    project_id?: number;
+  }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/billing/customer`);
+
+const getHasBilling = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/billing`
+);
+
+const listPaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+  }
+>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/billing/payment_method`
+);
+
+const addPaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+  }
+>(
+  "POST",
+  ({ project_id }) => `/api/projects/${project_id}/billing/payment_method`
+);
+
+const setDefaultPaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+    payment_method_id: string;
+  }
+>(
+  "PUT",
+  ({ project_id, payment_method_id }) =>
+    `/api/projects/${project_id}/billing/payment_method/${payment_method_id}/default`
+);
+
+const deletePaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+    payment_method_id: string;
+  }
+>(
+  "DELETE",
+  ({ project_id, payment_method_id }) =>
+    `/api/projects/${project_id}/billing/payment_method/${payment_method_id}`
+);
+
 const getGithubStatus = baseApi<{}, {}>("GET", ({}) => `/api/status/github`);
 
 const createSecretAndOpenGitHubPullRequest = baseApi<
@@ -3449,6 +3507,38 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
   "POST",
   ({ project_id, cluster_id, stack_name }) =>
     `/api/projects/${project_id}/clusters/${cluster_id}/applications/${stack_name}/pr`
+);
+
+const getCloudProviderPermissionsStatus = baseApi<
+  {
+    cloud_provider: string;
+    cloud_provider_credential_identifier: string;
+  },
+  { project_id: number }
+>(
+  "GET",
+  ({ project_id }) =>
+    `/api/projects/${project_id}/integrations/cloud-permissions`
+);
+
+const getCloudSqlSecret = baseApi<
+  {},
+  { project_id: number; deployment_target_id: string; app_name: string }
+>(
+  "GET",
+  ({ project_id, deployment_target_id, app_name }) =>
+    `/api/projects/${project_id}/targets/${deployment_target_id}/apps/${app_name}/cloudsql`
+);
+
+const createCloudSqlSecret = baseApi<
+  {
+    b64_service_account_json: string;
+  },
+  { project_id: number; deployment_target_id: string; app_name: string }
+>(
+  "POST",
+  ({ project_id, deployment_target_id, app_name }) =>
+    `/api/projects/${project_id}/targets/${deployment_target_id}/apps/${app_name}/cloudsql`
 );
 
 // Bundle export to allow default api import (api.<method> is more readable)
@@ -3604,6 +3694,7 @@ export default {
   getRevision,
   listAppRevisions,
   getLatestAppRevisions,
+  getAppInstances,
   listDeploymentTargets,
   createDeploymentTarget,
   getDeploymentTarget,
@@ -3658,7 +3749,6 @@ export default {
   getPolicyDocument,
   createWebhookToken,
   getUsage,
-  getCustomerToken,
   getHasBilling,
   getOnboardingState,
   saveOnboardingState,
@@ -3692,6 +3782,7 @@ export default {
   getDatastores,
   listDatastores,
   getDatastore,
+  getDatastoreCredential,
   updateDatastore,
   deleteDatastore,
   getPreviousLogsForContainer,
@@ -3738,7 +3829,17 @@ export default {
   addStackEnvGroup,
   removeStackEnvGroup,
 
+  // BILLING
+  checkBillingCustomerExists,
+  listPaymentMethod,
+  addPaymentMethod,
+  setDefaultPaymentMethod,
+  deletePaymentMethod,
+
   // STATUS
   getGithubStatus,
-  getDatabaseStatus,
+  getCloudProviderPermissionsStatus,
+
+  getCloudSqlSecret,
+  createCloudSqlSecret,
 };

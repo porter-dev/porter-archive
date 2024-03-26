@@ -16,6 +16,7 @@ import (
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/porter_app"
+	v2 "github.com/porter-dev/porter/internal/porter_app/v2"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -43,13 +44,21 @@ type ServiceDeletions struct {
 	IngressAnnotationKeys []string `json:"ingress_annotation_keys"`
 }
 
+// EnvVariableDeletions is the set of keys to delete from the environment group
+type EnvVariableDeletions struct {
+	// Variables is a set of variable keys to delete from the environment group
+	Variables []string `json:"variables"`
+	// Secrets is a set of secret variable keys to delete from the environment group
+	Secrets []string `json:"secrets"`
+}
+
 // Deletions are the names of services and env variables to delete
 type Deletions struct {
-	ServiceNames     []string                    `json:"service_names"`
-	Predeploy        []string                    `json:"predeploy"`
-	EnvVariableNames []string                    `json:"env_variable_names"`
-	EnvGroupNames    []string                    `json:"env_group_names"`
-	ServiceDeletions map[string]ServiceDeletions `json:"service_deletions"`
+	ServiceNames         []string                    `json:"service_names"`
+	Predeploy            []string                    `json:"predeploy"`
+	EnvGroupNames        []string                    `json:"env_group_names"`
+	ServiceDeletions     map[string]ServiceDeletions `json:"service_deletions"`
+	EnvVariableDeletions EnvVariableDeletions        `json:"env_variable_deletions"`
 }
 
 // UpdateAppRequest is the request object for the POST /apps/update endpoint
@@ -60,6 +69,8 @@ type UpdateAppRequest struct {
 	GitSource GitSource `json:"git_source,omitempty"`
 	// DeploymentTargetId is the ID of the deployment target to apply the update to
 	DeploymentTargetId string `json:"deployment_target_id"`
+	// DeploymentTargetName is the name of the deployment target to apply the update to
+	DeploymentTargetName string `json:"deployment_target_name"`
 	// Variables is a map of environment variable names to values
 	Variables map[string]string `json:"variables"`
 	// Secrets is a map of secret names to values
@@ -81,6 +92,8 @@ type UpdateAppRequest struct {
 	Base64AddonProtos []string `json:"b64_addon_protos"`
 	// Base64PorterYAML is a base64 encoded porter yaml to apply representing a potentially partial porter app contract
 	Base64PorterYAML string `json:"b64_porter_yaml"`
+	// PatchOperations is a set of patch operations to apply to the porter.yaml if specified
+	PatchOperations []v2.PatchOperation `json:"patch_operations"`
 	// IsEnvOverride is used to remove any variables that are not specified in the request.  If false, the request will only update the variables specified in the request,
 	// and leave all other variables untouched.
 	IsEnvOverride bool `json:"is_env_override"`
@@ -116,12 +129,21 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 		return
 	}
-	if request.DeploymentTargetId == "" {
-		err := telemetry.Error(ctx, span, nil, "deployment target id is empty")
-		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
-		return
-	}
+
 	deploymentTargetID := request.DeploymentTargetId
+	deploymentTargetName := request.DeploymentTargetName
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "deployment-target-id", Value: deploymentTargetID},
+		telemetry.AttributeKV{Key: "deployment-target-name", Value: deploymentTargetName},
+	)
+
+	var deploymentTargetIdentifer *porterv1.DeploymentTargetIdentifier
+	if deploymentTargetID != "" || deploymentTargetName != "" {
+		deploymentTargetIdentifer = &porterv1.DeploymentTargetIdentifier{
+			Id:   deploymentTargetID,
+			Name: deploymentTargetName,
+		}
+	}
 
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "name", Value: request.Name},
@@ -190,7 +212,13 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
 			return
 		}
-		appProto = appFromYaml.AppProto
+
+		appProto, err = v2.PatchApp(ctx, appFromYaml.AppProto, request.PatchOperations)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error patching app proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
 
 		// only public variables can be defined in porter.yaml
 		envVariables = mergeEnvVariables(request.Variables, appFromYaml.EnvVariables)
@@ -258,12 +286,11 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updateReq := connect.NewRequest(&porterv1.UpdateAppRequest{
-		ProjectId: int64(project.ID),
-		DeploymentTargetIdentifier: &porterv1.DeploymentTargetIdentifier{
-			Id: deploymentTargetID,
-		},
-		App:           appProto,
-		AppRevisionId: request.AppRevisionID,
+		ProjectId:                  int64(project.ID),
+		ClusterId:                  int64(cluster.ID),
+		DeploymentTargetIdentifier: deploymentTargetIdentifer,
+		App:                        appProto,
+		AppRevisionId:              request.AppRevisionID,
 		AppEnv: &porterv1.EnvGroupVariables{
 			Normal: envVariables,
 			Secret: request.Secrets,
@@ -274,9 +301,12 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Deletions: &porterv1.Deletions{
 			ServiceNames:     request.Deletions.ServiceNames,
 			PredeployNames:   request.Deletions.Predeploy,
-			EnvVariableNames: request.Deletions.EnvVariableNames,
 			EnvGroupNames:    request.Deletions.EnvGroupNames,
 			ServiceDeletions: serviceDeletions,
+			EnvVariableDeletions: &porterv1.EnvVariableDeletions{
+				Variables: request.Deletions.EnvVariableDeletions.Variables,
+				Secrets:   request.Deletions.EnvVariableDeletions.Secrets,
+			},
 		},
 		AppOverrides:        overrides,
 		CommitSha:           request.CommitSHA,

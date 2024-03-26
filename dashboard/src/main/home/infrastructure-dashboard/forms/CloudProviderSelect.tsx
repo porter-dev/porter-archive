@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import styled from "styled-components";
 
 import Button from "components/porter/Button";
@@ -14,6 +14,7 @@ import {
 } from "lib/clusters/constants";
 import { type ClientCloudProvider } from "lib/clusters/types";
 
+import { Context } from "shared/Context";
 import bolt from "assets/bolt.svg";
 
 import CostConsentModal from "../modals/cost-consent/CostConsentModal";
@@ -25,6 +26,7 @@ const CloudProviderSelect: React.FC<Props> = ({ onComplete }) => {
   const [cloudProvider, setCloudProvider] = useState<
     ClientCloudProvider | undefined
   >(undefined);
+  const { user } = useContext(Context);
 
   return (
     <div>
@@ -43,7 +45,11 @@ const CloudProviderSelect: React.FC<Props> = ({ onComplete }) => {
                 <Block
                   key={i}
                   onClick={() => {
-                    setCloudProvider(provider);
+                    if (user?.isPorterUser) {
+                      onComplete(provider);
+                    } else {
+                      setCloudProvider(provider);
+                    }
                   }}
                 >
                   <Icon src={provider.icon} />
@@ -61,12 +67,12 @@ const CloudProviderSelect: React.FC<Props> = ({ onComplete }) => {
         </Text>
         <Spacer y={0.5} />
         <Text color={"helper"}>
-          Get started with the Porter sandbox environment.
+          Get started on the Porter Cloud and eject to your own cloud account later.
         </Text>
         <Spacer y={1} />
-        <Link to="https://sandbox.porter.run">
+        <Link to="https://cloud.porter.run">
           <Button alt height="35px">
-            Deploy on the Porter sandbox <Spacer inline x={1} />{" "}
+            Deploy on the Porter Cloud <Spacer inline x={1} />{" "}
             <i className="material-icons" style={{ fontSize: "18px" }}>
               east
             </i>

@@ -105,11 +105,12 @@ type PorterApp struct {
 	Build    *Build    `yaml:"build,omitempty"`
 	Env      Env       `yaml:"env,omitempty"`
 
-	Predeploy    *Service      `yaml:"predeploy,omitempty"`
-	EnvGroups    []string      `yaml:"envGroups,omitempty"`
-	EfsStorage   *EfsStorage   `yaml:"efsStorage,omitempty"`
-	RequiredApps []RequiredApp `yaml:"requiredApps,omitempty"`
-	AutoRollback *AutoRollback `yaml:"autoRollback,omitempty"`
+	Predeploy     *Service      `yaml:"predeploy,omitempty"`
+	InitialDeploy *Service      `yaml:"initialDeploy,omitempty"`
+	EnvGroups     []string      `yaml:"envGroups,omitempty"`
+	EfsStorage    *EfsStorage   `yaml:"efsStorage,omitempty"`
+	RequiredApps  []RequiredApp `yaml:"requiredApps,omitempty"`
+	AutoRollback  *AutoRollback `yaml:"autoRollback,omitempty"`
 }
 
 // PorterAppWithAddons is the definition of a porter app in a Porter YAML file with addons
@@ -189,6 +190,7 @@ type Service struct {
 	Private                       *bool             `yaml:"private,omitempty" validate:"excluded_unless=Type web"`
 	IngressAnnotations            map[string]string `yaml:"ingressAnnotations,omitempty" validate:"excluded_unless=Type web"`
 	DisableTLS                    *bool             `yaml:"disableTLS,omitempty" validate:"excluded_unless=Type web"`
+	Sleep                         *bool             `yaml:"sleep,omitempty" validate:"excluded_unless=Type job"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -213,9 +215,11 @@ type Domains struct {
 
 // HealthCheck contains the health check settings
 type HealthCheck struct {
-	Enabled  bool   `yaml:"enabled"`
-	HttpPath string `yaml:"httpPath"`
-	Command  string `yaml:"command"`
+	Enabled             bool   `yaml:"enabled"`
+	HttpPath            string `yaml:"httpPath,omitempty"`
+	Command             string `yaml:"command,omitempty"`
+	TimeoutSeconds      int    `yaml:"timeoutSeconds,omitempty"`
+	InitialDelaySeconds *int32 `yaml:"initialDelaySeconds,omitempty"`
 }
 
 // ProtoFromApp converts a PorterApp type to a base PorterApp proto type and returns env variables
@@ -268,6 +272,14 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 			return appProto, nil, telemetry.Error(ctx, span, err, "error casting predeploy config")
 		}
 		appProto.Predeploy = predeployProto
+	}
+
+	if porterApp.InitialDeploy != nil {
+		initialDeployProto, err := serviceProtoFromConfig(*porterApp.InitialDeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
+		if err != nil {
+			return appProto, nil, telemetry.Error(ctx, span, err, "error casting initial deploy config")
+		}
+		appProto.InitialDeploy = initialDeployProto
 	}
 
 	for _, envGroup := range porterApp.EnvGroups {
@@ -416,9 +428,11 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		var healthCheck *porterv1.HealthCheck
 		if service.HealthCheck != nil {
 			healthCheck = &porterv1.HealthCheck{
-				Enabled:  service.HealthCheck.Enabled,
-				HttpPath: service.HealthCheck.HttpPath,
-				Command:  service.HealthCheck.Command,
+				Enabled:             service.HealthCheck.Enabled,
+				HttpPath:            service.HealthCheck.HttpPath,
+				Command:             service.HealthCheck.Command,
+				TimeoutSeconds:      int32(service.HealthCheck.TimeoutSeconds),
+				InitialDelaySeconds: service.HealthCheck.InitialDelaySeconds,
 			}
 		}
 		webConfig.HealthCheck = healthCheck
@@ -439,6 +453,9 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 
 		if service.DisableTLS != nil {
 			webConfig.DisableTls = service.DisableTLS
+		}
+		if service.Sleep != nil {
+			serviceProto.Sleep = service.Sleep
 		}
 
 		serviceProto.Config = &porterv1.Service_WebConfig{
@@ -462,12 +479,18 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		var healthCheck *porterv1.HealthCheck
 		if service.HealthCheck != nil {
 			healthCheck = &porterv1.HealthCheck{
-				Enabled:  service.HealthCheck.Enabled,
-				HttpPath: service.HealthCheck.HttpPath,
-				Command:  service.HealthCheck.Command,
+				Enabled:             service.HealthCheck.Enabled,
+				HttpPath:            service.HealthCheck.HttpPath,
+				Command:             service.HealthCheck.Command,
+				TimeoutSeconds:      int32(service.HealthCheck.TimeoutSeconds),
+				InitialDelaySeconds: service.HealthCheck.InitialDelaySeconds,
 			}
 		}
 		workerConfig.HealthCheck = healthCheck
+
+		if service.Sleep != nil {
+			serviceProto.Sleep = service.Sleep
+		}
 
 		serviceProto.Config = &porterv1.Service_WorkerConfig{
 			WorkerConfig: workerConfig,
@@ -535,6 +558,15 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 		porterApp.Predeploy = &appPredeploy
 	}
 
+	if appProto.InitialDeploy != nil {
+		appInitialDeploy, err := appServiceFromProto(appProto.InitialDeploy)
+		if err != nil {
+			return porterApp, err
+		}
+
+		porterApp.InitialDeploy = &appInitialDeploy
+	}
+
 	for _, envGroup := range appProto.EnvGroups {
 		if envGroup != nil {
 			porterApp.EnvGroups = append(porterApp.EnvGroups, fmt.Sprintf("%s:v%d", envGroup.Name, envGroup.Version))
@@ -576,6 +608,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		SmartOptimization:             service.SmartOptimization,
 		GPU:                           gpu,
 		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
+		Sleep:                         service.Sleep,
 	}
 
 	switch service.Type {
@@ -602,9 +635,11 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		var healthCheck *HealthCheck
 		if webConfig.HealthCheck != nil {
 			healthCheck = &HealthCheck{
-				Enabled:  webConfig.HealthCheck.Enabled,
-				HttpPath: webConfig.HealthCheck.HttpPath,
-				Command:  webConfig.HealthCheck.Command,
+				Enabled:             webConfig.HealthCheck.Enabled,
+				HttpPath:            webConfig.HealthCheck.HttpPath,
+				Command:             webConfig.HealthCheck.Command,
+				TimeoutSeconds:      int(webConfig.HealthCheck.TimeoutSeconds),
+				InitialDelaySeconds: webConfig.HealthCheck.InitialDelaySeconds,
 			}
 		}
 		appService.HealthCheck = healthCheck
@@ -645,9 +680,11 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		var healthCheck *HealthCheck
 		if workerConfig.HealthCheck != nil {
 			healthCheck = &HealthCheck{
-				Enabled:  workerConfig.HealthCheck.Enabled,
-				HttpPath: workerConfig.HealthCheck.HttpPath,
-				Command:  workerConfig.HealthCheck.Command,
+				Enabled:             workerConfig.HealthCheck.Enabled,
+				HttpPath:            workerConfig.HealthCheck.HttpPath,
+				Command:             workerConfig.HealthCheck.Command,
+				TimeoutSeconds:      int(workerConfig.HealthCheck.TimeoutSeconds),
+				InitialDelaySeconds: workerConfig.HealthCheck.InitialDelaySeconds,
 			}
 		}
 		appService.HealthCheck = healthCheck

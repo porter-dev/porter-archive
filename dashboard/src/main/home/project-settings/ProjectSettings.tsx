@@ -1,28 +1,34 @@
 import React, { Component, useContext, useEffect, useState } from "react";
+import _ from "lodash";
+import {
+  withRouter,
+  WithRouterProps,
+  type RouteComponentProps,
+} from "react-router";
 import styled from "styled-components";
 
-import { Context } from "shared/Context";
-import settingsGrad from "assets/settings-grad.svg";
-
-import InvitePage from "./InviteList";
-import TabRegion from "components/TabRegion";
 import Heading from "components/form-components/Heading";
 import Helper from "components/form-components/Helper";
-import DashboardHeader from "../cluster-dashboard/DashboardHeader";
-import { withAuth, WithAuthProps } from "shared/auth/AuthorizationHoc";
-import { RouteComponentProps, withRouter, WithRouterProps } from "react-router";
-import { getQueryParam } from "shared/routing";
-import APITokensSection from "./APITokensSection";
-import _ from "lodash";
+import Button from "components/porter/Button";
+import Error from "components/porter/Error";
+import Input from "components/porter/Input";
 import Link from "components/porter/Link";
 import Spacer from "components/porter/Spacer";
-import ProjectDeleteConsent from "./ProjectDeleteConsent";
-import Metadata from "./Metadata";
-import Button from "components/porter/Button";
-import Input from "components/porter/Input";
-import { isAlphanumeric } from "shared/common";
+import TabRegion from "components/TabRegion";
+
 import api from "shared/api";
-import Error from "components/porter/Error";
+import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
+import { isAlphanumeric } from "shared/common";
+import { Context } from "shared/Context";
+import { getQueryParam } from "shared/routing";
+import settingsGrad from "assets/settings-grad.svg";
+
+import DashboardHeader from "../cluster-dashboard/DashboardHeader";
+import APITokensSection from "./APITokensSection";
+import BillingPage from "./BillingPage";
+import InvitePage from "./InviteList";
+import Metadata from "./Metadata";
+import ProjectDeleteConsent from "./ProjectDeleteConsent";
 
 type PropsType = RouteComponentProps & WithAuthProps & {};
 type ValidationError = {
@@ -32,7 +38,7 @@ type ValidationError = {
 type StateType = {
   projectName: string;
   currentTab: string;
-  tabOptions: { value: string; label: string }[];
+  tabOptions: Array<{ value: string; label: string }>;
   showCostConfirmModal: boolean;
 };
 
@@ -48,8 +54,7 @@ function ProjectSettings(props: any) {
   const [buttonStatus, setButtonStatus] = useState<React.ReactNode>("");
 
   useEffect(() => {
-    const selectedTab =
-      getQueryParam(props, "selected_tab") || "manage-access";
+    const selectedTab = getQueryParam(props, "selected_tab") || "manage-access";
 
     if (currentTab !== selectedTab) {
       setCurrentTab(selectedTab);
@@ -60,36 +65,33 @@ function ProjectSettings(props: any) {
     if (projectName !== currentProject.name) {
       setProjectName(currentProject.name);
     }
-
   }, []);
 
-
   useEffect(() => {
-    let { currentProject } = context;
+    const { currentProject } = context;
     if (projectName !== currentProject.name) {
       setProjectName(currentProject.name);
     }
 
     const tabOpts = [];
     tabOpts.push({ value: "manage-access", label: "Manage access" });
-    // ? Disabled for now https://discord.com/channels/542888846271184896/1059277393031856208/1059277395913351258
-    // tabOptions.push({
-    //   value: "billing",
-    //   label: "Billing",
-    // });
-    tabOpts.push({ value: "metadata", label: "Metadata" });
-    if (props.isAuthorized("settings", "", ["get", "delete"])) {
-      // if (this.context?.hasBillingEnabled) {
-      //   tabOptions.push({
-      //     value: "billing",
-      //     label: "Billing",
-      //   });
-      // }
 
+    if (!currentProject?.sandbox_enabled) {
+      tabOpts.push({ value: "metadata", label: "Metadata" });
+    }
+
+    if (props.isAuthorized("settings", "", ["get", "delete"])) {
       if (currentProject?.api_tokens_enabled) {
         tabOpts.push({
           value: "api-tokens",
           label: "API Tokens",
+        });
+      }
+
+      if (currentProject?.billing_enabled) {
+        tabOpts.push({
+          value: "billing",
+          label: "Billing",
         });
       }
 
@@ -99,7 +101,6 @@ function ProjectSettings(props: any) {
       });
     }
 
-
     if (!_.isEqual(tabOpts, tabOptions)) {
       setTabOptions(tabOpts);
     }
@@ -108,7 +109,6 @@ function ProjectSettings(props: any) {
     if (selectedTab && selectedTab !== currentTab) {
       setCurrentTab(selectedTab);
     }
-
   }, [context, projectName, currentTab, props, tabOptions]);
 
   const validateProjectName = (): ValidationError => {
@@ -145,19 +145,19 @@ function ProjectSettings(props: any) {
       await api.renameProject(
         "<token>",
         {
-          name: name,
+          name,
         },
         {
           project_id: context.currentProject.id,
-        })
+        }
+      );
       setButtonStatus("success");
       window.location.reload();
-
     } catch (err) {
-      console.log(err)
+      console.log(err);
       setButtonStatus(<Error message="Unable to rename project" />);
     }
-  }
+  };
 
   const renderTabContents = () => {
     if (!props.isAuthorized("settings", "", ["get", "delete"])) {
@@ -166,40 +166,32 @@ function ProjectSettings(props: any) {
 
     if (currentTab === "manage-access") {
       return <InvitePage />;
-    }
-    else if (currentTab == "metadata") {
-      return <Metadata />
+    } else if (currentTab == "metadata") {
+      return <Metadata />;
     } else if (currentTab === "api-tokens") {
       return <APITokensSection />;
     } else if (currentTab === "billing") {
-      return (
-        <Placeholder>
-          <Helper>
-            Visit the{" "}
-            <a
-              href={`/api/projects/${context.currentProject?.id}/billing/redirect`}
-            >
-              billing portal
-            </a>{" "}
-            to view plans.
-          </Helper>
-        </Placeholder>
-      );
+      return <BillingPage></BillingPage>;
     } else {
       return (
         <>
-
           <Heading isAtTop={true}>Rename Project</Heading>
 
-          <Helper color={validateProjectName().hasError ? "#f5cb42" : "#aaaabb"}>
+          <Helper
+            color={validateProjectName().hasError ? "#f5cb42" : "#aaaabb"}
+          >
             (lowercase letters, numbers, and "-" only)
           </Helper>
-          <Input placeholder={"ex: perspective-vortex"} value={name} setValue={setName} width={"500px"}>
-          </Input>
+          <Input
+            placeholder={"ex: perspective-vortex"}
+            value={name}
+            setValue={setName}
+            width={"500px"}
+          ></Input>
           <Spacer y={1} />
           <Button
             onClick={() => {
-              handleNameChange()
+              handleNameChange();
             }}
             status={buttonStatus}
             loadingText={"Updating..."}
@@ -228,7 +220,7 @@ function ProjectSettings(props: any) {
           </DeleteButton>
           <ProjectDeleteConsent
             setShowCostConfirmModal={setShowCostConfirmModal}
-            show={showCostConfirmModal}  // <-- Pass these props
+            show={showCostConfirmModal} // <-- Pass these props
           />
         </>
       );
@@ -253,7 +245,6 @@ function ProjectSettings(props: any) {
     </StyledProjectSettings>
   );
 }
-
 
 ProjectSettings.contextType = Context;
 

@@ -19,6 +19,16 @@ export const datastoreMetadataValidator = z.object({
 export type DatastoreMetadataWithSource = z.infer<
   typeof datastoreMetadataValidator
 >;
+export const datastoreCredentialValidator = z.object({
+  host: z.string().optional().default(""),
+  port: z.number().optional().default(0),
+  username: z.string().optional().default(""),
+  database_name: z.string().optional().default(""),
+  password: z.string().optional().default(""),
+});
+export type DatastoreConnectionInfo = z.infer<
+  typeof datastoreCredentialValidator
+>;
 
 export const datastoreValidator = z.object({
   name: z.string(),
@@ -42,8 +52,11 @@ export const datastoreValidator = z.object({
     "DELETING_RECORD",
     "DELETED",
   ]),
-  cloud_provider: cloudProviderValidator,
+  cloud_provider: z.string().pipe(cloudProviderValidator.catch("UNKNOWN")),
   cloud_provider_credential_identifier: z.string(),
+  credential: datastoreCredentialValidator,
+  connected_cluster_ids: z.number().array().optional().default([]),
+  on_management_cluster: z.boolean().default(false),
 });
 
 export type SerializedDatastore = z.infer<typeof datastoreValidator>;
@@ -147,6 +160,7 @@ export type DatastoreTemplate = {
   description: string;
   disabled: boolean;
   instanceTiers: ResourceOption[];
+  supportedEngineVersions: EngineVersion[];
   formTitle: string;
   creationStateProgression: DatastoreState[];
   deletionStateProgression: DatastoreState[];
@@ -157,6 +171,7 @@ const instanceTierValidator = z.enum([
   "db.t4g.small",
   "db.t4g.medium",
   "db.t4g.large",
+  "db.m6g.large",
   "cache.t4g.micro",
   "cache.t4g.medium",
   "cache.r6g.large",
@@ -164,18 +179,25 @@ const instanceTierValidator = z.enum([
 ]);
 export type InstanceTier = z.infer<typeof instanceTierValidator>;
 
+const engineVersionValidator = z.enum(["15.4", "14.11"]);
+export type EngineVersion = {
+  name: z.infer<typeof engineVersionValidator>;
+  displayName: string;
+};
+
 const rdsPostgresConfigValidator = z.object({
   type: z.literal("rds-postgres"),
   instanceClass: instanceTierValidator
     .default("unspecified")
     .refine((val) => val !== "unspecified", {
-      message: "Instance class is required",
+      message: "Instance tier is required",
     }),
   allocatedStorageGigabytes: z
     .number()
     .int()
     .positive("Allocated storage must be a positive integer")
     .default(30),
+  engineVersion: engineVersionValidator,
   // the following three are not yet specified by the user during creation - only parsed from the backend after the form is submitted
   databaseName: z
     .string()
@@ -196,7 +218,7 @@ const auroraPostgresConfigValidator = z.object({
   instanceClass: instanceTierValidator
     .default("unspecified")
     .refine((val) => val !== "unspecified", {
-      message: "Instance class is required",
+      message: "Instance tier is required",
     }),
   allocatedStorageGigabytes: z
     .number()
@@ -220,7 +242,7 @@ const elasticacheRedisConfigValidator = z.object({
   instanceClass: instanceTierValidator
     .default("unspecified")
     .refine((val) => val !== "unspecified", {
-      message: "Instance class is required",
+      message: "Instance tier is required",
     }),
   // the following three are not yet specified by the user during creation - only parsed from the backend after the form is submitted
   databaseName: z.string().nonempty("Database name is required").default(""),
@@ -232,6 +254,7 @@ const elasticacheRedisConfigValidator = z.object({
     .string()
     .nonempty("Master password is required")
     .default(""),
+  engineVersion: z.string().default("7.1"),
 });
 
 export const dbFormValidator = z.object({

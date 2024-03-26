@@ -666,7 +666,7 @@ const preflightCheckErrorReplacements = {
     "Your cloud provider is currently throttling API requests. Please try again in a few minutes.",
 };
 
-const getErrorMessageFromNetworkCall = (
+export const getErrorMessageFromNetworkCall = (
   err: unknown,
   networkCallDescription: string,
   replaceError?: Record<string, string>

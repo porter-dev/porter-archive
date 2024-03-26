@@ -24,7 +24,7 @@ import PreflightChecksModal from "./modals/PreflightChecksModal";
 export type UpdateClusterButtonProps = {
   status: "" | "loading" | JSX.Element | "success";
   isDisabled: boolean;
-  loadingText: string;
+  loadingText?: string;
 };
 
 type ClusterFormContextType = {

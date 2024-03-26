@@ -7,10 +7,13 @@ import { z } from "zod";
 
 import ClusterProvisioningPlaceholder from "components/ClusterProvisioningPlaceholder";
 import Loading from "components/Loading";
+import Banner from "components/porter/Banner";
 import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
+import Image from "components/porter/Image";
 import PorterLink from "components/porter/Link";
+import Link from "components/porter/Link";
 import Modal from "components/porter/Modal";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
@@ -28,6 +31,7 @@ import { Context } from "shared/Context";
 import { useDeploymentTarget } from "shared/DeploymentTargetContext";
 import applicationGrad from "assets/application-grad.svg";
 import calendar from "assets/calendar-number.svg";
+import gift from "assets/gift.svg";
 import grid from "assets/grid.png";
 import list from "assets/list.png";
 import pull_request from "assets/pull_request_icon.svg";
@@ -212,31 +216,28 @@ const Apps: React.FC = () => {
       }
 
       return (
-        <DashboardPlaceholder>
-          <Text size={16}>No applications have been created yet</Text>
-          <Spacer y={0.5} />
-          <Text color={"helper"}>Get started by creating an application.</Text>
-          <Spacer y={1} />
-          {currentProject?.billing_enabled && !hasPaymentEnabled ? (
-            <Button
-              alt
-              onClick={() => {
-                setShowBillingModal(true);
-              }}
-              height="35px"
-            >
-              Create a new application
-              <Spacer inline x={1} />{" "}
-              <i className="material-icons" style={{ fontSize: "18px" }}>
-                east
-              </i>
-            </Button>
-          ) : (
-            <PorterLink to="/apps/new/app">
+        <>
+          {currentProject?.sandbox_enabled && (
+            <>
+              <Banner icon={<Image src={gift} />}>
+                $5 of Porter credits have automatically been credited to your
+                account.
+              </Banner>
+              <Spacer y={1} />
+            </>
+          )}
+          <DashboardPlaceholder>
+            <Text size={16}>No applications have been created yet</Text>
+            <Spacer y={0.5} />
+            <Text color={"helper"}>
+              Get started by creating an application.
+            </Text>
+            <Spacer y={1} />
+            {currentProject?.billing_enabled && !hasPaymentEnabled ? (
               <Button
                 alt
-                onClick={async () => {
-                  await updateAppStep({ step: "stack-launch-start" });
+                onClick={() => {
+                  setShowBillingModal(true);
                 }}
                 height="35px"
               >
@@ -246,17 +247,35 @@ const Apps: React.FC = () => {
                   east
                 </i>
               </Button>
-            </PorterLink>
-          )}
-          {showBillingModal && (
-            <BillingModal
-              back={() => setShowBillingModal(false)}
-              onCreate={() => {
-                history.push("/apps/new/app");
-              }}
-            />
-          )}
-        </DashboardPlaceholder>
+            ) : (
+              <PorterLink to="/apps/new/app">
+                <Button
+                  alt
+                  onClick={async () => {
+                    await updateAppStep({ step: "stack-launch-start" });
+                  }}
+                  height="35px"
+                >
+                  Create a new application
+                  <Spacer inline x={1} />{" "}
+                  <i className="material-icons" style={{ fontSize: "18px" }}>
+                    east
+                  </i>
+                </Button>
+              </PorterLink>
+            )}
+            {showBillingModal && (
+              <BillingModal
+                back={() => {
+                  setShowBillingModal(false);
+                }}
+                onCreate={() => {
+                  history.push("/apps/new/app");
+                }}
+              />
+            )}
+          </DashboardPlaceholder>
+        </>
       );
     }
 

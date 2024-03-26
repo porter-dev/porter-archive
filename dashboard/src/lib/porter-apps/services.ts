@@ -39,7 +39,7 @@ export type DetectedServices = {
     variables?: Record<string, string>;
   };
 };
-type ClientServiceType = "web" | "worker" | "job" | "predeploy";
+type ClientServiceType = "web" | "worker" | "job" | "predeploy" | "initdeploy";
 
 type ClientWebService = ClientService & { config: ClientWebConfig };
 export const isClientWebService = (
@@ -92,6 +92,13 @@ const predeployConfigValidator = z.object({
 });
 export type ClientPredeployConfig = z.infer<typeof predeployConfigValidator>;
 
+const initialDeployConfigValidator = z.object({
+  type: z.literal("initdeploy"),
+});
+export type ClientInitialDeployConfig = z.infer<
+  typeof initialDeployConfigValidator
+>;
+
 // serviceValidator is the validator for a ClientService
 // This is used to validate a service when creating or updating an app
 export const serviceValidator = z.object({
@@ -116,6 +123,7 @@ export const serviceValidator = z.object({
     workerConfigValidator,
     jobConfigValidator,
     predeployConfigValidator,
+    initialDeployConfigValidator,
   ]),
   domainDeletions: z
     .object({
@@ -176,6 +184,9 @@ export type SerializedService = {
       }
     | {
         type: "predeploy";
+      }
+    | {
+        type: "initdeploy";
       };
 };
 
@@ -295,6 +306,12 @@ export function defaultSerialized({
         type: "predeploy" as const,
       },
     }))
+    .with("initdeploy", () => ({
+      ...baseService,
+      config: {
+        type: "initdeploy" as const,
+      },
+    }))
     .exhaustive();
 }
 
@@ -360,6 +377,11 @@ export function serializeService(service: ClientService): SerializedService {
       .with({ type: "predeploy" }, () =>
         Object.freeze({
           type: "predeploy" as const,
+        })
+      )
+      .with({ type: "initdeploy" }, () =>
+        Object.freeze({
+          type: "initdeploy" as const,
         })
       )
       .exhaustive(),
@@ -579,6 +601,12 @@ export function deserializeService({
         type: "predeploy" as const,
       },
     }))
+    .with({ type: "initdeploy" }, () => ({
+      ...baseService,
+      config: {
+        type: "initdeploy" as const,
+      },
+    }))
     .exhaustive();
 }
 
@@ -589,6 +617,7 @@ export const serviceTypeEnumProto = (type: ClientServiceType): ServiceType => {
     .with("worker", () => ServiceType.WORKER)
     .with("job", () => ServiceType.JOB)
     .with("predeploy", () => ServiceType.JOB)
+    .with("initdeploy", () => ServiceType.JOB)
     .exhaustive();
 };
 
@@ -650,6 +679,20 @@ export function serviceProto(service: SerializedService): Service {
     )
     .with(
       { type: "predeploy" },
+      (config) =>
+        new Service({
+          ...service,
+          runOptional: service.run,
+          instancesOptional: service.instances,
+          type: serviceTypeEnumProto(config.type),
+          config: {
+            value: {},
+            case: "jobConfig",
+          },
+        })
+    )
+    .with(
+      { type: "initdeploy" },
       (config) =>
         new Service({
           ...service,

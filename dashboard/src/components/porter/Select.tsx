@@ -20,6 +20,7 @@ type Props = {
   setValue?: (value: string) => void;
   prefix?: React.ReactNode;
   width?: string;
+  height?: string;
 };
 
 const Select: React.FC<Props> = ({
@@ -32,11 +33,12 @@ const Select: React.FC<Props> = ({
   setValue,
   prefix,
   width,
+  height,
 }) => {
   return (
     <Div width={width}>
       {label && <Label color={labelColor}>{label}</Label>}
-      <SelectWrapper isDisabled={disabled ?? false}>
+      <SelectWrapper isDisabled={disabled ?? false} height={height}>
         {prefix && (
           <>
             <Prefix>{prefix}</Prefix>
@@ -128,11 +130,11 @@ const Error = styled.div`
   }
 `;
 
-const SelectWrapper = styled.div<{ isDisabled: boolean }>`
+const SelectWrapper = styled.div<{ isDisabled: boolean; height?: string }>`
   position: relative;
   padding-left: 10px;
   padding-right: 28px;
-  height: 30px;
+  height: ${(props) => props.height || "30px"};
   transition: all 0.2s;
   background: ${(props) => props.theme.fg};
   border: 1px solid #494b4f;
@@ -152,18 +154,18 @@ const SelectWrapper = styled.div<{ isDisabled: boolean }>`
   }
 
   ${(props) =>
-    !props.isDisabled ?
-    css`
-      :hover {
-        border: 1px solid #7a7b80;
-      }
-    ` : 
-    css`
-      color: #ffffff55;
-      > img {
-        opacity: 0.5;
-      }
-    `}
+    !props.isDisabled
+      ? css`
+          :hover {
+            border: 1px solid #7a7b80;
+          }
+        `
+      : css`
+          color: #ffffff55;
+          > img {
+            opacity: 0.5;
+          }
+        `}
 `;
 
 const SelectLayer = styled.select<{
@@ -176,7 +178,7 @@ const SelectLayer = styled.select<{
   left: 0;
   width: 100%;
   height: 100%;
-  cursor: ${props => props.disabled ? "not-allowed" : "pointer"};
+  cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
   background: none;
   appearance: none;
   opacity: 0;

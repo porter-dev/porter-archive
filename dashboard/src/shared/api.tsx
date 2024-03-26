@@ -2574,17 +2574,6 @@ const getUsage = baseApi<{}, { project_id: number }>(
   ({ project_id }) => `/api/projects/${project_id}/usage`
 );
 
-// Used for billing purposes
-const getCustomerToken = baseApi<{}, { project_id: number }>(
-  "GET",
-  ({ project_id }) => `/api/projects/${project_id}/billing/token`
-);
-
-const getHasBilling = baseApi<{}, { project_id: number }>(
-  "GET",
-  ({ project_id }) => `/api/projects/${project_id}/billing`
-);
-
 const getOnboardingState = baseApi<{}, { project_id: number }>(
   "GET",
   ({ project_id }) => `/api/projects/${project_id}/onboarding`
@@ -3437,6 +3426,65 @@ const removeStackEnvGroup = baseApi<
     `/api/v1/projects/${project_id}/clusters/${cluster_id}/namespaces/${namespace}/stacks/${stack_id}/remove_env_group/${env_group_name}`
 );
 
+// Billing
+const checkBillingCustomerExists = baseApi<
+  {
+    user_email?: string;
+  },
+  {
+    project_id?: number;
+  }
+>("POST", ({ project_id }) => `/api/projects/${project_id}/billing/customer`);
+
+const getHasBilling = baseApi<{}, { project_id: number }>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/billing`
+);
+
+const listPaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+  }
+>(
+  "GET",
+  ({ project_id }) => `/api/projects/${project_id}/billing/payment_method`
+);
+
+const addPaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+  }
+>(
+  "POST",
+  ({ project_id }) => `/api/projects/${project_id}/billing/payment_method`
+);
+
+const setDefaultPaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+    payment_method_id: string;
+  }
+>(
+  "PUT",
+  ({ project_id, payment_method_id }) =>
+    `/api/projects/${project_id}/billing/payment_method/${payment_method_id}/default`
+);
+
+const deletePaymentMethod = baseApi<
+  {},
+  {
+    project_id?: number;
+    payment_method_id: string;
+  }
+>(
+  "DELETE",
+  ({ project_id, payment_method_id }) =>
+    `/api/projects/${project_id}/billing/payment_method/${payment_method_id}`
+);
+
 const getGithubStatus = baseApi<{}, {}>("GET", ({}) => `/api/status/github`);
 
 const createSecretAndOpenGitHubPullRequest = baseApi<
@@ -3701,7 +3749,6 @@ export default {
   getPolicyDocument,
   createWebhookToken,
   getUsage,
-  getCustomerToken,
   getHasBilling,
   getOnboardingState,
   saveOnboardingState,
@@ -3781,6 +3828,13 @@ export default {
   removeStackAppResource,
   addStackEnvGroup,
   removeStackEnvGroup,
+
+  // BILLING
+  checkBillingCustomerExists,
+  listPaymentMethod,
+  addPaymentMethod,
+  setDefaultPaymentMethod,
+  deletePaymentMethod,
 
   // STATUS
   getGithubStatus,

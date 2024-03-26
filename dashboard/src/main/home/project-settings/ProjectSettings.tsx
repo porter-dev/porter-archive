@@ -25,6 +25,7 @@ import settingsGrad from "assets/settings-grad.svg";
 
 import DashboardHeader from "../cluster-dashboard/DashboardHeader";
 import APITokensSection from "./APITokensSection";
+import BillingPage from "./BillingPage";
 import InvitePage from "./InviteList";
 import Metadata from "./Metadata";
 import ProjectDeleteConsent from "./ProjectDeleteConsent";
@@ -74,24 +75,23 @@ function ProjectSettings(props: any) {
 
     const tabOpts = [];
     tabOpts.push({ value: "manage-access", label: "Manage access" });
-    // ? Disabled for now https://discord.com/channels/542888846271184896/1059277393031856208/1059277395913351258
-    // tabOptions.push({
-    //   value: "billing",
-    //   label: "Billing",
-    // });
-    tabOpts.push({ value: "metadata", label: "Metadata" });
-    if (props.isAuthorized("settings", "", ["get", "delete"])) {
-      // if (this.context?.hasBillingEnabled) {
-      //   tabOptions.push({
-      //     value: "billing",
-      //     label: "Billing",
-      //   });
-      // }
 
+    if (!currentProject?.sandbox_enabled) {
+      tabOpts.push({ value: "metadata", label: "Metadata" });
+    }
+
+    if (props.isAuthorized("settings", "", ["get", "delete"])) {
       if (currentProject?.api_tokens_enabled) {
         tabOpts.push({
           value: "api-tokens",
           label: "API Tokens",
+        });
+      }
+
+      if (currentProject?.billing_enabled) {
+        tabOpts.push({
+          value: "billing",
+          label: "Billing",
         });
       }
 
@@ -171,19 +171,7 @@ function ProjectSettings(props: any) {
     } else if (currentTab === "api-tokens") {
       return <APITokensSection />;
     } else if (currentTab === "billing") {
-      return (
-        <Placeholder>
-          <Helper>
-            Visit the{" "}
-            <a
-              href={`/api/projects/${context.currentProject?.id}/billing/redirect`}
-            >
-              billing portal
-            </a>{" "}
-            to view plans.
-          </Helper>
-        </Placeholder>
-      );
+      return <BillingPage></BillingPage>;
     } else {
       return (
         <>

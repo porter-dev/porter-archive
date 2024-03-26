@@ -55,6 +55,7 @@ const (
 	URLParamAppRevisionID         URLParam = "app_revision_id"
 	URLParamDatastoreType         URLParam = "datastore_type"
 	URLParamDatastoreName         URLParam = "datastore_name"
+	URLParamPaymentMethodID       URLParam = "payment_method_id"
 	URLParamNotificationConfigID  URLParam = "notification_config_id"
 	URLParamNotificationID        URLParam = "notification_id"
 	URLParamCloudProviderType     URLParam = "cloud_provider_type"

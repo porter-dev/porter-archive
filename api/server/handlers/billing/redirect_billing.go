@@ -6,7 +6,6 @@ import (
 
 	"github.com/porter-dev/porter/api/server/handlers"
 	"github.com/porter-dev/porter/api/server/shared"
-	"github.com/porter-dev/porter/api/server/shared/apierrors"
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/types"
 	"github.com/porter-dev/porter/internal/models"
@@ -53,12 +52,4 @@ func (c *RedirectBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		http.Redirect(w, r, "/dashboard?error="+url.QueryEscape("Only the creator of the project can manage billing"), 302)
 		return
 	}
-
-	redirectURI, err := c.Config().BillingManager.GetRedirectURI(user, proj)
-	if err != nil {
-		c.HandleAPIError(w, r, apierrors.NewErrInternal(err))
-		return
-	}
-
-	http.Redirect(w, r, redirectURI, 302)
 }

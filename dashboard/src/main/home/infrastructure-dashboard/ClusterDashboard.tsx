@@ -13,7 +13,6 @@ import Image from "components/porter/Image";
 import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
 import Select from "components/porter/Select";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Tag from "components/porter/Tag";
@@ -80,19 +79,17 @@ const ClusterDashboard: React.FC = () => {
           disableLineBreak
         />
         <DashboardPlaceholder>
-          <Text size={16}>Infrastructure is not enabled for sandbox users</Text>
+          <Text size={16}>Infrastructure is not enabled on the Porter Cloud</Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
             Eject to your own cloud account to enable infrastructure.
           </Text>
           <Spacer y={1} />
-          <ShowIntercomButton
-            alt
-            message="I would like to eject to my own cloud account"
-            height="35px"
-          >
-            Request ejection
-          </ShowIntercomButton>
+          <PorterLink to="https://docs.porter.run/other/eject">
+            <Button alt height="35px">
+              Request ejection
+            </Button>
+          </PorterLink>
         </DashboardPlaceholder>
       </StyledAppDashboard>
     );

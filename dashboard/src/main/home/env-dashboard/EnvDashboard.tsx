@@ -11,8 +11,8 @@ import Container from "components/porter/Container";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Fieldset from "components/porter/Fieldset";
 import Image from "components/porter/Image";
+import PorterLink from "components/porter/Link";
 import SearchBar from "components/porter/SearchBar";
-import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import Toggle from "components/porter/Toggle";
@@ -23,6 +23,7 @@ import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
 import { Context } from "shared/Context";
 import { search } from "shared/search";
 import { readableDate } from "shared/string_utils";
+import database from "assets/database.svg";
 import doppler from "assets/doppler.png";
 import envGroupGrad from "assets/env-group-grad.svg";
 import grid from "assets/grid.png";
@@ -30,7 +31,6 @@ import key from "assets/key.svg";
 import list from "assets/list.png";
 import notFound from "assets/not-found.png";
 import time from "assets/time.png";
-import database from "assets/database.svg";
 
 import { envGroupPath } from "../../../shared/util";
 
@@ -85,20 +85,18 @@ const EnvDashboard: React.FC<Props> = (props) => {
       return (
         <DashboardPlaceholder>
           <Text size={16}>
-            Environment groups are not enabled for sandbox users
+            Environment groups are not enabled on the Porter Cloud
           </Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
             Eject to your own cloud account to enable environment groups.
           </Text>
           <Spacer y={1} />
-          <ShowIntercomButton
-            alt
-            message="I would like to eject to my own cloud account"
-            height="35px"
-          >
-            Request ejection
-          </ShowIntercomButton>
+          <PorterLink to="https://docs.porter.run/other/eject">
+            <Button alt height="35px">
+              Request ejection
+            </Button>
+          </PorterLink>
         </DashboardPlaceholder>
       );
     }
@@ -202,7 +200,13 @@ const EnvDashboard: React.FC<Props> = (props) => {
                 >
                   <Container row>
                     <Image
-                      src={envGroup.type === "doppler" ? doppler : envGroup.type === "datastore" ? database : key}
+                      src={
+                        envGroup.type === "doppler"
+                          ? doppler
+                          : envGroup.type === "datastore"
+                          ? database
+                          : key
+                      }
                       size={20}
                     />
                     <Spacer inline x={0.7} />
@@ -228,7 +232,15 @@ const EnvDashboard: React.FC<Props> = (props) => {
                   key={i}
                 >
                   <Container row>
-                    <Image src={envGroup.type === "doppler" ? doppler : envGroup.type === "datastore" ? database : key} />
+                    <Image
+                      src={
+                        envGroup.type === "doppler"
+                          ? doppler
+                          : envGroup.type === "datastore"
+                          ? database
+                          : key
+                      }
+                    />
                     <Spacer inline x={0.7} />
                     <Text size={14}>{envGroup.name}</Text>
                   </Container>

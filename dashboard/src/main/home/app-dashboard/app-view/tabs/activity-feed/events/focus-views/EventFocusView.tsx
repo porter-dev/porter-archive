@@ -15,16 +15,19 @@ import api from "shared/api";
 import {
   porterAppEventValidator,
   type PorterAppBuildEvent,
+  type PorterAppInitialDeployEvent,
   type PorterAppPreDeployEvent,
 } from "../types";
 import BuildEventFocusView from "./BuildEventFocusView";
+import InitialDeployEventFocusView from "./InitialDeployEventFocusView";
 import PreDeployEventFocusView from "./PredeployEventFocusView";
 
 const EVENT_POLL_INTERVAL = 5000; // poll every 5 seconds
 
 type SupportedEventFocusViewEvent =
   | PorterAppBuildEvent
-  | PorterAppPreDeployEvent;
+  | PorterAppPreDeployEvent
+  | PorterAppInitialDeployEvent;
 
 const EventFocusView: React.FC = () => {
   const { search } = useLocation();
@@ -62,7 +65,12 @@ const EventFocusView: React.FC = () => {
   );
 
   useEffect(() => {
-    if (data != null && (data.type === "BUILD" || data.type === "PRE_DEPLOY")) {
+    if (
+      data != null &&
+      (data.type === "BUILD" ||
+        data.type === "PRE_DEPLOY" ||
+        data.type === "INITIAL_DEPLOY")
+    ) {
       setEvent(data);
     }
   }, [data]);
@@ -72,6 +80,9 @@ const EventFocusView: React.FC = () => {
       .with({ type: "BUILD" }, (ev) => <BuildEventFocusView event={ev} />)
       .with({ type: "PRE_DEPLOY" }, (ev) => (
         <PreDeployEventFocusView event={ev} />
+      ))
+      .with({ type: "INITIAL_DEPLOY" }, (ev) => (
+        <InitialDeployEventFocusView event={ev} />
       ))
       .with(null, () => {
         if (eventId != null && eventId !== "") {

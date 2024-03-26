@@ -7,6 +7,7 @@ import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisi
 import { type PorterAppEvent } from "../types";
 import BuildEventCard from "./BuildEventCard";
 import DeployEventCard from "./DeployEventCard";
+import InitialDeployEventCard from "./InitialDeployEventCard";
 import PreDeployEventCard from "./PreDeployEventCard";
 
 type Props = {
@@ -43,7 +44,7 @@ const EventCard: React.FC<Props> = ({
             : ""
         )
         // TODO: remove check for commit_sha when update flow is GA'd
-        .with({ type: "PRE_DEPLOY" }, (event) =>
+        .with({ type: "PRE_DEPLOY" }, { type: "INITIAL_DEPLOY" }, (event) =>
           event.metadata.commit_sha
             ? `https://www.github.com/${porterApp.repo_name}/commit/${event.metadata.commit_sha}`
             : event.metadata.image_tag
@@ -77,7 +78,7 @@ const EventCard: React.FC<Props> = ({
           event.metadata.commit_sha ? event.metadata.commit_sha.slice(0, 7) : ""
         )
         // TODO: remove check for commit_sha when update flow is GA'd
-        .with({ type: "PRE_DEPLOY" }, (event) =>
+        .with({ type: "PRE_DEPLOY" }, { type: "INITIAL_DEPLOY" }, (event) =>
           event.metadata.commit_sha
             ? event.metadata.commit_sha.slice(0, 7)
             : event.metadata.image_tag
@@ -122,6 +123,15 @@ const EventCard: React.FC<Props> = ({
     ))
     .with({ type: "PRE_DEPLOY" }, (ev) => (
       <PreDeployEventCard
+        event={ev}
+        projectId={projectId}
+        clusterId={clusterId}
+        gitCommitUrl={gitCommitUrl}
+        displayCommitSha={displayCommitSha}
+      />
+    ))
+    .with({ type: "INITIAL_DEPLOY" }, (ev) => (
+      <InitialDeployEventCard
         event={ev}
         projectId={projectId}
         clusterId={clusterId}

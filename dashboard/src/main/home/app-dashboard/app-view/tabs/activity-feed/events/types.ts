@@ -178,6 +178,16 @@ export const porterAppEventValidator = z.discriminatedUnion("type", [
     created_at: z.string(),
     updated_at: z.string(),
     status: z.string().optional().default(""),
+    type: z.literal("INITIAL_DEPLOY"),
+    type_external_source: z.string().optional().default(""),
+    porter_app_id: z.number(),
+    metadata: porterAppPreDeployEventMetadataValidator,
+  }),
+  z.object({
+    id: z.string(),
+    created_at: z.string(),
+    updated_at: z.string(),
+    status: z.string().optional().default(""),
     type: z.literal("APP_EVENT"),
     type_external_source: z.string().optional().default(""),
     porter_app_id: z.number(),
@@ -211,6 +221,9 @@ export type PorterAppEvent = z.infer<typeof porterAppEventValidator>;
 export type PorterAppBuildEvent = PorterAppEvent & { type: "BUILD" };
 export type PorterAppDeployEvent = PorterAppEvent & { type: "DEPLOY" };
 export type PorterAppPreDeployEvent = PorterAppEvent & { type: "PRE_DEPLOY" };
+export type PorterAppInitialDeployEvent = PorterAppEvent & {
+  type: "INITIAL_DEPLOY";
+};
 export type PorterAppAppEvent = PorterAppEvent & { type: "APP_EVENT" };
 export type PorterAppNotificationEvent = PorterAppEvent & {
   type: "NOTIFICATION";

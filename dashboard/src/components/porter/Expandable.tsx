@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import styled from "styled-components";
 
 type Props = {
+  maxHeight?: string;
   header: React.ReactNode;
   children: React.ReactNode;
   style?: React.CSSProperties;
@@ -11,6 +12,7 @@ type Props = {
 
 // TODO: support footer for consolidation w/ app services
 const Expandable: React.FC<Props> = ({
+  maxHeight,
   header,
   children,
   style,
@@ -49,17 +51,24 @@ const Expandable: React.FC<Props> = ({
         <span className="material-icons dropdown">arrow_drop_down</span>
         <FullWidth>{header}</FullWidth>
       </Header>
-      <ExpandedContents isExpanded={isExpanded}>{children}</ExpandedContents>
+      <ExpandedContents
+        isExpanded={isExpanded}
+        maxHeight={maxHeight || "500px"}
+      >
+        {children}
+      </ExpandedContents>
     </StyledExpandable>
   );
 };
 
 export default Expandable;
 
-const ExpandedContents = styled.div<{ isExpanded: boolean }>`
+const ExpandedContents = styled.div<{
+  isExpanded: boolean;
+  maxHeight?: string;
+}>`
   transition: all 0.5s;
-  overflow: hidden;
-  max-height: ${({ isExpanded }) => (isExpanded ? "500px" : "0")};
+  max-height: ${({ isExpanded, maxHeight }) => (isExpanded ? maxHeight : "0")};
   padding: ${({ isExpanded }) => (isExpanded ? "20px" : "0")};
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;

@@ -1,24 +1,26 @@
-import { type PorterAppFormData } from "lib/porter-apps";
 import React, {
-  type Dispatch,
-  type SetStateAction,
   useCallback,
   useEffect,
   useMemo,
   useState,
+  type Dispatch,
+  type SetStateAction,
 } from "react";
 import { UseFieldArrayAppend, useFormContext } from "react-hook-form";
-
-import sliders from "assets/sliders.svg";
-import doppler from "assets/doppler.png";
-
-import { type PopulatedEnvGroup } from "./types";
-import Text from "components/porter/Text";
-import Spacer from "components/porter/Spacer";
-import Modal from "components/porter/Modal";
 import styled, { css } from "styled-components";
-import Button from "components/porter/Button";
 import { type IterableElement } from "type-fest";
+
+import Button from "components/porter/Button";
+import Modal from "components/porter/Modal";
+import Spacer from "components/porter/Spacer";
+import Text from "components/porter/Text";
+import { type PorterAppFormData } from "lib/porter-apps";
+
+import doppler from "assets/doppler.png";
+import sliders from "assets/sliders.svg";
+
+import EnvGroupRow from "./EnvGroupRow";
+import { type PopulatedEnvGroup } from "./types";
 
 type Props = {
   baseEnvGroups: PopulatedEnvGroup[];
@@ -27,10 +29,8 @@ type Props = {
 };
 
 const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
-  const [
-    selectedEnvGroup,
-    setSelectedEnvGroup,
-  ] = useState<PopulatedEnvGroup | null>(null);
+  const [selectedEnvGroup, setSelectedEnvGroup] =
+    useState<PopulatedEnvGroup | null>(null);
 
   const { watch } = useFormContext<PorterAppFormData>();
   const envGroups = watch("app.envGroups", []);
@@ -52,65 +52,44 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
   }, [envGroups, baseEnvGroups]);
 
   return (
-    <Modal closeModal={() => { setOpen(false); }}>
+    <Modal
+      closeModal={() => {
+        setOpen(false);
+      }}
+    >
       <Text size={16}>Load env group</Text>
       <Spacer height="15px" />
       {remainingEnvGroupOptions.length ? (
         <>
           <Text color="helper">
-            Select an Env Group to load into your application.
+            Select an env group to sync to your application.
           </Text>
           <Spacer y={1} />
-          <GroupModalSections>
-            <SidebarSection $expanded={!selectedEnvGroup}>
-              <EnvGroupList>
-                {remainingEnvGroupOptions.map((eg, i) => (
-                  <EnvGroupRow
-                    key={eg.name}
+          <ScrollableContainer>
+            <EnvGroupList>
+              {remainingEnvGroupOptions.map((eg, i) => (
+                <EnvRowWrapper key={i}>
+                  <EnvGroupRow envGroup={eg} maxHeight="300px" noLink />
+                  <SelectedIndicator
+                    onClick={() => {
+                      setSelectedEnvGroup(eg);
+                    }}
                     isSelected={
                       Boolean(selectedEnvGroup) &&
                       selectedEnvGroup?.name === eg.name
                     }
-                    lastItem={i === remainingEnvGroupOptions?.length - 1}
-                    onClick={() => {
-                      setSelectedEnvGroup(eg);
-                    }}
                   >
-                    {eg.type === "doppler" ? (
-                      <img src={doppler} />
-                        ) : (
-                    <img src={sliders} />
+                    {Boolean(selectedEnvGroup) &&
+                    selectedEnvGroup?.name === eg.name ? (
+                      <Check className="material-icons">check</Check>
+                    ) : (
+                      <i className="material-icons">add</i>
                     )}
-                    {eg.name}
-                  </EnvGroupRow>
-                ))}
-              </EnvGroupList>
-            </SidebarSection>
-            {selectedEnvGroup && (
-              <>
-                <SidebarSection>
-                  <GroupEnvPreview>
-                    {Object.entries(selectedEnvGroup?.variables || {}).map(
-                      ([key, value]) => (
-                        <div key={key}>
-                          <span className="key">{key} = </span>
-                          <span className="value">{value}</span>
-                        </div>
-                      )
-                    )}
-                    {Object.entries(
-                      selectedEnvGroup?.secret_variables || {}
-                    ).map(([key, value]) => (
-                      <div key={key}>
-                        <span className="key">{key} = </span>
-                        <span className="value">{value}</span>
-                      </div>
-                    ))}
-                  </GroupEnvPreview>
-                </SidebarSection>
-              </>
-            )}
-          </GroupModalSections>
+                  </SelectedIndicator>
+                </EnvRowWrapper>
+              ))}
+            </EnvGroupList>
+          </ScrollableContainer>
         </>
       ) : (
         <Text>No selectable Env Groups</Text>
@@ -125,38 +104,51 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
 
 export default EnvGroupModal;
 
-const EnvGroupRow = styled.div<{ lastItem?: boolean; isSelected: boolean }>`
-  display: flex;
-  width: 100%;
-  font-size: 13px;
-  border-bottom: 1px solid
-    ${(props) => (props.lastItem ? "#00000000" : "#606166")};
+const Check = styled.i`
   color: #ffffff;
-  user-select: none;
+  background: #ffffff33;
+  width: 24px;
+  height: 23px;
+  z-index: 0;
+  display: flex;
   align-items: center;
-  padding: 10px 0px;
+  justify-content: center;
+  border-radius: 50%;
+`;
+
+const SelectedIndicator = styled.div<{ isSelected: boolean }>`
+  position: absolute;
+  top: 17px;
+  right: 20px;
+  width: 25px;
+  height: 25px;
+  border: 1px solid ${(props) => (props.isSelected ? "#ffffff" : "#ffffff55")};
+  border-radius: 50%;
   cursor: pointer;
-  background: ${(props) => (props.isSelected ? "#ffffff11" : "")};
+  display: flex;
+  z-index: 1;
+  align-items: center;
+  justify-content: center;
   :hover {
+    border-color: #ffffff;
     background: #ffffff11;
   }
 
-  > img,
-  i {
-    width: 16px;
-    height: 18px;
-    margin-left: 12px;
-    margin-right: 12px;
-    font-size: 20px;
+  > i {
+    font-size: 18px;
+    color: #ffffff;
   }
 `;
+
+const EnvRowWrapper = styled.div`
+  transition: all 0.1s;
+  position: relative;
+`;
+
 const EnvGroupList = styled.div`
-  width: 100%;
-  border-radius: 3px;
-  background: #ffffff11;
-  border: 1px solid #ffffff44;
-  overflow-y: auto;
-  max-height: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 `;
 
 const SidebarSection = styled.section<{ $expanded?: boolean }>`
@@ -182,17 +174,9 @@ const GroupEnvPreview = styled.pre`
     color: #3a48ca;
   }
 `;
-const GroupModalSections = styled.div`
-  width: 100%;
-  height: 100%;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 1fr 1fr;
-  max-height: 365px;
-`;
 
 const ScrollableContainer = styled.div`
   flex: 1;
   overflow-y: auto;
-  max-height: 300px;
+  max-height: 480px;
 `;

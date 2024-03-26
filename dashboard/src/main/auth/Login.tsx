@@ -126,7 +126,9 @@ const Login: React.FC<Props> = ({ authenticate }) => {
             <a href="https://porter.run">
               <Logo src={logo} />
             </a>
-            <Badge>Cloud</Badge>
+            {window.location.hostname === "cloud.porter.run" && (
+              <Badge>Cloud</Badge>
+            )}
           </Container>
           <Spacer y={2} />
           <Jumbotron>

@@ -31,7 +31,7 @@ type TCheckHasPaymentEnabled = {
   refetchPaymentEnabled: any;
 };
 
-type TGetPublishableKey = {
+type TCheckCustomerExists = {
   publishableKey: string;
 };
 
@@ -148,40 +148,28 @@ export const checkIfProjectHasPayment = (): TCheckHasPaymentEnabled => {
   };
 };
 
-export const usePublishableKey = (): TGetPublishableKey => {
+export const checkBillingCustomerExists = (): TCheckCustomerExists => {
   const { user, currentProject } = useContext(Context);
 
   // Fetch list of payment methods
-  const keyReq = useQuery(["getKey", currentProject?.id], async () => {
-    if (!currentProject?.id || currentProject.id === -1) {
-      return;
+  const keyReq = useQuery(
+    ["checkCustomerExists", currentProject?.id],
+    async () => {
+      if (!currentProject?.id || currentProject.id === -1) {
+        return;
+      }
+      const res = await api.checkBillingCustomerExists(
+        "<token>",
+        { user_email: user?.email },
+        { project_id: currentProject?.id }
+      );
+      return res.data;
     }
-    const res = await api.checkBillingCustomerExists(
-      "<token>",
-      { user_email: user?.email },
-      { project_id: currentProject?.id }
-    );
-    return res.data;
-  });
+  );
 
   return {
     publishableKey: keyReq.data,
   };
-};
-
-export const checkBillingCustomerExists = async (): Promise<void> => {
-  const { user, currentProject } = useContext(Context);
-  const res = await api.checkBillingCustomerExists(
-    "<token>",
-    { user_email: user?.email },
-    {
-      project_id: currentProject?.id,
-    }
-  );
-
-  if (res.status !== 200) {
-    throw Error("failed to check if billing customer exists");
-  }
 };
 
 export const useSetDefaultPaymentMethod = (): TSetDefaultPaymentMethod => {

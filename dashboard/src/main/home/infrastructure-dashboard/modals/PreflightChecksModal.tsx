@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import DiffViewer, { DiffMethod } from "react-diff-viewer";
 import styled from "styled-components";
-import { match, P } from "ts-pattern";
+import { match } from "ts-pattern";
 
 import Loading from "components/Loading";
 import Button from "components/porter/Button";
@@ -15,10 +15,7 @@ import Spacer from "components/porter/Spacer";
 import StatusDot from "components/porter/StatusDot";
 import Text from "components/porter/Text";
 import { type ClientPreflightCheck } from "lib/clusters/types";
-import {
-  checksWithSuggestedChanges,
-  type ClientPreflightCheckWithSuggestedChanges,
-} from "lib/hooks/useCluster";
+import { checksWithSuggestedChanges } from "lib/hooks/useCluster";
 
 import file_diff from "assets/file-diff.svg";
 
@@ -26,7 +23,7 @@ import { useClusterFormContext } from "../ClusterFormContextProvider";
 import ResolutionStepsModalContents from "./help/preflight/ResolutionStepsModalContents";
 
 type ItemProps = {
-  preflightCheck: ClientPreflightCheckWithSuggestedChanges;
+  preflightCheck: ClientPreflightCheck;
   preExpanded?: boolean;
 };
 export const CheckItem: React.FC<ItemProps> = ({
@@ -61,47 +58,44 @@ export const CheckItem: React.FC<ItemProps> = ({
   return (
     <Expandable preExpanded={preExpanded} header={renderHeader()}>
       <div>
-        {match(preflightCheck)
-          .with({ suggestedChanges: P.nullish }, () => (
-            <ErrorComponent
-              message={preflightCheck.error?.detail || ""}
-              ctaText={
-                preflightCheck.error?.resolution
-                  ? "Troubleshooting steps"
-                  : undefined
-              }
-              metadata={preflightCheck.error?.metadata}
-              errorModalContents={
-                preflightCheck.error?.resolution ? (
-                  <ResolutionStepsModalContents
-                    resolution={preflightCheck.error.resolution}
-                  />
-                ) : undefined
-              }
-            />
-          ))
-          .with({ suggestedChanges: P._ }, (check) => (
-            <RevisionDiffContainer>
-              <DiffViewer
-                leftTitle={"Current"}
-                rightTitle={"Suggested"}
-                oldValue={check.suggestedChanges?.original}
-                newValue={check.suggestedChanges?.suggested}
-                splitView={true}
-                hideLineNumbers
-                useDarkTheme
-                compareMethod={DiffMethod.TRIMMED_LINES}
-                styles={{
-                  variables: {
-                    dark: {
-                      diffViewerTitleColor: "fff",
-                    },
+        {preflightCheck.suggestedChanges ? (
+          <RevisionDiffContainer>
+            <DiffViewer
+              leftTitle={"Current"}
+              rightTitle={"Suggested"}
+              oldValue={preflightCheck.suggestedChanges?.original}
+              newValue={preflightCheck.suggestedChanges?.suggested}
+              splitView={true}
+              hideLineNumbers
+              useDarkTheme
+              compareMethod={DiffMethod.TRIMMED_LINES}
+              styles={{
+                variables: {
+                  dark: {
+                    diffViewerTitleColor: "fff",
                   },
-                }}
-              />
-            </RevisionDiffContainer>
-          ))
-          .exhaustive()}
+                },
+              }}
+            />
+          </RevisionDiffContainer>
+        ) : (
+          <ErrorComponent
+            message={preflightCheck.error?.detail || ""}
+            ctaText={
+              preflightCheck.error?.resolution
+                ? "Troubleshooting steps"
+                : undefined
+            }
+            metadata={preflightCheck.error?.metadata}
+            errorModalContents={
+              preflightCheck.error?.resolution ? (
+                <ResolutionStepsModalContents
+                  resolution={preflightCheck.error.resolution}
+                />
+              ) : undefined
+            }
+          />
+        )}
         <Spacer y={0.5} />
       </div>
     </Expandable>

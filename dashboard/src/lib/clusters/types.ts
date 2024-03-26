@@ -553,6 +553,12 @@ export const createContractResponseValidator = z.object({
     revision_id: z.string(),
   }),
 });
+
+type TPreflightCheckFixSuggestion = {
+  original: string;
+  suggested: string;
+};
+
 export type ClientPreflightCheck = {
   title: string;
   name: PreflightCheckKey;
@@ -562,6 +568,7 @@ export type ClientPreflightCheck = {
     metadata: Record<string, string> | undefined;
     resolution?: PreflightCheckResolution;
   };
+  suggestedChanges?: TPreflightCheckFixSuggestion;
 };
 type CreateContractResponse = z.infer<typeof createContractResponseValidator>;
 export type UpdateClusterResponse =

@@ -573,11 +573,6 @@ export const useClusterNodeList = ({
   };
 };
 
-type TPreflightCheckFixSuggestion = {
-  original: string;
-  suggested: string;
-};
-
 export const uniqueCidrMetadataValidator = z.object({
   "overlapping-service-cidr": z.string(),
   "overlapping-vpc-cidr": z.string(),
@@ -588,15 +583,11 @@ const unavailableCidrMetadataValidator = z.object({
   "Conflicting CIDR range in this region": z.string(),
 });
 
-export type ClientPreflightCheckWithSuggestedChanges = ClientPreflightCheck & {
-  suggestedChanges?: TPreflightCheckFixSuggestion;
-};
-
 export const checksWithSuggestedChanges = ({
   preflightChecks,
 }: {
   preflightChecks: ClientPreflightCheck[];
-}): ClientPreflightCheckWithSuggestedChanges[] => {
+}): ClientPreflightCheck[] => {
   return preflightChecks.map((c) =>
     match(c.name)
       .with("enforceCidrUniqueness", () => {

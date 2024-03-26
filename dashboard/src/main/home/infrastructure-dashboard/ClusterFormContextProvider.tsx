@@ -11,12 +11,12 @@ import { Error as ErrorComponent } from "components/porter/Error";
 import {
   clusterContractValidator,
   type ClientClusterContract,
+  type ClientPreflightCheck,
   type UpdateClusterResponse,
 } from "lib/clusters/types";
 import {
   uniqueCidrMetadataValidator,
   useUpdateCluster,
-  type ClientPreflightCheckWithSuggestedChanges,
 } from "lib/hooks/useCluster";
 import { useClusterAnalytics } from "lib/hooks/useClusterAnalytics";
 import { useIntercom } from "lib/hooks/useIntercom";
@@ -40,7 +40,7 @@ type ClusterFormContextType = {
   setCurrentContract: (contract: Contract) => void;
   submitSkippingPreflightChecks: () => Promise<void>;
   submitAndPatchCheckSuggestions: (args: {
-    preflightChecks: ClientPreflightCheckWithSuggestedChanges[];
+    preflightChecks: ClientPreflightCheck[];
   }) => Promise<void>;
 };
 
@@ -121,7 +121,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
     }
     if (Object.keys(errors).length > 0) {
       // TODO: remove this and properly handle form validation errors
-      console.log("errors", errors);
+      // console.log("errors", errors);
     }
     if (isHandlingPreflightChecks) {
       props.loadingText = "Running preflight checks...";
@@ -233,7 +233,7 @@ const ClusterFormContextProvider: React.FC<ClusterFormContextProviderProps> = ({
   const submitAndPatchCheckSuggestions = async ({
     preflightChecks,
   }: {
-    preflightChecks: ClientPreflightCheckWithSuggestedChanges[];
+    preflightChecks: ClientPreflightCheck[];
   }): Promise<void> => {
     if (clusterForm.formState.isSubmitting) {
       return;

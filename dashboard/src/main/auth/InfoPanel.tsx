@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import styled from "styled-components";
 
 import Container from "components/porter/Container";
+import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
 
+import gift from "assets/gift.svg";
 import logo from "assets/logo.png";
 
 const InfoPanel: React.FC = () => {
-  // ret2 set to cloud.porter.run
   if (window.location.hostname === "cloud.porter.run") {
     return (
       <Wrapper>
@@ -23,7 +24,8 @@ const InfoPanel: React.FC = () => {
         </Jumbotron>
         <Spacer y={2} />
         <CheckRow>
-          <i className="material-icons">done</i> $5 in free credits on sign-up
+          <Image src={gift} />
+          <Spacer inline width="10px" /> $5 in free credits on sign-up
         </CheckRow>
         <Spacer y={0.5} />
         <CheckRow>

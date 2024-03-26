@@ -31,7 +31,7 @@ function BillingPage(): JSX.Element {
     paymentMethodList,
     refetchPaymentMethods,
     deletePaymentMethod,
-    isDeleting,
+    deletingIds,
   } = usePaymentMethods();
   const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
   checkBillingCustomerExists();
@@ -78,8 +78,8 @@ function BillingPage(): JSX.Element {
       <Spacer y={1} />
       {paymentMethodList.map((paymentMethod, idx) => {
         return (
-          <>
-            <Fieldset key={idx}>
+          <div key={idx}>
+            <Fieldset>
               <Container row spaced>
                 <Container row>
                   <Icon src={cardIcon} height={"14px"} />
@@ -94,7 +94,7 @@ function BillingPage(): JSX.Element {
                   <Spacer inline x={1} />
                 </Container>
                 <DeleteButtonContainer>
-                  {isDeleting ? (
+                  {deletingIds.includes(paymentMethod.id) ? (
                     <Loading />
                   ) : !paymentMethod.is_default ? (
                     <Container row={true}>
@@ -131,7 +131,7 @@ function BillingPage(): JSX.Element {
               </Container>
             </Fieldset>
             <Spacer y={1} />
-          </>
+          </div>
         );
       })}
       <Button

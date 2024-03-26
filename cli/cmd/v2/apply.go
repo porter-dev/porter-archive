@@ -50,6 +50,8 @@ type ApplyInput struct {
 	Exact bool
 	// PatchOperations is a list of patch operations to apply to the app
 	PatchOperations []v2.PatchOperation
+	// SkipBuild is true when Apply should skip the build step
+	SkipBuild bool
 }
 
 // Apply implements the functionality of the `porter apply` command for validate apply v2 projects
@@ -119,7 +121,13 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		color.New(color.FgGreen).Printf("Using Porter YAML at path: %s\n", inp.PorterYamlPath) // nolint:errcheck,gosec
 	}
 
-	commitSHA := commitSHAFromEnv()
+	var commitSHA string
+	if !inp.SkipBuild {
+		// providing a commit SHA indicates the app is eligible for a build
+		// only set it if we want the build to run
+		commitSHA = commitSHAFromEnv()
+	}
+
 	gitSource, err := gitSourceFromEnv()
 	if err != nil {
 		return fmt.Errorf("error getting git source from env: %w", err)
@@ -160,7 +168,7 @@ func Apply(ctx context.Context, inp ApplyInput) error {
 		return fmt.Errorf("error getting build from revision: %w", err)
 	}
 
-	if buildSettings != nil && buildSettings.Build.Method != "" {
+	if !inp.SkipBuild && buildSettings != nil && buildSettings.Build.Method != "" {
 		eventID, _ := createBuildEvent(ctx, client, appName, cliConf.Project, cliConf.Cluster, deploymentTargetID, commitSHA)
 
 		var buildFinished bool

@@ -213,12 +213,7 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		appProto, err = v2.PatchApp(ctx, appFromYaml.AppProto, request.PatchOperations)
-		if err != nil {
-			err := telemetry.Error(ctx, span, err, "error patching app proto")
-			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
-			return
-		}
+		appProto = appFromYaml.AppProto
 
 		// only public variables can be defined in porter.yaml
 		envVariables = mergeEnvVariables(request.Variables, appFromYaml.EnvVariables)
@@ -230,6 +225,16 @@ func (c *UpdateAppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		addons = appFromYaml.Addons
+	}
+
+	if appProto != nil {
+		patchedProto, err := v2.PatchApp(ctx, appProto, request.PatchOperations)
+		if err != nil {
+			err := telemetry.Error(ctx, span, err, "error patching app proto")
+			c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusInternalServerError))
+			return
+		}
+		appProto = patchedProto
 	}
 
 	if appProto.Name == "" {

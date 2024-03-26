@@ -153,7 +153,10 @@ const DeleteDatastoreModal: React.FC<DeleteDatastoreModalProps> = ({
           await confirmDeletion();
         }}
         status={deleteButtonProps.status}
-        disabled={deleteButtonProps.isDisabled}
+        disabled={
+          deleteButtonProps.isDisabled ||
+          inputtedDatastoreName !== datastoreName
+        }
         loadingText={"Deleting..."}
       >
         Delete

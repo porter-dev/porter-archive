@@ -50,6 +50,14 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	var err error
+
+	// Create billing customer for project and set the billing ID
+	billingID, err := p.Config().BillingManager.CreateCustomer(user.Email, proj)
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	}
+	proj.BillingID = billingID
+
 	proj, _, err = CreateProjectWithUser(p.Repo().Project(), proj, user)
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))

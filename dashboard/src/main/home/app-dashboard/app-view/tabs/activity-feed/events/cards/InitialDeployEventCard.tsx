@@ -57,10 +57,10 @@ const InitialDeployEventCard: React.FC<Props> = ({
   ): JSX.Element => {
     const color = getStatusColor(event.status);
     const text = match(event.status)
-      .with("SUCCESS", () => "Initial Deploy job successful")
-      .with("FAILED", () => "Initial Deploy job failed")
-      .with("CANCELED", () => "Initial Deploy job canceled")
-      .otherwise(() => "Initial Deploy job in progress...");
+      .with("SUCCESS", () => "Initial deploy job successful")
+      .with("FAILED", () => "Initial deploy job failed")
+      .with("CANCELED", () => "Initial deploy job canceled")
+      .otherwise(() => "Initial deploy job in progress...");
     return <Text color={color}>{text}</Text>;
   };
 

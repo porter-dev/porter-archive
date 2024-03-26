@@ -50,8 +50,15 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 
 	var err error
-	proj, _, err = CreateProjectWithUser(p.Repo().Project(), proj, user)
 
+	// Create billing customer for project and set the billing ID
+	billingID, err := p.Config().BillingManager.CreateCustomer(user.Email, proj)
+	if err != nil {
+		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
+	}
+	proj.BillingID = billingID
+
+	proj, _, err = CreateProjectWithUser(p.Repo().Project(), proj, user)
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -68,7 +75,6 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		ProjectID:   proj.ID,
 		CurrentStep: step,
 	})
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
@@ -82,22 +88,12 @@ func (p *ProjectCreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		Clusters:       types.BasicPlan.Clusters,
 		Users:          types.BasicPlan.Users,
 	})
-
 	if err != nil {
 		p.HandleAPIError(w, r, apierrors.NewErrInternal(err))
 		return
 	}
 
 	p.WriteResult(w, r, proj.ToProjectType(p.Config().LaunchDarklyClient))
-
-	// add project to billing team
-	_, err = p.Config().BillingManager.CreateTeam(user, proj)
-
-	if err != nil {
-		// we do not write error response, since setting up billing error can be
-		// resolved later and may not be fatal
-		p.HandleAPIErrorNoWrite(w, r, apierrors.NewErrInternal(err))
-	}
 
 	p.Config().AnalyticsClient.Track(analytics.ProjectCreateTrack(&analytics.ProjectCreateDeleteTrackOpts{
 		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),
@@ -128,7 +124,6 @@ func CreateProjectWithUser(
 
 	// read the project again to get the model with the role attached
 	proj, err = projectRepo.ReadProject(proj.ID)
-
 	if err != nil {
 		return nil, nil, err
 	}

@@ -105,11 +105,12 @@ type PorterApp struct {
 	Build    *Build    `yaml:"build,omitempty"`
 	Env      Env       `yaml:"env,omitempty"`
 
-	Predeploy    *Service      `yaml:"predeploy,omitempty"`
-	EnvGroups    []string      `yaml:"envGroups,omitempty"`
-	EfsStorage   *EfsStorage   `yaml:"efsStorage,omitempty"`
-	RequiredApps []RequiredApp `yaml:"requiredApps,omitempty"`
-	AutoRollback *AutoRollback `yaml:"autoRollback,omitempty"`
+	Predeploy     *Service      `yaml:"predeploy,omitempty"`
+	InitialDeploy *Service      `yaml:"initialDeploy,omitempty"`
+	EnvGroups     []string      `yaml:"envGroups,omitempty"`
+	EfsStorage    *EfsStorage   `yaml:"efsStorage,omitempty"`
+	RequiredApps  []RequiredApp `yaml:"requiredApps,omitempty"`
+	AutoRollback  *AutoRollback `yaml:"autoRollback,omitempty"`
 }
 
 // PorterAppWithAddons is the definition of a porter app in a Porter YAML file with addons
@@ -189,6 +190,7 @@ type Service struct {
 	Private                       *bool             `yaml:"private,omitempty" validate:"excluded_unless=Type web"`
 	IngressAnnotations            map[string]string `yaml:"ingressAnnotations,omitempty" validate:"excluded_unless=Type web"`
 	DisableTLS                    *bool             `yaml:"disableTLS,omitempty" validate:"excluded_unless=Type web"`
+	Sleep                         *bool             `yaml:"sleep,omitempty" validate:"excluded_unless=Type job"`
 }
 
 // AutoScaling represents the autoscaling settings for web services
@@ -270,6 +272,14 @@ func ProtoFromApp(ctx context.Context, porterApp PorterApp) (*porterv1.PorterApp
 			return appProto, nil, telemetry.Error(ctx, span, err, "error casting predeploy config")
 		}
 		appProto.Predeploy = predeployProto
+	}
+
+	if porterApp.InitialDeploy != nil {
+		initialDeployProto, err := serviceProtoFromConfig(*porterApp.InitialDeploy, porterv1.ServiceType_SERVICE_TYPE_JOB)
+		if err != nil {
+			return appProto, nil, telemetry.Error(ctx, span, err, "error casting initial deploy config")
+		}
+		appProto.InitialDeploy = initialDeployProto
 	}
 
 	for _, envGroup := range porterApp.EnvGroups {
@@ -444,6 +454,9 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 		if service.DisableTLS != nil {
 			webConfig.DisableTls = service.DisableTLS
 		}
+		if service.Sleep != nil {
+			serviceProto.Sleep = service.Sleep
+		}
 
 		serviceProto.Config = &porterv1.Service_WebConfig{
 			WebConfig: webConfig,
@@ -474,6 +487,10 @@ func serviceProtoFromConfig(service Service, serviceType porterv1.ServiceType) (
 			}
 		}
 		workerConfig.HealthCheck = healthCheck
+
+		if service.Sleep != nil {
+			serviceProto.Sleep = service.Sleep
+		}
 
 		serviceProto.Config = &porterv1.Service_WorkerConfig{
 			WorkerConfig: workerConfig,
@@ -541,6 +558,15 @@ func AppFromProto(appProto *porterv1.PorterApp) (PorterApp, error) {
 		porterApp.Predeploy = &appPredeploy
 	}
 
+	if appProto.InitialDeploy != nil {
+		appInitialDeploy, err := appServiceFromProto(appProto.InitialDeploy)
+		if err != nil {
+			return porterApp, err
+		}
+
+		porterApp.InitialDeploy = &appInitialDeploy
+	}
+
 	for _, envGroup := range appProto.EnvGroups {
 		if envGroup != nil {
 			porterApp.EnvGroups = append(porterApp.EnvGroups, fmt.Sprintf("%s:v%d", envGroup.Name, envGroup.Version))
@@ -582,6 +608,7 @@ func appServiceFromProto(service *porterv1.Service) (Service, error) {
 		SmartOptimization:             service.SmartOptimization,
 		GPU:                           gpu,
 		TerminationGracePeriodSeconds: service.TerminationGracePeriodSeconds,
+		Sleep:                         service.Sleep,
 	}
 
 	switch service.Type {

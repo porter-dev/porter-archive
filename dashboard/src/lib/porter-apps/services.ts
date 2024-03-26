@@ -39,7 +39,7 @@ export type DetectedServices = {
     variables?: Record<string, string>;
   };
 };
-type ClientServiceType = "web" | "worker" | "job" | "predeploy";
+type ClientServiceType = "web" | "worker" | "job" | "predeploy" | "initdeploy";
 
 type ClientWebService = ClientService & { config: ClientWebConfig };
 export const isClientWebService = (
@@ -92,6 +92,13 @@ const predeployConfigValidator = z.object({
 });
 export type ClientPredeployConfig = z.infer<typeof predeployConfigValidator>;
 
+const initialDeployConfigValidator = z.object({
+  type: z.literal("initdeploy"),
+});
+export type ClientInitialDeployConfig = z.infer<
+  typeof initialDeployConfigValidator
+>;
+
 // serviceValidator is the validator for a ClientService
 // This is used to validate a service when creating or updating an app
 export const serviceValidator = z.object({
@@ -110,11 +117,13 @@ export const serviceValidator = z.object({
   }),
   smartOptimization: serviceBooleanValidator.optional(),
   terminationGracePeriodSeconds: serviceNumberValidator.optional(),
+  sleep: serviceBooleanValidator.optional(),
   config: z.discriminatedUnion("type", [
     webConfigValidator,
     workerConfigValidator,
     jobConfigValidator,
     predeployConfigValidator,
+    initialDeployConfigValidator,
   ]),
   domainDeletions: z
     .object({
@@ -148,6 +157,7 @@ export type SerializedService = {
     gpuCoresNvidia: number;
   };
   terminationGracePeriodSeconds?: number;
+  sleep?: boolean;
   config:
     | {
         type: "web";
@@ -174,6 +184,9 @@ export type SerializedService = {
       }
     | {
         type: "predeploy";
+      }
+    | {
+        type: "initdeploy";
       };
 };
 
@@ -293,6 +306,12 @@ export function defaultSerialized({
         type: "predeploy" as const,
       },
     }))
+    .with("initdeploy", () => ({
+      ...baseService,
+      config: {
+        type: "initdeploy" as const,
+      },
+    }))
     .exhaustive();
 }
 
@@ -314,6 +333,7 @@ export function serializeService(service: ClientService): SerializedService {
       gpuCoresNvidia: service.gpu.gpuCoresNvidia.value,
     },
     terminationGracePeriodSeconds: service.terminationGracePeriodSeconds?.value,
+    sleep: service.sleep?.value,
     config: match(service.config)
       .with({ type: "web" }, (config) =>
         Object.freeze({
@@ -359,6 +379,11 @@ export function serializeService(service: ClientService): SerializedService {
           type: "predeploy" as const,
         })
       )
+      .with({ type: "initdeploy" }, () =>
+        Object.freeze({
+          type: "initdeploy" as const,
+        })
+      )
       .exhaustive(),
   });
 }
@@ -386,6 +411,7 @@ export function deserializeService({
     instances: ServiceField.number(service.instances, override?.instances),
     port: ServiceField.number(service.port, override?.port),
     cpuCores: ServiceField.number(service.cpuCores, override?.cpuCores),
+    sleep: ServiceField.boolean(service.sleep, override?.sleep),
     gpu: {
       enabled: ServiceField.boolean(
         service.gpu?.enabled,
@@ -575,6 +601,12 @@ export function deserializeService({
         type: "predeploy" as const,
       },
     }))
+    .with({ type: "initdeploy" }, () => ({
+      ...baseService,
+      config: {
+        type: "initdeploy" as const,
+      },
+    }))
     .exhaustive();
 }
 
@@ -585,6 +617,7 @@ export const serviceTypeEnumProto = (type: ClientServiceType): ServiceType => {
     .with("worker", () => ServiceType.WORKER)
     .with("job", () => ServiceType.JOB)
     .with("predeploy", () => ServiceType.JOB)
+    .with("initdeploy", () => ServiceType.JOB)
     .exhaustive();
 };
 
@@ -600,6 +633,7 @@ export function serviceProto(service: SerializedService): Service {
           runOptional: service.run,
           instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
+          sleep: service.sleep,
           config: {
             value: {
               ...config,
@@ -616,6 +650,7 @@ export function serviceProto(service: SerializedService): Service {
           runOptional: service.run,
           instancesOptional: service.instances,
           type: serviceTypeEnumProto(config.type),
+          sleep: service.sleep,
           config: {
             value: {
               ...config,
@@ -656,6 +691,20 @@ export function serviceProto(service: SerializedService): Service {
           },
         })
     )
+    .with(
+      { type: "initdeploy" },
+      (config) =>
+        new Service({
+          ...service,
+          runOptional: service.run,
+          instancesOptional: service.instances,
+          type: serviceTypeEnumProto(config.type),
+          config: {
+            value: {},
+            case: "jobConfig",
+          },
+        })
+    )
     .exhaustive();
 }
 
@@ -678,6 +727,7 @@ export function serializedServiceFromProto({
       ...service,
       run: service.runOptional ?? service.run,
       instances: service.instancesOptional ?? service.instances,
+      sleep: service.sleep,
       config: {
         type: "web" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,
@@ -690,6 +740,7 @@ export function serializedServiceFromProto({
       ...service,
       run: service.runOptional ?? service.run,
       instances: service.instancesOptional ?? service.instances,
+      sleep: service.sleep,
       config: {
         type: "worker" as const,
         autoscaling: value.autoscaling ? value.autoscaling : undefined,

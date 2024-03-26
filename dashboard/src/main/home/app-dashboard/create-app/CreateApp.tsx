@@ -22,6 +22,7 @@ import Text from "components/porter/Text";
 import VerticalSteps from "components/porter/VerticalSteps";
 import DashboardHeader from "main/home/cluster-dashboard/DashboardHeader";
 import { useClusterContext } from "main/home/infrastructure-dashboard/ClusterContextProvider";
+import BillingModal from "main/home/modals/BillingModal";
 import { useAppAnalytics } from "lib/hooks/useAppAnalytics";
 import { useAppValidation } from "lib/hooks/useAppValidation";
 import {
@@ -31,6 +32,7 @@ import {
 } from "lib/hooks/useDeploymentTarget";
 import { useIntercom } from "lib/hooks/useIntercom";
 import { usePorterYaml } from "lib/hooks/usePorterYaml";
+import { checkIfProjectHasPayment } from "lib/hooks/useStripe";
 import {
   porterAppFormValidator,
   type PorterAppFormData,
@@ -71,6 +73,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
     return /^[a-z0-9-]{1,63}$/.test(value);
   };
   const [isNameHighlight, setIsNameHighlight] = React.useState(false);
+  const { hasPaymentEnabled } = checkIfProjectHasPayment();
 
   const { showIntercomWithMessage } = useIntercom();
 
@@ -754,6 +757,16 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           setDeploymentTargetID={(x: string) => {
             setDeploymentTargetID(x);
             refetchDeploymentTargetList();
+          }}
+        />
+      )}
+      {currentProject?.billing_enabled && !hasPaymentEnabled && (
+        <BillingModal
+          back={() => {
+            history.push("/apps");
+          }}
+          onCreate={() => {
+            history.push("/apps/new/app");
           }}
         />
       )}

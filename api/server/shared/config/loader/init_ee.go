@@ -4,9 +4,9 @@
 package loader
 
 import (
-	eeBilling "github.com/porter-dev/porter/ee/billing"
+	// TODO: delete once the billing code is cleaned up
+	// eeBilling "github.com/porter-dev/porter/ee/billing"
 	"github.com/porter-dev/porter/ee/models"
-	"github.com/porter-dev/porter/internal/billing"
 )
 
 func init() {
@@ -23,18 +23,20 @@ func init() {
 		key[i] = b
 	}
 
-	if InstanceEnvConf.ServerConf.BillingPrivateServerURL != "" && InstanceEnvConf.ServerConf.BillingPrivateKey != "" && InstanceEnvConf.ServerConf.BillingPublicServerURL != "" {
-		serverURL := InstanceEnvConf.ServerConf.BillingPrivateServerURL
-		publicServerURL := InstanceEnvConf.ServerConf.BillingPublicServerURL
-		apiKey := InstanceEnvConf.ServerConf.BillingPrivateKey
-		var err error
+	// TODO: delete once the billing code is cleaned up
 
-		InstanceBillingManager, err = eeBilling.NewClient(serverURL, publicServerURL, apiKey)
+	// if InstanceEnvConf.ServerConf.BillingPrivateServerURL != "" && InstanceEnvConf.ServerConf.BillingPrivateKey != "" && InstanceEnvConf.ServerConf.BillingPublicServerURL != "" {
+	// 	serverURL := InstanceEnvConf.ServerConf.BillingPrivateServerURL
+	// 	publicServerURL := InstanceEnvConf.ServerConf.BillingPublicServerURL
+	// 	apiKey := InstanceEnvConf.ServerConf.BillingPrivateKey
+	// 	var err error
 
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		InstanceBillingManager = &billing.NoopBillingManager{}
-	}
+	// 	InstanceBillingManager, err = eeBilling.NewClient(serverURL, publicServerURL, apiKey)
+
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// } else {
+	// 	InstanceBillingManager = &billing.StripeBillingManager{}
+	// }
 }

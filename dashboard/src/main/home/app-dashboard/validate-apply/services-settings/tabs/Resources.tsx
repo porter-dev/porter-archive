@@ -47,6 +47,20 @@ const Resources: React.FC<ResourcesProps> = ({
     }
   );
 
+  const sleepEnabled = watch(`app.services.${index}.sleep`, {
+    readOnly: false,
+    value: false,
+  });
+
+  const disabledMessage = (
+    defaultMessage: string,
+    isAsleep?: boolean
+  ): string => {
+    return isAsleep
+      ? "This service is asleep. Disable sleep mode to edit resources."
+      : defaultMessage;
+  };
+
   return (
     <>
       <Spacer y={1} />
@@ -75,10 +89,11 @@ const Resources: React.FC<ResourcesProps> = ({
               });
             }}
             step={0.01}
-            disabled={value.readOnly}
-            disabledTooltip={
-              "You may only edit this field in your porter.yaml."
-            }
+            disabled={value.readOnly || sleepEnabled?.value}
+            disabledTooltip={disabledMessage(
+              "You may only edit this field in your porter.yaml.",
+              sleepEnabled?.value
+            )}
             isSmartOptimizationOn={false}
             decimalsToRoundTo={2}
           />
@@ -107,16 +122,49 @@ const Resources: React.FC<ResourcesProps> = ({
               });
             }}
             step={10}
-            disabled={value.readOnly}
-            disabledTooltip={
-              "You may only edit this field in your porter.yaml."
-            }
+            disabled={value.readOnly || sleepEnabled?.value}
+            disabledTooltip={disabledMessage(
+              "You may only edit this field in your porter.yaml.",
+              sleepEnabled?.value
+            )}
             isSmartOptimizationOn={false}
           />
         )}
       />
-
       {currentProject?.gpu_enabled && <GPUResources index={index} />}
+      {service.config.type !== "job" && (
+        <>
+          <Spacer y={1} />
+          <Text>
+            Sleep Service
+            <a
+              href="https://docs.porter.run/configure/basic-configuration#sleep-mode"
+              target="_blank"
+              rel="noreferrer"
+            >
+              &nbsp;(?)
+            </a>
+          </Text>
+          <Spacer y={0.5} />
+          <Controller
+            name={`app.services.${index}.sleep`}
+            control={control}
+            render={({ field: { value, onChange } }) => (
+              <Checkbox
+                checked={Boolean(value?.value)}
+                toggleChecked={() => {
+                  onChange({
+                    ...value,
+                    value: !value?.value,
+                  });
+                }}
+              >
+                <Text color="helper">Pause all instances.</Text>
+              </Checkbox>
+            )}
+          />
+        </>
+      )}
       {match(service.config)
         .with({ type: "job" }, () => null)
         .with({ type: "predeploy" }, () => null)
@@ -128,13 +176,18 @@ const Resources: React.FC<ResourcesProps> = ({
             <ControlledInput
               type="text"
               placeholder="ex: 1"
-              disabled={service.instances.readOnly || autoscalingEnabled.value}
+              disabled={
+                service.instances.readOnly ||
+                autoscalingEnabled.value ||
+                sleepEnabled?.value
+              }
               width="300px"
-              disabledTooltip={
+              disabledTooltip={disabledMessage(
                 service.instances.readOnly
                   ? "You may only edit this field in your porter.yaml."
-                  : "Disable autoscaling to specify instances."
-              }
+                  : "Disable autoscaling to specify instances.",
+                sleepEnabled?.value
+              )}
               {...register(`app.services.${index}.instances.value`)}
             />
             <Spacer y={1} />
@@ -162,10 +215,11 @@ const Resources: React.FC<ResourcesProps> = ({
                         value: !value.value,
                       });
                     }}
-                    disabled={value.readOnly}
-                    disabledTooltip={
-                      "You may only edit this field in your porter.yaml."
-                    }
+                    disabled={value.readOnly || sleepEnabled?.value}
+                    disabledTooltip={disabledMessage(
+                      "You may only edit this field in your porter.yaml.",
+                      sleepEnabled?.value
+                    )}
                   >
                     <Text color="helper">
                       Enable autoscaling (overrides instances)
@@ -182,15 +236,17 @@ const Resources: React.FC<ResourcesProps> = ({
                   label="Min instances"
                   placeholder="ex: 1"
                   disabled={
-                    config.autoscaling?.minInstances?.readOnly ??
-                    !config.autoscaling?.enabled.value
+                    (config.autoscaling?.minInstances?.readOnly ??
+                      !config.autoscaling?.enabled.value) ||
+                    sleepEnabled?.value
                   }
                   width="300px"
-                  disabledTooltip={
+                  disabledTooltip={disabledMessage(
                     config.autoscaling?.minInstances?.readOnly
                       ? "You may only edit this field in your porter.yaml."
-                      : "Enable autoscaling to specify min instances."
-                  }
+                      : "Enable autoscaling to specify min instances.",
+                    sleepEnabled?.value
+                  )}
                   {...register(
                     `app.services.${index}.config.autoscaling.minInstances.value`
                   )}
@@ -201,15 +257,17 @@ const Resources: React.FC<ResourcesProps> = ({
                   label="Max instances"
                   placeholder="ex: 10"
                   disabled={
-                    config.autoscaling?.maxInstances?.readOnly ??
-                    !config.autoscaling?.enabled.value
+                    (config.autoscaling?.maxInstances?.readOnly ??
+                      !config.autoscaling?.enabled.value) ||
+                    sleepEnabled?.value
                   }
                   width="300px"
-                  disabledTooltip={
+                  disabledTooltip={disabledMessage(
                     config.autoscaling?.maxInstances?.readOnly
                       ? "You may only edit this field in your porter.yaml."
-                      : "Enable autoscaling to specify max instances."
-                  }
+                      : "Enable autoscaling to specify max instances.",
+                    sleepEnabled?.value
+                  )}
                   {...register(
                     `app.services.${index}.config.autoscaling.maxInstances.value`
                   )}
@@ -225,7 +283,11 @@ const Resources: React.FC<ResourcesProps> = ({
                       min={0}
                       max={100}
                       value={value?.value.toString() ?? "50"}
-                      disabled={value?.readOnly || !config.autoscaling?.enabled}
+                      disabled={
+                        value?.readOnly ||
+                        !config.autoscaling?.enabled ||
+                        sleepEnabled?.value
+                      }
                       width="300px"
                       setValue={(e) => {
                         onChange({
@@ -233,11 +295,12 @@ const Resources: React.FC<ResourcesProps> = ({
                           value: e,
                         });
                       }}
-                      disabledTooltip={
+                      disabledTooltip={disabledMessage(
                         value?.readOnly
                           ? "You may only edit this field in your porter.yaml."
-                          : "Enable autoscaling to specify CPU threshold."
-                      }
+                          : "Enable autoscaling to specify CPU threshold.",
+                        sleepEnabled?.value
+                      )}
                     />
                   )}
                 />
@@ -252,7 +315,11 @@ const Resources: React.FC<ResourcesProps> = ({
                       min={0}
                       max={100}
                       value={value?.value.toString() ?? "50"}
-                      disabled={value?.readOnly || !config.autoscaling?.enabled}
+                      disabled={
+                        value?.readOnly ||
+                        !config.autoscaling?.enabled ||
+                        sleepEnabled?.value
+                      }
                       width="300px"
                       setValue={(e) => {
                         onChange({
@@ -260,11 +327,12 @@ const Resources: React.FC<ResourcesProps> = ({
                           value: e,
                         });
                       }}
-                      disabledTooltip={
+                      disabledTooltip={disabledMessage(
                         value?.readOnly
                           ? "You may only edit this field in your porter.yaml."
-                          : "Enable autoscaling to specify RAM threshold."
-                      }
+                          : "Enable autoscaling to specify RAM threshold.",
+                        sleepEnabled?.value
+                      )}
                     />
                   )}
                 />

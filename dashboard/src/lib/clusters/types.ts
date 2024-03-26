@@ -143,6 +143,15 @@ const awsMachineTypeValidator = z.enum([
   "r6i.16xlarge",
   "r6i.24xlarge",
   "r6i.32xlarge",
+  "r7a.large",
+  "r7a.xlarge",
+  "r7a.2xlarge",
+  "r7a.4xlarge",
+  "r7a.8xlarge",
+  "r7a.12xlarge",
+  "r7a.16xlarge",
+  "r7a.24xlarge",
+  "r7a.32xlarge",
   "m5n.large",
   "m5n.xlarge",
   "m5n.2xlarge",
@@ -553,14 +562,22 @@ export const createContractResponseValidator = z.object({
     revision_id: z.string(),
   }),
 });
+
+type TPreflightCheckFixSuggestion = {
+  original: string;
+  suggested: string;
+};
+
 export type ClientPreflightCheck = {
   title: string;
+  name: PreflightCheckKey;
   status: "pending" | "success" | "failure";
   error?: {
     detail: string;
     metadata: Record<string, string> | undefined;
     resolution?: PreflightCheckResolution;
   };
+  suggestedChanges?: TPreflightCheckFixSuggestion;
 };
 type CreateContractResponse = z.infer<typeof createContractResponseValidator>;
 export type UpdateClusterResponse =

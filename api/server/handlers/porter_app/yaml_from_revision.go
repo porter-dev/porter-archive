@@ -477,6 +477,31 @@ func zeroOutValues(app v2.PorterApp) v2.PorterApp {
 		app.Predeploy.TimeoutSeconds = 0
 	}
 
+	if app.InitialDeploy != nil {
+		// remove name
+		app.InitialDeploy.Name = ""
+		// remove type
+		app.InitialDeploy.Type = ""
+		// remove smart optimization
+		app.InitialDeploy.SmartOptimization = nil
+		// remove launcher
+		if app.InitialDeploy.Run != nil {
+			launcherLess := strings.TrimPrefix(*app.InitialDeploy.Run, "launcher ")
+			launcherLess = strings.TrimPrefix(launcherLess, "/cnb/lifecycle/launcher ")
+			app.InitialDeploy.Run = &launcherLess
+		}
+		// remove port
+		app.InitialDeploy.Port = 0
+		// remove instances
+		app.InitialDeploy.Instances = nil
+		// remove suspendCron
+		app.InitialDeploy.SuspendCron = nil
+		// remove allowConcurrency
+		app.InitialDeploy.AllowConcurrent = nil
+		// remove timeout
+		app.InitialDeploy.TimeoutSeconds = 0
+	}
+
 	return app
 }
 

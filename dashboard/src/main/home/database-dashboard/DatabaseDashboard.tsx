@@ -87,19 +87,18 @@ const DatabaseDashboard: React.FC = () => {
     if (currentProject?.sandbox_enabled) {
       return (
         <DashboardPlaceholder>
-          <Text size={16}>Databases are not enabled for sandbox users</Text>
+          <Text size={16}>Datastores are coming soon to the Porter Cloud</Text>
           <Spacer y={0.5} />
           <Text color={"helper"}>
-            Eject to your own cloud account to enable managed databases.
+            You can also eject to your own cloud account to start using managed
+            datastores immediately.
           </Text>
           <Spacer y={1} />
-          <ShowIntercomButton
-            alt
-            message="I would like to eject to my own cloud account"
-            height="35px"
-          >
-            Request ejection
-          </ShowIntercomButton>
+          <PorterLink to="https://docs.porter.run/other/eject">
+            <Button alt height="35px">
+             Eject to AWS, Azure, or GCP
+            </Button>
+          </PorterLink>
         </DashboardPlaceholder>
       );
     }

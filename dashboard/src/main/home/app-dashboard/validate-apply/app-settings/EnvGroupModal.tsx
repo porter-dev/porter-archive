@@ -69,7 +69,7 @@ const EnvGroupModal: React.FC<Props> = ({ append, setOpen, baseEnvGroups }) => {
             <EnvGroupList>
               {remainingEnvGroupOptions.map((eg, i) => (
                 <EnvRowWrapper key={i}>
-                  <EnvGroupRow envGroup={eg} maxHeight="300px" />
+                  <EnvGroupRow envGroup={eg} maxHeight="300px" noLink />
                   <SelectedIndicator
                     onClick={() => {
                       setSelectedEnvGroup(eg);
@@ -140,7 +140,7 @@ const SelectedIndicator = styled.div<{ isSelected: boolean }>`
   }
 `;
 
-const EnvRowWrapper = styled.div<{ isSelected: boolean }>`
+const EnvRowWrapper = styled.div`
   transition: all 0.1s;
   position: relative;
 `;

@@ -25,6 +25,7 @@ type Props = {
     secret_variables: Record<string, string>;
   };
   canDelete?: boolean;
+  noLink?: boolean;
 };
 
 // TODO: support footer for consolidation w/ app services
@@ -33,6 +34,7 @@ const EnvGroupRow: React.FC<Props> = ({
   envGroup,
   onRemove,
   canDelete = true,
+  noLink = false,
 }) => {
   const { currentProject } = useContext(Context);
   const history = useHistory();
@@ -81,29 +83,34 @@ const EnvGroupRow: React.FC<Props> = ({
             <Text size={14}>{envGroup.name}</Text>
           </Container>
           <Container row>
-            <Svg
-              onClick={() => {
-                history.push(
-                  envGroupPath(currentProject, `/${envGroup.name}/synced-apps`)
-                );
-              }}
-              data-testid="geist-icon"
-              fill="none"
-              height="27px"
-              shape-rendering="geometricPrecision"
-              stroke="currentColor"
-              stroke-linecap="round"
-              strokeLinejoin="round"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-              width="27px"
-              data-darkreader-inline-stroke=""
-              data-darkreader-inline-color=""
-            >
-              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"></path>
-              <path d="M15 3h6v6"></path>
-              <path d="M10 14L21 3"></path>
-            </Svg>
+            {!noLink && (
+              <Svg
+                onClick={() => {
+                  history.push(
+                    envGroupPath(
+                      currentProject,
+                      `/${envGroup.name}/synced-apps`
+                    )
+                  );
+                }}
+                data-testid="geist-icon"
+                fill="none"
+                height="27px"
+                shape-rendering="geometricPrecision"
+                stroke="currentColor"
+                stroke-linecap="round"
+                strokeLinejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="27px"
+                data-darkreader-inline-stroke=""
+                data-darkreader-inline-color=""
+              >
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"></path>
+                <path d="M15 3h6v6"></path>
+                <path d="M10 14L21 3"></path>
+              </Svg>
+            )}
             {canDelete && onRemove && (
               <>
                 <Spacer inline x={0.5} />

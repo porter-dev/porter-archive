@@ -127,7 +127,7 @@ const InitialDeployEventCard: React.FC<Props> = ({
                 tab: "events",
                 queryParams: {
                   event_id: event.id,
-                  service: "initialDeploy",
+                  service: "initdeploy",
                   revision_id: event.metadata.app_revision_id,
                 },
               })}

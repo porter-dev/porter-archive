@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import Loading from "components/Loading";
@@ -26,7 +26,6 @@ import BillingModal from "../modals/BillingModal";
 function BillingPage(): JSX.Element {
   const { setCurrentOverlay } = useContext(Context);
   const [shouldCreate, setShouldCreate] = useState(false);
-  checkBillingCustomerExists();
 
   const {
     paymentMethodList,
@@ -35,6 +34,7 @@ function BillingPage(): JSX.Element {
     isDeleting,
   } = usePaymentMethods();
   const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
+  checkBillingCustomerExists();
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
 

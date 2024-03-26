@@ -28,9 +28,9 @@ const CreateGKEClusterForm: React.FC<Props> = ({
   const { reportToAnalytics } = useClusterAnalytics();
 
   useEffect(() => {
-    const projectNameLimit = 31 - "-cluster-".length - 6; // 6 characters for the random suffix
+    const projectNameLimit = 20 - 7; // 7 characters for the random suffix, 20 for max length of entire cluster name
     const truncatedProjectName = projectName.substring(0, projectNameLimit);
-    const clusterName = `${truncatedProjectName}-cluster-${Math.random()
+    const clusterName = `${truncatedProjectName}-${Math.random()
       .toString(36)
       .substring(2, 8)}`;
 

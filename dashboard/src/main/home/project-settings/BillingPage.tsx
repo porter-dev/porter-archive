@@ -32,6 +32,7 @@ function BillingPage(): JSX.Element {
     isDeleting,
   } = usePaymentMethods();
   const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
+  checkBillingCustomerExists();
 
   const { refetchPaymentEnabled } = checkIfProjectHasPayment();
 

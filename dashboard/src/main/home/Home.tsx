@@ -17,7 +17,6 @@ import Modal from "components/porter/Modal";
 import ShowIntercomButton from "components/porter/ShowIntercomButton";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { checkBillingCustomerExists } from "lib/hooks/useStripe";
 
 import api from "shared/api";
 import { withAuth, type WithAuthProps } from "shared/auth/AuthorizationHoc";
@@ -293,8 +292,6 @@ const Home: React.FC<Props> = (props) => {
     // Store previous value (legacy retrofit)
     prevCurrentCluster.current = props.currentCluster;
   }, [props.currentCluster]);
-
-  checkBillingCustomerExists();
 
   const projectOverlayCall = async () => {
     try {

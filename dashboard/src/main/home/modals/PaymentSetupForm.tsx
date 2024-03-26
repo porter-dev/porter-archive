@@ -50,6 +50,8 @@ const PaymentSetupForm = ({ onCreate }: { onCreate: () => Promise<void> }) => {
 
     if (error) {
       setErrorMessage(error.message);
+      setLoading(false);
+      return;
     }
 
     // Confirm the setup and set as default

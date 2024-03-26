@@ -14,7 +14,7 @@ import { Context } from "shared/Context";
 type TUsePaymentMethod = {
   paymentMethodList: PaymentMethodList;
   refetchPaymentMethods: any;
-  isDeleting: boolean;
+  deletingIds: string[];
   deletePaymentMethod: (paymentMethodId: string) => Promise<void>;
 };
 
@@ -43,7 +43,7 @@ export const usePaymentMethods = (): TUsePaymentMethod => {
   const [paymentMethodList, setPaymentMethodList] = useState<PaymentMethodList>(
     []
   );
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [deletingIds, setDeletingIds] = useState<string[]>([]);
 
   // Fetch list of payment methods
   const paymentMethodReq = useQuery(
@@ -73,7 +73,7 @@ export const usePaymentMethods = (): TUsePaymentMethod => {
     if (!paymentMethodId) {
       throw new Error("Payment Method ID is missing");
     }
-    setIsDeleting(true);
+    deletingIds.push(paymentMethodId);
 
     const resp = await api.deletePaymentMethod(
       "<token>",
@@ -89,13 +89,15 @@ export const usePaymentMethods = (): TUsePaymentMethod => {
         (paymentMethod) => paymentMethod.id !== paymentMethodId
       )
     );
-    setIsDeleting(false);
+    setDeletingIds(
+      deletingIds.filter((deleteId) => deleteId !== paymentMethodId)
+    );
   };
 
   return {
     paymentMethodList,
     refetchPaymentMethods: paymentMethodReq.refetch,
-    isDeleting,
+    deletingIds,
     deletePaymentMethod,
   };
 };

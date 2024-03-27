@@ -141,6 +141,34 @@ You can specify a tag using the --tag flag:
 	)
 	appCmd.AddCommand(appPushCommand)
 
+	appUpdateCommand := &cobra.Command{
+		Use:   "update [application]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Updates an application with the provided configuration.",
+		Long: fmt.Sprintf(`
+	%s
+
+Updates the specified app with the provided configuration. This command differs from "porter apply"
+in that it only updates the app, but does not attempt to build a new image.`,
+			color.New(color.FgBlue, color.Bold).Sprintf("Help for \"porter app update\":"),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return checkLoginAndRunWithConfig(cmd, cliConf, args, appUpdate)
+		},
+	}
+	appUpdateCommand.PersistentFlags().StringVarP(&porterYAML, "file", "f", "", "path to porter.yaml")
+	appUpdateCommand.PersistentFlags().BoolVarP(
+		&appWait,
+		"wait",
+		"w",
+		false,
+		"set this to wait until an update has rolled out successfully, otherwise time out",
+	)
+	flags.UseAppConfigFlags(appUpdateCommand)
+	flags.UseAppImageFlags(appUpdateCommand)
+
+	appCmd.AddCommand(appUpdateCommand)
+
 	// appRunCmd represents the "porter app run" subcommand
 	appRunCmd := &cobra.Command{
 		Use:   "run [application] -- COMMAND [args...]",
@@ -352,6 +380,49 @@ func appPush(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client 
 	})
 	if err != nil {
 		return fmt.Errorf("failed to push image for app: %w", err)
+	}
+
+	return nil
+}
+
+func appUpdate(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client api.Client, cliConfig config.CLIConfig, _ config.FeatureFlags, cmd *cobra.Command, args []string) error {
+	appName := args[0]
+	if appName == "" {
+		return fmt.Errorf("app name must be specified")
+	}
+
+	extraAppConfig, err := flags.AppConfigValuesFromCmd(cmd)
+	if err != nil {
+		return fmt.Errorf("could not retrieve app config values from command")
+	}
+
+	imageValues, err := flags.AppImageValuesFromCmd(cmd)
+	if err != nil {
+		return fmt.Errorf("could not retrieve image values from command")
+	}
+
+	patchOperations := appV2.PatchOperationsFromFlagValues(appV2.PatchOperationsFromFlagValuesInput{
+		EnvGroups:       extraAppConfig.AttachEnvGroups,
+		ImageRepository: imageValues.Repository,
+		ImageTag:        imageValues.Tag,
+	})
+
+	inp := v2.ApplyInput{
+		CLIConfig:                   cliConfig,
+		Client:                      client,
+		PorterYamlPath:              porterYAML,
+		AppName:                     appName,
+		ImageTagOverride:            imageValues.Tag,
+		PreviewApply:                previewApply,
+		WaitForSuccessfulDeployment: appWait,
+		Exact:                       exact,
+		PatchOperations:             patchOperations,
+		SkipBuild:                   true, // skip build for update
+	}
+
+	err = v2.Apply(ctx, inp)
+	if err != nil {
+		return err
 	}
 
 	return nil

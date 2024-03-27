@@ -17,6 +17,8 @@ const (
 	App_Buildpacks = "attach-buildpacks"
 	// App_BuildContext is the key for the build context flag
 	App_BuildContext = "build-context"
+	// App_NoBuild is the key for the no build flag
+	App_NoBuild = "no-build"
 )
 
 // UseAppBuildFlags adds build flags to the given command

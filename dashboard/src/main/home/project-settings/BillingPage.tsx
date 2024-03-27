@@ -6,6 +6,7 @@ import Button from "components/porter/Button";
 import Container from "components/porter/Container";
 import Fieldset from "components/porter/Fieldset";
 import Icon from "components/porter/Icon";
+import Image from "components/porter/Image";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import {
@@ -17,6 +18,7 @@ import {
 
 import { Context } from "shared/Context";
 import cardIcon from "assets/credit-card.svg";
+import gift from "assets/gift.svg";
 import trashIcon from "assets/trash.png";
 
 import BillingModal from "../modals/BillingModal";
@@ -29,7 +31,7 @@ function BillingPage(): JSX.Element {
     paymentMethodList,
     refetchPaymentMethods,
     deletePaymentMethod,
-    isDeleting,
+    deletingIds,
   } = usePaymentMethods();
   const { setDefaultPaymentMethod } = useSetDefaultPaymentMethod();
   checkBillingCustomerExists();
@@ -44,12 +46,32 @@ function BillingPage(): JSX.Element {
 
   if (shouldCreate) {
     return (
-      <BillingModal onCreate={onCreate} back={() => setShouldCreate(false)} />
+      <BillingModal
+        onCreate={onCreate}
+        back={() => {
+          setShouldCreate(false);
+        }}
+      />
     );
   }
 
   return (
     <>
+      <Text size={16}>Porter credit balance</Text>
+      <Spacer y={1} />
+      <Text color="helper">
+        View the amount of Porter credits you have available to spend on
+        resources within this project.
+      </Text>
+      <Spacer y={1} />
+      <Container row>
+        <Image src={gift} style={{ marginTop: "-2px" }} />
+        <Spacer inline x={1} />
+        <Text size={20}>
+          {paymentMethodList?.length > 0 ? "$ 5.00" : "$ 0.00"}
+        </Text>
+      </Container>
+      <Spacer y={2} />
       <Text size={16}>Payment methods</Text>
       <Spacer y={1} />
       <Text color="helper">
@@ -58,8 +80,8 @@ function BillingPage(): JSX.Element {
       <Spacer y={1} />
       {paymentMethodList.map((paymentMethod, idx) => {
         return (
-          <>
-            <Fieldset key={idx}>
+          <div key={idx}>
+            <Fieldset>
               <Container row spaced>
                 <Container row>
                   <Icon src={cardIcon} height={"14px"} />
@@ -74,7 +96,7 @@ function BillingPage(): JSX.Element {
                   <Spacer inline x={1} />
                 </Container>
                 <DeleteButtonContainer>
-                  {isDeleting ? (
+                  {deletingIds.includes(paymentMethod.id) ? (
                     <Loading />
                   ) : !paymentMethod.is_default ? (
                     <Container row={true}>
@@ -111,7 +133,7 @@ function BillingPage(): JSX.Element {
               </Container>
             </Fieldset>
             <Spacer y={1} />
-          </>
+          </div>
         );
       })}
       <Button

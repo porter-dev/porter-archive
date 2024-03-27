@@ -47,6 +47,10 @@ const BillingModal = ({
         <Text size={16}>Add payment method</Text>
         <Spacer y={1} />
         <Text color="helper">
+          <Text style={{ fontWeight: 500 }}>
+            You will not be charged until you have an app deployed and have run
+            out of credits.
+          </Text>{" "}
           A payment method is required to begin deploying applications on
           Porter. You can learn more about our pricing{" "}
           <Link target="_blank" to="https://porter.run/pricing">

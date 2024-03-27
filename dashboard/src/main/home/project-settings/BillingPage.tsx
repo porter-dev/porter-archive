@@ -67,7 +67,9 @@ function BillingPage(): JSX.Element {
       <Container row>
         <Image src={gift} style={{ marginTop: "-2px" }} />
         <Spacer inline x={1} />
-        <Text size={20}>$ 5.00</Text>
+        <Text size={20}>
+          {paymentMethodList?.length > 0 ? "$ 5.00" : "$ 0.00"}
+        </Text>
       </Container>
       <Spacer y={2} />
       <Text size={16}>Payment methods</Text>

@@ -785,10 +785,10 @@ const DEFAULT_RESOURCE_ALLOWANCES = {
 };
 
 const DEFAULT_SANDBOX_RESOURCE_ALLOWANCES = {
-  maxCpuCores: 0.2,
+  maxCpuCores: 2.0,
   newServiceDefaultCpuCores: 0.1,
-  maxRamMegabytes: 250,
-  newServiceDefaultRamMegabytes: 120,
+  maxRamMegabytes: 4000,
+  newServiceDefaultRamMegabytes: 250,
 };
 
 export function getServiceResourceAllowances(

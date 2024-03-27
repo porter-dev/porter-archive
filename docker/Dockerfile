@@ -56,6 +56,7 @@ RUN npm run build
 # ----------------------
 FROM alpine
 RUN apk update
+RUN apk add tzdata
 
 COPY --from=build-go /porter/bin/app /porter/
 COPY --from=build-go /porter/bin/migrate /porter/

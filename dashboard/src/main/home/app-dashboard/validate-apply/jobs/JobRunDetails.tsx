@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import dayjs from "dayjs";
 import { Link, useHistory } from "react-router-dom";
 import styled from "styled-components";
@@ -14,6 +13,7 @@ import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
 import { useLatestRevision } from "main/home/app-dashboard/app-view/LatestRevisionContext";
 import Logs from "main/home/app-dashboard/validate-apply/logs/Logs";
+import { getErrorMessageFromNetworkCall } from "lib/hooks/useCluster";
 import { type JobRun } from "lib/hooks/useJobs";
 
 import api from "shared/api";
@@ -96,11 +96,9 @@ const JobRunDetails: React.FC<Props> = ({ jobRun }) => {
         `/apps/${appName}/job-history?service=${jobRun.service_name}`
       );
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setJobRunCancelError(err.message);
-      } else {
-        setJobRunCancelError("An error occurred while canceling the job run.");
-      }
+      setJobRunCancelError(
+        getErrorMessageFromNetworkCall(err, "Error canceling job run")
+      );
     } finally {
       setJobRunCancelling(false);
     }

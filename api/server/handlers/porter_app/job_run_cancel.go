@@ -15,7 +15,7 @@ import (
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
-// CancelJobRunHandler is the handler for POST /apps/jobs/{porter_app_name}/{job_run_name}/cancel
+// CancelJobRunHandler is the handler for POST /apps/jobs/{porter_app_name}/jobs/{job_run_name}/cancel
 type CancelJobRunHandler struct {
 	handlers.PorterHandlerReadWriter
 }
@@ -31,13 +31,13 @@ func NewCancelJobRunHandler(
 	}
 }
 
-// CancelJobRunRequest is the expected format for a request body on POST /apps/jobs/{porter_app_name}/{job_run_name}/cancel
+// CancelJobRunRequest is the expected format for a request body on POST /apps/jobs/{porter_app_name}/jobs/{job_run_name}/cancel
 type CancelJobRunRequest struct {
-	DeploymentTargetID   string `schema:"deployment_target_id,omitempty"`
-	DeploymentTargetName string `schema:"deployment_target_name,omitempty"`
+	DeploymentTargetID   string `json:"deployment_target_id,omitempty" validate:"optional"`
+	DeploymentTargetName string `json:"deployment_target_name,omitempty" validate:"optional"`
 }
 
-// CancelJobRunResponse is the response format for POST /apps/jobs/{porter_app_name}/{job_run_name}/cancel
+// CancelJobRunResponse is the response format for POST /apps/jobs/{porter_app_name}/jobs/{job_run_name}/cancel
 type CancelJobRunResponse struct{}
 
 // ServeHTTP handles the cancel job run request

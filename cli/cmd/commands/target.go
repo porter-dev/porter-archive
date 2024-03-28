@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"text/tabwriter"
 
 	"github.com/fatih/color"
@@ -38,6 +39,16 @@ func registerCommand_Target(cliConf config.CLIConfig) *cobra.Command {
 	listTargetCmd := &cobra.Command{
 		Use:   "list",
 		Short: "Lists the deployment targets for the logged in user",
+		Long: fmt.Sprintf(`Lists the deployment targets in the project
+
+The following columns are returned:
+* ID:          id of the deployment target
+* NAME:        name of the deployment target
+* CLUSTER-ID:  id of the cluster associated with the deployment target
+* DEFAULT:     whether the deployment target is the default target for the cluster
+
+If the --preview flag is set, only deployment targets for preview environments will be returned.
+`),
 		Run: func(cmd *cobra.Command, args []string) {
 			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listTargets)
 			if err != nil {
@@ -45,6 +56,9 @@ func registerCommand_Target(cliConf config.CLIConfig) *cobra.Command {
 			}
 		},
 	}
+
+	var includePreviews bool
+	listTargetCmd.Flags().BoolVar(&includePreviews, "preview", false, "List preview environments")
 	targetCmd.AddCommand(listTargetCmd)
 
 	return targetCmd
@@ -70,7 +84,12 @@ func createTarget(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 }
 
 func listTargets(ctx context.Context, user *types.GetAuthenticatedUserResponse, client api.Client, cliConf config.CLIConfig, featureFlags config.FeatureFlags, cmd *cobra.Command, args []string) error {
-	resp, err := client.ListDeploymentTargets(ctx, cliConf.Project)
+	includePreviews, err := cmd.Flags().GetBool("preview")
+	if err != nil {
+		return fmt.Errorf("error finding preview flag: %w", err)
+	}
+
+	resp, err := client.ListDeploymentTargets(ctx, cliConf.Project, includePreviews)
 	if err != nil {
 		return err
 	}
@@ -80,16 +99,37 @@ func listTargets(ctx context.Context, user *types.GetAuthenticatedUserResponse, 
 
 	targets := *resp
 
+	sort.Slice(targets.DeploymentTargets, func(i, j int) bool {
+		if targets.DeploymentTargets[i].ClusterID != targets.DeploymentTargets[j].ClusterID {
+			return targets.DeploymentTargets[i].ClusterID < targets.DeploymentTargets[j].ClusterID
+		}
+		return targets.DeploymentTargets[i].Name < targets.DeploymentTargets[j].Name
+	})
+
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 3, 8, 0, '\t', tabwriter.AlignRight)
 
-	fmt.Fprintf(w, "%s\t%s\t%s\n", "ID", "NAME", "CLUSTER ID")
-
-	for _, target := range targets.DeploymentTargets {
-		fmt.Fprintf(w, "%s\t%s\t%d\n", target.ID, target.Name, target.ClusterID)
+	if includePreviews {
+		fmt.Fprintf(w, "%s\t%s\t%s\n", "ID", "NAME", "CLUSTER-ID")
+		for _, target := range targets.DeploymentTargets {
+			fmt.Fprintf(w, "%s\t%s\t%d\n", target.ID, target.Name, target.ClusterID)
+		}
+	} else {
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", "ID", "NAME", "CLUSTER-ID", "DEFAULT")
+		for _, target := range targets.DeploymentTargets {
+			fmt.Fprintf(w, "%s\t%s\t%d\t%s\n", target.ID, target.Name, target.ClusterID, checkmark(target.IsDefault))
+		}
 	}
 
 	w.Flush()
 
 	return nil
+}
+
+func checkmark(b bool) string {
+	if b {
+		return "✓"
+	}
+
+	return ""
 }

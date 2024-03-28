@@ -39,7 +39,7 @@ func registerCommand_Target(cliConf config.CLIConfig) *cobra.Command {
 	listTargetCmd := &cobra.Command{
 		Use:   "list",
 		Short: "Lists the deployment targets for the logged in user",
-		Long: fmt.Sprintf(`Lists the deployment targets in the project
+		Long: `Lists the deployment targets in the project
 
 The following columns are returned:
 * ID:          id of the deployment target
@@ -48,7 +48,7 @@ The following columns are returned:
 * DEFAULT:     whether the deployment target is the default target for the cluster
 
 If the --preview flag is set, only deployment targets for preview environments will be returned.
-`),
+`,
 		Run: func(cmd *cobra.Command, args []string) {
 			err := checkLoginAndRunWithConfig(cmd, cliConf, args, listTargets)
 			if err != nil {
@@ -78,7 +78,7 @@ func createTarget(ctx context.Context, _ *types.GetAuthenticatedUserResponse, cl
 		return err
 	}
 
-	color.New(color.FgGreen).Printf("Created target with name %s and id %s\n", targetName, resp.DeploymentTargetID)
+	_, _ = color.New(color.FgGreen).Printf("Created target with name %s and id %s\n", targetName, resp.DeploymentTargetID)
 
 	return nil
 }
@@ -121,7 +121,7 @@ func listTargets(ctx context.Context, user *types.GetAuthenticatedUserResponse, 
 		}
 	}
 
-	w.Flush()
+	_ = w.Flush()
 
 	return nil
 }

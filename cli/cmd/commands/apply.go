@@ -44,7 +44,6 @@ import (
 var (
 	porterYAML   string
 	previewApply bool
-	envGroups    []string
 	// pullImageBeforeBuild is a flag that determines whether to pull the docker image from a repo before building
 	pullImageBeforeBuild bool
 	predeploy            bool
@@ -124,10 +123,11 @@ applying a configuration:
 		false,
 		"set this to wait and be notified when an apply is successful, otherwise time out",
 	)
-	applyCmd.PersistentFlags().StringSliceVar(&envGroups, "attach-env-groups", nil, "attach environment groups to the app on apply")
+	applyCmd.PersistentFlags().Bool(flags.App_NoBuild, false, "apply configuration without building a new image")
 
 	flags.UseAppBuildFlags(applyCmd)
 	flags.UseAppImageFlags(applyCmd)
+	flags.UseAppConfigFlags(applyCmd)
 
 	applyCmd.MarkFlagRequired("file")
 
@@ -162,13 +162,23 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 		return fmt.Errorf("could not retrieve build values from command")
 	}
 
+	extraAppConfig, err := flags.AppConfigValuesFromCmd(cmd)
+	if err != nil {
+		return fmt.Errorf("could not retrieve app config values from command")
+	}
+
+	noBuild, err := cmd.Flags().GetBool(flags.App_NoBuild)
+	if err != nil {
+		return fmt.Errorf("could not retrieve no-build flag from command")
+	}
+
 	if project.ValidateApplyV2 {
 		if previewApply && !project.PreviewEnvsEnabled {
 			return fmt.Errorf("preview environments are not enabled for this project. Please contact support@porter.run")
 		}
 
 		patchOperations := appV2.PatchOperationsFromFlagValues(appV2.PatchOperationsFromFlagValuesInput{
-			EnvGroups:       envGroups,
+			EnvGroups:       extraAppConfig.AttachEnvGroups,
 			BuildMethod:     buildValues.BuildMethod,
 			Dockerfile:      buildValues.Dockerfile,
 			Builder:         buildValues.Builder,
@@ -190,6 +200,7 @@ func apply(ctx context.Context, _ *types.GetAuthenticatedUserResponse, client ap
 			WithPredeploy:               predeploy,
 			Exact:                       exact,
 			PatchOperations:             patchOperations,
+			SkipBuild:                   noBuild,
 		}
 		err = v2.Apply(ctx, inp)
 		if err != nil {

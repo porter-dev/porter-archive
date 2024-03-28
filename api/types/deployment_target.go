@@ -35,9 +35,6 @@ type CreateDeploymentTargetResponse struct {
 	DeploymentTargetID string `json:"deployment_target_id"`
 }
 
-// ReadDeploymentTargetResponse is a struct that contains the response from a `GET /targets/{target_id}` request
-type ReadDeploymentTargetResponse DeploymentTarget
-
 // ListDeploymentTargetsRequest is the request object for the /deployment-targets GET endpoint
 type ListDeploymentTargetsRequest struct {
 	Preview bool `json:"preview"`

@@ -47,13 +47,7 @@ export const useJobs = ({
   });
 
   const { data, isLoading: isLoadingJobRuns } = useQuery(
-    [
-      "jobRuns",
-      appName,
-      deploymentTargetId,
-      revisionIdToNumber,
-      selectedJobName,
-    ],
+    ["jobRuns", appName, deploymentTargetId, selectedJobName],
     async () => {
       const res = await api.appJobs(
         "<token>",

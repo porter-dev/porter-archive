@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import dayjs from "dayjs";
 import { Link, useHistory } from "react-router-dom";
@@ -29,6 +30,7 @@ type Props = {
 };
 
 const JobRunDetails: React.FC<Props> = ({ jobRun }) => {
+  const queryClient = useQueryClient();
   const { projectId, clusterId, latestProto, deploymentTarget, porterApp } =
     useLatestRevision();
   const history = useHistory();
@@ -82,6 +84,13 @@ const JobRunDetails: React.FC<Props> = ({ jobRun }) => {
           job_run_name: jobRun.name,
         }
       );
+
+      await queryClient.invalidateQueries([
+        "jobRuns",
+        appName,
+        deploymentTarget.id,
+        jobRun.name,
+      ]);
 
       history.push(
         `/apps/${appName}/job-history?service=${jobRun.service_name}`

@@ -19,3 +19,31 @@ type DeploymentTarget struct {
 	CreatedAtUTC time.Time `json:"created_at"`
 	UpdatedAtUTC time.Time `json:"updated_at"`
 }
+
+// CreateDeploymentTargetRequest is the request object for the /deployment-targets POST endpoint
+type CreateDeploymentTargetRequest struct {
+	// Deprecated: use name instead
+	Selector string `json:"selector"`
+	Name     string `json:"name,omitempty"`
+	Preview  bool   `json:"preview"`
+	// required if using the project-scoped endpoint
+	ClusterId uint `json:"cluster_id"`
+}
+
+// CreateDeploymentTargetResponse is the response object for the /deployment-targets POST endpoint
+type CreateDeploymentTargetResponse struct {
+	DeploymentTargetID string `json:"deployment_target_id"`
+}
+
+// ReadDeploymentTargetResponse is a struct that contains the response from a `GET /targets/{target_id}` request
+type ReadDeploymentTargetResponse DeploymentTarget
+
+// ListDeploymentTargetsRequest is the request object for the /deployment-targets GET endpoint
+type ListDeploymentTargetsRequest struct {
+	Preview bool `json:"preview"`
+}
+
+// ListDeploymentTargetsResponse is the response object for the /deployment-targets GET endpoint
+type ListDeploymentTargetsResponse struct {
+	DeploymentTargets []DeploymentTarget `json:"deployment_targets"`
+}

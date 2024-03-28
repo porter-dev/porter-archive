@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/fatih/color"
@@ -36,6 +39,14 @@ type RunAppJobInput struct {
 
 // RunAppJob triggers a job run for an app and returns without waiting for the job to complete
 func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	termChan := make(chan os.Signal, 1)
+	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
+
+	var runFinished bool
+
 	currentAppRevisionResp, err := inp.Client.CurrentAppRevision(ctx, api.CurrentAppRevisionInput{
 		ProjectID:            inp.CLIConfig.Project,
 		ClusterID:            inp.CLIConfig.Cluster,
@@ -51,7 +62,6 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 	if err != nil {
 		return fmt.Errorf("unable to run job: %w", err)
 	}
-
 	triggeredBackgroundColor := color.FgGreen
 	if inp.WaitForExit {
 		triggeredBackgroundColor = color.FgBlue
@@ -99,27 +109,62 @@ func RunAppJob(ctx context.Context, inp RunAppJobInput) error {
 		ProjectID:            inp.CLIConfig.Project,
 	}
 
-	for time.Now().Before(deadline) {
-		statusResp, err := inp.Client.RunAppJobStatus(ctx, input)
-		if err != nil {
-			return fmt.Errorf("unable to get job status: %w", err)
-		}
+	go func() {
+		select {
+		case <-termChan:
+			color.New(color.FgYellow).Println("Shutdown signal received, canceling processes") // nolint:errcheck,gosec
 
-		switch statusResp.Status {
-		case porter_app_internal.InstanceStatusDescriptor_Pending:
-			print(".")
-			time.Sleep(WaitIntervalInSeconds)
-		case porter_app_internal.InstanceStatusDescriptor_Running:
-			print(".")
-			time.Sleep(WaitIntervalInSeconds)
-		case porter_app_internal.InstanceStatusDescriptor_Succeeded:
-			print("\n")
-			color.New(color.FgGreen).Println("Job completed successfully") // nolint:errcheck,gosec
-			return nil
-		case porter_app_internal.InstanceStatusDescriptor_Failed:
-			return fmt.Errorf("job exited with non-zero exit code: %w", err)
-		case porter_app_internal.InstanceStatusDescriptor_Unknown:
-			return fmt.Errorf("unknown job status: %w", err)
+			if !runFinished {
+				color.New(color.FgBlue).Println("\nCanceling job...") // nolint:errcheck,gosec
+				_, err := inp.Client.CancelAppJobRun(ctx, api.CancelAppJobInput{
+					ProjectID:            inp.CLIConfig.Project,
+					ClusterID:            inp.CLIConfig.Cluster,
+					AppName:              inp.AppName,
+					DeploymentTargetName: inp.DeploymentTargetName,
+					JobName:              resp.JobRunName,
+				})
+				if err != nil {
+					fmt.Println("Error canceling job:", err)
+					return
+				}
+
+				color.New(color.FgYellow).Println("\nJob run canceled") // nolint:errcheck,gosec
+			}
+			cancel()
+			return
+		case <-ctx.Done():
+		}
+	}()
+
+	for time.Now().Before(deadline) {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			statusResp, err := inp.Client.RunAppJobStatus(ctx, input)
+			if err != nil {
+				return fmt.Errorf("unable to get job status: %w", err)
+			}
+
+			switch statusResp.Status {
+			case porter_app_internal.InstanceStatusDescriptor_Pending:
+				print(".")
+				time.Sleep(WaitIntervalInSeconds)
+			case porter_app_internal.InstanceStatusDescriptor_Running:
+				print(".")
+				time.Sleep(WaitIntervalInSeconds)
+			case porter_app_internal.InstanceStatusDescriptor_Succeeded:
+				runFinished = true
+				print("\n")
+				color.New(color.FgGreen).Println("Job completed successfully") // nolint:errcheck,gosec
+				return nil
+			case porter_app_internal.InstanceStatusDescriptor_Failed:
+				runFinished = true
+				return fmt.Errorf("job exited with non-zero exit code: %w", err)
+			case porter_app_internal.InstanceStatusDescriptor_Unknown:
+				runFinished = true
+				return fmt.Errorf("unknown job status: %w", err)
+			}
 		}
 	}
 

@@ -419,6 +419,16 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           }
           errorMessage = `${errorMessage}.`;
         }
+
+       if (appErrors.includes("env")) {
+          errorMessage = "Environment variables are not properly configured";
+          if (errors.app?.env?.root?.message ?? errors.app?.env?.message) {
+            const envErrorMessage =
+              errors.app?.env?.root?.message ?? errors.app?.env?.message;
+            errorMessage = `${errorMessage} - ${envErrorMessage}`;
+          }
+          errorMessage = `${errorMessage}.`;
+        }
       }
 
       showIntercomWithMessage({

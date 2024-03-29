@@ -94,9 +94,12 @@ func (c *SetDefaultBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		telemetry.AttributeKV{Key: "payment-method-id", Value: paymentMethodID},
 	)
 
-	c.Config().AnalyticsClient.Track(analytics.PaymentMethodAttachedTrack(&analytics.PaymentMethodCreateDeleteTrackOpts{
+	err = c.Config().AnalyticsClient.Track(analytics.PaymentMethodAttachedTrack(&analytics.PaymentMethodCreateDeleteTrackOpts{
 		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),
 	}))
+	if err != nil {
+		telemetry.Error(ctx, span, err, "error creating payment method track")
+	}
 
 	c.WriteResult(w, r, "")
 }

@@ -180,7 +180,7 @@ type PaymentMethodCreateDeleteTrackOpts struct {
 	CompanyName string
 }
 
-// PaymentMethodLinkedTrack returns a track for when a payment method is attached
+// PaymentMethodAttachedTrack returns a track for when a payment method is attached
 func PaymentMethodAttachedTrack(opts *PaymentMethodCreateDeleteTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 
@@ -194,6 +194,7 @@ func PaymentMethodAttachedTrack(opts *PaymentMethodCreateDeleteTrackOpts) segmen
 	)
 }
 
+// PaymentMethodDettachedTrack returns a track for when a payment method is detached
 func PaymentMethodDettachedTrack(opts *PaymentMethodCreateDeleteTrackOpts) segmentTrack {
 	additionalProps := make(map[string]interface{})
 

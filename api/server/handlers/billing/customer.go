@@ -44,19 +44,24 @@ func (c *CreateBillingCustomerHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	// There is no easy way to pass environment variables to the frontend,
 	// so for now pass via the backend. This is acceptable because the key is
 	// meant to be public
-	publishableKey := c.Config().BillingManager.GetPublishableKey()
+	publishableKey := c.Config().BillingManager.GetPublishableKey(ctx)
 	if proj.BillingID != "" {
 		c.WriteResult(w, r, publishableKey)
 		return
 	}
 
 	// Create customer in Stripe
-	customerID, err := c.Config().BillingManager.CreateCustomer(request.UserEmail, proj)
+	customerID, err := c.Config().BillingManager.CreateCustomer(ctx, request.UserEmail, proj)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error creating billing customer")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating billing customer: %w", err)))
 		return
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
+		telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
+	)
 
 	// Update the project record with the customer ID
 	proj.BillingID = customerID

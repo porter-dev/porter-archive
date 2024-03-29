@@ -31,7 +31,7 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 	for _, svc := range svcList.Items {
 		// check that helm chart annotation is correct exists
 		if svc.Spec.Type == v1.ServiceTypeLoadBalancer {
-			nginxSvc = &svc
+			nginxSvc = &svc // nolint:gosec // quick fix to duplicate logic
 			exists = true
 			break
 		}

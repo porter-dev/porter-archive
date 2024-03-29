@@ -39,12 +39,16 @@ func (c *DeleteBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err := c.Config().BillingManager.DeletePaymentMethod(paymentMethodID)
+	err := c.Config().BillingManager.DeletePaymentMethod(ctx, paymentMethodID)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error deleting payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error deleting payment method: %w", err)))
 		return
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "payment-method-id", Value: paymentMethodID},
+	)
 
 	c.WriteResult(w, r, "")
 }

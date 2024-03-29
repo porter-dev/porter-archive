@@ -17,7 +17,8 @@ import (
 
 // GetNGINXIngressServiceIP retrieves the external address of the nginx-ingress service
 func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, error) {
-	svcList, err := clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
+	// first check ingress-nginx namespace
+	svcList, err := clientset.CoreV1().Services("ingress-nginx").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/managed-by=Helm",
 	})
 	if err != nil {
@@ -26,6 +27,37 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 
 	var nginxSvc *v1.Service
 	exists := false
+
+	for _, svc := range svcList.Items {
+		// check that helm chart annotation is correct exists
+		if svc.Spec.Type == v1.ServiceTypeLoadBalancer {
+			nginxSvc = &svc // nolint:gosec // quick fix to duplicate logic
+			exists = true
+			break
+		}
+	}
+
+	if exists {
+		if ipArr := nginxSvc.Status.LoadBalancer.Ingress; len(ipArr) > 0 {
+			// first default to ip, then check hostname
+			if ipArr[0].IP != "" {
+				return ipArr[0].IP, true, nil
+			} else if ipArr[0].Hostname != "" {
+				return ipArr[0].Hostname, true, nil
+			}
+		}
+	}
+
+	// fall back to all namespaces
+	nginxSvc = nil
+	exists = false
+
+	svcList, err = clientset.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{
+		LabelSelector: "app.kubernetes.io/managed-by=Helm",
+	})
+	if err != nil {
+		return "", false, err
+	}
 
 	for _, svc := range svcList.Items {
 		// check that helm chart annotation is correct exists

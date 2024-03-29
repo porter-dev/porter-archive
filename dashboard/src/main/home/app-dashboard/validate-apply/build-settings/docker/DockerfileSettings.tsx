@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import styled from "styled-components";
+import { match } from "ts-pattern";
 
 import Container from "components/porter/Container";
+import { ControlledInput } from "components/porter/ControlledInput";
 import Input from "components/porter/Input";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";
-import { type PorterAppFormData } from "lib/porter-apps";
+import { type PorterAppFormData, type SourceOptions } from "lib/porter-apps";
 
 import folder from "assets/folder_v2.svg";
 
@@ -14,30 +16,21 @@ import FileSelector from "../FileSelector";
 
 type Props = {
   projectId: number;
-  repoId: number;
-  repoOwner: string;
-  repoName: string;
-  branch: string;
+  source: SourceOptions & { type: "github" | "local" };
 };
-const DockerfileSettings: React.FC<Props> = ({
-  projectId,
-  repoId,
-  repoOwner,
-  repoName,
-  branch,
-}) => {
-  const { control, watch } = useFormContext<PorterAppFormData>();
+const DockerfileSettings: React.FC<Props> = ({ projectId, source }) => {
+  const { control, watch, register } = useFormContext<PorterAppFormData>();
   const [showFileSelector, setShowFileSelector] = useState<boolean>(false);
 
   const path = watch("app.build.dockerfile", "");
 
-  const fileSelectorRef = useRef(null);
+  const fileSelectorRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: { target: unknown }): void => {
       if (
         fileSelectorRef.current &&
-        !fileSelectorRef.current?.contains(event.target)
+        !fileSelectorRef.current?.contains(event.target as Node)
       ) {
         setShowFileSelector(false);
       }
@@ -48,57 +41,72 @@ const DockerfileSettings: React.FC<Props> = ({
     };
   }, [fileSelectorRef]);
 
-  return (
-    <Controller
-      name="app.build.dockerfile"
-      control={control}
-      render={({ field: { onChange } }) => (
-        <div>
-          <Text>Dockerfile path</Text>
-          <Spacer y={0.5} />
-          <Container row>
-            <Input
-              width="300px"
-              placeholder="ex: ./Dockerfile"
-              value={path}
-              setValue={(val: string) => {
-                onChange(val);
-              }}
-            />
-            <Spacer inline x={0.5} />
-            <FileDirectoryToggleButton
-              onClick={() => {
-                setShowFileSelector(!showFileSelector);
-              }}
-              color="#b91133"
-            >
-              <img src={folder} />
-            </FileDirectoryToggleButton>
-          </Container>
-          {showFileSelector && (
-            <div ref={fileSelectorRef}>
-              <FileSelector
-                projectId={projectId}
-                repoId={repoId}
-                repoOwner={repoOwner}
-                repoName={repoName}
-                branch={branch}
-                onFileSelect={(path: string) => {
-                  onChange(`./${path}`);
-                  setShowFileSelector(false);
+  return match(source)
+    .with({ type: "github" }, (s) => (
+      <Controller
+        name="app.build.dockerfile"
+        control={control}
+        render={({ field: { onChange } }) => (
+          <div>
+            <Text>Dockerfile path</Text>
+            <Spacer y={0.5} />
+            <Container row>
+              <Input
+                width="300px"
+                placeholder="ex: ./Dockerfile"
+                value={path}
+                setValue={(val: string) => {
+                  onChange(val);
                 }}
-                isFileSelectable={(path: string) =>
-                  path.toLowerCase().includes("dockerfile")
-                }
-                headerText={"Select your Dockerfile:"}
-                widthPercent={100}
               />
-            </div>
-          )}
-        </div>
-      )}
-    />
-  );
+              <Spacer inline x={0.5} />
+              <FileDirectoryToggleButton
+                onClick={() => {
+                  setShowFileSelector(!showFileSelector);
+                }}
+                color="#b91133"
+              >
+                <img src={folder} />
+              </FileDirectoryToggleButton>
+            </Container>
+            {showFileSelector && (
+              <div ref={fileSelectorRef}>
+                <FileSelector
+                  projectId={projectId}
+                  repoId={s.git_repo_id}
+                  repoOwner={s.git_repo_name.split("/")[0]}
+                  repoName={s.git_repo_name.split("/")[1]}
+                  branch={s.git_branch}
+                  onFileSelect={(path: string) => {
+                    onChange(`./${path}`);
+                    setShowFileSelector(false);
+                  }}
+                  isFileSelectable={(path: string) =>
+                    path.toLowerCase().includes("dockerfile")
+                  }
+                  headerText={"Select your Dockerfile:"}
+                  widthPercent={100}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      />
+    ))
+    .with({ type: "local" }, () => (
+      <>
+        <Text color="helper">Dockerfile path (absolute path)</Text>
+        <Spacer y={0.5} />
+        <ControlledInput
+          width="300px"
+          placeholder="ex: ./Dockerfile"
+          type="text"
+          {...register("app.build.dockerfile")}
+        />
+        <Spacer y={0.5} />
+      </>
+    ))
+    .exhaustive();
 };
 
 export default DockerfileSettings;

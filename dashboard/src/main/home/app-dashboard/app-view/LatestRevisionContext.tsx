@@ -63,6 +63,7 @@ type LatestRevisionContextType = {
   setPreviewRevision: Dispatch<SetStateAction<AppRevision | null>>;
   latestClientServices: ClientService[];
   loading: boolean;
+  latestSource: SourceOptions;
   tabUrlGenerator: ({
     tab,
     queryParams,
@@ -276,6 +277,12 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
       };
     }
 
+    if (!porterApp.git_repo_id) {
+      return {
+        type: "local",
+      };
+    }
+
     return {
       type: "github",
       git_repo_id: porterApp.git_repo_id ?? 0,
@@ -332,7 +339,8 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
     status === "loading" ||
     porterAppStatus === "loading" ||
     !appParamsExist ||
-    porterYamlLoading;
+    porterYamlLoading ||
+    !latestSource;
 
   if (loading) {
     if (!showLoader) {
@@ -379,6 +387,7 @@ export const LatestRevisionProvider: React.FC<LatestRevisionProviderProps> = ({
         previewRevision,
         setPreviewRevision,
         latestClientServices,
+        latestSource,
         appName,
         loading,
         tabUrlGenerator: ({ tab, queryParams }) =>

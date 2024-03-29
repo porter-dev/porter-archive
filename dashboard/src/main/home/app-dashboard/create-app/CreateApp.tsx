@@ -420,7 +420,7 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
           errorMessage = `${errorMessage}.`;
         }
 
-       if (appErrors.includes("env")) {
+        if (appErrors.includes("env")) {
           errorMessage = "Environment variables are not properly configured";
           if (errors.app?.env?.root?.message ?? errors.app?.env?.message) {
             const envErrorMessage =
@@ -623,11 +623,15 @@ const CreateApp: React.FC<CreateAppProps> = ({ history }) => {
                       <Spacer y={1} />
                       {source?.type ? (
                         source.type === "github" ? (
-                          <RepoSettings
-                            build={build}
-                            source={source}
-                            projectId={currentProject.id}
-                          />
+                          <>
+                            <Text size={16}>Build settings</Text>
+                            <Spacer y={0.5} />
+                            <RepoSettings
+                              build={build}
+                              source={source}
+                              projectId={currentProject.id}
+                            />
+                          </>
                         ) : (
                           <ImageSettings
                             projectId={currentProject.id}

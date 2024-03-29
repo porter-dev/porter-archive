@@ -13,8 +13,6 @@ import Container from "components/porter/Container";
 import DashboardPlaceholder from "components/porter/DashboardPlaceholder";
 import Image from "components/porter/Image";
 import PorterLink from "components/porter/Link";
-import Link from "components/porter/Link";
-import Modal from "components/porter/Modal";
 import SearchBar from "components/porter/SearchBar";
 import Spacer from "components/porter/Spacer";
 import Text from "components/porter/Text";

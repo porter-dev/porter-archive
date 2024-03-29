@@ -170,6 +170,43 @@ func ProjectDeleteTrack(opts *ProjectCreateDeleteTrackOpts) segmentTrack {
 	)
 }
 
+// PaymentMethodCreateDeleteTrackOpts are the options for creating a track when a payment method is attached/detached
+type PaymentMethodCreateDeleteTrackOpts struct {
+	*ProjectScopedTrackOpts
+
+	Email       string
+	FirstName   string
+	LastName    string
+	CompanyName string
+}
+
+// PaymentMethodLinkedTrack returns a track for when a payment method is attached
+func PaymentMethodAttachedTrack(opts *PaymentMethodCreateDeleteTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, PaymentMethodAttached),
+	)
+}
+
+func PaymentMethodDettachedTrack(opts *PaymentMethodCreateDeleteTrackOpts) segmentTrack {
+	additionalProps := make(map[string]interface{})
+
+	additionalProps["email"] = opts.Email
+	additionalProps["name"] = opts.FirstName + " " + opts.LastName
+	additionalProps["company"] = opts.CompanyName
+
+	return getSegmentProjectTrack(
+		opts.ProjectScopedTrackOpts,
+		getDefaultSegmentTrack(additionalProps, PaymentMethodDettached),
+	)
+}
+
 // ClusterDeleteTrackOpts are the options for creating a track when a cluster is deleted
 type ClusterDeleteTrackOpts struct {
 	*ProjectScopedTrackOpts

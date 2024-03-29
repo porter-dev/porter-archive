@@ -10,6 +10,7 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
 	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
@@ -70,6 +71,7 @@ func (c *SetDefaultBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	ctx, span := telemetry.NewSpan(r.Context(), "set-default-billing-endpoint")
 	defer span.End()
 
+	user, _ := r.Context().Value(types.UserScope).(*models.User)
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
 	paymentMethodID, reqErr := requestutils.GetURLParamString(r, types.URLParamPaymentMethodID)
@@ -91,6 +93,10 @@ func (c *SetDefaultBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
 		telemetry.AttributeKV{Key: "payment-method-id", Value: paymentMethodID},
 	)
+
+	c.Config().AnalyticsClient.Track(analytics.PaymentMethodAttachedTrack(&analytics.PaymentMethodCreateDeleteTrackOpts{
+		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),
+	}))
 
 	c.WriteResult(w, r, "")
 }

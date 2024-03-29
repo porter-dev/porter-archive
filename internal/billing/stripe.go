@@ -27,6 +27,10 @@ func (s *StripeBillingManager) CreateCustomer(ctx context.Context, userEmail str
 
 	stripe.Key = s.StripeSecretKey
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "billing-id", Value: proj.BillingID},
+	)
+
 	if proj.BillingID == "" {
 		// Create customer if not exists
 		customerName := fmt.Sprintf("project_%s", proj.Name)
@@ -54,6 +58,10 @@ func (s *StripeBillingManager) DeleteCustomer(ctx context.Context, proj *models.
 
 	stripe.Key = s.StripeSecretKey
 
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "billing-id", Value: proj.BillingID},
+	)
+
 	if proj.BillingID != "" {
 		params := &stripe.CustomerParams{}
 		_, err := customer.Del(proj.BillingID, params)
@@ -67,7 +75,7 @@ func (s *StripeBillingManager) DeleteCustomer(ctx context.Context, proj *models.
 
 // CheckPaymentEnabled will return true if the project has a payment method added, false otherwise
 func (s *StripeBillingManager) CheckPaymentEnabled(ctx context.Context, proj *models.Project) (paymentEnabled bool, err error) {
-	ctx, span := telemetry.NewSpan(ctx, "check-stripe-payment-enabled")
+	_, span := telemetry.NewSpan(ctx, "check-stripe-payment-enabled")
 	defer span.End()
 
 	stripe.Key = s.StripeSecretKey
@@ -189,9 +197,9 @@ func (s *StripeBillingManager) DeletePaymentMethod(ctx context.Context, paymentM
 	return nil
 }
 
-// GetPublishableKey is a no-op
+// GetPublishableKey returns the Stripe publishable key
 func (s *StripeBillingManager) GetPublishableKey(ctx context.Context) (key string) {
-	ctx, span := telemetry.NewSpan(ctx, "get-stripe-publishable-key")
+	_, span := telemetry.NewSpan(ctx, "get-stripe-publishable-key")
 	defer span.End()
 
 	return s.StripePublishableKey

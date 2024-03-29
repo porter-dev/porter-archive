@@ -25,11 +25,28 @@ const ImageList: React.FC<Props> = ({ setSelectedImage, loading, images }) => {
   const renderImageList = (): JSX.Element => {
     if (loading) {
       return (
-        <LoadingWrapper>
-          <Loading message={"Loading all images linked to your project"} />
-        </LoadingWrapper>
+        <div>
+          {searchFilter !== "" && (
+            <ImageItem
+              onClick={() => {
+                setSelectedImage({
+                  uri: searchFilter,
+                  artifacts: [],
+                });
+              }}
+            >
+              <img src={addCircle} />
+              {`Use image URL: "${searchFilter}"`}
+            </ImageItem>
+          )}
+          <LoadingWrapper>
+            <Loading message={"Loading all images linked to your project"} />
+          </LoadingWrapper>
+        </div>
       );
-    } else if (images.length === 0 && !searchFilter) {
+    }
+
+    if (images.length === 0 && !searchFilter) {
       return (
         <LoadingWrapper>
           <Text color="helper">No linked images found.</Text>

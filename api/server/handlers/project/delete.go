@@ -92,7 +92,7 @@ func (p *ProjectDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = p.Config().BillingManager.DeleteCustomer(proj)
+	err = p.Config().BillingManager.DeleteCustomer(ctx, proj)
 	if err != nil {
 		e := "error deleting project in billing provider"
 		err = telemetry.Error(ctx, span, err, e)

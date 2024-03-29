@@ -39,7 +39,7 @@ func (c *ListBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	paymentMethods, err := c.Config().BillingManager.ListPaymentMethod(proj)
+	paymentMethods, err := c.Config().BillingManager.ListPaymentMethod(ctx, proj)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error listing payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error listing payment method: %w", err)))
@@ -65,12 +65,17 @@ func (c *CheckPaymentEnabledHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	paymentEnabled, err := c.Config().BillingManager.CheckPaymentEnabled(proj)
+	paymentEnabled, err := c.Config().BillingManager.CheckPaymentEnabled(ctx, proj)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error checking if payment enabled")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error checking if payment enabled: %w", err)))
 		return
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
+		telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
+	)
 
 	c.WriteResult(w, r, paymentEnabled)
 }

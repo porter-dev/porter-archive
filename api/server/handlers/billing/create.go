@@ -41,12 +41,17 @@ func (c *CreateBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 
 	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
 
-	clientSecret, err := c.Config().BillingManager.CreatePaymentMethod(proj)
+	clientSecret, err := c.Config().BillingManager.CreatePaymentMethod(ctx, proj)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error creating payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error creating payment method: %w", err)))
 		return
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
+		telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
+	)
 
 	c.WriteResult(w, r, clientSecret)
 }
@@ -74,12 +79,18 @@ func (c *SetDefaultBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err := c.Config().BillingManager.SetDefaultPaymentMethod(paymentMethodID, proj)
+	err := c.Config().BillingManager.SetDefaultPaymentMethod(ctx, paymentMethodID, proj)
 	if err != nil {
 		err := telemetry.Error(ctx, span, err, "error setting default payment method")
 		c.HandleAPIError(w, r, apierrors.NewErrInternal(fmt.Errorf("error setting default payment method: %w", err)))
 		return
 	}
+
+	telemetry.WithAttributes(span,
+		telemetry.AttributeKV{Key: "project-id", Value: proj.ID},
+		telemetry.AttributeKV{Key: "customer-id", Value: proj.BillingID},
+		telemetry.AttributeKV{Key: "payment-method-id", Value: paymentMethodID},
+	)
 
 	c.WriteResult(w, r, "")
 }

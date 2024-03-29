@@ -17,6 +17,7 @@ import (
 
 // GetNGINXIngressServiceIP retrieves the external address of the nginx-ingress service
 func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, error) {
+	// first check ingress-nginx namespace
 	svcList, err := clientset.CoreV1().Services("ingress-nginx").List(context.TODO(), metav1.ListOptions{
 		LabelSelector: "app.kubernetes.io/managed-by=Helm",
 	})
@@ -47,6 +48,7 @@ func GetNGINXIngressServiceIP(clientset kubernetes.Interface) (string, bool, err
 		}
 	}
 
+	// fall back to all namespaces
 	nginxSvc = nil
 	exists = false
 

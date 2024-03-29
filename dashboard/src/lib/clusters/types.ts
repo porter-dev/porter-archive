@@ -243,6 +243,8 @@ const azureMachineTypeValidator = z.enum([
   "Standard_DS2_v2",
   "Standard_D2ads_v5",
   "Standard_B4als_v2",
+  "Standard_B8als_v2",
+  "Standard_B16als_v2",
   "Standard_NC4as_T4_v3",
   "Standard_NC8as_T4_v3",
   "Standard_NC16as_T4_v3",

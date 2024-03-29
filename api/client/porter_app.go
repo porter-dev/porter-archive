@@ -738,6 +738,39 @@ func (c *Client) RunAppJob(
 	return resp, err
 }
 
+// CancelAppJobInput contains all the information necessary to cancel a job
+type CancelAppJobInput struct {
+	ProjectID            uint
+	ClusterID            uint
+	AppName              string
+	JobName              string
+	DeploymentTargetName string
+}
+
+// CancelAppJobRun cancels a in progress job run
+func (c *Client) CancelAppJobRun(
+	ctx context.Context,
+	inp CancelAppJobInput,
+) (*porter_app.CancelJobRunResponse, error) {
+	resp := &porter_app.CancelJobRunResponse{}
+
+	req := &porter_app.CancelJobRunRequest{
+		DeploymentTargetName: inp.DeploymentTargetName,
+	}
+
+	err := c.postRequest(
+		fmt.Sprintf(
+			"/projects/%d/clusters/%d/apps/%s/jobs/%s/cancel",
+			inp.ProjectID, inp.ClusterID,
+			inp.AppName, inp.JobName,
+		),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
 // RunAppJobStatusInput contains all the information necessary to check the status of a job
 type RunAppJobStatusInput struct {
 	// AppName is the name of the app associated with the job

@@ -30,34 +30,21 @@ func NewCreateDeploymentTargetHandler(
 	}
 }
 
-// CreateDeploymentTargetRequest is the request object for the /deployment-targets POST endpoint
-type CreateDeploymentTargetRequest struct {
-	// Deprecated: use name instead
-	Selector string `json:"selector"`
-	Name     string `json:"name,omitempty"`
-	Preview  bool   `json:"preview"`
-}
-
-// CreateDeploymentTargetResponse is the response object for the /deployment-targets POST endpoint
-type CreateDeploymentTargetResponse struct {
-	DeploymentTargetID string `json:"deployment_target_id"`
-}
-
 // ServeHTTP handles POST requests to create a new deployment target
 func (c *CreateDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, span := telemetry.NewSpan(r.Context(), "serve-create-deployment-target")
 	defer span.End()
 
 	project, _ := ctx.Value(types.ProjectScope).(*models.Project)
-	cluster, _ := ctx.Value(types.ClusterScope).(*models.Cluster)
 
+	cluster, clusterOk := ctx.Value(types.ClusterScope).(*models.Cluster)
 	if !project.GetFeatureFlag(models.ValidateApplyV2, c.Config().LaunchDarklyClient) {
 		err := telemetry.Error(ctx, span, nil, "project does not have validate apply v2 enabled")
 		c.HandleAPIError(w, r, apierrors.NewErrForbidden(err))
 		return
 	}
 
-	request := &CreateDeploymentTargetRequest{}
+	request := &types.CreateDeploymentTargetRequest{}
 	if ok := c.DecodeAndValidate(w, r, request); !ok {
 		err := telemetry.Error(ctx, span, nil, "error decoding request")
 		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
@@ -69,6 +56,16 @@ func (c *CreateDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
+	clusterId := request.ClusterId
+	if clusterOk {
+		clusterId = cluster.ID
+	}
+	if clusterId == 0 {
+		err := telemetry.Error(ctx, span, nil, "cluster id is required")
+		c.HandleAPIError(w, r, apierrors.NewErrPassThroughToClient(err, http.StatusBadRequest))
+		return
+	}
+
 	name := request.Name
 	if name == "" {
 		name = request.Selector
@@ -76,7 +73,7 @@ func (c *CreateDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http
 
 	createReq := connect.NewRequest(&porterv1.CreateDeploymentTargetRequest{
 		ProjectId: int64(project.ID),
-		ClusterId: int64(cluster.ID),
+		ClusterId: int64(clusterId),
 		Name:      name,
 		Namespace: name,
 		IsPreview: request.Preview,
@@ -99,7 +96,9 @@ func (c *CreateDeploymentTargetHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	res := &CreateDeploymentTargetResponse{
+	telemetry.WithAttributes(span, telemetry.AttributeKV{Key: "deployment-target-id", Value: ccpResp.Msg.DeploymentTargetId})
+
+	res := &types.CreateDeploymentTargetResponse{
 		DeploymentTargetID: ccpResp.Msg.DeploymentTargetId,
 	}
 

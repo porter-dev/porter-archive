@@ -1253,7 +1253,7 @@ const SUPPORTED_AZURE_MACHINE_TYPES: ClientMachineType[] = [
     ],
     isGPU: false,
     cpuCores: 8,
-    ramMegabytes: 16000,
+    ramMegabytes: 16384,
   },
   {
     name: "Standard_B16als_v2",
@@ -1282,7 +1282,7 @@ const SUPPORTED_AZURE_MACHINE_TYPES: ClientMachineType[] = [
     ],
     isGPU: false,
     cpuCores: 16,
-    ramMegabytes: 32000,
+    ramMegabytes: 32768,
   },
   {
     name: "Standard_NC4as_T4_v3",

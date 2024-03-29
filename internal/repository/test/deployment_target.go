@@ -22,8 +22,13 @@ func (repo *DeploymentTargetRepository) DeploymentTargetBySelectorAndSelectorTyp
 	return nil, errors.New("cannot read database")
 }
 
+// ListForCluster returns all deployment targets for a project
+func (repo *DeploymentTargetRepository) ListForCluster(projectID uint, clusterID uint, preview bool) ([]*models.DeploymentTarget, error) {
+	return nil, errors.New("cannot read database")
+}
+
 // List returns all deployment targets for a project
-func (repo *DeploymentTargetRepository) List(projectID uint, clusterID uint, preview bool) ([]*models.DeploymentTarget, error) {
+func (repo *DeploymentTargetRepository) List(projectID uint, preview bool) ([]*models.DeploymentTarget, error) {
 	return nil, errors.New("cannot read database")
 }
 

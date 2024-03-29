@@ -3,6 +3,8 @@ package router
 import (
 	"fmt"
 
+	"github.com/porter-dev/porter/api/server/handlers/deployment_target"
+
 	"github.com/go-chi/chi/v5"
 	apiContract "github.com/porter-dev/porter/api/server/handlers/api_contract"
 	"github.com/porter-dev/porter/api/server/handlers/api_token"
@@ -1737,6 +1739,62 @@ func getProjectRoutes(
 	routes = append(routes, &router.Route{
 		Endpoint: imagesEndpoint,
 		Handler:  imagesHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/targets -> deployment_target.ListDeploymentTargetHandler
+	listDeploymentTargetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbGet,
+			Method: types.HTTPVerbGet,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/targets", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	listDeploymentTargetHandler := deployment_target.NewListDeploymentTargetsHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: listDeploymentTargetEndpoint,
+		Handler:  listDeploymentTargetHandler,
+		Router:   r,
+	})
+
+	// GET /api/projects/{project_id}/targets -> deployment_target.ListDeploymentTargetHandler
+	createDeploymentTargetEndpoint := factory.NewAPIEndpoint(
+		&types.APIRequestMetadata{
+			Verb:   types.APIVerbCreate,
+			Method: types.HTTPVerbPost,
+			Path: &types.Path{
+				Parent:       basePath,
+				RelativePath: fmt.Sprintf("%s/targets", relPath),
+			},
+			Scopes: []types.PermissionScope{
+				types.UserScope,
+				types.ProjectScope,
+			},
+		},
+	)
+
+	createDeploymentTargetHandler := deployment_target.NewCreateDeploymentTargetHandler(
+		config,
+		factory.GetDecoderValidator(),
+		factory.GetResultWriter(),
+	)
+
+	routes = append(routes, &router.Route{
+		Endpoint: createDeploymentTargetEndpoint,
+		Handler:  createDeploymentTargetHandler,
 		Router:   r,
 	})
 

@@ -375,7 +375,12 @@ func deploymentTargetFromConfig(ctx context.Context, client api.Client, projectI
 			return deploymentTargetID, errors.New("branch name is empty. Please run apply in a git repository with access to the git CLI")
 		}
 
-		targetResp, err := client.CreateDeploymentTarget(ctx, projectID, clusterID, branchName, true)
+		targetResp, err := client.CreateDeploymentTarget(ctx, projectID, &types.CreateDeploymentTargetRequest{
+			Selector:  "",
+			Name:      branchName,
+			Preview:   true,
+			ClusterId: clusterID,
+		})
 		if err != nil {
 			return deploymentTargetID, fmt.Errorf("error calling create deployment target endpoint: %w", err)
 		}

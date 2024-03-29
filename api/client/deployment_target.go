@@ -4,28 +4,40 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/porter-dev/porter/api/server/handlers/deployment_target"
+	"github.com/porter-dev/porter/api/types"
 )
 
-// CreateDeploymentTarget creates a new deployment target for a given project and cluster with the provided name
+// CreateDeploymentTarget creates a deployment target with the given request options
 func (c *Client) CreateDeploymentTarget(
 	ctx context.Context,
-	projectID, clusterID uint,
-	selector string,
-	preview bool,
-) (*deployment_target.CreateDeploymentTargetResponse, error) {
-	resp := &deployment_target.CreateDeploymentTargetResponse{}
-
-	req := &deployment_target.CreateDeploymentTargetRequest{
-		Selector: selector,
-		Preview:  preview,
-	}
+	projectId uint,
+	req *types.CreateDeploymentTargetRequest,
+) (*types.CreateDeploymentTargetResponse, error) {
+	resp := &types.CreateDeploymentTargetResponse{}
 
 	err := c.postRequest(
-		fmt.Sprintf(
-			"/projects/%d/clusters/%d/deployment-targets",
-			projectID, clusterID,
-		),
+		fmt.Sprintf("/projects/%d/targets", projectId),
+		req,
+		resp,
+	)
+
+	return resp, err
+}
+
+// ListDeploymentTargets retrieves all deployment targets in a project
+func (c *Client) ListDeploymentTargets(
+	ctx context.Context,
+	projectId uint,
+	includePreviews bool,
+) (*types.ListDeploymentTargetsResponse, error) {
+	resp := &types.ListDeploymentTargetsResponse{}
+
+	req := &types.ListDeploymentTargetsRequest{
+		Preview: includePreviews,
+	}
+
+	err := c.getRequest(
+		fmt.Sprintf("/projects/%d/targets", projectId),
 		req,
 		resp,
 	)

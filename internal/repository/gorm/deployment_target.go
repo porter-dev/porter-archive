@@ -32,10 +32,20 @@ func (repo *DeploymentTargetRepository) DeploymentTargetBySelectorAndSelectorTyp
 	return deploymentTarget, nil
 }
 
-// List finds all deployment targets for a given project
-func (repo *DeploymentTargetRepository) List(projectID uint, clusterID uint, preview bool) ([]*models.DeploymentTarget, error) {
+// ListForCluster finds all deployment targets for a given project
+func (repo *DeploymentTargetRepository) ListForCluster(projectID uint, clusterID uint, preview bool) ([]*models.DeploymentTarget, error) {
 	deploymentTargets := []*models.DeploymentTarget{}
 	if err := repo.db.Where("project_id = ? AND cluster_id = ? AND preview = ?", projectID, clusterID, preview).Find(&deploymentTargets).Error; err != nil {
+		return nil, err
+	}
+
+	return deploymentTargets, nil
+}
+
+// List finds all deployment targets for a given project
+func (repo *DeploymentTargetRepository) List(projectID uint, preview bool) ([]*models.DeploymentTarget, error) {
+	deploymentTargets := []*models.DeploymentTarget{}
+	if err := repo.db.Where("project_id = ? AND preview = ?", projectID, preview).Find(&deploymentTargets).Error; err != nil {
 		return nil, err
 	}
 

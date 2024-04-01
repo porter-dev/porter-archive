@@ -10,6 +10,8 @@ import (
 	"github.com/porter-dev/porter/api/server/shared/config"
 	"github.com/porter-dev/porter/api/server/shared/requestutils"
 	"github.com/porter-dev/porter/api/types"
+	"github.com/porter-dev/porter/internal/analytics"
+	"github.com/porter-dev/porter/internal/models"
 	"github.com/porter-dev/porter/internal/telemetry"
 )
 
@@ -32,6 +34,9 @@ func (c *DeleteBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	ctx, span := telemetry.NewSpan(r.Context(), "delete-billing-endpoint")
 	defer span.End()
 
+	user, _ := r.Context().Value(types.UserScope).(*models.User)
+	proj, _ := ctx.Value(types.ProjectScope).(*models.Project)
+
 	paymentMethodID, reqErr := requestutils.GetURLParamString(r, types.URLParamPaymentMethodID)
 	if reqErr != nil {
 		err := telemetry.Error(ctx, span, reqErr, "error deleting payment method")
@@ -49,6 +54,10 @@ func (c *DeleteBillingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	telemetry.WithAttributes(span,
 		telemetry.AttributeKV{Key: "payment-method-id", Value: paymentMethodID},
 	)
+
+	_ = c.Config().AnalyticsClient.Track(analytics.PaymentMethodDettachedTrack(&analytics.PaymentMethodCreateDeleteTrackOpts{
+		ProjectScopedTrackOpts: analytics.GetProjectScopedTrackOpts(user.ID, proj.ID),
+	}))
 
 	c.WriteResult(w, r, "")
 }

@@ -3511,6 +3511,7 @@ const createSecretAndOpenGitHubPullRequest = baseApi<
     porter_yaml_path?: string;
     delete_workflow_filename?: string;
     previews_workflow_filename?: string;
+    deployment_target_id?: string;
   },
   {
     project_id: number;
